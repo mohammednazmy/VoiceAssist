@@ -1,0 +1,379 @@
+# VoiceAssist V2 Documentation Index
+# Machine-readable index for AI assistants and tooling
+# Last Updated: 2025-11-20
+
+docs:
+  # Overview & Planning
+  - id: project_summary
+    path: docs/PROJECT_SUMMARY.md
+    title: "Project Summary"
+    category: overview
+    audience: [stakeholder, pm, developer]
+    summary: "High-level project overview, tech stack, cost estimates, quick start commands."
+    related: [start_here, architecture_v2]
+
+  - id: start_here
+    path: docs/START_HERE.md
+    title: "Start Here - Project Orientation"
+    category: overview
+    audience: [developer, clinician, security, admin]
+    summary: "Main entry point with role-based guides, documentation map, quick start paths."
+    related: [architecture_v2, development_phases_v2, current_phase]
+
+  - id: architecture_v2
+    path: docs/ARCHITECTURE_V2.md
+    title: "Architecture V2 - Docker Compose First"
+    category: architecture
+    audience: [developer, ops, security]
+    summary: "System architecture, microservices, Nextcloud integration, Compose-first strategy."
+    related: [service_catalog, backend_architecture, infrastructure_setup]
+
+  - id: backend_architecture
+    path: docs/BACKEND_ARCHITECTURE.md
+    title: "Backend Architecture - Monorepo vs Microservices"
+    category: architecture
+    audience: [developer, ops]
+    summary: "Monorepo structure (Phases 0-10) vs microservices (Phases 11-14), migration path."
+    related: [service_catalog, architecture_v2]
+
+  # Development Phases
+  - id: development_phases_v2
+    path: docs/DEVELOPMENT_PHASES_V2.md
+    title: "Development Phases V2 (15 Phases)"
+    category: planning
+    audience: [developer, pm]
+    summary: "Complete 15-phase development plan (Phase 0-14), Compose-first approach."
+    related: [roadmap, all_phases_summary, current_phase]
+
+  - id: roadmap
+    path: docs/ROADMAP.md
+    title: "Development Roadmap"
+    category: planning
+    audience: [pm, stakeholder]
+    summary: "Time-based phase grouping, milestones, dependencies."
+    related: [development_phases_v2, all_phases_summary]
+
+  - id: all_phases_summary
+    path: docs/ALL_PHASES_SUMMARY.md
+    title: "All Phases Summary"
+    category: planning
+    audience: [developer, pm]
+    summary: "Brief description of each phase (0-14) with deliverables."
+    related: [development_phases_v2, roadmap]
+
+  - id: current_phase
+    path: CURRENT_PHASE.md
+    title: "Current Phase Tracking"
+    category: planning
+    audience: [developer]
+    summary: "Current phase status, next steps, what to read."
+    related: [phase_status, development_phases_v2]
+
+  - id: phase_status
+    path: PHASE_STATUS.md
+    title: "Phase Status Tracking"
+    category: planning
+    audience: [developer, pm]
+    summary: "Detailed phase completion tracking (0-14)."
+    related: [current_phase, development_phases_v2]
+
+  # Development Setup
+  - id: local_development
+    path: docs/LOCAL_DEVELOPMENT.md
+    title: "Local Development Guide"
+    category: development
+    audience: [developer]
+    summary: "Complete local setup, ports table, separate Nextcloud stack, daily workflow."
+    related: [architecture_v2, infrastructure_setup]
+
+  - id: infrastructure_setup
+    path: docs/INFRASTRUCTURE_SETUP.md
+    title: "Infrastructure Setup - Ubuntu Production"
+    category: deployment
+    audience: [ops]
+    summary: "Production server deployment, separate stacks, systemd, backups."
+    related: [local_development, compose_to_k8s]
+
+  - id: compose_to_k8s
+    path: docs/COMPOSE_TO_K8S_MIGRATION.md
+    title: "Docker Compose to Kubernetes Migration"
+    category: deployment
+    audience: [ops]
+    summary: "Migration guide from Compose (Phases 0-10) to K8s (Phases 11-14)."
+    related: [infrastructure_setup, architecture_v2]
+
+  # Security & Compliance
+  - id: security_compliance
+    path: docs/SECURITY_COMPLIANCE.md
+    title: "Security & HIPAA Compliance"
+    category: security
+    audience: [security, developer, ops]
+    summary: "HIPAA requirements, PHI handling, audit logging, encryption."
+    related: [semantic_search_design, orchestration_design, observability]
+
+  - id: nextcloud_integration
+    path: docs/NEXTCLOUD_INTEGRATION.md
+    title: "Nextcloud Integration - Separate Stack"
+    category: architecture
+    audience: [developer, ops, security]
+    summary: "Separate Nextcloud stack, WebDAV integration, dev/prod config."
+    related: [architecture_v2, infrastructure_setup]
+
+  # Core Design
+  - id: data_model
+    path: docs/DATA_MODEL.md
+    title: "Canonical Data Model"
+    category: design
+    audience: [developer]
+    summary: "All 11 entities with JSON Schema, Pydantic, TypeScript definitions."
+    related: [web_app_specs, admin_panel_specs, semantic_search_design]
+
+  - id: service_catalog
+    path: docs/SERVICE_CATALOG.md
+    title: "Service Catalog"
+    category: design
+    audience: [developer, ops]
+    summary: "All 10+ services with ports, endpoints, dependencies, monorepo paths."
+    related: [backend_architecture, architecture_v2]
+
+  - id: orchestration_design
+    path: docs/ORCHESTRATION_DESIGN.md
+    title: "Orchestration & Conductor Design"
+    category: design
+    audience: [developer]
+    summary: "Query orchestrator, 10-step pipeline, failure modes, conductor API."
+    related: [semantic_search_design, service_catalog, data_model]
+
+  - id: semantic_search_design
+    path: docs/SEMANTIC_SEARCH_DESIGN.md
+    title: "Semantic Search & RAG Design"
+    category: design
+    audience: [developer]
+    summary: "KB ingestion, vector search, RAG pipeline, PHI detection, idempotency, state machine."
+    related: [orchestration_design, data_model, security_compliance]
+
+  - id: observability
+    path: docs/OBSERVABILITY.md
+    title: "Observability - Metrics, Logs, Traces"
+    category: operations
+    audience: [ops, developer]
+    summary: "Health/ready/metrics endpoints, Prometheus metrics, structured logging, alerting, tool metrics."
+    related: [architecture_v2, security_compliance, admin_panel_specs, tools_integrations]
+
+  - id: tools_integrations
+    path: docs/TOOLS_AND_INTEGRATIONS.md
+    title: "Tools & External Integrations"
+    category: design
+    audience: [developer]
+    summary: "10 tools for OpenAI Realtime API, Pydantic models, PHI classification, tool registry, external API integrations."
+    related: [orchestration_design, data_model, security_compliance, observability]
+
+  # Application Specifications
+  - id: web_app_specs
+    path: docs/WEB_APP_SPECS.md
+    title: "Web App Specifications"
+    category: specifications
+    audience: [developer, ux]
+    summary: "Clinician-facing UI, clinical workflows, voice interface, user settings, chat data flow."
+    related: [data_model, service_catalog, medical_features]
+
+  - id: admin_panel_specs
+    path: docs/ADMIN_PANEL_SPECS.md
+    title: "Admin Panel Specifications"
+    category: specifications
+    audience: [developer, admin]
+    summary: "System management, KB management, user admin, system settings, indexing job UI."
+    related: [data_model, service_catalog, observability]
+
+  - id: medical_features
+    path: docs/MEDICAL_FEATURES.md
+    title: "Medical Features & Use Cases"
+    category: specifications
+    audience: [clinician, developer, product]
+    summary: "Medical capabilities, clinical workflows, use cases, privacy considerations."
+    related: [web_app_specs, semantic_search_design]
+
+  # Implementation Guides
+  - id: server_readme
+    path: server/README.md
+    title: "Backend Implementation Guide"
+    category: implementation
+    audience: [developer]
+    summary: "FastAPI backend, service architecture, API envelope, monorepo structure."
+    related: [data_model, service_catalog, backend_architecture]
+
+  - id: web_app_readme
+    path: web-app/README.md
+    title: "Web App Implementation Guide"
+    category: implementation
+    audience: [developer]
+    summary: "Next.js web app, React hooks, API integration, development setup."
+    related: [web_app_specs, data_model]
+
+  - id: admin_panel_readme
+    path: admin-panel/README.md
+    title: "Admin Panel Implementation Guide"
+    category: implementation
+    audience: [developer]
+    summary: "Next.js admin panel, React hooks, KB management, development setup."
+    related: [admin_panel_specs, data_model]
+
+  # Frontend Implementation Files
+  - id: web_app_types
+    path: web-app/src/types.ts
+    title: "Web App TypeScript Types"
+    category: implementation
+    audience: [developer]
+    summary: "Core types for web app: ChatMessage, Citation, ClinicalContext, APIEnvelope. Aligned with DATA_MODEL.md."
+    related: [data_model, web_app_specs, web_app_api_client]
+
+  - id: web_app_api_client
+    path: web-app/src/lib/api.ts
+    title: "Web App API Client"
+    category: implementation
+    audience: [developer]
+    summary: "fetchAPI helper for API communication, APIError class, envelope unwrapping."
+    related: [web_app_types, server_readme]
+
+  - id: web_app_chat_hook
+    path: web-app/src/hooks/useChatSession.ts
+    title: "Web App Chat Hook"
+    category: implementation
+    audience: [developer]
+    summary: "React hook for chat functionality, calls /api/chat/message endpoint."
+    related: [web_app_types, web_app_api_client, web_app_specs]
+
+  - id: admin_panel_types
+    path: admin-panel/src/types.ts
+    title: "Admin Panel TypeScript Types"
+    category: implementation
+    audience: [developer]
+    summary: "Core types for admin panel: ChatMessage, Citation, ClinicalContext, APIEnvelope. Aligned with DATA_MODEL.md."
+    related: [data_model, admin_panel_specs, admin_panel_api_client]
+
+  - id: admin_panel_api_client
+    path: admin-panel/src/lib/api.ts
+    title: "Admin Panel API Client"
+    category: implementation
+    audience: [developer]
+    summary: "fetchAPI helper for API communication, identical to web-app implementation."
+    related: [admin_panel_types, server_readme]
+
+  - id: admin_panel_kb_hook
+    path: admin-panel/src/hooks/useKnowledgeDocuments.ts
+    title: "Admin Panel KB Documents Hook"
+    category: implementation
+    audience: [developer]
+    summary: "React hook for KB management, calls /api/admin/kb/documents, includes demo data fallback."
+    related: [admin_panel_types, admin_panel_api_client, admin_panel_specs]
+
+  - id: admin_panel_jobs_hook
+    path: admin-panel/src/hooks/useIndexingJobs.ts
+    title: "Admin Panel Indexing Jobs Hook"
+    category: implementation
+    audience: [developer]
+    summary: "React hook for indexing job monitoring, calls /api/admin/kb/jobs, includes demo data fallback."
+    related: [admin_panel_types, admin_panel_api_client, admin_panel_specs]
+
+  # AI Assistant Resources
+  - id: claude_execution_guide
+    path: docs/CLAUDE_EXECUTION_GUIDE.md
+    title: "Claude Code Execution Guide"
+    category: ai_assistant
+    audience: [ai_assistant]
+    summary: "Session startup, branch strategy, parallel safety, quality checks."
+    related: [claude_prompts, doc_index, start_here]
+
+  - id: claude_prompts
+    path: docs/CLAUDE_PROMPTS.md
+    title: "Claude Code Prompt Library"
+    category: ai_assistant
+    audience: [ai_assistant]
+    summary: "Ready-to-use prompts for phases, bugfixes, docs, infra."
+    related: [claude_execution_guide, development_phases_v2]
+
+  - id: doc_index
+    path: docs/DOC_INDEX.yml
+    title: "Machine-Readable Documentation Index"
+    category: ai_assistant
+    audience: [ai_assistant, tooling]
+    summary: "This file - canonical registry of all documentation."
+    related: [start_here]
+
+  # Enhancement Documentation
+  - id: enhancement_summary
+    path: docs/ENHANCEMENT_SUMMARY.md
+    title: "Documentation Enhancement Summary"
+    category: overview
+    audience: [developer, pm]
+    summary: "Summary of all V2 documentation enhancements, what changed from V1."
+    related: [start_here, development_phases_v2]
+
+# Task-to-Docs Mapping (for AI assistants)
+task_mappings:
+  understand_architecture:
+    - start_here
+    - architecture_v2
+    - backend_architecture
+    - service_catalog
+    - data_model
+
+  implement_backend:
+    - data_model
+    - service_catalog
+    - orchestration_design
+    - server_readme
+    - semantic_search_design
+
+  implement_frontend:
+    - web_app_specs
+    - data_model
+    - web_app_readme
+    - web_app_types
+    - web_app_api_client
+    - web_app_chat_hook
+
+  implement_admin:
+    - admin_panel_specs
+    - data_model
+    - admin_panel_readme
+    - admin_panel_types
+    - admin_panel_api_client
+    - admin_panel_kb_hook
+    - admin_panel_jobs_hook
+
+  implement_search:
+    - semantic_search_design
+    - orchestration_design
+    - data_model
+
+  implement_security:
+    - security_compliance
+    - data_model
+    - orchestration_design
+
+  setup_infrastructure:
+    - local_development
+    - infrastructure_setup
+    - architecture_v2
+
+  deploy_production:
+    - infrastructure_setup
+    - compose_to_k8s
+    - observability
+
+  start_phase:
+    - current_phase
+    - phase_status
+    - development_phases_v2
+    - claude_execution_guide
+    - claude_prompts
+
+  implement_tools:
+    - tools_integrations
+    - orchestration_design
+    - data_model
+    - security_compliance
+    - observability
+    - web_app_specs
+    - admin_panel_specs

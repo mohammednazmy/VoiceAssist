@@ -1,0 +1,86 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Data directories
+data/postgres/*
+data/redis/*
+data/qdrant/*
+data/uploads/*
+data/backups/*
+!data/.gitkeep
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+.next/
+out/
+build/
+dist/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+coverage/
+
+# Docker
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# Secrets
+secrets/
+*.key
+*.pem
+*.crt
+*-key.json
+credentials.json
+
+# Backups
+*.backup
+*.bak
+*.sql
+
+# Keep folder structure
+!.gitkeep

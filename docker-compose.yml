@@ -1,0 +1,52 @@
+# Networks
+networks:
+  voiceassist-network:
+    driver: bridge
+
+  database-network:
+    driver: bridge
+    internal: true  # Database network is internal-only
+
+# Volumes for data persistence
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  qdrant-data:
+    driver: local
+  nextcloud-data:
+    driver: local
+  keycloak-data:
+    driver: local
+
+services:
+  # Services will be added in subsequent phases
+  # This is the skeleton structure
+
+  # Phase 1 will add:
+  # - postgres
+  # - redis
+  # - qdrant
+
+  # Phase 2 will add:
+  # - nextcloud
+  # - keycloak
+  # - auth-service
+
+  # Phase 3 will add:
+  # - api-gateway
+  # - voice-proxy
+  # - medical-kb
+  # - admin-api
+  # - prometheus
+  # - grafana
+
+  # Phase 4 will add:
+  # - Additional microservices
+
+  # Placeholder service to test setup
+  hello-world:
+    image: hello-world
+    networks:
+      - voiceassist-network
