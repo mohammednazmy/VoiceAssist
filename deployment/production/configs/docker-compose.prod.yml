@@ -1,0 +1,418 @@
+################################################################################
+# VoiceAssist Production Docker Compose Override
+#
+# This file contains production-specific configuration overrides for the
+# VoiceAssist platform. Use in combination with docker-compose.yml:
+#
+#   docker-compose -f docker-compose.yml -f deployment/production/configs/docker-compose.prod.yml up -d
+#
+################################################################################
+
+version: '3.8'
+
+services:
+  # API Gateway - Production Configuration
+  voiceassist-server:
+    restart: always
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - WORKERS=4
+      - MAX_REQUESTS=1000
+      - MAX_REQUESTS_JITTER=100
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.voiceassist.service=api-gateway"
+      - "com.voiceassist.environment=production"
+
+  # Worker Service - Production Configuration
+  voiceassist-worker:
+    restart: always
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - WORKER_CONCURRENCY=4
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.voiceassist.service=worker"
+      - "com.voiceassist.environment=production"
+
+  # PostgreSQL - Production Configuration
+  postgres:
+    restart: always
+    environment:
+      - POSTGRES_MAX_CONNECTIONS=200
+      - POSTGRES_SHARED_BUFFERS=1GB
+      - POSTGRES_EFFECTIVE_CACHE_SIZE=3GB
+      - POSTGRES_MAINTENANCE_WORK_MEM=256MB
+      - POSTGRES_CHECKPOINT_COMPLETION_TARGET=0.9
+      - POSTGRES_WAL_BUFFERS=16MB
+      - POSTGRES_DEFAULT_STATISTICS_TARGET=100
+      - POSTGRES_RANDOM_PAGE_COST=1.1
+      - POSTGRES_EFFECTIVE_IO_CONCURRENCY=200
+      - POSTGRES_WORK_MEM=5MB
+      - POSTGRES_MIN_WAL_SIZE=1GB
+      - POSTGRES_MAX_WAL_SIZE=4GB
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 8G
+        reservations:
+          cpus: '1.0'
+          memory: 4G
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+      - /opt/voiceassist/backups/postgres:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voiceassist"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.voiceassist.service=database"
+      - "com.voiceassist.environment=production"
+
+  # PostgreSQL Replica - Production High Availability
+  postgres-replica:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=voiceassist
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=voiceassist
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
+      - ./ha-dr/postgresql/replica.conf:/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voiceassist"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.voiceassist.service=database-replica"
+      - "com.voiceassist.environment=production"
+
+  # Redis - Production Configuration
+  redis:
+    restart: always
+    command: >
+      redis-server
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --appendonly yes
+      --appendfsync everysec
+      --requirepass ${REDIS_PASSWORD}
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 3G
+        reservations:
+          cpus: '0.5'
+          memory: 2G
+    volumes:
+      - redis_data_prod:/data
+      - /opt/voiceassist/backups/redis:/backups
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.voiceassist.service=cache"
+      - "com.voiceassist.environment=production"
+
+  # Qdrant - Production Configuration
+  qdrant:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+    volumes:
+      - qdrant_data_prod:/qdrant/storage
+      - /opt/voiceassist/backups/qdrant:/backups
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6333/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.voiceassist.service=vector-db"
+      - "com.voiceassist.environment=production"
+
+  # Nextcloud - Production Configuration
+  nextcloud:
+    restart: always
+    environment:
+      - NEXTCLOUD_TRUSTED_DOMAINS=${DOMAIN}
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
+      - MYSQL_HOST=nextcloud-db
+      - REDIS_HOST=redis
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+    volumes:
+      - nextcloud_data_prod:/var/www/html
+      - /opt/voiceassist/backups/nextcloud:/backups
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.voiceassist.service=nextcloud"
+      - "com.voiceassist.environment=production"
+
+  # Nextcloud Database
+  nextcloud-db:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    volumes:
+      - nextcloud_db_data_prod:/var/lib/mysql
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.voiceassist.service=nextcloud-db"
+      - "com.voiceassist.environment=production"
+
+  # Prometheus - Production Configuration
+  prometheus:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    volumes:
+      - prometheus_data_prod:/prometheus
+      - ./infrastructure/observability/prometheus:/etc/prometheus
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.voiceassist.service=prometheus"
+      - "com.voiceassist.environment=production"
+
+  # Grafana - Production Configuration
+  grafana:
+    restart: always
+    environment:
+      - GF_SERVER_ROOT_URL=https://${DOMAIN}/grafana
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      - GF_ALERTING_ENABLED=true
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=${SMTP_HOST}:${SMTP_PORT}
+      - GF_SMTP_USER=${SMTP_USER}
+      - GF_SMTP_PASSWORD=${SMTP_PASSWORD}
+      - GF_SMTP_FROM_ADDRESS=${ADMIN_EMAIL}
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    volumes:
+      - grafana_data_prod:/var/lib/grafana
+      - ./infrastructure/observability/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./infrastructure/observability/grafana/datasources:/etc/grafana/provisioning/datasources
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.voiceassist.service=grafana"
+      - "com.voiceassist.environment=production"
+
+  # Jaeger - Production Configuration
+  jaeger:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.voiceassist.service=jaeger"
+      - "com.voiceassist.environment=production"
+
+  # Loki - Production Configuration
+  loki:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    volumes:
+      - loki_data_prod:/loki
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.voiceassist.service=loki"
+      - "com.voiceassist.environment=production"
+
+  # Nginx - Production Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deployment/production/configs/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    depends_on:
+      - voiceassist-server
+      - grafana
+      - prometheus
+      - jaeger
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.voiceassist.service=nginx"
+      - "com.voiceassist.environment=production"
+
+volumes:
+  postgres_data_prod:
+    driver: local
+  postgres_replica_data:
+    driver: local
+  redis_data_prod:
+    driver: local
+  qdrant_data_prod:
+    driver: local
+  nextcloud_data_prod:
+    driver: local
+  nextcloud_db_data_prod:
+    driver: local
+  prometheus_data_prod:
+    driver: local
+  grafana_data_prod:
+    driver: local
+  loki_data_prod:
+    driver: local
+
+networks:
+  default:
+    name: voiceassist_production
+    driver: bridge
