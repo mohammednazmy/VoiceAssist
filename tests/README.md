@@ -1,377 +1,151 @@
-# VoiceAssist Phase 9 Test Suite
+# VoiceAssist Test Suite
 
-Comprehensive pytest test suite for VoiceAssist V2 Phase 9 implementation.
+Comprehensive test suite for the VoiceAssist platform covering E2E, integration, and voice interaction testing.
 
-## Overview
+## Test Structure
 
-This test suite provides complete coverage for Phase 9 functionality including:
-
-- **API Envelope**: Standard response format testing
-- **Password Validation**: Security and strength testing
-- **Feature Flags**: A/B testing and rollout functionality
-- **PHI Redaction**: Healthcare data protection
-- **Business Metrics**: Prometheus metrics and observability
-- **Tracing**: Distributed tracing and context propagation
-- **Authentication**: JWT-based auth flows
-- **Knowledge Base**: Document management and RAG queries
-- **Health Checks**: Kubernetes-ready health and readiness probes
-
-## Test Statistics
-
-- **Total Files**: 16
-- **Total Lines**: 6,452
-- **Unit Tests**: 6 files (3,597 lines)
-- **Integration Tests**: 5 files (2,232 lines)
-- **Configuration**: 2 files (596 lines)
-
-## Installation
-
-```bash
-# Install pytest and dependencies
-pip install pytest pytest-cov pytest-asyncio pytest-timeout
-
-# Or install all test dependencies
-pip install -r requirements-test.txt
+```
+tests/
+├── conftest.py                    # Pytest configuration and fixtures
+├── e2e/                           # End-to-end tests
+│   └── test_user_workflows.py    # Complete user workflow tests
+├── integration/                   # Service integration tests
+│   └── test_service_integration.py
+├── voice/                         # Voice interaction tests
+│   └── test_voice_interactions.py
+└── fixtures/                      # Test fixtures and sample data
 ```
 
 ## Running Tests
 
-### Run All Tests
+### Run all tests
 ```bash
 pytest
 ```
 
-### Run Only Unit Tests
+### Run specific test categories
 ```bash
-pytest tests/unit/
-```
+# E2E tests only
+pytest -m e2e
 
-### Run Only Integration Tests
-```bash
-pytest tests/integration/
-```
+# Integration tests only
+pytest -m integration
 
-### Run Tests by Marker
-```bash
-# Run only auth-related tests
-pytest -m auth
+# Voice tests only
+pytest -m voice
 
-# Run only API tests
-pytest -m api
-
-# Run only metrics tests
-pytest -m metrics
-
-# Run only PHI-related tests
-pytest -m phi
-```
-
-### Run with Coverage
-```bash
-pytest --cov=server/app --cov-report=html
-```
-
-### Run Specific Test File
-```bash
-pytest tests/unit/test_api_envelope.py
-```
-
-### Run Specific Test
-```bash
-pytest tests/unit/test_api_envelope.py::test_success_response_returns_correct_format
-```
-
-### Skip Slow Tests
-```bash
+# Exclude slow tests
 pytest -m "not slow"
 ```
 
-## Test Organization
+### Run specific test files
+```bash
+pytest tests/e2e/test_user_workflows.py
+pytest tests/integration/test_service_integration.py
+pytest tests/voice/test_voice_interactions.py
+```
 
-### Unit Tests (`tests/unit/`)
+### Run with coverage
+```bash
+pytest --cov=services --cov-report=html
+```
 
-Tests individual components in isolation with mocked dependencies:
+## Test Configuration
 
-1. **test_api_envelope.py** (460 lines)
-   - Success/error response formats
-   - Metadata inclusion
-   - Pagination helpers
-   - Validation error formatting
+### Environment Variables
+```bash
+export TEST_DATABASE_URL="postgresql://voiceassist:password@localhost:5432/voiceassist_test"
+export TEST_API_BASE_URL="http://localhost:8000"
+```
 
-2. **test_password_validator.py** (489 lines)
-   - Strong password validation
-   - Weak password rejection
-   - Common password blocking
-   - Password strength scoring
+### Test Database Setup
+```bash
+# Create test database
+createdb voiceassist_test
 
-3. **test_feature_flags.py** (576 lines)
-   - Flag evaluation
-   - User overrides
-   - A/B testing rollout percentages
-   - Caching behavior
-
-4. **test_phi_redaction.py** (660 lines)
-   - SSN redaction
-   - Medical record number redaction
-   - Phone number masking
-   - Email masking
-   - Non-PHI passthrough
-
-5. **test_business_metrics.py** (717 lines)
-   - Metric registration
-   - Counter increments
-   - Gauge sets
-   - Histogram observations
-
-6. **test_tracing_utils.py** (695 lines)
-   - Trace context propagation
-   - Span creation and management
-   - Trace ID generation
-   - Baggage handling
-
-### Integration Tests (`tests/integration/`)
-
-Tests API endpoints and system integration:
-
-1. **test_auth_flow.py** (588 lines)
-   - User registration
-   - Login with valid/invalid credentials
-   - JWT token validation
-   - Token refresh
-   - Logout flows
-
-2. **test_knowledge_base_api.py** (634 lines)
-   - Document upload
-   - Document listing and pagination
-   - Document search
-   - Document deletion
-   - RAG queries
-
-3. **test_feature_flags_api.py** (229 lines)
-   - Create/update/delete flags
-   - List flags
-   - User overrides
-   - Admin operations
-
-4. **test_metrics_endpoint.py** (320 lines)
-   - Prometheus format
-   - Business metrics presence
-   - Metric value updates
-   - Performance checks
-
-5. **test_health_checks.py** (461 lines)
-   - /health endpoint
-   - /ready endpoint
-   - Database connectivity
-   - Redis connectivity
-   - Dependency checks
-
-## Configuration
-
-### pytest.ini
-
-Configures pytest behavior:
-- Test discovery patterns
-- Test markers (unit, integration, slow, auth, api, etc.)
-- Coverage settings
-- Logging configuration
-- Timeouts
-
-### conftest.py
-
-Provides shared fixtures:
-- FastAPI test client
-- Mock database sessions
-- Mock Redis clients
-- Test user fixtures
-- Authentication tokens
-- Environment mocking
-- Cleanup utilities
+# Run migrations
+alembic upgrade head
+```
 
 ## Test Markers
 
-Tests are organized with markers for selective execution:
-
-- `@pytest.mark.unit` - Fast unit tests
-- `@pytest.mark.integration` - Integration tests
-- `@pytest.mark.slow` - Tests taking >1 second
-- `@pytest.mark.auth` - Authentication tests
-- `@pytest.mark.api` - API endpoint tests
-- `@pytest.mark.database` - Database-dependent tests
-- `@pytest.mark.redis` - Redis-dependent tests
-- `@pytest.mark.phi` - PHI detection/redaction tests
-- `@pytest.mark.metrics` - Metrics/observability tests
-- `@pytest.mark.feature_flags` - Feature flag tests
-
-## Fixtures
-
-### Application Fixtures
-- `app` - Fresh FastAPI application
-- `client` - Test client for HTTP requests
-- `authenticated_client` - Client with auth headers
-
-### Database Fixtures
-- `mock_db_session` - Mock database session
-- `in_memory_db_session` - Real in-memory SQLite DB
-
-### Redis Fixtures
-- `mock_redis_client` - Mock Redis client
-- `mock_redis_with_data` - Redis client with test data
-
-### Authentication Fixtures
-- `test_user` - Standard test user
-- `test_admin_user` - Admin test user
-- `test_user_token` - Valid JWT token
-- `expired_token` - Expired JWT token
-
-### Test Data Fixtures
-- `sample_document` - Sample KB document
-- `sample_chat_message` - Sample chat message
-- `sample_feature_flag` - Sample feature flag
-- `phi_test_data` - Test data containing PHI
-
-### Monitoring Fixtures
-- `mock_prometheus_registry` - Mock metrics registry
-- `mock_counter` - Mock counter metric
-- `mock_gauge` - Mock gauge metric
-- `mock_histogram` - Mock histogram metric
+- `@pytest.mark.e2e` - End-to-end integration tests
+- `@pytest.mark.voice` - Voice interaction tests
+- `@pytest.mark.integration` - Service integration tests
+- `@pytest.mark.slow` - Slow-running tests (>5 seconds)
+- `@pytest.mark.requires_services` - Requires external services running
 
 ## Writing New Tests
 
-### Unit Test Template
-
+### Test Structure
 ```python
 import pytest
-from app.module import function_to_test
+from httpx import AsyncClient
 
-@pytest.mark.unit
-def test_should_do_something_when_condition(mock_dependency):
-    """Test that function does expected behavior under condition.
-
-    This test verifies that...
-    """
-    # Arrange
-    test_input = "test"
-
-    # Act
-    result = function_to_test(test_input)
-
-    # Assert
-    assert result == expected_output
+@pytest.mark.e2e
+@pytest.mark.asyncio
+async def test_my_feature(api_client: AsyncClient, user_token: str):
+    headers = {"Authorization": f"Bearer {user_token}"}
+    response = await api_client.get("/api/endpoint", headers=headers)
+    assert response.status_code == 200
 ```
 
-### Integration Test Template
+### Available Fixtures
+- `api_client` - Async HTTP client for API testing
+- `admin_token` - Admin authentication token
+- `user_token` - Regular user authentication token
+- `auth_headers_admin` - Admin auth headers
+- `auth_headers_user` - User auth headers
+- `test_db_session` - Database session for testing
+- `sample_audio_file` - Path to sample audio file
+- `sample_medical_document` - Path to sample medical document
 
-```python
-import pytest
-from fastapi import status
+## CI/CD Integration
 
-@pytest.mark.integration
-@pytest.mark.api
-def test_endpoint_returns_expected_data(authenticated_client):
-    """Test that API endpoint returns expected data format.
+Tests run automatically on:
+- Pull requests
+- Pushes to main branch
+- Nightly builds
 
-    This test verifies that...
-    """
-    # Arrange
-    request_data = {"key": "value"}
+See `.github/workflows/ci.yml` for CI configuration.
 
-    # Act
-    response = authenticated_client.post("/api/endpoint", json=request_data)
+## Test Results
 
-    # Assert
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    assert data["success"] is True
-    assert "expected_field" in data["data"]
-```
-
-## Best Practices
-
-1. **Test Names**: Use descriptive names that explain what's being tested
-   - Format: `test_should_do_something_when_condition`
-   - Example: `test_login_fails_with_invalid_password`
-
-2. **Docstrings**: Every test should have a docstring explaining its purpose
-
-3. **AAA Pattern**: Organize tests with Arrange, Act, Assert structure
-
-4. **Fixtures**: Use fixtures for common setup and teardown
-
-5. **Mocking**: Mock external dependencies in unit tests
-
-6. **Assertions**: Include helpful error messages in assertions
-
-7. **Parametrize**: Use `@pytest.mark.parametrize` for multiple test cases
-
-8. **Markers**: Tag tests appropriately with markers
-
-9. **Independence**: Tests should be independent and not rely on execution order
-
-10. **Cleanup**: Use fixtures to ensure proper cleanup after tests
-
-## Continuous Integration
-
-Tests are designed to run in CI/CD pipelines:
-
-```yaml
-# Example GitHub Actions workflow
-- name: Run Tests
-  run: |
-    pytest tests/ --cov=server/app --cov-report=xml
-
-- name: Upload Coverage
-  uses: codecov/codecov-action@v3
-  with:
-    file: ./coverage.xml
-```
-
-## Coverage Goals
-
-- **Overall Coverage**: >80%
-- **Critical Paths**: >95% (auth, PHI handling)
-- **New Code**: 100% coverage required
+Test results are available in:
+- Console output (real-time)
+- HTML coverage reports (`htmlcov/` directory)
+- JUnit XML reports (`test-results.xml`)
+- CI/CD pipeline artifacts
 
 ## Troubleshooting
 
-### Import Errors
-If you get import errors, ensure the Python path includes the server directory:
-```bash
-export PYTHONPATH="${PYTHONPATH}:${PWD}/server"
-```
+### Common Issues
 
-### Database Errors
-Integration tests use in-memory SQLite by default. For PostgreSQL tests:
-```bash
-export TEST_DATABASE_URL="postgresql://test:test@localhost:5432/test_db"
-```
+1. **Database connection fails**
+   ```bash
+   # Ensure PostgreSQL is running
+   docker compose up -d postgres
+   
+   # Check connection
+   psql postgresql://voiceassist:password@localhost:5432/voiceassist_test
+   ```
 
-### Redis Errors
-Redis tests use mocks by default. For real Redis tests:
-```bash
-export TEST_REDIS_URL="redis://localhost:6379/15"
-```
+2. **API endpoints return 404**
+   - Some tests skip if endpoints aren't implemented yet
+   - This is expected during development
 
-### Slow Tests
-Skip slow tests during development:
-```bash
-pytest -m "not slow"
-```
+3. **Authentication failures**
+   - Ensure test users exist or registration is enabled
+   - Check TEST_ADMIN_EMAIL and TEST_USER_EMAIL environment variables
 
-## Contributing
+## Phase 13 Completion
 
-When adding new tests:
+This test suite was created as part of Phase 13: Final Testing & Documentation to provide comprehensive coverage of:
+- User registration and authentication workflows
+- Document upload and processing
+- RAG query workflows
+- Voice interaction capabilities
+- Service-to-service integration
+- Health checks and monitoring
+- Admin functionality
 
-1. Place unit tests in `tests/unit/`
-2. Place integration tests in `tests/integration/`
-3. Add appropriate markers
-4. Update this README if adding new test categories
-5. Ensure tests pass locally before committing
-6. Maintain >80% code coverage
-
-## Support
-
-For questions about the test suite:
-- Check existing tests for examples
-- Review pytest documentation: https://docs.pytest.org/
-- Check the conftest.py for available fixtures
