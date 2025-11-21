@@ -219,6 +219,22 @@ VoiceAssist/
 - [Development Workflow](docs/DEVELOPMENT_PHASES_V2.md)
 - [Current Phase Status](CURRENT_PHASE.md)
 
+### 🆕 Client Implementation Planning
+**NEW:** Comprehensive planning documents for the three client applications
+
+- **[Client Implementation Overview](docs/client-implementation/README.md)** - Start here
+- [Master Implementation Plan](docs/client-implementation/MASTER_IMPLEMENTATION_PLAN.md) - 20-week roadmap, 98 features
+- [Web App Feature Specs](docs/client-implementation/WEB_APP_FEATURE_SPECS.md) - Detailed specifications with code
+- [Technical Architecture](docs/client-implementation/TECHNICAL_ARCHITECTURE.md) - Monorepo, shared packages, patterns
+- [Integration Guide](docs/client-implementation/INTEGRATION_GUIDE.md) - Connect frontend to backend
+
+**Applications:**
+- **Web App** - Main user-facing medical AI assistant (voiceassist.asimo.io)
+- **Admin Panel** - System management and configuration (admin.asimo.io)
+- **Documentation Site** - User and developer docs (docs-voice.asimo.io)
+
+**Status:** 📋 Planning Phase - Awaiting Team Review & Feedback
+
 ### Architecture & Design
 - [System Architecture](docs/ARCHITECTURE_V2.md)
 - [Security & Compliance](docs/SECURITY_COMPLIANCE.md)
