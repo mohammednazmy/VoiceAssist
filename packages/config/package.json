@@ -1,0 +1,25 @@
+{
+  "name": "@voiceassist/config",
+  "version": "1.0.0",
+  "description": "Shared configuration files for VoiceAssist applications",
+  "main": "./index.js",
+  "files": [
+    "eslint.js",
+    "tailwind.js",
+    "tsconfig.base.json",
+    "tsconfig.react.json"
+  ],
+  "dependencies": {
+    "@voiceassist/design-tokens": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "typescript": "^5.3.3"
+  },
+  "keywords": [
+    "config",
+    "eslint",
+    "tailwind",
+    "typescript"
+  ]
+}

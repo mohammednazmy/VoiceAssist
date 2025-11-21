@@ -1,0 +1,9 @@
+# VoiceAssist Monorepo Workspace Configuration
+# Defines all packages in the monorepo for pnpm workspaces
+
+packages:
+  # Client applications
+  - 'apps/*'
+
+  # Shared packages
+  - 'packages/*'
