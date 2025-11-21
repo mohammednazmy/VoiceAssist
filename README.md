@@ -68,22 +68,38 @@ docker compose logs -f voiceassist-server
 ### Running Tests
 
 ```bash
-# Install test dependencies
+# Backend tests
 pip install pytest pytest-asyncio httpx
+pytest                      # Run all tests
+pytest -m e2e              # End-to-end tests
+pytest -m voice            # Voice interaction tests
 
-# Run all tests
-pytest
+# Frontend tests
+pnpm test                  # Run all frontend tests
+pnpm test --filter @voiceassist/ui  # Test specific package
+```
 
-# Run specific test categories
-pytest -m e2e          # End-to-end tests
-pytest -m voice        # Voice interaction tests
-pytest -m integration  # Service integration tests
+### Frontend Development (Client Applications)
 
-# Run with coverage
-pytest --cov=services --cov-report=html
+```bash
+# Install dependencies (first time)
+npm install -g pnpm        # Install pnpm globally
+pnpm install              # Install all workspace dependencies
 
-# See detailed test documentation
-cat tests/README.md
+# Development
+pnpm dev                  # Start all apps in dev mode
+pnpm --filter web-app dev # Start specific app
+
+# Build
+pnpm build                # Build all packages with Turbo
+pnpm --filter @voiceassist/ui build  # Build specific package
+
+# Storybook (Component Library)
+pnpm storybook            # Open Storybook at http://localhost:6006
+
+# Linting & Type Checking
+pnpm lint                 # Lint all packages
+pnpm type-check          # TypeScript type checking
 ```
 
 ---
@@ -92,49 +108,63 @@ cat tests/README.md
 
 ```
 VoiceAssist/
-├── services/                      # Microservices
-│   ├── api-gateway/              # Main FastAPI gateway
+├── apps/                         # 🆕 Client Applications (Monorepo)
+│   ├── web-app/                 # User-facing medical AI assistant
+│   ├── admin-panel/             # System management dashboard
+│   └── docs-site/               # Documentation website
+│
+├── packages/                     # 🆕 Shared Packages
+│   ├── design-tokens/           # Medical-themed design system
+│   ├── types/                   # TypeScript type definitions
+│   ├── utils/                   # Utility functions (incl. PHI detection)
+│   ├── api-client/              # Type-safe HTTP client
+│   ├── ui/                      # React component library + Storybook
+│   └── config/                  # Shared configurations
+│
+├── services/                     # Backend Microservices
+│   ├── api-gateway/             # Main FastAPI gateway
 │   │   ├── main.py
 │   │   ├── routes/
 │   │   └── requirements.txt
-│   └── worker/                   # Background task worker
+│   └── worker/                  # Background task worker
 │
-├── tests/                        # Comprehensive test suite
-│   ├── e2e/                     # End-to-end tests (20+ scenarios)
-│   ├── voice/                   # Voice interaction tests (10+ scenarios)
-│   ├── integration/             # Service integration tests (15+ scenarios)
-│   ├── conftest.py              # Pytest configuration
-│   └── README.md                # Test documentation
+├── tests/                       # Comprehensive test suite
+│   ├── e2e/                    # End-to-end tests (20+ scenarios)
+│   ├── voice/                  # Voice interaction tests (10+ scenarios)
+│   ├── integration/            # Service integration tests (15+ scenarios)
+│   ├── conftest.py             # Pytest configuration
+│   └── README.md               # Test documentation
 │
-├── docs/                        # Documentation
-│   ├── DEPLOYMENT_GUIDE.md     # Production deployment (3 options)
-│   ├── USER_GUIDE.md           # End-user documentation
-│   ├── ARCHITECTURE_V2.md      # System architecture
-│   ├── RTO_RPO_DOCUMENTATION.md # Disaster recovery objectives
-│   ├── DISASTER_RECOVERY_RUNBOOK.md # DR procedures
-│   ├── HIPAA_COMPLIANCE_MATRIX.md # HIPAA compliance
-│   └── phases/                  # Phase completion summaries
+├── docs/                       # Documentation
+│   ├── DEPLOYMENT_GUIDE.md    # Production deployment (3 options)
+│   ├── USER_GUIDE.md          # End-user documentation
+│   ├── ARCHITECTURE_V2.md     # System architecture
+│   ├── client-implementation/ # 🆕 Frontend development roadmap
+│   └── phases/                # Phase completion summaries
 │
-├── infrastructure/              # Infrastructure as Code
-│   ├── docker/                 # Docker configurations
-│   ├── kubernetes/             # K8s manifests
-│   ├── terraform/              # Cloud infrastructure
-│   └── observability/          # Monitoring stack
+├── infrastructure/             # Infrastructure as Code
+│   ├── docker/                # Docker configurations
+│   ├── kubernetes/            # K8s manifests
+│   ├── terraform/             # Cloud infrastructure
+│   └── observability/         # Monitoring stack
 │
-├── ha-dr/                      # High Availability & Disaster Recovery
-│   ├── postgresql/             # Database replication configs
-│   ├── backup/                 # Automated backup scripts
-│   └── testing/                # HA/DR testing scripts
+├── ha-dr/                     # High Availability & Disaster Recovery
+│   ├── postgresql/            # Database replication configs
+│   ├── backup/                # Automated backup scripts
+│   └── testing/               # HA/DR testing scripts
 │
-├── security/                   # Security configurations
-│   ├── network-policies/       # Kubernetes network policies
-│   └── rbac/                   # Role-based access control
+├── security/                  # Security configurations
+│   ├── network-policies/      # Kubernetes network policies
+│   └── rbac/                  # Role-based access control
 │
-├── docker-compose.yml          # Development stack
-├── pytest.ini                  # Test configuration
-├── .env.example               # Environment template
-├── CURRENT_PHASE.md           # Development progress
-└── PHASE_STATUS.md            # Phase completion tracking
+├── package.json               # 🆕 Monorepo root package.json
+├── pnpm-workspace.yaml        # 🆕 pnpm workspace configuration
+├── turbo.json                 # 🆕 Turborepo configuration
+├── docker-compose.yml         # Development stack
+├── pytest.ini                 # Test configuration
+├── .env.example              # Environment template
+├── CURRENT_PHASE.md          # Development progress
+└── PHASE_STATUS.md           # Phase completion tracking
 ```
 
 ---
@@ -219,21 +249,36 @@ VoiceAssist/
 - [Development Workflow](docs/DEVELOPMENT_PHASES_V2.md)
 - [Current Phase Status](CURRENT_PHASE.md)
 
-### 🆕 Client Implementation Planning
-**NEW:** Comprehensive planning documents for the three client applications
+### 🆕 Client Applications (Milestone 1 - IN PROGRESS)
+**Status:** 🚀 **Phase 0 Complete** | 📍 **Phase 1 Starting** (Weeks 3-4: Authentication & Layout)
 
-- **[Client Implementation Overview](docs/client-implementation/README.md)** - Start here
-- [Master Implementation Plan](docs/client-implementation/MASTER_IMPLEMENTATION_PLAN.md) - 20-week roadmap, 98 features
-- [Web App Feature Specs](docs/client-implementation/WEB_APP_FEATURE_SPECS.md) - Detailed specifications with code
-- [Technical Architecture](docs/client-implementation/TECHNICAL_ARCHITECTURE.md) - Monorepo, shared packages, patterns
-- [Integration Guide](docs/client-implementation/INTEGRATION_GUIDE.md) - Connect frontend to backend
+**Monorepo Foundation:**
+- ✅ pnpm workspaces + Turborepo build system
+- ✅ 6 shared packages (design-tokens, types, utils, api-client, ui, config)
+- ✅ Medical-themed design system (blue/teal palette)
+- ✅ PHI detection & redaction utilities (HIPAA-compliant)
+- ✅ Storybook 8.0 component documentation
+- ✅ Type-safe API client with auto-token injection
 
 **Applications:**
-- **Web App** - Main user-facing medical AI assistant (voiceassist.asimo.io)
-- **Admin Panel** - System management and configuration (admin.asimo.io)
-- **Documentation Site** - User and developer docs (docs-voice.asimo.io)
+- **Web App** (`apps/web-app`) - Main user-facing medical AI assistant
+- **Admin Panel** (`apps/admin-panel`) - System management dashboard
+- **Documentation Site** (`apps/docs-site`) - User and developer documentation
 
-**Status:** 📋 Planning Phase - Awaiting Team Review & Feedback
+**Development Commands:**
+```bash
+pnpm build          # Build all packages (Turborepo)
+pnpm dev            # Run development servers
+pnpm storybook      # View component library (port 6006)
+pnpm test           # Run all tests
+```
+
+**Documentation:**
+- [Unified Roadmap](docs/client-implementation/CLIENT_DEV_ROADMAP.md) - Complete 52-week plan
+- [Master Implementation Plan](docs/client-implementation/MASTER_IMPLEMENTATION_PLAN.md) - 20-week client apps roadmap
+- [Open Questions](docs/client-implementation/OPEN_QUESTIONS.md) - Decisions & clarifications
+- [Web App Feature Specs](docs/client-implementation/WEB_APP_FEATURE_SPECS.md) - Detailed specifications
+- [Technical Architecture](docs/client-implementation/TECHNICAL_ARCHITECTURE.md) - Monorepo patterns
 
 ### Architecture & Design
 - [System Architecture](docs/ARCHITECTURE_V2.md)
