@@ -1,0 +1,66 @@
+# PostgreSQL Streaming Replication Configuration (Phase 12)
+# This file configures PostgreSQL primary-replica setup for High Availability
+
+version: '3.8'
+
+services:
+  postgres-primary:
+    image: postgres:16
+    container_name: voiceassist-postgres-primary
+    environment:
+      POSTGRES_USER: voiceassist
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-voiceassist_password}
+      POSTGRES_DB: voiceassist
+      # Replication configuration
+      POSTGRES_INITDB_ARGS: "-c wal_level=replica -c max_wal_senders=3 -c max_replication_slots=3"
+    volumes:
+      - postgres-primary-data:/var/lib/postgresql/data
+      - ./postgresql/primary/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./postgresql/primary/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      - ./postgresql/primary/init-replication.sh:/docker-entrypoint-initdb.d/init-replication.sh
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    ports:
+      - "5432:5432"
+    networks:
+      - voiceassist-ha
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voiceassist"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-replica:
+    image: postgres:16
+    container_name: voiceassist-postgres-replica
+    environment:
+      POSTGRES_USER: voiceassist
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-voiceassist_password}
+      PGUSER: voiceassist
+      PGPASSWORD: ${POSTGRES_PASSWORD:-voiceassist_password}
+    volumes:
+      - postgres-replica-data:/var/lib/postgresql/data
+      - ./postgresql/replica/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./postgresql/replica/setup-replica.sh:/docker-entrypoint-initdb.d/setup-replica.sh
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    ports:
+      - "5433:5432"
+    networks:
+      - voiceassist-ha
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voiceassist"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-primary-data:
+    driver: local
+  postgres-replica-data:
+    driver: local
+
+networks:
+  voiceassist-ha:
+    driver: bridge
