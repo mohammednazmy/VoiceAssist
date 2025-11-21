@@ -1,15 +1,32 @@
 # VoiceAssist Client Applications - Master Implementation Plan
 
-**Version:** 1.0
+**Version:** 2.0 (Reconciled with Continuous Improvement Plan)
 **Date:** 2025-11-21
-**Status:** Draft - Awaiting Team Feedback
+**Status:** Superseded - See [CLIENT_DEV_ROADMAP.md](CLIENT_DEV_ROADMAP.md)
 **Project:** VoiceAssist Enterprise Medical AI Assistant
+
+---
+
+## ⚠️ Important Notice
+
+**This document has been reconciled with the [Continuous Improvement Plan](../CONTINUOUS_IMPROVEMENT_PLAN.md).**
+
+**For the comprehensive, unified roadmap that includes:**
+- Deferred backend features (voice pipeline, medical AI, integrations)
+- Client applications (this document's scope)
+- Platform enhancements (design system, i18n, PWA, telemetry)
+- External integrations (medical databases, EMR/FHIR)
+- 52-week timeline across 6 milestones
+
+**→ See [CLIENT_DEV_ROADMAP.md](CLIENT_DEV_ROADMAP.md)**
+
+This document remains as the **detailed specification for client applications only** (Weeks 1-20, Milestones 1-2).
 
 ---
 
 ## 🎯 Executive Summary
 
-This document outlines the comprehensive implementation plan for VoiceAssist's three client applications:
+This document outlines the implementation plan for VoiceAssist's three client applications:
 
 1. **Web App** (web-app/) - Primary user-facing medical AI assistant
 2. **Admin Panel** (admin-panel/) - System management and configuration
@@ -20,13 +37,23 @@ This document outlines the comprehensive implementation plan for VoiceAssist's t
 - ✅ Specifications: Complete for all three clients
 - ⏳ Implementation: Ready to begin (currently 0-5% complete)
 
+**Scope:** This plan covers **Milestones 1-2** (Weeks 1-20) of the [unified roadmap](CLIENT_DEV_ROADMAP.md).
+
 **Goal:** Build three world-class, production-ready client applications that set the standard for medical AI interfaces.
 
 ---
 
 ## 📊 Project Timeline
 
-### Overview (20 Weeks Total)
+### Positioning in Overall Roadmap
+
+This plan represents **Milestones 1-2** of the [CLIENT_DEV_ROADMAP.md](CLIENT_DEV_ROADMAP.md):
+- **Milestone 1:** Frontend Foundation (Weeks 1-10)
+- **Milestone 2:** Admin Panel & Voice Pipeline (Weeks 11-20)
+
+The complete roadmap includes 4 additional milestones (Weeks 21-52) covering deferred backend features, platform enhancements, and external integrations.
+
+### Client Applications Timeline (20 Weeks)
 
 ```
 Phase 0: Foundation & Setup           [Weeks 1-2]    ████████░░░░░░░░░░░░  10%
@@ -38,9 +65,14 @@ Phase 5: Documentation Site           [Weeks 17-18]  ░░░░░░░░░
 Phase 6: Integration & Polish         [Weeks 19-20]  ░░░░░░░░░░░░░░░░░░░░  10%
 ```
 
-**Total Timeline:** 20 weeks (5 months)
+**Client Apps Timeline:** 20 weeks (5 months)
 **Team Size:** 2-3 developers recommended
 **Deployment:** Rolling deployment per application
+
+**Note:** Week 19-20 also includes completion of deferred backend features:
+- OIDC authentication
+- Full voice pipeline (WebRTC, VAD, echo cancellation, barge-in)
+- Client-side PHI detection
 
 ---
 
