@@ -25,7 +25,7 @@ passlib[bcrypt]==1.7.4
 bcrypt==4.1.2
 
 # OpenAI (for future use)
-openai==1.10.0
+openai==2.8.1
 
 # Rate Limiting
 slowapi==0.1.9
