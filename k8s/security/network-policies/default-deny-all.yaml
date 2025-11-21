@@ -1,0 +1,22 @@
+---
+# Default Deny All Network Policy (Phase 11)
+# HIPAA Requirement: §164.312(e)(1) - Transmission Security
+#
+# This policy implements a default-deny approach where all ingress and egress
+# traffic is blocked unless explicitly allowed by other NetworkPolicies.
+# This is a security best practice and required for HIPAA compliance.
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: voiceassist
+  labels:
+    app.kubernetes.io/name: voiceassist
+    app.kubernetes.io/component: security
+    security.voiceassist.io/policy: default-deny
+spec:
+  podSelector: {}  # Applies to all pods in namespace
+  policyTypes:
+    - Ingress
+    - Egress

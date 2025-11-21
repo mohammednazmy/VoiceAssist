@@ -1,0 +1,49 @@
+---
+# Database (PostgreSQL) Network Policy (Phase 11)
+# Restricts database access to only API Gateway and Worker pods
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-policy
+  namespace: voiceassist
+  labels:
+    app.kubernetes.io/name: voiceassist
+    app.kubernetes.io/component: database
+    security.voiceassist.io/policy: postgres
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow only from API Gateway
+    - from:
+        - podSelector:
+            matchLabels:
+              app: voiceassist-api-gateway
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Allow from Worker pods
+    - from:
+        - podSelector:
+            matchLabels:
+              app: voiceassist-worker
+      ports:
+        - protocol: TCP
+          port: 5432
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53

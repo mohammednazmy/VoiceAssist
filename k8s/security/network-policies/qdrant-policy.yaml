@@ -1,0 +1,53 @@
+---
+# Qdrant Vector Store Network Policy (Phase 11)
+# Restricts Qdrant access to only API Gateway and Worker pods
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: qdrant-policy
+  namespace: voiceassist
+  labels:
+    app.kubernetes.io/name: voiceassist
+    app.kubernetes.io/component: vector-store
+    security.voiceassist.io/policy: qdrant
+spec:
+  podSelector:
+    matchLabels:
+      app: qdrant
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow from API Gateway
+    - from:
+        - podSelector:
+            matchLabels:
+              app: voiceassist-api-gateway
+      ports:
+        - protocol: TCP
+          port: 6333  # REST API
+        - protocol: TCP
+          port: 6334  # gRPC
+    # Allow from Worker pods
+    - from:
+        - podSelector:
+            matchLabels:
+              app: voiceassist-worker
+      ports:
+        - protocol: TCP
+          port: 6333
+        - protocol: TCP
+          port: 6334
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
