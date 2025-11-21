@@ -14,7 +14,7 @@ asyncpg==0.29.0
 
 # Redis (downgraded for fastapi-cache2 compatibility)
 redis==4.6.0
-arq==0.25.0  # async task queue for document processing
+arq==0.26.3  # async task queue for document processing
 
 # Qdrant
 qdrant-client==1.7.3
