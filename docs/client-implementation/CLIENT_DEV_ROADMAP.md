@@ -1,9 +1,28 @@
 # VoiceAssist Client Development & Enhancement Roadmap
 
-**Version:** 2.0 (Reconciled)
+**Version:** 2.1 (Final Decisions Made)
 **Date:** 2025-11-21
-**Status:** Active Roadmap (Post Phase 15)
+**Status:** ✅ Ready for Implementation - Milestone 1 Starting
 **Branch:** `client-roadmap-reconciliation`
+
+---
+
+## 🎉 Critical Decisions Finalized (2025-11-21)
+
+**All 8 critical questions resolved! Development can proceed immediately.**
+
+| Decision | Choice | Impact |
+|----------|--------|--------|
+| **Design System** | Create from scratch (Radix UI + Tailwind) | Week 1-2 |
+| **Storybook** | Include in monorepo setup | Week 1 |
+| **Deployment** | Ubuntu server (Docker Compose) initially | Week 1-2 |
+| **UpToDate** | No budget, use free sources (PubMed, OpenEvidence) | Milestone 5 |
+| **Offline PHI** | No PHI offline, non-PHI only with encryption | Milestone 6 |
+| **GPU Budget** | No budget, use OpenAI APIs | Milestone 3 |
+| **Image Datasets** | Pre-trained models (GPT-4 Vision) | Milestone 6 |
+| **AI Liability** | Decision support only, clear disclaimers | All phases |
+
+**See [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) for detailed rationale.**
 
 ---
 
@@ -18,8 +37,9 @@ This unified roadmap integrates:
 
 **Current Status:**
 - ✅ **Backend Core:** 100% Complete (Phases 0-15, HIPAA-compliant, production-ready)
+- ✅ **Critical Decisions:** All 8 resolved (2025-11-21)
 - ⏳ **Deferred Backend Features:** Identified and scheduled (Milestones 2-6)
-- ⏳ **Client Applications:** Ready to begin (Milestone 1-2, 20 weeks)
+- 🚀 **Client Applications:** Starting NOW (Milestone 1-2, 20 weeks)
 - ⏳ **Platform Enhancements:** Planned across all milestones
 
 **Total Timeline:** 52+ weeks (6 major milestones)
@@ -97,11 +117,12 @@ This unified roadmap integrates:
 - [ ] Confidence scoring
 
 **Category C: External Medical Integrations**
-- [ ] UpToDate API integration
-- [ ] OpenEvidence API integration
-- [ ] PubMed integration
-- [ ] Clinical trial databases
-- [ ] Drug information systems
+- [x] ~~UpToDate API integration~~ (no budget, deferred)
+- [ ] OpenEvidence API integration (free tier, Milestone 5)
+- [ ] PubMed integration (free, Milestone 5 - highest priority)
+- [ ] Clinical practice guidelines (free, CDC/WHO, Milestone 5)
+- [ ] Clinical trial databases (future consideration)
+- [ ] Drug information systems (future consideration)
 
 **Category D: Nextcloud Integration Completion**
 - [x] CalDAV service (MVP completed in Phase 6)

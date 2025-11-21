@@ -1,9 +1,28 @@
 # VoiceAssist Client Development - Open Questions & Decisions
 
-**Version:** 1.0
+**Version:** 2.0
 **Date:** 2025-11-21
-**Status:** Awaiting Decisions
+**Status:** ✅ Critical Decisions Made - Ready for Milestone 1
 **Branch:** `client-roadmap-reconciliation`
+
+---
+
+## 🎉 Critical Decisions Made (2025-11-21)
+
+**All 8 critical questions have been resolved! Development can proceed.**
+
+| Question | Decision | Impact |
+|----------|----------|--------|
+| Q1: Design System | ✅ Create from scratch (Radix UI + Tailwind) | Week 1-2 |
+| Q2: Storybook | ✅ Yes, include in monorepo setup | Week 1-2 |
+| Q6: Deployment | ✅ Ubuntu server (Docker Compose) initially | Week 1-2 |
+| Q10: UpToDate License | ✅ No budget, use free sources | Milestone 5 |
+| Q15: Offline PHI | ✅ No PHI offline, non-PHI only | Milestone 6 |
+| Q18: GPU Budget | ✅ No budget, use OpenAI APIs | Milestone 3 |
+| Q22: Image Datasets | ✅ Use pre-trained models (GPT-4 Vision) | Milestone 6 |
+| Q23: AI Liability | ✅ Decision support only, clear disclaimers | All phases |
+
+**See [Resolved Decisions](#resolved-decisions) section for details.**
 
 ---
 
@@ -12,7 +31,7 @@
 This document consolidates all open questions that require answers before proceeding with client development. Questions are organized by category and priority.
 
 **Total Questions:** 23
-- **Critical (answer before starting):** 8 questions
+- **Critical (resolved):** 8 questions ✅
 - **Medium Priority (answer by specific milestones):** 10 questions
 - **Low Priority (can decide later):** 5 questions
 
@@ -38,6 +57,296 @@ This document consolidates all open questions that require answers before procee
 3. [Low Priority Decisions](#low-priority-decisions-can-defer)
 4. [Decision Template](#decision-template)
 5. [Approval Process](#approval-process)
+
+---
+
+## Resolved Decisions
+
+### Critical Questions - Final Decisions (2025-11-21)
+
+All 8 critical questions have been answered and documented below. These decisions are final and development can proceed.
+
+---
+
+#### ✅ Q1: Design System Availability - RESOLVED
+**Decision Date:** 2025-11-21
+**Decision Maker:** Product Team
+**Final Decision:** **Create design system from scratch**
+
+**Rationale:**
+- No existing design system available
+- Create basic design system using Radix UI + Tailwind as foundation
+- Focus on medical professionalism and trust-building design
+
+**Implementation Details:**
+- **Design Tokens Package:** `@voiceassist/design-tokens`
+  - Colors: Medical blues, teals, grays (trust-building palette)
+  - Typography: System fonts (San Francisco, Segoe UI, Roboto)
+  - Spacing: 4px/8px grid system
+  - Border radius, shadows, z-index scales
+  - Animation timing and easing functions
+  - Breakpoints for responsive design
+
+- **Component Library:** `@voiceassist/ui`
+  - Base: Radix UI primitives + Tailwind CSS
+  - Documentation: Storybook
+  - Accessibility: WCAG 2.1 AA compliance from day 1
+
+**Timeline:** Week 1-2 (Phase 0)
+**Status:** Ready to implement
+
+---
+
+#### ✅ Q2: Storybook Setup - RESOLVED
+**Decision Date:** 2025-11-21
+**Decision Maker:** Product Team
+**Final Decision:** **Yes, include Storybook in monorepo setup**
+
+**Rationale:**
+- Component documentation from day 1
+- Visual testing during development
+- Accessibility testing integration (axe-core)
+- Better collaboration and design system showcase
+
+**Implementation Details:**
+- **Setup:** Storybook 8.0+ with Vite
+- **Addons:**
+  - Accessibility addon (axe-core)
+  - Docs addon for MDX documentation
+  - Controls addon for interactive props
+  - Viewport addon for responsive testing
+  - Interactions addon for testing
+
+- **Deployment:** Local development only initially
+- **Timeline:** Week 1 (during monorepo setup)
+
+**Status:** Ready to implement
+
+---
+
+#### ✅ Q6: Deployment Strategy - RESOLVED
+**Decision Date:** 2025-11-21
+**Decision Maker:** Product Team
+**Final Decision:** **Ubuntu server (Docker Compose) initially, evaluate Vercel/Netlify after Milestone 1**
+
+**Rationale:**
+- Leverage existing production-ready Ubuntu server infrastructure
+- Simple deployment via Docker Compose (same as backend)
+- No additional cost or complexity
+- Re-evaluate managed frontend hosting (Vercel/Netlify) after Milestone 1 for:
+  - Global CDN
+  - Automatic SSL
+  - Preview deployments
+
+**Implementation Details:**
+- **Backend:** Ubuntu server (asimo.io) - existing
+- **Frontend:** Ubuntu server (Docker Compose) for Milestone 1
+  - Deploy web-app, admin-panel, docs-site as Docker containers
+  - Nginx reverse proxy (existing)
+  - Let's Encrypt SSL (existing)
+
+- **Subdomains:**
+  - voiceassist.asimo.io → web-app
+  - admin.voiceassist.asimo.io → admin-panel
+  - docs.voiceassist.asimo.io → docs-site
+
+- **Future Evaluation (after Milestone 1):**
+  - Move frontend to Vercel/Netlify for better CDN
+  - Keep backend on Ubuntu server
+  - Benefits: Global CDN, auto-scaling, preview deployments
+
+**Timeline:** Week 1-2 (Docker Compose), Re-evaluate Week 10
+**Status:** Ready to implement
+
+---
+
+#### ✅ Q10: UpToDate Licensing Budget - RESOLVED
+**Decision Date:** 2025-11-21
+**Decision Maker:** Product Team
+**Final Decision:** **No budget allocated, use free sources**
+
+**Rationale:**
+- UpToDate license ($500-1000/month) not in current budget
+- Excellent free alternatives available:
+  - PubMed (35M+ citations, free)
+  - OpenEvidence (evidence synthesis, free tier)
+  - Clinical practice guidelines (CDC, WHO, free)
+
+- Re-evaluate in later milestones if user demand justifies cost
+
+**Implementation Details:**
+- **Primary Sources (Milestone 5):**
+  1. **PubMed** - Week 40-42 (highest priority)
+  2. **OpenEvidence** - Week 37-38 (high priority)
+  3. **Clinical Guidelines** - Week 39 (CDC, WHO, specialty societies)
+
+- **Alternative (if budget later):**
+  - DynaMed ($400-800/month) as UpToDate alternative
+
+**Timeline:** Milestone 5 (Weeks 37-44)
+**Status:** Documented, proceed with free sources
+
+---
+
+#### ✅ Q15: Offline Mode PHI Regulations - RESOLVED
+**Decision Date:** 2025-11-21
+**Decision Maker:** Product Team (with compliance consideration)
+**Final Decision:** **No PHI in offline storage, non-PHI only with encryption**
+
+**Rationale:**
+- HIPAA compliance: Safest approach is no offline PHI
+- Minimize risk of PHI exposure on lost/stolen devices
+- Offline functionality limited to non-PHI features
+
+**Implementation Details:**
+- **Allowed Offline (non-PHI):**
+  - Medical knowledge base articles
+  - De-identified conversation history (remove names, dates, identifiers)
+  - User preferences and settings (theme, language)
+  - UI assets (JavaScript, CSS, images)
+
+- **Prohibited Offline (PHI):**
+  - Patient demographics
+  - Clinical context (problems, medications, labs)
+  - Identifiable data
+  - Actual patient information
+
+- **Security Measures:**
+  - AES-256 encryption for all offline data
+  - Auto-expiration after 7 days
+  - Re-authentication required to access cached data
+  - Secure deletion on logout
+
+- **User Consent:**
+  - Prompt on first offline mode use
+  - Clear explanation of what's cached
+  - Option to disable offline mode
+
+**Timeline:** Milestone 6 (Weeks 45-52)
+**Status:** Policy documented, ready to implement
+
+---
+
+#### ✅ Q18: GPU Infrastructure Budget - RESOLVED
+**Decision Date:** 2025-11-21
+**Decision Maker:** Product Team
+**Final Decision:** **No budget for GPU infrastructure, use hosted OpenAI APIs**
+
+**Rationale:**
+- GPU infrastructure ($500-1500/month) not in current budget
+- OpenAI APIs provide good medical performance
+- Hosted services (OpenAI) sufficient for MVP
+- Re-assess GPU needs after core system is live and user feedback collected
+
+**Implementation Details:**
+- **Current Approach (Milestone 3 and beyond):**
+  - Continue with OpenAI text-embedding-3-small for embeddings
+  - Use OpenAI GPT-4 for generation
+  - Monitor costs and accuracy
+
+- **Future Re-evaluation (Month 9+):**
+  - If OpenAI costs exceed $500/month: Consider GPU
+  - If medical accuracy < 85%: Consider BioGPT/PubMedBERT
+  - If data sovereignty becomes important: Consider self-hosted models
+
+- **Alternative Hosted Options:**
+  - Hugging Face Inference API ($200-600/month, managed)
+  - AWS SageMaker Serverless (pay per use)
+
+**Timeline:** Milestone 3 (Weeks 21-28), Re-evaluate Month 9
+**Status:** Documented, proceed with OpenAI APIs
+
+---
+
+#### ✅ Q22: Medical Image Datasets - RESOLVED
+**Decision Date:** 2025-11-21
+**Decision Maker:** Product Team
+**Final Decision:** **Use pre-trained models (GPT-4 Vision), evaluate public datasets later**
+
+**Rationale:**
+- Pre-trained GPT-4 Vision provides good accuracy (80-90%) out-of-the-box
+- No need for custom training or labeled datasets initially
+- Public datasets available if needed later (HAM10000, ChestX-ray14)
+
+**Implementation Details:**
+- **Initial Approach (Milestone 6):**
+  - GPT-4 Vision for medical image analysis
+  - Support use cases:
+    1. Dermatology (skin lesions)
+    2. Wound assessment
+    3. General medical images
+
+- **Accuracy Validation:**
+  - Benchmark on test dataset
+  - Medical professional review
+  - User feedback collection
+
+- **Future Options (if accuracy < 85%):**
+  - **Free Datasets:**
+    - HAM10000 (dermatology, 10k images, free)
+    - ChestX-ray14 (radiology, 100k images, free)
+    - RSNA datasets (various competitions, free with attribution)
+
+  - **Fine-tuning:** If dataset acquired and accuracy improvement > 10%
+
+**Timeline:** Milestone 6 (Weeks 45-52)
+**Status:** Documented, proceed with GPT-4 Vision
+
+---
+
+#### ✅ Q23: AI Diagnosis Liability - RESOLVED
+**Decision Date:** 2025-11-21
+**Decision Maker:** Product Team
+**Final Decision:** **Decision support tool only, clear disclaimers, no diagnostic claims**
+
+**Rationale:**
+- Avoid FDA medical device classification
+- Lower liability risk
+- Faster to market (no FDA approval required)
+- Clear positioning as educational/decision support tool
+
+**Implementation Details:**
+- **Positioning:**
+  - "Clinical decision support tool"
+  - "For educational and reference purposes"
+  - "Not a substitute for professional medical judgment"
+  - "Not for diagnostic use"
+
+- **Required Disclaimers:**
+  1. **On First Use:**
+     ```
+     VoiceAssist is a clinical decision support tool, not a diagnostic device.
+     All AI-generated information should be verified with primary sources and
+     should not replace professional medical judgment. By using this tool,
+     you acknowledge that VoiceAssist is for educational and reference
+     purposes only.
+     ```
+     - User must accept terms before using
+
+  2. **Footer on Every Page:**
+     - "Decision support tool. Not for diagnostic use."
+
+  3. **On AI Responses (especially image analysis):**
+     - "Possible findings: [description]. Recommend [action]. Verify with primary sources."
+     - Always cite sources
+     - Encourage verification
+
+- **Prohibited Language:**
+  - ❌ "Diagnosis: [condition]"
+  - ❌ "VoiceAssist diagnoses..."
+  - ❌ "Diagnostic accuracy of 95%"
+  - ✅ "Possible findings suggest..."
+  - ✅ "Consider differential diagnosis including..."
+  - ✅ "Recommend consulting [specialist]..."
+
+- **Legal Requirements:**
+  - Terms of Service updated with disclaimers
+  - User acceptance flow on first use
+  - Professional liability insurance review
+  - Medical advisory board review of all AI features
+
+**Timeline:** All phases (implement disclaimers in Week 3)
+**Status:** Policy documented, ready to implement
 
 ---
 
@@ -1283,29 +1592,31 @@ For each decision, use this template:
 
 | Question | Status | Decision | Decided By | Date |
 |----------|--------|----------|-----------|------|
-| Q1: Design System | ⏳ Pending | - | - | - |
-| Q2: Storybook | ⏳ Pending | - | - | - |
+| Q1: Design System | ✅ Resolved | Create from scratch (Radix + Tailwind) | Product Team | 2025-11-21 |
+| Q2: Storybook | ✅ Resolved | Yes, include in monorepo | Product Team | 2025-11-21 |
 | Q3: Component Library | ⏳ Pending | - | - | - |
 | Q4: Dark Mode | ⏳ Pending | - | - | - |
 | Q5: Mobile Apps | ⏳ Pending | - | - | - |
-| Q6: Deployment | ⏳ Pending | - | - | - |
+| Q6: Deployment | ✅ Resolved | Ubuntu (Docker Compose) initially | Product Team | 2025-11-21 |
 | Q7: Staging Env | ⏳ Pending | - | - | - |
 | Q8: CI/CD Platform | ⏳ Pending | - | - | - |
 | Q9: Telemetry | ⏳ Pending | - | - | - |
-| Q10: UpToDate | ⏳ Pending | - | - | - |
+| Q10: UpToDate | ✅ Resolved | No budget, use free sources | Product Team | 2025-11-21 |
 | Q11: API Priorities | ⏳ Pending | - | - | - |
 | Q12: EMR Targets | ⏳ Pending | - | - | - |
 | Q13: Hospital Partnership | ⏳ Pending | - | - | - |
 | Q14: FHIR Cert | ⏳ Pending | - | - | - |
-| Q15: Offline PHI | ⏳ Pending | - | - | - |
+| Q15: Offline PHI | ✅ Resolved | No PHI offline, non-PHI only | Product Team | 2025-11-21 |
 | Q16: GDPR | ⏳ Pending | - | - | - |
 | Q17: Data Residency | ⏳ Pending | - | - | - |
-| Q18: GPU Budget | ⏳ Pending | - | - | - |
+| Q18: GPU Budget | ✅ Resolved | No budget, use OpenAI APIs | Product Team | 2025-11-21 |
 | Q19: Model Training | ⏳ Pending | - | - | - |
 | Q20: Model Evaluation | ⏳ Pending | - | - | - |
 | Q21: Multi-Modal Priority | ⏳ Pending | - | - | - |
-| Q22: Image Datasets | ⏳ Pending | - | - | - |
-| Q23: AI Liability | ⏳ Pending | - | - | - |
+| Q22: Image Datasets | ✅ Resolved | Pre-trained models (GPT-4 Vision) | Product Team | 2025-11-21 |
+| Q23: AI Liability | ✅ Resolved | Decision support only, disclaimers | Product Team | 2025-11-21 |
+
+**Summary:** 8/23 questions resolved (all critical questions). Ready for Milestone 1.
 
 ---
 
