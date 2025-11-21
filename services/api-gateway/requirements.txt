@@ -53,7 +53,7 @@ pypdf==4.0.0
 
 # Calendar and Email Integration (Phase 6)
 caldav==2.1.2
-vobject==0.9.7
+vobject==0.9.9
 imapclient==3.0.1
 webdavclient3==3.14.6
 
