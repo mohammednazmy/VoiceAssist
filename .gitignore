@@ -88,3 +88,7 @@ secrets/
 __MACOSX/
 #Backups/
 *.zip
+
+# Jaeger observability data
+infrastructure/observability/jaeger/data/
+infrastructure/observability/jaeger/key/
