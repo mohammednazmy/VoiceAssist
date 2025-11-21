@@ -1,0 +1,39 @@
+# VoiceAssist V2 - Bandit Security Configuration
+# Phase 9: Infrastructure as Code
+#
+# Bandit is a security linter for Python code
+
+[bandit]
+# Exclude directories
+exclude_dirs = [
+    '/tests/',
+    '/venv/',
+    '/.venv/',
+    '/migrations/',
+    '/.git/',
+    '/node_modules/',
+]
+
+# Test IDs to skip (with justification)
+skips = [
+    # B101: Test for use of assert - used in tests only
+    # B110: Try/except pass - acceptable in some contexts
+]
+
+# Severity level (LOW, MEDIUM, HIGH)
+level = MEDIUM
+
+# Confidence level (LOW, MEDIUM, HIGH)
+confidence = MEDIUM
+
+# Output format (screen, txt, html, json, csv, xml, yaml)
+format = json
+
+# Aggregate output by filename
+aggregate = file
+
+# Show only issues with a given severity level or higher
+severity = MEDIUM
+
+# Report only issues with a given confidence level or higher
+confidence = MEDIUM

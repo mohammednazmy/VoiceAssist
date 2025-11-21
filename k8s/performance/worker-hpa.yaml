@@ -1,0 +1,122 @@
+---
+# HorizontalPodAutoscaler for Background Worker
+# Scales the voiceassist-worker deployment based on CPU, Memory, and queue depth
+# Optimized for batch processing workloads
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: voiceassist-worker-hpa
+  namespace: voiceassist
+  labels:
+    app: voiceassist-worker
+    component: worker
+    tier: backend
+    version: v1
+  annotations:
+    description: "Autoscaler for VoiceAssist Background Worker"
+    autoscaling.alpha.kubernetes.io/conditions: "Queue-depth and resource-based scaling"
+spec:
+  # Target deployment to scale
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: voiceassist-worker
+
+  # Replica boundaries
+  # Min replicas: 1 is acceptable as workers can be temporarily unavailable
+  # Max replicas: 5 limits concurrent job processing
+  minReplicas: 1
+  maxReplicas: 5
+
+  # Metrics to drive autoscaling decisions
+  metrics:
+    # CPU utilization target: 80%
+    # Higher target for workers as they're compute-intensive
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+    # Memory utilization target: 85%
+    # Workers typically have predictable memory usage patterns
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 85
+
+    # Custom metric: Queue depth (jobs waiting to be processed)
+    # Target: 50 jobs per pod ensures reasonable processing time
+    # Requires custom metrics from Redis/Queue system
+    - type: Pods
+      pods:
+        metric:
+          name: celery_queue_depth
+        target:
+          type: AverageValue
+          averageValue: "50"
+
+    # Alternative: Queue age metric
+    # Scale if jobs are waiting too long (over 60 seconds)
+    - type: Pods
+      pods:
+        metric:
+          name: celery_queue_age_seconds
+        target:
+          type: AverageValue
+          averageValue: "60"
+
+  # Advanced scaling behavior configuration
+  behavior:
+    # Scale-up behavior: Moderate to handle queue backlogs
+    scaleUp:
+      # Wait 30 seconds to see if load is sustained
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Percent
+          value: 50  # Increase by 50% of current pods
+          periodSeconds: 60
+        - type: Pods
+          value: 1  # Add at least 1 pod
+          periodSeconds: 60
+      # Use the policy that scales faster
+      selectPolicy: Max
+
+    # Scale-down behavior: Very conservative
+    scaleDown:
+      # Wait 10 minutes before scaling down
+      # Workers may be processing long-running jobs
+      stabilizationWindowSeconds: 600
+      policies:
+        - type: Percent
+          value: 10  # Remove 10% of current pods
+          periodSeconds: 600  # Every 10 minutes
+        - type: Pods
+          value: 1  # Remove maximum 1 pod at once
+          periodSeconds: 600
+      # Use the policy that scales slower
+      selectPolicy: Min
+
+---
+# ServiceMonitor for worker metrics (optional, requires Prometheus Operator)
+# Enables collection of celery queue metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: voiceassist-worker-metrics
+  namespace: voiceassist
+  labels:
+    app: voiceassist-worker
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: voiceassist-worker
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics

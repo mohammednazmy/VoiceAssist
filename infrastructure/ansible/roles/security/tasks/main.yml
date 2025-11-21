@@ -1,0 +1,175 @@
+---
+# VoiceAssist V2 - Security Role Tasks
+# Phase 9: Infrastructure as Code
+#
+# HIPAA-compliant security hardening
+
+- name: Configure UFW firewall
+  block:
+    - name: Reset UFW
+      community.general.ufw:
+        state: reset
+      tags: [firewall]
+
+    - name: Set UFW default policies
+      community.general.ufw:
+        direction: "{{ item.direction }}"
+        policy: "{{ item.policy }}"
+      loop:
+        - { direction: 'incoming', policy: 'deny' }
+        - { direction: 'outgoing', policy: 'allow' }
+      tags: [firewall]
+
+    - name: Allow SSH
+      community.general.ufw:
+        rule: allow
+        port: '22'
+        proto: tcp
+        comment: 'SSH access'
+      tags: [firewall]
+
+    - name: Allow Kubernetes API (if K8s node)
+      community.general.ufw:
+        rule: allow
+        port: '6443'
+        proto: tcp
+        comment: 'Kubernetes API'
+      when: "'k8s_masters' in group_names"
+      tags: [firewall, kubernetes]
+
+    - name: Enable UFW
+      community.general.ufw:
+        state: enabled
+      tags: [firewall]
+
+- name: Configure fail2ban
+  block:
+    - name: Copy fail2ban configuration
+      ansible.builtin.copy:
+        dest: /etc/fail2ban/jail.local
+        content: |
+          [DEFAULT]
+          bantime = 3600
+          findtime = 600
+          maxretry = 5
+          destemail = security@voiceassist.com
+          sendername = Fail2Ban
+          action = %(action_mwl)s
+
+          [sshd]
+          enabled = true
+          port = ssh
+          logpath = /var/log/auth.log
+          maxretry = 3
+        mode: '0644'
+      tags: [fail2ban]
+
+    - name: Restart fail2ban
+      ansible.builtin.service:
+        name: fail2ban
+        state: restarted
+        enabled: yes
+      tags: [fail2ban]
+
+- name: Configure SSH hardening
+  block:
+    - name: Update SSH configuration
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      loop:
+        - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
+        - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
+        - { regexp: '^#?PubkeyAuthentication', line: 'PubkeyAuthentication yes' }
+        - { regexp: '^#?X11Forwarding', line: 'X11Forwarding no' }
+        - { regexp: '^#?MaxAuthTries', line: 'MaxAuthTries 3' }
+        - { regexp: '^#?ClientAliveInterval', line: 'ClientAliveInterval 300' }
+        - { regexp: '^#?ClientAliveCountMax', line: 'ClientAliveCountMax 2' }
+        - { regexp: '^#?Protocol', line: 'Protocol 2' }
+      notify: restart sshd
+      tags: [ssh]
+
+- name: Configure audit rules (HIPAA requirement)
+  ansible.builtin.copy:
+    dest: /etc/audit/rules.d/voiceassist.rules
+    content: |
+      # VoiceAssist HIPAA Audit Rules
+
+      # Monitor user activities
+      -w /etc/passwd -p wa -k identity
+      -w /etc/group -p wa -k identity
+      -w /etc/shadow -p wa -k identity
+      -w /etc/gshadow -p wa -k identity
+
+      # Monitor system changes
+      -w /etc/sudoers -p wa -k sudoers_changes
+      -w /etc/sudoers.d/ -p wa -k sudoers_changes
+
+      # Monitor authentication
+      -w /var/log/auth.log -p wa -k auth_log
+      -w /var/log/faillog -p wa -k login
+      -w /var/log/lastlog -p wa -k login
+
+      # Monitor network changes
+      -w /etc/hosts -p wa -k network_changes
+      -w /etc/network/ -p wa -k network_changes
+
+      # Monitor file access (PHI protection)
+      -w /opt/voiceassist/data -p wa -k phi_access
+      -w /var/log/voiceassist -p r -k phi_access
+
+      # Monitor privileged commands
+      -a always,exit -F arch=b64 -S execve -F euid=0 -k root_commands
+
+      # Make configuration immutable
+      -e 2
+    mode: '0640'
+  when: hipaa_compliant | default(false)
+  notify: restart auditd
+  tags: [audit, hipaa]
+
+- name: Install and configure AIDE (file integrity monitoring)
+  block:
+    - name: Initialize AIDE database
+      ansible.builtin.command: aideinit
+      args:
+        creates: /var/lib/aide/aide.db.new
+      tags: [aide]
+
+    - name: Copy AIDE database
+      ansible.builtin.copy:
+        src: /var/lib/aide/aide.db.new
+        dest: /var/lib/aide/aide.db
+        remote_src: yes
+      tags: [aide]
+
+    - name: Schedule daily AIDE check
+      ansible.builtin.cron:
+        name: "AIDE file integrity check"
+        minute: "0"
+        hour: "2"
+        job: "/usr/bin/aide --check | mail -s 'AIDE Report' security@voiceassist.com"
+      tags: [aide]
+  when: hipaa_compliant | default(false)
+
+- name: Configure automatic security updates
+  ansible.builtin.apt:
+    name: unattended-upgrades
+    state: present
+  tags: [updates]
+
+- name: Enable automatic security updates
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    content: |
+      Unattended-Upgrade::Allowed-Origins {
+          "${distro_id}:${distro_codename}-security";
+      };
+      Unattended-Upgrade::AutoFixInterruptedDpkg "true";
+      Unattended-Upgrade::MinimalSteps "true";
+      Unattended-Upgrade::InstallOnShutdown "false";
+      Unattended-Upgrade::Automatic-Reboot "false";
+    mode: '0644'
+  tags: [updates]

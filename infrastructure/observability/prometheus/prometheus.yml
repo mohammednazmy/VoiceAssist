@@ -1,0 +1,69 @@
+# Prometheus Configuration for VoiceAssist (Phase 7 Integration Improvements - P2.1)
+
+global:
+  scrape_interval: 15s  # Scrape targets every 15 seconds
+  evaluation_interval: 15s  # Evaluate rules every 15 seconds
+  external_labels:
+    cluster: 'voiceassist'
+    environment: 'development'
+
+# Alertmanager configuration (optional - add later)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#             - alertmanager:9093
+
+# Load rules once and periodically evaluate them (Phase 7 - P2.3: SLOs)
+rule_files:
+  - "rules/slo_recording_rules.yml"
+  - "rules/slo_alerts.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Self-monitoring: Prometheus
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # VoiceAssist API Gateway
+  - job_name: 'voiceassist'
+    scrape_interval: 10s  # More frequent scraping for API metrics
+    static_configs:
+      - targets: ['voiceassist-server:8000']
+        labels:
+          service: 'api-gateway'
+          component: 'backend'
+    metrics_path: '/metrics'
+    scheme: 'http'
+
+  # PostgreSQL Exporter (if added)
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']
+  #       labels:
+  #         service: 'postgres'
+
+  # Redis Exporter (if added)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis-exporter:9121']
+  #       labels:
+  #         service: 'redis'
+
+  # Qdrant metrics (if exposed)
+  # - job_name: 'qdrant'
+  #   static_configs:
+  #     - targets: ['qdrant:6333']
+  #       labels:
+  #         service: 'qdrant'
+  #   metrics_path: '/metrics'
+
+  # Node Exporter (for host metrics - optional)
+  # - job_name: 'node'
+  #   static_configs:
+  #     - targets: ['node-exporter:9100']
+  #       labels:
+  #         service: 'node-exporter'

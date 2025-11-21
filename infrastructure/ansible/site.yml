@@ -1,0 +1,61 @@
+---
+# VoiceAssist V2 - Main Ansible Playbook
+# Phase 9: Infrastructure as Code
+#
+# Complete server provisioning for Ubuntu 22.04 LTS
+# HIPAA-compliant configuration with security hardening
+
+- name: Configure VoiceAssist Infrastructure
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+  pre_tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      tags: always
+
+    - name: Display server information
+      ansible.builtin.debug:
+        msg: |
+          Configuring: {{ inventory_hostname }}
+          Environment: {{ environment }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Architecture: {{ ansible_architecture }}
+      tags: always
+
+  roles:
+    - role: common
+      tags: [common, base]
+
+    - role: security
+      tags: [security, hardening]
+
+    - role: docker
+      tags: [docker, container]
+      when: "'docker_hosts' in group_names"
+
+    - role: kubernetes
+      tags: [kubernetes, k8s]
+      when: "'k8s_nodes' in group_names"
+
+    - role: monitoring
+      tags: [monitoring, observability]
+
+  post_tasks:
+    - name: Verify system state
+      ansible.builtin.command: systemctl is-system-running
+      register: system_state
+      changed_when: false
+      failed_when: false
+      tags: always
+
+    - name: Display configuration summary
+      ansible.builtin.debug:
+        msg: |
+          Configuration complete for {{ inventory_hostname }}
+          System state: {{ system_state.stdout }}
+          Uptime: {{ ansible_uptime_seconds // 3600 }} hours
+      tags: always

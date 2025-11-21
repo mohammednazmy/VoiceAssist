@@ -1,0 +1,160 @@
+---
+# PodDisruptionBudget for API Gateway
+# Ensures high availability during voluntary disruptions
+# (node drains, upgrades, maintenance)
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: voiceassist-server-pdb
+  namespace: voiceassist
+  labels:
+    app: voiceassist-server
+    component: api-gateway
+  annotations:
+    description: "Ensures at least 1 API Gateway pod is always available"
+spec:
+  # Minimum pods that must remain available during disruption
+  # With minReplicas=2, this allows 1 pod to be disrupted at a time
+  minAvailable: 1
+
+  # Alternative: maxUnavailable: 1
+  # Specifies maximum pods that can be unavailable
+  # Use either minAvailable OR maxUnavailable, not both
+
+  selector:
+    matchLabels:
+      app: voiceassist-server
+
+  # Unhealthy pod eviction policy
+  # Options: IfHealthyBudget, AlwaysAllow
+  unhealthyPodEvictionPolicy: IfHealthyBudget
+
+---
+# PodDisruptionBudget for Worker
+# Allows full disruption as jobs can be retried
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: voiceassist-worker-pdb
+  namespace: voiceassist
+  labels:
+    app: voiceassist-worker
+    component: worker
+  annotations:
+    description: "Allows worker disruption as jobs are retriable"
+spec:
+  # Allow all workers to be disrupted if needed
+  # Workers process background jobs that can be retried
+  minAvailable: 0
+
+  # Alternative: Don't create PDB for workers
+  # This configuration allows maximum flexibility for node operations
+
+  selector:
+    matchLabels:
+      app: voiceassist-worker
+
+  unhealthyPodEvictionPolicy: AlwaysAllow
+
+---
+# PodDisruptionBudget for PostgreSQL
+# Critical: Database must remain available
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: voiceassist-postgres-pdb
+  namespace: voiceassist
+  labels:
+    app: voiceassist-postgres
+    component: database
+  annotations:
+    description: "Prevents PostgreSQL disruption - critical data service"
+spec:
+  # Database must always be available
+  # For single-replica: minAvailable=1 prevents any disruption
+  # For HA setup (replicas>1): adjust accordingly
+  minAvailable: 1
+
+  selector:
+    matchLabels:
+      app: voiceassist-postgres
+
+  unhealthyPodEvictionPolicy: IfHealthyBudget
+
+---
+# PodDisruptionBudget for Redis
+# Cache can tolerate brief disruptions
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: voiceassist-redis-pdb
+  namespace: voiceassist
+  labels:
+    app: voiceassist-redis
+    component: cache
+  annotations:
+    description: "Protects Redis availability during node maintenance"
+spec:
+  # Allow disruption if multiple replicas exist
+  # For single replica: minAvailable=1
+  # For Redis cluster: minAvailable=2 (quorum)
+  minAvailable: 1
+
+  selector:
+    matchLabels:
+      app: voiceassist-redis
+
+  unhealthyPodEvictionPolicy: AlwaysAllow
+
+---
+# Notes on PodDisruptionBudgets:
+#
+# 1. What PDBs protect against:
+#    - kubectl drain (node maintenance)
+#    - Node upgrades
+#    - Cluster autoscaler scale-down
+#    - Manual evictions
+#
+# 2. What PDBs DON'T protect against:
+#    - Node failures (involuntary disruptions)
+#    - Pod crashes or OOMKills
+#    - Replica reduction (kubectl scale)
+#    - Pod deletion with --force
+#
+# 3. Best practices:
+#    - Always set PDB for stateful services (databases)
+#    - Set PDB for frontend services with minReplicas > 1
+#    - Consider not setting PDB for workers/batch jobs
+#    - Test PDB behavior with 'kubectl drain --dry-run'
+#
+# 4. minAvailable vs maxUnavailable:
+#    - minAvailable: Absolute number (e.g., 2) or percentage (e.g., 50%)
+#    - maxUnavailable: Maximum that can be down simultaneously
+#    - Use minAvailable for critical services
+#    - Use maxUnavailable for flexible scaling
+#
+# 5. Common patterns:
+#    - Frontend (replicas=3): minAvailable=2 or maxUnavailable=1
+#    - Workers (replicas=5): maxUnavailable=2 or minAvailable=0
+#    - Database (replicas=1): minAvailable=1 (no disruptions)
+#    - Stateless cache (replicas=2): maxUnavailable=1
+#
+# 6. Troubleshooting:
+#    - Check PDB status: kubectl get pdb -n voiceassist
+#    - View details: kubectl describe pdb <name> -n voiceassist
+#    - If drain hangs, check: .status.disruptionsAllowed
+#    - Temporarily disable: kubectl delete pdb <name>
+#
+# 7. Testing PDBs:
+#    # Dry run node drain
+#    kubectl drain <node> --dry-run=client --ignore-daemonsets
+#
+#    # Check what would be evicted
+#    kubectl get pods --field-selector spec.nodeName=<node> -n voiceassist
+#
+#    # View PDB status
+#    kubectl get pdb -n voiceassist -o wide

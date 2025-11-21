@@ -1,0 +1,92 @@
+---
+# VoiceAssist V2 - Kubernetes Role Tasks
+# Phase 9: Infrastructure as Code
+#
+# Install and configure Kubernetes components
+
+- name: Add Kubernetes GPG key
+  ansible.builtin.apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+  tags: [kubernetes]
+
+- name: Add Kubernetes repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
+    state: present
+  tags: [kubernetes]
+
+- name: Install Kubernetes components
+  ansible.builtin.apt:
+    name:
+      - kubelet={{ k8s_version }}.*
+      - kubeadm={{ k8s_version }}.*
+      - kubectl={{ k8s_version }}.*
+    state: present
+    update_cache: yes
+  tags: [kubernetes]
+
+- name: Hold Kubernetes packages
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+  tags: [kubernetes]
+
+- name: Configure kubelet
+  ansible.builtin.copy:
+    dest: /etc/default/kubelet
+    content: |
+      KUBELET_EXTRA_ARGS="--cloud-provider=aws --node-ip={{ ansible_default_ipv4.address }}"
+    mode: '0644'
+  notify: restart kubelet
+  tags: [kubernetes]
+
+- name: Load br_netfilter module
+  community.general.modprobe:
+    name: br_netfilter
+    state: present
+  tags: [kubernetes]
+
+- name: Configure bridge netfilter
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/k8s.conf
+    content: |
+      br_netfilter
+      overlay
+    mode: '0644'
+  tags: [kubernetes]
+
+- name: Configure Kubernetes sysctl
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  loop:
+    - { name: 'net.bridge.bridge-nf-call-iptables', value: '1' }
+    - { name: 'net.bridge.bridge-nf-call-ip6tables', value: '1' }
+    - { name: 'net.ipv4.ip_forward', value: '1' }
+  tags: [kubernetes]
+
+- name: Install AWS CLI (for EKS)
+  ansible.builtin.pip:
+    name: awscli
+    state: present
+  tags: [kubernetes, aws]
+
+- name: Install kubectl bash completion
+  ansible.builtin.shell: kubectl completion bash > /etc/bash_completion.d/kubectl
+  args:
+    creates: /etc/bash_completion.d/kubectl
+  tags: [kubernetes]
+
+- name: Start and enable kubelet
+  ansible.builtin.service:
+    name: kubelet
+    state: started
+    enabled: yes
+  tags: [kubernetes]

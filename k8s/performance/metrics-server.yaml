@@ -1,0 +1,298 @@
+---
+# Metrics Server Deployment
+# Required for HPA to function - provides resource metrics API
+# This is a production-ready configuration for metrics-server v0.7.0+
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: metrics-server
+  namespace: kube-system
+  labels:
+    k8s-app: metrics-server
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system:aggregated-metrics-reader
+  labels:
+    k8s-app: metrics-server
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+rules:
+  - apiGroups:
+      - metrics.k8s.io
+    resources:
+      - pods
+      - nodes
+    verbs:
+      - get
+      - list
+      - watch
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system:metrics-server
+  labels:
+    k8s-app: metrics-server
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes/metrics
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - nodes
+    verbs:
+      - get
+      - list
+      - watch
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: metrics-server:system:auth-delegator
+  labels:
+    k8s-app: metrics-server
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: metrics-server
+    namespace: kube-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system:metrics-server
+  labels:
+    k8s-app: metrics-server
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:metrics-server
+subjects:
+  - kind: ServiceAccount
+    name: metrics-server
+    namespace: kube-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: metrics-server-auth-reader
+  namespace: kube-system
+  labels:
+    k8s-app: metrics-server
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: extension-apiserver-authentication-reader
+subjects:
+  - kind: ServiceAccount
+    name: metrics-server
+    namespace: kube-system
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metrics-server
+  namespace: kube-system
+  labels:
+    k8s-app: metrics-server
+spec:
+  selector:
+    k8s-app: metrics-server
+  ports:
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: https
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metrics-server
+  namespace: kube-system
+  labels:
+    k8s-app: metrics-server
+    version: v0.7.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: metrics-server
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        k8s-app: metrics-server
+    spec:
+      serviceAccountName: metrics-server
+
+      # Priority class for system components
+      priorityClassName: system-cluster-critical
+
+      # Node selection (optional)
+      nodeSelector:
+        kubernetes.io/os: linux
+
+      containers:
+        - name: metrics-server
+          image: registry.k8s.io/metrics-server/metrics-server:v0.7.0
+          imagePullPolicy: IfNotPresent
+
+          args:
+            # Kubelet communication
+            - --cert-dir=/tmp
+            - --secure-port=10250
+
+            # Kubelet preferred address type
+            # Options: InternalIP, ExternalIP, Hostname
+            - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+
+            # Kubelet certificate validation
+            # For production, use valid certificates and remove --kubelet-insecure-tls
+            - --kubelet-use-node-status-port
+            - --metric-resolution=15s
+
+            # For development/testing only - remove in production
+            # - --kubelet-insecure-tls
+
+          ports:
+            - name: https
+              containerPort: 10250
+              protocol: TCP
+
+          # Resource requirements
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+
+          # Security context
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+
+          # Liveness probe
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: https
+              scheme: HTTPS
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 3
+
+          # Readiness probe
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: https
+              scheme: HTTPS
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 3
+
+          volumeMounts:
+            - name: tmp-dir
+              mountPath: /tmp
+
+      volumes:
+        - name: tmp-dir
+          emptyDir: {}
+
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1beta1.metrics.k8s.io
+  labels:
+    k8s-app: metrics-server
+spec:
+  service:
+    name: metrics-server
+    namespace: kube-system
+  group: metrics.k8s.io
+  version: v1beta1
+  insecureSkipTLSVerify: true
+  groupPriorityMinimum: 100
+  versionPriority: 100
+
+---
+# Installation and verification instructions:
+#
+# 1. Check if metrics-server is already installed:
+#    kubectl get deployment metrics-server -n kube-system
+#
+# 2. Apply this manifest:
+#    kubectl apply -f metrics-server.yaml
+#
+# 3. Wait for metrics-server to be ready:
+#    kubectl wait --for=condition=available --timeout=300s deployment/metrics-server -n kube-system
+#
+# 4. Verify metrics-server is working:
+#    kubectl top nodes
+#    kubectl top pods -n voiceassist
+#
+# 5. Check metrics API:
+#    kubectl get apiservices v1beta1.metrics.k8s.io
+#
+# 6. View metrics-server logs:
+#    kubectl logs -n kube-system deployment/metrics-server
+#
+# 7. Troubleshooting:
+#    # Check if metrics-server pod is running
+#    kubectl get pods -n kube-system -l k8s-app=metrics-server
+#
+#    # Check metrics-server service
+#    kubectl get svc metrics-server -n kube-system
+#
+#    # Test metrics endpoint
+#    kubectl get --raw /apis/metrics.k8s.io/v1beta1/nodes
+#
+#    # Common issues:
+#    # - Certificate errors: Add --kubelet-insecure-tls (dev only)
+#    # - Network policy blocking: Check network policies
+#    # - RBAC issues: Verify ClusterRole and bindings
+#
+# 8. For production deployments:
+#    - Use valid TLS certificates
+#    - Remove --kubelet-insecure-tls flag
+#    - Configure proper node selectors
+#    - Consider running multiple replicas for HA
+#    - Set appropriate resource limits
+#    - Enable audit logging
+#
+# 9. Alternative installation (Helm):
+#    helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+#    helm upgrade --install metrics-server metrics-server/metrics-server \
+#      --namespace kube-system \
+#      --set args[0]="--kubelet-preferred-address-types=InternalIP"

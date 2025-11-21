@@ -1,0 +1,11 @@
+---
+# VoiceAssist V2 - Common Role Handlers
+# Phase 9: Infrastructure as Code
+
+- name: restart sshd
+  ansible.builtin.service:
+    name: sshd
+    state: restarted
+
+- name: restart auditd
+  ansible.builtin.command: service auditd restart

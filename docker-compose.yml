@@ -17,6 +17,8 @@ volumes:
     driver: local
   nextcloud-data:
     driver: local
+  nextcloud-db-data:
+    driver: local
   keycloak-data:
     driver: local
 
@@ -109,6 +111,9 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ENVIRONMENT=${ENVIRONMENT}
       - DEBUG=${DEBUG}
+      - NEXTCLOUD_URL=${NEXTCLOUD_URL}
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
     ports:
       - "8000:8000"
     networks:
@@ -131,9 +136,79 @@ services:
   # ===================================
   # Phase 2: Security & Nextcloud
   # ===================================
-  # - nextcloud
-  # - keycloak
-  # - auth-service
+
+  nextcloud-db:
+    image: postgres:16-alpine
+    container_name: voiceassist-nextcloud-db
+    environment:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: ${NEXTCLOUD_DB_PASSWORD}
+    volumes:
+      - nextcloud-db-data:/var/lib/postgresql/data
+    networks:
+      - database-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextcloud"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nextcloud:
+    image: nextcloud:29-apache
+    container_name: voiceassist-nextcloud
+    restart: unless-stopped
+    depends_on:
+      - nextcloud-db
+    environment:
+      - POSTGRES_HOST=nextcloud-db
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD}
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
+      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.local localhost
+    volumes:
+      - nextcloud-data:/var/www/html
+    ports:
+      - "8080:80"
+    networks:
+      - voiceassist-network
+      - database-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/status.php || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===================================
+  # Phase 7: Contract Testing (P3.4)
+  # ===================================
+
+  # Pact Broker - Contract testing broker
+  pact-broker:
+    image: pactfoundation/pact-broker:latest
+    container_name: voiceassist-pact-broker
+    ports:
+      - "9292:9292"
+    environment:
+      PACT_BROKER_DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/pact_broker"
+      PACT_BROKER_BASIC_AUTH_USERNAME: pact
+      PACT_BROKER_BASIC_AUTH_PASSWORD: pact
+      PACT_BROKER_PUBLIC_HEARTBEAT: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - voiceassist-network
+      - database-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--tries=1", "--spider", "http://localhost:9292/diagnostic/status/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
 
   # ===================================
   # Phase 3: Additional Microservices

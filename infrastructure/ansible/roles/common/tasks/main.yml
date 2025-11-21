@@ -1,0 +1,131 @@
+---
+# VoiceAssist V2 - Common Role Tasks
+# Phase 9: Infrastructure as Code
+#
+# Base system configuration for all servers
+
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+  tags: [hostname]
+
+- name: Update /etc/hosts
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ ansible_default_ipv4.address }} {{ inventory_hostname }} {{ inventory_hostname_short }}"
+    state: present
+  tags: [hostname]
+
+- name: Install essential packages
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - software-properties-common
+      - git
+      - vim
+      - htop
+      - tmux
+      - wget
+      - unzip
+      - jq
+      - python3
+      - python3-pip
+      - net-tools
+      - dnsutils
+      - ntp
+      - fail2ban
+      - ufw
+      - auditd
+      - aide
+    state: present
+    update_cache: yes
+  tags: [packages]
+
+- name: Configure NTP
+  ansible.builtin.service:
+    name: ntp
+    state: started
+    enabled: yes
+  tags: [ntp]
+
+- name: Set timezone to UTC
+  community.general.timezone:
+    name: UTC
+  tags: [timezone]
+
+- name: Configure system limits
+  ansible.builtin.pam_limits:
+    domain: '*'
+    limit_type: "{{ item.limit_type }}"
+    limit_item: "{{ item.limit_item }}"
+    value: "{{ item.value }}"
+  loop:
+    - { limit_type: 'soft', limit_item: 'nofile', value: '65536' }
+    - { limit_type: 'hard', limit_item: 'nofile', value: '65536' }
+    - { limit_type: 'soft', limit_item: 'nproc', value: '32768' }
+    - { limit_type: 'hard', limit_item: 'nproc', value: '32768' }
+  tags: [limits]
+
+- name: Configure sysctl parameters
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  loop:
+    - { name: 'net.ipv4.ip_forward', value: '1' }
+    - { name: 'net.ipv4.tcp_max_syn_backlog', value: '8192' }
+    - { name: 'net.core.somaxconn', value: '32768' }
+    - { name: 'net.core.netdev_max_backlog', value: '16384' }
+    - { name: 'vm.swappiness', value: '10' }
+    - { name: 'vm.max_map_count', value: '262144' }
+    - { name: 'fs.file-max', value: '2097152' }
+  tags: [sysctl]
+
+- name: Disable swap (for Kubernetes)
+  ansible.builtin.shell: |
+    swapoff -a
+    sed -i '/ swap / s/^/#/' /etc/fstab
+  when: "'k8s_nodes' in group_names"
+  tags: [swap]
+
+- name: Configure log rotation
+  ansible.builtin.template:
+    src: logrotate.conf.j2
+    dest: /etc/logrotate.d/voiceassist
+    mode: '0644'
+  tags: [logging]
+
+- name: Enable and configure auditd (HIPAA requirement)
+  ansible.builtin.service:
+    name: auditd
+    state: started
+    enabled: yes
+  when: hipaa_compliant | default(false)
+  tags: [audit, hipaa]
+
+- name: Create VoiceAssist directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/voiceassist
+    - /var/log/voiceassist
+    - /etc/voiceassist
+  tags: [directories]
+
+- name: Install Python dependencies
+  ansible.builtin.pip:
+    name:
+      - boto3
+      - botocore
+      - awscli
+      - kubernetes
+      - openshift
+    state: present
+  tags: [python]

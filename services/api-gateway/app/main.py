@@ -3,43 +3,154 @@ Main FastAPI application
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import uvicorn
 
 from app.core.config import settings
-from app.api import health
+from app.core.logging import configure_logging, get_logger
+from app.core.middleware import (
+    SecurityHeadersMiddleware,
+    RequestTracingMiddleware,
+    MetricsMiddleware,
+)
+from app.core.database import redis_client
+from app.api import health, auth, users, realtime, admin_kb, integrations, admin_panel, admin_cache, metrics, admin_feature_flags
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+
+# Import business metrics to register them with Prometheus (P3.3)
+import app.core.business_metrics
 
 
-# Create FastAPI application
+# Configure structured logging
+configure_logging()
+logger = get_logger(__name__)
+
+
+# Create rate limiter
+limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
+
+
+# Create FastAPI application with enhanced documentation
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     debug=settings.DEBUG,
+    description="""
+    VoiceAssist V2 - Enterprise Medical AI Assistant API
+
+    ## Features
+    - Health monitoring endpoints
+    - Database connectivity checks (PostgreSQL, Redis, Qdrant)
+    - Prometheus metrics
+    - Structured logging with correlation IDs
+    - Rate limiting for API protection
+    - Circuit breaker pattern for resilience
+
+    ## Security
+    - Security headers (CSP, HSTS, X-Frame-Options)
+    - Rate limiting on all endpoints
+    - Request tracing with correlation IDs
+
+    ## Authentication
+    - JWT-based authentication with secure token management
+    - User registration and login endpoints
+    - Token refresh mechanism for extended sessions
+    - Integration with Nextcloud for file storage
+    """,
+    contact={
+        "name": "VoiceAssist Team",
+        "email": "support@voiceassist.example.com",
+    },
+    license_info={
+        "name": "Internal Use",
+    },
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
 )
 
-# CORS middleware
+
+# Add rate limiter to app state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Add custom middleware (order matters!)
+# 1. Security headers should be added first
+app.add_middleware(SecurityHeadersMiddleware)
+
+# 2. Request tracing for correlation IDs
+app.add_middleware(RequestTracingMiddleware)
+
+# 3. Metrics middleware
+app.add_middleware(MetricsMiddleware)
+
+# 4. CORS middleware
+allowed_origins = [
+    "https://voiceassist.local",
+    "https://nextcloud.local",
+    "https://admin.voiceassist.local",
+    "http://localhost:3000",  # Development frontend
+    "http://localhost:8080",  # Development Nextcloud
+]
+
+if settings.DEBUG:
+    allowed_origins.append("*")  # Allow all in development
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Will be restricted in Phase 2
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["X-Correlation-ID"],
 )
 
 # Include routers
 app.include_router(health.router, tags=["health"])
+app.include_router(metrics.router)  # Prometheus metrics endpoint (Phase 7 - P2.1)
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(realtime.router)
+app.include_router(admin_kb.router)  # Phase 5: KB Management
+app.include_router(integrations.router)  # Phase 6: Nextcloud integrations
+app.include_router(admin_panel.router)  # Phase 7: Admin Panel API
+app.include_router(admin_cache.router)  # Phase 7: Cache Management API (P2.1)
+app.include_router(admin_feature_flags.router)  # Phase 7: Feature Flags API (P3.1)
 
 
 @app.on_event("startup")
 async def startup_event():
     """Application startup tasks"""
-    print(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
-    print(f"Environment: {settings.ENVIRONMENT}")
+    logger.info(
+        "application_startup",
+        app_name=settings.APP_NAME,
+        version=settings.APP_VERSION,
+        environment=settings.ENVIRONMENT,
+        debug=settings.DEBUG,
+    )
+
+    # Initialize FastAPI Cache with Redis backend
+    FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
+    logger.info("cache_initialized", backend="redis")
+
+    logger.info("database_pool_configured", pool_size=20, max_overflow=40)
+    logger.info("redis_pool_configured", max_connections=50)
+    logger.info("middleware_configured", middleware=["SecurityHeaders", "RequestTracing", "Metrics", "CORS"])
+    logger.info("rate_limiting_enabled", default_limit="100/minute")
+    logger.info("auth_system_enabled", jwt_algorithm=settings.JWT_ALGORITHM, token_expiry_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Application shutdown tasks"""
-    print(f"Shutting down {settings.APP_NAME}")
+    logger.info(
+        "application_shutdown",
+        app_name=settings.APP_NAME,
+        version=settings.APP_VERSION,
+    )
 
 
 if __name__ == "__main__":

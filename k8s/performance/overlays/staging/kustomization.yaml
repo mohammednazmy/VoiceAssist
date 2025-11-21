@@ -1,0 +1,29 @@
+# Staging environment overlay
+# Production-like resources with moderate scaling limits
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Reference base configuration
+bases:
+  - ../../
+
+# Override namespace for staging
+namespace: voiceassist-staging
+
+# Staging-specific labels
+commonLabels:
+  environment: staging
+
+# Patches for staging environment
+patchesStrategicMerge:
+  - hpa-patch.yaml
+
+# Staging-specific ConfigMap
+configMapGenerator:
+  - name: autoscaling-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=staging
+      - LOG_LEVEL=info
+      - METRICS_SCRAPE_INTERVAL=30s

@@ -1,0 +1,155 @@
+# Prometheus Alert Rules for VoiceAssist
+# HIPAA-compliant alerts for medical AI system
+
+groups:
+  - name: voiceassist_critical
+    interval: 30s
+    rules:
+      # Service availability alerts
+      - alert: ServiceDown
+        expr: up{job="voiceassist-api-gateway"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: api-gateway
+        annotations:
+          summary: "VoiceAssist API Gateway is down"
+          description: "API Gateway has been down for more than 1 minute"
+
+      - alert: DatabaseDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "Database has been unavailable for more than 1 minute"
+
+      # High error rate
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: api-gateway
+        annotations:
+          summary: "High API error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+
+      # High response time
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 10m
+        labels:
+          severity: warning
+          component: api-gateway
+        annotations:
+          summary: "High API response time"
+          description: "95th percentile response time is {{ $value }}s"
+
+      # Authentication failures (security)
+      - alert: HighAuthenticationFailureRate
+        expr: rate(authentication_attempts_total{status="failure"}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "High authentication failure rate"
+          description: "Authentication failure rate: {{ $value }}/s. Possible brute force attack."
+
+      # Database connection pool exhaustion
+      - alert: DatabaseConnectionPoolNearLimit
+        expr: database_connections_active > 18
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database connection pool near limit"
+          description: "Active connections: {{ $value }}/20"
+
+      # Memory pressure
+      - alert: HighMemoryUsage
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+
+      # Disk space
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space"
+          description: "Disk space below 10%"
+
+  - name: voiceassist_performance
+    interval: 1m
+    rules:
+      # RAG query performance
+      - alert: SlowRAGQueries
+        expr: histogram_quantile(0.95, rate(rag_query_duration_seconds_bucket[5m])) > 30
+        for: 10m
+        labels:
+          severity: warning
+          component: rag
+        annotations:
+          summary: "RAG queries are slow"
+          description: "95th percentile RAG query time: {{ $value }}s"
+
+      # Vector search performance
+      - alert: SlowVectorSearch
+        expr: histogram_quantile(0.95, rate(vector_search_duration_seconds_bucket[5m])) > 2
+        for: 10m
+        labels:
+          severity: warning
+          component: vector-search
+        annotations:
+          summary: "Vector search queries are slow"
+          description: "95th percentile search time: {{ $value }}s"
+
+  - name: voiceassist_security
+    interval: 30s
+    rules:
+      # HIPAA compliance: Audit log failures
+      - alert: AuditLogFailures
+        expr: increase(errors_total{error_type="AuditLogError"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: audit
+        annotations:
+          summary: "Audit logging failures detected"
+          description: "{{ $value }} audit log failures in the last 5 minutes"
+
+      # Token revocation service unavailable
+      - alert: TokenRevocationServiceDown
+        expr: redis_operations_total{operation="revoke",status="failure"} > 0
+        for: 2m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "Token revocation service issues"
+          description: "Token revocation failures detected"
+
+  - name: voiceassist_data_integrity
+    interval: 1m
+    rules:
+      # HIPAA: Data backup monitoring
+      - alert: NoRecentBackup
+        expr: time() - backup_last_success_timestamp > 86400
+        for: 1h
+        labels:
+          severity: critical
+          component: backup
+        annotations:
+          summary: "No recent database backup"
+          description: "Last successful backup was more than 24 hours ago"

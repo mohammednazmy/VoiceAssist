@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<info>
+  <id>voiceassist-client</id>
+  <name>VoiceAssist Client</name>
+  <summary>Integration app between Nextcloud and VoiceAssist V2.</summary>
+  <description><![CDATA[
+    This app is part of Phase 6: Nextcloud App Integration & Unified Services.
+    It is currently a non-functional skeleton and is not intended for production use.
+  ]]></description>
+  <version>0.1.0</version>
+  <licence>agpl</licence>
+  <author>VoiceAssist</author>
+  <namespace>VoiceassistClient</namespace>
+  <category>integration</category>
+  <dependencies>
+    <nextcloud min-version="27" max-version="29"/>
+  </dependencies>
+</info>

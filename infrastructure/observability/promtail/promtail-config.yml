@@ -1,0 +1,47 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Docker container logs
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: 'logstream'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: 'project'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+    # PHI Redaction Pipeline Stage
+    pipeline_stages:
+      - regex:
+          expression: '.*(?P<phi_email>[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}).*'
+      - template:
+          source: phi_email
+          template: '[REDACTED_EMAIL]'
+      - regex:
+          expression: '.*(?P<phi_ssn>\d{3}-\d{2}-\d{4}).*'
+      - template:
+          source: phi_ssn
+          template: '[REDACTED_SSN]'
+      - regex:
+          expression: '.*(?P<phi_phone>\d{3}[-.]?\d{3}[-.]?\d{4}).*'
+      - template:
+          source: phi_phone
+          template: '[REDACTED_PHONE]'
+      - labeldrop:
+          - phi_email
+          - phi_ssn
+          - phi_phone

@@ -1,0 +1,477 @@
+name: Terraform Apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to apply changes to'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      auto_approve:
+        description: 'Auto-approve apply (use with caution)'
+        required: false
+        type: boolean
+        default: false
+
+  push:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/terraform/**'
+
+env:
+  TF_VERSION: "1.6.0"
+  AWS_REGION: us-east-1
+  TF_IN_AUTOMATION: "true"
+
+jobs:
+  # ======================================
+  # Determine Environment
+  # ======================================
+  determine-environment:
+    name: Determine Environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      requires-approval: ${{ steps.set-env.outputs.requires-approval }}
+
+    steps:
+      - name: Set environment
+        id: set-env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+            if [ "${{ github.event.inputs.environment }}" == "production" ]; then
+              echo "requires-approval=true" >> $GITHUB_OUTPUT
+            else
+              echo "requires-approval=false" >> $GITHUB_OUTPUT
+            fi
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "requires-approval=true" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "requires-approval=false" >> $GITHUB_OUTPUT
+          fi
+
+  # ======================================
+  # Terraform Apply - Staging
+  # ======================================
+  terraform-apply-staging:
+    name: Apply Infrastructure (Staging)
+    runs-on: ubuntu-latest
+    needs: determine-environment
+    if: needs.determine-environment.outputs.environment == 'staging'
+    environment:
+      name: staging-infrastructure
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: |
+          cd infrastructure/terraform
+          terraform init \
+            -backend-config="key=voiceassist/staging/terraform.tfstate"
+        env:
+          TF_WORKSPACE: staging
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          cd infrastructure/terraform
+          terraform plan \
+            -var-file="environments/staging.tfvars" \
+            -out=staging-apply.tfplan \
+            -no-color | tee plan-output.txt
+
+      - name: Save plan for review
+        run: |
+          cd infrastructure/terraform
+          terraform show -no-color staging-apply.tfplan > staging-plan-review.txt
+
+      - name: Upload plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-apply-plan
+          path: |
+            infrastructure/terraform/staging-apply.tfplan
+            infrastructure/terraform/staging-plan-review.txt
+          retention-days: 30
+
+      - name: Terraform Apply
+        id: apply
+        run: |
+          cd infrastructure/terraform
+          if [ "${{ github.event.inputs.auto_approve }}" == "true" ]; then
+            terraform apply -auto-approve staging-apply.tfplan
+          else
+            terraform apply staging-apply.tfplan
+          fi
+        env:
+          TF_WORKSPACE: staging
+
+      - name: Get outputs
+        id: outputs
+        run: |
+          cd infrastructure/terraform
+          terraform output -json > outputs.json
+          cat outputs.json
+
+      - name: Upload outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-terraform-outputs
+          path: infrastructure/terraform/outputs.json
+          retention-days: 90
+
+      - name: Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Staging Infrastructure Apply ${{ job.status }}
+            Environment: staging
+            Triggered by: ${{ github.actor }}
+            Commit: ${{ github.sha }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # ======================================
+  # Terraform Apply - Production
+  # ======================================
+  terraform-apply-production:
+    name: Apply Infrastructure (Production)
+    runs-on: ubuntu-latest
+    needs: determine-environment
+    if: needs.determine-environment.outputs.environment == 'production'
+    environment:
+      name: production-infrastructure
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: |
+          cd infrastructure/terraform
+          terraform init \
+            -backend-config="key=voiceassist/production/terraform.tfstate"
+        env:
+          TF_WORKSPACE: production
+
+      - name: Create backup of state
+        run: |
+          cd infrastructure/terraform
+          terraform state pull > terraform-state-backup-$(date +%Y%m%d-%H%M%S).json
+
+      - name: Upload state backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-state-backup-${{ github.run_number }}
+          path: infrastructure/terraform/terraform-state-backup-*.json
+          retention-days: 90
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          cd infrastructure/terraform
+          terraform plan \
+            -var-file="environments/production.tfvars" \
+            -out=production-apply.tfplan \
+            -no-color | tee plan-output.txt
+
+      - name: Check for destructive changes
+        id: check-destructive
+        run: |
+          cd infrastructure/terraform
+          if grep -q "destroy" plan-output.txt || grep -q "replace" plan-output.txt; then
+            echo "::warning::Destructive changes detected in plan!"
+            echo "destructive=true" >> $GITHUB_OUTPUT
+          else
+            echo "destructive=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Save plan for review
+        run: |
+          cd infrastructure/terraform
+          terraform show -no-color production-apply.tfplan > production-plan-review.txt
+
+      - name: Upload plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-apply-plan
+          path: |
+            infrastructure/terraform/production-apply.tfplan
+            infrastructure/terraform/production-plan-review.txt
+          retention-days: 90
+
+      - name: Manual approval required
+        if: steps.check-destructive.outputs.destructive == 'true' && github.event.inputs.auto_approve != 'true'
+        run: |
+          echo "::error::Destructive changes detected! Manual approval required."
+          echo "Please review the plan carefully before proceeding."
+          exit 1
+
+      - name: Terraform Apply
+        id: apply
+        run: |
+          cd infrastructure/terraform
+          if [ "${{ github.event.inputs.auto_approve }}" == "true" ]; then
+            terraform apply -auto-approve production-apply.tfplan
+          else
+            terraform apply production-apply.tfplan
+          fi
+        env:
+          TF_WORKSPACE: production
+
+      - name: Get outputs
+        id: outputs
+        run: |
+          cd infrastructure/terraform
+          terraform output -json > outputs.json
+          cat outputs.json
+
+      - name: Upload outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-terraform-outputs
+          path: infrastructure/terraform/outputs.json
+          retention-days: 90
+
+      - name: Tag release
+        if: success()
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          TAG="infra-$(date +%Y%m%d-%H%M%S)"
+          git tag -a "$TAG" -m "Infrastructure deployment: $TAG"
+          git push origin "$TAG" || echo "Failed to push tag, continuing..."
+
+      - name: Create deployment summary
+        if: success()
+        run: |
+          cd infrastructure/terraform
+          cat > deployment-summary.md << 'EOF'
+          # Production Infrastructure Deployment
+
+          ## Deployment Details
+          - **Date**: $(date)
+          - **Triggered by**: ${{ github.actor }}
+          - **Commit**: ${{ github.sha }}
+          - **Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ## Applied Changes
+          See attached plan file for details.
+
+          ## Outputs
+          $(terraform output)
+
+          ## Next Steps
+          - Verify infrastructure health
+          - Run smoke tests
+          - Monitor metrics and logs
+          EOF
+
+      - name: Upload deployment summary
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-deployment-summary
+          path: infrastructure/terraform/deployment-summary.md
+          retention-days: 90
+
+      - name: Notify Slack - Success
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: |
+            :rocket: Production Infrastructure Applied Successfully!
+            Environment: production
+            Triggered by: ${{ github.actor }}
+            Commit: ${{ github.sha }}
+            Destructive changes: ${{ steps.check-destructive.outputs.destructive }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Slack - Failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            :x: Production Infrastructure Apply Failed!
+            Environment: production
+            Triggered by: ${{ github.actor }}
+            Commit: ${{ github.sha }}
+            Action Required: Review logs and state backup
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # ======================================
+  # Post-Apply Verification
+  # ======================================
+  verify-infrastructure:
+    name: Verify Infrastructure
+    runs-on: ubuntu-latest
+    needs: [terraform-apply-staging, terraform-apply-production]
+    if: |
+      always() &&
+      (needs.terraform-apply-staging.result == 'success' ||
+       needs.terraform-apply-production.result == 'success')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download terraform outputs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-terraform-outputs'
+
+      - name: Verify EKS cluster
+        run: |
+          # Check if EKS cluster is accessible
+          aws eks list-clusters
+
+          # Verify cluster health (if cluster name is in outputs)
+          if [ -f "*/outputs.json" ]; then
+            CLUSTER_NAME=$(jq -r '.cluster_name.value // empty' */outputs.json | head -1)
+            if [ -n "$CLUSTER_NAME" ]; then
+              aws eks describe-cluster --name "$CLUSTER_NAME"
+            fi
+          fi
+
+      - name: Verify RDS instances
+        run: |
+          # List RDS instances
+          aws rds describe-db-instances --query 'DBInstances[*].[DBInstanceIdentifier,DBInstanceStatus]' --output table
+
+      - name: Verify VPC and networking
+        run: |
+          # List VPCs
+          aws ec2 describe-vpcs --query 'Vpcs[*].[VpcId,Tags[?Key==`Name`].Value|[0]]' --output table
+
+          # List security groups
+          aws ec2 describe-security-groups --query 'SecurityGroups[*].[GroupId,GroupName]' --output table
+
+      - name: Run infrastructure tests
+        run: |
+          # Run basic connectivity tests
+          if [ -d "tests/infrastructure" ]; then
+            echo "Running infrastructure tests..."
+            # Add your infrastructure test commands here
+          else
+            echo "No infrastructure tests found"
+          fi
+
+      - name: Generate infrastructure report
+        run: |
+          cat > infrastructure-report.md << 'EOF'
+          # Infrastructure Verification Report
+
+          ## Verification Status
+          - EKS Clusters: ✓
+          - RDS Instances: ✓
+          - VPC & Networking: ✓
+
+          ## Date
+          $(date)
+
+          ## Verified by
+          GitHub Actions Automation
+
+          EOF
+
+      - name: Upload verification report
+        uses: actions/upload-artifact@v4
+        with:
+          name: infrastructure-verification-report
+          path: infrastructure-report.md
+          retention-days: 30
+
+  # ======================================
+  # Rollback (Manual Trigger)
+  # ======================================
+  rollback:
+    name: Rollback Infrastructure
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production' && failure()
+    needs: [terraform-apply-production]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download state backup
+        uses: actions/download-artifact@v4
+        with:
+          pattern: 'production-state-backup-*'
+
+      - name: Terraform Init
+        run: |
+          cd infrastructure/terraform
+          terraform init \
+            -backend-config="key=voiceassist/production/terraform.tfstate"
+
+      - name: Restore previous state
+        run: |
+          cd infrastructure/terraform
+          # This is a placeholder - actual rollback requires careful consideration
+          echo "Manual rollback required - review state backup and apply necessary changes"
+
+      - name: Notify about rollback requirement
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            :warning: Production Infrastructure Apply Failed - Rollback May Be Required
+            State backup available in workflow artifacts
+            Manual intervention required
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -1,0 +1,98 @@
+# Kustomize configuration for VoiceAssist Performance/Autoscaling
+# Organizes all performance-related manifests with environment overlays
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Namespace for all resources
+namespace: voiceassist
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/name: voiceassist
+  app.kubernetes.io/version: "1.0"
+  app.kubernetes.io/component: performance
+  app.kubernetes.io/managed-by: kustomize
+
+# Common annotations
+commonAnnotations:
+  team: platform
+  contact: devops@voiceassist.com
+  documentation: https://docs.voiceassist.com/k8s/performance
+
+# Resources to include
+resources:
+  # HorizontalPodAutoscalers
+  - api-gateway-hpa.yaml
+  - worker-hpa.yaml
+
+  # Resource configurations
+  - resource-limits.yaml
+
+  # VerticalPodAutoscalers (optional)
+  - vpa-config.yaml
+
+  # PodDisruptionBudgets
+  - pod-disruption-budget.yaml
+
+  # Metrics Server (if not already installed)
+  # Uncomment if needed:
+  # - metrics-server.yaml
+
+# ConfigMap generator for environment-specific settings
+configMapGenerator:
+  - name: autoscaling-config
+    literals:
+      - METRICS_SCRAPE_INTERVAL=30s
+      - HPA_SYNC_PERIOD=15s
+      - VPA_RECOMMENDATION_MODE=Off
+
+# Secret generator for sensitive data (if needed)
+# secretGenerator:
+#   - name: metrics-credentials
+#     literals:
+#       - prometheus-token=CHANGE_ME
+
+# Images to use (can override image tags)
+images:
+  - name: voiceassist-server
+    newTag: latest
+  - name: voiceassist-worker
+    newTag: latest
+
+# Patches for environment-specific modifications
+# These are applied via overlays (see below)
+
+---
+# Directory structure for overlays:
+#
+# k8s/performance/
+# ├── base/
+# │   ├── kustomization.yaml          (this file)
+# │   ├── api-gateway-hpa.yaml
+# │   ├── worker-hpa.yaml
+# │   ├── resource-limits.yaml
+# │   ├── vpa-config.yaml
+# │   ├── pod-disruption-budget.yaml
+# │   └── metrics-server.yaml
+# └── overlays/
+#     ├── dev/
+#     │   └── kustomization.yaml      (development settings)
+#     ├── staging/
+#     │   └── kustomization.yaml      (staging settings)
+#     └── prod/
+#         └── kustomization.yaml      (production settings)
+#
+# Usage:
+#
+# 1. Apply base configuration:
+#    kubectl apply -k k8s/performance/
+#
+# 2. Apply with environment overlay:
+#    kubectl apply -k k8s/performance/overlays/prod/
+#
+# 3. View rendered manifests without applying:
+#    kubectl kustomize k8s/performance/
+#
+# 4. Diff before applying:
+#    kubectl diff -k k8s/performance/overlays/prod/

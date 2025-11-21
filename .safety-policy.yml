@@ -1,0 +1,54 @@
+# VoiceAssist V2 - Safety Policy Configuration
+# Phase 9: Infrastructure as Code
+#
+# Safety checks Python dependencies for known security vulnerabilities
+
+security:
+  # Fail the build if vulnerabilities are found
+  continue-on-error: false
+
+  # Ignore specific vulnerabilities (with justification)
+  ignore-vulnerabilities:
+    # Example: 12345 - Acceptable risk in dev environment only
+
+  # Ignore CVEs below this severity
+  ignore-cvss-severity-below: 7.0
+
+  # Ignore CVEs with unknown severity
+  ignore-cvss-unknown-severity: false
+
+  # Only report on production dependencies
+  ignore-unpinned-requirements: false
+
+reporting:
+  # Output format (text, json, html)
+  output: json
+
+  # Include full report
+  full-report: true
+
+  # Include CVE information
+  show-cve: true
+
+  # Include affected version ranges
+  show-affected-ranges: true
+
+scanning:
+  # Check for malicious packages
+  check-for-malicious-packages: true
+
+  # Check for license issues
+  check-licenses: true
+
+  # Allowed licenses
+  allowed-licenses:
+    - MIT
+    - Apache-2.0
+    - BSD-3-Clause
+    - BSD-2-Clause
+    - ISC
+    - PSF
+    - MPL-2.0
+
+  # Include transitive dependencies
+  recursive: true

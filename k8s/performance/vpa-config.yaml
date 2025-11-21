@@ -1,0 +1,223 @@
+---
+# VerticalPodAutoscaler for API Gateway
+# Provides resource optimization recommendations
+# Running in "Off" mode to avoid conflicts with HPA
+
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: voiceassist-server-vpa
+  namespace: voiceassist
+  labels:
+    app: voiceassist-server
+    component: api-gateway
+  annotations:
+    description: "VPA for resource recommendations - does not auto-apply"
+spec:
+  # Target deployment
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: voiceassist-server
+
+  # Update mode: "Off" means recommendation only
+  # Options: "Off", "Initial", "Recreate", "Auto"
+  # Use "Off" when HPA is active to avoid conflicts
+  updatePolicy:
+    updateMode: "Off"
+
+  # Resource policy: Control what VPA can recommend
+  resourcePolicy:
+    containerPolicies:
+      - containerName: server
+        # VPA can recommend for both CPU and memory
+        mode: Auto
+
+        # Minimum allowed resources
+        minAllowed:
+          cpu: 250m
+          memory: 256Mi
+
+        # Maximum allowed resources
+        maxAllowed:
+          cpu: 4000m
+          memory: 4Gi
+
+        # Controlled resources
+        controlledResources:
+          - cpu
+          - memory
+
+        # Controlled values: requests, limits, or both
+        controlledValues: RequestsAndLimits
+
+---
+# VerticalPodAutoscaler for Worker
+# Monitors worker resource usage and provides recommendations
+
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: voiceassist-worker-vpa
+  namespace: voiceassist
+  labels:
+    app: voiceassist-worker
+    component: worker
+  annotations:
+    description: "VPA for worker resource optimization recommendations"
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: voiceassist-worker
+
+  # Recommendation mode only
+  updatePolicy:
+    updateMode: "Off"
+
+  resourcePolicy:
+    containerPolicies:
+      - containerName: worker
+        mode: Auto
+
+        minAllowed:
+          cpu: 500m
+          memory: 512Mi
+
+        maxAllowed:
+          cpu: 8000m
+          memory: 8Gi
+
+        controlledResources:
+          - cpu
+          - memory
+
+        controlledValues: RequestsAndLimits
+
+---
+# VerticalPodAutoscaler for PostgreSQL
+# Database resource optimization (use with caution)
+
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: voiceassist-postgres-vpa
+  namespace: voiceassist
+  labels:
+    app: voiceassist-postgres
+    component: database
+  annotations:
+    description: "VPA for PostgreSQL - recommendation only, manual changes preferred"
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: voiceassist-postgres
+
+  # Always use "Off" for databases
+  # Database resource changes should be carefully planned
+  updatePolicy:
+    updateMode: "Off"
+
+  resourcePolicy:
+    containerPolicies:
+      - containerName: postgres
+        mode: Auto
+
+        minAllowed:
+          cpu: 500m
+          memory: 1Gi
+
+        maxAllowed:
+          cpu: 8000m
+          memory: 16Gi
+
+        controlledResources:
+          - cpu
+          - memory
+
+        controlledValues: RequestsAndLimits
+
+---
+# VerticalPodAutoscaler for Redis
+# Cache layer resource optimization
+
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: voiceassist-redis-vpa
+  namespace: voiceassist
+  labels:
+    app: voiceassist-redis
+    component: cache
+  annotations:
+    description: "VPA for Redis cache optimization"
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: voiceassist-redis
+
+  updatePolicy:
+    updateMode: "Off"
+
+  resourcePolicy:
+    containerPolicies:
+      - containerName: redis
+        mode: Auto
+
+        minAllowed:
+          cpu: 100m
+          memory: 128Mi
+
+        maxAllowed:
+          cpu: 2000m
+          memory: 2Gi
+
+        controlledResources:
+          - cpu
+          - memory
+
+        controlledValues: RequestsAndLimits
+
+---
+# Instructions for using VPA recommendations:
+#
+# 1. View recommendations:
+#    kubectl describe vpa voiceassist-server-vpa -n voiceassist
+#
+# 2. Get specific recommendations:
+#    kubectl get vpa voiceassist-server-vpa -n voiceassist -o jsonpath='{.status.recommendation}'
+#
+# 3. Apply recommendations manually:
+#    - Review the recommended values
+#    - Update resource-limits.yaml with new values
+#    - Apply changes during maintenance window
+#    - Monitor performance after changes
+#
+# 4. Example recommendation output:
+#    Target:
+#      cpu: "800m"
+#      memory: "768Mi"
+#    LowerBound:
+#      cpu: "500m"
+#      memory: "512Mi"
+#    UpperBound:
+#      cpu: "1200m"
+#      memory: "1Gi"
+#    UncappedTarget:
+#      cpu: "850m"
+#      memory: "800Mi"
+#
+# 5. Interpretation:
+#    - Target: VPA's recommended values
+#    - LowerBound: Minimum to maintain performance
+#    - UpperBound: Maximum before waste
+#    - UncappedTarget: Ideal without policy constraints
+#
+# 6. Best practices:
+#    - Review recommendations weekly
+#    - Apply changes during low-traffic periods
+#    - Monitor for 24-48 hours after changes
+#    - Keep VPA in "Off" mode with active HPA
+#    - Use VPA data to tune HPA thresholds

@@ -2,9 +2,237 @@
 
 ## Overview
 
-VoiceAssist integrates with Nextcloud as a **separate stack** for identity management, file storage, calendar, and email functionality. Nextcloud is **NOT** deployed as part of the VoiceAssist docker-compose.yml.
+VoiceAssist integrates with Nextcloud for identity management, file storage, calendar, and email functionality.
 
-## Architecture Decision
+**Current Status (Phase 6):** VoiceAssist now has working CalDAV calendar integration, WebDAV file auto-indexing, and email service skeleton.
+
+**Implementation Notes:**
+- **Phase 2:** Nextcloud added to docker-compose.yml, OCS API integration created
+- **Phase 6:** CalDAV calendar operations, WebDAV file auto-indexer, email service skeleton
+- **Phase 7+:** Full OIDC authentication, complete email integration, CardDAV contacts
+
+For development, Phase 2+ includes Nextcloud directly in the VoiceAssist docker-compose.yml stack. For production, you may choose to:
+- Continue using the integrated Nextcloud (simpler deployment)
+- Use a separate Nextcloud installation (more flexible, as described in the "Separate Stack" section below)
+
+---
+
+## Phase 2: Integrated Nextcloud Setup
+
+### What Was Implemented
+
+Phase 2 added Nextcloud directly to the VoiceAssist docker-compose.yml stack for simplified local development:
+
+**Docker Services Added:**
+- **nextcloud**: Nextcloud 29 (Apache), accessible at http://localhost:8080
+- **nextcloud-db**: PostgreSQL 16 database for Nextcloud
+
+**Integration Service Created:**
+- **NextcloudService** (`services/api-gateway/app/services/nextcloud.py`): OCS API client for user provisioning and management
+
+**Environment Variables:**
+```bash
+NEXTCLOUD_URL=http://nextcloud:80          # Internal Docker network URL
+NEXTCLOUD_ADMIN_USER=admin                 # Nextcloud admin username
+NEXTCLOUD_ADMIN_PASSWORD=<from .env>       # Nextcloud admin password
+NEXTCLOUD_DB_PASSWORD=<from .env>          # Nextcloud database password
+```
+
+**OCS API Integration:**
+- User creation via OCS API (`/ocs/v1.php/cloud/users`)
+- User existence check
+- Health check for Nextcloud connectivity
+- Authentication with admin credentials
+
+**Phase 6 Enhancements Implemented:**
+- ✅ CalDAV calendar integration (full CRUD operations)
+- ✅ WebDAV file auto-indexing into knowledge base
+- ✅ Email service skeleton (IMAP/SMTP basics)
+
+**Future Enhancements (Phase 7+):**
+- OIDC authentication integration
+- Full email integration with message parsing
+- CardDAV contacts integration
+- Full user provisioning workflow
+
+### Quick Start (Phase 2)
+
+If you have Phase 2 installed, Nextcloud is already running:
+
+```bash
+# Access Nextcloud
+open http://localhost:8080
+
+# Default credentials (first-time setup)
+Username: admin
+Password: (value from NEXTCLOUD_ADMIN_PASSWORD in .env)
+
+# Check Nextcloud health from API Gateway
+docker exec voiceassist-server python -c "
+from app.services.nextcloud import NextcloudService
+import asyncio
+svc = NextcloudService()
+result = asyncio.run(svc.health_check())
+print(f'Nextcloud healthy: {result}')
+"
+```
+
+**Phase 2 Limitations:**
+- OIDC integration not yet implemented (JWT tokens used for auth instead)
+- WebDAV/CalDAV integration not yet implemented
+- User provisioning is manual via Nextcloud UI
+
+---
+
+## Phase 6: Calendar & File Integration
+
+### What Was Implemented
+
+Phase 6 adds real integration with Nextcloud Calendar and Files, plus email service foundation:
+
+**Services Created:**
+- **CalDAVService** (`services/api-gateway/app/services/caldav_service.py`): Full CalDAV protocol support for calendar operations
+- **NextcloudFileIndexer** (`services/api-gateway/app/services/nextcloud_file_indexer.py`): Automatic medical document discovery and indexing
+- **EmailService** (`services/api-gateway/app/services/email_service.py`): IMAP/SMTP skeleton for future email integration
+- **Integration API** (`services/api-gateway/app/api/integrations.py`): Unified REST API for all integrations
+
+**Calendar Features (CalDAV):**
+- List all calendars for authenticated user
+- Get events within date range with filtering
+- Create new calendar events with full metadata
+- Update existing events (summary, time, location, description)
+- Delete calendar events
+- Timezone-aware event handling
+- Recurring event support
+- Error handling for connection and parsing failures
+
+**File Auto-Indexing (WebDAV):**
+- Discover medical documents in configurable Nextcloud directories
+- Automatic indexing into Phase 5 knowledge base
+- Supported formats: PDF, TXT, MD
+- Duplicate detection (prevents re-indexing)
+- Metadata tracking (file path, size, modification time)
+- Integration with Phase 5 KBIndexer for embedding generation
+- Batch scanning with progress reporting
+
+**API Endpoints Added:**
+```
+Calendar Operations:
+  GET    /api/integrations/calendar/calendars
+  GET    /api/integrations/calendar/events
+  POST   /api/integrations/calendar/events
+  PUT    /api/integrations/calendar/events/{uid}
+  DELETE /api/integrations/calendar/events/{uid}
+
+File Indexing:
+  POST   /api/integrations/files/scan-and-index
+  POST   /api/integrations/files/index
+
+Email (Skeleton):
+  GET    /api/integrations/email/folders
+  GET    /api/integrations/email/messages
+  POST   /api/integrations/email/send
+```
+
+**Configuration Required:**
+```bash
+# Add to ~/VoiceAssist/.env:
+
+# CalDAV Configuration
+NEXTCLOUD_CALDAV_URL=http://nextcloud:80/remote.php/dav
+NEXTCLOUD_CALDAV_USERNAME=admin
+NEXTCLOUD_CALDAV_PASSWORD=<from NEXTCLOUD_ADMIN_PASSWORD>
+
+# WebDAV Configuration
+NEXTCLOUD_WEBDAV_URL=http://nextcloud:80/remote.php/dav/files/admin/
+NEXTCLOUD_WEBDAV_USERNAME=admin
+NEXTCLOUD_WEBDAV_PASSWORD=<from NEXTCLOUD_ADMIN_PASSWORD>
+
+# Watch Directories for Auto-Indexing
+NEXTCLOUD_WATCH_DIRECTORIES=/Documents,/Medical_Guidelines
+```
+
+### Testing Phase 6 Integrations
+
+**Test Calendar Operations:**
+```bash
+# List calendars
+curl -X GET http://localhost:8000/api/integrations/calendar/calendars \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+# Create event
+curl -X POST http://localhost:8000/api/integrations/calendar/events \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "summary": "Patient Consultation",
+    "start": "2025-01-25T14:00:00Z",
+    "end": "2025-01-25T15:00:00Z",
+    "description": "Follow-up appointment",
+    "location": "Clinic Room 3"
+  }'
+
+# Get events in date range
+curl -X GET "http://localhost:8000/api/integrations/calendar/events?start_date=2025-01-20&end_date=2025-01-31" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+**Test File Auto-Indexing:**
+```bash
+# First, add some medical documents to Nextcloud
+# Via Nextcloud web UI: Upload PDFs to /Documents folder
+
+# Scan and index all files
+curl -X POST "http://localhost:8000/api/integrations/files/scan-and-index?source_type=guideline" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+# Response includes:
+# {
+#   "files_discovered": 10,
+#   "files_indexed": 8,
+#   "files_failed": 0,
+#   "files_skipped": 2  (already indexed)
+# }
+
+# Index specific file
+curl -X POST http://localhost:8000/api/integrations/files/index \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file_path": "/Documents/hypertension_guideline.pdf",
+    "source_type": "guideline",
+    "title": "2024 Hypertension Management Guidelines"
+  }'
+```
+
+**Verify Integration:**
+```bash
+# Files should now be searchable via Phase 5 RAG
+curl -X POST http://localhost:8000/api/realtime/query \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What are first-line treatments for hypertension?"}'
+
+# Response should include citations from indexed guideline
+```
+
+### Phase 6 Limitations
+
+**Not Yet Implemented:**
+- OIDC authentication (still using JWT tokens from Phase 2)
+- Per-user credentials (currently using admin credentials for all operations)
+- CardDAV contacts integration
+- Complete email integration (skeleton only)
+- Calendar event notifications/reminders
+- Conflict resolution for calendar syncing
+- Incremental file indexing (currently full scans)
+
+**Security Note:**
+Current implementation uses admin credentials for all Nextcloud operations. Production deployments should implement per-user credential management with secure storage (encrypted in database or secrets manager).
+
+---
+
+## Architecture Decision (for Separate Stack Deployment)
 
 **Key Principle:** Nextcloud and VoiceAssist are independent deployments that communicate via standard APIs.
 
@@ -709,17 +937,33 @@ docker compose up -d
 
 Track which integrations are implemented:
 
-- [ ] Phase 0: Documentation complete
+- [x] Phase 0: Documentation complete
 - [ ] Phase 1: N/A (databases only)
-- [ ] Phase 2: OIDC authentication implemented
+- [x] Phase 2: Nextcloud Docker services added, OCS API integration service created, basic user provisioning API (OIDC deferred)
 - [ ] Phase 3: N/A (internal services)
 - [ ] Phase 4: N/A (voice pipeline)
 - [ ] Phase 5: N/A (medical AI)
-- [ ] Phase 6: WebDAV, CalDAV, file integration
-- [ ] Phase 7: N/A (admin panel)
+- [x] **Phase 6: CalDAV calendar operations (CRUD), WebDAV file auto-indexing, Email service skeleton**
+- [ ] Phase 7: Full OIDC authentication, CardDAV contacts, Complete email integration
 - [ ] Phase 8: N/A (observability)
 - [ ] Phase 9: N/A (IaC)
 - [ ] Phase 10: Load test Nextcloud integration
+
+**Phase 6 Deliverables (Completed):**
+- ✅ CalDAV Service with full event CRUD operations
+- ✅ Nextcloud File Indexer for automatic KB population
+- ✅ Email Service skeleton (IMAP/SMTP basics)
+- ✅ Integration API endpoints (`/api/integrations/*`)
+- ✅ Comprehensive integration tests with mocks
+- ✅ Documentation updates
+
+**Deferred to Phase 7+:**
+- ⏳ OIDC authentication flow
+- ⏳ Per-user credential management
+- ⏳ CardDAV contacts integration
+- ⏳ Full email integration (parsing, threading, search)
+- ⏳ Calendar notifications and reminders
+- ⏳ Incremental file indexing with change detection
 
 ---
 

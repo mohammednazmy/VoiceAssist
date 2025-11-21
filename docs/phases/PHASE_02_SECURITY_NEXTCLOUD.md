@@ -55,6 +55,22 @@ See also:
 - Wire configuration via Settings (see `app.core.config`) rather than hard-coding URLs or secrets.
 - Keep PHI-handling rules in mind as described in SECURITY_COMPLIANCE.md.
 
+**Implementation Paths (Phase 2)**
+
+For Phase 2, you will primarily work in two places:
+
+- `services/api-gateway/app/`:
+  - Add `app/api/auth.py` for registration/login/logout endpoints.
+  - Add `app/core/security.py` for JWT handling and password hashing.
+  - Wire CORS and HTTPS-related settings in `app/main.py` and `app/core/middleware.py`.
+- `server/app/` (optional during Phase 2):
+  - Mirror auth/identity primitives for the monorepo if needed, following the patterns in DATA_MODEL.md.
+
+For Nextcloud itself:
+
+- Use the commented example `nextcloud` service in `docker-compose.yml` as a starting point.
+- See `docs/NEXTCLOUD_INTEGRATION.md` for details on WebDAV, calendar, and file API usage.
+
 ### 4.3 Testing
 
 - Add or update basic unit/integration tests where applicable.

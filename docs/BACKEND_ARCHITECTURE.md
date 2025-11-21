@@ -1,6 +1,6 @@
 # VoiceAssist V2 - Backend Architecture
 
-**Last Updated**: 2025-11-20
+**Last Updated**: 2025-11-20 (Phase 2 Enhancements)
 **Status**: Canonical Reference
 **Purpose**: Clarify backend structure evolution from monorepo to microservices
 
@@ -26,6 +26,22 @@ This document explains both approaches and when to use each.
 6. [Migration Path](#migration-path)
 
 ---
+
+### Repository Layout for Backend
+
+During Phases 0–1 the backend code lives in two related locations:
+
+- `services/api-gateway/app/` – The **running API Gateway** used by Docker Compose.
+  This service hosts the health endpoints, database connectivity, and core infrastructure
+  needed to validate Phase 0–1 (PostgreSQL, Redis, Qdrant, metrics, logging, etc.).
+- `server/app/` – The **logical monorepo** used for higher-level service designs:
+  QueryOrchestrator, LLMClient, tool execution engine, and other components defined in
+  ORCHESTRATION_DESIGN.md, TOOLS_AND_INTEGRATIONS.md, and DATA_MODEL.md.
+
+In early phases, `services/api-gateway` is responsible for infrastructure concerns and
+basic APIs, while `server/` hosts the emerging monorepo structure that later phases
+will build out. The SERVICE_CATALOG and .ai/index.json document how these pieces map
+to logical services.
 
 ## Development Evolution
 
@@ -308,10 +324,36 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
 
+  # Nextcloud (Phase 2+)
+  nextcloud:
+    image: nextcloud:29-apache
+    ports:
+      - "8080:80"
+    environment:
+      - POSTGRES_HOST=nextcloud-db
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
+    depends_on:
+      - nextcloud-db
+    volumes:
+      - nextcloud_data:/var/www/html
+
+  # Nextcloud Database (Phase 2+)
+  nextcloud-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD}
+    volumes:
+      - nextcloud_db_data:/var/lib/postgresql/data
+
 volumes:
   postgres_data:
   redis_data:
   qdrant_data:
+  nextcloud_data:
+  nextcloud_db_data:
 ```
 
 ---
@@ -492,11 +534,31 @@ spec:
 
 These are the logical boundaries, whether in monorepo or microservices:
 
-1. **Authentication Service** (`app/api/auth.py`)
-   - User login/logout
-   - JWT token management
-   - OIDC integration with Nextcloud
-   - Session management
+1. **Authentication Service** (`app/api/auth.py` + `app/core/security.py`)
+   - User registration with email validation
+   - User login/logout with JWT tokens
+   - JWT token management:
+     - Access tokens (15-minute expiry, HS256 algorithm)
+     - Refresh tokens (7-day expiry)
+     - Token verification and validation
+     - **Token revocation via Redis** (`app/services/token_revocation.py`):
+       - Dual-level revocation (individual tokens + all user tokens)
+       - Fail-open design for Redis unavailability
+       - Automatic TTL management
+       - Immediate session invalidation on logout
+   - Password hashing using bcrypt (via passlib)
+   - **Advanced password validation** (`app/core/password_validator.py`):
+     - Multi-criteria validation (uppercase, lowercase, digits, special chars)
+     - Password strength scoring (0-100)
+     - Common password rejection
+     - Sequential and repeated character detection
+   - Rate limiting on authentication endpoints:
+     - Registration: 5 requests/hour per IP
+     - Login: 10 requests/minute per IP
+     - Token refresh: 20 requests/minute per IP
+   - Authentication middleware (`get_current_user`, `get_current_admin_user`)
+   - Protected endpoints with JWT dependency injection
+   - **Comprehensive audit logging** for all authentication events (see Audit Service below)
 
 2. **Chat Service** (`app/api/chat.py` + `app/services/rag_service.py`)
    - Conversation management
@@ -534,10 +596,66 @@ These are the logical boundaries, whether in monorepo or microservices:
    - Local vs cloud decision
 
 8. **External APIs Service** (`app/services/external_apis/`)
-   - PubMed integration
-   - UpToDate integration
-   - Nextcloud WebDAV
-   - External search aggregation
+   - **Nextcloud Integration** (`app/services/nextcloud.py`):
+     - OCS API client for user provisioning
+     - User creation and management via REST API
+     - Health check for Nextcloud connectivity
+     - Authentication with admin credentials
+     - WebDAV integration (future phase)
+   - PubMed integration (future phase)
+   - UpToDate integration (future phase)
+   - External search aggregation (future phase)
+
+9. **Audit Service** (`app/services/audit_service.py` + `app/models/audit_log.py`)
+   - **HIPAA-compliant audit logging**:
+     - Immutable audit trail with SHA-256 integrity verification
+     - Comprehensive metadata capture (user, action, resource, timestamp)
+     - Request context tracking (IP address, user agent, request ID)
+     - Service context (service name, endpoint, status)
+     - Success/failure tracking with error details
+     - JSON metadata for additional context
+   - **Automated logging for authentication events**:
+     - User registration, login, logout
+     - Token refresh, token revocation
+     - Password changes, failed authentication attempts
+   - **Query capabilities**:
+     - Retrieve audit logs by user, action, timerange
+     - Integrity verification for tamper detection
+     - Composite indexes for efficient queries
+   - **Database table**: `audit_logs` (PostgreSQL with JSONB support)
+
+### Core Infrastructure
+
+**Request ID Middleware** (`app/core/request_id.py`):
+- Generates unique UUID v4 for each request
+- Accepts client-provided request IDs via `X-Request-ID` header
+- Returns request ID in response header for correlation
+- Enables distributed tracing across services
+- Stored in `request.state.request_id` for access in route handlers
+
+**API Envelope Standardization** (`app/core/api_envelope.py`):
+- **Consistent response format** for all endpoints:
+  ```json
+  {
+    "success": true/false,
+    "data": {...} | null,
+    "error": {code, message, details, field} | null,
+    "metadata": {version, request_id, pagination},
+    "timestamp": "2024-11-20T12:00:00Z"
+  }
+  ```
+- **Standard error codes** (`ErrorCodes` class):
+  - INVALID_CREDENTIALS, TOKEN_EXPIRED, TOKEN_REVOKED
+  - WEAK_PASSWORD, VALIDATION_ERROR, NOT_FOUND
+  - UNAUTHORIZED, FORBIDDEN, INTERNAL_ERROR
+- **Helper functions**:
+  - `success_response(data, request_id, version, pagination)`
+  - `error_response(code, message, details, field, request_id)`
+- **Pagination support** via `PaginationMetadata` model
+- **Benefits**:
+  - Simplified client-side error handling
+  - Consistent API experience across all endpoints
+  - Built-in request correlation for debugging
 
 ### API Contracts
 

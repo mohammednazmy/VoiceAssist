@@ -1,0 +1,34 @@
+# HPA patches for development environment
+# Reduced replicas and relaxed thresholds
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: voiceassist-server-hpa
+spec:
+  minReplicas: 1  # Reduced from 2
+  maxReplicas: 3  # Reduced from 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80  # Relaxed from 70%
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: voiceassist-worker-hpa
+spec:
+  minReplicas: 1  # Same as base
+  maxReplicas: 2  # Reduced from 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 85  # Relaxed from 80%

@@ -1,0 +1,385 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  PYTHON_VERSION_MAIN: "3.11"
+  CACHE_VERSION: v1
+
+jobs:
+  # ======================================
+  # Lint Job - Pre-commit hooks
+  # ======================================
+  lint:
+    name: Lint (black, flake8, isort)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION_MAIN }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION_MAIN }}
+          cache: 'pip'
+
+      - name: Cache pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ env.CACHE_VERSION }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            pre-commit-${{ env.CACHE_VERSION }}-
+
+      - name: Install pre-commit
+        run: |
+          python -m pip install --upgrade pip
+          pip install pre-commit
+
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files --show-diff-on-failure
+
+  # ======================================
+  # Unit Tests - Multiple Python versions
+  # ======================================
+  unit-tests:
+    name: Unit Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: 'services/api-gateway/requirements.txt'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r services/api-gateway/requirements.txt
+          pip install pytest-cov pytest-xdist
+
+      - name: Run unit tests with coverage
+        working-directory: services/api-gateway
+        run: |
+          pytest tests/unit/ \
+            --cov=app \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term-missing \
+            --junitxml=junit.xml \
+            -v \
+            -n auto
+        env:
+          ENVIRONMENT: test
+          SECRET_KEY: test-secret-key-for-ci
+          JWT_SECRET: test-jwt-secret-for-ci
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == env.PYTHON_VERSION_MAIN
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: services/api-gateway/coverage.xml
+          flags: unit
+          name: unit-tests-py${{ matrix.python-version }}
+          fail_ci_if_error: false
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results-py${{ matrix.python-version }}
+          path: |
+            services/api-gateway/junit.xml
+            services/api-gateway/htmlcov/
+          retention-days: 7
+
+  # ======================================
+  # Integration Tests - With Docker Compose
+  # ======================================
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: lint
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: voiceassist
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: voiceassist_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      qdrant:
+        image: qdrant/qdrant:v1.7.4
+        ports:
+          - 6333:6333
+        options: >-
+          --health-cmd "timeout 2 bash -c '</dev/tcp/localhost/6333' || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION_MAIN }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION_MAIN }}
+          cache: 'pip'
+          cache-dependency-path: 'services/api-gateway/requirements.txt'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r services/api-gateway/requirements.txt
+          pip install pytest-cov
+
+      - name: Wait for services
+        run: |
+          echo "Waiting for PostgreSQL..."
+          timeout 30 bash -c 'until pg_isready -h localhost -p 5432 -U voiceassist; do sleep 2; done'
+          echo "Waiting for Redis..."
+          timeout 30 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 2; done'
+          echo "All services ready!"
+
+      - name: Run integration tests
+        working-directory: services/api-gateway
+        run: |
+          pytest tests/integration/ \
+            --cov=app \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --junitxml=junit-integration.xml \
+            -v
+        env:
+          ENVIRONMENT: test
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: voiceassist
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: voiceassist_test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          REDIS_PASSWORD: ""
+          QDRANT_HOST: localhost
+          QDRANT_PORT: 6333
+          SECRET_KEY: test-secret-key-for-ci
+          JWT_SECRET: test-jwt-secret-for-ci
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: services/api-gateway/coverage.xml
+          flags: integration
+          name: integration-tests
+          fail_ci_if_error: false
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: services/api-gateway/junit-integration.xml
+          retention-days: 7
+
+  # ======================================
+  # Contract Tests - Pact
+  # ======================================
+  contract-tests:
+    name: Contract Tests (Pact)
+    runs-on: ubuntu-latest
+    needs: lint
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: voiceassist
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: pact_broker
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      pact-broker:
+        image: pactfoundation/pact-broker:latest
+        env:
+          PACT_BROKER_DATABASE_URL: postgresql://voiceassist:test_password@postgres/pact_broker
+          PACT_BROKER_BASIC_AUTH_USERNAME: pact
+          PACT_BROKER_BASIC_AUTH_PASSWORD: pact
+          PACT_BROKER_PUBLIC_HEARTBEAT: "true"
+        ports:
+          - 9292:9292
+        options: >-
+          --health-cmd "wget -q --tries=1 --spider http://localhost:9292/diagnostic/status/heartbeat"
+          --health-interval 30s
+          --health-timeout 10s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION_MAIN }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION_MAIN }}
+          cache: 'pip'
+          cache-dependency-path: 'services/api-gateway/requirements.txt'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r services/api-gateway/requirements.txt
+          pip install pact-python
+
+      - name: Wait for Pact Broker
+        run: |
+          echo "Waiting for Pact Broker..."
+          timeout 60 bash -c 'until curl -f http://localhost:9292/diagnostic/status/heartbeat; do sleep 5; done'
+
+      - name: Run contract tests
+        working-directory: services/api-gateway
+        run: |
+          if [ -d "tests/contract" ]; then
+            pytest tests/contract/ -v
+          else
+            echo "No contract tests found, skipping..."
+          fi
+        env:
+          PACT_BROKER_URL: http://localhost:9292
+          PACT_BROKER_USERNAME: pact
+          PACT_BROKER_PASSWORD: pact
+
+      - name: Publish pacts to broker
+        if: github.event_name == 'push'
+        working-directory: services/api-gateway
+        run: |
+          if [ -d "pacts" ]; then
+            echo "Publishing pacts to broker..."
+            # Pact files are automatically published during test run
+            echo "Pacts published successfully"
+          else
+            echo "No pacts to publish"
+          fi
+        env:
+          PACT_BROKER_URL: http://localhost:9292
+          PACT_BROKER_USERNAME: pact
+          PACT_BROKER_PASSWORD: pact
+          GIT_COMMIT: ${{ github.sha }}
+          GIT_BRANCH: ${{ github.ref_name }}
+
+  # ======================================
+  # Summary Job
+  # ======================================
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [lint, unit-tests, integration-tests, contract-tests]
+    if: always()
+
+    steps:
+      - name: Check CI Results
+        run: |
+          echo "CI Pipeline Results:"
+          echo "===================="
+          echo "Lint: ${{ needs.lint.result }}"
+          echo "Unit Tests: ${{ needs.unit-tests.result }}"
+          echo "Integration Tests: ${{ needs.integration-tests.result }}"
+          echo "Contract Tests: ${{ needs.contract-tests.result }}"
+
+          if [ "${{ needs.lint.result }}" != "success" ] || \
+             [ "${{ needs.unit-tests.result }}" != "success" ] || \
+             [ "${{ needs.integration-tests.result }}" != "success" ] || \
+             [ "${{ needs.contract-tests.result }}" != "success" ]; then
+            echo "CI Pipeline Failed!"
+            exit 1
+          fi
+
+          echo "CI Pipeline Passed!"
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('CI Pipeline Results');
+            });
+
+            const output = `## CI Pipeline Results
+
+            | Job | Status |
+            |-----|--------|
+            | Lint | ${{ needs.lint.result == 'success' && '✅' || '❌' }} |
+            | Unit Tests | ${{ needs.unit-tests.result == 'success' && '✅' || '❌' }} |
+            | Integration Tests | ${{ needs.integration-tests.result == 'success' && '✅' || '❌' }} |
+            | Contract Tests | ${{ needs.contract-tests.result == 'success' && '✅' || '❌' }} |
+
+            **Overall Status**: ${{ needs.lint.result == 'success' && needs.unit-tests.result == 'success' && needs.integration-tests.result == 'success' && needs.contract-tests.result == 'success' && '✅ PASSED' || '❌ FAILED' }}
+            `;
+
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              });
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              });
+            }

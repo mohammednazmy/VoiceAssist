@@ -1,0 +1,55 @@
+# Locust Load Testing Dependencies for VoiceAssist Phase 10
+
+# Core Locust
+locust==2.23.1
+
+# Fast HTTP client for better performance
+geventhttpclient==2.0.11
+
+# WebSocket support
+websocket-client==1.7.0
+locust-plugins==4.3.1
+
+# HTTP requests
+requests==2.31.0
+
+# Data processing and analysis
+pandas==2.1.4
+numpy==1.26.3
+
+# Reporting and visualization
+matplotlib==3.8.2
+seaborn==0.13.0
+
+# JSON handling
+ujson==5.9.0
+
+# Environment variables
+python-dotenv==1.0.0
+
+# Logging
+colorlog==6.8.0
+
+# Performance monitoring
+psutil==5.9.7
+
+# Data validation
+pydantic==2.5.3
+
+# Testing utilities
+Faker==22.0.0
+
+# CSV handling
+tabulate==0.9.0
+
+# Statistics
+scipy==1.11.4
+
+# Concurrent operations
+gevent==23.9.1
+greenlet==3.0.3
+
+# Optional: For advanced reporting
+# Uncomment if needed
+# plotly==5.18.0
+# jinja2==3.1.2

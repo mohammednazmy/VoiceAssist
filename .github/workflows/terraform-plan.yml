@@ -1,0 +1,444 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/terraform-plan.yml'
+
+env:
+  TF_VERSION: "1.6.0"
+  AWS_REGION: us-east-1
+  TF_IN_AUTOMATION: "true"
+
+jobs:
+  # ======================================
+  # Terraform Format Check
+  # ======================================
+  terraform-fmt:
+    name: Terraform Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Check Terraform formatting
+        run: |
+          cd infrastructure/terraform
+          terraform fmt -check -recursive -diff
+        continue-on-error: true
+        id: fmt
+
+      - name: Comment formatting issues
+        if: steps.fmt.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `#### Terraform Format Check: \`${{ steps.fmt.outcome }}\`
+
+            Terraform files are not properly formatted. Please run:
+            \`\`\`bash
+            cd infrastructure/terraform
+            terraform fmt -recursive
+            \`\`\`
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+  # ======================================
+  # Terraform Validate
+  # ======================================
+  terraform-validate:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+    needs: terraform-fmt
+
+    strategy:
+      matrix:
+        environment: [staging, production]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: |
+          cd infrastructure/terraform
+          terraform init \
+            -backend-config="key=voiceassist/${{ matrix.environment }}/terraform.tfstate"
+        env:
+          TF_WORKSPACE: ${{ matrix.environment }}
+
+      - name: Terraform Validate
+        id: validate
+        run: |
+          cd infrastructure/terraform
+          terraform validate -no-color
+
+      - name: Upload validation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-results-${{ matrix.environment }}
+          path: infrastructure/terraform/.terraform
+          retention-days: 7
+
+  # ======================================
+  # Terraform Plan - Staging
+  # ======================================
+  terraform-plan-staging:
+    name: Terraform Plan (Staging)
+    runs-on: ubuntu-latest
+    needs: terraform-validate
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: |
+          cd infrastructure/terraform
+          terraform init \
+            -backend-config="key=voiceassist/staging/terraform.tfstate"
+        env:
+          TF_WORKSPACE: staging
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          cd infrastructure/terraform
+          terraform plan \
+            -var-file="environments/staging.tfvars" \
+            -out=staging-plan.tfplan \
+            -no-color
+        continue-on-error: true
+
+      - name: Save plan output
+        if: always()
+        run: |
+          cd infrastructure/terraform
+          terraform show -no-color staging-plan.tfplan > staging-plan.txt
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-staging
+          path: |
+            infrastructure/terraform/staging-plan.tfplan
+            infrastructure/terraform/staging-plan.txt
+          retention-days: 30
+
+      - name: Comment on PR - Staging
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const fs = require('fs');
+            const planOutput = fs.readFileSync('infrastructure/terraform/staging-plan.txt', 'utf8');
+            const truncatedPlan = planOutput.length > 65000 ? planOutput.substring(0, 65000) + '\n\n... (truncated)' : planOutput;
+
+            const output = `#### Terraform Plan (Staging): \`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`hcl
+            ${truncatedPlan}
+            \`\`\`
+
+            </details>
+
+            **Pusher**: @${{ github.actor }}
+            **Action**: ${{ github.event_name }}
+            **Workspace**: staging
+            `;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Terraform Plan (Staging)');
+            });
+
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              });
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              });
+            }
+
+  # ======================================
+  # Terraform Plan - Production
+  # ======================================
+  terraform-plan-production:
+    name: Terraform Plan (Production)
+    runs-on: ubuntu-latest
+    needs: terraform-validate
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: |
+          cd infrastructure/terraform
+          terraform init \
+            -backend-config="key=voiceassist/production/terraform.tfstate"
+        env:
+          TF_WORKSPACE: production
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          cd infrastructure/terraform
+          terraform plan \
+            -var-file="environments/production.tfvars" \
+            -out=production-plan.tfplan \
+            -no-color
+        continue-on-error: true
+
+      - name: Save plan output
+        if: always()
+        run: |
+          cd infrastructure/terraform
+          terraform show -no-color production-plan.tfplan > production-plan.txt
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-production
+          path: |
+            infrastructure/terraform/production-plan.tfplan
+            infrastructure/terraform/production-plan.txt
+          retention-days: 30
+
+      - name: Comment on PR - Production
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const fs = require('fs');
+            const planOutput = fs.readFileSync('infrastructure/terraform/production-plan.txt', 'utf8');
+            const truncatedPlan = planOutput.length > 65000 ? planOutput.substring(0, 65000) + '\n\n... (truncated)' : planOutput;
+
+            const output = `#### Terraform Plan (Production): \`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`hcl
+            ${truncatedPlan}
+            \`\`\`
+
+            </details>
+
+            **Pusher**: @${{ github.actor }}
+            **Action**: ${{ github.event_name }}
+            **Workspace**: production
+
+            ⚠️ **WARNING**: This plan will affect production infrastructure. Review carefully!
+            `;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Terraform Plan (Production)');
+            });
+
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              });
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              });
+            }
+
+  # ======================================
+  # Cost Estimation with Infracost
+  # ======================================
+  terraform-cost:
+    name: Infrastructure Cost Estimation
+    runs-on: ubuntu-latest
+    needs: [terraform-plan-staging, terraform-plan-production]
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v2
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Download staging plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-staging
+          path: infrastructure/terraform/
+
+      - name: Download production plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-production
+          path: infrastructure/terraform/
+
+      - name: Generate cost estimate - Staging
+        run: |
+          cd infrastructure/terraform
+          infracost breakdown \
+            --path staging-plan.tfplan \
+            --format json \
+            --out-file infracost-staging.json
+
+      - name: Generate cost estimate - Production
+        run: |
+          cd infrastructure/terraform
+          infracost breakdown \
+            --path production-plan.tfplan \
+            --format json \
+            --out-file infracost-production.json
+
+      - name: Post cost comment
+        run: |
+          cd infrastructure/terraform
+          infracost comment github \
+            --path infracost-*.json \
+            --repo ${{ github.repository }} \
+            --pull-request ${{ github.event.pull_request.number }} \
+            --github-token ${{ secrets.GITHUB_TOKEN }} \
+            --behavior update
+
+  # ======================================
+  # Security Scan with Checkov
+  # ======================================
+  terraform-security:
+    name: Terraform Security Scan
+    runs-on: ubuntu-latest
+    needs: terraform-validate
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: infrastructure/terraform
+          framework: terraform
+          output_format: sarif
+          output_file_path: checkov-results.sarif
+          soft_fail: true
+
+      - name: Upload Checkov results to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: checkov-results.sarif
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: infrastructure/terraform
+          soft_fail: true
+
+  # ======================================
+  # Summary
+  # ======================================
+  terraform-summary:
+    name: Terraform Plan Summary
+    runs-on: ubuntu-latest
+    needs: [terraform-plan-staging, terraform-plan-production]
+    if: always()
+
+    steps:
+      - name: Check results
+        run: |
+          echo "Terraform Plan Results:"
+          echo "======================"
+          echo "Staging Plan: ${{ needs.terraform-plan-staging.result }}"
+          echo "Production Plan: ${{ needs.terraform-plan-production.result }}"
+
+          if [ "${{ needs.terraform-plan-staging.result }}" == "failure" ] || \
+             [ "${{ needs.terraform-plan-production.result }}" == "failure" ]; then
+            echo "::error::Terraform planning failed!"
+            exit 1
+          fi
+
+          echo "Terraform planning completed successfully!"

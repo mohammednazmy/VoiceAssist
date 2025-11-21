@@ -1,0 +1,366 @@
+name: Security Scanning
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ======================================
+  # Bandit - Python Security Linter
+  # ======================================
+  bandit:
+    name: Bandit Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Bandit
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit[toml]
+
+      - name: Run Bandit scan
+        run: |
+          bandit -r services/api-gateway/app \
+            -f json \
+            -o bandit-report.json \
+            --severity-level medium \
+            --confidence-level medium \
+            || true
+
+      - name: Run Bandit scan (text output)
+        run: |
+          bandit -r services/api-gateway/app \
+            -f txt \
+            --severity-level medium \
+            --confidence-level medium
+
+      - name: Check for high severity issues
+        run: |
+          if [ -f bandit-report.json ]; then
+            HIGH_COUNT=$(python -c "import json; data=json.load(open('bandit-report.json')); print(len([m for m in data.get('results', []) if m['issue_severity'] == 'HIGH']))")
+            echo "High severity issues found: $HIGH_COUNT"
+            if [ "$HIGH_COUNT" -gt 0 ]; then
+              echo "::error::Found $HIGH_COUNT high severity security issues"
+              exit 1
+            fi
+          fi
+
+      - name: Upload Bandit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-security-report
+          path: bandit-report.json
+          retention-days: 30
+
+  # ======================================
+  # Safety - Dependency Vulnerability Check
+  # ======================================
+  safety:
+    name: Safety - Dependency Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Safety
+        run: |
+          python -m pip install --upgrade pip
+          pip install safety
+
+      - name: Run Safety check
+        run: |
+          safety check \
+            --file=services/api-gateway/requirements.txt \
+            --json \
+            --output safety-report.json \
+            || true
+
+      - name: Display Safety results
+        run: |
+          safety check --file=services/api-gateway/requirements.txt || true
+
+      - name: Check for critical vulnerabilities
+        run: |
+          if [ -f safety-report.json ]; then
+            # Check if there are any vulnerabilities
+            VULN_COUNT=$(python -c "import json; data=json.load(open('safety-report.json')); print(len(data.get('vulnerabilities', [])))" 2>/dev/null || echo "0")
+            echo "Vulnerabilities found: $VULN_COUNT"
+
+            if [ "$VULN_COUNT" -gt 0 ]; then
+              echo "::warning::Found $VULN_COUNT dependency vulnerabilities. Review safety-report.json"
+            fi
+          fi
+
+      - name: Upload Safety report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: safety-dependency-report
+          path: safety-report.json
+          retention-days: 30
+
+  # ======================================
+  # Trivy - Container Image Scanning
+  # ======================================
+  trivy:
+    name: Trivy Container Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t voiceassist-api:scan services/api-gateway
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: voiceassist-api:scan
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Run Trivy scan (table output)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: voiceassist-api:scan
+          format: 'table'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload Trivy results to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Check for critical vulnerabilities
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy image \
+            --severity CRITICAL \
+            --exit-code 1 \
+            voiceassist-api:scan
+
+  # ======================================
+  # Gitleaks - Secret Scanning
+  # ======================================
+  secret-scan:
+    name: Gitleaks Secret Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for better secret detection
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Optional: for Gitleaks Pro
+
+      - name: Upload Gitleaks report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report
+          path: results.sarif
+          retention-days: 30
+
+  # ======================================
+  # Snyk - Additional Security Scanning
+  # ======================================
+  snyk:
+    name: Snyk Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r services/api-gateway/requirements.txt
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/python-3.10@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --file=services/api-gateway/requirements.txt --severity-threshold=high
+
+      - name: Upload Snyk report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-report
+          path: snyk-report.json
+          retention-days: 30
+
+  # ======================================
+  # OWASP Dependency Check
+  # ======================================
+  owasp-dependency-check:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'VoiceAssist'
+          path: 'services/api-gateway'
+          format: 'HTML'
+          args: >
+            --enableRetired
+            --failOnCVSS 7
+
+      - name: Upload OWASP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-dependency-check-report
+          path: reports
+          retention-days: 30
+
+  # ======================================
+  # Security Summary
+  # ======================================
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [bandit, safety, trivy, secret-scan]
+    if: always()
+
+    steps:
+      - name: Check Security Results
+        run: |
+          echo "Security Scan Results:"
+          echo "====================="
+          echo "Bandit: ${{ needs.bandit.result }}"
+          echo "Safety: ${{ needs.safety.result }}"
+          echo "Trivy: ${{ needs.trivy.result }}"
+          echo "Secret Scan: ${{ needs.secret-scan.result }}"
+
+      - name: Create GitHub Issue for failures
+        if: |
+          needs.bandit.result == 'failure' ||
+          needs.trivy.result == 'failure' ||
+          needs.secret-scan.result == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🚨 Security Scan Failures Detected';
+            const body = `
+            ## Security Scan Results
+
+            Critical security issues were detected in the automated security scan.
+
+            | Scan | Status |
+            |------|--------|
+            | Bandit (Python Security) | ${{ needs.bandit.result }} |
+            | Safety (Dependencies) | ${{ needs.safety.result }} |
+            | Trivy (Container) | ${{ needs.trivy.result }} |
+            | Secret Scan | ${{ needs.secret-scan.result }} |
+
+            **Triggered by**: ${context.eventName}
+            **Branch**: ${context.ref}
+            **Commit**: ${context.sha}
+            **Run**: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+
+            ## Action Required
+
+            Please review the security scan reports and address all high/critical severity issues.
+
+            ### Next Steps:
+            1. Download and review the security reports from the workflow artifacts
+            2. Fix identified vulnerabilities
+            3. Re-run security scans to verify fixes
+            4. Close this issue once all critical issues are resolved
+
+            ---
+            *This issue was automatically created by GitHub Actions*
+            `;
+
+            // Check if issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'security,automated'
+            });
+
+            const existingIssue = issues.data.find(issue => issue.title === title);
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## Updated Security Scan Results\n\n${body}`
+              });
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['security', 'automated', 'high-priority']
+              });
+            }
+
+      - name: Final check
+        run: |
+          if [ "${{ needs.bandit.result }}" == "failure" ] || \
+             [ "${{ needs.trivy.result }}" == "failure" ] || \
+             [ "${{ needs.secret-scan.result }}" == "failure" ]; then
+            echo "::error::Critical security issues detected!"
+            exit 1
+          fi
+          echo "Security scans completed successfully!"

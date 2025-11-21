@@ -1,0 +1,93 @@
+# Chaos Experiment: Network Latency (Phase 7 - P3.5)
+#
+# Injects network latency to simulate slow connections.
+# Expected: API continues to work but with increased response times
+#
+# Run: chaos run chaos/experiments/network-latency.yaml
+# Requires: toxiproxy (docker compose service)
+
+version: 1.0.0
+title: "High Network Latency"
+description: "What happens when network latency increases to 500ms?"
+
+tags:
+  - network
+  - latency
+  - performance
+
+configuration:
+  api_url: "http://localhost:8000"
+  toxiproxy_url: "http://localhost:8474"
+
+steady-state-hypothesis:
+  title: "API responds within acceptable time"
+  probes:
+    - name: "api-response-time-baseline"
+      type: probe
+      provider:
+        type: http
+        url: "${api_url}/health"
+        timeout: 2
+        expect:
+          - status: 200
+
+method:
+  - name: "inject-latency"
+    type: action
+    provider:
+      type: http
+      url: "${toxiproxy_url}/proxies/voiceassist-api/toxics"
+      method: POST
+      headers:
+        Content-Type: "application/json"
+      body:
+        name: "latency_toxic"
+        type: "latency"
+        attributes:
+          latency: 500  # 500ms delay
+          jitter: 50    # ±50ms variance
+    pauses:
+      after: 2
+
+  - name: "measure-degraded-performance"
+    type: probe
+    provider:
+      type: http
+      url: "${api_url}/health"
+      timeout: 10  # Longer timeout for latency
+      expect:
+        - status: 200
+
+  - name: "verify-no-timeouts"
+    type: probe
+    tolerance:
+      type: probe
+      provider:
+        type: http
+        url: "${api_url}/api/auth/login"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+        body:
+          email: "test@example.com"
+          password: "test"
+        timeout: 15  # Should complete even with latency
+        expect:
+          - status: [200, 401, 422]  # Any non-timeout response
+
+rollbacks:
+  - name: "remove-latency-toxic"
+    type: action
+    provider:
+      type: http
+      url: "${toxiproxy_url}/proxies/voiceassist-api/toxics/latency_toxic"
+      method: DELETE
+
+  - name: "verify-performance-restored"
+    type: probe
+    provider:
+      type: http
+      url: "${api_url}/health"
+      timeout: 2
+      expect:
+        - status: 200

@@ -12,6 +12,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from app.services.llm_client import LLMClient, LLMRequest, LLMResponse
+from app.services.search_aggregator import SearchAggregator, SearchResult
 # NOTE: In future phases we will inject concrete implementations for:
 # - PHI detector (app.services.phi_detector)
 # - semantic search / KB (app.services.search_aggregator)
@@ -62,32 +63,63 @@ class QueryOrchestrator:
     def __init__(self):
         # In future, accept Settings and injected clients (DB, Qdrant, etc.)
         self.llm_client = LLMClient()
+        self.search_aggregator = SearchAggregator()
 
     async def handle_query(
         self,
         request: QueryRequest,
         trace_id: Optional[str] = None,
     ) -> QueryResponse:
-        """Handle a clinician query.
+        """Handle a clinician query with RAG pipeline.
 
-        Current implementation uses LLMClient for basic text generation.
-        Later phases will add the full RAG pipeline.
+        Phase 5 implementation:
+        1. Semantic search over knowledge base
+        2. Assemble context from top results
+        3. Generate LLM response with context
+        4. Extract and return citations
         """
         now = datetime.utcnow()
         message_id = f"msg-{int(now.timestamp())}"
 
-        # TODO: implement full flow:
-        # - PHI detection (app.services.phi_detector) - for now assume no PHI
-        # - intent classification - for now use "other"
-        # - source selection
-        # - semantic search over KB (Qdrant/pgvector)
-        # - external evidence (OpenEvidence, PubMed)
-        # - streaming support
+        # Step 1: Perform semantic search over knowledge base
+        search_results: List[SearchResult] = []
+        try:
+            search_results = await self.search_aggregator.search(
+                query=request.query,
+                top_k=5,
+                score_threshold=0.2  # Lower threshold for broader recall
+            )
+        except Exception as e:
+            # Log error but continue with empty results (graceful degradation)
+            import logging
+            logging.getLogger(__name__).warning(
+                f"Search failed, continuing without RAG context: {e}"
+            )
 
-        # For now: call LLM directly with the query
-        # In production this would be the final synthesis step after RAG
+        # Step 2: Build context from search results
+        context = ""
+        if search_results:
+            context = self.search_aggregator.format_context_for_rag(search_results)
+
+        # Step 3: Construct prompt with context
+        if context:
+            prompt = (
+                "You are a clinical decision support assistant. "
+                "Use the following context from medical literature to answer the question.\n\n"
+                f"Context:\n{context}\n\n"
+                f"Question: {request.query}\n\n"
+                "Answer based on the context provided. Be concise and clinical."
+            )
+        else:
+            # Fallback when no context available
+            prompt = (
+                "You are a clinical decision support assistant. "
+                f"Answer this query: {request.query}"
+            )
+
+        # Step 4: Generate LLM response
         llm_request = LLMRequest(
-            prompt=f"You are a clinical decision support assistant. Answer this query: {request.query}",
+            prompt=prompt,
             intent="other",
             temperature=0.1,
             max_tokens=512,
@@ -97,10 +129,22 @@ class QueryOrchestrator:
 
         llm_response: LLMResponse = await self.llm_client.generate(llm_request)
 
+        # Step 5: Extract citations
+        citation_dicts = self.search_aggregator.extract_citations(search_results)
+        citations = [
+            Citation(
+                id=cit["id"],
+                source_type=cit["source_type"],
+                title=cit["title"],
+                url=cit.get("url")
+            )
+            for cit in citation_dicts
+        ]
+
         return QueryResponse(
             session_id=request.session_id or "session-stub",
             message_id=message_id,
             answer=llm_response.text,
             created_at=now,
-            citations=[],
+            citations=citations,
         )

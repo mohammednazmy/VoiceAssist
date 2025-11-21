@@ -1,0 +1,9 @@
+---
+# VoiceAssist V2 - Monitoring Role Handlers
+# Phase 9: Infrastructure as Code
+
+- name: restart node_exporter
+  ansible.builtin.systemd:
+    name: node_exporter
+    state: restarted
+    daemon_reload: yes

@@ -1,0 +1,330 @@
+# Prometheus Alerting Rules for SLOs (Phase 7 - P2.3)
+#
+# These rules fire alerts when SLOs are violated or error budget is at risk.
+# Alerts use multi-window, multi-burn-rate approach from Google SRE guidelines.
+#
+# Severity levels:
+# - critical: SLO violated, immediate action required
+# - warning: SLO at risk, investigation needed
+# - info: FYI, no immediate action needed
+
+groups:
+  # ================================================================
+  # API Availability Alerts
+  # ================================================================
+  - name: slo_api_availability_alerts
+    rules:
+      # Critical: SLO violated (< 99.9% over 5 minutes)
+      - alert: APIAvailabilitySLOViolation
+        expr: slo:api_availability:ratio_rate5m < 0.999
+        for: 5m
+        labels:
+          severity: critical
+          slo: availability
+          component: api-gateway
+        annotations:
+          summary: "API availability below SLO target (99.9%)"
+          description: |
+            Current availability: {{ $value | humanizePercentage }}
+            Target: 99.9%
+            Error rate: {{ with printf "1 - %f" $value }}{{ . | humanizePercentage }}{{ end }}
+
+      # Critical: High error rate (> 1% 5xx errors)
+      - alert: HighErrorRate
+        expr: slo:api_error_rate:ratio_rate5m > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          slo: availability
+          component: api-gateway
+        annotations:
+          summary: "High rate of 5xx errors (> 1%)"
+          description: |
+            Current error rate: {{ $value | humanizePercentage }}
+            Threshold: 1%
+
+      # Warning: Error budget burn rate too high
+      # Burning error budget faster than 14.4x sustainable rate over 1 hour
+      # will exhaust budget in < 2 days
+      - alert: ErrorBudgetBurnRateHigh
+        expr: slo:error_budget_burn_rate:ratio > 14.4
+        for: 1h
+        labels:
+          severity: warning
+          slo: availability
+          component: api-gateway
+        annotations:
+          summary: "Error budget burning too fast"
+          description: |
+            Current burn rate: {{ $value }}x sustainable rate
+            Time to exhaustion: {{ with query "slo:error_budget_hours_remaining:hours" }}{{ . | first | value | humanizeDuration }}{{ end }}
+            Remaining budget: {{ with query "slo:error_budget_remaining:percent" }}{{ . | first | value }}%{{ end }}
+
+      # Warning: Error budget depleted (< 25% remaining)
+      - alert: ErrorBudgetDepleted
+        expr: slo:error_budget_remaining:percent < 25
+        for: 15m
+        labels:
+          severity: warning
+          slo: availability
+          component: api-gateway
+        annotations:
+          summary: "Error budget critically low (< 25%)"
+          description: |
+            Remaining error budget: {{ $value }}%
+            Action required: Feature freeze until budget recovers
+
+  # ================================================================
+  # API Latency Alerts
+  # ================================================================
+  - name: slo_api_latency_alerts
+    rules:
+      # Critical: P95 latency exceeds SLO (> 500ms)
+      - alert: APILatencyP95SLOViolation
+        expr: slo:api_latency_p95_overall:seconds > 0.5
+        for: 5m
+        labels:
+          severity: critical
+          slo: latency
+          component: api-gateway
+        annotations:
+          summary: "API P95 latency exceeds SLO (500ms)"
+          description: |
+            Current P95 latency: {{ $value | humanizeDuration }}
+            Target: 500ms
+
+      # Warning: P95 latency approaching SLO (> 400ms)
+      - alert: APILatencyP95High
+        expr: slo:api_latency_p95_overall:seconds > 0.4
+        for: 10m
+        labels:
+          severity: warning
+          slo: latency
+          component: api-gateway
+        annotations:
+          summary: "API P95 latency approaching SLO"
+          description: |
+            Current P95 latency: {{ $value | humanizeDuration }}
+            Warning threshold: 400ms
+            SLO target: 500ms
+
+      # Critical: P99 latency exceeds SLO (> 1s)
+      - alert: APILatencyP99SLOViolation
+        expr: slo:api_latency_p99:seconds > 1.0
+        for: 5m
+        labels:
+          severity: critical
+          slo: latency
+          component: api-gateway
+        annotations:
+          summary: "API P99 latency exceeds SLO (1s)"
+          description: |
+            Current P99 latency: {{ $value | humanizeDuration }}
+            Target: 1s
+
+  # ================================================================
+  # RAG Query Quality Alerts
+  # ================================================================
+  - name: slo_rag_quality_alerts
+    rules:
+      # Critical: RAG query success rate below SLO (< 99%)
+      - alert: RAGQuerySuccessRateSLOViolation
+        expr: slo:rag_success_rate:ratio_rate5m < 0.99
+        for: 10m
+        labels:
+          severity: critical
+          slo: quality
+          component: rag-service
+        annotations:
+          summary: "RAG query success rate below SLO (99%)"
+          description: |
+            Current success rate: {{ $value | humanizePercentage }}
+            Target: 99%
+
+      # Warning: Cache hit rate below target (< 30%)
+      - alert: RAGCacheHitRateLow
+        expr: slo:rag_cache_hit_rate:ratio_rate1h < 0.30
+        for: 1h
+        labels:
+          severity: warning
+          slo: performance
+          component: cache
+        annotations:
+          summary: "RAG cache hit rate below target (30%)"
+          description: |
+            Current cache hit rate: {{ $value | humanizePercentage }}
+            Target: 30%
+            Impact: Increased latency and OpenAI API costs
+
+      # Warning: Low average search results (< 2)
+      - alert: RAGSearchResultsLow
+        expr: slo:rag_avg_results:count < 2
+        for: 30m
+        labels:
+          severity: warning
+          slo: quality
+          component: rag-service
+        annotations:
+          summary: "Average RAG search results below target"
+          description: |
+            Average results: {{ $value }}
+            Target: > 2 results
+            Possible cause: Insufficient indexed documents
+
+      # Warning: RAG query latency high (P95 > 2s)
+      - alert: RAGQueryLatencyHigh
+        expr: slo:rag_latency_p95:seconds > 2.0
+        for: 10m
+        labels:
+          severity: warning
+          slo: latency
+          component: rag-service
+        annotations:
+          summary: "RAG query latency exceeds target"
+          description: |
+            Current P95 latency: {{ $value | humanizeDuration }}
+            Target: < 2s
+
+  # ================================================================
+  # Database Performance Alerts
+  # ================================================================
+  - name: slo_database_alerts
+    rules:
+      # Critical: Database query latency exceeds SLO (P95 > 100ms)
+      - alert: DatabaseLatencySLOViolation
+        expr: slo:db_latency_p95:seconds > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          slo: latency
+          component: database
+        annotations:
+          summary: "Database query latency exceeds SLO (100ms)"
+          description: |
+            Current P95 latency: {{ $value | humanizeDuration }}
+            Target: 100ms
+
+      # Critical: Database connection failures
+      - alert: DatabaseConnectionFailureRateHigh
+        expr: slo:db_connection_success_rate:ratio_rate5m < 0.999
+        for: 5m
+        labels:
+          severity: critical
+          slo: availability
+          component: database
+        annotations:
+          summary: "High database connection failure rate"
+          description: |
+            Connection success rate: {{ $value | humanizePercentage }}
+            Target: 99.9%
+
+      # Warning: Database connection pool utilization high (> 80%)
+      - alert: DatabasePoolUtilizationHigh
+        expr: slo:db_pool_utilization:ratio > 0.80
+        for: 10m
+        labels:
+          severity: warning
+          slo: capacity
+          component: database
+        annotations:
+          summary: "Database connection pool utilization high"
+          description: |
+            Current utilization: {{ $value | humanizePercentage }}
+            Warning threshold: 80%
+            Action: Consider increasing pool size
+
+  # ================================================================
+  # Cache Performance Alerts
+  # ================================================================
+  - name: slo_cache_alerts
+    rules:
+      # Warning: Overall cache hit rate below target (< 40%)
+      - alert: CacheHitRateLow
+        expr: slo:cache_hit_rate:ratio_rate1h < 0.40
+        for: 1h
+        labels:
+          severity: warning
+          slo: performance
+          component: cache
+        annotations:
+          summary: "Cache hit rate below target (40%)"
+          description: |
+            Current hit rate: {{ $value | humanizePercentage }}
+            Target: 40%
+
+      # Warning: L1 cache hit rate low (< 60% of hits)
+      - alert: L1CacheHitRateLow
+        expr: slo:cache_l1_hit_rate:ratio_rate1h < 0.60
+        for: 1h
+        labels:
+          severity: warning
+          slo: performance
+          component: cache
+        annotations:
+          summary: "L1 cache hit rate below target"
+          description: |
+            L1 hit rate: {{ $value | humanizePercentage }} of all cache hits
+            Target: 60%
+            Possible cause: L1 cache too small or eviction too aggressive
+
+      # Info: Cache latency elevated (P95 > 10ms)
+      - alert: CacheLatencyElevated
+        expr: slo:cache_latency_p95:seconds > 0.01
+        for: 15m
+        labels:
+          severity: info
+          slo: latency
+          component: cache
+        annotations:
+          summary: "Cache operation latency elevated"
+          description: |
+            Current P95 latency: {{ $value | humanizeDuration }}
+            Target: 10ms
+
+  # ================================================================
+  # Document Processing Alerts
+  # ================================================================
+  - name: slo_document_processing_alerts
+    rules:
+      # Critical: Document processing success rate below SLO (< 95%)
+      - alert: DocumentProcessingSuccessRateSLOViolation
+        expr: slo:doc_processing_success_rate:ratio_rate1h < 0.95
+        for: 1h
+        labels:
+          severity: critical
+          slo: quality
+          component: document-processor
+        annotations:
+          summary: "Document processing success rate below SLO (95%)"
+          description: |
+            Current success rate: {{ $value | humanizePercentage }}
+            Target: 95%
+
+      # Warning: Document processing time high (P95 > 2 minutes)
+      - alert: DocumentProcessingTimeHigh
+        expr: slo:doc_processing_duration_p95:seconds > 120
+        for: 30m
+        labels:
+          severity: warning
+          slo: latency
+          component: document-processor
+        annotations:
+          summary: "Document processing time exceeds target"
+          description: |
+            Current P95 duration: {{ $value | humanizeDuration }}
+            Target: 2 minutes
+
+      # Warning: Document processing queue backlog (> 100 jobs)
+      - alert: DocumentProcessingQueueBacklog
+        expr: slo:doc_processing_queue_depth:count > 100
+        for: 15m
+        labels:
+          severity: warning
+          slo: capacity
+          component: document-processor
+        annotations:
+          summary: "Document processing queue backlog"
+          description: |
+            Current queue depth: {{ $value }}
+            Warning threshold: 100 jobs
+            Action: Consider scaling workers or investigating slow processing

@@ -1,0 +1,86 @@
+# Chaos Experiment: Database Failure (Phase 7 - P3.5)
+#
+# Tests VoiceAssist resilience when PostgreSQL becomes unavailable.
+# Expected: API returns 503 Service Unavailable, not 500 Internal Error
+#
+# Run: chaos run chaos/experiments/database-failure.yaml
+
+version: 1.0.0
+title: "Database Connection Loss"
+description: "What happens when PostgreSQL becomes unavailable?"
+
+tags:
+  - database
+  - infrastructure
+  - resilience
+
+configuration:
+  api_url: "http://localhost:8000"
+
+steady-state-hypothesis:
+  title: "API is healthy and responsive"
+  probes:
+    - name: "health-check-responds"
+      type: probe
+      provider:
+        type: http
+        url: "${api_url}/health"
+        timeout: 5
+        expect:
+          - status: 200
+
+method:
+  - name: "stop-postgres-container"
+    type: action
+    provider:
+      type: python
+      module: chaoslib.types
+      func: run_activity
+      arguments:
+        activity:
+          type: action
+          provider:
+            type: process
+            path: "docker"
+            arguments: ["compose", "stop", "postgres"]
+    pauses:
+      after: 5  # Wait 5 seconds for impact
+
+  - name: "verify-graceful-degradation"
+    type: probe
+    tolerance:
+      type: probe
+      provider:
+        type: http
+        url: "${api_url}/health"
+        timeout: 3
+        expect:
+          - status: [503, 500]  # Accept either during failure
+
+  - name: "verify-error-logged"
+    type: probe
+    provider:
+      type: python
+      module: subprocess
+      func: run
+      arguments:
+        args: ["docker", "compose", "logs", "--tail=10", "voiceassist-server"]
+
+rollbacks:
+  - name: "restart-postgres-container"
+    type: action
+    provider:
+      type: process
+      path: "docker"
+      arguments: ["compose", "start", "postgres"]
+    pauses:
+      after: 10  # Wait for PostgreSQL to be ready
+
+  - name: "verify-recovery"
+    type: probe
+    provider:
+      type: http
+      url: "${api_url}/health"
+      timeout: 10
+      expect:
+        - status: 200

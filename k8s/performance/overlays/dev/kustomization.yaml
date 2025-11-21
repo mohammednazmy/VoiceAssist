@@ -1,0 +1,30 @@
+# Development environment overlay
+# Reduced resources and relaxed limits for local development
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Reference base configuration
+bases:
+  - ../../
+
+# Override namespace for dev
+namespace: voiceassist-dev
+
+# Development-specific labels
+commonLabels:
+  environment: development
+
+# Patches for development environment
+patchesStrategicMerge:
+  - hpa-patch.yaml
+  - resource-patch.yaml
+
+# Development-specific ConfigMap
+configMapGenerator:
+  - name: autoscaling-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=debug
+      - METRICS_SCRAPE_INTERVAL=60s

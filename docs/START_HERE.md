@@ -15,9 +15,10 @@ This document is your entry point to the project. Choose your path below based o
 4. Start with [PHASE_00_INITIALIZATION.md](phases/PHASE_00_INITIALIZATION.md)
 
 ### For Experienced Developers
-1. Review [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) for system design
-2. Set up local environment: [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md)
-3. Jump to [Development Roadmap](#development-roadmap) to see phases
+1. Review **[UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md)** for complete system design (Phase 7 current state)
+2. Check [ARCHITECTURE_DIAGRAMS.md](architecture/ARCHITECTURE_DIAGRAMS.md) for visual diagrams
+3. Set up local environment: [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md)
+4. Jump to [Development Roadmap](#development-roadmap) to see phases
 
 ### For Clinicians
 1. Read [WEB_APP_SPECS.md](WEB_APP_SPECS.md) to understand clinical workflows
@@ -84,7 +85,9 @@ All documentation is in `/Users/mohammednazmy/VoiceAssist/docs/`. Here's the com
 | Document | Purpose | Audience |
 |----------|---------|----------|
 | **[START_HERE.md](START_HERE.md)** ⭐ | This file - project orientation | Everyone |
-| **[ARCHITECTURE_V2.md](ARCHITECTURE_V2.md)** ⭐ | System architecture, Docker Compose-first approach | Developers, DevOps |
+| **[UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md)** ⭐ **NEW** | **Canonical architecture reference (Phase 7)** | **Developers, Architects, DevOps** |
+| **[architecture/ARCHITECTURE_DIAGRAMS.md](architecture/ARCHITECTURE_DIAGRAMS.md)** ⭐ **NEW** | **Visual architecture diagrams (Mermaid)** | **Developers, Architects** |
+| **[ARCHITECTURE_V2.md](ARCHITECTURE_V2.md)** | System architecture, Docker Compose-first approach (reference) | Developers, DevOps |
 | **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** | High-level overview, tech stack, cost estimates | Stakeholders, PMs |
 | **[ROADMAP.md](ROADMAP.md)** | Product roadmap and feature timeline | Product, Management |
 | **[ENHANCEMENT_SUMMARY.md](ENHANCEMENT_SUMMARY.md)** | Summary of documentation enhancements | Contributors |

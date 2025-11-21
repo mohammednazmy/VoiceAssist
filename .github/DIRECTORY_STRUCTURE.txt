@@ -1,0 +1,26 @@
+VoiceAssist/.github/
+├── workflows/
+│   ├── ci.yml                      # Main CI pipeline (lint, test, coverage)
+│   ├── security-scan.yml           # Security scanning (Bandit, Trivy, etc.)
+│   ├── build-deploy.yml            # Build Docker images and deploy to EKS
+│   ├── terraform-plan.yml          # Infrastructure planning with cost estimation
+│   ├── terraform-apply.yml         # Infrastructure deployment
+│   └── README.md                   # Comprehensive workflow documentation
+│
+├── ISSUE_TEMPLATE/
+│   ├── bug_report.md               # Bug report template
+│   ├── feature_request.md          # Feature request template
+│   └── security_issue.md           # Security issue template
+│
+├── dependabot.yml                  # Automated dependency updates
+├── pull_request_template.md        # PR template with checklists
+├── SETUP_GUIDE.md                  # Step-by-step setup instructions
+├── WORKFLOWS_CHEATSHEET.md         # Quick reference guide
+├── IMPLEMENTATION_SUMMARY.md       # Complete implementation summary
+└── DIRECTORY_STRUCTURE.txt         # This file
+
+services/api-gateway/
+├── Dockerfile                      # API Gateway container
+└── Dockerfile.worker               # Worker container for async processing
+
+Total: 16 files created

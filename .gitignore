@@ -84,3 +84,7 @@ credentials.json
 
 # Keep folder structure
 !.gitkeep
+secrets/
+__MACOSX/
+#Backups/
+*.zip

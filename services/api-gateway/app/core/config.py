@@ -48,8 +48,18 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
 
+    # Nextcloud
+    NEXTCLOUD_URL: str = "http://nextcloud"
+    NEXTCLOUD_ADMIN_USER: str = "admin"
+    NEXTCLOUD_ADMIN_PASSWORD: str
+
     # OpenAI
     OPENAI_API_KEY: Optional[str] = None
+
+    # Caching (Phase 7 Integration Improvements - P2.1)
+    CACHE_ENABLED: bool = True
+    CACHE_L1_MAX_SIZE: int = 1000  # Max entries in L1 cache
+    CACHE_DEFAULT_TTL: int = 600  # Default TTL in seconds (10 minutes)
 
     class Config:
         env_file = ".env"

@@ -102,10 +102,11 @@ VoiceAssist implements the following HIPAA Security Rule requirements:
 #### Technical Safeguards
 
 **1. Access Control**
-- Unique User Identification (via Nextcloud OIDC)
-- Emergency Access Procedure
-- Automatic Logoff (30 minutes session timeout)
+- Unique User Identification (via JWT tokens with email, Phase 2; Nextcloud OIDC in Phase 6+)
+- Emergency Access Procedure (admin override)
+- Automatic Logoff (access tokens expire after 15 minutes, refresh tokens after 7 days)
 - Encryption and Decryption (AES-256)
+- Rate limiting on authentication endpoints to prevent brute force attacks
 
 **2. Audit Controls**
 - Hardware, software, and procedural mechanisms to record and examine activity
@@ -126,14 +127,14 @@ VoiceAssist implements the following HIPAA Security Rule requirements:
 
 | HIPAA Requirement | VoiceAssist Implementation |
 |------------------|----------------------------|
-| Access Control | RBAC via Nextcloud OIDC + JWT tokens |
+| Access Control | RBAC via JWT tokens (Phase 2), Nextcloud OIDC integration (Phase 6+) |
 | Audit Logging | Comprehensive audit logs (all PHI access tracked) |
-| Authentication | OIDC/OAuth2 + optional MFA |
+| Authentication | JWT with bcrypt password hashing (Phase 2), OIDC/OAuth2 + optional MFA (Phase 6+) |
 | Encryption at Rest | AES-256 encryption for database and file storage |
 | Encryption in Transit | TLS 1.3 for all communications |
 | Data Backup | Automated daily backups with encryption |
 | Emergency Access | Admin override with audit trail |
-| Session Management | 30-minute timeout, secure session tokens |
+| Session Management | Access tokens (15-min), refresh tokens (7-day), rate limiting on auth endpoints |
 | PHI Minimization | PHI detection service redacts unnecessary PHI |
 | Audit Trail | Immutable audit logs stored separately |
 
@@ -546,9 +547,56 @@ peerConnection.getStats().then(stats => {
 
 ## Authentication & Authorization
 
-### Authentication Flow
+### Authentication Flow (Phase 2: JWT-based)
 
+**Current Implementation (Phase 2):**
 ```
+1. User → Web App (email + password)
+2. Web App → API Gateway POST /api/auth/login
+3. API Gateway → Database (validate credentials)
+4. API Gateway verifies password hash (bcrypt)
+5. API Gateway → Web App (access token + refresh token)
+6. Web App stores tokens securely
+7. Web App → API Gateway (requests with Authorization: Bearer <access_token>)
+8. API Gateway verifies JWT signature and expiry
+9. API Gateway extracts user info from token payload
+10. API Gateway → Web App (protected resource)
+```
+
+**JWT Token Details (Phase 2 Enhancements):**
+- **Access Token**: 15-minute expiry, HS256 algorithm, contains user ID + email + role
+- **Refresh Token**: 7-day expiry, used to obtain new access tokens
+- **Token Revocation** (`app/services/token_revocation.py`):
+  - Redis-based blacklisting for immediate invalidation
+  - Dual-level revocation (individual token + all user tokens)
+  - Fail-open design (allows requests if Redis unavailable)
+  - Automatic TTL management matching token expiry
+  - Used for logout, password changes, security breaches
+- **Password Security**:
+  - **Hashing**: bcrypt via passlib (12 rounds)
+  - **Validation** (`app/core/password_validator.py`):
+    - Minimum 8 characters (configurable)
+    - Requires uppercase, lowercase, digits, special characters
+    - Rejects common passwords (password, 123456, qwerty, etc.)
+    - Detects sequential characters (abc, 123, etc.)
+    - Detects repeated characters (aaa, 111, etc.)
+    - Strength scoring (0-100): Weak (<40), Medium (40-70), Strong (≥70)
+- **Rate Limiting**:
+  - Registration: 5 requests/hour per IP
+  - Login: 10 requests/minute per IP
+  - Token refresh: 20 requests/minute per IP
+- **Request Tracking** (`app/core/request_id.py`):
+  - Unique UUID v4 for each request
+  - Returned in X-Request-ID response header
+  - Correlated across audit logs for debugging
+- **API Response Format** (`app/core/api_envelope.py`):
+  - Standardized envelope with success/error/metadata/timestamp
+  - Standard error codes (INVALID_CREDENTIALS, TOKEN_EXPIRED, TOKEN_REVOKED, etc.)
+  - Request ID correlation in metadata
+
+**Future Enhancement (Phase 6+):**
+```
+Full OIDC integration with Nextcloud:
 1. User → VoiceAssist Web App
 2. Web App → Nextcloud OIDC (/auth/login)
 3. Nextcloud → User (login form)
@@ -1029,14 +1077,39 @@ When PHI is detected in arguments to a non-PHI tool:
 ### Audit Log Requirements
 
 Every access to PHI must be logged with:
-1. **Who**: User ID, role
-2. **What**: Action performed (read, write, delete)
-3. **When**: Timestamp (UTC)
-4. **Where**: IP address, service
-5. **Why**: Purpose/reason (if applicable)
-6. **Result**: Success/failure
+1. **Who**: User ID, role, email
+2. **What**: Action performed (read, write, delete, authentication events)
+3. **When**: Timestamp (UTC with timezone support)
+4. **Where**: IP address, service, endpoint, request ID
+5. **Why**: Purpose/reason (stored in metadata)
+6. **Result**: Success/failure with error details
 
-### Audit Log Implementation
+### Phase 2 Implementation Status
+
+**✅ IMPLEMENTED** - Comprehensive audit logging system deployed in Phase 2:
+
+**Key Features**:
+- **Immutable audit trail** with SHA-256 integrity verification
+- **Authentication event logging** (registration, login, logout, token refresh/revocation)
+- **Comprehensive metadata capture** including IP address, user agent, request ID
+- **JSONB metadata field** for extensible additional context
+- **Composite indexes** for efficient queries by user, action, timestamp
+- **Automated integrity verification** to detect tampering
+- **Fail-safe logging** ensuring audit logs are created even if errors occur
+
+**Database Schema**: `audit_logs` table (PostgreSQL with JSONB)
+
+**Service Layer**:
+- `app/services/audit_service.py` - Audit logging service
+- `app/models/audit_log.py` - Audit log ORM model
+
+**Usage in Authentication Flow**:
+- All authentication events automatically logged
+- Token revocation events captured
+- Failed login attempts tracked
+- Request IDs correlated for debugging
+
+### Audit Log Implementation (Phase 2)
 
 ```python
 from sqlalchemy import Column, String, DateTime, JSON, Text

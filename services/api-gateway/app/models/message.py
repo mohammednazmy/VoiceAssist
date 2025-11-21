@@ -29,7 +29,7 @@ class Message(Base):
     # Metadata
     tokens = Column(Integer, nullable=True)  # Token count for this message
     model = Column(String(100), nullable=True)  # Model used to generate response
-    metadata = Column(JSONB, nullable=True)  # Additional metadata
+    message_metadata = Column(JSONB, nullable=True)  # Additional metadata
 
     # PHI detection
     contains_phi = Column(Boolean, default=False, nullable=False)  # Whether message contains PHI

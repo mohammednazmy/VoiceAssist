@@ -1,0 +1,8 @@
+---
+# VoiceAssist V2 - Docker Role Handlers
+# Phase 9: Infrastructure as Code
+
+- name: restart docker
+  ansible.builtin.service:
+    name: docker
+    state: restarted

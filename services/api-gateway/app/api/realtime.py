@@ -1,0 +1,301 @@
+"""
+Realtime WebSocket API for streaming chat and future voice integration.
+
+This module provides WebSocket endpoints for real-time communication between
+the client and the backend. In Phase 4 MVP, it supports text-based streaming.
+Future phases will add voice streaming, VAD, and OpenAI Realtime API integration.
+"""
+import json
+import logging
+from typing import Dict, Any, Optional
+from datetime import datetime
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.core.logging import get_logger
+from app.services.rag_service import QueryOrchestrator, QueryRequest
+from app.core.business_metrics import (
+    rag_queries_total,
+    rag_citations_per_query
+)
+
+router = APIRouter(prefix="/api/realtime", tags=["realtime"])
+logger = get_logger(__name__)
+
+# Global QueryOrchestrator instance
+query_orchestrator = QueryOrchestrator()
+
+
+class ConnectionManager:
+    """
+    Manages active WebSocket connections.
+
+    Handles connection lifecycle, message broadcasting, and connection cleanup.
+    """
+
+    def __init__(self):
+        self.active_connections: Dict[str, WebSocket] = {}
+
+    async def connect(self, websocket: WebSocket, client_id: str):
+        """Accept and register a new WebSocket connection."""
+        await websocket.accept()
+        self.active_connections[client_id] = websocket
+        logger.info(f"WebSocket connected: {client_id}")
+
+    def disconnect(self, client_id: str):
+        """Remove a WebSocket connection."""
+        if client_id in self.active_connections:
+            del self.active_connections[client_id]
+            logger.info(f"WebSocket disconnected: {client_id}")
+
+    async def send_personal_message(self, message: Dict[str, Any], client_id: str):
+        """Send a message to a specific client."""
+        if client_id in self.active_connections:
+            websocket = self.active_connections[client_id]
+            await websocket.send_json(message)
+
+    async def send_error(self, client_id: str, error_code: str, error_message: str):
+        """Send an error message to a client."""
+        error_msg = {
+            "type": "error",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "error": {
+                "code": error_code,
+                "message": error_message
+            }
+        }
+        await self.send_personal_message(error_msg, client_id)
+
+
+# Global connection manager instance
+manager = ConnectionManager()
+
+
+@router.websocket("/ws")
+async def websocket_endpoint(
+    websocket: WebSocket,
+    db: Session = Depends(get_db)
+):
+    """
+    WebSocket endpoint for realtime chat communication.
+
+    Message Protocol:
+    ----------------
+
+    Client -> Server:
+    {
+        "type": "message",
+        "content": "User's message text",
+        "session_id": "optional-session-uuid",
+        "clinical_context": {...}  // optional
+    }
+
+    Server -> Client:
+    {
+        "type": "message_start",
+        "message_id": "uuid",
+        "timestamp": "2025-11-21T03:00:00.000Z"
+    }
+
+    {
+        "type": "message_chunk",
+        "message_id": "uuid",
+        "content": "Partial response text...",
+        "chunk_index": 0
+    }
+
+    {
+        "type": "message_complete",
+        "message_id": "uuid",
+        "content": "Complete response text",
+        "citations": [...],
+        "timestamp": "2025-11-21T03:00:05.000Z"
+    }
+
+    {
+        "type": "error",
+        "error": {
+            "code": "ERROR_CODE",
+            "message": "Error description"
+        }
+    }
+
+    Future phases will add:
+    - Voice streaming events (audio_start, audio_chunk, audio_end)
+    - VAD events (speech_start, speech_end)
+    - Turn-taking events (interrupt, resume)
+    """
+    # For MVP, use a simple UUID-based client ID
+    # In production, this should be derived from authenticated user
+    import uuid
+    client_id = str(uuid.uuid4())
+
+    await manager.connect(websocket, client_id)
+
+    try:
+        # Send welcome message
+        await websocket.send_json({
+            "type": "connected",
+            "client_id": client_id,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "protocol_version": "1.0",
+            "capabilities": ["text_streaming"]
+        })
+
+        while True:
+            # Receive message from client
+            data = await websocket.receive_json()
+            message_type = data.get("type")
+
+            logger.info(f"Received WebSocket message", extra={
+                "client_id": client_id,
+                "message_type": message_type
+            })
+
+            if message_type == "message":
+                # Process chat message
+                await handle_chat_message(websocket, client_id, data, db)
+
+            elif message_type == "ping":
+                # Respond to ping for connection keepalive
+                await websocket.send_json({
+                    "type": "pong",
+                    "timestamp": datetime.utcnow().isoformat() + "Z"
+                })
+
+            else:
+                # Unknown message type
+                await manager.send_error(
+                    client_id,
+                    "UNKNOWN_MESSAGE_TYPE",
+                    f"Unknown message type: {message_type}"
+                )
+
+    except WebSocketDisconnect:
+        manager.disconnect(client_id)
+        logger.info(f"Client disconnected: {client_id}")
+
+    except Exception as e:
+        logger.error(f"WebSocket error: {str(e)}", exc_info=True)
+        await manager.send_error(client_id, "INTERNAL_ERROR", str(e))
+        manager.disconnect(client_id)
+
+
+async def handle_chat_message(
+    websocket: WebSocket,
+    client_id: str,
+    data: Dict[str, Any],
+    db: Session
+):
+    """
+    Handle incoming chat message and stream response using QueryOrchestrator.
+
+    Integrates with the QueryOrchestrator to process clinical queries and
+    stream responses back to the client in chunks.
+    """
+    import uuid
+    import asyncio
+
+    message_id = str(uuid.uuid4())
+    user_message = data.get("content", "")
+    session_id = data.get("session_id")
+    clinical_context_id = data.get("clinical_context_id")
+
+    logger.info("Processing chat message", extra={
+        "client_id": client_id,
+        "message_id": message_id,
+        "has_session": bool(session_id),
+        "has_context": bool(clinical_context_id)
+    })
+
+    # Send message start event
+    await websocket.send_json({
+        "type": "message_start",
+        "message_id": message_id,
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    })
+
+    try:
+        # Create query request for orchestrator
+        query_request = QueryRequest(
+            session_id=session_id,
+            query=user_message,
+            clinical_context_id=clinical_context_id
+        )
+
+        # Call QueryOrchestrator to process the query
+        # Note: Current implementation is synchronous (stub LLM)
+        # Future phases will add true streaming from LLM API
+        query_response = await query_orchestrator.handle_query(
+            query_request,
+            trace_id=message_id
+        )
+
+        # Stream the response in chunks
+        response_text = query_response.answer
+        chunk_size = 50  # Characters per chunk
+
+        for i in range(0, len(response_text), chunk_size):
+            chunk = response_text[i:i + chunk_size]
+            await websocket.send_json({
+                "type": "message_chunk",
+                "message_id": message_id,
+                "content": chunk,
+                "chunk_index": i // chunk_size
+            })
+            # Small delay to simulate streaming (will be natural with real LLM streaming)
+            await asyncio.sleep(0.05)
+
+        # Prepare citations for response
+        citations = [
+            {
+                "id": cite.id,
+                "source_type": cite.source_type,
+                "title": cite.title,
+                "url": cite.url
+            }
+            for cite in query_response.citations
+        ]
+
+        # Send message complete event
+        await websocket.send_json({
+            "type": "message_complete",
+            "message_id": message_id,
+            "content": response_text,
+            "citations": citations,
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        })
+
+        # Track RAG query metrics (P3.3 - Business Metrics)
+        has_citations = len(citations) > 0
+        rag_queries_total.labels(
+            success="true",
+            has_citations=str(has_citations).lower()
+        ).inc()
+        rag_citations_per_query.observe(len(citations))
+
+        logger.info("Completed streaming response", extra={
+            "client_id": client_id,
+            "message_id": message_id,
+            "response_length": len(response_text),
+            "citation_count": len(citations)
+        })
+
+    except Exception as e:
+        # Track failed RAG query (P3.3 - Business Metrics)
+        rag_queries_total.labels(
+            success="false",
+            has_citations="false"
+        ).inc()
+
+        logger.error(f"Error processing chat message: {str(e)}", exc_info=True)
+        await websocket.send_json({
+            "type": "error",
+            "message_id": message_id,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "error": {
+                "code": "QUERY_PROCESSING_ERROR",
+                "message": f"Failed to process query: {str(e)}"
+            }
+        })

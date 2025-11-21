@@ -1,0 +1,142 @@
+version: '3.8'
+
+# Distributed Locust setup for VoiceAssist load testing
+# Includes master node and multiple worker nodes for high-scale testing
+
+networks:
+  locust-network:
+    driver: bridge
+
+services:
+  # Locust Master Node
+  # Coordinates workers and provides web UI
+  locust-master:
+    image: locustio/locust:latest
+    container_name: voiceassist-locust-master
+    ports:
+      - "8089:8089"  # Web UI
+      - "5557:5557"  # Master port for workers
+    volumes:
+      - ./:/mnt/locust
+      - ./results:/mnt/results
+    working_dir: /mnt/locust
+    command: >
+      -f locustfile.py
+      --master
+      --expect-workers=${LOCUST_WORKER_COUNT:-4}
+      --host=${VOICEASSIST_BASE_URL:-http://host.docker.internal:8000}
+    environment:
+      - VOICEASSIST_BASE_URL=${VOICEASSIST_BASE_URL:-http://host.docker.internal:8000}
+      - VOICEASSIST_WS_URL=${VOICEASSIST_WS_URL:-ws://host.docker.internal:8000}
+    networks:
+      - locust-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Locust Worker Node 1
+  locust-worker-1:
+    image: locustio/locust:latest
+    container_name: voiceassist-locust-worker-1
+    volumes:
+      - ./:/mnt/locust
+    working_dir: /mnt/locust
+    command: >
+      -f locustfile.py
+      --worker
+      --master-host=locust-master
+    environment:
+      - VOICEASSIST_BASE_URL=${VOICEASSIST_BASE_URL:-http://host.docker.internal:8000}
+      - VOICEASSIST_WS_URL=${VOICEASSIST_WS_URL:-ws://host.docker.internal:8000}
+    networks:
+      - locust-network
+    depends_on:
+      - locust-master
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Locust Worker Node 2
+  locust-worker-2:
+    image: locustio/locust:latest
+    container_name: voiceassist-locust-worker-2
+    volumes:
+      - ./:/mnt/locust
+    working_dir: /mnt/locust
+    command: >
+      -f locustfile.py
+      --worker
+      --master-host=locust-master
+    environment:
+      - VOICEASSIST_BASE_URL=${VOICEASSIST_BASE_URL:-http://host.docker.internal:8000}
+      - VOICEASSIST_WS_URL=${VOICEASSIST_WS_URL:-ws://host.docker.internal:8000}
+    networks:
+      - locust-network
+    depends_on:
+      - locust-master
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Locust Worker Node 3
+  locust-worker-3:
+    image: locustio/locust:latest
+    container_name: voiceassist-locust-worker-3
+    volumes:
+      - ./:/mnt/locust
+    working_dir: /mnt/locust
+    command: >
+      -f locustfile.py
+      --worker
+      --master-host=locust-master
+    environment:
+      - VOICEASSIST_BASE_URL=${VOICEASSIST_BASE_URL:-http://host.docker.internal:8000}
+      - VOICEASSIST_WS_URL=${VOICEASSIST_WS_URL:-ws://host.docker.internal:8000}
+    networks:
+      - locust-network
+    depends_on:
+      - locust-master
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Locust Worker Node 4
+  locust-worker-4:
+    image: locustio/locust:latest
+    container_name: voiceassist-locust-worker-4
+    volumes:
+      - ./:/mnt/locust
+    working_dir: /mnt/locust
+    command: >
+      -f locustfile.py
+      --worker
+      --master-host=locust-master
+    environment:
+      - VOICEASSIST_BASE_URL=${VOICEASSIST_BASE_URL:-http://host.docker.internal:8000}
+      - VOICEASSIST_WS_URL=${VOICEASSIST_WS_URL:-ws://host.docker.internal:8000}
+    networks:
+      - locust-network
+    depends_on:
+      - locust-master
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+# Usage:
+# ------
+# 1. Start distributed Locust:
+#    docker-compose up -d
+#
+# 2. Scale workers (optional):
+#    docker-compose up -d --scale locust-worker=8
+#
+# 3. Access Web UI:
+#    http://localhost:8089
+#
+# 4. View logs:
+#    docker-compose logs -f locust-master
+#    docker-compose logs -f locust-worker-1
+#
+# 5. Stop all:
+#    docker-compose down
+#
+# Environment Variables:
+# ----------------------
+# VOICEASSIST_BASE_URL: Target API URL (default: http://host.docker.internal:8000)
+# VOICEASSIST_WS_URL: Target WebSocket URL (default: ws://host.docker.internal:8000)
+# LOCUST_WORKER_COUNT: Number of workers expected (default: 4)

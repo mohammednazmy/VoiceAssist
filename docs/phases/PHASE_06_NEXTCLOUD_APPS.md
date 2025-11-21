@@ -55,6 +55,19 @@ See also:
 - Wire configuration via Settings (see `app.core.config`) rather than hard-coding URLs or secrets.
 - Keep PHI-handling rules in mind as described in SECURITY_COMPLIANCE.md.
 
+**Implementation Paths (Phase 6)**
+
+For Phase 6, the primary locations are:
+
+- `nextcloud-apps/voiceassist-client/` – clinician-facing Nextcloud app skeleton.
+- `nextcloud-apps/voiceassist-admin/` – admin-facing Nextcloud app skeleton.
+- `nextcloud-apps/voiceassist-docs/` – document integration app skeleton.
+- `services/api-gateway/app/services/nextcloud.py` – Nextcloud service for OCS/API integration.
+- `docker-compose.yml` – Nextcloud service configuration (Phase 2 foundation).
+
+The current Phase 6 work has created the bare app skeletons so that future
+work can implement real routes, controllers, and UI.
+
 ### 4.3 Testing
 
 - Add or update basic unit/integration tests where applicable.

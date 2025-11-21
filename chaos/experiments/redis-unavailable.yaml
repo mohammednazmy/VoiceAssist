@@ -1,0 +1,91 @@
+# Chaos Experiment: Redis Unavailability (Phase 7 - P3.5)
+#
+# Tests VoiceAssist resilience when Redis (cache/sessions) is down.
+# Expected: API continues to work (degraded performance), not crash
+#
+# Run: chaos run chaos/experiments/redis-unavailable.yaml
+
+version: 1.0.0
+title: "Redis Cache Unavailable"
+description: "What happens when Redis becomes unavailable?"
+
+tags:
+  - cache
+  - redis
+  - degradation
+
+configuration:
+  api_url: "http://localhost:8000"
+
+steady-state-hypothesis:
+  title: "API serves requests successfully"
+  probes:
+    - name: "api-responds-to-auth"
+      type: probe
+      provider:
+        type: http
+        url: "${api_url}/api/auth/login"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+        body:
+          email: "test@example.com"
+          password: "testpass"
+        timeout: 5
+        expect:
+          - status: [200, 401]  # Either success or auth failure is fine
+
+method:
+  - name: "stop-redis-container"
+    type: action
+    provider:
+      type: process
+      path: "docker"
+      arguments: ["compose", "stop", "redis"]
+    pauses:
+      after: 3
+
+  - name: "verify-api-still-works"
+    type: probe
+    tolerance:
+      type: probe
+      provider:
+        type: http
+        url: "${api_url}/health"
+        timeout: 5
+        expect:
+          - status: [200, 503]  # May report degraded health
+
+  - name: "test-endpoint-without-cache"
+    type: probe
+    provider:
+      type: http
+      url: "${api_url}/api/auth/login"
+      method: POST
+      headers:
+        Content-Type: "application/json"
+      body:
+        email: "test@example.com"
+        password: "wrong"
+      timeout: 10
+      expect:
+        - status: 401  # Should still validate auth
+
+rollbacks:
+  - name: "restart-redis-container"
+    type: action
+    provider:
+      type: process
+      path: "docker"
+      arguments: ["compose", "start", "redis"]
+    pauses:
+      after: 5
+
+  - name: "verify-cache-restored"
+    type: probe
+    provider:
+      type: http
+      url: "${api_url}/health"
+      timeout: 10
+      expect:
+        - status: 200

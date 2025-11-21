@@ -1,0 +1,239 @@
+# Prometheus Recording Rules for SLOs (Phase 7 - P2.3)
+#
+# These rules pre-compute Service Level Indicators (SLIs) for fast querying
+# and efficient alerting. Recording rules run at regular intervals and store
+# the results as new time series.
+#
+# Usage: Include in prometheus.yml:
+#   rule_files:
+#     - "rules/slo_recording_rules.yml"
+
+groups:
+  # ================================================================
+  # API Availability SLIs
+  # ================================================================
+  - name: slo_api_availability
+    interval: 30s
+    rules:
+      # API availability over 5 minutes (success rate)
+      - record: slo:api_availability:ratio_rate5m
+        expr: |
+          sum(rate(voiceassist_http_requests_total{status_code=~"2..|3.."}[5m]))
+          /
+          sum(rate(voiceassist_http_requests_total[5m]))
+
+      # API availability over 1 hour
+      - record: slo:api_availability:ratio_rate1h
+        expr: |
+          sum(rate(voiceassist_http_requests_total{status_code=~"2..|3.."}[1h]))
+          /
+          sum(rate(voiceassist_http_requests_total[1h]))
+
+      # API availability over 24 hours
+      - record: slo:api_availability:ratio_rate24h
+        expr: |
+          sum(rate(voiceassist_http_requests_total{status_code=~"2..|3.."}[24h]))
+          /
+          sum(rate(voiceassist_http_requests_total[24h]))
+
+      # API availability over 30 days (for error budget calculation)
+      - record: slo:api_availability:ratio_rate30d
+        expr: |
+          sum(rate(voiceassist_http_requests_total{status_code=~"2..|3.."}[30d]))
+          /
+          sum(rate(voiceassist_http_requests_total[30d]))
+
+      # Error rate (5xx responses only)
+      - record: slo:api_error_rate:ratio_rate5m
+        expr: |
+          sum(rate(voiceassist_http_requests_total{status_code=~"5.."}[5m]))
+          /
+          sum(rate(voiceassist_http_requests_total[5m]))
+
+  # ================================================================
+  # API Latency SLIs
+  # ================================================================
+  - name: slo_api_latency
+    interval: 30s
+    rules:
+      # P50 latency per endpoint
+      - record: slo:api_latency_p50:seconds
+        labels:
+          quantile: "0.50"
+        expr: |
+          histogram_quantile(0.50,
+            sum(rate(voiceassist_http_request_duration_seconds_bucket[5m])) by (le, endpoint)
+          )
+
+      # P95 latency per endpoint
+      - record: slo:api_latency_p95:seconds
+        labels:
+          quantile: "0.95"
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_http_request_duration_seconds_bucket[5m])) by (le, endpoint)
+          )
+
+      # P99 latency per endpoint
+      - record: slo:api_latency_p99:seconds
+        labels:
+          quantile: "0.99"
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(voiceassist_http_request_duration_seconds_bucket[5m])) by (le, endpoint)
+          )
+
+      # Overall API latency (all endpoints)
+      - record: slo:api_latency_p95_overall:seconds
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_http_request_duration_seconds_bucket[5m])) by (le)
+          )
+
+  # ================================================================
+  # RAG Query Quality SLIs
+  # ================================================================
+  - name: slo_rag_quality
+    interval: 1m
+    rules:
+      # RAG query success rate
+      - record: slo:rag_success_rate:ratio_rate5m
+        expr: |
+          sum(rate(voiceassist_rag_query_duration_seconds_count{stage="total"}[5m]))
+          /
+          (sum(rate(voiceassist_rag_query_duration_seconds_count{stage="total"}[5m])) +
+           sum(rate(voiceassist_rag_query_errors_total[5m])))
+
+      # Cache hit rate for search results
+      - record: slo:rag_cache_hit_rate:ratio_rate1h
+        expr: |
+          sum(rate(voiceassist_cache_hits_total{cache_key_prefix="search_results"}[1h]))
+          /
+          (sum(rate(voiceassist_cache_hits_total{cache_key_prefix="search_results"}[1h])) +
+           sum(rate(voiceassist_cache_misses_total{cache_key_prefix="search_results"}[1h])))
+
+      # Average search results returned
+      - record: slo:rag_avg_results:count
+        expr: |
+          avg(voiceassist_rag_search_results_total)
+
+      # RAG query latency P95
+      - record: slo:rag_latency_p95:seconds
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_rag_query_duration_seconds_bucket{stage="total"}[5m])) by (le)
+          )
+
+  # ================================================================
+  # Database Performance SLIs
+  # ================================================================
+  - name: slo_database
+    interval: 30s
+    rules:
+      # Database query latency P95
+      - record: slo:db_latency_p95:seconds
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_db_query_duration_seconds_bucket[5m])) by (le)
+          )
+
+      # Database connection success rate
+      - record: slo:db_connection_success_rate:ratio_rate5m
+        expr: |
+          1 - (
+            sum(rate(voiceassist_db_connection_errors_total[5m]))
+            /
+            (sum(rate(voiceassist_db_query_duration_seconds_count[5m])) +
+             sum(rate(voiceassist_db_connection_errors_total[5m])))
+          )
+
+      # Database connection pool utilization
+      - record: slo:db_pool_utilization:ratio
+        expr: |
+          sum(voiceassist_db_connections_total{state="in_use"})
+          /
+          sum(voiceassist_db_connections_total)
+
+  # ================================================================
+  # Cache Performance SLIs
+  # ================================================================
+  - name: slo_cache
+    interval: 1m
+    rules:
+      # Overall cache hit rate
+      - record: slo:cache_hit_rate:ratio_rate1h
+        expr: |
+          sum(rate(voiceassist_cache_hits_total[1h]))
+          /
+          (sum(rate(voiceassist_cache_hits_total[1h])) +
+           sum(rate(voiceassist_cache_misses_total[1h])))
+
+      # L1 cache hit rate (of all hits)
+      - record: slo:cache_l1_hit_rate:ratio_rate1h
+        expr: |
+          sum(rate(voiceassist_cache_hits_total{cache_layer="l1"}[1h]))
+          /
+          sum(rate(voiceassist_cache_hits_total[1h]))
+
+      # Cache operation latency P95
+      - record: slo:cache_latency_p95:seconds
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_cache_latency_seconds_bucket[5m])) by (le, cache_layer)
+          )
+
+  # ================================================================
+  # Document Processing SLIs
+  # ================================================================
+  - name: slo_document_processing
+    interval: 1m
+    rules:
+      # Document processing success rate
+      - record: slo:doc_processing_success_rate:ratio_rate1h
+        expr: |
+          sum(rate(voiceassist_document_processing_jobs_total{status="completed"}[1h]))
+          /
+          sum(rate(voiceassist_document_processing_jobs_total[1h]))
+
+      # Document processing time P95
+      - record: slo:doc_processing_duration_p95:seconds
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_document_processing_duration_seconds_bucket[1h])) by (le)
+          )
+
+      # Document processing queue depth
+      - record: slo:doc_processing_queue_depth:count
+        expr: |
+          sum(voiceassist_arq_queue_depth)
+
+  # ================================================================
+  # Error Budget Calculations
+  # ================================================================
+  - name: slo_error_budget
+    interval: 5m
+    rules:
+      # Error budget remaining (as percentage)
+      # Target: 99.9% availability = 0.1% allowed errors
+      - record: slo:error_budget_remaining:percent
+        expr: |
+          100 * (1 - (
+            (1 - slo:api_availability:ratio_rate30d) / 0.001
+          ))
+
+      # Error budget burn rate (multiple of sustainable rate)
+      # > 1.0 means consuming faster than target
+      - record: slo:error_budget_burn_rate:ratio
+        expr: |
+          (1 - slo:api_availability:ratio_rate1h)
+          /
+          (1 - 0.999)
+
+      # Time until error budget exhausted (hours)
+      # Based on current burn rate
+      - record: slo:error_budget_hours_remaining:hours
+        expr: |
+          (slo:error_budget_remaining:percent / 100)
+          /
+          (1 - slo:api_availability:ratio_rate1h)
+          * 720  # hours in 30 days

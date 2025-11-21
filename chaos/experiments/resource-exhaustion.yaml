@@ -1,0 +1,102 @@
+# Chaos Experiment: Resource Exhaustion (Phase 7 - P3.5)
+#
+# Tests VoiceAssist behavior under CPU and memory pressure.
+# Expected: API slows down but remains stable, no crashes
+#
+# Run: chaos run chaos/experiments/resource-exhaustion.yaml
+
+version: 1.0.0
+title: "CPU and Memory Pressure"
+description: "What happens when system resources are exhausted?"
+
+tags:
+  - resources
+  - cpu
+  - memory
+  - stability
+
+configuration:
+  api_url: "http://localhost:8000"
+
+steady-state-hypothesis:
+  title: "System resources are available"
+  probes:
+    - name: "container-is-healthy"
+      type: probe
+      provider:
+        type: process
+        path: "docker"
+        arguments: ["compose", "ps", "-q", "voiceassist-server"]
+        expect:
+          - type: string
+            pattern: "[0-9a-f]+"  # Container ID present
+
+    - name: "api-responds"
+      type: probe
+      provider:
+        type: http
+        url: "${api_url}/health"
+        timeout: 5
+        expect:
+          - status: 200
+
+method:
+  - name: "apply-cpu-stress"
+    type: action
+    provider:
+      type: process
+      path: "docker"
+      arguments:
+        - "compose"
+        - "exec"
+        - "-T"
+        - "voiceassist-server"
+        - "sh"
+        - "-c"
+        - "stress-ng --cpu 2 --timeout 30s &"
+    pauses:
+      after: 5
+
+  - name: "verify-api-under-load"
+    type: probe
+    provider:
+      type: http
+      url: "${api_url}/health"
+      timeout: 15  # Longer timeout under stress
+      expect:
+        - status: 200
+
+  - name: "check-metrics-under-stress"
+    type: probe
+    provider:
+      type: http
+      url: "${api_url}/metrics"
+      timeout: 10
+      expect:
+        - status: 200
+
+  - name: "wait-for-stress-completion"
+    type: action
+    provider:
+      type: python
+      module: time
+      func: sleep
+      arguments:
+        seconds: 30
+
+rollbacks:
+  - name: "verify-recovery-after-stress"
+    type: probe
+    provider:
+      type: http
+      url: "${api_url}/health"
+      timeout: 5
+      expect:
+        - status: 200
+
+  - name: "check-no-memory-leaks"
+    type: probe
+    provider:
+      type: process
+      path: "docker"
+      arguments: ["stats", "--no-stream", "--format", "{{.MemUsage}}", "voiceassist-server"]

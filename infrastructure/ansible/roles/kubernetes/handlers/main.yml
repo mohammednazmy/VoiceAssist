@@ -1,0 +1,8 @@
+---
+# VoiceAssist V2 - Kubernetes Role Handlers
+# Phase 9: Infrastructure as Code
+
+- name: restart kubelet
+  ansible.builtin.service:
+    name: kubelet
+    state: restarted

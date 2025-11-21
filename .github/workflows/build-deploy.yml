@@ -1,0 +1,418 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main      # Production deployment
+      - develop   # Staging deployment
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY_API: voiceassist-api-gateway
+  ECR_REPOSITORY_WORKER: voiceassist-worker
+  EKS_CLUSTER_NAME: voiceassist-cluster
+
+jobs:
+  # ======================================
+  # Build API Gateway Image
+  # ======================================
+  build-api:
+    name: Build API Gateway Image
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_API }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/api-gateway
+          file: ./services/api-gateway/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ github.ref_name }}
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_API }}:${{ github.sha }}
+          format: spdx-json
+          output-file: sbom-api-gateway.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-api-gateway
+          path: sbom-api-gateway.spdx.json
+          retention-days: 90
+
+  # ======================================
+  # Build Worker Image
+  # ======================================
+  build-worker:
+    name: Build Worker Image
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_WORKER }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/api-gateway
+          file: ./services/api-gateway/Dockerfile.worker
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ github.ref_name }}
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_WORKER }}:${{ github.sha }}
+          format: spdx-json
+          output-file: sbom-worker.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-worker
+          path: sbom-worker.spdx.json
+          retention-days: 90
+
+  # ======================================
+  # Deploy to Staging
+  # ======================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-api, build-worker]
+    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment:
+      name: staging
+      url: https://staging.voiceassist.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ env.AWS_REGION }} \
+            --name ${{ env.EKS_CLUSTER_NAME }}-staging
+
+      - name: Deploy to Kubernetes
+        run: |
+          # Set image for API Gateway
+          kubectl set image deployment/voiceassist-api \
+            api=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_API }}:${{ github.sha }} \
+            -n voiceassist-staging
+
+          # Set image for Worker
+          kubectl set image deployment/voiceassist-worker \
+            worker=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_WORKER }}:${{ github.sha }} \
+            -n voiceassist-staging
+
+          # Wait for rollout
+          kubectl rollout status deployment/voiceassist-api -n voiceassist-staging --timeout=5m
+          kubectl rollout status deployment/voiceassist-worker -n voiceassist-staging --timeout=5m
+
+      - name: Verify deployment
+        run: |
+          # Check pod status
+          kubectl get pods -n voiceassist-staging
+          kubectl get deployments -n voiceassist-staging
+
+          # Run smoke tests
+          ENDPOINT=$(kubectl get svc voiceassist-api -n voiceassist-staging -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          echo "Testing endpoint: $ENDPOINT"
+
+          # Health check
+          curl -f http://${ENDPOINT}/health || exit 1
+          echo "Health check passed!"
+
+      - name: Notify deployment
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Staging Deployment ${{ job.status }}
+            Environment: staging
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # ======================================
+  # Deploy to Production
+  # ======================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-api, build-worker]
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment:
+      name: production
+      url: https://voiceassist.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ env.AWS_REGION }} \
+            --name ${{ env.EKS_CLUSTER_NAME }}-production
+
+      - name: Create backup
+        run: |
+          echo "Creating backup before deployment..."
+          kubectl get deployment voiceassist-api -n voiceassist-production -o yaml > backup-api-deployment.yaml
+          kubectl get deployment voiceassist-worker -n voiceassist-production -o yaml > backup-worker-deployment.yaml
+
+      - name: Deploy to Kubernetes (Blue-Green)
+        run: |
+          # Deploy to green environment
+          kubectl set image deployment/voiceassist-api-green \
+            api=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_API }}:${{ github.sha }} \
+            -n voiceassist-production
+
+          kubectl set image deployment/voiceassist-worker-green \
+            worker=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_WORKER }}:${{ github.sha }} \
+            -n voiceassist-production
+
+          # Wait for rollout
+          kubectl rollout status deployment/voiceassist-api-green -n voiceassist-production --timeout=5m
+          kubectl rollout status deployment/voiceassist-worker-green -n voiceassist-production --timeout=5m
+
+      - name: Run smoke tests
+        id: smoke-tests
+        run: |
+          # Get green service endpoint
+          ENDPOINT=$(kubectl get svc voiceassist-api-green -n voiceassist-production -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          echo "Testing green endpoint: $ENDPOINT"
+
+          # Health check
+          curl -f http://${ENDPOINT}/health || exit 1
+
+          # Basic API tests
+          curl -f http://${ENDPOINT}/api/v1/health || exit 1
+
+          echo "Smoke tests passed!"
+
+      - name: Switch traffic to green
+        if: success()
+        run: |
+          # Update service selector to point to green deployment
+          kubectl patch service voiceassist-api -n voiceassist-production \
+            -p '{"spec":{"selector":{"version":"green"}}}'
+
+          echo "Traffic switched to green deployment"
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Deployment failed, rolling back..."
+          kubectl rollout undo deployment/voiceassist-api-green -n voiceassist-production
+          kubectl rollout undo deployment/voiceassist-worker-green -n voiceassist-production
+          exit 1
+
+      - name: Tag stable version
+        if: success()
+        run: |
+          # Tag the successful deployment
+          docker tag \
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_API }}:${{ github.sha }} \
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_API }}:stable
+
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_API }}:stable
+
+      - name: Upload backup artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-backup-${{ github.sha }}
+          path: backup-*.yaml
+          retention-days: 30
+
+      - name: Notify deployment
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Production Deployment ${{ job.status }}
+            Environment: production
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            Images:
+              - API: ${{ env.ECR_REPOSITORY_API }}:${{ github.sha }}
+              - Worker: ${{ env.ECR_REPOSITORY_WORKER }}:${{ github.sha }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Create GitHub Release
+        if: success() && github.ref == 'refs/heads/main'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release v${{ github.run_number }}
+          body: |
+            ## Changes in this Release
+            - Commit: ${{ github.sha }}
+            - Author: ${{ github.actor }}
+            - Deployed to production
+
+            ## Docker Images
+            - API Gateway: `${{ env.ECR_REPOSITORY_API }}:${{ github.sha }}`
+            - Worker: `${{ env.ECR_REPOSITORY_WORKER }}:${{ github.sha }}`
+          draft: false
+          prerelease: false
+
+  # ======================================
+  # Post-Deployment Tests
+  # ======================================
+  post-deployment-tests:
+    name: Post-Deployment Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/develop'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pytest requests
+
+      - name: Run end-to-end tests
+        run: |
+          # Run E2E tests against staging
+          if [ -d "tests/e2e" ]; then
+            pytest tests/e2e/ -v
+          else
+            echo "No E2E tests found"
+          fi
+        env:
+          TEST_ENVIRONMENT: staging
+          API_BASE_URL: https://staging.voiceassist.example.com
+
+      - name: Performance tests
+        run: |
+          # Simple performance check
+          if command -v ab &> /dev/null; then
+            ab -n 100 -c 10 https://staging.voiceassist.example.com/health
+          else
+            echo "Apache Bench not available, skipping performance tests"
+          fi

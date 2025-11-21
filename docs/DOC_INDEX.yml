@@ -342,6 +342,30 @@ docs:
     summary: "Summary of all V2 documentation enhancements, what changed from V1."
     related: [start_here, development_phases_v2]
 
+  - id: phase_02_completion_report
+    path: docs/PHASE_02_COMPLETION_REPORT.md
+    title: "Phase 2 Completion Report"
+    category: phase_reports
+    audience: [developer, ai_agent]
+    summary: "Detailed report of Phase 2 security and Nextcloud integration work."
+    related: [phase_status, development_phases_v2]
+
+  - id: phase_03_completion_report
+    path: docs/PHASE_03_COMPLETION_REPORT.md
+    title: "Phase 3 Completion Report"
+    category: phase_reports
+    audience: [developer, ai_agent]
+    summary: "Detailed report of Phase 3 API Gateway and core microservices work."
+    related: [phase_status, development_phases_v2]
+
+  - id: phase_04_completion_report
+    path: docs/PHASE_04_COMPLETION_REPORT.md
+    title: "Phase 4 Completion Report"
+    category: phase_reports
+    audience: [developer, ai_agent]
+    summary: "Detailed report of Phase 4 realtime communication foundation with WebSocket endpoint and QueryOrchestrator integration."
+    related: [phase_status, development_phases_v2, service_catalog]
+
 # Task-to-Docs Mapping (for AI assistants)
 task_mappings:
   understand_architecture:
@@ -414,3 +438,22 @@ task_mappings:
     - observability
     - web_app_specs
     - admin_panel_specs
+- id: nextcloud_apps_design
+  path: docs/NEXTCLOUD_APPS_DESIGN.md
+  title: "Nextcloud Apps Design"
+  category: integration
+  audience: ["developer", "ai_agent"]
+  summary: "Design and status of the VoiceAssist Nextcloud apps for Phase 6."
+  related:
+    - nextcloud_integration
+    - phase_06_nextcloud_apps
+- id: phase_07_completion_report
+  path: docs/PHASE_07_COMPLETION_REPORT.md
+  title: "Phase 7 Completion Report"
+  category: phase_reports
+  audience: ["developer", "ai_agent"]
+  summary: "Detailed report of Phase 7 Admin Panel & RBAC work."
+  related:
+    - phase_status
+    - development_phases_v2
+

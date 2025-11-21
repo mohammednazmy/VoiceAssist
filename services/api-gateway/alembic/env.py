@@ -56,7 +56,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+    """Run migrations in 'online' mode with safety enhancements.
 
     In this scenario we need to create an Engine
     and associate a connection with the context.
@@ -70,11 +70,25 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,  # Compare column types during migrations
+            compare_server_default=True,  # Compare server defaults
         )
 
         with context.begin_transaction():
+            # Log migration start
+            print("=" * 50)
+            print(f"Starting migration: {context.get_head_revision()}")
+            print("=" * 50)
+
+            # Run the actual migrations
             context.run_migrations()
+
+            # Log migration completion
+            print("=" * 50)
+            print(f"Migration completed successfully!")
+            print("=" * 50)
 
 
 if context.is_offline_mode():

@@ -1,6 +1,6 @@
 # VoiceAssist V2 Service Catalog
 
-**Last Updated**: 2025-11-20
+**Last Updated**: 2025-11-21 (Phase 6: Nextcloud App Integration & Unified Services)
 **Status**: Canonical Reference
 **Purpose**: Comprehensive catalog of all backend services with implementation details
 
@@ -19,6 +19,20 @@ This document catalogs all backend services in VoiceAssist V2. These are **logic
 5. **Independent Development**: Each service has its own tests, can be developed independently
 
 ### Implementation Strategy
+
+### Implementation Note: API Gateway Location (Phases 0–1)
+
+For Phases 0–1, the API Gateway implementation used by Docker Compose
+lives under:
+
+- `services/api-gateway/app/` – containerized FastAPI application
+  built as `voiceassist-server` in `docker-compose.yml`.
+
+The `server/app/` directory hosts the logical monorepo design for
+future phases; many service modules there are stubs awaiting
+implementation and integration as the system evolves.
+
+
 
 **Phases 0-10: Monorepo (Docker Compose Development)**
 - All services live in `server/` directory
@@ -81,9 +95,11 @@ This document catalogs all backend services in VoiceAssist V2. These are **logic
 
 **Key Endpoints**:
 - `GET /health` - Gateway health check
-- `POST /api/auth/*` - Authentication routes (proxied to Auth Service)
-- `WS /api/chat/ws` - WebSocket chat (proxied to Voice Proxy)
-- `POST /api/chat/message` - REST chat (proxied to Voice Proxy)
+- `GET /ready` - Readiness probe (checks dependencies)
+- `GET /metrics` - Prometheus metrics
+- `POST /api/auth/*` - Authentication routes
+- `WS /api/realtime/ws` - Realtime WebSocket communication (Phase 4)
+- `POST /api/users/*` - User management endpoints
 - `POST /api/medical/search` - Medical search (proxied to Medical KB)
 - `POST /api/admin/*` - Admin operations (proxied to Admin API)
 - `GET /metrics` - Prometheus metrics endpoint
@@ -112,47 +128,92 @@ plugins:
 
 ---
 
-## 2. Voice Proxy Service
+## 2. Voice Proxy Service / Realtime Communication
 
-**Service ID**: `voice-proxy`
+**Service ID**: `voice-proxy` (future) / `realtime-api` (Phase 4)
 
-**Purpose**: The Voice Proxy Service manages real-time bidirectional communication between clients and the AI backend. It handles WebSocket connections for chat and voice interactions, integrates with OpenAI Realtime API for voice processing, manages conversation context and memory, implements voice activity detection (VAD), echo cancellation, and orchestrates the flow between user input, AI processing, and response streaming. This service is the heart of the real-time conversational experience.
+**Status**:
+- **Phase 4 (Current)**: Implemented as part of API Gateway at `/api/realtime/ws`
+- **Future Phases**: Will be extracted to separate service when voice features are added
+
+**Purpose**: Manages real-time bidirectional communication between clients and the AI backend. Currently provides WebSocket-based text streaming chat with QueryOrchestrator integration. Future phases will add voice processing, OpenAI Realtime API integration, VAD, echo cancellation, and full voice assistant capabilities.
 
 **Language/Runtime**: Python 3.11 with FastAPI and WebSockets
 
+**Implementation (Phase 4)**:
+- Location: `services/api-gateway/app/api/realtime.py`
+- Integrated with QueryOrchestrator for query processing
+- Supports text-based streaming responses
+- Message protocol: message_start → message_chunk* → message_complete
+
 **Main Ports**:
-- 8001/HTTP - REST API for conversation management
-- 8001/WebSocket - Real-time chat and voice streaming
+- 8000/WebSocket - Realtime communication endpoint (shared with API Gateway in Phase 4)
 
 **Dependencies**:
-- Redis (session state, conversation context)
-- PostgreSQL (conversation persistence, message history)
-- Medical KB Service (knowledge retrieval)
-- Auth Service (JWT validation)
-- External: OpenAI Realtime API (voice processing)
+- QueryOrchestrator (query processing)
+- LLMClient (language model interface)
+- PostgreSQL (future: conversation persistence)
+- Redis (future: session state)
 
-**Key Endpoints**:
-- `WS /api/chat/ws` - WebSocket connection for real-time chat/voice
-- `POST /api/chat/message` - Send message (REST alternative)
-- `GET /api/chat/conversations` - List user conversations
-- `GET /api/chat/conversations/{id}` - Get conversation details
-- `GET /api/chat/conversations/{id}/messages` - Get conversation messages
-- `POST /api/voice/start` - Initialize voice session
-- `POST /api/voice/stop` - End voice session
+**Key Endpoints (Phase 4)**:
+- `WS /api/realtime/ws` - WebSocket connection for realtime text chat
+  - Accepts: text messages with optional session_id and clinical_context_id
+  - Returns: Streaming responses with citations
+  - Supports: ping/pong keepalive
 
-**Event Schema (WebSocket)**:
-```python
-# Client → Server
-SessionStartEvent: type='session.start', mode, clinicalContext
-MessageSendEvent: type='message.send', sessionId, content
-AudioChunkEvent: type='audio.chunk', sessionId, data, sequence
+**Phase 4 Message Protocol**:
+```json
+// Client → Server
+{
+  "type": "message",
+  "content": "User query text",
+  "session_id": "optional-uuid",
+  "clinical_context_id": "optional-uuid"
+}
+{
+  "type": "ping"
+}
 
-# Server → Client
-SessionStartedEvent: type='session.started', sessionId
-MessageDeltaEvent: type='message.delta', contentDelta
-MessageCompleteEvent: type='message.complete', finishReason
-CitationListEvent: type='citation.list', citations
+// Server → Client
+{
+  "type": "connected",
+  "client_id": "uuid",
+  "protocol_version": "1.0",
+  "capabilities": ["text_streaming"]
+}
+{
+  "type": "message_start",
+  "message_id": "uuid",
+  "timestamp": "ISO-8601"
+}
+{
+  "type": "message_chunk",
+  "message_id": "uuid",
+  "content": "partial text...",
+  "chunk_index": 0
+}
+{
+  "type": "message_complete",
+  "message_id": "uuid",
+  "content": "full response text",
+  "citations": [{"id": "...", "source_type": "...", "title": "...", "url": "..."}],
+  "timestamp": "ISO-8601"
+}
+{
+  "type": "pong",
+  "timestamp": "ISO-8601"
+}
+{
+  "type": "error",
+  "error": {"code": "ERROR_CODE", "message": "..."}
+}
 ```
+
+**Future Endpoints** (Phases 5+):
+- Voice streaming (audio_chunk, VAD events)
+- Session management (session.start, session.end)
+- Turn-taking (interrupt, resume)
+- OpenAI Realtime API integration
 
 ---
 
@@ -160,12 +221,15 @@ CitationListEvent: type='citation.list', citations
 
 **Service ID**: `medical-kb` or `kb-service`
 
+**Status**: ✅ **Phase 5 MVP Implemented** (Document ingestion, semantic search, RAG-enhanced queries)
+
 **Implementation**:
 - **Phases 0-10 (Monorepo)**:
-  - Router: `server/app/api/kb.py` or `server/app/api/chat.py`
-  - RAG pipeline: `server/app/services/rag_service.py`
-  - **Orchestrator/Conductor**: `server/app/services/ai/orchestrator.py` (see [ORCHESTRATION_DESIGN.md](ORCHESTRATION_DESIGN.md))
-  - Search: `server/app/services/search_service.py`
+  - Admin KB API Router: `services/api-gateway/app/api/admin_kb.py`
+  - RAG pipeline: `services/api-gateway/app/services/rag_service.py` (QueryOrchestrator)
+  - Document ingestion: `services/api-gateway/app/services/kb_indexer.py` (KBIndexer)
+  - Semantic search: `services/api-gateway/app/services/search_aggregator.py` (SearchAggregator)
+  - LLM interface: `services/api-gateway/app/services/llm_client.py` (LLMClient)
 - **Phases 11-14 (Microservices)**: Extract to `services/kb-service/`
 
 **Purpose**: The Medical Knowledge Base (KB) Service implements a sophisticated Retrieval-Augmented Generation (RAG) system for medical information. It performs semantic search across indexed medical literature (textbooks, journals, guidelines), generates context-aware responses using retrieved knowledge, integrates with external medical APIs (PubMed, UpToDate), manages document embeddings in Qdrant vector database, and orchestrates multi-hop reasoning for complex medical queries. This service ensures evidence-based responses with proper citations.
@@ -194,6 +258,20 @@ The orchestrator (`app/services/ai/orchestrator.py` or `app/services/rag_service
 - LLM Service (OpenAI API or local Ollama)
 
 **Key Endpoints**:
+
+**Phase 5 Admin KB Endpoints** (implemented):
+- `POST /api/admin/kb/documents` - Upload and index document (text or PDF)
+  - Accepts: multipart/form-data with file, title, source_type, metadata
+  - Returns: Document ID, chunks indexed, processing time
+- `GET /api/admin/kb/documents` - List indexed documents with pagination
+  - Query params: skip, limit, source_type (optional filter)
+  - Returns: Paginated list of documents with metadata
+- `DELETE /api/admin/kb/documents/{document_id}` - Delete document and all chunks
+  - Returns: Deletion confirmation
+- `GET /api/admin/kb/documents/{document_id}` - Get document details
+  - Returns: Document metadata and indexing information
+
+**Future Endpoints** (Phases 6+):
 - `POST /api/medical/search` - Semantic search medical knowledge base
 - `POST /api/medical/rag/query` - RAG query with context generation
 - `POST /api/medical/journal/search` - Search PubMed journals
@@ -210,13 +288,28 @@ The orchestrator (`app/services/ai/orchestrator.py` or `app/services/rag_service
 - ClinicalContext
 - Citation
 
-**RAG Pipeline**:
+**RAG Pipeline (Phase 5 Implementation)**:
 ```
-User Query → Embedding → Vector Search (Qdrant) →
-Retrieve Top-K Documents → Rerank →
-Context Assembly → LLM Generation →
-Citation Extraction → Response
+User Query → QueryOrchestrator →
+  → SearchAggregator:
+    - Generate query embedding (OpenAI text-embedding-3-small)
+    - Semantic search in Qdrant (top_k=5, score_threshold=0.7)
+    - Format context with sources
+  → LLMClient:
+    - Assemble prompt with retrieved context
+    - PHI routing (cloud vs local model)
+    - Generate response
+  → Citation extraction
+  → QueryResponse with answer + citations
 ```
+
+**Phase 5 Implementation Details**:
+- **Embeddings**: OpenAI text-embedding-3-small (1536 dimensions)
+- **Vector DB**: Qdrant with cosine similarity search
+- **Chunking**: Fixed-size (500 chars) with overlap (50 chars)
+- **Document Types**: Text (.txt) and PDF (.pdf) support
+- **Search Configuration**: Configurable top-K and score threshold
+- **Citation Tracking**: Automatic extraction of source documents from search results
 
 **Related Documentation**:
 - [ORCHESTRATION_DESIGN.md](ORCHESTRATION_DESIGN.md) - Complete orchestrator/conductor design
@@ -277,41 +370,78 @@ Citation Extraction → Response
 
 **Purpose**: The Auth Service manages all authentication and authorization for the VoiceAssist system. It integrates with Nextcloud for Single Sign-On (SSO) via OIDC/OAuth2, issues and validates short-lived JWT tokens, implements multi-factor authentication (MFA) with TOTP, enforces role-based access control (RBAC), manages user sessions and token refresh, and provides secure password handling and reset workflows. This service is the security cornerstone of the entire platform.
 
+**Phase 2 Status**: ✅ **JWT Authentication Implemented with Enhancements**
+
 **Language/Runtime**: Python 3.11 with FastAPI and python-jose (JWT)
 
 **Main Ports**:
 - 8004/HTTP - REST API for authentication
 
 **Dependencies**:
-- PostgreSQL (user accounts, sessions, MFA secrets)
-- Redis (token blacklist, session cache)
-- External: Nextcloud OIDC provider (SSO), SMTP server (password reset emails)
+- PostgreSQL (user accounts, sessions, MFA secrets, audit logs)
+- Redis (token revocation blacklist, session cache, rate limiting)
+- External: Nextcloud OIDC provider (SSO - Phase 6+), SMTP server (password reset emails - Phase 3+)
+
+**Phase 2 Implementation Details**:
+- **JWT Tokens**: Access (15-min), Refresh (7-day), HS256 algorithm
+- **Password Security** (`app/core/password_validator.py`):
+  - Multi-criteria validation (min 8 chars, uppercase, lowercase, digits, special chars)
+  - Common password rejection (password, 123456, qwerty, etc.)
+  - Sequential/repeated character detection
+  - Strength scoring (0-100): Weak/Medium/Strong classification
+- **Token Revocation** (`app/services/token_revocation.py`):
+  - Redis-based blacklisting with dual-level revocation
+  - Individual token and all-user-tokens revocation
+  - Fail-open design for Redis unavailability
+  - Automatic TTL management
+- **Audit Logging** (`app/services/audit_service.py`):
+  - All authentication events logged automatically
+  - SHA-256 integrity verification for immutable audit trail
+  - Comprehensive metadata (IP, user agent, request ID, timestamp)
+  - JSONB fields for extensible context
+- **Request Tracking** (`app/core/request_id.py`):
+  - UUID v4 generation for each request
+  - X-Request-ID header for correlation
+  - Distributed tracing support
+- **API Envelope** (`app/core/api_envelope.py`):
+  - Standardized response format for all endpoints
+  - Error codes: INVALID_CREDENTIALS, TOKEN_EXPIRED, TOKEN_REVOKED, WEAK_PASSWORD
+  - Request ID correlation in metadata
 
 **Key Endpoints**:
-- `POST /api/auth/login` - Username/password login
-- `POST /api/auth/logout` - Invalidate session and tokens
-- `POST /api/auth/refresh` - Refresh JWT access token
-- `POST /api/auth/register` - User registration (if enabled)
-- `POST /api/auth/password/reset` - Request password reset
-- `POST /api/auth/password/reset/confirm` - Confirm password reset
-- `POST /api/auth/mfa/setup` - Initialize MFA setup
-- `POST /api/auth/mfa/verify` - Verify MFA code
-- `GET /api/auth/oidc/authorize` - OIDC authorization redirect
-- `POST /api/auth/oidc/callback` - OIDC callback handler
-- `GET /api/auth/me` - Get current user info
-- `POST /api/auth/token/validate` - Validate JWT token (internal)
+- `POST /api/auth/login` - Username/password login (✅ Phase 2)
+- `POST /api/auth/logout` - Invalidate session and tokens (✅ Phase 2)
+- `POST /api/auth/refresh` - Refresh JWT access token (✅ Phase 2)
+- `POST /api/auth/register` - User registration with password validation (✅ Phase 2)
+- `POST /api/auth/password/reset` - Request password reset (Phase 3+)
+- `POST /api/auth/password/reset/confirm` - Confirm password reset (Phase 3+)
+- `POST /api/auth/mfa/setup` - Initialize MFA setup (Phase 6+)
+- `POST /api/auth/mfa/verify` - Verify MFA code (Phase 6+)
+- `GET /api/auth/oidc/authorize` - OIDC authorization redirect (Phase 6+)
+- `POST /api/auth/oidc/callback` - OIDC callback handler (Phase 6+)
+- `GET /api/auth/me` - Get current user info (✅ Phase 2)
+- `POST /api/auth/token/validate` - Validate JWT token (✅ Phase 2 - internal)
 
-**JWT Claims**:
+**JWT Claims (Phase 2)**:
 ```json
 {
   "sub": "user_id",
   "email": "user@example.com",
-  "role": "admin|user|viewer",
-  "permissions": ["read:kb", "write:cases"],
+  "role": "clinician|admin|researcher",
   "exp": 1234567890,
-  "iat": 1234567890
+  "iat": 1234567890,
+  "type": "access|refresh"
 }
 ```
+
+**Rate Limiting (Phase 2)**:
+- Registration: 5 requests/hour per IP
+- Login: 10 requests/minute per IP
+- Token refresh: 20 requests/minute per IP
+
+**Database Tables**:
+- `users` - User accounts with hashed passwords
+- `audit_logs` - Authentication event audit trail (Phase 2)
 
 ---
 
@@ -362,36 +492,99 @@ Metadata Indexing (PostgreSQL) → Completion
 
 **Service ID**: `calendar-email-service`
 
+**Status**: ✅ **Phase 6 MVP Implemented** (CalDAV calendar operations, WebDAV file auto-indexing, Email skeleton)
+
+**Implementation**:
+- **Phases 0-10 (Monorepo)**:
+  - Integration API Router: `services/api-gateway/app/api/integrations.py`
+  - CalDAV Service: `services/api-gateway/app/services/caldav_service.py`
+  - File Indexer: `services/api-gateway/app/services/nextcloud_file_indexer.py`
+  - Email Service: `services/api-gateway/app/services/email_service.py` (skeleton)
+- **Phases 11-14 (Microservices)**: Extract to `services/integrations-service/`
+
 **Purpose**: The Calendar/Email Integration Service provides unified access to calendar and email functionality through multiple protocols. It integrates with Nextcloud Calendar via CalDAV, supports external calendar sync (Google Calendar, Outlook), connects to Nextcloud Mail or external IMAP/SMTP servers, enables voice commands for scheduling and email management, and maintains calendar event context for clinical workflows. This service allows clinicians to manage appointments and communications without leaving the VoiceAssist interface.
 
-**Language/Runtime**: Python 3.11 with FastAPI
+**Language/Runtime**: Python 3.11 with FastAPI, caldav library, webdavclient3
 
 **Main Ports**:
-- 8006/HTTP - REST API for calendar and email operations
+- Dev (Phases 0-10): 8000/HTTP (shared with main FastAPI app)
+- Prod (Phases 11-14): 8006/HTTP - Internal service mesh
 
 **Dependencies**:
-- PostgreSQL (event cache, email metadata)
-- Redis (calendar sync cache)
-- External: Nextcloud CalDAV/CardDAV, Google Calendar API (optional), IMAP/SMTP servers
+- PostgreSQL (event cache, email metadata - future)
+- Redis (calendar sync cache - future)
+- Qdrant (for file indexing into knowledge base)
+- External: Nextcloud CalDAV (calendar), Nextcloud WebDAV (files), IMAP/SMTP servers
 
 **Key Endpoints**:
-- `GET /api/integrations/calendar/events` - List calendar events
-- `POST /api/integrations/calendar/events` - Create calendar event
-- `PUT /api/integrations/calendar/events/{id}` - Update event
-- `DELETE /api/integrations/calendar/events/{id}` - Delete event
-- `GET /api/integrations/calendar/availability` - Check availability
-- `POST /api/integrations/calendar/sync` - Sync external calendars
-- `GET /api/integrations/email/messages` - List email messages
-- `POST /api/integrations/email/send` - Send email
-- `GET /api/integrations/email/messages/{id}` - Get email details
-- `POST /api/integrations/contacts/search` - Search contacts (CardDAV)
 
-**Protocols Supported**:
-- CalDAV (Nextcloud Calendar, iCloud)
-- CardDAV (Contacts)
-- IMAP/SMTP (Email)
-- Google Calendar API
-- Microsoft Graph API (Outlook/Exchange)
+**Phase 6 Calendar Endpoints** (implemented):
+- `GET /api/integrations/calendar/calendars` - List all available calendars for authenticated user
+  - Returns: Array of {id, name, url, supported_components}
+- `GET /api/integrations/calendar/events` - List calendar events within a date range
+  - Query params: start_date, end_date, calendar_id (optional)
+  - Returns: Array of CalendarEvent with uid, summary, start, end, description, location
+- `POST /api/integrations/calendar/events` - Create a new calendar event
+  - Body: {summary, start, end, description?, location?, calendar_id?}
+  - Returns: Created event UID
+- `PUT /api/integrations/calendar/events/{event_uid}` - Update an existing event
+  - Body: {summary?, start?, end?, description?, location?}
+  - Returns: Success confirmation
+- `DELETE /api/integrations/calendar/events/{event_uid}` - Delete a calendar event
+  - Returns: Deletion confirmation
+
+**Phase 6 File Indexing Endpoints** (implemented):
+- `POST /api/integrations/files/scan-and-index` - Scan Nextcloud directories and auto-index medical documents
+  - Query params: source_type (guideline|note|journal), force_reindex
+  - Returns: {files_discovered, files_indexed, files_failed, files_skipped}
+- `POST /api/integrations/files/index` - Index a specific Nextcloud file into the knowledge base
+  - Body: {file_path, source_type, title?}
+  - Returns: IndexingResult with document_id, chunks_indexed
+
+**Phase 6 Email Endpoints** (skeleton - future implementation):
+- `GET /api/integrations/email/folders` - List mailbox folders (NOT_IMPLEMENTED)
+- `GET /api/integrations/email/messages` - List email messages (NOT_IMPLEMENTED)
+- `POST /api/integrations/email/send` - Send email via SMTP (NOT_IMPLEMENTED)
+
+**Phase 6 Implementation Details**:
+
+**CalDAV Service** (`caldav_service.py`):
+- Connects to Nextcloud Calendar via CalDAV protocol (RFC 4791)
+- Supports calendar discovery and event CRUD operations
+- Uses vobject library for iCalendar parsing
+- Handles recurring events and timezone conversions
+- Error handling for connection failures and invalid events
+
+**Nextcloud File Indexer** (`nextcloud_file_indexer.py`):
+- Discovers files in Nextcloud via WebDAV protocol
+- Automatically indexes medical documents into Phase 5 KB
+- Supported formats: PDF (.pdf), Text (.txt), Markdown (.md)
+- Tracks indexed files to prevent re-indexing
+- Configurable watch directories (default: /Documents)
+- Integrates with KBIndexer from Phase 5 for embedding generation
+
+**Email Service** (`email_service.py` - skeleton):
+- Basic IMAP connection for reading emails
+- SMTP support for sending emails
+- Folder listing and message fetching
+- Full implementation deferred to Phase 7+
+
+**Protocols Supported** (Phase 6):
+- ✅ CalDAV (Nextcloud Calendar, RFC 4791)
+- ✅ WebDAV (Nextcloud Files, RFC 4918)
+- 🔄 IMAP/SMTP (skeleton only)
+- ⏳ CardDAV (Contacts - future)
+- ⏳ Google Calendar API (future)
+- ⏳ Microsoft Graph API (Outlook/Exchange - future)
+
+**Related Documentation**:
+- [NEXTCLOUD_INTEGRATION.md](NEXTCLOUD_INTEGRATION.md) - Integration architecture
+- [NEXTCLOUD_APPS_DESIGN.md](NEXTCLOUD_APPS_DESIGN.md) - Nextcloud app structure
+- [phases/PHASE_06_NEXTCLOUD_APPS.md](phases/PHASE_06_NEXTCLOUD_APPS.md) - Phase 6 details
+
+**Implementation Status**:
+- Phase 6 MVP: ✅ Calendar operations, ✅ File auto-indexing, 🔄 Email skeleton
+- Phase 7+: Full email integration, CardDAV contacts, external calendar sync
 
 ---
 

@@ -1,0 +1,292 @@
+---
+# Resource Requests and Limits Configuration
+# Defines compute resources for all VoiceAssist components
+# These patches should be applied to existing deployments
+
+# API Gateway Deployment - Resource Configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voiceassist-server
+  namespace: voiceassist
+  labels:
+    app: voiceassist-server
+    component: api-gateway
+spec:
+  template:
+    spec:
+      containers:
+        - name: server
+          resources:
+            # Requests: Guaranteed resources
+            # Used by scheduler for pod placement
+            requests:
+              cpu: 500m      # 0.5 CPU cores
+              memory: 512Mi  # 512 MiB RAM
+            # Limits: Maximum allowed resources
+            # Pod is throttled (CPU) or OOMKilled (memory) if exceeded
+            limits:
+              cpu: 2000m     # 2 CPU cores
+              memory: 2Gi    # 2 GiB RAM
+
+          # Liveness probe: Restart if unhealthy
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # Readiness probe: Remove from service if not ready
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+
+          # Startup probe: Allow slow startup
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30  # 150 seconds max startup time
+
+---
+# Worker Deployment - Resource Configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voiceassist-worker
+  namespace: voiceassist
+  labels:
+    app: voiceassist-worker
+    component: worker
+spec:
+  template:
+    spec:
+      containers:
+        - name: worker
+          resources:
+            # Higher resources for compute-intensive tasks
+            requests:
+              cpu: 1000m     # 1 CPU core
+              memory: 1Gi    # 1 GiB RAM
+            limits:
+              cpu: 4000m     # 4 CPU cores
+              memory: 4Gi    # 4 GiB RAM
+
+          # Liveness probe: Check worker health
+          livenessProbe:
+            exec:
+              command:
+                - celery
+                - -A
+                - app.celery
+                - inspect
+                - ping
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+
+          # Readiness probe: Check if worker can accept jobs
+          readinessProbe:
+            exec:
+              command:
+                - celery
+                - -A
+                - app.celery
+                - inspect
+                - active
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 2
+
+          # Preemption priority: Allow eviction if needed
+          # Workers can be interrupted as jobs can be retried
+          # (Set priorityClassName in pod spec if using PriorityClasses)
+
+---
+# PostgreSQL StatefulSet - Resource Configuration
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: voiceassist-postgres
+  namespace: voiceassist
+  labels:
+    app: voiceassist-postgres
+    component: database
+spec:
+  template:
+    spec:
+      containers:
+        - name: postgres
+          resources:
+            # Database needs consistent resources
+            requests:
+              cpu: 1000m     # 1 CPU core
+              memory: 2Gi    # 2 GiB RAM
+            limits:
+              cpu: 4000m     # 4 CPU cores
+              memory: 8Gi    # 8 GiB RAM
+
+          # Liveness probe: PostgreSQL health check
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - voiceassist
+                - -d
+                - voiceassist
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # Readiness probe: Can accept connections
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - voiceassist
+                - -d
+                - voiceassist
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+
+          # Volume mounts for persistence
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+              subPath: postgres
+
+          # Security context
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999  # postgres user
+            fsGroup: 999
+            allowPrivilegeEscalation: false
+
+---
+# Redis Deployment - Resource Configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voiceassist-redis
+  namespace: voiceassist
+  labels:
+    app: voiceassist-redis
+    component: cache
+spec:
+  template:
+    spec:
+      containers:
+        - name: redis
+          resources:
+            # Redis is memory-intensive but light on CPU
+            requests:
+              cpu: 250m      # 0.25 CPU cores
+              memory: 256Mi  # 256 MiB RAM
+            limits:
+              cpu: 1000m     # 1 CPU core
+              memory: 1Gi    # 1 GiB RAM
+
+          # Liveness probe: Redis PING
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # Readiness probe: Check Redis is ready
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+
+          # Redis configuration for performance
+          args:
+            - --maxmemory
+            - "768Mi"  # 75% of limit
+            - --maxmemory-policy
+            - allkeys-lru  # Evict least recently used keys
+            - --save
+            - ""  # Disable RDB snapshots for cache use case
+            - --appendonly
+            - "no"  # Disable AOF for cache use case
+
+---
+# Resource Quota for namespace (optional)
+# Prevents resource exhaustion at namespace level
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: voiceassist-quota
+  namespace: voiceassist
+spec:
+  hard:
+    # Limit total CPU and memory for all pods
+    requests.cpu: "20"        # 20 CPU cores total
+    requests.memory: 40Gi     # 40 GiB RAM total
+    limits.cpu: "50"          # 50 CPU cores total
+    limits.memory: 100Gi      # 100 GiB RAM total
+    # Limit number of resources
+    pods: "50"                # Maximum 50 pods
+    services: "20"            # Maximum 20 services
+    persistentvolumeclaims: "10"  # Maximum 10 PVCs
+
+---
+# LimitRange for namespace (optional)
+# Sets default limits if not specified in pod spec
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: voiceassist-limitrange
+  namespace: voiceassist
+spec:
+  limits:
+    # Default limits for containers
+    - type: Container
+      default:
+        cpu: 1000m
+        memory: 1Gi
+      defaultRequest:
+        cpu: 100m
+        memory: 128Mi
+      max:
+        cpu: 8000m
+        memory: 16Gi
+      min:
+        cpu: 50m
+        memory: 64Mi
+
+    # Default limits for pods
+    - type: Pod
+      max:
+        cpu: 16000m
+        memory: 32Gi
+      min:
+        cpu: 50m
+        memory: 64Mi

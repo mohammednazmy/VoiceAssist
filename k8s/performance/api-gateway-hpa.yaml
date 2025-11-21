@@ -1,0 +1,113 @@
+---
+# HorizontalPodAutoscaler for API Gateway
+# Scales the voiceassist-server deployment based on CPU, Memory, and custom metrics
+# Production-ready configuration with balanced scale-up/scale-down behavior
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: voiceassist-server-hpa
+  namespace: voiceassist
+  labels:
+    app: voiceassist-server
+    component: api-gateway
+    tier: frontend
+    version: v1
+  annotations:
+    description: "Autoscaler for VoiceAssist API Gateway"
+    autoscaling.alpha.kubernetes.io/conditions: "CPU and Memory based scaling"
+spec:
+  # Target deployment to scale
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: voiceassist-server
+
+  # Replica boundaries
+  # Min replicas: 2 ensures high availability and load distribution
+  # Max replicas: 10 prevents resource exhaustion while handling high traffic
+  minReplicas: 2
+  maxReplicas: 10
+
+  # Metrics to drive autoscaling decisions
+  metrics:
+    # CPU utilization target: 70%
+    # Conservative target allows headroom for traffic spikes
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+    # Memory utilization target: 80%
+    # Higher than CPU as memory typically grows more predictably
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+    # Custom metric: Requests per second per pod
+    # Target: 100 req/s per pod ensures responsive performance
+    # Requires Prometheus Adapter or similar metrics provider
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "100"
+
+  # Advanced scaling behavior configuration
+  behavior:
+    # Scale-up behavior: Aggressive to handle traffic spikes
+    scaleUp:
+      # Allow scaling up 100% of current pods every 30 seconds
+      # Example: 2 pods -> 4 pods -> 8 pods (if needed)
+      stabilizationWindowSeconds: 0  # No stabilization, react immediately
+      policies:
+        - type: Percent
+          value: 100  # Double the number of pods
+          periodSeconds: 30
+        - type: Pods
+          value: 2  # Add maximum 2 pods at once
+          periodSeconds: 30
+      # Use the policy that scales faster
+      selectPolicy: Max
+
+    # Scale-down behavior: Conservative to prevent flapping
+    scaleDown:
+      # Wait 5 minutes before considering scale-down
+      # Prevents premature scaling down during temporary traffic dips
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10  # Remove 10% of current pods
+          periodSeconds: 300  # Every 5 minutes
+        - type: Pods
+          value: 1  # Remove maximum 1 pod at once
+          periodSeconds: 300
+      # Use the policy that scales slower (more conservative)
+      selectPolicy: Min
+
+---
+# ServiceMonitor for custom metrics (optional, requires Prometheus Operator)
+# Enables collection of http_requests_per_second metric
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: voiceassist-server-metrics
+  namespace: voiceassist
+  labels:
+    app: voiceassist-server
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: voiceassist-server
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics

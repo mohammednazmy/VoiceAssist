@@ -1,0 +1,102 @@
+# VoiceAssist V2 - Docker Ignore
+# Phase 9: Infrastructure as Code
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Tests
+tests/
+**/test_*.py
+**/*_test.py
+pytest.ini
+.pytest_cache
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment files (secrets should not be in images)
+.env
+.env.*
+*.local
+
+# Logs
+*.log
+logs/
+
+# Infrastructure
+infrastructure/
+terraform/
+ansible/
+k8s/
+
+# Reports
+coverage/
+htmlcov/
+.coverage
+*.cover
+.hypothesis/
+.pytest_cache/
+*.report.json
+
+# Secrets
+secrets/
+*.key
+*.pem
+*.crt
+
+# Backups
+*.bak
+*.backup
+*#Backups/
+
+# Other
+.pre-commit-config.yaml
+.bandit
+.safety-policy.yml
+trivy.yaml
+.gitleaks.toml

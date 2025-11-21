@@ -1,0 +1,91 @@
+# VoiceAssist V2 - Trivy Configuration
+# Phase 9: Infrastructure as Code
+#
+# Trivy scans container images and infrastructure as code
+
+# Scan target types
+scan:
+  # Skip specific checks
+  skip-files:
+    - "**/.git/**"
+    - "**/node_modules/**"
+    - "**/venv/**"
+    - "**/.venv/**"
+
+  # Skip specific directories
+  skip-dirs:
+    - .git
+    - node_modules
+    - venv
+    - .venv
+
+# Vulnerability scanning
+vulnerability:
+  # Severity levels to report
+  severity:
+    - CRITICAL
+    - HIGH
+    - MEDIUM
+    - LOW
+
+  # Vulnerability types to detect
+  type:
+    - os
+    - library
+
+  # Ignore unfixed vulnerabilities
+  ignore-unfixed: false
+
+  # Skip update check
+  skip-update: false
+
+# Misconfiguration scanning
+misconfiguration:
+  # Severity levels to report
+  severity:
+    - CRITICAL
+    - HIGH
+    - MEDIUM
+
+  # Include Kubernetes checks
+  include-non-failures: false
+
+  # Trace misconfiguration sources
+  trace: true
+
+# Secret scanning
+secret:
+  # Enable secret scanning
+  enabled: true
+
+  # Severity levels
+  severity:
+    - CRITICAL
+    - HIGH
+    - MEDIUM
+
+# Output configuration
+format: json
+output: trivy-report.json
+
+# Cache configuration
+cache:
+  # Cache backend (fs or redis)
+  backend: fs
+
+  # Cache TTL
+  ttl: 24h
+
+# Exit code
+exit-code: 1
+
+# Timeout
+timeout: 10m
+
+# Ignore policy
+ignore:
+  # CVE IDs to ignore (with expiration date)
+  # Example:
+  # - id: CVE-2021-12345
+  #   expired: "2024-12-31"
+  #   reason: "Acceptable risk - requires manual upgrade"

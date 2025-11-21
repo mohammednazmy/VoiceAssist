@@ -1,0 +1,22 @@
+# HPA patches for staging environment
+# Production-like with moderate limits
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: voiceassist-server-hpa
+spec:
+  minReplicas: 2  # Same as production
+  maxReplicas: 6  # Reduced from 10
+  # Other settings inherit from base
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: voiceassist-worker-hpa
+spec:
+  minReplicas: 1  # Same as base
+  maxReplicas: 3  # Reduced from 5
+  # Other settings inherit from base
