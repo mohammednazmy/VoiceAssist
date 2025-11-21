@@ -359,7 +359,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Download terraform outputs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           pattern: '*-terraform-outputs'
 
@@ -450,7 +450,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Download state backup
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           pattern: 'production-state-backup-*'
 
