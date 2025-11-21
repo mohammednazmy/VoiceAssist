@@ -86,7 +86,7 @@ credentials.json
 !.gitkeep
 secrets/
 __MACOSX/
-#Backups/
+\#Backups/
 *.zip
 
 # Jaeger observability data
