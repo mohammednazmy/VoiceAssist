@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceAssist Documentation - asimo.io</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #10b981;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        .main-content {
+            padding: 3rem 0;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+
+        .card h3 {
+            color: #444;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.3rem;
+        }
+
+        .doc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .doc-item {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .doc-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .doc-item h4 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .doc-item p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .doc-item a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+
+        .doc-item a:hover {
+            text-decoration: underline;
+        }
+
+        .quick-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .quick-link {
+            background: #667eea;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .quick-link:hover {
+            background: #764ba2;
+        }
+
+        .info-box {
+            background: #e0e7ff;
+            border-left: 4px solid #667eea;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .info-box strong {
+            color: #667eea;
+        }
+
+        footer {
+            background: #2d3748;
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 4rem;
+        }
+
+        code {
+            background: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>VoiceAssist Documentation</h1>
+            <p class="subtitle">HIPAA-Compliant Medical AI Assistant Platform</p>
+            <span class="status-badge">✅ FULLY OPERATIONAL</span>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="card">
+                <h2>🚀 Quick Start</h2>
+                <div class="quick-links">
+                    <a href="https://assist.asimo.io" class="quick-link">API Gateway</a>
+                    <a href="https://assist.asimo.io/docs" class="quick-link">API Documentation</a>
+                    <a href="https://admin.asimo.io" class="quick-link">Admin Panel</a>
+                    <a href="https://asimo.io" class="quick-link">Nextcloud</a>
+                </div>
+
+                <div class="info-box">
+                    <strong>Server:</strong> Ubuntu @ asimo.io (107.204.29.210)<br>
+                    <strong>Deployed:</strong> 2025-11-21<br>
+                    <strong>Status:</strong> All services healthy and operational
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📚 Documentation Categories</h2>
+
+                <h3>Getting Started</h3>
+                <div class="doc-grid">
+                    <div class="doc-item">
+                        <h4>Start Here</h4>
+                        <p>New to VoiceAssist? Begin your journey with our comprehensive introduction.</p>
+                        <a href="START_HERE.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Project Summary</h4>
+                        <p>High-level overview of the VoiceAssist platform and its capabilities.</p>
+                        <a href="PROJECT_SUMMARY.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>User Guide</h4>
+                        <p>Learn how to use VoiceAssist features as an end user.</p>
+                        <a href="USER_GUIDE.md">Read More →</a>
+                    </div>
+                </div>
+
+                <h3>Deployment & Operations</h3>
+                <div class="doc-grid">
+                    <div class="doc-item">
+                        <h4>Deployment Summary</h4>
+                        <p>Complete deployment information for the asimo.io production environment.</p>
+                        <a href="deployment/DEPLOYMENT_SUMMARY.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Deployment Guide</h4>
+                        <p>Step-by-step guide for deploying VoiceAssist on Ubuntu.</p>
+                        <a href="DEPLOYMENT_GUIDE.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Local Development</h4>
+                        <p>Set up a local development environment for VoiceAssist.</p>
+                        <a href="LOCAL_DEVELOPMENT.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Production Deployment Runbook</h4>
+                        <p>Detailed procedures for production deployments.</p>
+                        <a href="PRODUCTION_DEPLOYMENT_RUNBOOK.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Infrastructure Setup</h4>
+                        <p>Configure infrastructure components and dependencies.</p>
+                        <a href="INFRASTRUCTURE_SETUP.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Apache Configurations</h4>
+                        <p>View Apache vhost configurations for all subdomains.</p>
+                        <a href="apache-configs/">View Configs →</a>
+                    </div>
+                </div>
+
+                <h3>Architecture & Design</h3>
+                <div class="doc-grid">
+                    <div class="doc-item">
+                        <h4>Architecture Overview</h4>
+                        <p>Comprehensive system architecture documentation.</p>
+                        <a href="ARCHITECTURE.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Unified Architecture</h4>
+                        <p>Detailed architecture diagrams and component interactions.</p>
+                        <a href="UNIFIED_ARCHITECTURE.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Backend Architecture</h4>
+                        <p>Deep dive into backend services and API design.</p>
+                        <a href="BACKEND_ARCHITECTURE.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Data Model</h4>
+                        <p>Database schema and data relationship documentation.</p>
+                        <a href="DATA_MODEL.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Service Catalog</h4>
+                        <p>Complete catalog of all microservices and their responsibilities.</p>
+                        <a href="SERVICE_CATALOG.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Semantic Search Design</h4>
+                        <p>Vector search and RAG implementation details.</p>
+                        <a href="SEMANTIC_SEARCH_DESIGN.md">Read More →</a>
+                    </div>
+                </div>
+
+                <h3>Security & Compliance</h3>
+                <div class="doc-grid">
+                    <div class="doc-item">
+                        <h4>Security & Compliance</h4>
+                        <p>Security best practices and compliance requirements.</p>
+                        <a href="SECURITY_COMPLIANCE.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>HIPAA Compliance Matrix</h4>
+                        <p>Detailed HIPAA compliance mapping and controls.</p>
+                        <a href="HIPAA_COMPLIANCE_MATRIX.md">Read More →</a>
+                    </div>
+                </div>
+
+                <h3>Integrations</h3>
+                <div class="doc-grid">
+                    <div class="doc-item">
+                        <h4>Nextcloud Integration</h4>
+                        <p>OAuth setup and Nextcloud integration guide.</p>
+                        <a href="NEXTCLOUD_INTEGRATION.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Tools & Integrations</h4>
+                        <p>Third-party tools and integration documentation.</p>
+                        <a href="TOOLS_AND_INTEGRATIONS.md">Read More →</a>
+                    </div>
+                </div>
+
+                <h3>Operations & Monitoring</h3>
+                <div class="doc-grid">
+                    <div class="doc-item">
+                        <h4>Observability</h4>
+                        <p>Monitoring, logging, and observability setup.</p>
+                        <a href="OBSERVABILITY.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Performance Benchmarks</h4>
+                        <p>System performance metrics and benchmarks.</p>
+                        <a href="PERFORMANCE_BENCHMARKS.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Performance Tuning Guide</h4>
+                        <p>Optimize VoiceAssist for maximum performance.</p>
+                        <a href="PERFORMANCE_TUNING_GUIDE.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Disaster Recovery Runbook</h4>
+                        <p>Emergency procedures and disaster recovery plans.</p>
+                        <a href="DISASTER_RECOVERY_RUNBOOK.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Chaos Engineering</h4>
+                        <p>Testing system resilience and failure scenarios.</p>
+                        <a href="CHAOS_ENGINEERING.md">Read More →</a>
+                    </div>
+                </div>
+
+                <h3>Development</h3>
+                <div class="doc-grid">
+                    <div class="doc-item">
+                        <h4>Development Phases</h4>
+                        <p>Project phases and development milestones.</p>
+                        <a href="DEVELOPMENT_PHASES.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Roadmap</h4>
+                        <p>Future features and development roadmap.</p>
+                        <a href="ROADMAP.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Testing Contracts</h4>
+                        <p>API contracts and contract testing documentation.</p>
+                        <a href="TESTING_CONTRACTS.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Load Testing Guide</h4>
+                        <p>Performance and load testing procedures.</p>
+                        <a href="LOAD_TESTING_GUIDE.md">Read More →</a>
+                    </div>
+                </div>
+
+                <h3>DevOps & Infrastructure</h3>
+                <div class="doc-grid">
+                    <div class="doc-item">
+                        <h4>CI/CD Guide</h4>
+                        <p>Continuous integration and deployment pipelines.</p>
+                        <a href="CICD_GUIDE.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Terraform Guide</h4>
+                        <p>Infrastructure as Code with Terraform.</p>
+                        <a href="TERRAFORM_GUIDE.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Ansible Guide</h4>
+                        <p>Configuration management with Ansible.</p>
+                        <a href="ANSIBLE_GUIDE.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Kubernetes Migration</h4>
+                        <p>Migrate from Docker Compose to Kubernetes.</p>
+                        <a href="COMPOSE_TO_K8S_MIGRATION.md">Read More →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🔧 Technical Specifications</h2>
+                <div class="doc-grid">
+                    <div class="doc-item">
+                        <h4>Web App Specifications</h4>
+                        <p>Frontend architecture and components.</p>
+                        <a href="WEB_APP_SPECS.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Admin Panel Specifications</h4>
+                        <p>Admin interface features and design.</p>
+                        <a href="ADMIN_PANEL_SPECS.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Medical Features</h4>
+                        <p>Medical-specific functionality documentation.</p>
+                        <a href="MEDICAL_FEATURES.md">Read More →</a>
+                    </div>
+                    <div class="doc-item">
+                        <h4>Configuration Reference</h4>
+                        <p>Complete configuration options reference.</p>
+                        <a href="CONFIGURATION_REFERENCE.md">Read More →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📦 System Information</h2>
+                <p><strong>Services Running:</strong></p>
+                <ul style="list-style: none; padding: 0; margin-top: 1rem;">
+                    <li style="padding: 0.5rem 0;">✅ <strong>PostgreSQL (pgvector)</strong> - Port 5433 (external) → 5432 (internal)</li>
+                    <li style="padding: 0.5rem 0;">✅ <strong>Redis</strong> - Port 6380 (external) → 6379 (internal)</li>
+                    <li style="padding: 0.5rem 0;">✅ <strong>Qdrant Vector DB</strong> - Ports 6333, 6334</li>
+                    <li style="padding: 0.5rem 0;">✅ <strong>VoiceAssist API Gateway</strong> - Port 8200 (external) → 8000 (internal)</li>
+                </ul>
+
+                <p style="margin-top: 2rem;"><strong>URLs:</strong></p>
+                <ul style="list-style: none; padding: 0; margin-top: 1rem;">
+                    <li style="padding: 0.5rem 0;">🌐 <strong>Main API:</strong> <code>https://assist.asimo.io</code></li>
+                    <li style="padding: 0.5rem 0;">🔧 <strong>Admin Panel:</strong> <code>https://admin.asimo.io</code></li>
+                    <li style="padding: 0.5rem 0;">📚 <strong>API Docs:</strong> <code>https://assist.asimo.io/docs</code></li>
+                    <li style="padding: 0.5rem 0;">☁️ <strong>Nextcloud:</strong> <code>https://asimo.io</code></li>
+                    <li style="padding: 0.5rem 0;">📖 <strong>Documentation:</strong> <code>https://assistdocs.asimo.io</code></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>VoiceAssist Platform © 2025 - Deployed on asimo.io</p>
+            <p style="margin-top: 0.5rem; opacity: 0.8;">HIPAA-Compliant Medical AI Assistant</p>
+        </div>
+    </footer>
+</body>
+</html>
