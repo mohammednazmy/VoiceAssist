@@ -348,13 +348,13 @@ jobs:
           api-key: ${{ secrets.INFRACOST_API_KEY }}
 
       - name: Download staging plan
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: terraform-plan-staging
           path: infrastructure/terraform/
 
       - name: Download production plan
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: terraform-plan-production
           path: infrastructure/terraform/
