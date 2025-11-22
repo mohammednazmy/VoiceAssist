@@ -266,13 +266,14 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
 
 /**
  * Patterns for detecting potential PHI (Protected Health Information)
+ * Note: Non-global patterns used to avoid lastIndex mutation in .test() calls
  */
 const PHI_PATTERNS = {
-  ssn: /\b\d{3}-\d{2}-\d{4}\b/g,
-  phone: /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g,
-  email: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
-  mrn: /\b(MRN|Medical Record Number|Patient ID)[:\s]*\d+\b/gi,
-  dob: /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g,
+  ssn: /\b\d{3}-\d{2}-\d{4}\b/,
+  phone: /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/,
+  email: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,
+  mrn: /\b(MRN|Medical Record Number|Patient ID)[:\s]*\d+\b/i,
+  dob: /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/,
 };
 
 /**
@@ -288,7 +289,9 @@ export function containsPHI(text: string): boolean {
 export function redactPHI(text: string): string {
   let redacted = text;
   Object.entries(PHI_PATTERNS).forEach(([type, pattern]) => {
-    redacted = redacted.replace(pattern, `[REDACTED_${type.toUpperCase()}]`);
+    // Create global version of pattern for replace (to redact all occurrences)
+    const globalPattern = new RegExp(pattern.source, pattern.flags + 'g');
+    redacted = redacted.replace(globalPattern, `[REDACTED_${type.toUpperCase()}]`);
   });
   return redacted;
 }
