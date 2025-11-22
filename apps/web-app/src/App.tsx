@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { HomePage } from './pages/HomePage';
+import { ProfilePage } from './pages/ProfilePage';
+import { OAuthCallbackPage } from './pages/OAuthCallbackPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { MainLayout } from './components/layout/MainLayout';
 
@@ -17,6 +19,7 @@ export function App() {
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/auth/callback" element={<OAuthCallbackPage />} />
 
         {/* Protected routes */}
         <Route
@@ -46,15 +49,7 @@ export function App() {
               </div>
             }
           />
-          <Route
-            path="settings"
-            element={
-              <div className="text-center py-12">
-                <h2 className="text-2xl font-bold text-neutral-900">Settings</h2>
-                <p className="mt-2 text-neutral-600">Coming soon...</p>
-              </div>
-            }
-          />
+          <Route path="settings" element={<ProfilePage />} />
         </Route>
 
         {/* Catch all */}

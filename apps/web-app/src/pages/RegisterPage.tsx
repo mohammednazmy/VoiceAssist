@@ -17,6 +17,7 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
+  OAuthButton,
 } from '@voiceassist/ui';
 import { useAuth } from '../hooks/useAuth';
 import { registerSchema, type RegisterFormData } from '../lib/validations';
@@ -58,7 +59,7 @@ function calculatePasswordStrength(password: string): PasswordStrength {
 }
 
 export function RegisterPage() {
-  const { register: registerUser, isLoading, error: authError } = useAuth();
+  const { register: registerUser, loginWithOAuth, isLoading, error: authError } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -354,6 +355,30 @@ export function RegisterPage() {
                 {isLoading ? 'Creating account...' : 'Create account'}
               </Button>
             </form>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-neutral-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-neutral-500">Or continue with</span>
+              </div>
+            </div>
+
+            <div className="grid gap-3">
+              <OAuthButton
+                provider="google"
+                fullWidth
+                disabled={isLoading}
+                onClick={() => loginWithOAuth('google')}
+              />
+              <OAuthButton
+                provider="microsoft"
+                fullWidth
+                disabled={isLoading}
+                onClick={() => loginWithOAuth('microsoft')}
+              />
+            </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-sm text-center text-neutral-600">

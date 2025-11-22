@@ -71,9 +71,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'voiceassist-auth',
-      partializ
-
-e: (state) => ({
+      partialize: (state) => ({
         user: state.user,
         tokens: state.tokens,
         isAuthenticated: state.isAuthenticated,

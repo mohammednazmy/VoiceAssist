@@ -93,6 +93,24 @@ export class VoiceAssistApiClient {
     return response.data.data!;
   }
 
+  async getOAuthUrl(provider: 'google' | 'microsoft'): Promise<string> {
+    const response = await this.client.get<ApiResponse<{ url: string }>>(
+      `/auth/oauth/${provider}/authorize`
+    );
+    return response.data.data!.url;
+  }
+
+  async handleOAuthCallback(
+    provider: 'google' | 'microsoft',
+    code: string
+  ): Promise<LoginResponse> {
+    const response = await this.client.post<ApiResponse<LoginResponse>>(
+      `/auth/oauth/${provider}/callback`,
+      { code }
+    );
+    return response.data.data!;
+  }
+
   // =========================================================================
   // Conversations
   // =========================================================================

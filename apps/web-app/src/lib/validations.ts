@@ -43,5 +43,18 @@ export const registerSchema = z
     path: ['confirmPassword'],
   });
 
+export const profileSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Name is required')
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name must not exceed 100 characters'),
+  email: z
+    .string()
+    .min(1, 'Email is required')
+    .email('Invalid email address'),
+});
+
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
+export type ProfileFormData = z.infer<typeof profileSchema>;

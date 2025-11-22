@@ -20,4 +20,7 @@ export {
   CardContent,
 } from './components/Card';
 
+export { OAuthButton } from './components/OAuthButton';
+export type { OAuthButtonProps } from './components/OAuthButton';
+
 export { cn } from './lib/utils';

@@ -17,12 +17,13 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
+  OAuthButton,
 } from '@voiceassist/ui';
 import { useAuth } from '../hooks/useAuth';
 import { loginSchema, type LoginFormData } from '../lib/validations';
 
 export function LoginPage() {
-  const { login, isLoading, error: authError } = useAuth();
+  const { login, loginWithOAuth, isLoading, error: authError } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -196,6 +197,30 @@ export function LoginPage() {
                 {isLoading ? 'Signing in...' : 'Sign in'}
               </Button>
             </form>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-neutral-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-neutral-500">Or continue with</span>
+              </div>
+            </div>
+
+            <div className="grid gap-3">
+              <OAuthButton
+                provider="google"
+                fullWidth
+                disabled={isLoading}
+                onClick={() => loginWithOAuth('google')}
+              />
+              <OAuthButton
+                provider="microsoft"
+                fullWidth
+                disabled={isLoading}
+                onClick={() => loginWithOAuth('microsoft')}
+              />
+            </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-sm text-center text-neutral-600">

@@ -105,6 +105,48 @@ export function useAuth() {
     }
   }, [tokens, setTokens, setUser, logoutStore]);
 
+  const loginWithOAuth = useCallback(
+    async (provider: 'google' | 'microsoft') => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Get OAuth authorization URL from backend
+        const authUrl = await apiClient.getOAuthUrl(provider);
+
+        // Redirect to OAuth provider
+        window.location.href = authUrl;
+      } catch (err) {
+        setLoading(false);
+        setError(err instanceof Error ? err.message : 'OAuth initialization failed');
+        throw err;
+      }
+    },
+    [setLoading, setError]
+  );
+
+  const handleOAuthCallback = useCallback(
+    async (provider: 'google' | 'microsoft', code: string) => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await apiClient.handleOAuthCallback(provider, code);
+
+        setUser(response.user);
+        setTokens(response.tokens);
+        setLoading(false);
+
+        navigate('/');
+      } catch (err) {
+        setLoading(false);
+        setError(err instanceof Error ? err.message : 'OAuth callback failed');
+        throw err;
+      }
+    },
+    [navigate, setUser, setTokens, setLoading, setError]
+  );
+
   return {
     user,
     tokens,
@@ -115,6 +157,8 @@ export function useAuth() {
     register,
     logout,
     refreshTokens,
+    loginWithOAuth,
+    handleOAuthCallback,
     apiClient,
   };
 }
