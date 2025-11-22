@@ -40,11 +40,23 @@ export interface LoginResponse {
 
 export interface Message {
   id: string;
-  conversationId: string;
+  conversationId?: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
-  timestamp: string;
+  delta?: string;
+  citations?: Citation[];
+  attachments?: string[];
+  timestamp: number;
   metadata?: MessageMetadata;
+}
+
+export interface Citation {
+  id: string;
+  source: 'kb' | 'url';
+  reference: string;
+  snippet?: string;
+  page?: number;
+  metadata?: Record<string, any>;
 }
 
 export interface MessageMetadata {
@@ -184,6 +196,60 @@ export interface ChatStreamChunk {
   messageId: string;
   delta: string;
   isComplete: boolean;
+}
+
+export type WebSocketEventType =
+  | 'delta'
+  | 'chunk'
+  | 'message.done'
+  | 'error'
+  | 'ping'
+  | 'pong';
+
+export interface WebSocketEvent {
+  type: WebSocketEventType;
+  eventId?: string;
+  messageId?: string;
+  content?: string;
+  delta?: string;
+  message?: Message;
+  metadata?: any;
+  error?: WebSocketError;
+}
+
+export interface WebSocketError {
+  code: WebSocketErrorCode;
+  message: string;
+  details?: unknown;
+}
+
+export type WebSocketErrorCode =
+  | 'AUTH_FAILED'
+  | 'RATE_LIMITED'
+  | 'QUOTA_EXCEEDED'
+  | 'INVALID_EVENT'
+  | 'BACKEND_ERROR'
+  | 'CONNECTION_DROPPED';
+
+export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
+
+// ============================================================================
+// Attachment Types
+// ============================================================================
+
+export interface Attachment {
+  id: string;
+  url: string;
+  mime: string;
+  size: number;
+  name?: string;
+}
+
+export interface AttachmentUploadResponse {
+  id: string;
+  url: string;
+  mime: string;
+  size: number;
 }
 
 // ============================================================================
