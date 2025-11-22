@@ -14,6 +14,7 @@ import type {
   LoginResponse,
   User,
   Conversation,
+  UpdateConversationRequest,
   Message,
   Document,
   SearchResult,
@@ -139,6 +140,25 @@ export class VoiceAssistApiClient {
       { title }
     );
     return response.data.data!;
+  }
+
+  async updateConversation(
+    id: string,
+    updates: UpdateConversationRequest
+  ): Promise<Conversation> {
+    const response = await this.client.patch<ApiResponse<Conversation>>(
+      `/conversations/${id}`,
+      updates
+    );
+    return response.data.data!;
+  }
+
+  async archiveConversation(id: string): Promise<Conversation> {
+    return this.updateConversation(id, { archived: true });
+  }
+
+  async unarchiveConversation(id: string): Promise<Conversation> {
+    return this.updateConversation(id, { archived: false });
   }
 
   async deleteConversation(id: string): Promise<void> {

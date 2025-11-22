@@ -33,6 +33,109 @@ const ws = new WebSocket(
 
 ---
 
+## Conversation Scoping
+
+### Overview
+
+Each WebSocket connection is scoped to a single conversation. The `conversationId` query parameter determines which conversation the WebSocket session belongs to. This scoping ensures proper message isolation and history management.
+
+### Conversation-WebSocket Relationship
+
+**One-to-One Mapping:**
+- Each WebSocket connection is associated with exactly one conversation
+- Each conversation can have at most one active WebSocket connection per client
+- Messages sent over the WebSocket are automatically associated with the conversation
+
+**Connection Lifecycle:**
+```
+Conversation Created → Load History → Connect WebSocket → Send/Receive Messages
+                                           ↓
+                        Switch Conversation: Disconnect WebSocket → Connect to New Conversation
+                                           ↓
+                        Delete Conversation: Disconnect WebSocket → Conversation Removed
+```
+
+### Switching Conversations
+
+**Process:**
+1. Client disconnects existing WebSocket connection
+2. Client clears message state for old conversation
+3. Client fetches new conversation history via REST API:
+   ```
+   GET /api/conversations/{newConversationId}/messages
+   ```
+4. Client connects new WebSocket with new `conversationId`:
+   ```javascript
+   const ws = new WebSocket(
+     `wss://assist.asimo.io/api/realtime?conversationId=${newConversationId}&token=${token}`
+   );
+   ```
+
+**Critical Requirements:**
+- Old WebSocket **must** be disconnected before connecting to new conversation
+- Message state **must** be cleared to prevent cross-contamination
+- Connection to new conversation **must** use correct `conversationId` parameter
+
+**Error Prevention:**
+```typescript
+// WRONG: Switching conversationId without disconnecting
+ws.send(JSON.stringify({ conversationId: 'new-id' })); // ❌ NOT SUPPORTED
+
+// CORRECT: Disconnect old, connect new
+oldWs.close();
+const newWs = new WebSocket(`wss://...?conversationId=new-id&token=${token}`); // ✅
+```
+
+### Message Persistence
+
+**REST API (Persistent):**
+- Messages are stored in the database associated with their conversation
+- History retrieved via: `GET /api/conversations/{conversationId}/messages`
+- Persists across WebSocket disconnections
+
+**WebSocket (Real-time):**
+- New messages sent via WebSocket are saved to database
+- Streaming responses are saved when complete (`message.done` event)
+- Messages persist even if WebSocket disconnects during streaming
+
+**Initial Load:**
+```typescript
+// 1. Load conversation history from REST API
+const history = await apiClient.getMessages(conversationId, 1, 50);
+
+// 2. Initialize messages with history
+const [messages, setMessages] = useState(history.items);
+
+// 3. Connect WebSocket for new real-time messages
+const ws = useChatSession({ conversationId, initialMessages: history.items });
+```
+
+### Authorization
+
+**Conversation Access Control:**
+1. Server validates JWT token
+2. Server extracts user ID from token
+3. Server checks if user owns conversation with given `conversationId`
+4. If unauthorized, connection is rejected with `AUTH_FAILED` error
+
+**Security Flow:**
+```
+Client connects with conversationId + token
+          ↓
+Server validates token signature
+          ↓
+Server extracts userId from token
+          ↓
+Server queries: SELECT * FROM conversations WHERE id = conversationId AND userId = userId
+          ↓
+If found: Allow connection
+If not found: Reject with AUTH_FAILED
+```
+
+**See detailed conversation management:** [CONVERSATIONS_AND_ROUTING.md](./CONVERSATIONS_AND_ROUTING.md)
+
+---
+
 ## Connection Lifecycle
 
 ### 1. Connection Handshake
@@ -690,6 +793,8 @@ function ChatPage() {
 ## Related Documentation
 
 - [Architecture Overview](./ARCHITECTURE_OVERVIEW.md)
+- [Conversations and Routing](./CONVERSATIONS_AND_ROUTING.md)
 - [Phase 2 Testing Plan](./TESTING_PHASE2.md)
+- [Phase 3 Testing Plan](./TESTING_PHASE3.md)
 - [Client Development Workflow](./DEVELOPMENT_WORKFLOW.md)
 - [API Reference](../api-reference/rest-api.md)

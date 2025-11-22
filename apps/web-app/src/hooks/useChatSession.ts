@@ -19,6 +19,7 @@ import { useAuthStore } from '../stores/authStore';
 
 interface UseChatSessionOptions {
   conversationId: string;
+  initialMessages?: Message[];
   onMessage?: (message: Message) => void;
   onError?: (error: WebSocketErrorCode, message: string) => void;
   onConnectionChange?: (status: ConnectionStatus) => void;
@@ -39,9 +40,9 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_RECONNECT_DELAY = 1000; // 1 second
 
 export function useChatSession(options: UseChatSessionOptions): UseChatSessionReturn {
-  const { conversationId, onMessage, onError, onConnectionChange } = options;
+  const { conversationId, initialMessages = [], onMessage, onError, onConnectionChange } = options;
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
   const [isTyping, setIsTyping] = useState(false);
 
@@ -52,6 +53,13 @@ export function useChatSession(options: UseChatSessionOptions): UseChatSessionRe
   const streamingMessageRef = useRef<Message | null>(null);
 
   const { tokens } = useAuthStore();
+
+  // Update messages when initialMessages changes (e.g., when conversation changes)
+  useEffect(() => {
+    setMessages(initialMessages);
+    streamingMessageRef.current = null;
+    setIsTyping(false);
+  }, [initialMessages]);
 
   const updateConnectionStatus = useCallback((status: ConnectionStatus) => {
     setConnectionStatus(status);

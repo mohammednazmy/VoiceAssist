@@ -158,6 +158,10 @@ apps/web-app/                    # Main application (assist.asimo.io)
 │   │   │   ├── ConnectionStatus.tsx    # WebSocket status indicator
 │   │   │   ├── ChatErrorBoundary.tsx   # Error boundary for chat
 │   │   │   └── __tests__/              # Component unit tests
+│   │   ├── conversations/       # Conversation management
+│   │   │   ├── ConversationList.tsx    # Conversation list sidebar
+│   │   │   ├── ConversationListItem.tsx # Individual conversation item
+│   │   │   └── __tests__/              # Conversation tests
 │   │   ├── layout/              # Layout components
 │   │   │   ├── MainLayout.tsx
 │   │   │   ├── Header.tsx
@@ -320,6 +324,247 @@ wss://assist.asimo.io/api/realtime?conversationId={id}&token={jwt}
 - `pong` - Heartbeat response from server
 
 **See detailed specification:** [docs/realtime/proxy-spec.md](./realtime/proxy-spec.md)
+
+---
+
+## Conversation Management
+
+### Overview
+
+VoiceAssist implements a first-class conversation management system that allows users to organize their chat sessions into distinct conversations with titles, history, and metadata. Each conversation is a logical grouping of messages with its own WebSocket session and persistent history.
+
+### Conversation Data Model
+
+```typescript
+interface Conversation {
+  id: string;                      // Unique conversation identifier
+  userId: string;                  // Owner of the conversation
+  title: string;                   // User-editable title
+  createdAt: string;               // ISO timestamp
+  updatedAt: string;               // ISO timestamp
+  messageCount: number;            // Total messages in conversation
+  archived?: boolean;              // Soft-delete flag
+  lastMessagePreview?: string;     // Snippet of last message
+}
+```
+
+**Key Fields:**
+- `id` - UUID generated on creation, used in URLs and WebSocket connections
+- `title` - Defaults to "New Conversation", user can rename inline
+- `archived` - Soft delete flag, archived conversations hidden from main list
+- `lastMessagePreview` - First ~100 chars of last message for quick preview
+
+### Conversation Routing Model
+
+**URL Structure:**
+```
+/chat                    → Auto-creates conversation, redirects to /chat/:id
+/chat/:conversationId    → Loads specific conversation with history
+```
+
+**Routing Behavior:**
+
+1. **Landing on `/chat`:**
+   - System creates a new conversation via `POST /api/conversations`
+   - Redirects to `/chat/:conversationId` with `replace: true`
+   - WebSocket connects automatically with new conversation ID
+
+2. **Navigating to `/chat/:conversationId`:**
+   - System validates conversation exists via `GET /api/conversations/:id`
+   - If valid: Loads message history, connects WebSocket
+   - If invalid (404): Shows error state with "Back to Conversations" button
+   - If network error: Shows retry interface
+
+3. **Switching Conversations:**
+   - Old WebSocket connection automatically disconnects
+   - Message state clears to prevent cross-contamination
+   - New conversation history loads from API
+   - New WebSocket connection establishes with new conversation ID
+
+### Conversation Lifecycle
+
+```
+┌──────────────┐
+│   Created    │  POST /api/conversations
+│  (Active)    │  - title: "New Conversation"
+└──────┬───────┘  - archived: false
+       │
+       │ User sends messages
+       │ title updates automatically
+       ▼
+┌──────────────┐
+│   Active     │  PATCH /api/conversations/:id
+│  (In Use)    │  - User can rename
+└──────┬───────┘  - Messages accumulate
+       │          - lastMessagePreview updates
+       │
+       │ User archives
+       ▼
+┌──────────────┐
+│  Archived    │  PATCH /api/conversations/:id
+│  (Hidden)    │  { archived: true }
+└──────┬───────┘  - Removed from main list
+       │          - Still accessible via URL
+       │
+       │ User deletes
+       ▼
+┌──────────────┐
+│   Deleted    │  DELETE /api/conversations/:id
+│  (Removed)   │  - Permanently removed
+└──────────────┘  - All messages deleted
+```
+
+### UI Components
+
+#### ConversationList Component
+**Location:** `apps/web-app/src/components/conversations/ConversationList.tsx`
+
+**Responsibilities:**
+- Fetches and displays list of conversations
+- Handles create, rename, archive, delete operations
+- Sorts by most recently updated
+- Filters archived vs active conversations
+- Loading, error, and empty states
+
+**States:**
+```typescript
+- Loading: Shows spinner while fetching conversations
+- Error: Shows error message with retry button
+- Empty: Shows "No conversations" with create CTA
+- Populated: Shows scrollable list of conversations
+```
+
+**Actions:**
+```typescript
+- Create: Creates new conversation, navigates to /chat/:id
+- Click: Navigates to /chat/:conversationId
+- Rename: Inline edit with Enter/Escape handlers
+- Archive: Soft deletes, removes from list
+- Delete: Shows confirmation dialog, permanently deletes
+```
+
+#### ConversationListItem Component
+**Location:** `apps/web-app/src/components/conversations/ConversationListItem.tsx`
+
+**Features:**
+- Displays title, last message preview, relative timestamp
+- Active state highlighting (current conversation)
+- Inline editing for rename (focus, Enter saves, Escape cancels)
+- 3-dot menu with Rename, Archive, Delete actions
+- Delete confirmation dialog to prevent accidents
+
+**UX Patterns:**
+- Truncates long titles and previews with ellipsis
+- Relative timestamps ("2 minutes ago", "3 hours ago")
+- Keyboard navigation support (Enter, Escape, Tab)
+- Confirmation dialog for destructive delete action
+
+#### MainLayout Integration
+**Location:** `apps/web-app/src/components/layout/MainLayout.tsx`
+
+**Behavior:**
+- Detects chat routes via `useLocation()` hook
+- Conditionally renders ConversationList in sidebar when on `/chat` routes
+- Shows traditional navigation (Home, Settings, etc.) on other routes
+- Responsive: Collapsible sidebar on mobile devices
+
+```typescript
+const isChatRoute = location.pathname.startsWith('/chat');
+
+// In sidebar:
+{isChatRoute ? (
+  <ConversationList />
+) : (
+  <nav>{/* Traditional links */}</nav>
+)}
+```
+
+#### ChatPage Integration
+**Location:** `apps/web-app/src/pages/ChatPage.tsx`
+
+**Conversation Initialization:**
+```typescript
+1. Extract conversationId from URL params
+2. If no conversationId:
+   - Create new conversation
+   - Redirect to /chat/:newId
+3. If conversationId present:
+   - Validate conversation exists
+   - Load message history
+   - Connect WebSocket with conversationId
+4. If invalid conversationId:
+   - Show error state
+   - Provide "Back to Conversations" button
+```
+
+**Error Handling:**
+- `not-found`: Conversation doesn't exist (404)
+- `failed-create`: Couldn't create conversation
+- `failed-load`: Network error loading conversation
+- `websocket`: Real-time connection errors
+
+### API Integration
+
+**Conversation Endpoints:**
+```typescript
+GET    /api/conversations           // List conversations
+GET    /api/conversations/:id       // Get specific conversation
+POST   /api/conversations           // Create conversation
+PATCH  /api/conversations/:id       // Update (rename/archive)
+DELETE /api/conversations/:id       // Delete conversation
+```
+
+**Message Endpoints:**
+```typescript
+GET    /api/conversations/:id/messages  // Get conversation history
+POST   /api/conversations/:id/messages  // Send message (REST fallback)
+```
+
+**WebSocket Connection:**
+```
+wss://assist.asimo.io/api/realtime?conversationId={id}&token={jwt}
+```
+
+### State Management
+
+**Conversation State:**
+- Conversation list managed locally in `ConversationList` component
+- Active conversation stored in `ChatPage` component state
+- Message history synced between initial load and WebSocket updates
+
+**Message State:**
+- Initial messages loaded from REST API (`GET /messages`)
+- New messages received via WebSocket streaming
+- Combined into single message array in `useChatSession` hook
+
+**Navigation State:**
+- Active conversation highlighted in sidebar list
+- URL param (`conversationId`) drives conversation loading
+- Browser back/forward properly switches conversations
+
+### Performance Considerations
+
+**Conversation List:**
+- Fetches up to 50 most recent conversations
+- Sorted by `updatedAt` on backend for efficiency
+- Frontend filtering for archived vs active
+- Pagination can be added if user has >50 conversations
+
+**Message History:**
+- Loads last 50 messages on conversation switch
+- Older messages can be lazy-loaded on scroll to top
+- Virtualized message rendering handles 1000+ messages
+
+**WebSocket Cleanup:**
+- Automatic disconnect when switching conversations
+- `useEffect` cleanup ensures no lingering connections
+- Reconnection logic prevents duplicate connections
+
+### Related Documentation
+
+- [CONVERSATIONS_AND_ROUTING.md](./CONVERSATIONS_AND_ROUTING.md) - Detailed routing behavior
+- [REALTIME_PROXY_SPEC.md](./REALTIME_PROXY_SPEC.md) - WebSocket protocol
+- [TESTING_PHASE3.md](./TESTING_PHASE3.md) - Conversation testing plan
 
 ---
 
