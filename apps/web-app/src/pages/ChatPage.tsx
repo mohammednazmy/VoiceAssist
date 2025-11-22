@@ -91,7 +91,7 @@ export function ChatPage() {
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="p-2 rounded-md hover:bg-neutral-100 transition-colors"
+              className="p-2 rounded-md hover:bg-neutral-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
               aria-label="Back to home"
             >
               <svg
@@ -138,7 +138,7 @@ export function ChatPage() {
             <button
               type="button"
               onClick={() => setError(null)}
-              className="text-red-600 hover:text-red-700"
+              className="text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
               aria-label="Dismiss error"
             >
               <svg

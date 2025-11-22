@@ -1,6 +1,11 @@
 /**
  * useChatSession Hook
  * Manages WebSocket connection for realtime chat streaming
+ *
+ * Performance Notes:
+ * - Streaming updates are batched via React's setState
+ * - Message updates use functional setState to avoid stale closures
+ * - Callbacks are memoized with useCallback to prevent re-renders
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';

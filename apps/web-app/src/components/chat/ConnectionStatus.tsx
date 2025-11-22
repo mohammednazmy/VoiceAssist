@@ -57,6 +57,7 @@ export function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps)
       className={`inline-flex items-center space-x-2 px-3 py-1.5 rounded-full border ${config.bgColor} ${config.borderColor}`}
       role="status"
       aria-live="polite"
+      aria-label={`Connection status: ${config.label}`}
     >
       {config.icon}
       <span className={`text-xs font-medium ${config.color}`}>
@@ -68,6 +69,7 @@ export function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps)
           type="button"
           onClick={onReconnect}
           className="ml-2 text-xs font-medium text-red-600 hover:text-red-700 underline"
+          aria-label="Reconnect to chat"
         >
           Retry
         </button>

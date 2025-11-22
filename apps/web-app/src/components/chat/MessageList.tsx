@@ -1,6 +1,11 @@
 /**
  * MessageList Component
  * Virtualized list of messages using react-virtuoso
+ *
+ * TODO: Performance Improvements
+ * - Add pagination for conversations with >1000 messages
+ * - Implement lazy loading of older messages on scroll to top
+ * - Add message caching/indexing for very large histories
  */
 
 import { useEffect, useRef } from 'react';
@@ -60,39 +65,41 @@ export function MessageList({ messages, isTyping, streamingMessageId }: MessageL
   }
 
   return (
-    <Virtuoso
-      ref={virtuosoRef}
-      data={messages}
-      className="h-full"
-      initialTopMostItemIndex={messages.length - 1}
-      followOutput="smooth"
-      itemContent={(index, message) => (
-        <MessageBubble
-          key={message.id}
-          message={message}
-          isStreaming={isTyping && message.id === streamingMessageId}
-        />
-      )}
-      components={{
-        Footer: () =>
-          isTyping && !streamingMessageId ? (
-            <div className="flex justify-start mb-4">
-              <div className="bg-white border border-neutral-200 shadow-sm rounded-lg px-4 py-3">
-                <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" />
-                  <div
-                    className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce"
-                    style={{ animationDelay: '0.1s' }}
-                  />
-                  <div
-                    className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce"
-                    style={{ animationDelay: '0.2s' }}
-                  />
+    <div role="region" aria-label="Message list" className="h-full">
+      <Virtuoso
+        ref={virtuosoRef}
+        data={messages}
+        className="h-full"
+        initialTopMostItemIndex={messages.length - 1}
+        followOutput="smooth"
+        itemContent={(index, message) => (
+          <MessageBubble
+            key={message.id}
+            message={message}
+            isStreaming={isTyping && message.id === streamingMessageId}
+          />
+        )}
+        components={{
+          Footer: () =>
+            isTyping && !streamingMessageId ? (
+              <div className="flex justify-start mb-4" role="status" aria-live="polite" aria-label="Assistant is typing">
+                <div className="bg-white border border-neutral-200 shadow-sm rounded-lg px-4 py-3">
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" />
+                    <div
+                      className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '0.1s' }}
+                    />
+                    <div
+                      className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '0.2s' }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : null,
-      }}
-    />
+            ) : null,
+        }}
+      />
+    </div>
   );
 }

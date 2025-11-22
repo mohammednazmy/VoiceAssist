@@ -3,6 +3,7 @@
  * Renders a chat message with markdown support, code blocks, and citations
  */
 
+import { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -18,7 +19,8 @@ export interface MessageBubbleProps {
   isStreaming?: boolean;
 }
 
-export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
+// Memoize to prevent unnecessary re-renders when other messages update
+export const MessageBubble = memo(function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
 
@@ -26,6 +28,8 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
     <div
       className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}
       data-message-id={message.id}
+      role="article"
+      aria-label={`${message.role === 'user' ? 'Your' : message.role === 'assistant' ? 'Assistant' : 'System'} message`}
     >
       <div
         className={`max-w-[80%] rounded-lg px-4 py-3 ${
@@ -171,7 +175,7 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
 
         {/* Streaming Indicator */}
         {isStreaming && (
-          <div className="mt-2 flex items-center space-x-1">
+          <div className="mt-2 flex items-center space-x-1" role="status" aria-live="polite" aria-label="Message is being generated">
             <div className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" />
             <div
               className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce"
@@ -205,4 +209,4 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
       </div>
     </div>
   );
-}
+});
