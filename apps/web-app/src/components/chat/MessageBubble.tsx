@@ -38,6 +38,7 @@ export const MessageBubble = memo(function MessageBubble({
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(message.content);
   const [isSaving, setIsSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   // Save handler
   const handleSave = async () => {
@@ -47,12 +48,15 @@ export const MessageBubble = memo(function MessageBubble({
     }
 
     setIsSaving(true);
+    setEditError(null);
     try {
       await onEditSave?.(message.id, editedContent);
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to save edit:", error);
-      // TODO: Show error toast notification
+      setEditError(
+        error instanceof Error ? error.message : "Failed to save changes",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -61,6 +65,7 @@ export const MessageBubble = memo(function MessageBubble({
   // Cancel handler
   const handleCancel = () => {
     setEditedContent(message.content);
+    setEditError(null);
     setIsEditing(false);
   };
 
@@ -119,20 +124,56 @@ export const MessageBubble = memo(function MessageBubble({
                 }
               }}
               aria-label="Edit message"
+              aria-invalid={editError ? "true" : "false"}
+              aria-describedby={editError ? "edit-error" : undefined}
             />
+            {editError && (
+              <div
+                id="edit-error"
+                role="alert"
+                className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded border border-red-200"
+              >
+                {editError}
+              </div>
+            )}
             <div className="flex justify-end space-x-2">
               <button
                 onClick={handleCancel}
                 disabled={isSaving}
                 className="px-3 py-1.5 text-sm border border-neutral-300 rounded hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed text-neutral-700"
+                aria-label="Cancel editing"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                disabled={isSaving}
-                className="px-3 py-1.5 text-sm bg-primary-500 text-white rounded hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSaving || editedContent.trim() === ""}
+                className="px-3 py-1.5 text-sm bg-primary-500 text-white rounded hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                aria-label={isSaving ? "Saving changes" : "Save changes"}
               >
+                {isSaving && (
+                  <svg
+                    className="animate-spin h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                )}
                 {isSaving ? "Saving..." : "Save"}
               </button>
             </div>
