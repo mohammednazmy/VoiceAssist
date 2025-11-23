@@ -8,15 +8,16 @@ Provides endpoints for administrators to manage the multi-level cache:
 
 These endpoints require admin authentication.
 """
-from typing import Dict, Any
-from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel
+
+from typing import Any, Dict
 
 from app.core.api_envelope import success_response
 from app.core.dependencies import get_current_admin_user
+from app.core.logging import get_logger
 from app.models.user import User
 from app.services.cache_service import cache_service
-from app.core.logging import get_logger
+from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/admin/cache", tags=["admin", "cache"])
 logger = get_logger(__name__)
@@ -24,6 +25,7 @@ logger = get_logger(__name__)
 
 class CacheStatsResponse(BaseModel):
     """Cache statistics response."""
+
     l1_size: int
     l1_max_size: int
     l1_utilization: float
@@ -34,13 +36,12 @@ class CacheStatsResponse(BaseModel):
 
 class CacheInvalidateRequest(BaseModel):
     """Request to invalidate cache by pattern."""
+
     pattern: str
 
 
 @router.get("/stats", response_model=dict)
-async def get_cache_stats(
-    current_admin_user: User = Depends(get_current_admin_user)
-):
+async def get_cache_stats(current_admin_user: User = Depends(get_current_admin_user)):
     """
     Get cache statistics for monitoring.
 
@@ -64,29 +65,21 @@ async def get_cache_stats(
             extra={
                 "admin_user_id": str(current_admin_user.id),
                 "l1_utilization": response_data.l1_utilization,
-            }
+            },
         )
 
-        return success_response(
-            data=response_data.dict(),
-            version="2.0.0"
-        )
+        return success_response(data=response_data.model_dump(), version="2.0.0")
 
     except Exception as e:
         logger.error(f"Error retrieving cache stats: {e}", exc_info=True)
         return success_response(
-            data={
-                "error": str(e),
-                "message": "Failed to retrieve cache statistics"
-            },
-            version="2.0.0"
+            data={"error": str(e), "message": "Failed to retrieve cache statistics"},
+            version="2.0.0",
         )
 
 
 @router.post("/clear", response_model=dict)
-async def clear_cache(
-    current_admin_user: User = Depends(get_current_admin_user)
-):
+async def clear_cache(current_admin_user: User = Depends(get_current_admin_user)):
     """
     Clear all caches (L1 and L2).
 
@@ -105,15 +98,19 @@ async def clear_cache(
                 "admin_user_id": str(current_admin_user.id),
                 "admin_email": current_admin_user.email,
                 "success": success,
-            }
+            },
         )
 
         return success_response(
             data={
                 "success": success,
-                "message": "All caches cleared successfully" if success else "Failed to clear caches"
+                "message": (
+                    "All caches cleared successfully"
+                    if success
+                    else "Failed to clear caches"
+                ),
             },
-            version="2.0.0"
+            version="2.0.0",
         )
 
     except Exception as e:
@@ -122,16 +119,18 @@ async def clear_cache(
             data={
                 "success": False,
                 "error": str(e),
-                "message": "Failed to clear caches"
+                "message": "Failed to clear caches",
             },
-            version="2.0.0"
+            version="2.0.0",
         )
 
 
 @router.post("/invalidate", response_model=dict)
 async def invalidate_cache_pattern(
-    pattern: str = Query(..., description="Redis key pattern to invalidate (e.g., 'rag_query:*')"),
-    current_admin_user: User = Depends(get_current_admin_user)
+    pattern: str = Query(
+        ..., description="Redis key pattern to invalidate (e.g., 'rag_query:*')"
+    ),
+    current_admin_user: User = Depends(get_current_admin_user),
 ):
     """
     Invalidate cache entries matching a pattern.
@@ -153,16 +152,16 @@ async def invalidate_cache_pattern(
                 "admin_user_id": str(current_admin_user.id),
                 "pattern": pattern,
                 "deleted_count": deleted_count,
-            }
+            },
         )
 
         return success_response(
             data={
                 "pattern": pattern,
                 "deleted_count": deleted_count,
-                "message": f"Invalidated {deleted_count} cache entries matching pattern '{pattern}'"
+                "message": f"Invalidated {deleted_count} cache entries matching pattern '{pattern}'",
             },
-            version="2.0.0"
+            version="2.0.0",
         )
 
     except Exception as e:
@@ -172,7 +171,7 @@ async def invalidate_cache_pattern(
                 "pattern": pattern,
                 "deleted_count": 0,
                 "error": str(e),
-                "message": "Failed to invalidate cache pattern"
+                "message": "Failed to invalidate cache pattern",
             },
-            version="2.0.0"
+            version="2.0.0",
         )

@@ -9,29 +9,29 @@ Provides endpoints for administrators to manage the medical knowledge base:
 
 These endpoints require admin authentication.
 """
-import uuid
+
 import logging
 import time
-from typing import List, Optional
+import uuid
 from datetime import datetime
+from typing import List, Optional
 
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, status
+from app.core.api_envelope import ErrorCodes, error_response, success_response
+from app.core.business_metrics import (
+    kb_chunks_total,
+    kb_document_uploads_total,
+    kb_documents_total,
+    kb_indexing_duration,
+)
+from app.core.database import get_db
+from app.core.dependencies import get_current_admin_user
+from app.core.logging import get_logger
+from app.models.user import User
+from app.services.kb_indexer import IndexingResult, KBIndexer
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-
-from app.core.database import get_db
-from app.core.api_envelope import success_response, error_response, ErrorCodes
-from app.core.logging import get_logger
-from app.core.dependencies import get_current_admin_user
-from app.models.user import User
-from app.services.kb_indexer import KBIndexer, IndexingResult
-from app.core.business_metrics import (
-    kb_document_uploads_total,
-    kb_indexing_duration,
-    kb_documents_total,
-    kb_chunks_total
-)
 
 router = APIRouter(prefix="/api/admin/kb", tags=["admin", "kb"])
 logger = get_logger(__name__)
@@ -39,8 +39,10 @@ logger = get_logger(__name__)
 
 # Request/Response Models
 
+
 class DocumentUploadResponse(BaseModel):
     """Response after document upload."""
+
     document_id: str
     title: str
     status: str
@@ -50,6 +52,7 @@ class DocumentUploadResponse(BaseModel):
 
 class DocumentListItem(BaseModel):
     """Document metadata for list response."""
+
     document_id: str
     title: str
     source_type: str
@@ -59,6 +62,7 @@ class DocumentListItem(BaseModel):
 
 class DocumentListResponse(BaseModel):
     """Response for document list endpoint."""
+
     documents: List[DocumentListItem]
     total: int
 
@@ -74,7 +78,7 @@ async def upload_document(
     title: Optional[str] = None,
     source_type: str = "uploaded",
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user)
+    current_admin_user: User = Depends(get_current_admin_user),
 ):
     """
     Upload and index a document to the knowledge base.
@@ -112,8 +116,8 @@ async def upload_document(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 content=error_response(
                     code=ErrorCodes.VALIDATION_ERROR,
-                    message=f"Unsupported file type. Allowed: {', '.join(allowed_extensions)}"
-                )
+                    message=f"Unsupported file type. Allowed: {', '.join(allowed_extensions)}",
+                ),
             )
 
         # Read file content
@@ -137,8 +141,8 @@ async def upload_document(
                 source_type=source_type,
                 metadata={
                     "filename": file.filename,
-                    "upload_date": datetime.utcnow().isoformat()
-                }
+                    "upload_date": datetime.utcnow().isoformat(),
+                },
             )
         else:  # .txt
             text_content = file_content.decode("utf-8")
@@ -149,8 +153,8 @@ async def upload_document(
                 source_type=source_type,
                 metadata={
                     "filename": file.filename,
-                    "upload_date": datetime.utcnow().isoformat()
-                }
+                    "upload_date": datetime.utcnow().isoformat(),
+                },
             )
 
         # Record indexing duration
@@ -162,8 +166,7 @@ async def upload_document(
             # Track upload metrics (P3.3 - Business Metrics)
             file_type = file_extension.lstrip(".")
             kb_document_uploads_total.labels(
-                source_type=source_type,
-                file_type=file_type
+                source_type=source_type, file_type=file_type
             ).inc()
             kb_chunks_total.inc(result.chunks_indexed)
 
@@ -172,15 +175,12 @@ async def upload_document(
                 title=doc_title,
                 status="indexed",
                 chunks_indexed=result.chunks_indexed,
-                message=f"Successfully indexed document with {result.chunks_indexed} chunks"
+                message=f"Successfully indexed document with {result.chunks_indexed} chunks",
             )
 
             logger.info(f"Successfully uploaded and indexed document: {document_id}")
 
-            return success_response(
-                data=response_data.dict(),
-                version="2.0.0"
-            )
+            return success_response(data=response_data.model_dump(), version="2.0.0")
         else:
             logger.error(f"Failed to index document: {result.error_message}")
 
@@ -188,8 +188,8 @@ async def upload_document(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content=error_response(
                     code=ErrorCodes.INTERNAL_ERROR,
-                    message=f"Document indexing failed: {result.error_message}"
-                )
+                    message=f"Document indexing failed: {result.error_message}",
+                ),
             )
 
     except Exception as e:
@@ -199,8 +199,8 @@ async def upload_document(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=error_response(
                 code=ErrorCodes.INTERNAL_ERROR,
-                message=f"Failed to upload document: {str(e)}"
-            )
+                message=f"Failed to upload document: {str(e)}",
+            ),
         )
 
 
@@ -210,7 +210,7 @@ async def list_documents(
     limit: int = 50,
     source_type: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user)
+    current_admin_user: User = Depends(get_current_admin_user),
 ):
     """
     List all documents in the knowledge base.
@@ -244,17 +244,13 @@ async def list_documents(
         #     query = query.filter(Document.source_type == source_type)
         # documents = query.all()
 
-        response_data = DocumentListResponse(
-            documents=[],
-            total=0
+        response_data = DocumentListResponse(documents=[], total=0)
+
+        logger.info(
+            f"Listed documents: skip={skip}, limit={limit}, source_type={source_type}"
         )
 
-        logger.info(f"Listed documents: skip={skip}, limit={limit}, source_type={source_type}")
-
-        return success_response(
-            data=response_data.dict(),
-            version="2.0.0"
-        )
+        return success_response(data=response_data.model_dump(), version="2.0.0")
 
     except Exception as e:
         logger.error(f"Error listing documents: {e}", exc_info=True)
@@ -263,8 +259,8 @@ async def list_documents(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=error_response(
                 code=ErrorCodes.INTERNAL_ERROR,
-                message=f"Failed to list documents: {str(e)}"
-            )
+                message=f"Failed to list documents: {str(e)}",
+            ),
         )
 
 
@@ -272,7 +268,7 @@ async def list_documents(
 async def delete_document(
     document_id: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user)
+    current_admin_user: User = Depends(get_current_admin_user),
 ):
     """
     Delete a document from the knowledge base.
@@ -297,17 +293,17 @@ async def delete_document(
                 data={
                     "document_id": document_id,
                     "status": "deleted",
-                    "message": "Document successfully removed from knowledge base"
+                    "message": "Document successfully removed from knowledge base",
                 },
-                version="2.0.0"
+                version="2.0.0",
             )
         else:
             return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,
                 content=error_response(
                     code=ErrorCodes.NOT_FOUND,
-                    message=f"Document not found: {document_id}"
-                )
+                    message=f"Document not found: {document_id}",
+                ),
             )
 
     except Exception as e:
@@ -317,8 +313,8 @@ async def delete_document(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=error_response(
                 code=ErrorCodes.INTERNAL_ERROR,
-                message=f"Failed to delete document: {str(e)}"
-            )
+                message=f"Failed to delete document: {str(e)}",
+            ),
         )
 
 
@@ -326,7 +322,7 @@ async def delete_document(
 async def get_document(
     document_id: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user)
+    current_admin_user: User = Depends(get_current_admin_user),
 ):
     """
     Get detailed information about a specific document.
@@ -349,9 +345,9 @@ async def get_document(
         return success_response(
             data={
                 "document_id": document_id,
-                "message": "Document retrieval not yet implemented in MVP"
+                "message": "Document retrieval not yet implemented in MVP",
             },
-            version="2.0.0"
+            version="2.0.0",
         )
 
     except Exception as e:
@@ -361,6 +357,6 @@ async def get_document(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=error_response(
                 code=ErrorCodes.INTERNAL_ERROR,
-                message=f"Failed to retrieve document: {str(e)}"
-            )
+                message=f"Failed to retrieve document: {str(e)}",
+            ),
         )
