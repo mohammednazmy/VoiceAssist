@@ -14,20 +14,23 @@ import { useAuthStore } from "../../stores/authStore";
 vi.mock("@voiceassist/api-client", () => {
   return {
     VoiceAssistApiClient: class MockApiClient {
+      register = vi.fn().mockResolvedValue({
+        accessToken: "access-token",
+        refreshToken: "refresh-token",
+        expiresIn: 3600,
+      });
       login = vi.fn().mockResolvedValue({
-        user: {
-          id: "1",
-          email: "test@example.com",
-          name: "Test User",
-          role: "user",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        tokens: {
-          accessToken: "access-token",
-          refreshToken: "refresh-token",
-          expiresIn: 3600,
-        },
+        accessToken: "access-token",
+        refreshToken: "refresh-token",
+        expiresIn: 3600,
+      });
+      getCurrentUser = vi.fn().mockResolvedValue({
+        id: "1",
+        email: "test@example.com",
+        name: "Test User",
+        role: "user",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
       getOAuthUrl = vi
         .fn()

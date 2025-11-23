@@ -38,7 +38,7 @@ export default defineConfig({
       '@voiceassist/types': path.resolve(__dirname, '../../packages/types/src'),
       '@voiceassist/api-client': path.resolve(__dirname, '../../packages/api-client/src'),
       '@voiceassist/utils': path.resolve(__dirname, '../../packages/utils/src'),
-      'react-syntax-highlighter': path.resolve(__dirname, './src/__mocks__/react-syntax-highlighter.ts'),
+      'react-syntax-highlighter': path.resolve(__dirname, './src/__mocks__/react-syntax-highlighter.tsx'),
     },
   },
 });

@@ -52,6 +52,7 @@ sudo ./deployment/asimo-production/deploy-to-asimo.sh
 ```
 
 This single command will:
+
 - ✅ Check prerequisites and install missing tools
 - ✅ Create deployment directory (`/opt/voiceassist`)
 - ✅ Copy project files
@@ -76,6 +77,7 @@ sudo nano /opt/voiceassist/.env.production
 ```
 
 Set the following:
+
 - `OPENAI_API_KEY` - Your OpenAI API key
 - `NEXTCLOUD_ADMIN_PASSWORD` - Nextcloud admin password
 - `NEXTCLOUD_DB_PASSWORD` - Nextcloud database password
@@ -147,6 +149,80 @@ sudo docker compose -f deployment/asimo-production/docker-compose.monitoring.yml
 sudo docker compose -f deployment/asimo-production/docker-compose.monitoring.yml restart
 ```
 
+### Monitoring Stack Configuration
+
+#### Jaeger (Distributed Tracing)
+
+**Storage Type:** In-memory (development/testing)
+
+```yaml
+environment:
+  - SPAN_STORAGE_TYPE=memory
+  - MEMORY_MAX_TRACES=10000
+```
+
+**Key Details:**
+
+- Stores up to 10,000 traces in memory
+- No persistence across container restarts
+- Suitable for development and testing environments
+- For production with persistence, consider switching to BadgerDB or Cassandra
+
+**Access:** http://localhost:16686 (via SSH tunnel recommended)
+
+#### Loki (Log Aggregation)
+
+**Schema Version:** v13 (TSDB - Time Series Database)
+
+```yaml
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+```
+
+**Key Configuration:**
+
+- **Storage:** Filesystem-based TSDB (Time Series Database)
+- **Retention:** 31 days (744 hours)
+- **Compactor:** Enabled with `delete_request_store: filesystem`
+- **Index Period:** 24 hours
+
+**Important Notes:**
+
+- Loki v3.x requires `delete_request_store` when retention is enabled
+- Deprecated fields removed: `shared_store`, `enforce_metric_name`, `max_look_back_period`
+- Configuration file: `/opt/voiceassist/deployment/asimo-production/configs/loki.yml`
+
+**Access:** http://localhost:3100 (accessed via Grafana datasource)
+
+#### Applying Configuration Changes
+
+After modifying monitoring configs:
+
+```bash
+# Copy updated configs to production
+sudo cp ~/VoiceAssist/deployment/asimo-production/configs/loki.yml \
+   /opt/voiceassist/deployment/asimo-production/configs/loki.yml
+
+sudo cp ~/VoiceAssist/deployment/asimo-production/docker-compose.monitoring.yml \
+   /opt/voiceassist/deployment/asimo-production/docker-compose.monitoring.yml
+
+# Restart affected services
+cd /opt/voiceassist
+sudo docker compose -f deployment/asimo-production/docker-compose.monitoring.yml restart jaeger loki
+
+# Or recreate containers to apply environment changes
+sudo docker compose -f deployment/asimo-production/docker-compose.monitoring.yml stop jaeger loki
+sudo docker compose -f deployment/asimo-production/docker-compose.monitoring.yml rm -f jaeger loki
+sudo docker compose -f deployment/asimo-production/docker-compose.monitoring.yml up -d jaeger loki
+
+# Verify containers are running
+docker ps | grep -E "voiceassist-(jaeger|loki)"
+```
+
 ### Health Checks
 
 ```bash
@@ -205,6 +281,7 @@ sudo ufw status
 ### Prometheus Alerts
 
 Configured alerts include:
+
 - API down or unreachable
 - High error rates (>5%)
 - High response times (>1s p95)
@@ -225,6 +302,7 @@ Configured alerts include:
 ### Grafana Dashboards
 
 Pre-configured dashboards:
+
 - **VoiceAssist Overview:** API status, request rates, response times
 - Add custom dashboards via Grafana UI
 
@@ -264,6 +342,7 @@ Automated backups are recommended. Example cron job:
 ### Log Rotation
 
 Configured via `/etc/logrotate.d/voiceassist`:
+
 - Apache logs: 14 days retention
 - Application logs: 30 days retention
 - Compressed after rotation
@@ -328,6 +407,7 @@ sudo docker exec -it voiceassist-postgres psql -U voiceassist
 ### Support
 
 For issues or questions:
+
 1. Check logs: `/var/log/apache2/assist-*.log`
 2. Run health check: `/opt/voiceassist/scripts/health-check.sh`
 3. Review Grafana dashboards: https://monitor.asimo.io
