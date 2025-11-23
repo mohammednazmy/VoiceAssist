@@ -48,6 +48,9 @@ out/
 build/
 dist/
 
+# Turbo
+.turbo/
+
 # Testing
 .coverage
 htmlcov/

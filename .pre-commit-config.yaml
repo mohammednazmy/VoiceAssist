@@ -9,7 +9,7 @@ repos:
     rev: 24.1.1
     hooks:
       - id: black
-        language_version: python3.11
+        language_version: python3.12
         files: ^services/.*\.py$
 
   # Python linting
@@ -17,7 +17,7 @@ repos:
     rev: 7.0.0
     hooks:
       - id: flake8
-        args: ['--max-line-length=120', '--extend-ignore=E203,W503']
+        args: ["--max-line-length=120", "--extend-ignore=E203,W503"]
         files: ^services/.*\.py$
 
   # Python import sorting
@@ -25,7 +25,7 @@ repos:
     rev: 5.13.2
     hooks:
       - id: isort
-        args: ['--profile', 'black', '--line-length', '120']
+        args: ["--profile", "black", "--line-length", "120"]
         files: ^services/.*\.py$
 
   # Python security scanning
@@ -33,7 +33,7 @@ repos:
     rev: 1.7.6
     hooks:
       - id: bandit
-        args: ['-c', '.bandit', '-r', 'services/api-gateway/app']
+        args: ["-c", ".bandit", "-r", "services/api-gateway/app"]
         pass_filenames: false
 
   # Type checking (optional, can be slow)
@@ -51,9 +51,9 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
-        args: ['--unsafe']  # Allow custom tags in docker-compose
+        args: ["--unsafe"] # Allow custom tags in docker-compose
       - id: check-added-large-files
-        args: ['--maxkb=1000']
+        args: ["--maxkb=1000"]
       - id: check-json
       - id: check-merge-conflict
       - id: detect-private-key
@@ -65,7 +65,7 @@ repos:
     hooks:
       - id: prettier
         types_or: [yaml, markdown]
-        args: ['--print-width', '120']
+        args: ["--print-width", "120"]
 
   # Shell script linting
   - repo: https://github.com/shellcheck-py/shellcheck-py
