@@ -22,6 +22,8 @@ import type {
   AuditLogEntry,
   PaginatedResponse,
   AuthTokens,
+  Branch,
+  CreateBranchRequest,
 } from "@voiceassist/types";
 
 export interface ApiClientConfig {
@@ -244,6 +246,38 @@ export class VoiceAssistApiClient {
     await this.client.delete(
       `/conversations/${conversationId}/messages/${messageId}`,
     );
+  }
+
+  // =========================================================================
+  // Conversation Branching (Phase 2, Week 10)
+  // =========================================================================
+
+  async createBranch(
+    sessionId: string,
+    request: CreateBranchRequest,
+  ): Promise<Branch> {
+    const response = await this.client.post<ApiResponse<Branch>>(
+      `/conversations/${sessionId}/branches`,
+      request,
+    );
+    return response.data.data!;
+  }
+
+  async listBranches(sessionId: string): Promise<Branch[]> {
+    const response = await this.client.get<ApiResponse<Branch[]>>(
+      `/conversations/${sessionId}/branches`,
+    );
+    return response.data.data!;
+  }
+
+  async getBranchMessages(
+    sessionId: string,
+    branchId: string,
+  ): Promise<Message[]> {
+    const response = await this.client.get<ApiResponse<Message[]>>(
+      `/conversations/${sessionId}/branches/${branchId}/messages`,
+    );
+    return response.data.data!;
   }
 
   // =========================================================================

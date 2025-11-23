@@ -496,5 +496,14 @@ export function KeyboardShortcutsDialog({ isOpen, onClose }: Props) {
 
 ---
 
-**Status:** Backend data model complete, Migration created
-**Next Step:** Implement backend API endpoints, then frontend integration
+**Status:** Phase 2 Complete - Backend API and Frontend Types/Client Ready
+**Completed in Phase 2:**
+
+- ✅ Backend API endpoints (`/api/conversations/{id}/branches`)
+- ✅ Pydantic schemas and response models
+- ✅ Router registered in main.py
+- ✅ Frontend Message type extended with `parentId` and `branchId`
+- ✅ Frontend Branch type and CreateBranchRequest added
+- ✅ API client methods: `createBranch()`, `listBranches()`, `getBranchMessages()`
+
+**Next Step:** Implement frontend UI components, hooks, and keyboard shortcuts

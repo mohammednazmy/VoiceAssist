@@ -4,29 +4,27 @@ Main FastAPI application
 
 # Import business metrics to register them with Prometheus (P3.3)
 import uvicorn
-
-# This import registers business metrics with Prometheus  # noqa: F401
-from app.core import business_metrics  # noqa: F401
 from app.api import (
     admin_cache,
     admin_feature_flags,
     admin_kb,
     admin_panel,
     auth,
+    conversations,
     health,
     integrations,
     metrics,
     realtime,
     users,
 )
+
+# This import registers business metrics with Prometheus  # noqa: F401
+from app.core import business_metrics  # noqa: F401
 from app.core.config import settings
-from app.core.database import redis_client
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import MetricsMiddleware, RequestTracingMiddleware, SecurityHeadersMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -116,6 +114,7 @@ app.include_router(metrics.router)  # Prometheus metrics endpoint (Phase 7 - P2.
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(realtime.router)
+app.include_router(conversations.router)  # Phase 2 Week 10: Conversation branching
 app.include_router(admin_kb.router)  # Phase 5: KB Management
 app.include_router(integrations.router)  # Phase 6: Nextcloud integrations
 app.include_router(admin_panel.router)  # Phase 7: Admin Panel API

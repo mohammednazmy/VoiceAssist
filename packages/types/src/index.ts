@@ -57,6 +57,9 @@ export interface Message {
   attachments?: string[];
   timestamp: number;
   metadata?: MessageMetadata;
+  // Conversation branching support (Phase 2, Week 10)
+  parentId?: string;
+  branchId?: string;
 }
 
 export interface Citation {
@@ -109,6 +112,21 @@ export interface Conversation {
 export interface UpdateConversationRequest {
   title?: string;
   archived?: boolean;
+}
+
+// Conversation Branching Types (Phase 2, Week 10)
+export interface Branch {
+  branchId: string;
+  sessionId: string;
+  parentMessageId: string | null;
+  messageCount: number;
+  createdAt: string;
+  lastActivity: string;
+}
+
+export interface CreateBranchRequest {
+  parentMessageId: string;
+  initialMessage?: string;
 }
 
 // ============================================================================
