@@ -22,7 +22,13 @@ export default defineConfig({
     },
     // Fix ESM import issues with react-syntax-highlighter
     deps: {
-      inline: ['react-syntax-highlighter', 'refractor'],
+      inline: [
+        'react-syntax-highlighter',
+        'refractor',
+        'remark-gfm',
+        'remark-math',
+        'rehype-katex',
+      ],
     },
   },
   resolve: {

@@ -195,7 +195,7 @@ function generateMarkdownExport(
   }
   markdown += `\n---\n\n`;
 
-  messages.forEach((message, index) => {
+  messages.forEach((message) => {
     const timestamp = new Date(message.createdAt).toLocaleString();
     const role = message.role.charAt(0).toUpperCase() + message.role.slice(1);
 
@@ -249,7 +249,7 @@ function generateTextExport(
   }
   text += `\n${"-".repeat(80)}\n\n`;
 
-  messages.forEach((message, index) => {
+  messages.forEach((message) => {
     const timestamp = new Date(message.createdAt).toLocaleString();
     const role = message.role.toUpperCase();
 
