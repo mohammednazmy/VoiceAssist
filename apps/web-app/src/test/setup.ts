@@ -44,9 +44,22 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
-// Mock window.location.href
+// Mock window.location for BrowserRouter
 delete (window as any).location;
-window.location = { href: "" } as any;
+window.location = {
+  href: "http://localhost:3000/",
+  origin: "http://localhost:3000",
+  protocol: "http:",
+  host: "localhost:3000",
+  hostname: "localhost",
+  port: "3000",
+  pathname: "/",
+  search: "",
+  hash: "",
+  assign: vi.fn(),
+  replace: vi.fn(),
+  reload: vi.fn(),
+} as any;
 
 // Mock React Router hooks
 vi.mock("react-router-dom", async () => {
@@ -59,3 +72,22 @@ vi.mock("react-router-dom", async () => {
     useSearchParams: () => [new URLSearchParams(), vi.fn()],
   };
 });
+
+// Mock WebSocket for useChatSession tests
+(global as any).WebSocket = class MockWebSocket {
+  onopen?: () => void;
+  onmessage?: (event: any) => void;
+  onerror?: (err: any) => void;
+  onclose?: () => void;
+  send = vi.fn();
+  close = vi.fn(function (this: any) {
+    if (this.onclose) this.onclose();
+  });
+
+  constructor(public url: string) {
+    // Simulate connection open asynchronously
+    setTimeout(() => {
+      if (this.onopen) this.onopen();
+    }, 0);
+  }
+};

@@ -8,9 +8,7 @@ import { render, screen } from "@testing-library/react";
 import { MessageBubble } from "../MessageBubble";
 import type { Message } from "@voiceassist/types";
 
-// TODO: Fix ESM import issue with react-syntax-highlighter (see KNOWN_ISSUES.md)
-// Skipping this suite until the ESM compatibility issue is resolved
-describe.skip("MessageBubble", () => {
+describe("MessageBubble", () => {
   const baseMessage: Message = {
     id: "msg-1",
     role: "user",

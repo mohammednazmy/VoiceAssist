@@ -52,14 +52,16 @@ export function ChatPage() {
   const [isClinicalContextOpen, setIsClinicalContextOpen] = useState(false);
   const [isCitationSidebarOpen, setIsCitationSidebarOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
-  const [clinicalContext, setClinicalContext] = useState<ClinicalContext>(() => {
-    // Load from localStorage
-    const saved = localStorage.getItem('voiceassist:clinical-context');
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [clinicalContext, setClinicalContext] = useState<ClinicalContext>(
+    () => {
+      // Load from localStorage
+      const saved = localStorage.getItem("voiceassist:clinical-context");
+      return saved ? JSON.parse(saved) : {};
+    },
+  );
 
   // Accessibility: Screen reader announcements
-  const { announce, LiveRegion: AnnouncementRegion } = useAnnouncer('polite');
+  const { announce, LiveRegion: AnnouncementRegion } = useAnnouncer("polite");
 
   // Handle conversation initialization and validation
   useEffect(() => {
@@ -164,6 +166,24 @@ export function ChatPage() {
   // Branching functionality
   const { createBranch } = useBranching(activeConversationId);
 
+  // Handle branch creation from message
+  const handleBranchFromMessage = useCallback(
+    async (messageId: string) => {
+      try {
+        const branch = await createBranch(messageId);
+        if (branch) {
+          // Show branch sidebar after creating
+          setIsBranchSidebarOpen(true);
+        }
+      } catch (error) {
+        console.error("Failed to create branch:", error);
+        setErrorType("websocket");
+        setErrorMessage("Failed to create branch. Please try again.");
+      }
+    },
+    [createBranch],
+  );
+
   // Keyboard shortcuts (pass function that opens dialog via Cmd+/)
   useKeyboardShortcuts({
     onToggleBranchSidebar: () => setIsBranchSidebarOpen((prev) => !prev),
@@ -171,7 +191,7 @@ export function ChatPage() {
       // Get the last message ID for branching
       if (messages.length > 0) {
         const lastMessage = messages[messages.length - 1];
-        createBranch(lastMessage.id);
+        handleBranchFromMessage(lastMessage.id);
       }
     },
   });
@@ -207,33 +227,25 @@ export function ChatPage() {
 
   // Save clinical context to localStorage
   useEffect(() => {
-    localStorage.setItem('voiceassist:clinical-context', JSON.stringify(clinicalContext));
+    localStorage.setItem(
+      "voiceassist:clinical-context",
+      JSON.stringify(clinicalContext),
+    );
   }, [clinicalContext]);
 
   // Accessibility: Announce new assistant messages to screen readers
   useEffect(() => {
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === 'assistant' && lastMessage.content) {
+      if (lastMessage.role === "assistant" && lastMessage.content) {
         // Announce first 100 characters of assistant response
         const preview = lastMessage.content.substring(0, 100);
-        announce(`New message from assistant: ${preview}${lastMessage.content.length > 100 ? '...' : ''}`);
+        announce(
+          `New message from assistant: ${preview}${lastMessage.content.length > 100 ? "..." : ""}`,
+        );
       }
     }
   }, [messages, announce]);
-
-  // Handle branch creation from message
-  const handleBranchFromMessage = useCallback(
-    async (messageId: string) => {
-      const branch = await createBranch(messageId);
-      if (branch) {
-        // Show branch sidebar after creating
-        setIsBranchSidebarOpen(true);
-      }
-    },
-    [createBranch],
-  );
-
   // Loading states
   if (loadingState === "creating") {
     return (
@@ -367,7 +379,7 @@ export function ChatPage() {
     >
       <div className="flex h-full">
         {/* Main Chat Area */}
-        <div className="flex flex-col flex-1">
+        <div className="flex flex-col flex-1 min-w-0">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 bg-white">
             <div className="flex items-center space-x-3">
@@ -432,8 +444,6 @@ export function ChatPage() {
                 <span className="hidden sm:inline">Citations</span>
               </button>
 
-
-
               {/* Branch Sidebar Toggle */}
               <button
                 type="button"
@@ -486,53 +496,52 @@ export function ChatPage() {
             </div>
           </div>
 
-        {/* Error Toast */}
-        {errorType === "websocket" && errorMessage && (
-          <div className="px-4 py-3 bg-red-50 border-b border-red-200 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-5 h-5 text-red-600"
+          {/* Error Toast */}
+          {errorType === "websocket" && errorMessage && (
+            <div className="px-4 py-3 bg-red-50 border-b border-red-200 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-5 h-5 text-red-600"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+                  />
+                </svg>
+                <span className="text-sm text-red-800">{errorMessage}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setErrorType(null);
+                  setErrorMessage(null);
+                }}
+                className="text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
+                aria-label="Dismiss error"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
-                />
-              </svg>
-              <span className="text-sm text-red-800">{errorMessage}</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setErrorType(null);
-                setErrorMessage(null);
-              }}
-              className="text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
-              aria-label="Dismiss error"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-5 h-5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-        )}
-
+          )}
           {/* Messages */}
           <div className="flex-1 overflow-hidden bg-neutral-50 px-4 py-4">
             <MessageList
@@ -596,7 +605,7 @@ export function ChatPage() {
       <ExportDialog
         isOpen={isExportDialogOpen}
         onClose={() => setIsExportDialogOpen(false)}
-        conversationTitle={conversation?.title || 'Conversation'}
+        conversationTitle={conversation?.title || "Conversation"}
         messages={messages}
       />
 

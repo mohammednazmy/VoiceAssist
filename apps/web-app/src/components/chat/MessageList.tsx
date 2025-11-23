@@ -21,6 +21,7 @@ export interface MessageListProps {
   onEditSave?: (messageId: string, newContent: string) => Promise<void>;
   onRegenerate?: (messageId: string) => Promise<void>;
   onDelete?: (messageId: string) => Promise<void>;
+  onBranch?: (messageId: string) => void;
 }
 
 export function MessageList({
@@ -30,6 +31,7 @@ export function MessageList({
   onEditSave,
   onRegenerate,
   onDelete,
+  onBranch,
 }: MessageListProps) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
@@ -92,6 +94,7 @@ export function MessageList({
             onEditSave={onEditSave}
             onRegenerate={onRegenerate}
             onDelete={onDelete}
+            onBranch={onBranch}
           />
         )}
         components={{

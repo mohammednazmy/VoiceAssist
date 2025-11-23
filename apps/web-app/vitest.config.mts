@@ -20,10 +20,9 @@ export default defineConfig({
         singleThread: true,
       },
     },
-    // Fix ESM import issues with react-syntax-highlighter
+    // Fix ESM import issues (react-syntax-highlighter is mocked via alias)
     deps: {
       inline: [
-        'react-syntax-highlighter',
         'refractor',
         'remark-gfm',
         'remark-math',
@@ -32,13 +31,14 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@voiceassist/ui': path.resolve(__dirname, '../../packages/ui/src'),
-      '@voiceassist/types': path.resolve(__dirname, '../../packages/types/src'),
-      '@voiceassist/api-client': path.resolve(__dirname, '../../packages/api-client/src'),
-      '@voiceassist/utils': path.resolve(__dirname, '../../packages/utils/src'),
-      'react-syntax-highlighter': path.resolve(__dirname, './src/__mocks__/react-syntax-highlighter.tsx'),
-    },
+    alias: [
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+      { find: '@voiceassist/ui', replacement: path.resolve(__dirname, '../../packages/ui/src') },
+      { find: '@voiceassist/types', replacement: path.resolve(__dirname, '../../packages/types/src') },
+      { find: '@voiceassist/api-client', replacement: path.resolve(__dirname, '../../packages/api-client/src') },
+      { find: '@voiceassist/utils', replacement: path.resolve(__dirname, '../../packages/utils/src') },
+      // Mock react-syntax-highlighter and all its sub-imports
+      { find: /^react-syntax-highlighter(.*)$/, replacement: path.resolve(__dirname, './src/__mocks__/react-syntax-highlighter.tsx') },
+    ],
   },
 });
