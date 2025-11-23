@@ -18,6 +18,7 @@ import { KeyboardShortcutsDialog } from "../components/KeyboardShortcutsDialog";
 import { ClinicalContextSidebar } from "../components/clinical/ClinicalContextSidebar";
 import { CitationSidebar } from "../components/citations/CitationSidebar";
 import { ExportDialog } from "../components/export/ExportDialog";
+import { ShareDialog } from "../components/sharing/ShareDialog";
 import { useAnnouncer } from "../components/accessibility/LiveRegion";
 import type { ClinicalContext } from "../components/clinical/ClinicalContextPanel";
 import type {
@@ -52,6 +53,7 @@ export function ChatPage() {
   const [isClinicalContextOpen, setIsClinicalContextOpen] = useState(false);
   const [isCitationSidebarOpen, setIsCitationSidebarOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [clinicalContext, setClinicalContext] = useState<ClinicalContext>(
     () => {
       // Load from localStorage
@@ -493,6 +495,31 @@ export function ChatPage() {
                 </svg>
                 <span className="hidden sm:inline">Export</span>
               </button>
+
+              {/* Share Button */}
+              <button
+                type="button"
+                onClick={() => setIsShareDialogOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors"
+                aria-label="Share conversation"
+                title="Share conversation"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Share</span>
+              </button>
             </div>
           </div>
 
@@ -608,6 +635,16 @@ export function ChatPage() {
         conversationTitle={conversation?.title || "Conversation"}
         messages={messages}
       />
+
+      {/* Share Dialog */}
+      {activeConversationId && (
+        <ShareDialog
+          isOpen={isShareDialogOpen}
+          onClose={() => setIsShareDialogOpen(false)}
+          conversationId={activeConversationId}
+          conversationTitle={conversation?.title || "Conversation"}
+        />
+      )}
 
       {/* Accessibility: Live Region for Screen Reader Announcements */}
       <AnnouncementRegion />
