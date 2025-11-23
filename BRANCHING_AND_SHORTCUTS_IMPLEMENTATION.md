@@ -9,6 +9,7 @@
 ## 🎯 Overview
 
 This document tracks the implementation of two major features:
+
 1. **Conversation Branching** - Allow users to fork conversations at any message
 2. **Enhanced Keyboard Shortcuts** - Global shortcuts with help dialog
 
@@ -40,6 +41,7 @@ This document tracks the implementation of two major features:
 **File:** `services/api-gateway/app/api/realtime.py` (or similar)
 
 Update message response schemas to include:
+
 ```python
 {
     "id": "uuid",
@@ -58,6 +60,7 @@ Update message response schemas to include:
 **Endpoint:** `POST /api/conversations/{conversation_id}/branches`
 
 **Request Body:**
+
 ```json
 {
     "parent_message_id": "uuid",
@@ -66,16 +69,18 @@ Update message response schemas to include:
 ```
 
 **Response:**
+
 ```json
 {
-    "branch_id": "string",
-    "conversation_id": "uuid",
-    "parent_message_id": "uuid",
-    "created_at": "datetime"
+  "branch_id": "string",
+  "conversation_id": "uuid",
+  "parent_message_id": "uuid",
+  "created_at": "datetime"
 }
 ```
 
 **Logic:**
+
 1. Validate parent message exists and belongs to conversation
 2. Generate unique branch_id (e.g., `branch-{timestamp}-{short-uuid}`)
 3. If initial_message provided, create first message in branch
@@ -231,30 +236,33 @@ async listBranches(conversationId: string): Promise<Branch[]> {
  * Manages conversation branching state and operations
  */
 
-import { useState, useCallback } from 'react';
-import { useAuth } from './useAuth';
-import type { Branch } from '@voiceassist/types';
+import { useState, useCallback } from "react";
+import { useAuth } from "./useAuth";
+import type { Branch } from "@voiceassist/types";
 
 export function useBranching(conversationId: string) {
   const { apiClient } = useAuth();
-  const [currentBranchId, setCurrentBranchId] = useState<string>('main');
+  const [currentBranchId, setCurrentBranchId] = useState<string>("main");
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const createBranch = useCallback(async (parentMessageId: string) => {
-    setIsLoading(true);
-    try {
-      const branch = await apiClient.createBranch(conversationId, parentMessageId);
-      setBranches(prev => [...prev, branch]);
-      setCurrentBranchId(branch.id);
-      return branch;
-    } catch (error) {
-      console.error('Failed to create branch:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [conversationId, apiClient]);
+  const createBranch = useCallback(
+    async (parentMessageId: string) => {
+      setIsLoading(true);
+      try {
+        const branch = await apiClient.createBranch(conversationId, parentMessageId);
+        setBranches((prev) => [...prev, branch]);
+        setCurrentBranchId(branch.id);
+        return branch;
+      } catch (error) {
+        console.error("Failed to create branch:", error);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [conversationId, apiClient],
+  );
 
   const switchBranch = useCallback((branchId: string) => {
     setCurrentBranchId(branchId);
@@ -266,7 +274,7 @@ export function useBranching(conversationId: string) {
       const branchList = await apiClient.listBranches(conversationId);
       setBranches(branchList);
     } catch (error) {
-      console.error('Failed to load branches:', error);
+      console.error("Failed to load branches:", error);
     } finally {
       setIsLoading(false);
     }
@@ -290,6 +298,7 @@ export function useBranching(conversationId: string) {
 **File:** `apps/web-app/src/components/chat/MessageBubble.tsx`
 
 Add to MessageActionMenu:
+
 ```typescript
 {!isSystem && (
   <button
@@ -347,6 +356,7 @@ export function BranchSidebar({ conversationId }: { conversationId: string }) {
 **File:** `apps/web-app/src/hooks/useKeyboardShortcuts.ts`
 
 Already exists - enhance with:
+
 - Cmd/Ctrl + K → Open conversation search
 - Cmd/Ctrl + B → Toggle branch sidebar
 - Cmd/Ctrl + Shift + B → Create branch at current message
@@ -386,6 +396,7 @@ export function KeyboardShortcutsDialog({ isOpen, onClose }: Props) {
 ## 📋 Testing Checklist
 
 ### Backend Tests
+
 - [ ] Create branch endpoint returns valid branch_id
 - [ ] Messages created in branch have correct branch_id
 - [ ] Querying branch messages returns only that branch's messages
@@ -393,6 +404,7 @@ export function KeyboardShortcutsDialog({ isOpen, onClose }: Props) {
 - [ ] Migration applies and rolls back cleanly
 
 ### Frontend Tests
+
 - [ ] Branch button appears on messages
 - [ ] Creating branch updates UI state
 - [ ] Switching branches loads correct messages
@@ -406,6 +418,7 @@ export function KeyboardShortcutsDialog({ isOpen, onClose }: Props) {
 ## 🚀 Deployment Steps
 
 1. **Apply Migration:**
+
    ```bash
    cd services/api-gateway
    source venv/bin/activate
@@ -413,22 +426,26 @@ export function KeyboardShortcutsDialog({ isOpen, onClose }: Props) {
    ```
 
 2. **Verify Migration:**
+
    ```bash
    psql $DATABASE_URL -c "\d messages"
    # Should show parent_message_id and branch_id columns
    ```
 
 3. **Run Backend Tests:**
+
    ```bash
    make test
    ```
 
 4. **Build Frontend:**
+
    ```bash
    pnpm build
    ```
 
 5. **Run Frontend Tests:**
+
    ```bash
    pnpm test
    ```
@@ -443,22 +460,26 @@ export function KeyboardShortcutsDialog({ isOpen, onClose }: Props) {
 ## 📝 Notes & Considerations
 
 ### Branch ID Format
+
 - Use format: `branch-{timestamp}-{shortUUID}`
 - Main conversation uses branch_id="main"
 - Ensures uniqueness and sortability
 
 ### Performance
+
 - Index on `branch_id` for fast filtering
 - Index on `parent_message_id` for tree traversal
 - Consider caching branch structure for large conversations
 
 ### UI/UX
+
 - Visual indicator showing current branch
 - Breadcrumb showing branch lineage
 - Confirmation before switching branches with unsaved changes
 - Color-code different branches for easy identification
 
 ### Future Enhancements
+
 - Branch merging
 - Branch naming/descriptions
 - Branch comparison view
