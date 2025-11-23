@@ -1,12 +1,8 @@
 """Unit tests for API Envelope helpers."""
-import pytest
+
 from datetime import datetime
-from app.core.api_envelope import (
-    success_response,
-    error_response,
-    ErrorCodes,
-    PaginationMetadata
-)
+
+from app.core.api_envelope import ErrorCodes, PaginationMetadata, error_response, success_response
 
 
 class TestSuccessResponse:
@@ -46,10 +42,7 @@ class TestSuccessResponse:
         """Test success response with pagination metadata."""
         data = {"items": [1, 2, 3]}
         pagination = PaginationMetadata(
-            page=1,
-            page_size=10,
-            total_items=50,
-            total_pages=5
+            page=1, page_size=10, total_items=50, total_pages=5
         )
 
         response = success_response(data, pagination=pagination)
@@ -232,8 +225,7 @@ class TestErrorCodes:
     def test_error_codes_in_error_response(self):
         """Test using error codes in error response."""
         response = error_response(
-            ErrorCodes.INVALID_CREDENTIALS,
-            "Invalid username or password"
+            ErrorCodes.INVALID_CREDENTIALS, "Invalid username or password"
         )
 
         assert response["error"]["code"] == ErrorCodes.INVALID_CREDENTIALS
@@ -245,10 +237,7 @@ class TestPaginationMetadata:
     def test_create_pagination_metadata(self):
         """Test creating pagination metadata."""
         pagination = PaginationMetadata(
-            page=2,
-            page_size=20,
-            total_items=100,
-            total_pages=5
+            page=2, page_size=20, total_items=100, total_pages=5
         )
 
         assert pagination.page == 2
@@ -259,13 +248,10 @@ class TestPaginationMetadata:
     def test_pagination_dict_conversion(self):
         """Test converting pagination to dict."""
         pagination = PaginationMetadata(
-            page=1,
-            page_size=10,
-            total_items=50,
-            total_pages=5
+            page=1, page_size=10, total_items=50, total_pages=5
         )
 
-        data = pagination.dict()
+        data = pagination.model_dump()
 
         assert data["page"] == 1
         assert data["page_size"] == 10
@@ -275,10 +261,7 @@ class TestPaginationMetadata:
     def test_pagination_metadata_types(self):
         """Test that pagination metadata has correct types."""
         pagination = PaginationMetadata(
-            page=1,
-            page_size=10,
-            total_items=50,
-            total_pages=5
+            page=1, page_size=10, total_items=50, total_pages=5
         )
 
         assert isinstance(pagination.page, int)
@@ -336,7 +319,7 @@ class TestAPIEnvelopeIntegration:
                 {"id": 2, "name": "Bob", "metadata": {"role": "user"}},
             ],
             "total": 2,
-            "filters": {"active": True}
+            "filters": {"active": True},
         }
 
         response = success_response(complex_data)
@@ -350,15 +333,13 @@ class TestAPIEnvelopeIntegration:
         details = {
             "validation_errors": {
                 "email": ["Invalid format", "Already exists"],
-                "password": ["Too short"]
+                "password": ["Too short"],
             },
-            "suggestions": ["Use a valid email", "Choose a longer password"]
+            "suggestions": ["Use a valid email", "Choose a longer password"],
         }
 
         response = error_response(
-            ErrorCodes.VALIDATION_ERROR,
-            "Validation failed",
-            details=details
+            ErrorCodes.VALIDATION_ERROR, "Validation failed", details=details
         )
 
         assert response["error"]["details"] == details

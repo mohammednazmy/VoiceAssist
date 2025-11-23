@@ -4,9 +4,10 @@ Smoke test for health endpoint (Phase 0-3)
 Validates that the /health endpoint is available and returns a valid response.
 This is a simple smoke test that doesn't require database or Redis connectivity.
 """
+
 import pytest
-from fastapi.testclient import TestClient
 from app.main import app
+from fastapi.testclient import TestClient
 
 
 @pytest.mark.smoke
@@ -33,5 +34,7 @@ def test_health_endpoint_structure():
     assert "version" in data, "Response should have 'version' field"
 
     # Status should be either "healthy" or "degraded" (not "unhealthy" in smoke test)
-    assert data["status"] in ["healthy", "degraded"], \
-        f"Status should be 'healthy' or 'degraded', got '{data['status']}'"
+    assert data["status"] in [
+        "healthy",
+        "degraded",
+    ], f"Status should be 'healthy' or 'degraded', got '{data['status']}'"

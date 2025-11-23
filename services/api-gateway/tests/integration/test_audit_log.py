@@ -1,12 +1,14 @@
 """Unit tests for Audit Log model and service."""
-import pytest
+
 import uuid
 from datetime import datetime, timezone
-from unittest.mock import Mock, AsyncMock
-from sqlalchemy.orm import Session
+from unittest.mock import Mock
+
+import pytest
 from app.models.audit_log import AuditLog
-from app.services.audit_service import AuditService
 from app.models.user import User
+from app.services.audit_service import AuditService
+from sqlalchemy.orm import Session
 
 
 @pytest.fixture
@@ -26,7 +28,7 @@ def sample_user():
         id=uuid.uuid4(),
         email="test@example.com",
         role="clinician",
-        hashed_password="hashed_password"
+        hashed_password="hashed_password",
     )
     return user
 
@@ -36,7 +38,9 @@ def mock_request():
     """Create a mock request object."""
     request = Mock()
     request.client.host = "192.168.1.1"
-    request.headers.get = lambda key, default=None: "Mozilla/5.0" if key.lower() == "user-agent" else default
+    request.headers.get = lambda key, default=None: (
+        "Mozilla/5.0" if key.lower() == "user-agent" else default
+    )
     request.url.path = "/api/test"
     request.state.request_id = str(uuid.uuid4())
     return request
@@ -54,7 +58,7 @@ class TestAuditLogModel:
             action="user_login",
             resource_type="authentication",
             success=True,
-            service_name="api-gateway"
+            service_name="api-gateway",
         )
 
         assert log.user_email == "test@example.com"
@@ -68,7 +72,7 @@ class TestAuditLogModel:
             action="test_action",
             resource_type="test_resource",
             success=True,
-            timestamp=datetime.now(timezone.utc)
+            timestamp=datetime.now(timezone.utc),
         )
 
         hash1 = log.calculate_hash()
@@ -85,7 +89,7 @@ class TestAuditLogModel:
             action="test_action",
             resource_type="test_resource",
             success=True,
-            timestamp=datetime.now(timezone.utc)
+            timestamp=datetime.now(timezone.utc),
         )
 
         log.hash = log.calculate_hash()
@@ -99,7 +103,7 @@ class TestAuditLogModel:
             action="test_action",
             resource_type="test_resource",
             success=True,
-            timestamp=datetime.now(timezone.utc)
+            timestamp=datetime.now(timezone.utc),
         )
 
         log.hash = log.calculate_hash()
@@ -116,17 +120,11 @@ class TestAuditLogModel:
         timestamp = datetime.now(timezone.utc)
 
         log1 = AuditLog(
-            user_id=user_id,
-            action="action1",
-            success=True,
-            timestamp=timestamp
+            user_id=user_id, action="action1", success=True, timestamp=timestamp
         )
 
         log2 = AuditLog(
-            user_id=user_id,
-            action="action2",
-            success=True,
-            timestamp=timestamp
+            user_id=user_id, action="action2", success=True, timestamp=timestamp
         )
 
         hash1 = log1.calculate_hash()
@@ -146,7 +144,7 @@ class TestAuditService:
             action="test_action",
             success=True,
             user=sample_user,
-            request=mock_request
+            request=mock_request,
         )
 
         assert log.action == "test_action"
@@ -168,7 +166,7 @@ class TestAuditService:
             action="anonymous_action",
             success=True,
             user=None,
-            request=mock_request
+            request=mock_request,
         )
 
         assert log.user_id is None
@@ -191,7 +189,7 @@ class TestAuditService:
             user=sample_user,
             resource_type="document",
             resource_id=resource_id,
-            request=mock_request
+            request=mock_request,
         )
 
         assert log.resource_type == "document"
@@ -208,7 +206,7 @@ class TestAuditService:
             success=True,
             user=sample_user,
             request=mock_request,
-            metadata=metadata
+            metadata=metadata,
         )
 
         assert log.metadata == metadata
@@ -226,7 +224,7 @@ class TestAuditService:
             user=None,
             request=mock_request,
             error_message=error_msg,
-            status_code="401"
+            status_code="401",
         )
 
         assert log.success is False
@@ -241,7 +239,7 @@ class TestAuditService:
             action="user_login",
             user=sample_user,
             request=mock_request,
-            success=True
+            success=True,
         )
 
         assert log.action == "user_login"
@@ -258,7 +256,7 @@ class TestAuditService:
             user=None,
             request=mock_request,
             success=False,
-            error_message="Invalid credentials"
+            error_message="Invalid credentials",
         )
 
         assert log.success is False
@@ -273,7 +271,7 @@ class TestAuditService:
             action="background_job",
             success=True,
             user=sample_user,
-            request=None
+            request=None,
         )
 
         assert log.action == "background_job"
@@ -282,14 +280,16 @@ class TestAuditService:
         assert log.request_id is None
 
     @pytest.mark.asyncio
-    async def test_integrity_hash_automatically_set(self, mock_db, sample_user, mock_request):
+    async def test_integrity_hash_automatically_set(
+        self, mock_db, sample_user, mock_request
+    ):
         """Test that integrity hash is automatically calculated."""
         log = await AuditService.log_event(
             db=mock_db,
             action="test_action",
             success=True,
             user=sample_user,
-            request=mock_request
+            request=mock_request,
         )
 
         # Hash should be set
@@ -300,7 +300,9 @@ class TestAuditService:
         assert log.verify_integrity() is True
 
     @pytest.mark.asyncio
-    async def test_log_event_captures_request_id(self, mock_db, sample_user, mock_request):
+    async def test_log_event_captures_request_id(
+        self, mock_db, sample_user, mock_request
+    ):
         """Test that request ID is captured from request context."""
         expected_request_id = str(uuid.uuid4())
         mock_request.state.request_id = expected_request_id
@@ -310,7 +312,7 @@ class TestAuditService:
             action="test_action",
             success=True,
             user=sample_user,
-            request=mock_request
+            request=mock_request,
         )
 
         assert log.request_id == expected_request_id
@@ -330,9 +332,7 @@ class TestAuditService:
         mock_order.all.return_value = []
 
         logs = await AuditService.get_user_audit_logs(
-            db=mock_db,
-            user_id=sample_user.id,
-            limit=50
+            db=mock_db, user_id=sample_user.id, limit=50
         )
 
         # Verify query was constructed correctly

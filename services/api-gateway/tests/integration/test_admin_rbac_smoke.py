@@ -1,8 +1,8 @@
 import pytest
-from fastapi import HTTPException
-
 from app.core.dependencies import get_current_admin_user
 from app.models.user import User
+from fastapi import HTTPException
+
 
 @pytest.mark.smoke
 @pytest.mark.asyncio

@@ -7,9 +7,9 @@ Tests the Phase 4 realtime communication endpoint including:
 - QueryOrchestrator integration
 - Error handling
 """
-import pytest
-from fastapi.testclient import TestClient
+
 from app.main import app
+from fastapi.testclient import TestClient
 
 
 class TestRealtimeWebSocket:
@@ -37,10 +37,7 @@ class TestRealtimeWebSocket:
             websocket.receive_json()
 
             # Send test message
-            websocket.send_json({
-                "type": "message",
-                "content": "What is diabetes?"
-            })
+            websocket.send_json({"type": "message", "content": "What is diabetes?"})
 
             # Receive message_start
             data = websocket.receive_json()
@@ -108,11 +105,13 @@ class TestRealtimeWebSocket:
             websocket.receive_json()
 
             # Send clinical query
-            websocket.send_json({
-                "type": "message",
-                "content": "Test clinical query",
-                "session_id": "test-session-123"
-            })
+            websocket.send_json(
+                {
+                    "type": "message",
+                    "content": "Test clinical query",
+                    "session_id": "test-session-123",
+                }
+            )
 
             # Skip to message_complete
             while True:
@@ -132,12 +131,14 @@ class TestRealtimeWebSocket:
             websocket.receive_json()
 
             # Send message with clinical context
-            websocket.send_json({
-                "type": "message",
-                "content": "Analyze this case",
-                "session_id": "session-456",
-                "clinical_context_id": "context-789"
-            })
+            websocket.send_json(
+                {
+                    "type": "message",
+                    "content": "Analyze this case",
+                    "session_id": "session-456",
+                    "clinical_context_id": "context-789",
+                }
+            )
 
             # Verify message is processed
             data = websocket.receive_json()
@@ -152,10 +153,7 @@ class TestRealtimeWebSocket:
             websocket.receive_json()
 
             # Send empty message
-            websocket.send_json({
-                "type": "message",
-                "content": ""
-            })
+            websocket.send_json({"type": "message", "content": ""})
 
             # Server should handle gracefully and return error
             data = websocket.receive_json()

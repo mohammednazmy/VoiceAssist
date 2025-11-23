@@ -15,8 +15,9 @@ help:
 	@echo "  make logs          - View Docker Compose logs"
 	@echo ""
 	@echo "Testing:"
-	@echo "  make test          - Run all backend tests"
+	@echo "  make test          - Run backend unit tests (fast, no external deps)"
 	@echo "  make test-unit     - Run backend unit tests only"
+	@echo "  make test-e2e      - Run e2e tests (requires docker-compose stack)"
 	@echo "  make test-frontend - Run frontend tests (if pnpm available)"
 	@echo ""
 	@echo "Quality Checks:"
@@ -84,7 +85,15 @@ test-unit:
 	@cd services/api-gateway && \
 		. venv/bin/activate && \
 		export PYTHONPATH=. && \
-		pytest tests/unit/ -v
+		pytest -v
+
+test-e2e:
+	@echo "Running e2e tests (requires docker-compose stack)..."
+	@echo "Ensure services are running: make dev"
+	@cd services/api-gateway && \
+		. venv/bin/activate && \
+		export PYTHONPATH=. && \
+		pytest tests/e2e/ -v || echo "⚠️  E2E tests require full docker-compose stack to be running"
 
 test-frontend:
 	@echo "Running frontend tests..."

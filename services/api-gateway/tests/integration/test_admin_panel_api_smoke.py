@@ -1,7 +1,7 @@
 import pytest
+from app.main import app
 from fastapi.testclient import TestClient
 
-from app.main import app
 
 @pytest.mark.smoke
 def test_admin_panel_summary_route_exists():

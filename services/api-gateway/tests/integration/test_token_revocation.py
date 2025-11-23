@@ -1,8 +1,10 @@
 """Unit tests for Token Revocation service."""
-import pytest
+
 import uuid
 from datetime import timedelta
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, patch
+
+import pytest
 from app.services.token_revocation import TokenRevocationService
 
 
@@ -34,7 +36,9 @@ class TestTokenRevocationService:
         """Test connecting to Redis."""
         service = TokenRevocationService()
 
-        with patch('app.services.token_revocation.redis.from_url', return_value=mock_redis):
+        with patch(
+            "app.services.token_revocation.redis.from_url", return_value=mock_redis
+        ):
             await service.connect()
 
             assert service.redis_client is not None
@@ -60,9 +64,9 @@ class TestTokenRevocationService:
 
         # Check the call arguments
         call_args = mock_redis.setex.call_args
-        assert call_args.kwargs['name'] == f"revoked_token:{token}"
-        assert call_args.kwargs['time'] == timedelta(seconds=ttl)
-        assert call_args.kwargs['value'] == "1"
+        assert call_args.kwargs["name"] == f"revoked_token:{token}"
+        assert call_args.kwargs["time"] == timedelta(seconds=ttl)
+        assert call_args.kwargs["value"] == "1"
 
     @pytest.mark.asyncio
     async def test_revoke_token_default_ttl(self, revocation_service, mock_redis):
@@ -75,7 +79,7 @@ class TestTokenRevocationService:
 
         # Should use default TTL of 900 seconds (15 minutes)
         call_args = mock_redis.setex.call_args
-        assert call_args.kwargs['time'] == timedelta(seconds=900)
+        assert call_args.kwargs["time"] == timedelta(seconds=900)
 
     @pytest.mark.asyncio
     async def test_is_token_revoked_false(self, revocation_service, mock_redis):
@@ -118,15 +122,17 @@ class TestTokenRevocationService:
         user_id = str(uuid.uuid4())
         ttl = 900
 
-        result = await revocation_service.revoke_all_user_tokens(user_id, ttl_seconds=ttl)
+        result = await revocation_service.revoke_all_user_tokens(
+            user_id, ttl_seconds=ttl
+        )
 
         assert result is True
         mock_redis.setex.assert_called_once()
 
         call_args = mock_redis.setex.call_args
-        assert call_args.kwargs['name'] == f"revoked_user:{user_id}"
-        assert call_args.kwargs['time'] == timedelta(seconds=ttl)
-        assert call_args.kwargs['value'] == "1"
+        assert call_args.kwargs["name"] == f"revoked_user:{user_id}"
+        assert call_args.kwargs["time"] == timedelta(seconds=ttl)
+        assert call_args.kwargs["value"] == "1"
 
     @pytest.mark.asyncio
     async def test_is_user_revoked_false(self, revocation_service, mock_redis):
@@ -183,10 +189,12 @@ class TestTokenRevocationService:
         assert result is True
 
         call_args = mock_redis.setex.call_args
-        assert call_args.kwargs['time'] == timedelta(seconds=ttl)
+        assert call_args.kwargs["time"] == timedelta(seconds=ttl)
 
     @pytest.mark.asyncio
-    async def test_multiple_tokens_revoked_independently(self, revocation_service, mock_redis):
+    async def test_multiple_tokens_revoked_independently(
+        self, revocation_service, mock_redis
+    ):
         """Test that multiple tokens can be revoked independently."""
         token1 = "token_1"
         token2 = "token_2"
@@ -198,13 +206,15 @@ class TestTokenRevocationService:
         assert mock_redis.setex.call_count == 2
 
         call_args_list = mock_redis.setex.call_args_list
-        keys = [call.kwargs['name'] for call in call_args_list]
+        keys = [call.kwargs["name"] for call in call_args_list]
 
         assert f"revoked_token:{token1}" in keys
         assert f"revoked_token:{token2}" in keys
 
     @pytest.mark.asyncio
-    async def test_revoke_token_handles_redis_error_gracefully(self, revocation_service, mock_redis):
+    async def test_revoke_token_handles_redis_error_gracefully(
+        self, revocation_service, mock_redis
+    ):
         """Test that Redis errors are handled gracefully."""
         mock_redis.setex.side_effect = Exception("Redis connection error")
 
@@ -222,7 +232,7 @@ class TestTokenRevocationService:
         await revocation_service.revoke_token(token)
 
         call_args = mock_redis.setex.call_args
-        key = call_args.kwargs['name']
+        key = call_args.kwargs["name"]
 
         # Should have prefix
         assert key.startswith("revoked_token:")
@@ -236,7 +246,7 @@ class TestTokenRevocationService:
         await revocation_service.revoke_all_user_tokens(user_id)
 
         call_args = mock_redis.setex.call_args
-        key = call_args.kwargs['name']
+        key = call_args.kwargs["name"]
 
         # Should have prefix
         assert key.startswith("revoked_user:")
@@ -249,7 +259,9 @@ class TestTokenRevocationService:
 
         service = TokenRevocationService()
 
-        with patch('app.services.token_revocation.redis.from_url', return_value=mock_redis):
+        with patch(
+            "app.services.token_revocation.redis.from_url", return_value=mock_redis
+        ):
             with pytest.raises(Exception):
                 await service.connect()
 
