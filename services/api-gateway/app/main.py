@@ -16,6 +16,7 @@ from app.api import (
     metrics,
     realtime,
     users,
+    voice,
 )
 
 # This import registers business metrics with Prometheus  # noqa: F401
@@ -115,6 +116,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(realtime.router)
 app.include_router(conversations.router)  # Phase 2 Week 10: Conversation branching
+app.include_router(voice.router)  # Milestone 1 Phase 3: Voice features (transcription, TTS)
 app.include_router(admin_kb.router)  # Phase 5: KB Management
 app.include_router(integrations.router)  # Phase 6: Nextcloud integrations
 app.include_router(admin_panel.router)  # Phase 7: Admin Panel API

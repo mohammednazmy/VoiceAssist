@@ -13,6 +13,8 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import type { Message } from "@voiceassist/types";
 import { CitationDisplay } from "./CitationDisplay";
 import { MessageActionMenu } from "./MessageActionMenu";
+import { AudioPlayer } from "../voice/AudioPlayer";
+import { useAuth } from "../../hooks/useAuth";
 import "katex/dist/katex.min.css";
 
 export interface MessageBubbleProps {
@@ -35,12 +37,18 @@ export const MessageBubble = memo(function MessageBubble({
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
+  const { apiClient } = useAuth();
 
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(message.content);
   const [isSaving, setIsSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+
+  // Audio state
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [isSynthesizing, setIsSynthesizing] = useState(false);
+  const [synthesisError, setSynthesisError] = useState<string | null>(null);
 
   // Save handler
   const handleSave = async () => {
@@ -74,6 +82,26 @@ export const MessageBubble = memo(function MessageBubble({
   // Copy handler
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
+  };
+
+  // Audio synthesis handler
+  const handlePlayAudio = async () => {
+    if (audioBlob) {
+      // If audio already exists, just play it (AudioPlayer will handle this)
+      return;
+    }
+
+    setIsSynthesizing(true);
+    setSynthesisError(null);
+    try {
+      const blob = await apiClient.synthesizeSpeech(message.content);
+      setAudioBlob(blob);
+    } catch (error) {
+      console.error("Speech synthesis failed:", error);
+      setSynthesisError("Failed to generate audio. Please try again.");
+    } finally {
+      setIsSynthesizing(false);
+    }
   };
 
   return (
@@ -340,6 +368,96 @@ export const MessageBubble = memo(function MessageBubble({
             {message.citations && message.citations.length > 0 && (
               <div className="mt-3 pt-3 border-t border-neutral-200">
                 <CitationDisplay citations={message.citations} />
+              </div>
+            )}
+
+            {/* Audio Playback (Assistant messages only) */}
+            {!isUser && !isSystem && !isStreaming && (
+              <div className="mt-3 space-y-2">
+                {/* Audio Player */}
+                {audioBlob && (
+                  <AudioPlayer
+                    audioBlob={audioBlob}
+                    autoPlay={false}
+                    onPlaybackEnd={() => {
+                      // Optional: track playback completion
+                    }}
+                  />
+                )}
+
+                {/* Play Audio Button */}
+                {!audioBlob && !isSynthesizing && (
+                  <button
+                    type="button"
+                    onClick={handlePlayAudio}
+                    className="flex items-center space-x-2 text-sm text-primary-600 hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded px-2 py-1 hover:bg-primary-50 transition-colors"
+                    aria-label="Play audio"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"
+                      />
+                    </svg>
+                    <span>Play Audio</span>
+                  </button>
+                )}
+
+                {/* Synthesizing Indicator */}
+                {isSynthesizing && (
+                  <div className="flex items-center space-x-2 text-sm text-neutral-600">
+                    <div className="w-4 h-4 rounded-full border-2 border-primary-500 border-t-transparent animate-spin" />
+                    <span>Generating audio...</span>
+                  </div>
+                )}
+
+                {/* Synthesis Error */}
+                {synthesisError && (
+                  <div className="flex items-start space-x-2 text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-4 h-4 flex-shrink-0 mt-0.5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+                      />
+                    </svg>
+                    <div className="flex-1">
+                      <p>{synthesisError}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSynthesisError(null)}
+                      className="text-red-600 hover:text-red-700 focus:outline-none"
+                      aria-label="Dismiss error"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                        stroke="currentColor"
+                        className="w-4 h-4"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
