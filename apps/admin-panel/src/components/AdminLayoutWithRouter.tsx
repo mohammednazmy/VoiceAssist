@@ -38,6 +38,9 @@ export function AdminLayoutWithRouter({ children }: LayoutProps) {
           <NavLink to="/knowledge-base" className={navLinkClass}>
             📚 Knowledge Base
           </NavLink>
+          <NavLink to="/analytics" className={navLinkClass}>
+            📈 Analytics
+          </NavLink>
           <NavLink to="/system" className={navLinkClass}>
             ⚙️ System Config
           </NavLink>

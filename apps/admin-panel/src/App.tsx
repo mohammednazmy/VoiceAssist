@@ -7,6 +7,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { UsersPage } from './pages/UsersPage';
 import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
 import { SystemPage } from './pages/SystemPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
 
 export function App() {
   return (
@@ -26,6 +27,7 @@ export function App() {
                     <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/users" element={<UsersPage />} />
                     <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
+                    <Route path="/analytics" element={<AnalyticsPage />} />
                     <Route path="/system" element={<SystemPage />} />
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
