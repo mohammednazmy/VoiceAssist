@@ -8,7 +8,6 @@ from typing import Dict, Optional
 import time
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from fastapi_cache.decorator import cache
 
 from app.core.database import (
     check_postgres_connection,
@@ -43,14 +42,12 @@ class ReadinessResponse(BaseModel):
 
 @router.get("/health", response_model=HealthResponse)
 @limiter.limit("100/minute")
-@cache(expire=5)  # Cache for 5 seconds
 async def health_check(request: Request):
     """
     Basic health check endpoint
     Returns 200 if the service is running
 
     Rate limit: 100 requests per minute
-    Cached: 5 seconds
     """
     logger.debug("health_check_requested")
     return HealthResponse(

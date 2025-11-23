@@ -134,9 +134,10 @@ async def startup_event():
         debug=settings.DEBUG,
     )
 
-    # Initialize FastAPI Cache with Redis backend
-    FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
-    logger.info("cache_initialized", backend="redis")
+    # FastAPI Cache disabled due to redis-py compatibility issues
+    # TODO: Re-enable when fastapi-cache2 supports redis-py 5.x
+    # FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
+    # logger.info("cache_initialized", backend="redis")
 
     logger.info("database_pool_configured", pool_size=20, max_overflow=40)
     logger.info("redis_pool_configured", max_connections=50)
