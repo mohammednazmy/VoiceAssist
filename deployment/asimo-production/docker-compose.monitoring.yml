@@ -1,0 +1,206 @@
+# VoiceAssist Full Monitoring Stack
+# Prometheus + Grafana + Jaeger + Loki
+#
+# Usage: docker compose -f docker-compose.monitoring.yml up -d
+
+version: '3.8'
+
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+
+services:
+  # ===================================
+  # Prometheus - Metrics Collection
+  # ===================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: voiceassist-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./configs/prometheus-alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===================================
+  # Grafana - Visualization & Dashboards
+  # ===================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: voiceassist-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_SERVER_ROOT_URL=https://monitor.asimo.io
+      - GF_SERVER_DOMAIN=monitor.asimo.io
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - GF_LOG_LEVEL=info
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./configs/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./configs/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+      - loki
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===================================
+  # Jaeger - Distributed Tracing
+  # ===================================
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: voiceassist-jaeger
+    restart: unless-stopped
+    ports:
+      - "5775:5775/udp"  # Zipkin compatible endpoint
+      - "6831:6831/udp"  # Compact protocol
+      - "6832:6832/udp"  # Binary protocol
+      - "5778:5778"      # Serve configs
+      - "16686:16686"    # UI
+      - "14268:14268"    # Receive spans directly from clients
+      - "14250:14250"    # Model.proto
+      - "9411:9411"      # Zipkin compatible endpoint
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+      - SPAN_STORAGE_TYPE=badger
+      - BADGER_EPHEMERAL=false
+      - BADGER_DIRECTORY_VALUE=/badger/data
+      - BADGER_DIRECTORY_KEY=/badger/key
+    volumes:
+      - ./data/jaeger:/badger
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--tries=1", "--spider", "http://localhost:16686/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===================================
+  # Loki - Log Aggregation
+  # ===================================
+  loki:
+    image: grafana/loki:latest
+    container_name: voiceassist-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yml
+    volumes:
+      - ./configs/loki.yml:/etc/loki/local-config.yml:ro
+      - loki-data:/loki
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===================================
+  # Promtail - Log Shipper for Loki
+  # ===================================
+  promtail:
+    image: grafana/promtail:latest
+    container_name: voiceassist-promtail
+    restart: unless-stopped
+    volumes:
+      - ./configs/promtail.yml:/etc/promtail/promtail.yml:ro
+      - /var/log:/var/log:ro
+      - /opt/voiceassist/logs:/opt/voiceassist/logs:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/promtail.yml
+    networks:
+      - monitoring
+    depends_on:
+      - loki
+
+  # ===================================
+  # Node Exporter - System Metrics
+  # ===================================
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: voiceassist-node-exporter
+    restart: unless-stopped
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/host'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/ host:ro,rslave
+    networks:
+      - monitoring
+
+  # ===================================
+  # cAdvisor - Container Metrics
+  # ===================================
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: voiceassist-cadvisor
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - monitoring
+
+  # ===================================
+  # AlertManager - Alert Management
+  # ===================================
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: voiceassist-alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./configs/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    networks:
+      - monitoring
