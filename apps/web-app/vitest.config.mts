@@ -20,6 +20,10 @@ export default defineConfig({
         singleThread: true,
       },
     },
+    // Fix ESM import issues with react-syntax-highlighter
+    deps: {
+      inline: ['react-syntax-highlighter', 'refractor'],
+    },
   },
   resolve: {
     alias: {

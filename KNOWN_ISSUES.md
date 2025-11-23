@@ -31,16 +31,15 @@ Changes made:
 
 #### Known Test Failures (Not Infrastructure)
 
-**ES Module Import Issues (4 suites fail to load):**
+**~~ES Module Import Issues (4 suites fail to load)~~** (RESOLVED 2025-11-23)
 
-- `AppSmoke.test.tsx`
-- `ChatFlow.test.tsx`
-- `MessageBubble.test.tsx`
-- `MessageList.test.tsx`
+**Status**: ✅ Resolved
+**Solution**: Added `deps.inline` configuration to Vitest config to handle ESM imports
 
-**Cause**: `react-syntax-highlighter` requires ES Module that can't be imported in CommonJS context
-**Impact**: These specific test suites don't run
-**Fix Needed**: Configure Vitest to handle ESM imports or mock the syntax highlighter
+Changes made:
+
+- Updated `apps/web-app/vitest.config.mts`: Added `deps: { inline: ['react-syntax-highlighter', 'refractor'] }`
+- All test suites now load successfully
 
 **Test Assertion Failures (12 tests):**
 
