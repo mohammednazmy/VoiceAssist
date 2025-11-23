@@ -16,6 +16,7 @@ from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.instrumentation.redis import RedisInstrumentor
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from fastapi import FastAPI
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ def setup_tracing(
         resource = Resource.create({
             SERVICE_NAME: service_name,
             SERVICE_VERSION: service_version,
-            "deployment.environment": "production",  # TODO: Get from config
+            "deployment.environment": settings.ENVIRONMENT,
             "service.namespace": "voiceassist",
         })
 
