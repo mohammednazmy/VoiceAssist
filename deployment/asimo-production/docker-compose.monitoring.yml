@@ -3,7 +3,7 @@
 #
 # Usage: docker compose -f docker-compose.monitoring.yml up -d
 
-version: '3.8'
+version: "3.8"
 
 networks:
   monitoring:
@@ -23,12 +23,12 @@ services:
     container_name: voiceassist-prometheus
     restart: unless-stopped
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=30d'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-      - '--web.enable-lifecycle'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.enable-lifecycle"
     ports:
       - "9090:9090"
     volumes:
@@ -85,22 +85,18 @@ services:
     container_name: voiceassist-jaeger
     restart: unless-stopped
     ports:
-      - "5775:5775/udp"  # Zipkin compatible endpoint
-      - "6831:6831/udp"  # Compact protocol
-      - "6832:6832/udp"  # Binary protocol
-      - "5778:5778"      # Serve configs
-      - "16686:16686"    # UI
-      - "14268:14268"    # Receive spans directly from clients
-      - "14250:14250"    # Model.proto
-      - "9411:9411"      # Zipkin compatible endpoint
+      - "5775:5775/udp" # Zipkin compatible endpoint
+      - "6831:6831/udp" # Compact protocol
+      - "6832:6832/udp" # Binary protocol
+      - "5778:5778" # Serve configs
+      - "16686:16686" # UI
+      - "14268:14268" # Receive spans directly from clients
+      - "14250:14250" # Model.proto
+      - "9411:9411" # Zipkin compatible endpoint
     environment:
       - COLLECTOR_ZIPKIN_HOST_PORT=:9411
-      - SPAN_STORAGE_TYPE=badger
-      - BADGER_EPHEMERAL=false
-      - BADGER_DIRECTORY_VALUE=/badger/data
-      - BADGER_DIRECTORY_KEY=/badger/key
-    volumes:
-      - ./data/jaeger:/badger
+      - SPAN_STORAGE_TYPE=memory
+      - MEMORY_MAX_TRACES=10000
     networks:
       - monitoring
     healthcheck:
@@ -156,10 +152,10 @@ services:
     container_name: voiceassist-node-exporter
     restart: unless-stopped
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.sysfs=/host/sys'
-      - '--path.rootfs=/host'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/host"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
     ports:
       - "9100:9100"
     volumes:
@@ -200,7 +196,7 @@ services:
     volumes:
       - ./configs/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
     command:
-      - '--config.file=/etc/alertmanager/alertmanager.yml'
-      - '--storage.path=/alertmanager'
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
     networks:
       - monitoring
