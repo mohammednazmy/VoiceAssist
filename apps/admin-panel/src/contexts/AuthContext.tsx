@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       setError(null);
-      const response = await fetchAPI<{ access_token: string; user: User }>(
+      const response = await fetchAPI<{ access_token: string; refresh_token: string; token_type: string }>(
         '/api/auth/login',
         {
           method: 'POST',
@@ -70,14 +70,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       );
 
-      if (!response.user.is_admin) {
+      // Store token first
+      localStorage.setItem('auth_token', response.access_token);
+
+      // Fetch user data with the new token
+      const userData = await fetchAPI<User>('/api/auth/me', {
+        headers: {
+          Authorization: `Bearer ${response.access_token}`,
+        },
+      });
+
+      if (!userData.is_admin) {
+        localStorage.removeItem('auth_token');
         throw new Error('Access denied: Admin privileges required');
       }
 
-      localStorage.setItem('auth_token', response.access_token);
-      setUser(response.user);
+      setUser(userData);
     } catch (err: any) {
       setError(err.message || 'Login failed');
+      localStorage.removeItem('auth_token');
       throw err;
     }
   };
