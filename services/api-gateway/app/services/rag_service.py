@@ -25,6 +25,9 @@ from pydantic import BaseModel, Field
 
 from app.services.llm_client import LLMClient, LLMRequest, LLMResponse
 from app.services.search_aggregator import SearchAggregator
+from app.services.phi_detector import PHIDetector
+from app.services.intent_classifier import IntentClassifier
+from app.core.config import settings
 
 
 class Citation(BaseModel):
@@ -95,8 +98,14 @@ class QueryOrchestrator:
             rag_top_k: Number of top results to retrieve
             rag_score_threshold: Minimum similarity score for results
         """
-        self.llm_client = LLMClient()
+        self.llm_client = LLMClient(
+            cloud_model="gpt-4o",
+            local_model="local-clinical-llm",
+            openai_api_key=settings.OPENAI_API_KEY
+        )
         self.search_aggregator = SearchAggregator() if enable_rag else None
+        self.phi_detector = PHIDetector()
+        self.intent_classifier = IntentClassifier()
         self.enable_rag = enable_rag
         self.rag_top_k = rag_top_k
         self.rag_score_threshold = rag_score_threshold
@@ -199,15 +208,35 @@ Instructions:
 
         prompt = "\n".join(prompt_parts)
 
-        # Step 4: Generate LLM response
-        # TODO: PHI detection - for now assume no PHI
-        # TODO: Intent classification - for now use "other"
+        # Step 4: PHI Detection
+        phi_result = self.phi_detector.detect(
+            text=request.query, clinical_context=clinical_context
+        )
+
+        if phi_result.contains_phi:
+            import logging
+            logging.warning(
+                f"PHI detected in query: types={phi_result.phi_types}, "
+                f"confidence={phi_result.confidence}, trace_id={trace_id}"
+            )
+
+        # Step 5: Intent Classification
+        intent = self.intent_classifier.classify(
+            query=request.query, clinical_context=clinical_context
+        )
+
+        import logging
+        logging.info(
+            f"Query classified as intent='{intent}', trace_id={trace_id}"
+        )
+
+        # Step 6: Generate LLM response
         llm_request = LLMRequest(
             prompt=prompt,
-            intent="other",
+            intent=intent,
             temperature=0.1,
             max_tokens=512,
-            phi_present=False,  # TODO: Run PHI detector first
+            phi_present=phi_result.contains_phi,
             trace_id=trace_id,
         )
 

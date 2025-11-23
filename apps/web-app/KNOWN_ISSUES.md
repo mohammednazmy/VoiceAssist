@@ -4,36 +4,29 @@
 
 ### 1. react-syntax-highlighter ESM Import Resolution
 
-**Status:** Blocked
-**Severity:** Medium
-**Impact:** 5 test suites cannot run in Vitest environment
+**Status:** ✅ Resolved (2025-11-23)
+**Severity:** Medium (was blocking 5 test suites)
 
 **Description:**
-The `react-syntax-highlighter` package has ESM module resolution issues in the Vitest test environment. When components import this package, Vite fails to resolve the import during test execution.
+The `react-syntax-highlighter` package had ESM module resolution issues in the Vitest test environment.
 
-**Error Message:**
+**Resolution:**
+- Replaced `react-syntax-highlighter` with `prism-react-renderer` v2.4.1
+- Updated `MessageBubble.tsx` to use the new Highlight component
+- Removed old mock file and uninstalled the problematic package
+- All previously skipped test suites should now be able to run
 
-```
-Error: Failed to resolve import "react-syntax-highlighter" from "src/components/chat/MessageBubble.tsx". Does the file exist?
-Plugin: vite:import-analysis
-```
-
-**Affected Test Suites:**
+**Previously Affected Test Suites:**
 
 1. `src/__tests__/AppSmoke.test.tsx`
 2. `src/components/chat/__tests__/MessageBubble.test.tsx` (4 tests)
-3. `src/components/chat/__tests__/MessageBubble-editing.test.tsx` (17 tests) - **NEW**
+3. `src/components/chat/__tests__/MessageBubble-editing.test.tsx` (17 tests)
 4. `src/__tests__/integration/ChatFlow.test.tsx`
 5. `src/__tests__/integration/MessageList.test.tsx`
 
-**Workaround:**
-All affected test suites are skipped with `describe.skip()` and TODO comments referencing this issue.
-
-**Next Steps:**
-
-- Investigate vite.config.ts test configuration for ESM module resolution
-- Consider mocking react-syntax-highlighter in test setup
-- Or migrate to a different syntax highlighter with better ESM support
+**Action Required:**
+- Remove `describe.skip()` from the affected test files
+- Run tests to verify they pass
 
 ### 2. WebSocket Connection Timing in Tests
 

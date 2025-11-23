@@ -8,8 +8,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { Highlight, themes } from "prism-react-renderer";
 import type { Message } from "@voiceassist/types";
 import { CitationDisplay } from "./CitationDisplay";
 import { MessageActionMenu } from "./MessageActionMenu";
@@ -235,20 +234,35 @@ export const MessageBubble = memo(function MessageBubble({
                     );
                   }
 
+                  const code = String(children).replace(/\n$/, "");
                   return (
                     <div className="my-2 rounded-md overflow-hidden">
-                      <SyntaxHighlighter
-                        language={language || "text"}
-                        style={vscDarkPlus}
-                        customStyle={{
-                          margin: 0,
-                          borderRadius: "0.375rem",
-                          fontSize: "0.875rem",
-                        }}
-                        {...props}
+                      <Highlight
+                        theme={themes.vsDark}
+                        code={code}
+                        language={(language || "text") as any}
                       >
-                        {String(children).replace(/\n$/, "")}
-                      </SyntaxHighlighter>
+                        {({ className, style, tokens, getLineProps, getTokenProps }) => (
+                          <pre
+                            className={className}
+                            style={{
+                              ...style,
+                              margin: 0,
+                              borderRadius: "0.375rem",
+                              fontSize: "0.875rem",
+                              padding: "1rem",
+                            }}
+                          >
+                            {tokens.map((line, i) => (
+                              <div key={i} {...getLineProps({ line })}>
+                                {line.map((token, key) => (
+                                  <span key={key} {...getTokenProps({ token })} />
+                                ))}
+                              </div>
+                            ))}
+                          </pre>
+                        )}
+                      </Highlight>
                     </div>
                   );
                 },
