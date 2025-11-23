@@ -69,7 +69,9 @@ class Settings(BaseSettings):
     CACHE_L1_MAX_SIZE: int = 1000  # Max entries in L1 cache
     CACHE_DEFAULT_TTL: int = 600  # Default TTL in seconds (10 minutes)
 
-    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
+    model_config = SettingsConfigDict(
+        env_file=".env", case_sensitive=True, extra="ignore"
+    )
 
 
 # Global settings instance
