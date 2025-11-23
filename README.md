@@ -286,6 +286,8 @@ pnpm test           # Run all tests
 - [HIPAA Compliance Matrix](docs/HIPAA_COMPLIANCE_MATRIX.md)
 
 ### Deployment
+- [asimo.io Production Deployment](docs/DEPLOYMENT_SUMMARY_ASIMO.md) - ✅ Live deployment guide
+- [asimo-production README](deployment/asimo-production/README.md) - Production configuration
 - [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) - Docker, Kubernetes, Cloud
 - [High Availability Setup](ha-dr/postgresql/README.md)
 - [Disaster Recovery Runbook](docs/DISASTER_RECOVERY_RUNBOOK.md)
@@ -349,6 +351,23 @@ See [Test Documentation](tests/README.md) for details.
 
 ## 🚀 Deployment
 
+### Production Deployment (asimo.io)
+
+**✅ LIVE IN PRODUCTION**
+
+VoiceAssist is currently deployed at:
+- **Main API:** https://assist.asimo.io
+- **Monitoring Dashboard:** https://monitor.asimo.io
+
+**Production Environment:**
+- Ubuntu 24.04 LTS server
+- Docker Compose deployment
+- Apache reverse proxy with SSL/TLS (Let's Encrypt)
+- Full monitoring stack (Prometheus + Grafana + Jaeger + Loki)
+- Email alerts configured for mo@asimo.io
+
+**Deployment Summary:** See [DEPLOYMENT_SUMMARY_ASIMO.md](docs/DEPLOYMENT_SUMMARY_ASIMO.md)
+
 ### Deployment Options
 
 **1. Docker Compose (Development/Small Production)**
@@ -356,12 +375,20 @@ See [Test Documentation](tests/README.md) for details.
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
-**2. Kubernetes (Production)**
+**2. Production Deployment to asimo.io**
+```bash
+cd ~/VoiceAssist
+sudo ./deployment/asimo-production/deploy-to-asimo.sh
+```
+
+See [asimo-production README](deployment/asimo-production/README.md) for details.
+
+**3. Kubernetes (Production)**
 ```bash
 kubectl apply -f infrastructure/kubernetes/
 ```
 
-**3. Cloud (AWS/GCP/Azure)**
+**4. Cloud (AWS/GCP/Azure)**
 ```bash
 cd infrastructure/terraform
 terraform init
@@ -426,6 +453,22 @@ See [Security & Compliance](docs/SECURITY_COMPLIANCE.md) for details.
 
 ### Accessing Monitoring
 
+**Production (asimo.io):**
+```bash
+# Grafana (dashboards) - HTTPS with SSL
+open https://monitor.asimo.io
+# Credentials configured
+
+# Prometheus (local access via SSH tunnel)
+ssh -L 9090:localhost:9090 root@asimo.io
+open http://localhost:9090
+
+# Jaeger (local access via SSH tunnel)
+ssh -L 16686:localhost:16686 root@asimo.io
+open http://localhost:16686
+```
+
+**Local Development:**
 ```bash
 # Grafana (dashboards)
 open http://localhost:3001

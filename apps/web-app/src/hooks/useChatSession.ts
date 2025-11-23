@@ -34,7 +34,13 @@ interface UseChatSessionReturn {
   reconnect: () => void;
 }
 
-const WS_URL = 'wss://assist.asimo.io/api/realtime';
+// WebSocket URL - configurable per environment
+const WS_URL = import.meta.env.VITE_WS_URL ||
+  (import.meta.env.DEV
+    ? 'ws://localhost:8000/api/realtime/ws'
+    : 'wss://assist.asimo.io/api/realtime/ws'
+  );
+
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_RECONNECT_DELAY = 1000; // 1 second
@@ -292,12 +298,15 @@ export function useChatSession(options: UseChatSessionOptions): UseChatSessionRe
     // Add user message to messages
     setMessages((prev) => [...prev, userMessage]);
 
-    // Send to server
+    // Send to server - changed from 'message.send' to 'message' to match backend
+    // Backend expects content directly, not nested in message object
     wsRef.current.send(JSON.stringify({
-      type: 'message.send',
-      message: userMessage,
+      type: 'message',
+      content: content,
+      session_id: conversationId,  // Add conversation ID as session
+      attachments: attachments,
     }));
-  }, [handleError]);
+  }, [handleError, conversationId]);
 
   // Connect on mount
   useEffect(() => {

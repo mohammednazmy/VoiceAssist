@@ -238,11 +238,12 @@ async def handle_chat_message(
 
         for i in range(0, len(response_text), chunk_size):
             chunk = response_text[i:i + chunk_size]
+            # Changed from 'message_chunk' to 'chunk' to match frontend
+            # Changed 'message_id' to 'messageId' for camelCase consistency
             await websocket.send_json({
-                "type": "message_chunk",
-                "message_id": message_id,
+                "type": "chunk",
+                "messageId": message_id,
                 "content": chunk,
-                "chunk_index": i // chunk_size
             })
             # Small delay to simulate streaming (will be natural with real LLM streaming)
             await asyncio.sleep(0.05)
@@ -251,19 +252,27 @@ async def handle_chat_message(
         citations = [
             {
                 "id": cite.id,
-                "source_type": cite.source_type,
-                "title": cite.title,
-                "url": cite.url
+                "source": cite.source_type,  # Changed key to match frontend
+                "reference": cite.title,  # Use title as reference
+                "snippet": cite.url,  # Placeholder for snippet
             }
             for cite in query_response.citations
         ]
 
-        # Send message complete event
-        await websocket.send_json({
-            "type": "message_complete",
-            "message_id": message_id,
+        # Build final message object for frontend
+        final_message = {
+            "id": message_id,
+            "role": "assistant",
             "content": response_text,
             "citations": citations,
+            "timestamp": int(datetime.utcnow().timestamp() * 1000),  # Unix timestamp in ms
+        }
+
+        # Changed from 'message_complete' to 'message.done' to match frontend
+        await websocket.send_json({
+            "type": "message.done",
+            "messageId": message_id,
+            "message": final_message,
             "timestamp": datetime.utcnow().isoformat() + "Z"
         })
 
@@ -290,12 +299,13 @@ async def handle_chat_message(
         ).inc()
 
         logger.error(f"Error processing chat message: {str(e)}", exc_info=True)
+        # Changed message_id to messageId for camelCase consistency
         await websocket.send_json({
             "type": "error",
-            "message_id": message_id,
+            "messageId": message_id,
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "error": {
-                "code": "QUERY_PROCESSING_ERROR",
+                "code": "BACKEND_ERROR",  # Changed to match frontend error codes
                 "message": f"Failed to process query: {str(e)}"
             }
         })
