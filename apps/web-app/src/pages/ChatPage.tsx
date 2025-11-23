@@ -17,6 +17,7 @@ import { BranchSidebar } from "../components/chat/BranchSidebar";
 import { KeyboardShortcutsDialog } from "../components/KeyboardShortcutsDialog";
 import { ClinicalContextSidebar } from "../components/clinical/ClinicalContextSidebar";
 import { CitationSidebar } from "../components/citations/CitationSidebar";
+import { ExportDialog } from "../components/export/ExportDialog";
 import type { ClinicalContext } from "../components/clinical/ClinicalContextPanel";
 import type {
   Message,
@@ -49,6 +50,7 @@ export function ChatPage() {
   const [isShortcutsDialogOpen, setIsShortcutsDialogOpen] = useState(false);
   const [isClinicalContextOpen, setIsClinicalContextOpen] = useState(false);
   const [isCitationSidebarOpen, setIsCitationSidebarOpen] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [clinicalContext, setClinicalContext] = useState<ClinicalContext>(() => {
     // Load from localStorage
     const saved = localStorage.getItem('voiceassist:clinical-context');
@@ -440,6 +442,31 @@ export function ChatPage() {
                 </svg>
                 <span className="hidden sm:inline">Branches</span>
               </button>
+
+              {/* Export Button */}
+              <button
+                type="button"
+                onClick={() => setIsExportDialogOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors"
+                aria-label="Export conversation"
+                title="Export conversation"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Export</span>
+              </button>
             </div>
           </div>
 
@@ -547,6 +574,14 @@ export function ChatPage() {
       <KeyboardShortcutsDialog
         isOpen={isShortcutsDialogOpen}
         onClose={() => setIsShortcutsDialogOpen(false)}
+      />
+
+      {/* Export Dialog */}
+      <ExportDialog
+        isOpen={isExportDialogOpen}
+        onClose={() => setIsExportDialogOpen(false)}
+        conversationTitle={conversation?.title || 'Conversation'}
+        messages={messages}
       />
     </ChatErrorBoundary>
   );
