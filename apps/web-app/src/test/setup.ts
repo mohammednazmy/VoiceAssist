@@ -47,3 +47,15 @@ Object.defineProperty(window, "matchMedia", {
 // Mock window.location.href
 delete (window as any).location;
 window.location = { href: "" } as any;
+
+// Mock React Router hooks
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => vi.fn(),
+    useLocation: () => ({ pathname: "/", search: "", hash: "", state: null }),
+    useParams: () => ({}),
+    useSearchParams: () => [new URLSearchParams(), vi.fn()],
+  };
+});

@@ -22,6 +22,10 @@ class Message(Base):
     role = Column(String(50), nullable=False)  # 'user', 'assistant', 'system', 'tool'
     content = Column(Text, nullable=False)
 
+    # Conversation branching support
+    parent_message_id = Column(UUID(as_uuid=True), ForeignKey("messages.id", ondelete="SET NULL"), nullable=True, index=True)
+    branch_id = Column(String(100), nullable=True, index=True)  # Identifies which branch this message belongs to
+
     # Tool usage tracking
     tool_calls = Column(JSONB, nullable=True)  # Tool calls made in this message
     tool_results = Column(JSONB, nullable=True)  # Results from tool calls
