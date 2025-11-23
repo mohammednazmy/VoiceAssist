@@ -260,13 +260,25 @@ async def handle_chat_message(
             # Small delay to simulate streaming (will be natural with real LLM streaming)
             await asyncio.sleep(0.05)
 
-        # Prepare citations for response
+        # Prepare citations for response with full structured data
         citations = [
             {
                 "id": cite.id,
-                "source": cite.source_type,  # Changed key to match frontend
-                "reference": cite.title,  # Use title as reference
-                "snippet": cite.url,  # Placeholder for snippet
+                "source_id": cite.source_id,
+                "source_type": cite.source_type,
+                "title": cite.title,
+                "url": cite.url if cite.url else None,
+                "authors": cite.authors if hasattr(cite, 'authors') and cite.authors else None,
+                "publication_date": cite.publication_date if hasattr(cite, 'publication_date') else None,
+                "journal": cite.journal if hasattr(cite, 'journal') else None,
+                "doi": cite.doi if hasattr(cite, 'doi') else None,
+                "pmid": cite.pmid if hasattr(cite, 'pmid') else None,
+                "relevance_score": cite.relevance_score if hasattr(cite, 'relevance_score') else None,
+                "quoted_text": cite.quoted_text if hasattr(cite, 'quoted_text') else None,
+                # Backward compatibility fields for frontend
+                "source": cite.source_type,
+                "reference": cite.title,
+                "snippet": cite.quoted_text if hasattr(cite, 'quoted_text') and cite.quoted_text else cite.url,
             }
             for cite in query_response.citations
         ]
