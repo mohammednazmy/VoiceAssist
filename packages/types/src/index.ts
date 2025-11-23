@@ -93,6 +93,13 @@ export interface Conversation {
   createdAt: string;
   updatedAt: string;
   messageCount: number;
+  archived?: boolean;
+  lastMessagePreview?: string;
+}
+
+export interface UpdateConversationRequest {
+  title?: string;
+  archived?: boolean;
 }
 
 // ============================================================================

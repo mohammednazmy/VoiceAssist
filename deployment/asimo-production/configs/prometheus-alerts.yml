@@ -1,0 +1,162 @@
+# Prometheus Alert Rules for VoiceAssist
+
+groups:
+  - name: voiceassist_alerts
+    interval: 30s
+    rules:
+      # API Availability
+      - alert: APIDown
+        expr: up{job="voiceassist-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "VoiceAssist API is down"
+          description: "The VoiceAssist API has been down for more than 1 minute."
+
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors per second."
+
+      # High Response Time
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 10m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High API response time"
+          description: "95th percentile response time is {{ $value }} seconds."
+
+      # Database Connection Issues
+      - alert: DatabaseDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "The PostgreSQL database has been unreachable for more than 1 minute."
+
+      # High Database Connections
+      - alert: HighDatabaseConnections
+        expr: pg_stat_database_numbackends > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "High number of database connections"
+          description: "Database has {{ $value }} active connections."
+
+      # Redis Down
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Redis cache is down"
+          description: "Redis has been unreachable for more than 1 minute."
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}%."
+
+      # High CPU Usage
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}%."
+
+      # Low Disk Space
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "Low disk space"
+          description: "Disk space is {{ $value }}% available."
+
+      # Container Down
+      - alert: ContainerDown
+        expr: up{job="cadvisor"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          component: containers
+        annotations:
+          summary: "Container monitoring is down"
+          description: "cAdvisor has been down for more than 2 minutes."
+
+      # Qdrant Vector Database
+      - alert: QdrantDown
+        expr: up{job="qdrant"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: vector-db
+        annotations:
+          summary: "Qdrant vector database is down"
+          description: "Qdrant has been unreachable for more than 2 minutes."
+
+      # Jaeger Tracing
+      - alert: JaegerDown
+        expr: up{job="jaeger"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          component: tracing
+        annotations:
+          summary: "Jaeger tracing is down"
+          description: "Jaeger has been down for more than 5 minutes."
+
+  - name: hipaa_compliance_alerts
+    interval: 1h
+    rules:
+      # Unusual access patterns (potential security breach)
+      - alert: UnusualAccessPattern
+        expr: rate(http_requests_total[1h]) > 1000
+        for: 10m
+        labels:
+          severity: warning
+          compliance: hipaa
+        annotations:
+          summary: "Unusual API access pattern detected"
+          description: "Request rate is {{ $value }} requests per second."
+
+      # Failed authentication attempts
+      - alert: HighAuthenticationFailures
+        expr: rate(auth_failures_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          compliance: hipaa
+        annotations:
+          summary: "High rate of authentication failures"
+          description: "{{ $value }} failed authentication attempts per second."

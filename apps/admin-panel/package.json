@@ -9,15 +9,19 @@
     "lint": "echo \"no lint configured\""
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@tanstack/react-query": "^5.0.0",
+    "date-fns": "^4.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@tanstack/react-query": "^5.0.0"
+    "react-router-dom": "^7.9.6",
+    "recharts": "^3.4.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react-swc": "^3.0.0",
     "typescript": "^5.0.0",
-    "vite": "^5.0.0",
-    "@vitejs/plugin-react-swc": "^3.0.0"
+    "vite": "^5.0.0"
   }
 }
