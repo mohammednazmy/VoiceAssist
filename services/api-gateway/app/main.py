@@ -19,6 +19,7 @@ from app.api import (
     integrations,
     metrics,
     realtime,
+    sharing,
     users,
     voice,
 )
@@ -134,6 +135,7 @@ app.include_router(
 app.include_router(clinical_context.router, prefix="/api")  # Phase 8: Clinical context
 app.include_router(folders.router, prefix="/api")  # Phase 8: Conversation folders
 app.include_router(export.router, prefix="/api")  # Phase 8: Conversation export
+app.include_router(sharing.router, prefix="/api")  # Phase 8: Conversation sharing
 
 
 @app.on_event("startup")
