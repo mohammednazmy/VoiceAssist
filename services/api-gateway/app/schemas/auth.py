@@ -1,8 +1,10 @@
 """
 Authentication request and response schemas
 """
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from pydantic import BaseModel, EmailStr, Field, field_serializer
+from typing import Optional, Any
+from uuid import UUID
+from datetime import datetime
 
 
 class UserRegister(BaseModel):
@@ -50,3 +52,19 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+    @field_serializer('id')
+    def serialize_id(self, value: Any) -> str:
+        """Convert UUID to string"""
+        if isinstance(value, UUID):
+            return str(value)
+        return str(value)
+
+    @field_serializer('created_at', 'last_login')
+    def serialize_datetime(self, value: Any) -> Optional[str]:
+        """Convert datetime to ISO format string"""
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value.isoformat()
+        return str(value)
