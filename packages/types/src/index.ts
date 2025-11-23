@@ -374,17 +374,34 @@ export type ConnectionStatus =
 
 export interface Attachment {
   id: string;
-  url: string;
-  mime: string;
-  size: number;
-  name?: string;
+  messageId: string;
+  fileName: string;
+  fileType: string; // 'pdf', 'image', 'text', 'markdown', 'document'
+  fileSize: number; // bytes
+  fileUrl: string;
+  mimeType?: string;
+  metadata?: Record<string, any>;
+  uploadedAt: string;
+  createdAt: string;
 }
 
 export interface AttachmentUploadResponse {
   id: string;
-  url: string;
-  mime: string;
-  size: number;
+  messageId: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  fileUrl: string;
+  mimeType?: string;
+  uploadedAt: string;
+  createdAt: string;
+}
+
+export interface UploadProgress {
+  fileName: string;
+  progress: number; // 0-100
+  status: "uploading" | "complete" | "error";
+  error?: string;
 }
 
 // ============================================================================

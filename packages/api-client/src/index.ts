@@ -30,6 +30,8 @@ import type {
   ShareRequest,
   ShareResponse,
   ShareLink,
+  Attachment,
+  AttachmentUploadResponse,
 } from "@voiceassist/types";
 
 export interface ApiClientConfig {
@@ -478,6 +480,64 @@ export class VoiceAssistApiClient {
 
   async revokeShareLink(sessionId: string, shareToken: string): Promise<void> {
     await this.client.delete(`/sessions/${sessionId}/share/${shareToken}`);
+  }
+
+  // =========================================================================
+  // Attachments
+  // =========================================================================
+
+  async uploadAttachment(
+    messageId: string,
+    file: File,
+    onProgress?: (progress: number) => void,
+  ): Promise<AttachmentUploadResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await this.client.post<AttachmentUploadResponse>(
+      `/messages/${messageId}/attachments`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+          if (onProgress && progressEvent.total) {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total,
+            );
+            onProgress(percentCompleted);
+          }
+        },
+      },
+    );
+
+    return response.data;
+  }
+
+  async listAttachments(messageId: string): Promise<Attachment[]> {
+    const response = await this.client.get<Attachment[]>(
+      `/messages/${messageId}/attachments`,
+    );
+    return response.data;
+  }
+
+  async deleteAttachment(attachmentId: string): Promise<void> {
+    await this.client.delete(`/attachments/${attachmentId}`);
+  }
+
+  async downloadAttachment(attachmentId: string): Promise<Blob> {
+    const response = await this.client.get(
+      `/attachments/${attachmentId}/download`,
+      {
+        responseType: "blob",
+      },
+    );
+    return response.data;
+  }
+
+  async getAttachmentUrl(attachmentId: string): string {
+    return `${this.config.baseURL}/attachments/${attachmentId}/download`;
   }
 
   // =========================================================================
