@@ -24,6 +24,12 @@ import type {
   AuthTokens,
   Branch,
   CreateBranchRequest,
+  Folder,
+  CreateFolderRequest,
+  UpdateFolderRequest,
+  ShareRequest,
+  ShareResponse,
+  ShareLink,
 } from "@voiceassist/types";
 
 export interface ApiClientConfig {
@@ -387,6 +393,91 @@ export class VoiceAssistApiClient {
       ApiResponse<PaginatedResponse<User>>
     >("/admin/users", { params: { page, pageSize } });
     return response.data.data!;
+  }
+
+  // =========================================================================
+  // Folders
+  // =========================================================================
+
+  async getFolders(parentId?: string | null): Promise<Folder[]> {
+    const params = parentId ? { parent_id: parentId } : undefined;
+    const response = await this.client.get<Folder[]>("/folders", { params });
+    return response.data;
+  }
+
+  async getFolderTree(): Promise<Folder[]> {
+    const response = await this.client.get<Folder[]>("/folders/tree");
+    return response.data;
+  }
+
+  async getFolder(id: string): Promise<Folder> {
+    const response = await this.client.get<Folder>(`/folders/${id}`);
+    return response.data;
+  }
+
+  async createFolder(request: CreateFolderRequest): Promise<Folder> {
+    const response = await this.client.post<Folder>("/folders", request);
+    return response.data;
+  }
+
+  async updateFolder(id: string, request: UpdateFolderRequest): Promise<Folder> {
+    const response = await this.client.put<Folder>(`/folders/${id}`, request);
+    return response.data;
+  }
+
+  async deleteFolder(id: string): Promise<void> {
+    await this.client.delete(`/folders/${id}`);
+  }
+
+  async moveFolder(folderId: string, targetFolderId: string): Promise<Folder> {
+    const response = await this.client.post<Folder>(
+      `/folders/${folderId}/move/${targetFolderId}`,
+    );
+    return response.data;
+  }
+
+  async moveConversationToFolder(
+    conversationId: string,
+    folderId: string | null,
+  ): Promise<Conversation> {
+    return this.updateConversation(conversationId, { folderId });
+  }
+
+  // =========================================================================
+  // Sharing
+  // =========================================================================
+
+  async createShareLink(
+    sessionId: string,
+    request: ShareRequest,
+  ): Promise<ShareResponse> {
+    const response = await this.client.post<ShareResponse>(
+      `/sessions/${sessionId}/share`,
+      request,
+    );
+    return response.data;
+  }
+
+  async getSharedConversation(
+    shareToken: string,
+    password?: string,
+  ): Promise<any> {
+    const params = password ? { password } : undefined;
+    const response = await this.client.get(`/shared/${shareToken}`, {
+      params,
+    });
+    return response.data;
+  }
+
+  async listShareLinks(sessionId: string): Promise<ShareLink[]> {
+    const response = await this.client.get<ShareLink[]>(
+      `/sessions/${sessionId}/shares`,
+    );
+    return response.data;
+  }
+
+  async revokeShareLink(sessionId: string, shareToken: string): Promise<void> {
+    await this.client.delete(`/sessions/${sessionId}/share/${shareToken}`);
   }
 
   // =========================================================================

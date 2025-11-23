@@ -107,11 +107,68 @@ export interface Conversation {
   messageCount: number;
   archived?: boolean;
   lastMessagePreview?: string;
+  folderId?: string | null;
 }
 
 export interface UpdateConversationRequest {
   title?: string;
   archived?: boolean;
+  folderId?: string | null;
+}
+
+// ============================================================================
+// Folder Types
+// ============================================================================
+
+export interface Folder {
+  id: string;
+  userId: string;
+  name: string;
+  color?: string | null;
+  icon?: string | null;
+  parentFolderId?: string | null;
+  createdAt: string;
+  children?: Folder[];
+}
+
+export interface CreateFolderRequest {
+  name: string;
+  color?: string | null;
+  icon?: string | null;
+  parentFolderId?: string | null;
+}
+
+export interface UpdateFolderRequest {
+  name?: string;
+  color?: string | null;
+  icon?: string | null;
+  parentFolderId?: string | null;
+}
+
+// ============================================================================
+// Sharing Types
+// ============================================================================
+
+export interface ShareRequest {
+  expiresInHours?: number;
+  password?: string | null;
+  allowAnonymous?: boolean;
+}
+
+export interface ShareResponse {
+  shareId: string;
+  shareUrl: string;
+  expiresAt: string;
+  passwordProtected: boolean;
+}
+
+export interface ShareLink {
+  shareToken: string;
+  shareUrl: string;
+  createdAt: string;
+  expiresAt: string;
+  passwordProtected: boolean;
+  accessCount: number;
 }
 
 // Conversation Branching Types (Phase 2, Week 10)
