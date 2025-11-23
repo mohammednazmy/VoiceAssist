@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { fetchAPI } from '../lib/api';
+import { ActiveSessionsMonitor } from '../components/ActiveSessionsMonitor';
+import { APIUsageGraph } from '../components/APIUsageGraph';
+import { AlertNotifications } from '../components/AlertNotifications';
 
 interface SystemMetrics {
   total_users: number;
@@ -102,6 +105,9 @@ export function DashboardPage() {
         </div>
       </div>
 
+      {/* Alert Notifications */}
+      <AlertNotifications />
+
       {/* Service Health */}
       <div>
         <h2 className="text-lg font-semibold text-slate-200 mb-3">Service Health</h2>
@@ -111,6 +117,12 @@ export function DashboardPage() {
           <ServiceCard name="Qdrant" healthy={health?.qdrant || false} />
         </div>
       </div>
+
+      {/* Active Sessions Monitor */}
+      <ActiveSessionsMonitor />
+
+      {/* API Usage Graph */}
+      <APIUsageGraph />
 
       {/* Last Updated */}
       <div className="text-xs text-slate-500">
