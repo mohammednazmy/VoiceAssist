@@ -59,13 +59,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       setError(null);
-      const response = await fetchAPI<{ access_token: string; refresh_token: string; token_type: string }>(
-        '/api/auth/login',
-        {
-          method: 'POST',
-          body: JSON.stringify({ email, password }),
-        }
-      );
+      // Auth endpoints return flat responses, not wrapped in APIEnvelope
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Login failed: ${res.statusText}`);
+      }
+
+      const response = await res.json() as { access_token: string; refresh_token: string; token_type: string };
 
       // Store token
       localStorage.setItem('auth_token', response.access_token);
