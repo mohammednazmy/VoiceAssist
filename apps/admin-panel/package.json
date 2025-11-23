@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "echo \"no lint configured\""
+    "lint": "echo \"TODO: Configure ESLint for admin-panel (Phase D follow-up)\""
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
