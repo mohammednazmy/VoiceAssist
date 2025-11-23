@@ -1,19 +1,41 @@
-
-import { AdminLayout } from './components/AdminLayout';
-import { Dashboard } from './components/Dashboard';
-import { KnowledgeBase } from './components/KnowledgeBase';
-import { ToolsIntegrations } from './components/ToolsIntegrations';
-import { SettingsPanel } from './components/SettingsPanel';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminLayoutWithRouter } from './components/AdminLayoutWithRouter';
+import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { UsersPage } from './pages/UsersPage';
+import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
+import { SystemPage } from './pages/SystemPage';
 
 export function App() {
   return (
-    <AdminLayout>
-      <div className="flex-1 flex flex-col overflow-y-auto">
-        <Dashboard />
-        <KnowledgeBase />
-        <ToolsIntegrations />
-        <SettingsPanel />
-      </div>
-    </AdminLayout>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          {/* Public route */}
+          <Route path="/login" element={<LoginPage />} />
+
+          {/* Protected admin routes */}
+          <Route
+            path="/*"
+            element={
+              <ProtectedRoute>
+                <AdminLayoutWithRouter>
+                  <Routes>
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/users" element={<UsersPage />} />
+                    <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
+                    <Route path="/system" element={<SystemPage />} />
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  </Routes>
+                </AdminLayoutWithRouter>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
