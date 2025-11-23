@@ -7,10 +7,14 @@ import { useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useChatSession } from "../hooks/useChatSession";
+import { useBranching } from "../hooks/useBranching";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { MessageList } from "../components/chat/MessageList";
 import { MessageInput } from "../components/chat/MessageInput";
 import { ConnectionStatus } from "../components/chat/ConnectionStatus";
 import { ChatErrorBoundary } from "../components/chat/ChatErrorBoundary";
+import { BranchSidebar } from "../components/chat/BranchSidebar";
+import { KeyboardShortcutsDialog } from "../components/KeyboardShortcutsDialog";
 import type {
   Message,
   WebSocketErrorCode,
@@ -38,6 +42,8 @@ export function ChatPage() {
   >(null);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [initialMessages, setInitialMessages] = useState<Message[]>([]);
+  const [isBranchSidebarOpen, setIsBranchSidebarOpen] = useState(false);
+  const [isShortcutsDialogOpen, setIsShortcutsDialogOpen] = useState(false);
 
   // Handle conversation initialization and validation
   useEffect(() => {
@@ -138,6 +144,50 @@ export function ChatPage() {
     onError: handleError,
     initialMessages,
   });
+
+  // Branching functionality
+  const { createBranch } = useBranching(activeConversationId);
+
+  // Keyboard shortcuts (pass function that opens dialog via Cmd+/)
+  useKeyboardShortcuts({
+    onToggleBranchSidebar: () => setIsBranchSidebarOpen((prev) => !prev),
+    onCreateBranch: () => {
+      // Get the last message ID for branching
+      if (messages.length > 0) {
+        const lastMessage = messages[messages.length - 1];
+        createBranch(lastMessage.id);
+      }
+    },
+  });
+
+  // Override keyboard shortcut dialog handler
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+      const modKey = isMac ? event.metaKey : event.ctrlKey;
+
+      // Cmd/Ctrl + /: Show keyboard shortcuts
+      if (modKey && event.key === "/") {
+        event.preventDefault();
+        setIsShortcutsDialogOpen(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Handle branch creation from message
+  const handleBranchFromMessage = useCallback(
+    async (messageId: string) => {
+      const branch = await createBranch(messageId);
+      if (branch) {
+        // Show branch sidebar after creating
+        setIsBranchSidebarOpen(true);
+      }
+    },
+    [createBranch],
+  );
 
   // Loading states
   if (loadingState === "creating") {
@@ -270,17 +320,49 @@ export function ChatPage() {
         setErrorMessage("An unexpected error occurred");
       }}
     >
-      <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 bg-white">
-          <div className="flex items-center space-x-3">
-            <h1 className="text-lg font-semibold text-neutral-900">
-              {conversation?.title || "Chat"}
-            </h1>
-          </div>
+      <div className="flex h-full">
+        {/* Main Chat Area */}
+        <div className="flex flex-col flex-1">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 bg-white">
+            <div className="flex items-center space-x-3">
+              <h1 className="text-lg font-semibold text-neutral-900">
+                {conversation?.title || "Chat"}
+              </h1>
+            </div>
 
-          <ConnectionStatus status={connectionStatus} onReconnect={reconnect} />
-        </div>
+            <div className="flex items-center space-x-3">
+              <ConnectionStatus
+                status={connectionStatus}
+                onReconnect={reconnect}
+              />
+
+              {/* Branch Sidebar Toggle */}
+              <button
+                type="button"
+                onClick={() => setIsBranchSidebarOpen((prev) => !prev)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors"
+                aria-label="Toggle branch sidebar"
+                title="Toggle branches (⌘B)"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Branches</span>
+              </button>
+            </div>
+          </div>
 
         {/* Error Toast */}
         {errorType === "websocket" && errorMessage && (
@@ -329,28 +411,43 @@ export function ChatPage() {
           </div>
         )}
 
-        {/* Messages */}
-        <div className="flex-1 overflow-hidden bg-neutral-50 px-4 py-4">
-          <MessageList
-            messages={messages}
-            isTyping={isTyping}
-            streamingMessageId={
-              messages.find((m) => m.role === "assistant" && isTyping)?.id
-            }
-            onEditSave={editMessage}
-            onRegenerate={regenerateMessage}
-            onDelete={deleteMessage}
+          {/* Messages */}
+          <div className="flex-1 overflow-hidden bg-neutral-50 px-4 py-4">
+            <MessageList
+              messages={messages}
+              isTyping={isTyping}
+              streamingMessageId={
+                messages.find((m) => m.role === "assistant" && isTyping)?.id
+              }
+              onEditSave={editMessage}
+              onRegenerate={regenerateMessage}
+              onDelete={deleteMessage}
+              onBranch={handleBranchFromMessage}
+            />
+          </div>
+
+          {/* Input */}
+          <MessageInput
+            onSend={sendMessage}
+            disabled={connectionStatus !== "connected"}
+            enableAttachments={false} // Feature flagged
+            enableVoiceInput={true} // Phase 1: Basic voice mode
           />
         </div>
 
-        {/* Input */}
-        <MessageInput
-          onSend={sendMessage}
-          disabled={connectionStatus !== "connected"}
-          enableAttachments={false} // Feature flagged
-          enableVoiceInput={true} // Phase 1: Basic voice mode
+        {/* Branch Sidebar */}
+        <BranchSidebar
+          sessionId={activeConversationId}
+          isOpen={isBranchSidebarOpen}
+          onClose={() => setIsBranchSidebarOpen(false)}
         />
       </div>
+
+      {/* Keyboard Shortcuts Dialog */}
+      <KeyboardShortcutsDialog
+        isOpen={isShortcutsDialogOpen}
+        onClose={() => setIsShortcutsDialogOpen(false)}
+      />
     </ChatErrorBoundary>
   );
 }
