@@ -94,6 +94,18 @@ export class VoiceAssistApiClient {
     return response.data.data!;
   }
 
+  async updateProfile(updates: { name?: string; email?: string }): Promise<User> {
+    const response = await this.client.put<ApiResponse<User>>('/users/me', updates);
+    return response.data.data!;
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await this.client.put('/users/me/password', {
+      currentPassword,
+      newPassword,
+    });
+  }
+
   async getOAuthUrl(provider: 'google' | 'microsoft'): Promise<string> {
     const response = await this.client.get<ApiResponse<{ url: string }>>(
       `/auth/oauth/${provider}/authorize`

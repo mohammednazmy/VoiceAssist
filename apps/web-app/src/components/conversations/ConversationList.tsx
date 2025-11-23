@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { Input } from '@voiceassist/ui';
 import type { Conversation } from '@voiceassist/types';
 import { ConversationListItem } from './ConversationListItem';
 
@@ -22,6 +23,7 @@ export function ConversationList({ showArchived = false }: ConversationListProps
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadConversations();
@@ -219,38 +221,75 @@ export function ConversationList({ showArchived = false }: ConversationListProps
     );
   }
 
+  // Filter conversations based on search
+  const filteredConversations = conversations.filter((conv) =>
+    conv.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="flex flex-col h-full">
       {/* Header with New Conversation button */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 bg-white">
-        <h2 className="text-sm font-semibold text-neutral-900">
-          {showArchived ? 'Archived' : 'Conversations'}
-        </h2>
-        {!showArchived && (
-          <button
-            type="button"
-            onClick={handleCreateNew}
-            disabled={isCreating}
-            className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-md transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            aria-label="New conversation"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              className="w-5 h-5"
+      <div className="flex flex-col px-4 py-3 border-b border-neutral-200 bg-white space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-neutral-900">
+            {showArchived ? 'Archived' : 'Conversations'}
+          </h2>
+          {!showArchived && (
+            <button
+              type="button"
+              onClick={handleCreateNew}
+              disabled={isCreating}
+              className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-md transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              aria-label="New conversation"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-          </button>
-        )}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Search Input */}
+        <div className="relative">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+            />
+          </svg>
+          <Input
+            type="text"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 text-sm"
+          />
+        </div>
       </div>
 
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto p-2 space-y-1" role="list">
-        {conversations.map((conversation) => (
+        {filteredConversations.length === 0 && searchQuery && (
+          <div className="p-4 text-center">
+            <p className="text-sm text-neutral-600">No conversations found</p>
+          </div>
+        )}
+        {filteredConversations.map((conversation) => (
           <ConversationListItem
             key={conversation.id}
             conversation={conversation}
