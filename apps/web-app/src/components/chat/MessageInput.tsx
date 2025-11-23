@@ -5,6 +5,7 @@
 
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import { VoiceInput } from '../voice/VoiceInput';
+import { FileUpload, type UploadedFile } from '../files/FileUpload';
 
 export interface MessageInputProps {
   onSend: (content: string, attachments?: string[]) => void;
@@ -24,6 +25,8 @@ export function MessageInput({
   const [content, setContent] = useState('');
   const [attachments, setAttachments] = useState<string[]>([]);
   const [showVoiceInput, setShowVoiceInput] = useState(false);
+  const [showFileUpload, setShowFileUpload] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-expand textarea based on content
@@ -37,9 +40,13 @@ export function MessageInput({
 
   const handleSend = () => {
     if (content.trim() && !disabled) {
-      onSend(content.trim(), attachments.length > 0 ? attachments : undefined);
+      // Use uploaded file IDs as attachments
+      const fileIds = uploadedFiles.map((f) => f.id);
+      onSend(content.trim(), fileIds.length > 0 ? fileIds : undefined);
       setContent('');
       setAttachments([]);
+      setUploadedFiles([]);
+      setShowFileUpload(false);
 
       // Reset textarea height
       if (textareaRef.current) {
@@ -56,19 +63,13 @@ export function MessageInput({
     }
   };
 
-  const handleAttachmentUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-
-    // TODO: Implement actual file upload
-    console.log('Files to upload:', files);
-
-    // Placeholder: simulate upload
-    const uploadedIds = Array.from(files).map((file) => `attachment-${Date.now()}-${file.name}`);
-    setAttachments((prev) => [...prev, ...uploadedIds]);
+  const handleFilesUploaded = (files: UploadedFile[]) => {
+    // Files are already uploaded by FileUpload component
+    // Just update the state
   };
 
-  const removeAttachment = (id: string) => {
-    setAttachments((prev) => prev.filter((a) => a !== id));
+  const handleFileRemoved = (fileId: string) => {
+    // File removal is handled by FileUpload component
   };
 
   const handleVoiceTranscript = (text: string) => {
@@ -105,48 +106,38 @@ export function MessageInput({
         </div>
       )}
 
-      {/* Attachments Preview */}
-      {attachments.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-2">
-          {attachments.map((id) => (
-            <div
-              key={id}
-              className="flex items-center space-x-2 bg-neutral-100 rounded-md px-3 py-1.5"
+      {/* File Upload Modal */}
+      {showFileUpload && enableAttachments && (
+        <div className="mb-4 p-4 bg-white rounded-lg border-2 border-primary-500 shadow-lg">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-neutral-900">Attach Files</h3>
+            <button
+              type="button"
+              onClick={() => setShowFileUpload(false)}
+              className="text-neutral-400 hover:text-neutral-600 focus:outline-none"
+              aria-label="Close file upload"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
-                strokeWidth={1.5}
+                strokeWidth={2}
                 stroke="currentColor"
-                className="w-4 h-4 text-neutral-500"
+                className="w-5 h-5"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
-              <span className="text-sm text-neutral-700">{id}</span>
-              <button
-                type="button"
-                onClick={() => removeAttachment(id)}
-                className="text-neutral-400 hover:text-neutral-600"
-                aria-label="Remove attachment"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                  className="w-4 h-4"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          ))}
+            </button>
+          </div>
+          <FileUpload
+            onFilesUploaded={(files) => {
+              setUploadedFiles((prev) => [...prev, ...files]);
+            }}
+            onFileRemoved={(fileId) => {
+              setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
+            }}
+            disabled={disabled}
+          />
         </div>
       )}
 
@@ -186,12 +177,18 @@ export function MessageInput({
 
         {/* Attachment Button */}
         {enableAttachments && (
-          <label
+          <button
+            type="button"
+            onClick={() => setShowFileUpload(!showFileUpload)}
+            disabled={disabled}
             className={`flex items-center justify-center w-10 h-10 rounded-md transition-colors ${
-              disabled
+              showFileUpload
+                ? 'bg-primary-500 text-white'
+                : disabled
                 ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
-                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 cursor-pointer'
+                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
             }`}
+            aria-label="Attach files"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -207,15 +204,12 @@ export function MessageInput({
                 d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"
               />
             </svg>
-            <input
-              type="file"
-              multiple
-              disabled={disabled}
-              onChange={(e) => handleAttachmentUpload(e.target.files)}
-              className="hidden"
-              accept=".pdf,.png,.jpg,.jpeg,.mp3,.wav,.txt,.md"
-            />
-          </label>
+            {uploadedFiles.length > 0 && (
+              <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-primary-600 rounded-full">
+                {uploadedFiles.length}
+              </span>
+            )}
+          </button>
         )}
 
         {/* Textarea */}

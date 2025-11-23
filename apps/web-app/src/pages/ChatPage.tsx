@@ -430,8 +430,8 @@ export function ChatPage() {
           <MessageInput
             onSend={sendMessage}
             disabled={connectionStatus !== "connected"}
-            enableAttachments={false} // Feature flagged
-            enableVoiceInput={true} // Phase 1: Basic voice mode
+            enableAttachments={true} // Phase 4: File upload enabled
+            enableVoiceInput={true} // Phase 3: Voice features
           />
         </div>
 
