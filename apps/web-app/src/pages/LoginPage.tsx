@@ -3,10 +3,10 @@
  * User authentication page with email/password login
  */
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
   Input,
@@ -18,9 +18,9 @@ import {
   CardContent,
   CardFooter,
   OAuthButton,
-} from '@voiceassist/ui';
-import { useAuth } from '../hooks/useAuth';
-import { loginSchema, type LoginFormData } from '../lib/validations';
+} from "@voiceassist/ui";
+import { useAuth } from "../hooks/useAuth";
+import { loginSchema, type LoginFormData } from "../lib/validations";
 
 export function LoginPage() {
   const { login, loginWithOAuth, isLoading, error: authError } = useAuth();
@@ -39,7 +39,7 @@ export function LoginPage() {
       await login(data);
     } catch (err) {
       // Error is handled by the auth store
-      console.error('Login failed:', err);
+      console.error("Login failed:", err);
     }
   };
 
@@ -89,14 +89,14 @@ export function LoginPage() {
                 </Label>
                 <Input
                   id="email"
-                  type="email"
+                  type="text"
                   placeholder="name@example.com"
                   autoComplete="email"
                   error={!!errors.email}
                   fullWidth
-                  {...register('email')}
-                  aria-invalid={errors.email ? 'true' : 'false'}
-                  aria-describedby={errors.email ? 'email-error' : undefined}
+                  {...register("email")}
+                  aria-invalid={errors.email ? "true" : "false"}
+                  aria-describedby={errors.email ? "email-error" : undefined}
                 />
                 {errors.email && (
                   <p
@@ -124,20 +124,24 @@ export function LoginPage() {
                 <div className="relative">
                   <Input
                     id="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     autoComplete="current-password"
                     error={!!errors.password}
                     fullWidth
-                    {...register('password')}
-                    aria-invalid={errors.password ? 'true' : 'false'}
-                    aria-describedby={errors.password ? 'password-error' : undefined}
+                    {...register("password")}
+                    aria-invalid={errors.password ? "true" : "false"}
+                    aria-describedby={
+                      errors.password ? "password-error" : undefined
+                    }
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-700"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showPassword ? (
                       <svg
@@ -194,7 +198,7 @@ export function LoginPage() {
                 disabled={isLoading}
                 className="mt-6"
               >
-                {isLoading ? 'Signing in...' : 'Sign in'}
+                {isLoading ? "Signing in..." : "Sign in"}
               </Button>
             </form>
 
@@ -203,7 +207,9 @@ export function LoginPage() {
                 <div className="w-full border-t border-neutral-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-neutral-500">Or continue with</span>
+                <span className="bg-white px-2 text-neutral-500">
+                  Or continue with
+                </span>
               </div>
             </div>
 
@@ -212,19 +218,19 @@ export function LoginPage() {
                 provider="google"
                 fullWidth
                 disabled={isLoading}
-                onClick={() => loginWithOAuth('google')}
+                onClick={() => loginWithOAuth("google")}
               />
               <OAuthButton
                 provider="microsoft"
                 fullWidth
                 disabled={isLoading}
-                onClick={() => loginWithOAuth('microsoft')}
+                onClick={() => loginWithOAuth("microsoft")}
               />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-sm text-center text-neutral-600">
-              Don't have an account?{' '}
+              Don't have an account?{" "}
               <Link
                 to="/register"
                 className="font-medium text-primary-600 hover:text-primary-500"
@@ -236,11 +242,11 @@ export function LoginPage() {
         </Card>
 
         <p className="mt-8 text-center text-xs text-neutral-500">
-          By signing in, you agree to our{' '}
+          By signing in, you agree to our{" "}
           <a href="#" className="text-primary-600 hover:text-primary-500">
             Terms of Service
-          </a>{' '}
-          and{' '}
+          </a>{" "}
+          and{" "}
           <a href="#" className="text-primary-600 hover:text-primary-500">
             Privacy Policy
           </a>
