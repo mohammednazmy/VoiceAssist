@@ -15,6 +15,11 @@ vi.mock("../../stores/authStore", () => ({
   })),
 }));
 
+// Mock react-router-dom
+vi.mock("react-router-dom", () => ({
+  useNavigate: vi.fn(() => vi.fn()),
+}));
+
 // Mock useAuth hook with apiClient
 const mockEditMessage = vi.fn();
 const mockDeleteMessage = vi.fn();

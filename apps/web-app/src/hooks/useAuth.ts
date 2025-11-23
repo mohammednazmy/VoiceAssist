@@ -3,15 +3,15 @@
  * Provides authentication operations and manages tokens
  */
 
-import { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { VoiceAssistApiClient } from '@voiceassist/api-client';
-import type { LoginRequest } from '@voiceassist/types';
-import { useAuthStore } from '../stores/authStore';
+import { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { VoiceAssistApiClient } from "@voiceassist/api-client";
+import type { LoginRequest } from "@voiceassist/types";
+import { useAuthStore } from "../stores/authStore";
 
 // Initialize API client
 const apiClient = new VoiceAssistApiClient({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
   getAccessToken: () => {
     const state = useAuthStore.getState();
     return state.tokens?.accessToken || null;
@@ -19,7 +19,7 @@ const apiClient = new VoiceAssistApiClient({
   onUnauthorized: () => {
     const state = useAuthStore.getState();
     state.logout();
-    window.location.href = '/login';
+    window.location.href = "/login";
   },
 });
 
@@ -44,19 +44,23 @@ export function useAuth() {
         setLoading(true);
         setError(null);
 
-        const response = await apiClient.login(credentials);
+        // Step 1: Get tokens from login endpoint
+        const tokens = await apiClient.login(credentials);
+        setTokens(tokens);
 
-        setUser(response.user);
-        setTokens(response.tokens);
+        // Step 2: Fetch user profile using the access token
+        const user = await apiClient.getCurrentUser();
+        setUser(user);
+
         setLoading(false);
-
-        navigate('/');
+        navigate("/");
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Login failed');
+        setLoading(false);
+        setError(err instanceof Error ? err.message : "Login failed");
         throw err;
       }
     },
-    [navigate, setUser, setTokens, setLoading, setError]
+    [navigate, setUser, setTokens, setLoading, setError],
   );
 
   const register = useCallback(
@@ -67,46 +71,46 @@ export function useAuth() {
 
         // TODO: Add register endpoint to API client
         // const response = await apiClient.register(data);
-        console.log('Register:', data);
+        console.log("Register:", data);
 
         // For now, auto-login after successful registration
         await login({ email: data.email, password: data.password });
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Registration failed');
+        setError(err instanceof Error ? err.message : "Registration failed");
         throw err;
       }
     },
-    [login, setLoading, setError]
+    [login, setLoading, setError],
   );
 
   const logout = useCallback(async () => {
     try {
       await apiClient.logout();
     } catch (err) {
-      console.error('Logout error:', err);
+      console.error("Logout error:", err);
     } finally {
       logoutStore();
-      navigate('/login');
+      navigate("/login");
     }
   }, [logoutStore, navigate]);
 
   const refreshTokens = useCallback(async () => {
     if (!tokens?.refreshToken) {
-      throw new Error('No refresh token available');
+      throw new Error("No refresh token available");
     }
 
     try {
-      const response = await apiClient.refreshToken(tokens.refreshToken);
-      setTokens(response.tokens);
-      setUser(response.user);
+      const newTokens = await apiClient.refreshToken(tokens.refreshToken);
+      setTokens(newTokens);
+      // User data doesn't change on token refresh, no need to fetch again
     } catch (err) {
       logoutStore();
       throw err;
     }
-  }, [tokens, setTokens, setUser, logoutStore]);
+  }, [tokens, setTokens, logoutStore]);
 
   const loginWithOAuth = useCallback(
-    async (provider: 'google' | 'microsoft') => {
+    async (provider: "google" | "microsoft") => {
       try {
         setLoading(true);
         setError(null);
@@ -118,33 +122,38 @@ export function useAuth() {
         window.location.href = authUrl;
       } catch (err) {
         setLoading(false);
-        setError(err instanceof Error ? err.message : 'OAuth initialization failed');
+        setError(
+          err instanceof Error ? err.message : "OAuth initialization failed",
+        );
         throw err;
       }
     },
-    [setLoading, setError]
+    [setLoading, setError],
   );
 
   const handleOAuthCallback = useCallback(
-    async (provider: 'google' | 'microsoft', code: string) => {
+    async (provider: "google" | "microsoft", code: string) => {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await apiClient.handleOAuthCallback(provider, code);
+        // Step 1: Get tokens from OAuth callback
+        const tokens = await apiClient.handleOAuthCallback(provider, code);
+        setTokens(tokens);
 
-        setUser(response.user);
-        setTokens(response.tokens);
+        // Step 2: Fetch user profile using the access token
+        const user = await apiClient.getCurrentUser();
+        setUser(user);
+
         setLoading(false);
-
-        navigate('/');
+        navigate("/");
       } catch (err) {
         setLoading(false);
-        setError(err instanceof Error ? err.message : 'OAuth callback failed');
+        setError(err instanceof Error ? err.message : "OAuth callback failed");
         throw err;
       }
     },
-    [navigate, setUser, setTokens, setLoading, setError]
+    [navigate, setUser, setTokens, setLoading, setError],
   );
 
   const updateProfile = useCallback(
@@ -158,11 +167,13 @@ export function useAuth() {
         setLoading(false);
       } catch (err) {
         setLoading(false);
-        setError(err instanceof Error ? err.message : 'Failed to update profile');
+        setError(
+          err instanceof Error ? err.message : "Failed to update profile",
+        );
         throw err;
       }
     },
-    [setUser, setLoading, setError]
+    [setUser, setLoading, setError],
   );
 
   const changePassword = useCallback(
@@ -175,11 +186,13 @@ export function useAuth() {
         setLoading(false);
       } catch (err) {
         setLoading(false);
-        setError(err instanceof Error ? err.message : 'Failed to change password');
+        setError(
+          err instanceof Error ? err.message : "Failed to change password",
+        );
         throw err;
       }
     },
-    [setLoading, setError]
+    [setLoading, setError],
   );
 
   return {

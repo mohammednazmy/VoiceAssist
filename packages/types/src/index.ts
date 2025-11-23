@@ -16,7 +16,7 @@ export interface User {
   updatedAt: string;
 }
 
-export type UserRole = 'admin' | 'physician' | 'staff' | 'patient';
+export type UserRole = "admin" | "physician" | "staff" | "patient";
 
 export interface AuthTokens {
   accessToken: string;
@@ -29,6 +29,15 @@ export interface LoginRequest {
   password: string;
 }
 
+// Backend token response (what /api/auth/login actually returns)
+export interface TokenResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
+// Frontend login response (after fetching user profile)
 export interface LoginResponse {
   user: User;
   tokens: AuthTokens;
@@ -41,7 +50,7 @@ export interface LoginResponse {
 export interface Message {
   id: string;
   conversationId?: string;
-  role: 'user' | 'assistant' | 'system';
+  role: "user" | "assistant" | "system";
   content: string;
   delta?: string;
   citations?: Citation[];
@@ -52,7 +61,7 @@ export interface Message {
 
 export interface Citation {
   id: string;
-  source: 'kb' | 'url';
+  source: "kb" | "url";
   reference: string;
   snippet?: string;
   page?: number;
@@ -136,7 +145,7 @@ export interface Document {
   status: DocumentStatus;
 }
 
-export type DocumentStatus = 'pending' | 'processing' | 'indexed' | 'failed';
+export type DocumentStatus = "pending" | "processing" | "indexed" | "failed";
 
 export interface KnowledgeBaseEntry {
   id: string;
@@ -206,12 +215,12 @@ export interface ChatStreamChunk {
 }
 
 export type WebSocketEventType =
-  | 'delta'
-  | 'chunk'
-  | 'message.done'
-  | 'error'
-  | 'ping'
-  | 'pong';
+  | "delta"
+  | "chunk"
+  | "message.done"
+  | "error"
+  | "ping"
+  | "pong";
 
 export interface WebSocketEvent {
   type: WebSocketEventType;
@@ -231,14 +240,18 @@ export interface WebSocketError {
 }
 
 export type WebSocketErrorCode =
-  | 'AUTH_FAILED'
-  | 'RATE_LIMITED'
-  | 'QUOTA_EXCEEDED'
-  | 'INVALID_EVENT'
-  | 'BACKEND_ERROR'
-  | 'CONNECTION_DROPPED';
+  | "AUTH_FAILED"
+  | "RATE_LIMITED"
+  | "QUOTA_EXCEEDED"
+  | "INVALID_EVENT"
+  | "BACKEND_ERROR"
+  | "CONNECTION_DROPPED";
 
-export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
+export type ConnectionStatus =
+  | "connecting"
+  | "connected"
+  | "reconnecting"
+  | "disconnected";
 
 // ============================================================================
 // Attachment Types
@@ -264,7 +277,7 @@ export interface AttachmentUploadResponse {
 // ============================================================================
 
 export interface UserSettings {
-  theme: 'light' | 'dark' | 'auto';
+  theme: "light" | "dark" | "auto";
   language: string;
   voiceConfig: VoiceConfig;
   notifications: NotificationSettings;

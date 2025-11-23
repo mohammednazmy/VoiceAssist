@@ -11,7 +11,7 @@ import axios, {
 import type {
   ApiResponse,
   LoginRequest,
-  LoginResponse,
+  TokenResponse,
   User,
   Conversation,
   UpdateConversationRequest,
@@ -21,6 +21,7 @@ import type {
   SystemMetrics,
   AuditLogEntry,
   PaginatedResponse,
+  AuthTokens,
 } from "@voiceassist/types";
 
 export interface ApiClientConfig {
@@ -69,29 +70,38 @@ export class VoiceAssistApiClient {
   // Authentication
   // =========================================================================
 
-  async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await this.client.post<ApiResponse<LoginResponse>>(
+  async login(credentials: LoginRequest): Promise<AuthTokens> {
+    const response = await this.client.post<TokenResponse>(
       "/auth/login",
       credentials,
     );
-    return response.data.data!;
+    // Convert backend response to frontend format
+    return {
+      accessToken: response.data.access_token,
+      refreshToken: response.data.refresh_token,
+      expiresIn: response.data.expires_in,
+    };
   }
 
   async logout(): Promise<void> {
     await this.client.post("/auth/logout");
   }
 
-  async refreshToken(refreshToken: string): Promise<LoginResponse> {
-    const response = await this.client.post<ApiResponse<LoginResponse>>(
-      "/auth/refresh",
-      { refreshToken },
-    );
-    return response.data.data!;
+  async refreshToken(refreshToken: string): Promise<AuthTokens> {
+    const response = await this.client.post<TokenResponse>("/auth/refresh", {
+      refresh_token: refreshToken,
+    });
+    // Convert backend response to frontend format
+    return {
+      accessToken: response.data.access_token,
+      refreshToken: response.data.refresh_token,
+      expiresIn: response.data.expires_in,
+    };
   }
 
   async getCurrentUser(): Promise<User> {
-    const response = await this.client.get<ApiResponse<User>>("/auth/me");
-    return response.data.data!;
+    const response = await this.client.get<User>("/users/me");
+    return response.data;
   }
 
   async updateProfile(updates: {
@@ -125,12 +135,17 @@ export class VoiceAssistApiClient {
   async handleOAuthCallback(
     provider: "google" | "microsoft",
     code: string,
-  ): Promise<LoginResponse> {
-    const response = await this.client.post<ApiResponse<LoginResponse>>(
+  ): Promise<AuthTokens> {
+    const response = await this.client.post<TokenResponse>(
       `/auth/oauth/${provider}/callback`,
       { code },
     );
-    return response.data.data!;
+    // Convert backend response to frontend format
+    return {
+      accessToken: response.data.access_token,
+      refreshToken: response.data.refresh_token,
+      expiresIn: response.data.expires_in,
+    };
   }
 
   // =========================================================================

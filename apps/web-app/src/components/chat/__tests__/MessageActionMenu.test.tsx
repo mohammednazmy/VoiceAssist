@@ -108,9 +108,7 @@ describe("MessageActionMenu", () => {
     });
 
     it("should not render for system messages", () => {
-      const { container } = render(
-        <MessageActionMenu messageId="msg-1" role="system" />,
-      );
+      render(<MessageActionMenu messageId="msg-1" role="system" />);
 
       // System messages should not show action menu at all
       const menuButton = screen.queryByRole("button", {
