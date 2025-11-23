@@ -9,6 +9,7 @@ import { Button } from '@voiceassist/ui';
 import { useAuth } from '../../hooks/useAuth';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { ConversationList } from '../conversations/ConversationList';
+import { SkipLink } from '../accessibility/SkipLink';
 
 export function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -28,8 +29,11 @@ export function MainLayout() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
+      {/* Skip Navigation */}
+      <SkipLink />
+
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-neutral-200">
+      <header className="sticky top-0 z-40 bg-white border-b border-neutral-200" role="banner">
         <div className="flex items-center justify-between h-16 px-4 lg:px-6">
           {/* Mobile menu button */}
           <button
@@ -242,7 +246,7 @@ export function MainLayout() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-hidden">
+        <main id="main-content" className="flex-1 overflow-hidden" role="main">
           <Outlet />
         </main>
       </div>

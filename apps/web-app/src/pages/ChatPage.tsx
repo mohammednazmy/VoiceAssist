@@ -18,6 +18,7 @@ import { KeyboardShortcutsDialog } from "../components/KeyboardShortcutsDialog";
 import { ClinicalContextSidebar } from "../components/clinical/ClinicalContextSidebar";
 import { CitationSidebar } from "../components/citations/CitationSidebar";
 import { ExportDialog } from "../components/export/ExportDialog";
+import { useAnnouncer } from "../components/accessibility/LiveRegion";
 import type { ClinicalContext } from "../components/clinical/ClinicalContextPanel";
 import type {
   Message,
@@ -56,6 +57,9 @@ export function ChatPage() {
     const saved = localStorage.getItem('voiceassist:clinical-context');
     return saved ? JSON.parse(saved) : {};
   });
+
+  // Accessibility: Screen reader announcements
+  const { announce, LiveRegion: AnnouncementRegion } = useAnnouncer('polite');
 
   // Handle conversation initialization and validation
   useEffect(() => {
@@ -205,6 +209,18 @@ export function ChatPage() {
   useEffect(() => {
     localStorage.setItem('voiceassist:clinical-context', JSON.stringify(clinicalContext));
   }, [clinicalContext]);
+
+  // Accessibility: Announce new assistant messages to screen readers
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === 'assistant' && lastMessage.content) {
+        // Announce first 100 characters of assistant response
+        const preview = lastMessage.content.substring(0, 100);
+        announce(`New message from assistant: ${preview}${lastMessage.content.length > 100 ? '...' : ''}`);
+      }
+    }
+  }, [messages, announce]);
 
   // Handle branch creation from message
   const handleBranchFromMessage = useCallback(
@@ -583,6 +599,9 @@ export function ChatPage() {
         conversationTitle={conversation?.title || 'Conversation'}
         messages={messages}
       />
+
+      {/* Accessibility: Live Region for Screen Reader Announcements */}
+      <AnnouncementRegion />
     </ChatErrorBoundary>
   );
 }

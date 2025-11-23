@@ -1,9 +1,106 @@
 
 :root {
-  color-scheme: dark;
+  color-scheme: light dark;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
 }
 
 body {
   margin: 0;
+}
+
+/* ===================================
+   Accessibility Utilities
+   =================================== */
+
+/* Screen Reader Only - hides visually but available to screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Make SR-only content visible when focused */
+.sr-only:focus,
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Enhanced Focus Indicators (WCAG 2.1 AA) */
+*:focus-visible {
+  outline: 2px solid #0080FF;
+  outline-offset: 2px;
+}
+
+/* High contrast focus for interactive elements */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid #0080FF;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(0, 128, 255, 0.1);
+}
+
+/* Ensure focus is visible even in dark mode */
+@media (prefers-color-scheme: dark) {
+  *:focus-visible {
+    outline-color: #4A9FFF;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline-color: #4A9FFF;
+    box-shadow: 0 0 0 4px rgba(74, 159, 255, 0.2);
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    border-width: 2px;
+  }
+
+  *:focus-visible {
+    outline-width: 4px;
+  }
+}
+
+/* Ensure text remains visible during font loading */
+@font-face {
+  font-display: swap;
 }
