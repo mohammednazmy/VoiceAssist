@@ -365,45 +365,52 @@ This unified roadmap integrates:
 
 ---
 
-#### Phase 2: Web App Advanced (Weeks 7-10)
+#### Phase 2: Web App Advanced (Weeks 7-10) 🚧 **IN PROGRESS**
+
+**Status:** Week 8 - Citations Complete (50% Complete)
+**Latest Commit:** 157e2a3
 
 **Tasks:**
-1. **Clinical Context** (Week 7)
-   - Patient demographics form
-   - Problems list management
-   - Medications list
-   - Lab values input
-   - Vitals tracking
-   - Context-aware queries
+1. **Clinical Context** (Week 7) ✅ **COMPLETE**
+   - ✅ Patient demographics form
+   - ✅ Problems list management
+   - ✅ Medications list
+   - ✅ Lab values input
+   - ✅ Vitals tracking
+   - ✅ Context-aware queries
+   - ✅ Keyboard shortcut (⌘I)
+   - **Commit:** 9626960
 
-2. **Citations & Sources** (Week 8)
-   - Citation sidebar
-   - Source highlighting
-   - PubMed integration
-   - Direct source links
-   - Citation export
+2. **Citations & Sources** (Week 8) ✅ **COMPLETE**
+   - ✅ Citation sidebar
+   - ✅ Source highlighting via expandable citations
+   - ✅ Search/filter across all citation fields
+   - ✅ Direct source links (PubMed, DOI, URLs)
+   - ✅ Citation export (Markdown/Text)
+   - ✅ Keyboard shortcut (⌘C)
+   - **Commit:** 157e2a3
 
-3. **Conversation Management** (Week 9)
-   - Conversation history with search
-   - Conversation folders
-   - Conversation sharing
-   - Conversation templates
-   - Export to PDF/Markdown
+3. **Conversation Management** (Week 9) ⏳ **IN PROGRESS**
+   - ⏳ Conversation history with search
+   - ⏳ Conversation folders
+   - ⏳ Conversation sharing
+   - ⏳ Conversation templates
+   - ⏳ Export to PDF/Markdown
 
-4. **Advanced Features** (Week 10)
-   - Message editing and regeneration
-   - Conversation branching
-   - Keyboard shortcuts
-   - Performance optimization
-   - Accessibility audit and fixes
+4. **Advanced Features** (Week 10) ✅ **PARTIALLY COMPLETE**
+   - ✅ Message editing and regeneration
+   - ✅ Conversation branching (Commit: a37068e)
+   - ✅ Keyboard shortcuts (⌘B, ⌘I, ⌘C, ⌘/)
+   - ⏳ Performance optimization
+   - ⏳ Accessibility audit and fixes
 
 **Deliverables:**
 - ✅ Clinical context fully functional
 - ✅ Citations and sources working
-- ✅ Conversation management complete
-- ✅ Advanced features operational
-- ✅ WCAG 2.1 AA compliant
-- ✅ Performance optimized
+- ⏳ Conversation management in progress
+- ✅ Advanced features partially complete
+- ⏳ WCAG 2.1 AA compliance pending
+- ⏳ Performance optimization pending
 
 **Success Criteria:**
 - Clinical context integrates with queries
