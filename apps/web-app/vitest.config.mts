@@ -20,10 +20,9 @@ export default defineConfig({
         singleThread: true,
       },
     },
-    // Fix ESM import issues with react-syntax-highlighter
+    // Fix ESM import issues (react-syntax-highlighter is mocked via alias)
     deps: {
       inline: [
-        'react-syntax-highlighter',
         'refractor',
         'remark-gfm',
         'remark-math',
@@ -39,6 +38,7 @@ export default defineConfig({
       '@voiceassist/api-client': path.resolve(__dirname, '../../packages/api-client/src'),
       '@voiceassist/utils': path.resolve(__dirname, '../../packages/utils/src'),
       'react-syntax-highlighter': path.resolve(__dirname, './src/__mocks__/react-syntax-highlighter.tsx'),
+      'react-syntax-highlighter/dist/esm/styles/prism': path.resolve(__dirname, './src/__mocks__/react-syntax-highlighter.tsx'),
     },
   },
 });
