@@ -33,6 +33,11 @@ const SHORTCUTS: Shortcut[] = [
     category: "Clinical",
   },
   {
+    keys: ["⌘", "C"],
+    description: "Toggle citations sidebar",
+    category: "Citations",
+  },
+  {
     keys: ["⌘", "B"],
     description: "Toggle branch sidebar",
     category: "Branching",

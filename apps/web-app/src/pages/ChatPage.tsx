@@ -16,6 +16,7 @@ import { ChatErrorBoundary } from "../components/chat/ChatErrorBoundary";
 import { BranchSidebar } from "../components/chat/BranchSidebar";
 import { KeyboardShortcutsDialog } from "../components/KeyboardShortcutsDialog";
 import { ClinicalContextSidebar } from "../components/clinical/ClinicalContextSidebar";
+import { CitationSidebar } from "../components/citations/CitationSidebar";
 import type { ClinicalContext } from "../components/clinical/ClinicalContextPanel";
 import type {
   Message,
@@ -47,6 +48,7 @@ export function ChatPage() {
   const [isBranchSidebarOpen, setIsBranchSidebarOpen] = useState(false);
   const [isShortcutsDialogOpen, setIsShortcutsDialogOpen] = useState(false);
   const [isClinicalContextOpen, setIsClinicalContextOpen] = useState(false);
+  const [isCitationSidebarOpen, setIsCitationSidebarOpen] = useState(false);
   const [clinicalContext, setClinicalContext] = useState<ClinicalContext>(() => {
     // Load from localStorage
     const saved = localStorage.getItem('voiceassist:clinical-context');
@@ -184,6 +186,12 @@ export function ChatPage() {
       if (modKey && event.key === "i") {
         event.preventDefault();
         setIsClinicalContextOpen((prev) => !prev);
+      }
+
+      // Cmd/Ctrl + C: Toggle citation sidebar
+      if (modKey && event.key === "c") {
+        event.preventDefault();
+        setIsCitationSidebarOpen((prev) => !prev);
       }
     };
 
@@ -354,7 +362,9 @@ export function ChatPage() {
               <ConnectionStatus
                 status={connectionStatus}
                 onReconnect={reconnect}
-              />              {/* Clinical Context Toggle */}
+              />
+
+              {/* Clinical Context Toggle */}
               <button
                 type="button"
                 onClick={() => setIsClinicalContextOpen((prev) => !prev)}
@@ -377,6 +387,31 @@ export function ChatPage() {
                   />
                 </svg>
                 <span className="hidden sm:inline">Context</span>
+              </button>
+
+              {/* Citations Toggle */}
+              <button
+                type="button"
+                onClick={() => setIsCitationSidebarOpen((prev) => !prev)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors"
+                aria-label="Toggle citations"
+                title="Citations (⌘C)"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Citations</span>
               </button>
 
 
@@ -486,6 +521,15 @@ export function ChatPage() {
             onClose={() => setIsClinicalContextOpen(false)}
             context={clinicalContext}
             onChange={setClinicalContext}
+          />
+        )}
+
+        {/* Citation Sidebar */}
+        {isCitationSidebarOpen && (
+          <CitationSidebar
+            isOpen={isCitationSidebarOpen}
+            onClose={() => setIsCitationSidebarOpen(false)}
+            messages={messages}
           />
         )}
 
