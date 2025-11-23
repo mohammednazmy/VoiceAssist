@@ -171,6 +171,46 @@ export interface ShareLink {
   accessCount: number;
 }
 
+// ============================================================================
+// Template Types
+// ============================================================================
+
+export interface ConversationTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  icon?: string;
+  color?: string;
+  messages: TemplateMessage[];
+  clinicalContext?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+  usageCount: number;
+}
+
+export interface TemplateMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
+export interface CreateTemplateRequest {
+  name: string;
+  description?: string;
+  category?: string;
+  icon?: string;
+  color?: string;
+  fromConversationId?: string;
+}
+
+export interface UpdateTemplateRequest {
+  name?: string;
+  description?: string;
+  category?: string;
+  icon?: string;
+  color?: string;
+}
+
 // Conversation Branching Types (Phase 2, Week 10)
 export interface Branch {
   branchId: string;
