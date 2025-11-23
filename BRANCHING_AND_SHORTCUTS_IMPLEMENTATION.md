@@ -496,7 +496,8 @@ export function KeyboardShortcutsDialog({ isOpen, onClose }: Props) {
 
 ---
 
-**Status:** Phase 2 Complete - Backend API and Frontend Types/Client Ready
+**Status:** Phase 3 Complete - Frontend UI Components and Keyboard Shortcuts Ready
+
 **Completed in Phase 2:**
 
 - ✅ Backend API endpoints (`/api/conversations/{id}/branches`)
@@ -506,4 +507,21 @@ export function KeyboardShortcutsDialog({ isOpen, onClose }: Props) {
 - ✅ Frontend Branch type and CreateBranchRequest added
 - ✅ API client methods: `createBranch()`, `listBranches()`, `getBranchMessages()`
 
-**Next Step:** Implement frontend UI components, hooks, and keyboard shortcuts
+**Completed in Phase 3:**
+
+- ✅ `useBranching` hook for branch state management (`apps/web-app/src/hooks/useBranching.ts`)
+- ✅ Branch button added to MessageActionMenu (`apps/web-app/src/components/chat/MessageActionMenu.tsx`)
+- ✅ Branch button wired up in MessageBubble (`apps/web-app/src/components/chat/MessageBubble.tsx`)
+- ✅ BranchSidebar component created (`apps/web-app/src/components/chat/BranchSidebar.tsx`)
+- ✅ Keyboard shortcuts hook (`apps/web-app/src/hooks/useKeyboardShortcuts.ts`)
+  - Cmd/Ctrl + B: Toggle branch sidebar
+  - Cmd/Ctrl + Shift + B: Create branch from current message
+  - Cmd/Ctrl + Enter: Send message
+  - Escape: Cancel editing
+
+**Next Steps:**
+
+1. Integrate components into main chat page
+2. Add tests for branching features
+3. Apply database migration (`alembic upgrade head`)
+4. End-to-end testing of branching workflow

@@ -21,6 +21,7 @@ export interface MessageBubbleProps {
   onEditSave?: (messageId: string, newContent: string) => Promise<void>;
   onRegenerate?: (messageId: string) => Promise<void>;
   onDelete?: (messageId: string) => Promise<void>;
+  onBranch?: (messageId: string) => Promise<void>;
 }
 
 // Memoize to prevent unnecessary re-renders when other messages update
@@ -30,6 +31,7 @@ export const MessageBubble = memo(function MessageBubble({
   onEditSave,
   onRegenerate,
   onDelete,
+  onBranch,
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
@@ -103,6 +105,7 @@ export const MessageBubble = memo(function MessageBubble({
             }
             onDelete={() => onDelete?.(message.id)}
             onCopy={handleCopy}
+            onBranch={!isSystem ? () => onBranch?.(message.id) : undefined}
           />
         </div>
 

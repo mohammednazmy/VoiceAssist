@@ -3,8 +3,8 @@
  * Global keyboard shortcuts for the application
  */
 
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export interface KeyboardShortcut {
   key: string;
@@ -15,77 +15,103 @@ export interface KeyboardShortcut {
   action: () => void;
 }
 
-export function useKeyboardShortcuts() {
+export interface UseKeyboardShortcutsProps {
+  onToggleBranchSidebar?: () => void;
+  onCreateBranch?: () => void;
+}
+
+export function useKeyboardShortcuts(props?: UseKeyboardShortcutsProps) {
   const navigate = useNavigate();
+  const { onToggleBranchSidebar, onCreateBranch } = props || {};
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
       const modKey = isMac ? event.metaKey : event.ctrlKey;
 
       // Cmd/Ctrl + K: Focus search (or open search dialog)
-      if (modKey && event.key === 'k') {
+      if (modKey && event.key === "k") {
         event.preventDefault();
-        const searchInput = document.querySelector('input[type="text"][placeholder*="Search"]') as HTMLInputElement;
+        const searchInput = document.querySelector(
+          'input[type="text"][placeholder*="Search"]',
+        ) as HTMLInputElement;
         searchInput?.focus();
         return;
       }
 
-      // Cmd/Ctrl + N: New conversation
-      if (modKey && event.key === 'n') {
+      // Cmd/Ctrl + B: Toggle branch sidebar
+      if (modKey && event.key === "b" && !event.shiftKey) {
         event.preventDefault();
-        navigate('/chat');
+        onToggleBranchSidebar?.();
+        return;
+      }
+
+      // Cmd/Ctrl + Shift + B: Create branch from current message
+      if (
+        modKey &&
+        event.shiftKey &&
+        (event.key === "B" || event.key === "b")
+      ) {
+        event.preventDefault();
+        onCreateBranch?.();
+        return;
+      }
+
+      // Cmd/Ctrl + N: New conversation
+      if (modKey && event.key === "n") {
+        event.preventDefault();
+        navigate("/chat");
         return;
       }
 
       // Cmd/Ctrl + /: Show keyboard shortcuts
-      if (modKey && event.key === '/') {
+      if (modKey && event.key === "/") {
         event.preventDefault();
         // TODO: Open keyboard shortcuts dialog
-        console.log('Keyboard shortcuts dialog');
+        console.log("Keyboard shortcuts dialog");
         return;
       }
 
       // Escape: Close modals/overlays
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         // Let React components handle their own escape logic
         return;
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [navigate]);
+  }, [navigate, onToggleBranchSidebar, onCreateBranch]);
 }
 
 export const KEYBOARD_SHORTCUTS: KeyboardShortcut[] = [
   {
-    key: 'k',
+    key: "k",
     metaKey: true,
     ctrlKey: true,
-    description: 'Focus search',
+    description: "Focus search",
     action: () => {},
   },
   {
-    key: 'n',
+    key: "n",
     metaKey: true,
     ctrlKey: true,
-    description: 'New conversation',
+    description: "New conversation",
     action: () => {},
   },
   {
-    key: '/',
+    key: "/",
     metaKey: true,
     ctrlKey: true,
-    description: 'Show keyboard shortcuts',
+    description: "Show keyboard shortcuts",
     action: () => {},
   },
   {
-    key: 'Escape',
-    description: 'Close modal/dialog',
+    key: "Escape",
+    description: "Close modal/dialog",
     action: () => {},
   },
 ];
