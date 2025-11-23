@@ -11,8 +11,8 @@ from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 # revision identifiers, used by Alembic.
-revision = "008_add_clinical_contexts"
-down_revision = "007_add_message_attachments"
+revision = "008"
+down_revision = "007"
 branch_labels = None
 depends_on = None
 

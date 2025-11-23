@@ -11,8 +11,8 @@ from alembic import op
 from sqlalchemy.dialects.postgresql import UUID
 
 # revision identifiers, used by Alembic.
-revision = "009_add_conversation_folders"
-down_revision = "008_add_clinical_contexts"
+revision = "009"
+down_revision = "008"
 branch_labels = None
 depends_on = None
 

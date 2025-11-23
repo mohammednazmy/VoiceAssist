@@ -35,9 +35,23 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Add performance indexes"""
 
+    # Helper function to check if index exists
+    def create_index_if_not_exists(index_name, table_name, columns, **kwargs):
+        conn = op.get_bind()
+        result = conn.execute(sa.text("""
+            SELECT EXISTS (
+                SELECT 1 FROM pg_indexes
+                WHERE indexname = :index_name
+            )
+        """), {"index_name": index_name})
+        exists = result.scalar()
+
+        if not exists:
+            op.create_index(index_name, table_name, columns, **kwargs)
+
     # Users table indexes (email already indexed, add last_login)
     # Index for DAU/MAU calculations and login tracking
-    op.create_index(
+    create_index_if_not_exists(
         'ix_users_last_login',
         'users',
         ['last_login'],
@@ -45,7 +59,7 @@ def upgrade() -> None:
     )
 
     # Composite index for filtering active users by last login
-    op.create_index(
+    create_index_if_not_exists(
         'ix_users_active_last_login',
         'users',
         ['is_active', 'last_login'],
@@ -54,7 +68,7 @@ def upgrade() -> None:
 
     # Sessions table indexes
     # Composite index for retrieving user sessions ordered by creation time
-    op.create_index(
+    create_index_if_not_exists(
         'ix_sessions_user_created',
         'sessions',
         ['user_id', 'created_at'],
@@ -62,7 +76,7 @@ def upgrade() -> None:
     )
 
     # Index for finding active/recent sessions
-    op.create_index(
+    create_index_if_not_exists(
         'ix_sessions_created_at',
         'sessions',
         ['created_at'],
@@ -72,7 +86,7 @@ def upgrade() -> None:
     # Messages table indexes
     # Composite index for retrieving messages by session with timestamp ordering
     # This is critical for chat history queries
-    op.create_index(
+    create_index_if_not_exists(
         'ix_messages_session_timestamp',
         'messages',
         ['session_id', 'created_at'],
@@ -80,7 +94,7 @@ def upgrade() -> None:
     )
 
     # Index for timestamp-based message queries
-    op.create_index(
+    create_index_if_not_exists(
         'ix_messages_timestamp',
         'messages',
         ['created_at'],
@@ -89,7 +103,7 @@ def upgrade() -> None:
 
     # Audit logs table indexes
     # Composite index for user audit trail queries
-    op.create_index(
+    create_index_if_not_exists(
         'ix_audit_logs_user_timestamp',
         'audit_logs',
         ['user_id', 'timestamp'],
@@ -97,7 +111,7 @@ def upgrade() -> None:
     )
 
     # Index for action-based audit queries
-    op.create_index(
+    create_index_if_not_exists(
         'ix_audit_logs_action',
         'audit_logs',
         ['action'],
@@ -105,7 +119,7 @@ def upgrade() -> None:
     )
 
     # Composite index for filtering audit logs by action and timestamp
-    op.create_index(
+    create_index_if_not_exists(
         'ix_audit_logs_action_timestamp',
         'audit_logs',
         ['action', 'timestamp'],
@@ -115,7 +129,7 @@ def upgrade() -> None:
     # Feature flags table indexes
     # Composite index for feature flag lookups (name + enabled status)
     # This is critical for fast feature flag checks
-    op.create_index(
+    create_index_if_not_exists(
         'ix_feature_flags_name_enabled',
         'feature_flags',
         ['name', 'enabled'],
@@ -123,7 +137,7 @@ def upgrade() -> None:
     )
 
     # Index for listing enabled flags
-    op.create_index(
+    create_index_if_not_exists(
         'ix_feature_flags_enabled',
         'feature_flags',
         ['enabled'],
@@ -137,7 +151,7 @@ def upgrade() -> None:
     # Additional performance indexes for common query patterns
 
     # Index for filtering sessions by ended_at (active vs completed sessions)
-    op.create_index(
+    create_index_if_not_exists(
         'ix_sessions_ended_at',
         'sessions',
         ['ended_at'],
@@ -145,7 +159,7 @@ def upgrade() -> None:
     )
 
     # Index for PHI-containing messages
-    op.create_index(
+    create_index_if_not_exists(
         'ix_messages_contains_phi',
         'messages',
         ['contains_phi'],
@@ -154,7 +168,7 @@ def upgrade() -> None:
     )
 
     # Index for request_id lookups in audit logs (correlation)
-    op.create_index(
+    create_index_if_not_exists(
         'ix_audit_logs_request_id',
         'audit_logs',
         ['request_id'],
