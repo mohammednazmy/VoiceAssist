@@ -36,12 +36,16 @@ import type {
   ClinicalContextCreate,
   ClinicalContextUpdate,
 } from "@voiceassist/types";
+import { withRetry, type RetryConfig } from "./retry";
 
 export interface ApiClientConfig {
   baseURL: string;
   timeout?: number;
   onUnauthorized?: () => void;
   getAccessToken?: () => string | null;
+  enableRetry?: boolean;
+  retryConfig?: Partial<RetryConfig>;
+  onRetry?: (attempt: number, error: any) => void;
 }
 
 export class VoiceAssistApiClient {
@@ -49,7 +53,10 @@ export class VoiceAssistApiClient {
   private config: ApiClientConfig;
 
   constructor(config: ApiClientConfig) {
-    this.config = config;
+    this.config = {
+      enableRetry: true, // Enable retry by default
+      ...config,
+    };
     this.client = axios.create({
       baseURL: config.baseURL,
       timeout: config.timeout || 30000,
@@ -77,6 +84,16 @@ export class VoiceAssistApiClient {
         return Promise.reject(error);
       },
     );
+  }
+
+  /**
+   * Wrap a request with retry logic if enabled
+   */
+  private async withRetryIfEnabled<T>(fn: () => Promise<T>): Promise<T> {
+    if (this.config.enableRetry) {
+      return withRetry(fn, this.config.retryConfig, this.config.onRetry);
+    }
+    return fn();
   }
 
   // =========================================================================
@@ -550,22 +567,26 @@ export class VoiceAssistApiClient {
   async createClinicalContext(
     context: ClinicalContextCreate,
   ): Promise<ClinicalContext> {
-    const response = await this.client.post<ClinicalContext>(
-      "/clinical-contexts",
-      context,
-    );
-    return response.data;
+    return this.withRetryIfEnabled(async () => {
+      const response = await this.client.post<ClinicalContext>(
+        "/clinical-contexts",
+        context,
+      );
+      return response.data;
+    });
   }
 
   async getCurrentClinicalContext(
     sessionId?: string,
   ): Promise<ClinicalContext> {
-    const params = sessionId ? { session_id: sessionId } : undefined;
-    const response = await this.client.get<ClinicalContext>(
-      "/clinical-contexts/current",
-      { params },
-    );
-    return response.data;
+    return this.withRetryIfEnabled(async () => {
+      const params = sessionId ? { session_id: sessionId } : undefined;
+      const response = await this.client.get<ClinicalContext>(
+        "/clinical-contexts/current",
+        { params },
+      );
+      return response.data;
+    });
   }
 
   async getClinicalContext(contextId: string): Promise<ClinicalContext> {
@@ -579,11 +600,13 @@ export class VoiceAssistApiClient {
     contextId: string,
     update: ClinicalContextUpdate,
   ): Promise<ClinicalContext> {
-    const response = await this.client.put<ClinicalContext>(
-      `/clinical-contexts/${contextId}`,
-      update,
-    );
-    return response.data;
+    return this.withRetryIfEnabled(async () => {
+      const response = await this.client.put<ClinicalContext>(
+        `/clinical-contexts/${contextId}`,
+        update,
+      );
+      return response.data;
+    });
   }
 
   async deleteClinicalContext(contextId: string): Promise<void> {

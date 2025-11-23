@@ -7,9 +7,13 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Button, Input } from "@voiceassist/ui";
 import { useConversations } from "../../hooks/useConversations";
+import { useFolders } from "../../hooks/useFolders";
+import { FolderDialog } from "../folders/FolderDialog";
+import { useToastContext } from "../../contexts/ToastContext";
 
 export function ConversationsSidebar() {
   const { conversationId } = useParams<{ conversationId: string }>();
+  const toast = useToastContext();
   const {
     conversations,
     isLoading,
@@ -25,9 +29,18 @@ export function ConversationsSidebar() {
     exportConversation,
   } = useConversations();
 
+  const {
+    folders,
+    createFolder,
+    updateFolder,
+    deleteFolder,
+  } = useFolders();
+
   const [isCreating, setIsCreating] = useState(false);
-  // const [editingId, setEditingId] = useState<string | null>(null); // TODO: Implement edit functionality
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set());
 
   const handleCreateConversation = async () => {
     setIsCreating(true);
