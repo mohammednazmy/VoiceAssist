@@ -3,12 +3,13 @@
  * Main chat interface with WebSocket streaming
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useChatSession } from "../hooks/useChatSession";
 import { useBranching } from "../hooks/useBranching";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { useClinicalContext } from "../hooks/useClinicalContext";
 import { MessageList } from "../components/chat/MessageList";
 import { MessageInput } from "../components/chat/MessageInput";
 import { ConnectionStatus } from "../components/chat/ConnectionStatus";
@@ -22,6 +23,10 @@ import { ShareDialog } from "../components/sharing/ShareDialog";
 import { SaveAsTemplateDialog } from "../components/templates/SaveAsTemplateDialog";
 import { useTemplates } from "../hooks/useTemplates";
 import { useAnnouncer } from "../components/accessibility/LiveRegion";
+import {
+  backendToFrontend,
+  frontendToBackend,
+} from "../components/clinical/ClinicalContextAdapter";
 import type { ClinicalContext } from "../components/clinical/ClinicalContextPanel";
 import type {
   Message,
@@ -58,13 +63,24 @@ export function ChatPage() {
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
-  const [clinicalContext, setClinicalContext] = useState<ClinicalContext>(
-    () => {
-      // Load from localStorage
-      const saved = localStorage.getItem("voiceassist:clinical-context");
-      return saved ? JSON.parse(saved) : {};
-    },
-  );
+
+  // Clinical context management
+  const clinicalContextHook = useClinicalContext(activeConversationId || undefined);
+  const [localClinicalContext, setLocalClinicalContext] = useState<ClinicalContext>({});
+  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Merge backend context with local edits (local takes precedence for optimistic updates)
+  const clinicalContext = {
+    ...backendToFrontend(clinicalContextHook.context),
+    ...localClinicalContext,
+  };
+
+  // Update local context when backend context loads
+  useEffect(() => {
+    if (clinicalContextHook.context && !clinicalContextHook.isLoading) {
+      setLocalClinicalContext({});
+    }
+  }, [clinicalContextHook.context, clinicalContextHook.isLoading]);
 
   // Accessibility: Screen reader announcements
   const { announce, LiveRegion: AnnouncementRegion } = useAnnouncer("polite");
@@ -231,13 +247,37 @@ export function ChatPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Save clinical context to localStorage
+  // Handle clinical context changes with debounced save
+  const handleClinicalContextChange = useCallback(
+    (newContext: ClinicalContext) => {
+      setLocalClinicalContext(newContext);
+
+      // Clear existing timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      // Debounce save to backend (1 second)
+      saveTimeoutRef.current = setTimeout(async () => {
+        try {
+          const backendData = frontendToBackend(newContext);
+          await clinicalContextHook.saveContext(backendData);
+        } catch (err) {
+          console.error("Failed to save clinical context:", err);
+        }
+      }, 1000);
+    },
+    [clinicalContextHook],
+  );
+
+  // Cleanup timeout on unmount
   useEffect(() => {
-    localStorage.setItem(
-      "voiceassist:clinical-context",
-      JSON.stringify(clinicalContext),
-    );
-  }, [clinicalContext]);
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Accessibility: Announce new assistant messages to screen readers
   useEffect(() => {
@@ -628,7 +668,7 @@ export function ChatPage() {
             isOpen={isClinicalContextOpen}
             onClose={() => setIsClinicalContextOpen(false)}
             context={clinicalContext}
-            onChange={setClinicalContext}
+            onChange={handleClinicalContextChange}
           />
         )}
 

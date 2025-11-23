@@ -405,6 +405,60 @@ export interface UploadProgress {
 }
 
 // ============================================================================
+// Clinical Context Types
+// ============================================================================
+
+export interface Vitals {
+  temperature?: number; // Celsius
+  heartRate?: number; // BPM
+  bloodPressure?: string; // e.g., "120/80"
+  respiratoryRate?: number; // breaths per minute
+  spo2?: number; // percentage (SpO2)
+}
+
+export interface ClinicalContext {
+  id: string;
+  userId: string;
+  sessionId?: string;
+  age?: number;
+  gender?: string;
+  weightKg?: number;
+  heightCm?: number;
+  chiefComplaint?: string;
+  problems: string[]; // Array of problems/diagnoses
+  medications: string[]; // Array of medications
+  allergies: string[]; // Array of allergies
+  vitals: Vitals;
+  lastUpdated: string;
+  createdAt: string;
+}
+
+export interface ClinicalContextCreate {
+  sessionId?: string;
+  age?: number;
+  gender?: string;
+  weightKg?: number;
+  heightCm?: number;
+  chiefComplaint?: string;
+  problems?: string[];
+  medications?: string[];
+  allergies?: string[];
+  vitals?: Vitals;
+}
+
+export interface ClinicalContextUpdate {
+  age?: number;
+  gender?: string;
+  weightKg?: number;
+  heightCm?: number;
+  chiefComplaint?: string;
+  problems?: string[];
+  medications?: string[];
+  allergies?: string[];
+  vitals?: Vitals;
+}
+
+// ============================================================================
 // Settings Types
 // ============================================================================
 

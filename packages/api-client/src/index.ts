@@ -32,6 +32,9 @@ import type {
   ShareLink,
   Attachment,
   AttachmentUploadResponse,
+  ClinicalContext,
+  ClinicalContextCreate,
+  ClinicalContextUpdate,
 } from "@voiceassist/types";
 
 export interface ApiClientConfig {
@@ -538,6 +541,53 @@ export class VoiceAssistApiClient {
 
   async getAttachmentUrl(attachmentId: string): string {
     return `${this.config.baseURL}/attachments/${attachmentId}/download`;
+  }
+
+  // =========================================================================
+  // Clinical Context
+  // =========================================================================
+
+  async createClinicalContext(
+    context: ClinicalContextCreate,
+  ): Promise<ClinicalContext> {
+    const response = await this.client.post<ClinicalContext>(
+      "/clinical-contexts",
+      context,
+    );
+    return response.data;
+  }
+
+  async getCurrentClinicalContext(
+    sessionId?: string,
+  ): Promise<ClinicalContext> {
+    const params = sessionId ? { session_id: sessionId } : undefined;
+    const response = await this.client.get<ClinicalContext>(
+      "/clinical-contexts/current",
+      { params },
+    );
+    return response.data;
+  }
+
+  async getClinicalContext(contextId: string): Promise<ClinicalContext> {
+    const response = await this.client.get<ClinicalContext>(
+      `/clinical-contexts/${contextId}`,
+    );
+    return response.data;
+  }
+
+  async updateClinicalContext(
+    contextId: string,
+    update: ClinicalContextUpdate,
+  ): Promise<ClinicalContext> {
+    const response = await this.client.put<ClinicalContext>(
+      `/clinical-contexts/${contextId}`,
+      update,
+    );
+    return response.data;
+  }
+
+  async deleteClinicalContext(contextId: string): Promise<void> {
+    await this.client.delete(`/clinical-contexts/${contextId}`);
   }
 
   // =========================================================================
