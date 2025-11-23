@@ -4,7 +4,7 @@ Provides per-user feature flag overrides for A/B testing and gradual rollouts.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 import uuid
 
@@ -71,4 +71,4 @@ class UserFeatureFlag(Base):
         """Check if override has expired."""
         if self.expires_at is None:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at

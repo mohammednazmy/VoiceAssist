@@ -3,7 +3,7 @@ User management API endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, get_current_admin_user
@@ -62,7 +62,7 @@ async def update_current_user_profile(
     if user_update.full_name:
         current_user.full_name = user_update.full_name
 
-    current_user.updated_at = datetime.utcnow()
+    current_user.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(current_user)
 
@@ -92,7 +92,7 @@ async def change_password(
 
     # Update password
     current_user.hashed_password = get_password_hash(password_data.new_password)
-    current_user.updated_at = datetime.utcnow()
+    current_user.updated_at = datetime.now(timezone.utc)
     db.commit()
 
     return {"message": "Password updated successfully"}
@@ -112,7 +112,7 @@ async def delete_current_user_account(
     Requires valid access token
     """
     current_user.is_active = False
-    current_user.updated_at = datetime.utcnow()
+    current_user.updated_at = datetime.now(timezone.utc)
     db.commit()
 
     return {"message": "Account deactivated successfully"}
@@ -180,7 +180,7 @@ async def activate_user(
         )
 
     user.is_active = True
-    user.updated_at = datetime.utcnow()
+    user.updated_at = datetime.now(timezone.utc)
     db.commit()
 
     return {"message": f"User {user.email} activated successfully"}
@@ -213,7 +213,7 @@ async def deactivate_user(
         )
 
     user.is_active = False
-    user.updated_at = datetime.utcnow()
+    user.updated_at = datetime.now(timezone.utc)
     db.commit()
 
     return {"message": f"User {user.email} deactivated successfully"}
@@ -239,7 +239,7 @@ async def promote_to_admin(
         )
 
     user.is_admin = True
-    user.updated_at = datetime.utcnow()
+    user.updated_at = datetime.now(timezone.utc)
     db.commit()
 
     return {"message": f"User {user.email} promoted to admin"}
@@ -272,7 +272,7 @@ async def revoke_admin_privileges(
         )
 
     user.is_admin = False
-    user.updated_at = datetime.utcnow()
+    user.updated_at = datetime.now(timezone.utc)
     db.commit()
 
     return {"message": f"Admin privileges revoked from {user.email}"}

@@ -17,7 +17,7 @@ Future enhancements:
 """
 import hashlib
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 import logging
@@ -219,7 +219,7 @@ class KBIndexer:
                 "document_id": document_id,
                 "title": title,
                 "source_type": source_type,
-                "indexed_at": datetime.utcnow().isoformat(),
+                "indexed_at": datetime.now(timezone.utc).isoformat(),
                 **(metadata or {})
             }
 

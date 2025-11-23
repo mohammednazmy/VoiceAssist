@@ -13,7 +13,7 @@ These endpoints require admin authentication.
 import logging
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from app.core.api_envelope import ErrorCodes, error_response, success_response
@@ -141,7 +141,7 @@ async def upload_document(
                 source_type=source_type,
                 metadata={
                     "filename": file.filename,
-                    "upload_date": datetime.utcnow().isoformat(),
+                    "upload_date": datetime.now(timezone.utc).isoformat(),
                 },
             )
         else:  # .txt
@@ -153,7 +153,7 @@ async def upload_document(
                 source_type=source_type,
                 metadata={
                     "filename": file.filename,
-                    "upload_date": datetime.utcnow().isoformat(),
+                    "upload_date": datetime.now(timezone.utc).isoformat(),
                 },
             )
 

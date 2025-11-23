@@ -3,7 +3,7 @@ Authentication endpoints for user registration, login, and token management
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session, selectinload
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
@@ -110,7 +110,7 @@ async def login(
         )
 
     # Update last login timestamp
-    user.last_login = datetime.utcnow()
+    user.last_login = datetime.now(timezone.utc)
     db.commit()
 
     # Track login metric (P3.3 - Business Metrics)

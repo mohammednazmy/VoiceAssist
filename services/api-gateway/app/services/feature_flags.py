@@ -30,7 +30,7 @@ import json
 import logging
 import time
 from typing import Any, Optional, Dict, List
-from datetime import datetime
+from datetime import datetime, timezone
 from cachetools import TTLCache
 
 from sqlalchemy.orm import Session
@@ -458,7 +458,7 @@ class FeatureFlagService:
             if metadata is not None:
                 flag.flag_metadata = metadata
 
-            flag.updated_at = datetime.utcnow()
+            flag.updated_at = datetime.now(timezone.utc)
 
             db.commit()
             db.refresh(flag)

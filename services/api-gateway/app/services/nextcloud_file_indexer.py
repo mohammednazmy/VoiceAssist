@@ -21,7 +21,7 @@ Future enhancements:
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Set
 from dataclasses import dataclass
 from pathlib import Path
@@ -235,7 +235,7 @@ class NextcloudFileIndexer:
                         "nextcloud_path": file.path,
                         "nextcloud_size": file.size,
                         "nextcloud_modified": file.modified.isoformat(),
-                        "indexed_at": datetime.utcnow().isoformat()
+                        "indexed_at": datetime.now(timezone.utc).isoformat()
                     }
                 )
 
@@ -251,7 +251,7 @@ class NextcloudFileIndexer:
                         "nextcloud_path": file.path,
                         "nextcloud_size": file.size,
                         "nextcloud_modified": file.modified.isoformat(),
-                        "indexed_at": datetime.utcnow().isoformat()
+                        "indexed_at": datetime.now(timezone.utc).isoformat()
                     }
                 )
 
@@ -321,7 +321,7 @@ class NextcloudFileIndexer:
                     failed_files += 1
 
         summary = {
-            "scan_completed": datetime.utcnow().isoformat(),
+            "scan_completed": datetime.now(timezone.utc).isoformat(),
             "watch_directories": self.watch_directories,
             "total_files_found": total_files,
             "files_indexed": indexed_files,

@@ -8,7 +8,7 @@ Future phases will add voice streaming, VAD, and OpenAI Realtime API integration
 import json
 import logging
 from typing import Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from sqlalchemy.orm import Session
 
@@ -59,7 +59,7 @@ class ConnectionManager:
         """Send an error message to a client."""
         error_msg = {
             "type": "error",
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
             "error": {
                 "code": error_code,
                 "message": error_message
@@ -154,7 +154,7 @@ async def websocket_endpoint(
         await websocket.send_json({
             "type": "connected",
             "client_id": client_id,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
             "protocol_version": "1.0",
             "capabilities": ["text_streaming"]
         })
@@ -177,7 +177,7 @@ async def websocket_endpoint(
                 # Respond to ping for connection keepalive
                 await websocket.send_json({
                     "type": "pong",
-                    "timestamp": datetime.utcnow().isoformat() + "Z"
+                    "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
                 })
 
             else:
@@ -277,7 +277,7 @@ async def handle_chat_message(
             "role": "assistant",
             "content": response_text,
             "citations": citations,
-            "timestamp": int(datetime.utcnow().timestamp() * 1000),  # Unix timestamp in ms
+            "timestamp": int(datetime.now(timezone.utc).timestamp() * 1000),  # Unix timestamp in ms
         }
 
         # Changed from 'message_complete' to 'message.done' to match frontend
@@ -285,7 +285,7 @@ async def handle_chat_message(
             "type": "message.done",
             "messageId": message_id,
             "message": final_message,
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
         })
 
         # Track RAG query metrics (P3.3 - Business Metrics)
@@ -315,7 +315,7 @@ async def handle_chat_message(
         await websocket.send_json({
             "type": "error",
             "messageId": message_id,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
             "error": {
                 "code": "BACKEND_ERROR",  # Changed to match frontend error codes
                 "message": f"Failed to process query: {str(e)}"

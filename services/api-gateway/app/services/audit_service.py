@@ -3,6 +3,7 @@ Audit logging service for tracking user actions and system events.
 
 HIPAA Compliance: All access to PHI and authentication events must be logged.
 """
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from fastapi import Request
 from typing import Optional, Dict, Any
@@ -223,7 +224,7 @@ class AuditService:
         """
         from datetime import datetime, timedelta
 
-        cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=minutes)
 
         return (
             db.query(AuditLog)

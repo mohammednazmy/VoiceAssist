@@ -1,7 +1,7 @@
 """
 Authentication request and response schemas
 """
-from pydantic import BaseModel, EmailStr, Field, field_serializer
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_serializer
 from typing import Optional, Any
 from uuid import UUID
 from datetime import datetime
@@ -41,6 +41,8 @@ class PasswordChange(BaseModel):
 
 class UserResponse(BaseModel):
     """User information response"""
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     email: str
     full_name: str
@@ -49,9 +51,6 @@ class UserResponse(BaseModel):
     nextcloud_user_id: Optional[str] = None
     created_at: str
     last_login: Optional[str] = None
-
-    class Config:
-        from_attributes = True
 
     @field_serializer('id')
     def serialize_id(self, value: Any) -> str:

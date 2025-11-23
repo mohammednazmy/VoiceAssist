@@ -18,7 +18,7 @@ Future enhancements:
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
@@ -109,7 +109,7 @@ class QueryOrchestrator:
         Returns:
             QueryResponse with answer and citations
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         message_id = f"msg-{int(now.timestamp())}"
 
         # Step 1: Perform semantic search if RAG is enabled

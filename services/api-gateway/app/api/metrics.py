@@ -10,7 +10,7 @@ Metrics include:
 - External API performance
 - Business metrics (P3.3)
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Response, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func, distinct
@@ -80,14 +80,14 @@ async def prometheus_metrics(db: Session = Depends(get_db)):
     # Update business metrics (P3.3)
     try:
         # Calculate Daily Active Users (users who logged in today)
-        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
         dau_count = db.query(func.count(distinct(User.id))).filter(
             User.last_login >= today_start
         ).scalar() or 0
         active_users_daily.set(dau_count)
 
         # Calculate Monthly Active Users (users who logged in this month)
-        month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        month_start = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         mau_count = db.query(func.count(distinct(User.id))).filter(
             User.last_login >= month_start
         ).scalar() or 0

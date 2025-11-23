@@ -9,7 +9,7 @@ sourced from Prometheus, database aggregates, etc.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict
 
 from fastapi import APIRouter, Depends, Request
@@ -45,7 +45,7 @@ async def get_system_summary(
         "total_users": total_users,
         "active_users": active_users,
         "admin_users": admin_users,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
     }
     trace_id = getattr(request.state, "trace_id", None)
     return success_response(data, trace_id=trace_id)
