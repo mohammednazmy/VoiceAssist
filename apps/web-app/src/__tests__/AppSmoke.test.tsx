@@ -7,9 +7,8 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import App from "../App";
 
-// TODO: Fix ESM import issue with react-syntax-highlighter (see KNOWN_ISSUES.md)
-// Skipping this suite until the ESM compatibility issue is resolved
-describe.skip("App Smoke Test", () => {
+// ESM import issue with react-syntax-highlighter has been resolved with mocking
+describe("App Smoke Test", () => {
   it("should render without crashing", () => {
     const { container } = render(<App />);
     expect(container).toBeInTheDocument();

@@ -7,10 +7,13 @@ import { useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useChatSession } from "../hooks/useChatSession";
+import { useBranching } from "../hooks/useBranching";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { MessageList } from "../components/chat/MessageList";
 import { MessageInput } from "../components/chat/MessageInput";
 import { ConnectionStatus } from "../components/chat/ConnectionStatus";
 import { ChatErrorBoundary } from "../components/chat/ChatErrorBoundary";
+import { BranchSidebar } from "../components/chat/BranchSidebar";
 import type {
   Message,
   WebSocketErrorCode,
@@ -38,6 +41,7 @@ export function ChatPage() {
   >(null);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [initialMessages, setInitialMessages] = useState<Message[]>([]);
+  const [isBranchSidebarOpen, setIsBranchSidebarOpen] = useState(false);
 
   // Handle conversation initialization and validation
   useEffect(() => {
@@ -137,6 +141,38 @@ export function ChatPage() {
     conversationId: activeConversationId || "",
     onError: handleError,
     initialMessages,
+  });
+
+  // Branching functionality
+  const { createBranch } = useBranching(activeConversationId);
+
+  const handleBranch = useCallback(
+    async (messageId: string) => {
+      try {
+        await createBranch(messageId);
+        setIsBranchSidebarOpen(true);
+      } catch (error) {
+        console.error("Failed to create branch:", error);
+        setErrorType("websocket");
+        setErrorMessage("Failed to create branch. Please try again.");
+      }
+    },
+    [createBranch],
+  );
+
+  const handleToggleBranchSidebar = useCallback(() => {
+    setIsBranchSidebarOpen((prev) => !prev);
+  }, []);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onToggleBranchSidebar: handleToggleBranchSidebar,
+    onCreateBranch: () => {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage) {
+        handleBranch(lastMessage.id);
+      }
+    },
   });
 
   // Loading states
@@ -270,85 +306,122 @@ export function ChatPage() {
         setErrorMessage("An unexpected error occurred");
       }}
     >
-      <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 bg-white">
-          <div className="flex items-center space-x-3">
-            <h1 className="text-lg font-semibold text-neutral-900">
-              {conversation?.title || "Chat"}
-            </h1>
-          </div>
-
-          <ConnectionStatus status={connectionStatus} onReconnect={reconnect} />
-        </div>
-
-        {/* Error Toast */}
-        {errorType === "websocket" && errorMessage && (
-          <div className="px-4 py-3 bg-red-50 border-b border-red-200 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-5 h-5 text-red-600"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
-                />
-              </svg>
-              <span className="text-sm text-red-800">{errorMessage}</span>
+      <div className="flex h-full">
+        {/* Main Chat Area */}
+        <div className="flex flex-col flex-1 min-w-0">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 bg-white">
+            <div className="flex items-center space-x-3">
+              <h1 className="text-lg font-semibold text-neutral-900">
+                {conversation?.title || "Chat"}
+              </h1>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setErrorType(null);
-                setErrorMessage(null);
-              }}
-              className="text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
-              aria-label="Dismiss error"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-5 h-5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-        )}
 
-        {/* Messages */}
-        <div className="flex-1 overflow-hidden bg-neutral-50 px-4 py-4">
-          <MessageList
-            messages={messages}
-            isTyping={isTyping}
-            streamingMessageId={
-              messages.find((m) => m.role === "assistant" && isTyping)?.id
-            }
-            onEditSave={editMessage}
-            onRegenerate={regenerateMessage}
-            onDelete={deleteMessage}
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={handleToggleBranchSidebar}
+                className="p-2 rounded-lg hover:bg-neutral-100 transition-colors"
+                aria-label="Toggle branch sidebar"
+                title="Branch Management (Cmd+B)"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-5 h-5 text-neutral-600"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"
+                  />
+                </svg>
+              </button>
+              <ConnectionStatus
+                status={connectionStatus}
+                onReconnect={reconnect}
+              />
+            </div>
+          </div>
+
+          {/* Error Toast */}
+          {errorType === "websocket" && errorMessage && (
+            <div className="px-4 py-3 bg-red-50 border-b border-red-200 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-5 h-5 text-red-600"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+                  />
+                </svg>
+                <span className="text-sm text-red-800">{errorMessage}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setErrorType(null);
+                  setErrorMessage(null);
+                }}
+                className="text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
+                aria-label="Dismiss error"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* Messages */}
+          <div className="flex-1 overflow-hidden bg-neutral-50 px-4 py-4">
+            <MessageList
+              messages={messages}
+              isTyping={isTyping}
+              streamingMessageId={
+                messages.find((m) => m.role === "assistant" && isTyping)?.id
+              }
+              onEditSave={editMessage}
+              onRegenerate={regenerateMessage}
+              onDelete={deleteMessage}
+              onBranch={handleBranch}
+            />
+          </div>
+
+          {/* Input */}
+          <MessageInput
+            onSend={sendMessage}
+            disabled={connectionStatus !== "connected"}
+            enableAttachments={false} // Feature flagged
+            enableVoiceInput={true} // Phase 1: Basic voice mode
           />
         </div>
 
-        {/* Input */}
-        <MessageInput
-          onSend={sendMessage}
-          disabled={connectionStatus !== "connected"}
-          enableAttachments={false} // Feature flagged
-          enableVoiceInput={true} // Phase 1: Basic voice mode
+        {/* Branch Sidebar */}
+        <BranchSidebar
+          sessionId={activeConversationId}
+          isOpen={isBranchSidebarOpen}
+          onClose={() => setIsBranchSidebarOpen(false)}
         />
       </div>
     </ChatErrorBoundary>

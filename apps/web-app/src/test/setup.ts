@@ -59,3 +59,22 @@ vi.mock("react-router-dom", async () => {
     useSearchParams: () => [new URLSearchParams(), vi.fn()],
   };
 });
+
+// Mock WebSocket for useChatSession tests
+(global as any).WebSocket = class MockWebSocket {
+  onopen?: () => void;
+  onmessage?: (event: any) => void;
+  onerror?: (err: any) => void;
+  onclose?: () => void;
+  send = vi.fn();
+  close = vi.fn(function (this: any) {
+    if (this.onclose) this.onclose();
+  });
+
+  constructor(public url: string) {
+    // Simulate connection open asynchronously
+    setTimeout(() => {
+      if (this.onopen) this.onopen();
+    }, 0);
+  }
+};
