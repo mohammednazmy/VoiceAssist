@@ -5,11 +5,14 @@
 
 import { BrowserRouter } from 'react-router-dom';
 import { AppRoutes } from './AppRoutes';
+import { ToastProvider } from './contexts/ToastContext';
 
 export function App() {
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <ToastProvider>
+        <AppRoutes />
+      </ToastProvider>
     </BrowserRouter>
   );
 }

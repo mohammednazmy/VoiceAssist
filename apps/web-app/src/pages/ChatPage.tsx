@@ -10,6 +10,7 @@ import { useChatSession } from "../hooks/useChatSession";
 import { useBranching } from "../hooks/useBranching";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useClinicalContext } from "../hooks/useClinicalContext";
+import { useToastContext } from "../contexts/ToastContext";
 import { MessageList } from "../components/chat/MessageList";
 import { MessageInput } from "../components/chat/MessageInput";
 import { ConnectionStatus } from "../components/chat/ConnectionStatus";
@@ -47,6 +48,7 @@ export function ChatPage() {
   const navigate = useNavigate();
   const { apiClient } = useAuth();
   const { createFromConversation } = useTemplates();
+  const toast = useToastContext();
 
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
   const [errorType, setErrorType] = useState<ErrorType>(null);
@@ -264,6 +266,10 @@ export function ChatPage() {
           await clinicalContextHook.saveContext(backendData);
         } catch (err) {
           console.error("Failed to save clinical context:", err);
+          toast.error(
+            "Failed to save clinical context",
+            "Your changes may not be saved. Please try again.",
+          );
         }
       }, 1000);
     },
