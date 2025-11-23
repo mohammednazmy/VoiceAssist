@@ -2,40 +2,55 @@
 
 ## Frontend Testing
 
-### Vitest/jsdom Configuration Issues (2025-11-23)
+### ~~Vitest/jsdom Configuration Issues~~ (RESOLVED 2025-11-23)
 
-**Status**: 🔴 Blocking
-**Priority**: High
-**Affects**: `apps/web-app` test suite
+**Status**: ✅ Resolved
+**Resolution Date**: 2025-11-23
+**Solution**: Downgraded jsdom from 27.2.0 to 24.1.3
 
-#### Problem
+#### Original Problem
 
-Frontend tests using Vitest with jsdom environment currently experience collection/initialization hang due to:
+Frontend tests using Vitest with jsdom@27.2.0 experienced collection/initialization hang due to `webidl-conversions` module incompatibility.
 
-1. `webidl-conversions` module attempting to access undefined properties during jsdom initialization
-2. Possible incompatibility between jsdom@27.2.0 and current Node.js/Vitest configuration
-3. Test collection phase not completing, causing timeout on `vitest run`
+#### Resolution
 
-#### Symptoms
+**Implemented Solution**: Downgraded jsdom to version 24.1.3
 
-- Running `pnpm --filter web-app test` hangs indefinitely during test collection
-- Error seen: `Cannot read properties of undefined (reading 'get')` in `webidl-conversions/lib/index.js:325`
-- Tests never execute; process must be killed manually
+Changes made:
 
-#### Temporary Workaround
+- Updated `apps/web-app/package.json`: `"jsdom": "24.1.3"` (was `"^27.2.0"`)
+- Restored `test` script to run actual tests: `"test": "vitest run"`
+- Removed temporary workaround that disabled tests
 
-The `test` script in `apps/web-app/package.json` is currently set to:
+#### Current Test Status
 
-```json
-"test": "echo 'WARN: Frontend tests currently disabled...' && exit 0"
-```
+- ✅ Tests run and exit cleanly (no more hangs!)
+- ✅ 118 total tests execute across multiple test files
+- ⚠️ Some test failures exist (see below), but these are **real test assertion failures**, not infrastructure issues
+- ✅ Frontend CI now runs real tests
 
-To attempt running tests (experimental):
+#### Known Test Failures (Not Infrastructure)
 
-```bash
-cd apps/web-app
-pnpm test:experimental
-```
+**ES Module Import Issues (4 suites fail to load):**
+
+- `AppSmoke.test.tsx`
+- `ChatFlow.test.tsx`
+- `MessageBubble.test.tsx`
+- `MessageList.test.tsx`
+
+**Cause**: `react-syntax-highlighter` requires ES Module that can't be imported in CommonJS context
+**Impact**: These specific test suites don't run
+**Fix Needed**: Configure Vitest to handle ESM imports or mock the syntax highlighter
+
+**Test Assertion Failures (12 tests):**
+
+- Various tests in `RegisterFlow.test.tsx` (6 failures)
+- `LoginFlow.test.tsx` (1 failure)
+- `MessageInput.test.tsx` (5 failures)
+
+**Cause**: Real test logic issues (e.g., elements not found, assertions don't match implementation)
+**Impact**: Tests fail but provide useful feedback
+**Fix Needed**: Update test assertions or fix component behavior
 
 #### Test Infrastructure Status
 
@@ -44,38 +59,15 @@ pnpm test:experimental
 - ✅ Testing Library dependencies installed
 - ✅ Test files exist (`src/__tests__/**/*.test.tsx`)
 - ✅ Test setup file configured (`src/test/setup.ts`)
-- ❌ **Tests cannot run due to environment initialization failure**
-
-#### Next Steps
-
-1. **Investigate jsdom version compatibility**
-   - Try downgrading jsdom from 27.2.0 to 24.x or 25.x
-   - Check for known issues with Node 18.19.1 + jsdom 27.x
-
-2. **Try alternative test environment**
-   - Consider `@happy-dom/global-registrator` as alternative to jsdom
-   - Or use `@vitest/browser` for real browser testing
-
-3. **Simplify test setup**
-   - Remove complex mocks from `src/test/setup.ts`
-   - Test with minimal configuration to isolate issue
-
-4. **Check for conflicting dependencies**
-   - Audit pnpm lockfile for duplicate/conflicting versions
-   - Ensure all packages use compatible React/jsdom versions
+- ✅ **Tests run successfully with jsdom 24.1.3**
+- ✅ 106 tests passing, 12 failing (real failures, not infrastructure)
 
 #### Related Files
 
-- `apps/web-app/package.json` - Test scripts
+- `apps/web-app/package.json` - Test scripts and jsdom version
 - `apps/web-app/vitest.config.mts` - Vitest configuration
-- `apps/web-app/src/test/setup.ts` - Test setup with WeakRef polyfill
+- `apps/web-app/src/test/setup.ts` - Test setup
 - Test files in `apps/web-app/src/__tests__/` and `apps/web-app/src/components/**/__tests__/`
-
-#### CI Impact
-
-- Frontend CI workflow (`.github/workflows/frontend-ci.yml`) will show tests as "passing" with warning
-- This is a false positive; tests are skipped, not actually passing
-- Backend tests (Python/pytest) are unaffected and working correctly
 
 ---
 

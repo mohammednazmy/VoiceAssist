@@ -153,7 +153,8 @@ make bandit
 
 - `pnpm test` - Runs tests once and exits (used in CI)
 - `pnpm test:watch` - Runs tests in interactive watch mode (for local development)
-- See KNOWN_ISSUES.md for current frontend test infrastructure status
+- Tests use jsdom 24.1.3 (downgraded from 27.2.0 to fix initialization hang)
+- Some tests have known failures - see KNOWN_ISSUES.md for details
 
 ---
 

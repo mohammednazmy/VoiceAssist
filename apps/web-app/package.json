@@ -8,8 +8,7 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
-    "test": "echo 'WARN: Frontend tests currently disabled due to jsdom/vitest configuration issues. See KNOWN_ISSUES.md' && exit 0",
-    "test:experimental": "vitest run",
+    "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage"
@@ -46,7 +45,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
-    "jsdom": "^27.2.0",
+    "jsdom": "24.1.3",
     "typescript": "^5.0.0",
     "vite": "^5.0.0",
     "vitest": "^4.0.13"
