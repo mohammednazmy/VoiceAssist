@@ -7,7 +7,7 @@ import axios, {
   type AxiosInstance,
   type AxiosRequestConfig,
   type AxiosResponse,
-} from 'axios';
+} from "axios";
 import type {
   ApiResponse,
   LoginRequest,
@@ -21,7 +21,7 @@ import type {
   SystemMetrics,
   AuditLogEntry,
   PaginatedResponse,
-} from '@voiceassist/types';
+} from "@voiceassist/types";
 
 export interface ApiClientConfig {
   baseURL: string;
@@ -40,7 +40,7 @@ export class VoiceAssistApiClient {
       baseURL: config.baseURL,
       timeout: config.timeout || 30000,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
@@ -61,7 +61,7 @@ export class VoiceAssistApiClient {
           this.config.onUnauthorized?.();
         }
         return Promise.reject(error);
-      }
+      },
     );
   }
 
@@ -71,55 +71,64 @@ export class VoiceAssistApiClient {
 
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const response = await this.client.post<ApiResponse<LoginResponse>>(
-      '/auth/login',
-      credentials
+      "/auth/login",
+      credentials,
     );
     return response.data.data!;
   }
 
   async logout(): Promise<void> {
-    await this.client.post('/auth/logout');
+    await this.client.post("/auth/logout");
   }
 
   async refreshToken(refreshToken: string): Promise<LoginResponse> {
     const response = await this.client.post<ApiResponse<LoginResponse>>(
-      '/auth/refresh',
-      { refreshToken }
+      "/auth/refresh",
+      { refreshToken },
     );
     return response.data.data!;
   }
 
   async getCurrentUser(): Promise<User> {
-    const response = await this.client.get<ApiResponse<User>>('/auth/me');
+    const response = await this.client.get<ApiResponse<User>>("/auth/me");
     return response.data.data!;
   }
 
-  async updateProfile(updates: { name?: string; email?: string }): Promise<User> {
-    const response = await this.client.put<ApiResponse<User>>('/users/me', updates);
+  async updateProfile(updates: {
+    name?: string;
+    email?: string;
+  }): Promise<User> {
+    const response = await this.client.put<ApiResponse<User>>(
+      "/users/me",
+      updates,
+    );
     return response.data.data!;
   }
 
-  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
-    await this.client.put('/users/me/password', {
+  async changePassword(
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    await this.client.put("/users/me/password", {
       currentPassword,
       newPassword,
     });
   }
 
-  async getOAuthUrl(provider: 'google' | 'microsoft'): Promise<string> {
+  async getOAuthUrl(provider: "google" | "microsoft"): Promise<string> {
     const response = await this.client.get<ApiResponse<{ url: string }>>(
-      `/auth/oauth/${provider}/authorize`
+      `/auth/oauth/${provider}/authorize`,
     );
     return response.data.data!.url;
   }
 
   async handleOAuthCallback(
-    provider: 'google' | 'microsoft',
-    code: string
+    provider: "google" | "microsoft",
+    code: string,
   ): Promise<LoginResponse> {
     const response = await this.client.post<ApiResponse<LoginResponse>>(
       `/auth/oauth/${provider}/callback`,
-      { code }
+      { code },
     );
     return response.data.data!;
   }
@@ -130,37 +139,36 @@ export class VoiceAssistApiClient {
 
   async getConversations(
     page = 1,
-    pageSize = 20
+    pageSize = 20,
   ): Promise<PaginatedResponse<Conversation>> {
-    const response = await this.client.get<ApiResponse<PaginatedResponse<Conversation>>>(
-      '/conversations',
-      { params: { page, pageSize } }
-    );
+    const response = await this.client.get<
+      ApiResponse<PaginatedResponse<Conversation>>
+    >("/conversations", { params: { page, pageSize } });
     return response.data.data!;
   }
 
   async getConversation(id: string): Promise<Conversation> {
     const response = await this.client.get<ApiResponse<Conversation>>(
-      `/conversations/${id}`
+      `/conversations/${id}`,
     );
     return response.data.data!;
   }
 
   async createConversation(title: string): Promise<Conversation> {
     const response = await this.client.post<ApiResponse<Conversation>>(
-      '/conversations',
-      { title }
+      "/conversations",
+      { title },
     );
     return response.data.data!;
   }
 
   async updateConversation(
     id: string,
-    updates: UpdateConversationRequest
+    updates: UpdateConversationRequest,
   ): Promise<Conversation> {
     const response = await this.client.patch<ApiResponse<Conversation>>(
       `/conversations/${id}`,
-      updates
+      updates,
     );
     return response.data.data!;
   }
@@ -184,69 +192,90 @@ export class VoiceAssistApiClient {
   async getMessages(
     conversationId: string,
     page = 1,
-    pageSize = 50
+    pageSize = 50,
   ): Promise<PaginatedResponse<Message>> {
-    const response = await this.client.get<ApiResponse<PaginatedResponse<Message>>>(
+    const response = await this.client.get<
+      ApiResponse<PaginatedResponse<Message>>
+    >(`/conversations/${conversationId}/messages`, {
+      params: { page, pageSize },
+    });
+    return response.data.data!;
+  }
+
+  async sendMessage(conversationId: string, content: string): Promise<Message> {
+    const response = await this.client.post<ApiResponse<Message>>(
       `/conversations/${conversationId}/messages`,
-      { params: { page, pageSize } }
+      { content },
     );
     return response.data.data!;
   }
 
-  async sendMessage(
+  async editMessage(
     conversationId: string,
-    content: string
+    messageId: string,
+    content: string,
   ): Promise<Message> {
-    const response = await this.client.post<ApiResponse<Message>>(
-      `/conversations/${conversationId}/messages`,
-      { content }
+    const response = await this.client.patch<ApiResponse<Message>>(
+      `/conversations/${conversationId}/messages/${messageId}`,
+      { content },
     );
     return response.data.data!;
+  }
+
+  async deleteMessage(
+    conversationId: string,
+    messageId: string,
+  ): Promise<void> {
+    await this.client.delete(
+      `/conversations/${conversationId}/messages/${messageId}`,
+    );
   }
 
   // =========================================================================
   // Knowledge Base
   // =========================================================================
 
-  async searchKnowledgeBase(query: string, limit = 10): Promise<SearchResult[]> {
+  async searchKnowledgeBase(
+    query: string,
+    limit = 10,
+  ): Promise<SearchResult[]> {
     const response = await this.client.post<ApiResponse<SearchResult[]>>(
-      '/kb/search',
-      { query, limit }
+      "/kb/search",
+      { query, limit },
     );
     return response.data.data!;
   }
 
   async getDocuments(
     page = 1,
-    pageSize = 20
+    pageSize = 20,
   ): Promise<PaginatedResponse<Document>> {
-    const response = await this.client.get<ApiResponse<PaginatedResponse<Document>>>(
-      '/kb/documents',
-      { params: { page, pageSize } }
-    );
+    const response = await this.client.get<
+      ApiResponse<PaginatedResponse<Document>>
+    >("/kb/documents", { params: { page, pageSize } });
     return response.data.data!;
   }
 
   async getDocument(id: string): Promise<Document> {
     const response = await this.client.get<ApiResponse<Document>>(
-      `/kb/documents/${id}`
+      `/kb/documents/${id}`,
     );
     return response.data.data!;
   }
 
   async uploadDocument(file: File, category: string): Promise<Document> {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('category', category);
+    formData.append("file", file);
+    formData.append("category", category);
 
     const response = await this.client.post<ApiResponse<Document>>(
-      '/kb/documents',
+      "/kb/documents",
       formData,
       {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data.data!;
   }
@@ -261,25 +290,25 @@ export class VoiceAssistApiClient {
 
   async transcribeAudio(audioBlob: Blob): Promise<string> {
     const formData = new FormData();
-    formData.append('audio', audioBlob);
+    formData.append("audio", audioBlob);
 
     const response = await this.client.post<ApiResponse<{ text: string }>>(
-      '/voice/transcribe',
+      "/voice/transcribe",
       formData,
       {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data.data!.text;
   }
 
   async synthesizeSpeech(text: string, voiceId?: string): Promise<Blob> {
     const response = await this.client.post(
-      '/voice/synthesize',
+      "/voice/synthesize",
       { text, voiceId },
-      { responseType: 'blob' }
+      { responseType: "blob" },
     );
     return response.data;
   }
@@ -289,31 +318,25 @@ export class VoiceAssistApiClient {
   // =========================================================================
 
   async getSystemMetrics(): Promise<SystemMetrics> {
-    const response = await this.client.get<ApiResponse<SystemMetrics>>(
-      '/admin/metrics'
-    );
+    const response =
+      await this.client.get<ApiResponse<SystemMetrics>>("/admin/metrics");
     return response.data.data!;
   }
 
   async getAuditLogs(
     page = 1,
-    pageSize = 50
+    pageSize = 50,
   ): Promise<PaginatedResponse<AuditLogEntry>> {
-    const response = await this.client.get<ApiResponse<PaginatedResponse<AuditLogEntry>>>(
-      '/admin/audit-logs',
-      { params: { page, pageSize } }
-    );
+    const response = await this.client.get<
+      ApiResponse<PaginatedResponse<AuditLogEntry>>
+    >("/admin/audit-logs", { params: { page, pageSize } });
     return response.data.data!;
   }
 
-  async getUsers(
-    page = 1,
-    pageSize = 20
-  ): Promise<PaginatedResponse<User>> {
-    const response = await this.client.get<ApiResponse<PaginatedResponse<User>>>(
-      '/admin/users',
-      { params: { page, pageSize } }
-    );
+  async getUsers(page = 1, pageSize = 20): Promise<PaginatedResponse<User>> {
+    const response = await this.client.get<
+      ApiResponse<PaginatedResponse<User>>
+    >("/admin/users", { params: { page, pageSize } });
     return response.data.data!;
   }
 
