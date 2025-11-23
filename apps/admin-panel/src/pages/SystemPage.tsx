@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from "react";
 
 interface SystemConfig {
   environment: string;
@@ -10,9 +10,9 @@ interface SystemConfig {
 
 export function SystemPage() {
   const [config, setConfig] = useState<SystemConfig>({
-    environment: 'production',
+    environment: "production",
     debug: false,
-    api_version: '2.0',
+    api_version: "2.0",
     database_pool_size: 20,
     redis_max_connections: 50,
   });
@@ -23,7 +23,7 @@ export function SystemPage() {
   const handleSave = async () => {
     setLoading(true);
     // Simulate save
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     setSaved(true);
     setLoading(false);
     setTimeout(() => setSaved(false), 3000);
@@ -32,7 +32,9 @@ export function SystemPage() {
   return (
     <div className="flex-1 p-6 space-y-6 overflow-y-auto">
       <div>
-        <h1 className="text-2xl font-bold text-slate-100">System Configuration</h1>
+        <h1 className="text-2xl font-bold text-slate-100">
+          System Configuration
+        </h1>
         <p className="text-sm text-slate-400 mt-1">
           Manage system settings and environment variables
         </p>
@@ -40,7 +42,9 @@ export function SystemPage() {
 
       {/* Environment Settings */}
       <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-slate-200">Environment Settings</h2>
+        <h2 className="text-lg font-semibold text-slate-200">
+          Environment Settings
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -49,7 +53,9 @@ export function SystemPage() {
             </label>
             <select
               value={config.environment}
-              onChange={(e) => setConfig({ ...config, environment: e.target.value })}
+              onChange={(e) =>
+                setConfig({ ...config, environment: e.target.value })
+              }
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="development">Development</option>
@@ -65,7 +71,9 @@ export function SystemPage() {
             <input
               type="text"
               value={config.api_version}
-              onChange={(e) => setConfig({ ...config, api_version: e.target.value })}
+              onChange={(e) =>
+                setConfig({ ...config, api_version: e.target.value })
+              }
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               readOnly
             />
@@ -88,7 +96,9 @@ export function SystemPage() {
 
       {/* Database Settings */}
       <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-slate-200">Database Configuration</h2>
+        <h2 className="text-lg font-semibold text-slate-200">
+          Database Configuration
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -98,7 +108,12 @@ export function SystemPage() {
             <input
               type="number"
               value={config.database_pool_size}
-              onChange={(e) => setConfig({ ...config, database_pool_size: parseInt(e.target.value) })}
+              onChange={(e) =>
+                setConfig({
+                  ...config,
+                  database_pool_size: parseInt(e.target.value),
+                })
+              }
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               min="1"
               max="100"
@@ -115,7 +130,12 @@ export function SystemPage() {
             <input
               type="number"
               value={config.redis_max_connections}
-              onChange={(e) => setConfig({ ...config, redis_max_connections: parseInt(e.target.value) })}
+              onChange={(e) =>
+                setConfig({
+                  ...config,
+                  redis_max_connections: parseInt(e.target.value),
+                })
+              }
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               min="1"
               max="200"
@@ -160,7 +180,7 @@ export function SystemPage() {
           disabled={loading}
           className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white rounded-md text-sm font-medium transition-colors"
         >
-          {loading ? 'Saving...' : 'Save Configuration'}
+          {loading ? "Saving..." : "Save Configuration"}
         </button>
 
         {saved && (
@@ -169,14 +189,20 @@ export function SystemPage() {
       </div>
 
       <div className="text-xs text-slate-500 p-4 bg-yellow-950/30 border border-yellow-900/50 rounded-lg">
-        <strong>Note:</strong> Some configuration changes require a service restart to take effect.
-        Make sure to coordinate with your operations team before applying changes in production.
+        <strong>Note:</strong> Some configuration changes require a service
+        restart to take effect. Make sure to coordinate with your operations
+        team before applying changes in production.
       </div>
     </div>
   );
 }
 
-function FeatureToggle({ id, label, description, enabled }: {
+function FeatureToggle({
+  id,
+  label,
+  description,
+  enabled,
+}: {
   id: string;
   label: string;
   description: string;
@@ -187,7 +213,10 @@ function FeatureToggle({ id, label, description, enabled }: {
   return (
     <div className="flex items-start justify-between p-3 bg-slate-800/50 rounded-lg">
       <div className="flex-1">
-        <label htmlFor={id} className="block text-sm font-medium text-slate-300">
+        <label
+          htmlFor={id}
+          className="block text-sm font-medium text-slate-300"
+        >
           {label}
         </label>
         <p className="mt-1 text-xs text-slate-500">{description}</p>
@@ -196,12 +225,12 @@ function FeatureToggle({ id, label, description, enabled }: {
         id={id}
         onClick={() => setIsEnabled(!isEnabled)}
         className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${
-          isEnabled ? 'bg-blue-600' : 'bg-slate-700'
+          isEnabled ? "bg-blue-600" : "bg-slate-700"
         }`}
       >
         <span
           className={`inline-block h-5 w-5 transform rounded-full bg-white transition duration-200 ease-in-out ${
-            isEnabled ? 'translate-x-5' : 'translate-x-0'
+            isEnabled ? "translate-x-5" : "translate-x-0"
           }`}
         />
       </button>

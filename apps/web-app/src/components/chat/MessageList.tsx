@@ -8,10 +8,11 @@
  * - Add message caching/indexing for very large histories
  */
 
-import { useEffect, useRef } from 'react';
-import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import type { Message } from '@voiceassist/types';
-import { MessageBubble } from './MessageBubble';
+import { useEffect, useRef } from "react";
+import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
+import type { Message } from "@voiceassist/types";
+import { MessageBubble } from "./MessageBubble";
+import { StreamingIndicator } from "./StreamingIndicator";
 
 export interface MessageListProps {
   messages: Message[];
@@ -19,7 +20,11 @@ export interface MessageListProps {
   streamingMessageId?: string;
 }
 
-export function MessageList({ messages, isTyping, streamingMessageId }: MessageListProps) {
+export function MessageList({
+  messages,
+  isTyping,
+  streamingMessageId,
+}: MessageListProps) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
   // Auto-scroll to bottom when new messages arrive
@@ -27,8 +32,8 @@ export function MessageList({ messages, isTyping, streamingMessageId }: MessageL
     if (messages.length > 0) {
       virtuosoRef.current?.scrollToIndex({
         index: messages.length - 1,
-        behavior: 'smooth',
-        align: 'end',
+        behavior: "smooth",
+        align: "end",
       });
     }
   }, [messages.length]);
@@ -57,7 +62,8 @@ export function MessageList({ messages, isTyping, streamingMessageId }: MessageL
             Start a Conversation
           </h3>
           <p className="text-neutral-600">
-            Ask me anything about medical information, treatment protocols, or healthcare guidance.
+            Ask me anything about medical information, treatment protocols, or
+            healthcare guidance.
           </p>
         </div>
       </div>
@@ -82,20 +88,8 @@ export function MessageList({ messages, isTyping, streamingMessageId }: MessageL
         components={{
           Footer: () =>
             isTyping && !streamingMessageId ? (
-              <div className="flex justify-start mb-4" role="status" aria-live="polite" aria-label="Assistant is typing">
-                <div className="bg-white border border-neutral-200 shadow-sm rounded-lg px-4 py-3">
-                  <div className="flex items-center space-x-1">
-                    <div className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" />
-                    <div
-                      className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce"
-                      style={{ animationDelay: '0.1s' }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce"
-                      style={{ animationDelay: '0.2s' }}
-                    />
-                  </div>
-                </div>
+              <div className="flex justify-start mb-4">
+                <StreamingIndicator message="AI is thinking..." />
               </div>
             ) : null,
         }}

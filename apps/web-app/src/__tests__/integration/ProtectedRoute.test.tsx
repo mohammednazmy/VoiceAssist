@@ -3,12 +3,12 @@
  * Tests route protection and authentication guards
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { ProtectedRoute } from '../../components/auth/ProtectedRoute';
-import { useAuthStore } from '../../stores/authStore';
-import type { User, AuthTokens } from '@voiceassist/types';
+import { describe, it, expect, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { ProtectedRoute } from "../../components/auth/ProtectedRoute";
+import { useAuthStore } from "../../stores/authStore";
+import type { User, AuthTokens } from "@voiceassist/types";
 
 // Test components
 function ProtectedContent() {
@@ -19,7 +19,7 @@ function LoginPage() {
   return <div>Login Page</div>;
 }
 
-describe('ProtectedRoute Integration', () => {
+describe("ProtectedRoute Integration", () => {
   beforeEach(() => {
     useAuthStore.setState({
       user: null,
@@ -30,9 +30,9 @@ describe('ProtectedRoute Integration', () => {
     });
   });
 
-  it('should redirect to login when not authenticated', () => {
+  it("should redirect to login when not authenticated", () => {
     render(
-      <MemoryRouter initialEntries={['/protected']}>
+      <MemoryRouter initialEntries={["/protected"]}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route
@@ -44,26 +44,26 @@ describe('ProtectedRoute Integration', () => {
             }
           />
         </Routes>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
-    expect(screen.getByText('Login Page')).toBeInTheDocument();
-    expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
+    expect(screen.getByText("Login Page")).toBeInTheDocument();
+    expect(screen.queryByText("Protected Content")).not.toBeInTheDocument();
   });
 
-  it('should show protected content when authenticated', () => {
+  it("should show protected content when authenticated", () => {
     const mockUser: User = {
-      id: '1',
-      email: 'test@example.com',
-      name: 'Test User',
-      role: 'user',
+      id: "1",
+      email: "test@example.com",
+      name: "Test User",
+      role: "user",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
     const mockTokens: AuthTokens = {
-      accessToken: 'access-token',
-      refreshToken: 'refresh-token',
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
       expiresIn: 3600,
     };
 
@@ -76,7 +76,7 @@ describe('ProtectedRoute Integration', () => {
     });
 
     render(
-      <MemoryRouter initialEntries={['/protected']}>
+      <MemoryRouter initialEntries={["/protected"]}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route
@@ -88,14 +88,14 @@ describe('ProtectedRoute Integration', () => {
             }
           />
         </Routes>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
-    expect(screen.getByText('Protected Content')).toBeInTheDocument();
-    expect(screen.queryByText('Login Page')).not.toBeInTheDocument();
+    expect(screen.getByText("Protected Content")).toBeInTheDocument();
+    expect(screen.queryByText("Login Page")).not.toBeInTheDocument();
   });
 
-  it('should show loading state while checking authentication', () => {
+  it("should show loading state while checking authentication", () => {
     useAuthStore.setState({
       user: null,
       tokens: null,
@@ -105,7 +105,7 @@ describe('ProtectedRoute Integration', () => {
     });
 
     const { container } = render(
-      <MemoryRouter initialEntries={['/protected']}>
+      <MemoryRouter initialEntries={["/protected"]}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route
@@ -117,26 +117,26 @@ describe('ProtectedRoute Integration', () => {
             }
           />
         </Routes>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     // Check for loading spinner (no text in loading state)
-    expect(container.querySelector('.animate-spin')).toBeInTheDocument();
-    expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
-    expect(screen.queryByText('Login Page')).not.toBeInTheDocument();
+    expect(container.querySelector(".animate-spin")).toBeInTheDocument();
+    expect(screen.queryByText("Protected Content")).not.toBeInTheDocument();
+    expect(screen.queryByText("Login Page")).not.toBeInTheDocument();
   });
 
-  it('should preserve original route in location state', () => {
-    let locationState: any = null;
+  it("should preserve original route in location state", () => {
+    let _locationState: any = null;
 
     function LoginPageWithState() {
       const location = window.location;
-      locationState = location;
+      _locationState = location;
       return <div>Login Page</div>;
     }
 
     render(
-      <MemoryRouter initialEntries={['/protected']}>
+      <MemoryRouter initialEntries={["/protected"]}>
         <Routes>
           <Route path="/login" element={<LoginPageWithState />} />
           <Route
@@ -148,27 +148,27 @@ describe('ProtectedRoute Integration', () => {
             }
           />
         </Routes>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
-    expect(screen.getByText('Login Page')).toBeInTheDocument();
+    expect(screen.getByText("Login Page")).toBeInTheDocument();
     // Note: In a real test we'd check the location state,
     // but MemoryRouter doesn't preserve it the same way
   });
 
-  it('should handle multiple protected routes', () => {
+  it("should handle multiple protected routes", () => {
     const mockUser: User = {
-      id: '1',
-      email: 'test@example.com',
-      name: 'Test User',
-      role: 'user',
+      id: "1",
+      email: "test@example.com",
+      name: "Test User",
+      role: "user",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
     const mockTokens: AuthTokens = {
-      accessToken: 'access-token',
-      refreshToken: 'refresh-token',
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
       expiresIn: 3600,
     };
 
@@ -181,7 +181,7 @@ describe('ProtectedRoute Integration', () => {
     });
 
     render(
-      <MemoryRouter initialEntries={['/dashboard']}>
+      <MemoryRouter initialEntries={["/dashboard"]}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route
@@ -209,9 +209,9 @@ describe('ProtectedRoute Integration', () => {
             }
           />
         </Routes>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
   });
 });

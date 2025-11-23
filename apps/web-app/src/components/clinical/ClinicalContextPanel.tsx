@@ -3,8 +3,9 @@
  * Capture patient demographics, problems, medications, labs, and vitals
  */
 
-import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Label, Input, Button } from '@voiceassist/ui';
+import { useState } from "react";
+// Placeholder for future UI component imports
+// import { Card, CardHeader, CardTitle, CardContent, Label, Input, Button } from '@voiceassist/ui';
 
 export interface ClinicalContext {
   demographics?: {
@@ -37,8 +38,12 @@ interface ClinicalContextPanelProps {
   onClear?: () => void;
 }
 
-export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalContextPanelProps) {
-  const [activeSection, setActiveSection] = useState<string>('demographics');
+export function ClinicalContextPanel({
+  context,
+  onChange,
+  onClear,
+}: ClinicalContextPanelProps) {
+  const [activeSection, setActiveSection] = useState<string>("demographics");
 
   const updateDemographics = (field: string, value: any) => {
     onChange({
@@ -60,7 +65,10 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
     });
   };
 
-  const addItem = (field: 'problems' | 'medications' | 'allergies', value: string) => {
+  const addItem = (
+    field: "problems" | "medications" | "allergies",
+    value: string,
+  ) => {
     if (!value.trim()) return;
 
     onChange({
@@ -69,7 +77,10 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
     });
   };
 
-  const removeItem = (field: 'problems' | 'medications' | 'allergies', index: number) => {
+  const removeItem = (
+    field: "problems" | "medications" | "allergies",
+    index: number,
+  ) => {
     onChange({
       ...context,
       [field]: (context[field] || []).filter((_, i) => i !== index),
@@ -79,7 +90,7 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
   const hasContext = Object.keys(context).some((key) => {
     const value = context[key as keyof ClinicalContext];
     if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === 'object') return Object.keys(value).length > 0;
+    if (typeof value === "object") return Object.keys(value).length > 0;
     return Boolean(value);
   });
 
@@ -87,7 +98,9 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-neutral-900">Clinical Context</h2>
+        <h2 className="text-lg font-semibold text-neutral-900">
+          Clinical Context
+        </h2>
         {hasContext && (
           <Button variant="ghost" size="sm" onClick={onClear}>
             Clear All
@@ -98,18 +111,18 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
       {/* Tabs */}
       <div className="flex space-x-1 border-b border-neutral-200">
         {[
-          { id: 'demographics', label: 'Demographics' },
-          { id: 'problems', label: 'Problems' },
-          { id: 'medications', label: 'Medications' },
-          { id: 'vitals', label: 'Vitals' },
+          { id: "demographics", label: "Demographics" },
+          { id: "problems", label: "Problems" },
+          { id: "medications", label: "Medications" },
+          { id: "vitals", label: "Vitals" },
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveSection(tab.id)}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeSection === tab.id
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300'
+                ? "border-primary-500 text-primary-600"
+                : "border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300"
             }`}
           >
             {tab.label}
@@ -120,7 +133,7 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
       {/* Content */}
       <div className="py-4">
         {/* Demographics */}
-        {activeSection === 'demographics' && (
+        {activeSection === "demographics" && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -129,16 +142,21 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
                   id="age"
                   type="number"
                   placeholder="e.g., 45"
-                  value={context.demographics?.age || ''}
-                  onChange={(e) => updateDemographics('age', parseInt(e.target.value) || undefined)}
+                  value={context.demographics?.age || ""}
+                  onChange={(e) =>
+                    updateDemographics(
+                      "age",
+                      parseInt(e.target.value) || undefined,
+                    )
+                  }
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="gender">Gender</Label>
                 <select
                   id="gender"
-                  value={context.demographics?.gender || ''}
-                  onChange={(e) => updateDemographics('gender', e.target.value)}
+                  value={context.demographics?.gender || ""}
+                  onChange={(e) => updateDemographics("gender", e.target.value)}
                   className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">Select...</option>
@@ -157,8 +175,13 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
                   type="number"
                   step="0.1"
                   placeholder="e.g., 70.5"
-                  value={context.demographics?.weight || ''}
-                  onChange={(e) => updateDemographics('weight', parseFloat(e.target.value) || undefined)}
+                  value={context.demographics?.weight || ""}
+                  onChange={(e) =>
+                    updateDemographics(
+                      "weight",
+                      parseFloat(e.target.value) || undefined,
+                    )
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -168,8 +191,13 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
                   type="number"
                   step="0.1"
                   placeholder="e.g., 175"
-                  value={context.demographics?.height || ''}
-                  onChange={(e) => updateDemographics('height', parseFloat(e.target.value) || undefined)}
+                  value={context.demographics?.height || ""}
+                  onChange={(e) =>
+                    updateDemographics(
+                      "height",
+                      parseFloat(e.target.value) || undefined,
+                    )
+                  }
                 />
               </div>
             </div>
@@ -180,8 +208,10 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
                 id="chiefComplaint"
                 rows={3}
                 placeholder="Patient's primary concern..."
-                value={context.chiefComplaint || ''}
-                onChange={(e) => onChange({ ...context, chiefComplaint: e.target.value })}
+                value={context.chiefComplaint || ""}
+                onChange={(e) =>
+                  onChange({ ...context, chiefComplaint: e.target.value })
+                }
                 className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
@@ -189,29 +219,29 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
         )}
 
         {/* Problems */}
-        {activeSection === 'problems' && (
+        {activeSection === "problems" && (
           <ItemList
             title="Active Problems"
             items={context.problems || []}
             placeholder="e.g., Type 2 Diabetes, Hypertension"
-            onAdd={(value) => addItem('problems', value)}
-            onRemove={(index) => removeItem('problems', index)}
+            onAdd={(value) => addItem("problems", value)}
+            onRemove={(index) => removeItem("problems", index)}
           />
         )}
 
         {/* Medications */}
-        {activeSection === 'medications' && (
+        {activeSection === "medications" && (
           <ItemList
             title="Current Medications"
             items={context.medications || []}
             placeholder="e.g., Metformin 500mg BID, Lisinopril 10mg daily"
-            onAdd={(value) => addItem('medications', value)}
-            onRemove={(index) => removeItem('medications', index)}
+            onAdd={(value) => addItem("medications", value)}
+            onRemove={(index) => removeItem("medications", index)}
           />
         )}
 
         {/* Vitals */}
-        {activeSection === 'vitals' && (
+        {activeSection === "vitals" && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -221,8 +251,13 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
                   type="number"
                   step="0.1"
                   placeholder="e.g., 37.2"
-                  value={context.vitals?.temperature || ''}
-                  onChange={(e) => updateVitals('temperature', parseFloat(e.target.value) || undefined)}
+                  value={context.vitals?.temperature || ""}
+                  onChange={(e) =>
+                    updateVitals(
+                      "temperature",
+                      parseFloat(e.target.value) || undefined,
+                    )
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -231,8 +266,13 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
                   id="heartRate"
                   type="number"
                   placeholder="e.g., 72"
-                  value={context.vitals?.heartRate || ''}
-                  onChange={(e) => updateVitals('heartRate', parseInt(e.target.value) || undefined)}
+                  value={context.vitals?.heartRate || ""}
+                  onChange={(e) =>
+                    updateVitals(
+                      "heartRate",
+                      parseInt(e.target.value) || undefined,
+                    )
+                  }
                 />
               </div>
             </div>
@@ -244,18 +284,27 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
                   id="bloodPressure"
                   type="text"
                   placeholder="e.g., 120/80"
-                  value={context.vitals?.bloodPressure || ''}
-                  onChange={(e) => updateVitals('bloodPressure', e.target.value)}
+                  value={context.vitals?.bloodPressure || ""}
+                  onChange={(e) =>
+                    updateVitals("bloodPressure", e.target.value)
+                  }
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="respiratoryRate">Respiratory Rate (breaths/min)</Label>
+                <Label htmlFor="respiratoryRate">
+                  Respiratory Rate (breaths/min)
+                </Label>
                 <Input
                   id="respiratoryRate"
                   type="number"
                   placeholder="e.g., 16"
-                  value={context.vitals?.respiratoryRate || ''}
-                  onChange={(e) => updateVitals('respiratoryRate', parseInt(e.target.value) || undefined)}
+                  value={context.vitals?.respiratoryRate || ""}
+                  onChange={(e) =>
+                    updateVitals(
+                      "respiratoryRate",
+                      parseInt(e.target.value) || undefined,
+                    )
+                  }
                 />
               </div>
             </div>
@@ -266,8 +315,13 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
                 id="oxygenSaturation"
                 type="number"
                 placeholder="e.g., 98"
-                value={context.vitals?.oxygenSaturation || ''}
-                onChange={(e) => updateVitals('oxygenSaturation', parseInt(e.target.value) || undefined)}
+                value={context.vitals?.oxygenSaturation || ""}
+                onChange={(e) =>
+                  updateVitals(
+                    "oxygenSaturation",
+                    parseInt(e.target.value) || undefined,
+                  )
+                }
               />
             </div>
           </div>
@@ -279,7 +333,6 @@ export function ClinicalContextPanel({ context, onChange, onClear }: ClinicalCon
 
 // Helper component for lists
 function ItemList({
-  title,
   items,
   placeholder,
   onAdd,
@@ -291,11 +344,11 @@ function ItemList({
   onAdd: (value: string) => void;
   onRemove: (index: number) => void;
 }) {
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
 
   const handleAdd = () => {
     onAdd(inputValue);
-    setInputValue('');
+    setInputValue("");
   };
 
   return (
@@ -306,7 +359,7 @@ function ItemList({
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyPress={(e) => {
-            if (e.key === 'Enter') {
+            if (e.key === "Enter") {
               e.preventDefault();
               handleAdd();
             }
@@ -321,7 +374,10 @@ function ItemList({
       {items.length > 0 && (
         <ul className="space-y-2">
           {items.map((item, index) => (
-            <li key={index} className="flex items-center justify-between p-3 bg-neutral-50 rounded-md border border-neutral-200">
+            <li
+              key={index}
+              className="flex items-center justify-between p-3 bg-neutral-50 rounded-md border border-neutral-200"
+            >
               <span className="text-sm text-neutral-900">{item}</span>
               <button
                 type="button"
@@ -337,7 +393,11 @@ function ItemList({
                   stroke="currentColor"
                   className="w-5 h-5"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </li>

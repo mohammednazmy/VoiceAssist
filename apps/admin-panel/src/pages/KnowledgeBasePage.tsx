@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useKnowledgeDocuments } from '../hooks/useKnowledgeDocuments';
+import { useState } from "react";
+import { useKnowledgeDocuments } from "../hooks/useKnowledgeDocuments";
 
 export function KnowledgeBasePage() {
   const { documents, loading, error, uploadDocument } = useKnowledgeDocuments();
@@ -12,12 +12,12 @@ export function KnowledgeBasePage() {
     setUploading(true);
     try {
       await uploadDocument(file);
-      alert('Document uploaded successfully!');
+      alert("Document uploaded successfully!");
     } catch (err: any) {
-      alert(err.message || 'Upload failed');
+      alert(err.message || "Upload failed");
     } finally {
       setUploading(false);
-      e.target.value = ''; // Reset input
+      e.target.value = ""; // Reset input
     }
   };
 
@@ -31,7 +31,7 @@ export function KnowledgeBasePage() {
           </p>
         </div>
         <label className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors cursor-pointer">
-          {uploading ? 'Uploading...' : '+ Upload Document'}
+          {uploading ? "Uploading..." : "+ Upload Document"}
           <input
             type="file"
             accept=".pdf,.txt"
@@ -58,19 +58,19 @@ export function KnowledgeBasePage() {
         />
         <StatCard
           label="Indexed"
-          value={documents.filter(d => d.status === 'indexed').length}
+          value={documents.filter((d) => d.status === "indexed").length}
           icon="✓"
           color="green"
         />
         <StatCard
           label="Processing"
-          value={documents.filter(d => d.status === 'processing').length}
+          value={documents.filter((d) => d.status === "processing").length}
           icon="⏳"
           color="yellow"
         />
         <StatCard
           label="Failed"
-          value={documents.filter(d => d.status === 'failed').length}
+          value={documents.filter((d) => d.status === "failed").length}
           icon="✗"
           color="red"
         />
@@ -164,17 +164,22 @@ export function KnowledgeBasePage() {
   );
 }
 
-function StatCard({ label, value, icon, color }: {
+function StatCard({
+  label,
+  value,
+  icon,
+  color,
+}: {
   label: string;
   value: number;
   icon: string;
-  color: 'blue' | 'green' | 'yellow' | 'red';
+  color: "blue" | "green" | "yellow" | "red";
 }) {
   const colors = {
-    blue: 'from-blue-900/50 to-blue-950/30 border-blue-800',
-    green: 'from-green-900/50 to-green-950/30 border-green-800',
-    yellow: 'from-yellow-900/50 to-yellow-950/30 border-yellow-800',
-    red: 'from-red-900/50 to-red-950/30 border-red-800',
+    blue: "from-blue-900/50 to-blue-950/30 border-blue-800",
+    green: "from-green-900/50 to-green-950/30 border-green-800",
+    yellow: "from-yellow-900/50 to-yellow-950/30 border-yellow-800",
+    red: "from-red-900/50 to-red-950/30 border-red-800",
   };
 
   return (
@@ -189,15 +194,18 @@ function StatCard({ label, value, icon, color }: {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const styles = {
-    indexed: 'bg-green-900/50 text-green-400 border-green-800',
-    processing: 'bg-yellow-900/50 text-yellow-400 border-yellow-800',
-    failed: 'bg-red-900/50 text-red-400 border-red-800',
-    uploaded: 'bg-blue-900/50 text-blue-400 border-blue-800',
-  }[status] || 'bg-slate-800 text-slate-400 border-slate-700';
+  const styles =
+    {
+      indexed: "bg-green-900/50 text-green-400 border-green-800",
+      processing: "bg-yellow-900/50 text-yellow-400 border-yellow-800",
+      failed: "bg-red-900/50 text-red-400 border-red-800",
+      uploaded: "bg-blue-900/50 text-blue-400 border-blue-800",
+    }[status] || "bg-slate-800 text-slate-400 border-slate-700";
 
   return (
-    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded border ${styles}`}>
+    <span
+      className={`inline-flex px-2 py-1 text-xs font-medium rounded border ${styles}`}
+    >
       {status}
     </span>
   );

@@ -1,5 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { fetchAPI } from '../lib/api';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+// import { fetchAPI } from '../lib/api'; // TODO: Use when implementing real auth
 
 interface User {
   id: string;
@@ -33,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem("auth_token");
       if (!token) {
         setLoading(false);
         return;
@@ -43,14 +49,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // The backend will reject invalid tokens on API calls anyway
       // Note: /api/auth/me endpoint has serialization issues, so we skip it for now
       setUser({
-        id: 'temp',
-        email: 'admin',
+        id: "temp",
+        email: "admin",
         is_admin: true,
         is_active: true,
       });
     } catch (err) {
-      console.error('Auth check failed:', err);
-      localStorage.removeItem('auth_token');
+      console.error("Auth check failed:", err);
+      localStorage.removeItem("auth_token");
     } finally {
       setLoading(false);
     }
@@ -60,10 +66,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setError(null);
       // Auth endpoints return flat responses, not wrapped in APIEnvelope
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       });
@@ -72,28 +78,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(`Login failed: ${res.statusText}`);
       }
 
-      const response = await res.json() as { access_token: string; refresh_token: string; token_type: string };
+      const response = (await res.json()) as {
+        access_token: string;
+        refresh_token: string;
+        token_type: string;
+      };
 
       // Store token
-      localStorage.setItem('auth_token', response.access_token);
+      localStorage.setItem("auth_token", response.access_token);
 
       // Set a temporary user object (admin panel requires admin login at backend level)
       // The backend validates admin status during login, so if we got tokens, user is admin
       setUser({
-        id: 'temp',
+        id: "temp",
         email: email,
         is_admin: true,
         is_active: true,
       });
     } catch (err: any) {
-      setError(err.message || 'Login failed');
-      localStorage.removeItem('auth_token');
+      setError(err.message || "Login failed");
+      localStorage.removeItem("auth_token");
       throw err;
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem("auth_token");
     setUser(null);
   };
 
@@ -117,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
