@@ -1,7 +1,8 @@
 
 import type { APIEnvelope } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Use same origin (proxied via Apache in production)
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export class APIError extends Error {
   code: string;
