@@ -307,6 +307,7 @@ export function ChatPage() {
           onSend={sendMessage}
           disabled={connectionStatus !== 'connected'}
           enableAttachments={false} // Feature flagged
+          enableVoiceInput={true} // Phase 1: Basic voice mode
         />
       </div>
     </ChatErrorBoundary>

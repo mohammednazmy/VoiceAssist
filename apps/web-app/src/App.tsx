@@ -9,6 +9,8 @@ import { RegisterPage } from './pages/RegisterPage';
 import { HomePage } from './pages/HomePage';
 import { ProfilePage } from './pages/ProfilePage';
 import { ChatPage } from './pages/ChatPage';
+import { DocumentsPage } from './pages/DocumentsPage';
+import { ClinicalContextPage } from './pages/ClinicalContextPage';
 import { OAuthCallbackPage } from './pages/OAuthCallbackPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { MainLayout } from './components/layout/MainLayout';
@@ -34,15 +36,8 @@ export function App() {
           <Route index element={<HomePage />} />
           <Route path="chat" element={<ChatPage />} />
           <Route path="chat/:conversationId" element={<ChatPage />} />
-          <Route
-            path="documents"
-            element={
-              <div className="text-center py-12">
-                <h2 className="text-2xl font-bold text-neutral-900">Documents</h2>
-                <p className="mt-2 text-neutral-600">Coming soon...</p>
-              </div>
-            }
-          />
+          <Route path="documents" element={<DocumentsPage />} />
+          <Route path="clinical-context" element={<ClinicalContextPage />} />
           <Route path="settings" element={<ProfilePage />} />
         </Route>
 

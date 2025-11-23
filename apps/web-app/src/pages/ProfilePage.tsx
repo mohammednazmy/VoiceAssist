@@ -52,7 +52,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
 export function ProfilePage() {
-  const { user } = useAuth();
+  const { user, updateProfile, changePassword } = useAuth();
 
   const {
     register: registerProfile,
@@ -77,24 +77,22 @@ export function ProfilePage() {
 
   const onProfileSubmit = async (data: ProfileFormData) => {
     try {
-      // TODO: Implement profile update API call
-      console.log('Update profile:', data);
+      await updateProfile(data);
       alert('Profile updated successfully!');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Profile update failed:', err);
-      alert('Failed to update profile');
+      alert(err?.response?.data?.error?.message || 'Failed to update profile');
     }
   };
 
   const onPasswordSubmit = async (data: PasswordFormData) => {
     try {
-      // TODO: Implement password change API call
-      console.log('Change password');
+      await changePassword(data.currentPassword, data.newPassword);
       alert('Password changed successfully!');
       resetPasswordForm();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Password change failed:', err);
-      alert('Failed to change password');
+      alert(err?.response?.data?.error?.message || 'Failed to change password');
     }
   };
 

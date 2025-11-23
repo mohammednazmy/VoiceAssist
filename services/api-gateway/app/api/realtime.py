@@ -80,8 +80,8 @@ async def websocket_endpoint(
     """
     WebSocket endpoint for realtime chat communication.
 
-    Message Protocol:
-    ----------------
+    Message Protocol (Updated to match frontend expectations):
+    ----------------------------------------------------------
 
     Client -> Server:
     {
@@ -91,34 +91,50 @@ async def websocket_endpoint(
         "clinical_context": {...}  // optional
     }
 
+    {
+        "type": "ping"
+    }
+
     Server -> Client:
     {
-        "type": "message_start",
-        "message_id": "uuid",
-        "timestamp": "2025-11-21T03:00:00.000Z"
+        "type": "connected",
+        "client_id": "uuid",
+        "timestamp": "2025-11-22T00:00:00.000Z",
+        "protocol_version": "1.0",
+        "capabilities": ["text_streaming"]
     }
 
     {
-        "type": "message_chunk",
-        "message_id": "uuid",
-        "content": "Partial response text...",
-        "chunk_index": 0
+        "type": "chunk",
+        "messageId": "uuid",
+        "content": "Partial response text..."
     }
 
     {
-        "type": "message_complete",
-        "message_id": "uuid",
-        "content": "Complete response text",
-        "citations": [...],
-        "timestamp": "2025-11-21T03:00:05.000Z"
+        "type": "message.done",
+        "messageId": "uuid",
+        "message": {
+            "id": "uuid",
+            "role": "assistant",
+            "content": "Complete response text",
+            "citations": [...],
+            "timestamp": 1700000000000  // Unix timestamp in milliseconds
+        },
+        "timestamp": "2025-11-22T00:00:05.000Z"
     }
 
     {
         "type": "error",
+        "messageId": "uuid",
         "error": {
-            "code": "ERROR_CODE",
+            "code": "BACKEND_ERROR",
             "message": "Error description"
         }
+    }
+
+    {
+        "type": "pong",
+        "timestamp": "2025-11-22T00:00:00.000Z"
     }
 
     Future phases will add:
@@ -209,12 +225,8 @@ async def handle_chat_message(
         "has_context": bool(clinical_context_id)
     })
 
-    # Send message start event
-    await websocket.send_json({
-        "type": "message_start",
-        "message_id": message_id,
-        "timestamp": datetime.utcnow().isoformat() + "Z"
-    })
+    # Note: Frontend expects specific event types and camelCase field names
+    # Changed to match frontend protocol in useChatSession.ts
 
     try:
         # Create query request for orchestrator
@@ -238,11 +250,12 @@ async def handle_chat_message(
 
         for i in range(0, len(response_text), chunk_size):
             chunk = response_text[i:i + chunk_size]
+            # Changed from 'message_chunk' to 'chunk' to match frontend
+            # Changed 'message_id' to 'messageId' for camelCase consistency
             await websocket.send_json({
-                "type": "message_chunk",
-                "message_id": message_id,
+                "type": "chunk",
+                "messageId": message_id,
                 "content": chunk,
-                "chunk_index": i // chunk_size
             })
             # Small delay to simulate streaming (will be natural with real LLM streaming)
             await asyncio.sleep(0.05)
@@ -251,19 +264,27 @@ async def handle_chat_message(
         citations = [
             {
                 "id": cite.id,
-                "source_type": cite.source_type,
-                "title": cite.title,
-                "url": cite.url
+                "source": cite.source_type,  # Changed key to match frontend
+                "reference": cite.title,  # Use title as reference
+                "snippet": cite.url,  # Placeholder for snippet
             }
             for cite in query_response.citations
         ]
 
-        # Send message complete event
-        await websocket.send_json({
-            "type": "message_complete",
-            "message_id": message_id,
+        # Build final message object for frontend
+        final_message = {
+            "id": message_id,
+            "role": "assistant",
             "content": response_text,
             "citations": citations,
+            "timestamp": int(datetime.utcnow().timestamp() * 1000),  # Unix timestamp in ms
+        }
+
+        # Changed from 'message_complete' to 'message.done' to match frontend
+        await websocket.send_json({
+            "type": "message.done",
+            "messageId": message_id,
+            "message": final_message,
             "timestamp": datetime.utcnow().isoformat() + "Z"
         })
 
@@ -290,12 +311,13 @@ async def handle_chat_message(
         ).inc()
 
         logger.error(f"Error processing chat message: {str(e)}", exc_info=True)
+        # Changed message_id to messageId for camelCase consistency
         await websocket.send_json({
             "type": "error",
-            "message_id": message_id,
+            "messageId": message_id,
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "error": {
-                "code": "QUERY_PROCESSING_ERROR",
+                "code": "BACKEND_ERROR",  # Changed to match frontend error codes
                 "message": f"Failed to process query: {str(e)}"
             }
         })

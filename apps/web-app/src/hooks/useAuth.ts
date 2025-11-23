@@ -147,6 +147,41 @@ export function useAuth() {
     [navigate, setUser, setTokens, setLoading, setError]
   );
 
+  const updateProfile = useCallback(
+    async (updates: { name?: string; email?: string }) => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const updatedUser = await apiClient.updateProfile(updates);
+        setUser(updatedUser);
+        setLoading(false);
+      } catch (err) {
+        setLoading(false);
+        setError(err instanceof Error ? err.message : 'Failed to update profile');
+        throw err;
+      }
+    },
+    [setUser, setLoading, setError]
+  );
+
+  const changePassword = useCallback(
+    async (currentPassword: string, newPassword: string) => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        await apiClient.changePassword(currentPassword, newPassword);
+        setLoading(false);
+      } catch (err) {
+        setLoading(false);
+        setError(err instanceof Error ? err.message : 'Failed to change password');
+        throw err;
+      }
+    },
+    [setLoading, setError]
+  );
+
   return {
     user,
     tokens,
@@ -159,6 +194,8 @@ export function useAuth() {
     refreshTokens,
     loginWithOAuth,
     handleOAuthCallback,
+    updateProfile,
+    changePassword,
     apiClient,
   };
 }

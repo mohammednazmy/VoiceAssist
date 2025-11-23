@@ -1,15 +1,17 @@
 /**
  * MessageInput Component
- * Markdown-aware message input with auto-expanding textarea
+ * Markdown-aware message input with auto-expanding textarea and voice input
  */
 
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import { VoiceInput } from '../voice/VoiceInput';
 
 export interface MessageInputProps {
   onSend: (content: string, attachments?: string[]) => void;
   disabled?: boolean;
   placeholder?: string;
   enableAttachments?: boolean;
+  enableVoiceInput?: boolean;
 }
 
 export function MessageInput({
@@ -17,9 +19,11 @@ export function MessageInput({
   disabled = false,
   placeholder = 'Type a message... (Shift+Enter for new line)',
   enableAttachments = false,
+  enableVoiceInput = true,
 }: MessageInputProps) {
   const [content, setContent] = useState('');
   const [attachments, setAttachments] = useState<string[]>([]);
+  const [showVoiceInput, setShowVoiceInput] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-expand textarea based on content
@@ -67,8 +71,40 @@ export function MessageInput({
     setAttachments((prev) => prev.filter((a) => a !== id));
   };
 
+  const handleVoiceTranscript = (text: string) => {
+    setContent((prev) => (prev ? `${prev} ${text}` : text));
+    setShowVoiceInput(false);
+  };
+
   return (
     <div className="border-t border-neutral-200 bg-white p-4">
+      {/* Voice Input Modal */}
+      {showVoiceInput && enableVoiceInput && (
+        <div className="mb-4 p-4 bg-white rounded-lg border-2 border-primary-500 shadow-lg">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-neutral-900">Voice Input</h3>
+            <button
+              type="button"
+              onClick={() => setShowVoiceInput(false)}
+              className="text-neutral-400 hover:text-neutral-600 focus:outline-none"
+              aria-label="Close voice input"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <VoiceInput onTranscript={handleVoiceTranscript} disabled={disabled} />
+        </div>
+      )}
+
       {/* Attachments Preview */}
       {attachments.length > 0 && (
         <div className="mb-3 flex flex-wrap gap-2">
@@ -116,6 +152,38 @@ export function MessageInput({
 
       {/* Input Row */}
       <div className="flex items-end space-x-2">
+        {/* Voice Input Button */}
+        {enableVoiceInput && (
+          <button
+            type="button"
+            onClick={() => setShowVoiceInput(!showVoiceInput)}
+            disabled={disabled}
+            className={`flex items-center justify-center w-10 h-10 rounded-md transition-colors ${
+              showVoiceInput
+                ? 'bg-primary-500 text-white'
+                : disabled
+                ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
+                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+            }`}
+            aria-label="Voice input"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"
+              />
+            </svg>
+          </button>
+        )}
+
         {/* Attachment Button */}
         {enableAttachments && (
           <label
