@@ -15,7 +15,7 @@ export interface MessageActionMenuProps {
 }
 
 export function MessageActionMenu({
-  messageId,
+  messageId: _messageId,
   role,
   onEdit,
   onRegenerate,

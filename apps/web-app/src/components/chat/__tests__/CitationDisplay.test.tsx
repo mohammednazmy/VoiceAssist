@@ -111,9 +111,7 @@ describe("CitationDisplay", () => {
 
     it("should toggle chevron icon on expand/collapse", async () => {
       const user = userEvent.setup();
-      const { container } = render(
-        <CitationDisplay citations={[kbCitation]} />,
-      );
+      render(<CitationDisplay citations={[kbCitation]} />);
 
       // Get the citation expand/collapse button (has aria-expanded attribute)
       const button = screen.getByRole("button", { expanded: false });

@@ -18,12 +18,18 @@ export interface MessageListProps {
   messages: Message[];
   isTyping?: boolean;
   streamingMessageId?: string;
+  onEditSave?: (messageId: string, newContent: string) => Promise<void>;
+  onRegenerate?: (messageId: string) => Promise<void>;
+  onDelete?: (messageId: string) => Promise<void>;
 }
 
 export function MessageList({
   messages,
   isTyping,
   streamingMessageId,
+  onEditSave,
+  onRegenerate,
+  onDelete,
 }: MessageListProps) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
@@ -83,6 +89,9 @@ export function MessageList({
             key={message.id}
             message={message}
             isStreaming={isTyping && message.id === streamingMessageId}
+            onEditSave={onEditSave}
+            onRegenerate={onRegenerate}
+            onDelete={onDelete}
           />
         )}
         components={{
