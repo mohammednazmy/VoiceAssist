@@ -5,9 +5,10 @@
 **Architecture:** HIPAA-compliant microservices with Docker Compose & Kubernetes
 **Version:** 2.0
 
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](tests/)
+[![Backend CI](https://github.com/mohammednazmy/VoiceAssist/actions/workflows/ci.yml/badge.svg)](https://github.com/mohammednazmy/VoiceAssist/actions/workflows/ci.yml)
+[![Frontend CI](https://github.com/mohammednazmy/VoiceAssist/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/mohammednazmy/VoiceAssist/actions/workflows/frontend-ci.yml)
+[![Security Scan](https://github.com/mohammednazmy/VoiceAssist/actions/workflows/security-scan.yml/badge.svg)](https://github.com/mohammednazmy/VoiceAssist/actions/workflows/security-scan.yml)
 [![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](tests/)
-[![Documentation](https://img.shields.io/badge/docs-comprehensive-blue)](docs/)
 [![HIPAA](https://img.shields.io/badge/HIPAA-compliant-blue)](docs/HIPAA_COMPLIANCE_MATRIX.md)
 [![Production](https://img.shields.io/badge/status-production--ready-success)](docs/DEPLOYMENT_GUIDE.md)
 
@@ -20,6 +21,7 @@ VoiceAssist is an enterprise-grade, HIPAA-compliant medical AI assistant platfor
 ### Project Status
 
 **Backend V2 (Production Ready):**
+
 - ✅ All 15 development phases complete (Phases 0-15)
 - ✅ 35,000+ lines of production-quality code
 - ✅ 250+ automated tests with 95% coverage
@@ -28,6 +30,7 @@ VoiceAssist is an enterprise-grade, HIPAA-compliant medical AI assistant platfor
 - ✅ HA/DR, monitoring, and security hardening complete
 
 **Client Applications (In Development):**
+
 - ✅ Monorepo foundation with pnpm workspaces + Turborepo
 - ✅ Shared packages: design-tokens, types, utils, api-client, ui, config
 - ✅ Phase 0: Foundation complete
@@ -62,6 +65,10 @@ See [docs/client-implementation/](docs/client-implementation/) for the complete 
 
 ### Local Development Setup
 
+For detailed setup instructions, see **[docs/DEVELOPMENT_SETUP.md](docs/DEVELOPMENT_SETUP.md)**.
+
+Quick start:
+
 ```bash
 # 1. Clone the repository
 git clone https://github.com/mohammednazmy/VoiceAssist.git
@@ -71,18 +78,19 @@ cd VoiceAssist
 cp .env.example .env
 # Edit .env and add your OPENAI_API_KEY and other credentials
 
-# 3. Start all services
+# 3. Validate environment
+make check-env
+
+# 4. Start all services
 docker compose up -d
 
-# 4. Check service health
+# 5. Check service health
 docker compose ps
 curl http://localhost:8000/health
 
-# 5. View logs
-docker compose logs -f voiceassist-server
-
 # 6. Access services
 # API Gateway: http://localhost:8000
+# API Docs: http://localhost:8000/docs
 # Grafana: http://localhost:3001 (admin/admin)
 # Prometheus: http://localhost:9090
 ```
@@ -239,6 +247,7 @@ VoiceAssist/
 ## ✨ Key Features
 
 ### Core Functionality
+
 - 🎤 **Voice Assistant** - Real-time voice queries with transcription
 - 🏥 **Medical AI** - RAG-based medical knowledge retrieval
 - 📄 **Document Management** - Upload, process, and search medical documents
@@ -247,6 +256,7 @@ VoiceAssist/
 - 💬 **Chat Interface** - Conversational AI with context
 
 ### Enterprise Features
+
 - 🔐 **HIPAA Compliance** - PHI data encryption, audit logs, BAA available
 - 👥 **Multi-tenancy** - Organization and role-based access control
 - 🌐 **SSO Integration** - Nextcloud OIDC authentication
@@ -255,6 +265,7 @@ VoiceAssist/
 - 🌍 **Internationalization** - Multi-language support (planned)
 
 ### Infrastructure
+
 - 🚀 **High Availability** - Database replication, failover (RTO: 30 min)
 - 💾 **Automated Backups** - Daily encrypted backups (RPO: 24 hours)
 - 📈 **Auto-scaling** - Kubernetes HPA support
@@ -267,14 +278,17 @@ VoiceAssist/
 ## 📖 Documentation
 
 ### Getting Started
+
 - [Quick Start Guide](docs/START_HERE.md)
 - [Development Workflow](docs/DEVELOPMENT_PHASES_V2.md)
 - [Current Phase Status](CURRENT_PHASE.md)
 
 ### 🆕 Client Applications (Milestone 1 - IN PROGRESS)
+
 **Status:** 🚀 **Phase 0 Complete** | 📍 **Phase 1 Starting** (Weeks 3-4: Authentication & Layout)
 
 **Monorepo Foundation:**
+
 - ✅ pnpm workspaces + Turborepo build system
 - ✅ 6 shared packages (design-tokens, types, utils, api-client, ui, config)
 - ✅ Medical-themed design system (blue/teal palette)
@@ -283,11 +297,13 @@ VoiceAssist/
 - ✅ Type-safe API client with auto-token injection
 
 **Applications:**
+
 - **Web App** (`apps/web-app`) - Main user-facing medical AI assistant
 - **Admin Panel** (`apps/admin-panel`) - System management dashboard
 - **Documentation Site** (`apps/docs-site`) - User and developer documentation
 
 **Development Commands:**
+
 ```bash
 pnpm build          # Build all packages (Turborepo)
 pnpm dev            # Run development servers
@@ -296,6 +312,7 @@ pnpm test           # Run all tests
 ```
 
 **Documentation:**
+
 - [Unified Roadmap](docs/client-implementation/CLIENT_DEV_ROADMAP.md) - Complete 52-week plan
 - [Master Implementation Plan](docs/client-implementation/MASTER_IMPLEMENTATION_PLAN.md) - 20-week client apps roadmap
 - [Open Questions](docs/client-implementation/OPEN_QUESTIONS.md) - Decisions & clarifications
@@ -303,11 +320,13 @@ pnpm test           # Run all tests
 - [Technical Architecture](docs/client-implementation/TECHNICAL_ARCHITECTURE.md) - Monorepo patterns
 
 ### Architecture & Design
+
 - [System Architecture](docs/ARCHITECTURE_V2.md)
 - [Security & Compliance](docs/SECURITY_COMPLIANCE.md)
 - [HIPAA Compliance Matrix](docs/HIPAA_COMPLIANCE_MATRIX.md)
 
 ### Deployment
+
 - [asimo.io Production Deployment](docs/DEPLOYMENT_SUMMARY_ASIMO.md) - ✅ Live deployment guide
 - [asimo-production README](deployment/asimo-production/README.md) - Production configuration
 - [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) - Docker, Kubernetes, Cloud
@@ -316,11 +335,13 @@ pnpm test           # Run all tests
 - [RTO/RPO Documentation](docs/RTO_RPO_DOCUMENTATION.md)
 
 ### User Guides
+
 - [User Guide](docs/USER_GUIDE.md) - End-user documentation
 - [Admin Guide](docs/ADMIN_GUIDE.md)
 - [API Documentation](docs/API_REFERENCE.md)
 
 ### Testing & Development
+
 - [Test Documentation](tests/README.md)
 - [Contributing Guide](CONTRIBUTING.md)
 - [Development Setup](docs/DEVELOPMENT_SETUP.md)
@@ -333,13 +354,13 @@ pnpm test           # Run all tests
 
 VoiceAssist includes comprehensive testing:
 
-| Category | Tests | Coverage |
-|----------|-------|----------|
-| **E2E Workflows** | 20+ | User registration, auth, documents, RAG, admin |
-| **Voice Interactions** | 10+ | Transcription, sessions, clarifications |
-| **Service Integration** | 15+ | Database, Redis, Qdrant, Nextcloud, workers |
-| **Health Checks** | 5+ | System availability, component health |
-| **Total** | **50+** | **~95% coverage** |
+| Category                | Tests   | Coverage                                       |
+| ----------------------- | ------- | ---------------------------------------------- |
+| **E2E Workflows**       | 20+     | User registration, auth, documents, RAG, admin |
+| **Voice Interactions**  | 10+     | Transcription, sessions, clarifications        |
+| **Service Integration** | 15+     | Database, Redis, Qdrant, Nextcloud, workers    |
+| **Health Checks**       | 5+      | System availability, component health          |
+| **Total**               | **50+** | **~95% coverage**                              |
 
 ### Running Tests
 
@@ -378,10 +399,12 @@ See [Test Documentation](tests/README.md) for details.
 **✅ LIVE IN PRODUCTION**
 
 VoiceAssist is currently deployed at:
+
 - **Main API:** https://assist.asimo.io
 - **Monitoring Dashboard:** https://monitor.asimo.io
 
 **Production Environment:**
+
 - Ubuntu 24.04 LTS server
 - Docker Compose deployment
 - Apache reverse proxy with SSL/TLS (Let's Encrypt)
@@ -393,11 +416,13 @@ VoiceAssist is currently deployed at:
 ### Deployment Options
 
 **1. Docker Compose (Development/Small Production)**
+
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
 **2. Production Deployment to asimo.io**
+
 ```bash
 cd ~/VoiceAssist
 sudo ./deployment/asimo-production/deploy-to-asimo.sh
@@ -406,11 +431,13 @@ sudo ./deployment/asimo-production/deploy-to-asimo.sh
 See [asimo-production README](deployment/asimo-production/README.md) for details.
 
 **3. Kubernetes (Production)**
+
 ```bash
 kubectl apply -f infrastructure/kubernetes/
 ```
 
 **4. Cloud (AWS/GCP/Azure)**
+
 ```bash
 cd infrastructure/terraform
 terraform init
@@ -476,6 +503,7 @@ See [Security & Compliance](docs/SECURITY_COMPLIANCE.md) for details.
 ### Accessing Monitoring
 
 **Production (asimo.io):**
+
 ```bash
 # Grafana (dashboards) - HTTPS with SSL
 open https://monitor.asimo.io
@@ -491,6 +519,7 @@ open http://localhost:16686
 ```
 
 **Local Development:**
+
 ```bash
 # Grafana (dashboards)
 open http://localhost:3001
@@ -570,6 +599,7 @@ gh pr create
 **Next Phase:** Continuous Improvement & Frontend Development
 
 See:
+
 - [Phase Status](PHASE_STATUS.md) - Detailed 15-phase completion status
 - [Continuous Improvement Plan](docs/CONTINUOUS_IMPROVEMENT_PLAN.md) - Post-launch roadmap with 6+ milestones
 
@@ -596,6 +626,7 @@ Personal/Internal Use - See [LICENSE](LICENSE) for details.
 ## 🎉 Acknowledgments
 
 Built with:
+
 - [FastAPI](https://fastapi.tiangolo.com/) - Modern Python web framework
 - [PostgreSQL](https://www.postgresql.org/) - Reliable database
 - [Redis](https://redis.io/) - In-memory data store
@@ -606,8 +637,8 @@ Built with:
 
 ---
 
-**Version:** 2.0  
-**Last Updated:** 2025-11-21  
+**Version:** 2.0
+**Last Updated:** 2025-11-21
 **Status:** Production Ready (Phase 13 Complete)
 
 For the latest updates, see [CHANGELOG.md](CHANGELOG.md)
