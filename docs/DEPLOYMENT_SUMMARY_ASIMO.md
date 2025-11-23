@@ -233,6 +233,19 @@ NEXTCLOUD_ADMIN_PASSWORD=your_nextcloud_admin_password
 NEXTCLOUD_DB_PASSWORD=your_nextcloud_db_password
 ```
 
+**CORS Configuration:**
+
+The `ALLOWED_ORIGINS` environment variable controls which frontend domains can access the API. This must include all domains serving the frontend application:
+
+```bash
+ALLOWED_ORIGINS=https://assist.asimo.io,https://assist1.asimo.io,https://admin.asimo.io,https://asimo.io
+```
+
+**Important Notes:**
+- Each origin must be comma-separated with no spaces
+- Include all subdomains that will make API requests
+- Missing an origin will cause CORS preflight failures in the browser
+
 After updating, restart services:
 
 ```bash
@@ -319,6 +332,43 @@ curl https://assist.asimo.io/health
 ```
 
 **⚠️ NOTE:** Avoid manual `docker run` commands for production deployments. Always use docker-compose to ensure proper network configuration, health checks, and restart policies.
+
+#### Database Password Management
+
+**Important:** PostgreSQL container passwords are set during initial database initialization and cannot be changed via environment variables alone.
+
+**If you need to reset the database password:**
+
+```bash
+# 1. Connect to the postgres container
+docker exec -it voiceassist-postgres psql -U voiceassist -d voiceassist
+
+# 2. Run the ALTER USER command
+ALTER USER voiceassist WITH PASSWORD 'your_new_password_here';
+
+# 3. Exit psql
+\q
+
+# 4. Update .env file to match
+# Edit ~/VoiceAssist/.env and update POSTGRES_PASSWORD
+
+# 5. Restart the API server to pick up new password
+docker-compose restart voiceassist-server
+```
+
+**Verification:**
+
+```bash
+# Test database connection from API server container
+docker exec voiceassist-server bash -c 'PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres -U voiceassist -d voiceassist -c "SELECT 1;"'
+
+# Should return: 1
+```
+
+**Common Issues:**
+
+- `FATAL: password authentication failed` - Password mismatch between .env and database
+- Solution: Follow password reset procedure above to sync passwords
 
 ### Service Management
 
