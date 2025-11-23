@@ -7,7 +7,7 @@ from io import BytesIO
 from typing import List
 from uuid import UUID
 
-from app.api.auth import get_current_user
+from app.core.dependencies import get_current_user
 from app.core.database import get_db
 from app.models.message import Message
 from app.models.session import Session

@@ -30,7 +30,7 @@ class MessageAttachment(Base):
     file_size = Column(Integer, nullable=False)  # Size in bytes
     file_url = Column(Text, nullable=False)  # S3/storage URL
     mime_type = Column(String(100), nullable=True)
-    metadata = Column(JSONB, nullable=True)  # Additional metadata
+    file_metadata = Column(JSONB, nullable=True)  # Additional metadata (renamed to avoid SQLAlchemy conflict)
 
     # Timestamps
     uploaded_at = Column(
@@ -56,7 +56,7 @@ class MessageAttachment(Base):
             "file_size": self.file_size,
             "file_url": self.file_url,
             "mime_type": self.mime_type,
-            "metadata": self.metadata,
+            "file_metadata": self.file_metadata,
             "uploaded_at": self.uploaded_at.isoformat() if self.uploaded_at else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }

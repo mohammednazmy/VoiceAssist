@@ -5,7 +5,7 @@ API endpoints for conversation folders
 from typing import Optional
 from uuid import UUID
 
-from app.api.auth import get_current_user
+from app.core.dependencies import get_current_user
 from app.core.database import get_db
 from app.models.folder import ConversationFolder, FolderCreate, FolderUpdate
 from app.models.user import User

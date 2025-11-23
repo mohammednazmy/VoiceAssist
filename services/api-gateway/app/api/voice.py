@@ -5,9 +5,9 @@ Handles audio transcription and speech synthesis
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
-from app.core.auth import get_current_user
+from app.core.dependencies import get_current_user
 from app.core.logging import get_logger
-from app.db.models import User
+from app.models.user import User
 import httpx
 import os
 

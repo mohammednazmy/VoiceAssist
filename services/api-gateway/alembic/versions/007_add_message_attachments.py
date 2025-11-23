@@ -45,7 +45,7 @@ def upgrade():
         ),
         sa.Column("file_url", sa.Text, nullable=False, comment="S3/storage URL"),
         sa.Column("mime_type", sa.String(100), nullable=True),
-        sa.Column("metadata", JSONB, nullable=True, comment="Additional file metadata"),
+        sa.Column("file_metadata", JSONB, nullable=True, comment="Additional file metadata"),
         sa.Column(
             "uploaded_at",
             sa.DateTime(timezone=True),

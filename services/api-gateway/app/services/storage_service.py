@@ -7,12 +7,11 @@ import uuid
 from pathlib import Path
 from typing import Optional
 
-from app.core.config import get_settings
+from app.core.config import settings
 from app.core.logging import get_logger
 from fastapi import UploadFile
 
 logger = get_logger(__name__)
-settings = get_settings()
 
 
 class StorageService:

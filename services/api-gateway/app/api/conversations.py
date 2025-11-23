@@ -12,7 +12,7 @@ from typing import List, Optional
 from app.core.api_envelope import ErrorCodes, error_response, success_response
 from app.core.database import get_db
 from app.core.logging import get_logger
-from app.core.security import get_current_user
+from app.core.dependencies import get_current_user
 from app.models.message import Message
 from app.models.session import Session as ChatSession
 from app.models.user import User
