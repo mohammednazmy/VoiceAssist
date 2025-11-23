@@ -156,21 +156,43 @@
 
 ## ⚠️ Known Issues
 
-### Test Environment
+### Test Environment - ESM Import Issues
 
-**Issue:** 4 test failures related to ES module imports
-**Error:** `require() of ES Module ... react-syntax-highlighter ... not supported`
+**Issue:** 4 test suites failing with ESM import errors for `react-syntax-highlighter`
+**Error:** `require() of ES Module ... refractor@5.0.0 ... not supported`
 
-**Current Status:** Vitest config updated with inline deps, but tests still failing
+**Affected Tests:**
 
-**Possible Solutions:**
+- `src/__tests__/AppSmoke.test.tsx`
+- `src/__tests__/integration/ChatFlow.test.tsx`
+- `src/components/chat/__tests__/MessageBubble.test.tsx`
+- `src/components/chat/__tests__/MessageList.test.tsx`
 
-1. Add more modules to `deps.inline` array
-2. Mock react-syntax-highlighter in test setup
-3. Use dynamic imports for syntax highlighter
-4. Investigate Vitest worker memory issues (OOM error observed)
+**Additional Failures:** 4 tests in `useChatSession.test.ts` (timeout/mock issues - pre-existing)
 
-**Impact:** Does not affect production code, only test execution
+**Attempted Fixes:**
+
+1. ✅ Added ESM modules to `deps.inline` in vitest.config.mts
+2. ✅ Created mock file at `src/__mocks__/react-syntax-highlighter.ts`
+3. ✅ Added alias in vitest.config.mts resolve section
+4. ❌ Tests still failing (mock not being used correctly)
+
+**Root Cause:** `react-syntax-highlighter` imports ESM-only `refractor` package via CommonJS, causing incompatibility in Vitest's test environment.
+
+**Impact:**
+
+- **Production:** ✅ NO IMPACT - Code works fine in browser
+- **Development:** ⚠️ 4 test suites cannot run (118/122 passing tests unaffected)
+- **Phase 1-2:** ✅ Implementations complete and committed (8cf91f0)
+
+**Recommendation:** Proceed with Phase 3 (component wiring) since this is a pre-existing test infrastructure issue unrelated to the message editing feature. The failing tests are smoke tests and integration tests that will need to be fixed separately as part of test infrastructure maintenance.
+
+**Future Fix Options:**
+
+1. Replace `react-syntax-highlighter` with a different syntax highlighting library
+2. Lazy-load syntax highlighter only when needed (code blocks present)
+3. Configure Vitest to use Vite's SSR mode for better ESM support
+4. Wait for `react-syntax-highlighter` to release CommonJS-compatible version
 
 ---
 
