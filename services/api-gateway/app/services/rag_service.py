@@ -28,16 +28,28 @@ from app.services.search_aggregator import SearchAggregator
 
 
 class Citation(BaseModel):
-    """Lightweight citation used in QueryResponse.
+    """Structured citation used in QueryResponse.
 
-    The full canonical definition lives in docs/DATA_MODEL.md;
-    this runtime model is deliberately minimal.
+    Enhanced with additional metadata fields for proper citation formatting.
+    The database model (MessageCitation) provides persistent storage.
     """
 
     id: str
+    source_id: str
     source_type: str = Field(..., description="textbook|journal|guideline|note")
     title: str
     url: Optional[str] = None
+    authors: Optional[List[str]] = None
+    publication_date: Optional[str] = None
+    journal: Optional[str] = None
+    volume: Optional[str] = None
+    issue: Optional[str] = None
+    pages: Optional[str] = None
+    doi: Optional[str] = None
+    pmid: Optional[str] = None
+    relevance_score: Optional[int] = None
+    quoted_text: Optional[str] = None
+    context: Optional[dict] = None
 
 
 class QueryRequest(BaseModel):
@@ -92,18 +104,21 @@ class QueryOrchestrator:
     async def handle_query(
         self,
         request: QueryRequest,
+        clinical_context: Optional[dict] = None,
         trace_id: Optional[str] = None,
     ) -> QueryResponse:
         """Handle a clinician query with full RAG pipeline.
 
         Pipeline:
-        1. Semantic search over KB (if RAG enabled)
-        2. Assemble context from search results
-        3. Generate LLM response with context
-        4. Extract citations
+        1. Load clinical context (if provided)
+        2. Semantic search over KB (if RAG enabled)
+        3. Assemble context from search results
+        4. Generate LLM response with context + clinical context
+        5. Extract citations
 
         Args:
             request: Query request with query text and optional context
+            clinical_context: Optional clinical context dict with patient info
             trace_id: Trace ID for logging
 
         Returns:
@@ -131,23 +146,58 @@ class QueryOrchestrator:
         if search_results:
             context = self.search_aggregator.format_context_for_rag(search_results)
 
-        # Step 3: Build prompt with context
+        # Step 3: Build prompt with context and clinical context
+        prompt_parts = [
+            "You are a clinical decision support assistant.",
+        ]
+
+        # Add clinical context if provided
+        if clinical_context:
+            clinical_info = []
+            if clinical_context.get("age"):
+                clinical_info.append(f"Age: {clinical_context['age']}")
+            if clinical_context.get("gender"):
+                clinical_info.append(f"Gender: {clinical_context['gender']}")
+            if clinical_context.get("chief_complaint"):
+                clinical_info.append(
+                    f"Chief Complaint: {clinical_context['chief_complaint']}"
+                )
+            if clinical_context.get("problems"):
+                problems = ", ".join(clinical_context["problems"])
+                clinical_info.append(f"Problems: {problems}")
+            if clinical_context.get("medications"):
+                meds = ", ".join(clinical_context["medications"])
+                clinical_info.append(f"Medications: {meds}")
+            if clinical_context.get("allergies"):
+                allergies = ", ".join(clinical_context["allergies"])
+                clinical_info.append(f"Allergies: {allergies}")
+
+            if clinical_info:
+                prompt_parts.append("\nPatient Context:")
+                prompt_parts.append("\n".join(f"- {info}" for info in clinical_info))
+
+        # Add knowledge base context if available
         if context:
-            prompt = f"""You are a clinical decision support assistant. Use the following context from medical literature to answer the query.
+            prompt_parts.append(
+                "\nUse the following context from medical literature to answer the query:"
+            )
+            prompt_parts.append(f"\nContext:\n{context}")
 
-Context:
-{context}
-
-Query: {request.query}
-
+        # Add query and instructions
+        prompt_parts.append(f"\nQuery: {request.query}")
+        prompt_parts.append(
+            """
 Instructions:
-- Base your answer primarily on the provided context
+- Consider the patient context when providing your answer
+- Base your answer on the provided medical literature context
 - If the context doesn't contain relevant information, say so
 - Be concise and clinical in your response
 - Reference specific sources when possible
+- Consider contraindications based on patient allergies and current medications
 """
-        else:
-            prompt = f"You are a clinical decision support assistant. Answer this query: {request.query}"
+        )
+
+        prompt = "\n".join(prompt_parts)
 
         # Step 4: Generate LLM response
         # TODO: PHI detection - for now assume no PHI
@@ -168,12 +218,26 @@ Instructions:
         if search_results:
             citation_dicts = self.search_aggregator.extract_citations(search_results)
             for cite_dict in citation_dicts:
-                citations.append(Citation(
-                    id=cite_dict["id"],
-                    source_type=cite_dict["source_type"],
-                    title=cite_dict["title"],
-                    url=cite_dict.get("url")
-                ))
+                citations.append(
+                    Citation(
+                        id=cite_dict.get("id", ""),
+                        source_id=cite_dict.get("source_id", cite_dict.get("id", "")),
+                        source_type=cite_dict.get("source_type", "textbook"),
+                        title=cite_dict.get("title", "Untitled"),
+                        url=cite_dict.get("url"),
+                        authors=cite_dict.get("authors"),
+                        publication_date=cite_dict.get("publication_date"),
+                        journal=cite_dict.get("journal"),
+                        volume=cite_dict.get("volume"),
+                        issue=cite_dict.get("issue"),
+                        pages=cite_dict.get("pages"),
+                        doi=cite_dict.get("doi"),
+                        pmid=cite_dict.get("pmid"),
+                        relevance_score=cite_dict.get("relevance_score"),
+                        quoted_text=cite_dict.get("quoted_text"),
+                        context=cite_dict.get("context"),
+                    )
+                )
 
         return QueryResponse(
             session_id=request.session_id or "session-stub",
