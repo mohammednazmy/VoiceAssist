@@ -1,0 +1,87 @@
+# This file documents the changes needed for Clinical Context integration
+# Apply these manually to ChatPage.tsx
+
+## 1. Add imports at the top
+```typescript
+import { ClinicalContextSidebar } from "../components/clinical/ClinicalContextSidebar";
+import type { ClinicalContext } from "../components/clinical/ClinicalContextPanel";
+```
+
+## 2. Add state variables (after line ~42)
+```typescript
+const [isClinicalContextOpen, setIsClinicalContextOpen] = useState(false);
+const [clinicalContext, setClinicalContext] = useState<ClinicalContext>(() => {
+  const saved = localStorage.getItem('voiceassist:clinical-context');
+  return saved ? JSON.parse(saved) : {};
+});
+```
+
+## 3. Add useEffect to save clinical context (after line ~172)
+```typescript
+// Save clinical context to localStorage
+useEffect(() => {
+  localStorage.setItem('voiceassist:clinical-context', JSON.stringify(clinicalContext));
+}, [clinicalContext]);
+```
+
+## 4. Add keyboard shortcut for clinical context (in existing keyboard handler, around line ~170)
+```typescript
+// Cmd/Ctrl + I: Toggle clinical context sidebar
+if (modKey && event.key === "i") {
+  event.preventDefault();
+  setIsClinicalContextOpen((prev) => !prev);
+}
+```
+
+## 5. Add Clinical Context button in header (before Branches button, around line ~290)
+```typescript
+{/* Clinical Context Toggle */}
+<button
+  type="button"
+  onClick={() => setIsClinicalContextOpen((prev) => !prev)}
+  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors"
+  aria-label="Toggle clinical context"
+  title="Clinical context (⌘I)"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    className="w-4 h-4"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+    />
+  </svg>
+  <span className="hidden sm:inline">Context</span>
+</button>
+```
+
+## 6. Add Clinical Context Sidebar component (before Branch Sidebar, around line ~357)
+```typescript
+{/* Clinical Context Sidebar */}
+{isClinicalContextOpen && (
+  <ClinicalContextSidebar
+    isOpen={isClinicalContextOpen}
+    onClose={() => setIsClinicalContextOpen(false)}
+    context={clinicalContext}
+    onChange={setClinicalContext}
+  />
+)}
+```
+
+## 7. Update Branch Sidebar to be conditional
+```typescript
+{/* Branch Sidebar */}
+{isBranchSidebarOpen && (
+  <BranchSidebar
+    sessionId={activeConversationId}
+    isOpen={isBranchSidebarOpen}
+    onClose={() => setIsBranchSidebarOpen(false)}
+  />
+)}
+```

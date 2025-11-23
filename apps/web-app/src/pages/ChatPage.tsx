@@ -15,6 +15,8 @@ import { ConnectionStatus } from "../components/chat/ConnectionStatus";
 import { ChatErrorBoundary } from "../components/chat/ChatErrorBoundary";
 import { BranchSidebar } from "../components/chat/BranchSidebar";
 import { KeyboardShortcutsDialog } from "../components/KeyboardShortcutsDialog";
+import { ClinicalContextSidebar } from "../components/clinical/ClinicalContextSidebar";
+import type { ClinicalContext } from "../components/clinical/ClinicalContextPanel";
 import type {
   Message,
   WebSocketErrorCode,
@@ -44,6 +46,12 @@ export function ChatPage() {
   const [initialMessages, setInitialMessages] = useState<Message[]>([]);
   const [isBranchSidebarOpen, setIsBranchSidebarOpen] = useState(false);
   const [isShortcutsDialogOpen, setIsShortcutsDialogOpen] = useState(false);
+  const [isClinicalContextOpen, setIsClinicalContextOpen] = useState(false);
+  const [clinicalContext, setClinicalContext] = useState<ClinicalContext>(() => {
+    // Load from localStorage
+    const saved = localStorage.getItem('voiceassist:clinical-context');
+    return saved ? JSON.parse(saved) : {};
+  });
 
   // Handle conversation initialization and validation
   useEffect(() => {
@@ -171,11 +179,22 @@ export function ChatPage() {
         event.preventDefault();
         setIsShortcutsDialogOpen(true);
       }
+
+      // Cmd/Ctrl + I: Toggle clinical context sidebar
+      if (modKey && event.key === "i") {
+        event.preventDefault();
+        setIsClinicalContextOpen((prev) => !prev);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // Save clinical context to localStorage
+  useEffect(() => {
+    localStorage.setItem('voiceassist:clinical-context', JSON.stringify(clinicalContext));
+  }, [clinicalContext]);
 
   // Handle branch creation from message
   const handleBranchFromMessage = useCallback(
@@ -335,7 +354,32 @@ export function ChatPage() {
               <ConnectionStatus
                 status={connectionStatus}
                 onReconnect={reconnect}
-              />
+              />              {/* Clinical Context Toggle */}
+              <button
+                type="button"
+                onClick={() => setIsClinicalContextOpen((prev) => !prev)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors"
+                aria-label="Toggle clinical context"
+                title="Clinical context (⌘I)"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Context</span>
+              </button>
+
+
 
               {/* Branch Sidebar Toggle */}
               <button
@@ -435,12 +479,24 @@ export function ChatPage() {
           />
         </div>
 
+        {/* Clinical Context Sidebar */}
+        {isClinicalContextOpen && (
+          <ClinicalContextSidebar
+            isOpen={isClinicalContextOpen}
+            onClose={() => setIsClinicalContextOpen(false)}
+            context={clinicalContext}
+            onChange={setClinicalContext}
+          />
+        )}
+
         {/* Branch Sidebar */}
-        <BranchSidebar
-          sessionId={activeConversationId}
-          isOpen={isBranchSidebarOpen}
-          onClose={() => setIsBranchSidebarOpen(false)}
-        />
+        {isBranchSidebarOpen && (
+          <BranchSidebar
+            sessionId={activeConversationId}
+            isOpen={isBranchSidebarOpen}
+            onClose={() => setIsBranchSidebarOpen(false)}
+          />
+        )}
       </div>
 
       {/* Keyboard Shortcuts Dialog */}

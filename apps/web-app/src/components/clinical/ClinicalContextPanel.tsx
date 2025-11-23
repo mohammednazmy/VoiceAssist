@@ -4,8 +4,7 @@
  */
 
 import { useState } from "react";
-// Placeholder for future UI component imports
-// import { Card, CardHeader, CardTitle, CardContent, Label, Input, Button } from '@voiceassist/ui';
+import { Label, Input, Button } from '@voiceassist/ui';
 
 export interface ClinicalContext {
   demographics?: {

@@ -28,6 +28,11 @@ const SHORTCUTS: Shortcut[] = [
     category: "Navigation",
   },
   {
+    keys: ["⌘", "I"],
+    description: "Toggle clinical context",
+    category: "Clinical",
+  },
+  {
     keys: ["⌘", "B"],
     description: "Toggle branch sidebar",
     category: "Branching",
