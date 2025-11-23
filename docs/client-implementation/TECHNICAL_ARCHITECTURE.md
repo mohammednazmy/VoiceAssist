@@ -1018,10 +1018,56 @@ export class WebSocketManager {
 
 *Due to length, I'll create the remaining sections in focused documents. This Technical Architecture document continues with sections on Security, Testing, Build & Deployment, etc. Should I continue with the complete Technical Architecture, or move to other documents?*
 
+---
+
+## 13. Internationalization (i18n)
+
+### i18n Foundation
+
+**Current Implementation:**
+- ✅ Locale configuration module: `packages/config/i18n.ts`
+- ✅ Supported locales: English (default), Arabic, Spanish, French
+- ✅ RTL support scaffolding for Arabic
+- ✅ Locale metadata: date/time formats, text direction, support status
+
+**Locale Configuration:**
+```typescript
+import {
+  SupportedLocale,
+  DEFAULT_LOCALE,
+  detectBrowserLocale,
+  getLocaleMetadata
+} from '@voiceassist/config/i18n';
+
+// Detect user's locale
+const userLocale = detectBrowserLocale(); // Falls back to 'en'
+
+// Get locale metadata
+const metadata = getLocaleMetadata(SupportedLocale.Arabic);
+// { code: 'ar', direction: 'rtl', isRTL: true, ... }
+```
+
+**Implementation Roadmap:**
+1. **Phase 1** (Current): Locale scaffolding and configuration
+2. **Phase 2** (Planned): Integration with i18next or react-intl
+3. **Phase 3** (Planned): Translation keys and message catalogs
+4. **Phase 4** (Planned): Medical content localization (Arabic priority)
+5. **Phase 5** (Planned): Dynamic locale switching and persistence
+
+**Extension Points:**
+- `packages/config/i18n.ts` - Core configuration
+- Future: `packages/i18n/` - Translation library integration
+- Future: `apps/*/locales/` - Translation files per application
+
+See [WEB_APP_FEATURE_SPECS.md](WEB_APP_FEATURE_SPECS.md) for detailed i18n requirements.
+
+---
+
 **Current Status:**
 - ✅ MASTER_IMPLEMENTATION_PLAN.md (20,000+ words)
 - ⏳ WEB_APP_FEATURE_SPECS.md (Started - 3 features detailed)
 - ⏳ TECHNICAL_ARCHITECTURE.md (In progress - Core sections complete)
+- ✅ i18n foundation added (2025-11-22)
 
 Next up:
 - Complete Technical Architecture
@@ -1029,5 +1075,3 @@ Next up:
 - Create Integration Guide
 - Create Development Workflow
 - Update existing README files
-
-Should I continue?
