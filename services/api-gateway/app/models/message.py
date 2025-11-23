@@ -8,6 +8,7 @@ from datetime import datetime
 from app.core.database import Base
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import relationship
 
 
 class Message(Base):
@@ -54,6 +55,14 @@ class Message(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    # Relationships
+    attachments = relationship(
+        "MessageAttachment",
+        back_populates="message",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
 
     def __repr__(self):
         return (
