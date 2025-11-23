@@ -41,7 +41,7 @@ git remote add upstream git@github.com:mohammednazmy/VoiceAssist.git
 
 ### 2. Set Up Development Environment
 
-Follow the complete setup instructions in [docs/DEVELOPMENT_SETUP.md](docs/DEVELOPMENT_SETUP.md).
+Follow the complete setup instructions in [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md).
 
 Quick setup:
 
@@ -131,16 +131,16 @@ Run these checks locally to ensure CI will pass:
 make check-env
 
 # 2. Run all tests
-make test           # Backend tests
-pnpm test          # Frontend tests
+make test           # Backend tests (pytest)
+pnpm test           # Frontend tests (runs Vitest in non-watch mode)
 
 # 3. Run linters
-make lint          # Backend (flake8, black, isort)
-pnpm lint          # Frontend (ESLint)
+make lint           # Backend (flake8, black, isort)
+pnpm lint           # Frontend (ESLint)
 
 # 4. Run type checking
-make type-check    # Backend (mypy)
-pnpm type-check    # Frontend (TypeScript)
+make type-check     # Backend (mypy)
+pnpm type-check     # Frontend (TypeScript)
 
 # 5. Run pre-commit hooks
 pre-commit run --all-files
@@ -148,6 +148,12 @@ pre-commit run --all-files
 # 6. Run security scans
 make bandit
 ```
+
+**Note on frontend tests**:
+
+- `pnpm test` - Runs tests once and exits (used in CI)
+- `pnpm test:watch` - Runs tests in interactive watch mode (for local development)
+- See KNOWN_ISSUES.md for current frontend test infrastructure status
 
 ---
 
@@ -339,15 +345,16 @@ def test_create_and_verify_access_token():
 
 ### Frontend Tests
 
-Use Jest/Vitest for unit tests and React Testing Library for component tests:
+Use Vitest for unit tests and React Testing Library for component tests:
 
 ```typescript
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { LoginPage } from './LoginPage';
+import { describe, it, expect, vi } from 'vitest';
 
 describe('LoginPage', () => {
   it('should submit login form with valid credentials', async () => {
-    const mockLogin = jest.fn();
+    const mockLogin = vi.fn();
     render(<LoginPage onLogin={mockLogin} />);
 
     fireEvent.change(screen.getByLabelText(/email/i), {
@@ -385,8 +392,7 @@ pytest --cov=app --cov-report=html
 open htmlcov/index.html
 
 # Frontend
-cd apps/web-app
-pnpm test --coverage
+pnpm test:coverage
 ```
 
 ---

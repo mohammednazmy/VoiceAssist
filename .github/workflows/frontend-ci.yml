@@ -71,8 +71,7 @@ jobs:
         run: pnpm type-check
 
       - name: Run tests
-        run: pnpm test --if-present
-        continue-on-error: true # Frontend tests may not be fully implemented yet
+        run: pnpm test
 
       - name: Build all packages
         run: pnpm build

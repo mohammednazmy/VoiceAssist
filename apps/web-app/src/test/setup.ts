@@ -3,9 +3,23 @@
  * Global test configuration and setup
  */
 
-import '@testing-library/jest-dom';
-import { cleanup } from '@testing-library/react';
-import { afterEach, vi } from 'vitest';
+import "@testing-library/jest-dom";
+import { cleanup } from "@testing-library/react";
+import { afterEach, vi } from "vitest";
+
+// Workaround for jsdom/webidl-conversions issue
+// See: https://github.com/jsdom/jsdom/issues/3363
+if (typeof globalThis.WeakRef === "undefined") {
+  (globalThis as any).WeakRef = class WeakRef {
+    private target: any;
+    constructor(target: any) {
+      this.target = target;
+    }
+    deref() {
+      return this.target;
+    }
+  };
+}
 
 // Cleanup after each test
 afterEach(() => {
@@ -13,10 +27,10 @@ afterEach(() => {
 });
 
 // Mock environment variables
-vi.stubEnv('VITE_API_URL', 'http://localhost:8000');
+vi.stubEnv("VITE_API_URL", "http://localhost:8000");
 
 // Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: vi.fn().mockImplementation((query) => ({
     matches: false,
@@ -32,4 +46,4 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Mock window.location.href
 delete (window as any).location;
-window.location = { href: '' } as any;
+window.location = { href: "" } as any;
