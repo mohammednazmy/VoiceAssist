@@ -1,8 +1,10 @@
 """
 Application configuration
 """
-from pydantic_settings import BaseSettings, SettingsConfigDict
+
 from typing import Optional
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -23,7 +25,10 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self) -> str:
-        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        return (
+            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
 
     # Redis
     REDIS_HOST: str = "redis"
@@ -56,15 +61,15 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: Optional[str] = None
 
+    # CORS
+    ALLOWED_ORIGINS: str = "http://localhost:3000"
+
     # Caching (Phase 7 Integration Improvements - P2.1)
     CACHE_ENABLED: bool = True
     CACHE_L1_MAX_SIZE: int = 1000  # Max entries in L1 cache
     CACHE_DEFAULT_TTL: int = 600  # Default TTL in seconds (10 minutes)
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        case_sensitive=True
-    )
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
 
 # Global settings instance

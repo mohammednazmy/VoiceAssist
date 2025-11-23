@@ -1,28 +1,35 @@
 """
 Main FastAPI application
 """
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-import uvicorn
-
-from app.core.config import settings
-from app.core.logging import configure_logging, get_logger
-from app.core.middleware import (
-    SecurityHeadersMiddleware,
-    RequestTracingMiddleware,
-    MetricsMiddleware,
-)
-from app.core.database import redis_client
-from app.api import health, auth, users, realtime, admin_kb, integrations, admin_panel, admin_cache, metrics, admin_feature_flags
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
 
 # Import business metrics to register them with Prometheus (P3.3)
-import app.core.business_metrics
+import uvicorn
 
+# This import registers business metrics with Prometheus  # noqa: F401
+from app.core import business_metrics  # noqa: F401
+from app.api import (
+    admin_cache,
+    admin_feature_flags,
+    admin_kb,
+    admin_panel,
+    auth,
+    health,
+    integrations,
+    metrics,
+    realtime,
+    users,
+)
+from app.core.config import settings
+from app.core.database import redis_client
+from app.core.logging import configure_logging, get_logger
+from app.core.middleware import MetricsMiddleware, RequestTracingMiddleware, SecurityHeadersMiddleware
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 # Configure structured logging
 configure_logging()
@@ -88,13 +95,8 @@ app.add_middleware(RequestTracingMiddleware)
 app.add_middleware(MetricsMiddleware)
 
 # 4. CORS middleware
-allowed_origins = [
-    "https://voiceassist.local",
-    "https://nextcloud.local",
-    "https://admin.voiceassist.local",
-    "http://localhost:3000",  # Development frontend
-    "http://localhost:8080",  # Development Nextcloud
-]
+# Parse ALLOWED_ORIGINS from environment (comma-separated string)
+allowed_origins = [origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",")]
 
 if settings.DEBUG:
     allowed_origins.append("*")  # Allow all in development
@@ -138,9 +140,16 @@ async def startup_event():
 
     logger.info("database_pool_configured", pool_size=20, max_overflow=40)
     logger.info("redis_pool_configured", max_connections=50)
-    logger.info("middleware_configured", middleware=["SecurityHeaders", "RequestTracing", "Metrics", "CORS"])
+    logger.info(
+        "middleware_configured",
+        middleware=["SecurityHeaders", "RequestTracing", "Metrics", "CORS"],
+    )
     logger.info("rate_limiting_enabled", default_limit="100/minute")
-    logger.info("auth_system_enabled", jwt_algorithm=settings.JWT_ALGORITHM, token_expiry_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    logger.info(
+        "auth_system_enabled",
+        jwt_algorithm=settings.JWT_ALGORITHM,
+        token_expiry_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+    )
 
 
 @app.on_event("shutdown")

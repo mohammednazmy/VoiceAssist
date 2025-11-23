@@ -5,7 +5,7 @@ networks:
 
   database-network:
     driver: bridge
-    internal: true  # Database network is internal-only
+    internal: true # Database network is internal-only
 
 # Volumes for data persistence
 volumes:
@@ -111,6 +111,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ENVIRONMENT=${ENVIRONMENT}
       - DEBUG=${DEBUG}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
       - NEXTCLOUD_URL=${NEXTCLOUD_URL}
       - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER}
       - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
