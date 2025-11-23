@@ -107,11 +107,108 @@ export interface Conversation {
   messageCount: number;
   archived?: boolean;
   lastMessagePreview?: string;
+  folderId?: string | null;
 }
 
 export interface UpdateConversationRequest {
   title?: string;
   archived?: boolean;
+  folderId?: string | null;
+}
+
+// ============================================================================
+// Folder Types
+// ============================================================================
+
+export interface Folder {
+  id: string;
+  userId: string;
+  name: string;
+  color?: string | null;
+  icon?: string | null;
+  parentFolderId?: string | null;
+  createdAt: string;
+  children?: Folder[];
+}
+
+export interface CreateFolderRequest {
+  name: string;
+  color?: string | null;
+  icon?: string | null;
+  parentFolderId?: string | null;
+}
+
+export interface UpdateFolderRequest {
+  name?: string;
+  color?: string | null;
+  icon?: string | null;
+  parentFolderId?: string | null;
+}
+
+// ============================================================================
+// Sharing Types
+// ============================================================================
+
+export interface ShareRequest {
+  expiresInHours?: number;
+  password?: string | null;
+  allowAnonymous?: boolean;
+}
+
+export interface ShareResponse {
+  shareId: string;
+  shareUrl: string;
+  expiresAt: string;
+  passwordProtected: boolean;
+}
+
+export interface ShareLink {
+  shareToken: string;
+  shareUrl: string;
+  createdAt: string;
+  expiresAt: string;
+  passwordProtected: boolean;
+  accessCount: number;
+}
+
+// ============================================================================
+// Template Types
+// ============================================================================
+
+export interface ConversationTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  icon?: string;
+  color?: string;
+  messages: TemplateMessage[];
+  clinicalContext?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+  usageCount: number;
+}
+
+export interface TemplateMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
+export interface CreateTemplateRequest {
+  name: string;
+  description?: string;
+  category?: string;
+  icon?: string;
+  color?: string;
+  fromConversationId?: string;
+}
+
+export interface UpdateTemplateRequest {
+  name?: string;
+  description?: string;
+  category?: string;
+  icon?: string;
+  color?: string;
 }
 
 // Conversation Branching Types (Phase 2, Week 10)
@@ -277,17 +374,88 @@ export type ConnectionStatus =
 
 export interface Attachment {
   id: string;
-  url: string;
-  mime: string;
-  size: number;
-  name?: string;
+  messageId: string;
+  fileName: string;
+  fileType: string; // 'pdf', 'image', 'text', 'markdown', 'document'
+  fileSize: number; // bytes
+  fileUrl: string;
+  mimeType?: string;
+  metadata?: Record<string, any>;
+  uploadedAt: string;
+  createdAt: string;
 }
 
 export interface AttachmentUploadResponse {
   id: string;
-  url: string;
-  mime: string;
-  size: number;
+  messageId: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  fileUrl: string;
+  mimeType?: string;
+  uploadedAt: string;
+  createdAt: string;
+}
+
+export interface UploadProgress {
+  fileName: string;
+  progress: number; // 0-100
+  status: "uploading" | "complete" | "error";
+  error?: string;
+}
+
+// ============================================================================
+// Clinical Context Types
+// ============================================================================
+
+export interface Vitals {
+  temperature?: number; // Celsius
+  heartRate?: number; // BPM
+  bloodPressure?: string; // e.g., "120/80"
+  respiratoryRate?: number; // breaths per minute
+  spo2?: number; // percentage (SpO2)
+}
+
+export interface ClinicalContext {
+  id: string;
+  userId: string;
+  sessionId?: string;
+  age?: number;
+  gender?: string;
+  weightKg?: number;
+  heightCm?: number;
+  chiefComplaint?: string;
+  problems: string[]; // Array of problems/diagnoses
+  medications: string[]; // Array of medications
+  allergies: string[]; // Array of allergies
+  vitals: Vitals;
+  lastUpdated: string;
+  createdAt: string;
+}
+
+export interface ClinicalContextCreate {
+  sessionId?: string;
+  age?: number;
+  gender?: string;
+  weightKg?: number;
+  heightCm?: number;
+  chiefComplaint?: string;
+  problems?: string[];
+  medications?: string[];
+  allergies?: string[];
+  vitals?: Vitals;
+}
+
+export interface ClinicalContextUpdate {
+  age?: number;
+  gender?: string;
+  weightKg?: number;
+  heightCm?: number;
+  chiefComplaint?: string;
+  problems?: string[];
+  medications?: string[];
+  allergies?: string[];
+  vitals?: Vitals;
 }
 
 // ============================================================================

@@ -3,12 +3,14 @@
  * Main chat interface with WebSocket streaming
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useChatSession } from "../hooks/useChatSession";
 import { useBranching } from "../hooks/useBranching";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { useClinicalContext } from "../hooks/useClinicalContext";
+import { useToastContext } from "../contexts/ToastContext";
 import { MessageList } from "../components/chat/MessageList";
 import { MessageInput } from "../components/chat/MessageInput";
 import { ConnectionStatus } from "../components/chat/ConnectionStatus";
@@ -18,7 +20,14 @@ import { KeyboardShortcutsDialog } from "../components/KeyboardShortcutsDialog";
 import { ClinicalContextSidebar } from "../components/clinical/ClinicalContextSidebar";
 import { CitationSidebar } from "../components/citations/CitationSidebar";
 import { ExportDialog } from "../components/export/ExportDialog";
+import { ShareDialog } from "../components/sharing/ShareDialog";
+import { SaveAsTemplateDialog } from "../components/templates/SaveAsTemplateDialog";
+import { useTemplates } from "../hooks/useTemplates";
 import { useAnnouncer } from "../components/accessibility/LiveRegion";
+import {
+  backendToFrontend,
+  frontendToBackend,
+} from "../components/clinical/ClinicalContextAdapter";
 import type { ClinicalContext } from "../components/clinical/ClinicalContextPanel";
 import type {
   Message,
@@ -38,6 +47,8 @@ export function ChatPage() {
   const { conversationId } = useParams<{ conversationId: string }>();
   const navigate = useNavigate();
   const { apiClient } = useAuth();
+  const { createFromConversation } = useTemplates();
+  const toast = useToastContext();
 
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
   const [errorType, setErrorType] = useState<ErrorType>(null);
@@ -52,13 +63,26 @@ export function ChatPage() {
   const [isClinicalContextOpen, setIsClinicalContextOpen] = useState(false);
   const [isCitationSidebarOpen, setIsCitationSidebarOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
-  const [clinicalContext, setClinicalContext] = useState<ClinicalContext>(
-    () => {
-      // Load from localStorage
-      const saved = localStorage.getItem("voiceassist:clinical-context");
-      return saved ? JSON.parse(saved) : {};
-    },
-  );
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
+
+  // Clinical context management
+  const clinicalContextHook = useClinicalContext(activeConversationId || undefined);
+  const [localClinicalContext, setLocalClinicalContext] = useState<ClinicalContext>({});
+  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Merge backend context with local edits (local takes precedence for optimistic updates)
+  const clinicalContext = {
+    ...backendToFrontend(clinicalContextHook.context),
+    ...localClinicalContext,
+  };
+
+  // Update local context when backend context loads
+  useEffect(() => {
+    if (clinicalContextHook.context && !clinicalContextHook.isLoading) {
+      setLocalClinicalContext({});
+    }
+  }, [clinicalContextHook.context, clinicalContextHook.isLoading]);
 
   // Accessibility: Screen reader announcements
   const { announce, LiveRegion: AnnouncementRegion } = useAnnouncer("polite");
@@ -225,13 +249,41 @@ export function ChatPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Save clinical context to localStorage
+  // Handle clinical context changes with debounced save
+  const handleClinicalContextChange = useCallback(
+    (newContext: ClinicalContext) => {
+      setLocalClinicalContext(newContext);
+
+      // Clear existing timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      // Debounce save to backend (1 second)
+      saveTimeoutRef.current = setTimeout(async () => {
+        try {
+          const backendData = frontendToBackend(newContext);
+          await clinicalContextHook.saveContext(backendData);
+        } catch (err) {
+          console.error("Failed to save clinical context:", err);
+          toast.error(
+            "Failed to save clinical context",
+            "Your changes may not be saved. Please try again.",
+          );
+        }
+      }, 1000);
+    },
+    [clinicalContextHook],
+  );
+
+  // Cleanup timeout on unmount
   useEffect(() => {
-    localStorage.setItem(
-      "voiceassist:clinical-context",
-      JSON.stringify(clinicalContext),
-    );
-  }, [clinicalContext]);
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Accessibility: Announce new assistant messages to screen readers
   useEffect(() => {
@@ -493,6 +545,56 @@ export function ChatPage() {
                 </svg>
                 <span className="hidden sm:inline">Export</span>
               </button>
+
+              {/* Share Button */}
+              <button
+                type="button"
+                onClick={() => setIsShareDialogOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors"
+                aria-label="Share conversation"
+                title="Share conversation"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Share</span>
+              </button>
+
+              {/* Save as Template Button */}
+              <button
+                type="button"
+                onClick={() => setIsSaveTemplateDialogOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors"
+                aria-label="Save as template"
+                title="Save as template"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Template</span>
+              </button>
             </div>
           </div>
 
@@ -572,7 +674,7 @@ export function ChatPage() {
             isOpen={isClinicalContextOpen}
             onClose={() => setIsClinicalContextOpen(false)}
             context={clinicalContext}
-            onChange={setClinicalContext}
+            onChange={handleClinicalContextChange}
           />
         )}
 
@@ -607,6 +709,34 @@ export function ChatPage() {
         onClose={() => setIsExportDialogOpen(false)}
         conversationTitle={conversation?.title || "Conversation"}
         messages={messages}
+      />
+
+      {/* Share Dialog */}
+      {activeConversationId && (
+        <ShareDialog
+          isOpen={isShareDialogOpen}
+          onClose={() => setIsShareDialogOpen(false)}
+          conversationId={activeConversationId}
+          conversationTitle={conversation?.title || "Conversation"}
+        />
+      )}
+
+      {/* Save as Template Dialog */}
+      <SaveAsTemplateDialog
+        isOpen={isSaveTemplateDialogOpen}
+        onClose={() => setIsSaveTemplateDialogOpen(false)}
+        onSave={async (name, description, category, icon, color) => {
+          if (activeConversationId && conversation) {
+            await createFromConversation(
+              activeConversationId,
+              conversation.title,
+              messages,
+              { name, description, category, icon, color },
+            );
+            announce("Template saved successfully");
+          }
+        }}
+        conversationTitle={conversation?.title || "Conversation"}
       />
 
       {/* Accessibility: Live Region for Screen Reader Announcements */}

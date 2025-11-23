@@ -24,13 +24,28 @@ import type {
   AuthTokens,
   Branch,
   CreateBranchRequest,
+  Folder,
+  CreateFolderRequest,
+  UpdateFolderRequest,
+  ShareRequest,
+  ShareResponse,
+  ShareLink,
+  Attachment,
+  AttachmentUploadResponse,
+  ClinicalContext,
+  ClinicalContextCreate,
+  ClinicalContextUpdate,
 } from "@voiceassist/types";
+import { withRetry, type RetryConfig } from "./retry";
 
 export interface ApiClientConfig {
   baseURL: string;
   timeout?: number;
   onUnauthorized?: () => void;
   getAccessToken?: () => string | null;
+  enableRetry?: boolean;
+  retryConfig?: Partial<RetryConfig>;
+  onRetry?: (attempt: number, error: any) => void;
 }
 
 export class VoiceAssistApiClient {
@@ -38,7 +53,10 @@ export class VoiceAssistApiClient {
   private config: ApiClientConfig;
 
   constructor(config: ApiClientConfig) {
-    this.config = config;
+    this.config = {
+      enableRetry: true, // Enable retry by default
+      ...config,
+    };
     this.client = axios.create({
       baseURL: config.baseURL,
       timeout: config.timeout || 30000,
@@ -66,6 +84,16 @@ export class VoiceAssistApiClient {
         return Promise.reject(error);
       },
     );
+  }
+
+  /**
+   * Wrap a request with retry logic if enabled
+   */
+  private async withRetryIfEnabled<T>(fn: () => Promise<T>): Promise<T> {
+    if (this.config.enableRetry) {
+      return withRetry(fn, this.config.retryConfig, this.config.onRetry);
+    }
+    return fn();
   }
 
   // =========================================================================
@@ -387,6 +415,202 @@ export class VoiceAssistApiClient {
       ApiResponse<PaginatedResponse<User>>
     >("/admin/users", { params: { page, pageSize } });
     return response.data.data!;
+  }
+
+  // =========================================================================
+  // Folders
+  // =========================================================================
+
+  async getFolders(parentId?: string | null): Promise<Folder[]> {
+    const params = parentId ? { parent_id: parentId } : undefined;
+    const response = await this.client.get<Folder[]>("/folders", { params });
+    return response.data;
+  }
+
+  async getFolderTree(): Promise<Folder[]> {
+    const response = await this.client.get<Folder[]>("/folders/tree");
+    return response.data;
+  }
+
+  async getFolder(id: string): Promise<Folder> {
+    const response = await this.client.get<Folder>(`/folders/${id}`);
+    return response.data;
+  }
+
+  async createFolder(request: CreateFolderRequest): Promise<Folder> {
+    const response = await this.client.post<Folder>("/folders", request);
+    return response.data;
+  }
+
+  async updateFolder(id: string, request: UpdateFolderRequest): Promise<Folder> {
+    const response = await this.client.put<Folder>(`/folders/${id}`, request);
+    return response.data;
+  }
+
+  async deleteFolder(id: string): Promise<void> {
+    await this.client.delete(`/folders/${id}`);
+  }
+
+  async moveFolder(folderId: string, targetFolderId: string): Promise<Folder> {
+    const response = await this.client.post<Folder>(
+      `/folders/${folderId}/move/${targetFolderId}`,
+    );
+    return response.data;
+  }
+
+  async moveConversationToFolder(
+    conversationId: string,
+    folderId: string | null,
+  ): Promise<Conversation> {
+    return this.updateConversation(conversationId, { folderId });
+  }
+
+  // =========================================================================
+  // Sharing
+  // =========================================================================
+
+  async createShareLink(
+    sessionId: string,
+    request: ShareRequest,
+  ): Promise<ShareResponse> {
+    const response = await this.client.post<ShareResponse>(
+      `/sessions/${sessionId}/share`,
+      request,
+    );
+    return response.data;
+  }
+
+  async getSharedConversation(
+    shareToken: string,
+    password?: string,
+  ): Promise<any> {
+    const params = password ? { password } : undefined;
+    const response = await this.client.get(`/shared/${shareToken}`, {
+      params,
+    });
+    return response.data;
+  }
+
+  async listShareLinks(sessionId: string): Promise<ShareLink[]> {
+    const response = await this.client.get<ShareLink[]>(
+      `/sessions/${sessionId}/shares`,
+    );
+    return response.data;
+  }
+
+  async revokeShareLink(sessionId: string, shareToken: string): Promise<void> {
+    await this.client.delete(`/sessions/${sessionId}/share/${shareToken}`);
+  }
+
+  // =========================================================================
+  // Attachments
+  // =========================================================================
+
+  async uploadAttachment(
+    messageId: string,
+    file: File,
+    onProgress?: (progress: number) => void,
+  ): Promise<AttachmentUploadResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await this.client.post<AttachmentUploadResponse>(
+      `/messages/${messageId}/attachments`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+          if (onProgress && progressEvent.total) {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total,
+            );
+            onProgress(percentCompleted);
+          }
+        },
+      },
+    );
+
+    return response.data;
+  }
+
+  async listAttachments(messageId: string): Promise<Attachment[]> {
+    const response = await this.client.get<Attachment[]>(
+      `/messages/${messageId}/attachments`,
+    );
+    return response.data;
+  }
+
+  async deleteAttachment(attachmentId: string): Promise<void> {
+    await this.client.delete(`/attachments/${attachmentId}`);
+  }
+
+  async downloadAttachment(attachmentId: string): Promise<Blob> {
+    const response = await this.client.get(
+      `/attachments/${attachmentId}/download`,
+      {
+        responseType: "blob",
+      },
+    );
+    return response.data;
+  }
+
+  async getAttachmentUrl(attachmentId: string): string {
+    return `${this.config.baseURL}/attachments/${attachmentId}/download`;
+  }
+
+  // =========================================================================
+  // Clinical Context
+  // =========================================================================
+
+  async createClinicalContext(
+    context: ClinicalContextCreate,
+  ): Promise<ClinicalContext> {
+    return this.withRetryIfEnabled(async () => {
+      const response = await this.client.post<ClinicalContext>(
+        "/clinical-contexts",
+        context,
+      );
+      return response.data;
+    });
+  }
+
+  async getCurrentClinicalContext(
+    sessionId?: string,
+  ): Promise<ClinicalContext> {
+    return this.withRetryIfEnabled(async () => {
+      const params = sessionId ? { session_id: sessionId } : undefined;
+      const response = await this.client.get<ClinicalContext>(
+        "/clinical-contexts/current",
+        { params },
+      );
+      return response.data;
+    });
+  }
+
+  async getClinicalContext(contextId: string): Promise<ClinicalContext> {
+    const response = await this.client.get<ClinicalContext>(
+      `/clinical-contexts/${contextId}`,
+    );
+    return response.data;
+  }
+
+  async updateClinicalContext(
+    contextId: string,
+    update: ClinicalContextUpdate,
+  ): Promise<ClinicalContext> {
+    return this.withRetryIfEnabled(async () => {
+      const response = await this.client.put<ClinicalContext>(
+        `/clinical-contexts/${contextId}`,
+        update,
+      );
+      return response.data;
+    });
+  }
+
+  async deleteClinicalContext(contextId: string): Promise<void> {
+    await this.client.delete(`/clinical-contexts/${contextId}`);
   }
 
   // =========================================================================
