@@ -17,6 +17,7 @@ import type {
 } from "@voiceassist/types";
 import { useAuthStore } from "../stores/authStore";
 import { useAuth } from "./useAuth";
+import { createAttachmentsApi } from "../lib/api/attachmentsApi";
 
 interface UseChatSessionOptions {
   conversationId: string | undefined;
@@ -31,7 +32,7 @@ interface UseChatSessionReturn {
   connectionStatus: ConnectionStatus;
   isTyping: boolean;
   editingMessageId: string | null;
-  sendMessage: (content: string, attachments?: string[]) => void;
+  sendMessage: (content: string, files?: File[]) => void;
   editMessage: (messageId: string, newContent: string) => Promise<void>;
   regenerateMessage: (messageId: string) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
@@ -75,6 +76,12 @@ export function useChatSession(
 
   const { tokens } = useAuthStore();
   const { apiClient } = useAuth();
+
+  // Create attachments API client
+  const attachmentsApi = createAttachmentsApi(
+    import.meta.env.VITE_API_URL || "http://localhost:8000",
+    () => tokens?.accessToken || null,
+  );
 
   // Update messages when initialMessages changes (e.g., when conversation changes)
   useEffect(() => {
@@ -364,35 +371,62 @@ export function useChatSession(
   }, [disconnect, connect]);
 
   const sendMessage = useCallback(
-    (content: string, attachments?: string[]) => {
+    async (content: string, files?: File[]) => {
       if (wsRef.current?.readyState !== WebSocket.OPEN) {
         handleError("CONNECTION_DROPPED", "Cannot send message: not connected");
         return;
       }
 
+      // Generate unique message ID
+      const messageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
       const userMessage: Message = {
-        id: `msg-${Date.now()}`,
+        id: messageId,
         role: "user",
         content,
-        attachments,
+        attachments: [], // Will be populated after upload
         timestamp: Date.now(),
       };
 
-      // Add user message to messages
+      // Add user message to messages immediately
       setMessages((prev) => [...prev, userMessage]);
 
-      // Send to server - changed from 'message.send' to 'message' to match backend
-      // Backend expects content directly, not nested in message object
+      // Send text message to server via WebSocket
       wsRef.current.send(
         JSON.stringify({
           type: "message",
           content: content,
-          session_id: conversationId, // Add conversation ID as session
-          attachments: attachments,
+          session_id: conversationId,
         }),
       );
+
+      // Upload files asynchronously if present
+      if (files && files.length > 0) {
+        try {
+          const uploadedAttachments = [];
+          for (const file of files) {
+            const attachment = await attachmentsApi.uploadAttachment(
+              messageId,
+              file,
+            );
+            uploadedAttachments.push(attachment);
+          }
+
+          // Update message with uploaded attachments
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === messageId
+                ? { ...msg, attachments: uploadedAttachments.map((a) => a.id) }
+                : msg,
+            ),
+          );
+        } catch (error) {
+          console.error("Failed to upload attachments:", error);
+          // Don't fail the whole message send if attachments fail
+        }
+      }
     },
-    [handleError, conversationId],
+    [handleError, conversationId, attachmentsApi],
   );
 
   const editMessage = useCallback(

@@ -3,12 +3,12 @@
  * Markdown-aware message input with auto-expanding textarea and voice input
  */
 
-import { useState, useRef, useEffect, KeyboardEvent } from 'react';
-import { VoiceInput } from '../voice/VoiceInput';
-import { FileUpload, type UploadedFile } from '../files/FileUpload';
+import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import { VoiceInput } from "../voice/VoiceInput";
+import { ChatAttachmentUpload, type PendingFile } from "./ChatAttachmentUpload";
 
 export interface MessageInputProps {
-  onSend: (content: string, attachments?: string[]) => void;
+  onSend: (content: string, files?: File[]) => void;
   disabled?: boolean;
   placeholder?: string;
   enableAttachments?: boolean;
@@ -18,58 +18,47 @@ export interface MessageInputProps {
 export function MessageInput({
   onSend,
   disabled = false,
-  placeholder = 'Type a message... (Shift+Enter for new line)',
+  placeholder = "Type a message... (Shift+Enter for new line)",
   enableAttachments = false,
   enableVoiceInput = true,
 }: MessageInputProps) {
-  const [content, setContent] = useState('');
-  const [attachments, setAttachments] = useState<string[]>([]);
+  const [content, setContent] = useState("");
   const [showVoiceInput, setShowVoiceInput] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-expand textarea based on content
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-      textarea.style.height = 'auto';
+      textarea.style.height = "auto";
       textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
     }
   }, [content]);
 
   const handleSend = () => {
     if (content.trim() && !disabled) {
-      // Use uploaded file IDs as attachments
-      const fileIds = uploadedFiles.map((f) => f.id);
-      onSend(content.trim(), fileIds.length > 0 ? fileIds : undefined);
-      setContent('');
-      setAttachments([]);
-      setUploadedFiles([]);
+      // Pass the actual File objects to the parent
+      const files = pendingFiles.map((pf) => pf.file);
+      onSend(content.trim(), files.length > 0 ? files : undefined);
+      setContent("");
+      setPendingFiles([]);
       setShowFileUpload(false);
 
       // Reset textarea height
       if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = "auto";
       }
     }
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     // Enter to send, Shift+Enter for newline
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
-  };
-
-  const handleFilesUploaded = (files: UploadedFile[]) => {
-    // Files are already uploaded by FileUpload component
-    // Just update the state
-  };
-
-  const handleFileRemoved = (fileId: string) => {
-    // File removal is handled by FileUpload component
   };
 
   const handleVoiceTranscript = (text: string) => {
@@ -83,7 +72,9 @@ export function MessageInput({
       {showVoiceInput && enableVoiceInput && (
         <div className="mb-4 p-4 bg-white rounded-lg border-2 border-primary-500 shadow-lg">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-neutral-900">Voice Input</h3>
+            <h3 className="text-sm font-semibold text-neutral-900">
+              Voice Input
+            </h3>
             <button
               type="button"
               onClick={() => setShowVoiceInput(false)}
@@ -98,11 +89,18 @@ export function MessageInput({
                 stroke="currentColor"
                 className="w-5 h-5"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
-          <VoiceInput onTranscript={handleVoiceTranscript} disabled={disabled} />
+          <VoiceInput
+            onTranscript={handleVoiceTranscript}
+            disabled={disabled}
+          />
         </div>
       )}
 
@@ -110,7 +108,9 @@ export function MessageInput({
       {showFileUpload && enableAttachments && (
         <div className="mb-4 p-4 bg-white rounded-lg border-2 border-primary-500 shadow-lg">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-neutral-900">Attach Files</h3>
+            <h3 className="text-sm font-semibold text-neutral-900">
+              Attach Files
+            </h3>
             <button
               type="button"
               onClick={() => setShowFileUpload(false)}
@@ -125,17 +125,17 @@ export function MessageInput({
                 stroke="currentColor"
                 className="w-5 h-5"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
-          <FileUpload
-            onFilesUploaded={(files) => {
-              setUploadedFiles((prev) => [...prev, ...files]);
-            }}
-            onFileRemoved={(fileId) => {
-              setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
-            }}
+          <ChatAttachmentUpload
+            onFilesSelected={setPendingFiles}
+            selectedFiles={pendingFiles}
             disabled={disabled}
           />
         </div>
@@ -151,10 +151,10 @@ export function MessageInput({
             disabled={disabled}
             className={`flex items-center justify-center w-10 h-10 rounded-md transition-colors ${
               showVoiceInput
-                ? 'bg-primary-500 text-white'
+                ? "bg-primary-500 text-white"
                 : disabled
-                ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
-                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                  ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
             }`}
             aria-label="Voice input"
           >
@@ -183,10 +183,10 @@ export function MessageInput({
             disabled={disabled}
             className={`flex items-center justify-center w-10 h-10 rounded-md transition-colors ${
               showFileUpload
-                ? 'bg-primary-500 text-white'
+                ? "bg-primary-500 text-white"
                 : disabled
-                ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
-                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                  ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
             }`}
             aria-label="Attach files"
           >
@@ -204,9 +204,9 @@ export function MessageInput({
                 d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"
               />
             </svg>
-            {uploadedFiles.length > 0 && (
+            {pendingFiles.length > 0 && (
               <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-primary-600 rounded-full">
-                {uploadedFiles.length}
+                {pendingFiles.length}
               </span>
             )}
           </button>
@@ -223,7 +223,7 @@ export function MessageInput({
             placeholder={placeholder}
             rows={1}
             className="w-full resize-none rounded-md border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-neutral-100 disabled:text-neutral-500"
-            style={{ maxHeight: '200px' }}
+            style={{ maxHeight: "200px" }}
             aria-label="Message input"
           />
 

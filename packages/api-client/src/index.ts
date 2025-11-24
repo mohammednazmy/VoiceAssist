@@ -639,7 +639,7 @@ export class VoiceAssistApiClient {
    */
   async exportConversationAsMarkdown(conversationId: string): Promise<Blob> {
     const response = await this.client.get(
-      `/export/conversations/${conversationId}/markdown`,
+      `/export/sessions/${conversationId}/export/markdown`,
       {
         responseType: "blob",
       },
@@ -653,7 +653,7 @@ export class VoiceAssistApiClient {
    */
   async exportConversationAsPdf(conversationId: string): Promise<Blob> {
     const response = await this.client.get(
-      `/export/conversations/${conversationId}/pdf`,
+      `/export/sessions/${conversationId}/export/pdf`,
       {
         responseType: "blob",
       },

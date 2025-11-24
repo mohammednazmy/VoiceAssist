@@ -125,7 +125,7 @@ export function createAttachmentsApi(
           reject(new Error(error));
         });
 
-        xhr.open("POST", `${apiUrl}/upload`);
+        xhr.open("POST", `${apiUrl}/messages/${messageId}/attachments`);
         xhr.setRequestHeader("Authorization", `Bearer ${token}`);
         xhr.send(formData);
       });
@@ -137,12 +137,15 @@ export function createAttachmentsApi(
         throw new Error("Not authenticated");
       }
 
-      const response = await fetch(`${apiUrl}/message/${messageId}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${apiUrl}/messages/${messageId}/attachments`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         throw new Error(
