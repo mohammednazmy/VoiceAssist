@@ -197,6 +197,35 @@ export class VoiceAssistApiClient {
     return response.data;
   }
 
+  async createRealtimeSession(request: {
+    conversation_id?: string | null;
+  }): Promise<{
+    url: string;
+    model: string;
+    api_key: string;
+    session_id: string;
+    expires_at: number;
+    conversation_id?: string | null;
+    voice_config: {
+      voice: string;
+      modalities: string[];
+      input_audio_format: string;
+      output_audio_format: string;
+      input_audio_transcription: {
+        model: string;
+      };
+      turn_detection: {
+        type: string;
+        threshold: number;
+        prefix_padding_ms: number;
+        silence_duration_ms: number;
+      };
+    };
+  }> {
+    const response = await this.client.post("/voice/realtime-session", request);
+    return response.data;
+  }
+
   async getOAuthUrl(provider: "google" | "microsoft"): Promise<string> {
     const response = await this.client.get<ApiResponse<{ url: string }>>(
       `/auth/oauth/${provider}/authorize`,
