@@ -15,6 +15,7 @@ import {
   VoiceSettingsEnhanced,
   useVoiceSettings,
 } from "../components/voice/VoiceSettingsEnhanced";
+import { VoiceModePanel } from "../components/voice/VoiceModePanel";
 import { useAuth } from "../hooks/useAuth";
 
 export default function VoiceTestPage() {
@@ -80,15 +81,20 @@ export default function VoiceTestPage() {
           <h3 className="text-sm font-medium text-blue-900 mb-2">
             Feature Status:
           </h3>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>✅ Voice Activity Detection (VAD)</li>
-            <li>✅ Waveform Visualization</li>
-            <li>✅ Push-to-Talk Mode</li>
-            <li>✅ OpenAI Whisper Transcription</li>
-            <li>✅ OpenAI TTS Synthesis</li>
-            <li>✅ Barge-in Support</li>
-            <li>✅ Voice Settings Panel</li>
-          </ul>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <ul className="text-sm text-blue-800 space-y-1">
+              <li>✅ Voice Activity Detection (VAD)</li>
+              <li>✅ Waveform Visualization</li>
+              <li>✅ Push-to-Talk Mode</li>
+              <li>✅ OpenAI Whisper Transcription</li>
+            </ul>
+            <ul className="text-sm text-blue-800 space-y-1">
+              <li>✅ OpenAI TTS Synthesis</li>
+              <li>✅ Barge-in Support</li>
+              <li>✅ Voice Settings Panel</li>
+              <li>✅ OpenAI Realtime API (Full-duplex voice)</li>
+            </ul>
+          </div>
         </div>
 
         {/* Voice Input Section */}
@@ -189,6 +195,26 @@ export default function VoiceTestPage() {
               />
             </div>
           )}
+        </div>
+
+        {/* Realtime Voice Mode Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold text-neutral-900 mb-2">
+              Realtime Voice Mode (OpenAI Realtime API)
+            </h2>
+            <p className="text-sm text-neutral-600 mb-4">
+              Full-duplex voice conversation with real-time bidirectional audio
+              streaming. The AI responds naturally with voice and text.
+            </p>
+          </div>
+          <VoiceModePanel
+            onTranscriptReceived={(text, isFinal) => {
+              if (isFinal) {
+                console.log("Realtime transcript (final):", text);
+              }
+            }}
+          />
         </div>
 
         {/* Voice Settings Section */}

@@ -50,7 +50,10 @@ export function useConversations() {
   );
 
   const updateConversation = useCallback(
-    async (id: string, updates: { title?: string }) => {
+    async (
+      id: string,
+      updates: { title?: string; folderId?: string | null },
+    ) => {
       try {
         const updated = await apiClient.updateConversation(id, updates);
         setConversations((prev) =>

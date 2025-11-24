@@ -97,6 +97,88 @@ export function ConversationsSidebar() {
     }
   };
 
+  const handleMoveToFolder = async (
+    conversationId: string,
+    folderId: string | null,
+  ) => {
+    try {
+      await updateConversation(conversationId, { folderId });
+      setMovingConversationId(null);
+      setMenuOpenId(null);
+      toast?.success(
+        `Conversation moved to ${folderId ? "folder" : "root level"}`,
+      );
+    } catch (err) {
+      console.error("Failed to move conversation:", err);
+      toast?.error("Failed to move conversation");
+    }
+  };
+
+  const toggleFolder = (folderId: string) => {
+    setExpandedFolderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderId)) {
+        next.delete(folderId);
+      } else {
+        next.add(folderId);
+      }
+      return next;
+    });
+  };
+
+  const renderFolderTree = (
+    folderList: typeof folders,
+    level: number = 0,
+  ): JSX.Element[] => {
+    return folderList.map((folder) => {
+      const isExpanded = expandedFolderIds.has(folder.id);
+      const isSelected = selectedFolderId === folder.id;
+      const hasChildren = folder.children && folder.children.length > 0;
+
+      return (
+        <div key={folder.id}>
+          <button
+            onClick={() => setSelectedFolderId(folder.id)}
+            className={`w-full flex items-center px-4 py-2 text-sm hover:bg-neutral-100 ${
+              isSelected ? "bg-primary-50" : ""
+            }`}
+            style={{ paddingLeft: `${16 + level * 16}px` }}
+          >
+            {hasChildren && (
+              <span
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFolder(folder.id);
+                }}
+                className="mr-1 text-neutral-600"
+              >
+                {isExpanded ? "▼" : "▶"}
+              </span>
+            )}
+            <span className="mr-2">{folder.icon || "📁"}</span>
+            <span className="flex-1 text-left truncate">{folder.name}</span>
+          </button>
+          {isExpanded &&
+            hasChildren &&
+            renderFolderTree(folder.children!, level + 1)}
+        </div>
+      );
+    });
+  };
+
+  const filteredConversations = useMemo(() => {
+    let filtered = conversations;
+
+    // Filter by folder
+    if (selectedFolderId !== null) {
+      filtered = filtered.filter((conv) => conv.folderId === selectedFolderId);
+    } else if (selectedFolderId === "root") {
+      filtered = filtered.filter((conv) => !conv.folderId);
+    }
+
+    return filtered;
+  }, [conversations, selectedFolderId]);
+
   const formatDate = (timestamp: number): string => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -187,7 +269,50 @@ export function ConversationsSidebar() {
           </svg>
           <span>{showArchived ? "Show Active" : "Show Archived"}</span>
         </button>
+
+        {/* Folders Toggle */}
+        <button
+          onClick={() => setShowFolders(!showFolders)}
+          className="mt-2 text-sm text-neutral-600 hover:text-neutral-900 flex items-center space-x-1"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-4 h-4"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"
+            />
+          </svg>
+          <span>{showFolders ? "Hide Folders" : "Show Folders"}</span>
+        </button>
       </div>
+
+      {/* Folder Tree */}
+      {showFolders && (
+        <div className="border-b border-neutral-200 max-h-64 overflow-y-auto">
+          {/* All Conversations (root) */}
+          <button
+            onClick={() => setSelectedFolderId(null)}
+            className={`w-full flex items-center px-4 py-2 text-sm hover:bg-neutral-100 ${
+              selectedFolderId === null ? "bg-primary-50" : ""
+            }`}
+          >
+            <span className="mr-2">📂</span>
+            <span className="flex-1 text-left font-medium">
+              All Conversations
+            </span>
+          </button>
+
+          {/* Render folder tree */}
+          {folders.length > 0 && renderFolderTree(folders)}
+        </div>
+      )}
 
       {/* Conversations List */}
       <div className="flex-1 overflow-y-auto">
@@ -204,7 +329,7 @@ export function ConversationsSidebar() {
           </div>
         )}
 
-        {!isLoading && conversations.length === 0 && (
+        {!isLoading && filteredConversations.length === 0 && (
           <div className="p-4 text-center">
             <p className="text-sm text-neutral-600">
               {searchQuery ? "No conversations found" : "No conversations yet"}
@@ -213,7 +338,7 @@ export function ConversationsSidebar() {
         )}
 
         {!isLoading &&
-          conversations.map((conversation) => (
+          filteredConversations.map((conversation) => (
             <div
               key={conversation.id}
               className={`relative group ${
