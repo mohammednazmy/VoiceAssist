@@ -75,6 +75,12 @@ class Settings(BaseSettings):
     TTS_VOICE: Optional[str] = None
     VOICE_WS_MAX_INFLIGHT: int = 5
 
+    # OpenAI Realtime API settings (voice mode with WebSocket)
+    REALTIME_ENABLED: bool = True  # Enable Realtime API for voice sessions
+    REALTIME_MODEL: str = "gpt-4o-realtime-preview-2024-10-01"  # Realtime model
+    REALTIME_BASE_URL: str = "wss://api.openai.com/v1/realtime"  # WebSocket endpoint
+    REALTIME_TOKEN_EXPIRY_SEC: int = 300  # 5 minutes for ephemeral tokens
+
     # CORS (comma-separated list of allowed origins)
     ALLOWED_ORIGINS: str = (
         "https://asimo.io,https://dev.asimo.io,https://assist.asimo.io,http://localhost:3000,http://localhost:5173"

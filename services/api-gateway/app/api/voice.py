@@ -1,9 +1,10 @@
 """
 Voice API endpoints
-Handles audio transcription and speech synthesis
+Handles audio transcription, speech synthesis, and Realtime API sessions
 
 Providers:
 - OpenAI Whisper/TTS (default)
+- OpenAI Realtime API (WebSocket-based voice mode)
 - Stubs for future providers (Azure/GCP/ElevenLabs) using config
 """
 
@@ -12,6 +13,7 @@ from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.core.logging import get_logger
 from app.models.user import User
+from app.services.realtime_voice_service import realtime_voice_service
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -32,6 +34,24 @@ class TranscribeResponse(BaseModel):
     """Response model for audio transcription"""
 
     text: str
+
+
+class RealtimeSessionRequest(BaseModel):
+    """Request model for Realtime session configuration"""
+
+    conversation_id: str | None = None
+
+
+class RealtimeSessionResponse(BaseModel):
+    """Response model for Realtime session configuration"""
+
+    url: str
+    model: str
+    api_key: str
+    session_id: str
+    expires_at: int
+    conversation_id: str | None
+    voice_config: dict
 
 
 @router.post(
@@ -270,4 +290,89 @@ async def synthesize_speech(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Speech synthesis failed: {str(e)}",
+        )
+
+
+@router.post(
+    "/realtime-session",
+    response_model=RealtimeSessionResponse,
+    summary="Create Realtime API session",
+    description="Generate session configuration for OpenAI Realtime API (WebSocket-based voice mode)",
+)
+async def create_realtime_session(
+    request: RealtimeSessionRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Create a Realtime API session for voice mode.
+
+    This endpoint generates ephemeral session configuration that the frontend
+    uses to establish a WebSocket connection to OpenAI's Realtime API.
+
+    Args:
+        request: RealtimeSessionRequest with optional conversation_id
+        current_user: Authenticated user
+
+    Returns:
+        RealtimeSessionResponse with session configuration including:
+        - WebSocket URL
+        - Model name
+        - API key (ephemeral or full)
+        - Session ID
+        - Expiry timestamp
+        - Voice configuration (voice, modalities, VAD settings)
+
+    Raises:
+        HTTPException: If Realtime API is not enabled or configured
+    """
+    logger.info(
+        f"Creating Realtime session for user {current_user.id}",
+        extra={
+            "user_id": current_user.id,
+            "conversation_id": request.conversation_id,
+        },
+    )
+
+    try:
+        # Check if Realtime API is enabled
+        if not realtime_voice_service.is_enabled():
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Realtime API is not enabled or not configured",
+            )
+
+        # Generate session configuration
+        config = realtime_voice_service.generate_session_config(
+            user_id=str(current_user.id),
+            conversation_id=request.conversation_id,
+        )
+
+        logger.info(
+            f"Realtime session created for user {current_user.id}",
+            extra={
+                "user_id": current_user.id,
+                "session_id": config["session_id"],
+                "expires_at": config["expires_at"],
+            },
+        )
+
+        return RealtimeSessionResponse(**config)
+
+    except ValueError as e:
+        logger.error(
+            f"Failed to create Realtime session: {str(e)}",
+            extra={"user_id": current_user.id, "error": str(e)},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(e),
+        )
+    except Exception as e:
+        logger.error(
+            f"Realtime session error: {str(e)}",
+            extra={"user_id": current_user.id, "error": str(e)},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create Realtime session: {str(e)}",
         )
