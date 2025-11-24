@@ -11,7 +11,7 @@ import { useAuthStore } from "../stores/authStore";
 
 // Initialize API client
 const apiClient = new VoiceAssistApiClient({
-  baseURL: `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api`,
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api",
   getAccessToken: () => {
     const state = useAuthStore.getState();
     return state.tokens?.accessToken || null;
@@ -69,13 +69,17 @@ export function useAuth() {
         setLoading(true);
         setError(null);
 
-        // TODO: Add register endpoint to API client
-        // const response = await apiClient.register(data);
-        console.log("Register:", data);
+        // Register the user with the backend
+        await apiClient.register({
+          email: data.email,
+          password: data.password,
+          full_name: data.name,
+        });
 
-        // For now, auto-login after successful registration
+        // Auto-login after successful registration
         await login({ email: data.email, password: data.password });
       } catch (err) {
+        setLoading(false);
         setError(err instanceof Error ? err.message : "Registration failed");
         throw err;
       }
