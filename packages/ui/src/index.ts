@@ -23,4 +23,9 @@ export {
 export { OAuthButton } from './components/OAuthButton';
 export type { OAuthButtonProps } from './components/OAuthButton';
 
+// Providers
+export { ThemeProvider, useTheme } from './providers';
+export type { Theme, ResolvedTheme, ThemeContextValue } from './providers';
+
+// Utilities
 export { cn } from './lib/utils';
