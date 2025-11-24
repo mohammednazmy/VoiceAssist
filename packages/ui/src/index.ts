@@ -44,6 +44,45 @@ export type { AvatarProps, AvatarGroupProps } from './components/Avatar';
 export { IconButton } from './components/IconButton';
 export type { IconButtonProps } from './components/IconButton';
 
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
+} from './components/Table';
+
+export {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogClose,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from './components/Dialog';
+export type { DialogContentProps } from './components/Dialog';
+
+export {
+  Select,
+  SelectGroup,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectLabel,
+  SelectItem,
+  SelectSeparator,
+  SelectScrollUpButton,
+  SelectScrollDownButton,
+} from './components/Select';
+export type { SelectTriggerProps } from './components/Select';
+
 // Providers
 export { ThemeProvider, useTheme } from './providers';
 export type { Theme, ResolvedTheme, ThemeContextValue } from './providers';
