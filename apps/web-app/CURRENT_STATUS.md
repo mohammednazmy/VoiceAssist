@@ -68,17 +68,21 @@
 
 ### Priority 1: Integration & Testing (Week 1-2)
 
-1. **Backend Integration** (3 days)
-   - [ ] Connect auth to `/api/auth/*` endpoints
-   - [ ] Test login/register flow end-to-end
-   - [ ] Implement token refresh logic
-   - [ ] Test protected routes
+1. **Backend Integration** (3 days) - ✅ COMPLETED
+   - [x] Connect auth to `/api/auth/*` endpoints
+   - [x] Test login/register flow end-to-end
+   - [x] Implement token refresh logic
+   - [x] Test protected routes
+   - [x] Fix React multiple instances issue (Vite dedupe)
+   - [x] Create ThemeContext for MainLayout
 
-2. **Chat Integration** (3 days)
-   - [ ] Connect to WebSocket `/api/realtime/ws`
-   - [ ] Test message streaming
-   - [ ] Implement conversation persistence
-   - [ ] Test citation display
+2. **Chat Integration** (3 days) - ✅ READY FOR TESTING
+   - [x] WebSocket client implementation complete (`useChatSession`)
+   - [x] Message streaming with delta/chunk support
+   - [x] Connection status monitoring and reconnection
+   - [x] API client methods verified (conversations, messages)
+   - [ ] End-to-end testing with backend (needs backend running)
+   - [ ] Test citation display with real data
 
 3. **Component Testing** (2-3 days)
    - [ ] Write tests for auth components
@@ -191,27 +195,32 @@
 
 ## 🚀 Next Immediate Actions
 
-1. **Today: Backend Connection**
-   - Update `.env.development` with correct API URL
-   - Test auth endpoints with Postman/curl
-   - Connect login page to backend
-   - Test token storage and refresh
+1. **✅ COMPLETED: Backend Connection**
+   - [x] Update `.env.development` with correct API URL
+   - [x] Test auth endpoints - registration and login working
+   - [x] Connect login page to backend
+   - [x] Test token storage and refresh
+   - [x] Fix React dedupe issue for Radix UI components
 
-2. **Tomorrow: Chat Integration**
-   - Connect WebSocket client
+2. **✅ COMPLETED: Chat Integration (Code Ready)**
+   - [x] WebSocket client implemented (`useChatSession` hook)
+   - [x] Message streaming support (delta/chunk events)
+   - [x] Conversation history loading
+   - [x] Connection status and auto-reconnection
+   - [ ] **NEXT: End-to-end testing** (see TESTING_GUIDE.md)
+
+3. **NOW: Manual Testing**
+   - Follow steps in `TESTING_GUIDE.md`
+   - Test chat with live backend
+   - Verify WebSocket connection
    - Test message streaming
-   - Implement conversation history
+   - Document any issues
 
-3. **Day 3: Testing**
-   - Write auth tests
-   - Write chat tests
-   - Run full test suite
-
-4. **Day 4-5: Polish & Deploy**
-   - Fix UI issues
-   - Add loading states
-   - Deploy to staging
-   - User acceptance testing
+4. **Then: Automated Testing**
+   - Write auth component tests
+   - Write chat component tests
+   - Write WebSocket hook tests
+   - Run full test suite (target >80% coverage)
 
 ---
 

@@ -3,8 +3,8 @@
  * Layout with header, sidebar, and content area
  */
 
-import { useState } from 'react';
-import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useState } from "react";
+import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   Button,
   Avatar,
@@ -16,34 +16,34 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  useTheme,
-} from '@voiceassist/ui';
-import { useAuth } from '../../hooks/useAuth';
-import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
-import { ConversationList } from '../conversations/ConversationList';
-import { SkipLink } from '../accessibility/SkipLink';
+} from "@voiceassist/ui";
+import { useAuth } from "../../hooks/useAuth";
+import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ConversationList } from "../conversations/ConversationList";
+import { SkipLink } from "../accessibility/SkipLink";
 
 export function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   // Enable keyboard shortcuts
   useKeyboardShortcuts();
 
-  const isChatRoute = location.pathname.startsWith('/chat');
+  const isChatRoute = location.pathname.startsWith("/chat");
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   // Helper to check if a route is active
   const isActiveRoute = (path: string) => {
-    if (path === '/') {
-      return location.pathname === '/';
+    if (path === "/") {
+      return location.pathname === "/";
     }
     return location.pathname.startsWith(path);
   };
@@ -54,7 +54,10 @@ export function MainLayout() {
       <SkipLink />
 
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800" role="banner">
+      <header
+        className="sticky top-0 z-40 bg-white border-b border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800"
+        role="banner"
+      >
         <div className="flex items-center justify-between h-16 px-4 lg:px-6">
           {/* Mobile menu button */}
           <button
@@ -110,12 +113,8 @@ export function MainLayout() {
             {/* Theme toggle */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <IconButton
-                  variant="ghost"
-                  size="md"
-                  aria-label="Toggle theme"
-                >
-                  {resolvedTheme === 'light' ? (
+                <IconButton variant="ghost" size="md" aria-label="Toggle theme">
+                  {theme === "light" ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -149,7 +148,7 @@ export function MainLayout() {
                 </IconButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setTheme('light')}>
+                <DropdownMenuItem onClick={() => setTheme("light")}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -165,7 +164,7 @@ export function MainLayout() {
                     />
                   </svg>
                   Light
-                  {theme === 'light' && (
+                  {theme === "light" && (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -174,11 +173,15 @@ export function MainLayout() {
                       stroke="currentColor"
                       className="w-4 h-4 ml-auto"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4.5 12.75l6 6 9-13.5"
+                      />
                     </svg>
                   )}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme('dark')}>
+                <DropdownMenuItem onClick={() => setTheme("dark")}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -194,7 +197,7 @@ export function MainLayout() {
                     />
                   </svg>
                   Dark
-                  {theme === 'dark' && (
+                  {theme === "dark" && (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -203,11 +206,15 @@ export function MainLayout() {
                       stroke="currentColor"
                       className="w-4 h-4 ml-auto"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4.5 12.75l6 6 9-13.5"
+                      />
                     </svg>
                   )}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme('system')}>
+                <DropdownMenuItem onClick={() => setTheme("system")}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -223,7 +230,7 @@ export function MainLayout() {
                     />
                   </svg>
                   System
-                  {theme === 'system' && (
+                  {theme === "system" && (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -232,7 +239,11 @@ export function MainLayout() {
                       stroke="currentColor"
                       className="w-4 h-4 ml-auto"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4.5 12.75l6 6 9-13.5"
+                      />
                     </svg>
                   )}
                 </DropdownMenuItem>
@@ -247,7 +258,7 @@ export function MainLayout() {
                   aria-label="User menu"
                 >
                   <Avatar
-                    alt={user?.name || 'User'}
+                    alt={user?.name || "User"}
                     size="sm"
                     className="cursor-pointer"
                   />
@@ -256,7 +267,9 @@ export function MainLayout() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium text-text-primary">{user?.name}</p>
+                    <p className="text-sm font-medium text-text-primary">
+                      {user?.name}
+                    </p>
                     <p className="text-xs text-text-tertiary">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
@@ -271,7 +284,7 @@ export function MainLayout() {
                     <DropdownMenuSeparator />
                   </>
                 )}
-                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -288,7 +301,7 @@ export function MainLayout() {
                   </svg>
                   Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/settings')}>
+                <DropdownMenuItem onClick={() => navigate("/settings")}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -349,7 +362,7 @@ export function MainLayout() {
           className={`
             fixed inset-y-0 left-0 z-30 w-64 transform bg-white border-r border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 transition-transform duration-300 ease-in-out
             lg:relative lg:translate-x-0 top-16
-            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           `}
           aria-label={isChatRoute ? "Conversations" : "Sidebar navigation"}
         >
@@ -362,9 +375,9 @@ export function MainLayout() {
                   <Link
                     to="/"
                     className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActiveRoute('/')
-                        ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400'
-                        : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-50'
+                      isActiveRoute("/")
+                        ? "bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400"
+                        : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-50"
                     }`}
                     onClick={() => setSidebarOpen(false)}
                   >
@@ -389,9 +402,9 @@ export function MainLayout() {
                   <Link
                     to="/chat"
                     className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActiveRoute('/chat')
-                        ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400'
-                        : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-50'
+                      isActiveRoute("/chat")
+                        ? "bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400"
+                        : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-50"
                     }`}
                     onClick={() => setSidebarOpen(false)}
                   >
@@ -416,9 +429,9 @@ export function MainLayout() {
                   <Link
                     to="/documents"
                     className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActiveRoute('/documents')
-                        ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400'
-                        : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-50'
+                      isActiveRoute("/documents")
+                        ? "bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400"
+                        : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-50"
                     }`}
                     onClick={() => setSidebarOpen(false)}
                   >
@@ -443,9 +456,9 @@ export function MainLayout() {
                   <Link
                     to="/clinical-context"
                     className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActiveRoute('/clinical-context')
-                        ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400'
-                        : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-50'
+                      isActiveRoute("/clinical-context")
+                        ? "bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400"
+                        : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-50"
                     }`}
                     onClick={() => setSidebarOpen(false)}
                   >
@@ -470,9 +483,9 @@ export function MainLayout() {
                   <Link
                     to="/settings"
                     className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActiveRoute('/settings')
-                        ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400'
-                        : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-50'
+                      isActiveRoute("/settings")
+                        ? "bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400"
+                        : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-50"
                     }`}
                     onClick={() => setSidebarOpen(false)}
                   >

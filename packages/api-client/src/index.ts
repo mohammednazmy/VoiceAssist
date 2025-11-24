@@ -113,6 +113,15 @@ export class VoiceAssistApiClient {
     };
   }
 
+  async register(data: {
+    email: string;
+    password: string;
+    full_name: string;
+  }): Promise<User> {
+    const response = await this.client.post<User>("/auth/register", data);
+    return response.data;
+  }
+
   async logout(): Promise<void> {
     await this.client.post("/auth/logout");
   }
@@ -475,7 +484,10 @@ export class VoiceAssistApiClient {
     return response.data;
   }
 
-  async updateFolder(id: string, request: UpdateFolderRequest): Promise<Folder> {
+  async updateFolder(
+    id: string,
+    request: UpdateFolderRequest,
+  ): Promise<Folder> {
     const response = await this.client.put<Folder>(`/folders/${id}`, request);
     return response.data;
   }
