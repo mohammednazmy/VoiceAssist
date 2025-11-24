@@ -36,7 +36,9 @@ This plan outlines a comprehensive approach to modernizing the VoiceAssist front
   - Add calming blues and greens palette
   - Ensure WCAG AA contrast ratios (4.5:1 for text, 3:1 for UI components)
   - Add semantic color tokens for states (success, error, warning, info)
-  - Create light and dark mode variants
+  - **Create both light and dark mode variants** (even if shipping only light mode initially)
+  - Structure tokens to support easy theme switching in future
+  - Document color usage guidelines for both modes
 
 ```typescript
 // Example structure:
@@ -1164,30 +1166,69 @@ pnpm add -D @storybook/react-vite @storybook/addon-essentials @storybook/addon-a
    - Run build: `pnpm build`
    - Manual testing
 
+### Stakeholder Feedback Sessions
+
+**Regular cadence to iterate on real-world feedback:**
+
+**Phase 1-2 (Weeks 1-3):**
+- **Week 2:** Internal review of design tokens and color palette
+- **Week 3:** Component library preview with stakeholders (Storybook)
+
+**Phase 3 (Weeks 4-6):**
+- **Week 4:** Web app mockups/prototype review with clinician stakeholders
+- **Week 5:** Mid-phase check-in after dashboard implementation
+- **Week 6:** End-of-phase demo and feedback session
+
+**Phase 4 (Weeks 7-8):**
+- **Week 7:** Admin panel prototype review with admin users
+- **Week 8:** End-of-phase demo and feedback session
+
+**Phase 5-6 (Weeks 9-11):**
+- **Week 9:** Accessibility audit review with stakeholders
+- **Week 10:** Full system demo across all devices
+- **Week 11:** Final review and approval session
+
+**Feedback Collection Methods:**
+- Live demo sessions (30-45 min)
+- Async feedback via recorded videos + comment tools
+- Structured feedback forms (5-point scale + open comments)
+- One-on-one interviews with key users (15-20 min)
+- Usage analytics review (post-deployment)
+
+**Feedback Integration:**
+- Document all feedback in issue tracker
+- Prioritize by impact and effort
+- Address critical items before next phase
+- Track themes and patterns across sessions
+
 ### Incremental Rollout
 
 1. **Phase 1-2: Foundation**
    - Merge to feature branch
    - No user-facing changes yet
    - Safe to deploy
+   - **Stakeholder review:** Design tokens and component library
 
 2. **Phase 3: Web App**
    - Use feature flags if possible
    - Deploy to staging first
-   - Beta test with small group
-   - Gather feedback
-   - Iterate
+   - Beta test with small group (3-5 clinicians)
+   - **Stakeholder feedback sessions:** Weekly demos
+   - Gather feedback and iterate
+   - A/B testing if possible (old vs new design)
 
 3. **Phase 4: Admin Panel**
    - Deploy to staging
-   - Test with admin users
-   - Gather feedback
-   - Iterate
+   - Test with admin users (2-3 users)
+   - **Stakeholder feedback session:** Admin demo
+   - Gather feedback and iterate
 
 4. **Phase 5-6: Polish**
    - Final testing
+   - **Stakeholder feedback:** Full system review
    - Documentation review
    - Prepare for production release
+   - **Final stakeholder approval:** Go/no-go decision
 
 ### Testing Checklist (Before Each Merge)
 
@@ -1268,6 +1309,25 @@ If critical issues are discovered after deployment:
    - Time to Interactive (TTI): <3.5s
    - Bundle size increase: <15%
 
+   **Performance Budgets:**
+   - Initial page load (web-app): <2.5s (3G connection)
+   - Initial page load (admin-panel): <2s (3G connection)
+   - JavaScript bundle size (web-app): <300KB gzipped
+   - JavaScript bundle size (admin-panel): <250KB gzipped
+   - CSS bundle size: <50KB gzipped
+   - Largest Contentful Paint (LCP): <2.5s
+   - Cumulative Layout Shift (CLS): <0.1
+   - First Input Delay (FID): <100ms
+   - Total Blocking Time (TBT): <300ms
+
+   **Visual Regression Testing:**
+   - Chromatic or Percy integration in CI/CD
+   - Baseline snapshots for all components (Storybook)
+   - Baseline snapshots for all page states
+   - Automated visual diff on every PR
+   - Manual review required for intentional changes
+   - Zero unintended visual regressions tolerance
+
 3. **Code Quality**
    - Test coverage: >80%
    - Linter errors: 0
@@ -1278,22 +1338,49 @@ If critical issues are discovered after deployment:
    - All touch targets: >44x44px
    - All interactive elements keyboard accessible
 
+### User-Centric Metrics
+
+1. **Clinician Satisfaction**
+   - Pre/post-redesign satisfaction scores: Target >20% improvement
+   - System Usability Scale (SUS) score: Target >80
+   - Net Promoter Score (NPS): Track improvement
+
+2. **Support & Efficiency**
+   - Reduction in UI-related support queries: Target >30% reduction
+   - Time to complete common tasks: Target >15% reduction
+   - Error rate during task completion: Target >25% reduction
+   - First-time user success rate: Target >90%
+
+3. **Engagement Metrics**
+   - Daily active users (DAU): Monitor for increase
+   - Feature adoption rates: Track usage of new features
+   - Session duration: Monitor for healthy engagement
+   - Return user rate: Target improvement
+
+4. **Admin Efficiency**
+   - Time to complete admin tasks: Target >20% reduction
+   - Admin panel error rates: Target >40% reduction
+   - Admin user satisfaction: Target >85% positive feedback
+
 ### Qualitative Metrics
 
 1. **User Feedback**
-   - Survey clinicians on new design
-   - Measure task completion rates
-   - Gather feedback on usability
+   - Post-phase clinician surveys (5-point scale)
+   - Task completion usability testing
+   - In-app feedback collection
+   - Stakeholder interview feedback
 
 2. **Developer Experience**
    - Faster component development with shared library
    - Consistent code patterns
    - Easier onboarding
+   - Developer satisfaction surveys
 
 3. **Visual Design**
    - Professional healthcare aesthetic
    - Consistent brand identity
    - Modern, clean interface
+   - Stakeholder design approval
 
 ---
 
