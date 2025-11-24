@@ -155,6 +155,39 @@ export class VoiceAssistApiClient {
     });
   }
 
+  // =========================================================================
+  // Voice (Transcription & TTS)
+  // =========================================================================
+
+  async transcribeAudio(audio: Blob, filename = "audio.webm"): Promise<string> {
+    const formData = new FormData();
+    formData.append("audio", audio as any, filename);
+
+    const response = await this.client.post<{ text: string }>(
+      "/voice/transcribe",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+
+    return response.data.text;
+  }
+
+  async synthesizeSpeech(text: string, voiceId?: string): Promise<Blob> {
+    const response = await this.client.post<Blob>(
+      "/voice/synthesize",
+      { text, voiceId },
+      {
+        responseType: "blob",
+      },
+    );
+
+    return response.data;
+  }
+
   async getOAuthUrl(provider: "google" | "microsoft"): Promise<string> {
     const response = await this.client.get<ApiResponse<{ url: string }>>(
       `/auth/oauth/${provider}/authorize`,

@@ -3,22 +3,27 @@ Realtime WebSocket API for streaming chat and future voice integration.
 
 This module provides WebSocket endpoints for real-time communication between
 the client and the backend. In Phase 4 MVP, it supports text-based streaming.
+
+Voice/TTS integration plan (to be implemented):
+- Add authenticated WS path for audio: accept PCM/Opus chunks, forward to ASR (OpenAI Realtime/local ASR)
+- Emit interim transcripts as `transcript.partial` and final as `transcript.final`
+- Support TTS responses via REST/WS: synthesize assistant replies and stream audio chunks
+- Heartbeats + backpressure: ping/pong and max in-flight frames to avoid buffer bloat
+- Metrics: connection counts, audio duration, ASR/TTS latency, error rates
 Future phases will add voice streaming, VAD, and OpenAI Realtime API integration.
 """
+
 import json
 import logging
-from typing import Dict, Any, Optional
 from datetime import datetime, timezone
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
-from sqlalchemy.orm import Session
+from typing import Any, Dict, Optional
 
+from app.core.business_metrics import rag_citations_per_query, rag_queries_total
 from app.core.database import get_db
 from app.core.logging import get_logger
 from app.services.rag_service import QueryOrchestrator, QueryRequest
-from app.core.business_metrics import (
-    rag_queries_total,
-    rag_citations_per_query
-)
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/api/realtime", tags=["realtime"])
 logger = get_logger(__name__)
@@ -60,10 +65,7 @@ class ConnectionManager:
         error_msg = {
             "type": "error",
             "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
-            "error": {
-                "code": error_code,
-                "message": error_message
-            }
+            "error": {"code": error_code, "message": error_message},
         }
         await self.send_personal_message(error_msg, client_id)
 
@@ -73,10 +75,7 @@ manager = ConnectionManager()
 
 
 @router.websocket("/ws")
-async def websocket_endpoint(
-    websocket: WebSocket,
-    db: Session = Depends(get_db)
-):
+async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
     """
     WebSocket endpoint for realtime chat communication.
 
@@ -145,29 +144,32 @@ async def websocket_endpoint(
     # For MVP, use a simple UUID-based client ID
     # In production, this should be derived from authenticated user
     import uuid
+
     client_id = str(uuid.uuid4())
 
     await manager.connect(websocket, client_id)
 
     try:
         # Send welcome message
-        await websocket.send_json({
-            "type": "connected",
-            "client_id": client_id,
-            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
-            "protocol_version": "1.0",
-            "capabilities": ["text_streaming"]
-        })
+        await websocket.send_json(
+            {
+                "type": "connected",
+                "client_id": client_id,
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+                "protocol_version": "1.0",
+                "capabilities": ["text_streaming"],
+            }
+        )
 
         while True:
             # Receive message from client
             data = await websocket.receive_json()
             message_type = data.get("type")
 
-            logger.info(f"Received WebSocket message", extra={
-                "client_id": client_id,
-                "message_type": message_type
-            })
+            logger.info(
+                f"Received WebSocket message",
+                extra={"client_id": client_id, "message_type": message_type},
+            )
 
             if message_type == "message":
                 # Process chat message
@@ -175,17 +177,19 @@ async def websocket_endpoint(
 
             elif message_type == "ping":
                 # Respond to ping for connection keepalive
-                await websocket.send_json({
-                    "type": "pong",
-                    "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
-                })
+                await websocket.send_json(
+                    {
+                        "type": "pong",
+                        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+                    }
+                )
 
             else:
                 # Unknown message type
                 await manager.send_error(
                     client_id,
                     "UNKNOWN_MESSAGE_TYPE",
-                    f"Unknown message type: {message_type}"
+                    f"Unknown message type: {message_type}",
                 )
 
     except WebSocketDisconnect:
@@ -199,10 +203,7 @@ async def websocket_endpoint(
 
 
 async def handle_chat_message(
-    websocket: WebSocket,
-    client_id: str,
-    data: Dict[str, Any],
-    db: Session
+    websocket: WebSocket, client_id: str, data: Dict[str, Any], db: Session
 ):
     """
     Handle incoming chat message and stream response using QueryOrchestrator.
@@ -210,20 +211,23 @@ async def handle_chat_message(
     Integrates with the QueryOrchestrator to process clinical queries and
     stream responses back to the client in chunks.
     """
-    import uuid
     import asyncio
+    import uuid
 
     message_id = str(uuid.uuid4())
     user_message = data.get("content", "")
     session_id = data.get("session_id")
     clinical_context_id = data.get("clinical_context_id")
 
-    logger.info("Processing chat message", extra={
-        "client_id": client_id,
-        "message_id": message_id,
-        "has_session": bool(session_id),
-        "has_context": bool(clinical_context_id)
-    })
+    logger.info(
+        "Processing chat message",
+        extra={
+            "client_id": client_id,
+            "message_id": message_id,
+            "has_session": bool(session_id),
+            "has_context": bool(clinical_context_id),
+        },
+    )
 
     # Note: Frontend expects specific event types and camelCase field names
     # Changed to match frontend protocol in useChatSession.ts
@@ -233,15 +237,14 @@ async def handle_chat_message(
         query_request = QueryRequest(
             session_id=session_id,
             query=user_message,
-            clinical_context_id=clinical_context_id
+            clinical_context_id=clinical_context_id,
         )
 
         # Call QueryOrchestrator to process the query
         # Note: Current implementation is synchronous (stub LLM)
         # Future phases will add true streaming from LLM API
         query_response = await query_orchestrator.handle_query(
-            query_request,
-            trace_id=message_id
+            query_request, trace_id=message_id
         )
 
         # Stream the response in chunks
@@ -249,14 +252,16 @@ async def handle_chat_message(
         chunk_size = 50  # Characters per chunk
 
         for i in range(0, len(response_text), chunk_size):
-            chunk = response_text[i:i + chunk_size]
+            chunk = response_text[i : i + chunk_size]
             # Changed from 'message_chunk' to 'chunk' to match frontend
             # Changed 'message_id' to 'messageId' for camelCase consistency
-            await websocket.send_json({
-                "type": "chunk",
-                "messageId": message_id,
-                "content": chunk,
-            })
+            await websocket.send_json(
+                {
+                    "type": "chunk",
+                    "messageId": message_id,
+                    "content": chunk,
+                }
+            )
             # Small delay to simulate streaming (will be natural with real LLM streaming)
             await asyncio.sleep(0.05)
 
@@ -268,17 +273,29 @@ async def handle_chat_message(
                 "source_type": cite.source_type,
                 "title": cite.title,
                 "url": cite.url if cite.url else None,
-                "authors": cite.authors if hasattr(cite, 'authors') and cite.authors else None,
-                "publication_date": cite.publication_date if hasattr(cite, 'publication_date') else None,
-                "journal": cite.journal if hasattr(cite, 'journal') else None,
-                "doi": cite.doi if hasattr(cite, 'doi') else None,
-                "pmid": cite.pmid if hasattr(cite, 'pmid') else None,
-                "relevance_score": cite.relevance_score if hasattr(cite, 'relevance_score') else None,
-                "quoted_text": cite.quoted_text if hasattr(cite, 'quoted_text') else None,
+                "authors": (
+                    cite.authors if hasattr(cite, "authors") and cite.authors else None
+                ),
+                "publication_date": (
+                    cite.publication_date if hasattr(cite, "publication_date") else None
+                ),
+                "journal": cite.journal if hasattr(cite, "journal") else None,
+                "doi": cite.doi if hasattr(cite, "doi") else None,
+                "pmid": cite.pmid if hasattr(cite, "pmid") else None,
+                "relevance_score": (
+                    cite.relevance_score if hasattr(cite, "relevance_score") else None
+                ),
+                "quoted_text": (
+                    cite.quoted_text if hasattr(cite, "quoted_text") else None
+                ),
                 # Backward compatibility fields for frontend
                 "source": cite.source_type,
                 "reference": cite.title,
-                "snippet": cite.quoted_text if hasattr(cite, 'quoted_text') and cite.quoted_text else cite.url,
+                "snippet": (
+                    cite.quoted_text
+                    if hasattr(cite, "quoted_text") and cite.quoted_text
+                    else cite.url
+                ),
             }
             for cite in query_response.citations
         ]
@@ -289,47 +306,52 @@ async def handle_chat_message(
             "role": "assistant",
             "content": response_text,
             "citations": citations,
-            "timestamp": int(datetime.now(timezone.utc).timestamp() * 1000),  # Unix timestamp in ms
+            "timestamp": int(
+                datetime.now(timezone.utc).timestamp() * 1000
+            ),  # Unix timestamp in ms
         }
 
         # Changed from 'message_complete' to 'message.done' to match frontend
-        await websocket.send_json({
-            "type": "message.done",
-            "messageId": message_id,
-            "message": final_message,
-            "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
-        })
+        await websocket.send_json(
+            {
+                "type": "message.done",
+                "messageId": message_id,
+                "message": final_message,
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+            }
+        )
 
         # Track RAG query metrics (P3.3 - Business Metrics)
         has_citations = len(citations) > 0
         rag_queries_total.labels(
-            success="true",
-            has_citations=str(has_citations).lower()
+            success="true", has_citations=str(has_citations).lower()
         ).inc()
         rag_citations_per_query.observe(len(citations))
 
-        logger.info("Completed streaming response", extra={
-            "client_id": client_id,
-            "message_id": message_id,
-            "response_length": len(response_text),
-            "citation_count": len(citations)
-        })
+        logger.info(
+            "Completed streaming response",
+            extra={
+                "client_id": client_id,
+                "message_id": message_id,
+                "response_length": len(response_text),
+                "citation_count": len(citations),
+            },
+        )
 
     except Exception as e:
         # Track failed RAG query (P3.3 - Business Metrics)
-        rag_queries_total.labels(
-            success="false",
-            has_citations="false"
-        ).inc()
+        rag_queries_total.labels(success="false", has_citations="false").inc()
 
         logger.error(f"Error processing chat message: {str(e)}", exc_info=True)
         # Changed message_id to messageId for camelCase consistency
-        await websocket.send_json({
-            "type": "error",
-            "messageId": message_id,
-            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
-            "error": {
-                "code": "BACKEND_ERROR",  # Changed to match frontend error codes
-                "message": f"Failed to process query: {str(e)}"
+        await websocket.send_json(
+            {
+                "type": "error",
+                "messageId": message_id,
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+                "error": {
+                    "code": "BACKEND_ERROR",  # Changed to match frontend error codes
+                    "message": f"Failed to process query: {str(e)}",
+                },
             }
-        })
+        )
