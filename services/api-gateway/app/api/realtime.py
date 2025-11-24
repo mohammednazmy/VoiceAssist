@@ -13,14 +13,19 @@ Voice/TTS integration plan (to be implemented):
 Future phases will add voice streaming, VAD, and OpenAI Realtime API integration.
 """
 
-import json
-import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from app.core.business_metrics import rag_citations_per_query, rag_queries_total
 from app.core.database import get_db
 from app.core.logging import get_logger
+from app.schemas.websocket import (
+    create_chunk_event,
+    create_connected_event,
+    create_error_event,
+    create_message_done_event,
+    create_pong_event,
+)
 from app.services.rag_service import QueryOrchestrator, QueryRequest
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
@@ -150,16 +155,11 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
     await manager.connect(websocket, client_id)
 
     try:
-        # Send welcome message
-        await websocket.send_json(
-            {
-                "type": "connected",
-                "client_id": client_id,
-                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
-                "protocol_version": "1.0",
-                "capabilities": ["text_streaming"],
-            }
+        # Send welcome message using schema
+        connected_event = create_connected_event(
+            client_id=client_id, timestamp=datetime.now(timezone.utc)
         )
+        await websocket.send_json(connected_event)
 
         while True:
             # Receive message from client
@@ -167,7 +167,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
             message_type = data.get("type")
 
             logger.info(
-                f"Received WebSocket message",
+                "Received WebSocket message",
                 extra={"client_id": client_id, "message_type": message_type},
             )
 
@@ -176,13 +176,9 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                 await handle_chat_message(websocket, client_id, data, db)
 
             elif message_type == "ping":
-                # Respond to ping for connection keepalive
-                await websocket.send_json(
-                    {
-                        "type": "pong",
-                        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
-                    }
-                )
+                # Respond to ping for connection keepalive using schema
+                pong_event = create_pong_event(timestamp=datetime.now(timezone.utc))
+                await websocket.send_json(pong_event)
 
             else:
                 # Unknown message type
@@ -253,73 +249,62 @@ async def handle_chat_message(
 
         for i in range(0, len(response_text), chunk_size):
             chunk = response_text[i : i + chunk_size]
-            # Changed from 'message_chunk' to 'chunk' to match frontend
-            # Changed 'message_id' to 'messageId' for camelCase consistency
-            await websocket.send_json(
-                {
-                    "type": "chunk",
-                    "messageId": message_id,
-                    "content": chunk,
-                }
-            )
+            # Use schema to create chunk event
+            chunk_event = create_chunk_event(message_id=message_id, content=chunk)
+            await websocket.send_json(chunk_event)
             # Small delay to simulate streaming (will be natural with real LLM streaming)
             await asyncio.sleep(0.05)
 
         # Prepare citations for response with full structured data
-        citations = [
-            {
+        # Use both snake_case (for schema) and camelCase (for frontend) field names
+        citations = []
+        for cite in query_response.citations:
+            citation_dict = {
                 "id": cite.id,
-                "source_id": cite.source_id,
-                "source_type": cite.source_type,
+                "sourceId": cite.source_id,
+                "source_id": cite.source_id,  # Also include snake_case
+                "sourceType": cite.source_type,
+                "source_type": cite.source_type,  # Also include snake_case
                 "title": cite.title,
                 "url": cite.url if cite.url else None,
-                "authors": (
-                    cite.authors if hasattr(cite, "authors") and cite.authors else None
+                "authors": cite.authors if hasattr(cite, "authors") else None,
+                "publicationYear": (
+                    cite.publication_date if hasattr(cite, "publication_date") else None
                 ),
                 "publication_date": (
                     cite.publication_date if hasattr(cite, "publication_date") else None
                 ),
                 "journal": cite.journal if hasattr(cite, "journal") else None,
                 "doi": cite.doi if hasattr(cite, "doi") else None,
+                "pubmedId": cite.pmid if hasattr(cite, "pmid") else None,
                 "pmid": cite.pmid if hasattr(cite, "pmid") else None,
+                "relevanceScore": (
+                    cite.relevance_score if hasattr(cite, "relevance_score") else None
+                ),
                 "relevance_score": (
                     cite.relevance_score if hasattr(cite, "relevance_score") else None
                 ),
+                "snippet": cite.quoted_text if hasattr(cite, "quoted_text") else None,
                 "quoted_text": (
                     cite.quoted_text if hasattr(cite, "quoted_text") else None
                 ),
-                # Backward compatibility fields for frontend
+                # Backward compatibility fields for older frontend code
                 "source": cite.source_type,
                 "reference": cite.title,
-                "snippet": (
-                    cite.quoted_text
-                    if hasattr(cite, "quoted_text") and cite.quoted_text
-                    else cite.url
-                ),
             }
-            for cite in query_response.citations
-        ]
+            citations.append(citation_dict)
 
-        # Build final message object for frontend
-        final_message = {
-            "id": message_id,
-            "role": "assistant",
-            "content": response_text,
-            "citations": citations,
-            "timestamp": int(
-                datetime.now(timezone.utc).timestamp() * 1000
-            ),  # Unix timestamp in ms
-        }
-
-        # Changed from 'message_complete' to 'message.done' to match frontend
-        await websocket.send_json(
-            {
-                "type": "message.done",
-                "messageId": message_id,
-                "message": final_message,
-                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
-            }
+        # Use schema to create message.done event
+        now = datetime.now(timezone.utc)
+        message_done_event = create_message_done_event(
+            message_id=message_id,
+            role="assistant",
+            content=response_text,
+            citations=citations,
+            timestamp=now,
         )
+
+        await websocket.send_json(message_done_event)
 
         # Track RAG query metrics (P3.3 - Business Metrics)
         has_citations = len(citations) > 0
@@ -343,15 +328,12 @@ async def handle_chat_message(
         rag_queries_total.labels(success="false", has_citations="false").inc()
 
         logger.error(f"Error processing chat message: {str(e)}", exc_info=True)
-        # Changed message_id to messageId for camelCase consistency
-        await websocket.send_json(
-            {
-                "type": "error",
-                "messageId": message_id,
-                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
-                "error": {
-                    "code": "BACKEND_ERROR",  # Changed to match frontend error codes
-                    "message": f"Failed to process query: {str(e)}",
-                },
-            }
+
+        # Use schema to create error event
+        error_event = create_error_event(
+            error_code="BACKEND_ERROR",
+            error_message=f"Failed to process query: {str(e)}",
+            message_id=message_id,
+            timestamp=datetime.now(timezone.utc),
         )
+        await websocket.send_json(error_event)

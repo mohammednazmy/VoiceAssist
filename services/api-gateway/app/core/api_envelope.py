@@ -176,7 +176,7 @@ class ErrorCodes:
 
     # Authentication errors (401)
     INVALID_CREDENTIALS = "INVALID_CREDENTIALS"
-    TOKEN_EXPIRED = "TOKEN_EXPIRED"
+    TOKEN_EXPIRED = "TOKEN_EXPIRED"  # nosec B105 - This is an error code constant, not a hardcoded password
     TOKEN_INVALID = "TOKEN_INVALID"
     TOKEN_REVOKED = "TOKEN_REVOKED"
     UNAUTHORIZED = "UNAUTHORIZED"

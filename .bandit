@@ -9,3 +9,4 @@ exclude_dirs:
 skips:
   - B101  # assert_used - used in tests
   - B110  # try_except_pass - acceptable in some contexts
+  - B608  # hardcoded_sql_expressions - we use parameterized queries via SQLAlchemy ORM

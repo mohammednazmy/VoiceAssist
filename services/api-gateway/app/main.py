@@ -2,6 +2,21 @@
 Main FastAPI application
 """
 
+# Suppress CryptographyDeprecationWarning from pypdf ARC4 usage
+# pypdf uses ARC4 (RC4) for older encrypted PDFs which triggers deprecation warnings
+# This is a known issue: https://github.com/py-pdf/pypdf/issues/1536
+# The warning is non-actionable for us as users of pypdf until they migrate to modern encryption
+import warnings
+
+try:
+    from cryptography.utils import CryptographyDeprecationWarning
+
+    warnings.filterwarnings(
+        "ignore", category=CryptographyDeprecationWarning, message=".*ARC4.*"
+    )  # nosec B608
+except ImportError:
+    pass  # cryptography not installed or no CryptographyDeprecationWarning
+
 # Import business metrics to register them with Prometheus (P3.3)
 import uvicorn
 from app.api import (

@@ -519,6 +519,231 @@ async def delete_conversation(
     return success_response(data={"message": "Conversation deleted successfully"})
 
 
+# API Endpoints - Messages
+@router.get("/{conversation_id}/messages")
+async def get_messages(
+    conversation_id: str,
+    page: int = 1,
+    pageSize: int = 50,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get all messages in a conversation (main branch).
+
+    Returns paginated list of messages in chronological order.
+
+    Args:
+        conversation_id: UUID of the conversation
+        page: Page number (1-indexed)
+        pageSize: Number of messages per page
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        PaginatedResponse with messages
+
+    Raises:
+        404: Conversation not found
+        403: User doesn't own the conversation
+    """
+    try:
+        conv_uuid = uuid.UUID(conversation_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_response(
+                error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"
+            ),
+        )
+
+    # Verify conversation exists and belongs to user
+    session = get_session_or_404(db, conv_uuid, current_user)
+
+    # Calculate offset
+    offset = (page - 1) * pageSize
+
+    # Query total count (main branch only - no branch_id)
+    total = (
+        db.query(func.count(Message.id))
+        .filter(
+            and_(
+                Message.session_id == session.id,
+                Message.branch_id.is_(None),
+            )
+        )
+        .scalar()
+    )
+
+    # Query messages in chronological order
+    messages = (
+        db.query(Message)
+        .filter(
+            and_(
+                Message.session_id == session.id,
+                Message.branch_id.is_(None),
+            )
+        )
+        .order_by(Message.created_at.asc())
+        .offset(offset)
+        .limit(pageSize)
+        .all()
+    )
+
+    message_responses = [
+        MessageResponse(
+            id=str(msg.id),
+            session_id=str(msg.session_id),
+            role=msg.role,
+            content=msg.content,
+            parent_message_id=(
+                str(msg.parent_message_id) if msg.parent_message_id else None
+            ),
+            branch_id=msg.branch_id,
+            created_at=msg.created_at.isoformat() + "Z",
+            tokens=msg.tokens,
+            model=msg.model,
+        )
+        for msg in messages
+    ]
+
+    class MessagesListResponse(BaseModel):
+        items: List[MessageResponse]
+        total: int
+        page: int
+        pageSize: int
+
+    return success_response(
+        data=MessagesListResponse(
+            items=message_responses,
+            total=total,
+            page=page,
+            pageSize=pageSize,
+        )
+    )
+
+
+class EditMessageRequest(BaseModel):
+    """Request to edit a message"""
+
+    content: str = Field(..., description="New message content")
+
+
+@router.patch("/{conversation_id}/messages/{message_id}")
+async def edit_message(
+    conversation_id: str,
+    message_id: str,
+    request: EditMessageRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Edit a message's content.
+
+    Args:
+        conversation_id: UUID of the conversation
+        message_id: UUID of the message to edit
+        request: Edit request with new content
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        MessageResponse with updated message
+
+    Raises:
+        404: Conversation or message not found
+        403: User doesn't own the conversation
+    """
+    try:
+        conv_uuid = uuid.UUID(conversation_id)
+        msg_uuid = uuid.UUID(message_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_response(
+                error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"
+            ),
+        )
+
+    # Verify conversation exists and belongs to user
+    session = get_session_or_404(db, conv_uuid, current_user)
+
+    # Get message
+    message = get_message_or_404(db, msg_uuid, session)
+
+    # Update content
+    message.content = request.content
+    db.commit()
+    db.refresh(message)
+
+    logger.info(f"Edited message {message_id} in conversation {conversation_id}")
+
+    return success_response(
+        data=MessageResponse(
+            id=str(message.id),
+            session_id=str(message.session_id),
+            role=message.role,
+            content=message.content,
+            parent_message_id=(
+                str(message.parent_message_id) if message.parent_message_id else None
+            ),
+            branch_id=message.branch_id,
+            created_at=message.created_at.isoformat() + "Z",
+            tokens=message.tokens,
+            model=message.model,
+        )
+    )
+
+
+@router.delete("/{conversation_id}/messages/{message_id}")
+async def delete_message(
+    conversation_id: str,
+    message_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Delete a message.
+
+    Args:
+        conversation_id: UUID of the conversation
+        message_id: UUID of the message to delete
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        Success response
+
+    Raises:
+        404: Conversation or message not found
+        403: User doesn't own the conversation
+    """
+    try:
+        conv_uuid = uuid.UUID(conversation_id)
+        msg_uuid = uuid.UUID(message_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_response(
+                error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"
+            ),
+        )
+
+    # Verify conversation exists and belongs to user
+    session = get_session_or_404(db, conv_uuid, current_user)
+
+    # Get message
+    message = get_message_or_404(db, msg_uuid, session)
+
+    # Delete message
+    db.delete(message)
+    db.commit()
+
+    logger.info(f"Deleted message {message_id} from conversation {conversation_id}")
+
+    return success_response(data={"message": "Message deleted successfully"})
+
+
 # API Endpoints - Conversation Branching
 @router.post("/{session_id}/branches", response_model=BranchResponse)
 async def create_branch(
