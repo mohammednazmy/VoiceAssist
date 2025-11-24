@@ -3,10 +3,10 @@
  * Lazy loading routes for better code splitting
  */
 
-import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import { MainLayout } from './components/layout/MainLayout';
+import { lazy, Suspense } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { MainLayout } from "./components/layout/MainLayout";
 
 // Loading component
 function PageLoader() {
@@ -21,14 +21,34 @@ function PageLoader() {
 }
 
 // Lazy load pages for code splitting
-const LoginPage = lazy(() => import('./pages/LoginPage'));
-const RegisterPage = lazy(() => import('./pages/RegisterPage'));
-const ChatPage = lazy(() => import('./pages/ChatPage'));
-const HomePage = lazy(() => import('./pages/HomePage'));
-const ProfilePage = lazy(() => import('./pages/ProfilePage'));
-const DocumentsPage = lazy(() => import('./pages/DocumentsPage'));
-const ClinicalContextPage = lazy(() => import('./pages/ClinicalContextPage'));
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const LoginPage = lazy(() =>
+  import("./pages/LoginPage").then((m) => ({ default: m.LoginPage })),
+);
+const RegisterPage = lazy(() =>
+  import("./pages/RegisterPage").then((m) => ({ default: m.RegisterPage })),
+);
+const ChatPage = lazy(() =>
+  import("./pages/ChatPage").then((m) => ({ default: m.ChatPage })),
+);
+const HomePage = lazy(() =>
+  import("./pages/HomePage").then((m) => ({ default: m.HomePage })),
+);
+const ProfilePage = lazy(() =>
+  import("./pages/ProfilePage").then((m) => ({ default: m.ProfilePage })),
+);
+const DocumentsPage = lazy(() =>
+  import("./pages/DocumentsPage").then((m) => ({ default: m.DocumentsPage })),
+);
+const ClinicalContextPage = lazy(() =>
+  import("./pages/ClinicalContextPage").then((m) => ({
+    default: m.ClinicalContextPage,
+  })),
+);
+const AdminDashboard = lazy(() =>
+  import("./pages/admin/AdminDashboard").then((m) => ({
+    default: m.AdminDashboard,
+  })),
+);
 
 export function AppRoutes() {
   return (
@@ -39,7 +59,13 @@ export function AppRoutes() {
         <Route path="/register" element={<RegisterPage />} />
 
         {/* Protected routes */}
-        <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+        <Route
+          element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route path="/" element={<HomePage />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/chat/:conversationId" element={<ChatPage />} />
