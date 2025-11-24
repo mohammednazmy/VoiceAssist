@@ -3,17 +3,19 @@
  * Renders a chat message with markdown support, code blocks, and citations
  */
 
-import { memo, useState } from "react";
+import { memo, useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import { Highlight, themes } from "prism-react-renderer";
-import type { Message } from "@voiceassist/types";
+import type { Message, Attachment } from "@voiceassist/types";
 import { CitationDisplay } from "./CitationDisplay";
 import { MessageActionMenu } from "./MessageActionMenu";
 import { AudioPlayer } from "../voice/AudioPlayer";
 import { useAuth } from "../../hooks/useAuth";
+import { createAttachmentsApi } from "../../lib/api/attachmentsApi";
+import { useAuthStore } from "../../stores/authStore";
 import "katex/dist/katex.min.css";
 
 export interface MessageBubbleProps {
@@ -37,6 +39,7 @@ export const MessageBubble = memo(function MessageBubble({
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
   const { apiClient } = useAuth();
+  const { tokens } = useAuthStore();
 
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
@@ -48,6 +51,13 @@ export const MessageBubble = memo(function MessageBubble({
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [synthesisError, setSynthesisError] = useState<string | null>(null);
+
+  // Attachment state
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [isLoadingAttachments, setIsLoadingAttachments] = useState(false);
+  const [downloadingAttachments, setDownloadingAttachments] = useState<
+    Set<string>
+  >(new Set());
 
   // Save handler
   const handleSave = async () => {
@@ -101,6 +111,149 @@ export const MessageBubble = memo(function MessageBubble({
     } finally {
       setIsSynthesizing(false);
     }
+  };
+
+  // Fetch attachments when message has attachment IDs
+  useEffect(() => {
+    if (!message.attachments || message.attachments.length === 0) {
+      return;
+    }
+
+    const fetchAttachments = async () => {
+      setIsLoadingAttachments(true);
+      try {
+        const attachmentsApi = createAttachmentsApi(
+          import.meta.env.VITE_API_URL || "http://localhost:8000",
+          () => tokens?.accessToken || null,
+        );
+        const fetchedAttachments = await attachmentsApi.listMessageAttachments(
+          message.id,
+        );
+        setAttachments(fetchedAttachments);
+      } catch (error) {
+        console.error("Failed to fetch attachments:", error);
+      } finally {
+        setIsLoadingAttachments(false);
+      }
+    };
+
+    fetchAttachments();
+  }, [message.id, message.attachments, tokens?.accessToken]);
+
+  // Attachment download handler
+  const handleDownloadAttachment = async (attachment: Attachment) => {
+    setDownloadingAttachments((prev) => new Set(prev).add(attachment.id));
+    try {
+      const attachmentsApi = createAttachmentsApi(
+        import.meta.env.VITE_API_URL || "http://localhost:8000",
+        () => tokens?.accessToken || null,
+      );
+      const blob = await attachmentsApi.downloadAttachment(attachment.id);
+
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = attachment.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Failed to download attachment:", error);
+      // Could show a toast/notification here
+    } finally {
+      setDownloadingAttachments((prev) => {
+        const next = new Set(prev);
+        next.delete(attachment.id);
+        return next;
+      });
+    }
+  };
+
+  // Get file icon based on file type
+  const getFileIcon = (fileType: string) => {
+    switch (fileType) {
+      case "pdf":
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-5 h-5 text-red-600"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+            />
+          </svg>
+        );
+      case "image":
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-5 h-5 text-blue-600"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+            />
+          </svg>
+        );
+      case "document":
+      case "text":
+      case "markdown":
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-5 h-5 text-neutral-600"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+            />
+          </svg>
+        );
+      default:
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-5 h-5 text-neutral-600"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"
+            />
+          </svg>
+        );
+    }
+  };
+
+  // Format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
   return (
@@ -242,7 +395,13 @@ export const MessageBubble = memo(function MessageBubble({
                         code={code}
                         language={(language || "text") as any}
                       >
-                        {({ className, style, tokens, getLineProps, getTokenProps }) => (
+                        {({
+                          className,
+                          style,
+                          tokens,
+                          getLineProps,
+                          getTokenProps,
+                        }) => (
                           <pre
                             className={className}
                             style={{
@@ -256,7 +415,10 @@ export const MessageBubble = memo(function MessageBubble({
                             {tokens.map((line, i) => (
                               <div key={i} {...getLineProps({ line })}>
                                 {line.map((token, key) => (
-                                  <span key={key} {...getTokenProps({ token })} />
+                                  <span
+                                    key={key}
+                                    {...getTokenProps({ token })}
+                                  />
                                 ))}
                               </div>
                             ))}
@@ -385,6 +547,79 @@ export const MessageBubble = memo(function MessageBubble({
               </div>
             )}
 
+            {/* Attachments */}
+            {message.attachments && message.attachments.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-neutral-200">
+                <div className="text-xs font-semibold text-neutral-700 mb-2">
+                  Attachments ({attachments.length})
+                </div>
+                {isLoadingAttachments && (
+                  <div className="flex items-center space-x-2 text-sm text-neutral-600">
+                    <div className="w-4 h-4 rounded-full border-2 border-primary-500 border-t-transparent animate-spin" />
+                    <span>Loading attachments...</span>
+                  </div>
+                )}
+                {!isLoadingAttachments && attachments.length > 0 && (
+                  <div className="space-y-2">
+                    {attachments.map((attachment) => (
+                      <button
+                        key={attachment.id}
+                        type="button"
+                        onClick={() => handleDownloadAttachment(attachment)}
+                        disabled={downloadingAttachments.has(attachment.id)}
+                        className="flex items-center space-x-3 w-full p-2 rounded bg-neutral-50 hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left border border-neutral-200"
+                        aria-label={`Download ${attachment.fileName}`}
+                      >
+                        {/* File Icon */}
+                        <div className="flex-shrink-0">
+                          {getFileIcon(attachment.fileType)}
+                        </div>
+
+                        {/* File Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-neutral-900 truncate">
+                            {attachment.fileName}
+                          </div>
+                          <div className="text-xs text-neutral-500">
+                            {formatFileSize(attachment.fileSize)}
+                          </div>
+                        </div>
+
+                        {/* Download Icon */}
+                        <div className="flex-shrink-0">
+                          {downloadingAttachments.has(attachment.id) ? (
+                            <div className="w-5 h-5 rounded-full border-2 border-primary-500 border-t-transparent animate-spin" />
+                          ) : (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth={1.5}
+                              stroke="currentColor"
+                              className="w-5 h-5 text-primary-600"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                              />
+                            </svg>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {!isLoadingAttachments &&
+                  attachments.length === 0 &&
+                  message.attachments.length > 0 && (
+                    <div className="text-sm text-neutral-500">
+                      Failed to load attachments
+                    </div>
+                  )}
+              </div>
+            )}
+
             {/* Audio Playback (Assistant messages only) */}
             {!isUser && !isSystem && !isStreaming && (
               <div className="mt-3 space-y-2">
@@ -467,7 +702,11 @@ export const MessageBubble = memo(function MessageBubble({
                         stroke="currentColor"
                         className="w-4 h-4"
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     </button>
                   </div>
