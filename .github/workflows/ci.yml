@@ -94,7 +94,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == env.PYTHON_VERSION_MAIN
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: services/api-gateway/coverage.xml
@@ -205,7 +205,7 @@ jobs:
           JWT_SECRET: test-jwt-secret-for-ci
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: services/api-gateway/coverage.xml
