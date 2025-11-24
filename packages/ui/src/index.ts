@@ -38,6 +38,12 @@ export {
 } from './components/Skeleton';
 export type { SkeletonProps } from './components/Skeleton';
 
+export { Avatar, AvatarGroup } from './components/Avatar';
+export type { AvatarProps, AvatarGroupProps } from './components/Avatar';
+
+export { IconButton } from './components/IconButton';
+export type { IconButtonProps } from './components/IconButton';
+
 // Providers
 export { ThemeProvider, useTheme } from './providers';
 export type { Theme, ResolvedTheme, ThemeContextValue } from './providers';

@@ -1,24 +1,53 @@
 /**
  * Card Component
  * A container component for grouping related content
+ *
+ * Features:
+ * - Multiple variants: default, bordered, elevated
+ * - Hover states
+ * - Dark mode support
+ * - Flexible composition with Header, Title, Description, Content, Footer
  */
 
 import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../lib/utils';
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      'rounded-lg border border-neutral-200 bg-white shadow-sm',
-      className
-    )}
-    {...props}
-  />
-));
+const cardVariants = cva(
+  'rounded-lg transition-all duration-normal',
+  {
+    variants: {
+      variant: {
+        default:
+          'border border-border-default bg-background-primary shadow-sm',
+        bordered:
+          'border-2 border-border-strong bg-background-primary',
+        elevated:
+          'bg-background-elevated shadow-lg border border-border-subtle',
+      },
+      hoverable: {
+        true: 'cursor-pointer hover:shadow-md hover:border-border-strong',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  }
+);
+
+export interface CardProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof cardVariants> {}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, variant, hoverable, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(cardVariants({ variant, hoverable, className }))}
+      {...props}
+    />
+  )
+);
 Card.displayName = 'Card';
 
 const CardHeader = React.forwardRef<
@@ -40,7 +69,7 @@ const CardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      'text-2xl font-semibold leading-none tracking-tight',
+      'text-2xl font-semibold leading-none tracking-tight text-text-primary',
       className
     )}
     {...props}
@@ -54,7 +83,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn('text-sm text-neutral-500', className)}
+    className={cn('text-sm text-text-secondary', className)}
     {...props}
   />
 ));
@@ -80,4 +109,12 @@ const CardFooter = React.forwardRef<
 ));
 CardFooter.displayName = 'CardFooter';
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  cardVariants,
+};
