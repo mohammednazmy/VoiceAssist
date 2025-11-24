@@ -60,6 +60,20 @@ class Settings(BaseSettings):
 
     # OpenAI
     OPENAI_API_KEY: Optional[str] = None
+    OPENAI_TIMEOUT_SEC: int = 30
+
+    # Local LLM (for PHI-safe inference)
+    LOCAL_LLM_URL: Optional[str] = None
+    LOCAL_LLM_API_KEY: Optional[str] = None
+    LOCAL_LLM_MODEL: Optional[str] = None
+    LOCAL_LLM_TIMEOUT_SEC: int = 15
+
+    # Voice/TTS settings (wire-up placeholder)
+    TTS_PROVIDER: Optional[str] = None  # e.g., "azure", "gcp", "elevenlabs"
+    TTS_ENDPOINT: Optional[str] = None
+    TTS_API_KEY: Optional[str] = None
+    TTS_VOICE: Optional[str] = None
+    VOICE_WS_MAX_INFLIGHT: int = 5
 
     # CORS
     ALLOWED_ORIGINS: str = "http://localhost:3000"

@@ -11,13 +11,16 @@ The intent is:
 - For PHI-containing queries: Prefer approved local models.
 - For all queries: Track cost, latency, and model selection decisions.
 """
+
 from __future__ import annotations
 
+import asyncio
+import logging
+import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Literal, Optional
-import time
 
-import logging
+import httpx
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion
 
@@ -59,19 +62,39 @@ class LLMClient:
         cloud_model: str = "gpt-4o",
         local_model: str = "local-clinical-llm",
         openai_api_key: Optional[str] = None,
+        openai_timeout_sec: int = 30,
+        local_api_url: Optional[str] = None,
+        local_api_key: Optional[str] = None,
+        local_timeout_sec: int = 15,
     ) -> None:
         self.cloud_model = cloud_model
         self.local_model = local_model
 
         # Initialize OpenAI client for cloud models
-        self.openai_client = AsyncOpenAI(api_key=openai_api_key) if openai_api_key else None
+        self.openai_client = (
+            AsyncOpenAI(
+                api_key=openai_api_key,
+                timeout=openai_timeout_sec,
+            )
+            if openai_api_key
+            else None
+        )
 
         if not self.openai_client:
             logger.warning("OpenAI API key not provided. Cloud model calls will fail.")
 
-        # Note: Local model client would be initialized here (e.g., vLLM, Ollama)
-        # For now, we'll use OpenAI as a fallback with appropriate warnings
-        self.local_client = None
+        # Local model client (OpenAI-compatible endpoint such as vLLM/LLama.cpp)
+        self.local_client: Optional[httpx.AsyncClient] = None
+        if local_api_url:
+            headers = {}
+            if local_api_key:
+                headers["Authorization"] = f"Bearer {local_api_key}"
+            self.local_client = httpx.AsyncClient(
+                base_url=local_api_url,
+                timeout=local_timeout_sec,
+                headers=headers or None,
+            )
+        self.has_local_model = self.local_client is not None
 
     async def generate(self, req: LLMRequest) -> LLMResponse:
         """Select model family and generate a single response.
@@ -89,7 +112,9 @@ class LLMClient:
         """
         # Safety: validate prompt is not empty
         if not req.prompt or not req.prompt.strip():
-            logger.warning("LLMClient.generate called with empty prompt, trace_id=%s", req.trace_id)
+            logger.warning(
+                "LLMClient.generate called with empty prompt, trace_id=%s", req.trace_id
+            )
             raise ValueError("Prompt cannot be empty")
 
         # Safety: normalize whitespace in prompt
@@ -109,6 +134,9 @@ class LLMClient:
             req.max_tokens = max_allowed_tokens
 
         family: ModelFamily = "local" if req.phi_present else "cloud"
+        if req.phi_present and not self.has_local_model:
+            # Defensive: callers should not route PHI here without a local model
+            raise RuntimeError("PHI present but no local LLM configured")
         logger.debug(
             "LLMClient.generate: family=%s intent=%s phi_present=%s trace_id=%s",
             family,
@@ -131,99 +159,124 @@ class LLMClient:
         See OBSERVABILITY.md for additional metrics to track
         """
         if not self.openai_client:
-            logger.error("OpenAI client not initialized. API key missing. trace_id=%s", req.trace_id)
-            raise RuntimeError("OpenAI API key not configured. Cannot call cloud model.")
-
-        logger.info("Calling cloud model %s trace_id=%s", self.cloud_model, req.trace_id)
-
-        start_time = time.time()
-
-        try:
-            # Prepare system message based on intent
-            system_prompts = {
-                "diagnosis": "You are a medical AI assistant specializing in clinical diagnosis. Provide evidence-based diagnostic insights with appropriate citations.",
-                "treatment": "You are a medical AI assistant specializing in treatment planning. Provide evidence-based treatment recommendations with appropriate citations.",
-                "drug": "You are a medical AI assistant specializing in pharmacology. Provide evidence-based drug information with appropriate citations.",
-                "guideline": "You are a medical AI assistant specializing in clinical guidelines. Provide evidence-based guideline information with appropriate citations.",
-                "summary": "You are a medical AI assistant specializing in medical summarization. Provide clear, concise summaries with appropriate citations.",
-                "other": "You are a helpful medical AI assistant. Provide accurate, evidence-based information with appropriate citations when available.",
-            }
-
-            system_message = system_prompts.get(req.intent, system_prompts["other"])
-
-            # Call OpenAI Chat Completions API
-            response: ChatCompletion = await self.openai_client.chat.completions.create(
-                model=self.cloud_model,
-                messages=[
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": req.prompt},
-                ],
-                temperature=req.temperature,
-                max_tokens=req.max_tokens,
-            )
-
-            # Calculate latency
-            latency_ms = (time.time() - start_time) * 1000
-
-            # Extract response data
-            choice = response.choices[0]
-            text = choice.message.content or ""
-            finish_reason = choice.finish_reason or "stop"
-
-            # Calculate token usage
-            usage = response.usage
-            total_tokens = usage.total_tokens if usage else 0
-
-            logger.info(
-                "Cloud model call successful: model=%s tokens=%d latency=%.2fms finish=%s trace_id=%s",
-                self.cloud_model,
-                total_tokens,
-                latency_ms,
-                finish_reason,
+            logger.error(
+                "OpenAI client not initialized. API key missing. trace_id=%s",
                 req.trace_id,
             )
+            raise RuntimeError(
+                "OpenAI API key not configured. Cannot call cloud model."
+            )
 
-            # TODO: Track cost based on model pricing
-            # gpt-4o: $2.50/1M input tokens, $10.00/1M output tokens
-            # gpt-3.5-turbo: $0.50/1M input tokens, $1.50/1M output tokens
-            if usage:
-                input_tokens = usage.prompt_tokens
-                output_tokens = usage.completion_tokens
-                logger.debug(
-                    "Token breakdown: input=%d output=%d total=%d trace_id=%s",
-                    input_tokens,
-                    output_tokens,
+        logger.info(
+            "Calling cloud model %s trace_id=%s", self.cloud_model, req.trace_id
+        )
+
+        backoff_seconds = [1, 2, 4]
+        last_error: Optional[Exception] = None
+
+        for attempt, delay in enumerate(backoff_seconds, start=1):
+            start_time = time.time()
+
+            try:
+                # Prepare system message based on intent
+                system_prompts = {
+                    "diagnosis": "You are a medical AI assistant specializing in clinical diagnosis. Provide evidence-based diagnostic insights with appropriate citations.",
+                    "treatment": "You are a medical AI assistant specializing in treatment planning. Provide evidence-based treatment recommendations with appropriate citations.",
+                    "drug": "You are a medical AI assistant specializing in pharmacology. Provide evidence-based drug information with appropriate citations.",
+                    "guideline": "You are a medical AI assistant specializing in clinical guidelines. Provide evidence-based guideline information with appropriate citations.",
+                    "summary": "You are a medical AI assistant specializing in medical summarization. Provide clear, concise summaries with appropriate citations.",
+                    "other": "You are a helpful medical AI assistant. Provide accurate, evidence-based information with appropriate citations when available.",
+                }
+
+                system_message = system_prompts.get(req.intent, system_prompts["other"])
+
+                # Call OpenAI Chat Completions API with timeout
+                response: ChatCompletion = await asyncio.wait_for(
+                    self.openai_client.chat.completions.create(
+                        model=self.cloud_model,
+                        messages=[
+                            {"role": "system", "content": system_message},
+                            {"role": "user", "content": req.prompt},
+                        ],
+                        temperature=req.temperature,
+                        max_tokens=req.max_tokens,
+                    ),
+                    timeout=30,
+                )
+
+                # Calculate latency
+                latency_ms = (time.time() - start_time) * 1000
+
+                # Extract response data
+                choice = response.choices[0]
+                text = choice.message.content or ""
+                finish_reason = choice.finish_reason or "stop"
+
+                # Calculate token usage
+                usage = response.usage
+                total_tokens = usage.total_tokens if usage else 0
+
+                logger.info(
+                    "Cloud model call successful: model=%s tokens=%d latency=%.2fms finish=%s trace_id=%s",
+                    self.cloud_model,
                     total_tokens,
+                    latency_ms,
+                    finish_reason,
                     req.trace_id,
                 )
 
-            return LLMResponse(
-                text=text,
-                model_name=self.cloud_model,
-                model_family="cloud",
-                used_tokens=total_tokens,
-                latency_ms=latency_ms,
-                finish_reason=finish_reason,
-            )
+                # TODO: Track cost based on model pricing
+                # gpt-4o: $2.50/1M input tokens, $10.00/1M output tokens
+                # gpt-3.5-turbo: $0.50/1M input tokens, $1.50/1M output tokens
+                if usage:
+                    input_tokens = usage.prompt_tokens
+                    output_tokens = usage.completion_tokens
+                    logger.debug(
+                        "Token breakdown: input=%d output=%d total=%d trace_id=%s",
+                        input_tokens,
+                        output_tokens,
+                        total_tokens,
+                        req.trace_id,
+                    )
 
-        except Exception as e:
-            latency_ms = (time.time() - start_time) * 1000
-            logger.error(
-                "Cloud model call failed: model=%s error=%s latency=%.2fms trace_id=%s",
-                self.cloud_model,
-                str(e),
-                latency_ms,
-                req.trace_id,
-                exc_info=True,
-            )
-            raise RuntimeError(f"Failed to call cloud model {self.cloud_model}: {str(e)}") from e
+                return LLMResponse(
+                    text=text,
+                    model_name=self.cloud_model,
+                    model_family="cloud",
+                    used_tokens=total_tokens,
+                    latency_ms=latency_ms,
+                    finish_reason=finish_reason,
+                )
+
+            except asyncio.TimeoutError as exc:
+                last_error = exc
+                logger.error(
+                    "Cloud model call timed out (attempt %d) model=%s trace_id=%s",
+                    attempt,
+                    self.cloud_model,
+                    req.trace_id,
+                )
+            except Exception as e:
+                last_error = e
+                latency_ms = (time.time() - start_time) * 1000
+                logger.error(
+                    "Cloud model call failed (attempt %d): model=%s error=%s latency=%.2fms trace_id=%s",
+                    attempt,
+                    self.cloud_model,
+                    str(e),
+                    latency_ms,
+                    req.trace_id,
+                    exc_info=True,
+                )
+
+            await asyncio.sleep(delay)
+
+        raise RuntimeError(
+            f"Failed to call cloud model {self.cloud_model} after retries: {last_error}"
+        ) from last_error
 
     async def _call_local(self, req: LLMRequest) -> LLMResponse:
         """Call a local model for PHI-containing queries.
-
-        IMPORTANT: This implementation currently falls back to OpenAI cloud model
-        when a local model is not available. This is NOT HIPAA-compliant for
-        PHI-containing queries and should only be used in development/testing.
 
         In production, this should call a local inference server (e.g., vLLM, Ollama)
         running a HIPAA-compliant model on-premises.
@@ -232,51 +285,75 @@ class LLMClient:
         See BACKEND_ARCHITECTURE.md - "Local LLM Service" for architecture.
         See OBSERVABILITY.md for metrics to track (tokens, latency).
         """
-        logger.warning(
-            "Local model requested but not configured. local_model=%s phi_present=%s trace_id=%s",
-            self.local_model,
-            req.phi_present,
-            req.trace_id,
+        if not self.has_local_model or not self.local_client:
+            raise RuntimeError("Local model requested but not configured")
+
+        logger.info(
+            "Calling local model %s trace_id=%s", self.local_model, req.trace_id
         )
 
-        # Check if we have a local model client (vLLM, Ollama, etc.)
-        if self.local_client:
-            # TODO: Implement actual local model call
-            # Example for vLLM:
-            # response = await self.local_client.post(
-            #     "http://localhost:8000/v1/completions",
-            #     json={"prompt": req.prompt, "max_tokens": req.max_tokens, ...}
-            # )
-            logger.info("Calling local model %s trace_id=%s", self.local_model, req.trace_id)
-            pass  # Placeholder for actual implementation
+        start_time = time.time()
+        try:
+            response = await self.local_client.post(
+                "/v1/chat/completions",
+                json={
+                    "model": self.local_model,
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "You are a local clinical assistant.",
+                        },
+                        {"role": "user", "content": req.prompt},
+                    ],
+                    "temperature": req.temperature,
+                    "max_tokens": min(req.max_tokens, 2048),
+                },
+            )
+            response.raise_for_status()
+            payload = response.json()
+            choice = payload["choices"][0]
+            text = choice["message"].get("content") or ""
+            finish_reason = choice.get("finish_reason", "stop")
 
-        # FALLBACK: Use OpenAI with explicit warning
-        # This should NOT be used in production for PHI queries!
-        if req.phi_present:
-            logger.error(
-                "PHI-containing query routed to cloud model due to missing local model! "
-                "This violates HIPAA compliance. trace_id=%s",
+            usage = payload.get("usage", {})
+            total_tokens = usage.get("total_tokens", 0)
+
+            latency_ms = (time.time() - start_time) * 1000
+            logger.info(
+                "Local model call successful: model=%s tokens=%d latency=%.2fms finish=%s trace_id=%s",
+                self.local_model,
+                total_tokens,
+                latency_ms,
+                finish_reason,
                 req.trace_id,
             )
-            # In production, this should raise an exception instead of falling back
-            # raise RuntimeError("Cannot route PHI query to cloud model. Local model not configured.")
 
-        logger.warning(
-            "Falling back to cloud model for local model request. "
-            "Configure local model for production use. trace_id=%s",
-            req.trace_id,
-        )
+            return LLMResponse(
+                text=text,
+                model_name=self.local_model,
+                model_family="local",
+                used_tokens=total_tokens,
+                latency_ms=latency_ms,
+                finish_reason=finish_reason,
+            )
 
-        # Use cloud implementation as fallback
-        # Note: Change model to gpt-3.5-turbo for cost efficiency in fallback scenario
-        original_model = self.cloud_model
-        self.cloud_model = "gpt-3.5-turbo"  # Use cheaper model for fallback
-
-        try:
-            response = await self._call_cloud(req)
-            # Override model_family to indicate this was a local request
-            response.model_family = "local"
-            response.model_name = f"{self.local_model} (fallback: {response.model_name})"
-            return response
-        finally:
-            self.cloud_model = original_model  # Restore original model
+        except httpx.RequestError as exc:
+            latency_ms = (time.time() - start_time) * 1000
+            logger.error(
+                "Local model HTTP error: %s latency=%.2fms trace_id=%s",
+                exc,
+                latency_ms,
+                req.trace_id,
+                exc_info=True,
+            )
+            raise RuntimeError(f"Local model HTTP error: {exc}") from exc
+        except Exception as exc:
+            latency_ms = (time.time() - start_time) * 1000
+            logger.error(
+                "Local model call failed: %s latency=%.2fms trace_id=%s",
+                exc,
+                latency_ms,
+                req.trace_id,
+                exc_info=True,
+            )
+            raise RuntimeError(f"Local model call failed: {exc}") from exc

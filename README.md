@@ -28,6 +28,7 @@ VoiceAssist is an enterprise-grade, HIPAA-compliant medical AI assistant platfor
 - ✅ Full HIPAA compliance (42/42 requirements met)
 - ✅ Production deployment automation ready
 - ✅ HA/DR, monitoring, and security hardening complete
+- ✅ Canonical backend is `services/api-gateway` (the `server/` folder is a legacy stub and should not be used)
 
 **Client Applications (In Development):**
 

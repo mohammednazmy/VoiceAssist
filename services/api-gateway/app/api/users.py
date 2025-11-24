@@ -1,31 +1,30 @@
 """
 User management API endpoints
 """
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+
 from datetime import datetime, timezone
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, get_current_admin_user
-from app.core.security import verify_password, get_password_hash
+from app.core.dependencies import get_current_admin_user, get_current_user
+from app.core.security import get_password_hash, verify_password
 from app.models.user import User
-from app.schemas.auth import UserResponse, PasswordChange
+from app.schemas.auth import PasswordChange, UserResponse
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
-
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
 
 class UserUpdate(BaseModel):
     """User profile update request"""
+
     full_name: str | None = None
     email: EmailStr | None = None
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user_profile(
-    current_user: User = Depends(get_current_user)
-):
+async def get_current_user_profile(current_user: User = Depends(get_current_user)):
     """
     Get current user's profile information
 
@@ -38,7 +37,7 @@ async def get_current_user_profile(
 async def update_current_user_profile(
     user_update: UserUpdate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Update current user's profile
@@ -53,8 +52,7 @@ async def update_current_user_profile(
         existing_user = db.query(User).filter(User.email == user_update.email).first()
         if existing_user:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already in use"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Email already in use"
             )
         current_user.email = user_update.email
 
@@ -73,7 +71,7 @@ async def update_current_user_profile(
 async def change_password(
     password_data: PasswordChange,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Change current user's password
@@ -86,8 +84,7 @@ async def change_password(
     # Verify old password
     if not verify_password(password_data.old_password, current_user.hashed_password):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect current password"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect current password"
         )
 
     # Update password
@@ -100,8 +97,7 @@ async def change_password(
 
 @router.delete("/me")
 async def delete_current_user_account(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
     Deactivate current user's account
@@ -119,12 +115,12 @@ async def delete_current_user_account(
 
 
 # Admin endpoints
-@router.get("/", response_model=list[UserResponse])
+@router.get("/")
 async def list_users(
     skip: int = 0,
     limit: int = 100,
     current_user: User = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     List all users (admin only)
@@ -134,15 +130,30 @@ async def list_users(
 
     Requires admin privileges
     """
+    from app.core.api_envelope import success_response
+
     users = db.query(User).offset(skip).limit(limit).all()
-    return users
+    # Convert to dict for serialization
+    users_data = [
+        {
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "is_active": user.is_active,
+            "is_admin": user.is_admin,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "last_login": user.last_login.isoformat() if user.last_login else None,
+        }
+        for user in users
+    ]
+    return success_response(users_data)
 
 
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user_by_id(
     user_id: str,
     current_user: User = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Get user by ID (admin only)
@@ -153,18 +164,82 @@ async def get_user_by_id(
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
     return user
+
+
+@router.patch("/{user_id}")
+async def update_user(
+    user_id: str,
+    user_update: dict,
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Update user properties (admin only)
+
+    Supports updating:
+    - is_active: boolean
+    - is_admin: boolean
+    - full_name: string
+
+    Requires admin privileges
+    """
+    from app.core.api_envelope import success_response
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    # Update fields if provided
+    if "is_active" in user_update:
+        # Don't allow deactivating yourself
+        if user.id == current_user.id and not user_update["is_active"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot deactivate your own account",
+            )
+        user.is_active = user_update["is_active"]
+
+    if "is_admin" in user_update:
+        # Don't allow removing your own admin privileges
+        if user.id == current_user.id and not user_update["is_admin"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot remove your own admin privileges",
+            )
+        user.is_admin = user_update["is_admin"]
+
+    if "full_name" in user_update:
+        user.full_name = user_update["full_name"]
+
+    user.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(user)
+
+    return success_response(
+        {
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "is_active": user.is_active,
+            "is_admin": user.is_admin,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "message": "User updated successfully",
+        }
+    )
 
 
 @router.put("/{user_id}/activate")
 async def activate_user(
     user_id: str,
     current_user: User = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Activate a user account (admin only)
@@ -175,8 +250,7 @@ async def activate_user(
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
     user.is_active = True
@@ -190,7 +264,7 @@ async def activate_user(
 async def deactivate_user(
     user_id: str,
     current_user: User = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Deactivate a user account (admin only)
@@ -201,15 +275,14 @@ async def deactivate_user(
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
     # Don't allow deactivating yourself
     if user.id == current_user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot deactivate your own account"
+            detail="Cannot deactivate your own account",
         )
 
     user.is_active = False
@@ -223,7 +296,7 @@ async def deactivate_user(
 async def promote_to_admin(
     user_id: str,
     current_user: User = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Grant admin privileges to a user (admin only)
@@ -234,8 +307,7 @@ async def promote_to_admin(
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
     user.is_admin = True
@@ -249,7 +321,7 @@ async def promote_to_admin(
 async def revoke_admin_privileges(
     user_id: str,
     current_user: User = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Revoke admin privileges from a user (admin only)
@@ -260,15 +332,14 @@ async def revoke_admin_privileges(
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
     # Don't allow revoking your own admin privileges
     if user.id == current_user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot revoke your own admin privileges"
+            detail="Cannot revoke your own admin privileges",
         )
 
     user.is_admin = False

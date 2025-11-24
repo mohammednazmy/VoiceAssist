@@ -16,18 +16,18 @@ Future enhancements:
 - Multi-hop reasoning
 - External evidence integration (OpenEvidence, PubMed)
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
-
-from app.services.llm_client import LLMClient, LLMRequest, LLMResponse
-from app.services.search_aggregator import SearchAggregator
-from app.services.phi_detector import PHIDetector
-from app.services.intent_classifier import IntentClassifier
 from app.core.config import settings
+from app.services.intent_classifier import IntentClassifier
+from app.services.llm_client import LLMClient, LLMRequest, LLMResponse
+from app.services.phi_detector import PHIDetector
+from app.services.search_aggregator import SearchAggregator
+from pydantic import BaseModel, Field
 
 
 class Citation(BaseModel):
@@ -88,7 +88,7 @@ class QueryOrchestrator:
         self,
         enable_rag: bool = True,
         rag_top_k: int = 5,
-        rag_score_threshold: float = 0.7
+        rag_score_threshold: float = 0.7,
     ):
         """
         Initialize QueryOrchestrator with RAG support.
@@ -100,8 +100,12 @@ class QueryOrchestrator:
         """
         self.llm_client = LLMClient(
             cloud_model="gpt-4o",
-            local_model="local-clinical-llm",
-            openai_api_key=settings.OPENAI_API_KEY
+            openai_api_key=settings.OPENAI_API_KEY,
+            openai_timeout_sec=settings.OPENAI_TIMEOUT_SEC,
+            local_api_url=settings.LOCAL_LLM_URL,
+            local_api_key=settings.LOCAL_LLM_API_KEY,
+            local_timeout_sec=settings.LOCAL_LLM_TIMEOUT_SEC,
+            local_model=settings.LOCAL_LLM_MODEL or "local-clinical-llm",
         )
         self.search_aggregator = SearchAggregator() if enable_rag else None
         self.phi_detector = PHIDetector()
@@ -143,11 +147,12 @@ class QueryOrchestrator:
                 search_results = await self.search_aggregator.search(
                     query=request.query,
                     top_k=self.rag_top_k,
-                    score_threshold=self.rag_score_threshold
+                    score_threshold=self.rag_score_threshold,
                 )
             except Exception as e:
                 # Log error but continue without RAG
                 import logging
+
                 logging.error(f"Error performing RAG search: {e}", exc_info=True)
 
         # Step 2: Assemble context from search results
@@ -213,12 +218,23 @@ Instructions:
             text=request.query, clinical_context=clinical_context
         )
 
+        # Decide prompt and routing: if PHI and no local model, sanitize and send to cloud
+        sanitized_prompt = prompt
+        llm_phi_flag = phi_result.contains_phi and self.llm_client.has_local_model
+
         if phi_result.contains_phi:
             import logging
+
             logging.warning(
                 f"PHI detected in query: types={phi_result.phi_types}, "
                 f"confidence={phi_result.confidence}, trace_id={trace_id}"
             )
+            if not self.llm_client.has_local_model:
+                sanitized_prompt = self.phi_detector.sanitize(prompt)
+                logging.warning(
+                    "No local model configured; PHI redacted before routing to cloud. trace_id=%s",
+                    trace_id,
+                )
 
         # Step 5: Intent Classification
         intent = self.intent_classifier.classify(
@@ -226,17 +242,16 @@ Instructions:
         )
 
         import logging
-        logging.info(
-            f"Query classified as intent='{intent}', trace_id={trace_id}"
-        )
+
+        logging.info(f"Query classified as intent='{intent}', trace_id={trace_id}")
 
         # Step 6: Generate LLM response
         llm_request = LLMRequest(
-            prompt=prompt,
+            prompt=sanitized_prompt,
             intent=intent,
             temperature=0.1,
             max_tokens=512,
-            phi_present=phi_result.contains_phi,
+            phi_present=llm_phi_flag,
             trace_id=trace_id,
         )
 

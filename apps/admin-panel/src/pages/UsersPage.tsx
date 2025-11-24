@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { fetchAPI } from '../lib/api';
+import { useEffect, useState } from "react";
+import { fetchAPI } from "../lib/api";
 
 interface User {
   id: string;
@@ -22,14 +22,11 @@ export function UsersPage() {
 
   const loadUsers = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      const data = await fetchAPI<User[]>('/api/users', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const data = await fetchAPI<User[]>("/api/users");
       setUsers(data);
       setError(null);
     } catch (err: any) {
-      setError(err.message || 'Failed to load users');
+      setError(err.message || "Failed to load users");
     } finally {
       setLoading(false);
     }
@@ -37,33 +34,33 @@ export function UsersPage() {
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      const token = localStorage.getItem('auth_token');
       await fetchAPI(`/api/users/${userId}`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}` },
+        method: "PATCH",
         body: JSON.stringify({ is_active: !currentStatus }),
       });
       await loadUsers();
     } catch (err: any) {
-      alert(err.message || 'Failed to update user');
+      alert(err.message || "Failed to update user");
     }
   };
 
   const toggleAdminRole = async (userId: string, currentStatus: boolean) => {
-    if (!confirm(`Are you sure you want to ${currentStatus ? 'remove' : 'grant'} admin privileges?`)) {
+    if (
+      !confirm(
+        `Are you sure you want to ${currentStatus ? "remove" : "grant"} admin privileges?`,
+      )
+    ) {
       return;
     }
 
     try {
-      const token = localStorage.getItem('auth_token');
       await fetchAPI(`/api/users/${userId}`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}` },
+        method: "PATCH",
         body: JSON.stringify({ is_admin: !currentStatus }),
       });
       await loadUsers();
     } catch (err: any) {
-      alert(err.message || 'Failed to update user role');
+      alert(err.message || "Failed to update user role");
     }
   };
 
@@ -126,30 +123,32 @@ export function UsersPage() {
           <tbody className="divide-y divide-slate-800">
             {users.map((user) => (
               <tr key={user.id} className="hover:bg-slate-800/50">
-                <td className="px-4 py-3 text-sm text-slate-300">{user.email}</td>
                 <td className="px-4 py-3 text-sm text-slate-300">
-                  {user.full_name || '-'}
+                  {user.email}
+                </td>
+                <td className="px-4 py-3 text-sm text-slate-300">
+                  {user.full_name || "-"}
                 </td>
                 <td className="px-4 py-3 text-sm">
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
                       user.is_admin
-                        ? 'bg-purple-900/50 text-purple-400 border border-purple-800'
-                        : 'bg-slate-800 text-slate-400 border border-slate-700'
+                        ? "bg-purple-900/50 text-purple-400 border border-purple-800"
+                        : "bg-slate-800 text-slate-400 border border-slate-700"
                     }`}
                   >
-                    {user.is_admin ? 'Admin' : 'User'}
+                    {user.is_admin ? "Admin" : "User"}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-sm">
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
                       user.is_active
-                        ? 'bg-green-900/50 text-green-400 border border-green-800'
-                        : 'bg-red-900/50 text-red-400 border border-red-800'
+                        ? "bg-green-900/50 text-green-400 border border-green-800"
+                        : "bg-red-900/50 text-red-400 border border-red-800"
                     }`}
                   >
-                    {user.is_active ? 'Active' : 'Inactive'}
+                    {user.is_active ? "Active" : "Inactive"}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-sm text-slate-400">
@@ -159,20 +158,20 @@ export function UsersPage() {
                   <button
                     onClick={() => toggleAdminRole(user.id, user.is_admin)}
                     className="text-purple-400 hover:text-purple-300 transition-colors"
-                    title={user.is_admin ? 'Remove admin' : 'Make admin'}
+                    title={user.is_admin ? "Remove admin" : "Make admin"}
                   >
-                    {user.is_admin ? '⚙️→👤' : '👤→⚙️'}
+                    {user.is_admin ? "⚙️→👤" : "👤→⚙️"}
                   </button>
                   <button
                     onClick={() => toggleUserStatus(user.id, user.is_active)}
                     className={`${
                       user.is_active
-                        ? 'text-yellow-400 hover:text-yellow-300'
-                        : 'text-green-400 hover:text-green-300'
+                        ? "text-yellow-400 hover:text-yellow-300"
+                        : "text-green-400 hover:text-green-300"
                     } transition-colors`}
-                    title={user.is_active ? 'Deactivate' : 'Activate'}
+                    title={user.is_active ? "Deactivate" : "Activate"}
                   >
-                    {user.is_active ? '🔒' : '🔓'}
+                    {user.is_active ? "🔒" : "🔓"}
                   </button>
                 </td>
               </tr>
@@ -188,16 +187,21 @@ export function UsersPage() {
       </div>
 
       <div className="text-xs text-slate-500">
-        Total users: {users.length} | Active: {users.filter((u) => u.is_active).length} | Admins: {users.filter((u) => u.is_admin).length}
+        Total users: {users.length} | Active:{" "}
+        {users.filter((u) => u.is_active).length} | Admins:{" "}
+        {users.filter((u) => u.is_admin).length}
       </div>
 
       {/* Create User Modal - Placeholder */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-lg font-bold text-slate-100 mb-4">Create New User</h2>
+            <h2 className="text-lg font-bold text-slate-100 mb-4">
+              Create New User
+            </h2>
             <p className="text-sm text-slate-400 mb-4">
-              User creation UI coming soon. Use the backend API directly for now.
+              User creation UI coming soon. Use the backend API directly for
+              now.
             </p>
             <button
               onClick={() => setShowCreateModal(false)}
