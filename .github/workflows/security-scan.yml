@@ -291,7 +291,7 @@ jobs:
           needs.bandit.result == 'failure' ||
           needs.trivy.result == 'failure' ||
           needs.secret-scan.result == 'failure'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const title = '🚨 Security Scan Failures Detected';

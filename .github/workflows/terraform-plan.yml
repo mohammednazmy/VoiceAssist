@@ -40,7 +40,7 @@ jobs:
 
       - name: Comment formatting issues
         if: steps.fmt.outcome == 'failure'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const output = `#### Terraform Format Check: \`${{ steps.fmt.outcome }}\`
@@ -168,7 +168,7 @@ jobs:
           retention-days: 30
 
       - name: Comment on PR - Staging
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         if: github.event_name == 'pull_request'
         with:
           script: |
@@ -277,7 +277,7 @@ jobs:
           retention-days: 30
 
       - name: Comment on PR - Production
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         if: github.event_name == 'pull_request'
         with:
           script: |
