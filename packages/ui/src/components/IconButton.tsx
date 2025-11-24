@@ -1,23 +1,21 @@
 /**
- * Button Component
- * A versatile button component with multiple variants, sizes, and states
+ * IconButton Component
+ * A button component specifically for icons
  *
  * Features:
- * - Multiple variants: primary, secondary, outline, ghost, danger
- * - Three sizes: sm, md, lg
- * - Loading state with spinner
- * - Icon support (left/right)
- * - Full width option
- * - Disabled state
- * - ARIA attributes
+ * - All button variants from Button component
+ * - Multiple sizes optimized for icons
+ * - Circular and square shapes
+ * - Loading state
+ * - Accessible with aria-label
  */
 
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../lib/utils';
 
-const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-all duration-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+const iconButtonVariants = cva(
+  'inline-flex items-center justify-center font-medium transition-all duration-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
@@ -33,26 +31,29 @@ const buttonVariants = cva(
           'bg-error-600 text-white hover:bg-error-700 active:bg-error-800 focus-visible:ring-error-500 dark:bg-error-600 dark:hover:bg-error-500',
         success:
           'bg-success-600 text-white hover:bg-success-700 active:bg-success-800 focus-visible:ring-success-500 dark:bg-success-600 dark:hover:bg-success-500',
-        link: 'text-primary-600 underline-offset-4 hover:underline focus-visible:ring-primary-500 dark:text-primary-400',
       },
       size: {
-        sm: 'h-8 px-3 text-sm',
-        md: 'h-10 px-4 py-2 text-base',
-        lg: 'h-12 px-6 text-lg',
+        xs: 'h-6 w-6 text-xs',
+        sm: 'h-8 w-8 text-sm',
+        md: 'h-10 w-10 text-base',
+        lg: 'h-12 w-12 text-lg',
+        xl: 'h-14 w-14 text-xl',
       },
-      fullWidth: {
-        true: 'w-full',
+      shape: {
+        circle: 'rounded-full',
+        square: 'rounded-md',
       },
     },
     defaultVariants: {
       variant: 'primary',
       size: 'md',
+      shape: 'circle',
     },
   }
 );
 
 /**
- * Spinner component for loading state
+ * Spinner for loading state
  */
 const Spinner = ({ className }: { className?: string }) => (
   <svg
@@ -60,8 +61,7 @@ const Spinner = ({ className }: { className?: string }) => (
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
     viewBox="0 0 24 24"
-    role="status"
-    aria-label="Loading"
+    aria-hidden="true"
   >
     <circle
       className="opacity-25"
@@ -79,48 +79,35 @@ const Spinner = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export interface ButtonProps
+export interface IconButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+    VariantProps<typeof iconButtonVariants> {
   /**
-   * Render as a child component (e.g., Next.js Link)
+   * Icon to display (React node)
    */
-  asChild?: boolean;
+  icon?: React.ReactNode;
 
   /**
-   * Show loading spinner and disable button
+   * Accessible label (required for icon-only buttons)
+   */
+  'aria-label': string;
+
+  /**
+   * Show loading spinner
    */
   loading?: boolean;
-
-  /**
-   * Icon to display before the button text
-   */
-  iconLeft?: React.ReactNode;
-
-  /**
-   * Icon to display after the button text
-   */
-  iconRight?: React.ReactNode;
-
-  /**
-   * Loading text to display when button is loading
-   */
-  loadingText?: string;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
   (
     {
       className,
       variant,
       size,
-      fullWidth,
+      shape,
+      icon,
       loading = false,
       disabled,
-      iconLeft,
-      iconRight,
-      loadingText,
-      type = 'button',
       children,
       ...props
     },
@@ -130,31 +117,18 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     return (
       <button
-        className={cn(buttonVariants({ variant, size, fullWidth, className }))}
+        className={cn(iconButtonVariants({ variant, size, shape, className }))}
         ref={ref}
-        type={type}
         disabled={isDisabled}
         aria-busy={loading}
-        aria-live={loading ? 'polite' : undefined}
         {...props}
       >
-        {loading ? (
-          <>
-            <Spinner />
-            {loadingText || children}
-          </>
-        ) : (
-          <>
-            {iconLeft && <span className="inline-flex">{iconLeft}</span>}
-            {children}
-            {iconRight && <span className="inline-flex">{iconRight}</span>}
-          </>
-        )}
+        {loading ? <Spinner /> : icon || children}
       </button>
     );
   }
 );
 
-Button.displayName = 'Button';
+IconButton.displayName = 'IconButton';
 
-export { Button, buttonVariants };
+export { IconButton, iconButtonVariants };

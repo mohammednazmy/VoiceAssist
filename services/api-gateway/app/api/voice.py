@@ -1,15 +1,19 @@
 """
 Voice API endpoints
 Handles audio transcription and speech synthesis
+
+Providers:
+- OpenAI Whisper/TTS (default)
+- Stubs for future providers (Azure/GCP/ElevenLabs) using config
 """
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from pydantic import BaseModel
+import httpx
+from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.core.logging import get_logger
 from app.models.user import User
-import httpx
-import os
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from pydantic import BaseModel
 
 logger = get_logger(__name__)
 
@@ -71,7 +75,7 @@ async def transcribe_audio(
 
     try:
         # Use OpenAI Whisper API for transcription
-        openai_api_key = os.getenv("OPENAI_API_KEY")
+        openai_api_key = settings.OPENAI_API_KEY
         if not openai_api_key:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -84,7 +88,7 @@ async def transcribe_audio(
             "model": (None, "whisper-1"),
         }
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=settings.OPENAI_TIMEOUT_SEC) as client:
             response = await client.post(
                 "https://api.openai.com/v1/audio/transcriptions",
                 headers={"Authorization": f"Bearer {openai_api_key}"},
@@ -180,7 +184,16 @@ async def synthesize_speech(
         )
 
     try:
-        openai_api_key = os.getenv("OPENAI_API_KEY")
+        # For now only OpenAI provider is wired; config placeholders allow future providers
+        provider = settings.TTS_PROVIDER or "openai"
+
+        if provider != "openai":
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail=f"TTS provider '{provider}' not implemented",
+            )
+
+        openai_api_key = settings.OPENAI_API_KEY
         if not openai_api_key:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -189,9 +202,9 @@ async def synthesize_speech(
 
         # Use OpenAI TTS API
         # Available voices: alloy, echo, fable, onyx, nova, shimmer
-        voice = request.voiceId or "alloy"
+        voice = request.voiceId or settings.TTS_VOICE or "alloy"
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=settings.OPENAI_TIMEOUT_SEC) as client:
             response = await client.post(
                 "https://api.openai.com/v1/audio/speech",
                 headers={
@@ -226,6 +239,7 @@ async def synthesize_speech(
                 extra={
                     "user_id": current_user.id,
                     "audio_size": len(audio_content),
+                    "voice": voice,
                 },
             )
 

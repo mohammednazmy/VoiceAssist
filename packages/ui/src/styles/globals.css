@@ -3,6 +3,8 @@
  * Tailwind CSS imports and custom styles
  */
 
+@import './theme-variables.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

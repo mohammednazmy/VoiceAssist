@@ -9,12 +9,13 @@ import { z } from 'zod';
 import {
   Button,
   Input,
-  Label,
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
+  Avatar,
+  Badge,
 } from '@voiceassist/ui';
 import { useAuth } from '../hooks/useAuth';
 
@@ -97,13 +98,22 @@ export function ProfilePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-neutral-900">Profile Settings</h1>
-        <p className="mt-2 text-neutral-600">
-          Manage your account information and preferences
-        </p>
-      </div>
+    <div className="h-full overflow-y-auto">
+      <div className="max-w-4xl mx-auto p-6 lg:p-8 space-y-6">
+        {/* Header with Avatar */}
+        <div className="flex items-start space-x-6">
+          <Avatar
+            alt={user?.name || 'User'}
+            size="xl"
+            className="ring-4 ring-neutral-100 dark:ring-neutral-800"
+          />
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-text-primary">Profile Settings</h1>
+            <p className="mt-2 text-text-secondary">
+              Manage your account information and preferences
+            </p>
+          </div>
+        </div>
 
       {/* Profile Information */}
       <Card>
@@ -115,51 +125,33 @@ export function ProfilePage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleProfileSubmit(onProfileSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name" required error={!!profileErrors.name}>
-                Full Name
-              </Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="John Doe"
-                error={!!profileErrors.name}
-                fullWidth
-                {...registerProfile('name')}
-                aria-invalid={profileErrors.name ? 'true' : 'false'}
-                aria-describedby={profileErrors.name ? 'name-error' : undefined}
-              />
-              {profileErrors.name && (
-                <p id="name-error" className="text-sm text-error-600" role="alert">
-                  {profileErrors.name.message}
-                </p>
-              )}
-            </div>
+            <Input
+              id="name"
+              label="Full Name"
+              type="text"
+              placeholder="John Doe"
+              required
+              error={!!profileErrors.name}
+              errorMessage={profileErrors.name?.message}
+              fullWidth
+              {...registerProfile('name')}
+            />
 
-            <div className="space-y-2">
-              <Label htmlFor="email" required error={!!profileErrors.email}>
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                error={!!profileErrors.email}
-                fullWidth
-                {...registerProfile('email')}
-                aria-invalid={profileErrors.email ? 'true' : 'false'}
-                aria-describedby={profileErrors.email ? 'email-error' : undefined}
-              />
-              {profileErrors.email && (
-                <p id="email-error" className="text-sm text-error-600" role="alert">
-                  {profileErrors.email.message}
-                </p>
-              )}
-            </div>
+            <Input
+              id="email"
+              label="Email Address"
+              type="email"
+              placeholder="name@example.com"
+              required
+              error={!!profileErrors.email}
+              errorMessage={profileErrors.email?.message}
+              fullWidth
+              {...registerProfile('email')}
+            />
 
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isProfileSubmitting}>
-                {isProfileSubmitting ? 'Saving...' : 'Save Changes'}
+            <div className="flex justify-end pt-2">
+              <Button type="submit" loading={isProfileSubmitting}>
+                Save Changes
               </Button>
             </div>
           </form>
@@ -176,102 +168,46 @@ export function ProfilePage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label
-                htmlFor="currentPassword"
-                required
-                error={!!passwordErrors.currentPassword}
-              >
-                Current Password
-              </Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                placeholder="••••••••"
-                error={!!passwordErrors.currentPassword}
-                fullWidth
-                {...registerPassword('currentPassword')}
-                aria-invalid={passwordErrors.currentPassword ? 'true' : 'false'}
-                aria-describedby={
-                  passwordErrors.currentPassword ? 'current-password-error' : undefined
-                }
-              />
-              {passwordErrors.currentPassword && (
-                <p
-                  id="current-password-error"
-                  className="text-sm text-error-600"
-                  role="alert"
-                >
-                  {passwordErrors.currentPassword.message}
-                </p>
-              )}
-            </div>
+            <Input
+              id="currentPassword"
+              label="Current Password"
+              type="password"
+              placeholder="••••••••"
+              required
+              error={!!passwordErrors.currentPassword}
+              errorMessage={passwordErrors.currentPassword?.message}
+              fullWidth
+              {...registerPassword('currentPassword')}
+            />
 
-            <div className="space-y-2">
-              <Label
-                htmlFor="newPassword"
-                required
-                error={!!passwordErrors.newPassword}
-              >
-                New Password
-              </Label>
-              <Input
-                id="newPassword"
-                type="password"
-                placeholder="••••••••"
-                error={!!passwordErrors.newPassword}
-                fullWidth
-                {...registerPassword('newPassword')}
-                aria-invalid={passwordErrors.newPassword ? 'true' : 'false'}
-                aria-describedby={
-                  passwordErrors.newPassword ? 'new-password-error' : undefined
-                }
-              />
-              {passwordErrors.newPassword && (
-                <p
-                  id="new-password-error"
-                  className="text-sm text-error-600"
-                  role="alert"
-                >
-                  {passwordErrors.newPassword.message}
-                </p>
-              )}
-            </div>
+            <Input
+              id="newPassword"
+              label="New Password"
+              type="password"
+              placeholder="••••••••"
+              required
+              error={!!passwordErrors.newPassword}
+              errorMessage={passwordErrors.newPassword?.message}
+              helperText="Must be at least 8 characters with uppercase, lowercase, and number"
+              fullWidth
+              {...registerPassword('newPassword')}
+            />
 
-            <div className="space-y-2">
-              <Label
-                htmlFor="confirmPassword"
-                required
-                error={!!passwordErrors.confirmPassword}
-              >
-                Confirm New Password
-              </Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                error={!!passwordErrors.confirmPassword}
-                fullWidth
-                {...registerPassword('confirmPassword')}
-                aria-invalid={passwordErrors.confirmPassword ? 'true' : 'false'}
-                aria-describedby={
-                  passwordErrors.confirmPassword ? 'confirm-password-error' : undefined
-                }
-              />
-              {passwordErrors.confirmPassword && (
-                <p
-                  id="confirm-password-error"
-                  className="text-sm text-error-600"
-                  role="alert"
-                >
-                  {passwordErrors.confirmPassword.message}
-                </p>
-              )}
-            </div>
+            <Input
+              id="confirmPassword"
+              label="Confirm New Password"
+              type="password"
+              placeholder="••••••••"
+              required
+              error={!!passwordErrors.confirmPassword}
+              errorMessage={passwordErrors.confirmPassword?.message}
+              fullWidth
+              {...registerPassword('confirmPassword')}
+            />
 
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isPasswordSubmitting}>
-                {isPasswordSubmitting ? 'Changing...' : 'Change Password'}
+            <div className="flex justify-end pt-2">
+              <Button type="submit" loading={isPasswordSubmitting}>
+                Change Password
               </Button>
             </div>
           </form>
@@ -285,22 +221,22 @@ export function ProfilePage() {
           <CardDescription>Your account details and role</CardDescription>
         </CardHeader>
         <CardContent>
-          <dl className="space-y-4">
-            <div>
-              <dt className="text-sm font-medium text-neutral-500">User ID</dt>
-              <dd className="mt-1 text-sm text-neutral-900">{user?.id}</dd>
+          <dl className="space-y-6">
+            <div className="flex items-center justify-between py-3 border-b border-neutral-200 dark:border-neutral-700">
+              <dt className="text-sm font-medium text-text-secondary">User ID</dt>
+              <dd className="text-sm font-mono text-text-primary">{user?.id}</dd>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-neutral-500">Role</dt>
-              <dd className="mt-1 text-sm text-neutral-900">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                  {user?.role}
-                </span>
+            <div className="flex items-center justify-between py-3 border-b border-neutral-200 dark:border-neutral-700">
+              <dt className="text-sm font-medium text-text-secondary">Role</dt>
+              <dd>
+                <Badge variant="secondary" size="md">
+                  {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1) || 'User'}
+                </Badge>
               </dd>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-neutral-500">Account Created</dt>
-              <dd className="mt-1 text-sm text-neutral-900">
+            <div className="flex items-center justify-between py-3">
+              <dt className="text-sm font-medium text-text-secondary">Account Created</dt>
+              <dd className="text-sm text-text-primary">
                 {user?.createdAt
                   ? new Date(user.createdAt).toLocaleDateString('en-US', {
                       year: 'numeric',
@@ -313,6 +249,7 @@ export function ProfilePage() {
           </dl>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

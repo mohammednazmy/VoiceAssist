@@ -1,9 +1,185 @@
+/**
+ * VoiceAssist Admin Panel - Global Styles
+ * Includes Tailwind, theme variables, and accessibility utilities
+ */
 
-:root {
-  color-scheme: dark;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+/* ===================================
+   Theme Variables (must come first)
+   =================================== */
+
+@import '../../../packages/ui/src/styles/theme-variables.css';
+
+/* ===================================
+   Tailwind CSS Imports
+   =================================== */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===================================
+   Base Styles
+   =================================== */
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+
+  /* Apply theme to body */
+  body {
+    @apply bg-background-primary text-text-primary font-sans antialiased;
+    margin: 0;
+  }
+
+  /* Heading styles */
+  h1 {
+    @apply text-4xl font-bold leading-tight tracking-tight;
+  }
+
+  h2 {
+    @apply text-3xl font-bold leading-tight tracking-tight;
+  }
+
+  h3 {
+    @apply text-2xl font-semibold;
+  }
+
+  h4 {
+    @apply text-xl font-semibold;
+  }
+
+  h5 {
+    @apply text-lg font-semibold;
+  }
+
+  h6 {
+    @apply text-base font-semibold;
+  }
+
+  /* Link styles */
+  a {
+    @apply text-text-link hover:text-text-link-hover;
+  }
+
+  /* Code styles */
+  code {
+    @apply font-mono text-sm bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded;
+  }
+
+  pre {
+    @apply font-mono text-sm bg-neutral-100 dark:bg-neutral-800 p-4 rounded-lg overflow-x-auto;
+  }
+
+  pre code {
+    @apply bg-transparent p-0;
+  }
 }
 
-body {
-  margin: 0;
+/* ===================================
+   Accessibility Utilities
+   =================================== */
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Enhanced Focus Indicators (WCAG 2.1 AA) */
+*:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+[role='button']:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--color-border-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* Dark mode focus ring adjustment */
+[data-theme='dark'] button:focus-visible,
+[data-theme='dark'] a:focus-visible,
+[data-theme='dark'] [role='button']:focus-visible,
+[data-theme='dark'] input:focus-visible,
+[data-theme='dark'] textarea:focus-visible,
+[data-theme='dark'] select:focus-visible,
+.dark button:focus-visible,
+.dark a:focus-visible,
+.dark [role='button']:focus-visible,
+.dark input:focus-visible,
+.dark textarea:focus-visible,
+.dark select:focus-visible {
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    border-width: 2px;
+  }
+
+  *:focus-visible {
+    outline-width: 4px;
+  }
+}
+
+/* ===================================
+   Scrollbar Styling
+   =================================== */
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-neutral-100 dark:bg-neutral-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-neutral-300 dark:bg-neutral-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-neutral-400 dark:bg-neutral-500;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-neutral-300) var(--color-neutral-100);
+}
+
+[data-theme='dark'] *,
+.dark * {
+  scrollbar-color: var(--color-neutral-600) var(--color-neutral-800);
 }

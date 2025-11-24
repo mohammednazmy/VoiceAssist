@@ -12,11 +12,11 @@
  * ```
  */
 
-export { colors } from './colors';
-export type { ColorToken, ColorCategory } from './colors';
+export { colors, lightColors, darkColors } from './colors';
+export type { ColorScale, LightColors, DarkColors, ColorMode } from './colors';
 
-export { typography } from './typography';
-export type { TypographyToken, FontSize, FontWeight, LineHeight } from './typography';
+export { typography, fontFamily, fontSize, fontWeight, lineHeight, letterSpacing, typographyPresets } from './typography';
+export type { FontFamily, FontSize, FontWeight, LineHeight, LetterSpacing, TypographyPreset } from './typography';
 
 export { spacing, borderRadius, shadows, zIndex } from './spacing';
 export type { SpacingToken, BorderRadiusToken, ShadowToken, ZIndexToken } from './spacing';

@@ -1,11 +1,79 @@
+/**
+ * VoiceAssist Web App - Global Styles
+ * Includes Tailwind, theme variables, and accessibility utilities
+ */
 
-:root {
-  color-scheme: light dark;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
-}
+/* ===================================
+   Theme Variables (must come first)
+   =================================== */
 
-body {
-  margin: 0;
+@import '../../../packages/ui/src/styles/theme-variables.css';
+
+/* ===================================
+   Tailwind CSS Imports
+   =================================== */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===================================
+   Base Styles
+   =================================== */
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+
+  /* Apply theme to body */
+  body {
+    @apply bg-background-primary text-text-primary font-sans antialiased;
+    margin: 0;
+  }
+
+  /* Heading styles */
+  h1 {
+    @apply text-4xl font-bold leading-tight tracking-tight;
+  }
+
+  h2 {
+    @apply text-3xl font-bold leading-tight tracking-tight;
+  }
+
+  h3 {
+    @apply text-2xl font-semibold;
+  }
+
+  h4 {
+    @apply text-xl font-semibold;
+  }
+
+  h5 {
+    @apply text-lg font-semibold;
+  }
+
+  h6 {
+    @apply text-base font-semibold;
+  }
+
+  /* Link styles */
+  a {
+    @apply text-text-link hover:text-text-link-hover;
+  }
+
+  /* Code styles */
+  code {
+    @apply font-mono text-sm bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded;
+  }
+
+  pre {
+    @apply font-mono text-sm bg-neutral-100 dark:bg-neutral-800 p-4 rounded-lg overflow-x-auto;
+  }
+
+  pre code {
+    @apply bg-transparent p-0;
+  }
 }
 
 /* ===================================
@@ -39,38 +107,38 @@ body {
 }
 
 /* Enhanced Focus Indicators (WCAG 2.1 AA) */
+/* Using new theme colors */
 *:focus-visible {
-  outline: 2px solid #0080FF;
+  outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
 }
 
 /* High contrast focus for interactive elements */
 button:focus-visible,
 a:focus-visible,
-[role="button"]:focus-visible,
+[role='button']:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 3px solid #0080FF;
+  outline: 3px solid var(--color-border-focus);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(0, 128, 255, 0.1);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
-/* Ensure focus is visible even in dark mode */
-@media (prefers-color-scheme: dark) {
-  *:focus-visible {
-    outline-color: #4A9FFF;
-  }
-
-  button:focus-visible,
-  a:focus-visible,
-  [role="button"]:focus-visible,
-  input:focus-visible,
-  textarea:focus-visible,
-  select:focus-visible {
-    outline-color: #4A9FFF;
-    box-shadow: 0 0 0 4px rgba(74, 159, 255, 0.2);
-  }
+/* Dark mode focus ring adjustment */
+[data-theme='dark'] button:focus-visible,
+[data-theme='dark'] a:focus-visible,
+[data-theme='dark'] [role='button']:focus-visible,
+[data-theme='dark'] input:focus-visible,
+[data-theme='dark'] textarea:focus-visible,
+[data-theme='dark'] select:focus-visible,
+.dark button:focus-visible,
+.dark a:focus-visible,
+.dark [role='button']:focus-visible,
+.dark input:focus-visible,
+.dark textarea:focus-visible,
+.dark select:focus-visible {
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
 }
 
 /* Reduced Motion Support */
@@ -106,27 +174,107 @@ select:focus-visible {
 }
 
 /* ===================================
-   Toast Animations
+   Custom Component Styles
    =================================== */
 
-@keyframes slide-in-right {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
+@layer components {
+  /* Skip to main content link */
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50;
+    @apply bg-primary-600 text-white px-4 py-2 rounded-md;
   }
-  to {
-    transform: translateX(0);
-    opacity: 1;
+
+  /* Focus trap container */
+  .focus-trap {
+    @apply outline-none;
   }
 }
 
-.animate-slide-in-right {
-  animation: slide-in-right 0.3s ease-out;
-}
+/* ===================================
+   Custom Animations
+   =================================== */
 
-/* Respect reduced motion preferences */
-@media (prefers-reduced-motion: reduce) {
+@layer utilities {
+  /* Toast animations */
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
   .animate-slide-in-right {
-    animation: none;
+    animation: slide-in-right 0.3s ease-out;
   }
+
+  /* Respect reduced motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-slide-in-right {
+      animation: none;
+    }
+  }
+
+  /* Fade animations */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fade-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 200ms ease-in-out;
+  }
+
+  .animate-fade-out {
+    animation: fade-out 200ms ease-in-out;
+  }
+}
+
+/* ===================================
+   Scrollbar Styling (Webkit)
+   =================================== */
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-neutral-100 dark:bg-neutral-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-neutral-300 dark:bg-neutral-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-neutral-400 dark:bg-neutral-500;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-neutral-300) var(--color-neutral-100);
+}
+
+[data-theme='dark'] *,
+.dark * {
+  scrollbar-color: var(--color-neutral-600) var(--color-neutral-800);
 }
