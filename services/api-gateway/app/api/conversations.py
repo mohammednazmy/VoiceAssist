@@ -11,8 +11,8 @@ from typing import List, Optional
 
 from app.core.api_envelope import ErrorCodes, error_response, success_response
 from app.core.database import get_db
-from app.core.logging import get_logger
 from app.core.dependencies import get_current_user
+from app.core.logging import get_logger
 from app.models.message import Message
 from app.models.session import Session as ChatSession
 from app.models.user import User
@@ -21,11 +21,50 @@ from pydantic import BaseModel, Field
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
-router = APIRouter(prefix="/api/conversations", tags=["conversations"])
+router = APIRouter(prefix="/conversations", tags=["conversations"])
 logger = get_logger(__name__)
 
 
 # Pydantic Schemas
+class CreateConversationRequest(BaseModel):
+    """Request to create a new conversation"""
+
+    title: str = Field(..., description="Conversation title")
+    folder_id: Optional[str] = Field(
+        None, description="Optional folder ID to organize conversation"
+    )
+
+
+class UpdateConversationRequest(BaseModel):
+    """Request to update a conversation"""
+
+    title: Optional[str] = Field(None, description="New conversation title")
+    archived: Optional[bool] = Field(None, description="Archive status")
+    folder_id: Optional[str] = Field(None, description="Move to folder")
+
+
+class ConversationResponse(BaseModel):
+    """Response containing conversation details"""
+
+    id: str
+    userId: str
+    title: str
+    archived: bool = False
+    messageCount: int = 0
+    folderId: Optional[str] = None
+    createdAt: str
+    updatedAt: str
+
+
+class ConversationsListResponse(BaseModel):
+    """Paginated list of conversations"""
+
+    items: List[ConversationResponse]
+    total: int
+    page: int
+    pageSize: int
+
+
 class CreateBranchRequest(BaseModel):
     """Request to create a new conversation branch"""
 
@@ -129,7 +168,358 @@ def get_message_or_404(
     return message
 
 
-# API Endpoints
+# API Endpoints - Conversation CRUD
+@router.get("")
+async def list_conversations(
+    page: int = 1,
+    pageSize: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    List all conversations for the current user.
+
+    Returns paginated list of conversations with message counts and metadata.
+
+    Args:
+        page: Page number (1-indexed)
+        pageSize: Number of items per page
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        PaginatedResponse with conversations
+    """
+    # Calculate offset
+    offset = (page - 1) * pageSize
+
+    # Query total count
+    total = (
+        db.query(func.count(ChatSession.id))
+        .filter(ChatSession.user_id == current_user.id)
+        .scalar()
+    )
+
+    # Query sessions with message counts
+    sessions = (
+        db.query(
+            ChatSession,
+            func.count(Message.id).label("message_count"),
+        )
+        .outerjoin(Message, Message.session_id == ChatSession.id)
+        .filter(ChatSession.user_id == current_user.id)
+        .group_by(ChatSession.id)
+        .order_by(ChatSession.updated_at.desc())
+        .offset(offset)
+        .limit(pageSize)
+        .all()
+    )
+
+    conversations = [
+        ConversationResponse(
+            id=str(session.id),
+            userId=str(session.user_id),
+            title=session.title or "New Conversation",
+            archived=bool(session.archived),  # Convert int to bool
+            messageCount=message_count,
+            folderId=str(session.folder_id) if session.folder_id else None,
+            createdAt=session.created_at.isoformat() + "Z",
+            updatedAt=session.updated_at.isoformat() + "Z",
+        )
+        for session, message_count in sessions
+    ]
+
+    return success_response(
+        data=ConversationsListResponse(
+            items=conversations,
+            total=total,
+            page=page,
+            pageSize=pageSize,
+        )
+    )
+
+
+@router.post("")
+async def create_conversation(
+    request: CreateConversationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Create a new conversation.
+
+    Args:
+        request: Conversation creation request
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        ConversationResponse with new conversation details
+    """
+    # Validate folder_id if provided
+    folder_uuid = None
+    if request.folder_id:
+        try:
+            folder_uuid = uuid.UUID(request.folder_id)
+            # Verify folder exists and belongs to user
+            from app.models.folder import ConversationFolder
+
+            folder = (
+                db.query(ConversationFolder)
+                .filter(
+                    and_(
+                        ConversationFolder.id == folder_uuid,
+                        ConversationFolder.user_id == current_user.id,
+                    )
+                )
+                .first()
+            )
+            if not folder:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=error_response(
+                        error_code=ErrorCodes.NOT_FOUND, message="Folder not found"
+                    ),
+                )
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error_response(
+                    error_code=ErrorCodes.VALIDATION_ERROR,
+                    message="Invalid folder UUID format",
+                ),
+            )
+
+    # Create new session
+    new_session = ChatSession(
+        user_id=current_user.id,
+        title=request.title,
+        folder_id=folder_uuid,
+        archived=0,  # 0 = not archived, 1 = archived (Integer column)
+    )
+
+    db.add(new_session)
+    db.commit()
+    db.refresh(new_session)
+
+    logger.info(f"Created conversation {new_session.id} for user {current_user.id}")
+
+    return success_response(
+        data=ConversationResponse(
+            id=str(new_session.id),
+            userId=str(new_session.user_id),
+            title=new_session.title,
+            archived=bool(new_session.archived),  # Convert int to bool
+            messageCount=0,
+            folderId=str(new_session.folder_id) if new_session.folder_id else None,
+            createdAt=new_session.created_at.isoformat() + "Z",
+            updatedAt=new_session.updated_at.isoformat() + "Z",
+        )
+    )
+
+
+@router.get("/{conversation_id}")
+async def get_conversation(
+    conversation_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get a specific conversation by ID.
+
+    Args:
+        conversation_id: UUID of the conversation
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        ConversationResponse with conversation details
+
+    Raises:
+        404: Conversation not found
+        403: User doesn't own the conversation
+    """
+    try:
+        conv_uuid = uuid.UUID(conversation_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_response(
+                error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"
+            ),
+        )
+
+    session = get_session_or_404(db, conv_uuid, current_user)
+
+    # Get message count
+    message_count = (
+        db.query(func.count(Message.id))
+        .filter(Message.session_id == session.id)
+        .scalar()
+    )
+
+    return success_response(
+        data=ConversationResponse(
+            id=str(session.id),
+            userId=str(session.user_id),
+            title=session.title or "New Conversation",
+            archived=bool(session.archived),  # Convert int to bool
+            messageCount=message_count,
+            folderId=str(session.folder_id) if session.folder_id else None,
+            createdAt=session.created_at.isoformat() + "Z",
+            updatedAt=session.updated_at.isoformat() + "Z",
+        )
+    )
+
+
+@router.patch("/{conversation_id}")
+async def update_conversation(
+    conversation_id: str,
+    request: UpdateConversationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Update a conversation's metadata.
+
+    Args:
+        conversation_id: UUID of the conversation
+        request: Update request with fields to change
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        ConversationResponse with updated conversation details
+
+    Raises:
+        404: Conversation not found
+        403: User doesn't own the conversation
+    """
+    try:
+        conv_uuid = uuid.UUID(conversation_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_response(
+                error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"
+            ),
+        )
+
+    session = get_session_or_404(db, conv_uuid, current_user)
+
+    # Update fields if provided
+    if request.title is not None:
+        session.title = request.title
+    if request.archived is not None:
+        session.archived = 1 if request.archived else 0  # Convert bool to int
+    if request.folder_id is not None:
+        if request.folder_id:
+            try:
+                folder_uuid = uuid.UUID(request.folder_id)
+                # Verify folder exists and belongs to user
+                from app.models.folder import ConversationFolder
+
+                folder = (
+                    db.query(ConversationFolder)
+                    .filter(
+                        and_(
+                            ConversationFolder.id == folder_uuid,
+                            ConversationFolder.user_id == current_user.id,
+                        )
+                    )
+                    .first()
+                )
+                if not folder:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=error_response(
+                            error_code=ErrorCodes.NOT_FOUND, message="Folder not found"
+                        ),
+                    )
+                session.folder_id = folder_uuid
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=error_response(
+                        error_code=ErrorCodes.VALIDATION_ERROR,
+                        message="Invalid folder UUID format",
+                    ),
+                )
+        else:
+            session.folder_id = None
+
+    db.commit()
+    db.refresh(session)
+
+    # Get message count
+    message_count = (
+        db.query(func.count(Message.id))
+        .filter(Message.session_id == session.id)
+        .scalar()
+    )
+
+    logger.info(f"Updated conversation {session.id}")
+
+    return success_response(
+        data=ConversationResponse(
+            id=str(session.id),
+            userId=str(session.user_id),
+            title=session.title or "New Conversation",
+            archived=bool(session.archived),  # Convert int to bool
+            messageCount=message_count,
+            folderId=str(session.folder_id) if session.folder_id else None,
+            createdAt=session.created_at.isoformat() + "Z",
+            updatedAt=session.updated_at.isoformat() + "Z",
+        )
+    )
+
+
+@router.delete("/{conversation_id}")
+async def delete_conversation(
+    conversation_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Delete a conversation and all its messages.
+
+    Args:
+        conversation_id: UUID of the conversation
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        Success response
+
+    Raises:
+        404: Conversation not found
+        403: User doesn't own the conversation
+    """
+    try:
+        conv_uuid = uuid.UUID(conversation_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_response(
+                error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"
+            ),
+        )
+
+    session = get_session_or_404(db, conv_uuid, current_user)
+
+    # Delete all messages first (cascade should handle this, but being explicit)
+    db.query(Message).filter(Message.session_id == session.id).delete()
+
+    # Delete the session
+    db.delete(session)
+    db.commit()
+
+    logger.info(f"Deleted conversation {conversation_id}")
+
+    return success_response(data={"message": "Conversation deleted successfully"})
+
+
+# API Endpoints - Conversation Branching
 @router.post("/{session_id}/branches", response_model=BranchResponse)
 async def create_branch(
     session_id: str,

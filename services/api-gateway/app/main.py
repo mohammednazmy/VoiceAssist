@@ -120,7 +120,9 @@ app.include_router(metrics.router)  # Prometheus metrics endpoint (Phase 7 - P2.
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(realtime.router)
-app.include_router(conversations.router)  # Phase 2 Week 10: Conversation branching
+app.include_router(
+    conversations.router, prefix="/api"
+)  # Phase 2 Week 10: Conversations & branching
 app.include_router(
     voice.router
 )  # Milestone 1 Phase 3: Voice features (transcription, TTS)

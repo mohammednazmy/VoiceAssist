@@ -24,9 +24,7 @@ class Document(Base):
         String(100), nullable=False, index=True
     )  # 'uploaded', 'guideline', 'journal', etc.
     filename = Column(String(500), nullable=True)
-    file_type = Column(
-        String(50), nullable=True
-    )  # 'pdf', 'txt', 'md', 'docx', etc.
+    file_type = Column(String(50), nullable=True)  # 'pdf', 'txt', 'md', 'docx', etc.
 
     # Indexing information
     chunks_indexed = Column(Integer, default=0, nullable=False)
@@ -37,11 +35,15 @@ class Document(Base):
     indexing_error = Column(Text, nullable=True)  # Error message if indexing failed
 
     # Additional metadata (flexible JSON field)
-    metadata = Column(JSONB, nullable=True)  # Arbitrary metadata
+    doc_metadata = Column(
+        "metadata", JSONB, nullable=True
+    )  # Arbitrary metadata (renamed to avoid SQLAlchemy conflict)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     def __repr__(self):
         return f"<Document(id={self.id}, document_id={self.document_id}, title={self.title})>"
