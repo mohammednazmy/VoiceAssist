@@ -184,9 +184,20 @@ export function useChatSession(
             setIsTyping(false);
 
             if (data.message) {
+              // Extract citations from either message.citations or message.metadata.citations
+              const citations =
+                data.message.citations ||
+                data.message.metadata?.citations ||
+                [];
+
               const finalMessage: Message = {
                 ...data.message,
                 timestamp: data.message.timestamp || Date.now(),
+                citations, // Ensure citations are at top level
+                metadata: {
+                  ...data.message.metadata,
+                  citations, // Also preserve in metadata for backward compat
+                },
               };
 
               setMessages((prev) => {

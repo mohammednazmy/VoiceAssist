@@ -821,7 +821,7 @@ async def create_branch(
     )
 
 
-@router.get("/{session_id}/branches", response_model=List[BranchInfo])
+@router.get("/{session_id}/branches")
 async def list_branches(
     session_id: str,
     db: Session = Depends(get_db),
@@ -930,9 +930,7 @@ async def list_branches(
     return success_response(data=branches)
 
 
-@router.get(
-    "/{session_id}/branches/{branch_id}/messages", response_model=List[MessageResponse]
-)
+@router.get("/{session_id}/branches/{branch_id}/messages")
 async def get_branch_messages(
     session_id: str,
     branch_id: str,

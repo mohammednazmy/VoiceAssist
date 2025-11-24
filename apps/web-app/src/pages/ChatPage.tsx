@@ -708,12 +708,15 @@ export function ChatPage() {
       />
 
       {/* Export Dialog */}
-      <ExportDialog
-        isOpen={isExportDialogOpen}
-        onClose={() => setIsExportDialogOpen(false)}
-        conversationTitle={conversation?.title || "Conversation"}
-        messages={messages}
-      />
+      {activeConversationId && (
+        <ExportDialog
+          isOpen={isExportDialogOpen}
+          onClose={() => setIsExportDialogOpen(false)}
+          conversationId={activeConversationId}
+          conversationTitle={conversation?.title || "Conversation"}
+          messages={messages}
+        />
+      )}
 
       {/* Share Dialog */}
       {activeConversationId && (

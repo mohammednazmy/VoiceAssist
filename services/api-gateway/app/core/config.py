@@ -75,8 +75,10 @@ class Settings(BaseSettings):
     TTS_VOICE: Optional[str] = None
     VOICE_WS_MAX_INFLIGHT: int = 5
 
-    # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:3000"
+    # CORS (comma-separated list of allowed origins)
+    ALLOWED_ORIGINS: str = (
+        "https://asimo.io,https://dev.asimo.io,https://assist.asimo.io,http://localhost:3000,http://localhost:5173"
+    )
 
     # Caching (Phase 7 Integration Improvements - P2.1)
     CACHE_ENABLED: bool = True

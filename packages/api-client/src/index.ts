@@ -404,35 +404,6 @@ export class VoiceAssistApiClient {
   }
 
   // =========================================================================
-  // Voice
-  // =========================================================================
-
-  async transcribeAudio(audioBlob: Blob): Promise<string> {
-    const formData = new FormData();
-    formData.append("audio", audioBlob);
-
-    const response = await this.client.post<ApiResponse<{ text: string }>>(
-      "/voice/transcribe",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      },
-    );
-    return response.data.data!.text;
-  }
-
-  async synthesizeSpeech(text: string, voiceId?: string): Promise<Blob> {
-    const response = await this.client.post(
-      "/voice/synthesize",
-      { text, voiceId },
-      { responseType: "blob" },
-    );
-    return response.data;
-  }
-
-  // =========================================================================
   // Admin
   // =========================================================================
 
@@ -601,7 +572,7 @@ export class VoiceAssistApiClient {
     return response.data;
   }
 
-  async getAttachmentUrl(attachmentId: string): string {
+  getAttachmentUrl(attachmentId: string): string {
     return `${this.config.baseURL}/attachments/${attachmentId}/download`;
   }
 
@@ -656,6 +627,38 @@ export class VoiceAssistApiClient {
 
   async deleteClinicalContext(contextId: string): Promise<void> {
     await this.client.delete(`/clinical-contexts/${contextId}`);
+  }
+
+  // =========================================================================
+  // Export
+  // =========================================================================
+
+  /**
+   * Export conversation as Markdown
+   * Returns a Blob that can be downloaded
+   */
+  async exportConversationAsMarkdown(conversationId: string): Promise<Blob> {
+    const response = await this.client.get(
+      `/export/conversations/${conversationId}/markdown`,
+      {
+        responseType: "blob",
+      },
+    );
+    return response.data;
+  }
+
+  /**
+   * Export conversation as PDF
+   * Returns a Blob that can be downloaded
+   */
+  async exportConversationAsPdf(conversationId: string): Promise<Blob> {
+    const response = await this.client.get(
+      `/export/conversations/${conversationId}/pdf`,
+      {
+        responseType: "blob",
+      },
+    );
+    return response.data;
   }
 
   // =========================================================================

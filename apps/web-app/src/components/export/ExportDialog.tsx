@@ -1,32 +1,45 @@
 /**
  * Export Dialog Component
  * Dialog for exporting conversations to PDF or Markdown
+ * Uses backend export API for server-side generation
  */
 
-import { useState } from 'react';
-import { Button } from '@voiceassist/ui';
-import type { Message } from '@voiceassist/types';
-import {
-  exportConversationToMarkdown,
-  exportConversationToPDF,
-} from '../../utils/exportConversation';
+import { useState } from "react";
+import { Button } from "@voiceassist/ui";
+import type { Message } from "@voiceassist/types";
+import { useAuth } from "../../hooks/useAuth";
 
 export interface ExportDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  conversationId: string;
   conversationTitle: string;
   messages: Message[];
+}
+
+/**
+ * Trigger browser download of a blob with the given filename
+ */
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 export function ExportDialog({
   isOpen,
   onClose,
+  conversationId,
   conversationTitle,
   messages,
 }: ExportDialogProps) {
-  const [format, setFormat] = useState<'markdown' | 'pdf'>('markdown');
-  const [includeTimestamps, setIncludeTimestamps] = useState(true);
-  const [includeCitations, setIncludeCitations] = useState(true);
+  const { apiClient } = useAuth();
+  const [format, setFormat] = useState<"markdown" | "pdf">("markdown");
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,21 +48,24 @@ export function ExportDialog({
     setError(null);
 
     try {
-      if (format === 'markdown') {
-        exportConversationToMarkdown(
-          conversationTitle,
-          messages,
-          includeTimestamps,
-          includeCitations
-        );
+      const timestamp = new Date().toISOString().split("T")[0];
+      const sanitizedTitle = conversationTitle
+        .replace(/[^a-z0-9]/gi, "-")
+        .toLowerCase();
+
+      let blob: Blob;
+      let filename: string;
+
+      if (format === "markdown") {
+        blob = await apiClient.exportConversationAsMarkdown(conversationId);
+        filename = `${sanitizedTitle}-${timestamp}.md`;
       } else {
-        exportConversationToPDF(
-          conversationTitle,
-          messages,
-          includeTimestamps,
-          includeCitations
-        );
+        blob = await apiClient.exportConversationAsPdf(conversationId);
+        filename = `${sanitizedTitle}-${timestamp}.pdf`;
       }
+
+      // Trigger download
+      downloadBlob(blob, filename);
 
       // Close dialog after short delay
       setTimeout(() => {
@@ -57,8 +73,10 @@ export function ExportDialog({
         setIsExporting(false);
       }, 500);
     } catch (err) {
-      console.error('Export failed:', err);
-      setError(err instanceof Error ? err.message : 'Failed to export conversation');
+      console.error("Export failed:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to export conversation",
+      );
       setIsExporting(false);
     }
   };
@@ -132,11 +150,11 @@ export function ExportDialog({
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => setFormat('markdown')}
+              onClick={() => setFormat("markdown")}
               className={`p-4 rounded-lg border-2 transition-colors ${
-                format === 'markdown'
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                  : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'
+                format === "markdown"
+                  ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+                  : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300"
               }`}
             >
               <div className="flex flex-col items-center space-y-2">
@@ -147,9 +165,9 @@ export function ExportDialog({
                   strokeWidth={1.5}
                   stroke="currentColor"
                   className={`w-6 h-6 ${
-                    format === 'markdown'
-                      ? 'text-primary-600'
-                      : 'text-neutral-500'
+                    format === "markdown"
+                      ? "text-primary-600"
+                      : "text-neutral-500"
                   }`}
                 >
                   <path
@@ -160,9 +178,9 @@ export function ExportDialog({
                 </svg>
                 <span
                   className={`text-sm font-medium ${
-                    format === 'markdown'
-                      ? 'text-primary-700 dark:text-primary-400'
-                      : 'text-neutral-700 dark:text-neutral-300'
+                    format === "markdown"
+                      ? "text-primary-700 dark:text-primary-400"
+                      : "text-neutral-700 dark:text-neutral-300"
                   }`}
                 >
                   Markdown
@@ -172,11 +190,11 @@ export function ExportDialog({
 
             <button
               type="button"
-              onClick={() => setFormat('pdf')}
+              onClick={() => setFormat("pdf")}
               className={`p-4 rounded-lg border-2 transition-colors ${
-                format === 'pdf'
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                  : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'
+                format === "pdf"
+                  ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+                  : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300"
               }`}
             >
               <div className="flex flex-col items-center space-y-2">
@@ -187,7 +205,7 @@ export function ExportDialog({
                   strokeWidth={1.5}
                   stroke="currentColor"
                   className={`w-6 h-6 ${
-                    format === 'pdf' ? 'text-primary-600' : 'text-neutral-500'
+                    format === "pdf" ? "text-primary-600" : "text-neutral-500"
                   }`}
                 >
                   <path
@@ -198,9 +216,9 @@ export function ExportDialog({
                 </svg>
                 <span
                   className={`text-sm font-medium ${
-                    format === 'pdf'
-                      ? 'text-primary-700 dark:text-primary-400'
-                      : 'text-neutral-700 dark:text-neutral-300'
+                    format === "pdf"
+                      ? "text-primary-700 dark:text-primary-400"
+                      : "text-neutral-700 dark:text-neutral-300"
                   }`}
                 >
                   PDF
@@ -210,31 +228,11 @@ export function ExportDialog({
           </div>
         </div>
 
-        {/* Options */}
-        <div className="mb-6 space-y-3">
-          <label className="flex items-center space-x-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={includeTimestamps}
-              onChange={(e) => setIncludeTimestamps(e.target.checked)}
-              className="w-4 h-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
-            />
-            <span className="text-sm text-neutral-700 dark:text-neutral-300">
-              Include timestamps
-            </span>
-          </label>
-
-          <label className="flex items-center space-x-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={includeCitations}
-              onChange={(e) => setIncludeCitations(e.target.checked)}
-              className="w-4 h-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
-            />
-            <span className="text-sm text-neutral-700 dark:text-neutral-300">
-              Include citations {citationCount > 0 && `(${citationCount})`}
-            </span>
-          </label>
+        {/* Info Note */}
+        <div className="mb-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <p className="text-sm text-blue-800 dark:text-blue-300">
+            Export includes timestamps and citations automatically
+          </p>
         </div>
 
         {/* Error Message */}
@@ -246,11 +244,7 @@ export function ExportDialog({
 
         {/* Actions */}
         <div className="flex justify-end space-x-3">
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            disabled={isExporting}
-          >
+          <Button variant="ghost" onClick={onClose} disabled={isExporting}>
             Cancel
           </Button>
           <Button

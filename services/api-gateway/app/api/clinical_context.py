@@ -5,8 +5,8 @@ API endpoints for clinical context management
 from typing import Optional
 from uuid import UUID
 
-from app.core.dependencies import get_current_user
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
 from app.models.clinical_context import ClinicalContext, ClinicalContextCreate, ClinicalContextUpdate
 from app.models.user import User
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -86,7 +86,7 @@ async def get_current_clinical_context(
         current_user: Authenticated user
 
     Returns:
-        Clinical context record
+        Clinical context record or None if not found
     """
     query = db.query(ClinicalContext).filter(ClinicalContext.user_id == current_user.id)
 
@@ -99,9 +99,8 @@ async def get_current_clinical_context(
     context = query.first()
 
     if not context:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Clinical context not found"
-        )
+        # Return None instead of 404 - this is not an error condition
+        return None
 
     return context.to_dict()
 

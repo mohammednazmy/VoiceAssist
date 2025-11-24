@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Debug - VoiceAssist</title>
+    <style>
+        body {
+            font-family: system-ui;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: white;
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            border-left-color: #f44336;
+        }
+        h1 { color: #333; }
+        code {
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .test { margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>VoiceAssist Frontend Debug</h1>
+
+    <div class="status">
+        ✅ This static HTML file is loading correctly
+    </div>
+
+    <div class="test">
+        <h2>Test Results:</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const results = document.getElementById('results');
+
+        function addResult(message, isError = false) {
+            const div = document.createElement('div');
+            div.className = 'status' + (isError ? ' error' : '');
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        // Test 1: Check if we can fetch the main app
+        fetch('/')
+            .then(r => r.text())
+            .then(html => {
+                if (html.includes('id="root"')) {
+                    addResult('✅ Main app HTML contains <code>id="root"</code>');
+                } else {
+                    addResult('❌ Main app HTML missing root div', true);
+                }
+            })
+            .catch(e => addResult('❌ Failed to fetch main app: ' + e.message, true));
+
+        // Test 2: Check if CSS loads
+        fetch('/src/styles.css')
+            .then(r => {
+                if (r.ok) {
+                    addResult('✅ styles.css loads (HTTP ' + r.status + ')');
+                } else {
+                    addResult('❌ styles.css failed (HTTP ' + r.status + ')', true);
+                }
+            })
+            .catch(e => addResult('❌ CSS fetch error: ' + e.message, true));
+
+        // Test 3: Check if React loads
+        fetch('/node_modules/.vite/deps/react.js')
+            .then(r => {
+                if (r.ok) {
+                    addResult('✅ React dependency loads (HTTP ' + r.status + ')');
+                } else {
+                    addResult('❌ React failed (HTTP ' + r.status + ')', true);
+                }
+            })
+            .catch(e => addResult('❌ React fetch error: ' + e.message, true));
+
+        // Test 4: Check backend API
+        fetch('http://localhost:8000/api/health')
+            .then(r => r.json())
+            .then(data => {
+                addResult('✅ Backend API responds: ' + JSON.stringify(data));
+            })
+            .catch(e => addResult('⚠️ Backend API not accessible from browser (CORS): ' + e.message));
+
+        addResult('📍 <strong>Current URL:</strong> ' + window.location.href);
+        addResult('🌐 <strong>User Agent:</strong> ' + navigator.userAgent.substring(0, 100) + '...');
+    </script>
+
+    <div style="margin-top: 40px; padding: 20px; background: white; border-radius: 8px;">
+        <h2>Quick Links:</h2>
+        <ul>
+            <li><a href="/">Main App (root)</a></li>
+            <li><a href="/login">Login Page</a></li>
+            <li><a href="/test-api.html">API Tester</a></li>
+        </ul>
+    </div>
+</body>
+</html>

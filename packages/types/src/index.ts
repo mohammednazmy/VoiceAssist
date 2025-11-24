@@ -62,17 +62,39 @@ export interface Message {
   branchId?: string;
 }
 
+/**
+ * Citation interface - matches backend CitationSchema
+ * Supports both structured (new) and legacy fields for backward compatibility
+ */
 export interface Citation {
+  // Core fields
   id: string;
-  source: "kb" | "url";
-  reference: string;
-  snippet?: string;
+
+  // Legacy fields (maintained for backward compatibility)
+  source?: "kb" | "url" | "pubmed" | "doi";
+  reference?: string;
+
+  // Structured fields (Phase 8)
+  sourceId?: string;
+  sourceType?: string;
+  title?: string;
+  subtitle?: string;
+  location?: string;
+  url?: string;
+  doi?: string;
+  pubmedId?: string;
   page?: number;
+  authors?: string[];
+  publicationYear?: number;
+  journal?: string;
+  snippet?: string;
+  relevanceScore?: number;
   metadata?: Record<string, any>;
 }
 
 export interface MessageMetadata {
   sources?: Source[];
+  citations?: Citation[]; // Phase 8: Structured citations
   toolCalls?: ToolCall[];
   errorInfo?: ErrorInfo;
 }
