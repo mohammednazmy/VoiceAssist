@@ -11,7 +11,7 @@ import { useAuthStore } from "../stores/authStore";
 
 // Initialize API client
 const apiClient = new VoiceAssistApiClient({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
+  baseURL: `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api`,
   getAccessToken: () => {
     const state = useAuthStore.getState();
     return state.tokens?.accessToken || null;

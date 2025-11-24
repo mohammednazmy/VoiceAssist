@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - VoiceAssist</title>
+    <style>
+        body { font-family: system-ui; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>VoiceAssist API Test</h1>
+
+    <div id="status"></div>
+
+    <h2>Test Login Flow</h2>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="testGetUser()">Test Get User (needs login first)</button>
+
+    <h2>Results</h2>
+    <pre id="results"></pre>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let accessToken = null;
+
+        function log(message) {
+            const results = document.getElementById('results');
+            results.textContent += message + '\n';
+            console.log(message);
+        }
+
+        function showStatus(message, isSuccess) {
+            const status = document.getElementById('status');
+            status.className = 'status ' + (isSuccess ? 'success' : 'error');
+            status.textContent = message;
+        }
+
+        async function testLogin() {
+            document.getElementById('results').textContent = '';
+            log('Testing login...');
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'test-frontend@example.com',
+                        password: 'TestPassword123'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                accessToken = data.access_token;
+
+                log('✓ Login successful!');
+                log(`Access token: ${accessToken.substring(0, 50)}...`);
+                log(`Expires in: ${data.expires_in} seconds`);
+                log(JSON.stringify(data, null, 2));
+
+                showStatus('Login successful! Access token saved.', true);
+            } catch (error) {
+                log('✗ Login failed: ' + error.message);
+                showStatus('Login failed: ' + error.message, false);
+            }
+        }
+
+        async function testGetUser() {
+            document.getElementById('results').textContent = '';
+
+            if (!accessToken) {
+                showStatus('Please login first!', false);
+                return;
+            }
+
+            log('Testing /users/me with token...');
+
+            try {
+                const response = await fetch(`${API_BASE}/users/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const user = await response.json();
+
+                log('✓ User profile fetched!');
+                log(JSON.stringify(user, null, 2));
+
+                showStatus(`Logged in as: ${user.email}`, true);
+            } catch (error) {
+                log('✗ Get user failed: ' + error.message);
+                showStatus('Get user failed: ' + error.message, false);
+            }
+        }
+    </script>
+</body>
+</html>
