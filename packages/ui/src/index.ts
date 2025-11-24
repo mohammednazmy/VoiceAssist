@@ -23,6 +23,21 @@ export {
 export { OAuthButton } from './components/OAuthButton';
 export type { OAuthButtonProps } from './components/OAuthButton';
 
+// New Components
+export { Badge } from './components/Badge';
+export type { BadgeProps } from './components/Badge';
+
+export { Spinner, SpinnerOverlay } from './components/Spinner';
+export type { SpinnerProps, SpinnerOverlayProps } from './components/Spinner';
+
+export {
+  Skeleton,
+  SkeletonAvatar,
+  SkeletonCard,
+  SkeletonTableRow,
+} from './components/Skeleton';
+export type { SkeletonProps } from './components/Skeleton';
+
 // Providers
 export { ThemeProvider, useTheme } from './providers';
 export type { Theme, ResolvedTheme, ThemeContextValue } from './providers';
