@@ -85,7 +85,7 @@ jobs:
           output-file: sbom-api-gateway.spdx.json
 
       - name: Upload SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sbom-api-gateway
           path: sbom-api-gateway.spdx.json
@@ -154,7 +154,7 @@ jobs:
           output-file: sbom-worker.spdx.json
 
       - name: Upload SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sbom-worker
           path: sbom-worker.spdx.json
@@ -333,7 +333,7 @@ jobs:
 
       - name: Upload backup artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: production-backup-${{ github.sha }}
           path: backup-*.yaml
