@@ -1,19 +1,23 @@
 /**
  * Conversations Sidebar
- * Displays list of conversations with search and management
+ * Displays list of conversations with search, folder organization, and management
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Button, Input } from "@voiceassist/ui";
 import { useConversations } from "../../hooks/useConversations";
 import { useFolders } from "../../hooks/useFolders";
 import { FolderDialog } from "../folders/FolderDialog";
 import { useToastContext } from "../../contexts/ToastContext";
+import { createFoldersApi } from "../../lib/api/foldersApi";
+import { useAuthStore } from "../../stores/authStore";
 
 export function ConversationsSidebar() {
   const { conversationId } = useParams<{ conversationId: string }>();
   const toast = useToastContext();
+  const { tokens } = useAuthStore();
+
   const {
     conversations,
     isLoading,
@@ -27,20 +31,27 @@ export function ConversationsSidebar() {
     unarchiveConversation,
     deleteConversation,
     exportConversation,
+    updateConversation,
   } = useConversations();
 
-  const {
-    folders,
-    createFolder,
-    updateFolder,
-    deleteFolder,
-  } = useFolders();
+  const { folders, createFolder, updateFolder, deleteFolder } = useFolders();
+
+  const foldersApi = createFoldersApi(
+    import.meta.env.VITE_API_URL || "http://localhost:8000",
+    () => tokens?.accessToken || null,
+  );
 
   const [isCreating, setIsCreating] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set());
+  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [showFolders, setShowFolders] = useState(true);
+  const [movingConversationId, setMovingConversationId] = useState<
+    string | null
+  >(null);
 
   const handleCreateConversation = async () => {
     setIsCreating(true);

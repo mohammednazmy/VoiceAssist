@@ -669,6 +669,8 @@ export function ChatPage() {
             disabled={connectionStatus !== "connected"}
             enableAttachments={true} // Phase 4: File upload enabled
             enableVoiceInput={true} // Phase 3: Voice features
+            enableRealtimeVoice={true} // Realtime voice mode (OpenAI Realtime API)
+            conversationId={activeConversationId || undefined}
           />
         </div>
 
