@@ -19,7 +19,7 @@ import { useAuthStore } from "../stores/authStore";
 import { useAuth } from "./useAuth";
 
 interface UseChatSessionOptions {
-  conversationId: string;
+  conversationId: string | undefined;
   initialMessages?: Message[];
   onMessage?: (message: Message) => void;
   onError?: (error: WebSocketErrorCode, message: string) => void;
@@ -229,6 +229,16 @@ export function useChatSession(
   );
 
   const connect = useCallback(() => {
+    // Don't try to connect without a valid conversationId or token
+    if (!conversationId || !tokens?.accessToken) {
+      console.debug(
+        "[WebSocket] Skipping connect - missing conversationId or token",
+        { conversationId, hasToken: !!tokens?.accessToken },
+      );
+      updateConnectionStatus("disconnected");
+      return;
+    }
+
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       return;
     }
@@ -254,35 +264,53 @@ export function useChatSession(
       ws.onmessage = handleWebSocketMessage;
 
       ws.onerror = (error) => {
-        console.error("[WebSocket] Error:", error);
-        handleError("CONNECTION_DROPPED", "WebSocket connection error");
+        // Log error details for debugging
+        console.error("[WebSocket] Error event received:", {
+          type: error.type,
+          target: error.target,
+          readyState: ws.readyState,
+        });
+        // Note: WebSocket error events don't contain detailed error info
+        // The actual reason will be in the subsequent close event
       };
 
       ws.onclose = (event) => {
-        console.log("[WebSocket] Closed:", event.code, event.reason);
+        console.log("[WebSocket] Closed:", {
+          code: event.code,
+          reason: event.reason || "(no reason provided)",
+          wasClean: event.wasClean,
+        });
         stopHeartbeat();
         updateConnectionStatus("disconnected");
 
-        // Attempt reconnection
-        if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
+        // Only treat as error if not a clean close (1000) or going away (1001)
+        const isNormalClosure = event.code === 1000 || event.code === 1001;
+
+        // Attempt reconnection for abnormal closures
+        if (
+          !isNormalClosure &&
+          reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS
+        ) {
           const delay =
             BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current);
           reconnectAttemptsRef.current += 1;
 
           console.log(
-            `[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current})`,
+            `[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})`,
           );
           updateConnectionStatus("reconnecting");
 
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, delay);
-        } else {
+        } else if (!isNormalClosure) {
+          // Only report error if we've exhausted retries
           handleError(
             "CONNECTION_DROPPED",
-            "Maximum reconnection attempts reached",
+            `WebSocket closed abnormally (code ${event.code}): ${event.reason || "Connection lost"}`,
           );
         }
+        // For normal closures, don't report as error
       };
 
       wsRef.current = ws;

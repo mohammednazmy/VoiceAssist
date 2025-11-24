@@ -64,11 +64,15 @@ export function ChatPage() {
   const [isCitationSidebarOpen, setIsCitationSidebarOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
+  const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] =
+    useState(false);
 
   // Clinical context management
-  const clinicalContextHook = useClinicalContext(activeConversationId || undefined);
-  const [localClinicalContext, setLocalClinicalContext] = useState<ClinicalContext>({});
+  const clinicalContextHook = useClinicalContext(
+    activeConversationId || undefined,
+  );
+  const [localClinicalContext, setLocalClinicalContext] =
+    useState<ClinicalContext>({});
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Merge backend context with local edits (local takes precedence for optimistic updates)
@@ -182,7 +186,7 @@ export function ChatPage() {
     deleteMessage,
     reconnect,
   } = useChatSession({
-    conversationId: activeConversationId || "",
+    conversationId: activeConversationId ?? undefined,
     onError: handleError,
     initialMessages,
   });
