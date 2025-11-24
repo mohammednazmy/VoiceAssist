@@ -4,8 +4,8 @@ API endpoints for message attachments
 
 from uuid import UUID
 
-from app.core.dependencies import get_current_user
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
 from app.models.attachment import MessageAttachment
 from app.models.message import Message
 from app.models.user import User
@@ -172,7 +172,7 @@ async def delete_attachment(
     return None
 
 
-@router.get("/attachments/{attachment_id}/download")
+@router.get("/attachments/{attachment_id}/download", response_class=StreamingResponse)
 async def download_attachment(
     attachment_id: UUID,
     db: Session = Depends(get_db),

@@ -13,6 +13,7 @@ from app.core.dependencies import get_current_user
 from app.core.logging import get_logger
 from app.models.user import User
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 logger = get_logger(__name__)
@@ -145,7 +146,7 @@ async def transcribe_audio(
     "/synthesize",
     summary="Synthesize speech from text",
     description="Convert text to speech using OpenAI TTS API",
-    response_class=None,  # Return raw audio
+    response_class=Response,  # Return raw audio
 )
 async def synthesize_speech(
     request: SynthesizeRequest,
@@ -244,8 +245,6 @@ async def synthesize_speech(
             )
 
             # Return raw audio with proper content type
-            from fastapi.responses import Response
-
             return Response(
                 content=audio_content,
                 media_type="audio/mpeg",

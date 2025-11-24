@@ -7,8 +7,8 @@ from io import BytesIO
 from typing import List
 from uuid import UUID
 
-from app.core.dependencies import get_current_user
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
 from app.models.message import Message
 from app.models.session import Session
 from app.models.user import User
@@ -187,7 +187,7 @@ def generate_pdf(session: Session, messages: List[Message], user: User) -> bytes
     return buffer.read()
 
 
-@router.get("/sessions/{session_id}/export/markdown")
+@router.get("/sessions/{session_id}/export/markdown", response_class=StreamingResponse)
 async def export_markdown(
     session_id: UUID,
     db: DBSession = Depends(get_db),
@@ -235,7 +235,7 @@ async def export_markdown(
     )
 
 
-@router.get("/sessions/{session_id}/export/pdf")
+@router.get("/sessions/{session_id}/export/pdf", response_class=StreamingResponse)
 async def export_pdf(
     session_id: UUID,
     db: DBSession = Depends(get_db),

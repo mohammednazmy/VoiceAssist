@@ -1,25 +1,25 @@
 """
 Health check endpoints
 """
-from fastapi import APIRouter, status, Request
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from typing import Dict, Optional
-import time
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
+import time
+from typing import Dict
+
+from app.core.config import settings
 from app.core.database import (
     check_postgres_connection,
-    check_redis_connection,
     check_qdrant_connection,
+    check_redis_connection,
     engine,
     redis_client,
 )
-from app.services.nextcloud import check_nextcloud_connection
-from app.core.config import settings
 from app.core.logging import get_logger
-
+from app.services.nextcloud import check_nextcloud_connection
+from fastapi import APIRouter, Request, status
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -28,6 +28,7 @@ limiter = Limiter(key_func=get_remote_address)
 
 class HealthResponse(BaseModel):
     """Health check response model"""
+
     status: str
     version: str
     timestamp: float
@@ -35,6 +36,7 @@ class HealthResponse(BaseModel):
 
 class ReadinessResponse(BaseModel):
     """Readiness check response model"""
+
     status: str
     checks: Dict[str, bool]
     timestamp: float
@@ -57,7 +59,7 @@ async def health_check(request: Request):
     )
 
 
-@router.get("/ready", response_model=ReadinessResponse)
+@router.get("/ready", response_class=JSONResponse)
 @limiter.limit("100/minute")
 async def readiness_check(request: Request):
     """
@@ -77,7 +79,9 @@ async def readiness_check(request: Request):
     }
 
     all_ready = all(checks.values())
-    response_status = status.HTTP_200_OK if all_ready else status.HTTP_503_SERVICE_UNAVAILABLE
+    response_status = (
+        status.HTTP_200_OK if all_ready else status.HTTP_503_SERVICE_UNAVAILABLE
+    )
 
     if not all_ready:
         logger.warning("readiness_check_failed", checks=checks)
@@ -98,7 +102,7 @@ async def readiness_check(request: Request):
 # Proper Prometheus metrics with business KPIs are available at /metrics
 
 
-@router.get("/health/detailed")
+@router.get("/health/detailed", response_class=JSONResponse)
 @limiter.limit("50/minute")
 async def detailed_health_check(request: Request):
     """
@@ -167,15 +171,17 @@ async def detailed_health_check(request: Request):
         "timestamp": time.time(),
     }
 
-    logger.info("detailed_health_check_completed", status=overall_status, latencies={
-        "postgres_ms": round(postgres_latency, 2),
-        "redis_ms": round(redis_latency, 2),
-        "qdrant_ms": round(qdrant_latency, 2),
-    })
+    logger.info(
+        "detailed_health_check_completed",
+        status=overall_status,
+        latencies={
+            "postgres_ms": round(postgres_latency, 2),
+            "redis_ms": round(redis_latency, 2),
+            "qdrant_ms": round(qdrant_latency, 2),
+        },
+    )
 
-    response_status = status.HTTP_200_OK if all_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+    response_status = (
+        status.HTTP_200_OK if all_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+    )
     return JSONResponse(status_code=response_status, content=response)
-
-
-# Import Response for metrics endpoint
-from fastapi import Response
