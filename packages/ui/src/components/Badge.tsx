@@ -60,25 +60,37 @@ export interface BadgeProps
    * Show a dot indicator
    */
   dot?: boolean;
+
+  /**
+   * Show count badge (displays number up to 99+)
+   */
+  count?: number;
+
+  /**
+   * Show count even when it's 0
+   */
+  showZero?: boolean;
 }
 
-function Badge({
-  className,
-  variant,
-  size,
-  dot,
-  children,
-  ...props
-}: BadgeProps) {
-  return (
-    <span
-      className={cn(badgeVariants({ variant, size, dot, className }))}
-      {...props}
-    >
-      {dot && <DotIndicator />}
-      {children}
-    </span>
-  );
-}
+const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
+  ({ className, variant, size, dot, count, showZero, children, ...props }, ref) => {
+    // Determine what to display for count
+    const displayCount = count !== undefined && (count > 0 || showZero);
+    const countText = count !== undefined && count > 99 ? '99+' : count?.toString();
+
+    return (
+      <span
+        ref={ref}
+        className={cn(badgeVariants({ variant, size, dot, className }))}
+        {...props}
+      >
+        {dot && <DotIndicator />}
+        {displayCount ? countText : children}
+      </span>
+    );
+  }
+);
+
+Badge.displayName = 'Badge';
 
 export { Badge, badgeVariants };

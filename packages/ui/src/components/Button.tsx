@@ -60,7 +60,8 @@ const Spinner = ({ className }: { className?: string }) => (
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
     viewBox="0 0 24 24"
-    aria-hidden="true"
+    role="status"
+    aria-label="Loading"
   >
     <circle
       className="opacity-25"
@@ -119,6 +120,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       iconLeft,
       iconRight,
       loadingText,
+      type = 'button',
       children,
       ...props
     },
@@ -130,6 +132,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         className={cn(buttonVariants({ variant, size, fullWidth, className }))}
         ref={ref}
+        type={type}
         disabled={isDisabled}
         aria-busy={loading}
         aria-live={loading ? 'polite' : undefined}
