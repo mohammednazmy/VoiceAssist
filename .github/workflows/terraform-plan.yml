@@ -103,7 +103,7 @@ jobs:
 
       - name: Upload validation results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: validation-results-${{ matrix.environment }}
           path: infrastructure/terraform/.terraform
@@ -159,7 +159,7 @@ jobs:
           terraform show -no-color staging-plan.tfplan > staging-plan.txt
 
       - name: Upload plan artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: terraform-plan-staging
           path: |
@@ -268,7 +268,7 @@ jobs:
           terraform show -no-color production-plan.tfplan > production-plan.txt
 
       - name: Upload plan artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: terraform-plan-production
           path: |
