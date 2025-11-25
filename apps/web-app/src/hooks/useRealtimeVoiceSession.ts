@@ -14,13 +14,19 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useAuth } from "./useAuth";
 
 // Types for Realtime API events
+export interface RealtimeAuthInfo {
+  type: string; // "ephemeral_token"
+  token: string; // HMAC-signed ephemeral token (NOT the raw OpenAI key)
+  expires_at: number; // Unix timestamp
+}
+
 export interface RealtimeSessionConfig {
   url: string;
   model: string;
-  api_key: string;
   session_id: string;
   expires_at: number;
   conversation_id?: string | null;
+  auth: RealtimeAuthInfo; // Ephemeral token auth (secure, no raw API key)
   voice_config: {
     voice: string;
     modalities: string[];
@@ -53,7 +59,9 @@ export type ConnectionStatus =
   | "disconnected"
   | "connecting"
   | "connected"
+  | "reconnecting"
   | "error"
+  | "failed"
   | "expired";
 
 export interface UseRealtimeVoiceSessionOptions {
@@ -77,6 +85,7 @@ export function useRealtimeVoiceSession(
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [sessionConfig, setSessionConfig] =
     useState<RealtimeSessionConfig | null>(null);
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
   // Refs for cleanup and persistence
   const wsRef = useRef<WebSocket | null>(null);
@@ -84,6 +93,62 @@ export function useRealtimeVoiceSession(
   const audioContextRef = useRef<AudioContext | null>(null);
   const processorNodeRef = useRef<ScriptProcessorNode | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sessionExpiryCheckRef = useRef<NodeJS.Timeout | null>(null);
+  const intentionalDisconnectRef = useRef(false);
+
+  // Constants for reconnection
+  const MAX_RECONNECT_ATTEMPTS = 5;
+  const BASE_RECONNECT_DELAY = 1000; // 1 second
+  const MAX_RECONNECT_DELAY = 30000; // 30 seconds
+
+  /**
+   * Calculate reconnection delay with exponential backoff
+   */
+  const calculateReconnectDelay = useCallback((attempt: number): number => {
+    const delay = Math.min(
+      BASE_RECONNECT_DELAY * Math.pow(2, attempt),
+      MAX_RECONNECT_DELAY
+    );
+    return delay;
+  }, []);
+
+  /**
+   * Schedule automatic reconnection with exponential backoff
+   */
+  const scheduleReconnect = useCallback(() => {
+    // Don't reconnect if user intentionally disconnected
+    if (intentionalDisconnectRef.current) {
+      console.log("[RealtimeVoiceSession] Skipping reconnect (intentional disconnect)");
+      return;
+    }
+
+    // Don't reconnect if max attempts reached
+    if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      console.error("[RealtimeVoiceSession] Max reconnect attempts reached");
+      updateStatus("failed");
+      return;
+    }
+
+    // Calculate delay for this attempt
+    const delay = calculateReconnectDelay(reconnectAttempts);
+    console.log(
+      `[RealtimeVoiceSession] Scheduling reconnect attempt ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`
+    );
+
+    // Update status to reconnecting
+    updateStatus("reconnecting");
+
+    // Clear any existing reconnect timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+
+    // Schedule reconnection
+    reconnectTimeoutRef.current = setTimeout(() => {
+      setReconnectAttempts((prev) => prev + 1);
+      connect();
+    }, delay);
+  }, [reconnectAttempts, calculateReconnectDelay, updateStatus, connect]);
 
   /**
    * Update status and notify via callback
@@ -133,10 +198,12 @@ export function useRealtimeVoiceSession(
   const initializeWebSocket = useCallback(
     (config: RealtimeSessionConfig): Promise<WebSocket> => {
       return new Promise((resolve, reject) => {
+        // Use the ephemeral token from auth for authentication
         const wsUrl = `${config.url}?model=${config.model}`;
         const ws = new WebSocket(wsUrl, [
           "realtime",
           `openai-beta.realtime-v1`,
+          `openai-insecure-api-key.${config.auth.token}`,
         ]);
 
         // WebSocket event handlers
@@ -173,7 +240,21 @@ export function useRealtimeVoiceSession(
           console.log(
             `[RealtimeVoiceSession] WebSocket closed: ${event.code} ${event.reason}`,
           );
-          updateStatus("disconnected");
+
+          // Check if session expired
+          if (sessionConfig && sessionConfig.expires_at * 1000 < Date.now()) {
+            console.log("[RealtimeVoiceSession] Session expired");
+            updateStatus("expired");
+            return;
+          }
+
+          // If not an intentional disconnect, schedule reconnection
+          if (!intentionalDisconnectRef.current) {
+            console.log("[RealtimeVoiceSession] Unexpected disconnect, will attempt reconnect");
+            scheduleReconnect();
+          } else {
+            updateStatus("disconnected");
+          }
         };
 
         ws.onmessage = (event) => {
@@ -196,7 +277,7 @@ export function useRealtimeVoiceSession(
         }, 10000);
       });
     },
-    [updateStatus],
+    [updateStatus, handleRealtimeMessage, scheduleReconnect, sessionConfig],
   );
 
   /**
@@ -368,6 +449,9 @@ export function useRealtimeVoiceSession(
       updateStatus("connecting");
       setError(null);
 
+      // Clear intentional disconnect flag when starting new connection
+      intentionalDisconnectRef.current = false;
+
       // Step 1: Fetch session config from backend
       const config = await fetchSessionConfig();
 
@@ -383,9 +467,17 @@ export function useRealtimeVoiceSession(
       // Step 3: Initialize audio streaming
       await initializeAudioStreaming(ws);
 
+      // Reset reconnect attempts on successful connection
+      setReconnectAttempts(0);
+
       console.log("[RealtimeVoiceSession] Connected successfully");
     } catch (err) {
       handleError(err instanceof Error ? err : new Error("Failed to connect"));
+
+      // If connection failed and we're in reconnect mode, schedule next attempt
+      if (status === "reconnecting") {
+        scheduleReconnect();
+      }
     }
   }, [
     status,
@@ -394,6 +486,7 @@ export function useRealtimeVoiceSession(
     initializeWebSocket,
     initializeAudioStreaming,
     handleError,
+    scheduleReconnect,
   ]);
 
   /**
@@ -401,6 +494,9 @@ export function useRealtimeVoiceSession(
    */
   const disconnect = useCallback(() => {
     console.log("[RealtimeVoiceSession] Disconnecting...");
+
+    // Mark as intentional disconnect to prevent auto-reconnect
+    intentionalDisconnectRef.current = true;
 
     // Close WebSocket
     if (wsRef.current) {
@@ -430,6 +526,15 @@ export function useRealtimeVoiceSession(
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
+
+    // Clear session expiry check
+    if (sessionExpiryCheckRef.current) {
+      clearTimeout(sessionExpiryCheckRef.current);
+      sessionExpiryCheckRef.current = null;
+    }
+
+    // Reset reconnect attempts
+    setReconnectAttempts(0);
 
     updateStatus("disconnected");
     setTranscript("");
@@ -468,6 +573,59 @@ export function useRealtimeVoiceSession(
       }),
     );
   }, []);
+
+  /**
+   * Monitor session expiry and proactively refresh
+   */
+  useEffect(() => {
+    // Only monitor if we have a session config and are connected
+    if (!sessionConfig || status !== "connected") {
+      return;
+    }
+
+    const checkExpiry = () => {
+      const now = Date.now();
+      const expiresAt = sessionConfig.expires_at * 1000;
+      const timeUntilExpiry = expiresAt - now;
+
+      // If already expired
+      if (timeUntilExpiry <= 0) {
+        console.log("[RealtimeVoiceSession] Session expired");
+        updateStatus("expired");
+        disconnect();
+        return;
+      }
+
+      // If within 60 seconds of expiry, proactively refresh
+      if (timeUntilExpiry <= 60000) {
+        console.log(
+          `[RealtimeVoiceSession] Session expiring soon (${Math.round(timeUntilExpiry / 1000)}s), refreshing...`
+        );
+        // Disconnect and reconnect to get new session
+        disconnect();
+        setTimeout(() => {
+          connect();
+        }, 100);
+        return;
+      }
+
+      // Schedule next check
+      // Check again halfway to the 60s threshold, or in 30s, whichever is sooner
+      const nextCheckDelay = Math.min(30000, (timeUntilExpiry - 60000) / 2);
+      sessionExpiryCheckRef.current = setTimeout(checkExpiry, nextCheckDelay);
+    };
+
+    // Start monitoring
+    checkExpiry();
+
+    // Cleanup on unmount or config change
+    return () => {
+      if (sessionExpiryCheckRef.current) {
+        clearTimeout(sessionExpiryCheckRef.current);
+        sessionExpiryCheckRef.current = null;
+      }
+    };
+  }, [sessionConfig, status, updateStatus, disconnect, connect]);
 
   /**
    * Auto-connect on mount if enabled
