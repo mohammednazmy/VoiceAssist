@@ -56,6 +56,8 @@ dist/
 htmlcov/
 .pytest_cache/
 coverage/
+playwright-report/
+test-results/
 
 # Docker
 *.pid
