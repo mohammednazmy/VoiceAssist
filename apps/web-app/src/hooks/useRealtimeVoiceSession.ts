@@ -29,6 +29,7 @@ export interface RealtimeSessionConfig {
   auth: RealtimeAuthInfo; // Ephemeral token auth (secure, no raw API key)
   voice_config: {
     voice: string;
+    language?: string | null;
     modalities: string[];
     input_audio_format: string;
     output_audio_format: string;
@@ -64,8 +65,15 @@ export type ConnectionStatus =
   | "failed"
   | "expired";
 
+export interface VoiceSettings {
+  voice?: string; // "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"
+  language?: string; // "en" | "es" | "fr" | "de" | "it" | "pt"
+  vadSensitivity?: number; // 0-100
+}
+
 export interface UseRealtimeVoiceSessionOptions {
   conversation_id?: string;
+  voiceSettings?: VoiceSettings;
   onTranscript?: (transcript: RealtimeTranscript) => void;
   onAudioChunk?: (chunk: RealtimeAudioChunk) => void;
   onError?: (error: Error) => void;
@@ -92,9 +100,20 @@ export function useRealtimeVoiceSession(
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const processorNodeRef = useRef<ScriptProcessorNode | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const sessionExpiryCheckRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const sessionExpiryCheckRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const intentionalDisconnectRef = useRef(false);
+
+  // Refs to break circular dependencies between callbacks
+  // Used so scheduleReconnect and initializeWebSocket can reference
+  // functions that are defined later in the hook.
+  const connectRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  const updateStatusRef = useRef<(status: ConnectionStatus) => void>(() => {});
+  const handleRealtimeMessageRef = useRef<(message: any) => void>(() => {});
 
   // Constants for reconnection
   const MAX_RECONNECT_ATTEMPTS = 5;
@@ -107,36 +126,39 @@ export function useRealtimeVoiceSession(
   const calculateReconnectDelay = useCallback((attempt: number): number => {
     const delay = Math.min(
       BASE_RECONNECT_DELAY * Math.pow(2, attempt),
-      MAX_RECONNECT_DELAY
+      MAX_RECONNECT_DELAY,
     );
     return delay;
   }, []);
 
   /**
    * Schedule automatic reconnection with exponential backoff
+   * Uses refs (updateStatusRef, connectRef) to avoid circular dependency
    */
   const scheduleReconnect = useCallback(() => {
     // Don't reconnect if user intentionally disconnected
     if (intentionalDisconnectRef.current) {
-      console.log("[RealtimeVoiceSession] Skipping reconnect (intentional disconnect)");
+      console.log(
+        "[RealtimeVoiceSession] Skipping reconnect (intentional disconnect)",
+      );
       return;
     }
 
     // Don't reconnect if max attempts reached
     if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
       console.error("[RealtimeVoiceSession] Max reconnect attempts reached");
-      updateStatus("failed");
+      updateStatusRef.current("failed");
       return;
     }
 
     // Calculate delay for this attempt
     const delay = calculateReconnectDelay(reconnectAttempts);
     console.log(
-      `[RealtimeVoiceSession] Scheduling reconnect attempt ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`
+      `[RealtimeVoiceSession] Scheduling reconnect attempt ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`,
     );
 
     // Update status to reconnecting
-    updateStatus("reconnecting");
+    updateStatusRef.current("reconnecting");
 
     // Clear any existing reconnect timeout
     if (reconnectTimeoutRef.current) {
@@ -146,9 +168,9 @@ export function useRealtimeVoiceSession(
     // Schedule reconnection
     reconnectTimeoutRef.current = setTimeout(() => {
       setReconnectAttempts((prev) => prev + 1);
-      connect();
+      connectRef.current();
     }, delay);
-  }, [reconnectAttempts, calculateReconnectDelay, updateStatus, connect]);
+  }, [reconnectAttempts, calculateReconnectDelay]);
 
   /**
    * Update status and notify via callback
@@ -160,6 +182,9 @@ export function useRealtimeVoiceSession(
     },
     [options],
   );
+
+  // Keep ref updated with latest updateStatus function
+  updateStatusRef.current = updateStatus;
 
   /**
    * Handle errors
@@ -180,8 +205,12 @@ export function useRealtimeVoiceSession(
   const fetchSessionConfig =
     useCallback(async (): Promise<RealtimeSessionConfig> => {
       try {
+        const { voiceSettings } = options;
         const config = await apiClient.createRealtimeSession({
           conversation_id: options.conversation_id || null,
+          voice: voiceSettings?.voice || null,
+          language: voiceSettings?.language || null,
+          vad_sensitivity: voiceSettings?.vadSensitivity ?? null,
         });
         setSessionConfig(config);
         return config;
@@ -190,7 +219,7 @@ export function useRealtimeVoiceSession(
           `Failed to fetch session config: ${err instanceof Error ? err.message : "Unknown error"}`,
         );
       }
-    }, [apiClient, options.conversation_id]);
+    }, [apiClient, options.conversation_id, options.voiceSettings]);
 
   /**
    * Initialize WebSocket connection
@@ -250,7 +279,9 @@ export function useRealtimeVoiceSession(
 
           // If not an intentional disconnect, schedule reconnection
           if (!intentionalDisconnectRef.current) {
-            console.log("[RealtimeVoiceSession] Unexpected disconnect, will attempt reconnect");
+            console.log(
+              "[RealtimeVoiceSession] Unexpected disconnect, will attempt reconnect",
+            );
             scheduleReconnect();
           } else {
             updateStatus("disconnected");
@@ -260,7 +291,8 @@ export function useRealtimeVoiceSession(
         ws.onmessage = (event) => {
           try {
             const message = JSON.parse(event.data);
-            handleRealtimeMessage(message);
+            // Use ref to avoid circular dependency with handleRealtimeMessage
+            handleRealtimeMessageRef.current(message);
           } catch (err) {
             console.error(
               "[RealtimeVoiceSession] Failed to parse message:",
@@ -277,7 +309,7 @@ export function useRealtimeVoiceSession(
         }, 10000);
       });
     },
-    [updateStatus, handleRealtimeMessage, scheduleReconnect, sessionConfig],
+    [updateStatus, scheduleReconnect, sessionConfig],
   );
 
   /**
@@ -371,6 +403,9 @@ export function useRealtimeVoiceSession(
     },
     [options, handleError],
   );
+
+  // Keep ref updated with latest handleRealtimeMessage function
+  handleRealtimeMessageRef.current = handleRealtimeMessage;
 
   /**
    * Initialize microphone and audio streaming
@@ -489,6 +524,9 @@ export function useRealtimeVoiceSession(
     scheduleReconnect,
   ]);
 
+  // Keep ref updated with latest connect function
+  connectRef.current = connect;
+
   /**
    * Disconnect from Realtime API
    */
@@ -599,7 +637,7 @@ export function useRealtimeVoiceSession(
       // If within 60 seconds of expiry, proactively refresh
       if (timeUntilExpiry <= 60000) {
         console.log(
-          `[RealtimeVoiceSession] Session expiring soon (${Math.round(timeUntilExpiry / 1000)}s), refreshing...`
+          `[RealtimeVoiceSession] Session expiring soon (${Math.round(timeUntilExpiry / 1000)}s), refreshing...`,
         );
         // Disconnect and reconnect to get new session
         disconnect();

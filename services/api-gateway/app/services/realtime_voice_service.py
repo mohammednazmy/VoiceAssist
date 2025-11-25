@@ -11,13 +11,13 @@ This service provides:
 import base64
 import hashlib
 import hmac
-import httpx
 import json
 import secrets
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
+import httpx
 from app.core.config import settings
 from app.core.logging import get_logger
 
@@ -53,7 +53,9 @@ class STTProviderConfig:
     enabled: bool  # Whether this provider is configured and available
     api_key_present: bool  # Whether API key is configured (but not the key itself)
     supports_streaming: bool = True  # Whether provider supports streaming audio
-    supports_interim_results: bool = True  # Whether provider supports partial transcripts
+    supports_interim_results: bool = (
+        True  # Whether provider supports partial transcripts
+    )
     supported_languages: Optional[list[str]] = None  # Supported language codes
     max_audio_duration_sec: Optional[int] = None  # Max audio duration in seconds
 
@@ -264,7 +266,12 @@ class RealtimeVoiceService:
             raise ValueError(f"Invalid token: {str(e)}")
 
     async def generate_session_config(
-        self, user_id: str, conversation_id: str | None = None
+        self,
+        user_id: str,
+        conversation_id: str | None = None,
+        voice: str | None = None,
+        language: str | None = None,
+        vad_sensitivity: int | None = None,
     ) -> Dict[str, Any]:
         """
         Generate session configuration for OpenAI Realtime API.
@@ -275,6 +282,9 @@ class RealtimeVoiceService:
         Args:
             user_id: User ID for the session
             conversation_id: Optional conversation ID to resume
+            voice: Optional voice selection (alloy, echo, fable, onyx, nova, shimmer)
+            language: Optional language code (en, es, fr, de, it, pt)
+            vad_sensitivity: Optional VAD sensitivity 0-100 (maps to threshold)
 
         Returns:
             Dictionary with session configuration including:
@@ -283,7 +293,7 @@ class RealtimeVoiceService:
             - auth: Authentication structure with OpenAI ephemeral token
             - session_id: Unique session identifier
             - expires_at: Unix timestamp when session expires
-            - voice_config: Default voice configuration
+            - voice_config: Voice configuration with user preferences
 
         Raises:
             ValueError: If Realtime API is not enabled or configured
@@ -293,6 +303,19 @@ class RealtimeVoiceService:
                 "Realtime API is not enabled or OpenAI API key not configured"
             )
 
+        # Validate and select voice
+        valid_voices = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
+        selected_voice = voice if voice in valid_voices else "alloy"
+
+        # Map VAD sensitivity (0-100) to threshold (0.1-0.9)
+        # High sensitivity (100) => low threshold (0.1) - picks up more
+        # Low sensitivity (0) => high threshold (0.9) - needs louder sound
+        if vad_sensitivity is not None:
+            vad_sensitivity = max(0, min(100, vad_sensitivity))
+            vad_threshold = 0.9 - (vad_sensitivity / 100.0 * 0.8)
+        else:
+            vad_threshold = 0.5  # Default threshold
+
         # Generate unique session ID for tracking
         session_id = f"rtc_{user_id}_{secrets.token_urlsafe(16)}"
 
@@ -300,7 +323,7 @@ class RealtimeVoiceService:
         # This gets us a real client_secret that works with the Realtime API
         openai_session = await self.create_openai_ephemeral_session(
             model=self.model,
-            voice="alloy",
+            voice=selected_voice,
         )
 
         client_secret = openai_session["client_secret"]
@@ -320,14 +343,15 @@ class RealtimeVoiceService:
                 "expires_at": expires_at,
             },
             "voice_config": {
-                "voice": "alloy",  # Default OpenAI voice
+                "voice": selected_voice,
+                "language": language,  # Kept as metadata for now
                 "modalities": ["text", "audio"],  # Both text and audio
                 "input_audio_format": "pcm16",  # 16-bit PCM
                 "output_audio_format": "pcm16",
                 "input_audio_transcription": {"model": "whisper-1"},
                 "turn_detection": {
                     "type": "server_vad",  # Server-side VAD
-                    "threshold": 0.5,
+                    "threshold": round(vad_threshold, 2),
                     "prefix_padding_ms": 300,
                     "silence_duration_ms": 500,
                 },
@@ -335,12 +359,15 @@ class RealtimeVoiceService:
         }
 
         logger.info(
-            f"Generated Realtime session config for user {user_id}",
+            "Generated Realtime session config",
             extra={
                 "user_id": user_id,
                 "session_id": session_id,
                 "conversation_id": conversation_id,
                 "expires_at": expires_at,
+                "voice": selected_voice,
+                "language": language,
+                "vad_threshold": round(vad_threshold, 2),
             },
         )
 
@@ -363,7 +390,7 @@ class RealtimeVoiceService:
             ValueError: If token is invalid or expired
         """
         # Validate token (will raise ValueError if invalid/expired)
-        payload = self.validate_ephemeral_token(token)
+        _payload = self.validate_ephemeral_token(token)  # noqa: F841
 
         # Token is valid, return the real API key
         # In a future proxy implementation, this would be used to authenticate

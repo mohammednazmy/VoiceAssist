@@ -199,6 +199,10 @@ export class VoiceAssistApiClient {
 
   async createRealtimeSession(request: {
     conversation_id?: string | null;
+    // Optional Voice Mode settings from frontend
+    voice?: string | null; // "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"
+    language?: string | null; // "en" | "es" | "fr" | "de" | "it" | "pt"
+    vad_sensitivity?: number | null; // 0-100 (maps to VAD threshold)
   }): Promise<{
     url: string;
     model: string;
@@ -207,11 +211,12 @@ export class VoiceAssistApiClient {
     conversation_id?: string | null;
     auth: {
       type: string; // "ephemeral_token"
-      token: string; // HMAC-signed ephemeral token (NOT the raw OpenAI key)
+      token: string; // OpenAI ephemeral token (NOT the raw API key)
       expires_at: number; // Unix timestamp
     };
     voice_config: {
       voice: string;
+      language?: string | null;
       modalities: string[];
       input_audio_format: string;
       output_audio_format: string;

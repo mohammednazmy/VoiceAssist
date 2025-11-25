@@ -222,7 +222,7 @@ describe("useRealtimeVoiceSession", () => {
       expect(mockApiClient.createRealtimeSession).toHaveBeenCalledTimes(1);
     });
 
-    it("should pass conversation_id to backend when provided", async () => {
+    it("should pass conversation_id and voice settings to backend when provided", async () => {
       const { result } = renderHook(() =>
         useRealtimeVoiceSession({ conversation_id: "conv-123" }),
       );
@@ -234,6 +234,34 @@ describe("useRealtimeVoiceSession", () => {
 
       expect(mockApiClient.createRealtimeSession).toHaveBeenCalledWith({
         conversation_id: "conv-123",
+        voice: null,
+        language: null,
+        vad_sensitivity: null,
+      });
+    });
+
+    it("should pass voice settings to backend when provided", async () => {
+      const { result } = renderHook(() =>
+        useRealtimeVoiceSession({
+          conversation_id: "conv-456",
+          voiceSettings: {
+            voice: "nova",
+            language: "es",
+            vadSensitivity: 80,
+          },
+        }),
+      );
+
+      await act(async () => {
+        result.current.connect();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      expect(mockApiClient.createRealtimeSession).toHaveBeenCalledWith({
+        conversation_id: "conv-456",
+        voice: "nova",
+        language: "es",
+        vad_sensitivity: 80,
       });
     });
   });

@@ -64,8 +64,12 @@ class TestRealtimeVoiceServiceConfiguration:
         expected = settings.REALTIME_ENABLED and bool(settings.OPENAI_API_KEY)
         assert service.is_enabled() == expected
 
-    def test_service_generates_valid_session_config(self):
-        """Test session config has required fields."""
+    @pytest.mark.asyncio
+    async def test_service_generates_valid_session_config(self):
+        """Test session config has required fields (mocked OpenAI call)."""
+        from unittest.mock import AsyncMock
+        from unittest.mock import patch as async_patch
+
         from app.core.config import settings
         from app.services.realtime_voice_service import RealtimeVoiceService
 
@@ -74,34 +78,171 @@ class TestRealtimeVoiceServiceConfiguration:
         if not service.is_enabled():
             pytest.skip("Realtime service not enabled or key not set")
 
-        config = service.generate_session_config(
-            user_id="test-user-123", conversation_id="conv-456"
-        )
+        # Mock the OpenAI ephemeral session call
+        mock_openai_response = {
+            "client_secret": "ek_test_mock_token_12345",
+            "expires_at": 1700000000,
+        }
 
-        # Verify required fields
-        assert "url" in config
-        assert "model" in config
-        assert "api_key" in config
-        assert "session_id" in config
-        assert "expires_at" in config
-        assert "conversation_id" in config
-        assert "voice_config" in config
+        with async_patch.object(
+            service, "create_openai_ephemeral_session", new_callable=AsyncMock
+        ) as mock_create:
+            mock_create.return_value = mock_openai_response
 
-        # Verify field values
-        assert config["url"] == settings.REALTIME_BASE_URL
-        assert config["model"] == settings.REALTIME_MODEL
-        assert config["session_id"].startswith("rtc_test-user-123_")
-        assert config["conversation_id"] == "conv-456"
-        assert isinstance(config["expires_at"], int)
-        assert config["expires_at"] > 0
+            config = await service.generate_session_config(
+                user_id="test-user-123", conversation_id="conv-456"
+            )
 
-        # Verify voice_config structure
-        voice_config = config["voice_config"]
-        assert "voice" in voice_config
-        assert "modalities" in voice_config
-        assert "input_audio_format" in voice_config
-        assert "output_audio_format" in voice_config
-        assert "turn_detection" in voice_config
+            # Verify required fields
+            assert "url" in config
+            assert "model" in config
+            assert "auth" in config  # Now uses auth instead of api_key
+            assert "session_id" in config
+            assert "expires_at" in config
+            assert "conversation_id" in config
+            assert "voice_config" in config
+
+            # Verify field values
+            assert config["url"] == settings.REALTIME_BASE_URL
+            assert config["model"] == settings.REALTIME_MODEL
+            assert config["session_id"].startswith("rtc_test-user-123_")
+            assert config["conversation_id"] == "conv-456"
+            assert isinstance(config["expires_at"], int)
+
+            # Verify auth structure (ephemeral token)
+            assert config["auth"]["type"] == "ephemeral_token"
+            assert config["auth"]["token"] == "ek_test_mock_token_12345"
+
+            # Verify voice_config structure
+            voice_config = config["voice_config"]
+            assert "voice" in voice_config
+            assert "modalities" in voice_config
+            assert "input_audio_format" in voice_config
+            assert "output_audio_format" in voice_config
+            assert "turn_detection" in voice_config
+
+    @pytest.mark.asyncio
+    async def test_service_generates_config_with_voice_settings(self):
+        """Test session config respects voice settings from frontend."""
+        from unittest.mock import AsyncMock
+        from unittest.mock import patch as async_patch
+
+        from app.services.realtime_voice_service import RealtimeVoiceService
+
+        service = RealtimeVoiceService()
+
+        if not service.is_enabled():
+            pytest.skip("Realtime service not enabled or key not set")
+
+        # Mock the OpenAI ephemeral session call
+        mock_openai_response = {
+            "client_secret": "ek_test_mock_token_12345",
+            "expires_at": 1700000000,
+        }
+
+        with async_patch.object(
+            service, "create_openai_ephemeral_session", new_callable=AsyncMock
+        ) as mock_create:
+            mock_create.return_value = mock_openai_response
+
+            config = await service.generate_session_config(
+                user_id="test-user-123",
+                conversation_id="test-conv",
+                voice="nova",
+                language="es",
+                vad_sensitivity=80,
+            )
+
+            # Verify voice settings are applied
+            voice_config = config["voice_config"]
+            assert voice_config["voice"] == "nova"
+            assert voice_config["language"] == "es"
+
+            # VAD sensitivity 80 should map to low threshold (high sensitivity)
+            # 80 -> threshold = 0.9 - (80/100 * 0.8) = 0.9 - 0.64 = 0.26
+            vad_threshold = voice_config["turn_detection"]["threshold"]
+            assert 0.2 <= vad_threshold <= 0.3, f"Expected ~0.26, got {vad_threshold}"
+
+            # Verify OpenAI was called with selected voice
+            mock_create.assert_called_once()
+            call_kwargs = mock_create.call_args.kwargs
+            assert call_kwargs.get("voice") == "nova"
+
+    @pytest.mark.asyncio
+    async def test_service_validates_voice_selection(self):
+        """Test service validates voice against allowed values."""
+        from unittest.mock import AsyncMock
+        from unittest.mock import patch as async_patch
+
+        from app.services.realtime_voice_service import RealtimeVoiceService
+
+        service = RealtimeVoiceService()
+
+        if not service.is_enabled():
+            pytest.skip("Realtime service not enabled or key not set")
+
+        mock_openai_response = {
+            "client_secret": "ek_test_mock_token",
+            "expires_at": 1700000000,
+        }
+
+        with async_patch.object(
+            service, "create_openai_ephemeral_session", new_callable=AsyncMock
+        ) as mock_create:
+            mock_create.return_value = mock_openai_response
+
+            # Invalid voice should fall back to "alloy"
+            config = await service.generate_session_config(
+                user_id="test-user",
+                voice="invalid_voice",
+            )
+
+            assert config["voice_config"]["voice"] == "alloy"
+
+    @pytest.mark.asyncio
+    async def test_service_maps_vad_sensitivity_correctly(self):
+        """Test VAD sensitivity mapping to threshold."""
+        from unittest.mock import AsyncMock
+        from unittest.mock import patch as async_patch
+
+        from app.services.realtime_voice_service import RealtimeVoiceService
+
+        service = RealtimeVoiceService()
+
+        if not service.is_enabled():
+            pytest.skip("Realtime service not enabled or key not set")
+
+        mock_openai_response = {
+            "client_secret": "ek_test",
+            "expires_at": 1700000000,
+        }
+
+        with async_patch.object(
+            service, "create_openai_ephemeral_session", new_callable=AsyncMock
+        ) as mock_create:
+            mock_create.return_value = mock_openai_response
+
+            # Low sensitivity (0) should give high threshold (0.9)
+            config_low = await service.generate_session_config(
+                user_id="test", vad_sensitivity=0
+            )
+            assert config_low["voice_config"]["turn_detection"]["threshold"] == 0.9
+
+            # High sensitivity (100) should give low threshold (0.1)
+            config_high = await service.generate_session_config(
+                user_id="test", vad_sensitivity=100
+            )
+            assert config_high["voice_config"]["turn_detection"]["threshold"] == 0.1
+
+            # Mid sensitivity (50) should give mid threshold (0.5)
+            config_mid = await service.generate_session_config(
+                user_id="test", vad_sensitivity=50
+            )
+            assert config_mid["voice_config"]["turn_detection"]["threshold"] == 0.5
+
+            # Default (None) should give 0.5
+            config_default = await service.generate_session_config(user_id="test")
+            assert config_default["voice_config"]["turn_detection"]["threshold"] == 0.5
 
     def test_service_validates_session_id_format(self):
         """Test session ID validation."""
@@ -130,7 +271,7 @@ class TestRealtimeVoiceServiceConfiguration:
         instructions = service.get_session_instructions()
         assert isinstance(instructions, str)
         assert len(instructions) > 0
-        assert "medical AI assistant" in instructions.lower()
+        assert "medical ai assistant" in instructions.lower()
         assert "voice mode" in instructions.lower()
 
         # With conversation ID
@@ -368,7 +509,7 @@ class TestRealtimeVoiceLiveIntegration:
 
         assert service.is_enabled() is True
 
-        config = service.generate_session_config(
+        config = await service.generate_session_config(
             user_id="live-test-user", conversation_id=None
         )
 
@@ -378,6 +519,13 @@ class TestRealtimeVoiceLiveIntegration:
         assert config["session_id"].startswith("rtc_live-test-user_")
         assert config["expires_at"] > 0
         assert "voice_config" in config
+        assert "auth" in config
+
+        # Verify auth structure (should have ephemeral token, NOT raw API key)
+        assert config["auth"]["type"] == "ephemeral_token"
+        assert config["auth"]["token"].startswith(
+            "ek_"
+        )  # OpenAI ephemeral tokens start with ek_
 
         # Verify voice config
         voice_config = config["voice_config"]
