@@ -98,6 +98,11 @@ class Settings(BaseSettings):
         "https://asimo.io,https://dev.asimo.io,https://assist.asimo.io,http://localhost:3000,http://localhost:5173"
     )
 
+    # Sentry Error Tracking
+    SENTRY_DSN: Optional[str] = None  # Sentry DSN for error tracking
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.1  # 10% of requests traced
+    SENTRY_PROFILES_SAMPLE_RATE: float = 0.1  # 10% of traced requests profiled
+
     # Caching (Phase 7 Integration Improvements - P2.1)
     CACHE_ENABLED: bool = True
     CACHE_L1_MAX_SIZE: int = 1000  # Max entries in L1 cache

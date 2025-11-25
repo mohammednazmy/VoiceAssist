@@ -11,6 +11,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { captureVoiceError } from "../lib/sentry";
 import { useAuth } from "./useAuth";
 
 // Types for Realtime API events
@@ -258,8 +259,14 @@ export function useRealtimeVoiceSession(
   // Keep ref updated with latest updateStatus function
   updateStatusRef.current = updateStatus;
 
+  // Keep a ref to current metrics for error reporting
+  const metricsRef = useRef(metrics);
+  useEffect(() => {
+    metricsRef.current = metrics;
+  }, [metrics]);
+
   /**
-   * Handle errors
+   * Handle errors - log, update state, and report to Sentry
    */
   const handleError = useCallback(
     (err: Error) => {
@@ -267,6 +274,18 @@ export function useRealtimeVoiceSession(
       setError(err);
       updateStatus("error");
       options.onError?.(err);
+
+      // Report to Sentry with voice context
+      captureVoiceError(err, {
+        status: statusRef.current,
+        conversationId: options.conversation_id,
+        metrics: {
+          connectionTimeMs: metricsRef.current.connectionTimeMs,
+          lastSttLatencyMs: metricsRef.current.lastSttLatencyMs,
+          lastResponseLatencyMs: metricsRef.current.lastResponseLatencyMs,
+          sessionDurationMs: metricsRef.current.sessionDurationMs,
+        },
+      });
     },
     [options, updateStatus],
   );

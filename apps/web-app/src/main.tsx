@@ -1,7 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { App } from "./App";
+import { initSentry } from "./lib/sentry";
 import "./styles.css";
+
+// Initialize Sentry error tracking first
+initSentry();
 
 console.log("🔍 main.tsx executing");
 console.log("🔍 root element:", document.getElementById("root"));
