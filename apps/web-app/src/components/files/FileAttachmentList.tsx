@@ -3,7 +3,9 @@
  * Display list of attached files with preview and remove options
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useMemo } from "react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Button } from "@voiceassist/ui";
 
 export interface PendingFile {
@@ -19,7 +21,11 @@ interface FileAttachmentListProps {
   disabled?: boolean;
 }
 
-export function FileAttachmentList({ files, onRemove, disabled = false }: FileAttachmentListProps) {
+export function FileAttachmentList({
+  files,
+  onRemove,
+  disabled = false,
+}: FileAttachmentListProps) {
   const getFileIcon = (file: File): string => {
     const extension = file.name.split(".").pop()?.toLowerCase();
 
@@ -82,7 +88,9 @@ export function FileAttachmentList({ files, onRemove, disabled = false }: FileAt
                   onLoad={() => URL.revokeObjectURL(previewUrl)}
                 />
               ) : (
-                <span className="text-2xl">{getFileIcon(pendingFile.file)}</span>
+                <span className="text-2xl">
+                  {getFileIcon(pendingFile.file)}
+                </span>
               )}
             </div>
 
@@ -96,14 +104,15 @@ export function FileAttachmentList({ files, onRemove, disabled = false }: FileAt
               </p>
 
               {/* Progress Bar */}
-              {pendingFile.progress !== undefined && pendingFile.progress < 100 && (
-                <div className="mt-2 w-full bg-neutral-200 rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="bg-primary-500 h-full transition-all duration-300"
-                    style={{ width: `${pendingFile.progress}%` }}
-                  />
-                </div>
-              )}
+              {pendingFile.progress !== undefined &&
+                pendingFile.progress < 100 && (
+                  <div className="mt-2 w-full bg-neutral-200 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-primary-500 h-full transition-all duration-300"
+                      style={{ width: `${pendingFile.progress}%` }}
+                    />
+                  </div>
+                )}
 
               {/* Error */}
               {pendingFile.error && (
@@ -127,7 +136,11 @@ export function FileAttachmentList({ files, onRemove, disabled = false }: FileAt
                 stroke="currentColor"
                 className="w-4 h-4"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>

@@ -3,8 +3,8 @@
  * Real-time metrics and system status
  */
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useState, useEffect } from "react";
+import { useAuth } from "../../hooks/useAuth";
 
 interface Metrics {
   activeSessions: number;
@@ -18,14 +18,14 @@ interface Metrics {
 }
 
 interface SystemStatus {
-  database: 'healthy' | 'degraded' | 'down';
-  redis: 'healthy' | 'degraded' | 'down';
-  qdrant: 'healthy' | 'degraded' | 'down';
-  apiGateway: 'healthy' | 'degraded' | 'down';
+  database: "healthy" | "degraded" | "down";
+  redis: "healthy" | "degraded" | "down";
+  qdrant: "healthy" | "degraded" | "down";
+  apiGateway: "healthy" | "degraded" | "down";
 }
 
 export function DashboardOverview() {
-  const { apiClient } = useAuth();
+  const { apiClient: _apiClient } = useAuth();
   const [metrics, setMetrics] = useState<Metrics>({
     activeSessions: 0,
     totalConversations: 0,
@@ -38,10 +38,10 @@ export function DashboardOverview() {
   });
 
   const [systemStatus, setSystemStatus] = useState<SystemStatus>({
-    database: 'healthy',
-    redis: 'healthy',
-    qdrant: 'healthy',
-    apiGateway: 'healthy',
+    database: "healthy",
+    redis: "healthy",
+    qdrant: "healthy",
+    apiGateway: "healthy",
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -73,42 +73,42 @@ export function DashboardOverview() {
       });
 
       setSystemStatus({
-        database: 'healthy',
-        redis: 'healthy',
-        qdrant: 'healthy',
-        apiGateway: 'healthy',
+        database: "healthy",
+        redis: "healthy",
+        qdrant: "healthy",
+        apiGateway: "healthy",
       });
 
       setIsLoading(false);
     } catch (error) {
-      console.error('Failed to load metrics:', error);
+      console.error("Failed to load metrics:", error);
       setIsLoading(false);
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'healthy':
-        return 'text-green-600 bg-green-100';
-      case 'degraded':
-        return 'text-yellow-600 bg-yellow-100';
-      case 'down':
-        return 'text-red-600 bg-red-100';
+      case "healthy":
+        return "text-green-600 bg-green-100";
+      case "degraded":
+        return "text-yellow-600 bg-yellow-100";
+      case "down":
+        return "text-red-600 bg-red-100";
       default:
-        return 'text-neutral-600 bg-neutral-100';
+        return "text-neutral-600 bg-neutral-100";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'healthy':
-        return '✓';
-      case 'degraded':
-        return '⚠';
-      case 'down':
-        return '✗';
+      case "healthy":
+        return "✓";
+      case "degraded":
+        return "⚠";
+      case "down":
+        return "✗";
       default:
-        return '?';
+        return "?";
     }
   };
 
@@ -128,7 +128,9 @@ export function DashboardOverview() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">Dashboard Overview</h1>
+          <h1 className="text-2xl font-bold text-neutral-900">
+            Dashboard Overview
+          </h1>
           <p className="text-sm text-neutral-600">
             Real-time system metrics and status
           </p>
@@ -157,7 +159,9 @@ export function DashboardOverview() {
 
       {/* System Status */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-neutral-900 mb-4">System Status</h2>
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">
+          System Status
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {Object.entries(systemStatus).map(([service, status]) => (
             <div
@@ -165,14 +169,18 @@ export function DashboardOverview() {
               className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg"
             >
               <div className="flex items-center space-x-3">
-                <span className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold ${getStatusColor(status)}`}>
+                <span
+                  className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold ${getStatusColor(status)}`}
+                >
                   {getStatusIcon(status)}
                 </span>
                 <div>
                   <p className="text-sm font-medium text-neutral-900 capitalize">
-                    {service.replace(/([A-Z])/g, ' $1').trim()}
+                    {service.replace(/([A-Z])/g, " $1").trim()}
                   </p>
-                  <p className="text-xs text-neutral-600 capitalize">{status}</p>
+                  <p className="text-xs text-neutral-600 capitalize">
+                    {status}
+                  </p>
                 </div>
               </div>
             </div>
@@ -185,7 +193,9 @@ export function DashboardOverview() {
         {/* Active Sessions */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-neutral-600">Active Sessions</p>
+            <p className="text-sm font-medium text-neutral-600">
+              Active Sessions
+            </p>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -201,7 +211,9 @@ export function DashboardOverview() {
               />
             </svg>
           </div>
-          <p className="text-3xl font-bold text-neutral-900">{metrics.activeSessions}</p>
+          <p className="text-3xl font-bold text-neutral-900">
+            {metrics.activeSessions}
+          </p>
           <p className="text-xs text-green-600 mt-1">
             ↑ {metrics.activeUsers} active users
           </p>
@@ -210,7 +222,9 @@ export function DashboardOverview() {
         {/* Total Conversations */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-neutral-600">Total Conversations</p>
+            <p className="text-sm font-medium text-neutral-600">
+              Total Conversations
+            </p>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -237,7 +251,9 @@ export function DashboardOverview() {
         {/* API Calls */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-neutral-600">API Calls (Today)</p>
+            <p className="text-sm font-medium text-neutral-600">
+              API Calls (Today)
+            </p>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -280,14 +296,20 @@ export function DashboardOverview() {
               />
             </svg>
           </div>
-          <p className="text-3xl font-bold text-neutral-900">{metrics.errorRate.toFixed(2)}%</p>
-          <p className="text-xs text-neutral-600 mt-1">{metrics.storageUsed}% storage used</p>
+          <p className="text-3xl font-bold text-neutral-900">
+            {metrics.errorRate.toFixed(2)}%
+          </p>
+          <p className="text-xs text-neutral-600 mt-1">
+            {metrics.storageUsed}% storage used
+          </p>
         </div>
       </div>
 
       {/* Recent Activity (placeholder) */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Recent Activity</h2>
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">
+          Recent Activity
+        </h2>
         <div className="text-center py-12 text-neutral-500">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -303,7 +325,9 @@ export function DashboardOverview() {
               d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
             />
           </svg>
-          <p className="text-sm">Activity feed will be available when backend is ready</p>
+          <p className="text-sm">
+            Activity feed will be available when backend is ready
+          </p>
         </div>
       </div>
     </div>

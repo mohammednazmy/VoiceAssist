@@ -7,6 +7,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import {
   useRealtimeVoiceSession,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   type ConnectionStatus,
 } from "../useRealtimeVoiceSession";
 
@@ -62,6 +63,7 @@ class MockAudioContext {
 (global as any).AudioContext = MockAudioContext;
 
 // Mock WebSocket
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let mockWebSocketInstance: MockWebSocket | null = null;
 
 class MockWebSocket {

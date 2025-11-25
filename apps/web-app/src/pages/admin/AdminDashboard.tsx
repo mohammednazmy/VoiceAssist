@@ -3,12 +3,11 @@
  * Main admin panel with metrics, KB management, and analytics
  */
 
-import { useState } from 'react';
-import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import { DashboardOverview } from '../../components/admin/DashboardOverview';
-import { KnowledgeBaseManager } from '../../components/admin/KnowledgeBaseManager';
-import { AnalyticsDashboard } from '../../components/admin/AnalyticsDashboard';
-import { SystemHealth } from '../../components/admin/SystemHealth';
+import { Routes, Route, Link, useLocation } from "react-router-dom";
+import { DashboardOverview } from "../../components/admin/DashboardOverview";
+import { KnowledgeBaseManager } from "../../components/admin/KnowledgeBaseManager";
+import { AnalyticsDashboard } from "../../components/admin/AnalyticsDashboard";
+import { SystemHealth } from "../../components/admin/SystemHealth";
 
 export default function AdminDashboard() {
   const location = useLocation();
@@ -32,9 +31,9 @@ export default function AdminDashboard() {
               <Link
                 to="/admin"
                 className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  location.pathname === '/admin'
-                    ? 'bg-primary-50 text-primary-700'
-                    : 'text-neutral-700 hover:bg-neutral-100'
+                  location.pathname === "/admin"
+                    ? "bg-primary-50 text-primary-700"
+                    : "text-neutral-700 hover:bg-neutral-100"
                 }`}
               >
                 <svg
@@ -59,9 +58,9 @@ export default function AdminDashboard() {
               <Link
                 to="/admin/knowledge-base"
                 className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive('/admin/knowledge-base')
-                    ? 'bg-primary-50 text-primary-700'
-                    : 'text-neutral-700 hover:bg-neutral-100'
+                  isActive("/admin/knowledge-base")
+                    ? "bg-primary-50 text-primary-700"
+                    : "text-neutral-700 hover:bg-neutral-100"
                 }`}
               >
                 <svg
@@ -86,9 +85,9 @@ export default function AdminDashboard() {
               <Link
                 to="/admin/analytics"
                 className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive('/admin/analytics')
-                    ? 'bg-primary-50 text-primary-700'
-                    : 'text-neutral-700 hover:bg-neutral-100'
+                  isActive("/admin/analytics")
+                    ? "bg-primary-50 text-primary-700"
+                    : "text-neutral-700 hover:bg-neutral-100"
                 }`}
               >
                 <svg
@@ -113,9 +112,9 @@ export default function AdminDashboard() {
               <Link
                 to="/admin/system"
                 className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive('/admin/system')
-                    ? 'bg-primary-50 text-primary-700'
-                    : 'text-neutral-700 hover:bg-neutral-100'
+                  isActive("/admin/system")
+                    ? "bg-primary-50 text-primary-700"
+                    : "text-neutral-700 hover:bg-neutral-100"
                 }`}
               >
                 <svg

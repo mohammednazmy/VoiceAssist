@@ -15,10 +15,16 @@ interface ShareDialogProps {
   conversationTitle: string;
 }
 
-export function ShareDialog({ isOpen, onClose, conversationId, conversationTitle }: ShareDialogProps) {
+export function ShareDialog({
+  isOpen,
+  onClose,
+  conversationId,
+  conversationTitle,
+}: ShareDialogProps) {
   const { apiClient } = useAuth();
   const [activeLinks, setActiveLinks] = useState<ShareLink[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [isLoading, _setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -116,7 +122,10 @@ export function ShareDialog({ isOpen, onClose, conversationId, conversationTitle
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-neutral-200">
           <div>
-            <h2 id="share-dialog-title" className="text-lg font-semibold text-neutral-900">
+            <h2
+              id="share-dialog-title"
+              className="text-lg font-semibold text-neutral-900"
+            >
               Share Conversation
             </h2>
             <p className="text-sm text-neutral-600 mt-1">{conversationTitle}</p>
@@ -134,7 +143,11 @@ export function ShareDialog({ isOpen, onClose, conversationId, conversationTitle
               stroke="currentColor"
               className="w-5 h-5 text-neutral-500"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -146,7 +159,9 @@ export function ShareDialog({ isOpen, onClose, conversationId, conversationTitle
             <div className="p-4 bg-green-50 border border-green-200 rounded-md">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-green-900 mb-2">Share link created!</p>
+                  <p className="text-sm font-medium text-green-900 mb-2">
+                    Share link created!
+                  </p>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 px-3 py-2 bg-white border border-green-300 rounded text-sm text-green-900 truncate">
                       {newShareUrl}
@@ -179,11 +194,16 @@ export function ShareDialog({ isOpen, onClose, conversationId, conversationTitle
 
           {/* Create New Share Link */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-neutral-900">Create New Share Link</h3>
+            <h3 className="text-sm font-semibold text-neutral-900">
+              Create New Share Link
+            </h3>
 
             {/* Expiration */}
             <div>
-              <label htmlFor="expires-in" className="block text-sm font-medium text-neutral-700 mb-1">
+              <label
+                htmlFor="expires-in"
+                className="block text-sm font-medium text-neutral-700 mb-1"
+              >
                 Link Expiration
               </label>
               <select
@@ -201,7 +221,10 @@ export function ShareDialog({ isOpen, onClose, conversationId, conversationTitle
 
             {/* Password Protection */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-neutral-700 mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-neutral-700 mb-1"
+              >
                 Password Protection (Optional)
               </label>
               <Input
@@ -223,12 +246,19 @@ export function ShareDialog({ isOpen, onClose, conversationId, conversationTitle
                 onChange={(e) => setAllowAnonymous(e.target.checked)}
                 className="w-4 h-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
               />
-              <label htmlFor="allow-anonymous" className="ml-2 text-sm text-neutral-700">
+              <label
+                htmlFor="allow-anonymous"
+                className="ml-2 text-sm text-neutral-700"
+              >
                 Allow anonymous access
               </label>
             </div>
 
-            <Button onClick={handleCreateLink} disabled={isCreating} className="w-full">
+            <Button
+              onClick={handleCreateLink}
+              disabled={isCreating}
+              className="w-full"
+            >
               {isCreating ? (
                 <>
                   <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -243,7 +273,9 @@ export function ShareDialog({ isOpen, onClose, conversationId, conversationTitle
           {/* Active Share Links */}
           {activeLinks.length > 0 && (
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-neutral-900">Active Share Links</h3>
+              <h3 className="text-sm font-semibold text-neutral-900">
+                Active Share Links
+              </h3>
               <div className="space-y-2">
                 {activeLinks.map((link) => (
                   <div
@@ -254,10 +286,15 @@ export function ShareDialog({ isOpen, onClose, conversationId, conversationTitle
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <code className="text-xs text-neutral-600 truncate">
-                            {window.location.origin}{link.shareUrl}
+                            {window.location.origin}
+                            {link.shareUrl}
                           </code>
                           <button
-                            onClick={() => handleCopyLink(`${window.location.origin}${link.shareUrl}`)}
+                            onClick={() =>
+                              handleCopyLink(
+                                `${window.location.origin}${link.shareUrl}`,
+                              )
+                            }
                             className="p-1 hover:bg-neutral-200 rounded transition-colors shrink-0"
                             title="Copy link"
                           >
@@ -280,11 +317,16 @@ export function ShareDialog({ isOpen, onClose, conversationId, conversationTitle
                         <div className="flex items-center gap-3 text-xs text-neutral-600">
                           <span>Expires: {formatDate(link.expiresAt)}</span>
                           <span>•</span>
-                          <span>{link.accessCount} {link.accessCount === 1 ? "access" : "accesses"}</span>
+                          <span>
+                            {link.accessCount}{" "}
+                            {link.accessCount === 1 ? "access" : "accesses"}
+                          </span>
                           {link.passwordProtected && (
                             <>
                               <span>•</span>
-                              <span className="text-primary-600">🔒 Password protected</span>
+                              <span className="text-primary-600">
+                                🔒 Password protected
+                              </span>
                             </>
                           )}
                         </div>

@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useState } from "react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Button } from "@voiceassist/ui";
 
 interface FileUploadZoneProps {
@@ -85,17 +86,14 @@ export function FileUploadZone({
     [disabled],
   );
 
-  const handleDragLeave = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      // Only set dragging to false if leaving the drop zone itself
-      if (e.currentTarget === e.target) {
-        setIsDragging(false);
-      }
-    },
-    [],
-  );
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set dragging to false if leaving the drop zone itself
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();

@@ -44,18 +44,20 @@ pnpm test:e2e:report
 VoiceAssist/
 ├── e2e/                          # E2E test directory
 │   ├── fixtures/                 # Test fixtures and helpers
-│   │   └── auth.ts               # Authentication helpers
+│   │   ├── auth.ts               # Authentication helpers and mock state
+│   │   └── files/                # Test fixture files
+│   │       └── sample-document.txt  # Sample document for upload tests
 │   ├── login.spec.ts             # Manual login tests
-│   └── ai/                       # AI-generated tests
-│       ├── register-user.spec.ts
-│       ├── quick-consult.spec.ts
-│       ├── pdf-upload.spec.ts
-│       ├── voice-mode.spec.ts
-│       ├── conversation-management.spec.ts
-│       ├── profile-settings.spec.ts
-│       ├── clinical-context.spec.ts
-│       ├── export-conversation.spec.ts
-│       └── accessibility.spec.ts
+│   └── ai/                       # AI-generated and implemented tests
+│       ├── quick-consult.spec.ts    # [ACTIVE] Chat flow tests
+│       ├── clinical-context.spec.ts # [ACTIVE] Clinical context UI tests
+│       ├── pdf-upload.spec.ts       # [ACTIVE] Document upload tests
+│       ├── voice-mode.spec.ts       # [ACTIVE] Voice mode UI tests
+│       ├── register-user.spec.ts    # [TEMPLATE] User registration
+│       ├── conversation-management.spec.ts # [TEMPLATE] Conversation CRUD
+│       ├── profile-settings.spec.ts # [TEMPLATE] Profile management
+│       ├── export-conversation.spec.ts # [TEMPLATE] Export functionality
+│       └── accessibility.spec.ts    # [TEMPLATE] Keyboard navigation
 ├── playwright.config.ts          # Playwright configuration
 ├── scripts/
 │   └── generate-e2e-tests.js     # AI test generator script
@@ -216,17 +218,17 @@ The `e2e/ai/` directory contains AI-generated test templates. **These are skippe
 
 ### Template Status
 
-| File                              | Status   | Description                         |
-| --------------------------------- | -------- | ----------------------------------- |
-| `quick-consult.spec.ts`           | ACTIVE   | Fully implemented - tests chat flow |
-| `accessibility.spec.ts`           | TEMPLATE | Skipped - keyboard navigation       |
-| `clinical-context.spec.ts`        | TEMPLATE | Skipped - clinical context setup    |
-| `conversation-management.spec.ts` | TEMPLATE | Skipped - conversation CRUD         |
-| `export-conversation.spec.ts`     | TEMPLATE | Skipped - export functionality      |
-| `pdf-upload.spec.ts`              | TEMPLATE | Skipped - document upload           |
-| `profile-settings.spec.ts`        | TEMPLATE | Skipped - profile management        |
-| `register-user.spec.ts`           | TEMPLATE | Skipped - user registration         |
-| `voice-mode.spec.ts`              | TEMPLATE | Skipped - voice mode activation     |
+| File                              | Status   | Description                              |
+| --------------------------------- | -------- | ---------------------------------------- |
+| `quick-consult.spec.ts`           | ACTIVE   | Fully implemented - tests chat flow      |
+| `clinical-context.spec.ts`        | ACTIVE   | Fully implemented - clinical context UI  |
+| `pdf-upload.spec.ts`              | ACTIVE   | Fully implemented - document upload flow |
+| `voice-mode.spec.ts`              | ACTIVE   | Fully implemented - voice UI elements    |
+| `accessibility.spec.ts`           | TEMPLATE | Skipped - keyboard navigation            |
+| `conversation-management.spec.ts` | TEMPLATE | Skipped - conversation CRUD              |
+| `export-conversation.spec.ts`     | TEMPLATE | Skipped - export functionality           |
+| `profile-settings.spec.ts`        | TEMPLATE | Skipped - profile management             |
+| `register-user.spec.ts`           | TEMPLATE | Skipped - user registration              |
 
 ### Promoting a Template to a Real Test
 

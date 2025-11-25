@@ -183,7 +183,10 @@ export function VoiceModePanel({
   };
 
   return (
-    <div className="bg-white border-2 border-primary-500 rounded-lg shadow-xl p-6 space-y-4">
+    <div
+      className="bg-white border-2 border-primary-500 rounded-lg shadow-xl p-6 space-y-4"
+      data-testid="voice-mode-panel"
+    >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
@@ -224,6 +227,7 @@ export function VoiceModePanel({
           onClick={onClose}
           className="text-neutral-400 hover:text-neutral-600 transition-colors"
           aria-label="Close voice mode"
+          data-testid="close-voice-mode"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -272,6 +276,7 @@ export function VoiceModePanel({
             type="button"
             onClick={handleConnect}
             className="px-4 py-2 bg-primary-500 text-white text-sm font-medium rounded-md hover:bg-primary-600 transition-colors"
+            data-testid="start-voice-session"
           >
             Start Voice Session
           </button>
@@ -282,6 +287,7 @@ export function VoiceModePanel({
             type="button"
             onClick={handleDisconnect}
             className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-md hover:bg-red-600 transition-colors"
+            data-testid="end-voice-session"
           >
             End Session
           </button>

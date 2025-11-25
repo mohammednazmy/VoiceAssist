@@ -3,9 +3,9 @@
  * Upload, manage, and index documents for RAG
  */
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import { Button } from '@voiceassist/ui';
+import { useState, useEffect } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import { Button } from "@voiceassist/ui";
 
 interface Document {
   id: string;
@@ -14,16 +14,16 @@ interface Document {
   fileType: string;
   size: number;
   uploadedAt: string;
-  status: 'indexed' | 'processing' | 'failed';
+  status: "indexed" | "processing" | "failed";
   chunks?: number;
 }
 
 export function KnowledgeBaseManager() {
-  const { apiClient } = useAuth();
+  const { apiClient: _apiClient } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     loadDocuments();
@@ -37,45 +37,47 @@ export function KnowledgeBaseManager() {
       // Mock data for now
       setDocuments([
         {
-          id: '1',
-          title: 'Harrison\'s Principles of Internal Medicine',
-          filename: 'harrisons-21st-edition.pdf',
-          fileType: 'application/pdf',
+          id: "1",
+          title: "Harrison's Principles of Internal Medicine",
+          filename: "harrisons-21st-edition.pdf",
+          fileType: "application/pdf",
           size: 52428800, // 50 MB
           uploadedAt: new Date().toISOString(),
-          status: 'indexed',
+          status: "indexed",
           chunks: 2500,
         },
         {
-          id: '2',
-          title: 'Clinical Practice Guidelines - Diabetes',
-          filename: 'diabetes-guidelines-2024.pdf',
-          fileType: 'application/pdf',
+          id: "2",
+          title: "Clinical Practice Guidelines - Diabetes",
+          filename: "diabetes-guidelines-2024.pdf",
+          fileType: "application/pdf",
           size: 5242880, // 5 MB
           uploadedAt: new Date(Date.now() - 86400000).toISOString(),
-          status: 'indexed',
+          status: "indexed",
           chunks: 150,
         },
         {
-          id: '3',
-          title: 'Cardiology Clinical Updates',
-          filename: 'cardiology-updates.pdf',
-          fileType: 'application/pdf',
+          id: "3",
+          title: "Cardiology Clinical Updates",
+          filename: "cardiology-updates.pdf",
+          fileType: "application/pdf",
           size: 10485760, // 10 MB
           uploadedAt: new Date(Date.now() - 172800000).toISOString(),
-          status: 'processing',
+          status: "processing",
           chunks: 0,
         },
       ]);
 
       setIsLoading(false);
     } catch (error) {
-      console.error('Failed to load documents:', error);
+      console.error("Failed to load documents:", error);
       setIsLoading(false);
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
@@ -90,67 +92,67 @@ export function KnowledgeBaseManager() {
       // }
 
       // Simulate upload
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      alert('File upload will be available when backend is ready');
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      alert("File upload will be available when backend is ready");
 
       await loadDocuments();
     } catch (error) {
-      console.error('Upload failed:', error);
-      alert('Upload failed. Please try again.');
+      console.error("Upload failed:", error);
+      alert("Upload failed. Please try again.");
     } finally {
       setIsUploading(false);
-      event.target.value = '';
+      event.target.value = "";
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this document?')) return;
+    if (!confirm("Are you sure you want to delete this document?")) return;
 
     try {
       // TODO: Implement actual delete when backend is ready
       // await apiClient.delete(`/admin/documents/${id}`);
 
-      setDocuments(docs => docs.filter(d => d.id !== id));
-      alert('Delete functionality will be available when backend is ready');
+      setDocuments((docs) => docs.filter((d) => d.id !== id));
+      alert("Delete functionality will be available when backend is ready");
     } catch (error) {
-      console.error('Delete failed:', error);
-      alert('Delete failed. Please try again.');
+      console.error("Delete failed:", error);
+      alert("Delete failed. Please try again.");
     }
   };
 
-  const handleReindex = async (id: string) => {
+  const handleReindex = async (_id: string) => {
     try {
       // TODO: Implement actual reindex when backend is ready
       // await apiClient.post(`/admin/documents/${id}/reindex`);
 
-      alert('Reindex functionality will be available when backend is ready');
+      alert("Reindex functionality will be available when backend is ready");
     } catch (error) {
-      console.error('Reindex failed:', error);
-      alert('Reindex failed. Please try again.');
+      console.error("Reindex failed:", error);
+      alert("Reindex failed. Please try again.");
     }
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / 1048576).toFixed(1) + ' MB';
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / 1048576).toFixed(1) + " MB";
   };
 
-  const getStatusBadge = (status: Document['status']) => {
+  const getStatusBadge = (status: Document["status"]) => {
     switch (status) {
-      case 'indexed':
+      case "indexed":
         return (
           <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
             Indexed
           </span>
         );
-      case 'processing':
+      case "processing":
         return (
           <span className="px-2 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-full">
             Processing...
           </span>
         );
-      case 'failed':
+      case "failed":
         return (
           <span className="px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full">
             Failed
@@ -159,9 +161,10 @@ export function KnowledgeBaseManager() {
     }
   };
 
-  const filteredDocuments = documents.filter(doc =>
-    doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    doc.filename.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredDocuments = documents.filter(
+    (doc) =>
+      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      doc.filename.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   if (isLoading) {
@@ -180,7 +183,9 @@ export function KnowledgeBaseManager() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">Knowledge Base</h1>
+          <h1 className="text-2xl font-bold text-neutral-900">
+            Knowledge Base
+          </h1>
           <p className="text-sm text-neutral-600">
             Manage medical documents for RAG system
           </p>
@@ -255,12 +260,16 @@ export function KnowledgeBaseManager() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-lg shadow p-4">
           <p className="text-sm text-neutral-600">Total Documents</p>
-          <p className="text-2xl font-bold text-neutral-900">{documents.length}</p>
+          <p className="text-2xl font-bold text-neutral-900">
+            {documents.length}
+          </p>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
           <p className="text-sm text-neutral-600">Indexed Chunks</p>
           <p className="text-2xl font-bold text-neutral-900">
-            {documents.reduce((sum, doc) => sum + (doc.chunks || 0), 0).toLocaleString()}
+            {documents
+              .reduce((sum, doc) => sum + (doc.chunks || 0), 0)
+              .toLocaleString()}
           </p>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
@@ -300,8 +309,13 @@ export function KnowledgeBaseManager() {
             <tbody className="divide-y divide-neutral-200">
               {filteredDocuments.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-neutral-500">
-                    {searchQuery ? 'No documents found' : 'No documents uploaded yet'}
+                  <td
+                    colSpan={6}
+                    className="px-6 py-12 text-center text-neutral-500"
+                  >
+                    {searchQuery
+                      ? "No documents found"
+                      : "No documents uploaded yet"}
                   </td>
                 </tr>
               ) : (
@@ -324,8 +338,12 @@ export function KnowledgeBaseManager() {
                           />
                         </svg>
                         <div>
-                          <p className="text-sm font-medium text-neutral-900">{doc.title}</p>
-                          <p className="text-xs text-neutral-500">{doc.filename}</p>
+                          <p className="text-sm font-medium text-neutral-900">
+                            {doc.title}
+                          </p>
+                          <p className="text-xs text-neutral-500">
+                            {doc.filename}
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -334,7 +352,7 @@ export function KnowledgeBaseManager() {
                       {formatFileSize(doc.size)}
                     </td>
                     <td className="px-6 py-4 text-sm text-neutral-900">
-                      {doc.chunks?.toLocaleString() || '-'}
+                      {doc.chunks?.toLocaleString() || "-"}
                     </td>
                     <td className="px-6 py-4 text-sm text-neutral-600">
                       {new Date(doc.uploadedAt).toLocaleDateString()}

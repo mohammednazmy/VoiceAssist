@@ -4,7 +4,7 @@
  * Files are NOT uploaded immediately - they're sent after the message is created
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useRef, useCallback } from "react";
 
 export interface PendingFile {
   file: File;

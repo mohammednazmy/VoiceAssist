@@ -53,7 +53,11 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        // Use pre-populated auth state for authenticated tests
+        storageState: 'e2e/.auth/user.json',
+      },
     },
 
     {

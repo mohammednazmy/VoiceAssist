@@ -3,6 +3,7 @@
   "globalDependencies": [
     "**/.env.*local"
   ],
+  "ui": "stream",
   "tasks": {
     "build": {
       "dependsOn": [
@@ -27,6 +28,10 @@
       "outputs": [
         "coverage/**"
       ]
+    },
+    "test:fast": {
+      "cache": false,
+      "outputs": []
     },
     "lint": {
       "dependsOn": [

@@ -18,6 +18,7 @@
     "clean": "rm -rf dist storybook-static",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
+    "test:fast": "vitest run --no-coverage",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",

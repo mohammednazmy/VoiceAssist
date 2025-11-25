@@ -3,10 +3,10 @@
  * Display and navigate all citations from the current conversation
  */
 
-import { useState, useMemo } from 'react';
-import { CitationDisplay } from '../chat/CitationDisplay';
-import type { Citation } from '../../types';
-import type { Message } from '@voiceassist/types';
+import { useState, useMemo } from "react";
+import { CitationDisplay } from "../chat/CitationDisplay";
+import type { Citation } from "../../types";
+import type { Message } from "@voiceassist/types";
 
 export interface CitationSidebarProps {
   isOpen: boolean;
@@ -19,9 +19,9 @@ export function CitationSidebar({
   isOpen,
   onClose,
   messages,
-  onCitationClick,
+  onCitationClick: _onCitationClick,
 }: CitationSidebarProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Aggregate all citations from all messages
   const allCitations = useMemo(() => {
@@ -54,13 +54,13 @@ export function CitationSidebar({
         citation.subtitle,
         citation.reference,
         citation.snippet,
-        citation.authors?.join(' '),
+        citation.authors?.join(" "),
         citation.location,
         citation.doi,
         citation.pubmedId,
       ]
         .filter(Boolean)
-        .join(' ')
+        .join(" ")
         .toLowerCase();
 
       return searchableText.includes(query);
@@ -149,7 +149,7 @@ export function CitationSidebar({
               </svg>
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => setSearchQuery("")}
                   className="absolute right-3 top-2.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                   aria-label="Clear search"
                 >
@@ -252,7 +252,8 @@ export function CitationSidebar({
               />
             </svg>
             <p>
-              Citations are automatically collected from AI responses and provide sources for medical information.
+              Citations are automatically collected from AI responses and
+              provide sources for medical information.
             </p>
           </div>
         </div>
