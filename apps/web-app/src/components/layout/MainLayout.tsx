@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Button,
   Avatar,
   Badge,

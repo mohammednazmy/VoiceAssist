@@ -8,6 +8,8 @@ import { Link, useParams } from "react-router-dom";
 import { Button, Input } from "@voiceassist/ui";
 import { useConversations } from "../../hooks/useConversations";
 import { useFolders } from "../../hooks/useFolders";
+// FolderDialog imported for future use when folder feature is complete
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { FolderDialog } from "../folders/FolderDialog";
 import { useToastContext } from "../../contexts/ToastContext";
 import { createFoldersApi } from "../../lib/api/foldersApi";
@@ -34,16 +36,25 @@ export function ConversationsSidebar() {
     updateConversation,
   } = useConversations();
 
-  const { folders, createFolder, updateFolder, deleteFolder } = useFolders();
+  // Folder features - temporarily disabled, will be enabled when folder UI is complete
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const {
+    folders,
+    createFolder: _createFolder,
+    updateFolder: _updateFolder,
+    deleteFolder: _deleteFolder,
+  } = useFolders();
 
-  const foldersApi = createFoldersApi(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _foldersApi = createFoldersApi(
     import.meta.env.VITE_API_URL || "http://localhost:8000",
     () => tokens?.accessToken || null,
   );
 
   const [isCreating, setIsCreating] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
-  const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_isFolderDialogOpen, _setIsFolderDialogOpen] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(
     new Set(),

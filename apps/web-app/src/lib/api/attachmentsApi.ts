@@ -81,7 +81,7 @@ export function createAttachmentsApi(
                 });
               }
               resolve(response);
-            } catch (err) {
+            } catch {
               reject(new Error("Failed to parse upload response"));
             }
           } else {

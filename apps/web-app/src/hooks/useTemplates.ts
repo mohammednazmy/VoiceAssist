@@ -15,7 +15,8 @@ import type {
 const STORAGE_KEY = "voiceassist:templates";
 
 export function useTemplates() {
-  const { user } = useAuth();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { user: _user } = useAuth();
   const [templates, setTemplates] = useState<ConversationTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,14 +48,17 @@ export function useTemplates() {
   }, [loadTemplates]);
 
   // Save templates to localStorage
-  const saveToStorage = useCallback((updatedTemplates: ConversationTemplate[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTemplates));
-      setTemplates(updatedTemplates);
-    } catch (err: any) {
-      throw new Error("Failed to save templates to storage");
-    }
-  }, []);
+  const saveToStorage = useCallback(
+    (updatedTemplates: ConversationTemplate[]) => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTemplates));
+        setTemplates(updatedTemplates);
+      } catch {
+        throw new Error("Failed to save templates to storage");
+      }
+    },
+    [],
+  );
 
   // Create template from conversation
   const createFromConversation = useCallback(

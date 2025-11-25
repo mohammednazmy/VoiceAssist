@@ -14,7 +14,12 @@ interface TemplatePickerProps {
   templates: ConversationTemplate[];
 }
 
-export function TemplatePicker({ isOpen, onClose, onSelect, templates }: TemplatePickerProps) {
+export function TemplatePicker({
+  isOpen,
+  onClose,
+  onSelect,
+  templates,
+}: TemplatePickerProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -59,6 +64,7 @@ export function TemplatePicker({ isOpen, onClose, onSelect, templates }: Templat
     setSelectedCategory(null);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -81,7 +87,10 @@ export function TemplatePicker({ isOpen, onClose, onSelect, templates }: Templat
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-neutral-200">
           <div>
-            <h2 id="template-picker-dialog-title" className="text-lg font-semibold text-neutral-900">
+            <h2
+              id="template-picker-dialog-title"
+              className="text-lg font-semibold text-neutral-900"
+            >
               Choose a Template
             </h2>
             <p className="text-sm text-neutral-600 mt-1">
@@ -101,7 +110,11 @@ export function TemplatePicker({ isOpen, onClose, onSelect, templates }: Templat
               stroke="currentColor"
               className="w-5 h-5 text-neutral-500"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -182,7 +195,9 @@ export function TemplatePicker({ isOpen, onClose, onSelect, templates }: Templat
                 </svg>
               </div>
               <h3 className="text-base font-semibold text-neutral-900 mb-2">
-                {searchQuery || selectedCategory ? "No templates found" : "No templates yet"}
+                {searchQuery || selectedCategory
+                  ? "No templates found"
+                  : "No templates yet"}
               </h3>
               <p className="text-sm text-neutral-600 text-center">
                 {searchQuery || selectedCategory
@@ -202,7 +217,10 @@ export function TemplatePicker({ isOpen, onClose, onSelect, templates }: Templat
                     {/* Icon */}
                     <div
                       className="w-10 h-10 rounded-md flex items-center justify-center text-xl shrink-0"
-                      style={{ backgroundColor: `${template.color}20`, color: template.color }}
+                      style={{
+                        backgroundColor: `${template.color}20`,
+                        color: template.color,
+                      }}
                     >
                       {template.icon}
                     </div>
@@ -237,7 +255,8 @@ export function TemplatePicker({ isOpen, onClose, onSelect, templates }: Templat
         {/* Footer */}
         <div className="flex justify-between items-center p-4 border-t border-neutral-200">
           <p className="text-sm text-neutral-600">
-            {filteredTemplates.length} {filteredTemplates.length === 1 ? "template" : "templates"}
+            {filteredTemplates.length}{" "}
+            {filteredTemplates.length === 1 ? "template" : "templates"}
           </p>
           <Button onClick={onClose} variant="outline">
             Cancel
