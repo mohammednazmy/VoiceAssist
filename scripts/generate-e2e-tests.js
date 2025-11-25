@@ -267,8 +267,17 @@ async function main() {
 
   console.log('Generating E2E test files...\n');
 
+  // Check for --force flag to overwrite existing files
+  const forceOverwrite = process.argv.includes('--force');
+
   for (const scenario of testScenarios) {
     const filePath = path.join(outputDir, scenario.filename);
+
+    // Skip if file exists and not forcing overwrite (preserves committed manual templates)
+    if (fs.existsSync(filePath) && !forceOverwrite) {
+      console.log(`Skipping: ${scenario.filename} (already exists, use --force to overwrite)`);
+      continue;
+    }
 
     console.log(`Generating: ${scenario.filename}`);
     console.log(`  Description: ${scenario.description}`);
@@ -287,6 +296,10 @@ async function main() {
 
   console.log('\nTest generation complete!');
   console.log(`Generated ${testScenarios.length} test files in: ${outputDir}`);
+
+  console.log('\nUsage:');
+  console.log('  node generate-e2e-tests.js          # Skip existing files');
+  console.log('  node generate-e2e-tests.js --force  # Overwrite all files');
 
   if (hasOpenAIKey) {
     console.log('\nNext steps:');
