@@ -47,7 +47,7 @@ sentry-sdk[fastapi]==2.19.0  # Error tracking and performance monitoring
 
 # Utilities
 python-dotenv==1.0.0
-httpx==0.26.0
+httpx==0.28.1
 
 # Document Processing (Phase 5)
 pypdf==4.0.0
