@@ -226,11 +226,13 @@ docker-compose restart voiceassist-server
 ### Import Path Issues (RESOLVED)
 
 **Issue**: Multiple import errors preventing container startup:
+
 - `get_current_user` imported from wrong modules
 - `User` model imported from non-existent `app.db.models`
 - `get_settings` imported instead of `settings`
 
 **Resolution**: Fixed all import paths to use correct modules:
+
 - `app.core.dependencies` for `get_current_user`
 - `app.models.user` for `User`
 - Direct `settings` import from `app.core.config`
@@ -286,6 +288,7 @@ docker-compose restart voiceassist-server
 ### Unit Tests (COMPLETED)
 
 Created comprehensive unit tests for all new features:
+
 - ✅ `tests/unit/test_attachments.py` - MessageAttachment model tests
 - ✅ `tests/unit/test_clinical_context.py` - ClinicalContext model tests
 - ✅ `tests/unit/test_citations.py` - MessageCitation model tests including APA formatting
@@ -294,6 +297,7 @@ Created comprehensive unit tests for all new features:
 ### Integration Tests (COMPLETED)
 
 Created integration tests for complete workflows:
+
 - ✅ `tests/integration/test_new_features_integration.py` - End-to-end workflow tests
   - Clinical context with RAG queries
   - Messages with attachments and citations
@@ -301,6 +305,7 @@ Created integration tests for complete workflows:
   - Complete workflow from folder to citations
 
 Run tests with:
+
 ```bash
 cd services/api-gateway
 pytest tests/unit/ -v
@@ -366,6 +371,58 @@ Move conversation sharing from in-memory to database:
 - [ ] Create user guides for new features
 - [ ] Install optional dependencies in production (reportlab, PyPDF2, python-docx, Pillow, pytesseract)
 - [ ] Migrate conversation sharing from in-memory to database
+
+## 🔑 OpenAI API Key Verification
+
+The backend relies on OpenAI for LLM features (chat, RAG, voice mode). Use these methods to verify the key is properly configured.
+
+### Local Verification
+
+```bash
+# Quick check (from repo root)
+make check-openai
+
+# Manual script with verbose output
+cd services/api-gateway
+source venv/bin/activate
+python ../../scripts/check_openai_key.py --verbose
+```
+
+### Runtime Health Check
+
+When the backend is running:
+
+```bash
+curl http://localhost:8000/health/openai
+```
+
+Returns:
+
+- `200 OK` - Key valid and API accessible
+- `503 Service Unavailable` - Key missing or API unreachable
+
+### CI Verification (GitHub Actions)
+
+1. Go to **Actions** tab in GitHub
+2. Select **"OpenAI Integration Verification"** workflow
+3. Click **"Run workflow"**
+4. Select branch and click **"Run workflow"**
+
+**Prerequisites**: Set `OPENAI_API_KEY` (and optionally `OPENAI_PROJECT`) in repository secrets.
+
+### Live Integration Tests
+
+For deeper validation:
+
+```bash
+cd services/api-gateway
+source venv/bin/activate
+export PYTHONPATH=.
+export LIVE_OPENAI_TESTS=1
+pytest tests/integration/test_openai_config.py -v
+```
+
+**Note**: Live tests are skipped by default to avoid API costs. Enable with `LIVE_OPENAI_TESTS=1`.
 
 ## 📞 Support
 

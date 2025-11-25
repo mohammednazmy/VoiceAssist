@@ -1,4 +1,4 @@
-.PHONY: help dev test lint type-check bandit security clean install check-env
+.PHONY: help dev test lint type-check bandit security clean install check-env check-openai
 
 # Default target
 help:
@@ -7,6 +7,7 @@ help:
 	@echo ""
 	@echo "Environment:"
 	@echo "  make check-env     - Validate required environment variables"
+	@echo "  make check-openai  - Verify OpenAI API key is valid and working"
 	@echo "  make install       - Install all dependencies (backend + frontend)"
 	@echo ""
 	@echo "Development:"
@@ -39,6 +40,13 @@ check-env:
 	else \
 		echo "⚠️  scripts/check-env.sh not found. Skipping env validation."; \
 	fi
+
+# OpenAI API key verification
+check-openai:
+	@echo "Verifying OpenAI API key..."
+	@cd services/api-gateway && \
+		. venv/bin/activate && \
+		python ../../scripts/check_openai_key.py
 
 # Installation
 install: check-env
