@@ -39,7 +39,7 @@ tenacity==8.2.3
 
 # Caching
 fastapi-cache2[redis]==0.2.2
-cachetools==5.3.2  # LRU cache for in-memory caching
+cachetools==6.2.2  # LRU cache for in-memory caching
 
 # Observability
 prometheus-client==0.23.1  # Prometheus metrics
