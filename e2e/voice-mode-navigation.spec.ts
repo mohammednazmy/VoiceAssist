@@ -26,7 +26,8 @@ test.describe("Voice Mode Navigation Flow", () => {
 
     // Step 1: Navigate to home page
     await page.goto("/");
-    await expect(page).toHaveURL(/^\/$|^\/home/);
+    // URL should be root or /home (with or without trailing slash)
+    await expect(page).toHaveURL(/\/$|\/home/);
 
     // Step 2: Wait for Voice Mode card to be visible
     const voiceModeCard = page.getByTestId("voice-mode-card");
