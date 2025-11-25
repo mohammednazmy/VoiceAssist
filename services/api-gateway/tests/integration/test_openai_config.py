@@ -178,8 +178,96 @@ class TestRealtimeVoiceServiceConfiguration:
         assert config["conversation_id"] == "conv-456"
         assert "voice_config" in config
 
-        # API key should be present but we don't log/assert its value
-        assert "api_key" in config
+        # SECURITY: Raw API key should NOT be in response
+        assert "api_key" not in config, "Raw API key must not be exposed to client"
+
+        # Auth structure with ephemeral token SHOULD be present
+        assert "auth" in config
+        assert config["auth"]["type"] == "ephemeral_token"
+        assert "token" in config["auth"]
+        assert "expires_at" in config["auth"]
+
+        # Token should be non-empty string
+        token = config["auth"]["token"]
+        assert isinstance(token, str)
+        assert len(token) > 0
+        assert "." in token  # Should have format: payload.signature
+
+    def test_ephemeral_token_generation_and_validation(self):
+        """Test ephemeral token can be generated and validated."""
+        from app.services.realtime_voice_service import RealtimeVoiceService
+        import time
+
+        service = RealtimeVoiceService()
+
+        if not service.is_enabled():
+            pytest.skip("Realtime service not enabled or key not set")
+
+        # Generate token
+        user_id = "test-user-456"
+        session_id = "rtc_test_session_789"
+        expires_at = int(time.time()) + 300  # 5 minutes from now
+
+        token = service.generate_ephemeral_token(user_id, session_id, expires_at)
+
+        # Token should have proper format
+        assert isinstance(token, str)
+        parts = token.split(".")
+        assert len(parts) == 2, "Token should have format: payload.signature"
+
+        # Validate token
+        payload = service.validate_ephemeral_token(token)
+
+        # Payload should contain expected data
+        assert payload["user_id"] == user_id
+        assert payload["session_id"] == session_id
+        assert payload["expires_at"] == expires_at
+        assert "model" in payload
+        assert "issued_at" in payload
+
+    def test_ephemeral_token_rejects_tampered_token(self):
+        """Test that tampered tokens are rejected."""
+        from app.services.realtime_voice_service import RealtimeVoiceService
+        import time
+
+        service = RealtimeVoiceService()
+
+        if not service.is_enabled():
+            pytest.skip("Realtime service not enabled or key not set")
+
+        # Generate valid token
+        token = service.generate_ephemeral_token(
+            "user-123", "session-456", int(time.time()) + 300
+        )
+
+        # Tamper with token by modifying payload
+        parts = token.split(".")
+        tampered_payload = parts[0][:-4] + "XXXX"  # Corrupt last 4 chars
+        tampered_token = f"{tampered_payload}.{parts[1]}"
+
+        # Validation should fail
+        with pytest.raises(ValueError, match="Invalid token"):
+            service.validate_ephemeral_token(tampered_token)
+
+    def test_ephemeral_token_rejects_expired_token(self):
+        """Test that expired tokens are rejected."""
+        from app.services.realtime_voice_service import RealtimeVoiceService
+        import time
+
+        service = RealtimeVoiceService()
+
+        if not service.is_enabled():
+            pytest.skip("Realtime service not enabled or key not set")
+
+        # Generate token that's already expired
+        expires_at = int(time.time()) - 10  # 10 seconds ago
+        token = service.generate_ephemeral_token(
+            "user-123", "session-456", expires_at
+        )
+
+        # Validation should fail due to expiry
+        with pytest.raises(ValueError, match="expired"):
+            service.validate_ephemeral_token(token)
 
 
 class TestVoiceAPIConfiguration:

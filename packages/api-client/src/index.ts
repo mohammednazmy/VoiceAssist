@@ -202,10 +202,14 @@ export class VoiceAssistApiClient {
   }): Promise<{
     url: string;
     model: string;
-    api_key: string;
     session_id: string;
     expires_at: number;
     conversation_id?: string | null;
+    auth: {
+      type: string; // "ephemeral_token"
+      token: string; // HMAC-signed ephemeral token (NOT the raw OpenAI key)
+      expires_at: number; // Unix timestamp
+    };
     voice_config: {
       voice: string;
       modalities: string[];
