@@ -36,6 +36,9 @@ pnpm test:e2e:debug
 
 # View HTML report after tests
 pnpm test:e2e:report
+
+# Run fast Vitest tests (for development)
+cd apps/web-app && pnpm test:fast
 ```
 
 ## Project Structure
@@ -48,11 +51,13 @@ VoiceAssist/
 │   │   └── files/                # Test fixture files
 │   │       └── sample-document.txt  # Sample document for upload tests
 │   ├── login.spec.ts             # Manual login tests
+│   ├── voice-mode-navigation.spec.ts  # [ACTIVE] Voice Mode tile → /chat flow
+│   ├── voice-mode-session-smoke.spec.ts # [ACTIVE] Voice session smoke test
 │   └── ai/                       # AI-generated and implemented tests
 │       ├── quick-consult.spec.ts    # [ACTIVE] Chat flow tests
 │       ├── clinical-context.spec.ts # [ACTIVE] Clinical context UI tests
 │       ├── pdf-upload.spec.ts       # [ACTIVE] Document upload tests
-│       ├── voice-mode.spec.ts       # [ACTIVE] Voice mode UI tests
+│       ├── voice-mode.spec.ts       # [ACTIVE] Voice mode UI tests (legacy)
 │       ├── register-user.spec.ts    # [TEMPLATE] User registration
 │       ├── conversation-management.spec.ts # [TEMPLATE] Conversation CRUD
 │       ├── profile-settings.spec.ts # [TEMPLATE] Profile management
@@ -260,6 +265,179 @@ test.describe("Feature Name", () => {
   });
 });
 ```
+
+## Voice Mode E2E Tests
+
+VoiceAssist includes dedicated E2E tests for the Voice Mode feature. These tests verify the user journey from the Home page Voice Mode tile to the Chat page with voice capabilities.
+
+### Voice Mode Test Files
+
+| File                               | Status | Description                                 |
+| ---------------------------------- | ------ | ------------------------------------------- |
+| `voice-mode-navigation.spec.ts`    | ACTIVE | Tests Voice Mode tile → /chat navigation    |
+| `voice-mode-session-smoke.spec.ts` | ACTIVE | Tests "Start Voice Session" button behavior |
+| `ai/voice-mode.spec.ts`            | ACTIVE | Legacy voice UI tests (for migration)       |
+
+### Voice Mode Navigation Test
+
+**File**: `e2e/voice-mode-navigation.spec.ts`
+
+**Purpose**: Tests the complete Voice Mode navigation flow from Home to Chat.
+
+**Test Cases**:
+
+1. **Main Navigation Flow**:
+   - User clicks Voice Mode tile on Home page
+   - User is navigated to `/chat` with voice state
+   - Voice Mode panel auto-opens
+   - "Start Voice Session" button is visible and enabled
+
+2. **Voice Mode Tile Branding**:
+   - Verify Voice Mode tile has correct heading
+   - Verify description mentions voice/hands-free
+   - Check for NEW badge (optional)
+
+3. **Keyboard Accessibility**:
+   - Voice Mode tile is keyboard focusable
+   - Can be activated with Enter/Space
+
+4. **Home Page Layout**:
+   - Both Voice Mode and Quick Consult tiles visible
+
+**Run Locally**:
+
+```bash
+# Run all Voice Mode navigation tests
+pnpm test:e2e voice-mode-navigation.spec.ts
+
+# Run specific test
+pnpm test:e2e voice-mode-navigation.spec.ts -g "should navigate"
+
+# Debug mode
+pnpm test:e2e voice-mode-navigation.spec.ts --debug
+```
+
+### Voice Mode Session Smoke Test
+
+**File**: `e2e/voice-mode-session-smoke.spec.ts`
+
+**Purpose**: Tests "Start Voice Session" button behavior without requiring live backend.
+
+**Design Philosophy**:
+
+This test is **tolerant of backend configuration** and only fails if the UI is completely unresponsive. It succeeds if ANY of these occur:
+
+- Connection state indicator appears (Connecting/Connected/Error)
+- Error banner/toast appears (backend unavailable)
+- Voice visualizer appears
+- Button changes state (disabled, loading, text change)
+- Stop/Cancel button appears
+- Permission dialog appears
+
+**Backend Architecture**:
+
+Voice Mode now uses **OpenAI Realtime API ephemeral sessions** for secure authentication:
+
+- Backend calls `/v1/realtime/sessions` to create short-lived session tokens
+- Frontend receives ephemeral token (e.g., `ek_...`) with expiration timestamp
+- WebSocket connects using `openai-insecure-api-key.{ephemeral_token}` protocol
+- No raw OpenAI API keys exposed to the client
+- Automatic session refresh before expiry (monitored at hook level)
+
+**Test Cases**:
+
+1. **Response Validation** (always runs):
+   - Clicks "Start Voice Session"
+   - Verifies SOME UI response occurs within 10 seconds
+   - Logs which response was detected
+   - Fails ONLY if no UI change occurs (indicates broken button)
+
+2. **Connection Status Visibility** (always runs):
+   - Clicks "Start Voice Session"
+   - Verifies connection status text is displayed
+   - Status should be one of: `connecting`, `connected`, `reconnecting`, `error`, `failed`, `expired`, or `disconnected`
+   - Tests that ephemeral session states are surfaced in the UI
+
+3. **Live Backend Test** (gated by `LIVE_REALTIME_E2E=1`):
+   - Connects to actual OpenAI Realtime API
+   - Verifies either connected state or error message
+   - Skipped by default to avoid API costs
+   - Uses ephemeral session tokens (backend must have valid OPENAI_API_KEY)
+
+**Run Locally**:
+
+```bash
+# Run smoke test (tolerant, no backend required)
+pnpm test:e2e voice-mode-session-smoke.spec.ts
+
+# Run with live backend (requires OPENAI_API_KEY)
+LIVE_REALTIME_E2E=1 pnpm test:e2e voice-mode-session-smoke.spec.ts
+
+# Debug mode
+pnpm test:e2e voice-mode-session-smoke.spec.ts --debug
+```
+
+**Environment Variables**:
+
+- `LIVE_REALTIME_E2E=1`: Enable live backend testing (costs money, requires valid OpenAI key)
+
+### Voice Mode Test Strategy
+
+**Deterministic Tests** (run in CI):
+
+- ✅ Navigation flow (Voice Mode tile → /chat)
+- ✅ UI element presence (panel, buttons, tiles)
+- ✅ Button responsiveness (some UI change occurs)
+- ✅ Connection status visibility (ephemeral session states)
+- ✅ Keyboard accessibility
+
+**Optional Live Tests** (gated by env flag):
+
+- ⏭️ Actual WebSocket connection (requires backend)
+- ⏭️ Audio capture/playback (requires permissions)
+- ⏭️ OpenAI Realtime API integration (costs money)
+
+**Not Tested** (too flaky/expensive for E2E):
+
+- ❌ Actual voice recognition accuracy
+- ❌ Real-time latency measurements
+- ❌ Audio quality assessment
+- ❌ Cross-browser WebRTC compatibility
+
+### Voice Mode vs Quick Consult
+
+Both features are tested with similar patterns:
+
+| Feature      | Navigation Test            | Session Test                            |
+| ------------ | -------------------------- | --------------------------------------- |
+| Voice Mode   | `voice-mode-navigation`    | `voice-mode-session-smoke` (tolerant)   |
+| Quick Consult| `quick-consult` (in ai/)   | Covered by chat flow tests              |
+
+### Troubleshooting Voice Mode Tests
+
+**Voice Mode panel not found**:
+
+- Check that `data-testid="voice-mode-card"` exists on Home page
+- Verify ChatPage passes `autoOpenRealtimeVoice` prop
+- Check browser console for React errors
+
+**Start button not responding**:
+
+- Check if button is actually enabled (`isEnabled` check)
+- Verify WebSocket connection handler exists
+- Check for JavaScript errors in console
+
+**Live tests timing out**:
+
+- Ensure `OPENAI_API_KEY` is set and valid
+- Check that backend `/voice/realtime-session` endpoint is accessible
+- Verify network connectivity (no firewall blocking WebSockets)
+
+**Permission dialogs blocking tests**:
+
+- Tests should handle permission prompts gracefully
+- Smoke test considers permission dialog as a valid response
+- Use browser flags to auto-grant permissions if needed
 
 ## Writing Robust Assertions
 

@@ -40,6 +40,7 @@ export function VoiceModePanel({
   const [userTranscript, setUserTranscript] = useState("");
   const [aiTranscript, setAiTranscript] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [micPermissionDenied, setMicPermissionDenied] = useState(false);
 
   // Voice settings from store
   const { voice, language, showStatusHints } = useVoiceSettingsStore();
@@ -180,9 +181,20 @@ export function VoiceModePanel({
 
   const handleConnect = async () => {
     try {
+      setMicPermissionDenied(false);
       await connect();
     } catch (err) {
       console.error("[VoiceModePanel] Failed to connect:", err);
+      // Check if error is related to microphone permissions
+      if (err instanceof Error) {
+        if (
+          err.message.includes("Permission denied") ||
+          err.message.includes("NotAllowedError") ||
+          err.message.includes("getUserMedia")
+        ) {
+          setMicPermissionDenied(true);
+        }
+      }
     }
   };
 
@@ -190,6 +202,7 @@ export function VoiceModePanel({
     disconnect();
     setUserTranscript("");
     setAiTranscript("");
+    setMicPermissionDenied(false);
   };
 
   return (
@@ -357,8 +370,54 @@ export function VoiceModePanel({
             />
           </svg>
           <div className="flex-1">
-            <p className="text-sm font-medium text-red-900">Connection Error</p>
-            <p className="text-sm text-red-700 mt-1">{error.message}</p>
+            <p className="text-sm font-medium text-red-900">
+              {micPermissionDenied
+                ? "Microphone Access Denied"
+                : "Connection Error"}
+            </p>
+            <p className="text-sm text-red-700 mt-1">
+              {micPermissionDenied
+                ? "Please allow microphone access in your browser settings to use voice mode. You may need to click the microphone icon in your browser's address bar."
+                : error.message}
+            </p>
+            {!micPermissionDenied && (
+              <button
+                type="button"
+                onClick={handleConnect}
+                className="mt-2 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded transition-colors"
+              >
+                Try Again
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Microphone Permission Denied Warning */}
+      {micPermissionDenied && !error && (
+        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start space-x-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+            />
+          </svg>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-yellow-900">
+              Microphone Permission Required
+            </p>
+            <p className="text-sm text-yellow-700 mt-1">
+              Voice mode needs access to your microphone. Please allow access
+              when prompted, or check your browser settings.
+            </p>
           </div>
         </div>
       )}

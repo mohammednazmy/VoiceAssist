@@ -127,10 +127,14 @@ class MockWebSocket {
 const mockSessionConfig = {
   url: "wss://api.openai.com/v1/realtime",
   model: "gpt-4o-realtime-preview",
-  api_key: "test-api-key",
   session_id: "rtc_test-user_abc123",
   expires_at: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
   conversation_id: null,
+  auth: {
+    type: "ephemeral_token",
+    token: "mock.ephemeral.token",
+    expires_at: Math.floor(Date.now() / 1000) + 300, // 5 minutes from now
+  },
   voice_config: {
     voice: "alloy",
     modalities: ["text", "audio"],

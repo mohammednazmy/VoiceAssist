@@ -42,15 +42,23 @@ class RealtimeSessionRequest(BaseModel):
     conversation_id: str | None = None
 
 
+class RealtimeAuthInfo(BaseModel):
+    """Authentication information for Realtime API"""
+
+    type: str  # "ephemeral_token"
+    token: str  # HMAC-signed ephemeral token (NOT the raw OpenAI key)
+    expires_at: int  # Unix timestamp
+
+
 class RealtimeSessionResponse(BaseModel):
     """Response model for Realtime session configuration"""
 
     url: str
     model: str
-    api_key: str
     session_id: str
     expires_at: int
     conversation_id: str | None
+    auth: RealtimeAuthInfo  # Ephemeral token auth (secure, no raw API key)
     voice_config: dict
 
 
@@ -309,6 +317,10 @@ async def create_realtime_session(
     This endpoint generates ephemeral session configuration that the frontend
     uses to establish a WebSocket connection to OpenAI's Realtime API.
 
+    SECURITY: This endpoint returns an HMAC-signed ephemeral token instead of
+    the raw OpenAI API key. The token is valid for 5 minutes and is tied to
+    a specific user and session.
+
     Args:
         request: RealtimeSessionRequest with optional conversation_id
         current_user: Authenticated user
@@ -317,9 +329,9 @@ async def create_realtime_session(
         RealtimeSessionResponse with session configuration including:
         - WebSocket URL
         - Model name
-        - API key (ephemeral or full)
         - Session ID
         - Expiry timestamp
+        - Auth: Ephemeral token (NOT the raw API key)
         - Voice configuration (voice, modalities, VAD settings)
 
     Raises:
@@ -342,7 +354,8 @@ async def create_realtime_session(
             )
 
         # Generate session configuration
-        config = realtime_voice_service.generate_session_config(
+        # This creates a real ephemeral session with OpenAI
+        config = await realtime_voice_service.generate_session_config(
             user_id=str(current_user.id),
             conversation_id=request.conversation_id,
         )
