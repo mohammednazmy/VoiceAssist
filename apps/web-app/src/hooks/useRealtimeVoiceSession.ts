@@ -13,6 +13,18 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { captureVoiceError } from "../lib/sentry";
 import { useAuth } from "./useAuth";
+import { useVoiceCommands, type VoiceCommand } from "./useVoiceCommands";
+
+// Re-export VoiceCommand types for convenience
+export type { VoiceCommand } from "./useVoiceCommands";
+export type {
+  VoiceCommandIntent,
+  VitalSignsEntities,
+  MedicationEntities,
+  DiagnosisEntities,
+  SearchEntities,
+  NoteSectionEntities,
+} from "./useVoiceCommands";
 
 // Types for Realtime API events
 export interface RealtimeAuthInfo {
@@ -104,6 +116,12 @@ export interface UseRealtimeVoiceSessionOptions {
   onError?: (error: Error) => void;
   onConnectionChange?: (status: ConnectionStatus) => void;
   onMetricsUpdate?: (metrics: VoiceMetrics) => void;
+  /**
+   * Optional callback when a voice command is detected from user transcript.
+   * Called with the parsed VoiceCommand when parseCommand returns non-null.
+   * This is infrastructure for future clinical integration.
+   */
+  onVoiceCommand?: (command: VoiceCommand) => void;
   autoConnect?: boolean;
 }
 
@@ -111,6 +129,7 @@ export function useRealtimeVoiceSession(
   options: UseRealtimeVoiceSessionOptions = {},
 ) {
   const { apiClient } = useAuth();
+  const { parseCommand } = useVoiceCommands();
 
   // State
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
@@ -469,6 +488,15 @@ export function useRealtimeVoiceSession(
             is_final: true,
             timestamp: now,
           });
+
+          // Parse for voice commands and notify if detected
+          if (userTranscript && options.onVoiceCommand) {
+            const command = parseCommand(userTranscript);
+            if (command) {
+              console.debug("[VoiceCommands] Recognized command", command);
+              options.onVoiceCommand(command);
+            }
+          }
           break;
         }
 

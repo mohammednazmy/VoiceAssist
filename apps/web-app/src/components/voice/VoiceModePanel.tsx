@@ -10,10 +10,11 @@
  * - Seamless integration with Chat UI
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   useRealtimeVoiceSession,
   type VoiceMetrics,
+  type VoiceCommand,
 } from "../../hooks/useRealtimeVoiceSession";
 import { WaveformVisualizer } from "../../utils/waveform";
 import { VoiceModeSettings } from "./VoiceModeSettings";
@@ -22,6 +23,10 @@ import {
   VOICE_OPTIONS,
   LANGUAGE_OPTIONS,
 } from "../../stores/voiceSettingsStore";
+
+// Environment flag for voice commands debug panel
+const ENABLE_VOICE_COMMANDS_DEBUG =
+  import.meta.env.VITE_ENABLE_VOICE_COMMANDS_DEBUG === "true";
 
 export interface VoiceModePanelProps {
   conversationId?: string;
@@ -53,6 +58,9 @@ export function VoiceModePanel({
   const [aiTranscript, setAiTranscript] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [micPermissionDenied, setMicPermissionDenied] = useState(false);
+  const [lastVoiceCommand, setLastVoiceCommand] = useState<VoiceCommand | null>(
+    null,
+  );
 
   // Track pending final transcripts to add to chat
   const pendingUserMessageRef = useRef<string | null>(null);
@@ -129,6 +137,14 @@ export function VoiceModePanel({
       // Forward to parent for backend export
       onMetricsUpdate?.(metrics);
     },
+    onVoiceCommand: useCallback((command: VoiceCommand) => {
+      // Store the last recognized command for debug display
+      setLastVoiceCommand(command);
+      console.log(
+        `[VoiceModePanel] Voice command detected: ${command.intent}`,
+        command.entities,
+      );
+    }, []),
     autoConnect: false, // Manual connect
   });
 
@@ -668,6 +684,53 @@ export function VoiceModePanel({
             <li>Your conversation is saved to this chat</li>
             <li>Click "End Session" when you're finished</li>
           </ul>
+        </div>
+      )}
+
+      {/* Voice Commands Debug Panel - only shown when VITE_ENABLE_VOICE_COMMANDS_DEBUG=true */}
+      {ENABLE_VOICE_COMMANDS_DEBUG && lastVoiceCommand && (
+        <div
+          className="p-3 bg-yellow-50 border border-yellow-300 rounded-lg mt-3"
+          data-testid="voice-commands-debug-panel"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-semibold text-yellow-800">
+              Voice Command Debug
+            </h4>
+            <button
+              type="button"
+              onClick={() => setLastVoiceCommand(null)}
+              className="text-yellow-600 hover:text-yellow-800 text-xs"
+              aria-label="Clear debug info"
+            >
+              Clear
+            </button>
+          </div>
+          <div className="text-xs font-mono space-y-1">
+            <p>
+              <span className="text-yellow-700 font-semibold">Intent:</span>{" "}
+              <span className="text-yellow-900">{lastVoiceCommand.intent}</span>
+            </p>
+            <p>
+              <span className="text-yellow-700 font-semibold">Confidence:</span>{" "}
+              <span className="text-yellow-900">
+                {(lastVoiceCommand.confidence * 100).toFixed(0)}%
+              </span>
+            </p>
+            <div>
+              <span className="text-yellow-700 font-semibold">Entities:</span>
+              <pre className="mt-1 p-2 bg-yellow-100 rounded text-yellow-900 overflow-x-auto text-xs">
+                {JSON.stringify(lastVoiceCommand.entities, null, 2)}
+              </pre>
+            </div>
+            <p
+              className="text-yellow-600 truncate"
+              title={lastVoiceCommand.rawTranscript}
+            >
+              <span className="font-semibold">Raw:</span> "
+              {lastVoiceCommand.rawTranscript}"
+            </p>
+          </div>
         </div>
       )}
 
