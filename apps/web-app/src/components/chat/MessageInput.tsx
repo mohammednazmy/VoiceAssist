@@ -7,6 +7,7 @@ import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { VoiceInput } from "../voice/VoiceInput";
 import { VoiceModePanel } from "../voice/VoiceModePanel";
 import { ChatAttachmentUpload, type PendingFile } from "./ChatAttachmentUpload";
+import { useVoiceSettingsStore } from "../../stores/voiceSettingsStore";
 
 export interface MessageInputProps {
   onSend: (content: string, files?: File[]) => void;
@@ -37,6 +38,11 @@ export function MessageInput({
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Get autoStartOnOpen setting from store
+  const autoStartOnOpenSetting = useVoiceSettingsStore(
+    (state) => state.autoStartOnOpen,
+  );
+
   // Auto-expand textarea based on content
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -46,12 +52,16 @@ export function MessageInput({
     }
   }, [content]);
 
-  // Auto-open realtime voice panel when requested (e.g., from Home page Voice Mode card)
+  // Auto-open realtime voice panel when requested via prop or store setting
   useEffect(() => {
-    if (enableRealtimeVoice && autoOpenRealtimeVoice && !showRealtimeVoice) {
+    const shouldAutoOpen =
+      enableRealtimeVoice &&
+      (autoOpenRealtimeVoice || autoStartOnOpenSetting) &&
+      !showRealtimeVoice;
+    if (shouldAutoOpen) {
       setShowRealtimeVoice(true);
     }
-  }, [enableRealtimeVoice, autoOpenRealtimeVoice]); // Intentionally omit showRealtimeVoice to only trigger once
+  }, [enableRealtimeVoice, autoOpenRealtimeVoice, autoStartOnOpenSetting]); // Intentionally omit showRealtimeVoice to only trigger once
 
   const handleSend = () => {
     if (content.trim() && !disabled) {
