@@ -47,7 +47,7 @@ test.describe("Voice Mode Session Smoke Test", () => {
 
       // Try to find and click voice mode button to open panel
       const voiceButton = page.locator(
-        'button[aria-label*="voice mode" i], button[aria-label*="realtime" i], [data-testid="voice-mode-button"]'
+        'button[aria-label*="voice mode" i], button[aria-label*="realtime" i], [data-testid="realtime-voice-mode-button"]'
       );
 
       const hasVoiceButton = await voiceButton.count() > 0;
@@ -63,7 +63,7 @@ test.describe("Voice Mode Session Smoke Test", () => {
 
     // Find "Start Voice Session" button
     const startButton = page.locator(
-      'button:has-text("Start Voice Session"), button:has-text("Start Session"), button[aria-label*="start voice" i], [data-testid="start-voice-button"]'
+      'button:has-text("Start Voice Session"), button:has-text("Start Session"), button[aria-label*="start voice" i], [data-testid="start-voice-session"]'
     );
 
     const startButtonExists = await startButton.count() > 0;
@@ -205,7 +205,7 @@ test.describe("Voice Mode Session Smoke Test", () => {
 
     if (!panelExists) {
       console.log("ℹ Voice Mode panel not visible - checking for voice button");
-      const voiceButton = page.locator('button[aria-label*="voice mode" i]');
+      const voiceButton = page.locator('button[aria-label*="voice mode" i], [data-testid="realtime-voice-mode-button"]');
       const hasVoiceButton = await voiceButton.count() > 0;
 
       if (hasVoiceButton) {
@@ -311,7 +311,7 @@ test.describe("Voice Mode Session Smoke Test", () => {
     const panelExists = await voicePanel.count() > 0;
 
     if (!panelExists) {
-      const voiceButton = page.locator('button[aria-label*="voice mode" i]');
+      const voiceButton = page.locator('button[aria-label*="voice mode" i], [data-testid="realtime-voice-mode-button"]');
       if (await voiceButton.count() > 0) {
         await voiceButton.first().click();
         await page.waitForTimeout(1000);
