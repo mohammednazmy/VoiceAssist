@@ -334,6 +334,16 @@ This test is **tolerant of backend configuration** and only fails if the UI is c
 - Stop/Cancel button appears
 - Permission dialog appears
 
+**Backend Architecture**:
+
+Voice Mode now uses **OpenAI Realtime API ephemeral sessions** for secure authentication:
+
+- Backend calls `/v1/realtime/sessions` to create short-lived session tokens
+- Frontend receives ephemeral token (e.g., `ek_...`) with expiration timestamp
+- WebSocket connects using `openai-insecure-api-key.{ephemeral_token}` protocol
+- No raw OpenAI API keys exposed to the client
+- Automatic session refresh before expiry (monitored at hook level)
+
 **Test Cases**:
 
 1. **Response Validation** (always runs):
@@ -342,10 +352,17 @@ This test is **tolerant of backend configuration** and only fails if the UI is c
    - Logs which response was detected
    - Fails ONLY if no UI change occurs (indicates broken button)
 
-2. **Live Backend Test** (gated by `LIVE_REALTIME_E2E=1`):
+2. **Connection Status Visibility** (always runs):
+   - Clicks "Start Voice Session"
+   - Verifies connection status text is displayed
+   - Status should be one of: `connecting`, `connected`, `reconnecting`, `error`, `failed`, `expired`, or `disconnected`
+   - Tests that ephemeral session states are surfaced in the UI
+
+3. **Live Backend Test** (gated by `LIVE_REALTIME_E2E=1`):
    - Connects to actual OpenAI Realtime API
    - Verifies either connected state or error message
    - Skipped by default to avoid API costs
+   - Uses ephemeral session tokens (backend must have valid OPENAI_API_KEY)
 
 **Run Locally**:
 
@@ -371,6 +388,7 @@ pnpm test:e2e voice-mode-session-smoke.spec.ts --debug
 - ✅ Navigation flow (Voice Mode tile → /chat)
 - ✅ UI element presence (panel, buttons, tiles)
 - ✅ Button responsiveness (some UI change occurs)
+- ✅ Connection status visibility (ephemeral session states)
 - ✅ Keyboard accessibility
 
 **Optional Live Tests** (gated by env flag):

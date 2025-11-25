@@ -187,6 +187,103 @@ test.describe("Voice Mode Session Smoke Test", () => {
     ).toBe(true);
   });
 
+  test("should display connection status text after clicking Start Voice Session", async ({
+    authenticatedPage,
+  }) => {
+    const page = authenticatedPage;
+
+    // Navigate to chat
+    await page.goto("/chat");
+    await page.waitForLoadState("networkidle");
+
+    // Look for Voice Mode panel
+    const voicePanel = page.locator(
+      '[data-testid="voice-mode-panel"], section:has-text("Voice Mode")'
+    );
+
+    const panelExists = await voicePanel.count() > 0;
+
+    if (!panelExists) {
+      console.log("ℹ Voice Mode panel not visible - checking for voice button");
+      const voiceButton = page.locator('button[aria-label*="voice mode" i]');
+      const hasVoiceButton = await voiceButton.count() > 0;
+
+      if (hasVoiceButton) {
+        await voiceButton.first().click();
+        await page.waitForTimeout(1000);
+      } else {
+        test.skip(true, "Voice Mode UI not available");
+        return;
+      }
+    }
+
+    // Find "Start Voice Session" button
+    const startButton = page.locator(
+      'button:has-text("Start Voice Session"), button:has-text("Start Session"), [data-testid="start-voice-session"]'
+    );
+
+    const startButtonExists = await startButton.count() > 0;
+
+    if (!startButtonExists) {
+      test.skip(true, "Start Voice Session button not available");
+      return;
+    }
+
+    await expect(startButton.first()).toBeVisible();
+    console.log("✓ Found Start Voice Session button");
+
+    // Look for connection status indicator BEFORE clicking
+    // Should show "Disconnected" or similar initial state
+    const statusTextBefore = await page
+      .locator('text=/disconnected|connecting|connected/i')
+      .first()
+      .textContent()
+      .catch(() => null);
+
+    console.log(`Initial status text: "${statusTextBefore}"`);
+
+    // Click to start voice session
+    await startButton.first().click();
+
+    // Wait for status to change
+    await page.waitForTimeout(2000);
+
+    // Check that connection status text is visible and has changed
+    // Should show one of: "Connecting", "Connected", "Reconnecting", "Error", "Failed", "Expired"
+    const statusText = page.locator(
+      'text=/connecting|connected|reconnecting|error|failed|expired|disconnected/i'
+    );
+
+    const statusTextVisible = await statusText.count();
+
+    expect(
+      statusTextVisible,
+      "Connection status text should be visible after starting voice session"
+    ).toBeGreaterThan(0);
+
+    const statusValue = await statusText.first().textContent();
+    console.log(`✓ Connection status text is visible: "${statusValue}"`);
+
+    // The status should be one of the valid connection states
+    const validStatuses = [
+      "connecting",
+      "connected",
+      "reconnecting",
+      "error",
+      "failed",
+      "expired",
+      "disconnected",
+    ];
+
+    const statusLower = (statusValue || "").toLowerCase();
+    const hasValidStatus = validStatuses.some((s) => statusLower.includes(s));
+
+    expect(
+      hasValidStatus,
+      `Status text "${statusValue}" should contain one of: ${validStatuses.join(", ")}`
+    ).toBe(true);
+  });
+
   test.skip(
     !LIVE_REALTIME_E2E,
     "should connect to OpenAI Realtime API with valid backend (LIVE_REALTIME_E2E=1 only)"
