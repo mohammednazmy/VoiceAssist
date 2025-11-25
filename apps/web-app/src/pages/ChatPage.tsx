@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useChatSession } from "../hooks/useChatSession";
 import { useBranching } from "../hooks/useBranching";
@@ -46,7 +46,13 @@ type ErrorType =
 export function ChatPage() {
   const { conversationId } = useParams<{ conversationId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { apiClient } = useAuth();
+
+  // Check if we should auto-open voice mode (from Home page Voice Mode card)
+  const startVoiceMode =
+    (location.state as { startVoiceMode?: boolean } | null)?.startVoiceMode ===
+    true;
   const { createFromConversation } = useTemplates();
   const toast = useToastContext();
 
@@ -670,6 +676,7 @@ export function ChatPage() {
             enableAttachments={true} // Phase 4: File upload enabled
             enableVoiceInput={true} // Phase 3: Voice features
             enableRealtimeVoice={true} // Realtime voice mode (OpenAI Realtime API)
+            autoOpenRealtimeVoice={startVoiceMode} // Auto-open voice mode when navigating from Voice Mode card
             conversationId={activeConversationId || undefined}
           />
         </div>

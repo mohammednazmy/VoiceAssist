@@ -3,9 +3,18 @@
  * Landing page after login - Dashboard with quick action cards
  */
 
-import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Button, Badge } from '@voiceassist/ui';
-import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from "react-router-dom";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+  Button,
+  Badge,
+} from "@voiceassist/ui";
+import { useAuth } from "../hooks/useAuth";
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -13,9 +22,9 @@ export function HomePage() {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
   };
 
   return (
@@ -24,7 +33,7 @@ export function HomePage() {
         {/* Welcome Header */}
         <div className="space-y-2">
           <h1 className="text-4xl font-bold text-text-primary">
-            {getGreeting()}, {user?.name?.split(' ')[0] || 'there'}
+            {getGreeting()}, {user?.name?.split(" ")[0] || "there"}
           </h1>
           <p className="text-lg text-text-secondary">
             What would you like to do today?
@@ -34,7 +43,12 @@ export function HomePage() {
         {/* Quick Actions Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Chat Card */}
-          <Card variant="elevated" hoverable className="cursor-pointer transition-all hover:scale-[1.02]" onClick={() => navigate('/chat')}>
+          <Card
+            variant="elevated"
+            hoverable
+            className="cursor-pointer transition-all hover:scale-[1.02]"
+            onClick={() => navigate("/chat")}
+          >
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="h-12 w-12 rounded-lg bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center mb-3">
@@ -53,7 +67,9 @@ export function HomePage() {
                     />
                   </svg>
                 </div>
-                <Badge variant="primary" size="sm">Popular</Badge>
+                <Badge variant="primary" size="sm">
+                  Popular
+                </Badge>
               </div>
               <CardTitle>Chat</CardTitle>
               <CardDescription>
@@ -62,11 +78,17 @@ export function HomePage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-text-tertiary">
-                Ask questions, get medical information, and receive intelligent assistance through natural conversation.
+                Ask questions, get medical information, and receive intelligent
+                assistance through natural conversation.
               </p>
             </CardContent>
             <CardFooter>
-              <Button variant="ghost" size="sm" fullWidth className="justify-start">
+              <Button
+                variant="ghost"
+                size="sm"
+                fullWidth
+                className="justify-start"
+              >
                 Start new chat
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -76,14 +98,26 @@ export function HomePage() {
                   stroke="currentColor"
                   className="w-4 h-4 ml-auto"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                  />
                 </svg>
               </Button>
             </CardFooter>
           </Card>
 
           {/* Voice Mode Card */}
-          <Card variant="elevated" hoverable className="cursor-pointer transition-all hover:scale-[1.02]" onClick={() => navigate('/chat')}>
+          <Card
+            variant="elevated"
+            hoverable
+            className="cursor-pointer transition-all hover:scale-[1.02]"
+            onClick={() =>
+              navigate("/chat", { state: { startVoiceMode: true } })
+            }
+            data-testid="voice-mode-card"
+          >
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="h-12 w-12 rounded-lg bg-secondary-100 dark:bg-secondary-900/20 flex items-center justify-center mb-3">
@@ -102,20 +136,26 @@ export function HomePage() {
                     />
                   </svg>
                 </div>
-                <Badge variant="success" size="sm">New</Badge>
+                <Badge variant="success" size="sm">
+                  New
+                </Badge>
               </div>
               <CardTitle>Voice Mode</CardTitle>
-              <CardDescription>
-                Interact using your voice
-              </CardDescription>
+              <CardDescription>Interact using your voice</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-text-tertiary">
-                Use push-to-talk to ask questions and receive spoken responses for hands-free interaction.
+                Use push-to-talk to ask questions and receive spoken responses
+                for hands-free interaction.
               </p>
             </CardContent>
             <CardFooter>
-              <Button variant="ghost" size="sm" fullWidth className="justify-start">
+              <Button
+                variant="ghost"
+                size="sm"
+                fullWidth
+                className="justify-start"
+              >
                 Start voice session
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -125,14 +165,23 @@ export function HomePage() {
                   stroke="currentColor"
                   className="w-4 h-4 ml-auto"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                  />
                 </svg>
               </Button>
             </CardFooter>
           </Card>
 
           {/* Documents Card */}
-          <Card variant="elevated" hoverable className="cursor-pointer transition-all hover:scale-[1.02]" onClick={() => navigate('/documents')}>
+          <Card
+            variant="elevated"
+            hoverable
+            className="cursor-pointer transition-all hover:scale-[1.02]"
+            onClick={() => navigate("/documents")}
+          >
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="h-12 w-12 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-3">
@@ -159,11 +208,17 @@ export function HomePage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-text-tertiary">
-                Upload PDFs and images to build your knowledge base and make information instantly searchable.
+                Upload PDFs and images to build your knowledge base and make
+                information instantly searchable.
               </p>
             </CardContent>
             <CardFooter>
-              <Button variant="ghost" size="sm" fullWidth className="justify-start">
+              <Button
+                variant="ghost"
+                size="sm"
+                fullWidth
+                className="justify-start"
+              >
                 Manage documents
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -173,14 +228,23 @@ export function HomePage() {
                   stroke="currentColor"
                   className="w-4 h-4 ml-auto"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                  />
                 </svg>
               </Button>
             </CardFooter>
           </Card>
 
           {/* Clinical Context Card */}
-          <Card variant="elevated" hoverable className="cursor-pointer transition-all hover:scale-[1.02]" onClick={() => navigate('/clinical-context')}>
+          <Card
+            variant="elevated"
+            hoverable
+            className="cursor-pointer transition-all hover:scale-[1.02]"
+            onClick={() => navigate("/clinical-context")}
+          >
             <CardHeader>
               <div className="h-12 w-12 rounded-lg bg-success-100 dark:bg-success-900/20 flex items-center justify-center mb-3">
                 <svg
@@ -205,11 +269,17 @@ export function HomePage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-text-tertiary">
-                Set and manage clinical context to help the AI provide more relevant and accurate assistance.
+                Set and manage clinical context to help the AI provide more
+                relevant and accurate assistance.
               </p>
             </CardContent>
             <CardFooter>
-              <Button variant="ghost" size="sm" fullWidth className="justify-start">
+              <Button
+                variant="ghost"
+                size="sm"
+                fullWidth
+                className="justify-start"
+              >
                 Update context
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -219,14 +289,23 @@ export function HomePage() {
                   stroke="currentColor"
                   className="w-4 h-4 ml-auto"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                  />
                 </svg>
               </Button>
             </CardFooter>
           </Card>
 
           {/* Profile Card */}
-          <Card variant="elevated" hoverable className="cursor-pointer transition-all hover:scale-[1.02]" onClick={() => navigate('/profile')}>
+          <Card
+            variant="elevated"
+            hoverable
+            className="cursor-pointer transition-all hover:scale-[1.02]"
+            onClick={() => navigate("/profile")}
+          >
             <CardHeader>
               <div className="h-12 w-12 rounded-lg bg-warning-100 dark:bg-warning-900/20 flex items-center justify-center mb-3">
                 <svg
@@ -251,11 +330,17 @@ export function HomePage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-text-tertiary">
-                Update your profile information, change settings, and configure your preferences.
+                Update your profile information, change settings, and configure
+                your preferences.
               </p>
             </CardContent>
             <CardFooter>
-              <Button variant="ghost" size="sm" fullWidth className="justify-start">
+              <Button
+                variant="ghost"
+                size="sm"
+                fullWidth
+                className="justify-start"
+              >
                 View profile
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -265,15 +350,24 @@ export function HomePage() {
                   stroke="currentColor"
                   className="w-4 h-4 ml-auto"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                  />
                 </svg>
               </Button>
             </CardFooter>
           </Card>
 
           {/* Admin Dashboard Card - Only show if user is admin */}
-          {user?.role === 'admin' && (
-            <Card variant="elevated" hoverable className="cursor-pointer transition-all hover:scale-[1.02]" onClick={() => navigate('/admin')}>
+          {user?.role === "admin" && (
+            <Card
+              variant="elevated"
+              hoverable
+              className="cursor-pointer transition-all hover:scale-[1.02]"
+              onClick={() => navigate("/admin")}
+            >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="h-12 w-12 rounded-lg bg-error-100 dark:bg-error-900/20 flex items-center justify-center mb-3">
@@ -297,7 +391,9 @@ export function HomePage() {
                       />
                     </svg>
                   </div>
-                  <Badge variant="error" size="sm">Admin</Badge>
+                  <Badge variant="error" size="sm">
+                    Admin
+                  </Badge>
                 </div>
                 <CardTitle>Admin Dashboard</CardTitle>
                 <CardDescription>
@@ -306,11 +402,17 @@ export function HomePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-text-tertiary">
-                  Access administrative tools, manage users, and view system analytics.
+                  Access administrative tools, manage users, and view system
+                  analytics.
                 </p>
               </CardContent>
               <CardFooter>
-                <Button variant="ghost" size="sm" fullWidth className="justify-start">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  fullWidth
+                  className="justify-start"
+                >
                   Open admin panel
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -320,7 +422,11 @@ export function HomePage() {
                     stroke="currentColor"
                     className="w-4 h-4 ml-auto"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                    />
                   </svg>
                 </Button>
               </CardFooter>
@@ -334,8 +440,12 @@ export function HomePage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-text-tertiary">Recent Conversations</p>
-                  <p className="text-2xl font-bold text-text-primary mt-1">12</p>
+                  <p className="text-sm font-medium text-text-tertiary">
+                    Recent Conversations
+                  </p>
+                  <p className="text-2xl font-bold text-text-primary mt-1">
+                    12
+                  </p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center">
                   <svg
@@ -346,7 +456,11 @@ export function HomePage() {
                     stroke="currentColor"
                     className="w-6 h-6 text-primary-600"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"
+                    />
                   </svg>
                 </div>
               </div>
@@ -357,8 +471,12 @@ export function HomePage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-text-tertiary">Documents Uploaded</p>
-                  <p className="text-2xl font-bold text-text-primary mt-1">24</p>
+                  <p className="text-sm font-medium text-text-tertiary">
+                    Documents Uploaded
+                  </p>
+                  <p className="text-2xl font-bold text-text-primary mt-1">
+                    24
+                  </p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-secondary-100 dark:bg-secondary-900/20 flex items-center justify-center">
                   <svg
@@ -369,7 +487,11 @@ export function HomePage() {
                     stroke="currentColor"
                     className="w-6 h-6 text-secondary-600"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776"
+                    />
                   </svg>
                 </div>
               </div>
@@ -380,7 +502,9 @@ export function HomePage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-text-tertiary">Active Sessions</p>
+                  <p className="text-sm font-medium text-text-tertiary">
+                    Active Sessions
+                  </p>
                   <p className="text-2xl font-bold text-text-primary mt-1">3</p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-success-100 dark:bg-success-900/20 flex items-center justify-center">
@@ -392,7 +516,11 @@ export function HomePage() {
                     stroke="currentColor"
                     className="w-6 h-6 text-success-600"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                 </div>
               </div>

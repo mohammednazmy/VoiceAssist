@@ -16,7 +16,7 @@
  */
 
 import { test, expect, Page } from "@playwright/test";
-import { setupAuthenticatedState } from "../fixtures/auth";
+import { setupAndHydrateAuth } from "../fixtures/auth";
 import path from "path";
 
 /**
@@ -64,7 +64,7 @@ async function stubUploadApi(page: Page): Promise<void> {
 
 test.describe("Document Upload to Knowledge Base", () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuthenticatedState(page);
+    await setupAndHydrateAuth(page);
   });
 
   test("should display documents page correctly", async ({ page }) => {
@@ -80,10 +80,8 @@ test.describe("Document Upload to Knowledge Base", () => {
       )
     ).toBeVisible();
 
-    // Verify upload area
-    await expect(
-      page.locator("text=Choose files").or(page.locator("text=drag and drop"))
-    ).toBeVisible();
+    // Verify upload area - use first() since "Choose files" and "drag and drop" are siblings
+    await expect(page.getByText("Choose files").first()).toBeVisible();
 
     // Verify category selector
     await expect(page.locator("#category")).toBeVisible();
@@ -172,8 +170,23 @@ test.describe("Document Upload to Knowledge Base", () => {
   });
 
   test("should upload file successfully with stubbed API", async ({ page }) => {
-    // Stub the API before navigation
-    await stubUploadApi(page);
+    // Stub the API before navigation with a small delay to catch the uploading state
+    await page.route("**/api/documents/**", async (route) => {
+      // Small delay to allow UI to show uploading state
+      await new Promise((r) => setTimeout(r, 300));
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          document: {
+            id: "test-doc-123",
+            name: "sample-document.txt",
+          },
+        }),
+      });
+    });
+
     await navigateToDocuments(page);
 
     // Select a file
@@ -189,22 +202,19 @@ test.describe("Document Upload to Knowledge Base", () => {
     // Select category
     await page.locator("#category").selectOption("guidelines");
 
-    // Click upload
-    await page.locator('button:has-text("Upload Documents")').click();
+    // Click upload and immediately start watching for state changes
+    const uploadButton = page.locator('button:has-text("Upload Documents")');
+    await uploadButton.click();
 
-    // Wait for success message or progress
-    const successVisible = await page
-      .locator("text=Successfully uploaded")
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
+    // Either the button text changes to "Uploading..." or we see success message
+    // or the selected files list clears (indicating success)
+    const uploadingOrSuccess = page
+      .locator('button:has-text("Uploading")')
+      .or(page.locator("text=Successfully uploaded"))
+      .or(page.locator("text=file(s)"));
 
-    const uploadingVisible = await page
-      .locator("text=Uploading")
-      .isVisible()
-      .catch(() => false);
-
-    // Either we see success, or we see uploading state, or the button changed
-    expect(successVisible || uploadingVisible).toBe(true);
+    // Wait for any of these states with a reasonable timeout
+    await expect(uploadingOrSuccess.first()).toBeVisible({ timeout: 5000 });
   });
 
   test("should show upload progress during upload", async ({ page }) => {

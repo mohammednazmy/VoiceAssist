@@ -5,11 +5,11 @@
  * Description: User starts a voice-enabled consultation session
  *
  * Tests voice mode UI functionality:
- * - Voice input button presence and interaction
- * - Realtime voice mode panel activation
- * - Voice input panel activation
- * - Panel close functionality
- * - Text input still works alongside voice
+ * - Voice controls are present on the chat page
+ * - Voice Mode panel can be opened via the button AND via Home "Voice Mode" tile
+ * - Voice Mode instructions ("How Voice Mode Works", "Start Voice Session", "End Session") are visible
+ * - The close button hides the panel; regular chat still functions
+ * - Keyboard accessibility
  *
  * Note: This test does not actually test audio capture/speech recognition
  * as those require browser permissions and real microphone hardware.
@@ -17,7 +17,7 @@
  */
 
 import { test, expect, Page } from "@playwright/test";
-import { setupAuthenticatedState } from "../fixtures/auth";
+import { setupAndHydrateAuth } from "../fixtures/auth";
 
 /**
  * Stub getUserMedia to prevent actual microphone access prompts
@@ -91,8 +91,10 @@ test.describe("Voice Mode Session", () => {
   test.setTimeout(45000);
 
   test.beforeEach(async ({ page }) => {
-    await setupAuthenticatedState(page);
+    // Set up media device stubs first
     await stubMediaDevices(page);
+    // Then set up auth and navigate to home (triggers hydration)
+    await setupAndHydrateAuth(page);
   });
 
   test("should display voice input button in chat", async ({ page }) => {
@@ -170,12 +172,11 @@ test.describe("Voice Mode Session", () => {
     }
   });
 
-  test("should open realtime voice mode panel", async ({ page }) => {
+  test("should open realtime voice mode panel via chat button", async ({ page }) => {
     await navigateToChat(page);
 
-    const realtimeBtn = page.locator(
-      'button[aria-label="Realtime voice mode"]'
-    );
+    // Use data-testid for more reliable selection
+    const realtimeBtn = page.locator('[data-testid="realtime-voice-mode-button"]');
     const isVisible = await realtimeBtn
       .isVisible({ timeout: 5000 })
       .catch(() => false);
@@ -183,30 +184,69 @@ test.describe("Voice Mode Session", () => {
     if (isVisible) {
       await realtimeBtn.click();
 
-      // Voice mode panel should appear
-      await expect(page.locator("text=Voice Mode")).toBeVisible({
-        timeout: 5000,
-      });
+      // Voice mode panel should appear (use data-testid)
+      const voicePanel = page.locator('[data-testid="voice-mode-panel"]');
+      await expect(voicePanel).toBeVisible({ timeout: 5000 });
 
       // Should show disconnected status initially
       await expect(page.locator("text=Disconnected")).toBeVisible();
 
-      // Should have Start Voice Session button
-      await expect(
-        page.locator('button:has-text("Start Voice Session")')
-      ).toBeVisible();
+      // Should have Start Voice Session button (use data-testid)
+      const startBtn = page.locator('[data-testid="start-voice-session"]');
+      await expect(startBtn).toBeVisible();
     } else {
-      // Realtime voice mode may not be enabled
-      test.skip(true, "Realtime voice mode not available");
+      // Fallback to aria-label selector
+      const fallbackBtn = page.locator('button[aria-label="Realtime voice mode"]');
+      if (await fallbackBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await fallbackBtn.click();
+        await expect(page.locator("text=Voice Mode")).toBeVisible({ timeout: 5000 });
+      } else {
+        test.skip(true, "Realtime voice mode not available");
+      }
+    }
+  });
+
+  test("should open voice mode panel automatically via Home page Voice Mode tile", async ({ page }) => {
+    // Start at home page (we're already at / from setupAndHydrateAuth)
+    // Verify we're on the home page
+    await page.goto("/");
+    await page.waitForLoadState("domcontentloaded");
+
+    // Find and click the Voice Mode card
+    const voiceModeCard = page.locator('[data-testid="voice-mode-card"]');
+    const isCardVisible = await voiceModeCard
+      .isVisible({ timeout: 5000 })
+      .catch(() => false);
+
+    if (isCardVisible) {
+      await voiceModeCard.click();
+
+      // Should navigate to /chat page
+      await page.waitForURL(/\/chat/, { timeout: 10000 });
+
+      // Voice mode panel should be AUTOMATICALLY open (auto-opened via state)
+      const voicePanel = page.locator('[data-testid="voice-mode-panel"]');
+      await expect(voicePanel).toBeVisible({ timeout: 5000 });
+
+      // Should show Voice Mode heading
+      await expect(page.locator("text=Voice Mode")).toBeVisible();
+
+      // Should show disconnected status initially
+      await expect(page.locator("text=Disconnected")).toBeVisible();
+
+      // Should show instructions since not connected
+      await expect(page.locator("text=How Voice Mode Works")).toBeVisible();
+    } else {
+      // Voice Mode card may not be on home page - skip
+      test.skip(true, "Voice Mode card not found on Home page");
     }
   });
 
   test("should display voice mode instructions", async ({ page }) => {
     await navigateToChat(page);
 
-    const realtimeBtn = page.locator(
-      'button[aria-label="Realtime voice mode"]'
-    );
+    // Use data-testid for more reliable selection
+    const realtimeBtn = page.locator('[data-testid="realtime-voice-mode-button"]');
     const isVisible = await realtimeBtn
       .isVisible({ timeout: 5000 })
       .catch(() => false);
@@ -214,24 +254,37 @@ test.describe("Voice Mode Session", () => {
     if (isVisible) {
       await realtimeBtn.click();
 
-      // Should show instructions
+      // Verify panel is open (use data-testid)
+      const voicePanel = page.locator('[data-testid="voice-mode-panel"]');
+      await expect(voicePanel).toBeVisible({ timeout: 5000 });
+
+      // Should show instructions (when disconnected)
       await expect(page.locator("text=How Voice Mode Works")).toBeVisible({
         timeout: 5000,
       });
 
-      // Instructions should include key points
-      await expect(page.locator("text=Start Voice Session")).toBeVisible();
-      await expect(page.locator("text=End Session")).toBeVisible();
+      // Instructions should include key points - use data-testid for button
+      const startBtn = page.locator('[data-testid="start-voice-session"]');
+      await expect(startBtn).toBeVisible();
+      // Also check for instruction text about ending session
+      await expect(page.locator("text=End Session").first()).toBeVisible();
     } else {
-      // Fallback to regular voice input
-      const voiceInputBtn = page.locator('button[aria-label="Voice input"]');
-      if (await voiceInputBtn.isVisible({ timeout: 3000 })) {
-        await voiceInputBtn.click();
-        await expect(
-          page.locator("text=Press and hold").or(page.locator("text=Hold"))
-        ).toBeVisible({ timeout: 5000 });
+      // Fallback to aria-label selector
+      const fallbackBtn = page.locator('button[aria-label="Realtime voice mode"]');
+      if (await fallbackBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await fallbackBtn.click();
+        await expect(page.locator("text=How Voice Mode Works")).toBeVisible({ timeout: 5000 });
       } else {
-        test.skip(true, "No voice mode available");
+        // Fallback to regular voice input
+        const voiceInputBtn = page.locator('button[aria-label="Voice input"]');
+        if (await voiceInputBtn.isVisible({ timeout: 3000 })) {
+          await voiceInputBtn.click();
+          await expect(
+            page.locator("text=Press and hold").or(page.locator("text=Hold"))
+          ).toBeVisible({ timeout: 5000 });
+        } else {
+          test.skip(true, "No voice mode available");
+        }
       }
     }
   });
@@ -241,9 +294,8 @@ test.describe("Voice Mode Session", () => {
   }) => {
     await navigateToChat(page);
 
-    const realtimeBtn = page.locator(
-      'button[aria-label="Realtime voice mode"]'
-    );
+    // Use data-testid for more reliable selection
+    const realtimeBtn = page.locator('[data-testid="realtime-voice-mode-button"]');
     const isVisible = await realtimeBtn
       .isVisible({ timeout: 5000 })
       .catch(() => false);
@@ -251,19 +303,27 @@ test.describe("Voice Mode Session", () => {
     if (isVisible) {
       await realtimeBtn.click();
 
-      // Verify panel is open
-      await expect(page.locator("text=Voice Mode")).toBeVisible();
+      // Verify panel is open (use data-testid)
+      const voicePanel = page.locator('[data-testid="voice-mode-panel"]');
+      await expect(voicePanel).toBeVisible({ timeout: 5000 });
 
-      // Click close button
-      const closeBtn = page.locator('button[aria-label="Close voice mode"]');
+      // Click close button (use data-testid)
+      const closeBtn = page.locator('[data-testid="close-voice-mode"]');
       await closeBtn.click();
 
       // Panel should be closed
-      await expect(page.locator("text=Voice Mode")).not.toBeVisible({
-        timeout: 3000,
-      });
+      await expect(voicePanel).not.toBeVisible({ timeout: 3000 });
     } else {
-      test.skip(true, "Realtime voice mode not available");
+      // Fallback to aria-label selector
+      const fallbackBtn = page.locator('button[aria-label="Realtime voice mode"]');
+      if (await fallbackBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await fallbackBtn.click();
+        await expect(page.locator("text=Voice Mode")).toBeVisible();
+        await page.locator('button[aria-label="Close voice mode"]').click();
+        await expect(page.locator("text=Voice Mode")).not.toBeVisible({ timeout: 3000 });
+      } else {
+        test.skip(true, "Realtime voice mode not available");
+      }
     }
   });
 

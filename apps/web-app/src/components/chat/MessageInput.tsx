@@ -15,6 +15,8 @@ export interface MessageInputProps {
   enableAttachments?: boolean;
   enableVoiceInput?: boolean;
   enableRealtimeVoice?: boolean;
+  /** Auto-open the realtime voice panel when component mounts (e.g., from Home Voice Mode card) */
+  autoOpenRealtimeVoice?: boolean;
   conversationId?: string;
 }
 
@@ -25,6 +27,7 @@ export function MessageInput({
   enableAttachments = false,
   enableVoiceInput = true,
   enableRealtimeVoice = false,
+  autoOpenRealtimeVoice = false,
   conversationId,
 }: MessageInputProps) {
   const [content, setContent] = useState("");
@@ -42,6 +45,13 @@ export function MessageInput({
       textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
     }
   }, [content]);
+
+  // Auto-open realtime voice panel when requested (e.g., from Home page Voice Mode card)
+  useEffect(() => {
+    if (enableRealtimeVoice && autoOpenRealtimeVoice && !showRealtimeVoice) {
+      setShowRealtimeVoice(true);
+    }
+  }, [enableRealtimeVoice, autoOpenRealtimeVoice]); // Intentionally omit showRealtimeVoice to only trigger once
 
   const handleSend = () => {
     if (content.trim() && !disabled) {
@@ -182,6 +192,7 @@ export function MessageInput({
             }`}
             aria-label="Realtime voice mode"
             title="Start voice conversation"
+            data-testid="realtime-voice-mode-button"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

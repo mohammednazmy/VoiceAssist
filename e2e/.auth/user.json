@@ -1,0 +1,14 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:5173",
+      "localStorage": [
+        {
+          "name": "voiceassist-auth",
+          "value": "{\"state\":{\"user\":{\"id\":\"e2e-test-user\",\"email\":\"test@example.com\",\"name\":\"E2E Test User\",\"role\":\"user\",\"createdAt\":\"2024-01-01T00:00:00.000Z\",\"updatedAt\":\"2024-01-01T00:00:00.000Z\"},\"tokens\":{\"accessToken\":\"e2e-mock-access-token\",\"refreshToken\":\"e2e-mock-refresh-token\",\"expiresIn\":3600},\"isAuthenticated\":true},\"version\":0}"
+        }
+      ]
+    }
+  ]
+}

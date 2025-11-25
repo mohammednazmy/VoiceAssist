@@ -13,7 +13,7 @@
  */
 
 import { test, expect, Page } from "@playwright/test";
-import { setupAuthenticatedState } from "../fixtures/auth";
+import { setupAndHydrateAuth } from "../fixtures/auth";
 
 /**
  * Navigate to clinical context page and wait for it to load
@@ -86,13 +86,15 @@ async function addListItem(
   // Click Add button
   await page.locator('button:has-text("Add")').click();
 
-  // Wait for the item to appear in the list
-  await expect(page.locator(`text="${value}"`)).toBeVisible({ timeout: 5000 });
+  // Wait for the item to appear in the list (use first match to avoid strict mode)
+  await expect(page.locator(`text="${value}"`).first()).toBeVisible({
+    timeout: 5000,
+  });
 }
 
 test.describe("Clinical Context Integration", () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuthenticatedState(page);
+    await setupAndHydrateAuth(page);
   });
 
   test("should display clinical context page correctly", async ({ page }) => {
@@ -138,11 +140,12 @@ test.describe("Clinical Context Integration", () => {
       timeout: 5000,
     });
 
-    // Verify the summary contains our data
-    await expect(page.locator("text=Age: 45 years old")).toBeVisible();
-    await expect(page.locator("text=male")).toBeVisible();
+    // Verify the summary contains our data (use specific selectors to avoid strict mode)
+    // The summary shows "Age: X years old, gender"
+    await expect(page.getByText("Age: 45 years old, male")).toBeVisible();
+    // Chief complaint appears in summary section, use .first() to avoid matching textarea too
     await expect(
-      page.locator("text=Persistent headache for 3 days")
+      page.getByText("Persistent headache for 3 days").first()
     ).toBeVisible();
   });
 
@@ -156,13 +159,14 @@ test.describe("Clinical Context Integration", () => {
     await expect(page.locator("text=Context Summary")).toBeVisible({
       timeout: 5000,
     });
-    await expect(page.locator("text=Type 2 Diabetes")).toBeVisible();
+    // Use .first() to avoid strict mode violation (text appears in both list and summary)
+    await expect(page.getByText("Type 2 Diabetes").first()).toBeVisible();
 
     // Add a medication
     await addListItem(page, "Medications", "Metformin 500mg BID");
 
-    // Verify medication appears
-    await expect(page.locator("text=Metformin 500mg BID")).toBeVisible();
+    // Verify medication appears (use .first() for same reason)
+    await expect(page.getByText("Metformin 500mg BID").first()).toBeVisible();
   });
 
   test("should navigate to chat after setting context", async ({ page }) => {
