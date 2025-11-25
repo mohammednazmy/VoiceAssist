@@ -354,7 +354,8 @@ async def create_realtime_session(
             )
 
         # Generate session configuration
-        config = realtime_voice_service.generate_session_config(
+        # This creates a real ephemeral session with OpenAI
+        config = await realtime_voice_service.generate_session_config(
             user_id=str(current_user.id),
             conversation_id=request.conversation_id,
         )

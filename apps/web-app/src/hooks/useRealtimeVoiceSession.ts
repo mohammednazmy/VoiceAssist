@@ -198,10 +198,12 @@ export function useRealtimeVoiceSession(
   const initializeWebSocket = useCallback(
     (config: RealtimeSessionConfig): Promise<WebSocket> => {
       return new Promise((resolve, reject) => {
+        // Use the ephemeral token from auth for authentication
         const wsUrl = `${config.url}?model=${config.model}`;
         const ws = new WebSocket(wsUrl, [
           "realtime",
           `openai-beta.realtime-v1`,
+          `openai-insecure-api-key.${config.auth.token}`,
         ]);
 
         // WebSocket event handlers

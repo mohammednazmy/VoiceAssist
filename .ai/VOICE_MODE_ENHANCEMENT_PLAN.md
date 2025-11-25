@@ -50,13 +50,20 @@ This document outlines a comprehensive enhancement plan for the VoiceAssist Voic
 **Priority:** 🔴 P0 (Critical)
 **Effort:** Medium (3-5 days)
 **Impact:** High
+**Status:** ✅ **IMPLEMENTED** (2025-11-25)
 
-#### Current State
-- WebSocket disconnects require manual user intervention
-- No retry logic on connection failures
-- Session expiry not handled gracefully
+#### Implementation Summary
 
-#### Enhancement
+Automatic reconnection with exponential backoff has been implemented in `useRealtimeVoiceSession.ts`:
+
+- ✅ Exponential backoff: 1s → 2s → 4s → 8s → 16s → 30s (max)
+- ✅ Max 5 reconnection attempts before marking as "failed"
+- ✅ Respects intentional disconnects (won't auto-reconnect if user manually stops)
+- ✅ Session expiry monitoring with proactive refresh (<60s remaining)
+- ✅ New connection states: "reconnecting", "failed", "expired"
+- ✅ Reset attempt counter on successful connection
+
+#### Enhancement (Planned vs Implemented)
 
 **Frontend (`useRealtimeVoiceSession.ts`):**
 
@@ -2173,23 +2180,151 @@ export function VoiceAnalyticsDashboard({ conversationId }: Props) {
 **Priority:** 🔴 P0 (Critical)
 **Effort:** Medium (5-7 days)
 **Impact:** Very High
+**Status:** ✅ **IMPLEMENTED** (2025-11-25)
 
-#### Current State
-- Backend sends full OpenAI API key to frontend
-- **Security risk:** API key exposed in browser
-- No session-level key rotation
+#### Implementation Summary
 
-#### Enhancement
+The ephemeral token system has been implemented using **OpenAI's native ephemeral session API** rather than a custom JWT wrapper. This provides better security and compatibility with OpenAI's Realtime API.
 
-**Backend: Generate Ephemeral Tokens**
+**Key Changes:**
+1. Backend calls `POST /v1/realtime/sessions` to get real OpenAI ephemeral client secrets
+2. Client secrets (starting with `ek_`) are time-limited (typically 60 seconds)
+3. Frontend receives `auth.token` instead of raw `api_key`
+4. WebSocket connection uses ephemeral token for authentication
+5. Raw `OPENAI_API_KEY` never leaves the backend
+
+#### Implemented Solution
+
+**Backend: OpenAI Ephemeral Session Integration**
+
+The implementation calls OpenAI's native session creation endpoint to obtain real ephemeral client secrets:
 
 ```python
-# services/api-gateway/app/services/ephemeral_token.py
+# services/api-gateway/app/services/realtime_voice_service.py
 
-import jwt
-import time
-from typing import Dict
+async def create_openai_ephemeral_session(
+    self, model: str, voice: str = "alloy"
+) -> Dict[str, Any]:
+    """
+    Create an ephemeral session with OpenAI's Realtime API.
 
+    Returns:
+        Dict containing:
+        - client_secret: Ephemeral token for client use (starts with "ek_")
+        - expires_at: Unix timestamp when token expires
+    """
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(
+            "https://api.openai.com/v1/realtime/sessions",
+            headers={
+                "Authorization": f"Bearer {self.api_key}",  # Server-side key
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": model,
+                "voice": voice,
+            },
+        )
+
+        data = response.json()
+        client_secret_data = data.get("client_secret", {})
+
+        return {
+            "client_secret": client_secret_data.get("value"),
+            "expires_at": client_secret_data.get("expires_at"),
+        }
+
+async def generate_session_config(
+    self, user_id: str, conversation_id: str | None = None
+) -> Dict[str, Any]:
+    """Generate session configuration with OpenAI ephemeral token."""
+
+    # Create ephemeral session with OpenAI
+    openai_session = await self.create_openai_ephemeral_session(
+        model=self.model,
+        voice="alloy",
+    )
+
+    client_secret = openai_session["client_secret"]
+    expires_at = openai_session["expires_at"]
+
+    # Return config with ephemeral token
+    return {
+        "url": self.base_url,
+        "model": self.model,
+        "session_id": session_id,
+        "expires_at": expires_at,
+        "conversation_id": conversation_id,
+        "auth": {
+            "type": "ephemeral_token",
+            "token": client_secret,  # Real OpenAI ephemeral token
+            "expires_at": expires_at,
+        },
+        "voice_config": { ... },
+    }
+```
+
+**API Response Format:**
+
+```typescript
+// GET /api/voice/realtime-session response
+{
+  "url": "wss://api.openai.com/v1/realtime",
+  "model": "gpt-4o-realtime-preview-2024-12-17",
+  "session_id": "rtc_user123_xyz",
+  "expires_at": 1732534800,
+  "conversation_id": null,
+  "auth": {
+    "type": "ephemeral_token",
+    "token": "ek_...",  // OpenAI ephemeral client secret
+    "expires_at": 1732534800
+  },
+  "voice_config": {
+    "voice": "alloy",
+    "modalities": ["text", "audio"],
+    "input_audio_format": "pcm16",
+    "output_audio_format": "pcm16",
+    "input_audio_transcription": {"model": "whisper-1"},
+    "turn_detection": {
+      "type": "server_vad",
+      "threshold": 0.5,
+      "prefix_padding_ms": 300,
+      "silence_duration_ms": 500
+    }
+  }
+}
+```
+
+**Frontend: WebSocket Authentication**
+
+```typescript
+// apps/web-app/src/hooks/useRealtimeVoiceSession.ts
+
+const initializeWebSocket = (config: RealtimeSessionConfig) => {
+  const wsUrl = `${config.url}?model=${config.model}`;
+  const ws = new WebSocket(wsUrl, [
+    "realtime",
+    "openai-beta.realtime-v1",
+    `openai-insecure-api-key.${config.auth.token}`,  // Use ephemeral token
+  ]);
+
+  // ... WebSocket event handlers
+};
+```
+
+**Security Benefits:**
+- ✅ Raw `OPENAI_API_KEY` never sent to browser
+- ✅ Tokens expire automatically (typically 60 seconds)
+- ✅ Tokens are session-specific and cannot be reused
+- ✅ No custom token validation needed (OpenAI handles it)
+- ✅ Compatible with OpenAI's authentication flow
+
+**Legacy HMAC Methods:**
+
+For future server-side proxy implementations, HMAC-based token methods are still available:
+
+```python
+# DEPRECATED FOR DIRECT CLIENT USE - KEPT FOR FUTURE PROXY
 class EphemeralTokenService:
     """
     Generate short-lived tokens for OpenAI Realtime API access.

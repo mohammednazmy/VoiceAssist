@@ -6,6 +6,7 @@ Generates ephemeral tokens and session configuration for voice mode
 import base64
 import hashlib
 import hmac
+import httpx
 import json
 import secrets
 import time
@@ -36,6 +37,87 @@ class RealtimeVoiceService:
     def is_enabled(self) -> bool:
         """Check if Realtime API is enabled and configured"""
         return self.enabled and bool(self.api_key)
+
+    async def create_openai_ephemeral_session(
+        self, model: str, voice: str = "alloy"
+    ) -> Dict[str, Any]:
+        """
+        Create an ephemeral session with OpenAI's Realtime API.
+
+        This calls OpenAI's session creation endpoint to get a real ephemeral
+        client secret that can be used to connect to the Realtime WebSocket.
+
+        Args:
+            model: The Realtime model to use (e.g., "gpt-4o-realtime-preview-2024-12-17")
+            voice: The voice to use (default: "alloy")
+
+        Returns:
+            Dict containing:
+            - client_secret: Ephemeral token for client use
+            - expires_at: Unix timestamp when token expires
+
+        Raises:
+            ValueError: If session creation fails
+        """
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    "https://api.openai.com/v1/realtime/sessions",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": model,
+                        "voice": voice,
+                    },
+                )
+
+                if response.status_code != 200:
+                    error_detail = response.text
+                    logger.error(
+                        f"OpenAI session creation failed: {error_detail}",
+                        extra={
+                            "status_code": response.status_code,
+                            "response": error_detail,
+                        },
+                    )
+                    raise ValueError(
+                        f"Failed to create OpenAI session: {response.status_code}"
+                    )
+
+                data = response.json()
+
+                # OpenAI returns: { "client_secret": { "value": "ek_...", "expires_at": timestamp } }
+                client_secret_data = data.get("client_secret", {})
+                client_secret = client_secret_data.get("value")
+                expires_at = client_secret_data.get("expires_at")
+
+                if not client_secret:
+                    raise ValueError("OpenAI did not return a client_secret")
+
+                logger.info(
+                    "Created OpenAI ephemeral session",
+                    extra={
+                        "model": model,
+                        "expires_at": expires_at,
+                    },
+                )
+
+                return {
+                    "client_secret": client_secret,
+                    "expires_at": expires_at,
+                }
+
+        except httpx.TimeoutException as e:
+            logger.error(f"OpenAI session creation timeout: {str(e)}")
+            raise ValueError("OpenAI session creation timed out")
+        except httpx.HTTPError as e:
+            logger.error(f"OpenAI session creation HTTP error: {str(e)}")
+            raise ValueError(f"OpenAI session creation failed: {str(e)}")
+        except Exception as e:
+            logger.error(f"OpenAI session creation error: {str(e)}")
+            raise ValueError(f"Failed to create OpenAI session: {str(e)}")
 
     def generate_ephemeral_token(
         self, user_id: str, session_id: str, expires_at: int
@@ -141,11 +223,14 @@ class RealtimeVoiceService:
             )
             raise ValueError(f"Invalid token: {str(e)}")
 
-    def generate_session_config(
+    async def generate_session_config(
         self, user_id: str, conversation_id: str | None = None
     ) -> Dict[str, Any]:
         """
         Generate session configuration for OpenAI Realtime API.
+
+        This method creates a real ephemeral session with OpenAI and returns
+        the configuration needed for the client to connect via WebSocket.
 
         Args:
             user_id: User ID for the session
@@ -155,7 +240,7 @@ class RealtimeVoiceService:
             Dictionary with session configuration including:
             - url: WebSocket URL for Realtime API
             - model: Realtime model to use
-            - auth: Authentication structure with ephemeral token
+            - auth: Authentication structure with OpenAI ephemeral token
             - session_id: Unique session identifier
             - expires_at: Unix timestamp when session expires
             - voice_config: Default voice configuration
@@ -168,21 +253,21 @@ class RealtimeVoiceService:
                 "Realtime API is not enabled or OpenAI API key not configured"
             )
 
-        # Generate unique session ID
+        # Generate unique session ID for tracking
         session_id = f"rtc_{user_id}_{secrets.token_urlsafe(16)}"
 
-        # Calculate expiry time
-        expires_at = int(time.time()) + self.token_expiry
-
-        # Generate ephemeral token (signed, not the raw API key)
-        ephemeral_token = self.generate_ephemeral_token(
-            user_id=user_id,
-            session_id=session_id,
-            expires_at=expires_at,
+        # Create ephemeral session with OpenAI
+        # This gets us a real client_secret that works with the Realtime API
+        openai_session = await self.create_openai_ephemeral_session(
+            model=self.model,
+            voice="alloy",
         )
 
+        client_secret = openai_session["client_secret"]
+        expires_at = openai_session["expires_at"]
+
         # Build session configuration
-        # NOTE: We do NOT include the raw api_key anymore!
+        # NOTE: We use the real OpenAI ephemeral token, NOT the raw API key
         config = {
             "url": self.base_url,
             "model": self.model,
@@ -191,7 +276,7 @@ class RealtimeVoiceService:
             "conversation_id": conversation_id,
             "auth": {
                 "type": "ephemeral_token",
-                "token": ephemeral_token,
+                "token": client_secret,  # Real OpenAI ephemeral client secret
                 "expires_at": expires_at,
             },
             "voice_config": {

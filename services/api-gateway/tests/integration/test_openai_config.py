@@ -158,7 +158,7 @@ class TestRealtimeVoiceServiceConfiguration:
         expected = settings.REALTIME_ENABLED and bool(settings.OPENAI_API_KEY)
         assert service.is_enabled() == expected
 
-    def test_realtime_service_generates_session_config(self):
+    async def test_realtime_service_generates_session_config(self):
         """Test session config generation (when enabled)."""
         from app.core.config import settings
         from app.services.realtime_voice_service import RealtimeVoiceService
@@ -168,7 +168,9 @@ class TestRealtimeVoiceServiceConfiguration:
         if not service.is_enabled():
             pytest.skip("Realtime service not enabled or key not set")
 
-        config = service.generate_session_config(
+        # Note: This now calls OpenAI's real ephemeral session endpoint
+        # In a real test environment, you'd want to mock this
+        config = await service.generate_session_config(
             user_id="test-user-123", conversation_id="conv-456"
         )
 
@@ -187,11 +189,12 @@ class TestRealtimeVoiceServiceConfiguration:
         assert "token" in config["auth"]
         assert "expires_at" in config["auth"]
 
-        # Token should be non-empty string
+        # Token should be non-empty string (OpenAI ephemeral client secret)
         token = config["auth"]["token"]
         assert isinstance(token, str)
         assert len(token) > 0
-        assert "." in token  # Should have format: payload.signature
+        # OpenAI ephemeral tokens start with "ek_" or similar
+        # Note: We're not checking the HMAC format anymore since we use OpenAI's tokens
 
     def test_ephemeral_token_generation_and_validation(self):
         """Test ephemeral token can be generated and validated."""
