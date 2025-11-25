@@ -233,10 +233,17 @@ async def detailed_health_check(request: Request):
     except Exception:
         redis_memory_mb = 0
 
-    # Measure Qdrant latency
-    start = time.time()
-    qdrant_healthy = await check_qdrant_connection()
-    qdrant_latency = (time.time() - start) * 1000
+    # Measure Qdrant latency (skip if disabled)
+    qdrant_enabled = (
+        settings.QDRANT_ENABLED if hasattr(settings, "QDRANT_ENABLED") else True
+    )
+    if qdrant_enabled:
+        start = time.time()
+        qdrant_healthy = await check_qdrant_connection()
+        qdrant_latency = (time.time() - start) * 1000
+    else:
+        qdrant_healthy = True  # Report as healthy when disabled
+        qdrant_latency = 0
 
     # Get database pool stats
     pool_size = engine.pool.size()
@@ -265,8 +272,13 @@ async def detailed_health_check(request: Request):
                 "memory_used_mb": round(redis_memory_mb, 2),
             },
             "qdrant": {
-                "status": "up" if qdrant_healthy else "down",
+                "status": (
+                    "disabled"
+                    if not qdrant_enabled
+                    else ("up" if qdrant_healthy else "down")
+                ),
                 "latency_ms": round(qdrant_latency, 2),
+                "enabled": qdrant_enabled,
             },
         },
         "version": settings.APP_VERSION,
