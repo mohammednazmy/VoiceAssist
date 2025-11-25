@@ -46,7 +46,7 @@ prometheus-client==0.23.1  # Prometheus metrics
 
 # Utilities
 python-dotenv==1.0.0
-httpx==0.26.0
+httpx==0.28.1
 
 # Document Processing (Phase 5)
 pypdf==4.0.0
