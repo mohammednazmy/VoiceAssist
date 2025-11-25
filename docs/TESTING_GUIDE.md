@@ -224,12 +224,15 @@ VoiceAssist includes Auto Playwright for AI-powered test generation.
 
 2. Run the generator:
    ```bash
-   pnpm generate:e2e
+   pnpm generate:e2e           # Skip existing files (default)
+   pnpm generate:e2e --force   # Overwrite all files
    ```
 
 ### How It Works
 
 The generator script (`scripts/generate-e2e-tests.js`) creates test files from natural language descriptions. When `OPENAI_API_KEY` is set, it generates tests using the `auto()` function from `auto-playwright`, which interprets plain-text instructions at runtime.
+
+**Important**: By default, the generator **skips existing files** to preserve manually edited tests. Use `--force` to regenerate all files.
 
 ### Adding New AI-Generated Tests
 
@@ -310,10 +313,13 @@ The GitHub Actions workflow (`.github/workflows/frontend-ci.yml`) automatically:
 3. Runs all E2E tests
 4. Uploads test reports as artifacts
 
-Add the `OPENAI_API_KEY` secret in your repository settings:
+Add the following secrets in your repository settings (Settings > Secrets and variables > Actions):
 
-- Go to Settings > Secrets and variables > Actions
-- Add `OPENAI_API_KEY` with your OpenAI API key
+| Secret           | Purpose                            |
+| ---------------- | ---------------------------------- |
+| `OPENAI_API_KEY` | AI test generation (optional)      |
+| `E2E_EMAIL`      | Test user email for login tests    |
+| `E2E_PASSWORD`   | Test user password for login tests |
 
 ### Test Reports
 
