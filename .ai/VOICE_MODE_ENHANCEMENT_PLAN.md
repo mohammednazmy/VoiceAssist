@@ -2319,6 +2319,67 @@ const initializeWebSocket = (config: RealtimeSessionConfig) => {
 - ✅ No custom token validation needed (OpenAI handles it)
 - ✅ Compatible with OpenAI's authentication flow
 
+**Testing Strategy:**
+
+The implementation includes CI-safe tests that avoid hitting live OpenAI endpoints by default:
+
+```python
+# tests/integration/test_openai_config.py
+
+# CI-safe test (runs always) - uses mocked OpenAI calls
+@pytest.mark.asyncio
+async def test_realtime_service_generates_session_config_mocked(self):
+    """Test session config generation with mocked OpenAI call (CI-safe)."""
+
+    # Mock the OpenAI session creation
+    mock_openai_session = {
+        "client_secret": "ek_test_mock_ephemeral_token_abc123",
+        "expires_at": int(time.time()) + 300,
+    }
+
+    with patch.object(
+        service, "create_openai_ephemeral_session",
+        new=AsyncMock(return_value=mock_openai_session)
+    ):
+        config = await service.generate_session_config(
+            user_id="test-user-123",
+            conversation_id="conv-456"
+        )
+
+    # Verify auth structure
+    assert "auth" in config
+    assert config["auth"]["type"] == "ephemeral_token"
+    assert config["auth"]["token"] == "ek_test_mock_ephemeral_token_abc123"
+    assert "api_key" not in config  # Security check
+
+# Live test (only runs with LIVE_REALTIME_TESTS=1)
+@pytest.mark.skipif(
+    not LIVE_REALTIME_TESTS,
+    reason="Live Realtime tests disabled. Set LIVE_REALTIME_TESTS=1 to enable.",
+)
+@pytest.mark.asyncio
+async def test_live_realtime_session_creation(self):
+    """Test live OpenAI Realtime session creation."""
+
+    config = await service.generate_session_config(
+        user_id="live-test-user",
+        conversation_id=None
+    )
+
+    # Verify real OpenAI ephemeral token format
+    token = config["auth"]["token"]
+    assert token.startswith("ek_"), "OpenAI ephemeral token should start with 'ek_'"
+```
+
+**Running Tests:**
+```bash
+# Run CI-safe tests only (default)
+pytest tests/integration/test_openai_config.py -v
+
+# Run live Realtime tests (requires valid OPENAI_API_KEY)
+LIVE_REALTIME_TESTS=1 pytest tests/integration/test_openai_config.py -v
+```
+
 **Legacy HMAC Methods:**
 
 For future server-side proxy implementations, HMAC-based token methods are still available:
