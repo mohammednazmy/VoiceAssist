@@ -58,10 +58,11 @@ describe("MessageInput", () => {
     it("should render attachment button when enabled", () => {
       render(<MessageInput onSend={mockOnSend} enableAttachments={true} />);
 
-      const fileInput = screen
-        .getByRole("textbox")
-        .parentElement?.parentElement?.querySelector('input[type="file"]');
-      expect(fileInput).toBeInTheDocument();
+      // The attachment button shows when enableAttachments is true
+      const attachButton = screen.getByRole("button", {
+        name: /attach files/i,
+      });
+      expect(attachButton).toBeInTheDocument();
     });
   });
 
@@ -287,6 +288,13 @@ describe("MessageInput", () => {
       const user = userEvent.setup();
       render(<MessageInput onSend={mockOnSend} enableAttachments={true} />);
 
+      // Click attachment button to open modal
+      const attachButton = screen.getByRole("button", {
+        name: /attach files/i,
+      });
+      await user.click(attachButton);
+
+      // Find the file input inside the modal
       const fileInput = document.querySelector(
         'input[type="file"]',
       ) as HTMLInputElement;
@@ -303,6 +311,12 @@ describe("MessageInput", () => {
       const user = userEvent.setup();
       render(<MessageInput onSend={mockOnSend} enableAttachments={true} />);
 
+      // Click attachment button to open modal
+      const attachButton = screen.getByRole("button", {
+        name: /attach files/i,
+      });
+      await user.click(attachButton);
+
       const fileInput = document.querySelector(
         'input[type="file"]',
       ) as HTMLInputElement;
@@ -315,7 +329,7 @@ describe("MessageInput", () => {
       });
 
       const removeButton = screen.getByRole("button", {
-        name: /remove attachment/i,
+        name: /remove file/i,
       });
       await user.click(removeButton);
 
@@ -331,6 +345,12 @@ describe("MessageInput", () => {
       const textarea = screen.getByRole("textbox");
       await user.type(textarea, "Message with attachment");
 
+      // Click attachment button to open modal
+      const attachButton = screen.getByRole("button", {
+        name: /attach files/i,
+      });
+      await user.click(attachButton);
+
       const fileInput = document.querySelector(
         'input[type="file"]',
       ) as HTMLInputElement;
@@ -338,18 +358,17 @@ describe("MessageInput", () => {
       await user.upload(fileInput, file);
 
       await waitFor(() => {
-        expect(
-          screen.getByRole("button", { name: /remove attachment/i }),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/test.pdf/i)).toBeInTheDocument();
       });
 
       // Focus textarea and press Enter
       await user.click(textarea);
       await user.keyboard("{Enter}");
 
+      // The component sends File objects, not strings
       expect(mockOnSend).toHaveBeenCalledWith(
         "Message with attachment",
-        expect.arrayContaining([expect.stringContaining("test.pdf")]),
+        expect.arrayContaining([expect.any(File)]),
       );
     });
 
@@ -360,6 +379,12 @@ describe("MessageInput", () => {
       const textarea = screen.getByRole("textbox") as HTMLTextAreaElement;
       await user.type(textarea, "Message with attachment");
 
+      // Click attachment button to open modal
+      const attachButton = screen.getByRole("button", {
+        name: /attach files/i,
+      });
+      await user.click(attachButton);
+
       const fileInput = document.querySelector(
         'input[type="file"]',
       ) as HTMLInputElement;
@@ -367,36 +392,42 @@ describe("MessageInput", () => {
       await user.upload(fileInput, file);
 
       await waitFor(() => {
-        expect(
-          screen.getByRole("button", { name: /remove attachment/i }),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/test.pdf/i)).toBeInTheDocument();
       });
 
       // Focus textarea and press Enter
       await user.click(textarea);
       await user.keyboard("{Enter}");
 
-      // Verify onSend was called with attachments
+      // Verify onSend was called with attachments (File objects, not strings)
       expect(mockOnSend).toHaveBeenCalledWith(
         "Message with attachment",
-        expect.arrayContaining([expect.stringContaining("test.pdf")]),
+        expect.arrayContaining([expect.any(File)]),
       );
 
-      // Verify textarea and form were cleared (both should clear together)
+      // Verify textarea was cleared
       await waitFor(() => {
         expect(textarea).toHaveValue("");
       });
     });
 
-    it("should accept multiple file types", () => {
+    it("should accept multiple file types", async () => {
+      const user = userEvent.setup();
       render(<MessageInput onSend={mockOnSend} enableAttachments={true} />);
+
+      // Click attachment button to open modal
+      const attachButton = screen.getByRole("button", {
+        name: /attach files/i,
+      });
+      await user.click(attachButton);
 
       const fileInput = document.querySelector(
         'input[type="file"]',
       ) as HTMLInputElement;
+      // The ChatAttachmentUpload has different accept attribute
       expect(fileInput).toHaveAttribute(
         "accept",
-        ".pdf,.png,.jpg,.jpeg,.mp3,.wav,.txt,.md",
+        ".pdf,.png,.jpg,.jpeg,.txt,.md,.doc,.docx",
       );
     });
 
@@ -409,10 +440,11 @@ describe("MessageInput", () => {
         />,
       );
 
-      const fileInput = document.querySelector(
-        'input[type="file"]',
-      ) as HTMLInputElement;
-      expect(fileInput).toBeDisabled();
+      // The attachment button should be disabled
+      const attachButton = screen.getByRole("button", {
+        name: /attach files/i,
+      });
+      expect(attachButton).toBeDisabled();
     });
   });
 
@@ -450,9 +482,15 @@ describe("MessageInput", () => {
       expect(sendButton).toHaveAttribute("aria-label", "Send message");
     });
 
-    it("should have aria-label on remove attachment button", async () => {
+    it("should have aria-label on remove file button", async () => {
       const user = userEvent.setup();
       render(<MessageInput onSend={mockOnSend} enableAttachments={true} />);
+
+      // Click attachment button to open modal
+      const attachButton = screen.getByRole("button", {
+        name: /attach files/i,
+      });
+      await user.click(attachButton);
 
       const fileInput = document.querySelector(
         'input[type="file"]',
@@ -462,9 +500,9 @@ describe("MessageInput", () => {
 
       await waitFor(() => {
         const removeButton = screen.getByRole("button", {
-          name: /remove attachment/i,
+          name: /remove file/i,
         });
-        expect(removeButton).toHaveAttribute("aria-label", "Remove attachment");
+        expect(removeButton).toHaveAttribute("aria-label", "Remove file");
       });
     });
 
