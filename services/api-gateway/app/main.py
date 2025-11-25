@@ -44,6 +44,7 @@ from app.core import business_metrics  # noqa: F401
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import MetricsMiddleware, RequestTracingMiddleware, SecurityHeadersMiddleware
+from app.core.sentry import init_sentry
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -158,12 +159,16 @@ app.include_router(sharing.router, prefix="/api")  # Phase 8: Conversation shari
 @app.on_event("startup")
 async def startup_event():
     """Application startup tasks"""
+    # Initialize Sentry error tracking (if configured)
+    sentry_enabled = init_sentry()
+
     logger.info(
         "application_startup",
         app_name=settings.APP_NAME,
         version=settings.APP_VERSION,
         environment=settings.ENVIRONMENT,
         debug=settings.DEBUG,
+        sentry_enabled=sentry_enabled,
     )
 
     # FastAPI Cache disabled due to redis-py compatibility issues

@@ -14,6 +14,18 @@ import httpx
 from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.core.logging import get_logger
+from app.core.metrics import (
+    voice_connection_time_seconds,
+    voice_reconnects_total,
+    voice_response_latency_seconds,
+    voice_session_duration_seconds,
+    voice_sessions_total,
+    voice_slo_violations_total,
+    voice_stt_latency_seconds,
+    voice_transcripts_total,
+)
+from app.core.sentry import capture_slo_violation
+from app.core.slo import check_slo_violations, log_slo_violations
 from app.models.user import User
 from app.services.realtime_voice_service import realtime_voice_service
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
@@ -219,7 +231,8 @@ async def synthesize_speech(
         )
 
     try:
-        # For now only OpenAI provider is wired; config placeholders allow future providers
+        # For now only OpenAI provider is wired;
+        # config placeholders allow future providers
         provider = settings.TTS_PROVIDER or "openai"
 
         if provider != "openai":
@@ -311,7 +324,7 @@ async def synthesize_speech(
     "/realtime-session",
     response_model=RealtimeSessionResponse,
     summary="Create Realtime API session",
-    description="Generate session configuration for OpenAI Realtime API (WebSocket-based voice mode)",
+    description="Generate session config for OpenAI Realtime API voice mode",
 )
 async def create_realtime_session(
     request: RealtimeSessionRequest,
@@ -442,7 +455,7 @@ class VoiceMetricsResponse(BaseModel):
     "/metrics",
     response_model=VoiceMetricsResponse,
     summary="Submit voice session metrics",
-    description="Submit timing and count metrics from a voice session (no transcript content)",
+    description="Submit timing and count metrics from a voice session",
 )
 async def post_voice_metrics(
     payload: VoiceMetricsPayload,
@@ -454,8 +467,11 @@ async def post_voice_metrics(
     This endpoint receives timing and count metrics from frontend voice sessions.
     No transcript content or PHI is sent - only timing and counts.
 
-    Metrics are logged for aggregation and analysis. In production, these can be
-    forwarded to a metrics backend (Prometheus, Datadog, etc.).
+    Metrics flow:
+    1. Logged with structured logging
+    2. Recorded to Prometheus histograms/counters
+    3. Checked against SLO thresholds
+    4. SLO violations logged and sent to Sentry
 
     Args:
         payload: VoiceMetricsPayload with timing and count metrics
@@ -464,10 +480,13 @@ async def post_voice_metrics(
     Returns:
         VoiceMetricsResponse with status "ok"
     """
+    user_id = str(current_user.id)
+
+    # 1. Log metrics
     logger.info(
         "VoiceMetrics received",
         extra={
-            "user_id": current_user.id,
+            "user_id": user_id,
             "conversation_id": payload.conversation_id,
             "connection_time_ms": payload.connection_time_ms,
             "time_to_first_transcript_ms": payload.time_to_first_transcript_ms,
@@ -480,4 +499,76 @@ async def post_voice_metrics(
             "session_started_at": payload.session_started_at,
         },
     )
+
+    # 2. Record Prometheus metrics
+    if payload.connection_time_ms is not None:
+        voice_connection_time_seconds.observe(payload.connection_time_ms / 1000.0)
+
+    if payload.last_stt_latency_ms is not None:
+        voice_stt_latency_seconds.observe(payload.last_stt_latency_ms / 1000.0)
+
+    if payload.last_response_latency_ms is not None:
+        voice_response_latency_seconds.observe(
+            payload.last_response_latency_ms / 1000.0
+        )
+
+    if payload.session_duration_ms is not None:
+        voice_session_duration_seconds.observe(payload.session_duration_ms / 1000.0)
+        # Mark session as completed (we only receive metrics for completed sessions)
+        voice_sessions_total.labels(status="completed").inc()
+
+    if payload.user_transcript_count > 0:
+        voice_transcripts_total.labels(direction="user").inc(
+            payload.user_transcript_count
+        )
+
+    if payload.ai_response_count > 0:
+        voice_transcripts_total.labels(direction="ai").inc(payload.ai_response_count)
+
+    if payload.reconnect_count > 0:
+        voice_reconnects_total.inc(payload.reconnect_count)
+
+    # 3. Check SLO thresholds
+    violations = check_slo_violations(
+        connection_time_ms=(
+            float(payload.connection_time_ms) if payload.connection_time_ms else None
+        ),
+        stt_latency_ms=(
+            float(payload.last_stt_latency_ms) if payload.last_stt_latency_ms else None
+        ),
+        response_latency_ms=(
+            float(payload.last_response_latency_ms)
+            if payload.last_response_latency_ms
+            else None
+        ),
+        time_to_first_transcript_ms=(
+            float(payload.time_to_first_transcript_ms)
+            if payload.time_to_first_transcript_ms
+            else None
+        ),
+    )
+
+    # 4. Handle SLO violations
+    if violations:
+        # Log violations
+        log_slo_violations(
+            violations, user_id=user_id, conversation_id=payload.conversation_id
+        )
+
+        # Record to Prometheus
+        for violation in violations:
+            voice_slo_violations_total.labels(
+                metric=violation.metric.value, severity=violation.severity
+            ).inc()
+
+            # Report critical violations to Sentry
+            if violation.severity == "critical":
+                capture_slo_violation(
+                    metric_name=violation.metric.value,
+                    actual_value=violation.actual_ms,
+                    threshold=violation.threshold_ms,
+                    user_id=user_id,
+                    conversation_id=payload.conversation_id,
+                )
+
     return VoiceMetricsResponse(status="ok")
