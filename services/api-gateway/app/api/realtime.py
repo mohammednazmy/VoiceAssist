@@ -29,9 +29,53 @@ from app.schemas.websocket import (
 from app.services.rag_service import QueryOrchestrator, QueryRequest
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
+from starlette.websockets import WebSocketState
 
 router = APIRouter(prefix="/api/realtime", tags=["realtime"])
 logger = get_logger(__name__)
+
+
+def is_websocket_connected(websocket: WebSocket) -> bool:
+    """Check if WebSocket is still in a connected state and can receive messages."""
+    try:
+        return (
+            websocket.client_state == WebSocketState.CONNECTED
+            and websocket.application_state == WebSocketState.CONNECTED
+        )
+    except Exception:
+        return False
+
+
+async def safe_send_json(websocket: WebSocket, data: Dict[str, Any]) -> bool:
+    """Safely send JSON to WebSocket, returning False if the socket is closed.
+
+    Args:
+        websocket: The WebSocket connection
+        data: The data to send as JSON
+
+    Returns:
+        True if send succeeded, False if socket was closed or error occurred
+    """
+    if not is_websocket_connected(websocket):
+        logger.warning("Attempted to send on closed WebSocket, skipping")
+        return False
+
+    try:
+        await websocket.send_json(data)
+        return True
+    except RuntimeError as e:
+        if "close message has been sent" in str(e).lower():
+            logger.warning("WebSocket already closed, cannot send message")
+        else:
+            logger.error(f"RuntimeError sending WebSocket message: {e}")
+        return False
+    except WebSocketDisconnect:
+        logger.warning("WebSocket disconnected during send")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error sending WebSocket message: {e}")
+        return False
+
 
 # Global QueryOrchestrator instance
 query_orchestrator = QueryOrchestrator()
@@ -59,20 +103,35 @@ class ConnectionManager:
             del self.active_connections[client_id]
             logger.info(f"WebSocket disconnected: {client_id}")
 
-    async def send_personal_message(self, message: Dict[str, Any], client_id: str):
-        """Send a message to a specific client."""
-        if client_id in self.active_connections:
-            websocket = self.active_connections[client_id]
-            await websocket.send_json(message)
+    async def send_personal_message(
+        self, message: Dict[str, Any], client_id: str
+    ) -> bool:
+        """Send a message to a specific client.
 
-    async def send_error(self, client_id: str, error_code: str, error_message: str):
-        """Send an error message to a client."""
+        Returns:
+            True if send succeeded, False if client not found or socket closed
+        """
+        if client_id not in self.active_connections:
+            logger.warning(f"Client {client_id} not found in active connections")
+            return False
+
+        websocket = self.active_connections[client_id]
+        return await safe_send_json(websocket, message)
+
+    async def send_error(
+        self, client_id: str, error_code: str, error_message: str
+    ) -> bool:
+        """Send an error message to a client.
+
+        Returns:
+            True if send succeeded, False if client not found or socket closed
+        """
         error_msg = {
             "type": "error",
             "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
             "error": {"code": error_code, "message": error_message},
         }
-        await self.send_personal_message(error_msg, client_id)
+        return await self.send_personal_message(error_msg, client_id)
 
 
 # Global connection manager instance
@@ -194,6 +253,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
 
     except Exception as e:
         logger.error(f"WebSocket error: {str(e)}", exc_info=True)
+        # Try to send error, but don't fail if socket is already closed
         await manager.send_error(client_id, "INTERNAL_ERROR", str(e))
         manager.disconnect(client_id)
 
@@ -251,7 +311,13 @@ async def handle_chat_message(
             chunk = response_text[i : i + chunk_size]
             # Use schema to create chunk event
             chunk_event = create_chunk_event(message_id=message_id, content=chunk)
-            await websocket.send_json(chunk_event)
+            # Use safe send to handle disconnected clients gracefully
+            if not await safe_send_json(websocket, chunk_event):
+                logger.warning(
+                    "Client disconnected during streaming, aborting response",
+                    extra={"client_id": client_id, "message_id": message_id},
+                )
+                return  # Stop streaming if client disconnected
             # Small delay to simulate streaming (will be natural with real LLM streaming)
             await asyncio.sleep(0.05)
 
@@ -304,7 +370,8 @@ async def handle_chat_message(
             timestamp=now,
         )
 
-        await websocket.send_json(message_done_event)
+        # Use safe send for the final message.done event
+        await safe_send_json(websocket, message_done_event)
 
         # Track RAG query metrics (P3.3 - Business Metrics)
         has_citations = len(citations) > 0
@@ -336,4 +403,5 @@ async def handle_chat_message(
             message_id=message_id,
             timestamp=datetime.now(timezone.utc),
         )
-        await websocket.send_json(error_event)
+        # Use safe send to avoid RuntimeError if socket is already closed
+        await safe_send_json(websocket, error_event)
