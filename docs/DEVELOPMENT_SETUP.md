@@ -200,6 +200,7 @@ The repo includes a Makefile with common development tasks:
 ```bash
 # Environment
 make check-env          # Validate environment variables
+make check-openai       # Verify OpenAI API key is valid
 make install            # Install all dependencies
 
 # Development
@@ -306,6 +307,97 @@ pnpm dev
 cd apps/admin-panel
 pnpm dev
 ```
+
+---
+
+## Verifying OpenAI API Key Integration
+
+The application requires a valid OpenAI API key for LLM features (chat, RAG, voice mode).
+
+### Quick Verification
+
+```bash
+# From repo root (uses venv and settings automatically)
+make check-openai
+```
+
+This runs a verification script that:
+
+1. Loads the `OPENAI_API_KEY` from `.env` via Pydantic Settings
+2. Validates the key format (should start with `sk-`)
+3. Makes a live API call to OpenAI (lists available models)
+4. Reports success or failure with actionable error messages
+
+### Manual Script Usage
+
+```bash
+# From repo root
+cd services/api-gateway
+source venv/bin/activate
+python ../../scripts/check_openai_key.py
+
+# With verbose output
+python ../../scripts/check_openai_key.py --verbose
+
+# Skip live API test (only validate config)
+python ../../scripts/check_openai_key.py --skip-api-test
+```
+
+### Health Check Endpoint
+
+When the backend is running, you can also verify OpenAI connectivity via:
+
+```bash
+curl http://localhost:8000/health/openai
+```
+
+Returns:
+
+- `200 OK` - Key is valid and API is accessible
+- `503 Service Unavailable` - Key not configured or API not accessible
+
+Example response:
+
+```json
+{
+  "status": "ok",
+  "configured": true,
+  "accessible": true,
+  "latency_ms": 245.67,
+  "models_accessible": 108,
+  "timestamp": 1732476123.456
+}
+```
+
+### Live Integration Tests
+
+For deeper validation, run the live OpenAI integration tests:
+
+```bash
+cd services/api-gateway
+source venv/bin/activate
+export PYTHONPATH=.
+export LIVE_OPENAI_TESTS=1
+pytest tests/integration/test_openai_config.py -v
+```
+
+These tests verify:
+
+- API key can list models
+- LLM client can generate completions
+- Realtime Voice service is properly configured
+
+**Note:** Live tests are skipped by default to avoid API costs. Enable with `LIVE_OPENAI_TESTS=1`.
+
+### Troubleshooting
+
+If verification fails:
+
+1. **Key not configured**: Check `.env` file has `OPENAI_API_KEY=sk-...`
+2. **Invalid format**: Ensure key starts with `sk-` and is 40+ characters
+3. **API rejected**: Verify key at https://platform.openai.com/api-keys
+4. **Rate limited**: Check your OpenAI account usage and billing
+5. **Network error**: Verify server can reach api.openai.com
 
 ---
 

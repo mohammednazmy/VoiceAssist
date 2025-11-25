@@ -102,6 +102,109 @@ async def readiness_check(request: Request):
 # Proper Prometheus metrics with business KPIs are available at /metrics
 
 
+@router.get("/health/openai", response_class=JSONResponse)
+@limiter.limit("10/minute")
+async def openai_health_check(request: Request):
+    """
+    OpenAI API connectivity health check.
+
+    Tests that the configured OPENAI_API_KEY is valid and can connect
+    to OpenAI's API by making a cheap models.list() call.
+
+    Rate limit: 10 requests per minute (to avoid wasting API quota)
+
+    Returns:
+        200: OpenAI API is accessible and key is valid
+        503: OpenAI API is not accessible or key is invalid/missing
+
+    Response body:
+        - status: "ok" or "error"
+        - configured: whether OPENAI_API_KEY is set
+        - accessible: whether API call succeeded (only if configured)
+        - latency_ms: API call latency in milliseconds (only if accessible)
+        - error: error message (only if failed)
+        - timestamp: Unix timestamp
+
+    Note: This endpoint does NOT reveal the API key value.
+    """
+    logger.debug("openai_health_check_requested")
+
+    result = {
+        "status": "error",
+        "configured": False,
+        "accessible": False,
+        "timestamp": time.time(),
+    }
+
+    # Check if key is configured
+    api_key = settings.OPENAI_API_KEY
+    if not api_key:
+        result["error"] = "OPENAI_API_KEY not configured"
+        logger.warning("openai_health_check_failed: key not configured")
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=result,
+        )
+
+    result["configured"] = True
+
+    # Test API connectivity
+    try:
+        from openai import AsyncOpenAI
+
+        client = AsyncOpenAI(api_key=api_key, timeout=10.0)
+
+        start = time.time()
+        models = await client.models.list()
+        latency_ms = (time.time() - start) * 1000
+
+        result["status"] = "ok"
+        result["accessible"] = True
+        result["latency_ms"] = round(latency_ms, 2)
+        result["models_accessible"] = len(models.data) if models.data else 0
+
+        logger.info(
+            "openai_health_check_passed",
+            latency_ms=round(latency_ms, 2),
+            models_count=result["models_accessible"],
+        )
+
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=result,
+        )
+
+    except Exception as e:
+        error_type = type(e).__name__
+        error_msg = str(e)
+
+        # Sanitize error message to avoid leaking sensitive info
+        if (
+            "invalid_api_key" in error_msg.lower()
+            or "incorrect api key" in error_msg.lower()
+        ):
+            result["error"] = "API key invalid or expired"
+        elif "rate_limit" in error_msg.lower():
+            result["error"] = "Rate limited by OpenAI"
+        elif "timeout" in error_msg.lower():
+            result["error"] = "OpenAI API timeout"
+        elif "connection" in error_msg.lower():
+            result["error"] = f"Connection error: {error_type}"
+        else:
+            result["error"] = f"{error_type}: {error_msg[:100]}"
+
+        logger.error(
+            "openai_health_check_failed",
+            error=result["error"],
+            exc_info=True,
+        )
+
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=result,
+        )
+
+
 @router.get("/health/detailed", response_class=JSONResponse)
 @limiter.limit("50/minute")
 async def detailed_health_check(request: Request):
