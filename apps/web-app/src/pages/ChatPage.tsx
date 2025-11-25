@@ -50,9 +50,12 @@ export function ChatPage() {
   const { apiClient } = useAuth();
 
   // Check if we should auto-open voice mode (from Home page Voice Mode card)
+  // Support both query param (?mode=voice) and location state for backwards compatibility
+  const searchParams = new URLSearchParams(location.search);
   const startVoiceMode =
+    searchParams.get("mode") === "voice" ||
     (location.state as { startVoiceMode?: boolean } | null)?.startVoiceMode ===
-    true;
+      true;
   const { createFromConversation } = useTemplates();
   const toast = useToastContext();
 
