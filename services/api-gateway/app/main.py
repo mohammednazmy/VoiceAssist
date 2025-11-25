@@ -139,7 +139,7 @@ app.include_router(
     conversations.router, prefix="/api"
 )  # Phase 2 Week 10: Conversations & branching
 app.include_router(
-    voice.router
+    voice.router, prefix="/api"
 )  # Milestone 1 Phase 3: Voice features (transcription, TTS)
 app.include_router(admin_kb.router)  # Phase 5: KB Management
 app.include_router(integrations.router)  # Phase 6: Nextcloud integrations
