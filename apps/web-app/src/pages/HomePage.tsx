@@ -113,9 +113,7 @@ export function HomePage() {
             variant="elevated"
             hoverable
             className="cursor-pointer transition-all hover:scale-[1.02]"
-            onClick={() =>
-              navigate("/chat", { state: { startVoiceMode: true } })
-            }
+            onClick={() => navigate("/chat?mode=voice")}
             data-testid="voice-mode-card"
           >
             <CardHeader>
