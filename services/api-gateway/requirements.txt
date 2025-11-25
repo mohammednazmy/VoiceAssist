@@ -45,7 +45,7 @@ cachetools==5.3.2  # LRU cache for in-memory caching
 prometheus-client==0.23.1  # Prometheus metrics
 
 # Utilities
-python-dotenv==1.0.0
+python-dotenv==1.2.1
 httpx==0.26.0
 
 # Document Processing (Phase 5)
