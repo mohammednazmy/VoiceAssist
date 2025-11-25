@@ -50,7 +50,7 @@ python-dotenv==1.0.0
 httpx==0.28.1
 
 # Document Processing (Phase 5)
-pypdf==4.0.0
+pypdf==6.4.0
 
 # Calendar and Email Integration (Phase 6)
 caldav==2.1.2
