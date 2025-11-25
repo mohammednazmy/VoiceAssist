@@ -89,6 +89,15 @@ apps/web-app/src/components/voice/VoiceModeSettings.tsx
 - `VoiceModePanel.tsx` - Displays settings button and uses store values
 - `MessageInput.tsx` - Reads `autoStartOnOpen` for auto-open behavior
 
+### Advanced: Voice Mode Pipeline
+
+Settings are not just UI preferences - they propagate into real-time voice sessions:
+
+- **Voice/Language**: Sent to `/api/voice/realtime-session` and used by OpenAI Realtime API
+- **VAD Sensitivity**: Mapped to server-side VAD threshold (0→insensitive, 100→sensitive)
+
+For comprehensive pipeline documentation including backend integration, WebSocket connections, and metrics, see [VOICE_MODE_PIPELINE.md](./VOICE_MODE_PIPELINE.md).
+
 ---
 
 ## Development: Running Tests
