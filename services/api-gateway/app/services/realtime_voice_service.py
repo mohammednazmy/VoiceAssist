@@ -1,16 +1,56 @@
 """
 OpenAI Realtime API Integration Service
 Generates ephemeral tokens and session configuration for voice mode
+
+This service provides:
+1. OpenAI Realtime API session configuration
+2. Provider abstraction for future STT/TTS integrations
+3. Safe provider config (never exposes raw API keys)
 """
 
 import secrets
 import time
-from typing import Any, Dict
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
 
 from app.core.config import settings
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+@dataclass
+class TTSProviderConfig:
+    """Configuration for Text-to-Speech providers.
+
+    This data class provides metadata about TTS providers without exposing
+    sensitive API keys. Used for frontend feature detection and backend routing.
+    """
+
+    provider: str  # e.g., "openai", "elevenlabs", "azure", "gcp"
+    enabled: bool  # Whether this provider is configured and available
+    api_key_present: bool  # Whether API key is configured (but not the key itself)
+    default_voice: Optional[str] = None  # Default voice ID for this provider
+    available_voices: Optional[list[str]] = None  # List of available voice IDs
+    supports_streaming: bool = True  # Whether provider supports streaming audio
+    max_text_length: Optional[int] = None  # Max characters per request
+
+
+@dataclass
+class STTProviderConfig:
+    """Configuration for Speech-to-Text providers.
+
+    This data class provides metadata about STT providers without exposing
+    sensitive API keys. Used for frontend feature detection and backend routing.
+    """
+
+    provider: str  # e.g., "openai", "deepgram", "azure", "gcp"
+    enabled: bool  # Whether this provider is configured and available
+    api_key_present: bool  # Whether API key is configured (but not the key itself)
+    supports_streaming: bool = True  # Whether provider supports streaming audio
+    supports_interim_results: bool = True  # Whether provider supports partial transcripts
+    supported_languages: Optional[list[str]] = None  # Supported language codes
+    max_audio_duration_sec: Optional[int] = None  # Max audio duration in seconds
 
 
 class RealtimeVoiceService:
@@ -156,6 +196,140 @@ When speaking:
             instructions += f"\nResuming conversation: {conversation_id}"
 
         return instructions
+
+    def get_tts_config(self) -> TTSProviderConfig:
+        """
+        Get TTS provider configuration.
+
+        Returns metadata about the configured TTS provider without exposing
+        sensitive API keys. Used for feature detection and routing.
+
+        Returns:
+            TTSProviderConfig with provider metadata
+        """
+        provider = settings.TTS_PROVIDER or "openai"  # Default to OpenAI
+
+        if provider == "openai":
+            # OpenAI TTS (using main OpenAI key)
+            return TTSProviderConfig(
+                provider="openai",
+                enabled=bool(settings.OPENAI_API_KEY),
+                api_key_present=bool(settings.OPENAI_API_KEY),
+                default_voice=settings.TTS_VOICE or "alloy",
+                available_voices=["alloy", "echo", "fable", "onyx", "nova", "shimmer"],
+                supports_streaming=True,
+                max_text_length=4096,
+            )
+
+        elif provider == "elevenlabs":
+            # ElevenLabs TTS
+            return TTSProviderConfig(
+                provider="elevenlabs",
+                enabled=bool(settings.ELEVENLABS_API_KEY),
+                api_key_present=bool(settings.ELEVENLABS_API_KEY),
+                default_voice=settings.TTS_VOICE,
+                available_voices=None,  # Would query API for available voices
+                supports_streaming=True,
+                max_text_length=5000,
+            )
+
+        else:
+            # Unknown/unsupported provider
+            logger.warning(f"Unsupported TTS provider: {provider}")
+            return TTSProviderConfig(
+                provider=provider,
+                enabled=False,
+                api_key_present=False,
+                supports_streaming=False,
+            )
+
+    def get_stt_config(self) -> STTProviderConfig:
+        """
+        Get STT provider configuration.
+
+        Returns metadata about the configured STT provider without exposing
+        sensitive API keys. Used for feature detection and routing.
+
+        Returns:
+            STTProviderConfig with provider metadata
+        """
+        provider = settings.STT_PROVIDER or "openai"  # Default to OpenAI
+
+        if provider == "openai":
+            # OpenAI Whisper (using main OpenAI key)
+            return STTProviderConfig(
+                provider="openai",
+                enabled=bool(settings.OPENAI_API_KEY),
+                api_key_present=bool(settings.OPENAI_API_KEY),
+                supports_streaming=False,  # Whisper API is batch-only
+                supports_interim_results=False,
+                supported_languages=[
+                    "en",
+                    "es",
+                    "fr",
+                    "de",
+                    "it",
+                    "pt",
+                    "nl",
+                    "pl",
+                    "ru",
+                    "ja",
+                    "ko",
+                    "zh",
+                ],  # Whisper supports 99+ languages
+                max_audio_duration_sec=None,  # No hard limit
+            )
+
+        elif provider == "deepgram":
+            # Deepgram STT
+            return STTProviderConfig(
+                provider="deepgram",
+                enabled=bool(settings.DEEPGRAM_API_KEY),
+                api_key_present=bool(settings.DEEPGRAM_API_KEY),
+                supports_streaming=True,  # Deepgram supports streaming
+                supports_interim_results=True,
+                supported_languages=["en", "es", "fr", "de", "it", "pt", "nl", "ja"],
+                max_audio_duration_sec=None,  # No hard limit
+            )
+
+        else:
+            # Unknown/unsupported provider
+            logger.warning(f"Unsupported STT provider: {provider}")
+            return STTProviderConfig(
+                provider=provider,
+                enabled=False,
+                api_key_present=False,
+                supports_streaming=False,
+                supports_interim_results=False,
+            )
+
+    def get_available_providers(self) -> Dict[str, Any]:
+        """
+        Get summary of all available voice providers.
+
+        Returns:
+            Dictionary with provider availability status
+        """
+        return {
+            "tts": {
+                "current": settings.TTS_PROVIDER or "openai",
+                "config": {
+                    "provider": self.get_tts_config().provider,
+                    "enabled": self.get_tts_config().enabled,
+                },
+            },
+            "stt": {
+                "current": settings.STT_PROVIDER or "openai",
+                "config": {
+                    "provider": self.get_stt_config().provider,
+                    "enabled": self.get_stt_config().enabled,
+                },
+            },
+            "realtime": {
+                "enabled": self.is_enabled(),
+                "model": self.model if self.is_enabled() else None,
+            },
+        }
 
 
 # Global service instance

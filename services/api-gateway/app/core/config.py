@@ -70,17 +70,28 @@ class Settings(BaseSettings):
     LOCAL_LLM_TIMEOUT_SEC: int = 15
 
     # Voice/TTS settings (wire-up placeholder)
-    TTS_PROVIDER: Optional[str] = None  # e.g., "azure", "gcp", "elevenlabs"
+    TTS_PROVIDER: Optional[str] = None  # e.g., "openai", "elevenlabs", "azure", "gcp"
     TTS_ENDPOINT: Optional[str] = None
     TTS_API_KEY: Optional[str] = None
     TTS_VOICE: Optional[str] = None
     VOICE_WS_MAX_INFLIGHT: int = 5
+
+    # STT Provider settings
+    STT_PROVIDER: Optional[str] = None  # e.g., "openai", "deepgram", "azure", "gcp"
+    STT_ENDPOINT: Optional[str] = None
 
     # OpenAI Realtime API settings (voice mode with WebSocket)
     REALTIME_ENABLED: bool = True  # Enable Realtime API for voice sessions
     REALTIME_MODEL: str = "gpt-4o-realtime-preview-2024-10-01"  # Realtime model
     REALTIME_BASE_URL: str = "wss://api.openai.com/v1/realtime"  # WebSocket endpoint
     REALTIME_TOKEN_EXPIRY_SEC: int = 300  # 5 minutes for ephemeral tokens
+
+    # Provider API Keys (for future STT/TTS integration)
+    # IMPORTANT: These are sensitive credentials and should never be logged or exposed
+    ELEVENLABS_API_KEY: Optional[str] = None  # ElevenLabs TTS provider
+    DEEPGRAM_API_KEY: Optional[str] = None  # Deepgram STT provider
+    GOOGLE_STUDIO_API_KEY: Optional[str] = None  # Google AI Studio provider
+    DEEPSEEK_API_KEY: Optional[str] = None  # DeepSeek LLM provider
 
     # CORS (comma-separated list of allowed origins)
     ALLOWED_ORIGINS: str = (
