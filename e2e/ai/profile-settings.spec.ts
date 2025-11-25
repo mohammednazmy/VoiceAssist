@@ -1,15 +1,21 @@
 /**
  * User Profile Settings
  *
- * E2E Test Template
+ * STATUS: TEMPLATE - SKIPPED BY DEFAULT
  * Description: User updates their profile settings
  *
- * This is a template for the test. Implement the TODO steps with actual Playwright code.
+ * This is a template test with TODO placeholders. It is skipped by default
+ * to avoid false positives in CI. To promote this to a real test:
+ * 1. Implement all TODO steps with actual Playwright code
+ * 2. Add meaningful assertions
+ * 3. Remove .skip from test.describe.skip below
+ *
+ * @see docs/TESTING_GUIDE.md for template promotion process
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('User Profile Settings', () => {
+test.describe.skip("User Profile Settings (template)", () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the starting page
     await page.goto('/');

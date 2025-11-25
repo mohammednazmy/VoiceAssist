@@ -129,14 +129,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Auto Playwright dependencies
-        run: pnpm add -D auto-playwright ts-node -w
-        continue-on-error: true
-
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps
 
+      # AI test generation is skipped by default to avoid OpenAI API costs
+      # The generator skips existing files anyway, so this only matters for new scenarios
+      # Set CI_GENERATE_AI_TESTS=true in workflow to enable
       - name: Generate AI E2E tests
+        if: ${{ vars.CI_GENERATE_AI_TESTS == 'true' }}
         run: pnpm generate:e2e
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

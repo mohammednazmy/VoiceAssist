@@ -210,6 +210,102 @@ test("should navigate to profile", async ({ page }) => {
 });
 ```
 
+## AI Template Tests
+
+The `e2e/ai/` directory contains AI-generated test templates. **These are skipped by default** to prevent false positives in CI.
+
+### Template Status
+
+| File                              | Status   | Description                         |
+| --------------------------------- | -------- | ----------------------------------- |
+| `quick-consult.spec.ts`           | ACTIVE   | Fully implemented - tests chat flow |
+| `accessibility.spec.ts`           | TEMPLATE | Skipped - keyboard navigation       |
+| `clinical-context.spec.ts`        | TEMPLATE | Skipped - clinical context setup    |
+| `conversation-management.spec.ts` | TEMPLATE | Skipped - conversation CRUD         |
+| `export-conversation.spec.ts`     | TEMPLATE | Skipped - export functionality      |
+| `pdf-upload.spec.ts`              | TEMPLATE | Skipped - document upload           |
+| `profile-settings.spec.ts`        | TEMPLATE | Skipped - profile management        |
+| `register-user.spec.ts`           | TEMPLATE | Skipped - user registration         |
+| `voice-mode.spec.ts`              | TEMPLATE | Skipped - voice mode activation     |
+
+### Promoting a Template to a Real Test
+
+To convert a template into a fully functional test:
+
+1. **Implement all TODO steps** with actual Playwright code
+2. **Add meaningful assertions** that validate expected behavior
+3. **Handle edge cases** (backend unavailable, auth failures)
+4. **Remove `.skip`** from `test.describe.skip` → `test.describe`
+5. **Update the file header** from `STATUS: TEMPLATE` to `STATUS: IMPLEMENTED`
+6. **Run locally** to verify: `pnpm test:e2e --project=chromium e2e/ai/<file>.spec.ts`
+
+Example promotion (see `quick-consult.spec.ts` for reference):
+
+```typescript
+// Before (template)
+test.describe.skip("Feature Name (template)", () => {
+  test("description", async ({ page }) => {
+    // TODO: Step 1: Navigate...
+  });
+});
+
+// After (implemented)
+test.describe("Feature Name", () => {
+  test("description", async ({ page }) => {
+    await page.goto("/feature");
+    await expect(page.getByRole("heading")).toBeVisible();
+    // ... real implementation
+  });
+});
+```
+
+## Writing Robust Assertions
+
+### Avoid Always-Passing Tests
+
+**Never use patterns like:**
+
+```typescript
+// BAD: Always passes
+expect(condition || true).toBe(true);
+
+// BAD: Empty assertion
+test("should work", async ({ page }) => {
+  await page.goto("/");
+  // No assertions!
+});
+```
+
+**Use real assertions:**
+
+```typescript
+// GOOD: Real validation
+expect(stateChanged, `Expected state change but got: ${debugInfo}`).toBe(true);
+
+// GOOD: Verify actual behavior
+await expect(page.getByText("Success")).toBeVisible();
+```
+
+### Login Test Pattern
+
+The login test (`e2e/login.spec.ts`) validates form submission by checking for ANY of:
+
+- Navigation away from `/login`
+- Error alert or toast appears
+- Button changes to loading state
+- Network request was made to auth endpoint
+
+```typescript
+// Real assertion with network tracking
+page.on("request", (req) => {
+  if (req.url().includes("/auth")) loginRequestMade = true;
+});
+
+const stateChanged = !isStillOnLogin || hasAlert || hasToast || isButtonDisabled || loginRequestMade;
+
+expect(stateChanged, "Form submission must trigger some response").toBe(true);
+```
+
 ## AI-Powered Test Generation
 
 VoiceAssist includes Auto Playwright for AI-powered test generation.
@@ -309,17 +405,22 @@ pnpm test:e2e:debug
 The GitHub Actions workflow (`.github/workflows/frontend-ci.yml`) automatically:
 
 1. Installs dependencies and Playwright browsers
-2. Generates AI tests (if OPENAI_API_KEY secret is set)
-3. Runs all E2E tests
-4. Uploads test reports as artifacts
+2. Runs all E2E tests (templates are skipped)
+3. Uploads test reports as artifacts
+
+**Note:** AI test generation is disabled by default in CI to avoid OpenAI API costs. To enable it, set the repository variable `CI_GENERATE_AI_TESTS=true` in Settings > Secrets and variables > Actions > Variables.
 
 Add the following secrets in your repository settings (Settings > Secrets and variables > Actions):
 
-| Secret           | Purpose                            |
-| ---------------- | ---------------------------------- |
-| `OPENAI_API_KEY` | AI test generation (optional)      |
-| `E2E_EMAIL`      | Test user email for login tests    |
-| `E2E_PASSWORD`   | Test user password for login tests |
+| Secret           | Purpose                                          |
+| ---------------- | ------------------------------------------------ |
+| `E2E_EMAIL`      | Test user email for login tests (required)       |
+| `E2E_PASSWORD`   | Test user password for login tests (required)    |
+| `OPENAI_API_KEY` | AI test generation (optional, needs var enabled) |
+
+| Variable               | Purpose                                    |
+| ---------------------- | ------------------------------------------ |
+| `CI_GENERATE_AI_TESTS` | Set to `true` to enable AI test generation |
 
 ### Test Reports
 
