@@ -194,11 +194,35 @@ export function ChatPage() {
     regenerateMessage,
     deleteMessage,
     reconnect,
+    addMessage,
   } = useChatSession({
     conversationId: activeConversationId ?? undefined,
     onError: handleError,
     initialMessages,
   });
+
+  // Voice mode message handlers - add transcribed speech to chat timeline
+  const handleVoiceUserMessage = useCallback(
+    (content: string) => {
+      addMessage({
+        role: "user",
+        content,
+        metadata: { source: "voice" },
+      });
+    },
+    [addMessage],
+  );
+
+  const handleVoiceAssistantMessage = useCallback(
+    (content: string) => {
+      addMessage({
+        role: "assistant",
+        content,
+        metadata: { source: "voice" },
+      });
+    },
+    [addMessage],
+  );
 
   // Branching functionality
   const { createBranch } = useBranching(activeConversationId);
@@ -681,6 +705,8 @@ export function ChatPage() {
             enableRealtimeVoice={true} // Realtime voice mode (OpenAI Realtime API)
             autoOpenRealtimeVoice={startVoiceMode} // Auto-open voice mode when navigating from Voice Mode card
             conversationId={activeConversationId || undefined}
+            onVoiceUserMessage={handleVoiceUserMessage}
+            onVoiceAssistantMessage={handleVoiceAssistantMessage}
           />
         </div>
 

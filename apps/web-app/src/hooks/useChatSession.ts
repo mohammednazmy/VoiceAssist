@@ -38,6 +38,8 @@ interface UseChatSessionReturn {
   deleteMessage: (messageId: string) => Promise<void>;
   disconnect: () => void;
   reconnect: () => void;
+  /** Add a message directly to the chat timeline (for voice mode integration) */
+  addMessage: (message: Omit<Message, "id" | "timestamp">) => Message;
 }
 
 // WebSocket URL - configurable per environment
@@ -497,6 +499,28 @@ export function useChatSession(
     [conversationId, apiClient],
   );
 
+  /**
+   * Add a message directly to the chat timeline
+   * Used for voice mode integration to show transcribed speech
+   * without going through the WebSocket message flow
+   */
+  const addMessage = useCallback(
+    (messageData: Omit<Message, "id" | "timestamp">): Message => {
+      const messageId = `voice-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const newMessage: Message = {
+        ...messageData,
+        id: messageId,
+        timestamp: Date.now(),
+      };
+
+      setMessages((prev) => [...prev, newMessage]);
+      onMessage?.(newMessage);
+
+      return newMessage;
+    },
+    [onMessage],
+  );
+
   // Connect on mount
   useEffect(() => {
     connect();
@@ -517,5 +541,6 @@ export function useChatSession(
     deleteMessage,
     disconnect,
     reconnect,
+    addMessage,
   };
 }
