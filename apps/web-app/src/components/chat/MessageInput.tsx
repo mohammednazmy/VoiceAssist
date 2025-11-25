@@ -8,6 +8,7 @@ import { VoiceInput } from "../voice/VoiceInput";
 import { VoiceModePanel } from "../voice/VoiceModePanel";
 import { ChatAttachmentUpload, type PendingFile } from "./ChatAttachmentUpload";
 import { useVoiceSettingsStore } from "../../stores/voiceSettingsStore";
+import type { VoiceMetrics } from "../../hooks/useRealtimeVoiceSession";
 
 export interface MessageInputProps {
   onSend: (content: string, files?: File[]) => void;
@@ -23,6 +24,8 @@ export interface MessageInputProps {
   onVoiceUserMessage?: (content: string) => void;
   /** Called when a voice assistant message should be added to chat (AI responded) */
   onVoiceAssistantMessage?: (content: string) => void;
+  /** Called when voice metrics are updated (for backend export) */
+  onVoiceMetricsUpdate?: (metrics: VoiceMetrics) => void;
 }
 
 export function MessageInput({
@@ -36,6 +39,7 @@ export function MessageInput({
   conversationId,
   onVoiceUserMessage,
   onVoiceAssistantMessage,
+  onVoiceMetricsUpdate,
 }: MessageInputProps) {
   const [content, setContent] = useState("");
   const [showVoiceInput, setShowVoiceInput] = useState(false);
@@ -136,6 +140,7 @@ export function MessageInput({
             onClose={() => setShowRealtimeVoice(false)}
             onUserMessage={handleVoiceUserMessage}
             onAssistantMessage={handleVoiceAssistantMessage}
+            onMetricsUpdate={onVoiceMetricsUpdate}
           />
         </div>
       )}

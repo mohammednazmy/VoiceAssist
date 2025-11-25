@@ -415,3 +415,69 @@ async def create_realtime_session(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create Realtime session: {str(e)}",
         )
+
+
+class VoiceMetricsPayload(BaseModel):
+    """Request model for voice session metrics (privacy-safe, no transcripts)"""
+
+    conversation_id: str | None = None
+    connection_time_ms: int | None = None
+    time_to_first_transcript_ms: int | None = None
+    last_stt_latency_ms: int | None = None
+    last_response_latency_ms: int | None = None
+    session_duration_ms: int | None = None
+    user_transcript_count: int = 0
+    ai_response_count: int = 0
+    reconnect_count: int = 0
+    session_started_at: int | None = None
+
+
+class VoiceMetricsResponse(BaseModel):
+    """Response model for voice metrics submission"""
+
+    status: str
+
+
+@router.post(
+    "/metrics",
+    response_model=VoiceMetricsResponse,
+    summary="Submit voice session metrics",
+    description="Submit timing and count metrics from a voice session (no transcript content)",
+)
+async def post_voice_metrics(
+    payload: VoiceMetricsPayload,
+    current_user: User = Depends(get_current_user),
+) -> VoiceMetricsResponse:
+    """
+    Submit voice session metrics for observability.
+
+    This endpoint receives timing and count metrics from frontend voice sessions.
+    No transcript content or PHI is sent - only timing and counts.
+
+    Metrics are logged for aggregation and analysis. In production, these can be
+    forwarded to a metrics backend (Prometheus, Datadog, etc.).
+
+    Args:
+        payload: VoiceMetricsPayload with timing and count metrics
+        current_user: Authenticated user
+
+    Returns:
+        VoiceMetricsResponse with status "ok"
+    """
+    logger.info(
+        "VoiceMetrics received",
+        extra={
+            "user_id": current_user.id,
+            "conversation_id": payload.conversation_id,
+            "connection_time_ms": payload.connection_time_ms,
+            "time_to_first_transcript_ms": payload.time_to_first_transcript_ms,
+            "last_stt_latency_ms": payload.last_stt_latency_ms,
+            "last_response_latency_ms": payload.last_response_latency_ms,
+            "session_duration_ms": payload.session_duration_ms,
+            "user_transcript_count": payload.user_transcript_count,
+            "ai_response_count": payload.ai_response_count,
+            "reconnect_count": payload.reconnect_count,
+            "session_started_at": payload.session_started_at,
+        },
+    )
+    return VoiceMetricsResponse(status="ok")

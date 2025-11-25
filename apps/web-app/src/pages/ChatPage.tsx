@@ -34,6 +34,7 @@ import type {
   WebSocketErrorCode,
   Conversation,
 } from "@voiceassist/types";
+import type { VoiceMetrics } from "../hooks/useRealtimeVoiceSession";
 
 type LoadingState = "idle" | "creating" | "validating" | "loading-history";
 type ErrorType =
@@ -222,6 +223,57 @@ export function ChatPage() {
       });
     },
     [addMessage],
+  );
+
+  /**
+   * Handle voice metrics update - export to backend for observability
+   * Only sends in production when VITE_ENABLE_VOICE_METRICS is set
+   */
+  const handleVoiceMetricsUpdate = useCallback(
+    (metrics: VoiceMetrics) => {
+      // Only send metrics in production with feature flag enabled
+      const shouldSendMetrics =
+        import.meta.env.PROD ||
+        import.meta.env.VITE_ENABLE_VOICE_METRICS === "true";
+
+      if (!shouldSendMetrics) {
+        return;
+      }
+
+      try {
+        const payload = {
+          conversation_id: activeConversationId ?? undefined,
+          connection_time_ms: metrics.connectionTimeMs,
+          time_to_first_transcript_ms: metrics.timeToFirstTranscriptMs,
+          last_stt_latency_ms: metrics.lastSttLatencyMs,
+          last_response_latency_ms: metrics.lastResponseLatencyMs,
+          session_duration_ms: metrics.sessionDurationMs,
+          user_transcript_count: metrics.userTranscriptCount,
+          ai_response_count: metrics.aiResponseCount,
+          reconnect_count: metrics.reconnectCount,
+          session_started_at: metrics.sessionStartedAt,
+        };
+
+        // Use sendBeacon for reliability (survives page navigation)
+        if (navigator.sendBeacon) {
+          const blob = new Blob([JSON.stringify(payload)], {
+            type: "application/json",
+          });
+          navigator.sendBeacon("/api/voice/metrics", blob);
+        } else {
+          // Fallback to fetch with keepalive
+          void fetch("/api/voice/metrics", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            keepalive: true,
+          });
+        }
+      } catch (err) {
+        console.warn("[VoiceMetrics] Failed to send metrics", err);
+      }
+    },
+    [activeConversationId],
   );
 
   // Branching functionality
@@ -707,6 +759,7 @@ export function ChatPage() {
             conversationId={activeConversationId || undefined}
             onVoiceUserMessage={handleVoiceUserMessage}
             onVoiceAssistantMessage={handleVoiceAssistantMessage}
+            onVoiceMetricsUpdate={handleVoiceMetricsUpdate}
           />
         </div>
 
