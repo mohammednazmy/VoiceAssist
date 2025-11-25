@@ -2,7 +2,7 @@
  * useClinicalContext Hook Tests
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach, type Mock } from "vitest";
 import { useClinicalContext } from "../useClinicalContext";
 import { useAuth } from "../useAuth";
@@ -206,15 +206,33 @@ describe("useClinicalContext", () => {
   });
 
   it("should clear context locally", async () => {
-    const { result } = renderHook(() => useClinicalContext("session-1"));
-
-    // Manually set context
-    (result.current as any).context = {
+    // First load a context
+    const existingContext: ClinicalContext = {
       id: "ctx-1",
       userId: "user-1",
+      sessionId: "session-1",
+      age: 45,
+      gender: "male",
+      problems: [],
+      medications: [],
+      allergies: [],
+      vitals: {},
+      lastUpdated: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     };
 
-    result.current.clearContext();
+    mockApiClient.getCurrentClinicalContext.mockResolvedValue(existingContext);
+
+    const { result } = renderHook(() => useClinicalContext("session-1"));
+
+    await waitFor(() => {
+      expect(result.current.context).toEqual(existingContext);
+    });
+
+    // Now clear it
+    act(() => {
+      result.current.clearContext();
+    });
 
     expect(result.current.context).toBeNull();
     expect(result.current.error).toBeNull();

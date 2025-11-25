@@ -8,11 +8,10 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
-    "test": "vitest run",
-    "test:fast": "vitest run --no-coverage",
+    "test": "NODE_OPTIONS='--max-old-space-size=4096' vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "NODE_OPTIONS='--max-old-space-size=4096' vitest --coverage"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -28,7 +27,7 @@
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
-    "zod": "^3.23.8",
+    "zod": "^3.25.76",
     "zustand": "^4.5.7"
   },
   "devDependencies": {

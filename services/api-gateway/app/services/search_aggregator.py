@@ -29,6 +29,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 import openai
+from app.core.config import settings
 from app.core.metrics import rag_embedding_tokens_total, rag_query_duration_seconds, rag_search_results_total
 from app.services.cache_service import cache_service, generate_cache_key
 from qdrant_client import QdrantClient
@@ -69,8 +70,16 @@ class SearchAggregator:
             collection_name: Name of the collection to search
             embedding_model: OpenAI embedding model to use
         """
+        # Check if Qdrant is enabled
+        self.qdrant_enabled = getattr(settings, "QDRANT_ENABLED", True)
+
         # Qdrant client is sync; keep a short timeout and execute calls off the event loop
-        self.qdrant_client = QdrantClient(url=qdrant_url, timeout=5.0)
+        if self.qdrant_enabled:
+            self.qdrant_client = QdrantClient(url=qdrant_url, timeout=5.0)
+        else:
+            self.qdrant_client = None
+            logger.warning("Qdrant is disabled - search will return empty results")
+
         self.collection_name = collection_name
         self.embedding_model = embedding_model
 
@@ -156,6 +165,11 @@ class SearchAggregator:
         Returns:
             List of search results sorted by relevance
         """
+        # Return empty results if Qdrant is disabled
+        if not self.qdrant_enabled or self.qdrant_client is None:
+            logger.debug("Qdrant disabled - returning empty search results")
+            return []
+
         backoff_seconds = [1, 2, 4]
 
         # Check cache first
@@ -282,6 +296,11 @@ class SearchAggregator:
         Returns:
             List of document chunks
         """
+        # Return empty results if Qdrant is disabled
+        if not self.qdrant_enabled or self.qdrant_client is None:
+            logger.debug("Qdrant disabled - returning empty document chunks")
+            return []
+
         backoff_seconds = [1, 2, 4]
         last_error: Optional[Exception] = None
 

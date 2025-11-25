@@ -40,6 +40,7 @@ class Settings(BaseSettings):
         return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}"
 
     # Qdrant
+    QDRANT_ENABLED: bool = True  # Set to False for local development without Qdrant
     QDRANT_HOST: str = "qdrant"
     QDRANT_PORT: int = 6333
 

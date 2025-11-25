@@ -125,7 +125,9 @@ describe("useToast", () => {
     expect(result.current.toasts).toHaveLength(0);
   });
 
-  it("should auto-dismiss toast after duration", () => {
+  it("should pass duration to toast for auto-dismiss", () => {
+    // Note: Auto-dismiss is handled by the Toast component, not the hook.
+    // The hook only stores the duration and passes it to toasts.
     const { result } = renderHook(() => useToast());
 
     act(() => {
@@ -133,15 +135,16 @@ describe("useToast", () => {
     });
 
     expect(result.current.toasts).toHaveLength(1);
-
-    act(() => {
-      vi.advanceTimersByTime(5000);
+    expect(result.current.toasts[0]).toMatchObject({
+      type: "success",
+      message: "Auto-dismiss",
+      duration: 5000,
     });
-
-    expect(result.current.toasts).toHaveLength(0);
   });
 
-  it("should not auto-dismiss if duration is 0", () => {
+  it("should handle duration of 0 (no auto-dismiss)", () => {
+    // Note: Auto-dismiss is handled by the Toast component, not the hook.
+    // Duration of 0 means no auto-dismiss.
     const { result } = renderHook(() => useToast());
 
     act(() => {
@@ -149,12 +152,11 @@ describe("useToast", () => {
     });
 
     expect(result.current.toasts).toHaveLength(1);
-
-    act(() => {
-      vi.advanceTimersByTime(10000);
+    expect(result.current.toasts[0]).toMatchObject({
+      type: "success",
+      message: "No auto-dismiss",
+      duration: 0,
     });
-
-    expect(result.current.toasts).toHaveLength(1);
   });
 
   it("should return unique toast IDs", () => {
