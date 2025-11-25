@@ -159,6 +159,8 @@ export function useRealtimeVoiceSession(
   const connectRef = useRef<() => Promise<void>>(() => Promise.resolve());
   const updateStatusRef = useRef<(status: ConnectionStatus) => void>(() => {});
   const handleRealtimeMessageRef = useRef<(message: any) => void>(() => {});
+  // Ref to track current status for error reporting (Sentry)
+  const statusRef = useRef<ConnectionStatus>(status);
 
   // Constants for reconnection
   const MAX_RECONNECT_ATTEMPTS = 5;
@@ -264,6 +266,11 @@ export function useRealtimeVoiceSession(
   useEffect(() => {
     metricsRef.current = metrics;
   }, [metrics]);
+
+  // Keep statusRef in sync for error reporting
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   /**
    * Handle errors - log, update state, and report to Sentry
