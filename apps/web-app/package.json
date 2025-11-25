@@ -8,10 +8,10 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
-    "test": "vitest run",
+    "test": "NODE_OPTIONS='--max-old-space-size=4096' vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "NODE_OPTIONS='--max-old-space-size=4096' vitest --coverage"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
