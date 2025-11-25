@@ -16,25 +16,31 @@ test.describe('Voice Mode Session', () => {
   });
 
   test('User starts a voice-enabled consultation session', async ({ page }) => {
-    // TODO: Step 1: Log in with valid credentials
+    // TODO: Step 1: Navigate to /login and authenticate with test credentials
     // await page...;
 
-    // TODO: Step 2: Navigate to the chat page
+    // TODO: Step 2: Navigate to the chat page at /chat
     // await page...;
 
-    // TODO: Step 3: Click on the voice input button/microphone icon
+    // TODO: Step 3: Look for voice input button (microphone icon)
     // await page...;
 
-    // TODO: Step 4: Verify the voice mode interface activates
+    // TODO: Step 4: Click on the voice input button
     // await page...;
 
-    // TODO: Step 5: Check that the audio visualizer or recording indicator appears
+    // TODO: Step 5: Verify the voice mode interface activates
     // await page...;
 
-    // TODO: Step 6: Stop the recording
+    // TODO: Step 6: Check that the audio visualizer or recording indicator appears
     // await page...;
 
-    // TODO: Step 7: Verify the transcribed text appears in the input field or chat
+    // TODO: Step 7: Wait 2 seconds for voice mode to initialize
+    // await page...;
+
+    // TODO: Step 8: Click stop recording button
+    // await page...;
+
+    // TODO: Step 9: Verify any transcribed text appears or voice mode deactivates
     // await page...;
   });
 });

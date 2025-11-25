@@ -43,9 +43,13 @@ pnpm test:e2e:report
 ```
 VoiceAssist/
 ├── e2e/                          # E2E test directory
+│   ├── fixtures/                 # Test fixtures and helpers
+│   │   └── auth.ts               # Authentication helpers
 │   ├── login.spec.ts             # Manual login tests
 │   └── ai/                       # AI-generated tests
+│       ├── register-user.spec.ts
 │       ├── quick-consult.spec.ts
+│       ├── pdf-upload.spec.ts
 │       ├── voice-mode.spec.ts
 │       ├── conversation-management.spec.ts
 │       ├── profile-settings.spec.ts
@@ -57,6 +61,38 @@ VoiceAssist/
 │   └── generate-e2e-tests.js     # AI test generator script
 ├── playwright-report/            # HTML test reports (generated)
 └── test-results/                 # Test artifacts (generated)
+```
+
+## Test Credentials Setup
+
+E2E tests require test credentials. Set these in your `.env` file:
+
+```bash
+# E2E Test Credentials (do not commit real credentials)
+E2E_BASE_URL=http://localhost:5173
+E2E_EMAIL=test@example.com
+E2E_PASSWORD=TestPassword123!
+```
+
+The auth fixtures in `e2e/fixtures/auth.ts` provide helpers for:
+
+- **Mock authentication**: Set localStorage state to bypass login
+- **UI-based login**: Actually fill and submit the login form
+- **Clearing auth state**: Reset authentication between tests
+
+### Using Auth Fixtures
+
+```typescript
+import { TEST_USER, setupAuthenticatedState, clearAuthState, loginViaUI } from "./fixtures/auth";
+
+test.beforeEach(async ({ page }) => {
+  // Option 1: Mock authentication (faster, no API needed)
+  await setupAuthenticatedState(page);
+  await page.goto("/");
+
+  // Option 2: Login via UI (tests actual login flow)
+  await loginViaUI(page);
+});
 ```
 
 ## Configuration
@@ -122,14 +158,37 @@ test.describe("Feature Name", () => {
 #### Authentication
 
 ```typescript
-// Login helper
+// Login helper - note: use #password for password field
+// (getByLabel matches multiple elements due to "Show password" button)
 async function login(page: Page, email: string, password: string) {
   await page.goto("/login");
   await page.getByLabel(/email/i).fill(email);
-  await page.getByLabel(/password/i).fill(password);
+  await page.locator("#password").fill(password); // Use ID selector for password
   await page.getByRole("button", { name: /sign in/i }).click();
   await expect(page).toHaveURL("/");
 }
+```
+
+#### Common Selectors for VoiceAssist
+
+```typescript
+// Form fields
+page.getByLabel(/email/i); // Email input
+page.locator("#password"); // Password input (use ID)
+page.getByRole("button", { name: /sign in/i }); // Sign in button
+page.getByRole("button", { name: /sign up/i }); // Sign up button
+
+// Navigation
+page.getByRole("link", { name: /sign up/i }); // Registration link
+page.getByRole("link", { name: /forgot/i }); // Forgot password link
+
+// OAuth buttons
+page.getByRole("button", { name: /google/i }); // Google OAuth
+page.getByRole("button", { name: /microsoft/i }); // Microsoft OAuth
+
+// Validation errors
+page.locator('[role="alert"]'); // Error alert messages
+page.getByText(/required/i); // Required field errors
 ```
 
 #### Form Validation
@@ -299,8 +358,12 @@ Failed tests automatically capture:
 | Variable         | Description                      | Default                 |
 | ---------------- | -------------------------------- | ----------------------- |
 | `E2E_BASE_URL`   | Base URL for tests               | `http://localhost:5173` |
+| `E2E_EMAIL`      | Test user email address          | `test@example.com`      |
+| `E2E_PASSWORD`   | Test user password               | `TestPassword123!`      |
 | `OPENAI_API_KEY` | OpenAI API key for AI generation | -                       |
 | `CI`             | Set to `true` in CI environments | -                       |
+
+**Security Note**: Never commit real credentials. Use `.env` files (gitignored) for local development and GitHub Secrets for CI.
 
 ## Troubleshooting
 

@@ -16,34 +16,34 @@ test.describe('Conversation Management', () => {
   });
 
   test('User manages conversations - create, rename, delete', async ({ page }) => {
-    // TODO: Step 1: Log in with valid credentials
+    // TODO: Step 1: Navigate to /login and authenticate
     // await page...;
 
-    // TODO: Step 2: Navigate to the chat page
+    // TODO: Step 2: Navigate to /chat
     // await page...;
 
-    // TODO: Step 3: Start a new conversation by typing a message
+    // TODO: Step 3: Look for conversation sidebar or list
     // await page...;
 
-    // TODO: Step 4: Verify the conversation appears in the sidebar
+    // TODO: Step 4: Type a test message "Hello, this is a test" and send
     // await page...;
 
-    // TODO: Step 5: Open the conversation options menu
+    // TODO: Step 5: Verify the conversation appears in the sidebar
     // await page...;
 
-    // TODO: Step 6: Rename the conversation to "Test Conversation"
+    // TODO: Step 6: Click on conversation options menu (three dots)
     // await page...;
 
-    // TODO: Step 7: Verify the new name appears in the sidebar
+    // TODO: Step 7: Select rename option
     // await page...;
 
-    // TODO: Step 8: Create another conversation
+    // TODO: Step 8: Enter new name "Test Conversation"
     // await page...;
 
-    // TODO: Step 9: Delete the first conversation
+    // TODO: Step 9: Confirm the rename
     // await page...;
 
-    // TODO: Step 10: Verify the conversation is removed from the list
+    // TODO: Step 10: Verify the new name appears in the sidebar
     // await page...;
   });
 });

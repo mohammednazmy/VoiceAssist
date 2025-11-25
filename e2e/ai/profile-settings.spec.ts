@@ -16,28 +16,31 @@ test.describe('User Profile Settings', () => {
   });
 
   test('User updates their profile settings', async ({ page }) => {
-    // TODO: Step 1: Log in with valid credentials
+    // TODO: Step 1: Navigate to /login and authenticate
     // await page...;
 
-    // TODO: Step 2: Navigate to the profile page
+    // TODO: Step 2: Navigate to /profile page
     // await page...;
 
-    // TODO: Step 3: Verify the profile page loads with user information
+    // TODO: Step 3: Verify the profile page loads with user email displayed
     // await page...;
 
-    // TODO: Step 4: Update the display name field
+    // TODO: Step 4: Find the display name input field
     // await page...;
 
-    // TODO: Step 5: Save the changes
+    // TODO: Step 5: Clear existing name and enter "Updated Test User"
     // await page...;
 
-    // TODO: Step 6: Verify a success message appears
+    // TODO: Step 6: Click the Save or Update button
     // await page...;
 
-    // TODO: Step 7: Refresh the page
+    // TODO: Step 7: Verify a success message or toast appears
     // await page...;
 
-    // TODO: Step 8: Verify the updated name persists
+    // TODO: Step 8: Refresh the page
+    // await page...;
+
+    // TODO: Step 9: Verify the updated name persists after refresh
     // await page...;
   });
 });
