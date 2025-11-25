@@ -9,6 +9,7 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "test": "NODE_OPTIONS='--max-old-space-size=4096' vitest run",
+    "test:fast": "vitest run src/hooks/__tests__/useRealtimeVoiceSession.test.ts src/hooks/__tests__/useChatSession.test.ts src/__tests__/AppSmoke.test.tsx --reporter=dot",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "NODE_OPTIONS='--max-old-space-size=4096' vitest --coverage"
