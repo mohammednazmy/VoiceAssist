@@ -105,11 +105,12 @@ pnpm test:e2e --project=chromium e2e/voice-mode-session-smoke.spec.ts
 | VoiceModeSettings.test.tsx                | 25    | Component rendering, interactions |
 | MessageInput-voice-settings.test.tsx      | 12    | Integration with chat input       |
 | useChatSession-voice-integration.test.ts  | 8     | Message structure validation      |
+| test_voice_metrics.py (backend)           | 11    | Metrics endpoint validation       |
 | voice-mode-navigation.spec.ts             | 4     | E2E navigation flow               |
 | voice-mode-session-smoke.spec.ts          | 3     | E2E session smoke tests           |
 | voice-mode-voice-chat-integration.spec.ts | 4     | E2E panel integration             |
 
-**Total: 95 tests across 8 files**
+**Total: 106 tests across 9 files**
 
 ## Observability
 
@@ -145,6 +146,14 @@ interface VoiceMetrics {
   sessionStartedAt: number | null;
 }
 ```
+
+### Metrics Export to Backend
+
+Metrics are automatically sent to `POST /api/voice/metrics` in production.
+
+- **Privacy**: No PHI or transcripts sent, only timing/counts
+- **Enable in dev**: Set `VITE_ENABLE_VOICE_METRICS=true`
+- **Backend logs**: Metrics logged for aggregation/alerting
 
 ## Troubleshooting
 

@@ -392,7 +392,7 @@ For comprehensive voice pipeline validation, use the **Voice Pipeline Smoke Suit
 
 # Backend (mocked)
 cd services/api-gateway && source venv/bin/activate
-python -m pytest tests/integration/test_openai_config.py -v
+python -m pytest tests/integration/test_openai_config.py tests/integration/test_voice_metrics.py -v
 
 # Frontend unit (run individually to avoid OOM)
 cd apps/web-app && export NODE_OPTIONS="--max-old-space-size=768"

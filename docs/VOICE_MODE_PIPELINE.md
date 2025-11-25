@@ -358,6 +358,78 @@ useRealtimeVoiceSession({
 });
 ```
 
+### Metrics Export to Backend
+
+Metrics can be automatically exported to the backend for aggregation and alerting.
+
+**Backend Endpoint**: `POST /api/voice/metrics`
+
+**Location**: `services/api-gateway/app/api/voice.py`
+
+#### Request Schema
+
+```typescript
+interface VoiceMetricsPayload {
+  conversation_id?: string;
+  connection_time_ms?: number;
+  time_to_first_transcript_ms?: number;
+  last_stt_latency_ms?: number;
+  last_response_latency_ms?: number;
+  session_duration_ms?: number;
+  user_transcript_count: number;
+  ai_response_count: number;
+  reconnect_count: number;
+  session_started_at?: number;
+}
+```
+
+#### Response
+
+```typescript
+interface VoiceMetricsResponse {
+  status: "ok";
+}
+```
+
+#### Privacy
+
+**No PHI or transcript content is sent.** Only timing metrics and counts.
+
+#### Frontend Configuration
+
+Metrics export is controlled by environment variables:
+
+- **Production** (`import.meta.env.PROD`): Metrics sent automatically
+- **Development**: Set `VITE_ENABLE_VOICE_METRICS=true` to enable
+
+The export uses `navigator.sendBeacon()` for reliability (survives page navigation).
+
+#### Backend Logging
+
+Metrics are logged with user context:
+
+```python
+logger.info(
+    "VoiceMetrics received",
+    extra={
+        "user_id": current_user.id,
+        "conversation_id": payload.conversation_id,
+        "connection_time_ms": payload.connection_time_ms,
+        "session_duration_ms": payload.session_duration_ms,
+        ...
+    },
+)
+```
+
+#### Testing
+
+```bash
+# Backend
+cd /home/asimo/VoiceAssist/services/api-gateway
+source venv/bin/activate && export PYTHONPATH=.
+python -m pytest tests/integration/test_voice_metrics.py -v
+```
+
 ## Security
 
 ### Ephemeral Token Architecture
@@ -439,9 +511,10 @@ LIVE_REALTIME_E2E=1 npx playwright test e2e/voice-mode-session-smoke.spec.ts
 
 | File                                                           | Purpose                            |
 | -------------------------------------------------------------- | ---------------------------------- |
-| `services/api-gateway/app/api/voice.py`                        | API routes, timing logs            |
+| `services/api-gateway/app/api/voice.py`                        | API routes, metrics, timing logs   |
 | `services/api-gateway/app/services/realtime_voice_service.py`  | Session creation, token generation |
 | `services/api-gateway/tests/integration/test_openai_config.py` | Integration tests                  |
+| `services/api-gateway/tests/integration/test_voice_metrics.py` | Metrics endpoint tests             |
 
 ### Frontend
 
@@ -476,7 +549,7 @@ LIVE_REALTIME_E2E=1 npx playwright test e2e/voice-mode-session-smoke.spec.ts
 
 ## Future Work
 
-- **Metrics export to backend**: Send metrics to backend for aggregation/alerting
+- ~~**Metrics export to backend**: Send metrics to backend for aggregation/alerting~~ ✓ Implemented
 - **Voice→chat transcript content E2E**: Test actual transcript content in chat timeline
 - **Performance baseline**: Establish latency targets (connection <2s, STT <500ms)
 - **Error tracking integration**: Send errors to Sentry/similar

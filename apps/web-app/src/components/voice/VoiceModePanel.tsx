@@ -11,7 +11,10 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { useRealtimeVoiceSession } from "../../hooks/useRealtimeVoiceSession";
+import {
+  useRealtimeVoiceSession,
+  type VoiceMetrics,
+} from "../../hooks/useRealtimeVoiceSession";
 import { WaveformVisualizer } from "../../utils/waveform";
 import { VoiceModeSettings } from "./VoiceModeSettings";
 import {
@@ -28,6 +31,8 @@ export interface VoiceModePanelProps {
   onUserMessage?: (content: string) => void;
   /** Called when a final assistant response is ready to be added to chat */
   onAssistantMessage?: (content: string) => void;
+  /** Called when voice metrics are updated (for observability/export) */
+  onMetricsUpdate?: (metrics: VoiceMetrics) => void;
 }
 
 export function VoiceModePanel({
@@ -36,6 +41,7 @@ export function VoiceModePanel({
   onTranscriptReceived,
   onUserMessage,
   onAssistantMessage,
+  onMetricsUpdate,
 }: VoiceModePanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const waveformRef = useRef<WaveformVisualizer | null>(null);
@@ -120,6 +126,8 @@ export function VoiceModePanel({
           `[VoiceModePanel] voice_session_duration_ms=${metrics.sessionDurationMs}`,
         );
       }
+      // Forward to parent for backend export
+      onMetricsUpdate?.(metrics);
     },
     autoConnect: false, // Manual connect
   });
