@@ -3,16 +3,17 @@
  */
 
 import { renderHook, act } from "@testing-library/react";
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import { useToast } from "../useToast";
 
 describe("useToast", () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
   });
 
   it("should initialize with empty toasts", () => {
@@ -134,7 +135,7 @@ describe("useToast", () => {
     expect(result.current.toasts).toHaveLength(1);
 
     act(() => {
-      jest.advanceTimersByTime(5000);
+      vi.advanceTimersByTime(5000);
     });
 
     expect(result.current.toasts).toHaveLength(0);
@@ -150,7 +151,7 @@ describe("useToast", () => {
     expect(result.current.toasts).toHaveLength(1);
 
     act(() => {
-      jest.advanceTimersByTime(10000);
+      vi.advanceTimersByTime(10000);
     });
 
     expect(result.current.toasts).toHaveLength(1);
