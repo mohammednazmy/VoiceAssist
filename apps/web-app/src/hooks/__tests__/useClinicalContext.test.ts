@@ -2,27 +2,28 @@
  * useClinicalContext Hook Tests
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
+import { vi, describe, it, expect, beforeEach, type Mock } from "vitest";
 import { useClinicalContext } from "../useClinicalContext";
 import { useAuth } from "../useAuth";
 import type { ClinicalContext } from "@voiceassist/types";
 
 // Mock useAuth
-jest.mock("../useAuth");
+vi.mock("../useAuth");
 
 const mockApiClient = {
-  getCurrentClinicalContext: jest.fn(),
-  createClinicalContext: jest.fn(),
-  updateClinicalContext: jest.fn(),
-  deleteClinicalContext: jest.fn(),
+  getCurrentClinicalContext: vi.fn(),
+  createClinicalContext: vi.fn(),
+  updateClinicalContext: vi.fn(),
+  deleteClinicalContext: vi.fn(),
 };
 
 describe("useClinicalContext", () => {
   beforeEach(() => {
-    (useAuth as jest.Mock).mockReturnValue({
+    (useAuth as Mock).mockReturnValue({
       apiClient: mockApiClient,
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should initialize with null context", () => {
@@ -61,7 +62,9 @@ describe("useClinicalContext", () => {
 
     expect(result.current.context).toEqual(mockContext);
     expect(result.current.hasContext).toBe(true);
-    expect(mockApiClient.getCurrentClinicalContext).toHaveBeenCalledWith("session-1");
+    expect(mockApiClient.getCurrentClinicalContext).toHaveBeenCalledWith(
+      "session-1",
+    );
   });
 
   it("should handle 404 gracefully when no context exists", async () => {
@@ -165,7 +168,9 @@ describe("useClinicalContext", () => {
     });
 
     expect(result.current.context).toEqual(updatedContext);
-    expect(mockApiClient.updateClinicalContext).toHaveBeenCalledWith("ctx-1", { age: 46 });
+    expect(mockApiClient.updateClinicalContext).toHaveBeenCalledWith("ctx-1", {
+      age: 46,
+    });
   });
 
   it("should delete context", async () => {
@@ -201,15 +206,33 @@ describe("useClinicalContext", () => {
   });
 
   it("should clear context locally", async () => {
-    const { result } = renderHook(() => useClinicalContext("session-1"));
-
-    // Manually set context
-    (result.current as any).context = {
+    // First load a context
+    const existingContext: ClinicalContext = {
       id: "ctx-1",
       userId: "user-1",
+      sessionId: "session-1",
+      age: 45,
+      gender: "male",
+      problems: [],
+      medications: [],
+      allergies: [],
+      vitals: {},
+      lastUpdated: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     };
 
-    result.current.clearContext();
+    mockApiClient.getCurrentClinicalContext.mockResolvedValue(existingContext);
+
+    const { result } = renderHook(() => useClinicalContext("session-1"));
+
+    await waitFor(() => {
+      expect(result.current.context).toEqual(existingContext);
+    });
+
+    // Now clear it
+    act(() => {
+      result.current.clearContext();
+    });
 
     expect(result.current.context).toBeNull();
     expect(result.current.error).toBeNull();
