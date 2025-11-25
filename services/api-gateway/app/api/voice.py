@@ -40,6 +40,10 @@ class RealtimeSessionRequest(BaseModel):
     """Request model for Realtime session configuration"""
 
     conversation_id: str | None = None
+    # Optional Voice Mode settings from frontend
+    voice: str | None = None  # "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"
+    language: str | None = None  # "en" | "es" | "fr" | "de" | "it" | "pt"
+    vad_sensitivity: int | None = None  # 0-100 (maps to VAD threshold)
 
 
 class RealtimeAuthInfo(BaseModel):
@@ -358,6 +362,9 @@ async def create_realtime_session(
         config = await realtime_voice_service.generate_session_config(
             user_id=str(current_user.id),
             conversation_id=request.conversation_id,
+            voice=request.voice,
+            language=request.language,
+            vad_sensitivity=request.vad_sensitivity,
         )
 
         logger.info(
