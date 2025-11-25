@@ -98,6 +98,29 @@ export function VoiceModePanel({
     onConnectionChange: (newStatus) => {
       console.log("[VoiceModePanel] Status changed:", newStatus);
     },
+    onMetricsUpdate: (metrics) => {
+      // Log key metrics for observability (no secrets or PHI)
+      if (metrics.connectionTimeMs !== null) {
+        console.log(
+          `[VoiceModePanel] voice_session_connect_ms=${metrics.connectionTimeMs}`,
+        );
+      }
+      if (metrics.lastSttLatencyMs !== null) {
+        console.log(
+          `[VoiceModePanel] voice_stt_latency_ms=${metrics.lastSttLatencyMs}`,
+        );
+      }
+      if (metrics.lastResponseLatencyMs !== null) {
+        console.log(
+          `[VoiceModePanel] voice_first_reply_ms=${metrics.lastResponseLatencyMs}`,
+        );
+      }
+      if (metrics.sessionDurationMs !== null) {
+        console.log(
+          `[VoiceModePanel] voice_session_duration_ms=${metrics.sessionDurationMs}`,
+        );
+      }
+    },
     autoConnect: false, // Manual connect
   });
 
