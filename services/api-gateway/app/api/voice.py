@@ -8,6 +8,8 @@ Providers:
 - Stubs for future providers (Azure/GCP/ElevenLabs) using config
 """
 
+import time
+
 import httpx
 from app.core.config import settings
 from app.core.dependencies import get_current_user
@@ -341,11 +343,15 @@ async def create_realtime_session(
     Raises:
         HTTPException: If Realtime API is not enabled or configured
     """
+    start_time = time.monotonic()
     logger.info(
         f"Creating Realtime session for user {current_user.id}",
         extra={
             "user_id": current_user.id,
             "conversation_id": request.conversation_id,
+            "voice": request.voice,
+            "language": request.language,
+            "vad_sensitivity": request.vad_sensitivity,
         },
     )
 
@@ -367,30 +373,43 @@ async def create_realtime_session(
             vad_sensitivity=request.vad_sensitivity,
         )
 
+        duration_ms = int((time.monotonic() - start_time) * 1000)
         logger.info(
             f"Realtime session created for user {current_user.id}",
             extra={
                 "user_id": current_user.id,
                 "session_id": config["session_id"],
                 "expires_at": config["expires_at"],
+                "voice": config.get("voice_config", {}).get("voice"),
+                "duration_ms": duration_ms,
             },
         )
 
         return RealtimeSessionResponse(**config)
 
     except ValueError as e:
+        duration_ms = int((time.monotonic() - start_time) * 1000)
         logger.error(
             f"Failed to create Realtime session: {str(e)}",
-            extra={"user_id": current_user.id, "error": str(e)},
+            extra={
+                "user_id": current_user.id,
+                "error": str(e),
+                "duration_ms": duration_ms,
+            },
         )
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=str(e),
         )
     except Exception as e:
+        duration_ms = int((time.monotonic() - start_time) * 1000)
         logger.error(
             f"Realtime session error: {str(e)}",
-            extra={"user_id": current_user.id, "error": str(e)},
+            extra={
+                "user_id": current_user.id,
+                "error": str(e),
+                "duration_ms": duration_ms,
+            },
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

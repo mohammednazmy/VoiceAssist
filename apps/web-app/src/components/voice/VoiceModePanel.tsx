@@ -24,12 +24,18 @@ export interface VoiceModePanelProps {
   conversationId?: string;
   onClose?: () => void;
   onTranscriptReceived?: (text: string, isFinal: boolean) => void;
+  /** Called when a final user transcript is ready to be added to chat */
+  onUserMessage?: (content: string) => void;
+  /** Called when a final assistant response is ready to be added to chat */
+  onAssistantMessage?: (content: string) => void;
 }
 
 export function VoiceModePanel({
   conversationId,
   onClose,
   onTranscriptReceived,
+  onUserMessage,
+  onAssistantMessage,
 }: VoiceModePanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const waveformRef = useRef<WaveformVisualizer | null>(null);
@@ -41,6 +47,10 @@ export function VoiceModePanel({
   const [aiTranscript, setAiTranscript] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [micPermissionDenied, setMicPermissionDenied] = useState(false);
+
+  // Track pending final transcripts to add to chat
+  const pendingUserMessageRef = useRef<string | null>(null);
+  const pendingAiMessageRef = useRef<string | null>(null);
 
   // Voice settings from store
   const { voice, language, showStatusHints } = useVoiceSettingsStore();
@@ -57,11 +67,22 @@ export function VoiceModePanel({
     isConnecting,
   } = useRealtimeVoiceSession({
     conversation_id: conversationId,
-    onTranscript: (transcript) => {
-      // Update local transcript display
-      if (transcript.text) {
-        setAiTranscript(transcript.text);
-        onTranscriptReceived?.(transcript.text, transcript.is_final);
+    onTranscript: (transcriptData) => {
+      // Update local transcript display (AI responses)
+      if (transcriptData.text) {
+        if (transcriptData.is_final) {
+          // Final AI response - set full transcript and add to chat
+          setAiTranscript(transcriptData.text);
+          pendingAiMessageRef.current = transcriptData.text;
+          // Fire callback to add AI message to chat timeline
+          if (transcriptData.text.trim()) {
+            onAssistantMessage?.(transcriptData.text);
+          }
+        } else {
+          // Partial - just append to display
+          setAiTranscript((prev) => prev + transcriptData.text);
+        }
+        onTranscriptReceived?.(transcriptData.text, transcriptData.is_final);
       }
     },
     onAudioChunk: (chunk) => {
@@ -76,6 +97,29 @@ export function VoiceModePanel({
     },
     onConnectionChange: (newStatus) => {
       console.log("[VoiceModePanel] Status changed:", newStatus);
+    },
+    onMetricsUpdate: (metrics) => {
+      // Log key metrics for observability (no secrets or PHI)
+      if (metrics.connectionTimeMs !== null) {
+        console.log(
+          `[VoiceModePanel] voice_session_connect_ms=${metrics.connectionTimeMs}`,
+        );
+      }
+      if (metrics.lastSttLatencyMs !== null) {
+        console.log(
+          `[VoiceModePanel] voice_stt_latency_ms=${metrics.lastSttLatencyMs}`,
+        );
+      }
+      if (metrics.lastResponseLatencyMs !== null) {
+        console.log(
+          `[VoiceModePanel] voice_first_reply_ms=${metrics.lastResponseLatencyMs}`,
+        );
+      }
+      if (metrics.sessionDurationMs !== null) {
+        console.log(
+          `[VoiceModePanel] voice_session_duration_ms=${metrics.sessionDurationMs}`,
+        );
+      }
     },
     autoConnect: false, // Manual connect
   });
@@ -171,13 +215,16 @@ export function VoiceModePanel({
   }, [disconnect]);
 
   /**
-   * Update user transcript from the hook
+   * Update user transcript from the hook and add to chat
+   * The hook's transcript state contains the user's speech transcription
    */
   useEffect(() => {
-    if (transcript) {
+    if (transcript && transcript.trim()) {
       setUserTranscript(transcript);
+      // Fire callback to add user message to chat timeline
+      onUserMessage?.(transcript);
     }
-  }, [transcript]);
+  }, [transcript, onUserMessage]);
 
   const handleConnect = async () => {
     try {
@@ -313,34 +360,58 @@ export function VoiceModePanel({
                 ? "bg-green-500"
                 : status === "connecting"
                   ? "bg-yellow-500 animate-pulse"
-                  : status === "error"
-                    ? "bg-red-500"
-                    : "bg-neutral-300"
+                  : status === "reconnecting"
+                    ? "bg-orange-500 animate-pulse"
+                    : status === "error" || status === "failed"
+                      ? "bg-red-500"
+                      : status === "expired"
+                        ? "bg-amber-500"
+                        : "bg-neutral-300"
             }`}
           />
-          <span className="text-sm font-medium text-neutral-700">
+          <span
+            className="text-sm font-medium text-neutral-700"
+            data-testid="connection-status"
+          >
             {status === "connected"
               ? "Connected"
               : status === "connecting"
                 ? "Connecting..."
-                : status === "error"
-                  ? "Error"
-                  : "Disconnected"}
+                : status === "reconnecting"
+                  ? "Reconnecting..."
+                  : status === "error"
+                    ? "Error"
+                    : status === "failed"
+                      ? "Connection Failed"
+                      : status === "expired"
+                        ? "Session Expired"
+                        : "Disconnected"}
           </span>
         </div>
 
-        {!isConnected && !isConnecting && (
+        {/* Show Start button when disconnected, failed, expired, or error (but not connecting/reconnecting) */}
+        {(status === "disconnected" ||
+          status === "failed" ||
+          status === "expired" ||
+          status === "error") && (
           <button
             type="button"
             onClick={handleConnect}
             className="px-4 py-2 bg-primary-500 text-white text-sm font-medium rounded-md hover:bg-primary-600 transition-colors"
             data-testid="start-voice-session"
           >
-            Start Voice Session
+            {status === "failed" || status === "expired"
+              ? "Reconnect"
+              : status === "error"
+                ? "Try Again"
+                : "Start Voice Session"}
           </button>
         )}
 
-        {(isConnected || isConnecting) && (
+        {/* Show End button when connected, connecting, or reconnecting */}
+        {(isConnected ||
+          status === "connecting" ||
+          status === "reconnecting") && (
           <button
             type="button"
             onClick={handleDisconnect}
@@ -418,6 +489,116 @@ export function VoiceModePanel({
               Voice mode needs access to your microphone. Please allow access
               when prompted, or check your browser settings.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Reconnecting Status */}
+      {status === "reconnecting" && (
+        <div
+          className="p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-start space-x-2"
+          data-testid="reconnecting-alert"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5 animate-spin"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+            />
+          </svg>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-orange-900">
+              Reconnecting to Voice Session
+            </p>
+            <p className="text-sm text-orange-700 mt-1">
+              Connection was interrupted. Attempting to reconnect
+              automatically...
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Connection Failed Status */}
+      {status === "failed" && !error && (
+        <div
+          className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2"
+          data-testid="failed-alert"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+            />
+          </svg>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-red-900">
+              Connection Failed
+            </p>
+            <p className="text-sm text-red-700 mt-1">
+              Unable to establish a voice connection after multiple attempts.
+              Please check your internet connection and try again.
+            </p>
+            <button
+              type="button"
+              onClick={handleConnect}
+              className="mt-2 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded transition-colors"
+            >
+              Reconnect
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Session Expired Status */}
+      {status === "expired" && !error && (
+        <div
+          className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start space-x-2"
+          data-testid="expired-alert"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-900">
+              Session Expired
+            </p>
+            <p className="text-sm text-amber-700 mt-1">
+              Your voice session has expired. Click below to start a new session
+              and continue your conversation.
+            </p>
+            <button
+              type="button"
+              onClick={handleConnect}
+              className="mt-2 px-3 py-1 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded transition-colors"
+            >
+              Start New Session
+            </button>
           </div>
         </div>
       )}

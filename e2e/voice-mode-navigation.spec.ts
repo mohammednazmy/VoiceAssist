@@ -26,7 +26,8 @@ test.describe("Voice Mode Navigation Flow", () => {
 
     // Step 1: Navigate to home page
     await page.goto("/");
-    await expect(page).toHaveURL(/^\/$|^\/home/);
+    // URL should be root or /home (with or without trailing slash)
+    await expect(page).toHaveURL(/\/$|\/home/);
 
     // Step 2: Wait for Voice Mode card to be visible
     const voiceModeCard = page.getByTestId("voice-mode-card");
@@ -57,7 +58,7 @@ test.describe("Voice Mode Navigation Flow", () => {
 
       // Step 6: Verify "Start Voice Session" button is present
       const startButton = page.locator(
-        'button:has-text("Start Voice Session"), button:has-text("Start Session"), button[aria-label*="start voice" i], [data-testid="start-voice-button"]'
+        'button:has-text("Start Voice Session"), button:has-text("Start Session"), button[aria-label*="start voice" i], [data-testid="start-voice-session"]'
       );
 
       const startButtonExists = await startButton.count() > 0;
@@ -89,7 +90,7 @@ test.describe("Voice Mode Navigation Flow", () => {
 
       // Fallback: Check for voice mode button/toggle
       const voiceModeButton = page.locator(
-        'button[aria-label*="voice mode" i], button[aria-label*="realtime" i], [data-testid="voice-mode-button"]'
+        'button[aria-label*="voice mode" i], button[aria-label*="realtime" i], [data-testid="realtime-voice-mode-button"]'
       );
 
       const hasVoiceButton = await voiceModeButton.count() > 0;
@@ -171,7 +172,7 @@ test.describe("Voice Mode Navigation Flow", () => {
     ).toBe(true);
   });
 
-  test("should show Quick Consult tile alongside Voice Mode tile", async ({
+  test("should show Chat tile alongside Voice Mode tile", async ({
     authenticatedPage,
   }) => {
     const page = authenticatedPage;
@@ -180,13 +181,15 @@ test.describe("Voice Mode Navigation Flow", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // Both tiles should be visible
+    // Voice Mode and Chat tiles should be visible on the home page
     const voiceModeCard = page.getByTestId("voice-mode-card");
-    const quickConsultCard = page.getByTestId("quick-consult-card");
+
+    // The Chat card doesn't have a specific data-testid, so we look for it by content
+    const chatCard = page.locator('div:has-text("Chat"):has-text("conversation")').first();
 
     await expect(voiceModeCard).toBeVisible();
-    await expect(quickConsultCard).toBeVisible();
+    await expect(chatCard).toBeVisible();
 
-    console.log("✓ Both Voice Mode and Quick Consult tiles are visible");
+    console.log("✓ Both Voice Mode and Chat tiles are visible");
   });
 });

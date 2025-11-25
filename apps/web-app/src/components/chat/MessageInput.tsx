@@ -19,6 +19,10 @@ export interface MessageInputProps {
   /** Auto-open the realtime voice panel when component mounts (e.g., from Home Voice Mode card) */
   autoOpenRealtimeVoice?: boolean;
   conversationId?: string;
+  /** Called when a voice user message should be added to chat (user spoke) */
+  onVoiceUserMessage?: (content: string) => void;
+  /** Called when a voice assistant message should be added to chat (AI responded) */
+  onVoiceAssistantMessage?: (content: string) => void;
 }
 
 export function MessageInput({
@@ -30,6 +34,8 @@ export function MessageInput({
   enableRealtimeVoice = false,
   autoOpenRealtimeVoice = false,
   conversationId,
+  onVoiceUserMessage,
+  onVoiceAssistantMessage,
 }: MessageInputProps) {
   const [content, setContent] = useState("");
   const [showVoiceInput, setShowVoiceInput] = useState(false);
@@ -92,11 +98,32 @@ export function MessageInput({
     setShowVoiceInput(false);
   };
 
-  const handleRealtimeTranscript = (text: string, isFinal: boolean) => {
-    if (isFinal) {
-      // Add AI response to message history by sending it
-      onSend(text);
+  /**
+   * Handle user message from voice mode (user finished speaking)
+   * This adds the user's spoken words to the chat timeline
+   */
+  const handleVoiceUserMessage = (text: string) => {
+    if (text.trim()) {
+      // Call the parent's handler if provided, otherwise fall back to onSend
+      if (onVoiceUserMessage) {
+        onVoiceUserMessage(text.trim());
+      } else {
+        // Fallback: send as regular user message
+        onSend(text.trim());
+      }
     }
+  };
+
+  /**
+   * Handle assistant message from voice mode (AI finished responding)
+   * This adds the AI's response to the chat timeline
+   */
+  const handleVoiceAssistantMessage = (text: string) => {
+    if (text.trim() && onVoiceAssistantMessage) {
+      onVoiceAssistantMessage(text.trim());
+    }
+    // Note: If no onVoiceAssistantMessage handler is provided,
+    // the AI message is still shown in the VoiceModePanel but not added to chat
   };
 
   return (
@@ -107,7 +134,8 @@ export function MessageInput({
           <VoiceModePanel
             conversationId={conversationId}
             onClose={() => setShowRealtimeVoice(false)}
-            onTranscriptReceived={handleRealtimeTranscript}
+            onUserMessage={handleVoiceUserMessage}
+            onAssistantMessage={handleVoiceAssistantMessage}
           />
         </div>
       )}

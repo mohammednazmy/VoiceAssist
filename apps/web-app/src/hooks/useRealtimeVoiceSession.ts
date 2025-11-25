@@ -71,6 +71,30 @@ export interface VoiceSettings {
   vadSensitivity?: number; // 0-100
 }
 
+/**
+ * Voice pipeline metrics for performance monitoring
+ */
+export interface VoiceMetrics {
+  /** Time from connect() call to connected status (ms) */
+  connectionTimeMs: number | null;
+  /** Time from connection to first transcript (ms) */
+  timeToFirstTranscriptMs: number | null;
+  /** Time from speech_stopped to transcript completion (ms) */
+  lastSttLatencyMs: number | null;
+  /** Time from user speech end to AI audio start (ms) */
+  lastResponseLatencyMs: number | null;
+  /** Total session duration (ms) */
+  sessionDurationMs: number | null;
+  /** Count of user transcripts received */
+  userTranscriptCount: number;
+  /** Count of AI audio responses received */
+  aiResponseCount: number;
+  /** Count of reconnection attempts */
+  reconnectCount: number;
+  /** Timestamp of session start */
+  sessionStartedAt: number | null;
+}
+
 export interface UseRealtimeVoiceSessionOptions {
   conversation_id?: string;
   voiceSettings?: VoiceSettings;
@@ -78,6 +102,7 @@ export interface UseRealtimeVoiceSessionOptions {
   onAudioChunk?: (chunk: RealtimeAudioChunk) => void;
   onError?: (error: Error) => void;
   onConnectionChange?: (status: ConnectionStatus) => void;
+  onMetricsUpdate?: (metrics: VoiceMetrics) => void;
   autoConnect?: boolean;
 }
 
@@ -95,6 +120,19 @@ export function useRealtimeVoiceSession(
     useState<RealtimeSessionConfig | null>(null);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
+  // Metrics state
+  const [metrics, setMetrics] = useState<VoiceMetrics>({
+    connectionTimeMs: null,
+    timeToFirstTranscriptMs: null,
+    lastSttLatencyMs: null,
+    lastResponseLatencyMs: null,
+    sessionDurationMs: null,
+    userTranscriptCount: 0,
+    aiResponseCount: 0,
+    reconnectCount: 0,
+    sessionStartedAt: null,
+  });
+
   // Refs for cleanup and persistence
   const wsRef = useRef<WebSocket | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -107,6 +145,12 @@ export function useRealtimeVoiceSession(
     null,
   );
   const intentionalDisconnectRef = useRef(false);
+
+  // Timing refs for metrics tracking
+  const connectStartTimeRef = useRef<number | null>(null);
+  const sessionStartTimeRef = useRef<number | null>(null);
+  const speechStopTimeRef = useRef<number | null>(null);
+  const hasReceivedFirstTranscriptRef = useRef(false);
 
   // Refs to break circular dependencies between callbacks
   // Used so scheduleReconnect and initializeWebSocket can reference
@@ -173,14 +217,42 @@ export function useRealtimeVoiceSession(
   }, [reconnectAttempts, calculateReconnectDelay]);
 
   /**
+   * Update metrics and notify via callback
+   */
+  const updateMetrics = useCallback(
+    (updates: Partial<VoiceMetrics>) => {
+      setMetrics((prev) => {
+        const updated = { ...prev, ...updates };
+        // Notify callback with updated metrics
+        options.onMetricsUpdate?.(updated);
+        return updated;
+      });
+    },
+    [options],
+  );
+
+  /**
    * Update status and notify via callback
    */
   const updateStatus = useCallback(
     (newStatus: ConnectionStatus) => {
       setStatus(newStatus);
       options.onConnectionChange?.(newStatus);
+
+      // Track connection time when status becomes "connected"
+      if (newStatus === "connected" && connectStartTimeRef.current) {
+        const connectionTime = Date.now() - connectStartTimeRef.current;
+        sessionStartTimeRef.current = Date.now();
+        updateMetrics({
+          connectionTimeMs: connectionTime,
+          sessionStartedAt: sessionStartTimeRef.current,
+        });
+        console.log(
+          `[RealtimeVoiceSession] Connection established in ${connectionTime}ms`,
+        );
+      }
     },
-    [options],
+    [options, updateMetrics],
   );
 
   // Keep ref updated with latest updateStatus function
@@ -333,30 +405,77 @@ export function useRealtimeVoiceSession(
           console.log("[RealtimeVoiceSession] Item created:", message.item);
           break;
 
-        case "conversation.item.input_audio_transcription.completed":
+        case "conversation.item.input_audio_transcription.completed": {
           // User speech transcription
           const userTranscript = message.transcript || "";
           setTranscript(userTranscript);
+
+          // Track STT latency (time from speech_stopped to transcript)
+          const now = Date.now();
+          const sttLatency = speechStopTimeRef.current
+            ? now - speechStopTimeRef.current
+            : null;
+
+          // Track time to first transcript
+          let timeToFirst: number | null = null;
+          if (
+            !hasReceivedFirstTranscriptRef.current &&
+            sessionStartTimeRef.current
+          ) {
+            timeToFirst = now - sessionStartTimeRef.current;
+            hasReceivedFirstTranscriptRef.current = true;
+          }
+
+          updateMetrics({
+            lastSttLatencyMs: sttLatency,
+            ...(timeToFirst !== null && {
+              timeToFirstTranscriptMs: timeToFirst,
+            }),
+            userTranscriptCount: metrics.userTranscriptCount + 1,
+          });
+
+          if (sttLatency !== null) {
+            console.log(`[RealtimeVoiceSession] STT latency: ${sttLatency}ms`);
+          }
+
           options.onTranscript?.({
             text: userTranscript,
             is_final: true,
-            timestamp: Date.now(),
+            timestamp: now,
           });
           break;
+        }
 
-        case "response.audio.delta":
+        case "response.audio.delta": {
           // AI audio response chunk (base64 PCM16)
           const audioData = message.delta;
           if (audioData) {
+            const now = Date.now();
+
+            // Track response latency (first audio delta after speech stopped)
+            if (speechStopTimeRef.current) {
+              const responseLatency = now - speechStopTimeRef.current;
+              updateMetrics({
+                lastResponseLatencyMs: responseLatency,
+                aiResponseCount: metrics.aiResponseCount + 1,
+              });
+              console.log(
+                `[RealtimeVoiceSession] Response latency: ${responseLatency}ms`,
+              );
+              // Clear to avoid double-counting for subsequent audio chunks
+              speechStopTimeRef.current = null;
+            }
+
             const buffer = Uint8Array.from(atob(audioData), (c) =>
               c.charCodeAt(0),
             ).buffer;
             options.onAudioChunk?.({
               audio: buffer,
-              timestamp: Date.now(),
+              timestamp: now,
             });
           }
           break;
+        }
 
         case "response.audio_transcript.delta":
           // AI speech transcript (partial)
@@ -386,6 +505,8 @@ export function useRealtimeVoiceSession(
 
         case "input_audio_buffer.speech_stopped":
           setIsSpeaking(false);
+          // Record timestamp for latency calculations
+          speechStopTimeRef.current = Date.now();
           break;
 
         case "error":
@@ -401,7 +522,7 @@ export function useRealtimeVoiceSession(
           );
       }
     },
-    [options, handleError],
+    [options, handleError, updateMetrics, metrics],
   );
 
   // Keep ref updated with latest handleRealtimeMessage function
@@ -483,6 +604,23 @@ export function useRealtimeVoiceSession(
     try {
       updateStatus("connecting");
       setError(null);
+
+      // Record connection start time for metrics
+      connectStartTimeRef.current = Date.now();
+      hasReceivedFirstTranscriptRef.current = false;
+
+      // Reset metrics for new session
+      setMetrics({
+        connectionTimeMs: null,
+        timeToFirstTranscriptMs: null,
+        lastSttLatencyMs: null,
+        lastResponseLatencyMs: null,
+        sessionDurationMs: null,
+        userTranscriptCount: 0,
+        aiResponseCount: 0,
+        reconnectCount: reconnectAttempts,
+        sessionStartedAt: null,
+      });
 
       // Clear intentional disconnect flag when starting new connection
       intentionalDisconnectRef.current = false;
@@ -574,10 +712,25 @@ export function useRealtimeVoiceSession(
     // Reset reconnect attempts
     setReconnectAttempts(0);
 
+    // Calculate and record session duration
+    if (sessionStartTimeRef.current) {
+      const sessionDuration = Date.now() - sessionStartTimeRef.current;
+      updateMetrics({ sessionDurationMs: sessionDuration });
+      console.log(
+        `[RealtimeVoiceSession] Session duration: ${sessionDuration}ms`,
+      );
+      sessionStartTimeRef.current = null;
+    }
+
+    // Reset timing refs
+    connectStartTimeRef.current = null;
+    speechStopTimeRef.current = null;
+    hasReceivedFirstTranscriptRef.current = false;
+
     updateStatus("disconnected");
     setTranscript("");
     setIsSpeaking(false);
-  }, [updateStatus]);
+  }, [updateStatus, updateMetrics]);
 
   /**
    * Send text message (for turn-taking or text-only mode)
@@ -686,6 +839,7 @@ export function useRealtimeVoiceSession(
     transcript,
     isSpeaking,
     sessionConfig,
+    metrics,
 
     // Actions
     connect,

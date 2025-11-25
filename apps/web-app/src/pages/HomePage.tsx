@@ -114,6 +114,15 @@ export function HomePage() {
             hoverable
             className="cursor-pointer transition-all hover:scale-[1.02]"
             onClick={() => navigate("/chat?mode=voice")}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate("/chat?mode=voice");
+              }
+            }}
+            tabIndex={0}
+            role="button"
+            aria-label="Start Voice Mode"
             data-testid="voice-mode-card"
           >
             <CardHeader>

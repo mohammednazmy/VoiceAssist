@@ -272,11 +272,12 @@ VoiceAssist includes dedicated E2E tests for the Voice Mode feature. These tests
 
 ### Voice Mode Test Files
 
-| File                               | Status | Description                                 |
-| ---------------------------------- | ------ | ------------------------------------------- |
-| `voice-mode-navigation.spec.ts`    | ACTIVE | Tests Voice Mode tile → /chat navigation    |
-| `voice-mode-session-smoke.spec.ts` | ACTIVE | Tests "Start Voice Session" button behavior |
-| `ai/voice-mode.spec.ts`            | ACTIVE | Legacy voice UI tests (for migration)       |
+| File                                        | Status | Description                                   |
+| ------------------------------------------- | ------ | --------------------------------------------- |
+| `voice-mode-navigation.spec.ts`             | ACTIVE | Tests Voice Mode tile → /chat navigation      |
+| `voice-mode-session-smoke.spec.ts`          | ACTIVE | Tests "Start Voice Session" button behavior   |
+| `voice-mode-voice-chat-integration.spec.ts` | ACTIVE | Tests voice panel + chat timeline integration |
+| `ai/voice-mode.spec.ts`                     | ACTIVE | Legacy voice UI tests (for migration)         |
 
 ### Voice Mode Navigation Test
 
@@ -381,6 +382,28 @@ pnpm test:e2e voice-mode-session-smoke.spec.ts --debug
 
 - `LIVE_REALTIME_E2E=1`: Enable live backend testing (costs money, requires valid OpenAI key)
 
+### Voice Pipeline Smoke Suite
+
+For comprehensive voice pipeline validation, use the **Voice Pipeline Smoke Suite** which covers backend, frontend unit, and E2E tests:
+
+```bash
+# Quick validation (backend + frontend + E2E)
+# See docs/VOICE_MODE_PIPELINE.md for full commands
+
+# Backend (mocked)
+cd services/api-gateway && source venv/bin/activate
+python -m pytest tests/integration/test_openai_config.py -v
+
+# Frontend unit (run individually to avoid OOM)
+cd apps/web-app && export NODE_OPTIONS="--max-old-space-size=768"
+npx vitest run src/hooks/__tests__/useRealtimeVoiceSession.test.ts --reporter=dot
+
+# E2E
+npx playwright test e2e/voice-mode-*.spec.ts --project=chromium --reporter=list
+```
+
+For detailed pipeline architecture, metrics tracking, and complete test commands, see [VOICE_MODE_PIPELINE.md](./VOICE_MODE_PIPELINE.md).
+
 ### Voice Mode Test Strategy
 
 **Deterministic Tests** (run in CI):
@@ -408,10 +431,10 @@ pnpm test:e2e voice-mode-session-smoke.spec.ts --debug
 
 Both features are tested with similar patterns:
 
-| Feature      | Navigation Test            | Session Test                            |
-| ------------ | -------------------------- | --------------------------------------- |
-| Voice Mode   | `voice-mode-navigation`    | `voice-mode-session-smoke` (tolerant)   |
-| Quick Consult| `quick-consult` (in ai/)   | Covered by chat flow tests              |
+| Feature       | Navigation Test          | Session Test                          |
+| ------------- | ------------------------ | ------------------------------------- |
+| Voice Mode    | `voice-mode-navigation`  | `voice-mode-session-smoke` (tolerant) |
+| Quick Consult | `quick-consult` (in ai/) | Covered by chat flow tests            |
 
 ### Troubleshooting Voice Mode Tests
 

@@ -31,39 +31,42 @@ test.describe("Voice Mode Session Smoke Test", () => {
   }) => {
     const page = authenticatedPage;
 
-    // Navigate to chat with voice mode
-    await page.goto("/chat");
+    // Navigate to chat with voice mode enabled via query param
+    await page.goto("/chat?mode=voice");
     await page.waitForLoadState("networkidle");
 
-    // Look for Voice Mode panel or button
-    const voicePanel = page.locator(
-      '[data-testid="voice-mode-panel"], section:has-text("Voice Mode"), [class*="VoiceModePanel"]'
-    );
+    // Wait for the page to fully render
+    await page.waitForTimeout(2000);
 
-    const panelExists = await voicePanel.count() > 0;
+    // Look for Voice Mode panel or button
+    const voicePanel = page.locator('[data-testid="voice-mode-panel"]');
+    const voiceButton = page.locator('[data-testid="realtime-voice-mode-button"]');
+
+    // If panel not visible, click the voice button to open it
+    let panelExists = await voicePanel.count() > 0;
 
     if (!panelExists) {
-      console.log("ℹ Voice Mode panel not visible - checking for voice button");
+      console.log("ℹ Voice Mode panel not visible - clicking voice button to open");
 
-      // Try to find and click voice mode button to open panel
-      const voiceButton = page.locator(
-        'button[aria-label*="voice mode" i], button[aria-label*="realtime" i], [data-testid="voice-mode-button"]'
-      );
+      // Wait for and click the voice button
+      await voiceButton.waitFor({ timeout: 5000 });
+      await voiceButton.click();
 
-      const hasVoiceButton = await voiceButton.count() > 0;
-
-      if (hasVoiceButton) {
-        await voiceButton.first().click();
-        await page.waitForTimeout(1000);
-      } else {
-        test.skip(true, "Voice Mode UI not available");
-        return;
-      }
+      // Wait for panel to appear
+      await voicePanel.waitFor({ timeout: 5000 });
+      panelExists = await voicePanel.count() > 0;
     }
+
+    if (!panelExists) {
+      test.skip(true, "Voice Mode UI not available");
+      return;
+    }
+
+    console.log("✓ Voice Mode panel is now visible");
 
     // Find "Start Voice Session" button
     const startButton = page.locator(
-      'button:has-text("Start Voice Session"), button:has-text("Start Session"), button[aria-label*="start voice" i], [data-testid="start-voice-button"]'
+      'button:has-text("Start Voice Session"), button:has-text("Start Session"), button[aria-label*="start voice" i], [data-testid="start-voice-session"]'
     );
 
     const startButtonExists = await startButton.count() > 0;
@@ -95,18 +98,18 @@ test.describe("Voice Mode Session Smoke Test", () => {
     const responses = {
       // 1. Connection state indicators
       connectingIndicator: await page
-        .locator('text=/connecting|initializing/i, [class*="connecting"], [class*="loading"]')
+        .locator('[class*="connecting"], [class*="loading"], :text-matches("connecting|initializing", "i")')
         .count(),
 
       connectedIndicator: await page
-        .locator('text=/connected|active/i, [class*="connected"], [class*="active"]')
+        .locator('[class*="connected"], [class*="active"], :text-matches("connected|active", "i")')
         .count(),
 
       // 2. Error/alert indicators
       errorBanner: await page.locator('[role="alert"], [data-sonner-toast]').count(),
 
       errorText: await page
-        .locator('text=/error|failed|unable|unavailable/i')
+        .locator(':text-matches("error|failed|unable|unavailable", "i")')
         .count(),
 
       // 3. Voice visualizer or recording indicator
@@ -192,30 +195,34 @@ test.describe("Voice Mode Session Smoke Test", () => {
   }) => {
     const page = authenticatedPage;
 
-    // Navigate to chat
-    await page.goto("/chat");
+    // Navigate to chat with voice mode enabled
+    await page.goto("/chat?mode=voice");
     await page.waitForLoadState("networkidle");
 
-    // Look for Voice Mode panel
-    const voicePanel = page.locator(
-      '[data-testid="voice-mode-panel"], section:has-text("Voice Mode")'
-    );
+    // Wait for the page to fully render
+    await page.waitForTimeout(2000);
 
-    const panelExists = await voicePanel.count() > 0;
+    // Look for Voice Mode panel or button
+    const voicePanel = page.locator('[data-testid="voice-mode-panel"]');
+    const voiceButton = page.locator('[data-testid="realtime-voice-mode-button"]');
+
+    let panelExists = await voicePanel.count() > 0;
 
     if (!panelExists) {
-      console.log("ℹ Voice Mode panel not visible - checking for voice button");
-      const voiceButton = page.locator('button[aria-label*="voice mode" i]');
-      const hasVoiceButton = await voiceButton.count() > 0;
+      console.log("ℹ Voice Mode panel not visible - clicking voice button to open");
 
-      if (hasVoiceButton) {
-        await voiceButton.first().click();
-        await page.waitForTimeout(1000);
-      } else {
-        test.skip(true, "Voice Mode UI not available");
-        return;
-      }
+      await voiceButton.waitFor({ timeout: 5000 });
+      await voiceButton.click();
+      await voicePanel.waitFor({ timeout: 5000 });
+      panelExists = await voicePanel.count() > 0;
     }
+
+    if (!panelExists) {
+      test.skip(true, "Voice Mode UI not available");
+      return;
+    }
+
+    console.log("✓ Voice Mode panel is now visible");
 
     // Find "Start Voice Session" button
     const startButton = page.locator(
@@ -284,39 +291,37 @@ test.describe("Voice Mode Session Smoke Test", () => {
     ).toBe(true);
   });
 
-  test.skip(
-    !LIVE_REALTIME_E2E,
-    "should connect to OpenAI Realtime API with valid backend (LIVE_REALTIME_E2E=1 only)"
-  );
-
   test("should connect to OpenAI Realtime API with valid backend (LIVE_REALTIME_E2E=1 only)", async ({
     authenticatedPage,
   }) => {
     // This test only runs when LIVE_REALTIME_E2E=1 is set
-    if (!LIVE_REALTIME_E2E) {
-      test.skip(true, "Set LIVE_REALTIME_E2E=1 to run live backend tests");
-      return;
-    }
+    test.skip(!LIVE_REALTIME_E2E, "Set LIVE_REALTIME_E2E=1 to run live backend tests");
 
     const page = authenticatedPage;
 
     console.log("🔴 Running LIVE realtime backend test (requires valid OpenAI key)");
 
-    // Navigate to chat
-    await page.goto("/chat");
+    // Navigate to chat with voice mode enabled
+    await page.goto("/chat?mode=voice");
     await page.waitForLoadState("networkidle");
 
-    // Find and click Voice Mode button/panel
+    // Wait for the page to fully render
+    await page.waitForTimeout(2000);
+
+    // Look for Voice Mode panel or button
     const voicePanel = page.locator('[data-testid="voice-mode-panel"]');
-    const panelExists = await voicePanel.count() > 0;
+    const voiceButton = page.locator('[data-testid="realtime-voice-mode-button"]');
+    let panelExists = await voicePanel.count() > 0;
 
     if (!panelExists) {
-      const voiceButton = page.locator('button[aria-label*="voice mode" i]');
-      if (await voiceButton.count() > 0) {
-        await voiceButton.first().click();
-        await page.waitForTimeout(1000);
-      }
+      console.log("ℹ Voice Mode panel not visible - clicking voice button to open");
+      await voiceButton.waitFor({ timeout: 5000 });
+      await voiceButton.click();
+      await voicePanel.waitFor({ timeout: 5000 });
+      panelExists = await voicePanel.count() > 0;
     }
+
+    console.log("✓ Voice Mode panel is now visible");
 
     // Find Start button
     const startButton = page.locator(
