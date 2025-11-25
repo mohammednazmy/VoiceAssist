@@ -220,7 +220,19 @@ test.describe("Login Form Interaction", () => {
     await expect(page.locator("#password")).toHaveValue(TEST_USER.password);
   });
 
-  test("should submit form and show loading or error state", async ({ page }) => {
+  test("should submit form and trigger login request", async ({ page }) => {
+    // Track network requests to verify form submission
+    let loginRequestMade = false;
+    page.on("request", (request) => {
+      if (
+        request.url().includes("/auth") ||
+        request.url().includes("/login") ||
+        request.url().includes("/api")
+      ) {
+        loginRequestMade = true;
+      }
+    });
+
     // Fill valid credentials
     await page.getByLabel(/email/i).fill(TEST_USER.email);
     await page.locator("#password").fill(TEST_USER.password);
@@ -235,26 +247,50 @@ test.describe("Login Form Interaction", () => {
     await submitButton.click();
 
     // Wait for either:
-    // 1. Loading state (button text changes to "Signing in...")
-    // 2. Error alert (API not available)
+    // 1. Loading state (button text changes or button becomes disabled)
+    // 2. Error alert or toast (API not available)
     // 3. URL change (successful login)
+    // 4. Network request (form was submitted to API)
+    const timeout = 10000;
     await Promise.race([
-      page.waitForSelector('button:has-text("Signing in")', { timeout: 5000 }).catch(() => null),
-      page.waitForSelector('[role="alert"]', { timeout: 5000 }).catch(() => null),
-      page.waitForURL("/", { timeout: 5000 }).catch(() => null),
+      page.waitForSelector('button:has-text("Signing in")', { timeout }).catch(() => null),
+      page.waitForSelector('button[disabled]', { timeout }).catch(() => null),
+      page.waitForSelector('[role="alert"]', { timeout }).catch(() => null),
+      page.waitForSelector('[data-sonner-toast]', { timeout }).catch(() => null),
+      page.waitForURL(/^\/$|^\/chat|^\/home/, { timeout }).catch(() => null),
+      new Promise((r) => setTimeout(r, 3000)), // Give time for network request
     ]);
 
     // Verify some state change occurred
-    const isStillOnLogin = page.url().includes("/login");
+    const currentUrl = page.url();
+    const isStillOnLogin = currentUrl.includes("/login");
     const hasAlert = await page.locator('[role="alert"]').count();
+    const hasToast = await page.locator('[data-sonner-toast]').count();
     const buttonText = await submitButton.textContent();
+    const isButtonDisabled = await submitButton.isDisabled();
 
-    // Either we navigated away, got an error, or button changed state
+    // Form submission is valid if ANY of these occurred:
+    // - Navigation away from login
+    // - Error alert/toast shown
+    // - Button changed to loading state
+    // - Network request was made to auth endpoint
     const stateChanged =
       !isStillOnLogin ||
       hasAlert > 0 ||
-      buttonText?.includes("Signing in");
+      hasToast > 0 ||
+      isButtonDisabled ||
+      loginRequestMade ||
+      buttonText?.toLowerCase().includes("signing") ||
+      buttonText?.toLowerCase().includes("loading");
 
-    expect(stateChanged || true).toBe(true); // Always pass as form submission works
+    // Real assertion: form submission must trigger a state change or network request
+    // NOTE: Do NOT add "|| true" here - this test must fail if nothing happens
+    expect(
+      stateChanged,
+      `Form submission did not trigger expected behavior. ` +
+        `URL: ${currentUrl}, Alerts: ${hasAlert}, Toasts: ${hasToast}, ` +
+        `Button: "${buttonText}", Disabled: ${isButtonDisabled}, ` +
+        `Network request: ${loginRequestMade}`
+    ).toBe(true);
   });
 });
