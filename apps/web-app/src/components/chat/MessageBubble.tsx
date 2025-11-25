@@ -367,12 +367,26 @@ export const MessageBubble = memo(function MessageBubble({
               remarkPlugins={[remarkGfm, remarkMath]}
               rehypePlugins={[rehypeKatex]}
               components={{
+                // Pre wrapper - use div to avoid DOM nesting issues
+                // (react-markdown wraps code blocks in <pre><code>, but our code
+                // component renders its own <pre> inside Highlight)
+                pre({ children }) {
+                  return <>{children}</>;
+                },
+
                 // Code blocks with syntax highlighting
                 code({ inline, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || "");
                   const language = match ? match[1] : "";
+                  const codeString = String(children).replace(/\n$/, "");
 
-                  if (inline) {
+                  // Determine if this is truly inline code:
+                  // - inline prop is true, OR
+                  // - no language specified AND no newlines in content
+                  const isInline =
+                    inline || (!match && !codeString.includes("\n"));
+
+                  if (isInline) {
                     return (
                       <code
                         className={`px-1.5 py-0.5 rounded text-sm font-mono ${
@@ -387,12 +401,12 @@ export const MessageBubble = memo(function MessageBubble({
                     );
                   }
 
-                  const code = String(children).replace(/\n$/, "");
+                  // Block code with syntax highlighting
                   return (
                     <div className="my-2 rounded-md overflow-hidden">
                       <Highlight
                         theme={themes.vsDark}
-                        code={code}
+                        code={codeString}
                         language={(language || "text") as any}
                       >
                         {({
@@ -412,16 +426,19 @@ export const MessageBubble = memo(function MessageBubble({
                               padding: "1rem",
                             }}
                           >
-                            {tokens.map((line, i) => (
-                              <div key={i} {...getLineProps({ line })}>
-                                {line.map((token, key) => (
-                                  <span
-                                    key={key}
-                                    {...getTokenProps({ token })}
-                                  />
-                                ))}
-                              </div>
-                            ))}
+                            <code>
+                              {tokens.map((line, i) => (
+                                <span key={i} {...getLineProps({ line })}>
+                                  {line.map((token, key) => (
+                                    <span
+                                      key={key}
+                                      {...getTokenProps({ token })}
+                                    />
+                                  ))}
+                                  {i < tokens.length - 1 && "\n"}
+                                </span>
+                              ))}
+                            </code>
                           </pre>
                         )}
                       </Highlight>
