@@ -1,8 +1,8 @@
 # Frontend Phase 3 Plan - Web App UX & Voice Enhancements
 
 **Date:** 2025-11-25
-**Branch:** feature/frontend-phase3C-branches-citations
-**Status:** Phase 3A-C Complete
+**Branch:** feature/frontend-phase3D-voice-transcript-preview
+**Status:** Phase 3A-D Complete
 **Scope:** Web App (apps/web-app) frontend-focused improvements
 
 ---
@@ -162,8 +162,9 @@ Allow users to "fork" a conversation from any message with inline preview.
 
 #### 5. Voice Transcript Preview During Speech
 
+**Status:** ✅ **Implemented** (feature/frontend-phase3D-voice-transcript-preview)
 **Effort:** 1-2 days
-**Files:** `VoiceModePanel.tsx`, `useRealtimeVoiceSession.ts`
+**Files:** `VoiceModePanel.tsx`, `useRealtimeVoiceSession.ts`, new `VoiceTranscriptPreview.tsx`
 
 **Description:**
 Show real-time transcript preview as user speaks, before finalizing.
@@ -177,9 +178,10 @@ Show real-time transcript preview as user speaks, before finalizing.
 
 **Acceptance Criteria:**
 
-- [ ] Partial transcripts appear as user speaks
-- [ ] Clear visual distinction (e.g., italic/faded)
-- [ ] Smooth transitions to final transcript
+- [x] Partial transcripts appear as user speaks
+- [x] Clear visual distinction (e.g., italic/faded)
+- [x] Smooth transitions to final transcript
+- [x] Tests for component and hook (14 + 2 tests)
 
 ---
 
@@ -497,6 +499,52 @@ Phase 3C focused on conversation branching preview and citation filtering enhanc
 
 ---
 
+## Phase 3D Summary – Voice Transcript Preview (Completed)
+
+Phase 3D focused on implementing live speech-to-text preview while the user is speaking. This work was completed on branch feature/frontend-phase3D-voice-transcript-preview.
+
+### Implemented Features
+
+1. **Hook-level Partial Transcript Support**
+   - Extended `useRealtimeVoiceSession` hook with `partialTranscript` state
+   - Added handler for `conversation.item.input_audio_transcription.delta` events
+   - Accumulates partial text as speech is recognized
+   - Clears partial transcript on speech start and when final transcript arrives
+   - Partial transcripts count toward "time to first transcript" metrics
+
+2. **VoiceTranscriptPreview Component**
+   - Shows "Listening" indicator with animated pulsing dot
+   - Displays partial transcript text in italic blue styling
+   - Blinking cursor indicates more text is expected
+   - Only visible when speaking AND partial text exists
+   - Accessible with `aria-live="polite"` and `aria-atomic="false"`
+   - Decorative elements hidden from screen readers
+
+3. **VoiceModePanel Integration**
+   - VoiceTranscriptPreview appears after waveform, before final transcript
+   - "Speaking..." indicator hidden when partial transcript is displayed
+   - Smooth transition from partial to final transcript display
+
+### Test Coverage
+
+- `VoiceTranscriptPreview.test.tsx`: 14 tests (rendering, visual indicators, accessibility, content updates, edge cases)
+- `useRealtimeVoiceSession.test.ts`: 2 additional tests (partialTranscript initialization, disconnect cleanup)
+
+### Files Created/Modified
+
+**New Files:**
+
+- `src/components/voice/VoiceTranscriptPreview.tsx`
+- `src/components/voice/__tests__/VoiceTranscriptPreview.test.tsx`
+
+**Modified Files:**
+
+- `src/hooks/useRealtimeVoiceSession.ts` (partialTranscript state, delta event handler)
+- `src/hooks/__tests__/useRealtimeVoiceSession.test.ts` (2 new tests)
+- `src/components/voice/VoiceModePanel.tsx` (VoiceTranscriptPreview integration)
+
+---
+
 ## Additional P1 Backlog Items (Suggested)
 
 #### Keyboard-driven Voice UX
@@ -546,8 +594,8 @@ Ensure voice panel and metrics display work well on mobile and narrow viewports.
 ---
 
 **Created:** 2025-11-25
-**Last Updated:** 2025-11-25
+**Last Updated:** 2025-11-26
 **Author:** Claude (AI Assistant)
-**Status:** Phase 3A-C Complete, Phase 3D Planning
+**Status:** Phase 3A-D Complete
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
