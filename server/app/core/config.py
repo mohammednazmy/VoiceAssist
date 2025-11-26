@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     redis_url: str = Field("redis://localhost:6379/0", alias="REDIS_URL")
     qdrant_url: str = Field("http://localhost:6333", alias="QDRANT_URL")
     nextcloud_base_url: str = Field("http://localhost:8080", alias="NEXTCLOUD_BASE_URL")
+    nextcloud_username: str = Field("", alias="NEXTCLOUD_USERNAME")
+    nextcloud_password: str = Field("", alias="NEXTCLOUD_PASSWORD")
+    nextcloud_default_calendar: str = Field("personal", alias="NEXTCLOUD_DEFAULT_CALENDAR")
 
     class Config:
         env_file = ".env"
