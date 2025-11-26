@@ -178,7 +178,7 @@ describe("MessageInput Voice Settings Integration", () => {
       // Set auto-start before render
       useVoiceSettingsStore.getState().setAutoStartOnOpen(true);
 
-      const { rerender } = render(
+      render(
         <MessageInput
           onSend={mockOnSend}
           enableRealtimeVoice={true}

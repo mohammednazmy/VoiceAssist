@@ -13,6 +13,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { captureVoiceError } from "../lib/sentry";
 import { useAuth } from "./useAuth";
+import { voiceLog } from "../lib/logger";
 
 // Types for Realtime API events
 export interface RealtimeAuthInfo {
@@ -64,7 +65,54 @@ export type ConnectionStatus =
   | "reconnecting"
   | "error"
   | "failed"
-  | "expired";
+  | "expired"
+  | "mic_permission_denied";
+
+/**
+ * Check if an error is a microphone permission error (fatal, no retry)
+ */
+function isMicPermissionError(err: unknown): boolean {
+  if (err instanceof DOMException) {
+    // NotAllowedError: User denied permission or page not secure
+    // SecurityError: Feature policy blocks microphone
+    // NotFoundError: No microphone device available
+    return (
+      err.name === "NotAllowedError" ||
+      err.name === "SecurityError" ||
+      err.name === "NotFoundError"
+    );
+  }
+  // Also check error message for permission-related text
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase();
+    return (
+      msg.includes("permission") ||
+      msg.includes("not allowed") ||
+      msg.includes("blocked") ||
+      msg.includes("denied")
+    );
+  }
+  return false;
+}
+
+/**
+ * Get a user-friendly error message for mic permission errors
+ */
+function getMicErrorMessage(err: unknown): string {
+  if (err instanceof DOMException) {
+    switch (err.name) {
+      case "NotAllowedError":
+        return "Microphone access denied. Please allow microphone access in your browser settings and reload the page.";
+      case "SecurityError":
+        return "Microphone blocked by browser policy. This site may need to be accessed via HTTPS.";
+      case "NotFoundError":
+        return "No microphone found. Please connect a microphone and try again.";
+      default:
+        return `Microphone error: ${err.message}`;
+    }
+  }
+  return err instanceof Error ? err.message : "Unknown microphone error";
+}
 
 export interface VoiceSettings {
   voice?: string; // "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"
@@ -147,6 +195,8 @@ export function useRealtimeVoiceSession(
     null,
   );
   const intentionalDisconnectRef = useRef(false);
+  // Track fatal errors (mic permission denied) to prevent reconnection loops
+  const fatalErrorRef = useRef(false);
 
   // Timing refs for metrics tracking
   const connectStartTimeRef = useRef<number | null>(null);
@@ -186,23 +236,29 @@ export function useRealtimeVoiceSession(
   const scheduleReconnect = useCallback(() => {
     // Don't reconnect if user intentionally disconnected
     if (intentionalDisconnectRef.current) {
-      console.log(
-        "[RealtimeVoiceSession] Skipping reconnect (intentional disconnect)",
+      voiceLog.debug("Skipping reconnect (intentional disconnect)");
+      return;
+    }
+
+    // Don't reconnect on fatal errors (mic permission denied)
+    if (fatalErrorRef.current) {
+      voiceLog.debug(
+        "Skipping reconnect (fatal error - mic permission denied)",
       );
       return;
     }
 
     // Don't reconnect if max attempts reached
     if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      console.error("[RealtimeVoiceSession] Max reconnect attempts reached");
+      voiceLog.error(" Max reconnect attempts reached");
       updateStatusRef.current("failed");
       return;
     }
 
     // Calculate delay for this attempt
     const delay = calculateReconnectDelay(reconnectAttempts);
-    console.log(
-      `[RealtimeVoiceSession] Scheduling reconnect attempt ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`,
+    voiceLog.debug(
+      `Scheduling reconnect attempt ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`,
     );
 
     // Update status to reconnecting
@@ -251,7 +307,7 @@ export function useRealtimeVoiceSession(
           connectionTimeMs: connectionTime,
           sessionStartedAt: sessionStartTimeRef.current,
         });
-        console.log(
+        voiceLog.debug(
           `[RealtimeVoiceSession] Connection established in ${connectionTime}ms`,
         );
       }
@@ -278,7 +334,7 @@ export function useRealtimeVoiceSession(
    */
   const handleError = useCallback(
     (err: Error) => {
-      console.error("[RealtimeVoiceSession] Error:", err);
+      voiceLog.error(" Error:", err);
       setError(err);
       updateStatus("error");
       options.onError?.(err);
@@ -336,7 +392,7 @@ export function useRealtimeVoiceSession(
 
         // WebSocket event handlers
         ws.onopen = () => {
-          console.log("[RealtimeVoiceSession] WebSocket connected");
+          voiceLog.debug(" WebSocket connected");
 
           // Send session.update message with configuration
           ws.send(
@@ -360,25 +416,25 @@ export function useRealtimeVoiceSession(
         };
 
         ws.onerror = (event) => {
-          console.error("[RealtimeVoiceSession] WebSocket error:", event);
+          voiceLog.error(" WebSocket error:", event);
           reject(new Error("WebSocket connection failed"));
         };
 
         ws.onclose = (event) => {
-          console.log(
+          voiceLog.debug(
             `[RealtimeVoiceSession] WebSocket closed: ${event.code} ${event.reason}`,
           );
 
           // Check if session expired
           if (sessionConfig && sessionConfig.expires_at * 1000 < Date.now()) {
-            console.log("[RealtimeVoiceSession] Session expired");
+            voiceLog.debug(" Session expired");
             updateStatus("expired");
             return;
           }
 
           // If not an intentional disconnect, schedule reconnection
           if (!intentionalDisconnectRef.current) {
-            console.log(
+            voiceLog.debug(
               "[RealtimeVoiceSession] Unexpected disconnect, will attempt reconnect",
             );
             scheduleReconnect();
@@ -393,7 +449,7 @@ export function useRealtimeVoiceSession(
             // Use ref to avoid circular dependency with handleRealtimeMessage
             handleRealtimeMessageRef.current(message);
           } catch (err) {
-            console.error(
+            voiceLog.error(
               "[RealtimeVoiceSession] Failed to parse message:",
               err,
             );
@@ -418,18 +474,18 @@ export function useRealtimeVoiceSession(
     (message: any) => {
       switch (message.type) {
         case "session.created":
-          console.log(
+          voiceLog.debug(
             "[RealtimeVoiceSession] Session created:",
             message.session,
           );
           break;
 
         case "session.updated":
-          console.log("[RealtimeVoiceSession] Session updated");
+          voiceLog.debug(" Session updated");
           break;
 
         case "conversation.item.created":
-          console.log("[RealtimeVoiceSession] Item created:", message.item);
+          voiceLog.debug(" Item created:", message.item);
           break;
 
         case "conversation.item.input_audio_transcription.delta": {
@@ -447,7 +503,7 @@ export function useRealtimeVoiceSession(
               const timeToFirst = now - sessionStartTimeRef.current;
               hasReceivedFirstTranscriptRef.current = true;
               updateMetrics({ timeToFirstTranscriptMs: timeToFirst });
-              console.log(
+              voiceLog.debug(
                 `[RealtimeVoiceSession] Time to first transcript: ${timeToFirst}ms`,
               );
             }
@@ -493,7 +549,7 @@ export function useRealtimeVoiceSession(
           });
 
           if (sttLatency !== null) {
-            console.log(`[RealtimeVoiceSession] STT latency: ${sttLatency}ms`);
+            voiceLog.debug(` STT latency: ${sttLatency}ms`);
           }
 
           options.onTranscript?.({
@@ -517,7 +573,7 @@ export function useRealtimeVoiceSession(
                 lastResponseLatencyMs: responseLatency,
                 aiResponseCount: metrics.aiResponseCount + 1,
               });
-              console.log(
+              voiceLog.debug(
                 `[RealtimeVoiceSession] Response latency: ${responseLatency}ms`,
               );
               // Clear to avoid double-counting for subsequent audio chunks
@@ -576,7 +632,7 @@ export function useRealtimeVoiceSession(
           break;
 
         default:
-          console.log(
+          voiceLog.debug(
             "[RealtimeVoiceSession] Unhandled message type:",
             message.type,
           );
@@ -590,11 +646,13 @@ export function useRealtimeVoiceSession(
 
   /**
    * Initialize microphone and audio streaming
+   * @throws Error with isMicPermissionError=true for permission errors (fatal, no retry)
    */
   const initializeAudioStreaming = useCallback(async (ws: WebSocket) => {
+    // Get microphone stream
+    let stream: MediaStream;
     try {
-      // Get microphone stream
-      const stream = await navigator.mediaDevices.getUserMedia({
+      stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
@@ -603,9 +661,28 @@ export function useRealtimeVoiceSession(
           channelCount: 1,
         },
       });
+    } catch (err) {
+      // Check if this is a permission error (fatal - don't retry)
+      if (isMicPermissionError(err)) {
+        const friendlyMessage = getMicErrorMessage(err);
+        voiceLog.error(
+          `[RealtimeVoiceSession] Mic permission error (fatal): ${err instanceof DOMException ? err.name : "unknown"}`,
+        );
+        // Create an error that preserves the fatal status
+        const micError = new Error(friendlyMessage);
+        (micError as any).isFatal = true;
+        (micError as any).originalError = err;
+        throw micError;
+      }
+      // Other errors (network, device issues) - can retry
+      throw new Error(
+        `Failed to access microphone: ${err instanceof Error ? err.message : "Unknown error"}`,
+      );
+    }
 
-      mediaStreamRef.current = stream;
+    mediaStreamRef.current = stream;
 
+    try {
       // Create audio context and processor
       const audioContext = new AudioContext({ sampleRate: 24000 });
       audioContextRef.current = audioContext;
@@ -644,10 +721,12 @@ export function useRealtimeVoiceSession(
       source.connect(processor);
       processor.connect(audioContext.destination);
 
-      console.log("[RealtimeVoiceSession] Audio streaming initialized");
+      voiceLog.debug(" Audio streaming initialized");
     } catch (err) {
+      // Clean up the stream if audio context setup fails
+      stream.getTracks().forEach((track) => track.stop());
       throw new Error(
-        `Failed to initialize audio: ${err instanceof Error ? err.message : "Unknown error"}`,
+        `Failed to initialize audio processing: ${err instanceof Error ? err.message : "Unknown error"}`,
       );
     }
   }, []);
@@ -657,7 +736,15 @@ export function useRealtimeVoiceSession(
    */
   const connect = useCallback(async () => {
     if (status === "connected" || status === "connecting") {
-      console.warn("[RealtimeVoiceSession] Already connected or connecting");
+      voiceLog.warn(" Already connected or connecting");
+      return;
+    }
+
+    // Don't attempt to connect if we have a fatal error (mic permission denied)
+    if (fatalErrorRef.current) {
+      voiceLog.warn(
+        "[RealtimeVoiceSession] Cannot connect - fatal error (mic permission denied)",
+      );
       return;
     }
 
@@ -703,12 +790,33 @@ export function useRealtimeVoiceSession(
       // Reset reconnect attempts on successful connection
       setReconnectAttempts(0);
 
-      console.log("[RealtimeVoiceSession] Connected successfully");
+      voiceLog.debug(" Connected successfully");
     } catch (err) {
-      handleError(err instanceof Error ? err : new Error("Failed to connect"));
+      const error = err instanceof Error ? err : new Error("Failed to connect");
+
+      // Check if this is a fatal mic permission error
+      if ((err as any)?.isFatal || isMicPermissionError(err)) {
+        voiceLog.error(
+          "[RealtimeVoiceSession] Fatal mic permission error - will not retry",
+        );
+        fatalErrorRef.current = true;
+        setError(error);
+        updateStatus("mic_permission_denied");
+        options.onError?.(error);
+
+        // Close WebSocket if it was opened
+        if (wsRef.current) {
+          wsRef.current.close();
+          wsRef.current = null;
+        }
+        return;
+      }
+
+      handleError(error);
 
       // If connection failed and we're in reconnect mode, schedule next attempt
-      if (status === "reconnecting") {
+      // But NOT if we have a fatal error
+      if (status === "reconnecting" && !fatalErrorRef.current) {
         scheduleReconnect();
       }
     }
@@ -720,16 +828,29 @@ export function useRealtimeVoiceSession(
     initializeAudioStreaming,
     handleError,
     scheduleReconnect,
+    options,
   ]);
 
   // Keep ref updated with latest connect function
   connectRef.current = connect;
 
   /**
+   * Reset fatal error state (allows retry after user grants mic permission)
+   */
+  const resetFatalError = useCallback(() => {
+    if (fatalErrorRef.current) {
+      voiceLog.debug(" Resetting fatal error state");
+      fatalErrorRef.current = false;
+      setError(null);
+      updateStatus("disconnected");
+    }
+  }, [updateStatus]);
+
+  /**
    * Disconnect from Realtime API
    */
   const disconnect = useCallback(() => {
-    console.log("[RealtimeVoiceSession] Disconnecting...");
+    voiceLog.debug(" Disconnecting...");
 
     // Mark as intentional disconnect to prevent auto-reconnect
     intentionalDisconnectRef.current = true;
@@ -776,7 +897,7 @@ export function useRealtimeVoiceSession(
     if (sessionStartTimeRef.current) {
       const sessionDuration = Date.now() - sessionStartTimeRef.current;
       updateMetrics({ sessionDurationMs: sessionDuration });
-      console.log(
+      voiceLog.debug(
         `[RealtimeVoiceSession] Session duration: ${sessionDuration}ms`,
       );
       sessionStartTimeRef.current = null;
@@ -798,7 +919,7 @@ export function useRealtimeVoiceSession(
    */
   const sendMessage = useCallback((text: string) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      console.warn("[RealtimeVoiceSession] WebSocket not connected");
+      voiceLog.warn(" WebSocket not connected");
       return;
     }
 
@@ -842,7 +963,7 @@ export function useRealtimeVoiceSession(
 
       // If already expired
       if (timeUntilExpiry <= 0) {
-        console.log("[RealtimeVoiceSession] Session expired");
+        voiceLog.debug(" Session expired");
         updateStatus("expired");
         disconnect();
         return;
@@ -850,7 +971,7 @@ export function useRealtimeVoiceSession(
 
       // If within 60 seconds of expiry, proactively refresh
       if (timeUntilExpiry <= 60000) {
-        console.log(
+        voiceLog.debug(
           `[RealtimeVoiceSession] Session expiring soon (${Math.round(timeUntilExpiry / 1000)}s), refreshing...`,
         );
         // Disconnect and reconnect to get new session
@@ -907,10 +1028,12 @@ export function useRealtimeVoiceSession(
     connect,
     disconnect,
     sendMessage,
+    resetFatalError,
 
     // Derived state
     isConnected: status === "connected",
     isConnecting: status === "connecting",
+    isMicPermissionDenied: status === "mic_permission_denied",
     canSend:
       status === "connected" && wsRef.current?.readyState === WebSocket.OPEN,
   };
