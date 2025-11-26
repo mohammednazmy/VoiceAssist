@@ -19,6 +19,8 @@ from typing import Any, Dict
 from app.core.business_metrics import rag_citations_per_query, rag_queries_total
 from app.core.database import get_db
 from app.core.logging import get_logger
+from app.models.message import Message
+from app.models.session import Session as ChatSession
 from app.schemas.websocket import (
     create_chunk_event,
     create_connected_event,
@@ -103,9 +105,7 @@ class ConnectionManager:
             del self.active_connections[client_id]
             logger.info(f"WebSocket disconnected: {client_id}")
 
-    async def send_personal_message(
-        self, message: Dict[str, Any], client_id: str
-    ) -> bool:
+    async def send_personal_message(self, message: Dict[str, Any], client_id: str) -> bool:
         """Send a message to a specific client.
 
         Returns:
@@ -118,9 +118,7 @@ class ConnectionManager:
         websocket = self.active_connections[client_id]
         return await safe_send_json(websocket, message)
 
-    async def send_error(
-        self, client_id: str, error_code: str, error_message: str
-    ) -> bool:
+    async def send_error(self, client_id: str, error_code: str, error_message: str) -> bool:
         """Send an error message to a client.
 
         Returns:
@@ -215,9 +213,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
 
     try:
         # Send welcome message using schema
-        connected_event = create_connected_event(
-            client_id=client_id, timestamp=datetime.now(timezone.utc)
-        )
+        connected_event = create_connected_event(client_id=client_id, timestamp=datetime.now(timezone.utc))
         await websocket.send_json(connected_event)
 
         while True:
@@ -258,22 +254,20 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
         manager.disconnect(client_id)
 
 
-async def handle_chat_message(
-    websocket: WebSocket, client_id: str, data: Dict[str, Any], db: Session
-):
+async def handle_chat_message(websocket: WebSocket, client_id: str, data: Dict[str, Any], db: Session):
     """
     Handle incoming chat message and stream response using QueryOrchestrator.
 
     Integrates with the QueryOrchestrator to process clinical queries and
     stream responses back to the client in chunks.
     """
-    import asyncio
     import uuid
 
     message_id = str(uuid.uuid4())
     user_message = data.get("content", "")
     session_id = data.get("session_id")
     clinical_context_id = data.get("clinical_context_id")
+    attachments = data.get("attachments") or []
 
     logger.info(
         "Processing chat message",
@@ -289,6 +283,53 @@ async def handle_chat_message(
     # Changed to match frontend protocol in useChatSession.ts
 
     try:
+        # Validate session if provided
+        session_obj: ChatSession | None = None
+        if session_id:
+            try:
+                session_uuid = uuid.UUID(session_id)
+                session_obj = db.query(ChatSession).filter(ChatSession.id == session_uuid).first()
+                if not session_obj:
+                    await manager.send_error(
+                        client_id,
+                        "INVALID_SESSION",
+                        f"Session {session_id} not found",
+                    )
+                    return
+            except ValueError:
+                await manager.send_error(
+                    client_id,
+                    "INVALID_SESSION_ID",
+                    f"Session id {session_id} is not a valid UUID",
+                )
+                return
+
+        # Persist user message for history
+        user_db_message_id = None
+        if session_obj:
+            user_message_row = Message(
+                session_id=session_obj.id,
+                role="user",
+                content=user_message,
+                message_metadata={
+                    "source": "realtime_ws",
+                    "clinical_context_id": clinical_context_id,
+                    "attachments": attachments,
+                },
+            )
+            db.add(user_message_row)
+            session_obj.message_count = (session_obj.message_count or 0) + 1
+            db.commit()
+            db.refresh(user_message_row)
+            user_db_message_id = str(user_message_row.id)
+            logger.info(
+                "Persisted realtime user message",
+                extra={
+                    "session_id": session_id,
+                    "message_id": user_db_message_id,
+                },
+            )
+
         # Create query request for orchestrator
         query_request = QueryRequest(
             session_id=session_id,
@@ -296,30 +337,14 @@ async def handle_chat_message(
             clinical_context_id=clinical_context_id,
         )
 
-        # Call QueryOrchestrator to process the query
-        # Note: Current implementation is synchronous (stub LLM)
-        # Future phases will add true streaming from LLM API
-        query_response = await query_orchestrator.handle_query(
-            query_request, trace_id=message_id
-        )
-
-        # Stream the response in chunks
-        response_text = query_response.answer
-        chunk_size = 50  # Characters per chunk
-
-        for i in range(0, len(response_text), chunk_size):
-            chunk = response_text[i : i + chunk_size]
-            # Use schema to create chunk event
+        async def stream_chunk(chunk: str):
             chunk_event = create_chunk_event(message_id=message_id, content=chunk)
-            # Use safe send to handle disconnected clients gracefully
-            if not await safe_send_json(websocket, chunk_event):
-                logger.warning(
-                    "Client disconnected during streaming, aborting response",
-                    extra={"client_id": client_id, "message_id": message_id},
-                )
-                return  # Stop streaming if client disconnected
-            # Small delay to simulate streaming (will be natural with real LLM streaming)
-            await asyncio.sleep(0.05)
+            await safe_send_json(websocket, chunk_event)
+
+        # Stream LLM response with real-time chunks
+        query_response = await query_orchestrator.stream_query(
+            query_request, trace_id=message_id, on_chunk=stream_chunk
+        )
 
         # Prepare citations for response with full structured data
         # Use both snake_case (for schema) and camelCase (for frontend) field names
@@ -334,26 +359,16 @@ async def handle_chat_message(
                 "title": cite.title,
                 "url": cite.url if cite.url else None,
                 "authors": cite.authors if hasattr(cite, "authors") else None,
-                "publicationYear": (
-                    cite.publication_date if hasattr(cite, "publication_date") else None
-                ),
-                "publication_date": (
-                    cite.publication_date if hasattr(cite, "publication_date") else None
-                ),
+                "publicationYear": (cite.publication_date if hasattr(cite, "publication_date") else None),
+                "publication_date": (cite.publication_date if hasattr(cite, "publication_date") else None),
                 "journal": cite.journal if hasattr(cite, "journal") else None,
                 "doi": cite.doi if hasattr(cite, "doi") else None,
                 "pubmedId": cite.pmid if hasattr(cite, "pmid") else None,
                 "pmid": cite.pmid if hasattr(cite, "pmid") else None,
-                "relevanceScore": (
-                    cite.relevance_score if hasattr(cite, "relevance_score") else None
-                ),
-                "relevance_score": (
-                    cite.relevance_score if hasattr(cite, "relevance_score") else None
-                ),
+                "relevanceScore": (cite.relevance_score if hasattr(cite, "relevance_score") else None),
+                "relevance_score": (cite.relevance_score if hasattr(cite, "relevance_score") else None),
                 "snippet": cite.quoted_text if hasattr(cite, "quoted_text") else None,
-                "quoted_text": (
-                    cite.quoted_text if hasattr(cite, "quoted_text") else None
-                ),
+                "quoted_text": (cite.quoted_text if hasattr(cite, "quoted_text") else None),
                 # Backward compatibility fields for older frontend code
                 "source": cite.source_type,
                 "reference": cite.title,
@@ -365,7 +380,7 @@ async def handle_chat_message(
         message_done_event = create_message_done_event(
             message_id=message_id,
             role="assistant",
-            content=response_text,
+            content=query_response.answer,
             citations=citations,
             timestamp=now,
         )
@@ -373,11 +388,37 @@ async def handle_chat_message(
         # Use safe send for the final message.done event
         await safe_send_json(websocket, message_done_event)
 
+        # Persist assistant message for history
+        if session_obj:
+            assistant_metadata = {
+                "source": "realtime_ws",
+                "citations": citations,
+                "clinical_context_id": clinical_context_id,
+                "user_message_id": user_db_message_id,
+                "finish_reason": query_response.finish_reason,
+            }
+            assistant_message_row = Message(
+                session_id=session_obj.id,
+                role="assistant",
+                content=query_response.answer,
+                tokens=query_response.tokens,
+                model=query_response.model,
+                message_metadata=assistant_metadata,
+            )
+            db.add(assistant_message_row)
+            session_obj.message_count = (session_obj.message_count or 0) + 1
+            db.commit()
+            logger.info(
+                "Persisted realtime assistant message",
+                extra={
+                    "session_id": session_id,
+                    "message_id": str(assistant_message_row.id),
+                },
+            )
+
         # Track RAG query metrics (P3.3 - Business Metrics)
         has_citations = len(citations) > 0
-        rag_queries_total.labels(
-            success="true", has_citations=str(has_citations).lower()
-        ).inc()
+        rag_queries_total.labels(success="true", has_citations=str(has_citations).lower()).inc()
         rag_citations_per_query.observe(len(citations))
 
         logger.info(
@@ -385,7 +426,7 @@ async def handle_chat_message(
             extra={
                 "client_id": client_id,
                 "message_id": message_id,
-                "response_length": len(response_text),
+                "response_length": len(query_response.answer),
                 "citation_count": len(citations),
             },
         )

@@ -15,15 +15,16 @@ The intent is:
 from __future__ import annotations
 
 import asyncio
+import inspect
 import logging
 import time
 from dataclasses import dataclass
-from typing import Dict, Literal, Optional
+from typing import Awaitable, Callable, Dict, Literal, Optional
 
 import httpx
 from app.core.business_metrics import openai_api_cost_dollars, openai_tokens_used_total
 from openai import AsyncOpenAI
-from openai.types.chat import ChatCompletion
+from openai.types.chat import ChatCompletion, ChatCompletionChunk
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +150,36 @@ class LLMClient:
             )
         self.has_local_model = self.local_client is not None
 
+    @staticmethod
+    def _system_prompt_for_intent(intent: IntentType) -> str:
+        system_prompts = {
+            "diagnosis": (
+                "You are a medical AI assistant specializing in clinical diagnosis. "
+                "Provide evidence-based diagnostic insights with appropriate citations."
+            ),
+            "treatment": (
+                "You are a medical AI assistant specializing in treatment planning. "
+                "Provide evidence-based treatment recommendations with appropriate citations."
+            ),
+            "drug": (
+                "You are a medical AI assistant specializing in pharmacology. "
+                "Provide evidence-based drug information with appropriate citations."
+            ),
+            "guideline": (
+                "You are a medical AI assistant specializing in clinical guidelines. "
+                "Provide evidence-based guideline information with appropriate citations."
+            ),
+            "summary": (
+                "You are a medical AI assistant specializing in medical summarization. "
+                "Provide clear, concise summaries with appropriate citations."
+            ),
+            "other": (
+                "You are a helpful medical AI assistant. "
+                "Provide accurate, evidence-based information with appropriate citations when available."
+            ),
+        }
+        return system_prompts.get(intent, system_prompts["other"])
+
     async def generate(self, req: LLMRequest) -> LLMResponse:
         """Select model family and generate a single response.
 
@@ -225,35 +256,7 @@ class LLMClient:
             start_time = time.time()
 
             try:
-                # Prepare system message based on intent
-                system_prompts = {
-                    "diagnosis": (
-                        "You are a medical AI assistant specializing in clinical diagnosis. "
-                        "Provide evidence-based diagnostic insights with appropriate citations."
-                    ),
-                    "treatment": (
-                        "You are a medical AI assistant specializing in treatment planning. "
-                        "Provide evidence-based treatment recommendations with appropriate citations."
-                    ),
-                    "drug": (
-                        "You are a medical AI assistant specializing in pharmacology. "
-                        "Provide evidence-based drug information with appropriate citations."
-                    ),
-                    "guideline": (
-                        "You are a medical AI assistant specializing in clinical guidelines. "
-                        "Provide evidence-based guideline information with appropriate citations."
-                    ),
-                    "summary": (
-                        "You are a medical AI assistant specializing in medical summarization. "
-                        "Provide clear, concise summaries with appropriate citations."
-                    ),
-                    "other": (
-                        "You are a helpful medical AI assistant. "
-                        "Provide accurate, evidence-based information with appropriate citations when available."
-                    ),
-                }
-
-                system_message = system_prompts.get(req.intent, system_prompts["other"])
+                system_message = self._system_prompt_for_intent(req.intent)
 
                 # Call OpenAI Chat Completions API with timeout
                 response: ChatCompletion = await asyncio.wait_for(
@@ -346,6 +349,109 @@ class LLMClient:
             await asyncio.sleep(delay)
 
         raise RuntimeError(f"Failed to call cloud model {self.cloud_model} after retries: {last_error}") from last_error
+
+    async def stream_generate(
+        self,
+        req: LLMRequest,
+        on_chunk: Optional[Callable[[str], Awaitable[None] | None]] = None,
+    ) -> LLMResponse:
+        """
+        Stream a response from the cloud model and invoke a callback per text delta.
+
+        Args:
+            req: LLMRequest with prompt and config
+            on_chunk: Optional callback to receive partial text chunks
+
+        Returns:
+            LLMResponse with aggregated text and usage metadata
+        """
+        if not self.openai_client:
+            logger.error(
+                "OpenAI client not initialized. API key missing. trace_id=%s",
+                req.trace_id,
+            )
+            raise RuntimeError("OpenAI API key not configured. Cannot call cloud model.")
+
+        if not req.prompt or not req.prompt.strip():
+            raise ValueError("Prompt cannot be empty")
+
+        req.prompt = " ".join(req.prompt.split())
+        max_allowed_tokens = 4096 if not req.phi_present else 2048
+        if req.max_tokens > max_allowed_tokens:
+            req.max_tokens = max_allowed_tokens
+
+        logger.info("Streaming cloud model %s trace_id=%s", self.cloud_model, req.trace_id)
+
+        full_text: list[str] = []
+        start_time = time.time()
+        finish_reason: str = "stop"
+        usage = None
+
+        try:
+            stream = await self.openai_client.chat.completions.create(
+                model=self.cloud_model,
+                messages=[
+                    {"role": "system", "content": self._system_prompt_for_intent(req.intent)},
+                    {"role": "user", "content": req.prompt},
+                ],
+                temperature=req.temperature,
+                max_tokens=req.max_tokens,
+                stream=True,
+            )
+
+            async for chunk in stream:
+                if isinstance(chunk, ChatCompletionChunk):
+                    delta = chunk.choices[0].delta
+                    text_piece = delta.content or ""
+                    if text_piece:
+                        full_text.append(text_piece)
+                        if on_chunk:
+                            result = on_chunk(text_piece)
+                            if inspect.isawaitable(result):
+                                await result
+
+                    if chunk.choices[0].finish_reason:
+                        finish_reason = chunk.choices[0].finish_reason
+
+                    # Final chunk includes usage
+                    if getattr(chunk, "usage", None):
+                        usage = chunk.usage
+
+            latency_ms = (time.time() - start_time) * 1000
+            aggregated_text = "".join(full_text)
+
+            input_tokens = usage.prompt_tokens if usage else 0
+            output_tokens = usage.completion_tokens if usage else 0
+            total_tokens = usage.total_tokens if usage else input_tokens + output_tokens
+            cost_usd = calculate_cost(self.cloud_model, input_tokens, output_tokens) if usage else 0.0
+
+            if usage:
+                openai_tokens_used_total.labels(model=self.cloud_model, token_type="prompt").inc(input_tokens)
+                openai_tokens_used_total.labels(model=self.cloud_model, token_type="completion").inc(output_tokens)
+                openai_api_cost_dollars.inc(cost_usd)
+
+            return LLMResponse(
+                text=aggregated_text,
+                model_name=self.cloud_model,
+                model_family="cloud",
+                used_tokens=total_tokens,
+                latency_ms=latency_ms,
+                finish_reason=finish_reason,
+                cost_usd=cost_usd,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+            )
+
+        except Exception as exc:  # noqa: BLE001
+            latency_ms = (time.time() - start_time) * 1000
+            logger.error(
+                "Streaming cloud model failed: %s latency=%.2fms trace_id=%s",
+                exc,
+                latency_ms,
+                req.trace_id,
+                exc_info=True,
+            )
+            raise
 
     async def _call_local(self, req: LLMRequest) -> LLMResponse:
         """Call a local model for PHI-containing queries.

@@ -177,10 +177,24 @@ export function captureVoiceError(
     status?: string;
     conversationId?: string;
     metrics?: Record<string, number | null>;
+    breadcrumb?: string;
   },
 ): string | undefined {
   if (!sentryInitialized) {
     return undefined;
+  }
+
+  const breadcrumb = context?.breadcrumb
+    ? {
+        type: "info",
+        category: "voice",
+        message: context.breadcrumb,
+        level: "info",
+      }
+    : undefined;
+
+  if (breadcrumb) {
+    Sentry.addBreadcrumb(breadcrumb);
   }
 
   return Sentry.captureException(error, {
@@ -190,6 +204,7 @@ export function captureVoiceError(
     },
     extra: {
       conversation_id: context?.conversationId,
+      breadcrumb: context?.breadcrumb,
       // Only include numeric metrics, no transcripts
       metrics: context?.metrics
         ? {

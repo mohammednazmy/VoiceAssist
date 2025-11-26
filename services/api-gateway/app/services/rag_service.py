@@ -19,8 +19,9 @@ Future enhancements:
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Awaitable, Callable, List, Optional
 
 from app.core.config import settings
 from app.services.intent_classifier import IntentClassifier
@@ -71,6 +72,9 @@ class QueryResponse(BaseModel):
     answer: str
     created_at: datetime
     citations: List[Citation] = []
+    tokens: Optional[int] = None
+    model: Optional[str] = None
+    finish_reason: Optional[str] = None
 
 
 class QueryOrchestrator:
@@ -114,6 +118,116 @@ class QueryOrchestrator:
         self.rag_top_k = rag_top_k
         self.rag_score_threshold = rag_score_threshold
 
+    async def _prepare_llm_request(
+        self,
+        request: QueryRequest,
+        clinical_context: Optional[dict],
+        trace_id: Optional[str],
+    ) -> tuple[LLMRequest, list, str, bool, str]:
+        """Prepare prompt, RAG context, and LLM request for streaming or non-streaming paths."""
+        # Step 1: Perform semantic search if RAG is enabled
+        search_results = []
+        if self.enable_rag and self.search_aggregator:
+            try:
+                search_results = await self.search_aggregator.search(
+                    query=request.query,
+                    top_k=self.rag_top_k,
+                    score_threshold=self.rag_score_threshold,
+                )
+            except Exception as e:  # noqa: BLE001
+                import logging
+
+                logging.error(f"Error performing RAG search: {e}", exc_info=True)
+
+        # Step 2: Assemble context from search results
+        context = ""
+        if search_results:
+            context = self.search_aggregator.format_context_for_rag(search_results)
+
+        # Step 3: Build prompt with context and clinical context
+        prompt_parts = [
+            "You are a clinical decision support assistant.",
+        ]
+
+        # Add clinical context if provided
+        if clinical_context:
+            clinical_info = []
+            if clinical_context.get("age"):
+                clinical_info.append(f"Age: {clinical_context['age']}")
+            if clinical_context.get("gender"):
+                clinical_info.append(f"Gender: {clinical_context['gender']}")
+            if clinical_context.get("chief_complaint"):
+                clinical_info.append(f"Chief Complaint: {clinical_context['chief_complaint']}")
+            if clinical_context.get("problems"):
+                problems = ", ".join(clinical_context["problems"])
+                clinical_info.append(f"Problems: {problems}")
+            if clinical_context.get("medications"):
+                meds = ", ".join(clinical_context["medications"])
+                clinical_info.append(f"Medications: {meds}")
+            if clinical_context.get("allergies"):
+                allergies = ", ".join(clinical_context["allergies"])
+                clinical_info.append(f"Allergies: {allergies}")
+
+            if clinical_info:
+                prompt_parts.append("\nPatient Context:")
+                prompt_parts.append("\n".join(f"- {info}" for info in clinical_info))
+
+        # Add knowledge base context if available
+        if context:
+            prompt_parts.append("\nUse the following context from medical literature to answer the query:")
+            prompt_parts.append(f"\nContext:\n{context}")
+
+        # Add query and instructions
+        prompt_parts.append(f"\nQuery: {request.query}")
+        prompt_parts.append(
+            """
+Instructions:
+- Consider the patient context when providing your answer
+- Base your answer on the provided medical literature context
+- If the context doesn't contain relevant information, say so
+- Be concise and clinical in your response
+- Reference specific sources when possible
+- Consider contraindications based on patient allergies and current medications
+"""
+        )
+
+        prompt = "\n".join(prompt_parts)
+
+        # Step 4: PHI Detection
+        phi_result = self.phi_detector.detect(text=request.query, clinical_context=clinical_context)
+
+        # Decide prompt and routing: if PHI and no local model, sanitize and send to cloud
+        sanitized_prompt = prompt
+        llm_phi_flag = phi_result.contains_phi and self.llm_client.has_local_model
+
+        if phi_result.contains_phi:
+            import logging
+
+            logging.warning(
+                f"PHI detected in query: types={phi_result.phi_types}, "
+                f"confidence={phi_result.confidence}, trace_id={trace_id}"
+            )
+            if not self.llm_client.has_local_model:
+                sanitized_prompt = self.phi_detector.sanitize(prompt)
+                logging.warning(
+                    "No local model configured; PHI redacted before routing to cloud. trace_id=%s",
+                    trace_id,
+                )
+
+        # Step 5: Intent Classification
+        intent = self.intent_classifier.classify(query=request.query, clinical_context=clinical_context)
+
+        llm_request = LLMRequest(
+            prompt=sanitized_prompt,
+            intent=intent,
+            temperature=0.1,
+            max_tokens=512,
+            phi_present=llm_phi_flag,
+            trace_id=trace_id,
+        )
+
+        return llm_request, search_results, prompt, phi_result.contains_phi, intent
+
     async def handle_query(
         self,
         request: QueryRequest,
@@ -140,120 +254,13 @@ class QueryOrchestrator:
         now = datetime.now(timezone.utc)
         message_id = f"msg-{int(now.timestamp())}"
 
-        # Step 1: Perform semantic search if RAG is enabled
-        search_results = []
-        if self.enable_rag and self.search_aggregator:
-            try:
-                search_results = await self.search_aggregator.search(
-                    query=request.query,
-                    top_k=self.rag_top_k,
-                    score_threshold=self.rag_score_threshold,
-                )
-            except Exception as e:
-                # Log error but continue without RAG
-                import logging
-
-                logging.error(f"Error performing RAG search: {e}", exc_info=True)
-
-        # Step 2: Assemble context from search results
-        context = ""
-        if search_results:
-            context = self.search_aggregator.format_context_for_rag(search_results)
-
-        # Step 3: Build prompt with context and clinical context
-        prompt_parts = [
-            "You are a clinical decision support assistant.",
-        ]
-
-        # Add clinical context if provided
-        if clinical_context:
-            clinical_info = []
-            if clinical_context.get("age"):
-                clinical_info.append(f"Age: {clinical_context['age']}")
-            if clinical_context.get("gender"):
-                clinical_info.append(f"Gender: {clinical_context['gender']}")
-            if clinical_context.get("chief_complaint"):
-                clinical_info.append(
-                    f"Chief Complaint: {clinical_context['chief_complaint']}"
-                )
-            if clinical_context.get("problems"):
-                problems = ", ".join(clinical_context["problems"])
-                clinical_info.append(f"Problems: {problems}")
-            if clinical_context.get("medications"):
-                meds = ", ".join(clinical_context["medications"])
-                clinical_info.append(f"Medications: {meds}")
-            if clinical_context.get("allergies"):
-                allergies = ", ".join(clinical_context["allergies"])
-                clinical_info.append(f"Allergies: {allergies}")
-
-            if clinical_info:
-                prompt_parts.append("\nPatient Context:")
-                prompt_parts.append("\n".join(f"- {info}" for info in clinical_info))
-
-        # Add knowledge base context if available
-        if context:
-            prompt_parts.append(
-                "\nUse the following context from medical literature to answer the query:"
-            )
-            prompt_parts.append(f"\nContext:\n{context}")
-
-        # Add query and instructions
-        prompt_parts.append(f"\nQuery: {request.query}")
-        prompt_parts.append(
-            """
-Instructions:
-- Consider the patient context when providing your answer
-- Base your answer on the provided medical literature context
-- If the context doesn't contain relevant information, say so
-- Be concise and clinical in your response
-- Reference specific sources when possible
-- Consider contraindications based on patient allergies and current medications
-"""
-        )
-
-        prompt = "\n".join(prompt_parts)
-
-        # Step 4: PHI Detection
-        phi_result = self.phi_detector.detect(
-            text=request.query, clinical_context=clinical_context
-        )
-
-        # Decide prompt and routing: if PHI and no local model, sanitize and send to cloud
-        sanitized_prompt = prompt
-        llm_phi_flag = phi_result.contains_phi and self.llm_client.has_local_model
-
-        if phi_result.contains_phi:
-            import logging
-
-            logging.warning(
-                f"PHI detected in query: types={phi_result.phi_types}, "
-                f"confidence={phi_result.confidence}, trace_id={trace_id}"
-            )
-            if not self.llm_client.has_local_model:
-                sanitized_prompt = self.phi_detector.sanitize(prompt)
-                logging.warning(
-                    "No local model configured; PHI redacted before routing to cloud. trace_id=%s",
-                    trace_id,
-                )
-
-        # Step 5: Intent Classification
-        intent = self.intent_classifier.classify(
-            query=request.query, clinical_context=clinical_context
+        llm_request, search_results, _prompt, _phi_present, intent = await self._prepare_llm_request(
+            request=request, clinical_context=clinical_context, trace_id=trace_id
         )
 
         import logging
 
         logging.info(f"Query classified as intent='{intent}', trace_id={trace_id}")
-
-        # Step 6: Generate LLM response
-        llm_request = LLMRequest(
-            prompt=sanitized_prompt,
-            intent=intent,
-            temperature=0.1,
-            max_tokens=512,
-            phi_present=llm_phi_flag,
-            trace_id=trace_id,
-        )
 
         llm_response: LLMResponse = await self.llm_client.generate(llm_request)
 
@@ -289,4 +296,76 @@ Instructions:
             answer=llm_response.text,
             created_at=now,
             citations=citations,
+            tokens=llm_response.used_tokens,
+            model=llm_response.model_name,
+            finish_reason=llm_response.finish_reason,
+        )
+
+    async def stream_query(
+        self,
+        request: QueryRequest,
+        clinical_context: Optional[dict] = None,
+        trace_id: Optional[str] = None,
+        on_chunk: Optional[Callable[[str], Awaitable[None]]] = None,
+    ) -> QueryResponse:
+        """Stream a clinician query with RAG support.
+
+        Args:
+            request: Query request with query text and optional context
+            clinical_context: Optional clinical context dict with patient info
+            trace_id: Trace ID for logging
+            on_chunk: Callback invoked per text delta
+
+        Returns:
+            QueryResponse with full answer and citations
+        """
+        now = datetime.now(timezone.utc)
+        message_id = f"msg-{int(now.timestamp())}"
+
+        llm_request, search_results, _prompt, _phi_present, intent = await self._prepare_llm_request(
+            request=request, clinical_context=clinical_context, trace_id=trace_id
+        )
+
+        async def _emit_chunk(text: str):
+            if on_chunk:
+                result = on_chunk(text)
+                if asyncio.iscoroutine(result):
+                    await result
+
+        llm_response: LLMResponse = await self.llm_client.stream_generate(llm_request, on_chunk=_emit_chunk)
+
+        citations: List[Citation] = []
+        if search_results:
+            citation_dicts = self.search_aggregator.extract_citations(search_results)
+            for cite_dict in citation_dicts:
+                citations.append(
+                    Citation(
+                        id=cite_dict.get("id", ""),
+                        source_id=cite_dict.get("source_id", cite_dict.get("id", "")),
+                        source_type=cite_dict.get("source_type", "textbook"),
+                        title=cite_dict.get("title", "Untitled"),
+                        url=cite_dict.get("url"),
+                        authors=cite_dict.get("authors"),
+                        publication_date=cite_dict.get("publication_date"),
+                        journal=cite_dict.get("journal"),
+                        volume=cite_dict.get("volume"),
+                        issue=cite_dict.get("issue"),
+                        pages=cite_dict.get("pages"),
+                        doi=cite_dict.get("doi"),
+                        pmid=cite_dict.get("pmid"),
+                        relevance_score=cite_dict.get("relevance_score"),
+                        quoted_text=cite_dict.get("quoted_text"),
+                        context=cite_dict.get("context"),
+                    )
+                )
+
+        return QueryResponse(
+            session_id=request.session_id or "session-stub",
+            message_id=message_id,
+            answer=llm_response.text,
+            created_at=now,
+            citations=citations,
+            tokens=llm_response.used_tokens,
+            model=llm_response.model_name,
+            finish_reason=llm_response.finish_reason,
         )

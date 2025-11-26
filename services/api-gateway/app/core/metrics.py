@@ -90,12 +90,8 @@ cache_latency_seconds = _safe_histogram(
     "Cache operation latency",
     ["cache_layer", "operation"],
 )
-cache_size_bytes = _safe_gauge(
-    "voiceassist_cache_size_bytes", "Current cache size", ["cache_layer"]
-)
-cache_entries_total = _safe_gauge(
-    "voiceassist_cache_entries_total", "Total cache entries", ["cache_layer"]
-)
+cache_size_bytes = _safe_gauge("voiceassist_cache_size_bytes", "Current cache size", ["cache_layer"])
+cache_entries_total = _safe_gauge("voiceassist_cache_entries_total", "Total cache entries", ["cache_layer"])
 cache_evictions_total = _safe_counter(
     "voiceassist_cache_evictions_total",
     "Total cache evictions",
@@ -103,20 +99,14 @@ cache_evictions_total = _safe_counter(
 )
 
 # RAG Query Metrics
-rag_query_duration_seconds = _safe_histogram(
-    "voiceassist_rag_query_duration_seconds", "RAG query duration", ["stage"]
-)
+rag_query_duration_seconds = _safe_histogram("voiceassist_rag_query_duration_seconds", "RAG query duration", ["stage"])
 rag_search_results_total = _safe_histogram(
     "voiceassist_rag_search_results_total",
     "Search results count",
     buckets=[0, 1, 2, 3, 5, 10, 20],
 )
-rag_embedding_tokens_total = _safe_counter(
-    "voiceassist_rag_embedding_tokens_total", "Embedding tokens"
-)
-rag_llm_tokens_total = _safe_counter(
-    "voiceassist_rag_llm_tokens_total", "LLM tokens", ["type"]
-)
+rag_embedding_tokens_total = _safe_counter("voiceassist_rag_embedding_tokens_total", "Embedding tokens")
+rag_llm_tokens_total = _safe_counter("voiceassist_rag_llm_tokens_total", "LLM tokens", ["type"])
 
 # RBAC Metrics
 rbac_checks_total = _safe_counter(
@@ -134,45 +124,40 @@ http_requests_total = _safe_counter(
 http_request_duration_seconds = _safe_histogram(
     "voiceassist_http_request_duration_seconds", "HTTP duration", ["method", "endpoint"]
 )
-websocket_connections_total = _safe_gauge(
-    "voiceassist_websocket_connections_total", "Active WebSocket connections"
-)
+websocket_connections_total = _safe_gauge("voiceassist_websocket_connections_total", "Active WebSocket connections")
 websocket_messages_total = _safe_counter(
     "voiceassist_websocket_messages_total",
     "WebSocket messages",
     ["direction", "message_type"],
 )
+voice_relay_latency_seconds = _safe_histogram(
+    "voiceassist_voice_relay_latency_seconds",
+    "End-to-end latency for voice relay (transcript -> answer)",
+    ["path"],
+)
+voice_proxy_ttfb_seconds = _safe_histogram(
+    "voiceassist_voice_proxy_ttfb_seconds",
+    "Time to first byte for voice proxy streaming",
+)
+voice_first_audio_latency_seconds = _safe_histogram(
+    "voiceassist_voice_first_audio_latency_seconds",
+    "Time from transcript reception to first audio chunk",
+)
 
 # Database Metrics
-db_connections_total = _safe_gauge(
-    "voiceassist_db_connections_total", "DB connections", ["pool_name", "state"]
-)
+db_connections_total = _safe_gauge("voiceassist_db_connections_total", "DB connections", ["pool_name", "state"])
 db_query_duration_seconds = _safe_histogram(
     "voiceassist_db_query_duration_seconds", "DB query duration", ["query_type"]
 )
-db_connection_errors_total = _safe_counter(
-    "voiceassist_db_connection_errors_total", "DB errors", ["error_type"]
-)
+db_connection_errors_total = _safe_counter("voiceassist_db_connection_errors_total", "DB errors", ["error_type"])
 db_pool_size = _safe_gauge("voiceassist_db_pool_size", "DB pool size")
-db_pool_checked_out = _safe_gauge(
-    "voiceassist_db_pool_checked_out", "DB connections checked out"
-)
-db_pool_checked_in = _safe_gauge(
-    "voiceassist_db_pool_checked_in", "DB connections idle"
-)
+db_pool_checked_out = _safe_gauge("voiceassist_db_pool_checked_out", "DB connections checked out")
+db_pool_checked_in = _safe_gauge("voiceassist_db_pool_checked_in", "DB connections idle")
 db_pool_overflow = _safe_gauge("voiceassist_db_pool_overflow", "DB pool overflow")
-db_pool_utilization_percent = _safe_gauge(
-    "voiceassist_db_pool_utilization_percent", "DB pool utilization"
-)
-redis_pool_max_connections = _safe_gauge(
-    "voiceassist_redis_pool_max_connections", "Redis max connections"
-)
-redis_pool_in_use = _safe_gauge(
-    "voiceassist_redis_pool_in_use", "Redis connections in use"
-)
-redis_pool_available = _safe_gauge(
-    "voiceassist_redis_pool_available", "Redis connections available"
-)
+db_pool_utilization_percent = _safe_gauge("voiceassist_db_pool_utilization_percent", "DB pool utilization")
+redis_pool_max_connections = _safe_gauge("voiceassist_redis_pool_max_connections", "Redis max connections")
+redis_pool_in_use = _safe_gauge("voiceassist_redis_pool_in_use", "Redis connections in use")
+redis_pool_available = _safe_gauge("voiceassist_redis_pool_available", "Redis connections available")
 
 # External Service Metrics
 external_api_requests_total = _safe_counter(
@@ -195,14 +180,10 @@ document_processing_duration_seconds = _safe_histogram(
     "Document processing duration",
     ["file_type"],
 )
-document_chunks_indexed_total = _safe_counter(
-    "voiceassist_document_chunks_indexed_total", "Document chunks indexed"
-)
+document_chunks_indexed_total = _safe_counter("voiceassist_document_chunks_indexed_total", "Document chunks indexed")
 
 # Health Check Metrics
-health_check_status = _safe_gauge(
-    "voiceassist_health_check_status", "Health check status", ["check_name"]
-)
+health_check_status = _safe_gauge("voiceassist_health_check_status", "Health check status", ["check_name"])
 health_check_duration_seconds = _safe_histogram(
     "voiceassist_health_check_duration_seconds", "Health check duration", ["check_name"]
 )
