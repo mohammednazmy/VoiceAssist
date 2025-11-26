@@ -3,7 +3,6 @@
  * Displays WebSocket connection status with visual indicators and reconnect functionality
  */
 
-import type { ReactNode } from "react";
 import type { ConnectionStatus as Status } from "@voiceassist/types";
 
 export interface ConnectionStatusProps {

@@ -56,7 +56,6 @@ export function VoiceModePanel({
   const [showSettings, setShowSettings] = useState(false);
 
   // Track pending final transcripts to add to chat
-  const pendingUserMessageRef = useRef<string | null>(null);
   const pendingAiMessageRef = useRef<string | null>(null);
 
   // Voice settings from store
@@ -72,7 +71,7 @@ export function VoiceModePanel({
     connect,
     disconnect,
     isConnected,
-    isConnecting,
+    isConnecting: _isConnecting,
     isMicPermissionDenied,
     resetFatalError,
     metrics,
