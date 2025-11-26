@@ -327,12 +327,63 @@ export class VoiceAssistApiClient {
     return response.data.data!;
   }
 
-  async sendMessage(conversationId: string, content: string): Promise<Message> {
-    const response = await this.client.post<ApiResponse<Message>>(
-      `/conversations/${conversationId}/messages`,
-      { content },
-    );
-    return response.data.data!;
+  /**
+   * Send a message to a conversation
+   * @param conversationId - The conversation ID
+   * @param content - The message content
+   * @param options - Optional parameters including idempotency key
+   */
+  async sendMessage(
+    conversationId: string,
+    content: string,
+    options?: {
+      role?: "user" | "assistant" | "system";
+      branchId?: string;
+      parentMessageId?: string;
+      clientMessageId?: string;
+      metadata?: Record<string, any>;
+    },
+  ): Promise<Message & { isDuplicate?: boolean }> {
+    const response = await this.client.post<
+      ApiResponse<Message & { is_duplicate?: boolean }>
+    >(`/conversations/${conversationId}/messages`, {
+      content,
+      role: options?.role ?? "user",
+      branch_id: options?.branchId,
+      parent_message_id: options?.parentMessageId,
+      client_message_id: options?.clientMessageId,
+      metadata: options?.metadata,
+    });
+    const data = response.data.data!;
+    return {
+      ...data,
+      isDuplicate: data.is_duplicate,
+    };
+  }
+
+  /**
+   * Send an idempotent message to a conversation
+   * Safe to retry - will return existing message if client_message_id already exists
+   * @param conversationId - The conversation ID
+   * @param clientMessageId - Unique client-generated ID for deduplication
+   * @param content - The message content
+   * @param options - Optional parameters
+   */
+  async sendIdempotentMessage(
+    conversationId: string,
+    clientMessageId: string,
+    content: string,
+    options?: {
+      role?: "user" | "assistant" | "system";
+      branchId?: string;
+      parentMessageId?: string;
+      metadata?: Record<string, any>;
+    },
+  ): Promise<Message & { isDuplicate: boolean }> {
+    return this.sendMessage(conversationId, content, {
+      ...options,
+      clientMessageId,
+    }) as Promise<Message & { isDuplicate: boolean }>;
   }
 
   async editMessage(

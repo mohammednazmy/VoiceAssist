@@ -38,11 +38,12 @@ class Session(Base):
     context = Column(JSONB, nullable=True)  # Additional context data
     message_count = Column(Integer, default=0, nullable=False)
 
+    # Per-conversation settings (P1 feature)
+    settings = Column(JSONB, nullable=True, default={})  # LLM mode, system prompt, voice options, etc.
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     ended_at = Column(DateTime, nullable=True)
 
     # Relationships
