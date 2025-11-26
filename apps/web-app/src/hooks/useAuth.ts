@@ -1,13 +1,60 @@
 /**
  * useAuth Hook
  * Provides authentication operations and manages tokens
+ *
+ * Phase 4 enhancements:
+ * - Better error messages based on HTTP status codes
+ * - OAuth provider availability detection (503 = not configured)
+ * - No rethrow in OAuth to prevent uncaught promise rejections
  */
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { VoiceAssistApiClient } from "@voiceassist/api-client";
 import type { LoginRequest } from "@voiceassist/types";
 import { useAuthStore } from "../stores/authStore";
+import type { AxiosError } from "axios";
+
+/** OAuth provider availability status */
+export type OAuthProviderStatus = "unknown" | "available" | "unavailable";
+
+/** Helper to extract HTTP status from axios error */
+function getErrorStatus(err: unknown): number | undefined {
+  return (err as AxiosError)?.response?.status;
+}
+
+/** Helper to get user-friendly login error message based on status */
+function getLoginErrorMessage(err: unknown): string {
+  const status = getErrorStatus(err);
+  if (status === 401 || status === 403) {
+    return "Invalid email or password. Please try again.";
+  }
+  if (status === 429) {
+    return "Too many login attempts. Please wait a moment and try again.";
+  }
+  if (status && status >= 500) {
+    return "Unexpected error logging in. Please try again later.";
+  }
+  // Fallback to error message or generic
+  return err instanceof Error ? err.message : "Login failed";
+}
+
+/** Helper to get user-friendly OAuth error message based on status */
+function getOAuthErrorMessage(provider: string, err: unknown): string {
+  const status = getErrorStatus(err);
+  const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+
+  if (status === 503) {
+    return `${providerName} login is not available in this environment.`;
+  }
+  if (status === 429) {
+    return "Too many attempts. Please wait a moment and try again.";
+  }
+  if (status && status >= 500) {
+    return `${providerName} login is temporarily unavailable. Please try again later.`;
+  }
+  return `${providerName} login failed. Please try again.`;
+}
 
 // Initialize API client
 const apiClient = new VoiceAssistApiClient({
@@ -38,6 +85,12 @@ export function useAuth() {
     logout: logoutStore,
   } = useAuthStore();
 
+  // Track OAuth provider availability (503 = not configured)
+  const [googleStatus, setGoogleStatus] =
+    useState<OAuthProviderStatus>("unknown");
+  const [microsoftStatus, setMicrosoftStatus] =
+    useState<OAuthProviderStatus>("unknown");
+
   const login = useCallback(
     async (credentials: LoginRequest) => {
       try {
@@ -56,7 +109,7 @@ export function useAuth() {
         navigate("/");
       } catch (err) {
         setLoading(false);
-        setError(err instanceof Error ? err.message : "Login failed");
+        setError(getLoginErrorMessage(err));
         throw err;
       }
     },
@@ -115,6 +168,9 @@ export function useAuth() {
 
   const loginWithOAuth = useCallback(
     async (provider: "google" | "microsoft") => {
+      const setProviderStatus =
+        provider === "google" ? setGoogleStatus : setMicrosoftStatus;
+
       try {
         setLoading(true);
         setError(null);
@@ -122,14 +178,24 @@ export function useAuth() {
         // Get OAuth authorization URL from backend
         const authUrl = await apiClient.getOAuthUrl(provider);
 
+        // Mark provider as available (we got a valid URL)
+        setProviderStatus("available");
+
         // Redirect to OAuth provider
         window.location.href = authUrl;
       } catch (err) {
         setLoading(false);
-        setError(
-          err instanceof Error ? err.message : "OAuth initialization failed",
-        );
-        throw err;
+
+        // Check if provider is not configured (503)
+        const status = getErrorStatus(err);
+        if (status === 503) {
+          setProviderStatus("unavailable");
+        }
+
+        // Set user-friendly error message
+        setError(getOAuthErrorMessage(provider, err));
+        // Note: intentionally NOT rethrowing to prevent uncaught promise rejections
+        // The error state is set above for the UI to display
       }
     },
     [setLoading, setError],
@@ -214,5 +280,10 @@ export function useAuth() {
     updateProfile,
     changePassword,
     apiClient,
+    // OAuth provider availability status
+    oauthStatus: {
+      google: googleStatus,
+      microsoft: microsoftStatus,
+    },
   };
 }
