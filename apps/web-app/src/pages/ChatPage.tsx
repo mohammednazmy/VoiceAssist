@@ -45,6 +45,9 @@ type ErrorType =
   | "websocket"
   | null;
 
+/** Default page size for message pagination */
+const MESSAGE_PAGE_SIZE = 50;
+
 /** Skeleton loader for chat messages during history loading */
 function MessageSkeleton({ isUser = false }: { isUser?: boolean }) {
   return (
@@ -121,6 +124,12 @@ export function ChatPage() {
   >(null);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [initialMessages, setInitialMessages] = useState<Message[]>([]);
+
+  // Pagination state for loading older messages
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
+  const [totalMessageCount, setTotalMessageCount] = useState(0);
+  const [oldestLoadedPage, setOldestLoadedPage] = useState(1);
   const [isBranchSidebarOpen, setIsBranchSidebarOpen] = useState(false);
   const [isShortcutsDialogOpen, setIsShortcutsDialogOpen] = useState(false);
   const [isClinicalContextOpen, setIsClinicalContextOpen] = useState(false);
@@ -190,20 +199,53 @@ export function ChatPage() {
         setActiveConversationId(null);
         setConversation(null);
         setInitialMessages([]);
+        // Reset pagination state
+        setHasMoreMessages(false);
+        setTotalMessageCount(0);
+        setOldestLoadedPage(1);
 
         try {
           // Validate conversation exists
           const conv = await apiClient.getConversation(conversationId);
           setConversation(conv);
 
-          // Load conversation history
+          // Load conversation history (start with first page to get total count)
           setLoadingState("loading-history");
-          const messagesResponse = await apiClient.getMessages(
+          const firstPageResponse = await apiClient.getMessages(
             conversationId,
             1,
-            50,
+            MESSAGE_PAGE_SIZE,
           );
-          setInitialMessages(messagesResponse.items);
+
+          const total = firstPageResponse.total;
+          setTotalMessageCount(total);
+
+          if (total === 0) {
+            // Empty conversation
+            setInitialMessages([]);
+            setHasMoreMessages(false);
+            setOldestLoadedPage(1);
+          } else {
+            // Calculate last page (most recent messages)
+            const lastPage = Math.ceil(total / MESSAGE_PAGE_SIZE);
+
+            if (lastPage === 1) {
+              // Only one page, use the response we already have
+              setInitialMessages(firstPageResponse.items);
+              setHasMoreMessages(false);
+              setOldestLoadedPage(1);
+            } else {
+              // Fetch the last page (most recent messages)
+              const lastPageResponse = await apiClient.getMessages(
+                conversationId,
+                lastPage,
+                MESSAGE_PAGE_SIZE,
+              );
+              setInitialMessages(lastPageResponse.items);
+              setHasMoreMessages(lastPage > 1);
+              setOldestLoadedPage(lastPage);
+            }
+          }
 
           // Set active conversation (will trigger WebSocket connection)
           setActiveConversationId(conversationId);
@@ -227,6 +269,57 @@ export function ChatPage() {
 
     initializeConversation();
   }, [conversationId, activeConversationId, apiClient, navigate, loadingState]);
+
+  // Load older messages (pagination)
+  const loadOlderMessages = useCallback(async () => {
+    if (
+      !activeConversationId ||
+      isLoadingMoreMessages ||
+      !hasMoreMessages ||
+      oldestLoadedPage <= 1
+    ) {
+      return;
+    }
+
+    setIsLoadingMoreMessages(true);
+
+    try {
+      const nextPage = oldestLoadedPage - 1;
+      const response = await apiClient.getMessages(
+        activeConversationId,
+        nextPage,
+        MESSAGE_PAGE_SIZE,
+      );
+
+      // Prepend older messages to the list
+      setInitialMessages((prev) => {
+        // Avoid duplicates by filtering based on ID
+        const existingIds = new Set(prev.map((m) => m.id));
+        const newMessages = response.items.filter(
+          (m) => !existingIds.has(m.id),
+        );
+        // Sort by timestamp (oldest first)
+        return [...newMessages, ...prev].sort(
+          (a, b) => a.timestamp - b.timestamp,
+        );
+      });
+
+      setOldestLoadedPage(nextPage);
+      setHasMoreMessages(nextPage > 1);
+    } catch (err) {
+      console.error("Failed to load older messages:", err);
+      toast.error("Failed to load messages", "Please try again.");
+    } finally {
+      setIsLoadingMoreMessages(false);
+    }
+  }, [
+    activeConversationId,
+    isLoadingMoreMessages,
+    hasMoreMessages,
+    oldestLoadedPage,
+    apiClient,
+    toast,
+  ]);
 
   const handleError = useCallback(
     (code: WebSocketErrorCode, message: string) => {
@@ -846,6 +939,10 @@ export function ChatPage() {
               onDelete={deleteMessage}
               onBranch={handleBranchFromMessage}
               branchedMessageIds={branchedMessageIds}
+              onLoadMore={loadOlderMessages}
+              hasMore={hasMoreMessages}
+              isLoadingMore={isLoadingMoreMessages}
+              totalCount={totalMessageCount}
             />
           </div>
 
