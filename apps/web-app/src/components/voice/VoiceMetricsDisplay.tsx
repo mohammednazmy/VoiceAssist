@@ -90,7 +90,7 @@ export function VoiceMetricsDisplay({
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-3 py-2 flex items-center justify-between bg-neutral-50 hover:bg-neutral-100 transition-colors"
+        className="w-full min-h-[44px] px-3 py-2 flex items-center justify-between bg-neutral-50 hover:bg-neutral-100 transition-colors"
         aria-expanded={isExpanded}
         aria-controls="voice-metrics-content"
       >
@@ -239,8 +239,8 @@ export function VoiceMetricsDisplay({
           )}
 
           {/* Counts */}
-          <div className="pt-2 border-t border-neutral-100 flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+          <div className="pt-2 border-t border-neutral-100 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
               <span className="text-xs text-neutral-400">
                 <span className="font-medium text-neutral-600">
                   {metrics.userTranscriptCount}
@@ -265,13 +265,13 @@ export function VoiceMetricsDisplay({
           {/* Latency Legend */}
           <div className="pt-2 border-t border-neutral-100">
             <div
-              className="flex items-center justify-center space-x-4 text-xs"
+              className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs"
               role="list"
               aria-label="Latency quality indicators"
             >
               <div className="flex items-center space-x-1" role="listitem">
                 <span
-                  className="w-2 h-2 rounded-full bg-green-500"
+                  className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"
                   aria-hidden="true"
                 />
                 <span className="text-neutral-400">
@@ -280,7 +280,7 @@ export function VoiceMetricsDisplay({
               </div>
               <div className="flex items-center space-x-1" role="listitem">
                 <span
-                  className="w-2 h-2 rounded-full bg-yellow-500"
+                  className="w-2 h-2 rounded-full bg-yellow-500 flex-shrink-0"
                   aria-hidden="true"
                 />
                 <span className="text-neutral-400">
@@ -290,7 +290,7 @@ export function VoiceMetricsDisplay({
               </div>
               <div className="flex items-center space-x-1" role="listitem">
                 <span
-                  className="w-2 h-2 rounded-full bg-red-500"
+                  className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"
                   aria-hidden="true"
                 />
                 <span className="text-neutral-400">
