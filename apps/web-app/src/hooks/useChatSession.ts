@@ -75,6 +75,10 @@ export function useChatSession(
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const streamingMessageRef = useRef<Message | null>(null);
+  const skipLoggedRef = useRef<{
+    conversationId: string | undefined;
+    hasToken: boolean;
+  } | null>(null);
 
   const { tokens } = useAuthStore();
   const { apiClient } = useAuth();
@@ -249,15 +253,31 @@ export function useChatSession(
   );
 
   const connect = useCallback(() => {
+    const hasToken = !!tokens?.accessToken;
+
     // Don't try to connect without a valid conversationId or token
-    if (!conversationId || !tokens?.accessToken) {
-      console.debug(
-        "[WebSocket] Skipping connect - missing conversationId or token",
-        { conversationId, hasToken: !!tokens?.accessToken },
-      );
+    if (!conversationId || !hasToken) {
+      // Only log skip once per unique state to reduce noise
+      const currentSkipState = { conversationId, hasToken };
+      const shouldLog =
+        !skipLoggedRef.current ||
+        skipLoggedRef.current.conversationId !==
+          currentSkipState.conversationId ||
+        skipLoggedRef.current.hasToken !== currentSkipState.hasToken;
+
+      if (shouldLog) {
+        console.debug(
+          "[WebSocket] Skipping connect - missing conversationId or token",
+          currentSkipState,
+        );
+        skipLoggedRef.current = currentSkipState;
+      }
       updateConnectionStatus("disconnected");
       return;
     }
+
+    // Clear skip log state when we actually connect
+    skipLoggedRef.current = null;
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       return;
@@ -268,9 +288,8 @@ export function useChatSession(
     try {
       const url = new URL(WS_URL);
       url.searchParams.append("conversationId", conversationId);
-      if (tokens?.accessToken) {
-        url.searchParams.append("token", tokens.accessToken);
-      }
+      // Token is guaranteed to exist at this point (checked above)
+      url.searchParams.append("token", tokens!.accessToken);
 
       const ws = new WebSocket(url.toString());
 
@@ -521,14 +540,22 @@ export function useChatSession(
     [onMessage],
   );
 
-  // Connect on mount
+  // Connect when conversationId and token are available
+  // Disconnect when the hook unmounts or when conversationId changes
   useEffect(() => {
-    connect();
+    // Only attempt connect when we have both prerequisites
+    // This prevents unnecessary connect() calls that just log and return
+    const hasToken = !!tokens?.accessToken;
+    const hasConversationId = !!conversationId;
+
+    if (hasToken && hasConversationId) {
+      connect();
+    }
 
     return () => {
       disconnect();
     };
-  }, [connect, disconnect]);
+  }, [connect, disconnect, conversationId, tokens?.accessToken]);
 
   return {
     messages,
