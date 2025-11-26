@@ -129,11 +129,19 @@ FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaS
 
 ## Summary
 
-**Current Test Status:**
+**Current Test Status (2025-11-25):**
 
-- All tests pass (~350+ tests across 30 test files)
-- 27 tests intentionally skipped (timing/async issues)
+- All tests pass (403 tests across 28 test files)
+- 23 tests intentionally skipped (timing/async issues)
 - OOM crash during cleanup is cosmetic (tests pass before crash)
+
+**Test Command:**
+
+```bash
+pnpm test --filter voiceassist-web
+# or directly:
+cd apps/web-app && NODE_OPTIONS='--max-old-space-size=4096' npx vitest run
+```
 
 ## Date
 
