@@ -17,6 +17,7 @@ import {
 } from "../../hooks/useRealtimeVoiceSession";
 import { WaveformVisualizer } from "../../utils/waveform";
 import { VoiceModeSettings } from "./VoiceModeSettings";
+import { VoiceMetricsDisplay } from "./VoiceMetricsDisplay";
 import {
   useVoiceSettingsStore,
   VOICE_OPTIONS,
@@ -71,6 +72,7 @@ export function VoiceModePanel({
     disconnect,
     isConnected,
     isConnecting,
+    metrics,
   } = useRealtimeVoiceSession({
     conversation_id: conversationId,
     onTranscript: (transcriptData) => {
@@ -654,6 +656,9 @@ export function VoiceModePanel({
           )}
         </div>
       )}
+
+      {/* Voice Metrics Display */}
+      <VoiceMetricsDisplay metrics={metrics} isConnected={isConnected} />
 
       {/* Instructions - only show when showStatusHints is enabled */}
       {!isConnected && !error && showStatusHints && (
