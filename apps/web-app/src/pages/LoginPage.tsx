@@ -1,6 +1,10 @@
 /**
  * Login Page
  * User authentication page with email/password login
+ *
+ * Phase 4 enhancements:
+ * - OAuth buttons disabled when provider is unavailable (503 from backend)
+ * - User-friendly error messages based on HTTP status codes
  */
 
 import { useState, useEffect } from "react";
@@ -23,7 +27,13 @@ import { useAuth } from "../hooks/useAuth";
 import { loginSchema, type LoginFormData } from "../lib/validations";
 
 export function LoginPage() {
-  const { login, loginWithOAuth, isLoading, error: authError } = useAuth();
+  const {
+    login,
+    loginWithOAuth,
+    isLoading,
+    error: authError,
+    oauthStatus,
+  } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [oauthError, setOauthError] = useState<string | null>(null);
@@ -238,18 +248,34 @@ export function LoginPage() {
             </div>
 
             <div className="grid gap-3">
-              <OAuthButton
-                provider="google"
-                fullWidth
-                disabled={isLoading}
-                onClick={() => handleOAuthLogin("google")}
-              />
-              <OAuthButton
-                provider="microsoft"
-                fullWidth
-                disabled={isLoading}
-                onClick={() => handleOAuthLogin("microsoft")}
-              />
+              <div className="relative">
+                <OAuthButton
+                  provider="google"
+                  fullWidth
+                  disabled={isLoading || oauthStatus.google === "unavailable"}
+                  onClick={() => handleOAuthLogin("google")}
+                />
+                {oauthStatus.google === "unavailable" && (
+                  <p className="text-xs text-neutral-500 mt-1 text-center">
+                    Google login is not configured in this environment
+                  </p>
+                )}
+              </div>
+              <div className="relative">
+                <OAuthButton
+                  provider="microsoft"
+                  fullWidth
+                  disabled={
+                    isLoading || oauthStatus.microsoft === "unavailable"
+                  }
+                  onClick={() => handleOAuthLogin("microsoft")}
+                />
+                {oauthStatus.microsoft === "unavailable" && (
+                  <p className="text-xs text-neutral-500 mt-1 text-center">
+                    Microsoft login is not configured in this environment
+                  </p>
+                )}
+              </div>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">

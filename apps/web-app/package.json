@@ -12,11 +12,15 @@
     "test:fast": "vitest run src/hooks/__tests__/useRealtimeVoiceSession.test.ts src/hooks/__tests__/useChatSession.test.ts src/__tests__/AppSmoke.test.tsx --reporter=dot",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "NODE_OPTIONS='--max-old-space-size=4096' vitest --coverage"
+    "test:coverage": "NODE_OPTIONS='--max-old-space-size=4096' vitest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:dev": "E2E_BASE_URL=https://dev.asimo.io playwright test"
   },
   "dependencies": {
-    "@sentry/browser": "^8.42.0",
     "@hookform/resolvers": "^3.10.0",
+    "@sentry/browser": "^8.42.0",
     "@tanstack/react-query": "^5.0.0",
     "katex": "^0.16.25",
     "prism-react-renderer": "^2.4.1",
@@ -33,6 +37,7 @@
     "zustand": "^4.5.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
