@@ -3,11 +3,21 @@
  * Tests for structured citations with full metadata (authors, DOI, PubMed ID, etc.)
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CitationDisplay } from "../CitationDisplay";
 import type { Citation } from "../../../types";
+
+// Mock useToastContext since CitationDisplay uses it for copy feedback
+vi.mock("../../../contexts/ToastContext", () => ({
+  useToastContext: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  }),
+}));
 
 describe("CitationDisplay - Phase 8 Structured Citations", () => {
   // Phase 8: Textbook citation with full metadata

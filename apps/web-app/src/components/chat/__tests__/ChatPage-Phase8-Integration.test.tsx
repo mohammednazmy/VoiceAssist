@@ -25,7 +25,7 @@ const mockListMessageAttachments = vi.fn();
 const mockExportMarkdown = vi.fn();
 const mockExportPdf = vi.fn();
 
-vi.mock("../../hooks/useChatSession", () => ({
+vi.mock("../../../hooks/useChatSession", () => ({
   useChatSession: () => ({
     messages: [],
     connectionStatus: "connected" as const,
@@ -48,11 +48,11 @@ const mockAttachmentsApiClient = {
   deleteAttachment: vi.fn(),
 };
 
-vi.mock("../../lib/api/attachmentsApi", () => ({
+vi.mock("../../../lib/api/attachmentsApi", () => ({
   createAttachmentsApi: () => mockAttachmentsApiClient,
 }));
 
-vi.mock("../../hooks/useAuth", () => ({
+vi.mock("../../../hooks/useAuth", () => ({
   useAuth: () => ({
     apiClient: {
       exportConversationAsMarkdown: mockExportMarkdown,
@@ -74,7 +74,7 @@ vi.mock("../../hooks/useAuth", () => ({
   }),
 }));
 
-vi.mock("../../stores/authStore", () => ({
+vi.mock("../../../stores/authStore", () => ({
   useAuthStore: () => ({
     tokens: {
       accessToken: "test-token",

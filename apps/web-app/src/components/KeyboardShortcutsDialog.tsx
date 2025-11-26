@@ -54,7 +54,7 @@ const SHORTCUTS: Shortcut[] = [
   },
   {
     keys: ["Esc"],
-    description: "Close modal/dialog",
+    description: "Close modal / Cancel edit",
     category: "General",
   },
   {

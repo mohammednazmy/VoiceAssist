@@ -17,6 +17,7 @@ import {
 } from "../../hooks/useRealtimeVoiceSession";
 import { WaveformVisualizer } from "../../utils/waveform";
 import { VoiceModeSettings } from "./VoiceModeSettings";
+import { VoiceMetricsDisplay } from "./VoiceMetricsDisplay";
 import {
   useVoiceSettingsStore,
   VOICE_OPTIONS,
@@ -71,6 +72,7 @@ export function VoiceModePanel({
     disconnect,
     isConnected,
     isConnecting,
+    metrics,
   } = useRealtimeVoiceSession({
     conversation_id: conversationId,
     onTranscript: (transcriptData) => {
@@ -433,7 +435,12 @@ export function VoiceModePanel({
 
       {/* Error Display */}
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
+        <div
+          className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2"
+          data-testid={
+            micPermissionDenied ? "mic-permission-error" : "connection-error"
+          }
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -459,22 +466,35 @@ export function VoiceModePanel({
                 ? "Please allow microphone access in your browser settings to use voice mode. You may need to click the microphone icon in your browser's address bar."
                 : error.message}
             </p>
-            {!micPermissionDenied && (
+            <div className="mt-2 flex space-x-2">
+              {!micPermissionDenied && (
+                <button
+                  type="button"
+                  onClick={handleConnect}
+                  className="px-3 py-1 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded transition-colors"
+                >
+                  Try Again
+                </button>
+              )}
               <button
                 type="button"
-                onClick={handleConnect}
-                className="mt-2 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded transition-colors"
+                onClick={onClose}
+                className="px-3 py-1 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded transition-colors"
+                data-testid="use-text-only-error-button"
               >
-                Try Again
+                Use text-only mode instead
               </button>
-            )}
+            </div>
           </div>
         </div>
       )}
 
       {/* Microphone Permission Denied Warning */}
       {micPermissionDenied && !error && (
-        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start space-x-2">
+        <div
+          className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start space-x-2"
+          data-testid="mic-permission-warning"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -497,6 +517,14 @@ export function VoiceModePanel({
               Voice mode needs access to your microphone. Please allow access
               when prompted, or check your browser settings.
             </p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-2 px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 hover:bg-yellow-200 rounded transition-colors"
+              data-testid="use-text-only-button"
+            >
+              Use text-only mode instead
+            </button>
           </div>
         </div>
       )}
@@ -654,6 +682,9 @@ export function VoiceModePanel({
           )}
         </div>
       )}
+
+      {/* Voice Metrics Display */}
+      <VoiceMetricsDisplay metrics={metrics} isConnected={isConnected} />
 
       {/* Instructions - only show when showStatusHints is enabled */}
       {!isConnected && !error && showStatusHints && (

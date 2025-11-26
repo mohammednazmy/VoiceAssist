@@ -10,6 +10,16 @@ import { CitationSidebar } from "../CitationSidebar";
 import type { Message } from "@voiceassist/types";
 import type { Citation } from "../../../types";
 
+// Mock useToastContext since CitationDisplay uses it for copy feedback
+vi.mock("../../../contexts/ToastContext", () => ({
+  useToastContext: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  }),
+}));
+
 describe("CitationSidebar - Phase 8", () => {
   // Phase 8: Messages with structured citations
   const textbookCitation: Citation = {
