@@ -10,7 +10,14 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 
 export function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter
+      future={{
+        // Enable React Router v7 future flags to suppress warnings
+        // and prepare for v7 compatibility
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <ThemeProvider>
         <ToastProvider>
           <AppRoutes />

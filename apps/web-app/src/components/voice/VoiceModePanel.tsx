@@ -54,10 +54,8 @@ export function VoiceModePanel({
   const [userTranscript, setUserTranscript] = useState("");
   const [aiTranscript, setAiTranscript] = useState("");
   const [showSettings, setShowSettings] = useState(false);
-  const [micPermissionDenied, setMicPermissionDenied] = useState(false);
 
   // Track pending final transcripts to add to chat
-  const pendingUserMessageRef = useRef<string | null>(null);
   const pendingAiMessageRef = useRef<string | null>(null);
 
   // Voice settings from store
@@ -73,7 +71,9 @@ export function VoiceModePanel({
     connect,
     disconnect,
     isConnected,
-    isConnecting,
+    isConnecting: _isConnecting,
+    isMicPermissionDenied,
+    resetFatalError,
     metrics,
   } = useRealtimeVoiceSession({
     conversation_id: conversationId,
@@ -238,30 +238,29 @@ export function VoiceModePanel({
     }
   }, [transcript, onUserMessage]);
 
+  /**
+   * Handle connect - resets fatal errors first to allow retry
+   */
   const handleConnect = async () => {
     try {
-      setMicPermissionDenied(false);
+      // Reset any fatal error state before attempting to connect
+      // This allows users to retry after fixing mic permissions
+      resetFatalError();
       await connect();
     } catch (err) {
+      // Error handling is done in the hook - it will set isMicPermissionDenied
+      // and update the error state appropriately
       console.error("[VoiceModePanel] Failed to connect:", err);
-      // Check if error is related to microphone permissions
-      if (err instanceof Error) {
-        if (
-          err.message.includes("Permission denied") ||
-          err.message.includes("NotAllowedError") ||
-          err.message.includes("getUserMedia")
-        ) {
-          setMicPermissionDenied(true);
-        }
-      }
     }
   };
 
+  /**
+   * Handle disconnect - clears local state
+   */
   const handleDisconnect = () => {
     disconnect();
     setUserTranscript("");
     setAiTranscript("");
-    setMicPermissionDenied(false);
   };
 
   return (
@@ -374,7 +373,9 @@ export function VoiceModePanel({
                   ? "bg-yellow-500 animate-pulse"
                   : status === "reconnecting"
                     ? "bg-orange-500 animate-pulse"
-                    : status === "error" || status === "failed"
+                    : status === "error" ||
+                        status === "failed" ||
+                        status === "mic_permission_denied"
                       ? "bg-red-500"
                       : status === "expired"
                         ? "bg-amber-500"
@@ -395,30 +396,33 @@ export function VoiceModePanel({
                     ? "Error"
                     : status === "failed"
                       ? "Connection Failed"
-                      : status === "expired"
-                        ? "Session Expired"
-                        : "Disconnected"}
+                      : status === "mic_permission_denied"
+                        ? "Microphone Blocked"
+                        : status === "expired"
+                          ? "Session Expired"
+                          : "Disconnected"}
           </span>
         </div>
 
-        {/* Show Start button when disconnected, failed, expired, or error (but not connecting/reconnecting) */}
+        {/* Show Start button when disconnected, failed, expired, or error (but not connecting/reconnecting/mic_permission_denied) */}
         {(status === "disconnected" ||
           status === "failed" ||
           status === "expired" ||
-          status === "error") && (
-          <button
-            type="button"
-            onClick={handleConnect}
-            className="min-h-[44px] px-4 py-2 bg-primary-500 text-white text-sm font-medium rounded-md hover:bg-primary-600 transition-colors w-full sm:w-auto"
-            data-testid="start-voice-session"
-          >
-            {status === "failed" || status === "expired"
-              ? "Reconnect"
-              : status === "error"
-                ? "Try Again"
-                : "Start Voice Session"}
-          </button>
-        )}
+          status === "error") &&
+          !isMicPermissionDenied && (
+            <button
+              type="button"
+              onClick={handleConnect}
+              className="min-h-[44px] px-4 py-2 bg-primary-500 text-white text-sm font-medium rounded-md hover:bg-primary-600 transition-colors w-full sm:w-auto"
+              data-testid="start-voice-session"
+            >
+              {status === "failed" || status === "expired"
+                ? "Reconnect"
+                : status === "error"
+                  ? "Try Again"
+                  : "Start Voice Session"}
+            </button>
+          )}
 
         {/* Show End button when connected, connecting, or reconnecting */}
         {(isConnected ||
@@ -435,13 +439,78 @@ export function VoiceModePanel({
         )}
       </div>
 
-      {/* Error Display */}
-      {error && (
+      {/* Microphone Permission Denied - Focused Error Card */}
+      {isMicPermissionDenied && (
+        <div
+          className="p-4 bg-red-50 border-2 border-red-300 rounded-lg"
+          data-testid="mic-permission-error"
+        >
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-6 h-6 text-red-600"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h4 className="text-base font-semibold text-red-900">
+                Microphone Access Blocked
+              </h4>
+              <p className="text-sm text-red-700 mt-1">
+                Voice mode needs microphone access to work. Your browser or
+                system settings are currently blocking it.
+              </p>
+              <div className="mt-3 p-3 bg-red-100/50 rounded-md">
+                <p className="text-xs font-medium text-red-800 mb-2">
+                  To fix this:
+                </p>
+                <ol className="text-xs text-red-700 space-y-1 list-decimal list-inside">
+                  <li>
+                    Click the lock/info icon in your browser&apos;s address bar
+                  </li>
+                  <li>Find &quot;Microphone&quot; in the permissions list</li>
+                  <li>Change it to &quot;Allow&quot;</li>
+                  <li>Click &quot;Re-check Microphone&quot; below</li>
+                </ol>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={handleConnect}
+                  className="min-h-[44px] px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+                  data-testid="recheck-mic-button"
+                >
+                  Re-check Microphone
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="min-h-[44px] px-4 py-2 text-sm font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-md transition-colors"
+                  data-testid="use-text-only-button"
+                >
+                  Use text-only mode
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* General Error Display (non-mic errors) */}
+      {error && !isMicPermissionDenied && (
         <div
           className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2"
-          data-testid={
-            micPermissionDenied ? "mic-permission-error" : "connection-error"
-          }
+          data-testid="connection-error"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -458,26 +527,16 @@ export function VoiceModePanel({
             />
           </svg>
           <div className="flex-1">
-            <p className="text-sm font-medium text-red-900">
-              {micPermissionDenied
-                ? "Microphone Access Denied"
-                : "Connection Error"}
-            </p>
-            <p className="text-sm text-red-700 mt-1">
-              {micPermissionDenied
-                ? "Please allow microphone access in your browser settings to use voice mode. You may need to click the microphone icon in your browser's address bar."
-                : error.message}
-            </p>
+            <p className="text-sm font-medium text-red-900">Connection Error</p>
+            <p className="text-sm text-red-700 mt-1">{error.message}</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {!micPermissionDenied && (
-                <button
-                  type="button"
-                  onClick={handleConnect}
-                  className="min-h-[44px] px-3 py-2 text-sm font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded transition-colors"
-                >
-                  Try Again
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={handleConnect}
+                className="min-h-[44px] px-3 py-2 text-sm font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded transition-colors"
+              >
+                Try Again
+              </button>
               <button
                 type="button"
                 onClick={onClose}
@@ -487,46 +546,6 @@ export function VoiceModePanel({
                 Use text-only mode instead
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Microphone Permission Denied Warning */}
-      {micPermissionDenied && !error && (
-        <div
-          className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start space-x-2"
-          data-testid="mic-permission-warning"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-            />
-          </svg>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-yellow-900">
-              Microphone Permission Required
-            </p>
-            <p className="text-sm text-yellow-700 mt-1">
-              Voice mode needs access to your microphone. Please allow access
-              when prompted, or check your browser settings.
-            </p>
-            <button
-              type="button"
-              onClick={onClose}
-              className="mt-2 min-h-[44px] px-3 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 hover:bg-yellow-200 rounded transition-colors"
-              data-testid="use-text-only-button"
-            >
-              Use text-only mode instead
-            </button>
           </div>
         </div>
       )}
