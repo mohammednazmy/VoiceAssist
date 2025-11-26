@@ -128,6 +128,7 @@ export function ChatPage() {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] =
     useState(false);
+  const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(false);
 
   // Clinical context management
   const clinicalContextHook = useClinicalContext(
@@ -399,6 +400,9 @@ export function ChatPage() {
     onShowShortcuts: () => setIsShortcutsDialogOpen(true),
     onToggleCitations: () => setIsCitationSidebarOpen((prev) => !prev),
     onToggleClinicalContext: () => setIsClinicalContextOpen((prev) => !prev),
+    onToggleVoicePanel: () => setIsVoicePanelOpen((prev) => !prev),
+    onCloseVoicePanel: () => setIsVoicePanelOpen(false),
+    isVoicePanelOpen,
   });
 
   // Handle clinical context changes with debounced save
@@ -809,6 +813,8 @@ export function ChatPage() {
             onVoiceUserMessage={handleVoiceUserMessage}
             onVoiceAssistantMessage={handleVoiceAssistantMessage}
             onVoiceMetricsUpdate={handleVoiceMetricsUpdate}
+            isVoicePanelOpen={isVoicePanelOpen}
+            onVoicePanelChange={setIsVoicePanelOpen}
           />
         </div>
 
