@@ -3,20 +3,22 @@
 Sets up tracing with Jaeger and OTLP exporters for comprehensive
 distributed tracing across all services and external calls.
 """
+
 import logging
 from typing import Optional
+
+from app.core.config import settings
+from fastapi import FastAPI
 from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
-from opentelemetry.instrumentation.redis import RedisInstrumentor
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
-from fastapi import FastAPI
-from app.core.config import settings
+from opentelemetry.instrumentation.redis import RedisInstrumentor
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +30,8 @@ def setup_tracing(
     jaeger_host: Optional[str] = None,
     jaeger_port: int = 6831,
     otlp_endpoint: Optional[str] = None,
-    enable_tracing: bool = True
+    otlp_insecure: Optional[bool] = None,
+    enable_tracing: bool = True,
 ) -> Optional[TracerProvider]:
     """Set up OpenTelemetry tracing with Jaeger and OTLP exporters.
 
@@ -39,6 +42,7 @@ def setup_tracing(
         jaeger_host: Jaeger agent hostname (optional)
         jaeger_port: Jaeger agent port (default 6831)
         otlp_endpoint: OTLP collector endpoint (optional)
+        otlp_insecure: Use insecure connection for OTLP (default: True for dev)
         enable_tracing: Enable/disable tracing (default True)
 
     Returns:
@@ -48,14 +52,20 @@ def setup_tracing(
         logger.info("Tracing is disabled")
         return None
 
+    # Default otlp_insecure based on environment if not explicitly set
+    if otlp_insecure is None:
+        otlp_insecure = settings.ENVIRONMENT != "production"
+
     try:
         # Create resource with service information
-        resource = Resource.create({
-            SERVICE_NAME: service_name,
-            SERVICE_VERSION: service_version,
-            "deployment.environment": settings.ENVIRONMENT,
-            "service.namespace": "voiceassist",
-        })
+        resource = Resource.create(
+            {
+                SERVICE_NAME: service_name,
+                SERVICE_VERSION: service_version,
+                "deployment.environment": settings.ENVIRONMENT,
+                "service.namespace": "voiceassist",
+            }
+        )
 
         # Create tracer provider
         provider = TracerProvider(resource=resource)
@@ -75,12 +85,10 @@ def setup_tracing(
         # Add OTLP exporter if configured
         if otlp_endpoint:
             try:
-                otlp_exporter = OTLPSpanExporter(
-                    endpoint=otlp_endpoint,
-                    insecure=True  # TODO: Use TLS in production
-                )
+                otlp_exporter = OTLPSpanExporter(endpoint=otlp_endpoint, insecure=otlp_insecure)
                 provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
-                logger.info(f"OTLP exporter configured: {otlp_endpoint}")
+                tls_status = "insecure" if otlp_insecure else "TLS enabled"
+                logger.info(f"OTLP exporter configured: {otlp_endpoint} ({tls_status})")
             except Exception as e:
                 logger.warning(f"Failed to configure OTLP exporter: {e}")
 
@@ -188,10 +196,13 @@ class TracingHelper:
         Returns:
             Span context manager
         """
-        return create_span("vector.search", {
-            "query.length": len(query),
-            "search.top_k": top_k,
-        })
+        return create_span(
+            "vector.search",
+            {
+                "query.length": len(query),
+                "search.top_k": top_k,
+            },
+        )
 
     @staticmethod
     def trace_document_indexing(document_id: str, file_type: str):
@@ -204,10 +215,13 @@ class TracingHelper:
         Returns:
             Span context manager
         """
-        return create_span("document.index", {
-            "document.id": document_id,
-            "document.type": file_type,
-        })
+        return create_span(
+            "document.index",
+            {
+                "document.id": document_id,
+                "document.type": file_type,
+            },
+        )
 
     @staticmethod
     def trace_external_api(service: str, operation: str):
@@ -220,10 +234,13 @@ class TracingHelper:
         Returns:
             Span context manager
         """
-        return create_span(f"{service}.{operation}", {
-            "service.name": service,
-            "operation": operation,
-        })
+        return create_span(
+            f"{service}.{operation}",
+            {
+                "service.name": service,
+                "operation": operation,
+            },
+        )
 
     @staticmethod
     def trace_database_operation(operation: str, table: Optional[str] = None):

@@ -3,9 +3,13 @@
  * Upload, manage, and index documents for RAG
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { Button } from "@voiceassist/ui";
+import type {
+  AdminKBDocument,
+  AdminKBDocumentDetail,
+} from "@voiceassist/api-client";
 
 interface Document {
   id: string;
@@ -18,62 +22,66 @@ interface Document {
   chunks?: number;
 }
 
+/** Convert API document to local Document type */
+function apiDocToLocal(doc: AdminKBDocument): Document {
+  return {
+    id: doc.document_id,
+    title: doc.title,
+    filename: doc.title, // API doesn't return filename in list, use title
+    fileType: doc.source_type,
+    size: 0, // Not available in list response
+    uploadedAt: doc.upload_date,
+    status: "indexed",
+    chunks: doc.chunks_indexed,
+  };
+}
+
+/** Convert detailed API document to local Document type */
+function apiDetailToLocal(doc: AdminKBDocumentDetail): Document {
+  const metadata = doc.metadata as { file_size?: number } | undefined;
+  return {
+    id: doc.document_id,
+    title: doc.title,
+    filename: doc.filename,
+    fileType: doc.file_type,
+    size: metadata?.file_size ?? 0,
+    uploadedAt: doc.created_at,
+    status:
+      doc.indexing_status === "indexed"
+        ? "indexed"
+        : doc.indexing_status === "processing"
+          ? "processing"
+          : "failed",
+    chunks: doc.chunks_indexed,
+  };
+}
+
 export function KnowledgeBaseManager() {
-  const { apiClient: _apiClient } = useAuth();
+  const { apiClient } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const loadDocuments = useCallback(async () => {
+    try {
+      setError(null);
+      const response = await apiClient.getAdminKBDocuments(0, 100);
+      const localDocs = response.documents.map(apiDocToLocal);
+      setDocuments(localDocs);
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Failed to load documents:", err);
+      setError(err instanceof Error ? err.message : "Failed to load documents");
+      setIsLoading(false);
+    }
+  }, [apiClient]);
 
   useEffect(() => {
     loadDocuments();
-  }, []);
-
-  const loadDocuments = async () => {
-    try {
-      // TODO: Replace with actual API call when backend is ready
-      // const docs = await apiClient.get('/admin/documents');
-
-      // Mock data for now
-      setDocuments([
-        {
-          id: "1",
-          title: "Harrison's Principles of Internal Medicine",
-          filename: "harrisons-21st-edition.pdf",
-          fileType: "application/pdf",
-          size: 52428800, // 50 MB
-          uploadedAt: new Date().toISOString(),
-          status: "indexed",
-          chunks: 2500,
-        },
-        {
-          id: "2",
-          title: "Clinical Practice Guidelines - Diabetes",
-          filename: "diabetes-guidelines-2024.pdf",
-          fileType: "application/pdf",
-          size: 5242880, // 5 MB
-          uploadedAt: new Date(Date.now() - 86400000).toISOString(),
-          status: "indexed",
-          chunks: 150,
-        },
-        {
-          id: "3",
-          title: "Cardiology Clinical Updates",
-          filename: "cardiology-updates.pdf",
-          fileType: "application/pdf",
-          size: 10485760, // 10 MB
-          uploadedAt: new Date(Date.now() - 172800000).toISOString(),
-          status: "processing",
-          chunks: 0,
-        },
-      ]);
-
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Failed to load documents:", error);
-      setIsLoading(false);
-    }
-  };
+  }, [loadDocuments]);
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -82,25 +90,26 @@ export function KnowledgeBaseManager() {
     if (!files || files.length === 0) return;
 
     setIsUploading(true);
+    setUploadProgress(0);
+    setError(null);
 
     try {
-      // TODO: Implement actual file upload when backend is ready
-      // for (const file of files) {
-      //   const formData = new FormData();
-      //   formData.append('file', file);
-      //   await apiClient.post('/admin/documents/upload', formData);
-      // }
-
-      // Simulate upload
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      alert("File upload will be available when backend is ready");
+      for (const file of Array.from(files)) {
+        await apiClient.uploadAdminKBDocument(
+          file,
+          undefined, // Use filename as title
+          "uploaded",
+          (progress) => setUploadProgress(progress),
+        );
+      }
 
       await loadDocuments();
-    } catch (error) {
-      console.error("Upload failed:", error);
-      alert("Upload failed. Please try again.");
+    } catch (err) {
+      console.error("Upload failed:", err);
+      setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
       event.target.value = "";
     }
   };
@@ -109,27 +118,22 @@ export function KnowledgeBaseManager() {
     if (!confirm("Are you sure you want to delete this document?")) return;
 
     try {
-      // TODO: Implement actual delete when backend is ready
-      // await apiClient.delete(`/admin/documents/${id}`);
-
+      setError(null);
+      await apiClient.deleteAdminKBDocument(id);
+      // Remove from local state immediately for better UX
       setDocuments((docs) => docs.filter((d) => d.id !== id));
-      alert("Delete functionality will be available when backend is ready");
-    } catch (error) {
-      console.error("Delete failed:", error);
-      alert("Delete failed. Please try again.");
+    } catch (err) {
+      console.error("Delete failed:", err);
+      setError(err instanceof Error ? err.message : "Delete failed");
     }
   };
 
-  const handleReindex = async (_id: string) => {
-    try {
-      // TODO: Implement actual reindex when backend is ready
-      // await apiClient.post(`/admin/documents/${id}/reindex`);
-
-      alert("Reindex functionality will be available when backend is ready");
-    } catch (error) {
-      console.error("Reindex failed:", error);
-      alert("Reindex failed. Please try again.");
-    }
+  const handleReindex = async (id: string) => {
+    // TODO: Backend doesn't have reindex endpoint yet
+    // When implemented, call: await apiClient.reindexAdminKBDocument(id);
+    setError(
+      `Reindex for document ${id} is not yet implemented. Delete and re-upload the document to reindex.`,
+    );
   };
 
   const formatFileSize = (bytes: number) => {
@@ -205,7 +209,7 @@ export function KnowledgeBaseManager() {
               {isUploading ? (
                 <>
                   <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Uploading...
+                  {uploadProgress > 0 ? `${uploadProgress}%` : "Uploading..."}
                 </>
               ) : (
                 <>
@@ -230,6 +234,48 @@ export function KnowledgeBaseManager() {
           </label>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+            />
+          </svg>
+          <div className="flex-1">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-500 hover:text-red-700"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Search */}
       <div className="relative">

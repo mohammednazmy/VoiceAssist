@@ -8,20 +8,285 @@ Tools:
 - create_calendar_event: Create new calendar event
 """
 
-from typing import List, Optional
-from pydantic import BaseModel, Field
-from datetime import datetime
 import logging
+import re
+import uuid
+from datetime import datetime, timedelta
+from typing import List, Optional
+from urllib.parse import quote
 
+import httpx
+from pydantic import BaseModel, Field
+
+from app.core.config import get_settings
 from app.tools.base import (
-    ToolDefinition,
-    ToolResult,
-    ToolCategory,
     RiskLevel,
-    ToolError
+    ToolCategory,
+    ToolDefinition,
+    ToolError,
+    ToolResult,
 )
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# CalDAV Client Helper Functions
+# ============================================================================
+
+def _get_caldav_url(username: str, calendar_name: str = "personal") -> str:
+    """Build CalDAV URL for Nextcloud calendar."""
+    settings = get_settings()
+    base_url = settings.nextcloud_base_url.rstrip("/")
+    # Nextcloud CalDAV endpoint format
+    return f"{base_url}/remote.php/dav/calendars/{quote(username)}/{quote(calendar_name)}/"
+
+
+def _get_auth() -> tuple[str, str]:
+    """Get Nextcloud authentication credentials."""
+    settings = get_settings()
+    return (settings.nextcloud_username, settings.nextcloud_password)
+
+
+def _parse_icalendar_datetime(dt_str: str) -> Optional[datetime]:
+    """Parse iCalendar datetime string to Python datetime."""
+    if not dt_str:
+        return None
+
+    # Remove any parameters (e.g., TZID=...)
+    dt_str = dt_str.split(":")[-1] if ":" in dt_str else dt_str
+
+    # Handle different formats
+    formats = [
+        "%Y%m%dT%H%M%SZ",  # UTC format
+        "%Y%m%dT%H%M%S",   # Local format
+        "%Y%m%d",          # All-day format
+    ]
+
+    for fmt in formats:
+        try:
+            return datetime.strptime(dt_str, fmt)
+        except ValueError:
+            continue
+
+    return None
+
+
+def _parse_vevent(vevent_text: str, calendar_name: str) -> Optional[CalendarEvent]:
+    """Parse a VEVENT block into a CalendarEvent object."""
+    try:
+        # Extract UID
+        uid_match = re.search(r"UID:(.+?)(?:\r?\n)", vevent_text)
+        uid = uid_match.group(1).strip() if uid_match else str(uuid.uuid4())
+
+        # Extract SUMMARY (title)
+        summary_match = re.search(r"SUMMARY:(.+?)(?:\r?\n)", vevent_text)
+        title = summary_match.group(1).strip() if summary_match else "Untitled Event"
+
+        # Extract DTSTART
+        dtstart_match = re.search(r"DTSTART[^:]*:(.+?)(?:\r?\n)", vevent_text)
+        dtstart_str = dtstart_match.group(1).strip() if dtstart_match else ""
+        start_dt = _parse_icalendar_datetime(dtstart_str)
+
+        # Extract DTEND
+        dtend_match = re.search(r"DTEND[^:]*:(.+?)(?:\r?\n)", vevent_text)
+        dtend_str = dtend_match.group(1).strip() if dtend_match else ""
+        end_dt = _parse_icalendar_datetime(dtend_str)
+
+        # If no end time, assume 1 hour duration
+        if start_dt and not end_dt:
+            end_dt = start_dt + timedelta(hours=1)
+
+        if not start_dt:
+            return None
+
+        # Extract LOCATION
+        location_match = re.search(r"LOCATION:(.+?)(?:\r?\n)", vevent_text)
+        location = location_match.group(1).strip() if location_match else None
+
+        # Extract DESCRIPTION
+        desc_match = re.search(r"DESCRIPTION:(.+?)(?:\r?\n)", vevent_text, re.DOTALL)
+        description = desc_match.group(1).strip() if desc_match else None
+        # Handle line folding in description
+        if description:
+            description = description.replace("\r\n ", "").replace("\n ", "")
+
+        # Check if all-day event (no time component in DTSTART)
+        all_day = len(dtstart_str) == 8  # YYYYMMDD format
+
+        return CalendarEvent(
+            id=uid,
+            title=title,
+            start=start_dt.isoformat() + "Z" if start_dt else "",
+            end=end_dt.isoformat() + "Z" if end_dt else "",
+            location=location,
+            description=description,
+            calendar_name=calendar_name,
+            all_day=all_day
+        )
+    except Exception as e:
+        logger.warning(f"Error parsing VEVENT: {e}")
+        return None
+
+
+async def _caldav_query_events(
+    calendar_url: str,
+    auth: tuple[str, str],
+    start_date: str,
+    end_date: str,
+    calendar_name: str,
+) -> List[CalendarEvent]:
+    """
+    Query CalDAV server for events in date range using REPORT method.
+
+    Args:
+        calendar_url: CalDAV calendar URL
+        auth: (username, password) tuple
+        start_date: Start date (YYYY-MM-DD)
+        end_date: End date (YYYY-MM-DD)
+        calendar_name: Name of the calendar
+
+    Returns:
+        List of CalendarEvent objects
+    """
+    # Build CalDAV REPORT request body
+    # This uses calendar-query with time-range filter
+    report_body = f"""<?xml version="1.0" encoding="utf-8" ?>
+<C:calendar-query xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
+  <D:prop>
+    <D:getetag/>
+    <C:calendar-data/>
+  </D:prop>
+  <C:filter>
+    <C:comp-filter name="VCALENDAR">
+      <C:comp-filter name="VEVENT">
+        <C:time-range start="{start_date.replace('-', '')}T000000Z"
+                      end="{end_date.replace('-', '')}T235959Z"/>
+      </C:comp-filter>
+    </C:comp-filter>
+  </C:filter>
+</C:calendar-query>"""
+
+    headers = {
+        "Content-Type": "application/xml; charset=utf-8",
+        "Depth": "1",
+    }
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        response = await client.request(
+            method="REPORT",
+            url=calendar_url,
+            content=report_body,
+            headers=headers,
+            auth=auth,
+        )
+        response.raise_for_status()
+
+    # Parse response - extract VEVENT blocks from calendar-data elements
+    events = []
+    vevent_pattern = re.compile(r"BEGIN:VEVENT(.+?)END:VEVENT", re.DOTALL)
+
+    for match in vevent_pattern.finditer(response.text):
+        vevent_text = "BEGIN:VEVENT" + match.group(1) + "END:VEVENT"
+        event = _parse_vevent(vevent_text, calendar_name)
+        if event:
+            events.append(event)
+
+    return events
+
+
+def _generate_icalendar_event(
+    uid: str,
+    title: str,
+    start_datetime: str,
+    end_datetime: str,
+    location: Optional[str] = None,
+    description: Optional[str] = None,
+    all_day: bool = False,
+) -> str:
+    """Generate iCalendar VEVENT string."""
+    now = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+
+    # Parse and format datetime
+    try:
+        start_dt = datetime.fromisoformat(start_datetime.replace("Z", "+00:00"))
+        end_dt = datetime.fromisoformat(end_datetime.replace("Z", "+00:00"))
+
+        if all_day:
+            dtstart = start_dt.strftime("%Y%m%d")
+            dtend = end_dt.strftime("%Y%m%d")
+            dtstart_line = f"DTSTART;VALUE=DATE:{dtstart}"
+            dtend_line = f"DTEND;VALUE=DATE:{dtend}"
+        else:
+            dtstart = start_dt.strftime("%Y%m%dT%H%M%SZ")
+            dtend = end_dt.strftime("%Y%m%dT%H%M%SZ")
+            dtstart_line = f"DTSTART:{dtstart}"
+            dtend_line = f"DTEND:{dtend}"
+    except Exception:
+        # Fallback to raw strings
+        dtstart_line = f"DTSTART:{start_datetime}"
+        dtend_line = f"DTEND:{end_datetime}"
+
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//VoiceAssist//Calendar//EN",
+        "BEGIN:VEVENT",
+        f"UID:{uid}",
+        f"DTSTAMP:{now}",
+        dtstart_line,
+        dtend_line,
+        f"SUMMARY:{title}",
+    ]
+
+    if location:
+        lines.append(f"LOCATION:{location}")
+    if description:
+        # Escape special characters and fold long lines
+        desc = description.replace("\\", "\\\\").replace("\n", "\\n")
+        lines.append(f"DESCRIPTION:{desc}")
+
+    lines.extend([
+        "END:VEVENT",
+        "END:VCALENDAR",
+    ])
+
+    return "\r\n".join(lines)
+
+
+async def _caldav_create_event(
+    calendar_url: str,
+    auth: tuple[str, str],
+    uid: str,
+    icalendar_data: str,
+) -> bool:
+    """
+    Create event on CalDAV server using PUT method.
+
+    Args:
+        calendar_url: CalDAV calendar URL
+        auth: (username, password) tuple
+        uid: Event UID
+        icalendar_data: iCalendar formatted event data
+
+    Returns:
+        True if created successfully
+    """
+    event_url = f"{calendar_url}{uid}.ics"
+
+    headers = {
+        "Content-Type": "text/calendar; charset=utf-8",
+    }
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        response = await client.put(
+            url=event_url,
+            content=icalendar_data,
+            headers=headers,
+            auth=auth,
+        )
+        # 201 Created or 204 No Content indicates success
+        return response.status_code in (201, 204)
 
 
 # ============================================================================
@@ -96,9 +361,7 @@ GET_CALENDAR_EVENTS_DEF = ToolDefinition(
 
 def get_events(args: GetCalendarEventsArgs, user_id: int) -> ToolResult:
     """
-    Get calendar events for date range.
-
-    STUB IMPLEMENTATION - Replace with actual CalDAV integration in Phase 6.
+    Get calendar events for date range using CalDAV.
 
     Args:
         args: Validated arguments
@@ -107,48 +370,77 @@ def get_events(args: GetCalendarEventsArgs, user_id: int) -> ToolResult:
     Returns:
         ToolResult with events list
     """
+    import asyncio
+
     start_time = datetime.utcnow()
 
     try:
-        logger.info(f"Getting calendar events for user {user_id}: {args.start_date} to {args.end_date}")
+        logger.info(
+            f"Getting calendar events for user {user_id}: "
+            f"{args.start_date} to {args.end_date}"
+        )
 
-        # STUB: Return mock data
-        # TODO: Implement CalDAV client to query Nextcloud Calendar
-        # - Connect to Nextcloud CalDAV endpoint
-        # - Query events in date range
-        # - Parse iCal format
-        # - Return structured events
+        settings = get_settings()
 
-        mock_events = [
-            CalendarEvent(
-                id="event-1",
-                title="Morning Rounds",
-                start=f"{args.start_date}T08:00:00Z",
-                end=f"{args.start_date}T09:00:00Z",
-                location="Hospital - Floor 3",
-                description="Daily morning rounds with team",
-                calendar_name="Work",
-                all_day=False
-            ),
-            CalendarEvent(
-                id="event-2",
-                title="Patient Consultation",
-                start=f"{args.start_date}T10:00:00Z",
-                end=f"{args.start_date}T10:30:00Z",
-                location="Clinic Room 2",
-                description="Follow-up consultation",
-                calendar_name="Work",
-                all_day=False
+        # Check if Nextcloud is configured
+        if not settings.nextcloud_username or not settings.nextcloud_password:
+            logger.warning("Nextcloud credentials not configured, returning empty results")
+            result_data = GetCalendarEventsResult(
+                events=[],
+                total_count=0,
+                date_range=f"{args.start_date} to {args.end_date}"
             )
-        ]
+            execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+            return ToolResult(
+                tool_name="get_calendar_events",
+                success=True,
+                result=result_data.dict(),
+                execution_time_ms=execution_time
+            )
+
+        # Determine calendar to query
+        calendar_name = args.calendar_name or settings.nextcloud_default_calendar
+        calendar_url = _get_caldav_url(settings.nextcloud_username, calendar_name)
+        auth = _get_auth()
+
+        async def _query():
+            return await _caldav_query_events(
+                calendar_url=calendar_url,
+                auth=auth,
+                start_date=args.start_date,
+                end_date=args.end_date,
+                calendar_name=calendar_name,
+            )
+
+        # Run async query
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop and loop.is_running():
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, _query())
+                events = future.result(timeout=15)
+        else:
+            events = asyncio.run(_query())
+
+        # Sort by start time and limit results
+        events.sort(key=lambda e: e.start)
+        events = events[:args.max_results]
 
         result_data = GetCalendarEventsResult(
-            events=mock_events[:args.max_results],
-            total_count=len(mock_events),
+            events=events,
+            total_count=len(events),
             date_range=f"{args.start_date} to {args.end_date}"
         )
 
         execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+
+        logger.info(
+            f"Retrieved {len(events)} calendar events in {execution_time:.2f}ms"
+        )
 
         return ToolResult(
             tool_name="get_calendar_events",
@@ -157,6 +449,23 @@ def get_events(args: GetCalendarEventsArgs, user_id: int) -> ToolResult:
             execution_time_ms=execution_time
         )
 
+    except httpx.HTTPStatusError as e:
+        logger.error(f"CalDAV HTTP error: {e}")
+        execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        return ToolResult(
+            tool_name="get_calendar_events",
+            success=False,
+            error=f"Calendar server error: {e.response.status_code}",
+            execution_time_ms=execution_time
+        )
+    except httpx.TimeoutException:
+        execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        return ToolResult(
+            tool_name="get_calendar_events",
+            success=False,
+            error="Calendar request timed out",
+            execution_time_ms=execution_time
+        )
     except Exception as e:
         logger.error(f"Error getting calendar events: {e}", exc_info=True)
         execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
@@ -247,9 +556,7 @@ CREATE_CALENDAR_EVENT_DEF = ToolDefinition(
 
 def create_event(args: CreateCalendarEventArgs, user_id: int) -> ToolResult:
     """
-    Create a calendar event.
-
-    STUB IMPLEMENTATION - Replace with actual CalDAV integration in Phase 6.
+    Create a calendar event using CalDAV.
 
     Args:
         args: Validated arguments
@@ -258,30 +565,88 @@ def create_event(args: CreateCalendarEventArgs, user_id: int) -> ToolResult:
     Returns:
         ToolResult with created event details
     """
+    import asyncio
+
     start_time = datetime.utcnow()
 
     try:
         logger.info(f"Creating calendar event for user {user_id}: {args.title}")
 
-        # STUB: Simulate event creation
-        # TODO: Implement CalDAV client to create event
-        # - Connect to Nextcloud CalDAV endpoint
-        # - Generate iCal format event
-        # - POST to calendar
-        # - Return event ID
+        settings = get_settings()
 
-        event_id = f"event-{datetime.utcnow().timestamp()}"
+        # Check if Nextcloud is configured
+        if not settings.nextcloud_username or not settings.nextcloud_password:
+            return ToolResult(
+                tool_name="create_calendar_event",
+                success=False,
+                error="Calendar not configured. Please set Nextcloud credentials.",
+                execution_time_ms=(datetime.utcnow() - start_time).total_seconds() * 1000
+            )
+
+        # Generate unique event ID
+        event_uid = f"voiceassist-{uuid.uuid4()}"
+
+        # Determine calendar
+        calendar_name = args.calendar_name or settings.nextcloud_default_calendar
+        calendar_url = _get_caldav_url(settings.nextcloud_username, calendar_name)
+        auth = _get_auth()
+
+        # Generate iCalendar data
+        icalendar_data = _generate_icalendar_event(
+            uid=event_uid,
+            title=args.title,
+            start_datetime=args.start_datetime,
+            end_datetime=args.end_datetime,
+            location=args.location,
+            description=args.description,
+            all_day=args.all_day,
+        )
+
+        async def _create():
+            return await _caldav_create_event(
+                calendar_url=calendar_url,
+                auth=auth,
+                uid=event_uid,
+                icalendar_data=icalendar_data,
+            )
+
+        # Run async create
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop and loop.is_running():
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, _create())
+                created = future.result(timeout=15)
+        else:
+            created = asyncio.run(_create())
+
+        if not created:
+            return ToolResult(
+                tool_name="create_calendar_event",
+                success=False,
+                error="Failed to create event on calendar server",
+                execution_time_ms=(datetime.utcnow() - start_time).total_seconds() * 1000
+            )
 
         result_data = CreateCalendarEventResult(
-            event_id=event_id,
+            event_id=event_uid,
             title=args.title,
             start=args.start_datetime,
             end=args.end_datetime,
             created=True,
-            message=f"Event '{args.title}' created successfully"
+            message=f"Event '{args.title}' created successfully in calendar '{calendar_name}'"
         )
 
         execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+
+        logger.info(
+            f"Created calendar event '{args.title}' (uid={event_uid}) "
+            f"in {execution_time:.2f}ms"
+        )
 
         return ToolResult(
             tool_name="create_calendar_event",
@@ -290,6 +655,23 @@ def create_event(args: CreateCalendarEventArgs, user_id: int) -> ToolResult:
             execution_time_ms=execution_time
         )
 
+    except httpx.HTTPStatusError as e:
+        logger.error(f"CalDAV HTTP error creating event: {e}")
+        execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        return ToolResult(
+            tool_name="create_calendar_event",
+            success=False,
+            error=f"Calendar server error: {e.response.status_code}",
+            execution_time_ms=execution_time
+        )
+    except httpx.TimeoutException:
+        execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        return ToolResult(
+            tool_name="create_calendar_event",
+            success=False,
+            error="Calendar request timed out",
+            execution_time_ms=execution_time
+        )
     except Exception as e:
         logger.error(f"Error creating calendar event: {e}", exc_info=True)
         execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000

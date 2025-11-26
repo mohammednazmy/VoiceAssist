@@ -107,10 +107,20 @@ class Settings(BaseSettings):
         "https://asimo.io,https://dev.asimo.io,https://assist.asimo.io,http://localhost:3000,http://localhost:5173"
     )
 
+    # Frontend URL (used for generating share links and other frontend-facing URLs)
+    FRONTEND_URL: str = "http://localhost:5173"
+
     # Sentry Error Tracking
     SENTRY_DSN: Optional[str] = None  # Sentry DSN for error tracking
     SENTRY_TRACES_SAMPLE_RATE: float = 0.1  # 10% of requests traced
     SENTRY_PROFILES_SAMPLE_RATE: float = 0.1  # 10% of traced requests profiled
+
+    # OpenTelemetry / Tracing
+    OTLP_ENDPOINT: Optional[str] = None  # OTLP collector endpoint
+    OTLP_INSECURE: bool = True  # Set to False for TLS in production
+    JAEGER_HOST: Optional[str] = None  # Jaeger agent hostname
+    JAEGER_PORT: int = 6831  # Jaeger agent port
+    TRACING_ENABLED: bool = True  # Enable/disable distributed tracing
 
     # Caching (Phase 7 Integration Improvements - P2.1)
     CACHE_ENABLED: bool = True

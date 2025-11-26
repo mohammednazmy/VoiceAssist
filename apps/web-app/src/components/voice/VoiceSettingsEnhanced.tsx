@@ -3,7 +3,7 @@
  * Configure voice input/output preferences with backend persistence
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Label,
   Card,
@@ -13,6 +13,7 @@ import {
 } from "@voiceassist/ui";
 import type { VADConfig } from "../../utils/vad";
 import { DEFAULT_VAD_CONFIG } from "../../utils/vad";
+import { useAuth } from "../../hooks/useAuth";
 
 export interface VoiceSettingsData {
   // TTS Settings
@@ -54,16 +55,27 @@ const AVAILABLE_VOICES = [
   { id: "shimmer", name: "Shimmer", description: "Soft and gentle" },
 ];
 
+// Sample sentences for voice testing
+const VOICE_TEST_SAMPLES = [
+  "Hello! This is a test of your selected voice settings.",
+  "The quick brown fox jumps over the lazy dog.",
+  "Welcome to VoiceAssist. How can I help you today?",
+];
+
 export function VoiceSettingsEnhanced({
   onSettingsChange,
   initialSettings,
 }: VoiceSettingsEnhancedProps) {
+  const { apiClient } = useAuth();
   const [settings, setSettings] = useState<VoiceSettingsData>({
     ...DEFAULT_SETTINGS,
     ...initialSettings,
   });
 
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isTestingVoice, setIsTestingVoice] = useState(false);
+  const [testError, setTestError] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -97,6 +109,79 @@ export function VoiceSettingsEnhanced({
   const resetToDefaults = () => {
     setSettings(DEFAULT_SETTINGS);
   };
+
+  // Stop any currently playing test audio
+  const stopTestAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      URL.revokeObjectURL(audioRef.current.src);
+      audioRef.current = null;
+    }
+  };
+
+  // Test voice with current settings
+  const testVoiceSettings = async () => {
+    // Stop any existing playback
+    stopTestAudio();
+
+    setIsTestingVoice(true);
+    setTestError(null);
+
+    try {
+      // Pick a random sample sentence
+      const sampleText =
+        VOICE_TEST_SAMPLES[
+          Math.floor(Math.random() * VOICE_TEST_SAMPLES.length)
+        ];
+
+      // Synthesize speech with current voice
+      const audioBlob = await apiClient.synthesizeSpeech(
+        sampleText,
+        settings.voiceId,
+      );
+
+      // Create audio element and play
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      // Apply settings
+      audio.volume = settings.volume;
+      audio.playbackRate = settings.speed;
+
+      // Handle playback end
+      audio.onended = () => {
+        setIsTestingVoice(false);
+        URL.revokeObjectURL(audioUrl);
+        audioRef.current = null;
+      };
+
+      // Handle errors
+      audio.onerror = () => {
+        setTestError("Failed to play audio");
+        setIsTestingVoice(false);
+        URL.revokeObjectURL(audioUrl);
+        audioRef.current = null;
+      };
+
+      // Play the audio
+      await audio.play();
+    } catch (err: unknown) {
+      console.error("Voice test failed:", err);
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to test voice";
+      setTestError(errorMessage);
+      setIsTestingVoice(false);
+    }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopTestAudio();
+    };
+  }, []);
 
   return (
     <Card>
@@ -332,21 +417,61 @@ export function VoiceSettingsEnhanced({
         )}
 
         {/* Test Voice Button */}
-        <div className="pt-3 border-t border-neutral-200">
+        <div className="pt-3 border-t border-neutral-200 space-y-2">
           <button
             type="button"
-            className="w-full px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors font-medium"
-            onClick={() => {
-              // TODO: Implement voice test
-              alert(
-                "Voice test feature coming soon! This will speak a sample sentence with your selected voice and settings.",
-              );
-            }}
+            className={`w-full px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center gap-2 ${
+              isTestingVoice
+                ? "bg-red-500 hover:bg-red-600 text-white"
+                : "bg-primary-500 hover:bg-primary-600 text-white"
+            }`}
+            onClick={isTestingVoice ? stopTestAudio : testVoiceSettings}
+            disabled={isTestingVoice && !audioRef.current}
           >
-            Test Voice Settings
+            {isTestingVoice ? (
+              <>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5.25 7.5A2.25 2.25 0 017.5 5.25h9a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25v-9z"
+                  />
+                </svg>
+                Stop Playback
+              </>
+            ) : (
+              <>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"
+                  />
+                </svg>
+                Test Voice Settings
+              </>
+            )}
           </button>
-          <p className="text-xs text-neutral-500 text-center mt-2">
-            Hear how your voice settings sound
+          {testError && (
+            <p className="text-xs text-red-500 text-center">{testError}</p>
+          )}
+          <p className="text-xs text-neutral-500 text-center">
+            Hear how your voice settings sound with "{settings.voiceId}" voice
+            at {settings.speed}x speed
           </p>
         </div>
       </CardContent>

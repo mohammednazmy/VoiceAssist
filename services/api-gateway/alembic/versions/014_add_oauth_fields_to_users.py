@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "014_add_oauth_fields"
-down_revision = "013_add_message_metadata"
+revision = "014"
+down_revision = "013"
 branch_labels = None
 depends_on = None
 

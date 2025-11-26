@@ -18,9 +18,10 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Literal, Optional
+from typing import Dict, Literal, Optional
 
 import httpx
+from app.core.business_metrics import openai_api_cost_dollars, openai_tokens_used_total
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion
 
@@ -28,6 +29,55 @@ logger = logging.getLogger(__name__)
 
 ModelFamily = Literal["cloud", "local"]
 IntentType = Literal["diagnosis", "treatment", "drug", "guideline", "summary", "other"]
+
+# OpenAI model pricing per 1M tokens (as of 2024)
+# Format: {model_name: (input_price_per_1m, output_price_per_1m)}
+MODEL_PRICING: Dict[str, tuple[float, float]] = {
+    # GPT-4o models
+    "gpt-4o": (2.50, 10.00),
+    "gpt-4o-2024-11-20": (2.50, 10.00),
+    "gpt-4o-2024-08-06": (2.50, 10.00),
+    "gpt-4o-2024-05-13": (5.00, 15.00),
+    "gpt-4o-mini": (0.15, 0.60),
+    "gpt-4o-mini-2024-07-18": (0.15, 0.60),
+    # GPT-4 Turbo
+    "gpt-4-turbo": (10.00, 30.00),
+    "gpt-4-turbo-2024-04-09": (10.00, 30.00),
+    "gpt-4-turbo-preview": (10.00, 30.00),
+    # GPT-4
+    "gpt-4": (30.00, 60.00),
+    "gpt-4-0613": (30.00, 60.00),
+    # GPT-3.5 Turbo
+    "gpt-3.5-turbo": (0.50, 1.50),
+    "gpt-3.5-turbo-0125": (0.50, 1.50),
+    "gpt-3.5-turbo-1106": (1.00, 2.00),
+    # Realtime models (audio pricing is different, this is for text fallback)
+    "gpt-4o-realtime-preview": (5.00, 20.00),
+    "gpt-4o-realtime-preview-2024-10-01": (5.00, 20.00),
+}
+
+
+def calculate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
+    """Calculate cost in USD for a given model and token count.
+
+    Args:
+        model: Model name (e.g., "gpt-4o")
+        input_tokens: Number of input/prompt tokens
+        output_tokens: Number of output/completion tokens
+
+    Returns:
+        Cost in USD
+    """
+    pricing = MODEL_PRICING.get(model)
+    if not pricing:
+        # Default to gpt-4o pricing if model not found
+        logger.warning(f"Unknown model {model} for pricing, using gpt-4o pricing")
+        pricing = MODEL_PRICING["gpt-4o"]
+
+    input_price_per_1m, output_price_per_1m = pricing
+    input_cost = (input_tokens / 1_000_000) * input_price_per_1m
+    output_cost = (output_tokens / 1_000_000) * output_price_per_1m
+    return input_cost + output_cost
 
 
 @dataclass
@@ -48,6 +98,9 @@ class LLMResponse:
     used_tokens: int
     latency_ms: float
     finish_reason: str
+    cost_usd: float = 0.0  # Estimated cost in USD
+    input_tokens: int = 0
+    output_tokens: int = 0
 
 
 class LLMClient:
@@ -112,9 +165,7 @@ class LLMClient:
         """
         # Safety: validate prompt is not empty
         if not req.prompt or not req.prompt.strip():
-            logger.warning(
-                "LLMClient.generate called with empty prompt, trace_id=%s", req.trace_id
-            )
+            logger.warning("LLMClient.generate called with empty prompt, trace_id=%s", req.trace_id)
             raise ValueError("Prompt cannot be empty")
 
         # Safety: normalize whitespace in prompt
@@ -163,13 +214,9 @@ class LLMClient:
                 "OpenAI client not initialized. API key missing. trace_id=%s",
                 req.trace_id,
             )
-            raise RuntimeError(
-                "OpenAI API key not configured. Cannot call cloud model."
-            )
+            raise RuntimeError("OpenAI API key not configured. Cannot call cloud model.")
 
-        logger.info(
-            "Calling cloud model %s trace_id=%s", self.cloud_model, req.trace_id
-        )
+        logger.info("Calling cloud model %s trace_id=%s", self.cloud_model, req.trace_id)
 
         backoff_seconds = [1, 2, 4]
         last_error: Optional[Exception] = None
@@ -180,12 +227,30 @@ class LLMClient:
             try:
                 # Prepare system message based on intent
                 system_prompts = {
-                    "diagnosis": "You are a medical AI assistant specializing in clinical diagnosis. Provide evidence-based diagnostic insights with appropriate citations.",
-                    "treatment": "You are a medical AI assistant specializing in treatment planning. Provide evidence-based treatment recommendations with appropriate citations.",
-                    "drug": "You are a medical AI assistant specializing in pharmacology. Provide evidence-based drug information with appropriate citations.",
-                    "guideline": "You are a medical AI assistant specializing in clinical guidelines. Provide evidence-based guideline information with appropriate citations.",
-                    "summary": "You are a medical AI assistant specializing in medical summarization. Provide clear, concise summaries with appropriate citations.",
-                    "other": "You are a helpful medical AI assistant. Provide accurate, evidence-based information with appropriate citations when available.",
+                    "diagnosis": (
+                        "You are a medical AI assistant specializing in clinical diagnosis. "
+                        "Provide evidence-based diagnostic insights with appropriate citations."
+                    ),
+                    "treatment": (
+                        "You are a medical AI assistant specializing in treatment planning. "
+                        "Provide evidence-based treatment recommendations with appropriate citations."
+                    ),
+                    "drug": (
+                        "You are a medical AI assistant specializing in pharmacology. "
+                        "Provide evidence-based drug information with appropriate citations."
+                    ),
+                    "guideline": (
+                        "You are a medical AI assistant specializing in clinical guidelines. "
+                        "Provide evidence-based guideline information with appropriate citations."
+                    ),
+                    "summary": (
+                        "You are a medical AI assistant specializing in medical summarization. "
+                        "Provide clear, concise summaries with appropriate citations."
+                    ),
+                    "other": (
+                        "You are a helpful medical AI assistant. "
+                        "Provide accurate, evidence-based information with appropriate citations when available."
+                    ),
                 }
 
                 system_message = system_prompts.get(req.intent, system_prompts["other"])
@@ -225,19 +290,25 @@ class LLMClient:
                     req.trace_id,
                 )
 
-                # TODO: Track cost based on model pricing
-                # gpt-4o: $2.50/1M input tokens, $10.00/1M output tokens
-                # gpt-3.5-turbo: $0.50/1M input tokens, $1.50/1M output tokens
+                # Calculate and track cost
+                input_tokens = usage.prompt_tokens if usage else 0
+                output_tokens = usage.completion_tokens if usage else 0
+                cost_usd = calculate_cost(self.cloud_model, input_tokens, output_tokens)
+
+                # Track metrics via Prometheus
                 if usage:
-                    input_tokens = usage.prompt_tokens
-                    output_tokens = usage.completion_tokens
-                    logger.debug(
-                        "Token breakdown: input=%d output=%d total=%d trace_id=%s",
-                        input_tokens,
-                        output_tokens,
-                        total_tokens,
-                        req.trace_id,
-                    )
+                    openai_tokens_used_total.labels(model=self.cloud_model, token_type="prompt").inc(input_tokens)
+                    openai_tokens_used_total.labels(model=self.cloud_model, token_type="completion").inc(output_tokens)
+                    openai_api_cost_dollars.inc(cost_usd)
+
+                logger.debug(
+                    "Token breakdown: input=%d output=%d total=%d cost=$%.6f trace_id=%s",
+                    input_tokens,
+                    output_tokens,
+                    total_tokens,
+                    cost_usd,
+                    req.trace_id,
+                )
 
                 return LLMResponse(
                     text=text,
@@ -246,6 +317,9 @@ class LLMClient:
                     used_tokens=total_tokens,
                     latency_ms=latency_ms,
                     finish_reason=finish_reason,
+                    cost_usd=cost_usd,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
                 )
 
             except asyncio.TimeoutError as exc:
@@ -271,9 +345,7 @@ class LLMClient:
 
             await asyncio.sleep(delay)
 
-        raise RuntimeError(
-            f"Failed to call cloud model {self.cloud_model} after retries: {last_error}"
-        ) from last_error
+        raise RuntimeError(f"Failed to call cloud model {self.cloud_model} after retries: {last_error}") from last_error
 
     async def _call_local(self, req: LLMRequest) -> LLMResponse:
         """Call a local model for PHI-containing queries.
@@ -288,9 +360,7 @@ class LLMClient:
         if not self.has_local_model or not self.local_client:
             raise RuntimeError("Local model requested but not configured")
 
-        logger.info(
-            "Calling local model %s trace_id=%s", self.local_model, req.trace_id
-        )
+        logger.info("Calling local model %s trace_id=%s", self.local_model, req.trace_id)
 
         start_time = time.time()
         try:
