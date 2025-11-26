@@ -21,6 +21,12 @@ export interface UseKeyboardShortcutsProps {
   onShowShortcuts?: () => void;
   onToggleCitations?: () => void;
   onToggleClinicalContext?: () => void;
+  /** Toggle voice mode panel (Ctrl/Cmd + Shift + V) */
+  onToggleVoicePanel?: () => void;
+  /** Close voice panel specifically (called on Escape when panel is open) */
+  onCloseVoicePanel?: () => void;
+  /** Whether voice panel is currently open (used for Escape priority) */
+  isVoicePanelOpen?: boolean;
 }
 
 export function useKeyboardShortcuts(props?: UseKeyboardShortcutsProps) {
@@ -31,6 +37,9 @@ export function useKeyboardShortcuts(props?: UseKeyboardShortcutsProps) {
     onShowShortcuts,
     onToggleCitations,
     onToggleClinicalContext,
+    onToggleVoicePanel,
+    onCloseVoicePanel,
+    isVoicePanelOpen,
   } = props || {};
 
   useEffect(() => {
@@ -100,8 +109,24 @@ export function useKeyboardShortcuts(props?: UseKeyboardShortcutsProps) {
         return;
       }
 
-      // Escape: Close modals/overlays
+      // Cmd/Ctrl + Shift + V: Toggle voice mode panel
+      if (
+        modKey &&
+        event.shiftKey &&
+        (event.key === "V" || event.key === "v")
+      ) {
+        event.preventDefault();
+        onToggleVoicePanel?.();
+        return;
+      }
+
+      // Escape: Close voice panel first if open, then let other components handle
       if (event.key === "Escape") {
+        if (isVoicePanelOpen && onCloseVoicePanel) {
+          event.preventDefault();
+          onCloseVoicePanel();
+          return;
+        }
         // Let React components handle their own escape logic
         return;
       }
@@ -119,6 +144,9 @@ export function useKeyboardShortcuts(props?: UseKeyboardShortcutsProps) {
     onShowShortcuts,
     onToggleCitations,
     onToggleClinicalContext,
+    onToggleVoicePanel,
+    onCloseVoicePanel,
+    isVoicePanelOpen,
   ]);
 }
 
@@ -142,6 +170,14 @@ export const KEYBOARD_SHORTCUTS: KeyboardShortcut[] = [
     metaKey: true,
     ctrlKey: true,
     description: "Show keyboard shortcuts",
+    action: () => {},
+  },
+  {
+    key: "V",
+    metaKey: true,
+    ctrlKey: true,
+    shiftKey: true,
+    description: "Toggle voice mode",
     action: () => {},
   },
   {

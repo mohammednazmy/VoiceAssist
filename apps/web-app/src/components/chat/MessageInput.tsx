@@ -26,6 +26,10 @@ export interface MessageInputProps {
   onVoiceAssistantMessage?: (content: string) => void;
   /** Called when voice metrics are updated (for backend export) */
   onVoiceMetricsUpdate?: (metrics: VoiceMetrics) => void;
+  /** External control: whether voice panel is open (controlled mode) */
+  isVoicePanelOpen?: boolean;
+  /** External control: callback when voice panel open state changes */
+  onVoicePanelChange?: (isOpen: boolean) => void;
 }
 
 export function MessageInput({
@@ -40,13 +44,34 @@ export function MessageInput({
   onVoiceUserMessage,
   onVoiceAssistantMessage,
   onVoiceMetricsUpdate,
+  isVoicePanelOpen: externalIsVoicePanelOpen,
+  onVoicePanelChange,
 }: MessageInputProps) {
   const [content, setContent] = useState("");
   const [showVoiceInput, setShowVoiceInput] = useState(false);
-  const [showRealtimeVoice, setShowRealtimeVoice] = useState(false);
+  const [internalShowRealtimeVoice, setInternalShowRealtimeVoice] =
+    useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Support both controlled and uncontrolled modes for voice panel
+  const isControlled = externalIsVoicePanelOpen !== undefined;
+  const showRealtimeVoice = isControlled
+    ? externalIsVoicePanelOpen
+    : internalShowRealtimeVoice;
+
+  const setShowRealtimeVoice = (
+    value: boolean | ((prev: boolean) => boolean),
+  ) => {
+    const newValue =
+      typeof value === "function" ? value(showRealtimeVoice) : value;
+    if (isControlled) {
+      onVoicePanelChange?.(newValue);
+    } else {
+      setInternalShowRealtimeVoice(newValue);
+    }
+  };
 
   // Get autoStartOnOpen setting from store
   const autoStartOnOpenSetting = useVoiceSettingsStore(
@@ -71,6 +96,7 @@ export function MessageInput({
     if (shouldAutoOpen) {
       setShowRealtimeVoice(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enableRealtimeVoice, autoOpenRealtimeVoice, autoStartOnOpenSetting]); // Intentionally omit showRealtimeVoice to only trigger once
 
   const handleSend = () => {

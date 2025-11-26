@@ -264,7 +264,7 @@ export function VoiceModePanel({
 
   return (
     <div
-      className="bg-white border-2 border-primary-500 rounded-lg shadow-xl p-6 space-y-4"
+      className="bg-white border-2 border-primary-500 rounded-lg shadow-xl p-4 sm:p-6 space-y-3 sm:space-y-4"
       data-testid="voice-mode-panel"
     >
       {/* Header */}
@@ -362,10 +362,10 @@ export function VoiceModePanel({
       </div>
 
       {/* Connection Status */}
-      <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 p-3 bg-neutral-50 rounded-lg">
         <div className="flex items-center space-x-2">
           <div
-            className={`w-2 h-2 rounded-full ${
+            className={`w-2 h-2 rounded-full flex-shrink-0 ${
               status === "connected"
                 ? "bg-green-500"
                 : status === "connecting"
@@ -407,7 +407,7 @@ export function VoiceModePanel({
           <button
             type="button"
             onClick={handleConnect}
-            className="px-4 py-2 bg-primary-500 text-white text-sm font-medium rounded-md hover:bg-primary-600 transition-colors"
+            className="min-h-[44px] px-4 py-2 bg-primary-500 text-white text-sm font-medium rounded-md hover:bg-primary-600 transition-colors w-full sm:w-auto"
             data-testid="start-voice-session"
           >
             {status === "failed" || status === "expired"
@@ -425,7 +425,7 @@ export function VoiceModePanel({
           <button
             type="button"
             onClick={handleDisconnect}
-            className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-md hover:bg-red-600 transition-colors"
+            className="min-h-[44px] px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-md hover:bg-red-600 transition-colors w-full sm:w-auto"
             data-testid="end-voice-session"
           >
             End Session
@@ -466,12 +466,12 @@ export function VoiceModePanel({
                 ? "Please allow microphone access in your browser settings to use voice mode. You may need to click the microphone icon in your browser's address bar."
                 : error.message}
             </p>
-            <div className="mt-2 flex space-x-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               {!micPermissionDenied && (
                 <button
                   type="button"
                   onClick={handleConnect}
-                  className="px-3 py-1 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded transition-colors"
+                  className="min-h-[44px] px-3 py-2 text-sm font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded transition-colors"
                 >
                   Try Again
                 </button>
@@ -479,7 +479,7 @@ export function VoiceModePanel({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3 py-1 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded transition-colors"
+                className="min-h-[44px] px-3 py-2 text-sm font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded transition-colors"
                 data-testid="use-text-only-error-button"
               >
                 Use text-only mode instead
@@ -520,7 +520,7 @@ export function VoiceModePanel({
             <button
               type="button"
               onClick={onClose}
-              className="mt-2 px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 hover:bg-yellow-200 rounded transition-colors"
+              className="mt-2 min-h-[44px] px-3 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 hover:bg-yellow-200 rounded transition-colors"
               data-testid="use-text-only-button"
             >
               Use text-only mode instead
@@ -592,7 +592,7 @@ export function VoiceModePanel({
             <button
               type="button"
               onClick={handleConnect}
-              className="mt-2 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded transition-colors"
+              className="mt-2 min-h-[44px] px-3 py-2 text-sm font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded transition-colors"
             >
               Reconnect
             </button>
@@ -631,7 +631,7 @@ export function VoiceModePanel({
             <button
               type="button"
               onClick={handleConnect}
-              className="mt-2 px-3 py-1 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded transition-colors"
+              className="mt-2 min-h-[44px] px-3 py-2 text-sm font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded transition-colors"
             >
               Start New Session
             </button>
@@ -641,12 +641,12 @@ export function VoiceModePanel({
 
       {/* Waveform Visualization */}
       {isConnected && (
-        <div className="p-4 bg-neutral-50 rounded-lg">
+        <div className="p-3 sm:p-4 bg-neutral-50 rounded-lg">
           <canvas
             ref={canvasRef}
             width={600}
             height={80}
-            className="w-full h-20 rounded"
+            className="w-full h-16 sm:h-20 rounded"
             style={{ maxWidth: "100%", height: "auto" }}
           />
           {isSpeaking && (
