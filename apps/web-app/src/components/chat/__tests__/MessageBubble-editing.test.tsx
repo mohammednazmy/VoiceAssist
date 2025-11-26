@@ -418,8 +418,8 @@ describe("MessageBubble - Editing Flow", () => {
       });
       await user.click(menuButton);
 
-      // Click delete
-      const deleteButton = screen.getByText(/delete/i);
+      // Click delete - use menuitem role to avoid matching "Message to delete" content
+      const deleteButton = screen.getByRole("menuitem", { name: /delete/i });
       await user.click(deleteButton);
 
       await waitFor(() => {
