@@ -1,35 +1,71 @@
 /**
  * useConversations Hook
- * Manages conversation list, search, and operations
+ * Manages conversation list, search, and operations with optimistic updates
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "./useAuth";
 import type { Conversation, PaginatedResponse } from "@voiceassist/types";
 
-export function useConversations() {
+export interface UseConversationsOptions {
+  /** Callback when an error occurs (for toast notifications) */
+  onError?: (message: string, description?: string) => void;
+  /** Initial page size for pagination */
+  pageSize?: number;
+}
+
+export function useConversations(options: UseConversationsOptions = {}) {
+  const { onError, pageSize = 20 } = options;
   const { apiClient } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalCountRef = useRef(0);
 
-  const loadConversations = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  const loadConversations = useCallback(
+    async (page = 1, append = false) => {
+      if (page === 1) {
+        setIsLoading(true);
+      } else {
+        setIsLoadingMore(true);
+      }
+      setError(null);
 
-    try {
-      const response: PaginatedResponse<Conversation> =
-        await apiClient.getConversations(1, 100);
-      setConversations(response.items);
-    } catch (err: any) {
-      setError(err.message || "Failed to load conversations");
-      console.error("Failed to load conversations:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [apiClient]);
+      try {
+        const response: PaginatedResponse<Conversation> =
+          await apiClient.getConversations(page, pageSize);
+
+        totalCountRef.current = response.totalCount;
+        setHasMore(page < response.totalPages);
+        setCurrentPage(page);
+
+        if (append) {
+          setConversations((prev) => [...prev, ...response.items]);
+        } else {
+          setConversations(response.items);
+        }
+      } catch (err: any) {
+        const errorMessage = err.message || "Failed to load conversations";
+        setError(errorMessage);
+        console.error("Failed to load conversations:", err);
+        onError?.("Failed to load conversations", errorMessage);
+      } finally {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
+    },
+    [apiClient, pageSize, onError],
+  );
+
+  const loadMore = useCallback(async () => {
+    if (!hasMore || isLoadingMore) return;
+    await loadConversations(currentPage + 1, true);
+  }, [hasMore, isLoadingMore, currentPage, loadConversations]);
 
   useEffect(() => {
     loadConversations();
@@ -42,11 +78,13 @@ export function useConversations() {
         setConversations((prev) => [newConversation, ...prev]);
         return newConversation;
       } catch (err: any) {
-        setError(err.message || "Failed to create conversation");
+        const errorMessage = err.message || "Failed to create conversation";
+        setError(errorMessage);
+        onError?.("Failed to create conversation", errorMessage);
         throw err;
       }
     },
-    [apiClient],
+    [apiClient, onError],
   );
 
   const updateConversation = useCallback(
@@ -54,61 +92,125 @@ export function useConversations() {
       id: string,
       updates: { title?: string; folderId?: string | null },
     ) => {
+      // Save original state for rollback
+      const originalConversations = conversations;
+
+      // Optimistically update
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === id
+            ? { ...conv, ...updates, updatedAt: new Date().toISOString() }
+            : conv,
+        ),
+      );
+
       try {
         const updated = await apiClient.updateConversation(id, updates);
+        // Replace with server response
         setConversations((prev) =>
           prev.map((conv) => (conv.id === id ? updated : conv)),
         );
         return updated;
       } catch (err: any) {
-        setError(err.message || "Failed to update conversation");
+        // Rollback on error
+        setConversations(originalConversations);
+        const errorMessage = err.message || "Failed to update conversation";
+        setError(errorMessage);
+        onError?.("Failed to update conversation", errorMessage);
         throw err;
       }
     },
-    [apiClient],
+    [apiClient, conversations, onError],
   );
 
   const archiveConversation = useCallback(
     async (id: string) => {
+      // Save original state for rollback
+      const originalConversations = conversations;
+
+      // Optimistically update
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === id
+            ? { ...conv, archived: true, updatedAt: new Date().toISOString() }
+            : conv,
+        ),
+      );
+
       try {
         const updated = await apiClient.archiveConversation(id);
         setConversations((prev) =>
           prev.map((conv) => (conv.id === id ? updated : conv)),
         );
+        return updated;
       } catch (err: any) {
-        setError(err.message || "Failed to archive conversation");
+        // Rollback on error
+        setConversations(originalConversations);
+        const errorMessage = err.message || "Failed to archive conversation";
+        setError(errorMessage);
+        onError?.("Failed to archive conversation", errorMessage);
         throw err;
       }
     },
-    [apiClient],
+    [apiClient, conversations, onError],
   );
 
   const unarchiveConversation = useCallback(
     async (id: string) => {
+      // Save original state for rollback
+      const originalConversations = conversations;
+
+      // Optimistically update
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === id
+            ? { ...conv, archived: false, updatedAt: new Date().toISOString() }
+            : conv,
+        ),
+      );
+
       try {
         const updated = await apiClient.unarchiveConversation(id);
         setConversations((prev) =>
           prev.map((conv) => (conv.id === id ? updated : conv)),
         );
+        return updated;
       } catch (err: any) {
-        setError(err.message || "Failed to unarchive conversation");
+        // Rollback on error
+        setConversations(originalConversations);
+        const errorMessage = err.message || "Failed to unarchive conversation";
+        setError(errorMessage);
+        onError?.("Failed to unarchive conversation", errorMessage);
         throw err;
       }
     },
-    [apiClient],
+    [apiClient, conversations, onError],
   );
 
   const deleteConversation = useCallback(
     async (id: string) => {
+      // Save original state for rollback
+      const originalConversations = conversations;
+      const deletedConversation = conversations.find((conv) => conv.id === id);
+
+      // Optimistically remove
+      setConversations((prev) => prev.filter((conv) => conv.id !== id));
+
       try {
         await apiClient.deleteConversation(id);
-        setConversations((prev) => prev.filter((conv) => conv.id !== id));
       } catch (err: any) {
-        setError(err.message || "Failed to delete conversation");
+        // Rollback on error
+        setConversations(originalConversations);
+        const errorMessage = err.message || "Failed to delete conversation";
+        setError(errorMessage);
+        onError?.(
+          "Failed to delete conversation",
+          `"${deletedConversation?.title}" could not be deleted. ${errorMessage}`,
+        );
         throw err;
       }
     },
-    [apiClient],
+    [apiClient, conversations, onError],
   );
 
   const exportConversation = useCallback(
@@ -169,17 +271,21 @@ export function useConversations() {
     conversations: filteredConversations,
     allConversations: conversations,
     isLoading,
+    isLoadingMore,
     error,
     searchQuery,
     setSearchQuery,
     showArchived,
     setShowArchived,
+    hasMore,
+    totalCount: totalCountRef.current,
     createConversation,
     updateConversation,
     archiveConversation,
     unarchiveConversation,
     deleteConversation,
     exportConversation,
+    loadMore,
     reload: loadConversations,
   };
 }
