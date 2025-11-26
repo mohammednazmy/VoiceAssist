@@ -64,7 +64,54 @@ export type ConnectionStatus =
   | "reconnecting"
   | "error"
   | "failed"
-  | "expired";
+  | "expired"
+  | "mic_permission_denied";
+
+/**
+ * Check if an error is a microphone permission error (fatal, no retry)
+ */
+function isMicPermissionError(err: unknown): boolean {
+  if (err instanceof DOMException) {
+    // NotAllowedError: User denied permission or page not secure
+    // SecurityError: Feature policy blocks microphone
+    // NotFoundError: No microphone device available
+    return (
+      err.name === "NotAllowedError" ||
+      err.name === "SecurityError" ||
+      err.name === "NotFoundError"
+    );
+  }
+  // Also check error message for permission-related text
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase();
+    return (
+      msg.includes("permission") ||
+      msg.includes("not allowed") ||
+      msg.includes("blocked") ||
+      msg.includes("denied")
+    );
+  }
+  return false;
+}
+
+/**
+ * Get a user-friendly error message for mic permission errors
+ */
+function getMicErrorMessage(err: unknown): string {
+  if (err instanceof DOMException) {
+    switch (err.name) {
+      case "NotAllowedError":
+        return "Microphone access denied. Please allow microphone access in your browser settings and reload the page.";
+      case "SecurityError":
+        return "Microphone blocked by browser policy. This site may need to be accessed via HTTPS.";
+      case "NotFoundError":
+        return "No microphone found. Please connect a microphone and try again.";
+      default:
+        return `Microphone error: ${err.message}`;
+    }
+  }
+  return err instanceof Error ? err.message : "Unknown microphone error";
+}
 
 export interface VoiceSettings {
   voice?: string; // "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"
@@ -147,6 +194,8 @@ export function useRealtimeVoiceSession(
     null,
   );
   const intentionalDisconnectRef = useRef(false);
+  // Track fatal errors (mic permission denied) to prevent reconnection loops
+  const fatalErrorRef = useRef(false);
 
   // Timing refs for metrics tracking
   const connectStartTimeRef = useRef<number | null>(null);
@@ -188,6 +237,14 @@ export function useRealtimeVoiceSession(
     if (intentionalDisconnectRef.current) {
       console.log(
         "[RealtimeVoiceSession] Skipping reconnect (intentional disconnect)",
+      );
+      return;
+    }
+
+    // Don't reconnect on fatal errors (mic permission denied)
+    if (fatalErrorRef.current) {
+      console.log(
+        "[RealtimeVoiceSession] Skipping reconnect (fatal error - mic permission denied)",
       );
       return;
     }
@@ -590,11 +647,13 @@ export function useRealtimeVoiceSession(
 
   /**
    * Initialize microphone and audio streaming
+   * @throws Error with isMicPermissionError=true for permission errors (fatal, no retry)
    */
   const initializeAudioStreaming = useCallback(async (ws: WebSocket) => {
+    // Get microphone stream
+    let stream: MediaStream;
     try {
-      // Get microphone stream
-      const stream = await navigator.mediaDevices.getUserMedia({
+      stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
@@ -603,9 +662,28 @@ export function useRealtimeVoiceSession(
           channelCount: 1,
         },
       });
+    } catch (err) {
+      // Check if this is a permission error (fatal - don't retry)
+      if (isMicPermissionError(err)) {
+        const friendlyMessage = getMicErrorMessage(err);
+        console.error(
+          `[RealtimeVoiceSession] Mic permission error (fatal): ${err instanceof DOMException ? err.name : "unknown"}`,
+        );
+        // Create an error that preserves the fatal status
+        const micError = new Error(friendlyMessage);
+        (micError as any).isFatal = true;
+        (micError as any).originalError = err;
+        throw micError;
+      }
+      // Other errors (network, device issues) - can retry
+      throw new Error(
+        `Failed to access microphone: ${err instanceof Error ? err.message : "Unknown error"}`,
+      );
+    }
 
-      mediaStreamRef.current = stream;
+    mediaStreamRef.current = stream;
 
+    try {
       // Create audio context and processor
       const audioContext = new AudioContext({ sampleRate: 24000 });
       audioContextRef.current = audioContext;
@@ -646,8 +724,10 @@ export function useRealtimeVoiceSession(
 
       console.log("[RealtimeVoiceSession] Audio streaming initialized");
     } catch (err) {
+      // Clean up the stream if audio context setup fails
+      stream.getTracks().forEach((track) => track.stop());
       throw new Error(
-        `Failed to initialize audio: ${err instanceof Error ? err.message : "Unknown error"}`,
+        `Failed to initialize audio processing: ${err instanceof Error ? err.message : "Unknown error"}`,
       );
     }
   }, []);
@@ -658,6 +738,14 @@ export function useRealtimeVoiceSession(
   const connect = useCallback(async () => {
     if (status === "connected" || status === "connecting") {
       console.warn("[RealtimeVoiceSession] Already connected or connecting");
+      return;
+    }
+
+    // Don't attempt to connect if we have a fatal error (mic permission denied)
+    if (fatalErrorRef.current) {
+      console.warn(
+        "[RealtimeVoiceSession] Cannot connect - fatal error (mic permission denied)",
+      );
       return;
     }
 
@@ -705,10 +793,31 @@ export function useRealtimeVoiceSession(
 
       console.log("[RealtimeVoiceSession] Connected successfully");
     } catch (err) {
-      handleError(err instanceof Error ? err : new Error("Failed to connect"));
+      const error = err instanceof Error ? err : new Error("Failed to connect");
+
+      // Check if this is a fatal mic permission error
+      if ((err as any)?.isFatal || isMicPermissionError(err)) {
+        console.error(
+          "[RealtimeVoiceSession] Fatal mic permission error - will not retry",
+        );
+        fatalErrorRef.current = true;
+        setError(error);
+        updateStatus("mic_permission_denied");
+        options.onError?.(error);
+
+        // Close WebSocket if it was opened
+        if (wsRef.current) {
+          wsRef.current.close();
+          wsRef.current = null;
+        }
+        return;
+      }
+
+      handleError(error);
 
       // If connection failed and we're in reconnect mode, schedule next attempt
-      if (status === "reconnecting") {
+      // But NOT if we have a fatal error
+      if (status === "reconnecting" && !fatalErrorRef.current) {
         scheduleReconnect();
       }
     }
@@ -720,10 +829,23 @@ export function useRealtimeVoiceSession(
     initializeAudioStreaming,
     handleError,
     scheduleReconnect,
+    options,
   ]);
 
   // Keep ref updated with latest connect function
   connectRef.current = connect;
+
+  /**
+   * Reset fatal error state (allows retry after user grants mic permission)
+   */
+  const resetFatalError = useCallback(() => {
+    if (fatalErrorRef.current) {
+      console.log("[RealtimeVoiceSession] Resetting fatal error state");
+      fatalErrorRef.current = false;
+      setError(null);
+      updateStatus("disconnected");
+    }
+  }, [updateStatus]);
 
   /**
    * Disconnect from Realtime API
@@ -907,10 +1029,12 @@ export function useRealtimeVoiceSession(
     connect,
     disconnect,
     sendMessage,
+    resetFatalError,
 
     // Derived state
     isConnected: status === "connected",
     isConnecting: status === "connecting",
+    isMicPermissionDenied: status === "mic_permission_denied",
     canSend:
       status === "connected" && wsRef.current?.readyState === WebSocket.OPEN,
   };

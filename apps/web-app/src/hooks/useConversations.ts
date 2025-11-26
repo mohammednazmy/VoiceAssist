@@ -27,8 +27,24 @@ export function useConversations(options: UseConversationsOptions = {}) {
   const [currentPage, setCurrentPage] = useState(1);
   const totalCountRef = useRef(0);
 
+  // Refs to prevent infinite fetch loops
+  const isLoadingRef = useRef(false);
+  const hasInitializedRef = useRef(false);
+
   const loadConversations = useCallback(
     async (page = 1, append = false) => {
+      // Guard against concurrent requests (prevents request storm)
+      if (isLoadingRef.current && !append) {
+        console.log(
+          "[useConversations] Skipping load - already loading (page:",
+          page,
+          ")",
+        );
+        return;
+      }
+
+      isLoadingRef.current = true;
+
       if (page === 1) {
         setIsLoading(true);
       } else {
@@ -57,19 +73,27 @@ export function useConversations(options: UseConversationsOptions = {}) {
       } finally {
         setIsLoading(false);
         setIsLoadingMore(false);
+        isLoadingRef.current = false;
       }
     },
     [apiClient, pageSize, onError],
   );
 
   const loadMore = useCallback(async () => {
-    if (!hasMore || isLoadingMore) return;
+    if (!hasMore || isLoadingMore || isLoadingRef.current) return;
     await loadConversations(currentPage + 1, true);
   }, [hasMore, isLoadingMore, currentPage, loadConversations]);
 
+  // Initial load - runs only once on mount
+  // Using hasInitializedRef to prevent re-fetching when dependencies change identity
   useEffect(() => {
+    if (hasInitializedRef.current) {
+      return;
+    }
+    hasInitializedRef.current = true;
     loadConversations();
-  }, [loadConversations]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const createConversation = useCallback(
     async (title: string) => {

@@ -251,6 +251,53 @@ describe("useConversations", () => {
       });
     });
 
+    it("should prevent concurrent requests (request storm guard)", async () => {
+      // Mock a slow API response
+      let resolvePromise: (value: any) => void;
+      (mockApiClient.getConversations as any).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolvePromise = resolve;
+          }),
+      );
+
+      const { result } = renderHook(() => useConversations());
+
+      // Initial call should be in progress
+      expect(result.current.isLoading).toBe(true);
+
+      // Try to reload while still loading - should be skipped
+      await act(async () => {
+        result.current.reload();
+      });
+
+      // Should still only have one pending call
+      expect(mockApiClient.getConversations).toHaveBeenCalledTimes(1);
+
+      // Resolve the first call
+      await act(async () => {
+        resolvePromise!({
+          items: [],
+          total: 0,
+          page: 1,
+          pageSize: 100,
+          totalPages: 1,
+        });
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Now a new call should work
+      await act(async () => {
+        result.current.reload();
+      });
+
+      // Should have been called twice now (initial + reload after first completed)
+      expect(mockApiClient.getConversations).toHaveBeenCalledTimes(2);
+    });
+
     it("should filter conversations by search query", async () => {
       const mockConversations = [
         {
