@@ -116,6 +116,7 @@ export function useRealtimeVoiceSession(
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
   const [error, setError] = useState<Error | null>(null);
   const [transcript, setTranscript] = useState<string>("");
+  const [partialTranscript, setPartialTranscript] = useState<string>("");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [sessionConfig, setSessionConfig] =
     useState<RealtimeSessionConfig | null>(null);
@@ -431,10 +432,41 @@ export function useRealtimeVoiceSession(
           console.log("[RealtimeVoiceSession] Item created:", message.item);
           break;
 
+        case "conversation.item.input_audio_transcription.delta": {
+          // Partial/streaming user speech transcription
+          const partialText = message.delta || "";
+          if (partialText) {
+            setPartialTranscript((prev) => prev + partialText);
+
+            // Track time to first transcript (partial counts)
+            const now = Date.now();
+            if (
+              !hasReceivedFirstTranscriptRef.current &&
+              sessionStartTimeRef.current
+            ) {
+              const timeToFirst = now - sessionStartTimeRef.current;
+              hasReceivedFirstTranscriptRef.current = true;
+              updateMetrics({ timeToFirstTranscriptMs: timeToFirst });
+              console.log(
+                `[RealtimeVoiceSession] Time to first transcript: ${timeToFirst}ms`,
+              );
+            }
+
+            options.onTranscript?.({
+              text: partialText,
+              is_final: false,
+              timestamp: now,
+            });
+          }
+          break;
+        }
+
         case "conversation.item.input_audio_transcription.completed": {
-          // User speech transcription
+          // User speech transcription (final)
           const userTranscript = message.transcript || "";
           setTranscript(userTranscript);
+          // Clear partial transcript since we now have the final one
+          setPartialTranscript("");
 
           // Track STT latency (time from speech_stopped to transcript)
           const now = Date.now();
@@ -442,7 +474,7 @@ export function useRealtimeVoiceSession(
             ? now - speechStopTimeRef.current
             : null;
 
-          // Track time to first transcript
+          // Track time to first transcript (if we haven't already from partials)
           let timeToFirst: number | null = null;
           if (
             !hasReceivedFirstTranscriptRef.current &&
@@ -527,6 +559,8 @@ export function useRealtimeVoiceSession(
 
         case "input_audio_buffer.speech_started":
           setIsSpeaking(true);
+          // Clear partial transcript for new utterance
+          setPartialTranscript("");
           break;
 
         case "input_audio_buffer.speech_stopped":
@@ -755,6 +789,7 @@ export function useRealtimeVoiceSession(
 
     updateStatus("disconnected");
     setTranscript("");
+    setPartialTranscript("");
     setIsSpeaking(false);
   }, [updateStatus, updateMetrics]);
 
@@ -863,6 +898,7 @@ export function useRealtimeVoiceSession(
     status,
     error,
     transcript,
+    partialTranscript,
     isSpeaking,
     sessionConfig,
     metrics,
