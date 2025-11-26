@@ -22,7 +22,7 @@ qdrant-client==1.7.3
 # Security
 python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
-bcrypt==5.0.0  # Pinned to 4.1.3 for passlib compatibility
+bcrypt==4.0.1  # Pinned to 4.0.x for passlib 1.7.4 compatibility (4.1+/5.x have version detection issues)
 
 # OpenAI (for future use)
 openai==2.8.1
