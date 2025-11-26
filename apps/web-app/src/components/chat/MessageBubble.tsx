@@ -26,6 +26,8 @@ export interface MessageBubbleProps {
   onRegenerate?: (messageId: string) => Promise<void>;
   onDelete?: (messageId: string) => Promise<void>;
   onBranch?: (messageId: string) => Promise<void>;
+  /** Whether this message has branches created from it */
+  hasBranch?: boolean;
 }
 
 // Memoize to prevent unnecessary re-renders when other messages update
@@ -36,6 +38,7 @@ export const MessageBubble = memo(function MessageBubble({
   onRegenerate,
   onDelete,
   onBranch,
+  hasBranch,
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
@@ -740,16 +743,46 @@ export const MessageBubble = memo(function MessageBubble({
               </div>
             )}
 
-            {/* Timestamp */}
+            {/* Timestamp and Branch Indicator */}
             <div
-              className={`text-xs mt-2 ${
+              className={`flex items-center gap-2 text-xs mt-2 ${
                 isUser ? "text-primary-100" : "text-neutral-500"
               }`}
             >
-              {new Date(message.timestamp).toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              <span>
+                {new Date(message.timestamp).toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+              {hasBranch && (
+                <span
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${
+                    isUser
+                      ? "bg-primary-400/30 text-primary-100"
+                      : "bg-amber-100 text-amber-700"
+                  }`}
+                  aria-label="This message has branches"
+                  data-testid="branch-indicator"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-3 h-3"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"
+                    />
+                  </svg>
+                  Branched
+                </span>
+              )}
             </div>
           </div>
         )}

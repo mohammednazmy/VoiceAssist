@@ -3,7 +3,7 @@
  * Main chat interface with WebSocket streaming
  */
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useChatSession } from "../hooks/useChatSession";
@@ -16,6 +16,7 @@ import { MessageInput } from "../components/chat/MessageInput";
 import { ConnectionStatus } from "../components/chat/ConnectionStatus";
 import { ChatErrorBoundary } from "../components/chat/ChatErrorBoundary";
 import { BranchSidebar } from "../components/chat/BranchSidebar";
+import { BranchPreview } from "../components/chat/BranchPreview";
 import { KeyboardShortcutsDialog } from "../components/KeyboardShortcutsDialog";
 import { ClinicalContextSidebar } from "../components/clinical/ClinicalContextSidebar";
 import { CitationSidebar } from "../components/citations/CitationSidebar";
@@ -129,6 +130,12 @@ export function ChatPage() {
   const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] =
     useState(false);
   const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(false);
+
+  // Branch preview state
+  const [branchPreviewMessageId, setBranchPreviewMessageId] = useState<
+    string | null
+  >(null);
+  const [isCreatingBranch, setIsCreatingBranch] = useState(false);
 
   // Clinical context management
   const clinicalContextHook = useClinicalContext(
@@ -367,25 +374,52 @@ export function ChatPage() {
   );
 
   // Branching functionality
-  const { createBranch } = useBranching(activeConversationId);
+  const { branches, createBranch } = useBranching(activeConversationId);
 
-  // Handle branch creation from message
-  const handleBranchFromMessage = useCallback(
-    async (messageId: string) => {
-      try {
-        const branch = await createBranch(messageId);
-        if (branch) {
-          // Show branch sidebar after creating
-          setIsBranchSidebarOpen(true);
-        }
-      } catch (error) {
-        console.error("Failed to create branch:", error);
-        setErrorType("websocket");
-        setErrorMessage("Failed to create branch. Please try again.");
-      }
-    },
-    [createBranch],
+  // Compute set of message IDs that have branches
+  const branchedMessageIds = useMemo(
+    () =>
+      new Set(
+        (branches || [])
+          .map((b) => b.parentMessageId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    [branches],
   );
+
+  // Handle branch request from message - shows preview instead of directly creating
+  const handleBranchFromMessage = useCallback((messageId: string) => {
+    setBranchPreviewMessageId(messageId);
+  }, []);
+
+  // Handle branch creation confirmation
+  const handleConfirmBranch = useCallback(async () => {
+    if (!branchPreviewMessageId) return;
+
+    setIsCreatingBranch(true);
+    try {
+      const branch = await createBranch(branchPreviewMessageId);
+      if (branch) {
+        // Show branch sidebar after creating
+        setIsBranchSidebarOpen(true);
+        toast.success(
+          "Branch created",
+          "You can now explore an alternative conversation path.",
+        );
+      }
+      setBranchPreviewMessageId(null);
+    } catch (error) {
+      console.error("Failed to create branch:", error);
+      toast.error("Branch creation failed", "Please try again.");
+    } finally {
+      setIsCreatingBranch(false);
+    }
+  }, [branchPreviewMessageId, createBranch, toast]);
+
+  // Handle branch preview cancel
+  const handleCancelBranchPreview = useCallback(() => {
+    setBranchPreviewMessageId(null);
+  }, []);
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -786,6 +820,19 @@ export function ChatPage() {
               </button>
             </div>
           )}
+          {/* Branch Preview */}
+          {branchPreviewMessageId && (
+            <div className="px-4 py-3 border-b border-neutral-200">
+              <BranchPreview
+                messages={messages}
+                parentMessageId={branchPreviewMessageId}
+                isCreating={isCreatingBranch}
+                onConfirm={handleConfirmBranch}
+                onCancel={handleCancelBranchPreview}
+              />
+            </div>
+          )}
+
           {/* Messages */}
           <div className="flex-1 overflow-hidden bg-neutral-50 px-4 py-4">
             <MessageList
@@ -798,6 +845,7 @@ export function ChatPage() {
               onRegenerate={regenerateMessage}
               onDelete={deleteMessage}
               onBranch={handleBranchFromMessage}
+              branchedMessageIds={branchedMessageIds}
             />
           </div>
 
@@ -834,6 +882,18 @@ export function ChatPage() {
             isOpen={isCitationSidebarOpen}
             onClose={() => setIsCitationSidebarOpen(false)}
             messages={messages}
+            onJumpToMessage={(messageId) => {
+              const el = document.querySelector<HTMLElement>(
+                `[data-message-id="${messageId}"]`,
+              );
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                el.classList.add("ring-2", "ring-primary-500");
+                setTimeout(() => {
+                  el.classList.remove("ring-2", "ring-primary-500");
+                }, 2000);
+              }
+            }}
           />
         )}
 

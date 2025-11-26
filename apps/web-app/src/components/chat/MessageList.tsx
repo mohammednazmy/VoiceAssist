@@ -22,6 +22,8 @@ export interface MessageListProps {
   onRegenerate?: (messageId: string) => Promise<void>;
   onDelete?: (messageId: string) => Promise<void>;
   onBranch?: (messageId: string) => void;
+  /** Set of message IDs that have branches created from them */
+  branchedMessageIds?: Set<string>;
 }
 
 export function MessageList({
@@ -32,6 +34,7 @@ export function MessageList({
   onRegenerate,
   onDelete,
   onBranch,
+  branchedMessageIds,
 }: MessageListProps) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
@@ -95,6 +98,7 @@ export function MessageList({
             onRegenerate={onRegenerate}
             onDelete={onDelete}
             onBranch={onBranch}
+            hasBranch={branchedMessageIds?.has(message.id)}
           />
         )}
         components={{
