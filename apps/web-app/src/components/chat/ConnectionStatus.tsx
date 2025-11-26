@@ -3,6 +3,7 @@
  * Displays WebSocket connection status with visual indicators and reconnect functionality
  */
 
+import type { ReactNode } from "react";
 import type { ConnectionStatus as Status } from "@voiceassist/types";
 
 export interface ConnectionStatusProps {
@@ -59,7 +60,17 @@ export function ConnectionStatus({
   onReconnect,
   compact = false,
 }: ConnectionStatusProps) {
-  const statusConfig = {
+  const statusConfig: Record<
+    Status,
+    {
+      label: string;
+      color: string;
+      bgColor: string;
+      borderColor: string;
+      icon: React.ReactNode;
+      showRetry?: boolean;
+    }
+  > = {
     connecting: {
       label: "Connecting",
       color: "text-yellow-600",
@@ -87,10 +98,34 @@ export function ConnectionStatus({
       bgColor: "bg-red-50",
       borderColor: "border-red-200",
       icon: <div className="w-2 h-2 rounded-full bg-red-500" />,
+      showRetry: true,
+    },
+    failed: {
+      label: "Connection Failed",
+      color: "text-red-700",
+      bgColor: "bg-red-100",
+      borderColor: "border-red-300",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+          stroke="currentColor"
+          className="w-3 h-3"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+          />
+        </svg>
+      ),
+      showRetry: true,
     },
   };
 
-  const config = statusConfig[status];
+  const config = statusConfig[status] || statusConfig.disconnected;
 
   // Compact version for inline display
   if (compact) {
@@ -107,7 +142,7 @@ export function ConnectionStatus({
       >
         {config.icon}
         <span className="font-medium">{config.label}</span>
-        {status === "disconnected" && onReconnect && (
+        {config.showRetry && onReconnect && (
           <button
             type="button"
             onClick={onReconnect}
@@ -135,7 +170,7 @@ export function ConnectionStatus({
         {config.label}
       </span>
 
-      {status === "disconnected" && onReconnect && (
+      {config.showRetry && onReconnect && (
         <button
           type="button"
           onClick={onReconnect}
