@@ -1,6 +1,8 @@
 /**
  * Knowledge Base Manager
  * Upload, manage, and index documents for RAG
+ *
+ * Phase 8.3: Added document preview modal
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -20,6 +22,11 @@ interface Document {
   uploadedAt: string;
   status: "indexed" | "processing" | "failed";
   chunks?: number;
+}
+
+interface DocumentPreview {
+  detail: AdminKBDocumentDetail;
+  isLoading: boolean;
 }
 
 /** Convert API document to local Document type */
@@ -64,6 +71,9 @@ export function KnowledgeBaseManager() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // Phase 8.3: Preview state
+  const [preview, setPreview] = useState<DocumentPreview | null>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
   const loadDocuments = useCallback(async () => {
     try {
@@ -134,6 +144,25 @@ export function KnowledgeBaseManager() {
     setError(
       `Reindex for document ${id} is not yet implemented. Delete and re-upload the document to reindex.`,
     );
+  };
+
+  // Phase 8.3: Preview document
+  const handlePreview = async (docId: string) => {
+    setIsLoadingPreview(true);
+    setError(null);
+    try {
+      const detail = await apiClient.getAdminKBDocument(docId);
+      setPreview({ detail, isLoading: false });
+    } catch (err) {
+      console.error("Failed to load document preview:", err);
+      setError(err instanceof Error ? err.message : "Failed to load preview");
+    } finally {
+      setIsLoadingPreview(false);
+    }
+  };
+
+  const closePreview = () => {
+    setPreview(null);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -405,6 +434,13 @@ export function KnowledgeBaseManager() {
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <button
+                        onClick={() => handlePreview(doc.id)}
+                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                        disabled={isLoadingPreview}
+                      >
+                        Preview
+                      </button>
+                      <button
                         onClick={() => handleReindex(doc.id)}
                         className="text-sm text-primary-600 hover:text-primary-700 font-medium"
                       >
@@ -424,6 +460,189 @@ export function KnowledgeBaseManager() {
           </table>
         </div>
       </div>
+
+      {/* Phase 8.3: Preview Modal */}
+      {preview && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-neutral-900">
+                Document Preview
+              </h3>
+              <button
+                onClick={closePreview}
+                className="text-neutral-400 hover:text-neutral-600"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Document Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Title
+                  </label>
+                  <p className="text-sm text-neutral-900 mt-1">
+                    {preview.detail.title}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Filename
+                  </label>
+                  <p className="text-sm text-neutral-900 mt-1">
+                    {preview.detail.filename}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    File Type
+                  </label>
+                  <p className="text-sm text-neutral-900 mt-1">
+                    {preview.detail.file_type}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Source Type
+                  </label>
+                  <p className="text-sm text-neutral-900 mt-1">
+                    {preview.detail.source_type}
+                  </p>
+                </div>
+              </div>
+
+              {/* Indexing Status */}
+              <div className="bg-neutral-50 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-neutral-700 mb-3">
+                  Indexing Information
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-neutral-500">Status</p>
+                    <p
+                      className={`text-sm font-medium ${
+                        preview.detail.indexing_status === "indexed"
+                          ? "text-green-600"
+                          : preview.detail.indexing_status === "processing"
+                            ? "text-yellow-600"
+                            : "text-red-600"
+                      }`}
+                    >
+                      {preview.detail.indexing_status}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-500">Chunks Indexed</p>
+                    <p className="text-sm font-medium text-neutral-900">
+                      {preview.detail.chunks_indexed?.toLocaleString() || 0}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-500">Total Tokens</p>
+                    <p className="text-sm font-medium text-neutral-900">
+                      {preview.detail.total_tokens?.toLocaleString() || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-500">Document ID</p>
+                    <p className="text-sm font-mono text-neutral-600">
+                      {preview.detail.document_id.substring(0, 16)}...
+                    </p>
+                  </div>
+                </div>
+
+                {preview.detail.indexing_error && (
+                  <div className="mt-4 p-3 bg-red-50 rounded border border-red-200">
+                    <p className="text-xs font-medium text-red-700 mb-1">
+                      Indexing Error
+                    </p>
+                    <p className="text-sm text-red-600">
+                      {preview.detail.indexing_error}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Metadata */}
+              {preview.detail.metadata &&
+                Object.keys(preview.detail.metadata).length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-neutral-700 mb-2">
+                      Metadata
+                    </h4>
+                    <div className="bg-neutral-50 rounded-lg p-4 overflow-x-auto">
+                      <pre className="text-xs text-neutral-700 whitespace-pre-wrap">
+                        {JSON.stringify(preview.detail.metadata, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+
+              {/* Timestamps */}
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-neutral-200">
+                <div>
+                  <label className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Created
+                  </label>
+                  <p className="text-sm text-neutral-900 mt-1">
+                    {new Date(preview.detail.created_at).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Updated
+                  </label>
+                  <p className="text-sm text-neutral-900 mt-1">
+                    {new Date(preview.detail.updated_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-neutral-200 flex justify-end space-x-3">
+              <button
+                onClick={closePreview}
+                className="px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Preview Overlay */}
+      {isLoadingPreview && (
+        <div className="fixed inset-0 bg-black/25 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm text-neutral-700">
+                Loading preview...
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
