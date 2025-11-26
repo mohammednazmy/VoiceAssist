@@ -31,15 +31,28 @@ export interface OfflineRecording {
   retryCount: number;
 }
 
+/** API client interface for voice operations */
+export interface VoiceApiClient {
+  transcribeAudio: (audio: Blob, filename?: string) => Promise<string>;
+}
+
+/** Maximum retry attempts for failed uploads */
+const MAX_UPLOAD_RETRIES = 3;
+
 export interface UseOfflineVoiceCaptureOptions {
   /** Conversation ID to associate recordings with */
   conversationId: string;
+  /** API client for uploading recordings (required for sync functionality) */
+  apiClient?: VoiceApiClient;
   /** Enable offline mode even when online */
   forceOffline?: boolean;
   /** Callback when a recording is ready */
   onRecordingComplete?: (recording: OfflineRecording) => void;
-  /** Callback when a recording is uploaded */
-  onUploadComplete?: (recording: OfflineRecording) => void;
+  /** Callback when a recording is uploaded with transcribed text */
+  onUploadComplete?: (
+    recording: OfflineRecording,
+    transcribedText: string,
+  ) => void;
   /** Callback for errors */
   onError?: (error: Error) => void;
 }
@@ -152,6 +165,7 @@ async function deleteRecordingFromDB(id: string): Promise<void> {
 
 export function useOfflineVoiceCapture({
   conversationId,
+  apiClient,
   forceOffline = false,
   onRecordingComplete,
   onUploadComplete,
@@ -182,11 +196,18 @@ export function useOfflineVoiceCapture({
     updatePendingCount();
   }, [updatePendingCount]);
 
-  // Check online status
+  // Reference to syncPendingRecordings for use in online event handler
+  // Initialized to null, will be set in effect after syncPendingRecordings is defined
+  const syncPendingRecordingsRef = useRef<(() => Promise<void>) | null>(null);
+
+  // Check online status and auto-sync when coming back online
   useEffect(() => {
     const handleOnline = () => {
       if (!forceOffline) {
         setIsOfflineMode(false);
+        // Auto-sync when coming back online
+        console.log("[OfflineVoice] Back online, triggering auto-sync");
+        syncPendingRecordingsRef.current?.();
       }
     };
 
@@ -320,34 +341,101 @@ export function useOfflineVoiceCapture({
   }, []);
 
   const syncPendingRecordings = useCallback(async () => {
-    // TODO: Implement actual upload logic
-    // This would call the voice-upload API endpoint
-    console.log(
-      "[OfflineVoice] Sync pending recordings - TODO: implement upload",
-    );
+    // Check if apiClient is available
+    if (!apiClient) {
+      console.warn(
+        "[OfflineVoice] Cannot sync recordings: apiClient not provided",
+      );
+      return;
+    }
+
+    // Check if we're online
+    if (!navigator.onLine) {
+      console.log("[OfflineVoice] Cannot sync: offline");
+      return;
+    }
 
     const pending = await getPendingRecordings();
+    if (pending.length === 0) {
+      console.log("[OfflineVoice] No pending recordings to sync");
+      return;
+    }
+
+    console.log(
+      `[OfflineVoice] Syncing ${pending.length} pending recording(s)`,
+    );
+
     for (const recording of pending) {
+      // Skip recordings that have exceeded retry limit
+      if (recording.retryCount >= MAX_UPLOAD_RETRIES) {
+        console.warn(
+          `[OfflineVoice] Recording ${recording.id} exceeded max retries (${MAX_UPLOAD_RETRIES}), skipping`,
+        );
+        continue;
+      }
+
       try {
-        // Placeholder for actual upload
-        // await apiClient.uploadVoiceRecording(recording.conversationId, recording.audioBlob);
+        // Mark as uploading
+        recording.status = "uploading";
+        await saveRecording(recording);
+
+        // Determine filename from mime type
+        const extension = recording.mimeType.includes("webm") ? "webm" : "ogg";
+        const filename = `offline_recording_${recording.id}.${extension}`;
+
+        console.log(
+          `[OfflineVoice] Uploading recording ${recording.id} (${recording.duration}s, ${recording.audioBlob.size} bytes)`,
+        );
+
+        // Upload and transcribe the audio
+        const transcribedText = await apiClient.transcribeAudio(
+          recording.audioBlob,
+          filename,
+        );
+
+        console.log(
+          `[OfflineVoice] Recording ${recording.id} transcribed: "${transcribedText.substring(0, 50)}..."`,
+        );
 
         // Mark as uploaded
         recording.status = "uploaded";
         await saveRecording(recording);
-        onUploadComplete?.(recording);
 
-        // Or delete after successful upload
-        // await deleteRecordingFromDB(recording.id);
+        // Call completion callback with transcribed text
+        onUploadComplete?.(recording, transcribedText);
+
+        // Delete recording after successful upload to free up storage
+        await deleteRecordingFromDB(recording.id);
+        console.log(
+          `[OfflineVoice] Recording ${recording.id} uploaded and deleted`,
+        );
       } catch (error) {
+        console.error(
+          `[OfflineVoice] Failed to upload recording ${recording.id}:`,
+          error,
+        );
+
+        // Mark as failed and increment retry count
         recording.status = "failed";
         recording.retryCount++;
         await saveRecording(recording);
+
+        // Report error if callback provided
+        onError?.(
+          error instanceof Error
+            ? error
+            : new Error(`Failed to upload recording: ${String(error)}`),
+        );
       }
     }
 
     await updatePendingCount();
-  }, [onUploadComplete, updatePendingCount]);
+  }, [apiClient, onUploadComplete, onError, updatePendingCount]);
+
+  // Update ref whenever syncPendingRecordings changes (for use in event handlers)
+  useEffect(() => {
+    syncPendingRecordingsRef.current = syncPendingRecordings;
+  }, [syncPendingRecordings]);
 
   const getPendingRecordingsList = useCallback(async () => {
     return getRecordingsByConversation(conversationId);
