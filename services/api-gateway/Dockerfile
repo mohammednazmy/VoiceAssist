@@ -1,14 +1,17 @@
-FROM python:3.11-slim
+# Use specific Python version with security patches (Bookworm/Debian 12)
+FROM python:3.11.10-slim-bookworm
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install system dependencies with security updates
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     gcc \
     postgresql-client \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 # Copy requirements first for better caching
 COPY requirements.txt .
