@@ -49,6 +49,15 @@ class LoadTestConfig:
         # Chat (if using REST)
         "chat": "/api/chat",
 
+        # Conversations (history)
+        "conversations": "/api/conversations",
+        "conversation": "/api/conversations/{conversation_id}",
+        "conversation_messages": "/api/conversations/{conversation_id}/messages",
+
+        # Export
+        "export_markdown": "/api/sessions/{session_id}/export/markdown",
+        "export_pdf": "/api/sessions/{session_id}/export/pdf",
+
         # Admin - Knowledge Base
         "admin_kb_documents": "/api/admin/kb/documents",
         "admin_kb_document": "/api/admin/kb/documents/{document_id}",
@@ -72,6 +81,7 @@ class LoadTestConfig:
         # Integrations
         "integrations_nextcloud": "/api/integrations/nextcloud",
         "integrations_calendar": "/api/integrations/calendar",
+        "integrations_files": "/api/integrations/files",
 
         # WebSocket
         "websocket": "/api/realtime/ws",
