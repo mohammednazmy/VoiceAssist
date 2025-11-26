@@ -15,7 +15,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "015"
-down_revision = "014_add_oauth_fields_to_users"
+down_revision = "014"
 branch_labels = None
 depends_on = None
 

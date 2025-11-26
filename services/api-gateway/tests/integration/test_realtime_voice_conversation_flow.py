@@ -143,7 +143,7 @@ class TestWebSocketRealtimeFlow:
         # Test connected event
         connected = create_connected_event(client_id="client-123", timestamp=datetime.utcnow())
         assert connected["type"] == "connected"
-        assert connected["client_id"] == "client-123"
+        assert connected["clientId"] == "client-123"
 
         # Test chunk event
         chunk = create_chunk_event(message_id="msg-123", content="Hello")
@@ -350,6 +350,6 @@ class TestRealtimeFlowSmoke:
         assert success["success"] is True
         assert success["data"]["key"] == "value"
 
-        error = error_response(error_code="TEST_ERROR", message="Test error")
+        error = error_response(code="TEST_ERROR", message="Test error")
         assert error["success"] is False
         assert error["error"]["code"] == "TEST_ERROR"
