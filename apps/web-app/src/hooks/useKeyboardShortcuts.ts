@@ -18,11 +18,20 @@ export interface KeyboardShortcut {
 export interface UseKeyboardShortcutsProps {
   onToggleBranchSidebar?: () => void;
   onCreateBranch?: () => void;
+  onShowShortcuts?: () => void;
+  onToggleCitations?: () => void;
+  onToggleClinicalContext?: () => void;
 }
 
 export function useKeyboardShortcuts(props?: UseKeyboardShortcutsProps) {
   const navigate = useNavigate();
-  const { onToggleBranchSidebar, onCreateBranch } = props || {};
+  const {
+    onToggleBranchSidebar,
+    onCreateBranch,
+    onShowShortcuts,
+    onToggleCitations,
+    onToggleClinicalContext,
+  } = props || {};
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -67,8 +76,27 @@ export function useKeyboardShortcuts(props?: UseKeyboardShortcutsProps) {
       // Cmd/Ctrl + /: Show keyboard shortcuts
       if (modKey && event.key === "/") {
         event.preventDefault();
-        // TODO: Open keyboard shortcuts dialog
-        console.log("Keyboard shortcuts dialog");
+        onShowShortcuts?.();
+        return;
+      }
+
+      // Cmd/Ctrl + I: Toggle clinical context sidebar
+      if (modKey && event.key === "i" && !event.shiftKey) {
+        event.preventDefault();
+        onToggleClinicalContext?.();
+        return;
+      }
+
+      // Cmd/Ctrl + C (without selection): Toggle citations sidebar
+      // Note: only trigger if no text is selected to not interfere with copy
+      if (
+        modKey &&
+        event.key === "c" &&
+        !event.shiftKey &&
+        window.getSelection()?.toString() === ""
+      ) {
+        event.preventDefault();
+        onToggleCitations?.();
         return;
       }
 
@@ -84,7 +112,14 @@ export function useKeyboardShortcuts(props?: UseKeyboardShortcutsProps) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [navigate, onToggleBranchSidebar, onCreateBranch]);
+  }, [
+    navigate,
+    onToggleBranchSidebar,
+    onCreateBranch,
+    onShowShortcuts,
+    onToggleCitations,
+    onToggleClinicalContext,
+  ]);
 }
 
 export const KEYBOARD_SHORTCUTS: KeyboardShortcut[] = [

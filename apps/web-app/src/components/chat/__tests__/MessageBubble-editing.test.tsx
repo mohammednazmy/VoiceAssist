@@ -9,7 +9,15 @@ import userEvent from "@testing-library/user-event";
 import { MessageBubble } from "../MessageBubble";
 import type { Message } from "@voiceassist/types";
 
-// MessageBubble imports react-syntax-highlighter which has Vite ESM resolution issues in test environment
+// Mock useToastContext since MessageBubble uses it for copy feedback
+vi.mock("../../../contexts/ToastContext", () => ({
+  useToastContext: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  }),
+}));
 describe("MessageBubble - Editing Flow", () => {
   const mockOnEditSave = vi.fn();
   const mockOnRegenerate = vi.fn();

@@ -13,20 +13,18 @@ export default defineConfig({
     testTimeout: 10000,
     hookTimeout: 10000,
     teardownTimeout: 5000,
-    // Use forks pool to get isolated memory for each worker, preventing OOM
-    pool: 'forks',
+    // Use threads pool which is more memory efficient for these tests
+    pool: 'threads',
     poolOptions: {
-      forks: {
-        singleFork: false,
-        isolate: true,
-        // Increase memory limit for workers (default is too low)
-        execArgv: ['--max-old-space-size=4096'],
+      threads: {
+        singleThread: true, // Run all tests in single thread to prevent OOM
+        isolate: false, // Disable isolation to reduce memory overhead
       },
     },
     // Limit concurrent tests to prevent memory exhaustion
-    maxConcurrency: 5,
-    // Isolate test files for better memory cleanup between files
-    fileParallelism: true,
+    maxConcurrency: 3,
+    // Run test files sequentially for more predictable memory usage
+    fileParallelism: false,
     // Fix ESM import issues (react-syntax-highlighter is mocked via alias)
     deps: {
       inline: [

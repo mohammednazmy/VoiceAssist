@@ -44,6 +44,58 @@ type ErrorType =
   | "websocket"
   | null;
 
+/** Skeleton loader for chat messages during history loading */
+function MessageSkeleton({ isUser = false }: { isUser?: boolean }) {
+  return (
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
+      <div
+        className={`max-w-[70%] rounded-lg p-4 animate-pulse ${
+          isUser ? "bg-primary-100" : "bg-white border border-neutral-200"
+        }`}
+      >
+        <div className={`space-y-2 ${isUser ? "items-end" : "items-start"}`}>
+          <div
+            className={`h-4 rounded ${isUser ? "bg-primary-200" : "bg-neutral-200"} w-48`}
+          />
+          <div
+            className={`h-4 rounded ${isUser ? "bg-primary-200" : "bg-neutral-200"} w-64`}
+          />
+          <div
+            className={`h-4 rounded ${isUser ? "bg-primary-200" : "bg-neutral-200"} w-32`}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Skeleton loader for the entire chat area */
+function ChatSkeleton() {
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header skeleton */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 bg-white">
+        <div className="h-6 w-32 bg-neutral-200 rounded animate-pulse" />
+        <div className="flex items-center space-x-2">
+          <div className="h-8 w-20 bg-neutral-100 rounded animate-pulse" />
+          <div className="h-8 w-20 bg-neutral-100 rounded animate-pulse" />
+        </div>
+      </div>
+      {/* Messages skeleton */}
+      <div className="flex-1 overflow-hidden bg-neutral-50 px-4 py-4">
+        <MessageSkeleton isUser={true} />
+        <MessageSkeleton isUser={false} />
+        <MessageSkeleton isUser={true} />
+        <MessageSkeleton isUser={false} />
+      </div>
+      {/* Input skeleton */}
+      <div className="border-t border-neutral-200 bg-white px-4 py-3">
+        <div className="h-12 bg-neutral-100 rounded-lg animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
 export function ChatPage() {
   const { conversationId } = useParams<{ conversationId: string }>();
   const navigate = useNavigate();
@@ -170,20 +222,57 @@ export function ChatPage() {
 
   const handleError = useCallback(
     (code: WebSocketErrorCode, message: string) => {
+      console.error(`[ChatPage] WebSocket error: ${code} - ${message}`);
+
+      // Show toast notification for better visibility
+      switch (code) {
+        case "AUTH_FAILED":
+          toast.error(
+            "Authentication Failed",
+            "Please log in again to continue.",
+          );
+          navigate("/login");
+          break;
+        case "RATE_LIMITED":
+          toast.warning(
+            "Rate Limited",
+            "Please wait a moment before sending more messages.",
+          );
+          break;
+        case "QUOTA_EXCEEDED":
+          toast.error("Quota Exceeded", "You have reached your usage limit.");
+          break;
+        case "BACKEND_ERROR":
+          toast.error(
+            "Server Error",
+            message || "The server encountered an error. Please try again.",
+          );
+          break;
+        case "CONNECTION_DROPPED":
+          toast.warning("Connection Lost", "Reconnecting to the server...");
+          break;
+        default:
+          toast.error(
+            "Connection Error",
+            message || "An unexpected error occurred.",
+          );
+      }
+
+      // Also update error state for persistent display in UI
       setErrorType("websocket");
-      // Show transient toast for recoverable errors
-      if (["RATE_LIMITED", "BACKEND_ERROR"].includes(code)) {
-        setErrorMessage(`${code}: ${message}`);
+      setErrorMessage(`${code}: ${message}`);
+
+      // Auto-clear transient errors after 5 seconds
+      if (
+        ["RATE_LIMITED", "BACKEND_ERROR", "CONNECTION_DROPPED"].includes(code)
+      ) {
         setTimeout(() => {
           setErrorType(null);
           setErrorMessage(null);
         }, 5000);
-      } else {
-        // Persistent error for fatal issues
-        setErrorMessage(`${code}: ${message}`);
       }
     },
-    [],
+    [toast, navigate],
   );
 
   const {
@@ -297,7 +386,7 @@ export function ChatPage() {
     [createBranch],
   );
 
-  // Keyboard shortcuts (pass function that opens dialog via Cmd+/)
+  // Keyboard shortcuts
   useKeyboardShortcuts({
     onToggleBranchSidebar: () => setIsBranchSidebarOpen((prev) => !prev),
     onCreateBranch: () => {
@@ -307,36 +396,10 @@ export function ChatPage() {
         handleBranchFromMessage(lastMessage.id);
       }
     },
+    onShowShortcuts: () => setIsShortcutsDialogOpen(true),
+    onToggleCitations: () => setIsCitationSidebarOpen((prev) => !prev),
+    onToggleClinicalContext: () => setIsClinicalContextOpen((prev) => !prev),
   });
-
-  // Override keyboard shortcut dialog handler
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
-      const modKey = isMac ? event.metaKey : event.ctrlKey;
-
-      // Cmd/Ctrl + /: Show keyboard shortcuts
-      if (modKey && event.key === "/") {
-        event.preventDefault();
-        setIsShortcutsDialogOpen(true);
-      }
-
-      // Cmd/Ctrl + I: Toggle clinical context sidebar
-      if (modKey && event.key === "i") {
-        event.preventDefault();
-        setIsClinicalContextOpen((prev) => !prev);
-      }
-
-      // Cmd/Ctrl + C: Toggle citation sidebar
-      if (modKey && event.key === "c") {
-        event.preventDefault();
-        setIsCitationSidebarOpen((prev) => !prev);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
 
   // Handle clinical context changes with debounced save
   const handleClinicalContextChange = useCallback(
@@ -387,27 +450,13 @@ export function ChatPage() {
       }
     }
   }, [messages, announce]);
-  // Loading states
-  if (loadingState === "creating") {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-primary-500 border-t-transparent animate-spin" />
-          <p className="text-neutral-600">Creating conversation...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (loadingState === "validating" || loadingState === "loading-history") {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-primary-500 border-t-transparent animate-spin" />
-          <p className="text-neutral-600">Loading conversation...</p>
-        </div>
-      </div>
-    );
+  // Loading states - use skeleton loaders for better UX
+  if (
+    loadingState === "creating" ||
+    loadingState === "validating" ||
+    loadingState === "loading-history"
+  ) {
+    return <ChatSkeleton />;
   }
 
   // Error states

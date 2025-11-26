@@ -3,7 +3,7 @@
  * Renders a chat message with markdown support, code blocks, and citations
  */
 
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -14,6 +14,7 @@ import { CitationDisplay } from "./CitationDisplay";
 import { MessageActionMenu } from "./MessageActionMenu";
 import { AudioPlayer } from "../voice/AudioPlayer";
 import { useAuth } from "../../hooks/useAuth";
+import { useToastContext } from "../../contexts/ToastContext";
 import { createAttachmentsApi } from "../../lib/api/attachmentsApi";
 import { useAuthStore } from "../../stores/authStore";
 import "katex/dist/katex.min.css";
@@ -40,6 +41,7 @@ export const MessageBubble = memo(function MessageBubble({
   const isSystem = message.role === "system";
   const { apiClient } = useAuth();
   const { tokens } = useAuthStore();
+  const toast = useToastContext();
 
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
@@ -89,9 +91,18 @@ export const MessageBubble = memo(function MessageBubble({
   };
 
   // Copy handler
-  const handleCopy = () => {
-    navigator.clipboard.writeText(message.content);
-  };
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      toast.success(
+        "Copied to clipboard",
+        "Message content copied successfully.",
+      );
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      toast.error("Copy failed", "Unable to copy to clipboard.");
+    }
+  }, [message.content, toast]);
 
   // Audio synthesis handler
   const handlePlayAudio = async () => {

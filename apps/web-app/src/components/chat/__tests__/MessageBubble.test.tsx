@@ -3,10 +3,20 @@
  * Tests message rendering, markdown, citations, and streaming states
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MessageBubble } from "../MessageBubble";
 import type { Message } from "@voiceassist/types";
+
+// Mock useToastContext since MessageBubble uses it for copy feedback
+vi.mock("../../../contexts/ToastContext", () => ({
+  useToastContext: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  }),
+}));
 
 describe("MessageBubble", () => {
   const baseMessage: Message = {

@@ -8,6 +8,16 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Message, Citation, Attachment } from "@voiceassist/types";
 
+// Mock useToastContext since MessageBubble uses it for copy feedback
+vi.mock("../../../contexts/ToastContext", () => ({
+  useToastContext: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  }),
+}));
+
 // Mock the hooks and API clients
 const mockSendMessage = vi.fn();
 const mockDownloadAttachment = vi.fn();
