@@ -3,8 +3,8 @@
  * Real-time metrics and system status
  */
 
-import { useState, useEffect } from "react";
-import { useAuth } from "../../hooks/useAuth";
+import { useState, useEffect, useCallback } from "react";
+import { getDefaultAdminApi } from "../../lib/api/adminApi";
 
 interface Metrics {
   activeSessions: number;
@@ -24,8 +24,23 @@ interface SystemStatus {
   apiGateway: "healthy" | "degraded" | "down";
 }
 
+/**
+ * Map component status from API response to display status
+ */
+function mapComponentStatus(status: string): "healthy" | "degraded" | "down" {
+  switch (status) {
+    case "up":
+      return "healthy";
+    case "down":
+      return "down";
+    case "disabled":
+      return "degraded";
+    default:
+      return "down";
+  }
+}
+
 export function DashboardOverview() {
-  const { apiClient: _apiClient } = useAuth();
   const [metrics, setMetrics] = useState<Metrics>({
     activeSessions: 0,
     totalConversations: 0,
@@ -45,6 +60,74 @@ export function DashboardOverview() {
   });
 
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadMetrics = useCallback(async () => {
+    try {
+      setError(null);
+      const adminApi = getDefaultAdminApi();
+
+      // Fetch detailed health and admin summary in parallel
+      const [detailedHealth, adminSummary] = await Promise.all([
+        adminApi.getDetailedHealth().catch(() => null),
+        adminApi.getAdminSummary().catch(() => null),
+      ]);
+
+      // Update system status from health check
+      if (detailedHealth) {
+        const { components } = detailedHealth;
+        setSystemStatus({
+          database: mapComponentStatus(components.postgres.status),
+          redis: mapComponentStatus(components.redis.status),
+          qdrant: components.qdrant.enabled
+            ? mapComponentStatus(components.qdrant.status)
+            : "degraded",
+          apiGateway: "healthy", // If we got response, API is healthy
+        });
+
+        // Calculate avg response time from latencies
+        const avgLatency =
+          (components.postgres.latency_ms +
+            components.redis.latency_ms +
+            components.qdrant.latency_ms) /
+          3;
+
+        setMetrics((prev) => ({
+          ...prev,
+          avgResponseTime: avgLatency,
+        }));
+      } else {
+        setSystemStatus({
+          database: "down",
+          redis: "down",
+          qdrant: "down",
+          apiGateway: "down",
+        });
+        setError("Unable to connect to backend");
+      }
+
+      // Update user metrics from admin summary
+      if (adminSummary) {
+        setMetrics((prev) => ({
+          ...prev,
+          activeUsers: adminSummary.active_users,
+          // Other metrics would come from future endpoints
+          activeSessions: adminSummary.active_users, // Approximate
+          totalConversations: prev.totalConversations || 0,
+          messagesLast24h: prev.messagesLast24h || 0,
+          apiCallsToday: prev.apiCallsToday || 0,
+          storageUsed: prev.storageUsed || 0,
+          errorRate: prev.errorRate || 0,
+        }));
+      }
+
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Failed to load metrics:", err);
+      setError(err instanceof Error ? err.message : "Unknown error");
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadMetrics();
@@ -52,39 +135,7 @@ export function DashboardOverview() {
     // Refresh metrics every 30 seconds
     const interval = setInterval(loadMetrics, 30000);
     return () => clearInterval(interval);
-  }, []);
-
-  const loadMetrics = async () => {
-    try {
-      // TODO: Replace with actual API calls when backend is ready
-      // const metricsData = await apiClient.get('/admin/metrics');
-      // const statusData = await apiClient.get('/admin/system-status');
-
-      // Mock data for now
-      setMetrics({
-        activeSessions: Math.floor(Math.random() * 50) + 10,
-        totalConversations: 1247,
-        messagesLast24h: Math.floor(Math.random() * 500) + 200,
-        avgResponseTime: Math.random() * 200 + 100,
-        apiCallsToday: Math.floor(Math.random() * 1000) + 500,
-        storageUsed: 45.6,
-        activeUsers: Math.floor(Math.random() * 30) + 5,
-        errorRate: Math.random() * 2,
-      });
-
-      setSystemStatus({
-        database: "healthy",
-        redis: "healthy",
-        qdrant: "healthy",
-        apiGateway: "healthy",
-      });
-
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Failed to load metrics:", error);
-      setIsLoading(false);
-    }
-  };
+  }, [loadMetrics]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -125,6 +176,27 @@ export function DashboardOverview() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            className="w-5 h-5 text-red-600"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+            />
+          </svg>
+          <span className="text-sm text-red-700">{error}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
