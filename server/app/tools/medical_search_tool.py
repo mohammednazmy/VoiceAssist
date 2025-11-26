@@ -76,30 +76,173 @@ SEARCH_OPENEVIDENCE_DEF = ToolDefinition(
 )
 
 
+async def _openevidence_search(
+    query: str,
+    max_results: int,
+    evidence_level: Optional[str],
+    api_key: str,
+    base_url: str,
+) -> List[OpenEvidenceResult]:
+    """
+    Search OpenEvidence API for medical evidence.
+
+    Args:
+        query: Medical question or topic
+        max_results: Maximum number of results
+        evidence_level: Filter by evidence level (high, moderate, low)
+        api_key: OpenEvidence API key
+        base_url: OpenEvidence API base URL
+
+    Returns:
+        List of OpenEvidenceResult objects
+    """
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    payload: Dict[str, Any] = {
+        "query": query,
+        "limit": max_results,
+    }
+
+    if evidence_level:
+        payload["evidence_level"] = evidence_level
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        response = await client.post(
+            f"{base_url}/v1/search",
+            headers=headers,
+            json=payload,
+        )
+        response.raise_for_status()
+
+    data = response.json()
+    results = []
+
+    for item in data.get("results", []):
+        result = OpenEvidenceResult(
+            title=item.get("title", "Untitled"),
+            summary=item.get("summary", item.get("content", "")),
+            evidence_level=item.get("evidence_level", "moderate"),
+            source=item.get("source", item.get("citation", "Unknown")),
+            pubmed_id=item.get("pubmed_id", item.get("pmid")),
+            url=item.get("url", item.get("link", "")),
+            date=item.get("date", item.get("publication_date")),
+        )
+        results.append(result)
+
+    return results
+
+
 def search_openevidence(args: SearchOpenEvidenceArgs, user_id: int) -> ToolResult:
-    """STUB: OpenEvidence API integration - Implement in Phase 5"""
+    """
+    Search OpenEvidence for high-quality medical evidence.
+
+    OpenEvidence provides AI-powered medical evidence search with
+    quality ratings and citations to primary sources.
+    """
     start_time = datetime.utcnow()
+
     try:
-        # TODO: Implement OpenEvidence API client
-        mock_results = SearchOpenEvidenceResponse(
-            results=[
-                OpenEvidenceResult(
-                    title="Beta-blockers in Heart Failure",
-                    summary="Beta-blockers reduce mortality in HFrEF patients (Class I, Level A evidence)",
-                    evidence_level="high",
-                    source="ESC Heart Failure Guidelines",
-                    url="https://openevidence.example.com/...",
-                    date="2023-08"
-                )
-            ],
-            total_count=1,
+        settings = get_settings()
+
+        if not settings.openevidence_api_key:
+            logger.warning(
+                "OpenEvidence API key not configured, returning empty results"
+            )
+            execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+            return ToolResult(
+                tool_name="search_openevidence",
+                success=True,
+                result=SearchOpenEvidenceResponse(
+                    results=[],
+                    total_count=0,
+                    query=args.query
+                ).dict(),
+                execution_time_ms=execution_time,
+                metadata={"warning": "OpenEvidence API key not configured"}
+            )
+
+        logger.info(
+            f"Searching OpenEvidence for user {user_id}: query='{args.query}'"
+        )
+
+        async def _search():
+            return await _openevidence_search(
+                query=args.query,
+                max_results=args.max_results or 5,
+                evidence_level=args.evidence_level,
+                api_key=settings.openevidence_api_key,
+                base_url=settings.openevidence_base_url,
+            )
+
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop and loop.is_running():
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, _search())
+                results = future.result(timeout=15)
+        else:
+            results = asyncio.run(_search())
+
+        response = SearchOpenEvidenceResponse(
+            results=results,
+            total_count=len(results),
             query=args.query
         )
+
         execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
-        return ToolResult(tool_name="search_openevidence", success=True, result=mock_results.dict(), execution_time_ms=execution_time)
+
+        logger.info(
+            f"OpenEvidence search completed in {execution_time:.2f}ms, "
+            f"returned {len(results)} results"
+        )
+
+        return ToolResult(
+            tool_name="search_openevidence",
+            success=True,
+            result=response.dict(),
+            execution_time_ms=execution_time
+        )
+
+    except httpx.TimeoutException as e:
+        execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        logger.error(f"OpenEvidence API timeout: {e}")
+        return ToolResult(
+            tool_name="search_openevidence",
+            success=False,
+            error="OpenEvidence API request timed out. Please try again.",
+            execution_time_ms=execution_time
+        )
+    except httpx.HTTPStatusError as e:
+        execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        logger.error(f"OpenEvidence API HTTP error: {e}")
+        error_msg = f"OpenEvidence API error: {e.response.status_code}"
+        if e.response.status_code == 401:
+            error_msg = "OpenEvidence API authentication failed. Check API key."
+        elif e.response.status_code == 429:
+            error_msg = "OpenEvidence API rate limit exceeded. Try again later."
+        return ToolResult(
+            tool_name="search_openevidence",
+            success=False,
+            error=error_msg,
+            execution_time_ms=execution_time
+        )
     except Exception as e:
         execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
-        return ToolResult(tool_name="search_openevidence", success=False, error=str(e), execution_time_ms=execution_time)
+        logger.error(f"OpenEvidence search failed: {e}", exc_info=True)
+        return ToolResult(
+            tool_name="search_openevidence",
+            success=False,
+            error=str(e),
+            execution_time_ms=execution_time
+        )
 
 
 # Tool 6: Search PubMed

@@ -45,6 +45,12 @@ class Settings(BaseSettings):
     nextcloud_password: str = Field("", alias="NEXTCLOUD_PASSWORD")
     nextcloud_default_calendar: str = Field("personal", alias="NEXTCLOUD_DEFAULT_CALENDAR")
 
+    # OpenEvidence API Settings
+    openevidence_api_key: str = Field("", alias="OPENEVIDENCE_API_KEY")
+    openevidence_base_url: str = Field(
+        "https://api.openevidence.com", alias="OPENEVIDENCE_BASE_URL"
+    )
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
