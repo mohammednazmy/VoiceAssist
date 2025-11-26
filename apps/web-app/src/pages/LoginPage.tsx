@@ -3,8 +3,8 @@
  * User authentication page with email/password login
  */
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -25,6 +25,24 @@ import { loginSchema, type LoginFormData } from "../lib/validations";
 export function LoginPage() {
   const { login, loginWithOAuth, isLoading, error: authError } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [oauthError, setOauthError] = useState<string | null>(null);
+
+  // Handle OAuth error from redirect
+  useEffect(() => {
+    const error = searchParams.get("error");
+    const message = searchParams.get("message");
+
+    if (error === "oauth_failed" || error === "oauth_invalid") {
+      setOauthError(
+        message || "OAuth authentication failed. Please try again.",
+      );
+      // Clear the URL params
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
+
+  const displayError = oauthError || authError;
 
   const {
     register,
@@ -36,11 +54,17 @@ export function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
+      setOauthError(null); // Clear any OAuth errors
       await login(data);
     } catch (err) {
       // Error is handled by the auth store
       console.error("Login failed:", err);
     }
+  };
+
+  const handleOAuthLogin = (provider: "google" | "microsoft") => {
+    setOauthError(null); // Clear any OAuth errors
+    loginWithOAuth(provider);
   };
 
   return (
@@ -73,13 +97,13 @@ export function LoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {authError && (
+              {displayError && (
                 <div
                   className="rounded-md bg-error-50 p-4 text-sm text-error-800"
                   role="alert"
                   aria-live="polite"
                 >
-                  {authError}
+                  {displayError}
                 </div>
               )}
 
@@ -218,13 +242,13 @@ export function LoginPage() {
                 provider="google"
                 fullWidth
                 disabled={isLoading}
-                onClick={() => loginWithOAuth("google")}
+                onClick={() => handleOAuthLogin("google")}
               />
               <OAuthButton
                 provider="microsoft"
                 fullWidth
                 disabled={isLoading}
-                onClick={() => loginWithOAuth("microsoft")}
+                onClick={() => handleOAuthLogin("microsoft")}
               />
             </div>
           </CardContent>

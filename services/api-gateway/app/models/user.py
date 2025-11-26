@@ -1,12 +1,13 @@
 """
 User model
 """
-from sqlalchemy import Column, String, Boolean, DateTime, Integer
-from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime
+
 import uuid
+from datetime import datetime
 
 from app.core.database import Base
+from sqlalchemy import Boolean, Column, DateTime, String
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class User(Base):
@@ -23,6 +24,10 @@ class User(Base):
 
     # Nextcloud integration
     nextcloud_user_id = Column(String(255), unique=True, nullable=True, index=True)
+
+    # OAuth provider info (for SSO users)
+    oauth_provider = Column(String(50), nullable=True, index=True)  # "google" or "microsoft"
+    oauth_provider_id = Column(String(255), nullable=True, index=True)  # Provider's user ID
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

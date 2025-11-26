@@ -93,6 +93,15 @@ class Settings(BaseSettings):
     GOOGLE_STUDIO_API_KEY: Optional[str] = None  # Google AI Studio provider
     DEEPSEEK_API_KEY: Optional[str] = None  # DeepSeek LLM provider
 
+    # OAuth Providers (optional - leave empty to disable)
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GOOGLE_OAUTH_REDIRECT_URI: Optional[str] = None
+
+    MICROSOFT_CLIENT_ID: Optional[str] = None
+    MICROSOFT_CLIENT_SECRET: Optional[str] = None
+    MICROSOFT_OAUTH_REDIRECT_URI: Optional[str] = None
+
     # CORS (comma-separated list of allowed origins)
     ALLOWED_ORIGINS: str = (
         "https://asimo.io,https://dev.asimo.io,https://assist.asimo.io,http://localhost:3000,http://localhost:5173"
@@ -108,9 +117,7 @@ class Settings(BaseSettings):
     CACHE_L1_MAX_SIZE: int = 1000  # Max entries in L1 cache
     CACHE_DEFAULT_TTL: int = 600  # Default TTL in seconds (10 minutes)
 
-    model_config = SettingsConfigDict(
-        env_file=".env", case_sensitive=True, extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
 
 
 # Global settings instance
