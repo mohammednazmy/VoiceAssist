@@ -8,6 +8,16 @@ import { render, screen } from "@testing-library/react";
 import { MessageList } from "../MessageList";
 import type { Message } from "@voiceassist/types";
 
+// Mock useToastContext since MessageBubble uses it for copy feedback
+vi.mock("../../../contexts/ToastContext", () => ({
+  useToastContext: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  }),
+}));
+
 // Mock react-virtuoso
 vi.mock("react-virtuoso", () => ({
   Virtuoso: ({ data, itemContent, components }: any) => (
