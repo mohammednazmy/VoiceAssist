@@ -1,8 +1,8 @@
 # Frontend Phase 3 Plan - Web App UX & Voice Enhancements
 
 **Date:** 2025-11-25
-**Branch:** feature/frontend-phase2-polish (Phase 3A merged into Phase 2 PR)
-**Status:** Phase 3A Complete, Phase 3B-C Planning
+**Branch:** feature/frontend-phase3C-branches-citations
+**Status:** Phase 3A-C Complete
 **Scope:** Web App (apps/web-app) frontend-focused improvements
 
 ---
@@ -137,6 +137,7 @@ Make message actions more discoverable and polish the interaction patterns.
 
 #### 4. Inline Branch Creation UI
 
+**Status:** ✅ **Implemented** (feature/frontend-phase3C-branches-citations)
 **Effort:** 2-3 days
 **Files:** `MessageBubble.tsx`, `useBranching.ts`, new `BranchPreview.tsx`
 
@@ -152,10 +153,10 @@ Allow users to "fork" a conversation from any message with inline preview.
 
 **Acceptance Criteria:**
 
-- [ ] Can create branch from any message
-- [ ] Visual feedback for branched messages
-- [ ] Branch preview before confirming
-- [ ] Tests for branch creation flow
+- [x] Can create branch from any message
+- [x] Visual feedback for branched messages
+- [x] Branch preview before confirming
+- [x] Tests for branch creation flow (16 tests)
 
 ---
 
@@ -184,6 +185,7 @@ Show real-time transcript preview as user speaks, before finalizing.
 
 #### 6. Citation Sidebar Filters
 
+**Status:** ✅ **Implemented** (feature/frontend-phase3C-branches-citations)
 **Effort:** 1-2 days
 **Files:** `CitationSidebar.tsx`
 
@@ -200,10 +202,10 @@ Add filtering and search capabilities to the citation sidebar.
 
 **Acceptance Criteria:**
 
-- [ ] Can filter citations by type
-- [ ] Can search citation text
-- [ ] "Jump to" scrolls to citation in message
-- [ ] Tests for filter/search functionality
+- [x] Can filter citations by type
+- [x] Can search citation text
+- [x] "Jump to" scrolls to citation in message
+- [x] Tests for filter/search functionality (18 new tests in Phase 3C)
 
 ---
 
@@ -410,12 +412,88 @@ Phase 3A focused on voice mode polish and observability. This work was completed
 - `VoiceModePanel-metrics.test.tsx`: 8 tests (integration wiring)
 - `VoiceModePanel-permissions.test.tsx`: 14 tests (permission handling, state, connection status)
 
-### Upcoming (Phase 3B-C)
+### Upcoming (Phase 3D+)
 
-- Inline branching UI
 - Voice transcript preview during speech
 - Barge-in indicator
 - Message action menu enhancements
+
+---
+
+## Phase 3B Summary – Keyboard-driven Voice UX & Responsive Layout (Completed)
+
+Phase 3B focused on keyboard accessibility and responsive design for voice mode. This work was completed as PR #67.
+
+### Implemented Features
+
+1. **Keyboard-driven Voice Mode Control**
+   - Global hotkey `Ctrl+Shift+V` to toggle voice mode
+   - Push-to-talk mode (hold Space to talk)
+   - Escape to disconnect voice session
+   - Full keyboard navigation within voice panel
+
+2. **Responsive Voice Panel Layout**
+   - Stacked layout on narrow screens (< 640px)
+   - Touch-friendly buttons meeting 44px minimum tap targets
+   - Metrics legend wraps appropriately on mobile
+   - Waveform scales to viewport width
+
+### Test Coverage
+
+- Multiple tests for keyboard interactions and responsive behavior
+
+---
+
+## Phase 3C Summary – Advanced Branching & Citations (Completed)
+
+Phase 3C focused on conversation branching preview and citation filtering enhancements. This work was completed as part of feature/frontend-phase3C-branches-citations.
+
+### Implemented Features
+
+1. **BranchPreview Component**
+   - Confirmation dialog before creating branch
+   - Shows parent message preview with truncation
+   - Displays message position (e.g., "message 2 of 4")
+   - Shows count of messages that will be excluded from branch
+   - Loading state with spinner during branch creation
+   - Proper ARIA attributes for accessibility
+
+2. **Visual Branch Indicator**
+   - Messages that have branches show "Branched" badge
+   - Badge styled differently for user vs assistant messages
+   - Uses `branchedMessageIds` Set for efficient lookup
+
+3. **Citation Sidebar Filters**
+   - Type filter pills: All, Knowledge Base, PubMed/DOI, Guidelines
+   - Message filter dropdown (when multiple messages have citations)
+   - Filters combine with existing text search
+   - Smart categorization based on source and sourceType
+
+4. **Jump-to-Message Functionality**
+   - "Jump to message #N" button on each citation
+   - Smooth scroll to message with highlight effect
+   - 2-second highlight ring animation
+   - Uses `data-message-id` attribute for targeting
+
+### Test Coverage
+
+- `BranchPreview.test.tsx`: 16 tests (rendering, actions, creating state, edge cases, accessibility)
+- `CitationSidebar-Phase8.test.tsx`: 18 new tests for Phase 3C features (type filters, message filters, jump-to, combined filters)
+
+### Files Created/Modified
+
+**New Files:**
+
+- `src/components/chat/BranchPreview.tsx`
+- `src/components/chat/__tests__/BranchPreview.test.tsx`
+
+**Modified Files:**
+
+- `src/pages/ChatPage.tsx` (branch preview state, onJumpToMessage callback)
+- `src/components/chat/MessageList.tsx` (branchedMessageIds prop)
+- `src/components/chat/MessageBubble.tsx` (hasBranch prop, visual indicator)
+- `src/components/citations/CitationSidebar.tsx` (type/message filters, jump-to)
+- `src/components/citations/__tests__/CitationSidebar-Phase8.test.tsx` (new tests)
 
 ---
 
@@ -470,6 +548,6 @@ Ensure voice panel and metrics display work well on mobile and narrow viewports.
 **Created:** 2025-11-25
 **Last Updated:** 2025-11-25
 **Author:** Claude (AI Assistant)
-**Status:** Phase 3A Complete, Phase 3B Planning
+**Status:** Phase 3A-C Complete, Phase 3D Planning
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
