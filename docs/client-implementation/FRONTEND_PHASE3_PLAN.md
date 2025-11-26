@@ -1,8 +1,8 @@
 # Frontend Phase 3 Plan - Web App UX & Voice Enhancements
 
 **Date:** 2025-11-25
-**Branch:** TBD (to be created from main after Phase 2 merge)
-**Status:** Planning
+**Branch:** feature/frontend-phase2-polish (Phase 3A merged into Phase 2 PR)
+**Status:** Phase 3A Complete, Phase 3B-C Planning
 **Scope:** Web App (apps/web-app) frontend-focused improvements
 
 ---
@@ -56,8 +56,9 @@ Phase 3 focuses on **Voice/Realtime UX polish**, **advanced chat controls**, and
 
 #### 1. Voice Metrics Dashboard in Voice Panel
 
+**Status:** ✅ **Implemented** (feature/frontend-phase2-polish, PR #66)
 **Effort:** 1-2 days
-**Files:** `VoiceModePanel.tsx`, new `VoiceMetricsDisplay.tsx`
+**Files:** `VoiceModePanel.tsx`, `VoiceMetricsDisplay.tsx`
 
 **Description:**
 Display voice metrics prominently in the VoiceModePanel so users can see connection health and latency.
@@ -67,18 +68,23 @@ Display voice metrics prominently in the VoiceModePanel so users can see connect
 - Show connection time, STT latency, response latency in real-time
 - Color-coded indicators (green/yellow/red) for latency thresholds
 - Expandable/collapsible metrics panel
-- Export metrics for debugging
+- Time to first transcript display
+- User/AI message counts and reconnect tracking
+- Accessibility: sr-only legend text, aria-expanded, aria-controls
 
 **Acceptance Criteria:**
 
-- [ ] Metrics visible during active voice session
-- [ ] Latency thresholds: <500ms green, 500-1000ms yellow, >1000ms red
-- [ ] Tests for VoiceMetricsDisplay component
+- [x] Metrics visible during active voice session
+- [x] Latency thresholds: <500ms green, 500-1000ms yellow, >1000ms red
+- [x] Tests for VoiceMetricsDisplay component (25 tests)
+- [x] Integration tests for VoiceModePanel metrics wiring (8 tests)
+- [x] Accessible legend with screen reader support
 
 ---
 
 #### 2. Mic Permission Error Handling UX
 
+**Status:** ✅ **Implemented** (feature/frontend-phase2-polish, PR #66)
 **Effort:** 0.5-1 day
 **Files:** `VoiceModePanel.tsx`, `useRealtimeVoiceSession.ts`
 
@@ -90,13 +96,15 @@ Improve the user experience when microphone permission is denied or unavailable.
 - Clear error message when mic permission denied
 - Link to browser settings instructions
 - Retry button after granting permission
-- Graceful fallback (show text-only mode option)
+- Graceful fallback ("Use text-only mode" button)
+- State hygiene (micPermissionDenied reset on disconnect/reconnect)
 
 **Acceptance Criteria:**
 
-- [ ] Permission denied shows helpful UI instead of error
-- [ ] User can recover without refreshing page
-- [ ] Tests for permission error states
+- [x] Permission denied shows helpful UI instead of error
+- [x] User can recover without refreshing page
+- [x] "Use text-only mode" fallback button available
+- [x] Tests for permission error states (14 tests)
 
 ---
 
@@ -371,8 +379,97 @@ Most Phase 3 items are frontend-only. Potential backend dependencies:
 
 ---
 
+## Phase 3A Summary – Voice UX & Observability (Completed)
+
+Phase 3A focused on voice mode polish and observability. This work was completed as part of the Phase 2 polish effort (PR #66).
+
+### Implemented Features
+
+1. **VoiceMetricsDisplay Component**
+   - Collapsible metrics panel with real-time latency display
+   - Color-coded indicators (green <500ms, yellow 500-1000ms, red >1000ms)
+   - Displays: connection time, STT latency, response latency, time to first transcript
+   - Shows user/AI message counts and reconnect count
+   - Accessible legend with sr-only text for screen readers
+   - Robust header that handles narrow viewport widths
+
+2. **Mic Permission UX**
+   - Contextual error messages for permission denied vs generic errors
+   - Browser settings instructions for granting mic access
+   - "Use text-only mode" fallback button
+   - State properly resets on disconnect/reconnect
+   - Retry button for non-permission connection errors
+
+3. **Voice Metrics Logging**
+   - Console logging for observability: `voice_session_connect_ms`, `voice_stt_latency_ms`, `voice_first_reply_ms`, `voice_session_duration_ms`
+   - `onMetricsUpdate` callback for parent component integration
+
+### Test Coverage
+
+- `VoiceMetricsDisplay.test.tsx`: 25 tests (visibility, collapsible, metrics display, formatting, color coding, accessibility)
+- `VoiceModePanel-metrics.test.tsx`: 8 tests (integration wiring)
+- `VoiceModePanel-permissions.test.tsx`: 14 tests (permission handling, state, connection status)
+
+### Upcoming (Phase 3B-C)
+
+- Inline branching UI
+- Voice transcript preview during speech
+- Barge-in indicator
+- Message action menu enhancements
+
+---
+
+## Additional P1 Backlog Items (Suggested)
+
+#### Keyboard-driven Voice UX
+
+**Effort:** 1-2 days
+**Files:** `VoiceModePanel.tsx`, `MessageInput.tsx`
+
+**Description:**
+Add keyboard shortcuts for voice mode control.
+
+**Features:**
+
+- Global hotkey to toggle voice mode (e.g., `Ctrl+Shift+V`)
+- Push-to-talk mode option (hold Space to talk)
+- Keyboard navigation within voice panel
+- Escape to disconnect
+
+**Acceptance Criteria:**
+
+- [ ] Can toggle voice mode with keyboard shortcut
+- [ ] Push-to-talk mode available in settings
+- [ ] Tests for keyboard interactions
+
+---
+
+#### Responsive Voice Panel & Metrics Layout
+
+**Effort:** 1 day
+**Files:** `VoiceModePanel.tsx`, `VoiceMetricsDisplay.tsx`
+
+**Description:**
+Ensure voice panel and metrics display work well on mobile and narrow viewports.
+
+**Features:**
+
+- Stacked layout on narrow screens
+- Touch-friendly buttons (minimum 44px tap targets)
+- Metrics legend collapses or wraps on mobile
+- Waveform scales appropriately
+
+**Acceptance Criteria:**
+
+- [ ] Usable on 320px viewport width
+- [ ] All interactive elements meet touch target guidelines
+- [ ] Tests for responsive behavior (if feasible)
+
+---
+
 **Created:** 2025-11-25
+**Last Updated:** 2025-11-25
 **Author:** Claude (AI Assistant)
-**Status:** Ready for review
+**Status:** Phase 3A Complete, Phase 3B Planning
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)

@@ -94,14 +94,15 @@ export function VoiceMetricsDisplay({
         aria-expanded={isExpanded}
         aria-controls="voice-metrics-content"
       >
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 min-w-0 flex-shrink">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
             stroke="currentColor"
-            className="w-4 h-4 text-neutral-500"
+            className="w-4 h-4 text-neutral-500 flex-shrink-0"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -109,15 +110,16 @@ export function VoiceMetricsDisplay({
               d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
             />
           </svg>
-          <span className="text-sm font-medium text-neutral-700">
+          <span className="text-sm font-medium text-neutral-700 truncate">
             Voice Metrics
           </span>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 flex-shrink-0">
           {/* Quick stats preview when collapsed */}
           {!isExpanded && metrics.lastResponseLatencyMs !== null && (
             <span
               className={`text-xs font-medium ${getLatencyColor(metrics.lastResponseLatencyMs)}`}
+              aria-label={`Response latency: ${formatMs(metrics.lastResponseLatencyMs)}`}
             >
               {formatMs(metrics.lastResponseLatencyMs)}
             </span>
@@ -128,7 +130,8 @@ export function VoiceMetricsDisplay({
             viewBox="0 0 24 24"
             strokeWidth={1.5}
             stroke="currentColor"
-            className={`w-4 h-4 text-neutral-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+            className={`w-4 h-4 text-neutral-400 transition-transform flex-shrink-0 ${isExpanded ? "rotate-180" : ""}`}
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -199,6 +202,29 @@ export function VoiceMetricsDisplay({
             </div>
           </div>
 
+          {/* Time to First Transcript */}
+          {metrics.timeToFirstTranscriptMs !== null && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-1">
+                <span className="text-xs text-neutral-500">
+                  First Transcript
+                </span>
+                <span
+                  className="text-xs text-neutral-400"
+                  title="Time from connection to first user transcript"
+                >
+                  ⓘ
+                </span>
+              </div>
+              <span
+                className={`text-xs font-mono ${getLatencyColor(metrics.timeToFirstTranscriptMs)}`}
+                data-testid="metric-first-transcript"
+              >
+                {formatMs(metrics.timeToFirstTranscriptMs)}
+              </span>
+            </div>
+          )}
+
           {/* Session Duration */}
           {metrics.sessionDurationMs !== null && (
             <div className="flex items-center justify-between">
@@ -238,18 +264,38 @@ export function VoiceMetricsDisplay({
 
           {/* Latency Legend */}
           <div className="pt-2 border-t border-neutral-100">
-            <div className="flex items-center justify-center space-x-4 text-xs">
-              <div className="flex items-center space-x-1">
-                <span className="w-2 h-2 rounded-full bg-green-500" />
-                <span className="text-neutral-400">&lt;500ms</span>
+            <div
+              className="flex items-center justify-center space-x-4 text-xs"
+              role="list"
+              aria-label="Latency quality indicators"
+            >
+              <div className="flex items-center space-x-1" role="listitem">
+                <span
+                  className="w-2 h-2 rounded-full bg-green-500"
+                  aria-hidden="true"
+                />
+                <span className="text-neutral-400">
+                  <span className="sr-only">Good latency: </span>&lt;500ms
+                </span>
               </div>
-              <div className="flex items-center space-x-1">
-                <span className="w-2 h-2 rounded-full bg-yellow-500" />
-                <span className="text-neutral-400">500-1000ms</span>
+              <div className="flex items-center space-x-1" role="listitem">
+                <span
+                  className="w-2 h-2 rounded-full bg-yellow-500"
+                  aria-hidden="true"
+                />
+                <span className="text-neutral-400">
+                  <span className="sr-only">Acceptable latency: </span>
+                  500-1000ms
+                </span>
               </div>
-              <div className="flex items-center space-x-1">
-                <span className="w-2 h-2 rounded-full bg-red-500" />
-                <span className="text-neutral-400">&gt;1000ms</span>
+              <div className="flex items-center space-x-1" role="listitem">
+                <span
+                  className="w-2 h-2 rounded-full bg-red-500"
+                  aria-hidden="true"
+                />
+                <span className="text-neutral-400">
+                  <span className="sr-only">Poor latency: </span>&gt;1000ms
+                </span>
               </div>
             </div>
           </div>

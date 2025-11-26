@@ -23,6 +23,59 @@ const createMockMetrics = (
 });
 
 describe("VoiceMetricsDisplay", () => {
+  describe("accessibility", () => {
+    it("should have aria-expanded attribute on header button", () => {
+      render(
+        <VoiceMetricsDisplay
+          metrics={createMockMetrics()}
+          isConnected={true}
+        />,
+      );
+
+      const button = screen.getByRole("button", { name: /voice metrics/i });
+      expect(button).toHaveAttribute("aria-expanded", "false");
+
+      fireEvent.click(button);
+      expect(button).toHaveAttribute("aria-expanded", "true");
+    });
+
+    it("should have aria-controls pointing to content", () => {
+      render(
+        <VoiceMetricsDisplay
+          metrics={createMockMetrics()}
+          isConnected={true}
+        />,
+      );
+
+      const button = screen.getByRole("button", { name: /voice metrics/i });
+      expect(button).toHaveAttribute("aria-controls", "voice-metrics-content");
+    });
+
+    it("should have sr-only text for latency legend items", () => {
+      const metrics = createMockMetrics({ connectionTimeMs: 100 });
+      render(<VoiceMetricsDisplay metrics={metrics} isConnected={true} />);
+
+      fireEvent.click(screen.getByText("Voice Metrics"));
+
+      // Check for screen-reader-only text in legend
+      expect(screen.getByText("Good latency:")).toHaveClass("sr-only");
+      expect(screen.getByText("Acceptable latency:")).toHaveClass("sr-only");
+      expect(screen.getByText("Poor latency:")).toHaveClass("sr-only");
+    });
+
+    it("should have aria-label on collapsed preview latency", () => {
+      const metrics = createMockMetrics({ lastResponseLatencyMs: 250 });
+      render(<VoiceMetricsDisplay metrics={metrics} isConnected={true} />);
+
+      // Find the preview latency in collapsed state
+      const previewElement = screen.getByText("250ms");
+      expect(previewElement).toHaveAttribute(
+        "aria-label",
+        "Response latency: 250ms",
+      );
+    });
+  });
+
   describe("visibility", () => {
     it("should not render when disconnected and no metrics", () => {
       const { container } = render(
@@ -153,6 +206,30 @@ describe("VoiceMetricsDisplay", () => {
       expect(screen.getByTestId("metric-session-duration")).toHaveTextContent(
         "2:05",
       );
+    });
+
+    it("should display time to first transcript", () => {
+      const metrics = createMockMetrics({ timeToFirstTranscriptMs: 850 });
+
+      render(<VoiceMetricsDisplay metrics={metrics} isConnected={true} />);
+
+      fireEvent.click(screen.getByText("Voice Metrics"));
+
+      expect(screen.getByTestId("metric-first-transcript")).toHaveTextContent(
+        "850ms",
+      );
+    });
+
+    it("should not display time to first transcript when null", () => {
+      const metrics = createMockMetrics({ timeToFirstTranscriptMs: null });
+
+      render(<VoiceMetricsDisplay metrics={metrics} isConnected={true} />);
+
+      fireEvent.click(screen.getByText("Voice Metrics"));
+
+      expect(
+        screen.queryByTestId("metric-first-transcript"),
+      ).not.toBeInTheDocument();
     });
 
     it("should display message counts", () => {
