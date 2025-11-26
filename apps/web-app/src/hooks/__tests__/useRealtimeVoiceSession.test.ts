@@ -369,7 +369,9 @@ describe("useRealtimeVoiceSession", () => {
         result.current.sendMessage("Hello");
       });
 
+      // Logger adds [RealtimeVoiceSession] prefix
       expect(consoleWarn).toHaveBeenCalledWith(
+        "[RealtimeVoiceSession]",
         expect.stringContaining("WebSocket not connected"),
       );
 
