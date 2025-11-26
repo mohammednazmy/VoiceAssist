@@ -9,14 +9,24 @@ Tools:
 - search_medical_guidelines: Local guidelines database
 """
 
-from typing import List, Optional
-from pydantic import BaseModel, Field
-from datetime import datetime
 import logging
+import xml.etree.ElementTree as ET
+from datetime import datetime
+from typing import List, Optional
+from urllib.parse import urlencode
 
-from app.tools.base import ToolDefinition, ToolResult, ToolCategory, RiskLevel
+import httpx
+from pydantic import BaseModel, Field
+
+from app.tools.base import ToolCategory, RiskLevel, ToolDefinition, ToolResult
 
 logger = logging.getLogger(__name__)
+
+# NCBI E-utilities base URLs
+NCBI_ESEARCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+NCBI_EFETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+NCBI_TOOL_NAME = "VoiceAssist"
+NCBI_TOOL_EMAIL = "voiceassist@asimo.io"
 
 
 # Tool 5: Search OpenEvidence
@@ -138,32 +148,252 @@ SEARCH_PUBMED_DEF = ToolDefinition(
 )
 
 
+async def _pubmed_esearch(
+    query: str,
+    max_results: int,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+) -> tuple[List[str], int]:
+    """
+    Search PubMed and return list of PMIDs.
+
+    Args:
+        query: Search query string
+        max_results: Maximum number of results to return
+        date_from: Optional start date (YYYY/MM/DD)
+        date_to: Optional end date (YYYY/MM/DD)
+
+    Returns:
+        Tuple of (list of PMIDs, total count)
+    """
+    params = {
+        "db": "pubmed",
+        "term": query,
+        "retmax": max_results,
+        "retmode": "xml",
+        "tool": NCBI_TOOL_NAME,
+        "email": NCBI_TOOL_EMAIL,
+    }
+
+    if date_from:
+        params["mindate"] = date_from.replace("/", "/")
+        params["datetype"] = "pdat"
+    if date_to:
+        params["maxdate"] = date_to.replace("/", "/")
+        params["datetype"] = "pdat"
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        response = await client.get(f"{NCBI_ESEARCH_URL}?{urlencode(params)}")
+        response.raise_for_status()
+
+    root = ET.fromstring(response.text)
+
+    # Extract PMIDs
+    pmids = [id_elem.text for id_elem in root.findall(".//Id") if id_elem.text]
+
+    # Extract total count
+    count_elem = root.find(".//Count")
+    total_count = int(count_elem.text) if count_elem is not None and count_elem.text else 0
+
+    return pmids, total_count
+
+
+async def _pubmed_efetch(pmids: List[str]) -> List[PubMedArticle]:
+    """
+    Fetch article details for given PMIDs.
+
+    Args:
+        pmids: List of PubMed IDs
+
+    Returns:
+        List of PubMedArticle objects
+    """
+    if not pmids:
+        return []
+
+    params = {
+        "db": "pubmed",
+        "id": ",".join(pmids),
+        "retmode": "xml",
+        "rettype": "abstract",
+        "tool": NCBI_TOOL_NAME,
+        "email": NCBI_TOOL_EMAIL,
+    }
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        response = await client.get(f"{NCBI_EFETCH_URL}?{urlencode(params)}")
+        response.raise_for_status()
+
+    root = ET.fromstring(response.text)
+    articles = []
+
+    for article_elem in root.findall(".//PubmedArticle"):
+        try:
+            # Extract PMID
+            pmid_elem = article_elem.find(".//PMID")
+            pmid = pmid_elem.text if pmid_elem is not None else ""
+
+            # Extract title
+            title_elem = article_elem.find(".//ArticleTitle")
+            title = title_elem.text if title_elem is not None and title_elem.text else "No title"
+
+            # Extract authors
+            authors = []
+            for author in article_elem.findall(".//Author"):
+                last_name = author.find("LastName")
+                initials = author.find("Initials")
+                if last_name is not None and last_name.text:
+                    author_name = last_name.text
+                    if initials is not None and initials.text:
+                        author_name += f" {initials.text}"
+                    authors.append(author_name)
+
+            # Extract journal
+            journal_elem = article_elem.find(".//Journal/Title")
+            journal = journal_elem.text if journal_elem is not None and journal_elem.text else "Unknown Journal"
+
+            # Extract publication date
+            pub_date = ""
+            pub_date_elem = article_elem.find(".//PubDate")
+            if pub_date_elem is not None:
+                year = pub_date_elem.find("Year")
+                month = pub_date_elem.find("Month")
+                day = pub_date_elem.find("Day")
+                if year is not None and year.text:
+                    pub_date = year.text
+                    if month is not None and month.text:
+                        pub_date += f"-{month.text}"
+                        if day is not None and day.text:
+                            pub_date += f"-{day.text}"
+
+            # Extract abstract
+            abstract_parts = []
+            for abstract_text in article_elem.findall(".//AbstractText"):
+                if abstract_text.text:
+                    label = abstract_text.get("Label", "")
+                    if label:
+                        abstract_parts.append(f"{label}: {abstract_text.text}")
+                    else:
+                        abstract_parts.append(abstract_text.text)
+            abstract = " ".join(abstract_parts) if abstract_parts else None
+
+            # Extract DOI
+            doi = None
+            for article_id in article_elem.findall(".//ArticleId"):
+                if article_id.get("IdType") == "doi":
+                    doi = article_id.text
+                    break
+
+            articles.append(PubMedArticle(
+                pmid=pmid,
+                title=title,
+                authors=authors[:10],  # Limit to first 10 authors
+                journal=journal,
+                publication_date=pub_date,
+                abstract=abstract[:2000] if abstract else None,  # Limit abstract length
+                doi=doi,
+                url=f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
+            ))
+
+        except Exception as e:
+            logger.warning(f"Error parsing PubMed article: {e}")
+            continue
+
+    return articles
+
+
 def search_pubmed(args: SearchPubMedArgs, user_id: int) -> ToolResult:
-    """STUB: PubMed API integration - Implement in Phase 5"""
+    """
+    Search PubMed for medical literature using NCBI E-utilities API.
+
+    This function performs a two-step search:
+    1. esearch: Search PubMed and get list of PMIDs
+    2. efetch: Fetch detailed article information for each PMID
+    """
+    import asyncio
+
     start_time = datetime.utcnow()
-    try:
-        # TODO: Implement NCBI E-utilities API (esearch + efetch)
-        mock_results = SearchPubMedResult(
-            articles=[
-                PubMedArticle(
-                    pmid="12345678",
-                    title="Efficacy of Beta-Blockers in Heart Failure: A Meta-Analysis",
-                    authors=["Smith J", "Jones A"],
-                    journal="JAMA",
-                    publication_date="2023-06-15",
-                    abstract="...",
-                    doi="10.1001/jama.2023.12345",
-                    url="https://pubmed.ncbi.nlm.nih.gov/12345678/"
-                )
-            ],
-            total_count=1,
+
+    async def _search():
+        # Step 1: Search for PMIDs
+        pmids, total_count = await _pubmed_esearch(
+            query=args.query,
+            max_results=args.max_results or 10,
+            date_from=args.date_from,
+            date_to=args.date_to,
+        )
+
+        logger.info(
+            f"PubMed search for '{args.query}' returned {len(pmids)} PMIDs "
+            f"(total: {total_count}) for user {user_id}"
+        )
+
+        # Step 2: Fetch article details
+        articles = await _pubmed_efetch(pmids)
+
+        return SearchPubMedResult(
+            articles=articles,
+            total_count=total_count,
             query=args.query
         )
+
+    try:
+        # Run async search
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop and loop.is_running():
+            # If already in async context, create a task
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, _search())
+                result = future.result(timeout=20)
+        else:
+            result = asyncio.run(_search())
+
         execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
-        return ToolResult(tool_name="search_pubmed", success=True, result=mock_results.dict(), execution_time_ms=execution_time)
+
+        logger.info(
+            f"PubMed search completed in {execution_time:.2f}ms, "
+            f"returned {len(result.articles)} articles"
+        )
+
+        return ToolResult(
+            tool_name="search_pubmed",
+            success=True,
+            result=result.dict(),
+            execution_time_ms=execution_time
+        )
+
+    except httpx.TimeoutException as e:
+        execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        logger.error(f"PubMed API timeout: {e}")
+        return ToolResult(
+            tool_name="search_pubmed",
+            success=False,
+            error="PubMed API request timed out. Please try again.",
+            execution_time_ms=execution_time
+        )
+    except httpx.HTTPStatusError as e:
+        execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        logger.error(f"PubMed API HTTP error: {e}")
+        return ToolResult(
+            tool_name="search_pubmed",
+            success=False,
+            error=f"PubMed API error: {e.response.status_code}",
+            execution_time_ms=execution_time
+        )
     except Exception as e:
         execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
-        return ToolResult(tool_name="search_pubmed", success=False, error=str(e), execution_time_ms=execution_time)
+        logger.error(f"PubMed search failed: {e}", exc_info=True)
+        return ToolResult(
+            tool_name="search_pubmed",
+            success=False,
+            error=str(e),
+            execution_time_ms=execution_time
+        )
 
 
 # Tool 8: Search Medical Guidelines
