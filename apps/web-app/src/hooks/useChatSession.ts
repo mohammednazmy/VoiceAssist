@@ -18,6 +18,7 @@ import type {
 import { useAuthStore } from "../stores/authStore";
 import { useAuth } from "./useAuth";
 import { createAttachmentsApi } from "../lib/api/attachmentsApi";
+import { websocketLog } from "../lib/logger";
 
 interface UseChatSessionOptions {
   conversationId: string | undefined;
@@ -110,7 +111,7 @@ export function useChatSession(
 
   const handleError = useCallback(
     (code: WebSocketErrorCode, message: string) => {
-      console.error(`[WebSocket Error] ${code}: ${message}`);
+      websocketLog.error(`Error ${code}: ${message}`);
       onError?.(code, message);
     },
     [onError],
@@ -250,7 +251,7 @@ export function useChatSession(
           }
         }
       } catch (error) {
-        console.error("[WebSocket] Failed to parse message:", error);
+        websocketLog.error("Failed to parse message:", error);
       }
     },
     [onMessage, handleError],
@@ -270,8 +271,8 @@ export function useChatSession(
         skipLoggedRef.current.hasToken !== currentSkipState.hasToken;
 
       if (shouldLog) {
-        console.debug(
-          "[WebSocket] Skipping connect - missing conversationId or token",
+        websocketLog.debug(
+          "Skipping connect - missing conversationId or token",
           currentSkipState,
         );
         skipLoggedRef.current = currentSkipState;
@@ -290,9 +291,7 @@ export function useChatSession(
 
     // Guard: Already connecting (prevents duplicate connection attempts)
     if (isConnectingRef.current) {
-      console.debug(
-        "[WebSocket] Already connecting, skipping duplicate attempt",
-      );
+      websocketLog.debug("Already connecting, skipping duplicate attempt");
       return;
     }
 
@@ -311,7 +310,7 @@ export function useChatSession(
       const ws = new WebSocket(url.toString());
 
       ws.onopen = () => {
-        console.log("[WebSocket] Connected");
+        websocketLog.debug("Connected");
         isConnectingRef.current = false;
         updateConnectionStatus("connected");
         reconnectAttemptsRef.current = 0;
@@ -322,9 +321,8 @@ export function useChatSession(
 
       ws.onerror = (error) => {
         // Log error details for debugging
-        console.error("[WebSocket] Error event received:", {
+        websocketLog.error("Error event received:", {
           type: error.type,
-          target: error.target,
           readyState: ws.readyState,
         });
         isConnectingRef.current = false;
@@ -333,7 +331,7 @@ export function useChatSession(
       };
 
       ws.onclose = (event) => {
-        console.log("[WebSocket] Closed:", {
+        websocketLog.debug("Closed:", {
           code: event.code,
           reason: event.reason || "(no reason provided)",
           wasClean: event.wasClean,
@@ -345,7 +343,7 @@ export function useChatSession(
 
         // Don't reconnect if this was an intentional disconnect
         if (intentionalDisconnectRef.current) {
-          console.log("[WebSocket] Intentional disconnect - not reconnecting");
+          websocketLog.debug("Intentional disconnect - not reconnecting");
           return;
         }
 
@@ -361,8 +359,8 @@ export function useChatSession(
             BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current);
           reconnectAttemptsRef.current += 1;
 
-          console.log(
-            `[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})`,
+          websocketLog.debug(
+            `Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})`,
           );
           updateConnectionStatus("reconnecting");
 
@@ -381,7 +379,7 @@ export function useChatSession(
 
       wsRef.current = ws;
     } catch (error) {
-      console.error("[WebSocket] Connection failed:", error);
+      websocketLog.error("Connection failed:", error);
       isConnectingRef.current = false;
       handleError("CONNECTION_DROPPED", "Failed to establish connection");
       updateConnectionStatus("disconnected");
@@ -474,7 +472,7 @@ export function useChatSession(
             ),
           );
         } catch (error) {
-          console.error("Failed to upload attachments:", error);
+          websocketLog.error("Failed to upload attachments:", error);
           // Don't fail the whole message send if attachments fail
         }
       }
@@ -498,7 +496,7 @@ export function useChatSession(
 
         setEditingMessageId(null);
       } catch (error) {
-        console.error("Failed to edit message:", error);
+        websocketLog.error("Failed to edit message:", error);
         throw error;
       }
     },
@@ -512,13 +510,15 @@ export function useChatSession(
         (m) => m.id === assistantMessageId,
       );
       if (messageIndex === -1 || messageIndex === 0) {
-        console.error("Cannot regenerate: invalid message");
+        websocketLog.error("Cannot regenerate: invalid message");
         return;
       }
 
       const userMessage = messages[messageIndex - 1];
       if (userMessage.role !== "user") {
-        console.error("Cannot regenerate: previous message is not from user");
+        websocketLog.error(
+          "Cannot regenerate: previous message is not from user",
+        );
         return;
       }
 
@@ -543,7 +543,7 @@ export function useChatSession(
         // Update local state
         setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
       } catch (error) {
-        console.error("Failed to delete message:", error);
+        websocketLog.error("Failed to delete message:", error);
         throw error;
       }
     },

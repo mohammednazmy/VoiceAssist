@@ -13,6 +13,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { captureVoiceError } from "../lib/sentry";
 import { useAuth } from "./useAuth";
+import { voiceLog } from "../lib/logger";
 
 // Types for Realtime API events
 export interface RealtimeAuthInfo {
@@ -235,31 +236,29 @@ export function useRealtimeVoiceSession(
   const scheduleReconnect = useCallback(() => {
     // Don't reconnect if user intentionally disconnected
     if (intentionalDisconnectRef.current) {
-      console.log(
-        "[RealtimeVoiceSession] Skipping reconnect (intentional disconnect)",
-      );
+      voiceLog.debug("Skipping reconnect (intentional disconnect)");
       return;
     }
 
     // Don't reconnect on fatal errors (mic permission denied)
     if (fatalErrorRef.current) {
-      console.log(
-        "[RealtimeVoiceSession] Skipping reconnect (fatal error - mic permission denied)",
+      voiceLog.debug(
+        "Skipping reconnect (fatal error - mic permission denied)",
       );
       return;
     }
 
     // Don't reconnect if max attempts reached
     if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      console.error("[RealtimeVoiceSession] Max reconnect attempts reached");
+      voiceLog.error(" Max reconnect attempts reached");
       updateStatusRef.current("failed");
       return;
     }
 
     // Calculate delay for this attempt
     const delay = calculateReconnectDelay(reconnectAttempts);
-    console.log(
-      `[RealtimeVoiceSession] Scheduling reconnect attempt ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`,
+    voiceLog.debug(
+      `Scheduling reconnect attempt ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`,
     );
 
     // Update status to reconnecting
@@ -308,7 +307,7 @@ export function useRealtimeVoiceSession(
           connectionTimeMs: connectionTime,
           sessionStartedAt: sessionStartTimeRef.current,
         });
-        console.log(
+        voiceLog.debug(
           `[RealtimeVoiceSession] Connection established in ${connectionTime}ms`,
         );
       }
@@ -335,7 +334,7 @@ export function useRealtimeVoiceSession(
    */
   const handleError = useCallback(
     (err: Error) => {
-      console.error("[RealtimeVoiceSession] Error:", err);
+      voiceLog.error(" Error:", err);
       setError(err);
       updateStatus("error");
       options.onError?.(err);
@@ -393,7 +392,7 @@ export function useRealtimeVoiceSession(
 
         // WebSocket event handlers
         ws.onopen = () => {
-          console.log("[RealtimeVoiceSession] WebSocket connected");
+          voiceLog.debug(" WebSocket connected");
 
           // Send session.update message with configuration
           ws.send(
@@ -417,25 +416,25 @@ export function useRealtimeVoiceSession(
         };
 
         ws.onerror = (event) => {
-          console.error("[RealtimeVoiceSession] WebSocket error:", event);
+          voiceLog.error(" WebSocket error:", event);
           reject(new Error("WebSocket connection failed"));
         };
 
         ws.onclose = (event) => {
-          console.log(
+          voiceLog.debug(
             `[RealtimeVoiceSession] WebSocket closed: ${event.code} ${event.reason}`,
           );
 
           // Check if session expired
           if (sessionConfig && sessionConfig.expires_at * 1000 < Date.now()) {
-            console.log("[RealtimeVoiceSession] Session expired");
+            voiceLog.debug(" Session expired");
             updateStatus("expired");
             return;
           }
 
           // If not an intentional disconnect, schedule reconnection
           if (!intentionalDisconnectRef.current) {
-            console.log(
+            voiceLog.debug(
               "[RealtimeVoiceSession] Unexpected disconnect, will attempt reconnect",
             );
             scheduleReconnect();
@@ -450,7 +449,7 @@ export function useRealtimeVoiceSession(
             // Use ref to avoid circular dependency with handleRealtimeMessage
             handleRealtimeMessageRef.current(message);
           } catch (err) {
-            console.error(
+            voiceLog.error(
               "[RealtimeVoiceSession] Failed to parse message:",
               err,
             );
@@ -475,18 +474,18 @@ export function useRealtimeVoiceSession(
     (message: any) => {
       switch (message.type) {
         case "session.created":
-          console.log(
+          voiceLog.debug(
             "[RealtimeVoiceSession] Session created:",
             message.session,
           );
           break;
 
         case "session.updated":
-          console.log("[RealtimeVoiceSession] Session updated");
+          voiceLog.debug(" Session updated");
           break;
 
         case "conversation.item.created":
-          console.log("[RealtimeVoiceSession] Item created:", message.item);
+          voiceLog.debug(" Item created:", message.item);
           break;
 
         case "conversation.item.input_audio_transcription.delta": {
@@ -504,7 +503,7 @@ export function useRealtimeVoiceSession(
               const timeToFirst = now - sessionStartTimeRef.current;
               hasReceivedFirstTranscriptRef.current = true;
               updateMetrics({ timeToFirstTranscriptMs: timeToFirst });
-              console.log(
+              voiceLog.debug(
                 `[RealtimeVoiceSession] Time to first transcript: ${timeToFirst}ms`,
               );
             }
@@ -550,7 +549,7 @@ export function useRealtimeVoiceSession(
           });
 
           if (sttLatency !== null) {
-            console.log(`[RealtimeVoiceSession] STT latency: ${sttLatency}ms`);
+            voiceLog.debug(` STT latency: ${sttLatency}ms`);
           }
 
           options.onTranscript?.({
@@ -574,7 +573,7 @@ export function useRealtimeVoiceSession(
                 lastResponseLatencyMs: responseLatency,
                 aiResponseCount: metrics.aiResponseCount + 1,
               });
-              console.log(
+              voiceLog.debug(
                 `[RealtimeVoiceSession] Response latency: ${responseLatency}ms`,
               );
               // Clear to avoid double-counting for subsequent audio chunks
@@ -633,7 +632,7 @@ export function useRealtimeVoiceSession(
           break;
 
         default:
-          console.log(
+          voiceLog.debug(
             "[RealtimeVoiceSession] Unhandled message type:",
             message.type,
           );
@@ -666,7 +665,7 @@ export function useRealtimeVoiceSession(
       // Check if this is a permission error (fatal - don't retry)
       if (isMicPermissionError(err)) {
         const friendlyMessage = getMicErrorMessage(err);
-        console.error(
+        voiceLog.error(
           `[RealtimeVoiceSession] Mic permission error (fatal): ${err instanceof DOMException ? err.name : "unknown"}`,
         );
         // Create an error that preserves the fatal status
@@ -722,7 +721,7 @@ export function useRealtimeVoiceSession(
       source.connect(processor);
       processor.connect(audioContext.destination);
 
-      console.log("[RealtimeVoiceSession] Audio streaming initialized");
+      voiceLog.debug(" Audio streaming initialized");
     } catch (err) {
       // Clean up the stream if audio context setup fails
       stream.getTracks().forEach((track) => track.stop());
@@ -737,13 +736,13 @@ export function useRealtimeVoiceSession(
    */
   const connect = useCallback(async () => {
     if (status === "connected" || status === "connecting") {
-      console.warn("[RealtimeVoiceSession] Already connected or connecting");
+      voiceLog.warn(" Already connected or connecting");
       return;
     }
 
     // Don't attempt to connect if we have a fatal error (mic permission denied)
     if (fatalErrorRef.current) {
-      console.warn(
+      voiceLog.warn(
         "[RealtimeVoiceSession] Cannot connect - fatal error (mic permission denied)",
       );
       return;
@@ -791,13 +790,13 @@ export function useRealtimeVoiceSession(
       // Reset reconnect attempts on successful connection
       setReconnectAttempts(0);
 
-      console.log("[RealtimeVoiceSession] Connected successfully");
+      voiceLog.debug(" Connected successfully");
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Failed to connect");
 
       // Check if this is a fatal mic permission error
       if ((err as any)?.isFatal || isMicPermissionError(err)) {
-        console.error(
+        voiceLog.error(
           "[RealtimeVoiceSession] Fatal mic permission error - will not retry",
         );
         fatalErrorRef.current = true;
@@ -840,7 +839,7 @@ export function useRealtimeVoiceSession(
    */
   const resetFatalError = useCallback(() => {
     if (fatalErrorRef.current) {
-      console.log("[RealtimeVoiceSession] Resetting fatal error state");
+      voiceLog.debug(" Resetting fatal error state");
       fatalErrorRef.current = false;
       setError(null);
       updateStatus("disconnected");
@@ -851,7 +850,7 @@ export function useRealtimeVoiceSession(
    * Disconnect from Realtime API
    */
   const disconnect = useCallback(() => {
-    console.log("[RealtimeVoiceSession] Disconnecting...");
+    voiceLog.debug(" Disconnecting...");
 
     // Mark as intentional disconnect to prevent auto-reconnect
     intentionalDisconnectRef.current = true;
@@ -898,7 +897,7 @@ export function useRealtimeVoiceSession(
     if (sessionStartTimeRef.current) {
       const sessionDuration = Date.now() - sessionStartTimeRef.current;
       updateMetrics({ sessionDurationMs: sessionDuration });
-      console.log(
+      voiceLog.debug(
         `[RealtimeVoiceSession] Session duration: ${sessionDuration}ms`,
       );
       sessionStartTimeRef.current = null;
@@ -920,7 +919,7 @@ export function useRealtimeVoiceSession(
    */
   const sendMessage = useCallback((text: string) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      console.warn("[RealtimeVoiceSession] WebSocket not connected");
+      voiceLog.warn(" WebSocket not connected");
       return;
     }
 
@@ -964,7 +963,7 @@ export function useRealtimeVoiceSession(
 
       // If already expired
       if (timeUntilExpiry <= 0) {
-        console.log("[RealtimeVoiceSession] Session expired");
+        voiceLog.debug(" Session expired");
         updateStatus("expired");
         disconnect();
         return;
@@ -972,7 +971,7 @@ export function useRealtimeVoiceSession(
 
       // If within 60 seconds of expiry, proactively refresh
       if (timeUntilExpiry <= 60000) {
-        console.log(
+        voiceLog.debug(
           `[RealtimeVoiceSession] Session expiring soon (${Math.round(timeUntilExpiry / 1000)}s), refreshing...`,
         );
         // Disconnect and reconnect to get new session
