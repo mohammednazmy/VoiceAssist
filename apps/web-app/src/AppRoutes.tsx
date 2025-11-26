@@ -49,6 +49,11 @@ const AdminDashboard = lazy(() =>
     default: m.AdminDashboard,
   })),
 );
+const OAuthCallbackPage = lazy(() =>
+  import("./pages/OAuthCallbackPage").then((m) => ({
+    default: m.OAuthCallbackPage,
+  })),
+);
 
 export function AppRoutes() {
   return (
@@ -57,6 +62,10 @@ export function AppRoutes() {
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route
+          path="/auth/callback/:provider"
+          element={<OAuthCallbackPage />}
+        />
 
         {/* Protected routes */}
         <Route
