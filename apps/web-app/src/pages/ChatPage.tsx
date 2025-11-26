@@ -882,6 +882,18 @@ export function ChatPage() {
             isOpen={isCitationSidebarOpen}
             onClose={() => setIsCitationSidebarOpen(false)}
             messages={messages}
+            onJumpToMessage={(messageId) => {
+              const el = document.querySelector<HTMLElement>(
+                `[data-message-id="${messageId}"]`,
+              );
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                el.classList.add("ring-2", "ring-primary-500");
+                setTimeout(() => {
+                  el.classList.remove("ring-2", "ring-primary-500");
+                }, 2000);
+              }
+            }}
           />
         )}
 
