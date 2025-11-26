@@ -12,8 +12,8 @@ alembic==1.17.2
 psycopg2-binary==2.9.11
 asyncpg==0.31.0
 
-# Redis (downgraded for fastapi-cache2 compatibility)
-redis==7.1.0
+# Redis (pinned to 4.x for arq==0.26.3 compatibility - arq requires redis<6)
+redis==4.6.0
 arq==0.26.3  # async task queue for document processing
 
 # Qdrant
