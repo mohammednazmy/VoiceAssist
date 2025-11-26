@@ -1,470 +1,154 @@
 # VoiceAssist Documentation Site
 
-## Overview
+Technical documentation for the VoiceAssist platform, automatically rendering markdown files from the `docs/` directory.
 
-Comprehensive documentation for VoiceAssist, including user guides, admin documentation, API references, and medical feature guides.
-
-**URL**: https://docs-voice.asimo.io
+**URL**: https://docs.asimo.io
 
 ## Technology Stack
 
 - **Next.js 14**: React framework with App Router
-- **MDX**: Markdown with React components
-- **Tailwind CSS**: Styling
-- **Contentlayer**: Content processing
-- **Algolia DocSearch**: Search functionality
-- **Shiki**: Code syntax highlighting
-- **Mermaid**: Diagrams
+- **React Markdown**: Markdown rendering with GFM support
+- **Tailwind CSS**: Styling with Typography plugin
+- **Gray Matter**: Frontmatter parsing
+- **TypeScript**: Type safety
 
 ## Project Structure
 
 ```
 docs-site/
-├── app/
-│   ├── layout.tsx              # Root layout
-│   ├── page.tsx                # Homepage
-│   ├── getting-started/
-│   │   ├── page.tsx
-│   │   ├── quick-start/
-│   │   └── installation/
-│   ├── user-guide/
-│   │   ├── voice/
-│   │   ├── text/
-│   │   └── integrations/
-│   ├── medical/
-│   │   ├── textbooks/
-│   │   ├── journals/
-│   │   └── guidelines/
-│   └── admin/
-│       ├── overview/
-│       └── configuration/
-├── content/                    # MDX content files
-│   ├── getting-started/
-│   ├── user-guide/
-│   ├── medical/
-│   ├── admin/
-│   └── reference/
-├── components/
-│   ├── MDXComponents.tsx       # Custom MDX components
-│   ├── Sidebar.tsx
-│   ├── TableOfContents.tsx
-│   ├── CodeBlock.tsx
-│   ├── Callout.tsx
-│   └── SearchDialog.tsx
-├── public/
-│   ├── images/
-│   └── videos/
-├── contentlayer.config.ts
-├── next.config.js
-├── tailwind.config.js
-└── package.json
-```
-
-## Installation
-
-```bash
-npm install
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx                    # Root layout with sidebar
+│   │   ├── page.tsx                      # Homepage
+│   │   ├── architecture/                 # Architecture docs
+│   │   ├── frontend/
+│   │   │   ├── web-app/                  # Web app documentation
+│   │   │   ├── voice/                    # Voice mode documentation
+│   │   │   └── admin-panel/              # Admin panel documentation
+│   │   ├── backend/
+│   │   │   ├── architecture/             # Backend architecture
+│   │   │   ├── websocket/                # WebSocket protocol
+│   │   │   └── data-model/               # Data model reference
+│   │   ├── operations/
+│   │   │   ├── deployment/               # Deployment guide
+│   │   │   ├── testing/                  # Testing guide
+│   │   │   └── development/              # Development setup
+│   │   └── reference/
+│   │       ├── api/                      # API reference
+│   │       ├── configuration/            # Configuration reference
+│   │       └── all-docs/                 # Document index
+│   ├── components/
+│   │   ├── Header.tsx                    # Site header
+│   │   ├── Sidebar.tsx                   # Navigation sidebar
+│   │   └── MarkdownRenderer.tsx          # Markdown rendering
+│   └── lib/
+│       ├── docs.ts                       # Document loading utilities
+│       └── navigation.ts                 # Navigation configuration
+├── package.json
+├── tailwind.config.ts
+├── tsconfig.json
+└── next.config.js
 ```
 
 ## Development
 
 ```bash
-npm run dev
+# Install dependencies
+pnpm install
+
+# Start development server (port 3001)
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Run linting
+pnpm lint
+
+# Type checking
+pnpm type-check
 ```
 
-Access at `http://localhost:3000`
+Access at `http://localhost:3001`
 
-## Content Structure
+## How It Works
 
-Content organized in `content/` directory as MDX files:
+The docs site loads markdown files from the monorepo's `docs/` directory at build time:
 
-```
-content/
-├── getting-started/
-│   ├── welcome.mdx
-│   ├── quick-start.mdx
-│   └── installation.mdx
-├── user-guide/
-│   ├── voice.mdx
-│   ├── text.mdx
-│   └── files.mdx
-├── medical/
-│   ├── overview.mdx
-│   ├── textbooks.mdx
-│   ├── journals.mdx
-│   └── privacy.mdx
-├── admin/
-│   ├── dashboard.mdx
-│   ├── models.mdx
-│   └── knowledge-base.mdx
-└── reference/
-    ├── voice-commands.mdx
-    ├── keyboard-shortcuts.mdx
-    └── faq.mdx
-```
+1. **Document Loading**: `lib/docs.ts` provides utilities to load markdown files:
+   - `loadDoc(path)` - Load from `docs/` directory
+   - `loadClientImplDoc(filename)` - Load from `docs/client-implementation/`
+   - `listDocsInDirectory(path)` - List markdown files in a directory
 
-## Creating Content
+2. **Navigation**: `lib/navigation.ts` defines the sidebar structure with sections:
+   - Overview (Getting Started, Architecture)
+   - Frontend (Web App, Voice Mode, Admin Panel)
+   - Backend (Architecture, WebSocket, Data Model)
+   - Operations (Deployment, Testing, Development)
+   - Reference (API, Configuration, All Docs)
 
-### Basic MDX File
+3. **Rendering**: `MarkdownRenderer.tsx` handles markdown-to-HTML conversion with:
+   - GitHub Flavored Markdown support
+   - Custom styling for headings, code blocks, tables
+   - Dark mode support
 
-```mdx
----
-title: Quick Start
-description: Get started with VoiceAssist in 5 minutes
----
+## Adding New Pages
 
-# Quick Start
+1. Create a new directory under `src/app/`:
 
-Get up and running with VoiceAssist quickly.
+   ```
+   src/app/new-section/page.tsx
+   ```
 
-## Prerequisites
+2. Import document loading utilities:
 
-Before you begin, ensure you have:
-- An OpenAI API key
-- Access to voiceassist.asimo.io
+   ```tsx
+   import { loadDoc } from "@/lib/docs";
+   ```
 
-## Step 1: Access the Web App
+3. Load and render markdown:
 
-Navigate to [voiceassist.asimo.io](https://voiceassist.asimo.io).
+   ```tsx
+   export default function NewPage() {
+     const doc = loadDoc("YOUR_DOC.md");
+     return (
+       <div>
+         <MarkdownRenderer content={doc?.content || ""} />
+       </div>
+     );
+   }
+   ```
 
-<Callout type="info">
-  First-time users will need to create an account.
-</Callout>
+4. Add to navigation in `lib/navigation.ts`
 
-## Step 2: Try Your First Query
+## Scripts
 
-<InteractiveExample>
-"What is the mechanism of action of metformin?"
-</InteractiveExample>
+| Command           | Description                           |
+| ----------------- | ------------------------------------- |
+| `pnpm dev`        | Start development server on port 3001 |
+| `pnpm build`      | Build for production                  |
+| `pnpm start`      | Start production server               |
+| `pnpm lint`       | Run ESLint                            |
+| `pnpm type-check` | Run TypeScript type checking          |
 
-## Next Steps
+## Turborepo Integration
 
-- [Medical textbook queries →](/medical/textbooks)
-- [Set up integrations →](/user-guide/integrations)
-```
-
-## Custom MDX Components
-
-### Callout
-
-```mdx
-<Callout type="info">
-  Informational message
-</Callout>
-
-<Callout type="warning">
-  Warning message
-</Callout>
-
-<Callout type="error">
-  Error message
-</Callout>
-
-<Callout type="tip">
-  Helpful tip
-</Callout>
-```
-
-### Code Block
-
-```mdx
-```python
-from voiceassist import VoiceAssist
-
-assistant = VoiceAssist(api_key="...")
-response = assistant.query("What is diabetes?")
-print(response)
-```
-```
-
-### Tabs
-
-```mdx
-<Tabs>
-  <Tab label="macOS">
-    macOS-specific instructions
-  </Tab>
-  <Tab label="Linux">
-    Linux-specific instructions
-  </Tab>
-</Tabs>
-```
-
-### Diagram
-
-```mdx
-<Mermaid chart={`
-  graph LR
-    A[User] --> B[VoiceAssist]
-    B --> C[Local Model]
-    B --> D[Cloud API]
-`} />
-```
-
-### Video
-
-```mdx
-<Video src="/videos/quick-start.mp4" />
-```
-
-### Interactive Example
-
-```mdx
-<InteractiveExample>
-  Try asking: "What does Harrison's say about diabetes?"
-</InteractiveExample>
-```
-
-## Navigation
-
-Sidebar navigation automatically generated from content structure.
-
-`nav.config.ts`:
-
-```typescript
-export const navigation = [
-  {
-    title: 'Getting Started',
-    links: [
-      { title: 'Welcome', href: '/getting-started/welcome' },
-      { title: 'Quick Start', href: '/getting-started/quick-start' },
-      { title: 'Installation', href: '/getting-started/installation' }
-    ]
-  },
-  {
-    title: 'User Guide',
-    links: [
-      { title: 'Voice Mode', href: '/user-guide/voice' },
-      { title: 'Text Mode', href: '/user-guide/text' },
-      // ...
-    ]
-  },
-  // ...
-];
-```
-
-## Search
-
-### Algolia DocSearch
-
-```typescript
-// docsearch.config.json
-{
-  "index_name": "voiceassist",
-  "start_urls": ["https://docs-voice.asimo.io"],
-  "selectors": {
-    "lvl0": "h1",
-    "lvl1": "h2",
-    "lvl2": "h3",
-    "text": "p"
-  }
-}
-```
-
-### Search Component
-
-```typescript
-import { DocSearch } from '@docsearch/react';
-
-<DocSearch
-  appId="YOUR_APP_ID"
-  apiKey="YOUR_SEARCH_API_KEY"
-  indexName="voiceassist"
-/>
-```
-
-## Styling
-
-### Dark Mode
-
-```typescript
-// Automatic based on system preference
-// Manual toggle available in header
-
-const { theme, setTheme } = useTheme();
-
-<button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-  Toggle Theme
-</button>
-```
-
-### Custom Theme
-
-`tailwind.config.js`:
-
-```javascript
-module.exports = {
-  darkMode: 'class',
-  theme: {
-    extend: {
-      colors: {
-        primary: '#2563EB',
-        // ...
-      },
-    },
-  },
-}
-```
-
-## Build & Deploy
-
-### Build for Production
+This app is part of the VoiceAssist monorepo and integrates with Turborepo:
 
 ```bash
-npm run build
+# Build from root
+pnpm turbo build --filter=docs-site
+
+# Lint from root
+pnpm turbo lint --filter=docs-site
 ```
 
-Output in `.next/` and `out/` (if using static export).
+## Document Sources
 
-### Static Export
+The site loads documentation from:
 
-```bash
-# next.config.js
-module.exports = {
-  output: 'export',
-  images: {
-    unoptimized: true
-  }
-}
-
-npm run build
-```
-
-### Deploy
-
-```bash
-# Build
-npm run build
-
-# Deploy to server
-rsync -avz out/ user@asimo.io:/var/www/docs-voice/
-
-# Or use Vercel/Netlify
-```
-
-## SEO
-
-### Meta Tags
-
-Automatically generated from frontmatter:
-
-```mdx
----
-title: Quick Start
-description: Get started with VoiceAssist in 5 minutes
----
-```
-
-Generates:
-
-```html
-<title>Quick Start | VoiceAssist Docs</title>
-<meta name="description" content="Get started with VoiceAssist in 5 minutes" />
-<meta property="og:title" content="Quick Start" />
-<meta property="og:description" content="Get started with VoiceAssist in 5 minutes" />
-```
-
-### Sitemap
-
-Automatically generated at build time:
-
-```
-https://docs-voice.asimo.io/sitemap.xml
-```
-
-## Accessibility
-
-- Semantic HTML
-- ARIA labels
-- Keyboard navigation
-- Skip to content link
-- Focus management
-- Screen reader friendly
-
-## Analytics
-
-Privacy-respecting analytics with Plausible:
-
-```typescript
-// app/layout.tsx
-<Script
-  defer
-  data-domain="docs-voice.asimo.io"
-  src="https://plausible.io/js/script.js"
-/>
-```
-
-## Maintenance
-
-### Update Documentation
-
-1. Edit MDX files in `content/`
-2. Commit changes
-3. Push to Git
-4. CI/CD automatically rebuilds
-
-### Add New Page
-
-1. Create MDX file in appropriate directory
-2. Add to navigation config
-3. Build and deploy
-
-### Update Dependencies
-
-```bash
-npm update
-npm audit fix
-```
-
-## Contributing
-
-### Content Guidelines
-
-- Clear, concise writing
-- Step-by-step instructions
-- Lots of examples
-- Screenshots where helpful
-- Keep up-to-date with app changes
-
-### Submitting Changes
-
-1. Fork repository
-2. Create feature branch
-3. Make changes
-4. Submit pull request
-
-## Troubleshooting
-
-### Build fails
-
-```bash
-# Clear cache
-rm -rf .next
-npm run build
-```
-
-### Search not working
-
-- Verify Algolia configuration
-- Check API keys
-- Ensure site is crawled
-
-### Images not loading
-
-- Check file paths
-- Verify public directory structure
-- Ensure proper image optimization config
-
-## Future Enhancements
-
-- [ ] Versioned documentation
-- [ ] Multi-language support
-- [ ] Interactive code playground
-- [ ] Video tutorials library
-- [ ] Community contributions
-- [ ] Changelog automation
-- [ ] API reference auto-generation
-
-## License
-
-Personal use project.
+- `docs/` - Root documentation files
+- `docs/client-implementation/` - Frontend implementation specs
+- `docs/overview/` - Platform overviews
+- `docs/voice/` - Voice mode documentation
+- `docs/infra/` - Infrastructure documentation
