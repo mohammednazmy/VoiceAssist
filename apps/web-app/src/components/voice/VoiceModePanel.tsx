@@ -18,6 +18,7 @@ import {
 import { WaveformVisualizer } from "../../utils/waveform";
 import { VoiceModeSettings } from "./VoiceModeSettings";
 import { VoiceMetricsDisplay } from "./VoiceMetricsDisplay";
+import { VoiceTranscriptPreview } from "./VoiceTranscriptPreview";
 import {
   useVoiceSettingsStore,
   VOICE_OPTIONS,
@@ -67,6 +68,7 @@ export function VoiceModePanel({
     status,
     error,
     transcript,
+    partialTranscript,
     isSpeaking,
     connect,
     disconnect,
@@ -649,7 +651,7 @@ export function VoiceModePanel({
             className="w-full h-16 sm:h-20 rounded"
             style={{ maxWidth: "100%", height: "auto" }}
           />
-          {isSpeaking && (
+          {isSpeaking && !partialTranscript && (
             <div className="mt-2 flex items-center justify-center space-x-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               <span className="text-xs font-medium text-green-600">
@@ -658,6 +660,14 @@ export function VoiceModePanel({
             </div>
           )}
         </div>
+      )}
+
+      {/* Live Transcript Preview (while speaking) */}
+      {isConnected && (
+        <VoiceTranscriptPreview
+          partialTranscript={partialTranscript}
+          isSpeaking={isSpeaking}
+        />
       )}
 
       {/* Transcript Display */}
