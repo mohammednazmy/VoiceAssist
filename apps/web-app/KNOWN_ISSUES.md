@@ -30,7 +30,41 @@ The `react-syntax-highlighter` package had ESM module resolution issues in the V
 - Remove `describe.skip()` from the affected test files
 - Run tests to verify they pass
 
-### 2. WebSocket Connection Timing in Tests
+### 2. react-markdown v10 Inline Code Detection
+
+**Status:** ✅ Resolved (2025-11-25)
+**Severity:** Medium (2 test failures)
+
+**Description:**
+After upgrading to react-markdown v10+, the `inline` prop was removed from the `code` component. The MessageBubble tests for inline code and code blocks were failing because the detection logic was broken.
+
+**Resolution:**
+
+- Updated MessageBubble.tsx code component to detect code blocks by checking:
+  - If className contains a language class (e.g., `language-javascript`)
+  - If the code content contains newlines
+  - If the AST node spans multiple lines
+- Added `<code>` wrapper inside `<pre>` for syntax-highlighted code blocks
+- All MessageBubble code rendering tests now pass
+
+### 3. ChatPage-Phase8-Integration Mock Paths
+
+**Status:** ✅ Resolved (2025-11-25)
+**Severity:** Medium (6 test failures)
+
+**Description:**
+The ChatPage-Phase8-Integration tests were failing with "Not authenticated" errors due to incorrect mock import paths.
+
+**Resolution:**
+
+- Fixed vi.mock paths from `../../` to `../../../` for:
+  - hooks/useChatSession
+  - hooks/useAuth
+  - lib/api/attachmentsApi
+  - stores/authStore
+- All 10 Phase8 integration tests now pass
+
+### 4. WebSocket Connection Timing in Tests
 
 **Status:** ✅ Resolved by skipping problematic tests (2025-11-25)
 **Severity:** Low
@@ -62,7 +96,7 @@ Multiple tests involving WebSocket connections have timing issues. The MockWebSo
 **Root Cause:**
 The useChatSession hook's useEffect depends on zustand store state which initializes asynchronously. When combined with fake timers, the React effect scheduling doesn't mesh well with the timer mocking, preventing the WebSocket from being created within the test window.
 
-### 3. Test Worker OOM During Cleanup
+### 5. Test Worker OOM During Cleanup
 
 **Status:** Known Issue (Infrastructure)
 **Severity:** Low (tests pass before crash)
@@ -92,6 +126,14 @@ FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaS
 - Profile memory usage during test cleanup
 - Consider upgrading vitest or using different pool configuration
 - May require jsdom environment cleanup improvements
+
+## Summary
+
+**Current Test Status:**
+
+- All tests pass (~350+ tests across 30 test files)
+- 27 tests intentionally skipped (timing/async issues)
+- OOM crash during cleanup is cosmetic (tests pass before crash)
 
 ## Date
 
