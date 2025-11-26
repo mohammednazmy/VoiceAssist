@@ -6,19 +6,22 @@ External medical knowledge APIs: OpenEvidence, PubMed, Guidelines
 Tools:
 - search_openevidence: OpenEvidence API
 - search_pubmed: PubMed literature search
-- search_medical_guidelines: Local guidelines database
+- search_medical_guidelines: Local guidelines database (vector search)
 """
 
+import asyncio
 import logging
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlencode
 
 import httpx
 from pydantic import BaseModel, Field
 
-from app.tools.base import ToolCategory, RiskLevel, ToolDefinition, ToolResult
+from app.core.config import get_settings
+from app.services.search_aggregator import SearchAggregator, SearchResult
+from app.tools.base import RiskLevel, ToolCategory, ToolDefinition, ToolResult
 
 logger = logging.getLogger(__name__)
 
@@ -443,21 +446,171 @@ SEARCH_MEDICAL_GUIDELINES_DEF = ToolDefinition(
 )
 
 
-def search_guidelines(args: SearchMedicalGuidelinesArgs, user_id: int) -> ToolResult:
-    """STUB: Guidelines search - Implement in Phase 5"""
-    start_time = datetime.utcnow()
-    try:
-        # TODO: Implement local vector search in guidelines KB
-        mock_results = SearchMedicalGuidelinesResult(
-            guidelines=[],
-            total_count=0,
-            query=args.query
+def _build_guideline_filter(
+    guideline_source: Optional[str],
+    condition: Optional[str]
+) -> Optional[Dict[str, Any]]:
+    """Build filter conditions for guideline search."""
+    filters = {}
+
+    if guideline_source:
+        source_map = {
+            "cdc": "CDC",
+            "who": "WHO",
+            "acc": "ACC",
+            "aha": "AHA",
+            "esc": "ESC",
+            "nice": "NICE",
+            "uspstf": "USPSTF",
+        }
+        normalized = source_map.get(guideline_source.lower(), guideline_source)
+        filters["source"] = normalized
+
+    if condition:
+        filters["condition"] = condition
+
+    return filters if filters else None
+
+
+def _search_result_to_guideline(result: SearchResult) -> MedicalGuideline:
+    """Convert a SearchResult to a MedicalGuideline object."""
+    metadata = result.metadata
+
+    guideline_id = result.document_id or result.chunk_id
+    title = metadata.get("title", "Untitled Guideline")
+    source = metadata.get("source", metadata.get("source_type", "Unknown"))
+    condition = metadata.get("condition", metadata.get("topic", "General"))
+
+    content = result.content
+    summary = content[:500] + "..." if len(content) > 500 else content
+
+    url = metadata.get("url", "")
+    if not url and result.document_id:
+        url = f"/guidelines/{result.document_id}"
+
+    pub_date = metadata.get("publication_date", metadata.get("date", ""))
+    last_updated = metadata.get("last_updated", pub_date)
+
+    return MedicalGuideline(
+        id=guideline_id,
+        title=title,
+        source=source,
+        condition=condition,
+        summary=summary,
+        url=url,
+        publication_date=pub_date,
+        last_updated=last_updated
+    )
+
+
+async def _search_guidelines_async(
+    args: SearchMedicalGuidelinesArgs,
+    user_id: int
+) -> SearchMedicalGuidelinesResult:
+    """Async implementation of guidelines vector search."""
+    settings = get_settings()
+
+    search_aggregator = SearchAggregator(
+        qdrant_url=settings.qdrant_url,
+        collection_name="medical_guidelines",
+        embedding_model="text-embedding-3-small"
+    )
+
+    filter_conditions = _build_guideline_filter(
+        args.guideline_source,
+        args.condition
+    )
+
+    max_results = args.max_results or 10
+
+    search_results = await search_aggregator.search(
+        query=args.query,
+        top_k=max_results,
+        score_threshold=0.3,
+        filter_conditions=filter_conditions
+    )
+
+    if not search_results and filter_conditions:
+        logger.info(
+            f"No results with filters, retrying without filters for query: "
+            f"{args.query}"
         )
+        search_results = await search_aggregator.search(
+            query=args.query,
+            top_k=max_results,
+            score_threshold=0.25
+        )
+
+    guidelines = [_search_result_to_guideline(r) for r in search_results]
+
+    seen_ids = set()
+    unique_guidelines = []
+    for g in guidelines:
+        if g.id not in seen_ids:
+            seen_ids.add(g.id)
+            unique_guidelines.append(g)
+
+    return SearchMedicalGuidelinesResult(
+        guidelines=unique_guidelines,
+        total_count=len(unique_guidelines),
+        query=args.query
+    )
+
+
+def search_guidelines(args: SearchMedicalGuidelinesArgs, user_id: int) -> ToolResult:
+    """
+    Search medical guidelines using local vector database.
+
+    Performs semantic search over the medical_guidelines collection in Qdrant.
+    Supports filtering by guideline source (CDC, WHO, ACC, etc.) and condition.
+    """
+    start_time = datetime.utcnow()
+
+    try:
+        logger.info(
+            f"Searching medical guidelines for user {user_id}: "
+            f"query='{args.query}', source={args.guideline_source}"
+        )
+
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop and loop.is_running():
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(
+                    asyncio.run,
+                    _search_guidelines_async(args, user_id)
+                )
+                result = future.result(timeout=10)
+        else:
+            result = asyncio.run(_search_guidelines_async(args, user_id))
+
         execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
-        return ToolResult(tool_name="search_medical_guidelines", success=True, result=mock_results.dict(), execution_time_ms=execution_time)
+
+        logger.info(
+            f"Guidelines search completed in {execution_time:.2f}ms, "
+            f"returned {len(result.guidelines)} guidelines"
+        )
+
+        return ToolResult(
+            tool_name="search_medical_guidelines",
+            success=True,
+            result=result.dict(),
+            execution_time_ms=execution_time
+        )
+
     except Exception as e:
+        logger.error(f"Guidelines search failed: {e}", exc_info=True)
         execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
-        return ToolResult(tool_name="search_medical_guidelines", success=False, error=str(e), execution_time_ms=execution_time)
+        return ToolResult(
+            tool_name="search_medical_guidelines",
+            success=False,
+            error=str(e),
+            execution_time_ms=execution_time
+        )
 
 
 def register_medical_search_tools():
