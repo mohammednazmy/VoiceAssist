@@ -48,6 +48,40 @@ export interface ApiClientConfig {
   onRetry?: (attempt: number, error: any) => void;
 }
 
+/** Admin KB document in list response */
+export interface AdminKBDocument {
+  document_id: string;
+  title: string;
+  source_type: string;
+  upload_date: string;
+  chunks_indexed: number;
+}
+
+/** Admin KB document detail response */
+export interface AdminKBDocumentDetail {
+  document_id: string;
+  title: string;
+  source_type: string;
+  filename: string;
+  file_type: string;
+  chunks_indexed: number;
+  total_tokens: number | null;
+  indexing_status: string;
+  indexing_error: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Admin KB upload response */
+export interface AdminKBUploadResponse {
+  document_id: string;
+  title: string;
+  status: string;
+  chunks_indexed: number;
+  message: string;
+}
+
 export class VoiceAssistApiClient {
   private client: AxiosInstance;
   private config: ApiClientConfig;
@@ -516,6 +550,95 @@ export class VoiceAssistApiClient {
     const response = await this.client.get<
       ApiResponse<PaginatedResponse<User>>
     >("/admin/users", { params: { page, pageSize } });
+    return response.data.data!;
+  }
+
+  // =========================================================================
+  // Admin Knowledge Base
+  // =========================================================================
+
+  /**
+   * List all documents in the knowledge base (admin only)
+   * @param skip - Number of documents to skip for pagination
+   * @param limit - Maximum number of documents to return
+   * @param sourceType - Optional filter by source type
+   */
+  async getAdminKBDocuments(
+    skip = 0,
+    limit = 50,
+    sourceType?: string,
+  ): Promise<{
+    documents: AdminKBDocument[];
+    total: number;
+  }> {
+    const params: Record<string, unknown> = { skip, limit };
+    if (sourceType) params.source_type = sourceType;
+
+    const response = await this.client.get<
+      ApiResponse<{ documents: AdminKBDocument[]; total: number }>
+    >("/admin/kb/documents", { params });
+    return response.data.data!;
+  }
+
+  /**
+   * Get details for a specific document (admin only)
+   * @param documentId - Document ID
+   */
+  async getAdminKBDocument(documentId: string): Promise<AdminKBDocumentDetail> {
+    const response = await this.client.get<ApiResponse<AdminKBDocumentDetail>>(
+      `/admin/kb/documents/${documentId}`,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Upload and index a document to the knowledge base (admin only)
+   * @param file - File to upload
+   * @param title - Optional document title (defaults to filename)
+   * @param sourceType - Type of source (e.g., "uploaded", "guideline", "journal")
+   * @param onProgress - Optional progress callback
+   */
+  async uploadAdminKBDocument(
+    file: File,
+    title?: string,
+    sourceType = "uploaded",
+    onProgress?: (progress: number) => void,
+  ): Promise<AdminKBUploadResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+    if (title) formData.append("title", title);
+    formData.append("source_type", sourceType);
+
+    const response = await this.client.post<ApiResponse<AdminKBUploadResponse>>(
+      "/admin/kb/documents",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+          if (onProgress && progressEvent.total) {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total,
+            );
+            onProgress(percentCompleted);
+          }
+        },
+      },
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Delete a document from the knowledge base (admin only)
+   * @param documentId - Document ID to delete
+   */
+  async deleteAdminKBDocument(
+    documentId: string,
+  ): Promise<{ document_id: string; status: string; message: string }> {
+    const response = await this.client.delete<
+      ApiResponse<{ document_id: string; status: string; message: string }>
+    >(`/admin/kb/documents/${documentId}`);
     return response.data.data!;
   }
 
