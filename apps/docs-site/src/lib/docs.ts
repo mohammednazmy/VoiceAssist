@@ -3,9 +3,15 @@ import path from "path";
 import matter from "gray-matter";
 
 // Path to the docs directory (relative to monorepo root)
-const DOCS_DIR = path.join(process.cwd(), "..", "..", "docs");
+// In production, DOCS_DIR can be set via environment variable
+const DOCS_DIR =
+  process.env.DOCS_DIR || path.join(process.cwd(), "..", "..", "docs");
 const CLIENT_IMPL_DIR = path.join(DOCS_DIR, "client-implementation");
 const WEB_APP_DIR = path.join(process.cwd(), "..", "web-app");
+
+// GitHub repository for "Edit this page" links
+const GITHUB_REPO = "mohammednazmy/VoiceAssist";
+const GITHUB_BRANCH = "main";
 
 export interface DocContent {
   content: string;
@@ -177,4 +183,20 @@ export function getAllDocs(): {
   }
 
   return docs.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Generate GitHub edit URL for a document
+ * @param relativePath - Path relative to docs/ directory
+ */
+export function getGitHubEditUrl(relativePath: string): string {
+  return `https://github.com/${GITHUB_REPO}/edit/${GITHUB_BRANCH}/docs/${relativePath}`;
+}
+
+/**
+ * Generate GitHub view URL for a document
+ * @param relativePath - Path relative to docs/ directory
+ */
+export function getGitHubViewUrl(relativePath: string): string {
+  return `https://github.com/${GITHUB_REPO}/blob/${GITHUB_BRANCH}/docs/${relativePath}`;
 }
