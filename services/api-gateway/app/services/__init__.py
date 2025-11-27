@@ -7,7 +7,7 @@ This module provides services for:
 - OpenAI Realtime API integration
 - Medical AI (embeddings, NER, reasoning)
 - RAG pipeline orchestration
-- External API integrations (Nextcloud, CalDAV, etc.)
+- External API integrations (Nextcloud, CalDAV, CardDAV, Email, OIDC)
 """
 
 from app.services.audio_processor import (
@@ -17,6 +17,11 @@ from app.services.audio_processor import (
     NoiseSuppressor,
     StreamingAudioProcessor,
 )
+from app.services.caldav_service import CalDAVService, CalendarEvent
+from app.services.carddav_service import AddressBook, CardDAVService, Contact, ContactSearchQuery
+from app.services.carddav_service import EmailAddress as CardEmailAddress
+from app.services.carddav_service import EmailType, PhoneNumber, PhoneType, PostalAddress
+from app.services.email_service import Email, EmailFolder, EmailService, EmailThread
 from app.services.medical_calculators import CalculatorResult, MedicalCalculators, RiskLevel, Sex, list_calculators
 from app.services.medical_embedding_service import (
     EmbeddingResult,
@@ -45,6 +50,14 @@ from app.services.multi_hop_reasoning_service import (
     SearchResult,
     hybrid_search_engine,
     multi_hop_reasoner,
+)
+from app.services.oidc_service import (
+    AuthorizationRequest,
+    OIDCClaims,
+    OIDCProvider,
+    OIDCProviderConfig,
+    OIDCService,
+    OIDCTokens,
 )
 from app.services.pubmed_enhanced_service import (
     ArticleType,
@@ -107,6 +120,31 @@ __all__ = [
     # Realtime Voice Service
     "RealtimeVoiceService",
     "realtime_voice_service",
+    # OIDC Authentication
+    "OIDCService",
+    "OIDCProvider",
+    "OIDCProviderConfig",
+    "OIDCTokens",
+    "OIDCClaims",
+    "AuthorizationRequest",
+    # CalDAV Calendar
+    "CalDAVService",
+    "CalendarEvent",
+    # CardDAV Contacts
+    "CardDAVService",
+    "Contact",
+    "AddressBook",
+    "ContactSearchQuery",
+    "PhoneNumber",
+    "PhoneType",
+    "CardEmailAddress",
+    "EmailType",
+    "PostalAddress",
+    # Email Service
+    "EmailService",
+    "Email",
+    "EmailFolder",
+    "EmailThread",
     # Medical Embedding Service
     "MedicalEmbeddingService",
     "MedicalModelType",
