@@ -1,3 +1,15 @@
+---
+title: "Web App Specs"
+slug: "web-app-specs"
+summary: "The VoiceAssist web application provides browser-based access to the medical AI assistant for clinicians, supporting both text and voice interactions ..."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["frontend"]
+tags: ["web", "app", "specs"]
+---
+
 # Web Application Specifications
 
 ## Overview
@@ -30,6 +42,7 @@ The VoiceAssist web application provides browser-based access to the medical AI 
 **Entry Point:** Home screen → Type question or tap microphone
 
 **Screen Layout:**
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ VoiceAssist                       🔔  Dr. Smith ▼  Settings │
@@ -81,6 +94,7 @@ The VoiceAssist web application provides browser-based access to the medical AI 
 ```
 
 **Context Sent to Backend:**
+
 ```json
 {
   "sessionId": "sess_abc123",
@@ -95,12 +109,14 @@ The VoiceAssist web application provides browser-based access to the medical AI 
 ```
 
 **Citation Display:** Inline numbered citations with expandable source panel showing:
+
 - Full citation (AMA format)
 - Quick link to full text (if available)
 - Recommendation class (for guidelines)
 - One-click "Add to Library"
 
 **Safety Elements:**
+
 - Prominent warning banner: "⚠️ Clinical judgment required. Not a replacement for individualized patient assessment."
 - Each recommendation shows evidence level/class if from guideline
 - "Report Issue" button for incorrect information
@@ -114,6 +130,7 @@ The VoiceAssist web application provides browser-based access to the medical AI 
 **Entry Point:** Home → "New Case" or "Open Case: [Patient Name]"
 
 **Screen Layout:**
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │ VoiceAssist                          🔔  Dr. Smith ▼  Settings  │
@@ -175,6 +192,7 @@ The VoiceAssist web application provides browser-based access to the medical AI 
 ```
 
 **Context Sent with Each Query:**
+
 ```json
 {
   "sessionId": "case_xyz789",
@@ -188,25 +206,18 @@ The VoiceAssist web application provides browser-based access to the medical AI 
       "sex": "M",
       "weight": 92
     },
-    "problems": [
-      "HFrEF (EF 25%)",
-      "CKD Stage 3b (eGFR 38)",
-      "Hypertension",
-      "Type 2 Diabetes"
-    ],
-    "medications": [
-      "Carvedilol 25mg BID",
-      "Lisinopril 40mg daily",
-      "Furosemide 80mg BID",
-      "Spironolactone 25mg daily"
-    ],
+    "problems": ["HFrEF (EF 25%)", "CKD Stage 3b (eGFR 38)", "Hypertension", "Type 2 Diabetes"],
+    "medications": ["Carvedilol 25mg BID", "Lisinopril 40mg daily", "Furosemide 80mg BID", "Spironolactone 25mg daily"],
     "labs": "Cr 1.8, BUN 42, K+ 4.2, BNP 1200",
-    "conversationHistory": [ /* previous messages */ ]
+    "conversationHistory": [
+      /* previous messages */
+    ]
   }
 }
 ```
 
 **Key Features:**
+
 - Persistent patient context panel (collapsible)
 - Conversation anchored to this case
 - All AI responses consider the clinical context
@@ -222,6 +233,7 @@ The VoiceAssist web application provides browser-based access to the medical AI 
 **Entry Point:** Quick Consult → "Compare guidelines/trials" OR Library → Select 2+ sources → "Compare"
 
 **Screen Layout:**
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │ VoiceAssist - Guideline Comparison            🔔  Dr. Smith ▼   │
@@ -276,6 +288,7 @@ The VoiceAssist web application provides browser-based access to the medical AI 
 ```
 
 **Implementation:**
+
 - Side-by-side view with synchronized scrolling
 - Highlight differences in yellow
 - AI-generated summary of key differences
@@ -290,6 +303,7 @@ The VoiceAssist web application provides browser-based access to the medical AI 
 **Entry Point:** Case Workspace → "Draft Note" button
 
 **Screen Layout:**
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │ VoiceAssist - Note Drafting               🔔  Dr. Smith ▼       │
@@ -342,6 +356,7 @@ The VoiceAssist web application provides browser-based access to the medical AI 
 ```
 
 **How It Works:**
+
 1. User provides structured problem list (from case workspace)
 2. AI generates assessment/plan based on:
    - Clinical context
@@ -352,6 +367,7 @@ The VoiceAssist web application provides browser-based access to the medical AI 
 5. Export to clipboard or EMR (if integrated)
 
 **Safety:**
+
 - Prominent disclaimer: "Review carefully. Modify as needed..."
 - Always requires physician review before use
 - Clear watermark: "AI-assisted draft"
@@ -362,6 +378,7 @@ The VoiceAssist web application provides browser-based access to the medical AI 
 ### ASCII Wireframes for Main Views
 
 #### Clinical Home / Dashboard
+
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │ VoiceAssist                🔍 Search        🔔  Dr. Smith ▼  ⚙️    │
@@ -402,6 +419,7 @@ The VoiceAssist web application provides browser-based access to the medical AI 
 ```
 
 #### Chat + Context + Citations Layout
+
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │ VoiceAssist                                 🔔  Dr. Smith ▼  ⚙️    │
@@ -433,6 +451,7 @@ The VoiceAssist web application provides browser-based access to the medical AI 
 ```
 
 #### Library View
+
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │ VoiceAssist - Medical Library                   🔔  Dr. Smith ▼    │
@@ -469,6 +488,7 @@ The VoiceAssist web application provides browser-based access to the medical AI 
 ```
 
 #### History View
+
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │ VoiceAssist - Conversation History                 🔔  Dr. Smith ▼ │
@@ -511,6 +531,7 @@ The VoiceAssist web application provides browser-based access to the medical AI 
 ```
 
 #### Settings View
+
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │ VoiceAssist - Settings                          🔔  Dr. Smith ▼    │
@@ -582,7 +603,7 @@ export interface ClinicalContext {
 
   patient?: {
     age?: number;
-    sex?: 'M' | 'F' | 'Other' | 'Unknown';
+    sex?: "M" | "F" | "Other" | "Unknown";
     weight?: number;
     height?: number;
   };
@@ -590,24 +611,24 @@ export interface ClinicalContext {
   problems?: string[];
   medications?: string[];
   allergies?: string[];
-  labs?: string;           // Free text for now
-  vitals?: string;         // Free text for now
-  notes?: string;          // Additional context
+  labs?: string; // Free text for now
+  vitals?: string; // Free text for now
+  notes?: string; // Additional context
 
-  specialty?: string;      // e.g., "cardiology", "pulmonology"
-  urgency?: 'routine' | 'urgent' | 'emergent';
+  specialty?: string; // e.g., "cardiology", "pulmonology"
+  urgency?: "routine" | "urgent" | "emergent";
 }
 
 // Citation with rich metadata
 export interface Citation {
   id: string;
-  sourceType: 'textbook' | 'journal' | 'guideline' | 'uptodate' | 'note' | 'trial';
+  sourceType: "textbook" | "journal" | "guideline" | "uptodate" | "note" | "trial";
   title: string;
   subtitle?: string;
   authors?: string[];
 
   // Source identification
-  source?: string;          // e.g., "Harrison's Internal Medicine, 21e"
+  source?: string; // e.g., "Harrison's Internal Medicine, 21e"
   publisher?: string;
   publicationYear?: number;
 
@@ -622,23 +643,23 @@ export interface Citation {
   url?: string;
 
   // Guideline-specific
-  recommendationClass?: 'I' | 'IIa' | 'IIb' | 'III';  // ACC/AHA classes
-  evidenceLevel?: 'A' | 'B' | 'C';
+  recommendationClass?: "I" | "IIa" | "IIb" | "III"; // ACC/AHA classes
+  evidenceLevel?: "A" | "B" | "C";
 
   // Excerpt
-  excerpt?: string;         // Relevant excerpt from source
+  excerpt?: string; // Relevant excerpt from source
 
   // Metadata
   specialty?: string[];
   tags?: string[];
-  relevanceScore?: number;  // 0-1, how relevant to query
+  relevanceScore?: number; // 0-1, how relevant to query
 }
 
 // Message in conversation
 export interface ChatMessage {
   id: string;
   sessionId: string;
-  role: 'user' | 'assistant' | 'system';
+  role: "user" | "assistant" | "system";
   content: string;
   createdAt: string;
 
@@ -664,11 +685,11 @@ export interface ChatMessage {
 export interface Attachment {
   id: string;
   name: string;
-  type: string;            // MIME type
-  size: number;            // bytes
+  type: string; // MIME type
+  size: number; // bytes
   url: string;
   uploadedAt: string;
-  status: 'uploading' | 'processing' | 'ready' | 'failed';
+  status: "uploading" | "processing" | "ready" | "failed";
   errorMessage?: string;
 }
 
@@ -676,7 +697,7 @@ export interface Attachment {
 export interface ConversationSession {
   id: string;
   userId: string;
-  mode: 'quick_consult' | 'case_workspace' | 'guideline_comparison';
+  mode: "quick_consult" | "case_workspace" | "guideline_comparison";
   title: string;
   createdAt: string;
   updatedAt: string;
@@ -687,7 +708,7 @@ export interface ConversationSession {
   metadata?: {
     messageCount: number;
     citationCount: number;
-    duration?: number;      // seconds
+    duration?: number; // seconds
     lastActivity: string;
   };
 
@@ -702,15 +723,15 @@ export interface UserSettings {
 
   general: {
     language: string;
-    theme: 'light' | 'dark' | 'auto';
-    startupView: 'quick_consult' | 'dashboard' | 'last_view';
+    theme: "light" | "dark" | "auto";
+    startupView: "quick_consult" | "dashboard" | "last_view";
   };
 
   voice: {
     microphone?: string;
-    mode: 'push_to_talk' | 'automatic' | 'always_listening';
+    mode: "push_to_talk" | "automatic" | "always_listening";
     ttsVoice: string;
-    speechRate: number;     // 0.5 - 2.0
+    speechRate: number; // 0.5 - 2.0
   };
 
   privacy: {
@@ -721,8 +742,8 @@ export interface UserSettings {
   };
 
   citations: {
-    style: 'AMA' | 'APA' | 'Vancouver' | 'NLM';
-    prioritizeSources: Array<'guidelines' | 'uptodate' | 'trials' | 'textbooks'>;
+    style: "AMA" | "APA" | "Vancouver" | "NLM";
+    prioritizeSources: Array<"guidelines" | "uptodate" | "trials" | "textbooks">;
   };
 
   notifications: {
@@ -736,7 +757,7 @@ export interface UserSettings {
 export interface KBDocument {
   id: string;
   name: string;
-  type: 'textbook' | 'journal' | 'guideline' | 'note' | 'uptodate';
+  type: "textbook" | "journal" | "guideline" | "note" | "uptodate";
 
   // Metadata
   authors?: string[];
@@ -750,7 +771,7 @@ export interface KBDocument {
   pages?: number;
   indexed: boolean;
   lastIndexedAt?: string;
-  indexingStatus?: 'pending' | 'running' | 'completed' | 'failed';
+  indexingStatus?: "pending" | "running" | "completed" | "failed";
   indexingError?: string;
 
   // Storage
@@ -815,6 +836,7 @@ Alternative Flow (No Streaming):
 ```
 
 **Key Points:**
+
 - Initial POST returns message ID and session ID
 - WebSocket provides streaming deltas for better UX
 - Citations sent separately as they're assembled
@@ -825,13 +847,13 @@ Alternative Flow (No Streaming):
 ```typescript
 // app/hooks/useChatSession.ts
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchAPI } from '@/lib/api';
-import { ChatMessage, ChatRequest, ChatResponse, Session } from '@/types'; // From DATA_MODEL.md
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchAPI } from "@/lib/api";
+import { ChatMessage, ChatRequest, ChatResponse, Session } from "@/types"; // From DATA_MODEL.md
 
 interface WebSocketDelta {
-  type: 'delta' | 'citation' | 'done' | 'error';
+  type: "delta" | "citation" | "done" | "error";
   content?: string;
   citation?: Citation;
   error?: APIError;
@@ -860,23 +882,23 @@ export function useChatSession(sessionId: string) {
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      console.log('WebSocket connected', { sessionId });
+      console.log("WebSocket connected", { sessionId });
     };
 
     ws.onmessage = (event) => {
       const delta: WebSocketDelta = JSON.parse(event.data);
 
       switch (delta.type) {
-        case 'delta':
+        case "delta":
           // Append content delta to streaming message
-          setMessages(prev => {
+          setMessages((prev) => {
             const lastMessage = prev[prev.length - 1];
             if (lastMessage?.id === streamingMessageId) {
               return [
                 ...prev.slice(0, -1),
                 {
                   ...lastMessage,
-                  content: lastMessage.content + (delta.content || ''),
+                  content: lastMessage.content + (delta.content || ""),
                 },
               ];
             }
@@ -884,10 +906,10 @@ export function useChatSession(sessionId: string) {
           });
           break;
 
-        case 'citation':
+        case "citation":
           // Add citation to streaming message
           if (delta.citation) {
-            setMessages(prev => {
+            setMessages((prev) => {
               const lastMessage = prev[prev.length - 1];
               if (lastMessage?.id === streamingMessageId) {
                 return [
@@ -903,30 +925,30 @@ export function useChatSession(sessionId: string) {
           }
           break;
 
-        case 'done':
+        case "done":
           // Streaming complete
           setIsStreaming(false);
           setStreamingMessageId(null);
-          queryClient.invalidateQueries(['session', sessionId]);
+          queryClient.invalidateQueries(["session", sessionId]);
           break;
 
-        case 'error':
+        case "error":
           // Streaming error
-          console.error('WebSocket error:', delta.error);
+          console.error("WebSocket error:", delta.error);
           setIsStreaming(false);
           setStreamingMessageId(null);
-          toast.error(delta.error?.message || 'Streaming failed');
+          toast.error(delta.error?.message || "Streaming failed");
           break;
       }
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      toast.error('Connection lost. Messages will be delivered without streaming.');
+      console.error("WebSocket error:", error);
+      toast.error("Connection lost. Messages will be delivered without streaming.");
     };
 
     ws.onclose = () => {
-      console.log('WebSocket closed');
+      console.log("WebSocket closed");
     };
 
     wsRef.current = ws;
@@ -943,17 +965,17 @@ export function useChatSession(sessionId: string) {
       const userMessage: ChatMessage = {
         id: `temp_${Date.now()}`,
         session_id: sessionId,
-        role: 'user',
+        role: "user",
         content: request.message,
         created_at: new Date().toISOString(),
         citations: [],
       };
 
-      setMessages(prev => [...prev, userMessage]);
+      setMessages((prev) => [...prev, userMessage]);
 
       // Send to backend
-      const response = await fetchAPI<ChatResponse>('/api/chat/message', {
-        method: 'POST',
+      const response = await fetchAPI<ChatResponse>("/api/chat/message", {
+        method: "POST",
         body: JSON.stringify({
           ...request,
           session_id: sessionId,
@@ -965,30 +987,26 @@ export function useChatSession(sessionId: string) {
 
     onSuccess: (response) => {
       // Replace temp user message with real one
-      setMessages(prev =>
-        prev.map(msg =>
-          msg.id.startsWith('temp_') ? response.user_message : msg
-        )
-      );
+      setMessages((prev) => prev.map((msg) => (msg.id.startsWith("temp_") ? response.user_message : msg)));
 
       // Add assistant message (will be updated via WebSocket)
       const assistantMessage: ChatMessage = {
         ...response.message,
-        content: '', // Will be filled by streaming deltas
+        content: "", // Will be filled by streaming deltas
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
       setIsStreaming(true);
       setStreamingMessageId(response.message.id);
     },
 
     onError: (error: APIError) => {
       // Remove optimistic user message on error
-      setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp_')));
+      setMessages((prev) => prev.filter((msg) => !msg.id.startsWith("temp_")));
 
       // Show error message
-      if (error.code === 'PHI_DETECTED') {
-        toast.info('Your query contains sensitive information. Using secure local processing.');
+      if (error.code === "PHI_DETECTED") {
+        toast.info("Your query contains sensitive information. Using secure local processing.");
       } else {
         toast.error(error.message);
       }
@@ -997,7 +1015,7 @@ export function useChatSession(sessionId: string) {
 
   const clearSession = useCallback(() => {
     setMessages([]);
-    queryClient.invalidateQueries(['session', sessionId]);
+    queryClient.invalidateQueries(["session", sessionId]);
   }, [sessionId, queryClient]);
 
   return {
@@ -1071,6 +1089,7 @@ These features are designed but not yet implemented. They represent Phase 6-10 e
 **Purpose**: Pin a clinical context while the clinician walks through multiple questions about the same patient during hospital rounds.
 
 **User Flow**:
+
 1. Doctor opens "Rounds Mode" from chat interface
 2. Enters basic patient context:
    - Age, sex, chief complaint
@@ -1089,27 +1108,30 @@ These features are designed but not yet implemented. They represent Phase 6-10 e
 interface RoundsSession {
   id: string;
   clinician_id: string;
-  clinical_context_id: string;  // Pinned context
+  clinical_context_id: string; // Pinned context
   questions_asked: number;
   started_at: string;
-  expires_at: string;  // Auto-expire after 4 hours
-  status: 'active' | 'expired' | 'closed';
+  expires_at: string; // Auto-expire after 4 hours
+  status: "active" | "expired" | "closed";
 }
 ```
 
 **UI Components**:
+
 - `<RoundsModePanel>` - Sidebar showing pinned context
 - `<ClinicalContextForm>` - Form to enter/edit context
 - `<RoundsTimer>` - Shows time remaining before auto-expire
 - Badge on chat input showing "Rounds Mode Active"
 
 **API Endpoints**:
+
 - `POST /api/rounds` - Create rounds session
 - `PATCH /api/rounds/{id}` - Update pinned context
 - `DELETE /api/rounds/{id}` - End rounds session
 - `GET /api/rounds/{id}` - Get current session
 
 **Privacy Considerations**:
+
 - All rounds sessions use local LLM (PHI assumed)
 - Auto-expire after 4 hours
 - Context not saved to database permanently
@@ -1122,6 +1144,7 @@ interface RoundsSession {
 **Purpose**: Export AI-generated content in structured Assessment & Plan (A/P) format for inclusion in clinical notes.
 
 **User Flow**:
+
 1. After receiving AI response, doctor clicks "Export as Note"
 2. System formats response into structured sections:
    - **Assessment**: Summary of condition/diagnosis
@@ -1162,28 +1185,31 @@ REFERENCES:
 interface NoteDraft {
   id: string;
   session_id: string;
-  message_id: string;  // Source AI response
+  message_id: string; // Source AI response
   assessment: string;
-  plan: string[];  // Array of plan items
+  plan: string[]; // Array of plan items
   references: Citation[];
-  format: 'ap' | 'soap' | 'free_text';
+  format: "ap" | "soap" | "free_text";
   created_at: string;
   exported_at?: string;
 }
 ```
 
 **UI Components**:
+
 - `<NoteDraftButton>` - Export button on message
 - `<NoteDraftEditor>` - Modal with editable sections
 - `<ExportOptions>` - Dropdown with export formats
 - `<CitationFormatter>` - Format citations by style (AMA, APA, Vancouver)
 
 **API Endpoints**:
+
 - `POST /api/notes/draft` - Generate draft from message
 - `PATCH /api/notes/draft/{id}` - Edit draft
 - `POST /api/notes/draft/{id}/export` - Export draft (logs export event)
 
 **Privacy Considerations**:
+
 - Drafts stored temporarily (24 hours)
 - Export events logged for audit
 - PHI must be manually redacted by clinician before export
@@ -1211,9 +1237,9 @@ type ClientEvent =
 
 // Start a new session or resume existing
 interface SessionStartEvent {
-  type: 'session.start';
-  sessionId?: string;                    // Resume if provided
-  mode: 'quick_consult' | 'case_workspace' | 'guideline_comparison';
+  type: "session.start";
+  sessionId?: string; // Resume if provided
+  mode: "quick_consult" | "case_workspace" | "guideline_comparison";
   clinicalContext?: ClinicalContext;
   preferences?: {
     prioritizeSources?: string[];
@@ -1224,48 +1250,48 @@ interface SessionStartEvent {
 
 // Send text message
 interface MessageSendEvent {
-  type: 'message.send';
+  type: "message.send";
   sessionId: string;
   content: string;
-  attachments?: string[];                // Attachment IDs
+  attachments?: string[]; // Attachment IDs
   clinicalContextId?: string;
 }
 
 // Start audio streaming
 interface AudioStartEvent {
-  type: 'audio.start';
+  type: "audio.start";
   sessionId: string;
   audioConfig: {
-    sampleRate: number;                  // e.g., 16000
-    channels: number;                    // 1 for mono
-    encoding: 'pcm' | 'opus';
+    sampleRate: number; // e.g., 16000
+    channels: number; // 1 for mono
+    encoding: "pcm" | "opus";
   };
 }
 
 // Stream audio chunk
 interface AudioChunkEvent {
-  type: 'audio.chunk';
+  type: "audio.chunk";
   sessionId: string;
-  data: ArrayBuffer;                     // Raw audio data
-  sequenceNumber?: number;               // For ordering
+  data: ArrayBuffer; // Raw audio data
+  sequenceNumber?: number; // For ordering
 }
 
 // Stop audio streaming
 interface AudioStopEvent {
-  type: 'audio.stop';
+  type: "audio.stop";
   sessionId: string;
 }
 
 // Request to stop AI generation mid-stream
 interface GenerationStopEvent {
-  type: 'generation.stop';
+  type: "generation.stop";
   sessionId: string;
   messageId: string;
 }
 
 // Update clinical context during conversation
 interface ContextUpdateEvent {
-  type: 'context.update';
+  type: "context.update";
   sessionId: string;
   clinicalContext: Partial<ClinicalContext>;
 }
@@ -1287,7 +1313,7 @@ type ServerEvent =
 
 // Session successfully started
 interface SessionStartedEvent {
-  type: 'session.started';
+  type: "session.started";
   sessionId: string;
   mode: string;
   clinicalContext?: ClinicalContext;
@@ -1295,26 +1321,26 @@ interface SessionStartedEvent {
 
 // Streaming message content (delta)
 interface MessageDeltaEvent {
-  type: 'message.delta';
+  type: "message.delta";
   sessionId: string;
   messageId: string;
-  role: 'assistant' | 'system';
-  contentDelta: string;                  // Incremental text
-  index?: number;                        // Token index
+  role: "assistant" | "system";
+  contentDelta: string; // Incremental text
+  index?: number; // Token index
 }
 
 // Message generation complete
 interface MessageCompleteEvent {
-  type: 'message.complete';
+  type: "message.complete";
   sessionId: string;
   messageId: string;
-  content: string;                       // Full message
-  finishReason: 'stop' | 'length' | 'error';
+  content: string; // Full message
+  finishReason: "stop" | "length" | "error";
 }
 
 // List of citations for a message
 interface CitationListEvent {
-  type: 'citation.list';
+  type: "citation.list";
   sessionId: string;
   messageId: string;
   citations: Citation[];
@@ -1322,7 +1348,7 @@ interface CitationListEvent {
 
 // Audio response chunk
 interface AudioResponseChunkEvent {
-  type: 'audio.chunk';
+  type: "audio.chunk";
   sessionId: string;
   data: ArrayBuffer;
   sequenceNumber?: number;
@@ -1330,7 +1356,7 @@ interface AudioResponseChunkEvent {
 
 // Real-time transcription of user's speech
 interface TranscriptionDeltaEvent {
-  type: 'transcription.delta';
+  type: "transcription.delta";
   sessionId: string;
   text: string;
   isFinal: boolean;
@@ -1338,29 +1364,29 @@ interface TranscriptionDeltaEvent {
 
 // Error occurred
 interface ErrorEvent {
-  type: 'error';
+  type: "error";
   sessionId?: string;
   code: string;
   message: string;
-  fatal?: boolean;                       // Requires reconnection?
+  fatal?: boolean; // Requires reconnection?
 }
 
 // AI is using a tool (file access, calculator, etc.)
 interface ToolUseEvent {
-  type: 'tool.use';
+  type: "tool.use";
   sessionId: string;
   messageId: string;
   tool: string;
   description: string;
-  status: 'started' | 'completed' | 'failed';
+  status: "started" | "completed" | "failed";
   result?: any;
 }
 
 // Status updates (connection, processing, etc.)
 interface StatusEvent {
-  type: 'status';
+  type: "status";
   sessionId?: string;
-  status: 'connected' | 'reconnecting' | 'processing' | 'idle';
+  status: "connected" | "reconnecting" | "processing" | "idle";
   message?: string;
 }
 ```
@@ -1369,8 +1395,8 @@ interface StatusEvent {
 
 ```typescript
 // hooks/useWebSocket.ts
-import { useEffect, useRef, useState, useCallback } from 'react';
-import type { ClientEvent, ServerEvent } from '@/types/websocket';
+import { useEffect, useRef, useState, useCallback } from "react";
+import type { ClientEvent, ServerEvent } from "@/types/websocket";
 
 interface UseWebSocketOptions {
   url: string;
@@ -1383,30 +1409,22 @@ interface UseWebSocketOptions {
 }
 
 export function useWebSocket(options: UseWebSocketOptions) {
-  const {
-    url,
-    onMessage,
-    onError,
-    onConnect,
-    onDisconnect,
-    reconnectAttempts = 5,
-    reconnectDelay = 2000
-  } = options;
+  const { url, onMessage, onError, onConnect, onDisconnect, reconnectAttempts = 5, reconnectDelay = 2000 } = options;
 
   const ws = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<"disconnected" | "connecting" | "connected">("disconnected");
   const reconnectCount = useRef(0);
 
   const connect = useCallback(() => {
     if (ws.current?.readyState === WebSocket.OPEN) return;
 
-    setConnectionStatus('connecting');
+    setConnectionStatus("connecting");
     ws.current = new WebSocket(url);
 
     ws.current.onopen = () => {
       setIsConnected(true);
-      setConnectionStatus('connected');
+      setConnectionStatus("connected");
       reconnectCount.current = 0;
       onConnect?.();
     };
@@ -1416,18 +1434,18 @@ export function useWebSocket(options: UseWebSocketOptions) {
         const data: ServerEvent = JSON.parse(event.data);
         onMessage?.(data);
       } catch (error) {
-        console.error('Failed to parse WebSocket message:', error);
+        console.error("Failed to parse WebSocket message:", error);
       }
     };
 
     ws.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error("WebSocket error:", error);
       onError?.(error);
     };
 
     ws.current.onclose = () => {
       setIsConnected(false);
-      setConnectionStatus('disconnected');
+      setConnectionStatus("disconnected");
       onDisconnect?.();
 
       // Attempt reconnection
@@ -1450,7 +1468,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
     if (ws.current?.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify(event));
     } else {
-      console.warn('WebSocket not connected, cannot send event:', event);
+      console.warn("WebSocket not connected, cannot send event:", event);
     }
   }, []);
 
@@ -1473,7 +1491,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
     send,
     sendAudioChunk,
     disconnect,
-    reconnect: connect
+    reconnect: connect,
   };
 }
 ```
@@ -1700,8 +1718,8 @@ The web app integrates with the OpenAI Realtime API tools system (see [TOOLS_AND
 
 ```typescript
 // hooks/useToolConfirmation.ts
-import { useState, useCallback } from 'react';
-import type { ToolCall } from '@/types';
+import { useState, useCallback } from "react";
+import type { ToolCall } from "@/types";
 
 interface ToolConfirmationState {
   isOpen: boolean;
@@ -1718,25 +1736,22 @@ export function useToolConfirmation() {
     onCancel: null,
   });
 
-  const requestConfirmation = useCallback(
-    (toolCall: ToolCall): Promise<boolean> => {
-      return new Promise((resolve) => {
-        setState({
-          isOpen: true,
-          toolCall,
-          onConfirm: () => {
-            setState({ isOpen: false, toolCall: null, onConfirm: null, onCancel: null });
-            resolve(true);
-          },
-          onCancel: () => {
-            setState({ isOpen: false, toolCall: null, onConfirm: null, onCancel: null });
-            resolve(false);
-          },
-        });
+  const requestConfirmation = useCallback((toolCall: ToolCall): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setState({
+        isOpen: true,
+        toolCall,
+        onConfirm: () => {
+          setState({ isOpen: false, toolCall: null, onConfirm: null, onCancel: null });
+          resolve(true);
+        },
+        onCancel: () => {
+          setState({ isOpen: false, toolCall: null, onConfirm: null, onCancel: null });
+          resolve(false);
+        },
       });
-    },
-    []
-  );
+    });
+  }, []);
 
   return {
     ...state,
@@ -1927,6 +1942,7 @@ export function Chat({ sessionId, clinicalContext, mode }: ChatProps) {
 - **PHI-Aware**: Tool calls are logged and audited per HIPAA requirements
 
 **Related Documentation:**
+
 - [TOOLS_AND_INTEGRATIONS.md](TOOLS_AND_INTEGRATIONS.md) - Complete tools layer specification
 - [ORCHESTRATION_DESIGN.md](ORCHESTRATION_DESIGN.md) - Backend tool execution flow
 - [DATA_MODEL.md](DATA_MODEL.md) - ToolCall and ToolResult entities
@@ -1936,6 +1952,7 @@ export function Chat({ sessionId, clinicalContext, mode }: ChatProps) {
 ## Technology Stack
 
 ### Frontend
+
 - **Framework**: React 18+ with TypeScript 5+
 - **Build Tool**: Vite 5+
 - **Styling**: Tailwind CSS 3+
@@ -1949,6 +1966,7 @@ export function Chat({ sessionId, clinicalContext, mode }: ChatProps) {
 - **Routing**: React Router v6
 
 ### Backend Integration
+
 - **API Client**: Fetch API with custom wrapper
 - **Authentication**: JWT in httpOnly cookies
 - **Session Management**: Redis-backed sessions
@@ -1979,19 +1997,19 @@ export interface APIEnvelope<T = any> {
 
 // Specific error codes from backend
 export type ErrorCode =
-  | 'AUTH_FAILED'
-  | 'AUTH_REQUIRED'
-  | 'FORBIDDEN'
-  | 'VALIDATION_ERROR'
-  | 'RATE_LIMITED'
-  | 'PHI_DETECTED'
-  | 'PHI_REDACTED'
-  | 'KB_TIMEOUT'
-  | 'TOOL_ERROR'
-  | 'LLM_ERROR'
-  | 'INTERNAL_ERROR'
-  | 'NOT_FOUND'
-  | 'CONFLICT';
+  | "AUTH_FAILED"
+  | "AUTH_REQUIRED"
+  | "FORBIDDEN"
+  | "VALIDATION_ERROR"
+  | "RATE_LIMITED"
+  | "PHI_DETECTED"
+  | "PHI_REDACTED"
+  | "KB_TIMEOUT"
+  | "TOOL_ERROR"
+  | "LLM_ERROR"
+  | "INTERNAL_ERROR"
+  | "NOT_FOUND"
+  | "CONFLICT";
 ```
 
 #### Fetch Helper
@@ -2007,19 +2025,16 @@ export class APIError extends Error {
     public traceId?: string,
   ) {
     super(message);
-    this.name = 'APIError';
+    this.name = "APIError";
   }
 }
 
-export async function fetchAPI<T>(
-  url: string,
-  options?: RequestInit,
-): Promise<T> {
+export async function fetchAPI<T>(url: string, options?: RequestInit): Promise<T> {
   try {
     const response = await fetch(url, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...options?.headers,
       },
     });
@@ -2027,15 +2042,15 @@ export async function fetchAPI<T>(
     const envelope: APIEnvelope<T> = await response.json();
 
     if (!envelope.success || envelope.error) {
-      console.error('API error:', {
+      console.error("API error:", {
         code: envelope.error?.code,
         message: envelope.error?.message,
         trace_id: envelope.trace_id,
       });
 
       throw new APIError(
-        envelope.error?.code || 'UNKNOWN_ERROR',
-        envelope.error?.message || 'An unknown error occurred',
+        envelope.error?.code || "UNKNOWN_ERROR",
+        envelope.error?.message || "An unknown error occurred",
         envelope.error?.details,
         envelope.trace_id,
       );
@@ -2048,11 +2063,7 @@ export async function fetchAPI<T>(
     }
 
     // Network error or invalid JSON
-    throw new APIError(
-      'NETWORK_ERROR',
-      'Failed to connect to server',
-      { originalError: String(error) },
-    );
+    throw new APIError("NETWORK_ERROR", "Failed to connect to server", { originalError: String(error) });
   }
 }
 ```
@@ -2062,38 +2073,38 @@ export async function fetchAPI<T>(
 ```typescript
 // app/hooks/useChat.ts
 
-import { useMutation } from '@tanstack/react-query';
-import { fetchAPI, APIError } from '@/lib/api';
-import { ChatRequest, ChatResponse } from '@/types'; // From DATA_MODEL.md
-import { toast } from '@/lib/toast';
+import { useMutation } from "@tanstack/react-query";
+import { fetchAPI, APIError } from "@/lib/api";
+import { ChatRequest, ChatResponse } from "@/types"; // From DATA_MODEL.md
+import { toast } from "@/lib/toast";
 
 export function useSendMessage() {
   return useMutation({
     mutationFn: async (request: ChatRequest) => {
-      return fetchAPI<ChatResponse>('/api/chat/message', {
-        method: 'POST',
+      return fetchAPI<ChatResponse>("/api/chat/message", {
+        method: "POST",
         body: JSON.stringify(request),
       });
     },
     onError: (error: APIError) => {
       // Handle specific error codes
       switch (error.code) {
-        case 'PHI_DETECTED':
+        case "PHI_DETECTED":
           // Show info toast: "Query contains PHI, using secure local model"
-          toast.info('Using secure processing for sensitive data');
+          toast.info("Using secure processing for sensitive data");
           break;
-        case 'KB_TIMEOUT':
-          toast.error('Search took too long, please try again');
+        case "KB_TIMEOUT":
+          toast.error("Search took too long, please try again");
           break;
-        case 'RATE_LIMITED':
-          toast.error('Too many requests, please wait a moment');
+        case "RATE_LIMITED":
+          toast.error("Too many requests, please wait a moment");
           break;
         default:
           toast.error(error.message);
       }
 
       // Log to monitoring with trace_id
-      console.error('Chat error:', {
+      console.error("Chat error:", {
         code: error.code,
         trace_id: error.traceId,
       });
@@ -2396,6 +2407,7 @@ function DocumentUploader() {
 ```
 
 ### Development Tools
+
 - **Type Checking**: TypeScript strict mode
 - **Linting**: ESLint with React/TypeScript rules
 - **Formatting**: Prettier
@@ -2412,6 +2424,7 @@ function DocumentUploader() {
 ## Security & Compliance
 
 ### PHI Handling
+
 - All patient data treated as PHI
 - Automatic redaction in logs and analytics
 - Clear warning banner on all clinical advice
@@ -2419,6 +2432,7 @@ function DocumentUploader() {
 - Session timeout after 30 minutes idle
 
 ### HIPAA Compliance
+
 - Encrypted data transmission (TLS 1.3)
 - Encrypted data at rest
 - Access controls (RBAC)
@@ -2426,6 +2440,7 @@ function DocumentUploader() {
 - Business Associate Agreement with OpenAI, UpToDate
 
 ### Content Security
+
 - Content Security Policy headers
 - XSS prevention (sanitize user input)
 - CSRF protection
@@ -2437,6 +2452,7 @@ function DocumentUploader() {
 ## Testing Strategy
 
 ### Unit Tests (Vitest + React Testing Library)
+
 ```typescript
 // __tests__/Chat.test.tsx
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -2477,28 +2493,30 @@ describe('Chat Component', () => {
 ```
 
 ### Integration Tests
+
 - WebSocket connection and reconnection
 - Message streaming
 - File upload flow
 - Authentication flow
 
 ### E2E Tests (Playwright)
+
 ```typescript
 // e2e/quick-consult.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test('quick consult workflow', async ({ page }) => {
-  await page.goto('/');
+test("quick consult workflow", async ({ page }) => {
+  await page.goto("/");
 
   // Type a question
-  await page.fill('input[placeholder="Type your question..."]', 'NSTEMI management');
+  await page.fill('input[placeholder="Type your question..."]', "NSTEMI management");
   await page.click('button:has-text("Send")');
 
   // Wait for AI response
-  await expect(page.locator('text=For NSTEMI')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator("text=For NSTEMI")).toBeVisible({ timeout: 10000 });
 
   // Verify citations appear
-  await expect(page.locator('text=Sources:')).toBeVisible();
+  await expect(page.locator("text=Sources:")).toBeVisible();
   await expect(page.locator('[data-testid="citation"]')).toHaveCount(3, { timeout: 5000 });
 });
 ```
@@ -2508,6 +2526,7 @@ test('quick consult workflow', async ({ page }) => {
 ## Performance Optimization
 
 ### Code Splitting
+
 ```typescript
 // Lazy load routes
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -2528,6 +2547,7 @@ function App() {
 ```
 
 ### Virtualization for Long Conversations
+
 ```typescript
 import { useVirtualizer } from '@tanstack/react-virtual';
 
@@ -2565,6 +2585,7 @@ function MessageList({ messages }: { messages: ChatMessage[] }) {
 ```
 
 ### Debouncing & Throttling
+
 ```typescript
 import { useDebouncedCallback } from 'use-debounce';
 
@@ -2596,6 +2617,7 @@ function SearchInput() {
 **Storage:** Per-user settings stored in PostgreSQL `user_settings` table, cached in Redis for performance.
 
 **Scope:**
+
 - **Per-User**: Each clinician has their own preferences
 - **Synced**: Settings sync across devices via backend
 - **Versioned**: Settings changes are tracked for audit purposes
@@ -2609,139 +2631,139 @@ Complete TypeScript interface for user settings:
 export interface UserSettings {
   // General Preferences
   general: {
-    language: 'en' | 'es' | 'fr';  // Interface language
-    timezone: string;               // IANA timezone (e.g., 'America/New_York')
-    theme: 'light' | 'dark' | 'auto';
-    dateFormat: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD';
-    timeFormat: '12h' | '24h';
+    language: "en" | "es" | "fr"; // Interface language
+    timezone: string; // IANA timezone (e.g., 'America/New_York')
+    theme: "light" | "dark" | "auto";
+    dateFormat: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
+    timeFormat: "12h" | "24h";
   };
 
   // Voice Settings
   voice: {
-    enabled: boolean;                   // Enable voice input
-    inputDevice: string | 'default';    // Microphone device ID
-    voiceActivation: 'push-to-talk' | 'voice-activated';
-    silenceThreshold: number;           // 0-100, sensitivity for VAD
+    enabled: boolean; // Enable voice input
+    inputDevice: string | "default"; // Microphone device ID
+    voiceActivation: "push-to-talk" | "voice-activated";
+    silenceThreshold: number; // 0-100, sensitivity for VAD
 
     // Text-to-Speech
     ttsEnabled: boolean;
-    ttsVoice: string;                   // Voice ID from TTS provider
-    ttsSpeed: number;                   // 0.5-2.0
-    ttsPitch: number;                   // 0.5-2.0
-    autoPlayResponses: boolean;         // Auto-play audio responses
+    ttsVoice: string; // Voice ID from TTS provider
+    ttsSpeed: number; // 0.5-2.0
+    ttsPitch: number; // 0.5-2.0
+    autoPlayResponses: boolean; // Auto-play audio responses
   };
 
   // Citation Preferences
   citations: {
-    displayStyle: 'inline' | 'sidebar' | 'footnotes';
-    autoExpand: boolean;                // Auto-expand citation details
-    showExcerpts: boolean;              // Show text excerpts
-    prioritizeSources: string[];        // Preferred source types
-    citationFormat: 'AMA' | 'APA' | 'Vancouver';
+    displayStyle: "inline" | "sidebar" | "footnotes";
+    autoExpand: boolean; // Auto-expand citation details
+    showExcerpts: boolean; // Show text excerpts
+    prioritizeSources: string[]; // Preferred source types
+    citationFormat: "AMA" | "APA" | "Vancouver";
     showRecommendationClasses: boolean; // Show ACC/AHA classes
-    showEvidenceLevels: boolean;        // Show evidence levels
+    showEvidenceLevels: boolean; // Show evidence levels
   };
 
   // Display Settings
   display: {
-    fontSize: 'small' | 'medium' | 'large' | 'x-large';
-    fontFamily: 'system' | 'serif' | 'sans-serif';
-    lineSpacing: 'compact' | 'normal' | 'relaxed';
+    fontSize: "small" | "medium" | "large" | "x-large";
+    fontFamily: "system" | "serif" | "sans-serif";
+    lineSpacing: "compact" | "normal" | "relaxed";
     codeHighlighting: boolean;
     showTimestamps: boolean;
-    compactMode: boolean;               // Reduce spacing for more info on screen
+    compactMode: boolean; // Reduce spacing for more info on screen
     animationsEnabled: boolean;
   };
 
   // Clinical Context
   clinicalContext: {
-    defaultMode: 'quick_consult' | 'case_workspace' | 'guideline_comparison';
+    defaultMode: "quick_consult" | "case_workspace" | "guideline_comparison";
     autoSaveContext: boolean;
-    rememberRecentCases: number;        // Number of recent cases to remember (0-20)
-    defaultSpecialty: string;           // User's primary specialty
-    favoriteTopics: string[];           // Frequently accessed topics
+    rememberRecentCases: number; // Number of recent cases to remember (0-20)
+    defaultSpecialty: string; // User's primary specialty
+    favoriteTopics: string[]; // Frequently accessed topics
   };
 
   // Privacy & Safety
   privacy: {
-    logConversations: boolean;          // Log conversations for review
-    retentionPeriod: number;            // Days to keep conversations (7-365)
-    allowAnalytics: boolean;            // Anonymous usage analytics
-    phiWarnings: boolean;               // Warn when PHI detected
-    requireConfirmation: boolean;       // Confirm before sending sensitive data
-    redactPHI: boolean;                 // Auto-redact PHI from logs
+    logConversations: boolean; // Log conversations for review
+    retentionPeriod: number; // Days to keep conversations (7-365)
+    allowAnalytics: boolean; // Anonymous usage analytics
+    phiWarnings: boolean; // Warn when PHI detected
+    requireConfirmation: boolean; // Confirm before sending sensitive data
+    redactPHI: boolean; // Auto-redact PHI from logs
   };
 
   // Notifications
   notifications: {
     enabled: boolean;
-    knowledgeBaseUpdates: boolean;      // Notify on new documents indexed
-    systemAlerts: boolean;              // Service outages, maintenance
-    desktop: boolean;                   // Desktop notifications (if supported)
-    sound: boolean;                     // Notification sounds
+    knowledgeBaseUpdates: boolean; // Notify on new documents indexed
+    systemAlerts: boolean; // Service outages, maintenance
+    desktop: boolean; // Desktop notifications (if supported)
+    sound: boolean; // Notification sounds
   };
 
   // Keyboard Shortcuts
   shortcuts: {
     enabled: boolean;
-    customShortcuts: Record<string, string>;  // Action -> key combo mapping
+    customShortcuts: Record<string, string>; // Action -> key combo mapping
   };
 
   // Advanced
   advanced: {
-    developerMode: boolean;             // Show debug info
-    betaFeatures: boolean;              // Opt into beta features
-    modelPreference: 'auto' | 'fast' | 'quality';  // Model routing preference
-    maxTokens: number;                  // Max response length (512-4096)
-    temperature: number;                // LLM temperature (0.0-1.0)
-    streamingEnabled: boolean;          // Stream responses token-by-token
+    developerMode: boolean; // Show debug info
+    betaFeatures: boolean; // Opt into beta features
+    modelPreference: "auto" | "fast" | "quality"; // Model routing preference
+    maxTokens: number; // Max response length (512-4096)
+    temperature: number; // LLM temperature (0.0-1.0)
+    streamingEnabled: boolean; // Stream responses token-by-token
   };
 }
 
 // Default settings
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   general: {
-    language: 'en',
+    language: "en",
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    theme: 'auto',
-    dateFormat: 'MM/DD/YYYY',
-    timeFormat: '12h'
+    theme: "auto",
+    dateFormat: "MM/DD/YYYY",
+    timeFormat: "12h",
   },
   voice: {
     enabled: true,
-    inputDevice: 'default',
-    voiceActivation: 'push-to-talk',
+    inputDevice: "default",
+    voiceActivation: "push-to-talk",
     silenceThreshold: 50,
     ttsEnabled: false,
-    ttsVoice: 'default',
+    ttsVoice: "default",
     ttsSpeed: 1.0,
     ttsPitch: 1.0,
-    autoPlayResponses: false
+    autoPlayResponses: false,
   },
   citations: {
-    displayStyle: 'inline',
+    displayStyle: "inline",
     autoExpand: false,
     showExcerpts: true,
-    prioritizeSources: ['guideline', 'textbook', 'journal'],
-    citationFormat: 'AMA',
+    prioritizeSources: ["guideline", "textbook", "journal"],
+    citationFormat: "AMA",
     showRecommendationClasses: true,
-    showEvidenceLevels: true
+    showEvidenceLevels: true,
   },
   display: {
-    fontSize: 'medium',
-    fontFamily: 'system',
-    lineSpacing: 'normal',
+    fontSize: "medium",
+    fontFamily: "system",
+    lineSpacing: "normal",
     codeHighlighting: true,
     showTimestamps: true,
     compactMode: false,
-    animationsEnabled: true
+    animationsEnabled: true,
   },
   clinicalContext: {
-    defaultMode: 'quick_consult',
+    defaultMode: "quick_consult",
     autoSaveContext: true,
     rememberRecentCases: 10,
-    defaultSpecialty: 'general',
-    favoriteTopics: []
+    defaultSpecialty: "general",
+    favoriteTopics: [],
   },
   privacy: {
     logConversations: true,
@@ -2749,33 +2771,33 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
     allowAnalytics: true,
     phiWarnings: true,
     requireConfirmation: false,
-    redactPHI: true
+    redactPHI: true,
   },
   notifications: {
     enabled: true,
     knowledgeBaseUpdates: true,
     systemAlerts: true,
     desktop: false,
-    sound: true
+    sound: true,
   },
   shortcuts: {
     enabled: true,
     customShortcuts: {
-      'new_conversation': 'Cmd+N',
-      'search': 'Cmd+K',
-      'focus_input': 'Cmd+/',
-      'send_message': 'Cmd+Enter',
-      'voice_toggle': 'Cmd+Shift+V'
-    }
+      new_conversation: "Cmd+N",
+      search: "Cmd+K",
+      focus_input: "Cmd+/",
+      send_message: "Cmd+Enter",
+      voice_toggle: "Cmd+Shift+V",
+    },
   },
   advanced: {
     developerMode: false,
     betaFeatures: false,
-    modelPreference: 'auto',
+    modelPreference: "auto",
     maxTokens: 2048,
     temperature: 0.7,
-    streamingEnabled: true
-  }
+    streamingEnabled: true,
+  },
 };
 ```
 
@@ -2931,10 +2953,10 @@ async def update_user_settings(
 
 ```typescript
 // src/hooks/useSettings.ts
-import { useState, useEffect } from 'react';
-import { adminApi } from '../services/api';
-import type { UserSettings } from '../types/settings';
-import { DEFAULT_USER_SETTINGS } from '../types/settings';
+import { useState, useEffect } from "react";
+import { adminApi } from "../services/api";
+import type { UserSettings } from "../types/settings";
+import { DEFAULT_USER_SETTINGS } from "../types/settings";
 
 export function useSettings() {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_USER_SETTINGS);
@@ -2948,7 +2970,7 @@ export function useSettings() {
         const data = await adminApi.getSettings();
         setSettings(data);
       } catch (err) {
-        console.error('Failed to load settings:', err);
+        console.error("Failed to load settings:", err);
         setError(err as Error);
         // Fall back to defaults
         setSettings(DEFAULT_USER_SETTINGS);
@@ -2966,7 +2988,7 @@ export function useSettings() {
       setSettings(updated);
       return updated;
     } catch (err) {
-      console.error('Failed to save settings:', err);
+      console.error("Failed to save settings:", err);
       throw err;
     }
   };
@@ -2976,7 +2998,7 @@ export function useSettings() {
     loading,
     error,
     updateSettings,
-    setSettings
+    setSettings,
   };
 }
 ```
@@ -2984,6 +3006,7 @@ export function useSettings() {
 ### Settings Synchronization
 
 Settings are:
+
 1. **Loaded on login** from backend
 2. **Cached in localStorage** for offline access
 3. **Synced on change** to backend (with debouncing)
@@ -2994,6 +3017,7 @@ Settings are:
 ## Deployment
 
 ### Environment Variables
+
 ```bash
 # .env.production
 VITE_API_URL=https://voiceassist.yourdomain.com/api
@@ -3003,6 +3027,7 @@ VITE_SENTRY_DSN=<sentry-dsn>
 ```
 
 ### Build Process
+
 ```bash
 # Install dependencies
 npm install
@@ -3024,6 +3049,7 @@ npm run preview
 ```
 
 ### Docker Container
+
 ```dockerfile
 # Dockerfile
 FROM node:20-alpine AS builder
@@ -3045,12 +3071,14 @@ CMD ["nginx", "-g", "daemon off;"]
 ## Future Enhancements
 
 ### Progressive Web App (PWA)
+
 - Service worker for offline support
 - App manifest for "Add to Home Screen"
 - Background sync for queued messages
 - Push notifications for knowledge base updates
 
 ### Advanced Features
+
 - Multi-language support (i18n)
 - Collaborative conversations (multiple clinicians)
 - Screen sharing for telemedicine consultations
@@ -3059,6 +3087,7 @@ CMD ["nginx", "-g", "daemon off;"]
 - Custom medical calculators integration
 
 ### AI Enhancements
+
 - Specialty-specific knowledge routing
 - Learning user preferences and style
 - Proactive information retrieval based on context

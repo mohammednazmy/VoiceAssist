@@ -1,3 +1,15 @@
+---
+title: "Current Phase"
+slug: "archive/current-phase"
+summary: "**Project:** VoiceAssist V2 - Enterprise Medical AI Assistant"
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["current", "phase"]
+---
+
 # Current Development Phase
 
 **Project:** VoiceAssist V2 - Enterprise Medical AI Assistant

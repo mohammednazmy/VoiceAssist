@@ -1,3 +1,15 @@
+---
+title: "Message Edit Progress"
+slug: "message-edit-progress"
+summary: "**Date:** 2025-11-23"
+status: experimental
+stability: experimental
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["message", "edit", "progress"]
+---
+
 # Message Editing & Regeneration - Implementation Progress
 
 **Date:** 2025-11-23

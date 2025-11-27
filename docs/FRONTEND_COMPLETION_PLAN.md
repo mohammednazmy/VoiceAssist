@@ -1,3 +1,15 @@
+---
+title: "Frontend Completion Plan"
+slug: "frontend-completion-plan"
+summary: "This document outlines the comprehensive implementation plan for completing the VoiceAssist frontend MVP. Based on thorough codebase analysis, the fro..."
+status: stable
+stability: beta
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["frontend"]
+tags: ["frontend", "completion", "plan"]
+---
+
 # VoiceAssist Frontend Completion Plan
 
 ## Executive Summary

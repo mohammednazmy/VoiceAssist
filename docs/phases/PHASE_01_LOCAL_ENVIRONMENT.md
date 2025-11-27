@@ -1,8 +1,21 @@
+---
+title: "Phase 01 Local Environment"
+slug: "phases/phase-01-local-environment"
+summary: "> **WARNING: LEGACY V1 PHASE - NOT CANONICAL FOR V2**"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["phase", "local", "environment"]
+---
+
 # Phase 1: Local Development Environment
 
 > **WARNING: LEGACY V1 PHASE - NOT CANONICAL FOR V2**
 > This describes the original V1 phase.
 > For the current 15-phase V2 plan, see:
+>
 > - [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)
 > - [PHASE_00_INITIALIZATION.md](PHASE_00_INITIALIZATION.md)
 > - [CURRENT_PHASE.md](../../CURRENT_PHASE.md)
@@ -49,6 +62,7 @@ which brew
 ```
 
 **Verify:**
+
 ```bash
 brew --version
 # Should show version number
@@ -80,6 +94,7 @@ brew install tesseract
 ```
 
 **Verify each installation:**
+
 ```bash
 python3.11 --version
 node --version
@@ -98,6 +113,7 @@ tesseract --version
 4. Wait for Docker to fully start (whale icon in menu bar)
 
 **Verify:**
+
 ```bash
 docker --version
 docker ps
@@ -123,6 +139,7 @@ ollama pull llama3.1:8b
 ```
 
 **Verify:**
+
 ```bash
 ollama list
 # Should show llama3.1:8b
@@ -155,6 +172,7 @@ psql voiceassist -c "CREATE EXTENSION vector;"
 ```
 
 **Verify:**
+
 ```bash
 psql voiceassist -c "SELECT extname FROM pg_extension WHERE extname = 'vector';"
 # Should show 'vector'
@@ -175,6 +193,7 @@ redis-cli ping
 ```
 
 **Verify:**
+
 ```bash
 redis-cli info server | grep redis_version
 ```
@@ -198,6 +217,7 @@ docker run -d \
 ```
 
 **Verify:**
+
 ```bash
 # Wait a few seconds
 sleep 5
@@ -241,6 +261,7 @@ mkdir -p scripts
 ```
 
 **Verify:**
+
 ```bash
 tree -L 3 ~/VoiceAssist
 # Should show all directories
@@ -262,6 +283,7 @@ pip install --upgrade pip setuptools wheel
 ```
 
 **Verify:**
+
 ```bash
 which python
 # Should point to venv/bin/python
@@ -335,6 +357,7 @@ httpx==0.25.1
 ```
 
 Install dependencies:
+
 ```bash
 cd ~/VoiceAssist/server
 source venv/bin/activate
@@ -342,6 +365,7 @@ pip install -r requirements.txt
 ```
 
 **Verify:**
+
 ```bash
 pip list | grep fastapi
 pip list | grep sqlalchemy
@@ -351,17 +375,20 @@ pip list | grep openai
 ### Task 11: Create Basic FastAPI Application
 
 Create `~/VoiceAssist/server/app/__init__.py`:
+
 ```python
 """VoiceAssist Backend Application"""
 __version__ = "0.1.0"
 ```
 
 Create `~/VoiceAssist/server/app/core/__init__.py`:
+
 ```python
 """Core modules"""
 ```
 
 Create `~/VoiceAssist/server/app/core/config.py`:
+
 ```python
 """Configuration management"""
 from pydantic_settings import BaseSettings
@@ -420,6 +447,7 @@ settings = Settings()
 ```
 
 Create `~/VoiceAssist/server/app/main.py`:
+
 ```python
 """FastAPI application entry point"""
 from fastapi import FastAPI
@@ -508,6 +536,7 @@ if __name__ == "__main__":
 ### Task 12: Create Environment Configuration
 
 Create `~/VoiceAssist/server/.env.example`:
+
 ```bash
 # Environment
 ENVIRONMENT=development
@@ -546,6 +575,7 @@ LOG_LEVEL=INFO
 ```
 
 Create actual `.env` file:
+
 ```bash
 cd ~/VoiceAssist/server
 
@@ -573,6 +603,7 @@ echo "Please edit .env and add your OpenAI API key"
 ### Task 13: Create Service Start Script
 
 Create `~/VoiceAssist/scripts/start-services.sh`:
+
 ```bash
 #!/bin/bash
 
@@ -654,6 +685,7 @@ echo "  python app/main.py"
 ```
 
 Make it executable:
+
 ```bash
 chmod +x ~/VoiceAssist/scripts/start-services.sh
 ```
@@ -671,6 +703,7 @@ python app/main.py
 ```
 
 In another terminal:
+
 ```bash
 # Test root endpoint
 curl http://localhost:8000/
@@ -692,6 +725,7 @@ open http://localhost:8000/docs
 ### Task 15: Create .gitignore
 
 Create `~/VoiceAssist/.gitignore`:
+
 ```
 # Python
 __pycache__/
@@ -830,18 +864,20 @@ EOF
 Update these files:
 
 1. Create `~/VoiceAssist/PHASE_STATUS.md`:
+
 ```markdown
 # Phase Completion Status
 
 - [x] Phase 1: Local Development Environment - Completed [DATE]
 - [ ] Phase 2: Database Schema & Models - Not Started
 - [ ] Phase 3: Authentication System - Not Started
-...
+      ...
 ```
 
 2. Update `~/VoiceAssist/README.md` if needed
 
 3. Create `~/VoiceAssist/DEVELOPMENT_LOG.md`:
+
 ```markdown
 # Development Log
 
@@ -850,6 +886,7 @@ Update these files:
 **Completed:** [DATE]
 
 ### What Was Built
+
 - Installed all local services (PostgreSQL, Redis, Qdrant, Ollama)
 - Created project structure
 - Set up Python virtual environment
@@ -858,6 +895,7 @@ Update these files:
 - Created service start script
 
 ### Services Running
+
 - PostgreSQL: localhost:5432
 - Redis: localhost:6379
 - Qdrant: localhost:6333
@@ -865,6 +903,7 @@ Update these files:
 - FastAPI: localhost:8000
 
 ### Next Phase
+
 Phase 2: Database Schema & Models
 ```
 
@@ -886,17 +925,20 @@ Before moving to Phase 2, verify:
 ## Troubleshooting
 
 ### PostgreSQL won't start
+
 ```bash
 brew services restart postgresql@15
 tail -f /opt/homebrew/var/log/postgresql@15.log
 ```
 
 ### Port 8000 already in use
+
 ```bash
 lsof -ti:8000 | xargs kill -9
 ```
 
 ### Ollama not responding
+
 ```bash
 pkill ollama
 ollama serve > /tmp/ollama.log 2>&1 &
@@ -904,6 +946,7 @@ tail -f /tmp/ollama.log
 ```
 
 ### Qdrant container issues
+
 ```bash
 docker rm -f qdrant
 docker run -d --name qdrant -p 6333:6333 -v ~/voiceassist-data/qdrant:/qdrant/storage qdrant/qdrant

@@ -1,3 +1,15 @@
+---
+title: "Claude Execution Guide"
+slug: "claude-execution-guide"
+summary: "This guide provides comprehensive instructions for Claude Code (or other AI assistants) working on the VoiceAssist V2 project. It covers session start..."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["agent", "human"]
+tags: ["claude", "execution", "guide"]
+---
+
 # Claude Code Execution Guide for VoiceAssist V2
 
 This guide provides comprehensive instructions for Claude Code (or other AI assistants) working on the VoiceAssist V2 project. It covers session startup, branching strategy, parallel session safety, quality checks, and phase completion criteria.
@@ -30,6 +42,7 @@ git status  # Check for any uncommitted changes
 ```
 
 If working on an existing branch:
+
 ```bash
 git checkout <branch-name>
 git pull origin main  # Merge latest changes
@@ -39,12 +52,14 @@ git status
 **Install/update dependencies if needed:**
 
 Backend:
+
 ```bash
 cd server
 pip install -r requirements.txt
 ```
 
 Frontend:
+
 ```bash
 cd web-app  # or admin-panel
 pnpm install
@@ -55,6 +70,7 @@ pnpm install
 Before starting ANY work, read these documents IN ORDER:
 
 **Required Reading (Always):**
+
 1. `.ai/index.json` - Machine-readable project index, find task-to-docs mapping (NEW!)
 2. `.ai/README.md` - AI agent navigation guide, how to use index.json (NEW!)
 3. `docs/START_HERE.md` - Project orientation and documentation map
@@ -64,15 +80,18 @@ Before starting ANY work, read these documents IN ORDER:
 
 **Phase-Specific Reading:**
 If implementing a phase, read:
+
 - `docs/phases/PHASE_XX_<NAME>.md` - Detailed phase instructions
 - Any referenced specification documents (WEB_APP_SPECS.md, etc.)
 
 **Service-Specific Reading:**
 If working on a specific microservice:
+
 - `docs/SERVICE_CATALOG.md` - Service details (ports, dependencies, endpoints)
 - Relevant service README (e.g., `server/README.md`)
 
 **Security/Compliance Work:**
+
 - `docs/SECURITY_COMPLIANCE.md` - HIPAA requirements
 - `docs/SEMANTIC_SEARCH_DESIGN.md` - PHI detection and routing
 
@@ -81,23 +100,28 @@ If working on a specific microservice:
 Determine and document:
 
 **What am I working on?**
+
 - Which phase (0-14)?
 - Which service or component?
 - Which files will I modify?
 
 **Dependencies:**
+
 - Do other services need to be running?
 - Are there prerequisites from previous phases?
 - Do I need test data or fixtures?
 
 **Success Criteria:**
+
 - What does "done" look like?
 - What tests must pass?
 - What documentation needs updating?
 
 **Example Session Checklist:**
+
 ```markdown
 Session: Phase 5 - Medical Knowledge Base & RAG System
+
 - [x] Read DEVELOPMENT_PHASES_V2.md
 - [x] Read PHASE_05_MEDICAL_AI.md
 - [x] Read SEMANTIC_SEARCH_DESIGN.md
@@ -118,46 +142,61 @@ Session: Phase 5 - Medical Knowledge Base & RAG System
 Follow these patterns for branch names:
 
 **Phase Implementation:**
+
 ```
 phase-N-short-name
 ```
+
 Examples:
+
 - `phase-1-infrastructure`
 - `phase-4-voice-pipeline`
 - `phase-11-web-app-ui`
 
 **Feature Work:**
+
 ```
 feature/area-description
 ```
+
 Examples:
+
 - `feature/web-chat-layout`
 - `feature/admin-kb-upload`
 - `feature/voice-vad-integration`
 
 **Bug Fixes:**
+
 ```
 fix/issue-description
 ```
+
 Examples:
+
 - `fix/kb-search-timeout`
 - `fix/nextcloud-auth-loop`
 - `fix/voice-echo-cancellation`
 
 **Documentation Updates:**
+
 ```
 docs/description
 ```
+
 Examples:
+
 - `docs/api-contracts`
 - `docs/service-catalog`
 - `docs/deployment-guide`
 
 **Infrastructure/Deployment:**
+
 ```
 infra/description
 ```
+
 Examples:
+
 - `infra/docker-compose-optimization`
 - `infra/k8s-manifests`
 - `infra/prometheus-dashboards`
@@ -165,6 +204,7 @@ Examples:
 ### When to Branch vs Commit to Main
 
 **Create a Branch:**
+
 - Phase implementations (significant work, 4-8 hours)
 - New features or significant refactoring
 - Experimental work or architecture changes
@@ -172,12 +212,14 @@ Examples:
 - When multiple parallel sessions are active
 
 **Commit Directly to Main:**
+
 - Documentation-only updates (no code changes)
 - Trivial fixes (typos, formatting)
 - Emergency hotfixes (with thorough testing)
 - When you're the only active session
 
 **Branch Workflow:**
+
 ```bash
 # Create and switch to new branch
 git checkout -b phase-5-medical-ai
@@ -211,6 +253,7 @@ Use conventional commits format:
 ```
 
 **Types:**
+
 - `feat` - New feature
 - `fix` - Bug fix
 - `docs` - Documentation only
@@ -221,6 +264,7 @@ Use conventional commits format:
 - `style` - Code style (formatting, semicolons, etc.)
 
 **Scopes:**
+
 - Service names: `voice-proxy`, `medical-kb`, `auth-service`, `admin-api`
 - Component names: `web-app`, `admin-panel`, `docs-site`
 - Phase numbers: `phase-1`, `phase-5`, `phase-11`
@@ -254,6 +298,7 @@ git commit -m "feat(auth-service): add MFA support
 ```
 
 **Long Commit Messages (with heredoc):**
+
 ```bash
 git commit -m "$(cat <<'EOF'
 feat(phase-11): implement web app UI with clinical workflows
@@ -286,15 +331,18 @@ When multiple Claude Code sessions (or developers) are working simultaneously, f
 **Golden Rule:** Only ONE session should modify a given service or phase at a time.
 
 **Before starting work:**
+
 1. Check active branches: `git branch -a`
 2. Look for branch names indicating work in your area
 3. If conflict, coordinate or work on different area
 
 **Communication:**
+
 - Use branch names to signal your work area
 - If uncertain, create a placeholder branch: `git checkout -b phase-5-in-progress`
 
 **Example:**
+
 ```bash
 # Check what's being worked on
 git branch -a
@@ -308,24 +356,28 @@ git branch -a
 ### 3.2 Avoiding Conflicts
 
 **High-Risk Shared Files:**
+
 - `docker-compose.yml` - Coordinate changes carefully
 - `.env` files - Don't commit, document changes
 - `alembic/versions/*.py` - Database migrations (coordinate)
 - Root-level config files (`pyproject.toml`, `package.json`)
 
 **Safe Practices:**
+
 - Work in separate services when possible
 - Each service has its own directory (low conflict)
 - Frontend and backend can be worked on in parallel
 - Tests and docs can be updated independently
 
 **If you MUST modify shared files:**
+
 1. Pull latest changes first: `git pull origin main`
 2. Make minimal, focused changes
 3. Commit and push quickly
 4. Notify other sessions
 
 **Conflict Resolution:**
+
 ```bash
 # If you encounter merge conflicts
 git pull origin main
@@ -337,11 +389,13 @@ git commit -m "merge: resolve conflicts from main"
 ### 3.3 Testing Boundaries
 
 **Isolated Testing:**
+
 - Test your service in isolation when possible
 - Use mocks/stubs for dependencies being worked on
 - Don't rely on services under active development
 
 **Docker Compose Testing:**
+
 ```bash
 # Test only your service
 docker compose up your-service postgres redis qdrant
@@ -351,6 +405,7 @@ docker compose up --scale other-service=0
 ```
 
 **Integration Testing:**
+
 - Run full integration tests AFTER merging
 - Not during parallel development
 - Coordinate timing with other sessions
@@ -392,11 +447,13 @@ bandit -r app/
 ```
 
 **Fix Common Issues:**
+
 - Import errors: `isort app/ tests/`
 - Long lines: Refactor or add `# noqa` comment
 - Type errors: Add type hints or `# type: ignore`
 
 **All checks must pass:**
+
 ```bash
 # Run all checks in sequence
 pytest tests/ && black app/ tests/ --check && flake8 app/ && mypy app/
@@ -427,11 +484,13 @@ pnpm build
 ```
 
 **Fix Common Issues:**
+
 - ESLint errors: `pnpm lint --fix`
 - Type errors: Fix TypeScript types
 - Build errors: Check imports and dependencies
 
 **All checks must pass:**
+
 ```bash
 # Run all checks in sequence
 pnpm test && pnpm type-check && pnpm lint && pnpm build
@@ -460,6 +519,7 @@ docker compose logs --tail=50
 ```
 
 **Expected Output:**
+
 ```
 NAME                  STATUS    PORTS
 postgres              Up        5432/tcp
@@ -474,6 +534,7 @@ medical-kb            Up        8002/tcp
 **Before committing documentation:**
 
 1. **Check all links work:**
+
 ```bash
 # Use markdown-link-check (install if needed)
 npm install -g markdown-link-check
@@ -481,17 +542,20 @@ markdown-link-check docs/**/*.md
 ```
 
 2. **Verify code examples are valid:**
+
 - Python: Copy code to temp file, run `python -m py_compile`
 - TypeScript: Copy code to temp file, run `tsc --noEmit`
 - Bash: Copy to temp file, run `bash -n` (syntax check)
 
 3. **Check formatting consistency:**
+
 - Headers use ATX style (`#` not underlines)
 - Code blocks specify language
 - Lists use consistent markers (`-` not `*`)
 - Proper spacing (blank line before/after headers, lists, code blocks)
 
 4. **Spell check (manual or tool):**
+
 ```bash
 # Use aspell or similar
 aspell check docs/YOUR_FILE.md
@@ -553,29 +617,34 @@ markdown-link-check docs/**/*.md
 ### Phase-Specific Criteria
 
 **Phase 0 (Initialization):**
+
 - [ ] All spec documents read and understood
 - [ ] Architecture diagram reviewed
 - [ ] Questions documented
 
 **Phase 1 (Infrastructure):**
+
 - [ ] PostgreSQL accessible and accepting connections
 - [ ] Redis accessible and responding to PING
 - [ ] Qdrant accessible and collection created
 - [ ] All databases persist data after restart
 
 **Phase 5 (Medical KB & RAG):**
+
 - [ ] Can embed and search documents
 - [ ] RAG pipeline returns relevant results
 - [ ] PubMed API integration works
 - [ ] Citations are properly formatted
 
 **Phase 11 (Web App UI):**
+
 - [ ] All workflows (Quick Consult, Case Workspace) functional
 - [ ] Voice input working
 - [ ] Citations display correctly
 - [ ] No console errors in browser
 
 **Phase 14 (Production Deployment):**
+
 - [ ] All services running on production server
 - [ ] SSL certificates valid
 - [ ] Monitoring and alerts configured
@@ -589,16 +658,19 @@ markdown-link-check docs/**/*.md
 ### Documentation-First Approach
 
 **Before implementing:**
+
 1. Read existing docs to understand design
 2. Note any gaps or ambiguities
 3. Plan implementation based on specs
 
 **During implementation:**
+
 - Update docs as you discover clarifications
 - Add inline code comments for complex logic
 - Document any deviations from original spec
 
 **After implementation:**
+
 - Update all affected documentation
 - Add examples and usage instructions
 - Document configuration and environment variables
@@ -606,21 +678,25 @@ markdown-link-check docs/**/*.md
 ### Documentation Standards
 
 **File Naming:**
+
 - Use UPPERCASE for major docs: `ARCHITECTURE_V2.md`
 - Use lowercase for code docs: `server/README.md`
 - Use underscores for multi-word: `WEB_APP_SPECS.md`
 
 **Structure:**
+
 - Always include Table of Contents for docs >200 lines
 - Use consistent heading levels (don't skip levels)
 - Include "Last Updated" date at bottom
 
 **Code Examples:**
+
 - Always specify language for syntax highlighting
 - Include imports/context needed to run example
 - Test that examples actually work
 
 **Links:**
+
 - Use relative links within repo: `[link](../docs/FILE.md)`
 - Use absolute URLs for external links
 - Don't link to specific line numbers (they change)
@@ -630,29 +706,34 @@ markdown-link-check docs/**/*.md
 ## Troubleshooting Common Issues
 
 ### "Tests are failing"
+
 1. Check if tests were failing before your changes: `git stash && pytest`
 2. If yes, fix tests first, then implement
 3. If no, debug your changes
 
 ### "Docker Compose won't start"
+
 1. Check syntax: `docker compose config`
 2. Check logs: `docker compose logs <service>`
 3. Check ports: `lsof -i :<port>` (ensure not in use)
 4. Reset: `docker compose down -v && docker compose up -d`
 
 ### "Service not accessible"
+
 1. Verify service is running: `docker compose ps`
 2. Check health endpoint: `curl http://localhost:<port>/health`
 3. Check logs: `docker compose logs <service> --tail=100`
 4. Verify networking: Services should be on same Docker network
 
 ### "Merge conflicts"
+
 1. Pull latest: `git pull origin main`
 2. Resolve conflicts in editor
 3. Run tests to ensure resolution is correct
 4. Commit: `git commit -m "merge: resolve conflicts"`
 
 ### "Phase seems complete but something's not working"
+
 - Go through exit checklist systematically
 - Don't skip manual verification
 - Check logs for warnings (not just errors)

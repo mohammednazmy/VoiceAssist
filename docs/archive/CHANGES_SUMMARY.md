@@ -1,3 +1,15 @@
+---
+title: "Changes Summary"
+slug: "archive/changes-summary"
+summary: "**Branch:** `fix/system-review-and-testing`"
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["changes", "summary"]
+---
+
 # System Review & WebSocket Protocol Fixes - Change Summary
 
 **Branch:** `fix/system-review-and-testing`

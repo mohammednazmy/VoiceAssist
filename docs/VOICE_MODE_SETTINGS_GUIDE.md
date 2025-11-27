@@ -1,3 +1,15 @@
+---
+title: "Voice Mode Settings Guide"
+slug: "voice-mode-settings-guide"
+summary: "This guide explains how to use and configure Voice Mode settings in VoiceAssist."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["frontend"]
+tags: ["voice", "mode", "settings", "guide"]
+---
+
 # Voice Mode Settings Guide
 
 This guide explains how to use and configure Voice Mode settings in VoiceAssist.

@@ -1,3 +1,15 @@
+---
+title: "Phase 14 Production Deploy"
+slug: "phases/phase-14-production-deploy"
+summary: "> **V2 PHASE DOCUMENT**"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["phase", "production", "deploy"]
+---
+
 # Phase 14: Production Deployment
 
 > **V2 PHASE DOCUMENT**
@@ -12,6 +24,7 @@
 Deploy to production and hand off runbooks.
 
 See also:
+
 - [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)
 - [PHASE_STATUS.md](../../PHASE_STATUS.md)
 - [BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md)

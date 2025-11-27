@@ -1,3 +1,15 @@
+---
+title: "Branching And Shortcuts Implementation"
+slug: "archive/branching-and-shortcuts-implementation"
+summary: "**Date:** 2025-11-23"
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["branching", "and", "shortcuts", "implementation"]
+---
+
 # Conversation Branching and Keyboard Shortcuts Implementation Plan
 
 **Date:** 2025-11-23

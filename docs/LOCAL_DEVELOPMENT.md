@@ -1,8 +1,21 @@
+---
+title: "Local Development"
+slug: "local-development"
+summary: "VoiceAssist V2 uses a **Compose-first development approach** with two separate Docker Compose stacks:"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["local", "development"]
+---
+
 # Local Development Guide (MacBook Pro)
 
 ## Overview
 
 VoiceAssist V2 uses a **Compose-first development approach** with two separate Docker Compose stacks:
+
 - **Nextcloud stack** (~/Nextcloud-Dev/) - Identity, files, calendar, email
 - **VoiceAssist stack** (~/VoiceAssist/) - Microservices architecture
 
@@ -107,18 +120,18 @@ cd ~/VoiceAssist
 
 Local development uses the following ports:
 
-| Port | Service | URL | Description |
-|------|---------|-----|-------------|
-| **8000** | FastAPI Main API | http://localhost:8000 | Backend API Gateway |
-| **5173** | Web App Dev Server | http://localhost:5173 | Doctor-facing web interface |
-| **5174** | Admin Panel Dev Server | http://localhost:5174 | System administration panel |
-| **8080** | Nextcloud | http://localhost:8080 | Identity, files, calendar (separate stack) |
-| **5432** | PostgreSQL | localhost:5432 | Primary database |
-| **6379** | Redis | localhost:6379 | Cache and sessions |
-| **6333** | Qdrant | http://localhost:6333 | Vector database |
-| **8081** | Nextcloud Dev (alt) | http://localhost:8081 | Alternative Nextcloud port |
-| **9090** | Prometheus | http://localhost:9090 | Metrics collection |
-| **3000** | Grafana | http://localhost:3000 | Monitoring dashboards |
+| Port     | Service                | URL                   | Description                                |
+| -------- | ---------------------- | --------------------- | ------------------------------------------ |
+| **8000** | FastAPI Main API       | http://localhost:8000 | Backend API Gateway                        |
+| **5173** | Web App Dev Server     | http://localhost:5173 | Doctor-facing web interface                |
+| **5174** | Admin Panel Dev Server | http://localhost:5174 | System administration panel                |
+| **8080** | Nextcloud              | http://localhost:8080 | Identity, files, calendar (separate stack) |
+| **5432** | PostgreSQL             | localhost:5432        | Primary database                           |
+| **6379** | Redis                  | localhost:6379        | Cache and sessions                         |
+| **6333** | Qdrant                 | http://localhost:6333 | Vector database                            |
+| **8081** | Nextcloud Dev (alt)    | http://localhost:8081 | Alternative Nextcloud port                 |
+| **9090** | Prometheus             | http://localhost:9090 | Metrics collection                         |
+| **3000** | Grafana                | http://localhost:3000 | Monitoring dashboards                      |
 
 ## Initial Setup (One-Time)
 
@@ -209,6 +222,7 @@ docker compose exec nextcloud php occ app:enable user_oidc
 ```
 
 **Manual Configuration Steps:**
+
 1. Open http://localhost:8080 in browser
 2. Login as admin
 3. Go to Settings → Security → OpenID Connect
@@ -420,32 +434,32 @@ docker compose run --rm api-gateway pytest /app/tests
 
 ### Nextcloud Stack (Port 8080)
 
-| Service | Port | URL | Purpose |
-|---------|------|-----|---------|
-| Nextcloud Web | 8080 | http://localhost:8080 | Identity, Files, Calendar, Email |
-| Nextcloud DB | 5433 | localhost:5433 (internal) | PostgreSQL for Nextcloud |
+| Service       | Port | URL                       | Purpose                          |
+| ------------- | ---- | ------------------------- | -------------------------------- |
+| Nextcloud Web | 8080 | http://localhost:8080     | Identity, Files, Calendar, Email |
+| Nextcloud DB  | 5433 | localhost:5433 (internal) | PostgreSQL for Nextcloud         |
 
 ### VoiceAssist Stack (Port 8000+)
 
-| Service | Port | URL | Purpose |
-|---------|------|-----|---------|
-| API Gateway | 8000 | http://localhost:8000 | Main entry point |
-| Voice Proxy | 8001 | http://localhost:8001 | WebRTC voice |
-| Auth Service | 8002 | http://localhost:8002 | Authentication |
-| Medical KB | 8003 | http://localhost:8003 | RAG system |
-| File Indexer | 8004 | http://localhost:8004 | Document indexing |
-| Calendar/Email | 8005 | http://localhost:8005 | Calendar/email ops |
-| Guideline Scraper | 8006 | http://localhost:8006 | Guideline ingestion |
-| Medical Calculator | 8007 | http://localhost:8007 | Medical calculations |
-| PHI Detection | 8008 | http://localhost:8008 | PHI detection/redaction |
-| Admin API | 8009 | http://localhost:8009 | Admin operations |
-| PostgreSQL | 5432 | localhost:5432 (internal) | Main database |
-| Redis | 6379 | localhost:6379 (internal) | Cache/sessions |
-| Qdrant | 6333 | http://localhost:6333 | Vector database |
-| Prometheus | 9090 | http://localhost:9090 | Metrics |
-| Grafana | 3000 | http://localhost:3000 | Dashboards |
-| Jaeger UI | 16686 | http://localhost:16686 | Tracing UI |
-| Loki | 3100 | http://localhost:3100 | Log aggregation |
+| Service            | Port  | URL                       | Purpose                 |
+| ------------------ | ----- | ------------------------- | ----------------------- |
+| API Gateway        | 8000  | http://localhost:8000     | Main entry point        |
+| Voice Proxy        | 8001  | http://localhost:8001     | WebRTC voice            |
+| Auth Service       | 8002  | http://localhost:8002     | Authentication          |
+| Medical KB         | 8003  | http://localhost:8003     | RAG system              |
+| File Indexer       | 8004  | http://localhost:8004     | Document indexing       |
+| Calendar/Email     | 8005  | http://localhost:8005     | Calendar/email ops      |
+| Guideline Scraper  | 8006  | http://localhost:8006     | Guideline ingestion     |
+| Medical Calculator | 8007  | http://localhost:8007     | Medical calculations    |
+| PHI Detection      | 8008  | http://localhost:8008     | PHI detection/redaction |
+| Admin API          | 8009  | http://localhost:8009     | Admin operations        |
+| PostgreSQL         | 5432  | localhost:5432 (internal) | Main database           |
+| Redis              | 6379  | localhost:6379 (internal) | Cache/sessions          |
+| Qdrant             | 6333  | http://localhost:6333     | Vector database         |
+| Prometheus         | 9090  | http://localhost:9090     | Metrics                 |
+| Grafana            | 3000  | http://localhost:3000     | Dashboards              |
+| Jaeger UI          | 16686 | http://localhost:16686    | Tracing UI              |
+| Loki               | 3100  | http://localhost:3100     | Log aggregation         |
 
 ## Database Management
 
@@ -604,17 +618,20 @@ docker system prune -a --volumes
 ### Integration Issues
 
 **OIDC not working:**
+
 1. Verify NEXTCLOUD_CLIENT_ID and NEXTCLOUD_CLIENT_SECRET in .env
 2. Check Nextcloud OIDC app is enabled
 3. Verify NEXTCLOUD_REDIRECT_URI matches in both systems
 4. Check logs: `docker compose logs -f auth-service`
 
 **WebDAV not accessible:**
+
 1. Verify user credentials
 2. Check NEXTCLOUD_WEBDAV_URL is correct
 3. Test with curl: `curl -u admin:password http://localhost:8080/remote.php/dav/`
 
 **CalDAV issues:**
+
 1. Verify calendar exists in Nextcloud
 2. Check NEXTCLOUD_CALDAV_URL
 3. Test calendar access through Nextcloud web UI first
@@ -696,9 +713,9 @@ services:
   api-gateway:
     build: ./services/api-gateway
     volumes:
-      - ./services/api-gateway:/app  # Hot reload
+      - ./services/api-gateway:/app # Hot reload
     environment:
-      - RELOAD=true  # FastAPI --reload
+      - RELOAD=true # FastAPI --reload
 ```
 
 ### 6. Test Before Committing
@@ -728,6 +745,7 @@ docker compose build
 ### VS Code
 
 **Extensions:**
+
 - Docker
 - Python
 - Pylance

@@ -1,3 +1,15 @@
+---
+title: "Architecture V2"
+slug: "architecture-v2"
+summary: "VoiceAssist V2 is an **enterprise-grade, HIPAA-compliant, multi-user medical AI assistant** designed to support hundreds of concurrent users with high..."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["architecture"]
+---
+
 # VoiceAssist Architecture V2 - Enterprise Microservices
 
 ## System Overview
@@ -76,12 +88,14 @@ VoiceAssist V2 is an **enterprise-grade, HIPAA-compliant, multi-user medical AI 
 ### Key Architecture Principles
 
 **1. Nextcloud Separation**
+
 - Nextcloud runs as a **completely separate stack**
 - Local Development: `~/Nextcloud-Dev/docker-compose.yml`
 - Production: Separate deployment (existing server or dedicated cluster)
 - VoiceAssist integrates via standard APIs (OIDC, WebDAV, CalDAV, CardDAV)
 
 **2. Integration Pattern**
+
 - VoiceAssist services are **clients** of Nextcloud
 - Communication via HTTP/HTTPS APIs
 - No shared Docker Compose project
@@ -89,11 +103,13 @@ VoiceAssist V2 is an **enterprise-grade, HIPAA-compliant, multi-user medical AI 
 - Environment variables configure the connection
 
 **3. Deployment Independence**
+
 - Nextcloud can be updated/restarted without affecting VoiceAssist
 - VoiceAssist can be updated/restarted without affecting Nextcloud
 - Separate monitoring and logging (though can be aggregated)
 
 **Authentication Flow:**
+
 ```
 User → Browser → Nextcloud Login (OIDC) → JWT Token → VoiceAssist Services
 ```
@@ -118,78 +134,80 @@ MacBook Pro
 
     Running at: http://localhost:8000 (API Gateway)
 ```
+
 ┌──────────────────────────┴──────────────────────────────────────┐
-│                    API Gateway (Kong/Nginx)                      │
-│             Rate Limiting │ Auth │ Routing │ Logging            │
-│                                                                   │
-│   NOTE: Phases 0-10 - No separate gateway, FastAPI handles all  │
-│         Phases 11-14 - Extract to Kong/Nginx for microservices  │
+│ API Gateway (Kong/Nginx) │
+│ Rate Limiting │ Auth │ Routing │ Logging │
+│ │
+│ NOTE: Phases 0-10 - No separate gateway, FastAPI handles all │
+│ Phases 11-14 - Extract to Kong/Nginx for microservices │
 └──────────────────────────┬──────────────────────────────────────┘
-                           │
+│
 ┌──────────────────────────┴──────────────────────────────────────┐
-│                  Service Mesh (Linkerd/Istio)                    │
-│         mTLS │ Service Discovery │ Load Balancing │ Policies    │
-│                                                                   │
-│   NOTE: Phases 0-10 - Not needed (single app)                   │
-│         Phases 11-14 - Add for microservices security           │
-│                                                                   │
-│  ┌─────────────────┬─────────────────┬─────────────────────┐   │
-│  │  Voice Proxy    │  Medical KB     │  Admin API          │   │
-│  │  Service        │  Service        │  Service            │   │
-│  │  - WebRTC/WS    │  - RAG Engine   │  - Config Mgmt      │   │
-│  │  - OpenAI API   │  - Orchestrator │  - User Mgmt        │   │
-│  │  - VAD/AEC      │  - Embeddings   │  - Analytics        │   │
-│  │  - Context      │  - PubMed       │  - RBAC             │   │
-│  └─────────────────┴─────────────────┴─────────────────────┘   │
-│                                                                   │
-│   Phases 0-10: Logical services (modules/routers in server/)    │
-│   Phases 11-14: Physical services (separate containers)         │
-│                                                                   │
-│  ┌─────────────────┬─────────────────┬─────────────────────┐   │
-│  │  Auth Service   │  File Indexer   │  Calendar/Email     │   │
-│  │  - JWT          │  - Local Files  │  Service            │   │
-│  │  - MFA          │  - Nextcloud    │  - CalDAV           │   │
-│  │  - RBAC         │  - Auto-index   │  - IMAP/SMTP        │   │
-│  └─────────────────┴─────────────────┴─────────────────────┘   │
-│                                                                   │
-│  ┌─────────────────┬─────────────────┬─────────────────────┐   │
-│  │  Guideline      │  Medical Calc   │  PHI Detection      │   │
-│  │  Scraper        │  Service        │  Service            │   │
-│  │  - CDC/WHO      │  - Wells/GRACE  │  - Redaction        │   │
-│  │  - Auto-update  │  - Renal Dosing │  - Classification   │   │
-│  └─────────────────┴─────────────────┴─────────────────────┘   │
+│ Service Mesh (Linkerd/Istio) │
+│ mTLS │ Service Discovery │ Load Balancing │ Policies │
+│ │
+│ NOTE: Phases 0-10 - Not needed (single app) │
+│ Phases 11-14 - Add for microservices security │
+│ │
+│ ┌─────────────────┬─────────────────┬─────────────────────┐ │
+│ │ Voice Proxy │ Medical KB │ Admin API │ │
+│ │ Service │ Service │ Service │ │
+│ │ - WebRTC/WS │ - RAG Engine │ - Config Mgmt │ │
+│ │ - OpenAI API │ - Orchestrator │ - User Mgmt │ │
+│ │ - VAD/AEC │ - Embeddings │ - Analytics │ │
+│ │ - Context │ - PubMed │ - RBAC │ │
+│ └─────────────────┴─────────────────┴─────────────────────┘ │
+│ │
+│ Phases 0-10: Logical services (modules/routers in server/) │
+│ Phases 11-14: Physical services (separate containers) │
+│ │
+│ ┌─────────────────┬─────────────────┬─────────────────────┐ │
+│ │ Auth Service │ File Indexer │ Calendar/Email │ │
+│ │ - JWT │ - Local Files │ Service │ │
+│ │ - MFA │ - Nextcloud │ - CalDAV │ │
+│ │ - RBAC │ - Auto-index │ - IMAP/SMTP │ │
+│ └─────────────────┴─────────────────┴─────────────────────┘ │
+│ │
+│ ┌─────────────────┬─────────────────┬─────────────────────┐ │
+│ │ Guideline │ Medical Calc │ PHI Detection │ │
+│ │ Scraper │ Service │ Service │ │
+│ │ - CDC/WHO │ - Wells/GRACE │ - Redaction │ │
+│ │ - Auto-update │ - Renal Dosing │ - Classification │ │
+│ └─────────────────┴─────────────────┴─────────────────────┘ │
 └───────────────────────────┬───────────────────────────────────┘
-                            │
+│
 ┌───────────────────────────┴───────────────────────────────────┐
-│                      Data Layer (Kubernetes)                   │
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐ │
-│  │  PostgreSQL Cluster (Primary + Replicas)                 │ │
-│  │  - Users, Conversations, Documents                       │ │
-│  │  - pgvector extension                                    │ │
-│  │  - Encrypted at rest                                     │ │
-│  └──────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐ │
-│  │  Redis Cluster (Master-Slave)                            │ │
-│  │  - Sessions, Caching                                     │ │
-│  │  - Pub/Sub for real-time                                 │ │
-│  └──────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐ │
-│  │  Qdrant (Vector Database)                                │ │
-│  │  - Medical knowledge embeddings                          │ │
-│  │  - Replicated for HA                                     │ │
-│  └──────────────────────────────────────────────────────────┘ │
+│ Data Layer (Kubernetes) │
+│ │
+│ ┌──────────────────────────────────────────────────────────┐ │
+│ │ PostgreSQL Cluster (Primary + Replicas) │ │
+│ │ - Users, Conversations, Documents │ │
+│ │ - pgvector extension │ │
+│ │ - Encrypted at rest │ │
+│ └──────────────────────────────────────────────────────────┘ │
+│ │
+│ ┌──────────────────────────────────────────────────────────┐ │
+│ │ Redis Cluster (Master-Slave) │ │
+│ │ - Sessions, Caching │ │
+│ │ - Pub/Sub for real-time │ │
+│ └──────────────────────────────────────────────────────────┘ │
+│ │
+│ ┌──────────────────────────────────────────────────────────┐ │
+│ │ Qdrant (Vector Database) │ │
+│ │ - Medical knowledge embeddings │ │
+│ │ - Replicated for HA │ │
+│ └──────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
-                            │
+│
 ┌───────────────────────────┴───────────────────────────────────┐
-│                 Observability Stack                            │
-│  ┌───────────┬───────────┬───────────┬──────────────────┐    │
-│  │Prometheus │  Grafana  │  Jaeger   │  Loki (Logs)     │    │
-│  │(Metrics)  │(Dashboard)│ (Traces)  │  AlertManager    │    │
-│  └───────────┴───────────┴───────────┴──────────────────┘    │
+│ Observability Stack │
+│ ┌───────────┬───────────┬───────────┬──────────────────┐ │
+│ │Prometheus │ Grafana │ Jaeger │ Loki (Logs) │ │
+│ │(Metrics) │(Dashboard)│ (Traces) │ AlertManager │ │
+│ └───────────┴───────────┴───────────┴──────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
+
 ```
 
 ## Key Architectural Decisions
@@ -307,27 +325,33 @@ The backend uses a **monorepo-first, microservices-ready** architecture:
 
 **Local Development:**
 ```
-~/Nextcloud-Dev/                         ~/VoiceAssist/
-├── docker-compose.yml                   ├── docker-compose.yml
-│   └── nextcloud service                │   └── voiceassist services
-│   └── postgres (for Nextcloud)         │   └── postgres (for VoiceAssist)
-│                                        │
-│ Port: 8080                             │ Port: 8000 (API Gateway)
-│                                        │
-│ VoiceAssist connects via:              │
+
+~/Nextcloud-Dev/ ~/VoiceAssist/
+├── docker-compose.yml ├── docker-compose.yml
+│ └── nextcloud service │ └── voiceassist services
+│ └── postgres (for Nextcloud) │ └── postgres (for VoiceAssist)
+│ │
+│ Port: 8080 │ Port: 8000 (API Gateway)
+│ │
+│ VoiceAssist connects via: │
 │ NEXTCLOUD_BASE_URL=http://localhost:8080
+
 ```
 
 **Production:**
 ```
-Nextcloud (Separate Server/Cluster)     VoiceAssist (This System)
-- cloud.asimo.io                         - voiceassist.asimo.io
-- Managed independently                  - Connects via HTTPS
-- Can be existing NC installation        - Environment: NEXTCLOUD_BASE_URL=https://cloud.asimo.io
+
+Nextcloud (Separate Server/Cluster) VoiceAssist (This System)
+
+- cloud.asimo.io - voiceassist.asimo.io
+- Managed independently - Connects via HTTPS
+- Can be existing NC installation - Environment: NEXTCLOUD_BASE_URL=https://cloud.asimo.io
+
 ```
 
 **Authentication Flow:**
 ```
+
 1. User → https://voiceassist.asimo.io
 2. Redirect → Nextcloud OIDC (cloud.asimo.io/apps/oidc)
 3. User logs in to Nextcloud (MFA if enabled)
@@ -335,7 +359,8 @@ Nextcloud (Separate Server/Cluster)     VoiceAssist (This System)
 5. VoiceAssist exchanges code for JWT token
 6. VoiceAssist validates token and creates session
 7. User accesses VoiceAssist with valid session
-```
+
+````
 
 **Integration Method:**
 - **NOT** via shared Docker Compose project
@@ -360,11 +385,12 @@ NEXTCLOUD_CARDDAV_URL=${NEXTCLOUD_BASE_URL}/remote.php/dav/addressbooks
 # Admin credentials (for service account operations)
 NEXTCLOUD_ADMIN_USER=admin
 NEXTCLOUD_ADMIN_PASSWORD=secure_password
-```
+````
 
 ### 5. Zero-Trust Security Model
 
 **Principles:**
+
 - Never trust, always verify
 - Assume breach
 - Verify explicitly
@@ -372,6 +398,7 @@ NEXTCLOUD_ADMIN_PASSWORD=secure_password
 - Segment access
 
 **Implementation:**
+
 - **mTLS** for all inter-service communication
 - **Short-lived JWT tokens** (5-15 minutes)
 - **Token refresh** mechanism
@@ -383,6 +410,7 @@ NEXTCLOUD_ADMIN_PASSWORD=secure_password
 ### 6. HIPAA Compliance
 
 **Key Requirements:**
+
 - **Encryption in transit** - TLS 1.2+, mTLS
 - **Encryption at rest** - Database encryption, encrypted backups
 - **Access controls** - RBAC, MFA, audit logs
@@ -394,21 +422,25 @@ NEXTCLOUD_ADMIN_PASSWORD=secure_password
 ### 7. High Availability Design
 
 **Database Layer:**
+
 - PostgreSQL primary with streaming replication
 - Read replicas for load distribution
 - Automatic failover
 
 **Application Layer:**
+
 - Multiple replicas per service (min 2 in production)
 - Load balancing across replicas
 - Health checks and auto-restart
 
 **Network Layer:**
+
 - Multiple availability zones (if cloud)
 - Load balancer with health checks
 - DNS failover
 
 **Target SLAs:**
+
 - **Availability:** 99.9% (8.76 hours downtime/year)
 - **Latency:** <500ms for voice activation, <2s for chat
 - **Throughput:** Support 500+ concurrent users
@@ -555,12 +587,14 @@ allow {
 ### Metrics (Prometheus)
 
 **System Metrics:**
+
 - CPU, memory, disk, network per pod
 - Request rate, latency, error rate per service
 - Database connections, query latency
 - Cache hit rate
 
 **Business Metrics:**
+
 - Active users
 - Voice sessions
 - Queries per minute
@@ -570,6 +604,7 @@ allow {
 ### Distributed Tracing (Jaeger)
 
 **Trace Example: Voice Query**
+
 ```
 Span 1: Voice Proxy receives audio (10ms)
   Span 2: OpenAI Realtime API call (300ms)
@@ -583,6 +618,7 @@ Total: 480ms
 ### Logging (Loki)
 
 **Log Levels:**
+
 - DEBUG - Development only
 - INFO - Normal operations
 - WARN - Potential issues
@@ -590,6 +626,7 @@ Total: 480ms
 - CRITICAL - Service failures
 
 **Log Redaction:**
+
 ```python
 # Automatically redact PHI
 log.info(f"Processing request for user {redact_phi(user_id)}")
@@ -599,6 +636,7 @@ log.info(f"Processing request for user {redact_phi(user_id)}")
 ### Alerting (AlertManager)
 
 **Alert Rules:**
+
 - Service down > 1 minute
 - Error rate > 5%
 - Voice latency > 1 second (p95)
@@ -624,18 +662,18 @@ spec:
   minReplicas: 2
   maxReplicas: 10
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
 ```
 
 ### Database Scaling
@@ -653,21 +691,21 @@ spec:
 
 ## Technology Stack Summary
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Orchestration** | Kubernetes (K3s locally) | Container orchestration |
-| **Service Mesh** | Linkerd | mTLS, observability, traffic management |
-| **Identity** | Nextcloud + Keycloak | SSO, user management |
-| **API Gateway** | Kong or Nginx | Routing, rate limiting, auth |
-| **Backend** | Python FastAPI | Microservices |
-| **Frontend** | React + TypeScript | Web apps |
-| **Databases** | PostgreSQL (pgvector), Redis, Qdrant | Data persistence, caching, vectors |
-| **AI/ML** | OpenAI, BioGPT, PubMedBERT | LLM, medical models |
-| **Voice** | OpenAI Realtime API, WebRTC | Voice interaction |
-| **Observability** | Prometheus, Grafana, Jaeger, Loki | Monitoring, metrics, tracing, logging |
-| **IaC** | Terraform, Ansible | Infrastructure automation |
-| **CI/CD** | GitHub Actions | Automated testing and deployment |
-| **Security** | Let's Encrypt, OPA, mTLS | SSL, authorization, encryption |
+| Layer             | Technology                           | Purpose                                 |
+| ----------------- | ------------------------------------ | --------------------------------------- |
+| **Orchestration** | Kubernetes (K3s locally)             | Container orchestration                 |
+| **Service Mesh**  | Linkerd                              | mTLS, observability, traffic management |
+| **Identity**      | Nextcloud + Keycloak                 | SSO, user management                    |
+| **API Gateway**   | Kong or Nginx                        | Routing, rate limiting, auth            |
+| **Backend**       | Python FastAPI                       | Microservices                           |
+| **Frontend**      | React + TypeScript                   | Web apps                                |
+| **Databases**     | PostgreSQL (pgvector), Redis, Qdrant | Data persistence, caching, vectors      |
+| **AI/ML**         | OpenAI, BioGPT, PubMedBERT           | LLM, medical models                     |
+| **Voice**         | OpenAI Realtime API, WebRTC          | Voice interaction                       |
+| **Observability** | Prometheus, Grafana, Jaeger, Loki    | Monitoring, metrics, tracing, logging   |
+| **IaC**           | Terraform, Ansible                   | Infrastructure automation               |
+| **CI/CD**         | GitHub Actions                       | Automated testing and deployment        |
+| **Security**      | Let's Encrypt, OPA, mTLS             | SSL, authorization, encryption          |
 
 ## Deployment Architecture
 

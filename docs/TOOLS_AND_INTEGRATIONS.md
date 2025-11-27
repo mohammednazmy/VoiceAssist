@@ -1,3 +1,15 @@
+---
+title: "Tools And Integrations"
+slug: "tools-and-integrations"
+summary: "**Last Updated**: 2025-11-20"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["tools", "and", "integrations"]
+---
+
 # VoiceAssist V2 - Tools and Integrations
 
 **Last Updated**: 2025-11-20
@@ -169,6 +181,7 @@ class ToolDefinition(BaseModel):
 **Risk Level**: `low`
 
 **Arguments**:
+
 ```python
 class GetCalendarEventsArgs(BaseModel):
     start_date: str  # ISO 8601 format (YYYY-MM-DD)
@@ -178,6 +191,7 @@ class GetCalendarEventsArgs(BaseModel):
 ```
 
 **Returns**:
+
 ```python
 class CalendarEvent(BaseModel):
     id: str
@@ -196,6 +210,7 @@ class GetCalendarEventsResult(BaseModel):
 ```
 
 **Example Call**:
+
 ```json
 {
   "tool": "get_calendar_events",
@@ -225,6 +240,7 @@ class GetCalendarEventsResult(BaseModel):
 **Risk Level**: `medium`
 
 **Arguments**:
+
 ```python
 class CreateCalendarEventArgs(BaseModel):
     title: str
@@ -237,6 +253,7 @@ class CreateCalendarEventArgs(BaseModel):
 ```
 
 **Returns**:
+
 ```python
 class CreateCalendarEventResult(BaseModel):
     event_id: str
@@ -248,6 +265,7 @@ class CreateCalendarEventResult(BaseModel):
 ```
 
 **Confirmation Prompt**:
+
 ```
 "I'd like to create a calendar event:
 - Title: {title}
@@ -277,6 +295,7 @@ Should I proceed?"
 **Risk Level**: `low`
 
 **Arguments**:
+
 ```python
 class SearchNextcloudFilesArgs(BaseModel):
     query: str  # Search query
@@ -286,6 +305,7 @@ class SearchNextcloudFilesArgs(BaseModel):
 ```
 
 **Returns**:
+
 ```python
 class NextcloudFile(BaseModel):
     file_id: str
@@ -303,6 +323,7 @@ class SearchNextcloudFilesResult(BaseModel):
 ```
 
 **Example Call**:
+
 ```json
 {
   "tool": "search_nextcloud_files",
@@ -333,6 +354,7 @@ class SearchNextcloudFilesResult(BaseModel):
 **Risk Level**: `low`
 
 **Arguments**:
+
 ```python
 class RetrieveNextcloudFileArgs(BaseModel):
     file_id: str  # File ID from search results
@@ -341,6 +363,7 @@ class RetrieveNextcloudFileArgs(BaseModel):
 ```
 
 **Returns**:
+
 ```python
 class RetrieveNextcloudFileResult(BaseModel):
     file_id: str
@@ -371,6 +394,7 @@ class RetrieveNextcloudFileResult(BaseModel):
 **Risk Level**: `low`
 
 **Arguments**:
+
 ```python
 class SearchOpenEvidenceArgs(BaseModel):
     query: str  # Medical question
@@ -379,6 +403,7 @@ class SearchOpenEvidenceArgs(BaseModel):
 ```
 
 **Returns**:
+
 ```python
 class OpenEvidenceResult(BaseModel):
     title: str
@@ -396,6 +421,7 @@ class SearchOpenEvidenceResponse(BaseModel):
 ```
 
 **Example Call**:
+
 ```json
 {
   "tool": "search_openevidence",
@@ -425,6 +451,7 @@ class SearchOpenEvidenceResponse(BaseModel):
 **Risk Level**: `low`
 
 **Arguments**:
+
 ```python
 class SearchPubMedArgs(BaseModel):
     query: str  # PubMed search query
@@ -435,6 +462,7 @@ class SearchPubMedArgs(BaseModel):
 ```
 
 **Returns**:
+
 ```python
 class PubMedArticle(BaseModel):
     pmid: str
@@ -471,6 +499,7 @@ class SearchPubMedResult(BaseModel):
 **Risk Level**: `medium` (results used for clinical decisions)
 
 **Arguments**:
+
 ```python
 class CalculateMedicalScoreArgs(BaseModel):
     calculator_name: str  # "wells_dvt", "chadsvasc", "grace", "renal_dosing"
@@ -478,6 +507,7 @@ class CalculateMedicalScoreArgs(BaseModel):
 ```
 
 **Returns**:
+
 ```python
 class MedicalScoreResult(BaseModel):
     calculator_name: str
@@ -489,6 +519,7 @@ class MedicalScoreResult(BaseModel):
 ```
 
 **Example Call** (Wells' DVT Score):
+
 ```json
 {
   "tool": "calculate_medical_score",
@@ -510,6 +541,7 @@ class MedicalScoreResult(BaseModel):
 ```
 
 **Example Result**:
+
 ```json
 {
   "calculator_name": "wells_dvt",
@@ -525,6 +557,7 @@ class MedicalScoreResult(BaseModel):
 ```
 
 **Supported Calculators**:
+
 - `wells_dvt`: Wells' Criteria for DVT
 - `wells_pe`: Wells' Criteria for Pulmonary Embolism
 - `chadsvasc`: CHA2DS2-VASc Score (stroke risk in AFib)
@@ -553,6 +586,7 @@ class MedicalScoreResult(BaseModel):
 **Risk Level**: `low`
 
 **Arguments**:
+
 ```python
 class SearchMedicalGuidelinesArgs(BaseModel):
     query: str  # Search query
@@ -562,6 +596,7 @@ class SearchMedicalGuidelinesArgs(BaseModel):
 ```
 
 **Returns**:
+
 ```python
 class MedicalGuideline(BaseModel):
     id: str
@@ -598,6 +633,7 @@ class SearchMedicalGuidelinesResult(BaseModel):
 **Risk Level**: `medium` (clinical decision support)
 
 **Arguments**:
+
 ```python
 class GenerateDifferentialDiagnosisArgs(BaseModel):
     chief_complaint: str
@@ -609,6 +645,7 @@ class GenerateDifferentialDiagnosisArgs(BaseModel):
 ```
 
 **Returns**:
+
 ```python
 class DiagnosisCandidate(BaseModel):
     diagnosis: str
@@ -628,24 +665,16 @@ class GenerateDifferentialDiagnosisResult(BaseModel):
 ```
 
 **Example Call**:
+
 ```json
 {
   "tool": "generate_differential_diagnosis",
   "arguments": {
     "chief_complaint": "chest pain",
-    "symptoms": [
-      "substernal chest pressure",
-      "shortness of breath",
-      "diaphoresis",
-      "pain radiating to left arm"
-    ],
+    "symptoms": ["substernal chest pressure", "shortness of breath", "diaphoresis", "pain radiating to left arm"],
     "patient_age": 65,
     "patient_sex": "M",
-    "relevant_history": [
-      "hypertension",
-      "diabetes",
-      "smoking history"
-    ],
+    "relevant_history": ["hypertension", "diabetes", "smoking history"],
     "max_results": 5
   }
 }
@@ -670,6 +699,7 @@ class GenerateDifferentialDiagnosisResult(BaseModel):
 **Risk Level**: `low`
 
 **Arguments**:
+
 ```python
 class WebSearchMedicalArgs(BaseModel):
     query: str
@@ -678,6 +708,7 @@ class WebSearchMedicalArgs(BaseModel):
 ```
 
 **Returns**:
+
 ```python
 class WebSearchResult(BaseModel):
     title: str
@@ -701,24 +732,28 @@ class WebSearchMedicalResponse(BaseModel):
 ### PHI Handling Rules
 
 **Tools with `requires_phi: true`:**
+
 - Calendar tools (patient appointments)
 - Nextcloud file tools (may contain patient documents)
 - Medical calculators (patient data)
 - Differential diagnosis (patient symptoms)
 
 **Security Requirements:**
+
 - Must not send PHI to external APIs
 - Must run locally or use HIPAA-compliant services
 - Must log tool calls with PHI flag
 - Must redact PHI from error messages
 
 **Tools with `requires_phi: false`:**
+
 - OpenEvidence search
 - PubMed search
 - Medical guidelines search
 - Web search
 
 **Security Requirements:**
+
 - Safe to call external APIs
 - No PHI in query parameters
 - Rate limiting to prevent abuse
@@ -726,10 +761,12 @@ class WebSearchMedicalResponse(BaseModel):
 ### Confirmation Requirements
 
 **Tools requiring user confirmation (`requires_confirmation: true`):**
+
 - `create_calendar_event`: Creates data
 - Any tool that modifies state
 
 **Confirmation Flow:**
+
 1. Tool call received from OpenAI
 2. Orchestrator detects `requires_confirmation: true`
 3. Send confirmation request to frontend
@@ -740,6 +777,7 @@ class WebSearchMedicalResponse(BaseModel):
 ### Rate Limiting
 
 **Per-Tool Rate Limits:**
+
 - Calendar tools: 10 calls/minute
 - File tools: 20 calls/minute
 - Medical search tools: 30 calls/minute
@@ -750,12 +788,14 @@ class WebSearchMedicalResponse(BaseModel):
 ### Input Validation
 
 **All tool arguments validated with Pydantic:**
+
 - Type checking
 - Range validation
 - Format validation (dates, enums)
 - Length limits (prevent injection attacks)
 
 **Example Validation:**
+
 ```python
 class GetCalendarEventsArgs(BaseModel):
     start_date: str = Field(..., regex=r'^\d{4}-\d{2}-\d{2}$')
@@ -886,6 +926,7 @@ def tool_result_to_citation(tool_result: ToolResult) -> List[Citation]:
 ```
 
 **Citation Display in Frontend:**
+
 - Show tool name as citation source
 - Link to external URLs if available
 - Display metadata (e.g., evidence level, date)
@@ -976,6 +1017,7 @@ export function ToolActivityIndicator({ activeTool }: { activeTool: string | nul
 ### Prometheus Metrics
 
 **Tool Invocation Metrics:**
+
 ```python
 tool_calls_total = Counter(
     'voiceassist_tool_calls_total',
@@ -1003,6 +1045,7 @@ tool_error_rate = Gauge(
 ```
 
 **Example Dashboard Panel:**
+
 ```
 Tool Call Rate (calls/minute)
 - get_calendar_events: 15/min
@@ -1042,6 +1085,7 @@ logger.info(
 ```
 
 **PHI Redaction:**
+
 - Never log file contents
 - Never log patient names, MRNs
 - Hash user identifiers
@@ -1050,6 +1094,7 @@ logger.info(
 ### Audit Logging
 
 **All tool calls logged to `audit_logs` table:**
+
 ```sql
 INSERT INTO audit_logs (
   user_id,
@@ -1081,6 +1126,7 @@ INSERT INTO audit_logs (
 ### Error Types
 
 **1. Validation Errors** (400 Bad Request)
+
 ```python
 {
   "error": "validation_error",
@@ -1092,6 +1138,7 @@ INSERT INTO audit_logs (
 ```
 
 **2. Permission Errors** (403 Forbidden)
+
 ```python
 {
   "error": "permission_denied",
@@ -1100,6 +1147,7 @@ INSERT INTO audit_logs (
 ```
 
 **3. Rate Limit Errors** (429 Too Many Requests)
+
 ```python
 {
   "error": "rate_limit_exceeded",
@@ -1113,6 +1161,7 @@ INSERT INTO audit_logs (
 ```
 
 **4. External API Errors** (502 Bad Gateway)
+
 ```python
 {
   "error": "external_api_error",
@@ -1125,6 +1174,7 @@ INSERT INTO audit_logs (
 ```
 
 **5. Timeout Errors** (504 Gateway Timeout)
+
 ```python
 {
   "error": "timeout",
@@ -1135,11 +1185,13 @@ INSERT INTO audit_logs (
 ### Error Recovery
 
 **Retry Strategy:**
+
 - Transient errors (5xx): Retry up to 3 times with exponential backoff
 - Rate limits: Wait and retry after `retry_after` seconds
 - Validation errors: Do not retry (client error)
 
 **Fallback Behavior:**
+
 - If external API fails, fall back to local knowledge base
 - If tool times out, return partial results if available
 - If confirmation denied, inform AI model gracefully
@@ -1214,6 +1266,7 @@ class MockCalendarTool:
 ### Admin Panel Testing UI
 
 **Feature: Test Tool Calls**
+
 - Dropdown to select tool
 - Form to enter arguments (JSON editor)
 - "Execute Tool" button

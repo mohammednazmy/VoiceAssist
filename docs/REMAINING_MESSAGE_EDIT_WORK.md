@@ -1,3 +1,15 @@
+---
+title: "Remaining Message Edit Work"
+slug: "remaining-message-edit-work"
+summary: "**Created:** 2025-11-23"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["remaining", "message", "edit", "work"]
+---
+
 # Message Editing & Regeneration - Remaining Implementation
 
 **Created:** 2025-11-23

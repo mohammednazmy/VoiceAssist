@@ -1,3 +1,15 @@
+---
+title: "Readme"
+slug: "readme"
+summary: "**Last Updated**: 2025-11-27"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["readme"]
+---
+
 # VoiceAssist V2 Documentation Index
 
 **Last Updated**: 2025-11-27

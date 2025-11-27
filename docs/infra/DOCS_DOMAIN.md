@@ -1,3 +1,15 @@
+---
+title: "Docs Domain"
+slug: "infra/docs-domain"
+summary: "- **Primary:** `docs.asimo.io` (served via Apache2 reverse proxy → Next.js app on port 3001)"
+status: stable
+stability: production
+owner: infra
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["docs", "domain"]
+---
+
 # Documentation Site Deployment & DNS
 
 ## Canonical Domain

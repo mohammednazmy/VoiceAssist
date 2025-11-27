@@ -1,3 +1,15 @@
+---
+title: "Deployment Summary Asimo"
+slug: "deployment-summary-asimo"
+summary: "**Deployment Date:** 2025-11-22 (Initial) / 2025-11-23 (Final Configuration)"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["devops", "sre"]
+tags: ["deployment", "summary", "asimo"]
+---
+
 # VoiceAssist Production Deployment Summary - asimo.io
 
 **Deployment Date:** 2025-11-22 (Initial) / 2025-11-23 (Final Configuration)
@@ -242,6 +254,7 @@ ALLOWED_ORIGINS=https://assist.asimo.io,https://assist1.asimo.io,https://admin.a
 ```
 
 **Important Notes:**
+
 - Each origin must be comma-separated with no spaces
 - Include all subdomains that will make API requests
 - Missing an origin will cause CORS preflight failures in the browser

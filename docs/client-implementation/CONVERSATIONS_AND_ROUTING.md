@@ -1,3 +1,15 @@
+---
+title: "Conversations And Routing"
+slug: "client-implementation/conversations-and-routing"
+summary: "This document describes the conversation management and routing system in VoiceAssist. It covers URL patterns, navigation behavior, conversation lifec..."
+status: stable
+stability: production
+owner: frontend
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["conversations", "and", "routing"]
+---
+
 # Conversations and Routing
 
 ## Overview
@@ -29,20 +41,23 @@ This document describes the conversation management and routing system in VoiceA
 **Scenario:** User navigates to `/chat` with no conversation ID
 
 **Behavior:**
+
 1. ChatPage extracts `conversationId` from URL params → `undefined`
 2. System automatically creates new conversation:
    ```typescript
-   const newConversation = await apiClient.createConversation('New Conversation');
+   const newConversation = await apiClient.createConversation("New Conversation");
    ```
 3. Redirects to `/chat/:conversationId` with `replace: true` (no back button to `/chat`)
 4. WebSocket connects with new conversation ID
 
 **Loading States:**
+
 - `creating` → Shows "Creating conversation..." spinner
 - Success → Redirect to new conversation
 - Error → Shows error state with retry button
 
 **Example Flow:**
+
 ```
 User → /chat
        ↓
@@ -62,6 +77,7 @@ User → /chat
 **Scenario:** User navigates directly to a specific conversation (via link, bookmark, or conversation list)
 
 **Behavior:**
+
 1. ChatPage extracts `conversationId` from URL params
 2. System validates conversation exists:
    ```typescript
@@ -80,12 +96,14 @@ User → /chat
    - Provides "Try Again" button → reloads page
 
 **Loading States:**
+
 - `validating` → Shows "Loading conversation..." spinner
 - `loading-history` → Continues showing spinner
 - Success → Renders chat interface
 - Error → Shows error page
 
 **Example Flow (Valid Conversation):**
+
 ```
 User → /chat/abc123
        ↓
@@ -101,6 +119,7 @@ User → /chat/abc123
 ```
 
 **Example Flow (Invalid Conversation):**
+
 ```
 User → /chat/invalid-id
        ↓
@@ -122,6 +141,7 @@ User → /chat/invalid-id
 **Scenario:** User clicks a different conversation in the sidebar while viewing another conversation
 
 **Behavior:**
+
 1. ConversationListItem onClick triggers:
    ```typescript
    navigate(`/chat/${conversation.id}`);
@@ -140,6 +160,7 @@ User → /chat/invalid-id
 7. New WebSocket connects
 
 **State Transitions:**
+
 ```
 Conversation A (active)
        ↓
@@ -165,13 +186,14 @@ Conversation A (active)
 ```
 
 **Critical Cleanup:**
+
 ```typescript
 // In useChatSession.ts
 useEffect(() => {
-  connect();  // Establishes WebSocket connection
+  connect(); // Establishes WebSocket connection
 
   return () => {
-    disconnect();  // Cleanup: disconnect when conversationId changes
+    disconnect(); // Cleanup: disconnect when conversationId changes
   };
 }, [connect, disconnect]);
 
@@ -194,11 +216,13 @@ useEffect(() => {
 **Scenario:** User uses browser back/forward buttons
 
 **Behavior:**
+
 - URL changes trigger conversation switch (same as clicking in sidebar)
 - History stack properly maintained
 - No duplicate conversations in history (due to `replace: true` on auto-create)
 
 **Example:**
+
 ```
 1. User lands on /chat → Creates conv A → /chat/A
 2. User creates new → /chat/B
@@ -215,6 +239,7 @@ useEffect(() => {
 **Trigger:** User clicks "New Conversation" button in ConversationList
 
 **Flow:**
+
 ```typescript
 1. ConversationList.handleCreateNew()
        ↓
@@ -230,6 +255,7 @@ useEffect(() => {
 ```
 
 **Result:**
+
 - New conversation appears at top of list
 - User navigated to new conversation
 - Old conversation remains in history
@@ -241,6 +267,7 @@ useEffect(() => {
 **Trigger:** User clicks Delete in conversation menu, confirms in dialog
 
 **Flow:**
+
 ```typescript
 1. ConversationListItem.handleDelete()
        ↓
@@ -255,6 +282,7 @@ useEffect(() => {
 ```
 
 **Edge Cases:**
+
 - If user deletes the currently active conversation:
   - Navigates to `/chat` (triggers auto-create)
   - Prevents user from staying on deleted conversation
@@ -269,6 +297,7 @@ useEffect(() => {
 **Trigger:** User clicks Archive in conversation menu
 
 **Flow:**
+
 ```typescript
 1. ConversationListItem.handleArchive()
        ↓
@@ -283,6 +312,7 @@ useEffect(() => {
 ```
 
 **Behavior:**
+
 - Same as delete, but conversation still accessible via URL
 - Archived conversations hidden from main list
 - Can be shown with `ConversationList showArchived={true}`
@@ -294,6 +324,7 @@ useEffect(() => {
 **Trigger:** User clicks Rename, edits title, presses Enter or clicks outside
 
 **Flow:**
+
 ```typescript
 1. ConversationListItem enters edit mode (isEditing = true)
        ↓
@@ -309,6 +340,7 @@ useEffect(() => {
 ```
 
 **No Navigation:**
+
 - Rename is purely a metadata update
 - No URL change or conversation reload
 - Title updates in sidebar and chat header
@@ -353,12 +385,14 @@ MainLayout
 ### State Synchronization
 
 **Conversation List ↔ ChatPage:**
+
 - No direct state sharing (decoupled)
 - Both read from same API endpoints
 - URL param (`conversationId`) is source of truth for active conversation
 - List highlights active conversation by comparing `conversation.id === conversationId`
 
 **Initial Messages ↔ WebSocket Messages:**
+
 ```typescript
 // In useChatSession.ts
 const [messages, setMessages] = useState<Message[]>(initialMessages);
@@ -383,10 +417,10 @@ case 'delta':
 
 ```typescript
 type ErrorType =
-  | 'not-found'       // 404: Conversation doesn't exist
-  | 'failed-create'   // Couldn't create new conversation
-  | 'failed-load'     // Network error loading conversation
-  | 'websocket'       // WebSocket connection/message errors
+  | "not-found" // 404: Conversation doesn't exist
+  | "failed-create" // Couldn't create new conversation
+  | "failed-load" // Network error loading conversation
+  | "websocket" // WebSocket connection/message errors
   | null;
 ```
 
@@ -407,6 +441,7 @@ type ErrorType =
 ```
 
 **Actions:**
+
 - "Back to Conversations" → `navigate('/chat')` → auto-creates new conversation
 
 #### 2. Failed to Create
@@ -424,6 +459,7 @@ type ErrorType =
 ```
 
 **Actions:**
+
 - "Try Again" → `window.location.reload()` → retry auto-create
 
 #### 3. Failed to Load
@@ -441,6 +477,7 @@ type ErrorType =
 ```
 
 **Actions:**
+
 - "Try Again" → `window.location.reload()` → retry validation/load
 
 #### 4. WebSocket Errors
@@ -452,6 +489,7 @@ type ErrorType =
 ```
 
 **Behavior:**
+
 - Transient toast notification (auto-dismisses in 5s for recoverable errors)
 - Persistent notification for fatal errors (requires manual dismiss)
 - Does not block chat interface (still shows message history)
@@ -463,25 +501,30 @@ type ErrorType =
 ### Conversation List
 
 **Fetching:**
+
 - Fetches on mount: `GET /api/conversations?page=1&pageSize=50`
 - Cached in component state (no global store needed)
 - Re-fetches only on explicit refresh or conversation create/delete
 
 **Sorting:**
+
 - Server returns conversations sorted by `updatedAt DESC`
 - Frontend applies additional filtering (archived vs active)
 
 **Pagination:**
+
 - Current: Loads first 50 conversations
 - Future: Implement infinite scroll for users with >50 conversations
 
 ### Message History
 
 **Initial Load:**
+
 - Fetches last 50 messages: `GET /api/conversations/:id/messages?page=1&pageSize=50`
 - Older messages not loaded initially
 
 **Lazy Loading (Future Enhancement):**
+
 - Detect scroll to top in MessageList
 - Fetch older messages: `GET /api/conversations/:id/messages?page=2&pageSize=50`
 - Prepend to message array without disrupting scroll position
@@ -489,6 +532,7 @@ type ErrorType =
 ### WebSocket Connection Management
 
 **Connection Lifecycle:**
+
 ```typescript
 Conversation A active
     ↓
@@ -510,6 +554,7 @@ Conversation B active
 ```
 
 **Prevents:**
+
 - Duplicate connections
 - Messages from wrong conversation appearing in UI
 - Memory leaks from unclosed connections
@@ -521,6 +566,7 @@ Conversation B active
 ### Unit Tests
 
 **ConversationList.test.tsx:**
+
 - Renders loading state
 - Renders error state with retry button
 - Renders empty state with "New Conversation" CTA
@@ -529,6 +575,7 @@ Conversation B active
 - Navigates to conversation on item click
 
 **ConversationListItem.test.tsx:**
+
 - Displays title, preview, timestamp
 - Highlights when active
 - Enters edit mode on rename click
@@ -537,6 +584,7 @@ Conversation B active
 - Calls onDelete after confirmation
 
 **ChatPage.test.tsx:**
+
 - Auto-creates conversation on /chat
 - Loads conversation on /chat/:id
 - Shows error for invalid conversation ID
@@ -547,6 +595,7 @@ Conversation B active
 ### Integration Tests
 
 **Conversation Switching:**
+
 1. Load conversation A
 2. Verify messages from A displayed
 3. Click conversation B in sidebar
@@ -555,6 +604,7 @@ Conversation B active
 6. Verify no cross-contamination
 
 **Conversation Deletion:**
+
 1. Load conversation A
 2. Click delete in sidebar
 3. Confirm deletion
@@ -562,6 +612,7 @@ Conversation B active
 5. Verify navigation to /chat (new conversation created)
 
 **Conversation Creation:**
+
 1. Click "New Conversation" button
 2. Verify new conversation created
 3. Verify navigation to new conversation

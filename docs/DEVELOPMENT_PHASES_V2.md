@@ -1,3 +1,15 @@
+---
+title: "Development Phases V2"
+slug: "development-phases-v2"
+summary: "VoiceAssist has been redesigned as an **enterprise-grade, HIPAA-compliant, multi-user medical AI assistant** with microservices architecture, Kubernet..."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["development", "phases"]
+---
+
 # VoiceAssist Development Phases V2 - Enterprise Architecture
 
 ## Overview
@@ -7,12 +19,14 @@ VoiceAssist has been redesigned as an **enterprise-grade, HIPAA-compliant, multi
 ## Architectural Shift
 
 ### Original Scope (V1)
+
 - Personal use system
 - Single user
 - Simple Docker deployment
 - macOS client focus
 
 ### Enhanced Scope (V2)
+
 - **Multi-user enterprise system** (hundreds of concurrent users)
 - **Microservices architecture** with Kubernetes/K3s
 - **Service mesh** (Istio/Linkerd/Kong) for security and resilience
@@ -28,6 +42,7 @@ VoiceAssist has been redesigned as an **enterprise-grade, HIPAA-compliant, multi
 ### Strategy
 
 **Phase 1-10: Docker Compose Development**
+
 - All microservices implemented with **Docker Compose**
 - Local development on MacBook Pro
 - Full enterprise features (microservices, security, observability)
@@ -36,11 +51,13 @@ VoiceAssist has been redesigned as an **enterprise-grade, HIPAA-compliant, multi
 - Same architecture patterns, simpler orchestration
 
 **Phase 11-12: Kubernetes Migration Preparation**
+
 - Create Kubernetes manifests
 - Test K8s deployment locally (K3s/Minikube)
 - Maintain Compose for development
 
 **Phase 13-14: Production Kubernetes Deployment**
+
 - Deploy to production Kubernetes cluster
 - Service mesh installation
 - High availability configuration
@@ -49,28 +66,33 @@ VoiceAssist has been redesigned as an **enterprise-grade, HIPAA-compliant, multi
 ### Why Compose-First?
 
 ✅ **Faster Development**
+
 - No K8s learning curve initially
 - Simpler debugging
 - Quicker iteration cycles
 
 ✅ **Lower Complexity**
+
 - Docker Compose is simpler than K8s
 - Easier to understand service relationships
 - Less YAML configuration
 
 ✅ **Same Architecture**
+
 - Microservices design identical
 - Security patterns identical
 - Observability identical
 - Just different orchestration
 
 ✅ **Easy Migration**
+
 - Compose services → K8s Deployments
 - Compose networks → K8s Services
 - Compose volumes → K8s PersistentVolumes
 - Well-documented migration path
 
 ### Local Development (MacBook Pro)
+
 - **Docker Compose** for all services
 - **Docker Desktop** with sufficient resources (8GB+ RAM)
 - Multiple compose files for different environments
@@ -78,6 +100,7 @@ VoiceAssist has been redesigned as an **enterprise-grade, HIPAA-compliant, multi
 - Local domains via /etc/hosts
 
 ### Production Deployment (Ubuntu Server)
+
 - **Kubernetes** cluster (K3s or full K8s)
 - **Service mesh** (Linkerd recommended)
 - **High availability** with replicas
@@ -101,6 +124,7 @@ Phase 14: Production Deployment
 ## Phase Structure
 
 Each phase is designed for Claude Code completion in **one focused session (4-8 hours)**. Phases now include:
+
 - Infrastructure setup
 - Security hardening
 - Comprehensive testing
@@ -112,6 +136,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 **Goal:** Set up project structure, Docker Compose environment, and initial documentation
 
 ### Objectives
+
 - Create comprehensive directory structure for microservices
 - Install Docker Desktop and verify installation
 - Set up development tooling (for future: Terraform, Ansible)
@@ -120,6 +145,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Set up CURRENT_PHASE.md tracking system
 
 ### Deliverables
+
 - Complete project structure in ~/VoiceAssist
 - Docker Desktop installed and running
 - Initial documentation (ARCHITECTURE_V2.md, SECURITY_COMPLIANCE.md)
@@ -128,12 +154,14 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Development environment verified
 
 ### Compose-First Approach
+
 - Install Docker Desktop (not K3s)
 - Create docker-compose.yml skeleton
 - Set up local domains in /etc/hosts
 - No Kubernetes configuration yet
 
 ### Tasks
+
 1. Create microservices directory structure
 2. Install Docker Desktop
 3. Create base docker-compose.yml
@@ -152,6 +180,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 **Goal:** Set up core databases with Docker Compose and basic microservices framework
 
 ### Objectives
+
 - Deploy PostgreSQL with pgvector via Compose
 - Deploy Redis for caching and sessions
 - Deploy Qdrant for vector storage
@@ -160,6 +189,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Implement health checks
 
 ### Deliverables
+
 - All databases running in Docker Compose
 - Docker images for base services
 - Updated docker-compose.yml with all databases
@@ -168,6 +198,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Data persistence with volumes
 
 ### Compose-First Approach
+
 - Use official PostgreSQL, Redis, Qdrant images
 - Configure with environment variables
 - Use Docker volumes for persistence
@@ -175,6 +206,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - No StatefulSets or K8s concepts yet
 
 ### Tasks
+
 1. Create Dockerfiles for each microservice
 2. Add PostgreSQL to docker-compose.yml with pgvector
 3. Add Redis to docker-compose.yml
@@ -194,6 +226,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 **Goal:** Implement Nextcloud SSO and authentication infrastructure with Docker Compose
 
 ### Objectives
+
 - Install and configure Nextcloud via Compose
 - Set up Keycloak/OIDC for identity management
 - Implement JWT-based authentication with short-lived tokens
@@ -202,6 +235,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Set up HTTPS with self-signed certificates
 
 ### Deliverables
+
 - Nextcloud instance running in Compose
 - Keycloak configured with Nextcloud
 - Authentication service with JWT
@@ -210,6 +244,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - HTTPS configured for local development
 
 ### Compose-First Approach
+
 - Add Nextcloud to docker-compose.yml
 - Add Keycloak to docker-compose.yml
 - Use Compose networking for service communication
@@ -217,6 +252,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - mTLS deferred to service mesh (K8s phase)
 
 ### Tasks
+
 1. Add Nextcloud to docker-compose.yml
 2. Add Keycloak to docker-compose.yml
 3. Configure Keycloak with Nextcloud OIDC
@@ -236,6 +272,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 **Goal:** Create core microservices with Docker Compose and basic observability
 
 ### Objectives
+
 - Create API Gateway microservice
 - Create Voice Proxy microservice skeleton
 - Create Medical KB microservice skeleton
@@ -244,6 +281,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Implement health checks and service discovery
 
 ### Deliverables
+
 - API Gateway microservice (Kong or Nginx)
 - Voice Proxy microservice skeleton
 - Medical KB microservice skeleton
@@ -253,6 +291,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Service health monitoring
 
 ### Compose-First Approach
+
 - No service mesh yet (deferred to K8s phase)
 - Use Compose networking for service discovery
 - API Gateway handles routing and rate limiting
@@ -260,6 +299,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Grafana dashboards for basic monitoring
 
 ### Tasks
+
 1. Create API Gateway service (Kong in Compose)
 2. Create Voice Proxy service (FastAPI)
 3. Create Medical KB service (FastAPI)
@@ -280,6 +320,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 **Goal:** Build web-based voice assistant with VAD, echo cancellation, and dynamic clarification
 
 ### Objectives
+
 - Implement web-based voice client (React + WebRTC)
 - Integrate robust VAD and echo cancellation
 - Connect to OpenAI Realtime API
@@ -288,6 +329,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Support barge-in and turn-taking
 
 ### Deliverables
+
 - Web voice client with WebRTC streaming
 - Voice Proxy microservice with OpenAI integration
 - VAD and echo cancellation implemented
@@ -297,6 +339,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - WebSocket connection management
 
 ### Tasks
+
 1. Create React voice client with WebRTC
 2. Implement VAD using @azure/cognitiveservices-speech or similar
 3. Add echo cancellation (WebRTC AEC)
@@ -318,6 +361,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 **Goal:** Build advanced RAG system with domain-specific models and automated guideline ingestion
 
 ### Objectives
+
 - Implement PDF processing pipeline
 - Integrate domain-specific models (BioGPT, PubMedBERT)
 - Build advanced RAG with multi-hop reasoning
@@ -327,6 +371,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Extend medical calculators
 
 ### Deliverables
+
 - PDF processing microservice
 - Embedding generation with BioGPT/PubMedBERT
 - Advanced RAG system with multi-hop reasoning
@@ -337,6 +382,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - PubMed integration
 
 ### Tasks
+
 1. Create PDF processing service
 2. Integrate BioGPT for medical summarization
 3. Add PubMedBERT embeddings
@@ -358,6 +404,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 **Goal:** Package all web apps as Nextcloud apps and unify calendar/email/file operations
 
 ### Objectives
+
 - Package web client as Nextcloud app
 - Package admin panel as Nextcloud app
 - Package docs site as Nextcloud app
@@ -367,6 +414,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Auto-index Nextcloud files
 
 ### Deliverables
+
 - VoiceAssist Web Client Nextcloud app
 - VoiceAssist Admin Nextcloud app
 - VoiceAssist Docs Nextcloud app
@@ -376,6 +424,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Nextcloud Tasks integration
 
 ### Tasks
+
 1. Create Nextcloud app structure for web client
 2. Package admin panel as Nextcloud app
 3. Package docs as Nextcloud app
@@ -396,6 +445,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 **Goal:** Build comprehensive admin control center with RBAC and cost analytics
 
 ### Objectives
+
 - Create admin dashboard with real-time metrics
 - Implement role-based access control
 - Add model selection (local vs cloud)
@@ -404,6 +454,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Add security policy configuration
 
 ### Deliverables
+
 - Admin dashboard with Prometheus metrics
 - RBAC system with roles (admin, viewer, user)
 - Model configuration interface
@@ -413,6 +464,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - User management interface
 
 ### Tasks
+
 1. Build admin dashboard (React + Tremor)
 2. Integrate Prometheus metrics
 3. Implement RBAC with Open Policy Agent
@@ -432,6 +484,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 **Goal:** Implement comprehensive observability with tracing, logging, and alerting
 
 ### Objectives
+
 - Deploy Jaeger/Zipkin for distributed tracing
 - Set up centralized logging (Loki or ELK)
 - Configure alerting (AlertManager)
@@ -439,6 +492,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Create observability dashboards
 
 ### Deliverables
+
 - Jaeger deployed and tracing all services
 - Centralized logging with Loki
 - AlertManager with HIPAA-relevant alerts
@@ -447,6 +501,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Log retention policies (30-90 days)
 
 ### Tasks
+
 1. Deploy Jaeger in K3s
 2. Instrument services with OpenTelemetry
 3. Deploy Loki for log aggregation
@@ -466,6 +521,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 **Goal:** Define all infrastructure as code and automate CI/CD pipelines
 
 ### Objectives
+
 - Create Terraform modules for all infrastructure
 - Write Ansible playbooks for server configuration
 - Set up CI/CD pipelines (GitHub Actions or GitLab CI)
@@ -473,6 +529,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Implement automated deployment
 
 ### Deliverables
+
 - Terraform modules for K8s, databases, services
 - Ansible playbooks for Ubuntu server setup
 - CI/CD pipelines
@@ -481,6 +538,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Infrastructure documentation
 
 ### Tasks
+
 1. Write Terraform modules
 2. Create Ansible playbooks
 3. Set up GitHub Actions workflows
@@ -500,6 +558,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 **Goal:** Test system under load and optimize for hundreds of concurrent users
 
 ### Objectives
+
 - Perform load testing with k6 or Locust
 - Test voice mode with multiple concurrent connections
 - Optimize database queries
@@ -508,6 +567,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Verify latency targets
 
 ### Deliverables
+
 - Load testing scripts
 - Performance benchmarks
 - Optimized database queries
@@ -516,6 +576,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Performance report
 
 ### Tasks
+
 1. Write k6 load testing scripts
 2. Test with 100, 200, 500 concurrent users
 3. Test voice mode with concurrent connections
@@ -535,6 +596,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 **Goal:** Implement comprehensive security measures and ensure HIPAA compliance
 
 ### Objectives
+
 - Conduct security audit
 - Implement encryption at rest and in transit
 - Set up audit logging
@@ -543,6 +605,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Document HIPAA compliance measures
 
 ### Deliverables
+
 - Security audit report
 - Encryption at rest for all databases
 - mTLS for all inter-service communication
@@ -552,6 +615,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - HIPAA compliance documentation
 
 ### Tasks
+
 1. Run security vulnerability scans
 2. Enable database encryption at rest
 3. Verify mTLS on all services
@@ -572,6 +636,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 **Goal:** Configure HA, backup, and disaster recovery procedures
 
 ### Objectives
+
 - Configure database replication
 - Set up automated encrypted backups
 - Create disaster recovery procedures
@@ -579,6 +644,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Test backup and restore
 
 ### Deliverables
+
 - PostgreSQL with replication
 - Automated backup scripts
 - Encrypted backup storage
@@ -586,6 +652,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Tested backup/restore procedures
 
 ### Tasks
+
 1. Configure PostgreSQL replication
 2. Set up automated daily backups
 3. Encrypt backups
@@ -604,6 +671,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 **Goal:** Comprehensive end-to-end testing and documentation finalization
 
 ### Objectives
+
 - Write comprehensive test suite
 - Perform end-to-end testing
 - Test voice interactions
@@ -611,6 +679,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Create deployment guide
 
 ### Deliverables
+
 - Complete test suite
 - E2E test results
 - Voice interaction test results
@@ -619,6 +688,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - User documentation
 
 ### Tasks
+
 1. Write E2E tests
 2. Test complete user workflows
 3. Test voice mode thoroughly
@@ -638,6 +708,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 **Goal:** Deploy to Ubuntu server and configure production environment
 
 ### Objectives
+
 - Deploy to Ubuntu server
 - Configure production domains and SSL
 - Set up production monitoring
@@ -645,6 +716,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Document production setup
 
 ### Deliverables
+
 - Production deployment
 - SSL certificates configured
 - Production monitoring active
@@ -652,6 +724,7 @@ Each phase is designed for Claude Code completion in **one focused session (4-8 
 - Production documentation
 
 ### Tasks
+
 1. Copy project to Ubuntu server
 2. Run Terraform to provision infrastructure
 3. Run Ansible to configure server
@@ -682,6 +755,7 @@ Create `~/VoiceAssist/CURRENT_PHASE.md`:
 ## Phase 0: Project Initialization & Architecture Setup
 
 ### Objectives
+
 - [ ] Create microservices directory structure
 - [ ] Install K3s locally
 - [ ] Set up Terraform and Ansible
@@ -690,15 +764,19 @@ Create `~/VoiceAssist/CURRENT_PHASE.md`:
 - [ ] Create CURRENT_PHASE.md tracking system
 
 ### Progress Notes
+
 [Claude will update this section with progress notes]
 
 ### Next Steps
+
 [Claude will update this section with next steps]
 
 ## Completed Tasks
+
 [List completed tasks here]
 
 ## Blockers/Issues
+
 [Note any blockers or issues]
 ```
 
@@ -756,6 +834,7 @@ When complete, mark the phase as done and update to next phase.
 **All phases 0-10 use Docker Compose exclusively.**
 
 Key Points:
+
 - No Kubernetes until Phase 11
 - All services run in docker-compose.yml
 - Same microservices architecture
@@ -764,6 +843,7 @@ Key Points:
 - Easy migration path to K8s
 
 Each phase document includes:
+
 - **Section A:** Docker Compose Implementation (primary)
 - **Section B:** Kubernetes Migration Notes (for reference)
 

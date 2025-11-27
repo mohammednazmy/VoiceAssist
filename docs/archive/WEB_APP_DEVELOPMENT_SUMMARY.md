@@ -1,3 +1,15 @@
+---
+title: "Web App Development Summary"
+slug: "archive/web-app-development-summary"
+summary: "**Project**: VoiceAssist Medical AI Assistant - Frontend Development"
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["frontend"]
+tags: ["web", "app", "development", "summary"]
+---
+
 # VoiceAssist Web App Development - Complete Summary
 
 **Project**: VoiceAssist Medical AI Assistant - Frontend Development

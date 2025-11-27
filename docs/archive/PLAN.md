@@ -1,3 +1,15 @@
+---
+title: "Plan"
+slug: "archive/plan"
+summary: "This plan addresses two related issues in the VoiceAssist codebase:"
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["plan"]
+---
+
 # Implementation Plan: WebSocket Testing & MessageList Performance
 
 ## Overview

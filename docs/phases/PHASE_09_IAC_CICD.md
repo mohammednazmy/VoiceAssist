@@ -1,3 +1,15 @@
+---
+title: "Phase 09 Iac Cicd"
+slug: "phases/phase-09-iac-cicd"
+summary: "> **V2 PHASE DOCUMENT**"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["phase", "iac", "cicd"]
+---
+
 # Phase 9: Infrastructure as Code & CI/CD
 
 > **V2 PHASE DOCUMENT**
@@ -12,6 +24,7 @@
 Define infra in code and set up CI/CD for backend and frontends.
 
 See also:
+
 - [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)
 - [PHASE_STATUS.md](../../PHASE_STATUS.md)
 - [BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md)

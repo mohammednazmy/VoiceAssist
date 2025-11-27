@@ -33,18 +33,18 @@ VoiceAssist is an enterprise-grade, HIPAA-compliant medical AI assistant platfor
 
 ## Component Status Table
 
-| Component               | Path                    | Status     | Stability  | Owner    | Notes                                                                                |
-| ----------------------- | ----------------------- | ---------- | ---------- | -------- | ------------------------------------------------------------------------------------ |
-| **API Gateway**         | `services/api-gateway/` | stable     | production | backend  | Canonical backend, 20+ API modules, 40+ services                                     |
-| **Web App**             | `apps/web-app/`         | draft      | beta       | frontend | Phases 0-2 complete, Phase 3 (Voice) starting                                        |
-| **Admin Panel**         | `apps/admin-panel/`     | stable     | production | frontend | Full dashboard, RBAC, KB management                                                  |
-| **Docs Site**           | `apps/docs-site/`       | stable     | production | docs     | Next.js 14 static export at https://assistdocs.asimo.io with AI agent JSON endpoints |
-| **Legacy Server**       | `server/`               | deprecated | legacy     | backend  | DO NOT USE - kept for reference only                                                 |
-| **Infrastructure**      | `infrastructure/`       | stable     | production | infra    | Terraform, Ansible, Docker Compose                                                   |
-| **HA/DR**               | `ha-dr/`                | stable     | production | sre      | PostgreSQL replication, backup automation                                            |
-| **Chaos Testing**       | `chaos/`                | stable     | production | sre      | Chaos Toolkit experiments                                                            |
-| **Security/Compliance** | `security/`             | stable     | production | security | HIPAA 42/42 requirements met                                                         |
-| **Shared Packages**     | `packages/`             | stable     | beta       | frontend | 7 packages: ui, types, utils, api-client, etc.                                       |
+| Component               | Path                    | Status     | Stability  | Owner    | Notes                                                                   |
+| ----------------------- | ----------------------- | ---------- | ---------- | -------- | ----------------------------------------------------------------------- |
+| **API Gateway**         | `services/api-gateway/` | stable     | production | backend  | Canonical backend, 20+ API modules, 40+ services                        |
+| **Web App**             | `apps/web-app/`         | draft      | beta       | frontend | Phases 0-2 complete, Phase 3 (Voice) starting                           |
+| **Admin Panel**         | `apps/admin-panel/`     | stable     | production | frontend | Full dashboard, RBAC, KB management                                     |
+| **Docs Site**           | `apps/docs-site/`       | stable     | production | docs     | Next.js 14 static export, AI agent JSON, search index, debugging guides |
+| **Legacy Server**       | `server/`               | deprecated | legacy     | backend  | DO NOT USE - kept for reference only                                    |
+| **Infrastructure**      | `infrastructure/`       | stable     | production | infra    | Terraform, Ansible, Docker Compose                                      |
+| **HA/DR**               | `ha-dr/`                | stable     | production | sre      | PostgreSQL replication, backup automation                               |
+| **Chaos Testing**       | `chaos/`                | stable     | production | sre      | Chaos Toolkit experiments                                               |
+| **Security/Compliance** | `security/`             | stable     | production | security | HIPAA 42/42 requirements met                                            |
+| **Shared Packages**     | `packages/`             | stable     | beta       | frontend | 7 packages: ui, types, utils, api-client, etc.                          |
 
 ---
 
@@ -108,18 +108,20 @@ System administration and monitoring dashboard.
 
 #### Docs Site (`apps/docs-site/`)
 
-**Status:** draft | **Stability:** beta
+**Status:** stable | **Stability:** production
 
-Technical documentation website.
+Technical documentation website at https://assistdocs.asimo.io.
 
-| Feature              | Status   | Notes                            |
-| -------------------- | -------- | -------------------------------- |
-| Markdown Rendering   | Complete | GFM support, syntax highlighting |
-| Navigation           | Complete | Configurable sidebar             |
-| Multi-source Loading | Complete | @root/ prefix support            |
-| Search               | Planned  | Full-text search needed          |
-| Agent JSON API       | Planned  | /agent/\* endpoints needed       |
-| Sitemap/SEO          | Planned  | robots.txt, sitemap.xml          |
+| Feature              | Status   | Notes                                           |
+| -------------------- | -------- | ----------------------------------------------- |
+| Markdown Rendering   | Complete | GFM support, syntax highlighting                |
+| Navigation           | Complete | Configurable sidebar with Operations section    |
+| Multi-source Loading | Complete | @root/ prefix support                           |
+| Search Index         | Complete | /search-index.json with 11K+ entries (Fuse.js)  |
+| Agent JSON API       | Complete | /agent/index.json, /agent/docs.json (220 docs)  |
+| Sitemap/SEO          | Complete | /sitemap.xml, robots.txt with AI bot allowlists |
+| Link Rewriting       | Complete | .md links → /docs/\* routes, GitHub fallbacks   |
+| Debugging Docs       | Complete | Operations section with debugging guides        |
 
 ---
 

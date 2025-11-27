@@ -1,3 +1,15 @@
+---
+title: "Observability"
+slug: "observability"
+summary: "**Purpose**: This document defines observability patterns for monitoring, logging, and alerting across all VoiceAssist services."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["observability"]
+---
+
 # VoiceAssist V2 Observability
 
 **Purpose**: This document defines observability patterns for monitoring, logging, and alerting across all VoiceAssist services.
@@ -9,6 +21,7 @@
 ## Overview
 
 VoiceAssist V2 uses a three-pillar observability approach:
+
 1. **Metrics** - Prometheus for time-series metrics
 2. **Logs** - Structured logging with trace IDs
 3. **Traces** - Distributed tracing (optional in Phase 11-14)
@@ -26,6 +39,7 @@ Every service must expose these endpoints:
 **Purpose**: Kubernetes liveness probe - is the service process running?
 
 **Response**:
+
 ```json
 {
   "status": "healthy",
@@ -36,6 +50,7 @@ Every service must expose these endpoints:
 ```
 
 **FastAPI Example**:
+
 ```python
 from fastapi import APIRouter
 from datetime import datetime
@@ -62,12 +77,14 @@ async def health_check():
 **Purpose**: Kubernetes readiness probe - are dependencies available?
 
 **Checks**:
+
 - Database connection (PostgreSQL)
 - Redis connection
 - Qdrant connection (if KB service)
 - Nextcloud API (if applicable)
 
 **Response (Healthy)**:
+
 ```json
 {
   "status": "ready",
@@ -81,6 +98,7 @@ async def health_check():
 ```
 
 **Response (Degraded)**:
+
 ```json
 {
   "status": "degraded",
@@ -94,6 +112,7 @@ async def health_check():
 ```
 
 **FastAPI Example**:
+
 ```python
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
@@ -159,6 +178,7 @@ async def readiness_check(
 **Response**: Plain text Prometheus metrics
 
 **FastAPI Setup**:
+
 ```python
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 from fastapi import Response
@@ -207,15 +227,16 @@ async def metrics():
 
 ### Chat & Query Metrics
 
-| Metric | Type | Labels | Purpose |
-|--------|------|--------|---------|
-| `chat_requests_total` | Counter | `intent`, `phi_detected` | Total chat requests by intent |
-| `chat_duration_seconds` | Histogram | `intent` | End-to-end chat latency |
-| `streaming_messages_total` | Counter | `completed` | Streaming message count |
-| `phi_detected_total` | Counter | - | PHI detection events |
-| `phi_redacted_total` | Counter | - | PHI redaction events |
+| Metric                     | Type      | Labels                   | Purpose                       |
+| -------------------------- | --------- | ------------------------ | ----------------------------- |
+| `chat_requests_total`      | Counter   | `intent`, `phi_detected` | Total chat requests by intent |
+| `chat_duration_seconds`    | Histogram | `intent`                 | End-to-end chat latency       |
+| `streaming_messages_total` | Counter   | `completed`              | Streaming message count       |
+| `phi_detected_total`       | Counter   | -                        | PHI detection events          |
+| `phi_redacted_total`       | Counter   | -                        | PHI redaction events          |
 
 **Usage in Code**:
+
 ```python
 async def process_chat(request: ChatRequest):
     phi_detected = await phi_detector.detect(request.message)
@@ -238,44 +259,46 @@ async def process_chat(request: ChatRequest):
 
 ### KB & Search Metrics
 
-| Metric | Type | Labels | Purpose |
-|--------|------|--------|---------|
-| `kb_search_duration_seconds` | Histogram | `source_type` | KB search latency |
-| `kb_search_results_total` | Histogram | - | Number of results returned |
-| `kb_cache_hits_total` | Counter | - | Redis cache hits |
-| `kb_cache_misses_total` | Counter | - | Redis cache misses |
-| `embedding_generation_duration_seconds` | Histogram | - | Embedding generation time |
+| Metric                                  | Type      | Labels        | Purpose                    |
+| --------------------------------------- | --------- | ------------- | -------------------------- |
+| `kb_search_duration_seconds`            | Histogram | `source_type` | KB search latency          |
+| `kb_search_results_total`               | Histogram | -             | Number of results returned |
+| `kb_cache_hits_total`                   | Counter   | -             | Redis cache hits           |
+| `kb_cache_misses_total`                 | Counter   | -             | Redis cache misses         |
+| `embedding_generation_duration_seconds` | Histogram | -             | Embedding generation time  |
 
 ### Indexing Metrics
 
-| Metric | Type | Labels | Purpose |
-|--------|------|--------|---------|
-| `indexing_jobs_active` | Gauge | - | Currently running jobs |
-| `indexing_jobs_total` | Counter | `state` | Total jobs by final state |
-| `indexing_duration_seconds` | Histogram | - | Time to index document |
-| `chunks_created_total` | Counter | `source_type` | Total chunks created |
+| Metric                      | Type      | Labels        | Purpose                   |
+| --------------------------- | --------- | ------------- | ------------------------- |
+| `indexing_jobs_active`      | Gauge     | -             | Currently running jobs    |
+| `indexing_jobs_total`       | Counter   | `state`       | Total jobs by final state |
+| `indexing_duration_seconds` | Histogram | -             | Time to index document    |
+| `chunks_created_total`      | Counter   | `source_type` | Total chunks created      |
 
 ### Tool Invocation Metrics
 
 VoiceAssist uses a comprehensive tools system (see [TOOLS_AND_INTEGRATIONS.md](TOOLS_AND_INTEGRATIONS.md)) that requires detailed observability.
 
-| Metric | Type | Labels | Purpose |
-|--------|------|--------|---------|
-| `voiceassist_tool_calls_total` | Counter | `tool_name`, `status` | Total tool calls by status (completed, failed, timeout, cancelled) |
-| `voiceassist_tool_execution_duration_seconds` | Histogram | `tool_name` | Tool execution duration (p50, p95, p99) |
-| `voiceassist_tool_confirmation_required_total` | Counter | `tool_name`, `confirmed` | Tool calls requiring user confirmation |
-| `voiceassist_tool_phi_detected_total` | Counter | `tool_name` | Tool calls with PHI detected |
-| `voiceassist_tool_errors_total` | Counter | `tool_name`, `error_code` | Tool execution errors by code |
-| `voiceassist_tool_timeouts_total` | Counter | `tool_name` | Tool execution timeouts |
-| `voiceassist_tool_active_calls` | Gauge | `tool_name` | Currently executing tool calls |
+| Metric                                         | Type      | Labels                    | Purpose                                                            |
+| ---------------------------------------------- | --------- | ------------------------- | ------------------------------------------------------------------ |
+| `voiceassist_tool_calls_total`                 | Counter   | `tool_name`, `status`     | Total tool calls by status (completed, failed, timeout, cancelled) |
+| `voiceassist_tool_execution_duration_seconds`  | Histogram | `tool_name`               | Tool execution duration (p50, p95, p99)                            |
+| `voiceassist_tool_confirmation_required_total` | Counter   | `tool_name`, `confirmed`  | Tool calls requiring user confirmation                             |
+| `voiceassist_tool_phi_detected_total`          | Counter   | `tool_name`               | Tool calls with PHI detected                                       |
+| `voiceassist_tool_errors_total`                | Counter   | `tool_name`, `error_code` | Tool execution errors by code                                      |
+| `voiceassist_tool_timeouts_total`              | Counter   | `tool_name`               | Tool execution timeouts                                            |
+| `voiceassist_tool_active_calls`                | Gauge     | `tool_name`               | Currently executing tool calls                                     |
 
 **Status Label Values:**
+
 - `completed` - Tool executed successfully
 - `failed` - Tool execution failed with error
 - `timeout` - Tool execution exceeded timeout
 - `cancelled` - User cancelled tool execution
 
 **Common Error Codes:**
+
 - `VALIDATION_ERROR` - Invalid arguments
 - `PERMISSION_DENIED` - User lacks permission
 - `EXTERNAL_API_ERROR` - External service failure
@@ -283,6 +306,7 @@ VoiceAssist uses a comprehensive tools system (see [TOOLS_AND_INTEGRATIONS.md](T
 - `PHI_VIOLATION` - PHI sent to non-PHI tool
 
 **Usage in Tool Execution:**
+
 ```python
 # server/app/services/orchestration/tool_executor.py
 from prometheus_client import Counter, Histogram, Gauge
@@ -436,11 +460,11 @@ async def execute_tool(
 
 For backward compatibility, external API calls also emit these metrics:
 
-| Metric | Type | Labels | Purpose |
-|--------|------|--------|---------|
-| `tool_requests_total` | Counter | `tool` | Total external API requests (legacy) |
-| `tool_failure_total` | Counter | `tool`, `error_type` | External tool failures (legacy) |
-| `tool_duration_seconds` | Histogram | `tool` | External tool latency (legacy) |
+| Metric                  | Type      | Labels               | Purpose                              |
+| ----------------------- | --------- | -------------------- | ------------------------------------ |
+| `tool_requests_total`   | Counter   | `tool`               | Total external API requests (legacy) |
+| `tool_failure_total`    | Counter   | `tool`, `error_type` | External tool failures (legacy)      |
+| `tool_duration_seconds` | Histogram | `tool`               | External tool latency (legacy)       |
 
 **Note**: New code should use `voiceassist_tool_*` metrics above. These legacy metrics are maintained for backward compatibility with Phase 5 implementations.
 
@@ -451,6 +475,7 @@ For backward compatibility, external API calls also emit these metrics:
 ### Log Structure
 
 Every log line must include:
+
 - `timestamp` (ISO 8601 UTC)
 - `level` (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 - `service` (service name)
@@ -460,6 +485,7 @@ Every log line must include:
 - `user_id` (if applicable, never with PHI)
 
 **JSON Format**:
+
 ```json
 {
   "timestamp": "2025-11-20T12:34:56.789Z",
@@ -524,6 +550,7 @@ logger.setLevel(logging.INFO)
 **CRITICAL**: PHI must NEVER be logged directly.
 
 **Allowed**:
+
 - Session IDs (UUIDs)
 - User IDs (UUIDs)
 - Document IDs
@@ -533,6 +560,7 @@ logger.setLevel(logging.INFO)
 - Counts and aggregates
 
 **FORBIDDEN**:
+
 - Patient names
 - Patient dates of birth
 - Medical record numbers
@@ -541,6 +569,7 @@ logger.setLevel(logging.INFO)
 - Document content
 
 **Instead of logging query text**:
+
 ```python
 # Bad - may contain PHI
 logger.info(f"Processing query: {query}")
@@ -562,21 +591,21 @@ logger.info(
 
 ### Critical Alerts (Page On-Call)
 
-| Alert | Condition | Action |
-|-------|-----------|--------|
-| Service Down | Health check failing > 2 minutes | Page on-call engineer |
-| Database Unavailable | PostgreSQL readiness check failing | Page DBA + engineer |
-| High Error Rate | Error rate > 5% for 5 minutes | Page on-call engineer |
-| PHI Leak Detected | PHI in logs or external API call | Page security team immediately |
+| Alert                | Condition                          | Action                         |
+| -------------------- | ---------------------------------- | ------------------------------ |
+| Service Down         | Health check failing > 2 minutes   | Page on-call engineer          |
+| Database Unavailable | PostgreSQL readiness check failing | Page DBA + engineer            |
+| High Error Rate      | Error rate > 5% for 5 minutes      | Page on-call engineer          |
+| PHI Leak Detected    | PHI in logs or external API call   | Page security team immediately |
 
 ### Warning Alerts (Slack Notification)
 
-| Alert | Condition | Action |
-|-------|-----------|--------|
-| High Latency | p95 latency > 5s for 10 minutes | Notify #engineering |
-| KB Search Timeouts | > 10% timeout rate for 5 minutes | Notify #engineering |
+| Alert                  | Condition                         | Action              |
+| ---------------------- | --------------------------------- | ------------------- |
+| High Latency           | p95 latency > 5s for 10 minutes   | Notify #engineering |
+| KB Search Timeouts     | > 10% timeout rate for 5 minutes  | Notify #engineering |
 | External Tool Failures | > 20% failure rate for 10 minutes | Notify #engineering |
-| Indexing Job Failures | > 3 failed jobs in 1 hour | Notify #admin |
+| Indexing Job Failures  | > 3 failed jobs in 1 hour         | Notify #admin       |
 
 ### Example Prometheus Alert Rules
 
@@ -653,6 +682,7 @@ For microservices deployment, add distributed tracing:
 **Tools**: Jaeger or OpenTelemetry
 
 **Trace Spans**:
+
 - Chat request (root span)
   - PHI detection
   - KB search
@@ -661,6 +691,7 @@ For microservices deployment, add distributed tracing:
   - Safety filters
 
 **Benefits**:
+
 - Visualize request flow across services
 - Identify bottlenecks
 - Debug distributed failures

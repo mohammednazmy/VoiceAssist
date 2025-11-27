@@ -1,3 +1,15 @@
+---
+title: "Voice Realtime Integration"
+slug: "archive/voice-realtime-integration"
+summary: "Comprehensive documentation for the OpenAI Realtime API integration in VoiceAssist."
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["voice", "realtime", "integration"]
+---
+
 # OpenAI Realtime API Integration
 
 Comprehensive documentation for the OpenAI Realtime API integration in VoiceAssist.

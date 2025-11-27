@@ -1,3 +1,15 @@
+---
+title: "Accessibility Audit"
+slug: "accessibility-audit"
+summary: "**Date**: 2025-11-23"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["accessibility", "audit"]
+---
+
 # VoiceAssist Web App - Accessibility Audit & Improvements
 
 **Date**: 2025-11-23

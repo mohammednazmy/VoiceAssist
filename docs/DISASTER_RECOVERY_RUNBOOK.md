@@ -1,3 +1,15 @@
+---
+title: "Disaster Recovery Runbook"
+slug: "disaster-recovery-runbook"
+summary: "**Document Version:** 1.0"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["sre", "backend", "frontend"]
+tags: ["disaster", "recovery", "runbook"]
+---
+
 # Disaster Recovery Runbook
 
 **Document Version:** 1.0
@@ -12,6 +24,7 @@
 This runbook provides step-by-step procedures for recovering the VoiceAssist platform from various disaster scenarios. It covers database failures, complete system failures, data corruption, and ransomware attacks.
 
 **Recovery Objectives:**
+
 - **RTO (Recovery Time Objective):** 4 hours
 - **RPO (Recovery Point Objective):** 24 hours (daily backups)
 - **RTO (with replication):** 30 minutes (failover to replica)
@@ -99,6 +112,7 @@ curl -u admin:password \
 #### 4. Maintain Contact List
 
 Keep updated contact list for:
+
 - On-call engineers
 - Database administrators
 - Cloud provider support
@@ -661,12 +675,14 @@ Conduct post-mortem meeting within 48 hours:
 **Drill Procedures:**
 
 1. **Backup Restoration Test** (Monthly)
+
    ```bash
    cd ~/VoiceAssist/ha-dr/backup/
    ./verify-backup.sh
    ```
 
 2. **Failover Test** (Quarterly)
+
    ```bash
    # Simulate primary failure and promote replica
    cd ~/VoiceAssist/ha-dr/testing/
@@ -700,21 +716,21 @@ After each test or real recovery:
 
 ### Emergency Contacts
 
-| Role | Name | Phone | Email | Escalation Time |
-|------|------|-------|-------|-----------------|
-| On-Call Engineer | [Name] | [Phone] | [Email] | Immediate |
-| Database Admin | [Name] | [Phone] | [Email] | 30 minutes |
-| Infrastructure Lead | [Name] | [Phone] | [Email] | 1 hour |
-| Engineering Manager | [Name] | [Phone] | [Email] | 2 hours |
-| CTO | [Name] | [Phone] | [Email] | 4 hours |
+| Role                | Name   | Phone   | Email   | Escalation Time |
+| ------------------- | ------ | ------- | ------- | --------------- |
+| On-Call Engineer    | [Name] | [Phone] | [Email] | Immediate       |
+| Database Admin      | [Name] | [Phone] | [Email] | 30 minutes      |
+| Infrastructure Lead | [Name] | [Phone] | [Email] | 1 hour          |
+| Engineering Manager | [Name] | [Phone] | [Email] | 2 hours         |
+| CTO                 | [Name] | [Phone] | [Email] | 4 hours         |
 
 ### Vendor Contacts
 
-| Vendor | Support | Phone | Website |
-|--------|---------|-------|---------|
-| AWS Support | Premium | 1-xxx-xxx-xxxx | https://console.aws.amazon.com/support |
-| PostgreSQL Support | [Company] | 1-xxx-xxx-xxxx | [URL] |
-| Docker Support | Enterprise | 1-xxx-xxx-xxxx | [URL] |
+| Vendor             | Support    | Phone          | Website                                |
+| ------------------ | ---------- | -------------- | -------------------------------------- |
+| AWS Support        | Premium    | 1-xxx-xxx-xxxx | https://console.aws.amazon.com/support |
+| PostgreSQL Support | [Company]  | 1-xxx-xxx-xxxx | [URL]                                  |
+| Docker Support     | Enterprise | 1-xxx-xxx-xxxx | [URL]                                  |
 
 ### Internal Resources
 
@@ -729,11 +745,11 @@ After each test or real recovery:
 
 ### A. Backup Schedule
 
-| Backup Type | Frequency | Retention | Location |
-|-------------|-----------|-----------|----------|
-| Full Database | Daily (2 AM) | 30 days | Local + S3 |
-| Incremental WAL | Continuous | 7 days | Local |
-| Configuration | Daily | 90 days | Git + S3 |
+| Backup Type     | Frequency    | Retention | Location   |
+| --------------- | ------------ | --------- | ---------- |
+| Full Database   | Daily (2 AM) | 30 days   | Local + S3 |
+| Incremental WAL | Continuous   | 7 days    | Local      |
+| Configuration   | Daily        | 90 days   | Git + S3   |
 
 ### B. Recovery Scripts
 
@@ -748,13 +764,14 @@ All recovery scripts located in: `~/VoiceAssist/ha-dr/`
 
 ### C. Change Log
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2025-11-21 | Phase 12 Team | Initial creation |
+| Version | Date       | Author        | Changes          |
+| ------- | ---------- | ------------- | ---------------- |
+| 1.0     | 2025-11-21 | Phase 12 Team | Initial creation |
 
 ---
 
 **Document Control:**
+
 - **Classification:** Internal Use Only - CONFIDENTIAL
 - **Distribution:** Engineering Team, Operations Team
 - **Review Frequency:** Quarterly

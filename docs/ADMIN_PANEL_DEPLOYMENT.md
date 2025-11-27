@@ -1,3 +1,15 @@
+---
+title: "Admin Panel Deployment"
+slug: "admin-panel-deployment"
+summary: "**Date**: 2025-11-22"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["devops", "sre"]
+tags: ["admin", "panel", "deployment"]
+---
+
 # Admin Panel Deployment Summary
 
 **Date**: 2025-11-22
@@ -23,6 +35,7 @@ npm run build
 ```
 
 **Build Output:**
+
 - Location: `dist/`
 - Size: 202.23 KB (gzipped: 63.62 KB)
 - Files: 3 (index.html, CSS, JS bundle)
@@ -42,6 +55,7 @@ sudo chown -R www-data:www-data /var/www/admin.asimo.io
 ```
 
 **Deployed Files:**
+
 - `/var/www/admin.asimo.io/index.html` (403 bytes)
 - `/var/www/admin.asimo.io/assets/index-C3epBpcL.js` (202 KB)
 - `/var/www/admin.asimo.io/assets/index-D8qvZpew.css` (0.12 KB)
@@ -51,6 +65,7 @@ sudo chown -R www-data:www-data /var/www/admin.asimo.io
 **Config File**: `/etc/apache2/sites-available/admin.asimo.io.conf`
 
 **Key Features:**
+
 - HTTP to HTTPS redirect
 - SPA routing (all requests → index.html)
 - Security headers (X-Content-Type-Options, X-Frame-Options, CSP)
@@ -59,6 +74,7 @@ sudo chown -R www-data:www-data /var/www/admin.asimo.io
 - Access and error logging
 
 **Certificate:**
+
 - Provider: Let's Encrypt
 - Certificate: `/etc/letsencrypt/live/assist.asimo.io/fullchain.pem`
 - Private Key: `/etc/letsencrypt/live/assist.asimo.io/privkey.pem`
@@ -143,6 +159,7 @@ Services (PostgreSQL, Redis, Qdrant)
 ```
 
 **API Endpoints Used:**
+
 - `POST /api/auth/login` - Authentication
 - `GET /api/auth/me` - Session validation
 - `GET /api/admin/panel/summary` - Dashboard metrics
@@ -205,12 +222,14 @@ Services (PostgreSQL, Redis, Qdrant)
 1. **Make changes** in `~/VoiceAssist/apps/admin-panel/src/`
 
 2. **Build**:
+
    ```bash
    cd ~/VoiceAssist/apps/admin-panel
    npm run build
    ```
 
 3. **Deploy**:
+
    ```bash
    sudo cp -r dist/* /var/www/admin.asimo.io/
    sudo chown -R www-data:www-data /var/www/admin.asimo.io
@@ -221,6 +240,7 @@ Services (PostgreSQL, Redis, Qdrant)
 ### Monitoring
 
 **Apache Logs:**
+
 ```bash
 # Error log
 sudo tail -f /var/log/apache2/admin-voiceassist-error.log
@@ -230,6 +250,7 @@ sudo tail -f /var/log/apache2/admin-voiceassist-access.log
 ```
 
 **Service Status:**
+
 ```bash
 # Apache status
 sudo systemctl status apache2
@@ -314,11 +335,13 @@ git checkout main
 ### Recommended Improvements
 
 1. **HSTS Header**
+
    ```apache
    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
    ```
 
 2. **Restrict CORS**
+
    ```apache
    Header always set Access-Control-Allow-Origin "https://admin.asimo.io"
    ```
@@ -333,6 +356,7 @@ git checkout main
 
 5. **HTTP/2**
    - Enable HTTP/2 protocol for faster loading
+
    ```bash
    sudo a2enmod http2
    ```
@@ -383,6 +407,7 @@ git checkout main
 ### Contact
 
 For issues or questions:
+
 1. Check logs: `/var/log/apache2/admin-voiceassist-*`
 2. Review documentation: `~/VoiceAssist/apps/admin-panel/ADMIN_PANEL_GUIDE.md`
 3. Check GitHub issues
@@ -409,6 +434,7 @@ For issues or questions:
 - **Performance**: 64 KB gzipped
 
 **Next Steps:**
+
 1. Create admin user in database
 2. Test all functionality
 3. Monitor logs for issues

@@ -1,3 +1,15 @@
+---
+title: "Phase 07 Admin Panel"
+slug: "phases/phase-07-admin-panel"
+summary: "> **V2 PHASE DOCUMENT**"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience: ["devops", "sre"]
+tags: ["phase", "admin", "panel"]
+---
+
 # Phase 7: Admin Panel & RBAC
 
 > **V2 PHASE DOCUMENT**
@@ -12,6 +24,7 @@
 Build fully functional admin panel wired to ADMIN API with RBAC.
 
 See also:
+
 - [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)
 - [PHASE_STATUS.md](../../PHASE_STATUS.md)
 - [BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md)

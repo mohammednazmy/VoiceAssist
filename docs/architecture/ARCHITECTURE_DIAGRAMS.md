@@ -1,3 +1,15 @@
+---
+title: "Architecture Diagrams"
+slug: "architecture/architecture-diagrams"
+summary: "**Last Updated**: 2025-11-20 (Phase 7)"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["architecture", "diagrams"]
+---
+
 # VoiceAssist V2 - Architecture Diagrams
 
 **Last Updated**: 2025-11-20 (Phase 7)

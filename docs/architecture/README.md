@@ -1,3 +1,15 @@
+---
+title: "Readme"
+slug: "architecture/readme"
+summary: "**Last Updated**: 2025-11-20 (Phase 7)"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["readme"]
+---
+
 # VoiceAssist V2 - Architecture Documentation
 
 **Last Updated**: 2025-11-20 (Phase 7)
@@ -20,38 +32,38 @@ This directory contains comprehensive architecture documentation for VoiceAssist
 
 ### Core Architecture
 
-| Document | Purpose | Last Updated |
-|----------|---------|--------------|
-| **[UNIFIED_ARCHITECTURE.md](../UNIFIED_ARCHITECTURE.md)** | **Canonical architecture reference** | 2025-11-20 |
-| [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md) | Visual architecture diagrams | 2025-11-20 |
-| [SERVICE_CATALOG.md](../SERVICE_CATALOG.md) | Comprehensive service catalog | 2025-11-21 |
-| [BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md) | Backend structure evolution | 2025-11-20 |
+| Document                                                  | Purpose                              | Last Updated |
+| --------------------------------------------------------- | ------------------------------------ | ------------ |
+| **[UNIFIED_ARCHITECTURE.md](../UNIFIED_ARCHITECTURE.md)** | **Canonical architecture reference** | 2025-11-20   |
+| [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md)      | Visual architecture diagrams         | 2025-11-20   |
+| [SERVICE_CATALOG.md](../SERVICE_CATALOG.md)               | Comprehensive service catalog        | 2025-11-21   |
+| [BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md)     | Backend structure evolution          | 2025-11-20   |
 
 ### Design Documents
 
-| Document | Purpose |
-|----------|---------|
-| [ORCHESTRATION_DESIGN.md](../ORCHESTRATION_DESIGN.md) | RAG query orchestrator design |
-| [SEMANTIC_SEARCH_DESIGN.md](../SEMANTIC_SEARCH_DESIGN.md) | Vector search implementation |
-| [DATA_MODEL.md](../DATA_MODEL.md) | Canonical data entities |
-| [NEXTCLOUD_INTEGRATION.md](../NEXTCLOUD_INTEGRATION.md) | Nextcloud integration architecture |
+| Document                                                  | Purpose                            |
+| --------------------------------------------------------- | ---------------------------------- |
+| [ORCHESTRATION_DESIGN.md](../ORCHESTRATION_DESIGN.md)     | RAG query orchestrator design      |
+| [SEMANTIC_SEARCH_DESIGN.md](../SEMANTIC_SEARCH_DESIGN.md) | Vector search implementation       |
+| [DATA_MODEL.md](../DATA_MODEL.md)                         | Canonical data entities            |
+| [NEXTCLOUD_INTEGRATION.md](../NEXTCLOUD_INTEGRATION.md)   | Nextcloud integration architecture |
 
 ### Operations & Observability
 
-| Document | Purpose |
-|----------|---------|
-| [operations/SLO_DEFINITIONS.md](../operations/SLO_DEFINITIONS.md) | Service level objectives |
-| [OBSERVABILITY.md](../OBSERVABILITY.md) | Monitoring and logging patterns |
-| [SECURITY_COMPLIANCE.md](../SECURITY_COMPLIANCE.md) | HIPAA compliance details |
+| Document                                                          | Purpose                         |
+| ----------------------------------------------------------------- | ------------------------------- |
+| [operations/SLO_DEFINITIONS.md](../operations/SLO_DEFINITIONS.md) | Service level objectives        |
+| [OBSERVABILITY.md](../OBSERVABILITY.md)                           | Monitoring and logging patterns |
+| [SECURITY_COMPLIANCE.md](../SECURITY_COMPLIANCE.md)               | HIPAA compliance details        |
 
 ### Development
 
-| Document | Purpose |
-|----------|---------|
-| [CURRENT_PHASE.md](../../CURRENT_PHASE.md) | Development status |
-| [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md) | Phase-by-phase plan |
-| [LOCAL_DEVELOPMENT.md](../LOCAL_DEVELOPMENT.md) | Local setup guide |
-| [testing/E2E_TESTING_GUIDE.md](../testing/E2E_TESTING_GUIDE.md) | Testing strategy |
+| Document                                                        | Purpose             |
+| --------------------------------------------------------------- | ------------------- |
+| [CURRENT_PHASE.md](../../CURRENT_PHASE.md)                      | Development status  |
+| [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)         | Phase-by-phase plan |
+| [LOCAL_DEVELOPMENT.md](../LOCAL_DEVELOPMENT.md)                 | Local setup guide   |
+| [testing/E2E_TESTING_GUIDE.md](../testing/E2E_TESTING_GUIDE.md) | Testing strategy    |
 
 ---
 
@@ -157,26 +169,28 @@ For detailed diagrams, see [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md).
 
 ## Architecture Evolution Timeline
 
-| Phase | Focus | Status |
-|-------|-------|--------|
-| **0-1** | Foundation (Docker, DB, Redis, Qdrant) | ✅ Complete |
-| **2-3** | Security & Core Services (JWT, Auth, API Gateway) | ✅ Complete |
-| **4** | Realtime Communication (WebSocket, QueryOrchestrator) | ✅ Complete |
-| **5** | Medical AI (RAG, semantic search, document ingestion) | ✅ Complete |
-| **6** | Nextcloud Integration (CalDAV, WebDAV, file indexing) | ✅ Complete |
-| **7** | Admin & RBAC (admin endpoints, dashboard, smoke tests) | ✅ Complete |
-| **8+** | OIDC, email, voice, frontend, microservices | ⏳ Future |
+| Phase   | Focus                                                  | Status      |
+| ------- | ------------------------------------------------------ | ----------- |
+| **0-1** | Foundation (Docker, DB, Redis, Qdrant)                 | ✅ Complete |
+| **2-3** | Security & Core Services (JWT, Auth, API Gateway)      | ✅ Complete |
+| **4**   | Realtime Communication (WebSocket, QueryOrchestrator)  | ✅ Complete |
+| **5**   | Medical AI (RAG, semantic search, document ingestion)  | ✅ Complete |
+| **6**   | Nextcloud Integration (CalDAV, WebDAV, file indexing)  | ✅ Complete |
+| **7**   | Admin & RBAC (admin endpoints, dashboard, smoke tests) | ✅ Complete |
+| **8+**  | OIDC, email, voice, frontend, microservices            | ⏳ Future   |
 
 ---
 
 ## Related Resources
 
 **Code Repositories:**
+
 - Backend: `/services/api-gateway/`
 - Tests: `/services/api-gateway/tests/`
 - Infrastructure: `/infrastructure/observability/`
 
 **External Documentation:**
+
 - [FastAPI Docs](https://fastapi.tiangolo.com/)
 - [PostgreSQL pgvector](https://github.com/pgvector/pgvector)
 - [Qdrant Docs](https://qdrant.tech/documentation/)
@@ -187,12 +201,14 @@ For detailed diagrams, see [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md).
 ## Contributing to Architecture Docs
 
 **When to Update:**
+
 - After completing a major phase
 - After significant architectural changes
 - After adding new services or components
 - After infrastructure changes (new databases, observability)
 
 **Update Process:**
+
 1. Update [UNIFIED_ARCHITECTURE.md](../UNIFIED_ARCHITECTURE.md) first (canonical reference)
 2. Update [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md) if visual changes
 3. Update [SERVICE_CATALOG.md](../SERVICE_CATALOG.md) if service changes
@@ -200,6 +216,7 @@ For detailed diagrams, see [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md).
 5. Create phase completion report in `/docs/` (e.g., `PHASE_XX_COMPLETION_REPORT.md`)
 
 **Review Cycle:**
+
 - Minor updates: As needed during development
 - Major reviews: After each phase completion
 - Full audit: Every 3 phases (currently at Phase 7, next full audit at Phase 10)

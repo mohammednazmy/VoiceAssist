@@ -26,6 +26,7 @@ The VoiceAssist documentation site exposes machine-readable JSON endpoints desig
 | -------------------- | ------ | ------------------------------------------- |
 | `/agent/index.json`  | GET    | Documentation system metadata and discovery |
 | `/agent/docs.json`   | GET    | Full document list with metadata            |
+| `/agent/schema.json` | GET    | JSON Schema for API response types          |
 | `/search-index.json` | GET    | Full-text search index (Fuse.js format)     |
 | `/sitemap.xml`       | GET    | XML sitemap for crawlers                    |
 
@@ -172,6 +173,51 @@ const backendDocs = data.docs.filter((doc) => doc.owner === "backend");
 
 ---
 
+## GET /agent/schema.json
+
+JSON Schema definitions for all API response types. Useful for validating responses or generating type definitions.
+
+### Request
+
+```http
+GET /agent/schema.json HTTP/1.1
+Host: assistdocs.asimo.io
+```
+
+### Response Structure
+
+Returns a JSON Schema (draft-07) with definitions for:
+
+- `DocIndexEntry` - Individual document metadata
+- `DocsListResponse` - Response from `/agent/docs.json`
+- `IndexResponse` - Response from `/agent/index.json`
+- `SearchIndexEntry` - Individual search index entry
+- `SearchIndexResponse` - Response from `/search-index.json`
+
+### Usage Example
+
+```javascript
+// Fetch and use schema for validation
+const schemaResponse = await fetch("https://assistdocs.asimo.io/agent/schema.json");
+const schema = await schemaResponse.json();
+
+// Access specific type definitions
+const docEntrySchema = schema.definitions.DocIndexEntry;
+console.log("Required fields:", docEntrySchema.required);
+// Output: ["slug", "path", "title"]
+
+// Get valid status values
+console.log("Valid status:", docEntrySchema.properties.status.enum);
+// Output: ["draft", "experimental", "stable", "deprecated", ...]
+```
+
+### Caching
+
+- `Cache-Control: max-age=86400, public`
+- Cached for 24 hours (schema changes infrequently)
+
+---
+
 ## GET /search-index.json
 
 Full-text search index designed for use with [Fuse.js](https://fusejs.io/).
@@ -308,6 +354,7 @@ Test the endpoints directly:
 
 - **Index:** https://assistdocs.asimo.io/agent/index.json
 - **Docs:** https://assistdocs.asimo.io/agent/docs.json
+- **Schema:** https://assistdocs.asimo.io/agent/schema.json
 - **Search Index:** https://assistdocs.asimo.io/search-index.json
 - **Sitemap:** https://assistdocs.asimo.io/sitemap.xml
 

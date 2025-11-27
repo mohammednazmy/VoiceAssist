@@ -1,3 +1,15 @@
+---
+title: "Phase Template"
+slug: "phase-template"
+summary: "[One paragraph describing what this phase accomplishes]"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["phase", "template"]
+---
+
 # Phase [NUMBER]: [NAME]
 
 ## Goal
@@ -30,6 +42,7 @@
 ```
 
 **Verify:**
+
 ```bash
 # Verification commands
 ```
@@ -71,6 +84,7 @@
 ## Troubleshooting
 
 ### [Common Issue 1]
+
 ```bash
 # Solution
 ```

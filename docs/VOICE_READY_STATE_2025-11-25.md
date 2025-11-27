@@ -1,3 +1,15 @@
+---
+title: "Voice Ready State 2025 11 25"
+slug: "voice-ready-state-2025-11-25"
+summary: "The voice pipeline is now stable on `main` with all tests passing. This document serves as context for future AI assistant sessions."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["voice", "ready", "state", "2025"]
+---
+
 # VoiceAssist Voice-Ready State - November 25, 2025
 
 ## Summary

@@ -1,6 +1,18 @@
+---
+title: "User Guide"
+slug: "user-guide"
+summary: "**Last Updated:** 2025-11-21"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["frontend"]
+tags: ["user", "guide"]
+---
+
 # VoiceAssist User Guide
 
-**Version:** 1.0  
+**Version:** 1.0
 **Last Updated:** 2025-11-21
 
 ---
@@ -46,6 +58,7 @@ VoiceAssist is an AI-powered medical assistant that helps healthcare professiona
 ### Dashboard Overview
 
 The dashboard shows:
+
 - Recent queries and conversations
 - Quick access to voice assistant
 - Document upload area
@@ -93,6 +106,7 @@ The dashboard shows:
 ### Voice Commands
 
 **Medical Queries:**
+
 ```
 "What are the symptoms of diabetes?"
 "Tell me about hypertension treatment"
@@ -100,6 +114,7 @@ The dashboard shows:
 ```
 
 **Document Requests:**
+
 ```
 "Find my patient records for John Doe"
 "Show recent lab results"
@@ -107,6 +122,7 @@ The dashboard shows:
 ```
 
 **Scheduling:**
+
 ```
 "Schedule an appointment for next Tuesday at 2 PM"
 "What's on my calendar today?"
@@ -116,12 +132,14 @@ The dashboard shows:
 ### Voice Tips
 
 ✅ **Do:**
+
 - Speak clearly and at a normal pace
 - Use medical terminology when appropriate
 - Provide context for ambiguous queries
 - Confirm important actions verbally
 
 ❌ **Don't:**
+
 - Speak too quickly or mumble
 - Use background noise environments
 - Mix multiple queries in one sentence
@@ -130,11 +148,13 @@ The dashboard shows:
 ### Clarifications
 
 If VoiceAssist needs clarification:
+
 1. It will ask a specific question
 2. Respond with the requested information
 3. The system will continue processing
 
 **Example:**
+
 ```
 You: "Find patient records"
 VoiceAssist: "Which patient are you looking for?"
@@ -158,6 +178,7 @@ You: "The first one"
 5. Click "Upload"
 
 **Supported Formats:**
+
 - PDF (.pdf)
 - Images (.jpg, .png, .tiff)
 - Documents (.docx, .doc)
@@ -167,16 +188,19 @@ You: "The first one"
 ### Organizing Documents
 
 **Folders:**
+
 - Create custom folders
 - Move documents between folders
 - Share folders with colleagues (if permissions allow)
 
 **Tags:**
+
 - Add multiple tags per document
 - Search by tags
 - Auto-tagging based on content
 
 **Search:**
+
 ```
 - By filename: "lab_results_2024"
 - By content: "glucose levels"
@@ -188,6 +212,7 @@ You: "The first one"
 ### Document Processing
 
 VoiceAssist automatically:
+
 - Extracts text from PDFs and images (OCR)
 - Indexes content for search
 - Generates summaries for long documents
@@ -201,6 +226,7 @@ VoiceAssist automatically:
 ### Knowledge Base
 
 VoiceAssist has access to:
+
 - Medical textbooks and guidelines
 - Clinical practice guidelines
 - Drug databases
@@ -210,24 +236,28 @@ VoiceAssist has access to:
 ### Query Types
 
 **1. Information Lookup**
+
 ```
 "What is the ICD-10 code for pneumonia?"
 "Explain the pathophysiology of diabetes"
 ```
 
 **2. Treatment Recommendations**
+
 ```
 "What's the first-line treatment for strep throat?"
 "Recommend antibiotics for UTI in adults"
 ```
 
 **3. Differential Diagnosis**
+
 ```
 "Patient presents with fever and cough, what could it be?"
 "Differential diagnosis for chest pain"
 ```
 
 **4. Drug Information**
+
 ```
 "Side effects of metformin"
 "Drug interactions with warfarin"
@@ -237,6 +267,7 @@ VoiceAssist has access to:
 ### Response Format
 
 Responses include:
+
 - **Answer:** Direct response to your query
 - **Sources:** References and citations
 - **Confidence:** AI confidence level
@@ -282,6 +313,7 @@ Responses include:
 ### Calendar Integration
 
 Syncs with:
+
 - Google Calendar
 - Outlook Calendar
 - Apple Calendar
@@ -326,6 +358,7 @@ Syncs with:
 ### Data Security
 
 VoiceAssist uses:
+
 - **Encryption:** AES-256 for data at rest, TLS 1.3 for data in transit
 - **Authentication:** Multi-factor authentication (MFA) available
 - **Access Control:** Role-based access control (RBAC)
@@ -334,6 +367,7 @@ VoiceAssist uses:
 ### HIPAA Compliance
 
 VoiceAssist is **HIPAA-compliant**:
+
 - Business Associate Agreement (BAA) available
 - PHI data is encrypted and protected
 - Access logs maintained for 7 years
@@ -342,6 +376,7 @@ VoiceAssist is **HIPAA-compliant**:
 ### Your Privacy Rights
 
 You can:
+
 - Export all your data
 - Delete your account and data
 - Request data corrections
@@ -377,6 +412,7 @@ You can:
 
 **Problem:** Microphone not detected
 **Solution:**
+
 1. Check browser permissions (Settings → Privacy → Microphone)
 2. Allow VoiceAssist to access microphone
 3. Test microphone with system settings
@@ -384,6 +420,7 @@ You can:
 
 **Problem:** Poor transcription quality
 **Solution:**
+
 1. Speak more clearly and slowly
 2. Reduce background noise
 3. Check microphone positioning
@@ -393,6 +430,7 @@ You can:
 
 **Problem:** Forgot password
 **Solution:**
+
 1. Click "Forgot Password" on login page
 2. Enter your email address
 3. Check email for reset link
@@ -400,6 +438,7 @@ You can:
 
 **Problem:** Account locked
 **Solution:**
+
 1. Wait 15 minutes (automatic unlock)
 2. Or contact administrator
 3. Enable MFA to prevent future lockouts
@@ -408,12 +447,14 @@ You can:
 
 **Problem:** File too large
 **Solution:**
+
 - Maximum file size: 50 MB
 - Compress PDF or image files
 - Split large documents
 
 **Problem:** Unsupported format
 **Solution:**
+
 - Convert to supported format (PDF, DOCX, JPG, PNG)
 - Use online converters
 - Contact support for special formats
@@ -424,52 +465,52 @@ You can:
 
 ### General
 
-**Q: Is VoiceAssist free?**  
+**Q: Is VoiceAssist free?**
 A: Pricing depends on your organization's plan. Contact your administrator.
 
-**Q: Can I use VoiceAssist on mobile?**  
+**Q: Can I use VoiceAssist on mobile?**
 A: Yes, VoiceAssist is mobile-responsive. Native apps coming soon.
 
-**Q: How accurate is the AI?**  
+**Q: How accurate is the AI?**
 A: Medical responses are based on peer-reviewed sources. Always verify critical information.
 
-**Q: Is my data backed up?**  
+**Q: Is my data backed up?**
 A: Yes, daily automated backups with 30-day retention.
 
 ### Voice
 
-**Q: What languages are supported?**  
+**Q: What languages are supported?**
 A: Currently English. Additional languages in development.
 
-**Q: Can I use voice in noisy environments?**  
+**Q: Can I use voice in noisy environments?**
 A: Noise-canceling headsets recommended for best results.
 
 ### Privacy
 
-**Q: Who can see my data?**  
+**Q: Who can see my data?**
 A: Only you and authorized users (based on permissions). Admins can view audit logs but not content.
 
-**Q: Is my voice recorded?**  
+**Q: Is my voice recorded?**
 A: Voice is transcribed in real-time and not stored permanently (unless you save transcripts).
 
-**Q: Can I delete my data?**  
+**Q: Can I delete my data?**
 A: Yes, go to Settings → Privacy → Delete My Data
 
 ---
 
 ## Support
 
-**Help Desk:** support@voiceassist.example.com  
-**Documentation:** https://docs.voiceassist.example.com  
-**Community Forum:** https://forum.voiceassist.example.com  
+**Help Desk:** support@voiceassist.example.com
+**Documentation:** https://docs.voiceassist.example.com
+**Community Forum:** https://forum.voiceassist.example.com
 **Phone Support:** 1-800-VOICE-AI
 
-**Hours:**  
-Monday-Friday: 8 AM - 6 PM EST  
+**Hours:**
+Monday-Friday: 8 AM - 6 PM EST
 Emergency Support: 24/7
 
 ---
 
-**Version:** 1.0  
-**Last Updated:** 2025-11-21  
+**Version:** 1.0
+**Last Updated:** 2025-11-21
 **Phase 13:** Final Testing & Documentation Complete

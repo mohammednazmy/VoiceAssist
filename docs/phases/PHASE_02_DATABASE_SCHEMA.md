@@ -1,8 +1,21 @@
+---
+title: "Phase 02 Database Schema"
+slug: "phases/phase-02-database-schema"
+summary: "> **WARNING: LEGACY V1 PHASE - NOT CANONICAL FOR V2**"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience: ["backend"]
+tags: ["phase", "database", "schema"]
+---
+
 # Phase 2: Database Schema & Models
 
 > **WARNING: LEGACY V1 PHASE - NOT CANONICAL FOR V2**
 > This describes the original V1 phase.
 > For the current 15-phase V2 plan, see:
+>
 > - [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)
 > - [PHASE_00_INITIALIZATION.md](PHASE_00_INITIALIZATION.md)
 > - [CURRENT_PHASE.md](../../CURRENT_PHASE.md)
@@ -51,6 +64,7 @@ alembic init alembic
 ### Task 2: Configure Alembic
 
 Edit `~/VoiceAssist/server/alembic.ini`:
+
 ```ini
 # Update this line:
 sqlalchemy.url = postgresql://localhost/voiceassist
@@ -60,6 +74,7 @@ sqlalchemy.url = postgresql://localhost/voiceassist
 ```
 
 Edit `~/VoiceAssist/server/alembic/env.py`:
+
 ```python
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config
@@ -95,6 +110,7 @@ target_metadata = Base.metadata
 ### Task 3: Create Database Models
 
 Create `~/VoiceAssist/server/app/models/__init__.py`:
+
 ```python
 """Database models"""
 from app.models.base import Base
@@ -115,6 +131,7 @@ __all__ = [
 ```
 
 Create `~/VoiceAssist/server/app/models/base.py`:
+
 ```python
 """Base model for all database models"""
 from sqlalchemy.ext.declarative import declarative_base
@@ -131,6 +148,7 @@ class TimestampMixin:
 ```
 
 Create `~/VoiceAssist/server/app/models/user.py`:
+
 ```python
 """User model"""
 from sqlalchemy import Column, String, Boolean, Integer
@@ -159,6 +177,7 @@ class User(Base, TimestampMixin):
 ```
 
 Create `~/VoiceAssist/server/app/models/conversation.py`:
+
 ```python
 """Conversation and Message models"""
 from sqlalchemy import Column, String, Integer, ForeignKey, Text, JSON, Enum as SQLEnum
@@ -209,6 +228,7 @@ class Message(Base, TimestampMixin):
 ```
 
 Create `~/VoiceAssist/server/app/models/document.py`:
+
 ```python
 """Document and DocumentChunk models"""
 from sqlalchemy import Column, String, Integer, ForeignKey, Text, JSON, Enum as SQLEnum, Float
@@ -271,6 +291,7 @@ class DocumentChunk(Base, TimestampMixin):
 ```
 
 Create `~/VoiceAssist/server/app/models/embedding.py`:
+
 ```python
 """Embedding model for tracking"""
 from sqlalchemy import Column, String, Integer, Float
@@ -295,6 +316,7 @@ class Embedding(Base, TimestampMixin):
 ### Task 4: Create Database Session Dependency
 
 Create `~/VoiceAssist/server/app/core/database.py`:
+
 ```python
 """Database session management"""
 from sqlalchemy import create_engine
@@ -339,6 +361,7 @@ alembic upgrade head
 ```
 
 **Verify:**
+
 ```bash
 # Check tables were created
 psql voiceassist -c "\dt"
@@ -349,6 +372,7 @@ psql voiceassist -c "\dt"
 ### Task 6: Create Qdrant Collections
 
 Create `~/VoiceAssist/server/app/core/vector_db.py`:
+
 ```python
 """Qdrant vector database client"""
 from qdrant_client import QdrantClient
@@ -402,6 +426,7 @@ vector_db = VectorDB()
 ```
 
 Create initialization script: `~/VoiceAssist/server/app/core/init_db.py`:
+
 ```python
 """Initialize database and vector DB"""
 from app.core.database import engine
@@ -430,6 +455,7 @@ if __name__ == "__main__":
 ```
 
 Run initialization:
+
 ```bash
 cd ~/VoiceAssist/server
 source venv/bin/activate
@@ -439,6 +465,7 @@ python -m app.core.init_db
 ### Task 7: Add Database Check to Health Endpoint
 
 Update `~/VoiceAssist/server/app/main.py`:
+
 ```python
 # Add at top
 from app.core.database import SessionLocal
@@ -481,6 +508,7 @@ async def health_check():
 ### Task 8: Create Test Data Script
 
 Create `~/VoiceAssist/server/scripts/create_test_data.py`:
+
 ```python
 """Create test data for development"""
 from app.core.database import SessionLocal
@@ -554,6 +582,7 @@ if __name__ == "__main__":
 ```
 
 Run it:
+
 ```bash
 cd ~/VoiceAssist/server
 source venv/bin/activate
@@ -606,6 +635,7 @@ curl http://localhost:8000/health | jq
 ### Test Database Queries
 
 Create a test script: `~/VoiceAssist/server/scripts/test_queries.py`:
+
 ```python
 """Test database queries"""
 from app.core.database import SessionLocal
@@ -634,6 +664,7 @@ print("\n✅ All queries successful")
 ```
 
 Run it:
+
 ```bash
 python scripts/test_queries.py
 ```
@@ -641,6 +672,7 @@ python scripts/test_queries.py
 ## Documentation Updates
 
 1. Update `~/VoiceAssist/PHASE_STATUS.md`:
+
 ```markdown
 - [x] Phase 1: Local Development Environment - Completed [DATE]
 - [x] Phase 2: Database Schema & Models - Completed [DATE]
@@ -648,12 +680,14 @@ python scripts/test_queries.py
 ```
 
 2. Update `~/VoiceAssist/DEVELOPMENT_LOG.md`:
+
 ```markdown
 ## Phase 2: Database Schema & Models
 
 **Completed:** [DATE]
 
 ### What Was Built
+
 - SQLAlchemy models for users, conversations, messages, documents
 - Alembic migrations setup
 - Qdrant collection created
@@ -662,6 +696,7 @@ python scripts/test_queries.py
 - Health check includes database status
 
 ### Database Tables
+
 - users
 - conversations
 - messages
@@ -670,13 +705,16 @@ python scripts/test_queries.py
 - embeddings
 
 ### Qdrant Collections
+
 - medical_knowledge (1536 dimensions, cosine similarity)
 
 ### Next Phase
+
 Phase 3: Authentication System
 ```
 
 3. Commit changes:
+
 ```bash
 cd ~/VoiceAssist
 git add .
@@ -699,6 +737,7 @@ git commit -m "Phase 2: Database schema and models with Alembic migrations"
 ## Troubleshooting
 
 ### Migration errors
+
 ```bash
 # Drop all tables and start fresh
 psql voiceassist -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
@@ -707,6 +746,7 @@ alembic upgrade head
 ```
 
 ### Qdrant collection issues
+
 ```python
 # Delete and recreate collection
 from app.core.vector_db import vector_db

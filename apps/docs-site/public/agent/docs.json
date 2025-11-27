@@ -1,6 +1,6 @@
 {
   "count": 220,
-  "generated_at": "2025-11-27T22:12:21.241Z",
+  "generated_at": "2025-11-27T22:41:01.703Z",
   "docs": [
     {
       "slug": "continuous-improvement-plan",
@@ -21,6 +21,102 @@
       "lastUpdated": "Wed Nov 26 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
+      "slug": "accessibility-audit",
+      "path": "ACCESSIBILITY_AUDIT.md",
+      "title": "Accessibility Audit",
+      "summary": "**Date**: 2025-11-23",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["accessibility", "audit"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "admin-panel-deployment",
+      "path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "title": "Admin Panel Deployment",
+      "summary": "**Date**: 2025-11-22",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["devops"],
+      "tags": ["admin", "panel", "deployment"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "admin-panel-implementation-summary",
+      "path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
+      "title": "Admin Panel Implementation Summary",
+      "summary": "**Project**: VoiceAssist Admin Panel Enhancement",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["devops"],
+      "tags": ["admin", "panel", "implementation", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "admin-panel-login-fix",
+      "path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "title": "Admin Panel Login Fix",
+      "summary": "**Date**: 2025-11-22",
+      "status": "experimental",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["devops"],
+      "tags": ["admin", "panel", "login", "fix"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "admin-panel-login-fix-complete",
+      "path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md",
+      "title": "Admin Panel Login Fix Complete",
+      "summary": "**Date:** 2025-11-22",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["devops"],
+      "tags": ["admin", "panel", "login", "fix"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "admin-panel-specs",
+      "path": "ADMIN_PANEL_SPECS.md",
+      "title": "Admin Panel Specs",
+      "summary": "The VoiceAssist Admin Panel provides a centralized web interface for system configuration, monitoring, and management. Accessible at `admin.asimo.io`.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["devops"],
+      "tags": ["admin", "panel", "specs"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "all-phases-summary",
+      "path": "ALL_PHASES_SUMMARY.md",
+      "title": "All Phases Summary",
+      "summary": "This is the V2 15-phase implementation plan for VoiceAssist. Each phase is a focused unit of work designed for completion in one session (4-10 hours).",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["all", "phases", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "ansible-guide",
+      "path": "ANSIBLE_GUIDE.md",
+      "title": "Ansible Guide",
+      "summary": "1. [Overview](#overview)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["ansible", "guide"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
       "slug": "api-reference/overview",
       "path": "API_REFERENCE.md",
       "title": "API Reference",
@@ -31,6 +127,30 @@
       "audience": ["human", "agent", "backend", "frontend"],
       "tags": ["api", "rest", "reference", "endpoints"],
       "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "architecture",
+      "path": "ARCHITECTURE.md",
+      "title": "Architecture",
+      "summary": "> **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["architecture"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "architecture-v2",
+      "path": "ARCHITECTURE_V2.md",
+      "title": "Architecture V2",
+      "summary": "VoiceAssist V2 is an **enterprise-grade, HIPAA-compliant, multi-user medical AI assistant** designed to support hundreds of concurrent users with high...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["architecture"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -47,6 +167,222 @@
       "lastUpdated": "2025-11-27"
     },
     {
+      "slug": "backend-skeleton-verification",
+      "path": "BACKEND_SKELETON_VERIFICATION.md",
+      "title": "Backend Skeleton Verification",
+      "summary": "**Date**: 2025-11-20",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["backend"],
+      "tags": ["backend", "skeleton", "verification"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "chaos-engineering",
+      "path": "CHAOS_ENGINEERING.md",
+      "title": "Chaos Engineering",
+      "summary": "**Last Updated**: 2025-11-21 (Phase 7 - P3.5)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["chaos", "engineering"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "cicd-guide",
+      "path": "CICD_GUIDE.md",
+      "title": "Cicd Guide",
+      "summary": "1. [Overview](#overview)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["cicd", "guide"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "claude-execution-guide",
+      "path": "CLAUDE_EXECUTION_GUIDE.md",
+      "title": "Claude Execution Guide",
+      "summary": "This guide provides comprehensive instructions for Claude Code (or other AI assistants) working on the VoiceAssist V2 project. It covers session start...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["agent", "human"],
+      "tags": ["claude", "execution", "guide"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "claude-prompts",
+      "path": "CLAUDE_PROMPTS.md",
+      "title": "Claude Prompts",
+      "summary": "This document contains ready-to-use prompts for different types of work on VoiceAssist V2. Copy and paste these prompts into a Claude Code session, fi...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["agent", "human"],
+      "tags": ["claude", "prompts"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "compose-first-summary",
+      "path": "COMPOSE_FIRST_SUMMARY.md",
+      "title": "Compose First Summary",
+      "summary": "1. **Updated DEVELOPMENT_PHASES_V2.md**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["compose", "first", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "compose-to-k8s-migration",
+      "path": "COMPOSE_TO_K8S_MIGRATION.md",
+      "title": "Compose To K8s Migration",
+      "summary": "This guide covers migrating VoiceAssist from Docker Compose (Phases 0-10) to Kubernetes (Phases 11-14). The migration maintains the **separate Nextclo...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["compose", "k8s", "migration"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "configuration-reference",
+      "path": "CONFIGURATION_REFERENCE.md",
+      "title": "Configuration Reference",
+      "summary": "**VoiceAssist V2 - Complete Configuration Guide**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["configuration", "reference"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "continuous-improvement-summary",
+      "path": "CONTINUOUS_IMPROVEMENT_SUMMARY.md",
+      "title": "Continuous Improvement Summary",
+      "summary": "**Date:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["continuous", "improvement", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "data-model",
+      "path": "DATA_MODEL.md",
+      "title": "Data Model",
+      "summary": "**Last Updated**: 2025-11-20",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["data", "model"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "deep-verification-qa-summary",
+      "path": "DEEP_VERIFICATION_QA_SUMMARY.md",
+      "title": "Deep Verification Qa Summary",
+      "summary": "**Date**: 2025-11-20",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["deep", "verification", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "deployment-guide",
+      "path": "DEPLOYMENT_GUIDE.md",
+      "title": "Deployment Guide",
+      "summary": "**Last Updated:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["devops"],
+      "tags": ["deployment", "guide"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "deployment-summary-asimo",
+      "path": "DEPLOYMENT_SUMMARY_ASIMO.md",
+      "title": "Deployment Summary Asimo",
+      "summary": "**Deployment Date:** 2025-11-22 (Initial) / 2025-11-23 (Final Configuration)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["devops"],
+      "tags": ["deployment", "summary", "asimo"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "development-phases",
+      "path": "DEVELOPMENT_PHASES.md",
+      "title": "Development Phases",
+      "summary": "> **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["development", "phases"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "development-phases-v2",
+      "path": "DEVELOPMENT_PHASES_V2.md",
+      "title": "Development Phases V2",
+      "summary": "VoiceAssist has been redesigned as an **enterprise-grade, HIPAA-compliant, multi-user medical AI assistant** with microservices architecture, Kubernet...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["development", "phases"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "development-setup",
+      "path": "DEVELOPMENT_SETUP.md",
+      "title": "Development Setup",
+      "summary": "This guide walks you through setting up your local development environment for VoiceAssist.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["development", "setup"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "disaster-recovery-runbook",
+      "path": "DISASTER_RECOVERY_RUNBOOK.md",
+      "title": "Disaster Recovery Runbook",
+      "summary": "**Document Version:** 1.0",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["backend", "frontend"],
+      "tags": ["disaster", "recovery", "runbook"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "documentation-completion-summary",
+      "path": "DOCUMENTATION_COMPLETION_SUMMARY.md",
+      "title": "Documentation Completion Summary",
+      "summary": "**Date:** November 19, 2024",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["documentation", "completion", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
       "slug": "docs/metadata-standard",
       "path": "DOCUMENTATION_METADATA_STANDARD.md",
       "title": "Documentation Metadata Standard",
@@ -57,6 +393,66 @@
       "audience": ["human", "agent"],
       "tags": ["documentation", "metadata", "standards", "frontmatter"],
       "relatedServices": ["docs-site"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "documentation-site-specs",
+      "path": "DOCUMENTATION_SITE_SPECS.md",
+      "title": "Documentation Site Specs",
+      "summary": "The VoiceAssist documentation site provides comprehensive guides, tutorials, and API documentation for users and administrators. Accessible at `docs-v...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["documentation", "site", "specs"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "enhancement-summary",
+      "path": "ENHANCEMENT_SUMMARY.md",
+      "title": "Enhancement Summary",
+      "summary": "This document summarizes the comprehensive documentation enhancements made to VoiceAssist V2, transforming it from a basic project concept into a full...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["enhancement", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "feature-flags",
+      "path": "FEATURE_FLAGS.md",
+      "title": "Feature Flags",
+      "summary": "**Last Updated**: 2025-11-21 (Phase 7 - P3.1)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["feature", "flags"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "file",
+      "path": "FILE.md",
+      "title": "File",
+      "summary": "This placeholder keeps existing references in sync until the source content is added.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["file"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "final-documentation-summary",
+      "path": "FINAL_DOCUMENTATION_SUMMARY.md",
+      "title": "Final Documentation Summary",
+      "summary": "**Date**: 2025-11-20",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["final", "documentation", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -73,6 +469,90 @@
       "lastUpdated": "2025-11-27"
     },
     {
+      "slug": "frontend-completion-plan",
+      "path": "FRONTEND_COMPLETION_PLAN.md",
+      "title": "Frontend Completion Plan",
+      "summary": "This document outlines the comprehensive implementation plan for completing the VoiceAssist frontend MVP. Based on thorough codebase analysis, the fro...",
+      "status": "stable",
+      "stability": "beta",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["frontend", "completion", "plan"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "frontend-verification-summary",
+      "path": "FRONTEND_VERIFICATION_SUMMARY.md",
+      "title": "Frontend Verification Summary",
+      "summary": "**Date**: 2025-11-20",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["frontend", "verification", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "hipaa-compliance-matrix",
+      "path": "HIPAA_COMPLIANCE_MATRIX.md",
+      "title": "Hipaa Compliance Matrix",
+      "summary": "**Document Version:** 1.0",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["hipaa", "compliance", "matrix"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "infrastructure-as-code",
+      "path": "INFRASTRUCTURE_AS_CODE.md",
+      "title": "Infrastructure As Code",
+      "summary": "1. [Overview](#overview)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["devops"],
+      "tags": ["infrastructure", "code"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "infrastructure-setup",
+      "path": "INFRASTRUCTURE_SETUP.md",
+      "title": "Infrastructure Setup",
+      "summary": "This guide covers infrastructure setup for VoiceAssist V2 across two deployment strategies:",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["devops"],
+      "tags": ["infrastructure", "setup"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "integration-handoff",
+      "path": "INTEGRATION_HANDOFF.md",
+      "title": "Integration Handoff",
+      "summary": "**Date**: 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["integration", "handoff"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "integration-improvements-phase-0-8",
+      "path": "INTEGRATION_IMPROVEMENTS_PHASE_0-8.md",
+      "title": "Integration Improvements Phase 0 8",
+      "summary": "**Date:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["integration", "improvements", "phase"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
       "slug": "internal-docs-system",
       "path": "INTERNAL_DOCS_SYSTEM.md",
       "title": "Internal Documentation System",
@@ -83,6 +563,402 @@
       "audience": ["human", "backend", "frontend", "devops"],
       "tags": ["documentation", "tooling", "ci-cd", "quality"],
       "relatedServices": ["docs-site"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "load-testing-guide",
+      "path": "LOAD_TESTING_GUIDE.md",
+      "title": "Load Testing Guide",
+      "summary": "This comprehensive guide covers load testing for VoiceAssist, including when to run tests, how to interpret results, choosing between tools (k6 vs Loc...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["load", "testing", "guide"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "local-development",
+      "path": "LOCAL_DEVELOPMENT.md",
+      "title": "Local Development",
+      "summary": "VoiceAssist V2 uses a **Compose-first development approach** with two separate Docker Compose stacks:",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["local", "development"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "login-500-fix-2025-11-25",
+      "path": "LOGIN_500_FIX_2025-11-25.md",
+      "title": "Login 500 Fix 2025 11 25",
+      "summary": "Users were experiencing HTTP 500 errors when attempting to login at dev.asimo.io.",
+      "status": "experimental",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["login", "500", "fix", "2025"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "medical-features",
+      "path": "MEDICAL_FEATURES.md",
+      "title": "Medical Features",
+      "summary": "VoiceAssist includes specialized medical capabilities designed for healthcare professionals, with a focus on evidence-based information retrieval, cli...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["medical", "features"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "message-edit-progress",
+      "path": "MESSAGE_EDIT_PROGRESS.md",
+      "title": "Message Edit Progress",
+      "summary": "**Date:** 2025-11-23",
+      "status": "experimental",
+      "stability": "experimental",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["message", "edit", "progress"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "nextcloud-apps-design",
+      "path": "NEXTCLOUD_APPS_DESIGN.md",
+      "title": "Nextcloud Apps Design",
+      "summary": "**Status:** In Progress (Phase 6 foundation started)",
+      "status": "stable",
+      "stability": "beta",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["nextcloud", "apps", "design"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "nextcloud-integration",
+      "path": "NEXTCLOUD_INTEGRATION.md",
+      "title": "Nextcloud Integration",
+      "summary": "VoiceAssist integrates with Nextcloud for identity management, file storage, calendar, and email functionality.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["nextcloud", "integration"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "oauth-login-config",
+      "path": "OAUTH_LOGIN_CONFIG.md",
+      "title": "Oauth Login Config",
+      "summary": "This document explains how to configure Google and Microsoft OAuth login for VoiceAssist.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["oauth", "login", "config"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "observability",
+      "path": "OBSERVABILITY.md",
+      "title": "Observability",
+      "summary": "**Purpose**: This document defines observability patterns for monitoring, logging, and alerting across all VoiceAssist services.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["observability"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "orchestration-design",
+      "path": "ORCHESTRATION_DESIGN.md",
+      "title": "Orchestration Design",
+      "summary": "**Last Updated**: 2025-11-20",
+      "status": "stable",
+      "stability": "beta",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["orchestration", "design"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "part2-deferred-backend-features-plan",
+      "path": "PART2_DEFERRED_BACKEND_FEATURES_PLAN.md",
+      "title": "Part2 Deferred Backend Features Plan",
+      "summary": "**Date:** 2025-11-26",
+      "status": "stable",
+      "stability": "beta",
+      "owner": "docs",
+      "audience": ["backend"],
+      "tags": ["part2", "deferred", "backend", "features"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "part3-platform-enhancements-plan",
+      "path": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md",
+      "title": "Part3 Platform Enhancements Plan",
+      "summary": "**Date:** 2025-11-26",
+      "status": "stable",
+      "stability": "beta",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["part3", "platform", "enhancements", "plan"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "performance-benchmarks",
+      "path": "PERFORMANCE_BENCHMARKS.md",
+      "title": "Performance Benchmarks",
+      "summary": "This document provides comprehensive performance benchmarks for VoiceAssist Phase 10, including baseline metrics, load test results, and performance t...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["performance", "benchmarks"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "performance-tuning-guide",
+      "path": "PERFORMANCE_TUNING_GUIDE.md",
+      "title": "Performance Tuning Guide",
+      "summary": "This comprehensive guide provides strategies, techniques, and best practices for optimizing VoiceAssist performance. Use this guide to identify bottle...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["performance", "tuning", "guide"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-02-completion-report",
+      "path": "PHASE_02_COMPLETION_REPORT.md",
+      "title": "Phase 02 Completion Report",
+      "summary": "**Date Completed**: 2025-11-21 00:20",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "completion", "report"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-02-enhancements-report",
+      "path": "PHASE_02_ENHANCEMENTS_REPORT.md",
+      "title": "Phase 02 Enhancements Report",
+      "summary": "**Date**: 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "enhancements", "report"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-03-completion-report",
+      "path": "PHASE_03_COMPLETION_REPORT.md",
+      "title": "Phase 03 Completion Report",
+      "summary": "**Date Completed**: 2025-11-21 03:00",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "completion", "report"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-04-completion-report",
+      "path": "PHASE_04_COMPLETION_REPORT.md",
+      "title": "Phase 04 Completion Report",
+      "summary": "**Date Completed**: 2025-11-21 03:45",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "completion", "report"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-05-completion-report",
+      "path": "PHASE_05_COMPLETION_REPORT.md",
+      "title": "Phase 05 Completion Report",
+      "summary": "**Date Completed**: 2025-11-21 05:00",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "completion", "report"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-06-completion-report",
+      "path": "PHASE_06_COMPLETION_REPORT.md",
+      "title": "Phase 06 Completion Report",
+      "summary": "**Project:** VoiceAssist V2 - Enterprise Medical AI Assistant",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "completion", "report"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-07-completion-report",
+      "path": "PHASE_07_COMPLETION_REPORT.md",
+      "title": "Phase 07 Completion Report",
+      "summary": "**Date Completed**: 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "completion", "report"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-08-api-contracts",
+      "path": "PHASE_08_API_CONTRACTS.md",
+      "title": "Phase 08 Api Contracts",
+      "summary": "This document defines the API contracts between frontend and backend for Phase 8 features.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["backend"],
+      "tags": ["phase", "api", "contracts"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-08-completion-report",
+      "path": "PHASE_08_COMPLETION_REPORT.md",
+      "title": "Phase 08 Completion Report",
+      "summary": "**Date:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "completion", "report"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-09-completion-report",
+      "path": "PHASE_09_COMPLETION_REPORT.md",
+      "title": "Phase 09 Completion Report",
+      "summary": "**Status**: ✅ COMPLETE",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "completion", "report"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-0-1-completion-report",
+      "path": "PHASE_0_1_COMPLETION_REPORT.md",
+      "title": "Phase 0 1 Completion Report",
+      "summary": "**Date:** 2025-11-20",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "completion", "report"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-0-1-optimization-recommendations",
+      "path": "PHASE_0_1_OPTIMIZATION_RECOMMENDATIONS.md",
+      "title": "Phase 0 1 Optimization Recommendations",
+      "summary": "**Date:** 2025-11-20",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "optimization", "recommendations"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-10-completion-report",
+      "path": "PHASE_10_COMPLETION_REPORT.md",
+      "title": "Phase 10 Completion Report",
+      "summary": "**Status**: ✅ COMPLETE",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "completion", "report"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-2-optimized-plan",
+      "path": "PHASE_2_OPTIMIZED_PLAN.md",
+      "title": "Phase 2 Optimized Plan",
+      "summary": "**Date:** 2025-11-20",
+      "status": "stable",
+      "stability": "beta",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "optimized", "plan"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-template",
+      "path": "PHASE_TEMPLATE.md",
+      "title": "Phase Template",
+      "summary": "[One paragraph describing what this phase accomplishes]",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "template"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "production-deployment-runbook",
+      "path": "PRODUCTION_DEPLOYMENT_RUNBOOK.md",
+      "title": "Production Deployment Runbook",
+      "summary": "**Last Updated:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["devops"],
+      "tags": ["production", "deployment", "runbook"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "production-readiness-checklist",
+      "path": "PRODUCTION_READINESS_CHECKLIST.md",
+      "title": "Production Readiness Checklist",
+      "summary": "**Date:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["production", "readiness", "checklist"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "project-summary",
+      "path": "PROJECT_SUMMARY.md",
+      "title": "Project Summary",
+      "summary": "VoiceAssist is a comprehensive AI assistant system designed specifically for medical professionals. It combines voice and text interfaces with special...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["project", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "readme",
+      "path": "README.md",
+      "title": "Readme",
+      "summary": "**Last Updated**: 2025-11-27",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["readme"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -99,6 +975,186 @@
       "lastUpdated": "2025-11-27"
     },
     {
+      "slug": "remaining-message-edit-work",
+      "path": "REMAINING_MESSAGE_EDIT_WORK.md",
+      "title": "Remaining Message Edit Work",
+      "summary": "**Created:** 2025-11-23",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["remaining", "message", "edit", "work"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "roadmap",
+      "path": "ROADMAP.md",
+      "title": "Roadmap",
+      "summary": "This is the canonical V2 development roadmap for VoiceAssist. It presents a **15-phase implementation plan (Phase 0-14)** organized by timeframe and d...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["roadmap"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "rto-rpo-documentation",
+      "path": "RTO_RPO_DOCUMENTATION.md",
+      "title": "Rto Rpo Documentation",
+      "summary": "**Document Version:** 1.0",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["rto", "rpo", "documentation"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "security",
+      "path": "SECURITY.md",
+      "title": "Security",
+      "summary": "This is a placeholder for infrastructure security documentation. Refer to `SECURITY_COMPLIANCE.md` for the current checklist.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["security"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "semantic-search-design",
+      "path": "SEMANTIC_SEARCH_DESIGN.md",
+      "title": "Semantic Search Design",
+      "summary": "VoiceAssist uses a sophisticated semantic search system to retrieve relevant medical knowledge from textbooks, journals, and clinical guidelines. This...",
+      "status": "stable",
+      "stability": "beta",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["semantic", "search", "design"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "service-catalog",
+      "path": "SERVICE_CATALOG.md",
+      "title": "Service Catalog",
+      "summary": "**Last Updated**: 2025-11-21 (Phase 6: Nextcloud App Integration & Unified Services)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["service", "catalog"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "start-here",
+      "path": "START_HERE.md",
+      "title": "Start Here",
+      "summary": "**Welcome to VoiceAssist V2** - A HIPAA-compliant voice-enabled clinical decision support system.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["start", "here"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "system-review-2025-11-22",
+      "path": "SYSTEM_REVIEW_2025-11-22.md",
+      "title": "System Review 2025 11 22",
+      "summary": "**Reviewer:** Claude (AI Assistant)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["system", "review", "2025"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "terraform-guide",
+      "path": "TERRAFORM_GUIDE.md",
+      "title": "Terraform Guide",
+      "summary": "1. [Overview](#overview)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["terraform", "guide"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "testing-contracts",
+      "path": "TESTING_CONTRACTS.md",
+      "title": "Testing Contracts",
+      "summary": "**Last Updated**: 2025-11-21 (Phase 7 - P3.4)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["testing", "contracts"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "testing-guide",
+      "path": "TESTING_GUIDE.md",
+      "title": "Testing Guide",
+      "summary": "This guide describes how to run, write, and generate end-to-end (E2E) tests for the VoiceAssist web application using Playwright and Auto Playwright (...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["testing", "guide"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "testing-results-2025-11-22",
+      "path": "TESTING_RESULTS_2025-11-22.md",
+      "title": "Testing Results 2025 11 22",
+      "summary": "**Date:** 2025-11-22",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["testing", "results", "2025"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "tools-and-integrations",
+      "path": "TOOLS_AND_INTEGRATIONS.md",
+      "title": "Tools And Integrations",
+      "summary": "**Last Updated**: 2025-11-20",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["tools", "and", "integrations"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "tools-completion-summary",
+      "path": "TOOLS_COMPLETION_SUMMARY.md",
+      "title": "Tools Completion Summary",
+      "summary": "**Date**: 2025-11-20",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["tools", "completion", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "tools-integration-summary",
+      "path": "TOOLS_INTEGRATION_SUMMARY.md",
+      "title": "Tools Integration Summary",
+      "summary": "**Date**: 2025-11-20",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["tools", "integration", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
       "slug": "architecture/unified",
       "path": "UNIFIED_ARCHITECTURE.md",
       "title": "Unified Architecture Documentation",
@@ -109,6 +1165,18 @@
       "audience": ["human", "agent", "backend", "frontend", "devops"],
       "tags": ["architecture", "system-design", "overview"],
       "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "user-guide",
+      "path": "USER_GUIDE.md",
+      "title": "User Guide",
+      "summary": "**Last Updated:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["user", "guide"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -125,6 +1193,30 @@
       "lastUpdated": "2025-11-27"
     },
     {
+      "slug": "voice-mode-settings-guide",
+      "path": "VOICE_MODE_SETTINGS_GUIDE.md",
+      "title": "Voice Mode Settings Guide",
+      "summary": "This guide explains how to use and configure Voice Mode settings in VoiceAssist.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["voice", "mode", "settings", "guide"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "voice-ready-state-2025-11-25",
+      "path": "VOICE_READY_STATE_2025-11-25.md",
+      "title": "Voice Ready State 2025 11 25",
+      "summary": "The voice pipeline is now stable on `main` with all tests passing. This document serves as context for future AI assistant sessions.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["voice", "ready", "state", "2025"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
       "slug": "api-reference/websocket",
       "path": "WEBSOCKET_PROTOCOL.md",
       "title": "WebSocket Protocol Specification",
@@ -135,6 +1227,42 @@
       "audience": ["human", "agent", "backend", "frontend"],
       "tags": ["websocket", "protocol", "api", "realtime", "streaming"],
       "relatedServices": ["api-gateway", "web-app"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "web-app-specs",
+      "path": "WEB_APP_SPECS.md",
+      "title": "Web App Specs",
+      "summary": "The VoiceAssist web application provides browser-based access to the medical AI assistant for clinicians, supporting both text and voice interactions ...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["web", "app", "specs"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "web-app-wireframes",
+      "path": "WEB_APP_WIREFRAMES.md",
+      "title": "Web App Wireframes",
+      "summary": "Placeholder for the web app wireframe collection. Replace this with the latest design artifacts when available.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["web", "app", "wireframes"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "admin/feature-parity",
+      "path": "admin/feature-parity.md",
+      "title": "Feature Parity",
+      "summary": "This document inventories the current admin/backend endpoints, compares them to the admin panel's expectations, and tracks implementation status.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["feature", "parity"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -187,6 +1315,762 @@
       "audience": ["human", "agent", "backend", "frontend"],
       "tags": ["api", "rest", "reference", "endpoints", "examples"],
       "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "architecture/architecture-diagrams",
+      "path": "architecture/ARCHITECTURE_DIAGRAMS.md",
+      "title": "Architecture Diagrams",
+      "summary": "**Last Updated**: 2025-11-20 (Phase 7)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["architecture", "diagrams"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "architecture/readme",
+      "path": "architecture/README.md",
+      "title": "Readme",
+      "summary": "**Last Updated**: 2025-11-20 (Phase 7)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["readme"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/backend-implementation-plan",
+      "path": "archive/BACKEND_IMPLEMENTATION_PLAN.md",
+      "title": "Backend Implementation Plan",
+      "summary": "**Date**: 2025-11-23",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["backend"],
+      "tags": ["backend", "implementation", "plan"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/backend-implementation-summary",
+      "path": "archive/BACKEND_IMPLEMENTATION_SUMMARY.md",
+      "title": "Backend Implementation Summary",
+      "summary": "**Date**: November 23, 2025",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["backend"],
+      "tags": ["backend", "implementation", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/branching-and-shortcuts-implementation",
+      "path": "archive/BRANCHING_AND_SHORTCUTS_IMPLEMENTATION.md",
+      "title": "Branching And Shortcuts Implementation",
+      "summary": "**Date:** 2025-11-23",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["branching", "and", "shortcuts", "implementation"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/changes-summary",
+      "path": "archive/CHANGES_SUMMARY.md",
+      "title": "Changes Summary",
+      "summary": "**Branch:** `fix/system-review-and-testing`",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["changes", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/current-phase",
+      "path": "archive/CURRENT_PHASE.md",
+      "title": "Current Phase",
+      "summary": "**Project:** VoiceAssist V2 - Enterprise Medical AI Assistant",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["current", "phase"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/deployment-complete",
+      "path": "archive/DEPLOYMENT_COMPLETE.md",
+      "title": "Deployment Complete",
+      "summary": "**Date**: November 23, 2025",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["devops"],
+      "tags": ["deployment", "complete"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/design-system-implementation-plan",
+      "path": "archive/DESIGN_SYSTEM_IMPLEMENTATION_PLAN.md",
+      "title": "Design System Implementation Plan",
+      "summary": "This plan outlines a comprehensive approach to modernizing the VoiceAssist frontend design while maintaining all existing functionality. The implement...",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["design", "system", "implementation", "plan"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/development-log",
+      "path": "archive/DEVELOPMENT_LOG.md",
+      "title": "Development Log",
+      "summary": "**Started:** 2025-11-20",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["development", "log"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/development-session-summary",
+      "path": "archive/DEVELOPMENT_SESSION_SUMMARY.md",
+      "title": "Development Session Summary",
+      "summary": "**Date**: 2025-11-23",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["development", "session", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/dev-cors-fix-summary",
+      "path": "archive/DEV_CORS_FIX_SUMMARY.md",
+      "title": "Dev Cors Fix Summary",
+      "summary": "**Date:** 2025-11-24",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["dev", "cors", "fix", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/documentation-created",
+      "path": "archive/DOCUMENTATION_CREATED.md",
+      "title": "Documentation Created",
+      "summary": "**Date:** November 22, 2025",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["documentation", "created"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/frontend-phase1-phase2-summary",
+      "path": "archive/FRONTEND_PHASE1_PHASE2_SUMMARY.md",
+      "title": "Frontend Phase1 Phase2 Summary",
+      "summary": "**Date:** 2025-11-25",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["frontend", "phase1", "phase2", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/frontend-phase8-tests",
+      "path": "archive/FRONTEND_PHASE8_TESTS.md",
+      "title": "Frontend Phase8 Tests",
+      "summary": "This document summarizes the test coverage for Phase 8 citation features in the frontend application. All tests are implemented using Vitest and React...",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["frontend", "phase8", "tests"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/phase-09-complete-summary",
+      "path": "archive/PHASE_09_COMPLETE_SUMMARY.md",
+      "title": "Phase 09 Complete Summary",
+      "summary": "**Date**: 2025-11-21",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "complete", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/phase-10-complete-summary",
+      "path": "archive/PHASE_10_COMPLETE_SUMMARY.md",
+      "title": "Phase 10 Complete Summary",
+      "summary": "**Date**: 2025-11-21",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "complete", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/phase-10-locust-summary",
+      "path": "archive/PHASE_10_LOCUST_SUMMARY.md",
+      "title": "Phase 10 Locust Summary",
+      "summary": "Successfully created comprehensive Locust load testing suite for VoiceAssist Phase 10.",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "locust", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/phase-10-optimization-summary",
+      "path": "archive/PHASE_10_OPTIMIZATION_SUMMARY.md",
+      "title": "Phase 10 Optimization Summary",
+      "summary": "This document summarizes the database query optimizations and advanced caching strategies implemented in Phase 10 to significantly improve VoiceAssist...",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "optimization", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/phase-3-voice-complete",
+      "path": "archive/PHASE_3_VOICE_COMPLETE.md",
+      "title": "Phase 3 Voice Complete",
+      "summary": "**Date:** 2025-11-23",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "voice", "complete"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/phase-5-complete",
+      "path": "archive/PHASE_5_COMPLETE.md",
+      "title": "Phase 5 Complete",
+      "summary": "**Status**: ✅ **100% COMPLETE** (Backend Integration)",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "complete"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/phase-6-citations-complete",
+      "path": "archive/PHASE_6_CITATIONS_COMPLETE.md",
+      "title": "Phase 6 Citations Complete",
+      "summary": "**Status**: ✅ Implemented and Deployed",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "citations", "complete"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/phase-7-complete",
+      "path": "archive/PHASE_7_COMPLETE.md",
+      "title": "Phase 7 Complete",
+      "summary": "**Status**: ✅ **100% COMPLETE** (3/3 features)",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "complete"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/phase-7-conversation-management-progress",
+      "path": "archive/PHASE_7_CONVERSATION_MANAGEMENT_PROGRESS.md",
+      "title": "Phase 7 Conversation Management Progress",
+      "summary": "**Status**: 🔄 IN PROGRESS (66% Complete)",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "conversation", "management", "progress"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/phase-7-export-complete",
+      "path": "archive/PHASE_7_EXPORT_COMPLETE.md",
+      "title": "Phase 7 Export Complete",
+      "summary": "**Status**: ✅ Export Feature Complete",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "export", "complete"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/phase-8-accessibility-complete",
+      "path": "archive/PHASE_8_ACCESSIBILITY_COMPLETE.md",
+      "title": "Phase 8 Accessibility Complete",
+      "summary": "**Status**: ✅ Accessibility Improvements Complete",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["phase", "accessibility", "complete"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/plan",
+      "path": "archive/PLAN.md",
+      "title": "Plan",
+      "summary": "This plan addresses two related issues in the VoiceAssist codebase:",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["plan"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/pull-request",
+      "path": "archive/PULL_REQUEST.md",
+      "title": "Pull Request",
+      "summary": "This PR completes **Milestone 1** (core web app features) and **Milestone 2** (admin panel) for the VoiceAssist medical AI assistant. It includes syst...",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["pull", "request"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/readme",
+      "path": "archive/README.md",
+      "title": "Readme",
+      "summary": "This directory contains archived documentation from completed development phases. These files are preserved for historical reference.",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["readme"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/realtime-sanity-check",
+      "path": "archive/REALTIME_SANITY_CHECK.md",
+      "title": "Realtime Sanity Check",
+      "summary": "**Date**: 2025-11-24",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["realtime", "sanity", "check"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/session-summary-2025-11-21-phase-10",
+      "path": "archive/SESSION_SUMMARY_2025-11-21_PHASE_10.md",
+      "title": "Session Summary 2025 11 21 Phase 10",
+      "summary": "**Date**: 2025-11-21",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["session", "summary", "2025", "phase"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/session-summary-2025-11-21-phase-9",
+      "path": "archive/SESSION_SUMMARY_2025-11-21_PHASE_9.md",
+      "title": "Session Summary 2025 11 21 Phase 9",
+      "summary": "**Date**: 2025-11-21",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["session", "summary", "2025", "phase"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/voice-endpoint-fix",
+      "path": "archive/VOICE_ENDPOINT_FIX.md",
+      "title": "Voice Endpoint Fix",
+      "summary": "**Date:** 2025-11-24",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["voice", "endpoint", "fix"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/voice-mode-enhancement-summary",
+      "path": "archive/VOICE_MODE_ENHANCEMENT_SUMMARY.md",
+      "title": "Voice Mode Enhancement Summary",
+      "summary": "**Date:** 2025-11-24",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["voice", "mode", "enhancement", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/voice-realtime-integration",
+      "path": "archive/VOICE_REALTIME_INTEGRATION.md",
+      "title": "Voice Realtime Integration",
+      "summary": "Comprehensive documentation for the OpenAI Realtime API integration in VoiceAssist.",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["voice", "realtime", "integration"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/web-app-development-summary",
+      "path": "archive/WEB_APP_DEVELOPMENT_SUMMARY.md",
+      "title": "Web App Development Summary",
+      "summary": "**Project**: VoiceAssist Medical AI Assistant - Frontend Development",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["web", "app", "development", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "archive/work-completed-2025-11-21",
+      "path": "archive/WORK_COMPLETED_2025-11-21.md",
+      "title": "Work Completed 2025 11 21",
+      "summary": "**Session Date**: 2025-11-21",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["work", "completed", "2025"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/admin-panel-feature-specs",
+      "path": "client-implementation/ADMIN_PANEL_FEATURE_SPECS.md",
+      "title": "Admin Panel Feature Specs",
+      "summary": "**Document Version:** 1.0.0",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["devops"],
+      "tags": ["admin", "panel", "feature", "specs"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/api-reference",
+      "path": "client-implementation/API_REFERENCE.md",
+      "title": "Api Reference",
+      "summary": "Placeholder bridging to the central API specification.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["backend"],
+      "tags": ["api", "reference"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/architecture-overview",
+      "path": "client-implementation/ARCHITECTURE_OVERVIEW.md",
+      "title": "Architecture Overview",
+      "summary": "The VoiceAssist platform is deployed across three dedicated domains, each serving a specific purpose:",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["architecture", "overview"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/buttongroup",
+      "path": "client-implementation/ButtonGroup.md",
+      "title": "Buttongroup",
+      "summary": "Placeholder for ButtonGroup component examples and properties.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["buttongroup"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/client-dev-roadmap",
+      "path": "client-implementation/CLIENT_DEV_ROADMAP.md",
+      "title": "Client Dev Roadmap",
+      "summary": "**Version:** 2.1 (Final Decisions Made)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["client", "dev", "roadmap"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/client-folder-structure",
+      "path": "client-implementation/CLIENT_FOLDER_STRUCTURE.md",
+      "title": "Client Folder Structure",
+      "summary": "Placeholder describing the client repository layout.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["client", "folder", "structure"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/code-examples",
+      "path": "client-implementation/CODE_EXAMPLES.md",
+      "title": "Code Examples",
+      "summary": "**Complete Production-Ready Patterns for VoiceAssist Client**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["code", "examples"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/component-library",
+      "path": "client-implementation/COMPONENT_LIBRARY.md",
+      "title": "Component Library",
+      "summary": "Placeholder outlining the shared component library expectations for the client implementation.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["component", "library"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/conversations-and-routing",
+      "path": "client-implementation/CONVERSATIONS_AND_ROUTING.md",
+      "title": "Conversations And Routing",
+      "summary": "This document describes the conversation management and routing system in VoiceAssist. It covers URL patterns, navigation behavior, conversation lifec...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["conversations", "and", "routing"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/development-workflow",
+      "path": "client-implementation/DEVELOPMENT_WORKFLOW.md",
+      "title": "Development Workflow",
+      "summary": "**Date:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["development", "workflow"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/docs-site-feature-specs",
+      "path": "client-implementation/DOCS_SITE_FEATURE_SPECS.md",
+      "title": "Docs Site Feature Specs",
+      "summary": "**Document Version:** 1.0.0",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["docs", "site", "feature", "specs"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/frontend-phase3-plan",
+      "path": "client-implementation/FRONTEND_PHASE3_PLAN.md",
+      "title": "Frontend Phase3 Plan",
+      "summary": "**Date:** 2025-11-25",
+      "status": "stable",
+      "stability": "beta",
+      "owner": "frontend",
+      "audience": ["frontend"],
+      "tags": ["frontend", "phase3", "plan"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/integration-guide",
+      "path": "client-implementation/INTEGRATION_GUIDE.md",
+      "title": "Integration Guide",
+      "summary": "**Date:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["frontend"],
+      "tags": ["integration", "guide"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/iconbutton",
+      "path": "client-implementation/IconButton.md",
+      "title": "Iconbutton",
+      "summary": "Placeholder for the IconButton component API and usage guidelines.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["iconbutton"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/master-implementation-plan",
+      "path": "client-implementation/MASTER_IMPLEMENTATION_PLAN.md",
+      "title": "Master Implementation Plan",
+      "summary": "**Version:** 2.0 (Reconciled with Continuous Improvement Plan)",
+      "status": "stable",
+      "stability": "beta",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["master", "implementation", "plan"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/open-questions",
+      "path": "client-implementation/OPEN_QUESTIONS.md",
+      "title": "Open Questions",
+      "summary": "**Date:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["open", "questions"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/readme",
+      "path": "client-implementation/README.md",
+      "title": "Readme",
+      "summary": "**Date:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["readme"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/realtime-proxy-spec",
+      "path": "client-implementation/REALTIME_PROXY_SPEC.md",
+      "title": "Realtime Proxy Spec",
+      "summary": "The VoiceAssist platform uses WebSocket connections for real-time bidirectional communication between the client and the OpenAI Realtime API. This doc...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["realtime", "proxy", "spec"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/technical-architecture",
+      "path": "client-implementation/TECHNICAL_ARCHITECTURE.md",
+      "title": "Technical Architecture",
+      "summary": "**Date:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["technical", "architecture"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/testing-guide",
+      "path": "client-implementation/TESTING_GUIDE.md",
+      "title": "Testing Guide",
+      "summary": "Placeholder for client testing strategy and tooling.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["frontend"],
+      "tags": ["testing", "guide"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/testing-phase2",
+      "path": "client-implementation/TESTING_PHASE2.md",
+      "title": "Testing Phase2",
+      "summary": "This document outlines the comprehensive testing strategy for Phase 2 (Chat Interface) of the VoiceAssist client application. It covers unit tests, in...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["testing", "phase2"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/testing-phase3",
+      "path": "client-implementation/TESTING_PHASE3.md",
+      "title": "Testing Phase3",
+      "summary": "Placeholder for the Phase 3 testing checklist and scenarios.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["testing", "phase3"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/web-app-feature-specs",
+      "path": "client-implementation/WEB_APP_FEATURE_SPECS.md",
+      "title": "Web App Feature Specs",
+      "summary": "**Date:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["frontend"],
+      "tags": ["web", "app", "feature", "specs"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/api-reference/rest-api",
+      "path": "client-implementation/api-reference/rest-api.md",
+      "title": "Rest Api",
+      "summary": "Placeholder for client-specific REST API integration details.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["backend"],
+      "tags": ["rest", "api"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/overview/architecture",
+      "path": "client-implementation/overview/ARCHITECTURE.md",
+      "title": "Architecture",
+      "summary": "Placeholder summarizing the client-side architectural decisions.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["architecture"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "client-implementation/realtime/proxy-spec",
+      "path": "client-implementation/realtime/proxy-spec.md",
+      "title": "Proxy Spec",
+      "summary": "Placeholder for realtime proxy protocol details. Fill in connection flows, message formats, and error handling when available.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["proxy", "spec"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -263,6 +2147,66 @@
       "lastUpdated": "2025-11-27"
     },
     {
+      "slug": "deployment/deployment-summary",
+      "path": "deployment/DEPLOYMENT_SUMMARY.md",
+      "title": "Deployment Summary",
+      "summary": "**Date:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "infra",
+      "audience": ["devops"],
+      "tags": ["deployment", "summary"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "design-system/phase-1-breakdown",
+      "path": "design-system/PHASE_1_BREAKDOWN.md",
+      "title": "Phase 1 Breakdown",
+      "summary": "Phase 1 establishes the foundation for the entire design system. These tasks can be worked on in parallel to maximize efficiency.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human"],
+      "tags": ["phase", "breakdown"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "infra/docs-domain",
+      "path": "infra/DOCS_DOMAIN.md",
+      "title": "Docs Domain",
+      "summary": "- **Primary:** `docs.asimo.io` (served via Apache2 reverse proxy → Next.js app on port 3001)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "infra",
+      "audience": ["human"],
+      "tags": ["docs", "domain"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "operations/business-metrics",
+      "path": "operations/BUSINESS_METRICS.md",
+      "title": "Business Metrics",
+      "summary": "**Last Updated**: 2025-11-21 (Phase 7 - P3.3)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "sre",
+      "audience": ["human"],
+      "tags": ["business", "metrics"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "operations/connection-pool-optimization",
+      "path": "operations/CONNECTION_POOL_OPTIMIZATION.md",
+      "title": "Connection Pool Optimization",
+      "summary": "**Last Updated**: 2025-11-20 (Phase 7 - P2.5)",
+      "status": "stable",
+      "stability": "production",
+      "owner": "sre",
+      "audience": ["human"],
+      "tags": ["connection", "pool", "optimization"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
       "slug": "operations/overview",
       "path": "operations/OPERATIONS_OVERVIEW.md",
       "title": "Operations Overview",
@@ -286,6 +2230,18 @@
       "audience": ["devops", "backend", "admin"],
       "tags": ["slo", "reliability", "metrics", "operations"],
       "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "operations/compliance/analytics-data-policy",
+      "path": "operations/compliance/ANALYTICS_DATA_POLICY.md",
+      "title": "Analytics Data Policy",
+      "summary": "VoiceAssist uses privacy-preserving analytics to understand feature adoption and reliability. Analytics are **opt-in** and disabled by default until a...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "tags": ["analytics", "data", "policy"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -373,6 +2329,18 @@
       "lastUpdated": "2025-11-27"
     },
     {
+      "slug": "overview/architecture",
+      "path": "overview/ARCHITECTURE.md",
+      "title": "Architecture",
+      "summary": "Placeholder for a high-level architecture summary referenced by the client documentation.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["architecture"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
       "slug": "overview/implementation-status",
       "path": "overview/IMPLEMENTATION_STATUS.md",
       "title": "Implementation Status",
@@ -386,1341 +2354,328 @@
       "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "accessibility-audit",
-      "path": "ACCESSIBILITY_AUDIT.md",
-      "title": "ACCESSIBILITY AUDIT",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "admin-panel-deployment",
-      "path": "ADMIN_PANEL_DEPLOYMENT.md",
-      "title": "ADMIN PANEL DEPLOYMENT",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "admin-panel-implementation-summary",
-      "path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
-      "title": "ADMIN PANEL IMPLEMENTATION SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "admin-panel-login-fix",
-      "path": "ADMIN_PANEL_LOGIN_FIX.md",
-      "title": "ADMIN PANEL LOGIN FIX",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "admin-panel-login-fix-complete",
-      "path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md",
-      "title": "ADMIN PANEL LOGIN FIX COMPLETE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "admin-panel-specs",
-      "path": "ADMIN_PANEL_SPECS.md",
-      "title": "ADMIN PANEL SPECS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "all-phases-summary",
-      "path": "ALL_PHASES_SUMMARY.md",
-      "title": "ALL PHASES SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "ansible-guide",
-      "path": "ANSIBLE_GUIDE.md",
-      "title": "ANSIBLE GUIDE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "architecture",
-      "path": "ARCHITECTURE.md",
-      "title": "ARCHITECTURE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "architecture-v2",
-      "path": "ARCHITECTURE_V2.md",
-      "title": "ARCHITECTURE V2",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "backend-skeleton-verification",
-      "path": "BACKEND_SKELETON_VERIFICATION.md",
-      "title": "BACKEND SKELETON VERIFICATION",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "chaos-engineering",
-      "path": "CHAOS_ENGINEERING.md",
-      "title": "CHAOS ENGINEERING",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "cicd-guide",
-      "path": "CICD_GUIDE.md",
-      "title": "CICD GUIDE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "claude-execution-guide",
-      "path": "CLAUDE_EXECUTION_GUIDE.md",
-      "title": "CLAUDE EXECUTION GUIDE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "claude-prompts",
-      "path": "CLAUDE_PROMPTS.md",
-      "title": "CLAUDE PROMPTS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "compose-first-summary",
-      "path": "COMPOSE_FIRST_SUMMARY.md",
-      "title": "COMPOSE FIRST SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "compose-to-k8s-migration",
-      "path": "COMPOSE_TO_K8S_MIGRATION.md",
-      "title": "COMPOSE TO K8S MIGRATION",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "configuration-reference",
-      "path": "CONFIGURATION_REFERENCE.md",
-      "title": "CONFIGURATION REFERENCE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "continuous-improvement-summary",
-      "path": "CONTINUOUS_IMPROVEMENT_SUMMARY.md",
-      "title": "CONTINUOUS IMPROVEMENT SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "data-model",
-      "path": "DATA_MODEL.md",
-      "title": "DATA MODEL",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "deep-verification-qa-summary",
-      "path": "DEEP_VERIFICATION_QA_SUMMARY.md",
-      "title": "DEEP VERIFICATION QA SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "deployment-guide",
-      "path": "DEPLOYMENT_GUIDE.md",
-      "title": "DEPLOYMENT GUIDE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "deployment-summary-asimo",
-      "path": "DEPLOYMENT_SUMMARY_ASIMO.md",
-      "title": "DEPLOYMENT SUMMARY ASIMO",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "development-phases",
-      "path": "DEVELOPMENT_PHASES.md",
-      "title": "DEVELOPMENT PHASES",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "development-phases-v2",
-      "path": "DEVELOPMENT_PHASES_V2.md",
-      "title": "DEVELOPMENT PHASES V2",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "development-setup",
-      "path": "DEVELOPMENT_SETUP.md",
-      "title": "DEVELOPMENT SETUP",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "disaster-recovery-runbook",
-      "path": "DISASTER_RECOVERY_RUNBOOK.md",
-      "title": "DISASTER RECOVERY RUNBOOK",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "documentation-completion-summary",
-      "path": "DOCUMENTATION_COMPLETION_SUMMARY.md",
-      "title": "DOCUMENTATION COMPLETION SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "documentation-site-specs",
-      "path": "DOCUMENTATION_SITE_SPECS.md",
-      "title": "DOCUMENTATION SITE SPECS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "enhancement-summary",
-      "path": "ENHANCEMENT_SUMMARY.md",
-      "title": "ENHANCEMENT SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "feature-flags",
-      "path": "FEATURE_FLAGS.md",
-      "title": "FEATURE FLAGS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "file",
-      "path": "FILE.md",
-      "title": "FILE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "final-documentation-summary",
-      "path": "FINAL_DOCUMENTATION_SUMMARY.md",
-      "title": "FINAL DOCUMENTATION SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "frontend-completion-plan",
-      "path": "FRONTEND_COMPLETION_PLAN.md",
-      "title": "FRONTEND COMPLETION PLAN",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "frontend-verification-summary",
-      "path": "FRONTEND_VERIFICATION_SUMMARY.md",
-      "title": "FRONTEND VERIFICATION SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "hipaa-compliance-matrix",
-      "path": "HIPAA_COMPLIANCE_MATRIX.md",
-      "title": "HIPAA COMPLIANCE MATRIX",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "infrastructure-as-code",
-      "path": "INFRASTRUCTURE_AS_CODE.md",
-      "title": "INFRASTRUCTURE AS CODE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "infrastructure-setup",
-      "path": "INFRASTRUCTURE_SETUP.md",
-      "title": "INFRASTRUCTURE SETUP",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "integration-handoff",
-      "path": "INTEGRATION_HANDOFF.md",
-      "title": "INTEGRATION HANDOFF",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "integration-improvements-phase-0-8",
-      "path": "INTEGRATION_IMPROVEMENTS_PHASE_0-8.md",
-      "title": "INTEGRATION IMPROVEMENTS PHASE 0-8",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "load-testing-guide",
-      "path": "LOAD_TESTING_GUIDE.md",
-      "title": "LOAD TESTING GUIDE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "local-development",
-      "path": "LOCAL_DEVELOPMENT.md",
-      "title": "LOCAL DEVELOPMENT",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "login-500-fix-2025-11-25",
-      "path": "LOGIN_500_FIX_2025-11-25.md",
-      "title": "LOGIN 500 FIX 2025-11-25",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "medical-features",
-      "path": "MEDICAL_FEATURES.md",
-      "title": "MEDICAL FEATURES",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "message-edit-progress",
-      "path": "MESSAGE_EDIT_PROGRESS.md",
-      "title": "MESSAGE EDIT PROGRESS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "nextcloud-apps-design",
-      "path": "NEXTCLOUD_APPS_DESIGN.md",
-      "title": "NEXTCLOUD APPS DESIGN",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "nextcloud-integration",
-      "path": "NEXTCLOUD_INTEGRATION.md",
-      "title": "NEXTCLOUD INTEGRATION",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "oauth-login-config",
-      "path": "OAUTH_LOGIN_CONFIG.md",
-      "title": "OAUTH LOGIN CONFIG",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "observability",
-      "path": "OBSERVABILITY.md",
-      "title": "OBSERVABILITY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "orchestration-design",
-      "path": "ORCHESTRATION_DESIGN.md",
-      "title": "ORCHESTRATION DESIGN",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "part2-deferred-backend-features-plan",
-      "path": "PART2_DEFERRED_BACKEND_FEATURES_PLAN.md",
-      "title": "PART2 DEFERRED BACKEND FEATURES PLAN",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "part3-platform-enhancements-plan",
-      "path": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md",
-      "title": "PART3 PLATFORM ENHANCEMENTS PLAN",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "performance-benchmarks",
-      "path": "PERFORMANCE_BENCHMARKS.md",
-      "title": "PERFORMANCE BENCHMARKS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "performance-tuning-guide",
-      "path": "PERFORMANCE_TUNING_GUIDE.md",
-      "title": "PERFORMANCE TUNING GUIDE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-02-completion-report",
-      "path": "PHASE_02_COMPLETION_REPORT.md",
-      "title": "PHASE 02 COMPLETION REPORT",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-02-enhancements-report",
-      "path": "PHASE_02_ENHANCEMENTS_REPORT.md",
-      "title": "PHASE 02 ENHANCEMENTS REPORT",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-03-completion-report",
-      "path": "PHASE_03_COMPLETION_REPORT.md",
-      "title": "PHASE 03 COMPLETION REPORT",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-04-completion-report",
-      "path": "PHASE_04_COMPLETION_REPORT.md",
-      "title": "PHASE 04 COMPLETION REPORT",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-05-completion-report",
-      "path": "PHASE_05_COMPLETION_REPORT.md",
-      "title": "PHASE 05 COMPLETION REPORT",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-06-completion-report",
-      "path": "PHASE_06_COMPLETION_REPORT.md",
-      "title": "PHASE 06 COMPLETION REPORT",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-07-completion-report",
-      "path": "PHASE_07_COMPLETION_REPORT.md",
-      "title": "PHASE 07 COMPLETION REPORT",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-08-api-contracts",
-      "path": "PHASE_08_API_CONTRACTS.md",
-      "title": "PHASE 08 API CONTRACTS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-08-completion-report",
-      "path": "PHASE_08_COMPLETION_REPORT.md",
-      "title": "PHASE 08 COMPLETION REPORT",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-09-completion-report",
-      "path": "PHASE_09_COMPLETION_REPORT.md",
-      "title": "PHASE 09 COMPLETION REPORT",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-0-1-completion-report",
-      "path": "PHASE_0_1_COMPLETION_REPORT.md",
-      "title": "PHASE 0 1 COMPLETION REPORT",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-0-1-optimization-recommendations",
-      "path": "PHASE_0_1_OPTIMIZATION_RECOMMENDATIONS.md",
-      "title": "PHASE 0 1 OPTIMIZATION RECOMMENDATIONS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-10-completion-report",
-      "path": "PHASE_10_COMPLETION_REPORT.md",
-      "title": "PHASE 10 COMPLETION REPORT",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-2-optimized-plan",
-      "path": "PHASE_2_OPTIMIZED_PLAN.md",
-      "title": "PHASE 2 OPTIMIZED PLAN",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-template",
-      "path": "PHASE_TEMPLATE.md",
-      "title": "PHASE TEMPLATE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "production-deployment-runbook",
-      "path": "PRODUCTION_DEPLOYMENT_RUNBOOK.md",
-      "title": "PRODUCTION DEPLOYMENT RUNBOOK",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "production-readiness-checklist",
-      "path": "PRODUCTION_READINESS_CHECKLIST.md",
-      "title": "PRODUCTION READINESS CHECKLIST",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "project-summary",
-      "path": "PROJECT_SUMMARY.md",
-      "title": "PROJECT SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "readme",
-      "path": "README.md",
-      "title": "README",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "remaining-message-edit-work",
-      "path": "REMAINING_MESSAGE_EDIT_WORK.md",
-      "title": "REMAINING MESSAGE EDIT WORK",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "roadmap",
-      "path": "ROADMAP.md",
-      "title": "ROADMAP",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "rto-rpo-documentation",
-      "path": "RTO_RPO_DOCUMENTATION.md",
-      "title": "RTO RPO DOCUMENTATION",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "security",
-      "path": "SECURITY.md",
-      "title": "SECURITY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "semantic-search-design",
-      "path": "SEMANTIC_SEARCH_DESIGN.md",
-      "title": "SEMANTIC SEARCH DESIGN",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "service-catalog",
-      "path": "SERVICE_CATALOG.md",
-      "title": "SERVICE CATALOG",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "start-here",
-      "path": "START_HERE.md",
-      "title": "START HERE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "system-review-2025-11-22",
-      "path": "SYSTEM_REVIEW_2025-11-22.md",
-      "title": "SYSTEM REVIEW 2025-11-22",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "terraform-guide",
-      "path": "TERRAFORM_GUIDE.md",
-      "title": "TERRAFORM GUIDE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "testing-contracts",
-      "path": "TESTING_CONTRACTS.md",
-      "title": "TESTING CONTRACTS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "testing-guide",
-      "path": "TESTING_GUIDE.md",
-      "title": "TESTING GUIDE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "testing-results-2025-11-22",
-      "path": "TESTING_RESULTS_2025-11-22.md",
-      "title": "TESTING RESULTS 2025-11-22",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "tools-and-integrations",
-      "path": "TOOLS_AND_INTEGRATIONS.md",
-      "title": "TOOLS AND INTEGRATIONS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "tools-completion-summary",
-      "path": "TOOLS_COMPLETION_SUMMARY.md",
-      "title": "TOOLS COMPLETION SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "tools-integration-summary",
-      "path": "TOOLS_INTEGRATION_SUMMARY.md",
-      "title": "TOOLS INTEGRATION SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "user-guide",
-      "path": "USER_GUIDE.md",
-      "title": "USER GUIDE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "voice-mode-settings-guide",
-      "path": "VOICE_MODE_SETTINGS_GUIDE.md",
-      "title": "VOICE MODE SETTINGS GUIDE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "voice-ready-state-2025-11-25",
-      "path": "VOICE_READY_STATE_2025-11-25.md",
-      "title": "VOICE READY STATE 2025-11-25",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "web-app-specs",
-      "path": "WEB_APP_SPECS.md",
-      "title": "WEB APP SPECS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "web-app-wireframes",
-      "path": "WEB_APP_WIREFRAMES.md",
-      "title": "WEB APP WIREFRAMES",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "feature-parity",
-      "path": "admin/feature-parity.md",
-      "title": "feature-parity",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "architecture-diagrams",
-      "path": "architecture/ARCHITECTURE_DIAGRAMS.md",
-      "title": "ARCHITECTURE DIAGRAMS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "readme",
-      "path": "architecture/README.md",
-      "title": "README",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "backend-implementation-plan",
-      "path": "archive/BACKEND_IMPLEMENTATION_PLAN.md",
-      "title": "BACKEND IMPLEMENTATION PLAN",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "backend-implementation-summary",
-      "path": "archive/BACKEND_IMPLEMENTATION_SUMMARY.md",
-      "title": "BACKEND IMPLEMENTATION SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "branching-and-shortcuts-implementation",
-      "path": "archive/BRANCHING_AND_SHORTCUTS_IMPLEMENTATION.md",
-      "title": "BRANCHING AND SHORTCUTS IMPLEMENTATION",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "changes-summary",
-      "path": "archive/CHANGES_SUMMARY.md",
-      "title": "CHANGES SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "current-phase",
-      "path": "archive/CURRENT_PHASE.md",
-      "title": "CURRENT PHASE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "deployment-complete",
-      "path": "archive/DEPLOYMENT_COMPLETE.md",
-      "title": "DEPLOYMENT COMPLETE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "design-system-implementation-plan",
-      "path": "archive/DESIGN_SYSTEM_IMPLEMENTATION_PLAN.md",
-      "title": "DESIGN SYSTEM IMPLEMENTATION PLAN",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "development-log",
-      "path": "archive/DEVELOPMENT_LOG.md",
-      "title": "DEVELOPMENT LOG",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "development-session-summary",
-      "path": "archive/DEVELOPMENT_SESSION_SUMMARY.md",
-      "title": "DEVELOPMENT SESSION SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "dev-cors-fix-summary",
-      "path": "archive/DEV_CORS_FIX_SUMMARY.md",
-      "title": "DEV CORS FIX SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "documentation-created",
-      "path": "archive/DOCUMENTATION_CREATED.md",
-      "title": "DOCUMENTATION CREATED",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "frontend-phase1-phase2-summary",
-      "path": "archive/FRONTEND_PHASE1_PHASE2_SUMMARY.md",
-      "title": "FRONTEND PHASE1 PHASE2 SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "frontend-phase8-tests",
-      "path": "archive/FRONTEND_PHASE8_TESTS.md",
-      "title": "FRONTEND PHASE8 TESTS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-09-complete-summary",
-      "path": "archive/PHASE_09_COMPLETE_SUMMARY.md",
-      "title": "PHASE 09 COMPLETE SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-10-complete-summary",
-      "path": "archive/PHASE_10_COMPLETE_SUMMARY.md",
-      "title": "PHASE 10 COMPLETE SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-10-locust-summary",
-      "path": "archive/PHASE_10_LOCUST_SUMMARY.md",
-      "title": "PHASE 10 LOCUST SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-10-optimization-summary",
-      "path": "archive/PHASE_10_OPTIMIZATION_SUMMARY.md",
-      "title": "PHASE 10 OPTIMIZATION SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-3-voice-complete",
-      "path": "archive/PHASE_3_VOICE_COMPLETE.md",
-      "title": "PHASE 3 VOICE COMPLETE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-5-complete",
-      "path": "archive/PHASE_5_COMPLETE.md",
-      "title": "PHASE 5 COMPLETE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-6-citations-complete",
-      "path": "archive/PHASE_6_CITATIONS_COMPLETE.md",
-      "title": "PHASE 6 CITATIONS COMPLETE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-7-complete",
-      "path": "archive/PHASE_7_COMPLETE.md",
-      "title": "PHASE 7 COMPLETE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-7-conversation-management-progress",
-      "path": "archive/PHASE_7_CONVERSATION_MANAGEMENT_PROGRESS.md",
-      "title": "PHASE 7 CONVERSATION MANAGEMENT PROGRESS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-7-export-complete",
-      "path": "archive/PHASE_7_EXPORT_COMPLETE.md",
-      "title": "PHASE 7 EXPORT COMPLETE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-8-accessibility-complete",
-      "path": "archive/PHASE_8_ACCESSIBILITY_COMPLETE.md",
-      "title": "PHASE 8 ACCESSIBILITY COMPLETE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "plan",
-      "path": "archive/PLAN.md",
-      "title": "PLAN",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "pull-request",
-      "path": "archive/PULL_REQUEST.md",
-      "title": "PULL REQUEST",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "readme",
-      "path": "archive/README.md",
-      "title": "README",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "realtime-sanity-check",
-      "path": "archive/REALTIME_SANITY_CHECK.md",
-      "title": "REALTIME SANITY CHECK",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "session-summary-2025-11-21-phase-10",
-      "path": "archive/SESSION_SUMMARY_2025-11-21_PHASE_10.md",
-      "title": "SESSION SUMMARY 2025-11-21 PHASE 10",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "session-summary-2025-11-21-phase-9",
-      "path": "archive/SESSION_SUMMARY_2025-11-21_PHASE_9.md",
-      "title": "SESSION SUMMARY 2025-11-21 PHASE 9",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "voice-endpoint-fix",
-      "path": "archive/VOICE_ENDPOINT_FIX.md",
-      "title": "VOICE ENDPOINT FIX",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "voice-mode-enhancement-summary",
-      "path": "archive/VOICE_MODE_ENHANCEMENT_SUMMARY.md",
-      "title": "VOICE MODE ENHANCEMENT SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "voice-realtime-integration",
-      "path": "archive/VOICE_REALTIME_INTEGRATION.md",
-      "title": "VOICE REALTIME INTEGRATION",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "web-app-development-summary",
-      "path": "archive/WEB_APP_DEVELOPMENT_SUMMARY.md",
-      "title": "WEB APP DEVELOPMENT SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "work-completed-2025-11-21",
-      "path": "archive/WORK_COMPLETED_2025-11-21.md",
-      "title": "WORK COMPLETED 2025-11-21",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "admin-panel-feature-specs",
-      "path": "client-implementation/ADMIN_PANEL_FEATURE_SPECS.md",
-      "title": "ADMIN PANEL FEATURE SPECS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "api-reference",
-      "path": "client-implementation/API_REFERENCE.md",
-      "title": "API REFERENCE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "architecture-overview",
-      "path": "client-implementation/ARCHITECTURE_OVERVIEW.md",
-      "title": "ARCHITECTURE OVERVIEW",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "buttongroup",
-      "path": "client-implementation/ButtonGroup.md",
-      "title": "ButtonGroup",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "client-dev-roadmap",
-      "path": "client-implementation/CLIENT_DEV_ROADMAP.md",
-      "title": "CLIENT DEV ROADMAP",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "client-folder-structure",
-      "path": "client-implementation/CLIENT_FOLDER_STRUCTURE.md",
-      "title": "CLIENT FOLDER STRUCTURE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "code-examples",
-      "path": "client-implementation/CODE_EXAMPLES.md",
-      "title": "CODE EXAMPLES",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "component-library",
-      "path": "client-implementation/COMPONENT_LIBRARY.md",
-      "title": "COMPONENT LIBRARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "conversations-and-routing",
-      "path": "client-implementation/CONVERSATIONS_AND_ROUTING.md",
-      "title": "CONVERSATIONS AND ROUTING",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "development-workflow",
-      "path": "client-implementation/DEVELOPMENT_WORKFLOW.md",
-      "title": "DEVELOPMENT WORKFLOW",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "docs-site-feature-specs",
-      "path": "client-implementation/DOCS_SITE_FEATURE_SPECS.md",
-      "title": "DOCS SITE FEATURE SPECS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "frontend-phase3-plan",
-      "path": "client-implementation/FRONTEND_PHASE3_PLAN.md",
-      "title": "FRONTEND PHASE3 PLAN",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "integration-guide",
-      "path": "client-implementation/INTEGRATION_GUIDE.md",
-      "title": "INTEGRATION GUIDE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "iconbutton",
-      "path": "client-implementation/IconButton.md",
-      "title": "IconButton",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "master-implementation-plan",
-      "path": "client-implementation/MASTER_IMPLEMENTATION_PLAN.md",
-      "title": "MASTER IMPLEMENTATION PLAN",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "open-questions",
-      "path": "client-implementation/OPEN_QUESTIONS.md",
-      "title": "OPEN QUESTIONS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "readme",
-      "path": "client-implementation/README.md",
-      "title": "README",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "realtime-proxy-spec",
-      "path": "client-implementation/REALTIME_PROXY_SPEC.md",
-      "title": "REALTIME PROXY SPEC",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "technical-architecture",
-      "path": "client-implementation/TECHNICAL_ARCHITECTURE.md",
-      "title": "TECHNICAL ARCHITECTURE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "testing-guide",
-      "path": "client-implementation/TESTING_GUIDE.md",
-      "title": "TESTING GUIDE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "testing-phase2",
-      "path": "client-implementation/TESTING_PHASE2.md",
-      "title": "TESTING PHASE2",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "testing-phase3",
-      "path": "client-implementation/TESTING_PHASE3.md",
-      "title": "TESTING PHASE3",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "web-app-feature-specs",
-      "path": "client-implementation/WEB_APP_FEATURE_SPECS.md",
-      "title": "WEB APP FEATURE SPECS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "rest-api",
-      "path": "client-implementation/api-reference/rest-api.md",
-      "title": "rest-api",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "architecture",
-      "path": "client-implementation/overview/ARCHITECTURE.md",
-      "title": "ARCHITECTURE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "proxy-spec",
-      "path": "client-implementation/realtime/proxy-spec.md",
-      "title": "proxy-spec",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "deployment-summary",
-      "path": "deployment/DEPLOYMENT_SUMMARY.md",
-      "title": "DEPLOYMENT SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "phase-1-breakdown",
-      "path": "design-system/PHASE_1_BREAKDOWN.md",
-      "title": "PHASE 1 BREAKDOWN",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "docs-domain",
-      "path": "infra/DOCS_DOMAIN.md",
-      "title": "DOCS DOMAIN",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "business-metrics",
-      "path": "operations/BUSINESS_METRICS.md",
-      "title": "BUSINESS METRICS",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "connection-pool-optimization",
-      "path": "operations/CONNECTION_POOL_OPTIMIZATION.md",
-      "title": "CONNECTION POOL OPTIMIZATION",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "analytics-data-policy",
-      "path": "operations/compliance/ANALYTICS_DATA_POLICY.md",
-      "title": "ANALYTICS DATA POLICY",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "architecture",
-      "path": "overview/ARCHITECTURE.md",
-      "title": "ARCHITECTURE",
-      "status": "draft",
-      "lastUpdated": ""
-    },
-    {
-      "slug": "final-code-review",
+      "slug": "phase-15-final-review/final-code-review",
       "path": "phase-15-final-review/FINAL_CODE_REVIEW.md",
-      "title": "FINAL CODE REVIEW",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Final Code Review",
+      "summary": "**Date:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["final", "code", "review"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "project-handoff-package",
+      "slug": "phase-15-final-review/project-handoff-package",
       "path": "phase-15-final-review/PROJECT_HANDOFF_PACKAGE.md",
-      "title": "PROJECT HANDOFF PACKAGE",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Project Handoff Package",
+      "summary": "**Date:** 2025-11-21",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["project", "handoff", "package"],
+      "lastUpdated": "2025-11-27"
     },
     {
       "slug": "phase8-folders-testing-guide",
       "path": "phase8-folders-testing-guide.md",
-      "title": "phase8-folders-testing-guide",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase8 Folders Testing Guide",
+      "summary": "**Date**: 2024-11-24",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "tags": ["phase8", "folders", "testing", "guide"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-00-initialization",
+      "slug": "phases/phase-00-initialization",
       "path": "phases/PHASE_00_INITIALIZATION.md",
-      "title": "PHASE 00 INITIALIZATION",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 00 Initialization",
+      "summary": "**Status:** Ready to Start",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "initialization"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-01-infrastructure",
+      "slug": "phases/phase-01-infrastructure",
       "path": "phases/PHASE_01_INFRASTRUCTURE.md",
-      "title": "PHASE 01 INFRASTRUCTURE",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 01 Infrastructure",
+      "summary": "> **V2 PHASE DOCUMENT**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["devops"],
+      "tags": ["phase", "infrastructure"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-01-local-environment",
+      "slug": "phases/phase-01-local-environment",
       "path": "phases/PHASE_01_LOCAL_ENVIRONMENT.md",
-      "title": "PHASE 01 LOCAL ENVIRONMENT",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 01 Local Environment",
+      "summary": "> **WARNING: LEGACY V1 PHASE - NOT CANONICAL FOR V2**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "local", "environment"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-02-database-schema",
+      "slug": "phases/phase-02-database-schema",
       "path": "phases/PHASE_02_DATABASE_SCHEMA.md",
-      "title": "PHASE 02 DATABASE SCHEMA",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 02 Database Schema",
+      "summary": "> **WARNING: LEGACY V1 PHASE - NOT CANONICAL FOR V2**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["backend"],
+      "tags": ["phase", "database", "schema"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-02-security-nextcloud",
+      "slug": "phases/phase-02-security-nextcloud",
       "path": "phases/PHASE_02_SECURITY_NEXTCLOUD.md",
-      "title": "PHASE 02 SECURITY NEXTCLOUD",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 02 Security Nextcloud",
+      "summary": "> **V2 PHASE DOCUMENT**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "security", "nextcloud"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-03-microservices",
+      "slug": "phases/phase-03-microservices",
       "path": "phases/PHASE_03_MICROSERVICES.md",
-      "title": "PHASE 03 MICROSERVICES",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 03 Microservices",
+      "summary": "> **V2 PHASE DOCUMENT**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "microservices"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-04-voice-pipeline",
+      "slug": "phases/phase-04-voice-pipeline",
       "path": "phases/PHASE_04_VOICE_PIPELINE.md",
-      "title": "PHASE 04 VOICE PIPELINE",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 04 Voice Pipeline",
+      "summary": "> **V2 PHASE DOCUMENT**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "voice", "pipeline"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-05-medical-ai",
+      "slug": "phases/phase-05-medical-ai",
       "path": "phases/PHASE_05_MEDICAL_AI.md",
-      "title": "PHASE 05 MEDICAL AI",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 05 Medical Ai",
+      "summary": "> **V2 PHASE DOCUMENT**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "medical"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-06-nextcloud-apps",
+      "slug": "phases/phase-06-nextcloud-apps",
       "path": "phases/PHASE_06_NEXTCLOUD_APPS.md",
-      "title": "PHASE 06 NEXTCLOUD APPS",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 06 Nextcloud Apps",
+      "summary": "> **V2 PHASE DOCUMENT**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "nextcloud", "apps"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-07-admin-panel",
+      "slug": "phases/phase-07-admin-panel",
       "path": "phases/PHASE_07_ADMIN_PANEL.md",
-      "title": "PHASE 07 ADMIN PANEL",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 07 Admin Panel",
+      "summary": "> **V2 PHASE DOCUMENT**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["devops"],
+      "tags": ["phase", "admin", "panel"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-08-observability",
+      "slug": "phases/phase-08-observability",
       "path": "phases/PHASE_08_OBSERVABILITY.md",
-      "title": "PHASE 08 OBSERVABILITY",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 08 Observability",
+      "summary": "> **V2 PHASE DOCUMENT**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "observability"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-09-iac-cicd",
+      "slug": "phases/phase-09-iac-cicd",
       "path": "phases/PHASE_09_IAC_CICD.md",
-      "title": "PHASE 09 IAC CICD",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 09 Iac Cicd",
+      "summary": "> **V2 PHASE DOCUMENT**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "iac", "cicd"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-10-load-testing",
+      "slug": "phases/phase-10-load-testing",
       "path": "phases/PHASE_10_LOAD_TESTING.md",
-      "title": "PHASE 10 LOAD TESTING",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 10 Load Testing",
+      "summary": "> **V2 PHASE DOCUMENT**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "load", "testing"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-11-complete-summary",
+      "slug": "phases/phase-11-complete-summary",
       "path": "phases/PHASE_11_COMPLETE_SUMMARY.md",
-      "title": "PHASE 11 COMPLETE SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 11 Complete Summary",
+      "summary": "**Status:** ✅ **COMPLETE**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "complete", "summary"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-11-security-hipaa",
+      "slug": "phases/phase-11-security-hipaa",
       "path": "phases/PHASE_11_SECURITY_HIPAA.md",
-      "title": "PHASE 11 SECURITY HIPAA",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 11 Security Hipaa",
+      "summary": "> **V2 PHASE DOCUMENT**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "security", "hipaa"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-12-complete-summary",
+      "slug": "phases/phase-12-complete-summary",
       "path": "phases/PHASE_12_COMPLETE_SUMMARY.md",
-      "title": "PHASE 12 COMPLETE SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 12 Complete Summary",
+      "summary": "**Status:** ✅ **COMPLETE**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "complete", "summary"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-12-ha-dr",
+      "slug": "phases/phase-12-ha-dr",
       "path": "phases/PHASE_12_HA_DR.md",
-      "title": "PHASE 12 HA DR",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 12 Ha Dr",
+      "summary": "> **V2 PHASE DOCUMENT**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-13-complete-summary",
+      "slug": "phases/phase-13-complete-summary",
       "path": "phases/PHASE_13_COMPLETE_SUMMARY.md",
-      "title": "PHASE 13 COMPLETE SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 13 Complete Summary",
+      "summary": "**Status:** ✅ COMPLETE",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "complete", "summary"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-13-testing-docs",
+      "slug": "phases/phase-13-testing-docs",
       "path": "phases/PHASE_13_TESTING_DOCS.md",
-      "title": "PHASE 13 TESTING DOCS",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 13 Testing Docs",
+      "summary": "> **V2 PHASE DOCUMENT**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "testing", "docs"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-14-complete-summary",
+      "slug": "phases/phase-14-complete-summary",
       "path": "phases/PHASE_14_COMPLETE_SUMMARY.md",
-      "title": "PHASE 14 COMPLETE SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 14 Complete Summary",
+      "summary": "**Status:** ✅ COMPLETE",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "complete", "summary"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-14-production-deploy",
+      "slug": "phases/phase-14-production-deploy",
       "path": "phases/PHASE_14_PRODUCTION_DEPLOY.md",
-      "title": "PHASE 14 PRODUCTION DEPLOY",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 14 Production Deploy",
+      "summary": "> **V2 PHASE DOCUMENT**",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "production", "deploy"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "phase-15-complete-summary",
+      "slug": "phases/phase-15-complete-summary",
       "path": "phases/PHASE_15_COMPLETE_SUMMARY.md",
-      "title": "PHASE 15 COMPLETE SUMMARY",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Phase 15 Complete Summary",
+      "summary": "**Status:** ✅ COMPLETE",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["phase", "complete", "summary"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "docs-site-path-resolution-plan",
+      "slug": "plans/docs-site-path-resolution-plan",
       "path": "plans/DOCS_SITE_PATH_RESOLUTION_PLAN.md",
-      "title": "DOCS SITE PATH RESOLUTION PLAN",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "Docs Site Path Resolution Plan",
+      "summary": "**Issue**: The `navigation.ts` file references package and service READMEs (`packages/api-client/README.md`, `services/api-gateway/README.md`) that ex...",
+      "status": "stable",
+      "stability": "beta",
+      "owner": "mixed",
+      "audience": ["human"],
+      "tags": ["docs", "site", "path", "resolution"],
+      "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "e2e-testing-guide",
+      "slug": "testing/e2e-testing-guide",
       "path": "testing/E2E_TESTING_GUIDE.md",
-      "title": "E2E TESTING GUIDE",
-      "status": "draft",
-      "lastUpdated": ""
+      "title": "E2e Testing Guide",
+      "summary": "This guide describes the comprehensive end-to-end (E2E) test suite for VoiceAssist V2. These tests verify complete user workflows, service integration...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "sre",
+      "audience": ["frontend"],
+      "tags": ["e2e", "testing", "guide"],
+      "lastUpdated": "2025-11-27"
     }
   ]
 }

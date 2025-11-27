@@ -1,6 +1,19 @@
+---
+title: "Development Phases"
+slug: "development-phases"
+summary: "> **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["development", "phases"]
+---
+
 > **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**
 > This describes the original 20-phase plan.
 > For the current architecture and phases, see:
+>
 > - [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md)
 > - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md)
 > - [START_HERE.md](START_HERE.md)
@@ -23,6 +36,7 @@ This document breaks down VoiceAssist development into self-contained phases, ea
 ## Phase Prerequisites
 
 Before starting any phase, Claude Code should:
+
 1. Read all documentation in `~/VoiceAssist/docs/`
 2. Check current status of the project
 3. Verify prerequisites for the phase are met
@@ -31,6 +45,7 @@ Before starting any phase, Claude Code should:
 ## Phase Structure
 
 Each phase document includes:
+
 - **Goal**: What this phase accomplishes
 - **Prerequisites**: What must exist before starting
 - **Entry Checklist**: Verify before beginning
@@ -45,18 +60,21 @@ Each phase document includes:
 ### Foundation Phases (1-3)
 
 **Phase 1: Local Development Environment** (~4 hours)
+
 - Install all dependencies on MacBook Pro
 - Set up local databases (PostgreSQL, Redis, Qdrant)
 - Create project structure
 - Basic FastAPI app with health check
 
 **Phase 2: Database Schema & Models** (~3 hours)
+
 - Define SQLAlchemy models
 - Create migrations with Alembic
 - Set up pgvector extension
 - Create Qdrant collections
 
 **Phase 3: Authentication System** (~4 hours)
+
 - JWT authentication
 - User registration/login
 - API key management
@@ -65,12 +83,14 @@ Each phase document includes:
 ### AI Integration Phases (4-5)
 
 **Phase 4: Local LLM Integration** (~3 hours)
+
 - Ollama setup and configuration
 - LLM service wrapper
 - Basic chat endpoint
 - Test local inference
 
 **Phase 5: OpenAI Realtime API** (~5 hours)
+
 - WebSocket endpoint for voice
 - OpenAI Realtime API proxy
 - Audio streaming setup
@@ -79,12 +99,14 @@ Each phase document includes:
 ### File System & Privacy Phases (6-7)
 
 **Phase 6: File System Access & Privacy** (~5 hours)
+
 - File indexing service
 - Privacy classifier implementation
 - Local vector search
 - File query endpoints
 
 **Phase 7: macOS System Integrations** (~6 hours)
+
 - Calendar access (EventKit/AppleScript)
 - Email integration
 - Reminders and Notes
@@ -93,24 +115,28 @@ Each phase document includes:
 ### Medical Knowledge Base Phases (8-11)
 
 **Phase 8: PDF Processing Pipeline** (~5 hours)
+
 - PDF upload endpoint
 - Text extraction (PyPDF2, pdfplumber)
 - OCR integration (Tesseract)
 - Chunking strategy implementation
 
 **Phase 9: Embedding & Vector Storage** (~4 hours)
+
 - Embedding generation (OpenAI)
 - Store in Qdrant with metadata
 - Batch processing
 - Test retrieval
 
 **Phase 10: RAG System Implementation** (~5 hours)
+
 - Semantic search
 - Context assembly
 - Citation generation
 - Medical query endpoint with sources
 
 **Phase 11: PubMed Integration** (~4 hours)
+
 - PubMed API client
 - Search and download
 - Journal article processing
@@ -119,6 +145,7 @@ Each phase document includes:
 ### Frontend Phases (12-14)
 
 **Phase 12: Web App - Core Chat Interface** (~5 hours)
+
 - React + TypeScript + Vite setup
 - Chat UI components
 - Message streaming
@@ -126,12 +153,14 @@ Each phase document includes:
 - File upload
 
 **Phase 13: Web App - Voice Interface** (~4 hours)
+
 - Microphone input setup
 - Web Audio API integration
 - Voice controls and visualization
 - Audio playback
 
 **Phase 14: Web App - History & Settings** (~3 hours)
+
 - Conversation history
 - Search functionality
 - User settings page
@@ -140,12 +169,14 @@ Each phase document includes:
 ### Admin Panel Phases (15-16)
 
 **Phase 15: Admin Panel - Dashboard** (~4 hours)
+
 - React setup with Tremor
 - System overview dashboard
 - Real-time metrics
 - Service status indicators
 
 **Phase 16: Admin Panel - Knowledge Base UI** (~4 hours)
+
 - Document upload interface
 - Document management table
 - Indexing controls
@@ -154,6 +185,7 @@ Each phase document includes:
 ### External Integrations Phase (17)
 
 **Phase 17: External Service Integrations** (~5 hours)
+
 - Nextcloud WebDAV integration
 - OpenEvidence API (if available)
 - Clinical guidelines scrapers
@@ -162,12 +194,14 @@ Each phase document includes:
 ### Testing & Polish Phases (18-19)
 
 **Phase 18: Integration Testing & Bug Fixes** (~6 hours)
+
 - Write integration tests
 - End-to-end testing
 - Bug fixes and refinements
 - Performance optimization
 
 **Phase 19: Documentation Site** (~4 hours)
+
 - Next.js + MDX setup
 - Content creation
 - Search functionality
@@ -176,6 +210,7 @@ Each phase document includes:
 ### Deployment Phase (20)
 
 **Phase 20: Ubuntu Deployment** (~5 hours)
+
 - Create deployment script
 - Ubuntu-specific configuration
 - Production environment setup
@@ -198,7 +233,7 @@ Create a `PHASE_STATUS.md` file to track progress:
 - [x] Phase 2: Database Schema & Models - Completed 2024-11-21
 - [ ] Phase 3: Authentication System - In Progress
 - [ ] Phase 4: Local LLM Integration - Not Started
-...
+      ...
 ```
 
 ## Starting a Phase
@@ -267,6 +302,7 @@ and verify exit criteria."
 ```
 
 Claude Code will:
+
 - Read the phase instructions
 - Check what already exists
 - Implement the required features

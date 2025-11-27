@@ -1,4 +1,17 @@
+---
+title: "Deployment Summary"
+slug: "deployment/deployment-summary"
+summary: "**Date:** 2025-11-21"
+status: stable
+stability: production
+owner: infra
+lastUpdated: "2025-11-27"
+audience: ["devops", "sre"]
+tags: ["deployment", "summary"]
+---
+
 # VoiceAssist Deployment Summary - asimo.io
+
 **Date:** 2025-11-21
 **Last Updated:** 2025-11-21 (Nextcloud OAuth Integration Completed)
 **Status:** ✅ **FULLY DEPLOYED & OPERATIONAL WITH SSL & NEXTCLOUD INTEGRATION**
@@ -15,28 +28,32 @@ VoiceAssist is now **fully operational** on your Ubuntu server with all services
 ## ✅ Completed Tasks
 
 ### 1. **Environment Configuration**
+
 - ✅ Generated secure secrets for all services
 - ✅ Retrieved OpenAI API key from existing Quran project
 - ✅ Created complete `.env` file at `/home/asimo/VoiceAssist/.env`
 - ✅ Configured for production use
 
 ### 2. **Resource Assessment**
+
 - **RAM:** 7.6GB total (4.1GB available) - ✅ Sufficient
 - **Disk:** 358GB total (128GB free) - ✅ Plenty of space
 - **CPU:** 4 cores - ✅ Meets requirements
 - **Ports:** Custom ports configured to avoid conflicts
 
 ### 3. **Docker Services Deployed**
+
 All services are **HEALTHY** and running:
 
-| Service | Status | Port (External→Internal) |
-|---------|--------|-------------------------|
-| **PostgreSQL** (pgvector) | ✅ Healthy | 5433→5432 |
-| **Redis** | ✅ Healthy | 6380→6379 |
-| **Qdrant** (Vector DB) | ✅ Healthy | 6333, 6334 |
-| **VoiceAssist API** | ✅ Healthy | **8200→8000** |
+| Service                   | Status     | Port (External→Internal) |
+| ------------------------- | ---------- | ------------------------ |
+| **PostgreSQL** (pgvector) | ✅ Healthy | 5433→5432                |
+| **Redis**                 | ✅ Healthy | 6380→6379                |
+| **Qdrant** (Vector DB)    | ✅ Healthy | 6333, 6334               |
+| **VoiceAssist API**       | ✅ Healthy | **8200→8000**            |
 
 ### 4. **Apache Configuration**
+
 - ✅ Created vhost for `assist.asimo.io` (Main API)
 - ✅ Created vhost for `admin.asimo.io` (Admin Panel)
 - ✅ Reverse proxy configured → port 8200
@@ -45,6 +62,7 @@ All services are **HEALTHY** and running:
 - ⏳ **SSL pending DNS configuration** (see below)
 
 ### 5. **Bug Fix & GitHub Commit**
+
 - ✅ Fixed critical Prometheus metrics duplicate registration bug
 - ✅ Application now starts successfully
 - ✅ Committed fix to GitHub repository
@@ -56,15 +74,18 @@ All services are **HEALTHY** and running:
 ## 📍 Access Information
 
 ### **API Endpoints**
+
 - **Health Check:** http://localhost:8200/health
-  *Response Time: ~3ms*
+  _Response Time: ~3ms_
 - **API Gateway:** http://localhost:8200/
 - **Via Apache (after DNS):** https://assist.asimo.io
 
 ### **Admin Panel**
+
 - **Via Apache (after DNS):** https://admin.asimo.io
 
 ### **Direct Service Access**
+
 - PostgreSQL: `localhost:5433`
 - Redis: `localhost:6380`
 - Qdrant: `localhost:6333`
@@ -153,6 +174,7 @@ docker compose restart voiceassist-server
 ## 🛠️ Management Commands
 
 ### **Service Management**
+
 ```bash
 cd ~/VoiceAssist
 
@@ -178,6 +200,7 @@ docker compose down
 ```
 
 ### **Database Operations**
+
 ```bash
 # Run migrations
 docker compose exec voiceassist-server alembic upgrade head
@@ -190,6 +213,7 @@ docker compose exec postgres pg_dump -U voiceassist voiceassist > backup-$(date 
 ```
 
 ### **Health Checks**
+
 ```bash
 # API health
 curl http://localhost:8200/health
@@ -206,6 +230,7 @@ docker stats
 ## 🐛 Bug Fix Details
 
 ### **Issue Fixed**
+
 The original VoiceAssist code had a critical bug where Prometheus metrics were being registered multiple times during module imports, causing this error:
 
 ```
@@ -214,7 +239,9 @@ ValueError: Duplicated timeseries in CollectorRegistry:
 ```
 
 ### **Solution Implemented**
+
 Created safe wrapper functions that gracefully handle duplicate registrations:
+
 - `_safe_counter()` - Returns dummy metric if registration fails
 - `_safe_histogram()` - Returns dummy metric if registration fails
 - `_safe_gauge()` - Returns dummy metric if registration fails
@@ -224,6 +251,7 @@ Created safe wrapper functions that gracefully handle duplicate registrations:
 **Result:** Application now starts successfully and is production-ready.
 
 ### **GitHub Commit**
+
 - **Commit Hash:** `6e2c7bd`
 - **Message:** "Fix Prometheus metrics duplicate registration error"
 - **Files Changed:** 2 (metrics.py + docker-compose.override.yml)
@@ -272,6 +300,7 @@ Response Time: ~3ms
 ## 🚨 Troubleshooting
 
 ### **Service Won't Start**
+
 ```bash
 # Check logs
 docker compose logs voiceassist-server
@@ -284,12 +313,15 @@ docker compose restart
 ```
 
 ### **Port Conflicts**
+
 If you see port binding errors, check what's using the port:
+
 ```bash
 sudo ss -tulpn | grep :8200
 ```
 
 ### **Health Check Failing**
+
 ```bash
 # Check if service is running
 docker compose ps
@@ -302,6 +334,7 @@ curl -v http://localhost:8200/health
 ```
 
 ### **SSL Certificate Issues**
+
 ```bash
 # Check Apache config
 sudo apache2ctl configtest
@@ -319,11 +352,13 @@ sudo certbot --apache -d assist.asimo.io -d admin.asimo.io
 ## 📚 Documentation
 
 ### **Project Documentation**
+
 - **GitHub:** https://github.com/mohammednazmy/VoiceAssist
 - **README:** /home/asimo/VoiceAssist/README.md
 - **Deployment Guide:** /home/asimo/VoiceAssist/docs/DEPLOYMENT_GUIDE.md
 
 ### **VoiceAssist Features**
+
 - 🎤 Voice Assistant with real-time transcription
 - 🏥 Medical AI with RAG-based knowledge retrieval
 - 📄 Document management and processing
@@ -337,16 +372,20 @@ sudo certbot --apache -d assist.asimo.io -d admin.asimo.io
 ## ⚙️ Configuration Files Created
 
 ### **1. Docker Compose Override**
+
 `/home/asimo/VoiceAssist/docker-compose.override.yml`
+
 - Custom ports to avoid conflicts
 - Production restart policies
 - Disabled bundled Nextcloud (using existing one)
 
 ### **2. Apache Virtual Hosts**
+
 - `/etc/apache2/sites-available/assist.asimo.io.conf`
 - `/etc/apache2/sites-available/admin.asimo.io.conf`
 
 Both configured with:
+
 - ✅ Reverse proxy to port 8200
 - ✅ WebSocket support
 - ✅ Security headers
@@ -357,21 +396,25 @@ Both configured with:
 ## 🎯 Quick Reference
 
 ### **Check System Status**
+
 ```bash
 cd ~/VoiceAssist && docker compose ps && curl http://localhost:8200/health
 ```
 
 ### **View Logs**
+
 ```bash
 docker compose logs -f voiceassist-server
 ```
 
 ### **Restart After Config Changes**
+
 ```bash
 docker compose restart voiceassist-server
 ```
 
 ### **Access Database**
+
 ```bash
 docker compose exec postgres psql -U voiceassist -d voiceassist
 ```
@@ -393,4 +436,4 @@ docker compose exec postgres psql -U voiceassist -d voiceassist
 
 ---
 
-*Remember to configure DNS records for SSL certificate setup!*
+_Remember to configure DNS records for SSL certificate setup!_

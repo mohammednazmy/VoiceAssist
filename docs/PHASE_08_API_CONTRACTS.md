@@ -1,3 +1,15 @@
+---
+title: "Phase 08 Api Contracts"
+slug: "phase-08-api-contracts"
+summary: "This document defines the API contracts between frontend and backend for Phase 8 features."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["backend"]
+tags: ["phase", "api", "contracts"]
+---
+
 # Phase 8 API Contracts
 
 This document defines the API contracts between frontend and backend for Phase 8 features.

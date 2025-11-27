@@ -1,3 +1,15 @@
+---
+title: "Phase 02 Security Nextcloud"
+slug: "phases/phase-02-security-nextcloud"
+summary: "> **V2 PHASE DOCUMENT**"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["phase", "security", "nextcloud"]
+---
+
 # Phase 2: Security Foundation & Nextcloud Integration
 
 > **V2 PHASE DOCUMENT**
@@ -12,6 +24,7 @@
 Implement SSO, JWT auth, and baseline security controls; connect to Nextcloud.
 
 See also:
+
 - [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)
 - [PHASE_STATUS.md](../../PHASE_STATUS.md)
 - [BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md)

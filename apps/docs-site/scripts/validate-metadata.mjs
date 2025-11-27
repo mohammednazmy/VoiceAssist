@@ -42,6 +42,7 @@ const VALID_AUDIENCE = [
   "admin",
   "user",
   "docs",
+  "sre",
   // Common variations
   "developers",
   "ai-agents",
@@ -123,7 +124,13 @@ function validateFile(filePath, relativePath) {
     // Validate date format
     const dateField = data.lastUpdated || data.last_updated;
     if (dateField) {
-      const dateStr = String(dateField).replace(/['"]/g, "");
+      // Handle Date objects (gray-matter parses YAML dates as Date objects)
+      let dateStr;
+      if (dateField instanceof Date) {
+        dateStr = dateField.toISOString().split('T')[0];
+      } else {
+        dateStr = String(dateField).replace(/['"]/g, "");
+      }
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
         result.warnings.push(
           `Invalid date format: "${dateField}". Use ISO format: YYYY-MM-DD`

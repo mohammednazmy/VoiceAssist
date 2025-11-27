@@ -1,3 +1,15 @@
+---
+title: "Architecture Overview"
+slug: "client-implementation/architecture-overview"
+summary: "The VoiceAssist platform is deployed across three dedicated domains, each serving a specific purpose:"
+status: stable
+stability: production
+owner: frontend
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["architecture", "overview"]
+---
+
 # VoiceAssist Client Architecture Overview
 
 ## Three-Domain Architecture

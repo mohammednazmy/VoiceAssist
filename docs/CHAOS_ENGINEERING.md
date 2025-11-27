@@ -1,3 +1,15 @@
+---
+title: "Chaos Engineering"
+slug: "chaos-engineering"
+summary: "**Last Updated**: 2025-11-21 (Phase 7 - P3.5)"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["chaos", "engineering"]
+---
+
 # Chaos Engineering Guide
 
 **Last Updated**: 2025-11-21 (Phase 7 - P3.5)
@@ -12,6 +24,7 @@ Chaos Engineering is the discipline of experimenting on a system to build confid
 **Philosophy**: "Break things on purpose to learn how to make them more resilient."
 
 **Benefits**:
+
 - Discover failure modes before production incidents
 - Validate graceful degradation strategies
 - Build confidence in system resilience
@@ -47,6 +60,7 @@ Chaos Engineering is the discipline of experimenting on a system to build confid
 ```
 
 **Components**:
+
 1. **Steady State Hypothesis**: Define what "normal" looks like
 2. **Method**: Actions and probes to inject chaos
 3. **Rollbacks**: Restore system to normal state
@@ -97,17 +111,20 @@ curl http://localhost:8000/health
 **What it tests**: PostgreSQL becomes unavailable
 
 **Expected behavior**:
+
 - API returns 503 Service Unavailable
 - Errors are logged appropriately
 - No 500 Internal Server Errors
 - System recovers when database returns
 
 **Run**:
+
 ```bash
 chaos run chaos/experiments/database-failure.yaml
 ```
 
 **What happens**:
+
 1. Verifies API is healthy
 2. Stops PostgreSQL container
 3. Checks API responds with graceful error
@@ -115,6 +132,7 @@ chaos run chaos/experiments/database-failure.yaml
 5. Verifies full recovery
 
 **Success criteria**:
+
 - No crashes or panics
 - Errors are logged with correlation IDs
 - Health check reflects degraded state
@@ -127,17 +145,20 @@ chaos run chaos/experiments/database-failure.yaml
 **What it tests**: Redis cache becomes unavailable
 
 **Expected behavior**:
+
 - API continues to function (degraded performance)
 - Cache misses are handled gracefully
 - Sessions may be lost but no errors
 - System recovers when Redis returns
 
 **Run**:
+
 ```bash
 chaos run chaos/experiments/redis-unavailable.yaml
 ```
 
 **What happens**:
+
 1. Verifies API serves requests
 2. Stops Redis container
 3. Tests API without cache
@@ -146,6 +167,7 @@ chaos run chaos/experiments/redis-unavailable.yaml
 6. Verifies cache is restored
 
 **Success criteria**:
+
 - API remains available
 - Slower response times acceptable
 - No 500 errors from cache failures
@@ -158,23 +180,27 @@ chaos run chaos/experiments/redis-unavailable.yaml
 **What it tests**: High network latency (500ms)
 
 **Expected behavior**:
+
 - API responds within timeout limits
 - No connection timeouts
 - Increased response times acceptable
 - Monitoring reflects slow responses
 
 **Prerequisites**:
+
 ```bash
 # Requires Toxiproxy for network chaos
 docker compose up -d toxiproxy
 ```
 
 **Run**:
+
 ```bash
 chaos run chaos/experiments/network-latency.yaml
 ```
 
 **What happens**:
+
 1. Measures baseline response time
 2. Injects 500ms latency via Toxiproxy
 3. Verifies API still responds
@@ -183,6 +209,7 @@ chaos run chaos/experiments/network-latency.yaml
 6. Verifies performance restored
 
 **Success criteria**:
+
 - Timeouts are appropriately configured
 - Circuit breakers don't trigger unnecessarily
 - Metrics show increased latency
@@ -195,17 +222,20 @@ chaos run chaos/experiments/network-latency.yaml
 **What it tests**: High CPU usage and memory pressure
 
 **Expected behavior**:
+
 - API slows down but remains stable
 - No out-of-memory crashes
 - Graceful degradation under load
 - Recovery after stress removed
 
 **Run**:
+
 ```bash
 chaos run chaos/experiments/resource-exhaustion.yaml
 ```
 
 **What happens**:
+
 1. Verifies container is healthy
 2. Applies CPU stress (stress-ng)
 3. Tests API under load
@@ -214,6 +244,7 @@ chaos run chaos/experiments/resource-exhaustion.yaml
 6. Verifies no memory leaks
 
 **Success criteria**:
+
 - No container restarts
 - API remains responsive (slower OK)
 - Memory usage returns to baseline
@@ -438,7 +469,7 @@ rollbacks:
     body:
       type: "loss_downstream"
       attributes:
-        probability: 0.3  # 30% packet loss
+        probability: 0.3 # 30% packet loss
 ```
 
 ---
@@ -451,11 +482,13 @@ rollbacks:
 **Good**: Test one failure mode at a time
 
 Start with:
+
 1. Single container failure
 2. Brief network issues
 3. Light resource pressure
 
 Then progress to:
+
 1. Multiple simultaneous failures
 2. Extended outages
 3. Severe resource exhaustion
@@ -463,17 +496,20 @@ Then progress to:
 ### 2. Run in Isolated Environment First
 
 **Never run chaos experiments in production without**:
+
 - Testing in development environment
 - Understanding potential impact
 - Having rollback procedures
 - Notifying team members
 
 Progression:
+
 1. Local development → 2. Staging → 3. Production (controlled)
 
 ### 3. Validate Monitoring
 
 Every experiment should verify:
+
 - Metrics reflect the chaos (latency spikes, error rates)
 - Alerts fire appropriately
 - Logs contain useful information
@@ -485,7 +521,7 @@ Every experiment should verify:
     type: http
     url: "http://localhost:9093/api/v2/alerts"
     expect:
-      - json: '$.length'
+      - json: "$.length"
         operator: gt
         value: 0
 ```
@@ -493,6 +529,7 @@ Every experiment should verify:
 ### 4. Document Learnings
 
 After each experiment:
+
 1. Document what broke
 2. Identify improvements
 3. Update runbooks
@@ -508,7 +545,7 @@ name: Chaos Tests
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # Run daily at 2 AM
+    - cron: "0 2 * * *" # Run daily at 2 AM
 
 jobs:
   chaos:
@@ -536,6 +573,7 @@ jobs:
 **Symptoms**: System remains broken after experiment
 
 **Solutions**:
+
 ```bash
 # Manually restart all services
 docker compose restart
@@ -552,6 +590,7 @@ docker compose logs voiceassist-server --tail=50
 **Symptoms**: Chaos toolkit stops responding
 
 **Solutions**:
+
 ```bash
 # Kill chaos process
 pkill -f "chaos run"
@@ -568,21 +607,23 @@ docker compose ps -a
 **Symptoms**: Experiment fails but system is actually fine
 
 **Root Causes**:
+
 - Timeouts too aggressive
 - Probes check wrong condition
 - Timing issues (race conditions)
 
 **Fix**:
+
 ```yaml
 # Increase timeouts
 provider:
   type: http
   url: "${api_url}/health"
-  timeout: 30  # Longer timeout
+  timeout: 30 # Longer timeout
 
 # Add delays
 pauses:
-  after: 10  # Wait longer for changes to propagate
+  after: 10 # Wait longer for changes to propagate
 ```
 
 ### Issue: Toxiproxy Not Available
@@ -590,6 +631,7 @@ pauses:
 **Symptoms**: `network-latency.yaml` fails with connection refused
 
 **Solutions**:
+
 ```bash
 # Start Toxiproxy
 docker compose up -d toxiproxy
@@ -619,7 +661,7 @@ Test multiple failures simultaneously:
 method:
   - name: "stop-postgres-and-redis"
     type: action
-    background: true  # Run in parallel
+    background: true # Run in parallel
     provider:
       type: process
       path: "docker"
@@ -665,7 +707,7 @@ Running in production requires:
 
 ```yaml
 configuration:
-  blast_radius: 0.01  # 1% of traffic
+  blast_radius: 0.01 # 1% of traffic
   max_latency_ms: 500
   max_error_rate: 0.05
 
@@ -700,12 +742,14 @@ steady-state-hypothesis:
 Regular chaos engineering exercises:
 
 **Monthly GameDay Schedule**:
+
 - Week 1: Database failures
 - Week 2: Network issues
 - Week 3: Resource exhaustion
 - Week 4: Multi-component failures
 
 **GameDay Checklist**:
+
 - [ ] Schedule 2-hour block
 - [ ] Notify all team members
 - [ ] Prepare rollback procedures

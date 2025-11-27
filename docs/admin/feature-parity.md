@@ -1,3 +1,15 @@
+---
+title: "Feature Parity"
+slug: "admin/feature-parity"
+summary: "This document inventories the current admin/backend endpoints, compares them to the admin panel's expectations, and tracks implementation status."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["feature", "parity"]
+---
+
 # Admin Feature Parity Matrix
 
 This document inventories the current admin/backend endpoints, compares them to the admin panel's expectations, and tracks implementation status.

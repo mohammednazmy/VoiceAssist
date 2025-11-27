@@ -1,8 +1,20 @@
+---
+title: "Production Deployment Runbook"
+slug: "production-deployment-runbook"
+summary: "**Last Updated:** 2025-11-21"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["devops", "sre"]
+tags: ["production", "deployment", "runbook"]
+---
+
 # VoiceAssist Production Deployment Runbook
 
-**Version:** 1.0  
-**Last Updated:** 2025-11-21  
-**Owner:** DevOps Team  
+**Version:** 1.0
+**Last Updated:** 2025-11-21
+**Owner:** DevOps Team
 **Phase:** 14 - Production Deployment
 
 ---
@@ -83,6 +95,7 @@ This runbook provides step-by-step instructions for deploying VoiceAssist to pro
 ### Infrastructure Requirements
 
 **Server Specifications:**
+
 - Ubuntu 22.04 LTS or later
 - 32 GB RAM minimum (64 GB recommended)
 - 8 CPU cores minimum (16 recommended)
@@ -91,13 +104,15 @@ This runbook provides step-by-step instructions for deploying VoiceAssist to pro
 - Firewall configured (ports 80, 443, 22)
 
 **Network Requirements:**
+
 - Domain name registered and DNS access
 - SSL certificate (Let's Encrypt or commercial)
 - Static IP address
 - Outbound internet access
 
 **Software Prerequisites:**
-- Docker 24.0+ 
+
+- Docker 24.0+
 - Docker Compose 2.20+
 - Git
 - Terraform 1.5+ (optional, for cloud deployment)
@@ -107,6 +122,7 @@ This runbook provides step-by-step instructions for deploying VoiceAssist to pro
 ### Access Requirements
 
 **Required Credentials:**
+
 - SSH access to production server (root or sudo user)
 - GitHub repository access
 - Domain registrar access (for DNS)
@@ -115,6 +131,7 @@ This runbook provides step-by-step instructions for deploying VoiceAssist to pro
 - Backup storage credentials (S3 or similar)
 
 **Service Accounts:**
+
 - PostgreSQL admin user
 - Redis password
 - Qdrant API key
@@ -343,6 +360,7 @@ bash deployment/production/smoke-tests/smoke-test.sh \
 ### Manual Verification Steps
 
 **1. Health Checks**
+
 ```bash
 # API Gateway health
 curl https://your-domain.com/health
@@ -358,6 +376,7 @@ curl https://your-domain.com/metrics
 ```
 
 **2. SSL/TLS Verification**
+
 ```bash
 # Test SSL certificate
 openssl s_client -servername your-domain.com -connect your-domain.com:443
@@ -367,6 +386,7 @@ openssl s_client -servername your-domain.com -connect your-domain.com:443
 ```
 
 **3. Database Verification**
+
 ```bash
 # Connect to PostgreSQL
 docker-compose exec postgres psql -U voiceassist -d voiceassist
@@ -378,6 +398,7 @@ SELECT version();
 ```
 
 **4. Monitoring Verification**
+
 ```bash
 # Access Grafana
 # URL: https://your-domain.com:3001
@@ -391,6 +412,7 @@ SELECT version();
 ```
 
 **5. Functional Testing**
+
 ```bash
 # Register test user
 curl -X POST https://your-domain.com/api/auth/register \
@@ -475,12 +497,14 @@ For severe issues requiring full system restore:
 ### Key Metrics to Monitor
 
 **System Metrics:**
+
 - CPU usage (alert if > 80% for 5 minutes)
 - Memory usage (alert if > 90%)
 - Disk usage (alert if > 85%)
 - Network I/O
 
 **Application Metrics:**
+
 - Request rate (requests/second)
 - Response time (P50, P95, P99)
 - Error rate (alert if > 1%)
@@ -488,6 +512,7 @@ For severe issues requiring full system restore:
 - Queue depth
 
 **Database Metrics:**
+
 - Connection count
 - Query latency
 - Replication lag (alert if > 10 seconds)
@@ -495,6 +520,7 @@ For severe issues requiring full system restore:
 - Cache hit rate
 
 **Infrastructure Metrics:**
+
 - Container health
 - Service uptime
 - SSL certificate expiry (alert 7 days before)
@@ -503,10 +529,12 @@ For severe issues requiring full system restore:
 ### Alert Configuration
 
 Alerts are configured in:
+
 - `infrastructure/observability/prometheus/alerts/`
 - `infrastructure/observability/alertmanager/config.yml`
 
 **Critical Alerts (PagerDuty):**
+
 - Service down
 - Database unavailable
 - Replication lag > 60 seconds
@@ -514,6 +542,7 @@ Alerts are configured in:
 - Error rate > 5%
 
 **Warning Alerts (Slack):**
+
 - High CPU usage
 - High memory usage
 - Slow response times
@@ -523,6 +552,7 @@ Alerts are configured in:
 ### Accessing Monitoring
 
 **Grafana Dashboards:**
+
 ```
 URL: https://your-domain.com:3001
 Login: admin / <GRAFANA_ADMIN_PASSWORD>
@@ -536,6 +566,7 @@ Dashboards:
 ```
 
 **Prometheus:**
+
 ```
 URL: https://your-domain.com:9090
 Queries:
@@ -545,6 +576,7 @@ Queries:
 ```
 
 **Jaeger Tracing:**
+
 ```
 URL: https://your-domain.com:16686
 Use to trace requests through the system
@@ -561,6 +593,7 @@ Use to trace requests through the system
 **Symptoms:** Container exits immediately or won't start
 
 **Diagnosis:**
+
 ```bash
 # Check container logs
 docker-compose logs voiceassist-server
@@ -573,6 +606,7 @@ docker inspect voiceassist-server
 ```
 
 **Solutions:**
+
 - Check `.env` file for missing/incorrect values
 - Verify ports are not in use: `netstat -tulpn | grep <port>`
 - Check disk space: `df -h`
@@ -583,6 +617,7 @@ docker inspect voiceassist-server
 **Symptoms:** "Cannot connect to database" errors
 
 **Diagnosis:**
+
 ```bash
 # Check PostgreSQL is running
 docker-compose ps postgres
@@ -595,6 +630,7 @@ docker-compose logs postgres
 ```
 
 **Solutions:**
+
 - Verify `DATABASE_URL` in `.env`
 - Check PostgreSQL container health
 - Verify credentials
@@ -605,6 +641,7 @@ docker-compose logs postgres
 **Symptoms:** "Certificate error" or "Not secure" warnings
 
 **Diagnosis:**
+
 ```bash
 # Check certificate
 openssl s_client -servername your-domain.com -connect your-domain.com:443
@@ -617,6 +654,7 @@ cat /var/log/letsencrypt/letsencrypt.log
 ```
 
 **Solutions:**
+
 - Verify DNS points to correct IP
 - Re-run SSL setup script
 - Check firewall allows port 80 (for renewal)
@@ -627,6 +665,7 @@ cat /var/log/letsencrypt/letsencrypt.log
 **Symptoms:** System slow, OOM errors
 
 **Diagnosis:**
+
 ```bash
 # Check memory usage
 free -h
@@ -637,6 +676,7 @@ docker-compose top
 ```
 
 **Solutions:**
+
 - Increase server memory
 - Adjust container memory limits in docker-compose.prod.yml
 - Restart services: `docker-compose restart`
@@ -647,6 +687,7 @@ docker-compose top
 **Symptoms:** High response times, timeouts
 
 **Diagnosis:**
+
 ```bash
 # Check response times
 curl -w "@curl-format.txt" -o /dev/null -s https://your-domain.com/health
@@ -659,6 +700,7 @@ uptime
 ```
 
 **Solutions:**
+
 - Scale up workers in docker-compose.prod.yml
 - Optimize database queries
 - Add database indexes
@@ -672,11 +714,13 @@ uptime
 ### Scheduled Maintenance
 
 **Recommended Schedule:**
+
 - **Weekly:** Sunday 2:00 AM - 4:00 AM UTC
 - **Monthly:** First Sunday of month, 2:00 AM - 6:00 AM UTC
 - **Quarterly:** Major updates, 6-hour window
 
 **Maintenance Activities:**
+
 - Apply system updates
 - Update Docker images
 - Database maintenance (VACUUM, ANALYZE)
@@ -718,12 +762,12 @@ bash deployment/production/smoke-tests/smoke-test.sh --domain your-domain.com
 
 ### On-Call Rotation
 
-| Role | Name | Phone | Email | Hours |
-|------|------|-------|-------|-------|
-| Primary DevOps | [Name] | [Phone] | [Email] | 24/7 |
-| Secondary DevOps | [Name] | [Phone] | [Email] | 24/7 |
-| Database Admin | [Name] | [Phone] | [Email] | Business hours |
-| Security Lead | [Name] | [Phone] | [Email] | 24/7 |
+| Role             | Name   | Phone   | Email   | Hours          |
+| ---------------- | ------ | ------- | ------- | -------------- |
+| Primary DevOps   | [Name] | [Phone] | [Email] | 24/7           |
+| Secondary DevOps | [Name] | [Phone] | [Email] | 24/7           |
+| Database Admin   | [Name] | [Phone] | [Email] | Business hours |
+| Security Lead    | [Name] | [Phone] | [Email] | 24/7           |
 
 ### Escalation Path
 
@@ -805,8 +849,7 @@ cat backup.sql | docker-compose exec -T postgres psql -U voiceassist voiceassist
 
 ---
 
-**Document Version:** 1.0  
-**Last Review:** 2025-11-21  
-**Next Review:** 2025-12-21  
+**Document Version:** 1.0
+**Last Review:** 2025-11-21
+**Next Review:** 2025-12-21
 **Owner:** DevOps Team
-

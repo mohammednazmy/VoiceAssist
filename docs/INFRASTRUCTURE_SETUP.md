@@ -1,12 +1,26 @@
+---
+title: "Infrastructure Setup"
+slug: "infrastructure-setup"
+summary: "This guide covers infrastructure setup for VoiceAssist V2 across two deployment strategies:"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["devops", "sre"]
+tags: ["infrastructure", "setup"]
+---
+
 # Infrastructure Setup Guide
 
 ## Overview
 
 This guide covers infrastructure setup for VoiceAssist V2 across two deployment strategies:
+
 - **Phases 0-10**: Docker Compose on Ubuntu Server (production-ready)
 - **Phases 11-14**: Kubernetes on Ubuntu Server (high availability)
 
 Both strategies deploy **two separate stacks**:
+
 - **Nextcloud stack**: Identity, files, calendar, email
 - **VoiceAssist stack**: Microservices architecture
 
@@ -29,6 +43,7 @@ Both strategies deploy **two separate stacks**:
 ### Server Requirements
 
 **Minimum for Docker Compose (Phases 0-10):**
+
 - Ubuntu 22.04 LTS or 24.04 LTS
 - 16GB RAM
 - 4 vCPUs
@@ -37,6 +52,7 @@ Both strategies deploy **two separate stacks**:
 - Static IP address
 
 **Recommended for Kubernetes (Phases 11-14):**
+
 - Ubuntu 22.04 LTS or 24.04 LTS
 - 32GB RAM (or 3+ nodes with 16GB each)
 - 8 vCPUs (or distributed across nodes)
@@ -573,6 +589,7 @@ sudo kubeadm join <master-ip>:6443 --token <token> --discovery-token-ca-cert-has
 See [COMPOSE_TO_K8S_MIGRATION.md](./COMPOSE_TO_K8S_MIGRATION.md) for detailed migration from Docker Compose to Kubernetes.
 
 **High-level steps:**
+
 1. Create namespaces for nextcloud and voiceassist
 2. Convert docker-compose.yml to Kubernetes manifests (Deployments, Services, ConfigMaps, Secrets)
 3. Set up persistent storage (PersistentVolumeClaims)
@@ -704,6 +721,7 @@ See phase documents for detailed NetworkPolicy configurations that enforce zero-
 ### Access Monitoring Services
 
 After deployment:
+
 - **Grafana**: https://grafana.yourdomain.com (admin / <GRAFANA_ADMIN_PASSWORD>)
 - **Prometheus**: https://prometheus.yourdomain.com
 - **Jaeger**: https://jaeger.yourdomain.com

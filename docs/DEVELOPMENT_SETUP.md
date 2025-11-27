@@ -1,3 +1,15 @@
+---
+title: "Development Setup"
+slug: "development-setup"
+summary: "This guide walks you through setting up your local development environment for VoiceAssist."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["development", "setup"]
+---
+
 # VoiceAssist Development Setup Guide
 
 This guide walks you through setting up your local development environment for VoiceAssist.

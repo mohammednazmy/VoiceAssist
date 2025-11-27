@@ -1,3 +1,15 @@
+---
+title: "Realtime Sanity Check"
+slug: "archive/realtime-sanity-check"
+summary: "**Date**: 2025-11-24"
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["realtime", "sanity", "check"]
+---
+
 # OpenAI Realtime API Integration - Sanity Check
 
 **Date**: 2025-11-24

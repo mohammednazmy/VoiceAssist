@@ -1,3 +1,15 @@
+---
+title: "Phase 6 Citations Complete"
+slug: "archive/phase-6-citations-complete"
+summary: "**Status**: ✅ Implemented and Deployed"
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["phase", "citations", "complete"]
+---
+
 # Phase 6: Citations & Sources UI - COMPLETE ✓
 
 **Status**: ✅ Implemented and Deployed

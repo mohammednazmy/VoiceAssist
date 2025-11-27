@@ -32,9 +32,9 @@ VoiceAssist is an enterprise-grade, HIPAA-compliant medical AI assistant platfor
 | --------------------- | ---------------- | --------------------------- |
 | Backend (API Gateway) | Production Ready | `services/api-gateway/`     |
 | Infrastructure        | Production Ready | `infrastructure/`, `ha-dr/` |
+| Admin Panel           | Production Ready | `apps/admin-panel/`         |
+| Docs Site             | Production Ready | `apps/docs-site/`           |
 | Web App               | In Development   | `apps/web-app/`             |
-| Admin Panel           | In Development   | `apps/admin-panel/`         |
-| Docs Site             | In Development   | `apps/docs-site/`           |
 | Legacy Server         | Deprecated       | `server/` (DO NOT USE)      |
 
 ### Key Facts
@@ -199,6 +199,149 @@ alembic upgrade head
 
 # Rollback
 alembic downgrade -1
+```
+
+---
+
+## Common Tasks for AI Agents
+
+This section provides task-specific guidance for common development scenarios.
+
+### Task: Add a New REST Endpoint to the API Gateway
+
+**Docs to read first:**
+
+- [API_REFERENCE.md](../API_REFERENCE.md) - Endpoint patterns and conventions
+- [api-reference/rest-api.md](../api-reference/rest-api.md) - Detailed endpoint specs
+- [BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md) - Service layer design
+
+**Directories to inspect:**
+
+- `services/api-gateway/app/api/` - Existing API modules
+- `services/api-gateway/app/schemas/` - Pydantic request/response schemas
+- `services/api-gateway/app/services/` - Business logic services
+
+**Steps:**
+
+1. Create handler in `app/api/<module>.py`
+2. Add schemas in `app/schemas/<module>.py`
+3. Register router in `app/main.py`
+4. Add tests in `tests/test_<module>.py`
+
+**Verify:**
+
+```bash
+cd services/api-gateway
+pytest tests/test_<module>.py -v
+curl http://localhost:8000/<endpoint>
+```
+
+### Task: Debug a Failing Medical Query (RAG Issues)
+
+**Docs to read first:**
+
+- [SEMANTIC_SEARCH_DESIGN.md](../SEMANTIC_SEARCH_DESIGN.md) - RAG architecture
+- [debugging/DEBUGGING_BACKEND.md](../debugging/DEBUGGING_BACKEND.md) - Backend debugging
+
+**Key files:**
+
+- `app/services/rag_service.py` - RAG pipeline logic
+- `app/services/llm_client.py` - OpenAI integration
+- `app/services/cache_service.py` - Cache layer
+
+**Diagnostic commands:**
+
+```bash
+# Check RAG service logs
+journalctl -u voiceassist-api -f | grep -i rag
+
+# Test embedding generation
+curl -X POST http://localhost:8000/api/search/test \
+  -H "Content-Type: application/json" \
+  -d '{"query": "test medical query"}'
+
+# Check Qdrant health
+curl http://localhost:6333/collections
+```
+
+### Task: Debug Voice / WebSocket Issues
+
+**Docs to read first:**
+
+- [debugging/DEBUGGING_VOICE_REALTIME.md](../debugging/DEBUGGING_VOICE_REALTIME.md) - Voice debugging
+- [REALTIME_ARCHITECTURE.md](../REALTIME_ARCHITECTURE.md) - WebSocket design
+- [VOICE_MODE_PIPELINE.md](../VOICE_MODE_PIPELINE.md) - Voice pipeline
+
+**Key files:**
+
+- `apps/web-app/src/hooks/useRealtimeSession.ts` - WebSocket client
+- `app/api/realtime.py` - WebSocket server endpoint
+
+**Diagnostic commands:**
+
+```bash
+# Check WebSocket endpoint
+curl -i -N -H "Connection: Upgrade" \
+  -H "Upgrade: websocket" \
+  http://localhost:8000/ws
+
+# Check browser console for WebSocket errors
+# Look for: "WebSocket connection failed" or "error_no_match"
+```
+
+### Task: Fix a Broken Docs Page or Missing Document
+
+**Docs to read first:**
+
+- [debugging/DEBUGGING_DOCS_SITE.md](../debugging/DEBUGGING_DOCS_SITE.md) - Docs site debugging
+- [INTERNAL_DOCS_SYSTEM.md](../INTERNAL_DOCS_SYSTEM.md) - Docs system internals
+
+**Key files:**
+
+- `apps/docs-site/src/lib/navigation.ts` - Navigation config
+- `apps/docs-site/src/lib/docs.ts` - Document loading
+- `apps/docs-site/src/components/DocPage.tsx` - Page rendering
+
+**Steps to fix a 404:**
+
+1. Check if doc exists in `docs/` with correct path
+2. Verify route in `navigation.ts` matches expected URL
+3. Ensure doc has valid frontmatter if metadata is required
+4. Rebuild and redeploy:
+
+```bash
+cd apps/docs-site
+pnpm build
+sudo cp -r out/* /var/www/assistdocs.asimo.io/
+```
+
+### Task: Update Agent JSON or Search Index
+
+**Key files:**
+
+- `apps/docs-site/scripts/generate-agent-json.js` - Agent JSON generator
+- `apps/docs-site/scripts/generate-search-index.js` - Search index generator
+
+**Commands:**
+
+```bash
+cd apps/docs-site
+
+# Regenerate agent JSON
+pnpm run generate-agent-json
+
+# Regenerate search index
+pnpm run generate-search-index
+
+# Full rebuild
+pnpm build
+```
+
+**Verify:**
+
+```bash
+curl https://assistdocs.asimo.io/agent/docs.json | jq '.count'
+curl https://assistdocs.asimo.io/search-index.json | jq '.docs | length'
 ```
 
 ---

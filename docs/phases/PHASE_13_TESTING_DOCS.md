@@ -1,3 +1,15 @@
+---
+title: "Phase 13 Testing Docs"
+slug: "phases/phase-13-testing-docs"
+summary: "> **V2 PHASE DOCUMENT**"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["phase", "testing", "docs"]
+---
+
 # Phase 13: End-to-End Testing & Documentation
 
 > **V2 PHASE DOCUMENT**
@@ -12,6 +24,7 @@
 Finalize tests and docs across the stack.
 
 See also:
+
 - [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)
 - [PHASE_STATUS.md](../../PHASE_STATUS.md)
 - [BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md)

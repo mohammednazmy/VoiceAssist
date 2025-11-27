@@ -1,3 +1,15 @@
+---
+title: "Cicd Guide"
+slug: "cicd-guide"
+summary: "1. [Overview](#overview)"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["frontend"]
+tags: ["cicd", "guide"]
+---
+
 # CI/CD Pipeline Guide
 
 ## Table of Contents
@@ -50,13 +62,13 @@ VoiceAssist uses GitHub Actions for continuous integration and continuous deploy
 
 ### Workflow Triggers
 
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| **CI Pipeline** | PR to main/develop | Code quality and tests |
-| **Security Scan** | PR/Push | Vulnerability scanning |
-| **Terraform Plan** | PR with infra changes | Preview infrastructure changes |
-| **Terraform Apply** | Merge to main | Apply infrastructure changes |
-| **Build & Deploy** | Tag/Manual | Build and deploy application |
+| Workflow            | Trigger               | Purpose                        |
+| ------------------- | --------------------- | ------------------------------ |
+| **CI Pipeline**     | PR to main/develop    | Code quality and tests         |
+| **Security Scan**   | PR/Push               | Vulnerability scanning         |
+| **Terraform Plan**  | PR with infra changes | Preview infrastructure changes |
+| **Terraform Apply** | Merge to main         | Apply infrastructure changes   |
+| **Build & Deploy**  | Tag/Manual            | Build and deploy application   |
 
 ## GitHub Actions Workflows
 
@@ -94,7 +106,7 @@ lint:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: "3.11"
     - name: Install pre-commit
       run: pip install pre-commit
     - name: Run pre-commit hooks
@@ -102,6 +114,7 @@ lint:
 ```
 
 **Checks:**
+
 - Code formatting (black)
 - Import sorting (isort)
 - Style guide (flake8)
@@ -135,6 +148,7 @@ unit-tests:
 ```
 
 **Coverage Requirements:**
+
 - Minimum 80% code coverage
 - Critical modules require 90%+
 - Coverage report uploaded to Codecov
@@ -165,6 +179,7 @@ integration-tests:
 ```
 
 **Test Services:**
+
 - PostgreSQL with pgvector extension
 - Redis cache
 - Qdrant vector database
@@ -188,6 +203,7 @@ contract-tests:
 ```
 
 **Contract Testing:**
+
 - Consumer-driven contracts
 - API versioning validation
 - Backward compatibility checks
@@ -234,6 +250,7 @@ build:
 ```
 
 **Build Optimizations:**
+
 - Layer caching with GitHub Actions cache
 - Multi-stage builds for smaller images
 - BuildKit for parallel builds
@@ -279,6 +296,7 @@ deploy-production:
 ```
 
 **Deployment Strategy:**
+
 - Rolling update with zero downtime
 - Automated rollback on failure
 - Health checks before traffic routing
@@ -369,6 +387,7 @@ terraform-apply:
 ```
 
 **Safety Measures:**
+
 - Manual approval required for production
 - Plan artifacts saved for 30 days
 - State backup before apply
@@ -381,6 +400,7 @@ terraform-apply:
 Navigate to: `Settings` > `Secrets and variables` > `Actions`
 
 **AWS Credentials:**
+
 ```
 AWS_ACCESS_KEY_ID          # AWS access key for Terraform/deployment
 AWS_SECRET_ACCESS_KEY      # AWS secret key
@@ -388,6 +408,7 @@ AWS_REGION                 # Default: us-east-1
 ```
 
 **Container Registry:**
+
 ```
 ECR_REGISTRY               # ECR registry URL (e.g., 123456789.dkr.ecr.us-east-1.amazonaws.com)
 DOCKER_USERNAME            # Optional: Docker Hub username
@@ -395,18 +416,21 @@ DOCKER_PASSWORD            # Optional: Docker Hub token
 ```
 
 **Code Quality:**
+
 ```
 CODECOV_TOKEN              # Codecov integration token
 SONAR_TOKEN                # Optional: SonarQube token
 ```
 
 **Infrastructure:**
+
 ```
 INFRACOST_API_KEY          # Cost estimation API key
 TF_API_TOKEN               # Optional: Terraform Cloud token
 ```
 
 **Notifications:**
+
 ```
 SLACK_WEBHOOK_URL          # Slack notifications webhook
 PAGERDUTY_INTEGRATION_KEY  # PagerDuty alerts
@@ -415,12 +439,14 @@ PAGERDUTY_INTEGRATION_KEY  # PagerDuty alerts
 ### Environment-Specific Variables
 
 **Development:**
+
 ```
 DEV_CLUSTER_NAME           # EKS cluster name
 DEV_NAMESPACE              # Kubernetes namespace
 ```
 
 **Staging:**
+
 ```
 STAGING_CLUSTER_NAME
 STAGING_NAMESPACE
@@ -428,6 +454,7 @@ STAGING_URL
 ```
 
 **Production:**
+
 ```
 PROD_CLUSTER_NAME
 PROD_NAMESPACE
@@ -440,6 +467,7 @@ PROD_BACKUP_BUCKET
 ### Manual Deployment
 
 1. **Create release tag:**
+
    ```bash
    git tag -a v2.0.0 -m "Release version 2.0.0"
    git push origin v2.0.0
@@ -458,6 +486,7 @@ PROD_BACKUP_BUCKET
    - Verify health checks pass
 
 4. **Verify deployment:**
+
    ```bash
    # Check pod status
    kubectl get pods -n voiceassist
@@ -472,16 +501,19 @@ PROD_BACKUP_BUCKET
 ### Automated Deployment
 
 **Development:**
+
 - Automatic on push to `develop` branch
 - Deploys to dev environment
 - No approval required
 
 **Staging:**
+
 - Automatic on merge to `main`
 - Deploys to staging environment
 - Runs smoke tests automatically
 
 **Production:**
+
 - Manual approval required
 - Deploy after staging validation
 - Change window: Non-peak hours
@@ -489,6 +521,7 @@ PROD_BACKUP_BUCKET
 ### Deployment Checklist
 
 **Pre-Deployment:**
+
 - [ ] All tests passing
 - [ ] Code review approved
 - [ ] Database migrations tested
@@ -496,12 +529,14 @@ PROD_BACKUP_BUCKET
 - [ ] Team notified
 
 **During Deployment:**
+
 - [ ] Monitor application logs
 - [ ] Watch error rates
 - [ ] Check response times
 - [ ] Verify health endpoints
 
 **Post-Deployment:**
+
 - [ ] Run smoke tests
 - [ ] Verify critical features
 - [ ] Check metrics/dashboards
@@ -513,6 +548,7 @@ PROD_BACKUP_BUCKET
 ### Automatic Rollback
 
 Deployments automatically roll back if:
+
 - Health checks fail
 - Readiness probes timeout
 - Pod crashes during rollout
@@ -520,6 +556,7 @@ Deployments automatically roll back if:
 ### Manual Rollback
 
 **Kubernetes Rollback:**
+
 ```bash
 # View deployment history
 kubectl rollout history deployment/api-gateway -n voiceassist
@@ -535,6 +572,7 @@ kubectl rollout status deployment/api-gateway -n voiceassist
 ```
 
 **GitHub Actions Rollback:**
+
 ```bash
 # Re-run previous successful deployment
 # 1. Go to Actions tab
@@ -544,6 +582,7 @@ kubectl rollout status deployment/api-gateway -n voiceassist
 ```
 
 **Terraform Rollback:**
+
 ```bash
 # Revert Git commit
 git revert <commit-hash>
@@ -560,11 +599,13 @@ terraform state push backup.tfstate
 In case of critical issues:
 
 1. **Stop incoming traffic:**
+
    ```bash
    kubectl scale deployment/api-gateway --replicas=0 -n voiceassist
    ```
 
 2. **Deploy previous version:**
+
    ```bash
    kubectl set image deployment/api-gateway \
      api-gateway=<previous-image-tag> \
@@ -572,6 +613,7 @@ In case of critical issues:
    ```
 
 3. **Scale up:**
+
    ```bash
    kubectl scale deployment/api-gateway --replicas=3 -n voiceassist
    ```
@@ -587,11 +629,13 @@ In case of critical issues:
 ### GitHub Actions Monitoring
 
 **Workflow Status:**
+
 - Green check: Success
 - Red X: Failure
 - Yellow circle: In progress
 
 **Deployment Status:**
+
 ```bash
 # Using GitHub CLI
 gh run list --workflow=build-deploy.yml
@@ -606,6 +650,7 @@ gh run view <run-id> --log
 ### Application Monitoring
 
 **Kubernetes:**
+
 ```bash
 # Watch deployment
 kubectl get deployments -n voiceassist -w
@@ -621,6 +666,7 @@ kubectl logs -f deployment/api-gateway -n voiceassist
 ```
 
 **Metrics:**
+
 - Grafana dashboards: Monitor request rates, errors, latency
 - Prometheus alerts: Automated alerting on issues
 - Jaeger tracing: Distributed request tracing
@@ -628,17 +674,19 @@ kubectl logs -f deployment/api-gateway -n voiceassist
 ### Notification Channels
 
 **Slack Integration:**
+
 ```yaml
 - name: Notify Slack
   uses: 8398a7/action-slack@v3
   with:
     status: ${{ job.status }}
-    text: 'Deployment to production completed'
+    text: "Deployment to production completed"
     webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
   if: always()
 ```
 
 **Email Notifications:**
+
 - Configure in GitHub repository settings
 - Notify on workflow failure
 - Daily deployment summary
@@ -648,11 +696,13 @@ kubectl logs -f deployment/api-gateway -n voiceassist
 ### CI Pipeline Issues
 
 **Issue: Tests failing randomly**
+
 ```
 Error: flaky test failures
 ```
 
 **Solutions:**
+
 ```bash
 # Run tests locally
 pytest tests/unit/ -v --reruns 3
@@ -665,11 +715,13 @@ pytest tests/ --collect-only
 ```
 
 **Issue: Build timeout**
+
 ```
 Error: Job timeout after 6 hours
 ```
 
 **Solutions:**
+
 ```yaml
 # Increase timeout in workflow
 jobs:
@@ -686,11 +738,13 @@ jobs:
 ### Deployment Issues
 
 **Issue: Pod not starting**
+
 ```
 Error: ImagePullBackOff
 ```
 
 **Solutions:**
+
 ```bash
 # Check image exists
 aws ecr describe-images --repository-name voiceassist-api
@@ -703,11 +757,13 @@ kubectl describe pod <pod-name> -n voiceassist
 ```
 
 **Issue: Deployment stuck**
+
 ```
 Error: Deployment does not have minimum availability
 ```
 
 **Solutions:**
+
 ```bash
 # Check pod status
 kubectl get pods -n voiceassist
@@ -725,11 +781,13 @@ kubectl rollout undo deployment/api-gateway -n voiceassist
 ### Terraform Issues
 
 **Issue: Plan shows unexpected changes**
+
 ```
 Error: Changes detected in production
 ```
 
 **Solutions:**
+
 ```bash
 # Review plan carefully
 terraform plan -var-file="environments/production.tfvars" | less
@@ -742,11 +800,13 @@ terraform state pull | jq . > current-state.json
 ```
 
 **Issue: Apply fails**
+
 ```
 Error: Error creating resource
 ```
 
 **Solutions:**
+
 ```bash
 # Enable debug logging
 TF_LOG=DEBUG terraform apply

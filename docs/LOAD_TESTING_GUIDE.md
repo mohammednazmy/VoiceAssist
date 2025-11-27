@@ -1,3 +1,15 @@
+---
+title: "Load Testing Guide"
+slug: "load-testing-guide"
+summary: "This comprehensive guide covers load testing for VoiceAssist, including when to run tests, how to interpret results, choosing between tools (k6 vs Loc..."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["frontend"]
+tags: ["load", "testing", "guide"]
+---
+
 # VoiceAssist Load Testing Guide
 
 ## Overview
@@ -109,6 +121,7 @@ We use both tools for different purposes. Here's when to use each:
 #### k6 - Recommended for:
 
 **Strengths**:
+
 - Fast execution (written in Go)
 - Low resource overhead
 - JavaScript-based scripts (familiar syntax)
@@ -119,6 +132,7 @@ We use both tools for different purposes. Here's when to use each:
 - Protocol-level testing (HTTP/2, gRPC)
 
 **Best For**:
+
 - Quick smoke tests
 - CI/CD integration
 - Simple API endpoint testing
@@ -127,6 +141,7 @@ We use both tools for different purposes. Here's when to use each:
 - Automated regression testing
 
 **Example Use Cases**:
+
 ```bash
 # Quick smoke test
 k6 run --vus 10 --duration 30s smoke-test.js
@@ -141,6 +156,7 @@ k6 run --http2 http2-test.js
 #### Locust - Recommended for:
 
 **Strengths**:
+
 - Python-based (easy to customize)
 - Web UI for real-time monitoring
 - Distributed load generation
@@ -151,6 +167,7 @@ k6 run --http2 http2-test.js
 - Better for long-running tests
 
 **Best For**:
+
 - Complex user scenarios
 - Long-duration tests (hours)
 - Real-time monitoring needs
@@ -160,6 +177,7 @@ k6 run --http2 http2-test.js
 - Exploratory testing
 
 **Example Use Cases**:
+
 ```bash
 # Web UI with real-time monitoring
 locust -f locustfile.py --web-port 8089
@@ -174,16 +192,16 @@ locust -f locustfile.py --headless -u 100 -r 10 -t 30m
 
 ### Decision Matrix
 
-| Criteria | Use k6 | Use Locust |
-|----------|--------|------------|
-| **Test Duration** | <30 min | >30 min |
-| **Script Complexity** | Simple | Complex |
-| **CI/CD Integration** | Yes | Optional |
-| **Real-time Monitoring** | Not critical | Required |
-| **Distributed Testing** | Not needed | Required |
-| **WebSocket Testing** | No | Yes |
-| **Team Familiarity** | JavaScript | Python |
-| **Resource Constraints** | Limited | Abundant |
+| Criteria                 | Use k6       | Use Locust |
+| ------------------------ | ------------ | ---------- |
+| **Test Duration**        | <30 min      | >30 min    |
+| **Script Complexity**    | Simple       | Complex    |
+| **CI/CD Integration**    | Yes          | Optional   |
+| **Real-time Monitoring** | Not critical | Required   |
+| **Distributed Testing**  | Not needed   | Required   |
+| **WebSocket Testing**    | No           | Yes        |
+| **Team Familiarity**     | JavaScript   | Python     |
+| **Resource Constraints** | Limited      | Abundant   |
 
 ### Hybrid Approach (Recommended)
 
@@ -219,6 +237,7 @@ We have 4 standard test scenarios with increasing load:
 **Purpose**: Verify system functionality under minimal load
 
 **Configuration**:
+
 ```yaml
 virtual_users: 10
 duration: 5 minutes
@@ -227,17 +246,20 @@ think_time: 5-10 seconds
 ```
 
 **User Distribution**:
+
 - 70% Regular Users (simple queries)
 - 20% Power Users (complex queries)
 - 10% Admin Users (document operations)
 
 **When to Use**:
+
 - After deployments
 - Quick sanity checks
 - Before longer tests
 - CI/CD pipelines
 
 **Success Criteria**:
+
 - Error rate <0.5%
 - P95 response time <500ms
 - No crashes or errors
@@ -247,6 +269,7 @@ think_time: 5-10 seconds
 **Purpose**: Establish performance baseline under light load
 
 **Configuration**:
+
 ```yaml
 virtual_users: 50
 duration: 15 minutes
@@ -256,17 +279,20 @@ think_time: 3-10 seconds
 ```
 
 **User Distribution**:
+
 - 70% Regular Users
 - 20% Power Users
 - 10% Admin Users
 
 **When to Use**:
+
 - Weekly baseline tests
 - After optimizations
 - Regression detection
 - Performance trending
 
 **Success Criteria**:
+
 - P95 response time <500ms
 - Error rate <1%
 - CPU utilization <60%
@@ -277,6 +303,7 @@ think_time: 3-10 seconds
 **Purpose**: Simulate production load
 
 **Configuration**:
+
 ```yaml
 virtual_users: 100
 duration: 30 minutes
@@ -286,17 +313,20 @@ think_time: 3-10 seconds
 ```
 
 **User Distribution**:
+
 - 70% Regular Users
 - 20% Power Users
 - 10% Admin Users
 
 **When to Use**:
+
 - Pre-release testing
 - Capacity validation
 - SLO verification
 - Monthly reviews
 
 **Success Criteria**:
+
 - P95 response time <800ms
 - Error rate <1%
 - CPU utilization <70%
@@ -307,6 +337,7 @@ think_time: 3-10 seconds
 **Purpose**: Test system limits and breaking points
 
 **Configuration**:
+
 ```yaml
 virtual_users: 200-500 (incremental)
 duration: 60 minutes
@@ -316,17 +347,20 @@ think_time: 3-10 seconds
 ```
 
 **User Distribution**:
+
 - 70% Regular Users
 - 20% Power Users
 - 10% Admin Users
 
 **When to Use**:
+
 - Capacity planning
 - Breaking point analysis
 - Quarterly reviews
 - Before major events
 
 **Success Criteria**:
+
 - System remains stable
 - Error rate <5%
 - Graceful degradation
@@ -339,6 +373,7 @@ think_time: 3-10 seconds
 ### Prerequisites
 
 1. **Environment Setup**:
+
    ```bash
    # Install Locust
    pip install locust locust-plugins
@@ -349,6 +384,7 @@ think_time: 3-10 seconds
    ```
 
 2. **Configuration**:
+
    ```bash
    # Copy and configure environment
    cp load-tests/locust/.env.example load-tests/locust/.env
@@ -383,6 +419,7 @@ locust -f locustfile.py --web-port 8089
 ```
 
 **Advantages**:
+
 - Real-time monitoring
 - Dynamic control (pause, stop, adjust)
 - Visual charts
@@ -420,6 +457,7 @@ locust -f locustfile.py \
 ```
 
 **Parameters**:
+
 - `-u`: Number of users (peak)
 - `-r`: Spawn rate (users/second)
 - `-t`: Test duration
@@ -498,17 +536,21 @@ k6 run --out influxdb=http://localhost:8086/k6 load-test.js
 Open these dashboards before starting tests:
 
 1. **Load Testing Overview**:
+
    ```
    http://grafana:3000/d/voiceassist-load-testing
    ```
+
    - Test status and VUs
    - Request rate and errors
    - Response time percentiles
 
 2. **System Performance**:
+
    ```
    http://grafana:3000/d/voiceassist-system-performance
    ```
+
    - Request throughput
    - Resource utilization
    - Database and cache performance
@@ -517,6 +559,7 @@ Open these dashboards before starting tests:
    ```
    http://grafana:3000/d/voiceassist-autoscaling
    ```
+
    - HPA status
    - Pod count
    - Scaling events
@@ -546,12 +589,14 @@ kubectl logs -f -l app=voiceassist-api -n voiceassist
 #### 1. Response Time
 
 **What to Look For**:
+
 - P50 (median): Representative user experience
 - P95: What 95% of users experience
 - P99: Edge cases and outliers
 - Trend over time: Stability vs degradation
 
 **Good**:
+
 ```
 P50: 180ms (stable throughout test)
 P95: 520ms (no spikes)
@@ -559,6 +604,7 @@ P99: 950ms (within target)
 ```
 
 **Bad**:
+
 ```
 P50: 320ms (increasing over time)
 P95: 1850ms (frequent spikes)
@@ -566,6 +612,7 @@ P99: 5200ms (extreme outliers)
 ```
 
 **Analysis**:
+
 - Increasing trend → Resource exhaustion or memory leak
 - Periodic spikes → Garbage collection or batch jobs
 - High variance → Inconsistent performance (investigate)
@@ -573,17 +620,20 @@ P99: 5200ms (extreme outliers)
 #### 2. Throughput
 
 **What to Look For**:
+
 - Requests per second (sustained)
 - Consistency throughout test
 - Correlation with user count
 
 **Good**:
+
 ```
 Target: 100 users
 Throughput: 90 req/s (consistent)
 ```
 
 **Bad**:
+
 ```
 Target: 100 users
 Throughput: 45 req/s (declining)
@@ -591,6 +641,7 @@ Or: 150 req/s (users waiting, not thinking)
 ```
 
 **Analysis**:
+
 - Lower than expected → Bottleneck (DB, CPU, network)
 - Higher than expected → Unrealistic think times
 - Declining → System degradation under load
@@ -598,11 +649,13 @@ Or: 150 req/s (users waiting, not thinking)
 #### 3. Error Rate
 
 **What to Look For**:
+
 - Percentage of failed requests
 - Error types (4xx vs 5xx)
 - When errors occur (start, middle, end)
 
 **Good**:
+
 ```
 Total Requests: 27,000
 Failed Requests: 81 (0.3%)
@@ -610,6 +663,7 @@ Error Type: Mostly 4xx (validation)
 ```
 
 **Bad**:
+
 ```
 Total Requests: 27,000
 Failed Requests: 1,350 (5%)
@@ -618,20 +672,23 @@ Trend: Increasing over time
 ```
 
 **Analysis**:
+
 - <1%: Acceptable (expected transient errors)
 - 1-3%: Warning (investigate if sustained)
-- >3%: Critical (system under stress)
+- > 3%: Critical (system under stress)
 - Increasing: System failing under load
 
 #### 4. Resource Utilization
 
 **What to Look For**:
+
 - CPU and memory utilization
 - Pod count (autoscaling)
 - Database connections
 - Cache hit rates
 
 **Good**:
+
 ```
 CPU: 60-70% (stable, room for spikes)
 Memory: 55-65% (stable)
@@ -641,6 +698,7 @@ Cache Hit Rate: 83% (effective)
 ```
 
 **Bad**:
+
 ```
 CPU: 85-95% (saturated, no headroom)
 Memory: 88-92% (risk of OOM)
@@ -650,6 +708,7 @@ Cache Hit Rate: 45% (ineffective)
 ```
 
 **Analysis**:
+
 - High CPU → Computation bottleneck
 - High memory → Memory leak or inefficient data structures
 - Max pods → Need vertical or horizontal scaling
@@ -743,6 +802,7 @@ default ✓ [======================================] 100 VUs  30m0s
 ```
 
 **Key Points**:
+
 - ✓ checks: 99.67% → Good (most checks passed)
 - http_req_duration: P95 = 398ms → Good (within target)
 - http_req_failed: 0.33% → Good (low error rate)
@@ -757,11 +817,13 @@ default ✓ [======================================] 100 VUs  30m0s
 #### Issue 1: High Error Rate (>3%)
 
 **Symptoms**:
+
 - Many 5xx errors
 - Error rate increasing over time
 - Specific endpoints failing
 
 **Diagnosis**:
+
 ```bash
 # Check pod logs
 kubectl logs -l app=voiceassist-api -n voiceassist --tail=100
@@ -775,6 +837,7 @@ kubectl top pods -n voiceassist
 ```
 
 **Common Causes**:
+
 1. **Database connection pool exhausted**
    - Solution: Increase pool size or add replicas
 
@@ -790,11 +853,13 @@ kubectl top pods -n voiceassist
 #### Issue 2: Poor Response Times
 
 **Symptoms**:
+
 - P95/P99 exceeding targets
 - Response time increasing over test duration
 - Inconsistent performance
 
 **Diagnosis**:
+
 ```bash
 # Check slow queries
 kubectl exec -it postgres-pod -- psql -U user -d voiceassist
@@ -808,6 +873,7 @@ kubectl get hpa -n voiceassist
 ```
 
 **Common Causes**:
+
 1. **Database queries not optimized**
    - Solution: Add indexes, optimize queries
 
@@ -823,11 +889,13 @@ kubectl get hpa -n voiceassist
 #### Issue 3: Autoscaling Not Working
 
 **Symptoms**:
+
 - Pods not scaling up despite high load
 - Scaling too slowly or too aggressively
 - Pods scaling down during active test
 
 **Diagnosis**:
+
 ```bash
 # Check HPA status
 kubectl describe hpa voiceassist-api -n voiceassist
@@ -840,6 +908,7 @@ kubectl get events -n voiceassist --sort-by='.lastTimestamp'
 ```
 
 **Common Causes**:
+
 1. **Metrics server not running**
    - Solution: Install/restart metrics server
 
@@ -855,11 +924,13 @@ kubectl get events -n voiceassist --sort-by='.lastTimestamp'
 #### Issue 4: Memory Leaks
 
 **Symptoms**:
+
 - Memory usage increasing over time
 - Pods being OOMKilled
 - Performance degrading over test duration
 
 **Diagnosis**:
+
 ```bash
 # Monitor memory over time
 kubectl top pods -n voiceassist --watch
@@ -872,6 +943,7 @@ kubectl describe pod <pod-name> -n voiceassist
 ```
 
 **Common Causes**:
+
 1. **Unclosed connections**
    - Solution: Ensure proper connection cleanup
 
@@ -887,11 +959,13 @@ kubectl describe pod <pod-name> -n voiceassist
 #### Issue 5: Load Test Itself Failing
 
 **Symptoms**:
+
 - Locust/k6 crashing
 - Cannot reach target user count
 - Inconsistent results
 
 **Diagnosis**:
+
 ```bash
 # Check load test machine resources
 top
@@ -906,6 +980,7 @@ cat load-tests/locust/config.py
 ```
 
 **Common Causes**:
+
 1. **Load test machine under-resourced**
    - Solution: Use more powerful machine or distributed mode
 
@@ -931,17 +1006,17 @@ name: Load Test
 on:
   schedule:
     # Run every Monday at 8 AM UTC
-    - cron: '0 8 * * 1'
+    - cron: "0 8 * * 1"
   workflow_dispatch:
     inputs:
       users:
-        description: 'Number of users'
+        description: "Number of users"
         required: true
-        default: '50'
+        default: "50"
       duration:
-        description: 'Test duration (e.g., 15m)'
+        description: "Test duration (e.g., 15m)"
         required: true
-        default: '15m'
+        default: "15m"
 
 jobs:
   load-test-k6:
@@ -987,7 +1062,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |

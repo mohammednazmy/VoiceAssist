@@ -1,3 +1,15 @@
+---
+title: "Master Implementation Plan"
+slug: "client-implementation/master-implementation-plan"
+summary: "**Version:** 2.0 (Reconciled with Continuous Improvement Plan)"
+status: stable
+stability: beta
+owner: frontend
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["master", "implementation", "plan"]
+---
+
 # VoiceAssist Client Applications - Master Implementation Plan
 
 **Version:** 2.0 (Reconciled with Continuous Improvement Plan)
@@ -12,6 +24,7 @@
 **This document has been reconciled with the [Continuous Improvement Plan](../CONTINUOUS_IMPROVEMENT_PLAN.md).**
 
 **For the comprehensive, unified roadmap that includes:**
+
 - Deferred backend features (voice pipeline, medical AI, integrations)
 - Client applications (this document's scope)
 - Platform enhancements (design system, i18n, PWA, telemetry)
@@ -33,6 +46,7 @@ This document outlines the implementation plan for VoiceAssist's three client ap
 3. **Documentation Site** (docs-site/) - User and developer documentation
 
 **Current Status:**
+
 - ✅ Backend: 100% Complete (15/15 phases, HIPAA-compliant, production-ready)
 - ✅ Specifications: Complete for all three clients
 - ⏳ Implementation: Ready to begin (currently 0-5% complete)
@@ -48,6 +62,7 @@ This document outlines the implementation plan for VoiceAssist's three client ap
 ### Positioning in Overall Roadmap
 
 This plan represents **Milestones 1-2** of the [CLIENT_DEV_ROADMAP.md](CLIENT_DEV_ROADMAP.md):
+
 - **Milestone 1:** Frontend Foundation (Weeks 1-10)
 - **Milestone 2:** Admin Panel & Voice Pipeline (Weeks 11-20)
 
@@ -70,6 +85,7 @@ Phase 6: Integration & Polish         [Weeks 19-20]  ░░░░░░░░░
 **Deployment:** Rolling deployment per application
 
 **Note:** Week 19-20 also includes completion of deferred backend features:
+
 - OIDC authentication
 - Full voice pipeline (WebRTC, VAD, echo cancellation, barge-in)
 - Client-side PHI detection
@@ -81,6 +97,7 @@ Phase 6: Integration & Polish         [Weeks 19-20]  ░░░░░░░░░
 ### Technology Stack
 
 #### Shared Foundation
+
 - **Language:** TypeScript 5.0+
 - **Package Manager:** pnpm (with workspaces)
 - **Build Tool:** Vite 5.0+
@@ -92,6 +109,7 @@ Phase 6: Integration & Polish         [Weeks 19-20]  ░░░░░░░░░
 - **CI/CD:** GitHub Actions
 
 #### Web App Specific
+
 - **Framework:** React 18.2+ with TypeScript
 - **Routing:** React Router 6.0+
 - **UI Components:** shadcn/ui + Radix UI
@@ -102,6 +120,7 @@ Phase 6: Integration & Polish         [Weeks 19-20]  ░░░░░░░░░
 - **Charts:** Recharts (for lightweight visualizations)
 
 #### Admin Panel Specific
+
 - **Framework:** React 18.2+ with TypeScript
 - **UI Components:** Tremor + shadcn/ui
 - **Data Tables:** TanStack Table v8
@@ -110,6 +129,7 @@ Phase 6: Integration & Polish         [Weeks 19-20]  ░░░░░░░░░
 - **File Upload:** React Dropzone
 
 #### Documentation Site Specific
+
 - **Framework:** Next.js 14.0+ (App Router)
 - **Content:** MDX with Contentlayer
 - **Search:** Algolia DocSearch
@@ -162,6 +182,7 @@ VoiceAssist/
 ### Web App - 45 Core Features
 
 **Authentication & User Management** (5 features)
+
 1. Email/password login
 2. OAuth integration (Google, Microsoft)
 3. User profile management
@@ -169,6 +190,7 @@ VoiceAssist/
 5. Multi-device sync
 
 **Chat Interface** (12 features)
+
 1. Real-time streaming responses
 2. Markdown rendering with syntax highlighting
 3. LaTeX math equation support
@@ -183,6 +205,7 @@ VoiceAssist/
 12. Conversation export (PDF, Markdown)
 
 **Voice Mode** (8 features)
+
 1. Push-to-talk voice input
 2. Hands-free continuous mode
 3. Voice activity detection (VAD)
@@ -193,6 +216,7 @@ VoiceAssist/
 8. Noise cancellation
 
 **Clinical Context** (6 features)
+
 1. Patient demographics form
 2. Problems list management
 3. Medications list
@@ -201,12 +225,14 @@ VoiceAssist/
 6. Context-aware queries
 
 **File Management** (4 features)
+
 1. PDF upload and OCR
 2. Image analysis
 3. Document library
 4. File search
 
 **Citations & Sources** (5 features)
+
 1. Citation sidebar
 2. Source highlighting
 3. PubMed integration
@@ -214,6 +240,7 @@ VoiceAssist/
 5. Citation export
 
 **Conversation Management** (5 features)
+
 1. Conversation history
 2. Conversation search
 3. Conversation folders
@@ -223,6 +250,7 @@ VoiceAssist/
 ### Admin Panel - 38 Core Features
 
 **Dashboard** (8 features)
+
 1. Real-time metrics
 2. System health indicators
 3. Active sessions monitor
@@ -233,6 +261,7 @@ VoiceAssist/
 8. System announcements
 
 **Knowledge Base Management** (12 features)
+
 1. Document library table
 2. Bulk document upload
 3. Document metadata editing
@@ -247,6 +276,7 @@ VoiceAssist/
 12. Vector DB statistics
 
 **AI Model Configuration** (6 features)
+
 1. Model selection (local/cloud)
 2. Model routing rules
 3. Temperature/parameters
@@ -255,6 +285,7 @@ VoiceAssist/
 6. Model performance metrics
 
 **Analytics** (6 features)
+
 1. Query analytics dashboard
 2. Cost breakdown by service
 3. Response time histograms
@@ -263,6 +294,7 @@ VoiceAssist/
 6. Export reports
 
 **Integration Management** (6 features)
+
 1. Nextcloud configuration
 2. Calendar integration setup
 3. Email integration
@@ -273,6 +305,7 @@ VoiceAssist/
 ### Documentation Site - 15 Core Features
 
 **Content Management** (5 features)
+
 1. MDX-based content
 2. Version control
 3. Multi-language support
@@ -280,6 +313,7 @@ VoiceAssist/
 5. Table of contents
 
 **Interactive Elements** (5 features)
+
 1. Code playgrounds
 2. Interactive examples
 3. Video tutorials
@@ -287,6 +321,7 @@ VoiceAssist/
 5. Callouts and alerts
 
 **Navigation** (5 features)
+
 1. Sidebar navigation
 2. Breadcrumbs
 3. Previous/Next links
@@ -339,10 +374,10 @@ VoiceAssist/
 --secondary-600: #0d9488;
 
 /* Semantic Colors */
---success: #10b981;  /* Green - successful actions */
---warning: #f59e0b;  /* Amber - caution */
---error: #ef4444;    /* Red - errors */
---info: #3b82f6;     /* Blue - information */
+--success: #10b981; /* Green - successful actions */
+--warning: #f59e0b; /* Amber - caution */
+--error: #ef4444; /* Red - errors */
+--info: #3b82f6; /* Blue - information */
 
 /* Neutral Colors */
 --gray-50: #f9fafb;
@@ -360,31 +395,27 @@ VoiceAssist/
 ```css
 /* Font Stack */
 font-family:
-  'Inter',
+  "Inter",
   -apple-system,
   BlinkMacSystemFont,
-  'Segoe UI',
+  "Segoe UI",
   Roboto,
-  'Helvetica Neue',
+  "Helvetica Neue",
   Arial,
   sans-serif;
 
 /* Medical Monospace (for codes, data) */
-font-family-mono:
-  'JetBrains Mono',
-  'Fira Code',
-  'Courier New',
-  monospace;
+font-family-mono: "JetBrains Mono", "Fira Code", "Courier New", monospace;
 
 /* Scale */
---text-xs: 0.75rem;    /* 12px */
---text-sm: 0.875rem;   /* 14px */
---text-base: 1rem;     /* 16px */
---text-lg: 1.125rem;   /* 18px */
---text-xl: 1.25rem;    /* 20px */
---text-2xl: 1.5rem;    /* 24px */
---text-3xl: 1.875rem;  /* 30px */
---text-4xl: 2.25rem;   /* 36px */
+--text-xs: 0.75rem; /* 12px */
+--text-sm: 0.875rem; /* 14px */
+--text-base: 1rem; /* 16px */
+--text-lg: 1.125rem; /* 18px */
+--text-xl: 1.25rem; /* 20px */
+--text-2xl: 1.5rem; /* 24px */
+--text-3xl: 1.875rem; /* 30px */
+--text-4xl: 2.25rem; /* 36px */
 ```
 
 ### Component Library
@@ -392,6 +423,7 @@ font-family-mono:
 All shared components will be in `packages/ui/`:
 
 **Base Components:**
+
 - Button (primary, secondary, ghost, danger)
 - Input (text, password, email, search)
 - Textarea
@@ -415,6 +447,7 @@ All shared components will be in `packages/ui/`:
 - Toast
 
 **Complex Components:**
+
 - DataTable (with sorting, filtering, pagination)
 - SearchBar (with autocomplete)
 - FileUpload (with drag-and-drop)
@@ -425,6 +458,7 @@ All shared components will be in `packages/ui/`:
 - Chart wrappers
 
 **Layout Components:**
+
 - Container
 - Grid
 - Flex
@@ -439,12 +473,13 @@ All shared components will be in `packages/ui/`:
 ### Authentication Strategy
 
 **JWT-Based Authentication**
+
 ```typescript
 // Token structure
 interface AuthTokens {
-  accessToken: string;    // Short-lived (15 minutes)
-  refreshToken: string;   // Long-lived (7 days)
-  tokenType: 'Bearer';
+  accessToken: string; // Short-lived (15 minutes)
+  refreshToken: string; // Long-lived (7 days)
+  tokenType: "Bearer";
   expiresIn: number;
 }
 
@@ -455,6 +490,7 @@ interface AuthTokens {
 ```
 
 **OAuth Integration**
+
 - Google OAuth 2.0
 - Microsoft Azure AD
 - Future: SAML for enterprise
@@ -493,6 +529,7 @@ interface AuthTokens {
 ### Phase 0: Foundation & Setup (Weeks 1-2)
 
 **Week 1: Environment Setup**
+
 - [ ] Set up monorepo with pnpm workspaces
 - [ ] Configure Turborepo for build caching
 - [ ] Set up shared packages structure
@@ -505,6 +542,7 @@ interface AuthTokens {
 - [ ] Set up GitHub Actions CI/CD
 
 **Week 2: Shared Infrastructure**
+
 - [ ] Build shared UI component library (20 base components)
 - [ ] Create shared TypeScript types package
 - [ ] Build API client package with full typing
@@ -517,6 +555,7 @@ interface AuthTokens {
 - [ ] Write contribution guidelines
 
 **Deliverables:**
+
 - ✅ Monorepo fully configured
 - ✅ Shared component library (20 components)
 - ✅ CI/CD pipelines working
@@ -527,6 +566,7 @@ interface AuthTokens {
 ### Phase 1: Web App Core (Weeks 3-6)
 
 **Week 3: Authentication & Routing**
+
 - [ ] Build login page with email/password
 - [ ] Build registration page with validation
 - [ ] Implement JWT token management
@@ -539,6 +579,7 @@ interface AuthTokens {
 - [ ] Write authentication tests
 
 **Week 4: Chat Interface Foundation**
+
 - [ ] Build main chat layout
 - [ ] Create message list component with virtualization
 - [ ] Build message bubble component
@@ -551,6 +592,7 @@ interface AuthTokens {
 - [ ] Write chat component tests
 
 **Week 5: Chat Features**
+
 - [ ] Add citation display inline
 - [ ] Build citation sidebar
 - [ ] Implement message editing
@@ -563,6 +605,7 @@ interface AuthTokens {
 - [ ] Write chat feature tests
 
 **Week 6: Voice Mode Foundation**
+
 - [ ] Build voice input button
 - [ ] Implement MediaRecorder API
 - [ ] Add audio visualization
@@ -575,6 +618,7 @@ interface AuthTokens {
 - [ ] Write voice mode tests
 
 **Deliverables:**
+
 - ✅ Functional authentication system
 - ✅ Working chat interface with streaming
 - ✅ Basic voice mode operational
@@ -585,6 +629,7 @@ interface AuthTokens {
 ### Phase 2: Web App Advanced Features (Weeks 7-10)
 
 **Week 7: Clinical Context**
+
 - [ ] Build clinical context panel
 - [ ] Create patient demographics form
 - [ ] Add problems list component
@@ -597,6 +642,7 @@ interface AuthTokens {
 - [ ] Write clinical context tests
 
 **Week 8: File Management**
+
 - [ ] Build file upload component (drag-and-drop)
 - [ ] Add PDF viewer
 - [ ] Implement OCR integration
@@ -609,6 +655,7 @@ interface AuthTokens {
 - [ ] Write file management tests
 
 **Week 9: Conversation Management**
+
 - [ ] Build conversation history page
 - [ ] Add conversation search
 - [ ] Implement conversation folders
@@ -621,6 +668,7 @@ interface AuthTokens {
 - [ ] Write conversation management tests
 
 **Week 10: Polish & Optimization**
+
 - [ ] Add skeleton loading states
 - [ ] Implement error boundaries
 - [ ] Build toast notification system
@@ -633,6 +681,7 @@ interface AuthTokens {
 - [ ] Conduct accessibility audit
 
 **Deliverables:**
+
 - ✅ Complete web app with all core features
 - ✅ Advanced features operational
 - ✅ Performance optimized (< 2s load time)
@@ -643,6 +692,7 @@ interface AuthTokens {
 ### Phase 3: Admin Panel Core (Weeks 11-13)
 
 **Week 11: Dashboard**
+
 - [ ] Build dashboard layout
 - [ ] Create metric cards component
 - [ ] Add real-time metrics with WebSocket
@@ -655,6 +705,7 @@ interface AuthTokens {
 - [ ] Write dashboard tests
 
 **Week 12: Knowledge Base Management**
+
 - [ ] Build document library table
 - [ ] Create document upload dialog
 - [ ] Add bulk upload with progress
@@ -667,6 +718,7 @@ interface AuthTokens {
 - [ ] Write KB management tests
 
 **Week 13: Analytics Foundation**
+
 - [ ] Build analytics dashboard layout
 - [ ] Create query analytics charts
 - [ ] Add cost tracking visualization
@@ -679,6 +731,7 @@ interface AuthTokens {
 - [ ] Write analytics tests
 
 **Deliverables:**
+
 - ✅ Functional admin dashboard
 - ✅ KB management working
 - ✅ Basic analytics operational
@@ -689,6 +742,7 @@ interface AuthTokens {
 ### Phase 4: Admin Panel Advanced (Weeks 14-16)
 
 **Week 14: System Management**
+
 - [ ] Build system settings page
 - [ ] Create environment variables viewer
 - [ ] Add service management controls
@@ -701,6 +755,7 @@ interface AuthTokens {
 - [ ] Write system management tests
 
 **Week 15: Integration Management**
+
 - [ ] Build integrations page
 - [ ] Create integration cards
 - [ ] Add Nextcloud configuration
@@ -713,6 +768,7 @@ interface AuthTokens {
 - [ ] Write integration tests
 
 **Week 16: AI Model Configuration**
+
 - [ ] Build model selection interface
 - [ ] Create model routing rules editor
 - [ ] Add parameter configuration
@@ -725,6 +781,7 @@ interface AuthTokens {
 - [ ] Write model config tests
 
 **Deliverables:**
+
 - ✅ Complete admin panel
 - ✅ All management features working
 - ✅ Integration controls operational
@@ -735,6 +792,7 @@ interface AuthTokens {
 ### Phase 5: Documentation Site (Weeks 17-18)
 
 **Week 17: Site Foundation**
+
 - [ ] Set up Next.js 14 project
 - [ ] Configure Contentlayer for MDX
 - [ ] Create site layout components
@@ -747,6 +805,7 @@ interface AuthTokens {
 - [ ] Write site tests
 
 **Week 18: Content & Features**
+
 - [ ] Write getting started guide
 - [ ] Create user guide sections
 - [ ] Write medical features documentation
@@ -759,6 +818,7 @@ interface AuthTokens {
 - [ ] Deploy documentation site
 
 **Deliverables:**
+
 - ✅ Functional documentation site
 - ✅ Comprehensive content
 - ✅ Search working
@@ -769,6 +829,7 @@ interface AuthTokens {
 ### Phase 6: Integration & Polish (Weeks 19-20)
 
 **Week 19: Cross-App Integration**
+
 - [ ] Test authentication across all apps
 - [ ] Verify shared components working
 - [ ] Test WebSocket connections
@@ -781,6 +842,7 @@ interface AuthTokens {
 - [ ] Write integration tests
 
 **Week 20: Final Polish & Launch**
+
 - [ ] Fix bugs from testing
 - [ ] Optimize bundle sizes
 - [ ] Improve loading performance
@@ -793,6 +855,7 @@ interface AuthTokens {
 - [ ] Launch to production
 
 **Deliverables:**
+
 - ✅ All three apps production-ready
 - ✅ Integration complete
 - ✅ Performance optimized
@@ -805,6 +868,7 @@ interface AuthTokens {
 ### Performance Metrics
 
 **Web App:**
+
 - Initial load time: < 2 seconds
 - Time to interactive: < 3 seconds
 - First contentful paint: < 1 second
@@ -814,6 +878,7 @@ interface AuthTokens {
 - WebSocket latency: < 50ms
 
 **Admin Panel:**
+
 - Initial load time: < 2.5 seconds
 - Dashboard refresh: < 1 second
 - Table load (1000 rows): < 500ms
@@ -821,6 +886,7 @@ interface AuthTokens {
 - Real-time update latency: < 100ms
 
 **Documentation Site:**
+
 - Initial load time: < 1.5 seconds
 - Search response: < 100ms
 - Page navigation: < 200ms
@@ -859,6 +925,7 @@ main
 ```
 
 **Branch Naming:**
+
 - `feature/` - New features
 - `bugfix/` - Bug fixes
 - `hotfix/` - Critical production fixes
@@ -866,6 +933,7 @@ main
 - `docs/` - Documentation updates
 
 **Commit Convention:**
+
 ```
 type(scope): subject
 
@@ -875,6 +943,7 @@ footer (optional)
 ```
 
 **Types:**
+
 - `feat` - New feature
 - `fix` - Bug fix
 - `docs` - Documentation
@@ -884,6 +953,7 @@ footer (optional)
 - `chore` - Maintenance
 
 **Example:**
+
 ```
 feat(web-app): add voice input component
 
@@ -920,24 +990,28 @@ Closes #123
 ### Testing Strategy
 
 **Unit Tests (Vitest)**
+
 - All utility functions
 - React hooks
 - Component logic
 - API client methods
 
 **Component Tests (React Testing Library)**
+
 - User interactions
 - Props variations
 - Error states
 - Loading states
 
 **Integration Tests (Playwright)**
+
 - Multi-component flows
 - API integration
 - WebSocket connections
 - Authentication flows
 
 **E2E Tests (Playwright)**
+
 - Critical user journeys
 - Cross-browser testing
 - Mobile responsiveness
@@ -946,17 +1020,20 @@ Closes #123
 ### Deployment Strategy
 
 **Environments:**
+
 1. **Development** - Local development
 2. **Staging** - Pre-production testing
 3. **Production** - Live environment
 
 **Deployment Pipeline:**
+
 ```
 Push to develop → CI/CD → Staging
 Manual approval → Deploy to production
 ```
 
 **Rollback Strategy:**
+
 - Keep last 5 deployments
 - One-click rollback
 - Zero-downtime deployment
@@ -968,7 +1045,8 @@ Manual approval → Deploy to production
 ### Code Documentation
 
 **Component Documentation:**
-```typescript
+
+````typescript
 /**
  * ChatMessage component displays a single message in the chat.
  *
@@ -987,15 +1065,17 @@ Manual approval → Deploy to production
  * />
  * ```
  */
-```
+````
 
 **API Documentation:**
+
 - OpenAPI/Swagger specs for all endpoints
 - Request/response examples
 - Error codes and handling
 - Rate limits and quotas
 
 **User Documentation:**
+
 - Getting started guide
 - Feature tutorials
 - Video walkthroughs
@@ -1003,6 +1083,7 @@ Manual approval → Deploy to production
 - Troubleshooting
 
 **Developer Documentation:**
+
 - Architecture overview
 - Setup guide
 - Contributing guide
@@ -1058,28 +1139,34 @@ What makes VoiceAssist **world-class**:
 ### Technical Risks
 
 **Risk: WebSocket Connection Instability**
+
 - **Mitigation:** Implement automatic reconnection with exponential backoff
 - **Fallback:** HTTP long-polling as backup
 
 **Risk: Large Bundle Sizes**
+
 - **Mitigation:** Aggressive code splitting, lazy loading
 - **Monitoring:** Bundle size tracking in CI/CD
 
 **Risk: Browser Compatibility**
+
 - **Mitigation:** Polyfills, progressive enhancement
 - **Testing:** Cross-browser testing in CI/CD
 
 ### Project Risks
 
 **Risk: Scope Creep**
+
 - **Mitigation:** Clear feature prioritization, MVP approach
 - **Process:** Weekly scope reviews
 
 **Risk: Timeline Delays**
+
 - **Mitigation:** Buffer time in schedule, parallel development
 - **Monitoring:** Weekly progress tracking
 
 **Risk: Quality Issues**
+
 - **Mitigation:** High test coverage, code reviews
 - **Process:** Automated quality gates
 
@@ -1088,30 +1175,35 @@ What makes VoiceAssist **world-class**:
 ## 📞 Team Responsibilities
 
 ### Frontend Lead
+
 - Architecture decisions
 - Code reviews
 - Performance optimization
 - Mentoring junior developers
 
 ### UI/UX Developer
+
 - Component library
 - Design system implementation
 - Accessibility
 - Responsive design
 
 ### Full-Stack Developer
+
 - API integration
 - WebSocket implementation
 - Authentication
 - State management
 
 ### QA Engineer
+
 - Test strategy
 - E2E tests
 - Manual testing
 - Bug tracking
 
 ### Technical Writer
+
 - User documentation
 - API documentation
 - Video tutorials
@@ -1122,6 +1214,7 @@ What makes VoiceAssist **world-class**:
 ## 🎉 Launch Checklist
 
 **Pre-Launch (Week 19)**
+
 - [ ] All features complete
 - [ ] All tests passing
 - [ ] Performance metrics met
@@ -1133,6 +1226,7 @@ What makes VoiceAssist **world-class**:
 - [ ] Support processes in place
 
 **Launch Day (Week 20)**
+
 - [ ] Deploy to production
 - [ ] Verify all services running
 - [ ] Test critical user flows
@@ -1143,6 +1237,7 @@ What makes VoiceAssist **world-class**:
 - [ ] Update status page
 
 **Post-Launch (Week 21+)**
+
 - [ ] Monitor user feedback
 - [ ] Address critical bugs
 - [ ] Collect usage metrics
@@ -1166,6 +1261,7 @@ What makes VoiceAssist **world-class**:
 ## 📝 Changelog
 
 ### Version 1.0 (2025-11-21)
+
 - Initial comprehensive implementation plan
 - Detailed timeline and phases
 - Architecture overview
@@ -1185,6 +1281,7 @@ What makes VoiceAssist **world-class**:
 ## 💬 Feedback & Questions
 
 Please review this plan and provide feedback on:
+
 1. Timeline feasibility
 2. Feature prioritization
 3. Technical approach
@@ -1192,10 +1289,11 @@ Please review this plan and provide feedback on:
 5. Any concerns or suggestions
 
 **Submit feedback via:**
+
 - GitHub Issues with `planning` label
 - Team discussion threads
 - Direct comments on this document
 
 ---
 
-*This is a living document and will be updated based on team feedback and project evolution.*
+_This is a living document and will be updated based on team feedback and project evolution._

@@ -1,3 +1,15 @@
+---
+title: "Phase 12 Ha Dr"
+slug: "phases/phase-12-ha-dr"
+summary: "> **V2 PHASE DOCUMENT**"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["phase"]
+---
+
 # Phase 12: High Availability & Disaster Recovery
 
 > **V2 PHASE DOCUMENT**
@@ -12,6 +24,7 @@
 Configure HA, backups, and DR procedures.
 
 See also:
+
 - [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)
 - [PHASE_STATUS.md](../../PHASE_STATUS.md)
 - [BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md)

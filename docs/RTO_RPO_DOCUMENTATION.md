@@ -1,3 +1,15 @@
+---
+title: "Rto Rpo Documentation"
+slug: "rto-rpo-documentation"
+summary: "**Document Version:** 1.0"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["rto", "rpo", "documentation"]
+---
+
 # RTO/RPO Documentation
 
 **Document Version:** 1.0
@@ -12,6 +24,7 @@
 This document defines the Recovery Time Objectives (RTO) and Recovery Point Objectives (RPO) for the VoiceAssist platform. These metrics establish the maximum acceptable downtime and data loss for various disaster scenarios.
 
 **Key Commitments:**
+
 - **Primary RTO:** 4 hours (complete system failure)
 - **Primary RPO:** 24 hours (daily backups)
 - **Failover RTO:** 30 minutes (with replication)
@@ -40,6 +53,7 @@ This document defines the Recovery Time Objectives (RTO) and Recovery Point Obje
 **Measured to:** Time when system is fully operational and serving production traffic
 
 **Components of RTO:**
+
 1. **Detection Time** - Time to detect the failure
 2. **Response Time** - Time to initiate recovery procedures
 3. **Recovery Time** - Time to execute recovery procedures
@@ -57,10 +71,10 @@ This document defines the Recovery Time Objectives (RTO) and Recovery Point Obje
 
 ### Business Impact
 
-| Metric | Low Impact | Medium Impact | High Impact | Critical Impact |
-|--------|------------|---------------|-------------|-----------------|
-| **RTO** | > 24 hours | 4-24 hours | 1-4 hours | < 1 hour |
-| **RPO** | > 7 days | 1-7 days | 1-24 hours | < 1 hour |
+| Metric  | Low Impact | Medium Impact | High Impact | Critical Impact |
+| ------- | ---------- | ------------- | ----------- | --------------- |
+| **RTO** | > 24 hours | 4-24 hours    | 1-4 hours   | < 1 hour        |
+| **RPO** | > 7 days   | 1-7 days      | 1-24 hours  | < 1 hour        |
 
 **VoiceAssist Classification:** High Impact (Healthcare application with PHI)
 
@@ -73,18 +87,21 @@ This document defines the Recovery Time Objectives (RTO) and Recovery Point Obje
 #### PostgreSQL Database
 
 **Scenario 1: Primary Database Failure (with replication)**
+
 - **RTO:** 30 minutes
 - **RPO:** < 1 minute
 - **Recovery Method:** Failover to streaming replica
 - **Business Impact:** Minimal - brief service interruption
 
 **Scenario 2: Complete Database Loss (restore from backup)**
+
 - **RTO:** 4 hours
 - **RPO:** 24 hours
 - **Recovery Method:** Restore from encrypted backup
 - **Business Impact:** Moderate - up to 1 day of data loss
 
 **Justification:**
+
 - Healthcare applications require high availability
 - Streaming replication provides near-zero data loss
 - Daily backups balance protection with operational overhead
@@ -141,20 +158,20 @@ This document defines the Recovery Time Objectives (RTO) and Recovery Point Obje
 
 ### Scenario Matrix
 
-| Scenario | Likelihood | Impact | RTO | RPO | Mitigation |
-|----------|------------|--------|-----|-----|------------|
-| **Database server failure** | Medium | High | 30 min | < 1 min | Streaming replication |
-| **Database corruption** | Low | High | 2 hours | 24 hours | Daily backups + PITR |
-| **Complete data center loss** | Very Low | Critical | 8 hours | 24 hours | Off-site backups |
-| **Ransomware attack** | Low | Critical | 6 hours | 24 hours | Immutable backups |
-| **Application container crash** | Medium | Medium | 15 min | 0 | Auto-restart + monitoring |
-| **Network partition** | Low | High | 30 min | 0 | Multiple availability zones |
-| **Human error (accidental deletion)** | Medium | Medium | 2 hours | 24 hours | Audit logging + backups |
-| **Hardware failure** | Medium | Medium | 4 hours | 24 hours | Cloud infrastructure |
-| **Power outage** | Low | High | Immediate* | 0 | Battery backup + generator |
-| **Natural disaster** | Very Low | Critical | 8 hours | 24 hours | Geographic redundancy |
+| Scenario                              | Likelihood | Impact   | RTO         | RPO      | Mitigation                  |
+| ------------------------------------- | ---------- | -------- | ----------- | -------- | --------------------------- |
+| **Database server failure**           | Medium     | High     | 30 min      | < 1 min  | Streaming replication       |
+| **Database corruption**               | Low        | High     | 2 hours     | 24 hours | Daily backups + PITR        |
+| **Complete data center loss**         | Very Low   | Critical | 8 hours     | 24 hours | Off-site backups            |
+| **Ransomware attack**                 | Low        | Critical | 6 hours     | 24 hours | Immutable backups           |
+| **Application container crash**       | Medium     | Medium   | 15 min      | 0        | Auto-restart + monitoring   |
+| **Network partition**                 | Low        | High     | 30 min      | 0        | Multiple availability zones |
+| **Human error (accidental deletion)** | Medium     | Medium   | 2 hours     | 24 hours | Audit logging + backups     |
+| **Hardware failure**                  | Medium     | Medium   | 4 hours     | 24 hours | Cloud infrastructure        |
+| **Power outage**                      | Low        | High     | Immediate\* | 0        | Battery backup + generator  |
+| **Natural disaster**                  | Very Low   | Critical | 8 hours     | 24 hours | Geographic redundancy       |
 
-*Power outages are typically handled by data center infrastructure
+\*Power outages are typically handled by data center infrastructure
 
 ### RTO/RPO by Scenario
 
@@ -163,6 +180,7 @@ This document defines the Recovery Time Objectives (RTO) and Recovery Point Obje
 **Detection:** Automatic (health checks fail within 30 seconds)
 
 **RTO Breakdown:**
+
 1. Detection: 30 seconds
 2. Notification: 1 minute
 3. Decision to failover: 5 minutes
@@ -172,6 +190,7 @@ This document defines the Recovery Time Objectives (RTO) and Recovery Point Obje
 7. **Total: 17 minutes** (well within 30-minute target)
 
 **RPO Analysis:**
+
 - Streaming replication lag: typically < 1 second
 - Maximum lag before failover: < 5 seconds
 - Data loss: < 1 minute of transactions (if any)
@@ -181,6 +200,7 @@ This document defines the Recovery Time Objectives (RTO) and Recovery Point Obje
 **Detection:** Automatic (all health checks fail)
 
 **RTO Breakdown:**
+
 1. Detection: 5 minutes
 2. Notification: 5 minutes
 3. Provision new infrastructure: 2 hours
@@ -192,10 +212,12 @@ This document defines the Recovery Time Objectives (RTO) and Recovery Point Obje
 9. **Total: 4 hours 30 minutes** (exceeds 4-hour target)
 
 **Improvement Actions:**
+
 - Pre-provision standby infrastructure (reduce to 2 hours)
 - Use faster backup restoration (reduce to 1.5 hours)
 
 **RPO Analysis:**
+
 - Last backup: Up to 24 hours old
 - Data loss: All transactions since last backup
 - **Maximum: 24 hours**
@@ -205,6 +227,7 @@ This document defines the Recovery Time Objectives (RTO) and Recovery Point Obje
 **Detection:** Manual (user reports or data validation)
 
 **RTO Breakdown:**
+
 1. Detection: 15 minutes (average)
 2. Investigation: 30 minutes
 3. Decision to restore: 15 minutes
@@ -216,6 +239,7 @@ This document defines the Recovery Time Objectives (RTO) and Recovery Point Obje
 9. **Total: 2 hours 30 minutes** (within 4-hour target)
 
 **RPO Analysis:**
+
 - Restore from backup before corruption
 - Depends on when corruption occurred
 - **Maximum: 24 hours**
@@ -229,17 +253,20 @@ This document defines the Recovery Time Objectives (RTO) and Recovery Point Obje
 #### High Availability (HA)
 
 **PostgreSQL Streaming Replication:**
+
 - Primary-replica setup with automatic replication
 - Synchronous or asynchronous replication (configurable)
 - Automatic failure detection via health checks
 - Manual or automatic failover (promotion)
 
 **Benefits:**
+
 - Near-zero data loss (RPO < 1 minute)
 - Fast failover (RTO < 30 minutes)
 - Read scalability (queries can be distributed to replica)
 
 **Limitations:**
+
 - Manual failover process (can be automated with Patroni/stolon)
 - Single replica (no automatic multi-replica configuration)
 - Same data center (no geographic redundancy)
@@ -247,6 +274,7 @@ This document defines the Recovery Time Objectives (RTO) and Recovery Point Obje
 #### Backup and Restore
 
 **Daily Encrypted Backups:**
+
 - Full database dumps using pg_dump
 - AES-256 encryption (GPG)
 - SHA-256 checksum verification
@@ -254,12 +282,14 @@ This document defines the Recovery Time Objectives (RTO) and Recovery Point Obje
 - 30-day retention
 
 **Benefits:**
+
 - Protection against data corruption
 - Protection against ransomware
 - Point-in-time recovery capability
 - Compliance with data retention requirements
 
 **Limitations:**
+
 - 24-hour RPO (daily backups)
 - Restore time depends on database size (currently ~45 minutes)
 - Manual restore process
@@ -267,12 +297,14 @@ This document defines the Recovery Time Objectives (RTO) and Recovery Point Obje
 #### Monitoring and Alerting
 
 **Health Checks:**
+
 - Database connectivity checks (every 30 seconds)
 - Replication lag monitoring
 - Service availability monitoring
 - Disk space monitoring
 
 **Alerts:**
+
 - PagerDuty/Slack integration (when configured)
 - Email notifications
 - Automated incident creation
@@ -333,17 +365,20 @@ This document defines the Recovery Time Objectives (RTO) and Recovery Point Obje
 **Measured:** Time from failure to full recovery
 
 **Dashboard Metrics:**
+
 - Average RTO (last 30 days)
 - Maximum RTO (last 30 days)
 - RTO by scenario type
 - RTO vs. target comparison
 
 **Calculation:**
+
 ```
 RTO = Recovery_Time - Failure_Time
 ```
 
 **Example Query (from audit logs):**
+
 ```sql
 SELECT
     incident_type,
@@ -359,17 +394,20 @@ GROUP BY incident_type;
 **Measured:** Age of data at time of recovery
 
 **Dashboard Metrics:**
+
 - Last backup timestamp
 - Replication lag (real-time)
 - Data loss estimation (during incidents)
 - RPO vs. target comparison
 
 **Calculation:**
+
 ```
 RPO = Recovery_Data_Timestamp - Latest_Available_Data_Timestamp
 ```
 
 **Example Query (replication lag):**
+
 ```sql
 SELECT
     application_name,
@@ -382,24 +420,28 @@ FROM pg_stat_replication;
 #### Availability Metrics
 
 **Service Level Agreement (SLA):**
+
 - **Target Availability:** 99.9% (8.76 hours downtime/year)
 - **Actual Availability:** Measured monthly
 
 **Calculation:**
+
 ```
 Availability = (Total_Time - Downtime) / Total_Time * 100%
 ```
 
 **Example:**
-- Month: 720 hours (30 days * 24 hours)
+
+- Month: 720 hours (30 days \* 24 hours)
 - Downtime: 1 hour
-- Availability: (720 - 1) / 720 * 100% = 99.86%
+- Availability: (720 - 1) / 720 \* 100% = 99.86%
 
 ### Monitoring Tools
 
 #### Prometheus Metrics
 
 **Database Metrics:**
+
 ```
 # Replication lag
 pg_stat_replication_lag_seconds
@@ -412,6 +454,7 @@ pg_up
 ```
 
 **Application Metrics:**
+
 ```
 # Service uptime
 service_uptime_seconds
@@ -435,13 +478,13 @@ http_requests_success_rate
 
 ### Alert Thresholds
 
-| Metric | Warning | Critical | Action |
-|--------|---------|----------|--------|
-| **Replication Lag** | > 10 seconds | > 60 seconds | Check network, investigate primary load |
-| **Backup Age** | > 26 hours | > 48 hours | Investigate backup job, manual backup |
-| **Database Availability** | N/A | Down | Initiate failover procedures |
-| **Disk Space** | > 80% | > 90% | Cleanup old backups, expand storage |
-| **RTO Exceeded** | N/A | > target | Post-mortem, process improvement |
+| Metric                    | Warning      | Critical     | Action                                  |
+| ------------------------- | ------------ | ------------ | --------------------------------------- |
+| **Replication Lag**       | > 10 seconds | > 60 seconds | Check network, investigate primary load |
+| **Backup Age**            | > 26 hours   | > 48 hours   | Investigate backup job, manual backup   |
+| **Database Availability** | N/A          | Down         | Initiate failover procedures            |
+| **Disk Space**            | > 80%        | > 90%        | Cleanup old backups, expand storage     |
+| **RTO Exceeded**          | N/A          | > target     | Post-mortem, process improvement        |
 
 ---
 
@@ -450,12 +493,14 @@ http_requests_success_rate
 ### Review Cycle
 
 **Quarterly Reviews:**
+
 - Review RTO/RPO objectives
 - Analyze incident trends
 - Update disaster recovery procedures
 - Test DR plans
 
 **Annual Reviews:**
+
 - Full DR drill (complete system recovery)
 - Capacity planning
 - Infrastructure upgrades
@@ -465,6 +510,7 @@ http_requests_success_rate
 
 **Post-Incident Review:**
 After each incident:
+
 1. Calculate actual RTO and RPO
 2. Compare to targets
 3. Identify improvement opportunities
@@ -472,8 +518,10 @@ After each incident:
 5. Implement improvements
 
 **Template:**
+
 ```markdown
 ## Incident: [Name]
+
 **Date:** [Date]
 **Duration:** [Duration]
 **RTO Target:** [Target]
@@ -482,15 +530,19 @@ After each incident:
 **RPO Actual:** [Actual]
 
 ### Root Cause
+
 [Description]
 
 ### Timeline
+
 [Event timeline]
 
 ### Impact
+
 [Business impact]
 
 ### Action Items
+
 - [ ] [Action 1]
 - [ ] [Action 2]
 ```
@@ -498,6 +550,7 @@ After each incident:
 ### Performance Trends
 
 **Track Over Time:**
+
 1. **RTO Trends**
    - Are we getting faster at recovery?
    - Which scenarios need improvement?
@@ -513,12 +566,14 @@ After each incident:
 ### Capacity Planning
 
 **Annual Assessment:**
+
 - Database growth rate
 - Backup storage requirements
 - Recovery time scalability
 - Infrastructure capacity
 
 **Example:**
+
 ```
 Current Database Size: 100 GB
 Growth Rate: 20% per year
@@ -569,12 +624,12 @@ Data Loss: All transactions between 02:00 and 10:00 (8 hours)
 
 ### B. Testing Schedule
 
-| Test Type | Frequency | Last Performed | Next Scheduled | Owner |
-|-----------|-----------|----------------|----------------|-------|
-| Backup Verification | Weekly | 2025-11-21 | 2025-11-28 | Ops Team |
-| Failover Test | Quarterly | 2025-11-21 | 2026-02-21 | DB Admin |
-| Full DR Drill | Annually | N/A | 2026-06-01 | Engineering Manager |
-| RTO/RPO Review | Quarterly | 2025-11-21 | 2026-02-21 | Leadership |
+| Test Type           | Frequency | Last Performed | Next Scheduled | Owner               |
+| ------------------- | --------- | -------------- | -------------- | ------------------- |
+| Backup Verification | Weekly    | 2025-11-21     | 2025-11-28     | Ops Team            |
+| Failover Test       | Quarterly | 2025-11-21     | 2026-02-21     | DB Admin            |
+| Full DR Drill       | Annually  | N/A            | 2026-06-01     | Engineering Manager |
+| RTO/RPO Review      | Quarterly | 2025-11-21     | 2026-02-21     | Leadership          |
 
 ### C. References
 
@@ -586,6 +641,7 @@ Data Loss: All transactions between 02:00 and 10:00 (8 hours)
 ---
 
 **Document Control:**
+
 - **Classification:** Internal Use Only - CONFIDENTIAL
 - **Distribution:** Engineering Team, Operations Team, Management
 - **Review Frequency:** Quarterly

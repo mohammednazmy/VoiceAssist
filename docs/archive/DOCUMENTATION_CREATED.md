@@ -1,3 +1,15 @@
+---
+title: "Documentation Created"
+slug: "archive/documentation-created"
+summary: "**Date:** November 22, 2025"
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["documentation", "created"]
+---
+
 # Documentation Created - November 22, 2025
 
 **Date:** November 22, 2025

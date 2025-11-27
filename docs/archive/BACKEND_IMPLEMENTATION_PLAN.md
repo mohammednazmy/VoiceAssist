@@ -1,3 +1,15 @@
+---
+title: "Backend Implementation Plan"
+slug: "archive/backend-implementation-plan"
+summary: "**Date**: 2025-11-23"
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["backend"]
+tags: ["backend", "implementation", "plan"]
+---
+
 # Backend Implementation Plan for Frontend Features
 
 **Date**: 2025-11-23

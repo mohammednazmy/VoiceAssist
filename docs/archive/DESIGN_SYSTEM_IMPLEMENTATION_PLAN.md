@@ -1,3 +1,15 @@
+---
+title: "Design System Implementation Plan"
+slug: "archive/design-system-implementation-plan"
+summary: "This plan outlines a comprehensive approach to modernizing the VoiceAssist frontend design while maintaining all existing functionality. The implement..."
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["design", "system", "implementation", "plan"]
+---
+
 # VoiceAssist Design System Implementation Plan
 
 ## Executive Summary

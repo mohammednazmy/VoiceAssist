@@ -1,3 +1,15 @@
+---
+title: "Oauth Login Config"
+slug: "oauth-login-config"
+summary: "This document explains how to configure Google and Microsoft OAuth login for VoiceAssist."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["oauth", "login", "config"]
+---
+
 # OAuth Login Configuration Guide
 
 This document explains how to configure Google and Microsoft OAuth login for VoiceAssist.

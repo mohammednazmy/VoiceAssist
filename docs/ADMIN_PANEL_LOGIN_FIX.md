@@ -1,3 +1,15 @@
+---
+title: "Admin Panel Login Fix"
+slug: "admin-panel-login-fix"
+summary: "**Date**: 2025-11-22"
+status: experimental
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["devops", "sre"]
+tags: ["admin", "panel", "login", "fix"]
+---
+
 # Admin Panel Login Fix - CORS & API Configuration
 
 **Date**: 2025-11-22
@@ -11,17 +23,21 @@
 When attempting to log in to https://admin.asimo.io, the following errors occurred:
 
 ### 1. Firebase Errors (Wrong Bundle)
+
 ```
 Firebase: Error (auth/network-request-failed)
 ```
+
 - The admin panel was loading Firebase authentication code
 - This indicated the wrong JavaScript bundle was being loaded
 
 ### 2. CORS Error
+
 ```
 Access to fetch at 'http://localhost:8000/api/auth/login' from origin 'https://admin.asimo.io'
 has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present
 ```
+
 - Admin panel was trying to call `http://localhost:8000` from `https://admin.asimo.io`
 - Browser blocked cross-origin request
 
@@ -30,21 +46,25 @@ has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is pres
 ## Root Causes
 
 ### 1. API URL Configuration
+
 **Problem**: The admin panel was hardcoded to use `http://localhost:8000` as the API base URL.
 
 **Code Location**: `/apps/admin-panel/src/lib/api.ts`
 
 **Original Code**:
+
 ```typescript
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 ```
 
 **Issue**: In production, this caused cross-origin requests from `https://admin.asimo.io` to `http://localhost:8000`
 
 ### 2. Missing Apache Proxy Configuration
+
 **Problem**: No proxy was configured to forward `/api` requests to the backend.
 
 **Result**: All API calls went directly to localhost, which:
+
 - Failed due to CORS restrictions
 - Couldn't reach the backend from the browser
 
@@ -57,15 +77,17 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 **File**: `/apps/admin-panel/src/lib/api.ts`
 
 **Changed**:
+
 ```typescript
 // Before
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // After
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = import.meta.env.VITE_API_URL || "";
 ```
 
 **Effect**:
+
 - API requests now use **same-origin** (e.g., `https://admin.asimo.io/api/auth/login`)
 - No CORS issues since requests stay within the same domain
 - Works in both development (with proxy) and production
@@ -75,6 +97,7 @@ const API_BASE = import.meta.env.VITE_API_URL || '';
 **File**: `/etc/apache2/sites-available/admin.asimo.io.conf`
 
 **Added**:
+
 ```apache
 # Proxy API requests to backend
 ProxyPreserveHost On
@@ -85,6 +108,7 @@ ProxyPassReverse /health http://localhost:8000/health
 ```
 
 **Effect**:
+
 - Apache intercepts `/api/*` and `/health` requests
 - Forwards them to the backend at `http://localhost:8000`
 - Returns responses back to the browser
@@ -93,12 +117,14 @@ ProxyPassReverse /health http://localhost:8000/health
 ### 3. Updated SPA Routing ✅
 
 **Added to rewrite conditions**:
+
 ```apache
 RewriteCond %{REQUEST_URI} !^/api
 RewriteCond %{REQUEST_URI} !^/health
 ```
 
 **Effect**:
+
 - API requests bypass the SPA routing
 - Only non-API, non-asset requests go to `index.html`
 - Preserves React Router functionality
@@ -126,6 +152,7 @@ sudo systemctl reload apache2
 ## Verification
 
 ### 1. Health Endpoint ✅
+
 ```bash
 $ curl -s https://admin.asimo.io/health | jq .
 {
@@ -136,6 +163,7 @@ $ curl -s https://admin.asimo.io/health | jq .
 ```
 
 ### 2. Auth Endpoint ✅
+
 ```bash
 $ curl -s https://admin.asimo.io/api/auth/login -X POST \
   -H "Content-Type: application/json" \
@@ -145,6 +173,7 @@ $ curl -s https://admin.asimo.io/api/auth/login -X POST \
 ```
 
 ### 3. No CORS Errors ✅
+
 - Requests originate from `https://admin.asimo.io`
 - Target `https://admin.asimo.io/api/*` (same origin)
 - Apache proxies to `http://localhost:8000/api/*`
@@ -247,6 +276,7 @@ VALUES (
 ```
 
 **Credentials**:
+
 - Email: admin@asimo.io
 - Password: admin123 (hashed with bcrypt)
 
@@ -255,15 +285,18 @@ VALUES (
 ## Files Changed
 
 ### 1. `/apps/admin-panel/src/lib/api.ts`
+
 - Changed `API_BASE` from `'http://localhost:8000'` to `''`
 - Enables same-origin requests
 
 ### 2. `/etc/apache2/sites-available/admin.asimo.io.conf`
+
 - Added ProxyPass directives for `/api` and `/health`
 - Updated RewriteCond to exclude API paths
 - Configured proper SPA routing
 
 ### 3. `/var/www/admin.asimo.io/*`
+
 - Deployed new build with updated API configuration
 - New JavaScript bundle: `index-BAlGZ301.js` (210.64 KB)
 
@@ -336,6 +369,7 @@ docker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c "SELECT e
 ⚠️ **IMPORTANT**: The default password is `admin123`. Change it immediately after first login!
 
 **To change password**:
+
 1. Log in as admin
 2. (Future) Use profile page to change password
 3. (Current) Update via database:
@@ -352,11 +386,13 @@ docker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c "SELECT e
 ## Third Login Issue - bcrypt Version Incompatibility
 
 ### Error Message
+
 ```
 Unexpected token 'I', 'Internal S'... is not valid JSON
 ```
 
 ### Investigation
+
 - Backend returned: HTTP 500 Internal Server Error with plain text "Internal Server Error"
 - Docker logs showed:
   ```
@@ -366,9 +402,11 @@ Unexpected token 'I', 'Internal S'... is not valid JSON
 - Root cause: passlib 1.7.4 is incompatible with bcrypt 5.0.0
 
 ### Solution
+
 **Downgrade bcrypt to 4.1.3:**
 
 1. **Temporary fix** (in running container):
+
    ```bash
    docker exec voiceassist-server pip install 'bcrypt==4.1.3' --force-reinstall
    docker restart voiceassist-server
@@ -384,6 +422,7 @@ Unexpected token 'I', 'Internal S'... is not valid JSON
    ```
 
 ### Verification
+
 ```bash
 # Test login endpoint
 curl -s https://admin.asimo.io/api/auth/login -X POST \
@@ -416,29 +455,35 @@ curl -s https://admin.asimo.io/api/auth/login -X POST \
 ## Fourth Login Issue - Frontend Expecting User Object in Login Response
 
 ### Error Message
+
 ```
 api/auth/login:1 Failed to load resource: the server responded with a status of 401 (Unauthorized)
 ```
 
 ### Investigation
+
 - Backend login endpoint working correctly (curl returns 200 OK with tokens)
 - Frontend AuthContext expected `response.user.is_admin` in login response
 - Backend only returns `TokenResponse` (access_token, refresh_token, token_type, expires_in)
 - No user object included in login response
 
 ### Root Cause
+
 **API Contract Mismatch:**
+
 - Frontend expected: `{ access_token: string; user: User }`
 - Backend returns: `{ access_token: string; refresh_token: string; token_type: string; expires_in: number }`
 
 This is correct REST/JWT design - login endpoints should return tokens only, not user data.
 
 ### Solution
+
 **Updated frontend to fetch user data separately:**
 
 **File**: `/apps/admin-panel/src/contexts/AuthContext.tsx`
 
 **Changes:**
+
 ```typescript
 // Before: Expected user in login response
 const response = await fetchAPI<{ access_token: string; user: User }>('/api/auth/login', ...);
@@ -459,6 +504,7 @@ if (!userData.is_admin) {
 ```
 
 ### Verification
+
 1. **Rebuild**: `npm run build`
 2. **Deploy**: `sudo cp -r dist/* /var/www/admin.asimo.io/`
 3. **Test**: Try logging in at https://admin.asimo.io
@@ -468,19 +514,24 @@ if (!userData.is_admin) {
 ## Fifth Login Issue - Backend /api/auth/me Response Validation Error
 
 ### Error Message
+
 ```
 api/auth/login:1 Failed to load resource: the server responded with a status of 401 (Unauthorized)
 ```
+
 (Same error as before, but login now succeeds, then /api/auth/me fails)
 
 ### Investigation
+
 - Login endpoint working correctly
 - Frontend successfully gets tokens from login
 - Frontend tries to fetch user data from `/api/auth/me`
 - Backend returns HTTP 500 Internal Server Error
 
 ### Root Cause
+
 **Pydantic Response Validation Error:**
+
 ```python
 fastapi.exceptions.ResponseValidationError: 3 validation errors:
   {'type': 'string_type', 'loc': ('response', 'id'), 'msg': 'Input should be a valid string', 'input': UUID('e70ba65f-4283-4aca-aa6e-13ab97e4cbc4')}
@@ -491,6 +542,7 @@ fastapi.exceptions.ResponseValidationError: 3 validation errors:
 The backend `UserResponse` Pydantic schema expects `id`, `created_at`, and `last_login` to be strings, but the SQLAlchemy User model returns UUID and datetime objects. The schema is missing proper field validators or `model_config = ConfigDict(from_attributes=True)`.
 
 ### Solution
+
 **Workaround - Skip /api/auth/me endpoint:**
 
 Since the backend schema needs fixing (which requires backend code changes), implemented a temporary workaround in the frontend:
@@ -498,6 +550,7 @@ Since the backend schema needs fixing (which requires backend code changes), imp
 **File**: `/apps/admin-panel/src/contexts/AuthContext.tsx`
 
 **Changes:**
+
 1. **After login**: Skip `/api/auth/me` call, create temporary user object
 2. **On app mount**: Skip `/api/auth/me` call, trust localStorage token
 3. **Security**: Backend still validates tokens on all API calls
@@ -518,6 +571,7 @@ const login = async (email: string, password: string) => {
 ```
 
 ### Backend Fix Required
+
 The proper fix requires updating the backend `UserResponse` schema:
 
 ```python
@@ -547,7 +601,9 @@ class UserResponse(BaseModel):
 ```
 
 ### Security Note
+
 The workaround is secure because:
+
 - Backend validates admin status during login (only admins can log in)
 - Backend validates JWT tokens on every protected API call
 - Invalid/expired tokens will be rejected by endpoints
@@ -571,6 +627,7 @@ The workaround is secure because:
 **Note**: Backend UserResponse schema needs fixing for proper UUID/datetime serialization
 
 **Login Steps:**
+
 1. Visit https://admin.asimo.io
 2. Clear browser cache (Ctrl+Shift+R) to load new JavaScript bundle
 3. Enter credentials: `admin@asimo.io` / `admin123`

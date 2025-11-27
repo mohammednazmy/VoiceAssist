@@ -1,3 +1,15 @@
+---
+title: "Phase 03 Microservices"
+slug: "phases/phase-03-microservices"
+summary: "> **V2 PHASE DOCUMENT**"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["phase", "microservices"]
+---
+
 # Phase 3: API Gateway & Core Services
 
 > **V2 PHASE DOCUMENT**
@@ -12,6 +24,7 @@
 Harden API layer and service boundaries within the monorepo; prepare for microservices.
 
 See also:
+
 - [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)
 - [PHASE_STATUS.md](../../PHASE_STATUS.md)
 - [BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md)

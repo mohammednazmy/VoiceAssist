@@ -1,3 +1,15 @@
+---
+title: "Voice Endpoint Fix"
+slug: "archive/voice-endpoint-fix"
+summary: "**Date:** 2025-11-24"
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["voice", "endpoint", "fix"]
+---
+
 # Voice Endpoint Fix
 
 **Date:** 2025-11-24

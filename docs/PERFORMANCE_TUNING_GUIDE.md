@@ -1,3 +1,15 @@
+---
+title: "Performance Tuning Guide"
+slug: "performance-tuning-guide"
+summary: "This comprehensive guide provides strategies, techniques, and best practices for optimizing VoiceAssist performance. Use this guide to identify bottle..."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["frontend"]
+tags: ["performance", "tuning", "guide"]
+---
+
 # VoiceAssist Performance Tuning Guide
 
 ## Overview
@@ -88,6 +100,7 @@ This comprehensive guide provides strategies, techniques, and best practices for
 #### 1. Identify Slow Queries
 
 **Tools**:
+
 ```sql
 -- Enable pg_stat_statements
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
@@ -116,6 +129,7 @@ LIMIT 20;
 ```
 
 **VoiceAssist-Specific**:
+
 ```bash
 # Check slow query log
 kubectl exec -it postgres-0 -n voiceassist -- \
@@ -163,6 +177,7 @@ CREATE INDEX idx_documents_fts
 ```
 
 **Index Analysis**:
+
 ```sql
 -- Check index usage
 SELECT
@@ -198,6 +213,7 @@ ORDER BY pg_relation_size(indexrelid) DESC;
 **N+1 Query Problem**:
 
 **Bad** (N+1 queries):
+
 ```python
 # Fetches users, then queries conversations for each user
 users = session.query(User).all()
@@ -209,6 +225,7 @@ for user in users:
 ```
 
 **Good** (Single query with JOIN):
+
 ```python
 # Single query with eager loading
 users = session.query(User)\
@@ -222,6 +239,7 @@ results = session.query(User, Conversation)\
 ```
 
 **VoiceAssist Implementation**:
+
 ```python
 # In server/models/user.py
 class User(Base):
@@ -247,6 +265,7 @@ async def get_user_conversations(user_id: int, db: Session = Depends(get_db)):
 **Pagination**:
 
 **Bad** (Loads all results):
+
 ```python
 conversations = session.query(Conversation)\
     .filter(Conversation.user_id == user_id)\
@@ -254,6 +273,7 @@ conversations = session.query(Conversation)\
 ```
 
 **Good** (Paginated):
+
 ```python
 def get_conversations_paginated(user_id: int, page: int = 1, per_page: int = 20):
     offset = (page - 1) * per_page
@@ -337,14 +357,15 @@ engine = create_engine(
 
 **Tuning Guidelines**:
 
-| Scenario | pool_size | max_overflow | Total | Notes |
-|----------|-----------|--------------|-------|-------|
-| **Light Load** (<50 users) | 10 | 5 | 15 | Minimal resources |
-| **Normal Load** (50-100 users) | 20 | 10 | 30 | Current setting |
-| **Heavy Load** (100-200 users) | 30 | 20 | 50 | Increase pool |
-| **Peak Load** (200+ users) | 40 | 30 | 70 | May need replicas |
+| Scenario                       | pool_size | max_overflow | Total | Notes             |
+| ------------------------------ | --------- | ------------ | ----- | ----------------- |
+| **Light Load** (<50 users)     | 10        | 5            | 15    | Minimal resources |
+| **Normal Load** (50-100 users) | 20        | 10           | 30    | Current setting   |
+| **Heavy Load** (100-200 users) | 30        | 20           | 50    | Increase pool     |
+| **Peak Load** (200+ users)     | 40        | 30           | 70    | May need replicas |
 
 **Monitoring**:
+
 ```python
 # Add to server/monitoring/metrics.py
 from prometheus_client import Gauge
@@ -442,27 +463,27 @@ metadata:
   name: db-maintenance
   namespace: voiceassist
 spec:
-  schedule: "0 2 * * *"  # Daily at 2 AM
+  schedule: "0 2 * * *" # Daily at 2 AM
   jobTemplate:
     spec:
       template:
         spec:
           containers:
-          - name: maintenance
-            image: postgres:15
-            command:
-            - /bin/bash
-            - -c
-            - |
-              echo "Running VACUUM ANALYZE..."
-              psql "$DATABASE_URL" -c "VACUUM ANALYZE;"
-              echo "Complete"
-            env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: voiceassist-secrets
-                  key: database-url
+            - name: maintenance
+              image: postgres:15
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  echo "Running VACUUM ANALYZE..."
+                  psql "$DATABASE_URL" -c "VACUUM ANALYZE;"
+                  echo "Complete"
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: voiceassist-secrets
+                      key: database-url
           restartPolicy: OnFailure
 ```
 
@@ -746,12 +767,14 @@ semantic_cache = SemanticCache(threshold=0.85)
 ### Cache Invalidation Strategies
 
 **Time-Based (TTL)**:
+
 ```python
 # Set with TTL
 await redis_cache.set(key, value, ttl=300)  # 5 minutes
 ```
 
 **Event-Based**:
+
 ```python
 # Invalidate on update
 @router.put("/users/{user_id}")
@@ -770,6 +793,7 @@ async def update_user(user_id: int, data: UserUpdate, db: Session):
 ```
 
 **Write-Through**:
+
 ```python
 # Update cache on write
 @router.post("/conversations")
@@ -841,16 +865,17 @@ async def startup_event():
 # k8s/deployments/api-gateway.yaml
 resources:
   requests:
-    cpu: 1000m      # 1 CPU core
-    memory: 1Gi     # 1 GB
+    cpu: 1000m # 1 CPU core
+    memory: 1Gi # 1 GB
   limits:
-    cpu: 2000m      # 2 CPU cores
-    memory: 2Gi     # 2 GB
+    cpu: 2000m # 2 CPU cores
+    memory: 2Gi # 2 GB
 ```
 
 **Tuning Process**:
 
 1. **Monitor Actual Usage** (Use VPA or metrics):
+
    ```bash
    # Get VPA recommendations
    kubectl get vpa voiceassist-api -n voiceassist -o yaml
@@ -861,12 +886,12 @@ resources:
 
 2. **Adjust Based on Observations**:
 
-| Scenario | CPU Request | CPU Limit | Memory Request | Memory Limit |
-|----------|-------------|-----------|----------------|--------------|
-| **Under-provisioned** | Increase 50% | Increase 50% | Increase 50% | Increase 50% |
-| **Over-provisioned** | Decrease 25% | Decrease 25% | Decrease 25% | Decrease 25% |
-| **CPU-bound** | Increase CPU | Increase CPU | Keep same | Keep same |
-| **Memory-bound** | Keep same | Keep same | Increase Memory | Increase Memory |
+| Scenario              | CPU Request  | CPU Limit    | Memory Request  | Memory Limit    |
+| --------------------- | ------------ | ------------ | --------------- | --------------- |
+| **Under-provisioned** | Increase 50% | Increase 50% | Increase 50%    | Increase 50%    |
+| **Over-provisioned**  | Decrease 25% | Decrease 25% | Decrease 25%    | Decrease 25%    |
+| **CPU-bound**         | Increase CPU | Increase CPU | Keep same       | Keep same       |
+| **Memory-bound**      | Keep same    | Keep same    | Increase Memory | Increase Memory |
 
 3. **Quality of Service (QoS)**:
 
@@ -944,64 +969,65 @@ spec:
   minReplicas: 2
   maxReplicas: 10
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
   behavior:
     scaleUp:
       stabilizationWindowSeconds: 0
       policies:
-      - type: Percent
-        value: 50
-        periodSeconds: 30
+        - type: Percent
+          value: 50
+          periodSeconds: 30
     scaleDown:
       stabilizationWindowSeconds: 300
       policies:
-      - type: Percent
-        value: 10
-        periodSeconds: 60
+        - type: Percent
+          value: 10
+          periodSeconds: 60
 ```
 
 ### Tuning Guidelines
 
 #### CPU Threshold
 
-| Load Pattern | Target % | Reasoning |
-|--------------|----------|-----------|
-| **Steady, predictable** | 70% | Default, balances utilization and headroom |
-| **Bursty, unpredictable** | 60% | More headroom for spikes |
-| **Cost-sensitive** | 80% | Higher utilization, less headroom |
-| **Critical workload** | 50% | Maximum headroom for reliability |
+| Load Pattern              | Target % | Reasoning                                  |
+| ------------------------- | -------- | ------------------------------------------ |
+| **Steady, predictable**   | 70%      | Default, balances utilization and headroom |
+| **Bursty, unpredictable** | 60%      | More headroom for spikes                   |
+| **Cost-sensitive**        | 80%      | Higher utilization, less headroom          |
+| **Critical workload**     | 50%      | Maximum headroom for reliability           |
 
 #### Memory Threshold
 
-| Memory Characteristics | Target % | Reasoning |
-|------------------------|----------|-----------|
-| **Stable usage** | 80% | Default |
-| **Growing over time (leak?)** | 70% | Trigger earlier |
-| **Highly variable** | 75% | Balance |
+| Memory Characteristics        | Target % | Reasoning       |
+| ----------------------------- | -------- | --------------- |
+| **Stable usage**              | 80%      | Default         |
+| **Growing over time (leak?)** | 70%      | Trigger earlier |
+| **Highly variable**           | 75%      | Balance         |
 
 #### Scale-Up Speed
 
 ```yaml
 scaleUp:
-  stabilizationWindowSeconds: 0  # No delay
+  stabilizationWindowSeconds: 0 # No delay
   policies:
-  - type: Percent
-    value: 100                   # Double pods
-    periodSeconds: 15            # Every 15 seconds
+    - type: Percent
+      value: 100 # Double pods
+      periodSeconds: 15 # Every 15 seconds
 ```
 
 **Use Cases**:
+
 - **Aggressive** (above): Flash crowds, rapid traffic increase
 - **Moderate** (default): Normal production usage
 - **Conservative**: Development, cost-conscious
@@ -1010,14 +1036,15 @@ scaleUp:
 
 ```yaml
 scaleDown:
-  stabilizationWindowSeconds: 600  # 10 minute delay
+  stabilizationWindowSeconds: 600 # 10 minute delay
   policies:
-  - type: Percent
-    value: 5                       # Remove 5% of pods
-    periodSeconds: 120             # Every 2 minutes
+    - type: Percent
+      value: 5 # Remove 5% of pods
+      periodSeconds: 120 # Every 2 minutes
 ```
 
 **Use Cases**:
+
 - **Slow** (above): Avoid flapping, warm pods are valuable
 - **Moderate** (default): Balance responsiveness and stability
 - **Fast**: Development environments, cost optimization
@@ -1030,13 +1057,13 @@ scaleDown:
 # k8s/performance/api-gateway-hpa.yaml
 spec:
   metrics:
-  - type: Pods
-    pods:
-      metric:
-        name: http_requests_per_second
-      target:
-        type: AverageValue
-        averageValue: "50"  # 50 req/s per pod
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "50" # 50 req/s per pod
 ```
 
 **Prometheus Adapter Configuration**:
@@ -1044,15 +1071,15 @@ spec:
 ```yaml
 # k8s/performance/prometheus-adapter-config.yaml
 rules:
-- seriesQuery: 'http_requests_total{namespace="voiceassist"}'
-  resources:
-    overrides:
-      namespace: {resource: "namespace"}
-      pod: {resource: "pod"}
-  name:
-    matches: "^http_requests_total"
-    as: "http_requests_per_second"
-  metricsQuery: 'rate(http_requests_total{<<.LabelMatchers>>}[1m])'
+  - seriesQuery: 'http_requests_total{namespace="voiceassist"}'
+    resources:
+      overrides:
+        namespace: { resource: "namespace" }
+        pod: { resource: "pod" }
+    name:
+      matches: "^http_requests_total"
+      as: "http_requests_per_second"
+    metricsQuery: "rate(http_requests_total{<<.LabelMatchers>>}[1m])"
 ```
 
 ---
@@ -1062,6 +1089,7 @@ rules:
 ### Async/Await Patterns
 
 **Before** (Synchronous):
+
 ```python
 @router.get("/dashboard")
 def get_dashboard(user_id: int, db: Session):
@@ -1076,6 +1104,7 @@ def get_dashboard(user_id: int, db: Session):
 ```
 
 **After** (Asynchronous):
+
 ```python
 @router.get("/dashboard")
 async def get_dashboard(user_id: int, db: Session):
@@ -1107,6 +1136,7 @@ app.add_middleware(GZIPMiddleware, minimum_size=1000)
 ```
 
 **Benchmark**:
+
 - Uncompressed: 150KB response, 50ms transfer
 - Compressed: 15KB response, 10ms transfer
 - **Savings**: 90% size, 80% transfer time
@@ -1136,6 +1166,7 @@ async def call_external_api(url: str):
 ### Batch Processing
 
 **Before** (Individual operations):
+
 ```python
 # Process documents one by one
 for document_id in document_ids:
@@ -1144,6 +1175,7 @@ for document_id in document_ids:
 ```
 
 **After** (Batch):
+
 ```python
 # Process documents in batch
 process_documents_batch(document_ids)  # 800ms total
@@ -1160,36 +1192,36 @@ process_documents_batch(document_ids)  # 800ms total
 ```yaml
 # k8s/monitoring/prometheus-rules.yaml
 groups:
-- name: performance
-  interval: 30s
-  rules:
-  # Response time alerts
-  - alert: HighResponseTime
-    expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High P95 response time"
-      description: "P95 response time is {{ $value }}s"
+  - name: performance
+    interval: 30s
+    rules:
+      # Response time alerts
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High P95 response time"
+          description: "P95 response time is {{ $value }}s"
 
-  # Error rate alerts
-  - alert: HighErrorRate
-    expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
-    for: 5m
-    labels:
-      severity: critical
-    annotations:
-      summary: "High error rate detected"
+      # Error rate alerts
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
 
-  # Cache performance
-  - alert: LowCacheHitRate
-    expr: rate(cache_hits_total[5m]) / (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m])) < 0.7
-    for: 15m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Low cache hit rate"
+      # Cache performance
+      - alert: LowCacheHitRate
+        expr: rate(cache_hits_total[5m]) / (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m])) < 0.7
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low cache hit rate"
 ```
 
 ---
@@ -1199,11 +1231,13 @@ groups:
 ### 1. Database Connection Pool Exhaustion
 
 **Symptoms**:
+
 - Timeouts waiting for connections
 - "Connection pool is full" errors
 - Increasing response times
 
 **Solutions**:
+
 - Increase pool size
 - Add read replicas
 - Implement connection pooling best practices
@@ -1212,11 +1246,13 @@ groups:
 ### 2. Memory Leaks
 
 **Symptoms**:
+
 - Memory usage growing over time
 - Pods being OOMKilled
 - Performance degrading over time
 
 **Solutions**:
+
 - Profile memory usage
 - Fix unclosed connections/files
 - Implement proper cleanup in finally blocks
@@ -1225,11 +1261,13 @@ groups:
 ### 3. Slow Queries
 
 **Symptoms**:
+
 - High P95/P99 response times
 - Database CPU high
 - Slow query logs filling up
 
 **Solutions**:
+
 - Add missing indexes
 - Optimize query structure
 - Implement query result caching
@@ -1238,11 +1276,13 @@ groups:
 ### 4. Cache Misses
 
 **Symptoms**:
+
 - Low cache hit rates
 - High database load
 - Inconsistent response times
 
 **Solutions**:
+
 - Warm cache on startup
 - Adjust TTL values
 - Implement cache hierarchies
@@ -1261,12 +1301,14 @@ Performance tuning is an ongoing process. Follow these principles:
 5. **Monitor continuously**
 
 For ongoing support:
+
 - Review dashboards daily
 - Run load tests weekly
 - Conduct performance reviews monthly
 - Update this guide as you learn
 
 **Related Documentation**:
+
 - Performance Benchmarks: `/docs/PERFORMANCE_BENCHMARKS.md`
 - Load Testing Guide: `/docs/LOAD_TESTING_GUIDE.md`
 - Dashboards: `/dashboards/`

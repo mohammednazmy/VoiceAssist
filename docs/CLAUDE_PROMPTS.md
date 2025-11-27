@@ -1,3 +1,15 @@
+---
+title: "Claude Prompts"
+slug: "claude-prompts"
+summary: "This document contains ready-to-use prompts for different types of work on VoiceAssist V2. Copy and paste these prompts into a Claude Code session, fi..."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["agent", "human"]
+tags: ["claude", "prompts"]
+---
+
 # Claude Code Prompt Library
 
 This document contains ready-to-use prompts for different types of work on VoiceAssist V2. Copy and paste these prompts into a Claude Code session, fill in the bracketed placeholders, and Claude will follow the appropriate workflow.
@@ -20,6 +32,7 @@ This document contains ready-to-use prompts for different types of work on Voice
 Use this prompt when you want Claude to implement a complete development phase from the VoiceAssist V2 roadmap.
 
 ### When to Use
+
 - Implementing Phase 0-14 from DEVELOPMENT_PHASES_V2.md
 - Starting a new major component or feature
 - Following the documented phase plan
@@ -93,6 +106,7 @@ Please confirm you've read the required docs, then proceed with implementation.
 Use this prompt when you need to fix a bug or refactor existing code without adding new features.
 
 ### When to Use
+
 - Fixing a reported bug or issue
 - Refactoring code for better maintainability
 - Improving performance of existing features
@@ -147,8 +161,10 @@ The Medical KB search is timing out for queries longer than 100 characters. When
 
 Error message:
 ```
+
 TimeoutError: Qdrant search exceeded 30s timeout
 File: app/services/medical/rag.py, line 145
+
 ```
 
 Expected: Search should complete within 5 seconds
@@ -188,6 +204,7 @@ Please confirm understanding and proceed.
 Use this prompt when you need to update, create, or improve documentation without changing code.
 
 ### When to Use
+
 - Adding missing documentation
 - Updating docs after code changes
 - Creating new guides or references
@@ -281,6 +298,7 @@ Please proceed with the documentation updates.
 Use this prompt for infrastructure changes, deployment configuration, Docker Compose updates, or Kubernetes manifest work.
 
 ### When to Use
+
 - Modifying docker-compose.yml
 - Creating or updating Kubernetes manifests
 - Configuring monitoring/observability
@@ -375,13 +393,16 @@ Please confirm understanding and proceed.
 ## Using These Prompts
 
 ### Step 1: Choose the Right Prompt
+
 - **Phase Implementation**: For sequential development phases
 - **Bugfix/Refactor**: For fixing issues or improving code
 - **Documentation**: For doc-only changes
 - **Infrastructure**: For Docker, K8s, monitoring, deployment
 
 ### Step 2: Fill in the Placeholders
+
 Replace all `[bracketed text]` with specific information:
+
 - `[N]` → Phase number (0-14)
 - `[Phase Name]` → Phase name from DEVELOPMENT_PHASES_V2.md
 - `[issue-description]` → Brief description of the issue
@@ -389,12 +410,14 @@ Replace all `[bracketed text]` with specific information:
 - `[service/component]` → Specific microservice or component name
 
 ### Step 3: Paste into Claude Code
+
 1. Open a new Claude Code conversation
 2. Paste the filled-in prompt
 3. Wait for Claude to confirm it has read the required docs
 4. Claude will proceed with the work
 
 ### Step 4: Monitor Progress
+
 - Claude will provide updates as it works
 - Review code changes before committing
 - Run quality checks manually if desired
@@ -405,6 +428,7 @@ Replace all `[bracketed text]` with specific information:
 ## Prompt Customization
 
 ### Adding Constraints
+
 You can add additional constraints to any prompt:
 
 ```
@@ -416,6 +440,7 @@ You can add additional constraints to any prompt:
 ```
 
 ### Specifying Context
+
 Provide additional context if needed:
 
 ```
@@ -427,6 +452,7 @@ Provide additional context if needed:
 ```
 
 ### Requesting Specific Approach
+
 Guide Claude's approach:
 
 ```
@@ -442,24 +468,28 @@ Guide Claude's approach:
 ## Common Scenarios
 
 ### Scenario 1: Starting Fresh on a Phase
+
 ```
 I want you to implement Phase 3: Authentication & Security for the VoiceAssist V2 project.
 [Use Phase Implementation Prompt]
 ```
 
 ### Scenario 2: Fixing a Production Bug
+
 ```
 I need you to fix a critical bug in the voice-proxy service causing WebSocket disconnections.
 [Use Bugfix Prompt with high priority noted]
 ```
 
 ### Scenario 3: Adding API Documentation
+
 ```
 I need you to update server/README.md with complete API contract examples for all endpoints.
 [Use Documentation Update Prompt]
 ```
 
 ### Scenario 4: Setting Up CI/CD
+
 ```
 I need you to create a GitHub Actions workflow for automated testing and deployment.
 [Use Infrastructure Prompt]
@@ -470,20 +500,24 @@ I need you to create a GitHub Actions workflow for automated testing and deploym
 ## Tips for Effective Prompts
 
 ### Be Specific
+
 - **Bad**: "Fix the search bug"
 - **Good**: "Fix the Qdrant timeout issue in medical-kb when queries exceed 100 characters"
 
 ### Provide Context
+
 - Include error messages
 - Note what you've already tried
 - Mention any constraints or requirements
 
 ### Set Clear Expectations
+
 - Define "done" criteria
 - Specify quality standards
 - Note any blockers or dependencies
 
 ### Reference Docs
+
 - Point to relevant specs
 - Link to related issues
 - Mention similar implementations
@@ -493,21 +527,25 @@ I need you to create a GitHub Actions workflow for automated testing and deploym
 ## Troubleshooting
 
 ### "Claude isn't following the prompt"
+
 - Ensure all placeholders `[like this]` are filled in
 - Check that referenced files exist
 - Verify paths are correct for the project
 
 ### "Claude skipped quality checks"
+
 - Explicitly remind Claude to run checks
 - Add checks to the task list
 - Request verification before marking complete
 
 ### "Claude made changes I didn't want"
+
 - Be more specific in the issue description
 - Add constraints section
 - Review changes before committing
 
 ### "Multiple prompts are needed"
+
 - Break complex work into smaller prompts
 - Use Phase prompt for new features
 - Use Bugfix prompt for corrections

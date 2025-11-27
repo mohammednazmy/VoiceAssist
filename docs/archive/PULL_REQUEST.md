@@ -1,3 +1,15 @@
+---
+title: "Pull Request"
+slug: "archive/pull-request"
+summary: "This PR completes **Milestone 1** (core web app features) and **Milestone 2** (admin panel) for the VoiceAssist medical AI assistant. It includes syst..."
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["pull", "request"]
+---
+
 # Pull Request: VoiceAssist Web App - Milestone 1 & 2 Complete
 
 ## 📋 Summary

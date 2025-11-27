@@ -1,3 +1,15 @@
+---
+title: "Development Session Summary"
+slug: "archive/development-session-summary"
+summary: "**Date**: 2025-11-23"
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["development", "session", "summary"]
+---
+
 # VoiceAssist Development Session Summary
 
 **Date**: 2025-11-23

@@ -1,3 +1,15 @@
+---
+title: "Phase 7 Conversation Management Progress"
+slug: "archive/phase-7-conversation-management-progress"
+summary: "**Status**: 🔄 IN PROGRESS (66% Complete)"
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["phase", "conversation", "management", "progress"]
+---
+
 # Phase 7: Conversation Management - Progress Report
 
 **Status**: 🔄 IN PROGRESS (66% Complete)

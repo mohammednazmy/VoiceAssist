@@ -1,3 +1,15 @@
+---
+title: "Frontend Phase3 Plan"
+slug: "client-implementation/frontend-phase3-plan"
+summary: "**Date:** 2025-11-25"
+status: stable
+stability: beta
+owner: frontend
+lastUpdated: "2025-11-27"
+audience: ["frontend"]
+tags: ["frontend", "phase3", "plan"]
+---
+
 # Frontend Phase 3 Plan - Web App UX & Voice Enhancements
 
 **Date:** 2025-11-25

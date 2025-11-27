@@ -1,3 +1,15 @@
+---
+title: "Web App Wireframes"
+slug: "web-app-wireframes"
+summary: "Placeholder for the web app wireframe collection. Replace this with the latest design artifacts when available."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["frontend"]
+tags: ["web", "app", "wireframes"]
+---
+
 # Web App Wireframes
 
 Placeholder for the web app wireframe collection. Replace this with the latest design artifacts when available.

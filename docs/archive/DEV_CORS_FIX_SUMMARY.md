@@ -1,3 +1,15 @@
+---
+title: "Dev Cors Fix Summary"
+slug: "archive/dev-cors-fix-summary"
+summary: "**Date:** 2025-11-24"
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["dev", "cors", "fix", "summary"]
+---
+
 # Dev Frontend CORS Fix Summary
 
 **Date:** 2025-11-24

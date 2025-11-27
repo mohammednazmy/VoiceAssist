@@ -1,3 +1,15 @@
+---
+title: "Phase 08 Observability"
+slug: "phases/phase-08-observability"
+summary: "> **V2 PHASE DOCUMENT**"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["phase", "observability"]
+---
+
 # Phase 8: Tracing, Metrics & Logging
 
 > **V2 PHASE DOCUMENT**
@@ -12,6 +24,7 @@
 Deploy full observability stack and integrate metrics/logging.
 
 See also:
+
 - [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)
 - [PHASE_STATUS.md](../../PHASE_STATUS.md)
 - [BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md)

@@ -1,3 +1,15 @@
+---
+title: "Testing Guide"
+slug: "testing-guide"
+summary: "This guide describes how to run, write, and generate end-to-end (E2E) tests for the VoiceAssist web application using Playwright and Auto Playwright (..."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["frontend"]
+tags: ["testing", "guide"]
+---
+
 # VoiceAssist E2E Testing Guide
 
 This guide describes how to run, write, and generate end-to-end (E2E) tests for the VoiceAssist web application using Playwright and Auto Playwright (AI-powered test generation).

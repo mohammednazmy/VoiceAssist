@@ -1,3 +1,15 @@
+---
+title: "Admin Panel Login Fix Complete"
+slug: "admin-panel-login-fix-complete"
+summary: "**Date:** 2025-11-22"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["devops", "sre"]
+tags: ["admin", "panel", "login", "fix"]
+---
+
 # Admin Panel Login Fix - Complete Resolution
 
 **Date:** 2025-11-22
@@ -34,6 +46,7 @@ ProxyPassReverse /api http://172.18.0.2:8000/api
 ```
 
 **Commands:**
+
 ```bash
 sudo cp /tmp/admin.asimo.io-static.conf /etc/apache2/sites-available/admin.asimo.io.conf
 sudo apache2ctl configtest
@@ -47,6 +60,7 @@ sudo systemctl reload apache2
 **Solution:** Restarted both containers.
 
 **Commands:**
+
 ```bash
 # Identify stopped containers
 docker ps -a | grep -E 'redis|postgres'
@@ -63,12 +77,14 @@ docker ps | grep -E 'redis|postgres'
 **Problem:** Backend `.env` file had a different Postgres password than the one used when creating the container.
 
 **Details:**
+
 - `.env` password: `kuBoHRZbmT9d3pDXCmZv5gLmttrJZCXO`
 - Container password: `b73576d93447d24cfca122df1e9179d0`
 
 **Solution:** Restarted backend container with correct password override.
 
 **Commands:**
+
 ```bash
 # Stop and remove old container
 docker stop voiceassist-server
@@ -90,6 +106,7 @@ docker run -d \
 ### 4. Frontend API Response Format Mismatch
 
 **Problem:** The backend `/api/auth/login` endpoint returns a flat JSON response:
+
 ```json
 {
   "access_token": "...",
@@ -100,6 +117,7 @@ docker run -d \
 ```
 
 But the frontend was using `fetchAPI()` which expects responses wrapped in an APIEnvelope:
+
 ```json
 {
   "success": true,
@@ -112,6 +130,7 @@ But the frontend was using `fetchAPI()` which expects responses wrapped in an AP
 **File:** `/home/asimo/VoiceAssist/apps/admin-panel/src/contexts/AuthContext.tsx`
 
 **Change:**
+
 ```typescript
 // Before: Using fetchAPI (expects APIEnvelope)
 const response = await fetchAPI<{ access_token: string; ... }>(
@@ -134,6 +153,7 @@ const response = await res.json() as { access_token: string; ... };
 ```
 
 **Deployment:**
+
 ```bash
 cd /home/asimo/VoiceAssist/apps/admin-panel
 npm run build
@@ -143,6 +163,7 @@ sudo cp -r dist/* /var/www/admin.asimo.io/
 ## Verification
 
 ### Backend API Test
+
 ```bash
 curl -s https://admin.asimo.io/api/auth/login \
   -X POST \
@@ -151,6 +172,7 @@ curl -s https://admin.asimo.io/api/auth/login \
 ```
 
 **Expected Output:**
+
 ```json
 {
   "access_token": "eyJhbGc...",
@@ -161,6 +183,7 @@ curl -s https://admin.asimo.io/api/auth/login \
 ```
 
 ### Docker Services Status
+
 ```bash
 docker ps | grep -E 'redis|postgres|voiceassist-server'
 ```
@@ -168,6 +191,7 @@ docker ps | grep -E 'redis|postgres|voiceassist-server'
 **Expected:** All three containers should show `Up` and `healthy` status.
 
 ### Apache Logs
+
 ```bash
 sudo tail -20 /var/log/apache2/admin-voiceassist-error.log
 ```
@@ -179,9 +203,11 @@ sudo tail -20 /var/log/apache2/admin-voiceassist-error.log
 **Branch:** `fix/admin-panel-login-api-format`
 
 **Files Changed:**
+
 - `apps/admin-panel/src/contexts/AuthContext.tsx`
 
 **Commit Message:**
+
 ```
 Fix admin panel login API response format mismatch
 
@@ -191,6 +217,7 @@ which expects responses wrapped in an APIEnvelope format.
 ```
 
 **Push:**
+
 ```bash
 git checkout -b fix/admin-panel-login-api-format
 git add apps/admin-panel/src/contexts/AuthContext.tsx
@@ -205,12 +232,14 @@ git push -u origin fix/admin-panel-login-api-format
 **Network:** `voiceassist_database-network`
 
 **Containers on Network:**
+
 - `voiceassist-server` (172.18.0.2) - Backend API
 - `f478d2901588_voiceassist-redis` (172.18.0.3) - Redis cache
 - `voiceassist-qdrant` (172.18.0.4) - Vector database
 - `5ec82d4fbfa9_voiceassist-postgres` (172.18.0.5) - PostgreSQL database
 
 **Network Aliases:**
+
 - `postgres` → 172.18.0.5
 - `redis` → 172.18.0.3
 - `qdrant` → 172.18.0.4

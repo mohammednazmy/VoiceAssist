@@ -1,3 +1,15 @@
+---
+title: "Phase 01 Infrastructure"
+slug: "phases/phase-01-infrastructure"
+summary: "> **V2 PHASE DOCUMENT**"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience: ["devops", "sre"]
+tags: ["phase", "infrastructure"]
+---
+
 # Phase 1: Core Infrastructure & Database Setup
 
 > **V2 PHASE DOCUMENT**
@@ -12,6 +24,7 @@
 Provision Postgres, Redis, and Qdrant via Docker Compose and wire basic health checks.
 
 See also:
+
 - [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)
 - [PHASE_STATUS.md](../../PHASE_STATUS.md)
 - [BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md)

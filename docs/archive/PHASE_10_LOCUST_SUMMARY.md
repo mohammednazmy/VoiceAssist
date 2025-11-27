@@ -1,3 +1,15 @@
+---
+title: "Phase 10 Locust Summary"
+slug: "archive/phase-10-locust-summary"
+summary: "Successfully created comprehensive Locust load testing suite for VoiceAssist Phase 10."
+status: deprecated
+stability: legacy
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["phase", "locust", "summary"]
+---
+
 # VoiceAssist Phase 10 - Locust Load Testing Implementation Summary
 
 ## Completion Status: ✅ COMPLETE

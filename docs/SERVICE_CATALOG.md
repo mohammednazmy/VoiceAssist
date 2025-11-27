@@ -1,3 +1,15 @@
+---
+title: "Service Catalog"
+slug: "service-catalog"
+summary: "**Last Updated**: 2025-11-21 (Phase 6: Nextcloud App Integration & Unified Services)"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["service", "catalog"]
+---
+
 # VoiceAssist V2 Service Catalog
 
 **Last Updated**: 2025-11-21 (Phase 6: Nextcloud App Integration & Unified Services)
@@ -32,9 +44,8 @@ The `server/app/` directory hosts the logical monorepo design for
 future phases; many service modules there are stubs awaiting
 implementation and integration as the system evolves.
 
-
-
 **Phases 0-10: Monorepo (Docker Compose Development)**
+
 - All services live in `server/` directory
 - Single FastAPI application with multiple routers
 - Services are **logical boundaries** enforced through module structure
@@ -42,12 +53,14 @@ implementation and integration as the system evolves.
 - See [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md) for structure
 
 **Phases 11-14: Microservices (Kubernetes Migration)**
+
 - Services can be extracted to separate containers
 - Each service becomes independent deployment
 - Communication via HTTP/gRPC through service mesh
 - Only split services that need independent scaling
 
 **Related Documentation:**
+
 - [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - Overall system architecture
 - [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md) - Monorepo to microservices evolution
 - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Implementation roadmap
@@ -76,24 +89,29 @@ implementation and integration as the system evolves.
 **Service ID**: `api-gateway`
 
 **Implementation**:
+
 - **Phases 0-10 (Monorepo)**: Not needed - single FastAPI app (`server/app/main.py`) handles all routing
 - **Phases 11-14 (Microservices)**: Extract to Kong or Nginx as separate container
 
 **Purpose**: The API Gateway serves as the single entry point for all external requests to the VoiceAssist system. It handles routing, rate limiting, authentication verification, request/response transformation, and provides a unified API surface for frontend clients. Built with Kong or Nginx, it acts as a reverse proxy that shields internal microservices from direct exposure while providing cross-cutting concerns like logging, monitoring, and security enforcement.
 
 **Language/Runtime**:
+
 - Phases 0-10: N/A (FastAPI handles routing)
 - Phases 11-14: Kong Gateway (Lua/Nginx) or Nginx with OpenResty
 
 **Main Ports**:
+
 - Dev (Phases 0-10): 8000/HTTP (shared with main FastAPI app)
 - Prod (Phases 11-14): 8000/HTTP, 8443/HTTPS - External-facing gateway
 
 **Dependencies**:
+
 - Phases 0-10: None (part of core app)
 - Phases 11-14: PostgreSQL (Kong config), Redis (rate limiting), all downstream services
 
 **Key Endpoints**:
+
 - `GET /health` - Gateway health check
 - `GET /ready` - Readiness probe (checks dependencies)
 - `GET /metrics` - Prometheus metrics
@@ -105,6 +123,7 @@ implementation and integration as the system evolves.
 - `GET /metrics` - Prometheus metrics endpoint
 
 **Configuration**:
+
 ```yaml
 # Kong declarative config example
 services:
@@ -133,6 +152,7 @@ plugins:
 **Service ID**: `voice-proxy` (future) / `realtime-api` (Phase 4)
 
 **Status**:
+
 - **Phase 4 (Current)**: Implemented as part of API Gateway at `/api/realtime/ws`
 - **Future Phases**: Will be extracted to separate service when voice features are added
 
@@ -141,27 +161,32 @@ plugins:
 **Language/Runtime**: Python 3.11 with FastAPI and WebSockets
 
 **Implementation (Phase 4)**:
+
 - Location: `services/api-gateway/app/api/realtime.py`
 - Integrated with QueryOrchestrator for query processing
 - Supports text-based streaming responses
-- Message protocol: message_start → message_chunk* → message_complete
+- Message protocol: message_start → message_chunk\* → message_complete
 
 **Main Ports**:
+
 - 8000/WebSocket - Realtime communication endpoint (shared with API Gateway in Phase 4)
 
 **Dependencies**:
+
 - QueryOrchestrator (query processing)
 - LLMClient (language model interface)
 - PostgreSQL (future: conversation persistence)
 - Redis (future: session state)
 
 **Key Endpoints (Phase 4)**:
+
 - `WS /api/realtime/ws` - WebSocket connection for realtime text chat
   - Accepts: text messages with optional session_id and clinical_context_id
   - Returns: Streaming responses with citations
   - Supports: ping/pong keepalive
 
 **Phase 4 Message Protocol**:
+
 ```json
 // Client → Server
 {
@@ -210,6 +235,7 @@ plugins:
 ```
 
 **Future Endpoints** (Phases 5+):
+
 - Voice streaming (audio_chunk, VAD events)
 - Session management (session.start, session.end)
 - Turn-taking (interrupt, resume)
@@ -224,6 +250,7 @@ plugins:
 **Status**: ✅ **Phase 5 MVP Implemented** (Document ingestion, semantic search, RAG-enhanced queries)
 
 **Implementation**:
+
 - **Phases 0-10 (Monorepo)**:
   - Admin KB API Router: `services/api-gateway/app/api/admin_kb.py`
   - RAG pipeline: `services/api-gateway/app/services/rag_service.py` (QueryOrchestrator)
@@ -236,6 +263,7 @@ plugins:
 
 **Core Component: Query Orchestrator/Conductor**
 The orchestrator (`app/services/ai/orchestrator.py` or `app/services/rag_service.py`) is the heart of this service:
+
 - Coordinates query processing from user input to final response
 - Handles PHI detection and routing (local vs cloud LLM)
 - Selects and searches multiple knowledge sources
@@ -246,10 +274,12 @@ The orchestrator (`app/services/ai/orchestrator.py` or `app/services/rag_service
 **Language/Runtime**: Python 3.11 with FastAPI, LangChain, and Qdrant
 
 **Main Ports**:
+
 - Dev (Phases 0-10): 8000/HTTP (shared with main FastAPI app)
 - Prod (Phases 11-14): 8002/HTTP - Internal service mesh
 
 **Dependencies**:
+
 - Qdrant (vector database for embeddings)
 - PostgreSQL (tables: `knowledge_documents`, `kb_chunks`, `chat_messages`, `sessions`, `clinical_contexts`)
 - Redis (search result caching, query cache)
@@ -260,6 +290,7 @@ The orchestrator (`app/services/ai/orchestrator.py` or `app/services/rag_service
 **Key Endpoints**:
 
 **Phase 5 Admin KB Endpoints** (implemented):
+
 - `POST /api/admin/kb/documents` - Upload and index document (text or PDF)
   - Accepts: multipart/form-data with file, title, source_type, metadata
   - Returns: Document ID, chunks indexed, processing time
@@ -272,6 +303,7 @@ The orchestrator (`app/services/ai/orchestrator.py` or `app/services/rag_service
   - Returns: Document metadata and indexing information
 
 **Future Endpoints** (Phases 6+):
+
 - `POST /api/medical/search` - Semantic search medical knowledge base
 - `POST /api/medical/rag/query` - RAG query with context generation
 - `POST /api/medical/journal/search` - Search PubMed journals
@@ -281,6 +313,7 @@ The orchestrator (`app/services/ai/orchestrator.py` or `app/services/rag_service
 - `GET /api/medical/sources` - List available knowledge sources
 
 **Data Model Entities** (reference [DATA_MODEL.md](DATA_MODEL.md)):
+
 - KnowledgeDocument
 - KBChunk
 - ChatMessage
@@ -289,6 +322,7 @@ The orchestrator (`app/services/ai/orchestrator.py` or `app/services/rag_service
 - Citation
 
 **RAG Pipeline (Phase 5 Implementation)**:
+
 ```
 User Query → QueryOrchestrator →
   → SearchAggregator:
@@ -304,6 +338,7 @@ User Query → QueryOrchestrator →
 ```
 
 **Phase 5 Implementation Details**:
+
 - **Embeddings**: OpenAI text-embedding-3-small (1536 dimensions)
 - **Vector DB**: Qdrant with cosine similarity search
 - **Chunking**: Fixed-size (500 chars) with overlap (50 chars)
@@ -312,12 +347,14 @@ User Query → QueryOrchestrator →
 - **Citation Tracking**: Automatic extraction of source documents from search results
 
 **Related Documentation**:
+
 - [ORCHESTRATION_DESIGN.md](ORCHESTRATION_DESIGN.md) - Complete orchestrator/conductor design
 - [SEMANTIC_SEARCH_DESIGN.md](SEMANTIC_SEARCH_DESIGN.md) - Search implementation details
 - [MEDICAL_FEATURES.md](MEDICAL_FEATURES.md) - RAG features
 - [DATA_MODEL.md](DATA_MODEL.md) - Entity definitions
 
 **Implementation Status**:
+
 - Phases 0-10: Core component in monorepo, central to all queries
 - Phases 11-14: Critical service, may need independent scaling for high query load
 
@@ -332,9 +369,11 @@ User Query → QueryOrchestrator →
 **Language/Runtime**: Python 3.11 with FastAPI
 
 **Main Ports**:
+
 - 8003/HTTP - REST API for admin operations
 
 **Dependencies**:
+
 - PostgreSQL (all administrative data)
 - Redis (cache management operations)
 - Qdrant (vector DB stats and management)
@@ -342,6 +381,7 @@ User Query → QueryOrchestrator →
 - File Indexer Service (trigger indexing jobs)
 
 **Key Endpoints**:
+
 - `GET /api/admin/dashboard` - Dashboard metrics and stats
 - `GET /api/admin/services/status` - Service health checks
 - `POST /api/admin/services/{service}/restart` - Restart service
@@ -358,6 +398,7 @@ User Query → QueryOrchestrator →
 - `GET /api/admin/audit/logs` - Audit log entries
 
 **Admin Security**:
+
 - Requires `admin` role in JWT
 - All actions logged to audit trail
 - MFA required for sensitive operations
@@ -375,14 +416,17 @@ User Query → QueryOrchestrator →
 **Language/Runtime**: Python 3.11 with FastAPI and python-jose (JWT)
 
 **Main Ports**:
+
 - 8004/HTTP - REST API for authentication
 
 **Dependencies**:
+
 - PostgreSQL (user accounts, sessions, MFA secrets, audit logs)
 - Redis (token revocation blacklist, session cache, rate limiting)
 - External: Nextcloud OIDC provider (SSO - Phase 6+), SMTP server (password reset emails - Phase 3+)
 
 **Phase 2 Implementation Details**:
+
 - **JWT Tokens**: Access (15-min), Refresh (7-day), HS256 algorithm
 - **Password Security** (`app/core/password_validator.py`):
   - Multi-criteria validation (min 8 chars, uppercase, lowercase, digits, special chars)
@@ -409,6 +453,7 @@ User Query → QueryOrchestrator →
   - Request ID correlation in metadata
 
 **Key Endpoints**:
+
 - `POST /api/auth/login` - Username/password login (✅ Phase 2)
 - `POST /api/auth/logout` - Invalidate session and tokens (✅ Phase 2)
 - `POST /api/auth/refresh` - Refresh JWT access token (✅ Phase 2)
@@ -423,6 +468,7 @@ User Query → QueryOrchestrator →
 - `POST /api/auth/token/validate` - Validate JWT token (✅ Phase 2 - internal)
 
 **JWT Claims (Phase 2)**:
+
 ```json
 {
   "sub": "user_id",
@@ -435,11 +481,13 @@ User Query → QueryOrchestrator →
 ```
 
 **Rate Limiting (Phase 2)**:
+
 - Registration: 5 requests/hour per IP
 - Login: 10 requests/minute per IP
 - Token refresh: 20 requests/minute per IP
 
 **Database Tables**:
+
 - `users` - User accounts with hashed passwords
 - `audit_logs` - Authentication event audit trail (Phase 2)
 
@@ -454,10 +502,12 @@ User Query → QueryOrchestrator →
 **Language/Runtime**: Python 3.11 with Celery for background tasks
 
 **Main Ports**:
+
 - 8005/HTTP - REST API for indexing management
 - No external-facing ports (internal service)
 
 **Dependencies**:
+
 - PostgreSQL (document records, indexing jobs)
 - Qdrant (vector storage)
 - Redis (Celery task queue)
@@ -465,6 +515,7 @@ User Query → QueryOrchestrator →
 - External: Nextcloud WebDAV (file access), Tesseract OCR (text extraction)
 
 **Key Endpoints**:
+
 - `POST /api/indexer/ingest` - Queue document for ingestion
 - `GET /api/indexer/jobs/{id}` - Get indexing job status
 - `POST /api/indexer/reindex/{doc_id}` - Reindex existing document
@@ -473,6 +524,7 @@ User Query → QueryOrchestrator →
 - `GET /api/indexer/stats` - Indexing statistics
 
 **Processing Pipeline**:
+
 ```
 Upload → File Validation → Text Extraction (PyPDF2/Tesseract) →
 Chunking (Medical-aware) → PHI Detection →
@@ -481,6 +533,7 @@ Metadata Indexing (PostgreSQL) → Completion
 ```
 
 **Supported File Types**:
+
 - PDF (native text and scanned/OCR)
 - DOCX (Microsoft Word)
 - TXT (plain text)
@@ -495,6 +548,7 @@ Metadata Indexing (PostgreSQL) → Completion
 **Status**: ✅ **Phase 6 MVP Implemented** (CalDAV calendar operations, WebDAV file auto-indexing, Email skeleton)
 
 **Implementation**:
+
 - **Phases 0-10 (Monorepo)**:
   - Integration API Router: `services/api-gateway/app/api/integrations.py`
   - CalDAV Service: `services/api-gateway/app/services/caldav_service.py`
@@ -507,10 +561,12 @@ Metadata Indexing (PostgreSQL) → Completion
 **Language/Runtime**: Python 3.11 with FastAPI, caldav library, webdavclient3
 
 **Main Ports**:
+
 - Dev (Phases 0-10): 8000/HTTP (shared with main FastAPI app)
 - Prod (Phases 11-14): 8006/HTTP - Internal service mesh
 
 **Dependencies**:
+
 - PostgreSQL (event cache, email metadata - future)
 - Redis (calendar sync cache - future)
 - Qdrant (for file indexing into knowledge base)
@@ -519,6 +575,7 @@ Metadata Indexing (PostgreSQL) → Completion
 **Key Endpoints**:
 
 **Phase 6 Calendar Endpoints** (implemented):
+
 - `GET /api/integrations/calendar/calendars` - List all available calendars for authenticated user
   - Returns: Array of {id, name, url, supported_components}
 - `GET /api/integrations/calendar/events` - List calendar events within a date range
@@ -534,6 +591,7 @@ Metadata Indexing (PostgreSQL) → Completion
   - Returns: Deletion confirmation
 
 **Phase 6 File Indexing Endpoints** (implemented):
+
 - `POST /api/integrations/files/scan-and-index` - Scan Nextcloud directories and auto-index medical documents
   - Query params: source_type (guideline|note|journal), force_reindex
   - Returns: {files_discovered, files_indexed, files_failed, files_skipped}
@@ -542,6 +600,7 @@ Metadata Indexing (PostgreSQL) → Completion
   - Returns: IndexingResult with document_id, chunks_indexed
 
 **Phase 6 Email Endpoints** (skeleton - future implementation):
+
 - `GET /api/integrations/email/folders` - List mailbox folders (NOT_IMPLEMENTED)
 - `GET /api/integrations/email/messages` - List email messages (NOT_IMPLEMENTED)
 - `POST /api/integrations/email/send` - Send email via SMTP (NOT_IMPLEMENTED)
@@ -549,6 +608,7 @@ Metadata Indexing (PostgreSQL) → Completion
 **Phase 6 Implementation Details**:
 
 **CalDAV Service** (`caldav_service.py`):
+
 - Connects to Nextcloud Calendar via CalDAV protocol (RFC 4791)
 - Supports calendar discovery and event CRUD operations
 - Uses vobject library for iCalendar parsing
@@ -556,6 +616,7 @@ Metadata Indexing (PostgreSQL) → Completion
 - Error handling for connection failures and invalid events
 
 **Nextcloud File Indexer** (`nextcloud_file_indexer.py`):
+
 - Discovers files in Nextcloud via WebDAV protocol
 - Automatically indexes medical documents into Phase 5 KB
 - Supported formats: PDF (.pdf), Text (.txt), Markdown (.md)
@@ -564,12 +625,14 @@ Metadata Indexing (PostgreSQL) → Completion
 - Integrates with KBIndexer from Phase 5 for embedding generation
 
 **Email Service** (`email_service.py` - skeleton):
+
 - Basic IMAP connection for reading emails
 - SMTP support for sending emails
 - Folder listing and message fetching
 - Full implementation deferred to Phase 7+
 
 **Protocols Supported** (Phase 6):
+
 - ✅ CalDAV (Nextcloud Calendar, RFC 4791)
 - ✅ WebDAV (Nextcloud Files, RFC 4918)
 - 🔄 IMAP/SMTP (skeleton only)
@@ -578,11 +641,13 @@ Metadata Indexing (PostgreSQL) → Completion
 - ⏳ Microsoft Graph API (Outlook/Exchange - future)
 
 **Related Documentation**:
+
 - [NEXTCLOUD_INTEGRATION.md](NEXTCLOUD_INTEGRATION.md) - Integration architecture
 - [NEXTCLOUD_APPS_DESIGN.md](NEXTCLOUD_APPS_DESIGN.md) - Nextcloud app structure
 - [phases/PHASE_06_NEXTCLOUD_APPS.md](phases/PHASE_06_NEXTCLOUD_APPS.md) - Phase 6 details
 
 **Implementation Status**:
+
 - Phase 6 MVP: ✅ Calendar operations, ✅ File auto-indexing, 🔄 Email skeleton
 - Phase 7+: Full email integration, CardDAV contacts, external calendar sync
 
@@ -597,20 +662,24 @@ Metadata Indexing (PostgreSQL) → Completion
 **Language/Runtime**: Python 3.11 with FastAPI and Microsoft Presidio
 
 **Main Ports**:
+
 - 8007/HTTP - REST API for PHI detection
 
 **Dependencies**:
+
 - Redis (classification cache)
 - PostgreSQL (detection logs for audit)
 - External: Pre-trained NER models (spaCy, Hugging Face Transformers)
 
 **Key Endpoints**:
+
 - `POST /api/phi/detect` - Detect PHI in text
 - `POST /api/phi/redact` - Redact PHI from text
 - `POST /api/phi/classify` - Classify query as PHI/non-PHI
 - `GET /api/phi/entities` - List detected entity types
 
 **Detection Capabilities**:
+
 - Patient names (PERSON)
 - Dates of birth (DATE)
 - Medical record numbers (MRN)
@@ -622,6 +691,7 @@ Metadata Indexing (PostgreSQL) → Completion
 - IP addresses
 
 **Response Format**:
+
 ```json
 {
   "containsPHI": true,
@@ -650,16 +720,19 @@ Metadata Indexing (PostgreSQL) → Completion
 **Language/Runtime**: Python 3.11 with Scrapy and Celery
 
 **Main Ports**:
+
 - 8008/HTTP - REST API for scraper management
 - No external-facing ports (background service)
 
 **Dependencies**:
+
 - PostgreSQL (guideline metadata, update tracking)
 - Redis (Celery task queue)
 - File Indexer Service (index downloaded guidelines)
 - External: CDC, WHO, specialty society websites
 
 **Key Endpoints**:
+
 - `POST /api/scraper/sources/add` - Add guideline source
 - `GET /api/scraper/sources` - List configured sources
 - `POST /api/scraper/run` - Trigger scraping job
@@ -668,6 +741,7 @@ Metadata Indexing (PostgreSQL) → Completion
 - `POST /api/scraper/schedule` - Configure scraping schedule
 
 **Supported Sources**:
+
 - CDC Guidelines (www.cdc.gov)
 - WHO Guidelines (www.who.int)
 - AHA/ACC Cardiovascular Guidelines
@@ -677,6 +751,7 @@ Metadata Indexing (PostgreSQL) → Completion
 - Custom RSS feeds
 
 **Scraping Strategy**:
+
 ```
 Source URL → HTML Parsing → Guideline Detection →
 PDF Download → Metadata Extraction →
@@ -695,13 +770,16 @@ Notification (if new/updated)
 **Language/Runtime**: Python 3.11 with FastAPI
 
 **Main Ports**:
+
 - 8009/HTTP - REST API for medical calculations
 
 **Dependencies**:
+
 - Redis (calculation result caching)
 - PostgreSQL (calculation history for audit)
 
 **Key Endpoints**:
+
 - `GET /api/calculator/list` - List available calculators
 - `POST /api/calculator/execute` - Execute calculator
 - `GET /api/calculator/{name}` - Get calculator details
@@ -713,6 +791,7 @@ Notification (if new/updated)
 - `POST /api/calculator/drug-dose` - Drug dosing (renal/hepatic)
 
 **Available Calculators**:
+
 - **Cardiovascular**: CHADS2-VASc, HAS-BLED, GRACE, TIMI, HEART
 - **Renal**: Cockcroft-Gault, MDRD, CKD-EPI, FENa
 - **VTE**: Wells DVT, Wells PE, Geneva, PERC
@@ -721,6 +800,7 @@ Notification (if new/updated)
 - **Drug Dosing**: Vancomycin, Aminoglycosides, Warfarin
 
 **Example Request/Response**:
+
 ```json
 // POST /api/calculator/chads2vasc
 {
@@ -750,22 +830,26 @@ Notification (if new/updated)
 ### Communication Patterns
 
 **Synchronous (HTTP/gRPC)**:
+
 - API Gateway → All services (REST)
 - Voice Proxy → Medical KB (RAG queries)
 - Medical KB → PHI Detection (classification)
 - Admin API → All services (health checks)
 
 **Asynchronous (Message Queue)**:
+
 - File Indexer → Redis/Celery (background jobs)
 - Guideline Scraper → Redis/Celery (scheduled tasks)
 - Admin API → File Indexer (trigger reindex)
 
 **Streaming (WebSocket)**:
+
 - Clients → API Gateway → Voice Proxy (real-time chat)
 
 ### Service Discovery
 
 **Docker Compose (Development)**:
+
 ```yaml
 # Services discover each other by container name
 voice-proxy:
@@ -775,6 +859,7 @@ voice-proxy:
 ```
 
 **Kubernetes (Production)**:
+
 ```yaml
 # Services discover via K8s DNS
 MEDICAL_KB_URL: http://medical-kb-service.voiceassist.svc.cluster.local:8002
@@ -785,11 +870,13 @@ MEDICAL_KB_URL: http://medical-kb-service.voiceassist.svc.cluster.local:8002
 ## Monitoring and Observability
 
 All services expose:
+
 - `GET /health` - Health check endpoint
 - `GET /ready` - Readiness probe
 - `GET /metrics` - Prometheus metrics
 
 **Standard Metrics**:
+
 - Request count, latency (p50, p95, p99)
 - Error rate
 - Active connections
@@ -797,11 +884,13 @@ All services expose:
 - Business metrics (queries, documents indexed, etc.)
 
 **Logging**:
+
 - Structured JSON logs to stdout
 - PHI redaction applied automatically
 - Correlation IDs for request tracing
 
 **Tracing**:
+
 - OpenTelemetry instrumentation
 - Jaeger for distributed tracing
 
@@ -817,20 +906,20 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 1G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
 
   medical-kb:
     deploy:
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 4G
         reservations:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 2G
 ```
 
@@ -847,14 +936,14 @@ spec:
   template:
     spec:
       containers:
-      - name: medical-kb
-        resources:
-          requests:
-            cpu: 1000m
-            memory: 2Gi
-          limits:
-            cpu: 2000m
-            memory: 4Gi
+        - name: medical-kb
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 2Gi
+            limits:
+              cpu: 2000m
+              memory: 4Gi
 ---
 # HorizontalPodAutoscaler
 apiVersion: autoscaling/v2
@@ -868,12 +957,12 @@ spec:
   minReplicas: 2
   maxReplicas: 10
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
 ```
 
 ---

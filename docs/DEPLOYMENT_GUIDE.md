@@ -1,7 +1,19 @@
+---
+title: "Deployment Guide"
+slug: "deployment-guide"
+summary: "**Last Updated:** 2025-11-21"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["devops", "sre"]
+tags: ["deployment", "guide"]
+---
+
 # VoiceAssist Deployment Guide
 
-**Version:** 1.0  
-**Last Updated:** 2025-11-21  
+**Version:** 1.0
+**Last Updated:** 2025-11-21
 **Phase:** 13 - Production Ready
 
 ---
@@ -25,12 +37,14 @@
 ### Hardware Requirements
 
 **Minimum (Development):**
+
 - CPU: 4 cores
 - RAM: 8 GB
 - Storage: 50 GB SSD
 - Network: 10 Mbps
 
 **Recommended (Production):**
+
 - CPU: 8+ cores
 - RAM: 32+ GB
 - Storage: 200+ GB SSD (RAID 10)
@@ -74,6 +88,7 @@ nano .env
 ```
 
 **Required Environment Variables:**
+
 ```bash
 # Database
 POSTGRES_USER=voiceassist
@@ -205,6 +220,7 @@ ansible-playbook -i inventory/production playbooks/deploy-voiceassist.yml
 ### Database Configuration
 
 **PostgreSQL (Production):**
+
 ```ini
 # postgresql.conf
 max_connections = 200
@@ -437,6 +453,7 @@ cd ha-dr/testing
 ```
 
 **RTO/RPO Targets:**
+
 - Database failover: RTO 30 min, RPO < 1 min
 - Full restore: RTO 4 hours, RPO 24 hours
 
@@ -449,6 +466,7 @@ See `docs/RTO_RPO_DOCUMENTATION.md` for details.
 ### Common Issues
 
 **1. Database connection failed**
+
 ```bash
 # Check PostgreSQL status
 docker compose ps postgres
@@ -458,6 +476,7 @@ docker compose exec voiceassist-server python -c "from sqlalchemy import create_
 ```
 
 **2. Redis cache issues**
+
 ```bash
 # Clear Redis cache
 docker compose exec redis redis-cli FLUSHALL
@@ -467,6 +486,7 @@ docker compose exec redis redis-cli PING
 ```
 
 **3. API returning 502/504**
+
 ```bash
 # Check logs
 docker compose logs voiceassist-server
@@ -479,6 +499,7 @@ docker stats
 ```
 
 **4. High memory usage**
+
 ```bash
 # Identify memory-intensive containers
 docker stats --no-stream --format "table {{.Name}}\t{{.MemUsage}}"
@@ -522,11 +543,11 @@ curl https://voiceassist.yourdomain.com/health/qdrant
 
 ## Support
 
-**Documentation:** https://github.com/mohammednazmy/VoiceAssist/tree/main/docs  
-**Issues:** https://github.com/mohammednazmy/VoiceAssist/issues  
+**Documentation:** https://github.com/mohammednazmy/VoiceAssist/tree/main/docs
+**Issues:** https://github.com/mohammednazmy/VoiceAssist/issues
 **Phase 13 Completion:** All deployment features tested and production-ready
 
 ---
 
-**Last Updated:** 2025-11-21  
+**Last Updated:** 2025-11-21
 **Phase:** 13 - Final Testing & Documentation Complete

@@ -26,13 +26,35 @@ const STATUS_COLORS: Record<DocStatus, string> = {
     "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
 };
 
+/** Stability badge color mapping */
+const STABILITY_COLORS: Record<string, string> = {
+  production:
+    "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+  beta: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
+  experimental:
+    "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800",
+  legacy:
+    "bg-stone-100 text-stone-800 border-stone-200 dark:bg-stone-900/30 dark:text-stone-300 dark:border-stone-800",
+};
+
 function StatusBadge({ status }: { status: DocStatus }) {
   const colors = STATUS_COLORS[status] || STATUS_COLORS.draft;
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${colors}`}
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${colors}`}
     >
       {status}
+    </span>
+  );
+}
+
+function StabilityBadge({ stability }: { stability: string }) {
+  const colors = STABILITY_COLORS[stability] || STABILITY_COLORS.beta;
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${colors}`}
+    >
+      {stability}
     </span>
   );
 }

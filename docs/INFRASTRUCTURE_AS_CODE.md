@@ -1,3 +1,15 @@
+---
+title: "Infrastructure As Code"
+slug: "infrastructure-as-code"
+summary: "1. [Overview](#overview)"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["devops", "sre"]
+tags: ["infrastructure", "code"]
+---
+
 # Infrastructure as Code Guide
 
 ## Table of Contents
@@ -109,44 +121,45 @@ voiceassist/
 
 The infrastructure is organized into reusable Terraform modules:
 
-| Module | Purpose | Key Resources |
-|--------|---------|---------------|
-| **VPC** | Network infrastructure | VPC, subnets, NAT gateways, route tables, flow logs |
-| **EKS** | Kubernetes cluster | EKS cluster, node groups, IRSA, add-ons |
-| **RDS** | PostgreSQL database | RDS instance, subnet group, parameter group, backups |
-| **ElastiCache** | Redis cache | Redis cluster, replication group, subnet group |
-| **IAM** | Access control | Service roles, policies, IRSA roles |
-| **Security Groups** | Network security | Security groups for EKS, RDS, Redis, ALB |
+| Module              | Purpose                | Key Resources                                        |
+| ------------------- | ---------------------- | ---------------------------------------------------- |
+| **VPC**             | Network infrastructure | VPC, subnets, NAT gateways, route tables, flow logs  |
+| **EKS**             | Kubernetes cluster     | EKS cluster, node groups, IRSA, add-ons              |
+| **RDS**             | PostgreSQL database    | RDS instance, subnet group, parameter group, backups |
+| **ElastiCache**     | Redis cache            | Redis cluster, replication group, subnet group       |
+| **IAM**             | Access control         | Service roles, policies, IRSA roles                  |
+| **Security Groups** | Network security       | Security groups for EKS, RDS, Redis, ALB             |
 
 ### Ansible Roles
 
 Server configuration is organized into Ansible roles:
 
-| Role | Purpose | Key Tasks |
-|------|---------|-----------|
-| **common** | Base system setup | Package updates, timezone, NTP, users |
-| **security** | Security hardening | Firewall, fail2ban, SSH hardening, audit logs |
-| **docker** | Container runtime | Docker installation, daemon config, user permissions |
-| **kubernetes** | K8s tools | kubectl, helm, kubeconfig setup |
-| **monitoring** | Observability | Prometheus node exporter, log forwarding |
+| Role           | Purpose            | Key Tasks                                            |
+| -------------- | ------------------ | ---------------------------------------------------- |
+| **common**     | Base system setup  | Package updates, timezone, NTP, users                |
+| **security**   | Security hardening | Firewall, fail2ban, SSH hardening, audit logs        |
+| **docker**     | Container runtime  | Docker installation, daemon config, user permissions |
+| **kubernetes** | K8s tools          | kubectl, helm, kubeconfig setup                      |
+| **monitoring** | Observability      | Prometheus node exporter, log forwarding             |
 
 ### CI/CD Pipelines
 
 GitHub Actions workflows automate the entire deployment lifecycle:
 
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| **CI Pipeline** | PR/Push | Lint, test, security scan code |
-| **Terraform Plan** | PR to main | Preview infrastructure changes |
-| **Terraform Apply** | Merge to main | Apply infrastructure changes |
-| **Security Scan** | PR/Push | Scan for vulnerabilities |
-| **Build & Deploy** | Tag/Manual | Build images and deploy to K8s |
+| Workflow            | Trigger       | Purpose                        |
+| ------------------- | ------------- | ------------------------------ |
+| **CI Pipeline**     | PR/Push       | Lint, test, security scan code |
+| **Terraform Plan**  | PR to main    | Preview infrastructure changes |
+| **Terraform Apply** | Merge to main | Apply infrastructure changes   |
+| **Security Scan**   | PR/Push       | Scan for vulnerabilities       |
+| **Build & Deploy**  | Tag/Manual    | Build images and deploy to K8s |
 
 ## Getting Started
 
 ### Quick Start
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/yourusername/voiceassist.git
    cd voiceassist
@@ -155,6 +168,7 @@ GitHub Actions workflows automate the entire deployment lifecycle:
 2. **Set up prerequisites** (see [Prerequisites](#prerequisites))
 
 3. **Configure AWS credentials**
+
    ```bash
    export AWS_ACCESS_KEY_ID="your-access-key"
    export AWS_SECRET_ACCESS_KEY="your-secret-key"
@@ -162,17 +176,20 @@ GitHub Actions workflows automate the entire deployment lifecycle:
    ```
 
 4. **Initialize Terraform**
+
    ```bash
    cd infrastructure/terraform
    terraform init
    ```
 
 5. **Plan infrastructure**
+
    ```bash
    terraform plan -var-file="environments/dev.tfvars"
    ```
 
 6. **Apply infrastructure**
+
    ```bash
    terraform apply -var-file="environments/dev.tfvars"
    ```
@@ -186,6 +203,7 @@ GitHub Actions workflows automate the entire deployment lifecycle:
 ### Environment-Specific Deployment
 
 See detailed guides for each tool:
+
 - [Terraform Guide](./TERRAFORM_GUIDE.md)
 - [Ansible Guide](./ANSIBLE_GUIDE.md)
 - [CI/CD Guide](./CICD_GUIDE.md)
@@ -195,23 +213,25 @@ See detailed guides for each tool:
 
 ### Required Tools
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| Terraform | >= 1.6.0 | Infrastructure provisioning |
-| Ansible | >= 2.15 | Server configuration |
-| AWS CLI | >= 2.13 | AWS resource management |
-| kubectl | >= 1.28 | Kubernetes management |
-| helm | >= 3.12 | Kubernetes package management |
-| Docker | >= 24.0 | Container runtime |
+| Tool      | Version  | Purpose                       |
+| --------- | -------- | ----------------------------- |
+| Terraform | >= 1.6.0 | Infrastructure provisioning   |
+| Ansible   | >= 2.15  | Server configuration          |
+| AWS CLI   | >= 2.13  | AWS resource management       |
+| kubectl   | >= 1.28  | Kubernetes management         |
+| helm      | >= 3.12  | Kubernetes package management |
+| Docker    | >= 24.0  | Container runtime             |
 
 ### Installation
 
 **macOS (using Homebrew)**
+
 ```bash
 brew install terraform ansible awscli kubectl helm docker
 ```
 
 **Linux (Ubuntu/Debian)**
+
 ```bash
 # Terraform
 wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
@@ -237,6 +257,7 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 ### AWS Account Setup
 
 1. **Create IAM user with required permissions**
+
    ```json
    {
      "Version": "2012-10-17",
@@ -263,11 +284,13 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
    ```
 
 2. **Configure AWS CLI**
+
    ```bash
    aws configure
    ```
 
 3. **Create S3 bucket for Terraform state**
+
    ```bash
    aws s3 mb s3://voiceassist-terraform-state
    aws s3api put-bucket-versioning \
@@ -384,11 +407,13 @@ terraform destroy -var-file="environments/production.tfvars"
 ### Terraform Issues
 
 **Issue: State file locked**
+
 ```
 Error: Error acquiring the state lock
 ```
 
 **Solution:**
+
 ```bash
 # Check DynamoDB for lock
 aws dynamodb get-item \
@@ -400,11 +425,13 @@ terraform force-unlock <lock-id>
 ```
 
 **Issue: Provider authentication failed**
+
 ```
 Error: error configuring Terraform AWS Provider: no valid credential sources
 ```
 
 **Solution:**
+
 ```bash
 # Verify AWS credentials
 aws sts get-caller-identity
@@ -416,11 +443,13 @@ aws configure
 ### Ansible Issues
 
 **Issue: SSH connection failed**
+
 ```
 fatal: [host]: UNREACHABLE! => {"msg": "Failed to connect to the host"}
 ```
 
 **Solution:**
+
 ```bash
 # Test SSH connectivity
 ssh -i ~/.ssh/id_rsa ubuntu@<host-ip>
@@ -433,11 +462,13 @@ ansible-inventory -i inventories/dev --list
 ```
 
 **Issue: Permission denied**
+
 ```
 fatal: [host]: FAILED! => {"msg": "Missing sudo password"}
 ```
 
 **Solution:**
+
 ```bash
 # Use --ask-become-pass flag
 ansible-playbook -i inventories/dev site.yml --ask-become-pass
@@ -448,21 +479,25 @@ ansible-playbook -i inventories/dev site.yml --ask-become-pass
 ### CI/CD Issues
 
 **Issue: Workflow fails with permission error**
+
 ```
 Error: The workflow is not permitted to access the repository
 ```
 
 **Solution:**
+
 1. Check GitHub Actions permissions: `Settings` > `Actions` > `General`
 2. Enable "Read and write permissions"
 3. Re-run workflow
 
 **Issue: AWS credentials invalid in Actions**
+
 ```
 Error: The security token included in the request is invalid
 ```
 
 **Solution:**
+
 1. Verify secrets: `Settings` > `Secrets and variables` > `Actions`
 2. Update `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
 3. Ensure IAM user has required permissions
@@ -470,6 +505,7 @@ Error: The security token included in the request is invalid
 ### Getting Help
 
 1. **Check logs**
+
    ```bash
    # Terraform logs
    TF_LOG=DEBUG terraform apply

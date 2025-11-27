@@ -1,10 +1,22 @@
+---
+title: "Start Here"
+slug: "start-here"
+summary: "**Welcome to VoiceAssist V2** - A HIPAA-compliant voice-enabled clinical decision support system."
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["start", "here"]
+---
+
 # 🚀 VoiceAssist V2 - Start Here
 
 **Welcome to VoiceAssist V2** - A HIPAA-compliant voice-enabled clinical decision support system.
 
 This document is your entry point to the project. Choose your path below based on your role and experience level.
 
-**Status update:** All 15 phases are complete and archived summaries live in [docs/archive/](archive/).
+**Status update:** All 15 phase specifications are complete. Backend and infrastructure are production-ready. Frontend web app is in active development (Phase 3). See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for detailed component status.
 
 ---
 
@@ -19,7 +31,7 @@ This document is your entry point to the project. Choose your path below based o
 
 ### For Experienced Developers
 
-1. Review **[UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md)** for complete system design (Phase 7 current state)
+1. Review **[UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md)** for complete system design
 2. Check [ARCHITECTURE_DIAGRAMS.md](architecture/ARCHITECTURE_DIAGRAMS.md) for visual diagrams
 3. Set up local environment: [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md)
 4. Jump to [Development Roadmap](#development-roadmap) to see phases
@@ -99,7 +111,7 @@ All documentation is in the `docs/` directory. Here's the complete index:
 | Document                                                                                      | Purpose                                                        | Audience                           |
 | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ---------------------------------- |
 | **[START_HERE.md](START_HERE.md)** ⭐                                                         | This file - project orientation                                | Everyone                           |
-| **[UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md)** ⭐ **NEW**                             | **Canonical architecture reference (Phase 7)**                 | **Developers, Architects, DevOps** |
+| **[UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md)** ⭐                                     | **Canonical architecture reference**                           | **Developers, Architects, DevOps** |
 | **[architecture/ARCHITECTURE_DIAGRAMS.md](architecture/ARCHITECTURE_DIAGRAMS.md)** ⭐ **NEW** | **Visual architecture diagrams (Mermaid)**                     | **Developers, Architects**         |
 | **[ARCHITECTURE_V2.md](ARCHITECTURE_V2.md)**                                                  | System architecture, Docker Compose-first approach (reference) | Developers, DevOps                 |
 | **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)**                                                  | High-level overview, tech stack, cost estimates                | Stakeholders, PMs                  |

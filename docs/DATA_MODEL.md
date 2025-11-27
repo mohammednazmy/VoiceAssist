@@ -1,3 +1,15 @@
+---
+title: "Data Model"
+slug: "data-model"
+summary: "**Last Updated**: 2025-11-20"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["data", "model"]
+---
+
 # VoiceAssist V2 - Canonical Data Model
 
 **Last Updated**: 2025-11-20
@@ -9,6 +21,7 @@
 ## Overview
 
 This document defines ALL data entities used in VoiceAssist V2. Each entity has:
+
 1. **Purpose** - What the entity represents
 2. **Storage Location** - Where data is persisted
 3. **Relationships** - How it relates to other entities
@@ -23,6 +36,7 @@ This document defines ALL data entities used in VoiceAssist V2. Each entity has:
 ## Entity Index
 
 ### Core Entities
+
 - [User](#user) - System user (clinician)
 - [Session / Conversation](#session--conversation) - Chat conversation container
 - [ChatMessage](#chatmessage) - Individual message in conversation
@@ -30,18 +44,22 @@ This document defines ALL data entities used in VoiceAssist V2. Each entity has:
 - [Citation](#citation) - Source reference for an answer
 
 ### Knowledge Base Entities
+
 - [KnowledgeDocument](#knowledgedocument) - Top-level document in KB
 - [KBChunk](#kbchunk) - Embedded chunk of a document
 - [IndexingJob](#indexingjob) - Background job for document processing
 
 ### Configuration Entities
+
 - [UserSettings](#usersettings) - Per-user preferences
 - [SystemSettings](#systemsettings) - Global system configuration
 
 ### Audit & Security
+
 - [AuditLogEntry](#auditlogentry) - Security audit log record
 
 ### Tool Invocation
+
 - [ToolCall](#toolcall) - Tool invocation request
 - [ToolResult](#toolresult) - Tool execution result (embedded in ToolCall)
 
@@ -56,10 +74,12 @@ This document defines ALL data entities used in VoiceAssist V2. Each entity has:
 **Storage**: PostgreSQL (`users` table)
 
 **Relationships**:
+
 - Has many: `Session`, `KnowledgeDocument`, `AuditLogEntry`
 - References: `UserSettings` (1:1)
 
 **Fields**:
+
 - `id` (required, uuid4) - Unique identifier
 - `email` (required, string, unique) - Email address for login
 - `username` (required, string, unique) - Username for display
@@ -162,7 +182,7 @@ class User(BaseModel):
 
 ```typescript
 export interface User {
-  id: string;  // uuid4
+  id: string; // uuid4
   email: string;
   username: string;
   hashedPassword: string;
@@ -170,9 +190,9 @@ export interface User {
   specialty?: string;
   isActive: boolean;
   isSuperuser: boolean;
-  createdAt: string;  // ISO 8601 timestamp
-  updatedAt: string;  // ISO 8601 timestamp
-  lastLogin?: string;  // ISO 8601 timestamp
+  createdAt: string; // ISO 8601 timestamp
+  updatedAt: string; // ISO 8601 timestamp
+  lastLogin?: string; // ISO 8601 timestamp
 }
 ```
 
@@ -185,11 +205,13 @@ export interface User {
 **Storage**: PostgreSQL (`sessions` table)
 
 **Relationships**:
+
 - Belongs to: `User`
 - Has many: `ChatMessage`
 - References: `ClinicalContext` (optional, 1:1)
 
 **Fields**:
+
 - `id` (required, uuid4) - Unique identifier
 - `user_id` (required, uuid4) - Foreign key to User
 - `title` (optional, string) - Conversation title (auto-generated or user-set)
@@ -207,17 +229,17 @@ export interface User {
   "title": "Session",
   "type": "object",
   "properties": {
-    "id": {"type": "string", "format": "uuid"},
-    "user_id": {"type": "string", "format": "uuid"},
-    "title": {"type": "string"},
+    "id": { "type": "string", "format": "uuid" },
+    "user_id": { "type": "string", "format": "uuid" },
+    "title": { "type": "string" },
     "mode": {
       "type": "string",
       "enum": ["text", "voice", "case_workspace"]
     },
-    "is_archived": {"type": "boolean", "default": false},
-    "created_at": {"type": "string", "format": "date-time"},
-    "updated_at": {"type": "string", "format": "date-time"},
-    "clinical_context_id": {"type": "string", "format": "uuid"}
+    "is_archived": { "type": "boolean", "default": false },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "clinical_context_id": { "type": "string", "format": "uuid" }
   },
   "required": ["id", "user_id", "mode", "is_archived", "created_at", "updated_at"]
 }
@@ -254,17 +276,17 @@ class Session(BaseModel):
 #### TypeScript
 
 ```typescript
-export type SessionMode = 'text' | 'voice' | 'case_workspace';
+export type SessionMode = "text" | "voice" | "case_workspace";
 
 export interface Session {
-  id: string;  // uuid4
-  userId: string;  // uuid4
+  id: string; // uuid4
+  userId: string; // uuid4
   title?: string;
   mode: SessionMode;
   isArchived: boolean;
-  createdAt: string;  // ISO 8601
-  updatedAt: string;  // ISO 8601
-  clinicalContextId?: string;  // uuid4
+  createdAt: string; // ISO 8601
+  updatedAt: string; // ISO 8601
+  clinicalContextId?: string; // uuid4
 }
 ```
 
@@ -277,10 +299,12 @@ export interface Session {
 **Storage**: PostgreSQL (`chat_messages` table)
 
 **Relationships**:
+
 - Belongs to: `Session`
 - References: `Citation[]` (embedded in metadata)
 
 **Fields**:
+
 - `id` (required, uuid4) - Unique identifier
 - `session_id` (required, uuid4) - Foreign key to Session
 - `role` (required, enum) - Message role: `user`, `assistant`, `system`
@@ -290,6 +314,7 @@ export interface Session {
 - `created_at` (required, timestamp) - Message creation time
 
 **Metadata Structure**:
+
 ```typescript
 {
   citations?: Citation[];
@@ -310,16 +335,16 @@ export interface Session {
   "title": "ChatMessage",
   "type": "object",
   "properties": {
-    "id": {"type": "string", "format": "uuid"},
-    "session_id": {"type": "string", "format": "uuid"},
+    "id": { "type": "string", "format": "uuid" },
+    "session_id": { "type": "string", "format": "uuid" },
     "role": {
       "type": "string",
       "enum": ["user", "assistant", "system"]
     },
-    "content": {"type": "string"},
-    "audio_url": {"type": "string", "format": "uri"},
-    "metadata": {"type": "object"},
-    "created_at": {"type": "string", "format": "date-time"}
+    "content": { "type": "string" },
+    "audio_url": { "type": "string", "format": "uri" },
+    "metadata": { "type": "object" },
+    "created_at": { "type": "string", "format": "date-time" }
   },
   "required": ["id", "session_id", "role", "content", "created_at"]
 }
@@ -355,11 +380,11 @@ class ChatMessage(BaseModel):
 #### TypeScript
 
 ```typescript
-export type MessageRole = 'user' | 'assistant' | 'system';
+export type MessageRole = "user" | "assistant" | "system";
 
 export interface ChatMessage {
-  id: string;  // uuid4
-  sessionId: string;  // uuid4
+  id: string; // uuid4
+  sessionId: string; // uuid4
   role: MessageRole;
   content: string;
   audioUrl?: string;
@@ -373,7 +398,7 @@ export interface ChatMessage {
     routingDecision?: string;
     [key: string]: any;
   };
-  createdAt: string;  // ISO 8601
+  createdAt: string; // ISO 8601
 }
 ```
 
@@ -386,9 +411,11 @@ export interface ChatMessage {
 **Storage**: PostgreSQL (`clinical_contexts` table)
 
 **Relationships**:
+
 - Belongs to: `Session` (1:1)
 
 **Fields**:
+
 - `id` (required, uuid4) - Unique identifier
 - `session_id` (required, uuid4) - Foreign key to Session
 - `patient_age` (optional, integer) - Patient age in years
@@ -409,27 +436,27 @@ export interface ChatMessage {
   "title": "ClinicalContext",
   "type": "object",
   "properties": {
-    "id": {"type": "string", "format": "uuid"},
-    "session_id": {"type": "string", "format": "uuid"},
-    "patient_age": {"type": "integer", "minimum": 0, "maximum": 150},
-    "patient_sex": {"type": "string", "enum": ["male", "female", "other"]},
-    "chief_complaint": {"type": "string"},
-    "relevant_history": {"type": "string"},
-    "current_medications": {"type": "array", "items": {"type": "string"}},
-    "allergies": {"type": "array", "items": {"type": "string"}},
+    "id": { "type": "string", "format": "uuid" },
+    "session_id": { "type": "string", "format": "uuid" },
+    "patient_age": { "type": "integer", "minimum": 0, "maximum": 150 },
+    "patient_sex": { "type": "string", "enum": ["male", "female", "other"] },
+    "chief_complaint": { "type": "string" },
+    "relevant_history": { "type": "string" },
+    "current_medications": { "type": "array", "items": { "type": "string" } },
+    "allergies": { "type": "array", "items": { "type": "string" } },
     "vital_signs": {
       "type": "object",
       "properties": {
-        "bp_systolic": {"type": "integer"},
-        "bp_diastolic": {"type": "integer"},
-        "heart_rate": {"type": "integer"},
-        "temperature": {"type": "number"},
-        "respiratory_rate": {"type": "integer"},
-        "o2_saturation": {"type": "integer"}
+        "bp_systolic": { "type": "integer" },
+        "bp_diastolic": { "type": "integer" },
+        "heart_rate": { "type": "integer" },
+        "temperature": { "type": "number" },
+        "respiratory_rate": { "type": "integer" },
+        "o2_saturation": { "type": "integer" }
       }
     },
-    "created_at": {"type": "string", "format": "date-time"},
-    "updated_at": {"type": "string", "format": "date-time"}
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
   },
   "required": ["id", "session_id", "created_at", "updated_at"]
 }
@@ -477,7 +504,7 @@ class ClinicalContext(BaseModel):
 #### TypeScript
 
 ```typescript
-export type PatientSex = 'male' | 'female' | 'other';
+export type PatientSex = "male" | "female" | "other";
 
 export interface VitalSigns {
   bpSystolic?: number;
@@ -489,8 +516,8 @@ export interface VitalSigns {
 }
 
 export interface ClinicalContext {
-  id: string;  // uuid4
-  sessionId: string;  // uuid4
+  id: string; // uuid4
+  sessionId: string; // uuid4
   patientAge?: number;
   patientSex?: PatientSex;
   chiefComplaint?: string;
@@ -498,8 +525,8 @@ export interface ClinicalContext {
   currentMedications?: string[];
   allergies?: string[];
   vitalSigns?: VitalSigns;
-  createdAt: string;  // ISO 8601
-  updatedAt: string;  // ISO 8601
+  createdAt: string; // ISO 8601
+  updatedAt: string; // ISO 8601
 }
 ```
 
@@ -512,10 +539,12 @@ export interface ClinicalContext {
 **Storage**: Embedded in `ChatMessage.metadata.citations` (not a separate table)
 
 **Relationships**:
+
 - Embedded in: `ChatMessage`
 - References: `KnowledgeDocument.id` (for internal KB) or external identifier
 
 **Fields**:
+
 - `id` (required, uuid4) - Unique identifier
 - `source_type` (required, enum) - Type: `textbook`, `journal`, `guideline`, `uptodate`, `pubmed`, `note`
 - `source_id` (optional, string) - KB document ID or external reference (PMID, DOI)
@@ -537,21 +566,21 @@ export interface ClinicalContext {
   "title": "Citation",
   "type": "object",
   "properties": {
-    "id": {"type": "string", "format": "uuid"},
+    "id": { "type": "string", "format": "uuid" },
     "source_type": {
       "type": "string",
       "enum": ["textbook", "journal", "guideline", "uptodate", "pubmed", "note"]
     },
-    "source_id": {"type": "string"},
-    "title": {"type": "string"},
-    "subtitle": {"type": "string"},
-    "authors": {"type": "array", "items": {"type": "string"}},
-    "publication_year": {"type": "integer"},
-    "location": {"type": "string"},
-    "url": {"type": "string", "format": "uri"},
-    "doi": {"type": "string"},
-    "snippet": {"type": "string", "maxLength": 500},
-    "relevance_score": {"type": "number", "minimum": 0, "maximum": 1}
+    "source_id": { "type": "string" },
+    "title": { "type": "string" },
+    "subtitle": { "type": "string" },
+    "authors": { "type": "array", "items": { "type": "string" } },
+    "publication_year": { "type": "integer" },
+    "location": { "type": "string" },
+    "url": { "type": "string", "format": "uri" },
+    "doi": { "type": "string" },
+    "snippet": { "type": "string", "maxLength": 500 },
+    "relevance_score": { "type": "number", "minimum": 0, "maximum": 1 }
   },
   "required": ["id", "source_type", "title"]
 }
@@ -591,21 +620,21 @@ class Citation(BaseModel):
 #### TypeScript
 
 ```typescript
-export type SourceType = 'textbook' | 'journal' | 'guideline' | 'uptodate' | 'pubmed' | 'note';
+export type SourceType = "textbook" | "journal" | "guideline" | "uptodate" | "pubmed" | "note";
 
 export interface Citation {
-  id: string;  // uuid4
+  id: string; // uuid4
   sourceType: SourceType;
   sourceId?: string;
   title: string;
   subtitle?: string;
   authors?: string[];
   publicationYear?: number;
-  location?: string;  // e.g., "ch. 252", "p. 2987"
+  location?: string; // e.g., "ch. 252", "p. 2987"
   url?: string;
   doi?: string;
-  snippet?: string;  // max 500 chars
-  relevanceScore?: number;  // 0-1
+  snippet?: string; // max 500 chars
+  relevanceScore?: number; // 0-1
 }
 ```
 
@@ -620,11 +649,13 @@ export interface Citation {
 **Storage**: PostgreSQL (`knowledge_documents` table)
 
 **Relationships**:
+
 - Belongs to: `User` (uploader)
 - Has many: `KBChunk`
 - References: `IndexingJob` (processing status)
 
 **Fields**:
+
 - `id` (required, uuid4) - Unique identifier
 - `user_id` (required, uuid4) - Foreign key to User (uploader)
 - `doc_key` (required, string, unique) - Stable idempotency key (e.g., "textbook-harrisons-21e-ch252")
@@ -660,43 +691,59 @@ export interface Citation {
   "title": "KnowledgeDocument",
   "type": "object",
   "properties": {
-    "id": {"type": "string", "format": "uuid"},
-    "user_id": {"type": "string", "format": "uuid"},
-    "doc_key": {"type": "string"},
-    "content_hash": {"type": "string"},
-    "version": {"type": "integer", "default": 1},
-    "superseded_by": {"type": "string", "format": "uuid"},
-    "title": {"type": "string"},
+    "id": { "type": "string", "format": "uuid" },
+    "user_id": { "type": "string", "format": "uuid" },
+    "doc_key": { "type": "string" },
+    "content_hash": { "type": "string" },
+    "version": { "type": "integer", "default": 1 },
+    "superseded_by": { "type": "string", "format": "uuid" },
+    "title": { "type": "string" },
     "document_type": {
       "type": "string",
       "enum": ["textbook", "journal", "guideline", "other"]
     },
-    "specialty": {"type": "string"},
-    "file_path": {"type": "string"},
-    "file_name": {"type": "string"},
-    "file_size": {"type": "integer"},
+    "specialty": { "type": "string" },
+    "file_path": { "type": "string" },
+    "file_name": { "type": "string" },
+    "file_size": { "type": "integer" },
     "file_format": {
       "type": "string",
       "enum": ["pdf", "docx", "txt", "html"]
     },
-    "page_count": {"type": "integer"},
-    "authors": {"type": "array", "items": {"type": "string"}},
-    "publication_year": {"type": "integer"},
-    "publisher": {"type": "string"},
-    "edition": {"type": "string"},
-    "isbn": {"type": "string"},
-    "doi": {"type": "string"},
-    "is_indexed": {"type": "boolean", "default": false},
+    "page_count": { "type": "integer" },
+    "authors": { "type": "array", "items": { "type": "string" } },
+    "publication_year": { "type": "integer" },
+    "publisher": { "type": "string" },
+    "edition": { "type": "string" },
+    "isbn": { "type": "string" },
+    "doi": { "type": "string" },
+    "is_indexed": { "type": "boolean", "default": false },
     "indexing_status": {
       "type": "string",
       "enum": ["pending", "processing", "completed", "failed"]
     },
-    "chunk_count": {"type": "integer"},
-    "metadata": {"type": "object"},
-    "created_at": {"type": "string", "format": "date-time"},
-    "updated_at": {"type": "string", "format": "date-time"}
+    "chunk_count": { "type": "integer" },
+    "metadata": { "type": "object" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
   },
-  "required": ["id", "user_id", "doc_key", "content_hash", "version", "title", "document_type", "file_path", "file_name", "file_size", "file_format", "is_indexed", "indexing_status", "created_at", "updated_at"]
+  "required": [
+    "id",
+    "user_id",
+    "doc_key",
+    "content_hash",
+    "version",
+    "title",
+    "document_type",
+    "file_path",
+    "file_name",
+    "file_size",
+    "file_format",
+    "is_indexed",
+    "indexing_status",
+    "created_at",
+    "updated_at"
+  ]
 }
 ```
 
@@ -762,23 +809,23 @@ class KnowledgeDocument(BaseModel):
 #### TypeScript
 
 ```typescript
-export type DocumentType = 'textbook' | 'journal' | 'guideline' | 'other';
-export type FileFormat = 'pdf' | 'docx' | 'txt' | 'html';
-export type IndexingStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type DocumentType = "textbook" | "journal" | "guideline" | "other";
+export type FileFormat = "pdf" | "docx" | "txt" | "html";
+export type IndexingStatus = "pending" | "processing" | "completed" | "failed";
 
 export interface KnowledgeDocument {
-  id: string;  // uuid4
-  userId: string;  // uuid4
-  docKey: string;  // Stable idempotency key
-  contentHash: string;  // SHA-256 hash
-  version: number;  // Version number (default: 1)
-  supersededBy?: string;  // uuid4 of newer version
+  id: string; // uuid4
+  userId: string; // uuid4
+  docKey: string; // Stable idempotency key
+  contentHash: string; // SHA-256 hash
+  version: number; // Version number (default: 1)
+  supersededBy?: string; // uuid4 of newer version
   title: string;
   documentType: DocumentType;
   specialty?: string;
   filePath: string;
   fileName: string;
-  fileSize: number;  // bytes
+  fileSize: number; // bytes
   fileFormat: FileFormat;
   pageCount?: number;
   authors?: string[];
@@ -791,8 +838,8 @@ export interface KnowledgeDocument {
   indexingStatus: IndexingStatus;
   chunkCount?: number;
   metadata?: Record<string, any>;
-  createdAt: string;  // ISO 8601
-  updatedAt: string;  // ISO 8601
+  createdAt: string; // ISO 8601
+  updatedAt: string; // ISO 8601
 }
 ```
 
@@ -803,13 +850,16 @@ export interface KnowledgeDocument {
 **Purpose**: Embedded text chunk of a document for vector search and RAG.
 
 **Storage**:
+
 - PostgreSQL (`kb_chunks` table) - Metadata
 - Qdrant (`medical_knowledge` collection) - Vector embeddings
 
 **Relationships**:
+
 - Belongs to: `KnowledgeDocument`
 
 **Fields** (PostgreSQL):
+
 - `id` (required, uuid4) - Unique identifier
 - `document_id` (required, uuid4) - Foreign key to KnowledgeDocument
 - `chunk_index` (required, integer) - Order within document (0-based)
@@ -824,6 +874,7 @@ export interface KnowledgeDocument {
 - `created_at` (required, timestamp)
 
 **Fields** (Qdrant Point):
+
 - `id` (string) - Same as `qdrant_id` in PostgreSQL
 - `vector` (array of floats) - Embedding vector (dimensions: 3072 for text-embedding-3-large)
 - `payload` (object):
@@ -846,20 +897,30 @@ export interface KnowledgeDocument {
   "title": "KBChunk",
   "type": "object",
   "properties": {
-    "id": {"type": "string", "format": "uuid"},
-    "document_id": {"type": "string", "format": "uuid"},
-    "chunk_index": {"type": "integer", "minimum": 0},
-    "content": {"type": "string"},
-    "page_number": {"type": "integer"},
-    "chapter": {"type": "string"},
-    "heading": {"type": "string"},
-    "token_count": {"type": "integer"},
-    "qdrant_id": {"type": "string"},
-    "embedding_model": {"type": "string"},
-    "superseded": {"type": "boolean", "default": false},
-    "created_at": {"type": "string", "format": "date-time"}
+    "id": { "type": "string", "format": "uuid" },
+    "document_id": { "type": "string", "format": "uuid" },
+    "chunk_index": { "type": "integer", "minimum": 0 },
+    "content": { "type": "string" },
+    "page_number": { "type": "integer" },
+    "chapter": { "type": "string" },
+    "heading": { "type": "string" },
+    "token_count": { "type": "integer" },
+    "qdrant_id": { "type": "string" },
+    "embedding_model": { "type": "string" },
+    "superseded": { "type": "boolean", "default": false },
+    "created_at": { "type": "string", "format": "date-time" }
   },
-  "required": ["id", "document_id", "chunk_index", "content", "token_count", "qdrant_id", "embedding_model", "superseded", "created_at"]
+  "required": [
+    "id",
+    "document_id",
+    "chunk_index",
+    "content",
+    "token_count",
+    "qdrant_id",
+    "embedding_model",
+    "superseded",
+    "created_at"
+  ]
 }
 ```
 
@@ -893,8 +954,8 @@ class KBChunk(BaseModel):
 
 ```typescript
 export interface KBChunk {
-  id: string;  // uuid4
-  documentId: string;  // uuid4
+  id: string; // uuid4
+  documentId: string; // uuid4
   chunkIndex: number;
   content: string;
   pageNumber?: number;
@@ -903,14 +964,14 @@ export interface KBChunk {
   tokenCount: number;
   qdrantId: string;
   embeddingModel: string;
-  superseded: boolean;  // Whether chunk is superseded (default: false)
-  createdAt: string;  // ISO 8601
+  superseded: boolean; // Whether chunk is superseded (default: false)
+  createdAt: string; // ISO 8601
 }
 
 // Qdrant Point Payload
 export interface QdrantPayload {
-  documentId: string;  // uuid4
-  chunkId: string;  // uuid4
+  documentId: string; // uuid4
+  chunkId: string; // uuid4
   content: string;
   pageNumber?: number;
   chapter?: string;
@@ -931,10 +992,12 @@ export interface QdrantPayload {
 **Storage**: PostgreSQL (`indexing_jobs` table)
 
 **Relationships**:
+
 - References: `KnowledgeDocument`
 - References: `User` (job creator)
 
 **Fields**:
+
 - `id` (required, uuid4) - Unique identifier
 - `document_id` (required, uuid4) - Foreign key to KnowledgeDocument
 - `doc_key` (required, string) - Document key reference for tracking
@@ -965,10 +1028,10 @@ export interface QdrantPayload {
   "title": "IndexingJob",
   "type": "object",
   "properties": {
-    "id": {"type": "string", "format": "uuid"},
-    "document_id": {"type": "string", "format": "uuid"},
-    "doc_key": {"type": "string"},
-    "user_id": {"type": "string", "format": "uuid"},
+    "id": { "type": "string", "format": "uuid" },
+    "document_id": { "type": "string", "format": "uuid" },
+    "doc_key": { "type": "string" },
+    "user_id": { "type": "string", "format": "uuid" },
     "state": {
       "type": "string",
       "enum": ["pending", "running", "completed", "failed", "superseded"]
@@ -977,23 +1040,34 @@ export interface QdrantPayload {
       "type": "string",
       "enum": ["pending", "processing", "completed", "failed"]
     },
-    "progress": {"type": "number", "minimum": 0, "maximum": 100},
-    "current_step": {"type": "string"},
-    "total_chunks": {"type": "integer"},
-    "processed_chunks": {"type": "integer", "default": 0},
-    "chunks_created": {"type": "integer"},
-    "retry_count": {"type": "integer", "default": 0},
-    "max_retries": {"type": "integer", "default": 3},
-    "error_message": {"type": "string"},
-    "error_details": {"type": "object"},
-    "superseded_by": {"type": "string"},
-    "started_at": {"type": "string", "format": "date-time"},
-    "completed_at": {"type": "string", "format": "date-time"},
-    "failed_at": {"type": "string", "format": "date-time"},
-    "created_at": {"type": "string", "format": "date-time"},
-    "updated_at": {"type": "string", "format": "date-time"}
+    "progress": { "type": "number", "minimum": 0, "maximum": 100 },
+    "current_step": { "type": "string" },
+    "total_chunks": { "type": "integer" },
+    "processed_chunks": { "type": "integer", "default": 0 },
+    "chunks_created": { "type": "integer" },
+    "retry_count": { "type": "integer", "default": 0 },
+    "max_retries": { "type": "integer", "default": 3 },
+    "error_message": { "type": "string" },
+    "error_details": { "type": "object" },
+    "superseded_by": { "type": "string" },
+    "started_at": { "type": "string", "format": "date-time" },
+    "completed_at": { "type": "string", "format": "date-time" },
+    "failed_at": { "type": "string", "format": "date-time" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
   },
-  "required": ["id", "document_id", "doc_key", "user_id", "state", "processed_chunks", "retry_count", "max_retries", "created_at", "updated_at"]
+  "required": [
+    "id",
+    "document_id",
+    "doc_key",
+    "user_id",
+    "state",
+    "processed_chunks",
+    "retry_count",
+    "max_retries",
+    "created_at",
+    "updated_at"
+  ]
 }
 ```
 
@@ -1052,33 +1126,33 @@ class IndexingJob(BaseModel):
 
 ```typescript
 // Legacy status enum - use JobState instead
-export type JobStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type JobStatus = "pending" | "processing" | "completed" | "failed";
 
 // Job state enum with superseded support
-export type JobState = 'pending' | 'running' | 'completed' | 'failed' | 'superseded';
+export type JobState = "pending" | "running" | "completed" | "failed" | "superseded";
 
 export interface IndexingJob {
-  id: string;  // uuid4
-  documentId: string;  // uuid4
-  docKey: string;  // Document key reference
-  userId: string;  // uuid4
-  state: JobState;  // Current job state
-  status?: JobStatus;  // Legacy status (deprecated)
-  progress?: number;  // 0-100 (deprecated, use processedChunks/totalChunks)
+  id: string; // uuid4
+  documentId: string; // uuid4
+  docKey: string; // Document key reference
+  userId: string; // uuid4
+  state: JobState; // Current job state
+  status?: JobStatus; // Legacy status (deprecated)
+  progress?: number; // 0-100 (deprecated, use processedChunks/totalChunks)
   currentStep?: string;
-  totalChunks?: number;  // Total chunks to process
-  processedChunks: number;  // Chunks processed (default: 0)
-  chunksCreated?: number;  // Deprecated, use processedChunks
-  retryCount: number;  // Number of retries (default: 0)
-  maxRetries: number;  // Max retry attempts (default: 3)
+  totalChunks?: number; // Total chunks to process
+  processedChunks: number; // Chunks processed (default: 0)
+  chunksCreated?: number; // Deprecated, use processedChunks
+  retryCount: number; // Number of retries (default: 0)
+  maxRetries: number; // Max retry attempts (default: 3)
   errorMessage?: string;
-  errorDetails?: Record<string, any>;  // Additional error context
-  supersededBy?: string;  // ID of newer job
-  startedAt?: string;  // ISO 8601
-  completedAt?: string;  // ISO 8601
-  failedAt?: string;  // ISO 8601
-  createdAt: string;  // ISO 8601
-  updatedAt: string;  // ISO 8601
+  errorDetails?: Record<string, any>; // Additional error context
+  supersededBy?: string; // ID of newer job
+  startedAt?: string; // ISO 8601
+  completedAt?: string; // ISO 8601
+  failedAt?: string; // ISO 8601
+  createdAt: string; // ISO 8601
+  updatedAt: string; // ISO 8601
 }
 ```
 
@@ -1093,12 +1167,14 @@ export interface IndexingJob {
 **Storage**: PostgreSQL (`user_settings` table)
 
 **Relationships**:
+
 - Belongs to: `User` (1:1)
 
 **Fields**:
 See [WEB_APP_SPECS.md - User Settings Section](WEB_APP_SPECS.md#user-settings--preferences) for complete field definitions.
 
 **Summary**:
+
 - General (language, timezone, theme)
 - Voice (input device, activation mode, TTS settings)
 - Citations (display style, priority sources)
@@ -1113,8 +1189,8 @@ See [WEB_APP_SPECS.md - User Settings Section](WEB_APP_SPECS.md#user-settings--p
 
 ```typescript
 export interface UserSettings {
-  id: string;  // uuid4
-  userId: string;  // uuid4
+  id: string; // uuid4
+  userId: string; // uuid4
   general: GeneralSettings;
   voice: VoiceSettings;
   citations: CitationSettings;
@@ -1145,6 +1221,7 @@ export interface UserSettings {
 See [ADMIN_PANEL_SPECS.md - System Settings Section](ADMIN_PANEL_SPECS.md#system-settings-interface) for complete field definitions.
 
 **Summary**:
+
 - General (system name, maintenance mode)
 - Data Retention (log retention, auto-cleanup)
 - Backup (schedule, retention, encryption)
@@ -1159,7 +1236,7 @@ See [ADMIN_PANEL_SPECS.md - System Settings Section](ADMIN_PANEL_SPECS.md#system
 
 ```typescript
 export interface SystemSettings {
-  id: string;  // uuid4
+  id: string; // uuid4
   general: GeneralSystemSettings;
   dataRetention: DataRetentionSettings;
   backup: BackupSettings;
@@ -1187,9 +1264,11 @@ export interface SystemSettings {
 **Storage**: PostgreSQL (`audit_logs` table) with append-only, no delete permissions
 
 **Relationships**:
+
 - References: `User` (actor)
 
 **Fields**:
+
 - `id` (required, uuid4) - Unique identifier
 - `user_id` (optional, uuid4) - Foreign key to User (null for system actions)
 - `action` (required, string) - Action type (e.g., "user.login", "document.upload", "query.execute")
@@ -1211,21 +1290,21 @@ export interface SystemSettings {
   "title": "AuditLogEntry",
   "type": "object",
   "properties": {
-    "id": {"type": "string", "format": "uuid"},
-    "user_id": {"type": "string", "format": "uuid"},
-    "action": {"type": "string"},
-    "resource_type": {"type": "string"},
-    "resource_id": {"type": "string"},
+    "id": { "type": "string", "format": "uuid" },
+    "user_id": { "type": "string", "format": "uuid" },
+    "action": { "type": "string" },
+    "resource_type": { "type": "string" },
+    "resource_id": { "type": "string" },
     "status": {
       "type": "string",
       "enum": ["success", "failure", "denied"]
     },
-    "ip_address": {"type": "string"},
-    "user_agent": {"type": "string"},
-    "details": {"type": "object"},
-    "phi_accessed": {"type": "boolean", "default": false},
-    "timestamp": {"type": "string", "format": "date-time"},
-    "session_id": {"type": "string"}
+    "ip_address": { "type": "string" },
+    "user_agent": { "type": "string" },
+    "details": { "type": "object" },
+    "phi_accessed": { "type": "boolean", "default": false },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "session_id": { "type": "string" }
   },
   "required": ["id", "action", "resource_type", "status", "ip_address", "phi_accessed", "timestamp"]
 }
@@ -1266,20 +1345,20 @@ class AuditLogEntry(BaseModel):
 #### TypeScript
 
 ```typescript
-export type AuditStatus = 'success' | 'failure' | 'denied';
+export type AuditStatus = "success" | "failure" | "denied";
 
 export interface AuditLogEntry {
-  id: string;  // uuid4
-  userId?: string;  // uuid4
-  action: string;  // e.g., "user.login", "document.upload"
-  resourceType: string;  // e.g., "user", "document"
+  id: string; // uuid4
+  userId?: string; // uuid4
+  action: string; // e.g., "user.login", "document.upload"
+  resourceType: string; // e.g., "user", "document"
   resourceId?: string;
   status: AuditStatus;
   ipAddress: string;
   userAgent?: string;
-  details?: Record<string, any>;  // PHI-redacted
+  details?: Record<string, any>; // PHI-redacted
   phiAccessed: boolean;
-  timestamp: string;  // ISO 8601
+  timestamp: string; // ISO 8601
   sessionId?: string;
 }
 ```
@@ -1295,9 +1374,11 @@ export interface AuditLogEntry {
 **Storage**: PostgreSQL (`tool_calls` table)
 
 **Relationships**:
+
 - References: `User` (executor), `Session` (conversation context)
 
 **Fields**:
+
 - `id` (required, uuid4) - Unique identifier
 - `session_id` (required, uuid4) - Foreign key to Session
 - `user_id` (required, uuid4) - Foreign key to User
@@ -1322,9 +1403,9 @@ export interface AuditLogEntry {
   "title": "ToolCall",
   "type": "object",
   "properties": {
-    "id": {"type": "string", "format": "uuid"},
-    "session_id": {"type": "string", "format": "uuid"},
-    "user_id": {"type": "string", "format": "uuid"},
+    "id": { "type": "string", "format": "uuid" },
+    "session_id": { "type": "string", "format": "uuid" },
+    "user_id": { "type": "string", "format": "uuid" },
     "tool_name": {
       "type": "string",
       "description": "Tool name from TOOL_REGISTRY"
@@ -1341,27 +1422,39 @@ export interface AuditLogEntry {
       "type": "string",
       "enum": ["pending", "success", "error", "denied", "timeout"]
     },
-    "confirmation_required": {"type": "boolean"},
-    "user_confirmed": {"type": "boolean"},
-    "phi_involved": {"type": "boolean"},
-    "execution_time_ms": {"type": "number"},
-    "error_message": {"type": "string"},
-    "trace_id": {"type": "string"},
-    "timestamp": {"type": "string", "format": "date-time"},
-    "created_at": {"type": "string", "format": "date-time"}
+    "confirmation_required": { "type": "boolean" },
+    "user_confirmed": { "type": "boolean" },
+    "phi_involved": { "type": "boolean" },
+    "execution_time_ms": { "type": "number" },
+    "error_message": { "type": "string" },
+    "trace_id": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "created_at": { "type": "string", "format": "date-time" }
   },
-  "required": ["id", "session_id", "user_id", "tool_name", "arguments", "status", "confirmation_required", "phi_involved", "trace_id", "timestamp", "created_at"],
+  "required": [
+    "id",
+    "session_id",
+    "user_id",
+    "tool_name",
+    "arguments",
+    "status",
+    "confirmation_required",
+    "phi_involved",
+    "trace_id",
+    "timestamp",
+    "created_at"
+  ],
   "definitions": {
     "ToolResult": {
       "type": "object",
       "properties": {
-        "success": {"type": "boolean"},
-        "result": {"type": "object"},
-        "error": {"type": "string"},
-        "execution_time_ms": {"type": "number"},
+        "success": { "type": "boolean" },
+        "result": { "type": "object" },
+        "error": { "type": "string" },
+        "execution_time_ms": { "type": "number" },
         "citations": {
           "type": "array",
-          "items": {"type": "object"}
+          "items": { "type": "object" }
         }
       },
       "required": ["success", "execution_time_ms"]
@@ -1421,7 +1514,7 @@ class ToolCall(BaseModel):
 #### TypeScript
 
 ```typescript
-export type ToolCallStatus = 'pending' | 'success' | 'error' | 'denied' | 'timeout';
+export type ToolCallStatus = "pending" | "success" | "error" | "denied" | "timeout";
 
 export interface ToolResult {
   success: boolean;
@@ -1432,10 +1525,10 @@ export interface ToolResult {
 }
 
 export interface ToolCall {
-  id: string;  // uuid4
-  sessionId: string;  // uuid4
-  userId: string;  // uuid4
-  toolName: string;  // e.g., "get_calendar_events"
+  id: string; // uuid4
+  sessionId: string; // uuid4
+  userId: string; // uuid4
+  toolName: string; // e.g., "get_calendar_events"
   arguments: Record<string, any>;
   result?: ToolResult;
   status: ToolCallStatus;
@@ -1445,8 +1538,8 @@ export interface ToolCall {
   executionTimeMs?: number;
   errorMessage?: string;
   traceId: string;
-  timestamp: string;  // ISO 8601
-  createdAt: string;  // ISO 8601
+  timestamp: string; // ISO 8601
+  createdAt: string; // ISO 8601
 }
 ```
 
@@ -1459,6 +1552,7 @@ export interface ToolCall {
 **Note**: See ToolResult definition in ToolCall entity above. This is NOT stored as a separate entity, but as a JSON field within the `tool_calls` table.
 
 **Fields**:
+
 - `success` (required, boolean) - Did tool execute successfully?
 - `result` (optional, object) - Tool result data (structure depends on tool)
 - `error` (optional, string) - Error message if failed
@@ -1496,21 +1590,21 @@ ToolResult (embedded in ToolCall, not separate entity)
 
 ## Storage Summary
 
-| Entity | PostgreSQL Table | Qdrant Collection | Redis Cache | Notes |
-|--------|------------------|-------------------|-------------|-------|
-| User | `users` | - | Session tokens | Primary storage: PostgreSQL |
-| Session | `sessions` | - | Active sessions | Cache for quick lookup |
-| ChatMessage | `chat_messages` | - | Recent messages | Citations embedded in metadata |
-| ClinicalContext | `clinical_contexts` | - | - | 1:1 with Session |
-| Citation | Embedded in ChatMessage | - | - | Not a separate table |
-| KnowledgeDocument | `knowledge_documents` | - | - | Metadata only |
-| KBChunk | `kb_chunks` | `medical_knowledge` | - | Text in PostgreSQL, vectors in Qdrant |
-| IndexingJob | `indexing_jobs` | - | Job status | Background processing |
-| UserSettings | `user_settings` | - | Settings cache | Per-user preferences |
-| SystemSettings | `system_settings` | - | Settings cache | Singleton, file backup |
-| AuditLogEntry | `audit_logs` | - | - | Append-only, HIPAA compliance |
-| ToolCall | `tool_calls` | - | - | Tool invocation audit trail |
-| ToolResult | Embedded in ToolCall | - | - | Not a separate table (JSON field in tool_calls) |
+| Entity            | PostgreSQL Table        | Qdrant Collection   | Redis Cache     | Notes                                           |
+| ----------------- | ----------------------- | ------------------- | --------------- | ----------------------------------------------- |
+| User              | `users`                 | -                   | Session tokens  | Primary storage: PostgreSQL                     |
+| Session           | `sessions`              | -                   | Active sessions | Cache for quick lookup                          |
+| ChatMessage       | `chat_messages`         | -                   | Recent messages | Citations embedded in metadata                  |
+| ClinicalContext   | `clinical_contexts`     | -                   | -               | 1:1 with Session                                |
+| Citation          | Embedded in ChatMessage | -                   | -               | Not a separate table                            |
+| KnowledgeDocument | `knowledge_documents`   | -                   | -               | Metadata only                                   |
+| KBChunk           | `kb_chunks`             | `medical_knowledge` | -               | Text in PostgreSQL, vectors in Qdrant           |
+| IndexingJob       | `indexing_jobs`         | -                   | Job status      | Background processing                           |
+| UserSettings      | `user_settings`         | -                   | Settings cache  | Per-user preferences                            |
+| SystemSettings    | `system_settings`       | -                   | Settings cache  | Singleton, file backup                          |
+| AuditLogEntry     | `audit_logs`            | -                   | -               | Append-only, HIPAA compliance                   |
+| ToolCall          | `tool_calls`            | -                   | -               | Tool invocation audit trail                     |
+| ToolResult        | Embedded in ToolCall    | -                   | -               | Not a separate table (JSON field in tool_calls) |
 
 ---
 
@@ -1524,6 +1618,7 @@ ToolResult (embedded in ToolCall, not separate entity)
 4. **Validation**: Pydantic handles validation automatically
 
 **Example**:
+
 ```python
 from app.models.data_model import User, Session, ChatMessage
 
@@ -1541,8 +1636,9 @@ class UserDB(User):
 4. **Forms**: Use types for form validation (Zod, Yup)
 
 **Example**:
+
 ```typescript
-import { User, Session, ChatMessage } from '@/types/data-model';
+import { User, Session, ChatMessage } from "@/types/data-model";
 
 // API call with types
 async function getSession(id: string): Promise<Session> {

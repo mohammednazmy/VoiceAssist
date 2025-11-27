@@ -1,6 +1,19 @@
+---
+title: "Architecture"
+slug: "architecture"
+summary: "> **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["architecture"]
+---
+
 > **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**
 > This describes the original 20-phase plan.
 > For the current architecture and phases, see:
+>
 > - [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md)
 > - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md)
 > - [START_HERE.md](START_HERE.md)
@@ -100,18 +113,21 @@ VoiceAssist uses a distributed architecture with components running on macOS (cl
 ### 1. macOS Client
 
 **Voice Interface**
+
 - Continuous audio monitoring with wake word detection (Porcupine)
 - Streams to OpenAI Realtime API when activated
 - Low-latency speech-to-speech conversation
 - Handles interruptions and natural conversation flow
 
 **AI Orchestrator**
+
 - Routes requests based on privacy classification
 - Manages conversation context and history
 - Coordinates between local and cloud models
 - Implements tool calling for system actions
 
 **Local Processing**
+
 - Ollama for local LLM inference
 - Vector search over local files
 - System integration via AppleScript/shortcuts
@@ -122,24 +138,28 @@ VoiceAssist uses a distributed architecture with components running on macOS (cl
 ### 2. Ubuntu Server Services
 
 #### Voice API Service
+
 - WebSocket endpoint for web clients
 - Proxy to OpenAI Realtime API
 - Session management
 - Authentication and authorization
 
 #### Medical Knowledge Base Service
+
 - RAG (Retrieval Augmented Generation) pipeline
 - Vector similarity search
 - Source citation and metadata tracking
 - Periodic knowledge base updates
 
 **APIs:**
+
 - `POST /search` - Search medical knowledge
 - `GET /textbook/{id}/section/{section}` - Retrieve textbook content
 - `POST /journal/search` - Search medical journals
 - `POST /journal/download` - Download and process PDF
 
 #### Admin API Service
+
 - System configuration endpoints
 - User management
 - Usage analytics
@@ -147,6 +167,7 @@ VoiceAssist uses a distributed architecture with components running on macOS (cl
 - Integration testing
 
 #### PDF Processing Pipeline
+
 1. Download from PubMed, direct links, or upload
 2. Extract text (PyPDF2, pdfplumber)
 3. OCR if needed (Tesseract)
@@ -158,16 +179,19 @@ VoiceAssist uses a distributed architecture with components running on macOS (cl
 #### External Service Integrations
 
 **PubMed API**
+
 - Search via E-utilities
 - Download abstracts and metadata
 - Full-text retrieval from PMC
 
 **OpenEvidence API**
+
 - Evidence summary queries
 - Clinical question answering
 - Guideline recommendations
 
 **Nextcloud Integration**
+
 - WebDAV for file access
 - Automatic indexing of medical notes
 - Document backup and sync
@@ -175,6 +199,7 @@ VoiceAssist uses a distributed architecture with components running on macOS (cl
 ### 3. Web Application
 
 **Frontend (React + TypeScript)**
+
 - Chat interface with voice input option
 - File upload for analysis
 - Source citation display
@@ -182,6 +207,7 @@ VoiceAssist uses a distributed architecture with components running on macOS (cl
 - Mobile-responsive design
 
 **Features:**
+
 - Text and voice input modes
 - Real-time streaming responses
 - Code/markdown rendering
@@ -189,6 +215,7 @@ VoiceAssist uses a distributed architecture with components running on macOS (cl
 - Export conversations
 
 **Communication:**
+
 - WebSocket for real-time chat
 - REST API for file operations
 - Audio streaming for voice mode
@@ -229,6 +256,7 @@ VoiceAssist uses a distributed architecture with components running on macOS (cl
 ### 5. Documentation Site
 
 **Content Structure:**
+
 - Getting started guide
 - Installation instructions
 - User manual
@@ -285,6 +313,7 @@ VoiceAssist uses a distributed architecture with components running on macOS (cl
 ### Data Classification
 
 **Tier 1 - Strictly Local (PHI/Sensitive)**
+
 - Patient notes
 - Personal medical records
 - Sensitive personal files
@@ -292,6 +321,7 @@ VoiceAssist uses a distributed architecture with components running on macOS (cl
 - Processed by local Ollama only
 
 **Tier 2 - Server (Private but not PHI)**
+
 - Personal documents
 - Email content
 - Calendar details
@@ -299,14 +329,16 @@ VoiceAssist uses a distributed architecture with components running on macOS (cl
 - Not sent to commercial APIs
 
 **Tier 3 - Cloud OK (Public/General Knowledge)**
+
 - Medical literature queries
 - General medical questions
 - Web searches
 - Can use OpenAI/Claude APIs
 
 ### Classification Logic
+
 - Keyword detection (patient names, MRN, etc.)
-- File path analysis (/Medical-Records/* = local)
+- File path analysis (/Medical-Records/\* = local)
 - User tagging (mark conversations as sensitive)
 - Default: assume Tier 1 unless explicitly cleared
 
@@ -337,6 +369,7 @@ VoiceAssist uses a distributed architecture with components running on macOS (cl
 **Current Design**: Single-user, personal use
 
 **Future Expansion Possibilities**:
+
 - Multi-user support (family members, colleagues)
 - Horizontal scaling of server services
 - Multiple macOS/iOS clients
@@ -346,12 +379,14 @@ VoiceAssist uses a distributed architecture with components running on macOS (cl
 ## Deployment Architecture
 
 ### macOS Client
+
 - LaunchAgent for auto-start
 - Menu bar app
 - System permissions (microphone, accessibility)
 - Auto-update mechanism
 
 ### Ubuntu Server
+
 - Docker Compose for service orchestration
 - Nginx reverse proxy
 - Let's Encrypt SSL certificates
@@ -359,6 +394,7 @@ VoiceAssist uses a distributed architecture with components running on macOS (cl
 - Automated backups
 
 ### Monitoring
+
 - Prometheus + Grafana for metrics
 - Log aggregation (Loki or ELK)
 - Alerting (if server issues)

@@ -1,3 +1,15 @@
+---
+title: "Development Workflow"
+slug: "client-implementation/development-workflow"
+summary: "**Date:** 2025-11-21"
+status: stable
+stability: production
+owner: frontend
+lastUpdated: "2025-11-27"
+audience: ["human"]
+tags: ["development", "workflow"]
+---
+
 # VoiceAssist Development Workflow Guide
 
 **Version:** 1.0.0
@@ -36,16 +48,16 @@ All branches must follow a strict naming convention to ensure clarity and automa
 
 #### Branch Types
 
-| Type | Purpose | Example |
-|------|---------|---------|
-| `feature/` | New features or enhancements | `feature/VA-123-voice-mode-ui` |
-| `bugfix/` | Bug fixes | `bugfix/VA-456-auth-token-refresh` |
-| `hotfix/` | Critical production fixes | `hotfix/VA-789-security-patch` |
+| Type        | Purpose                               | Example                                 |
+| ----------- | ------------------------------------- | --------------------------------------- |
+| `feature/`  | New features or enhancements          | `feature/VA-123-voice-mode-ui`          |
+| `bugfix/`   | Bug fixes                             | `bugfix/VA-456-auth-token-refresh`      |
+| `hotfix/`   | Critical production fixes             | `hotfix/VA-789-security-patch`          |
 | `refactor/` | Code refactoring (no behavior change) | `refactor/VA-234-chat-state-management` |
-| `docs/` | Documentation only | `docs/VA-567-api-guide-update` |
-| `test/` | Test additions or fixes | `test/VA-890-e2e-voice-tests` |
-| `chore/` | Build, dependencies, tooling | `chore/VA-345-update-dependencies` |
-| `release/` | Release preparation | `release/v1.2.0` |
+| `docs/`     | Documentation only                    | `docs/VA-567-api-guide-update`          |
+| `test/`     | Test additions or fixes               | `test/VA-890-e2e-voice-tests`           |
+| `chore/`    | Build, dependencies, tooling          | `chore/VA-345-update-dependencies`      |
+| `release/`  | Release preparation                   | `release/v1.2.0`                        |
 
 #### Examples
 
@@ -65,11 +77,11 @@ feature-123
 
 #### Protected Branches
 
-| Branch | Purpose | Merge Requirements |
-|--------|---------|-------------------|
-| `main` | Production-ready code | • 2+ approvals<br>• All CI checks pass<br>• No merge commits<br>• Squash merge only |
-| `develop` | Integration branch | • 1+ approval<br>• All CI checks pass<br>• Merge commit allowed |
-| `staging` | Pre-production testing | • 1+ approval<br>• All CI checks pass |
+| Branch    | Purpose                | Merge Requirements                                                                  |
+| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| `main`    | Production-ready code  | • 2+ approvals<br>• All CI checks pass<br>• No merge commits<br>• Squash merge only |
+| `develop` | Integration branch     | • 1+ approval<br>• All CI checks pass<br>• Merge commit allowed                     |
+| `staging` | Pre-production testing | • 1+ approval<br>• All CI checks pass                                               |
 
 ### 1.2 Commit Message Format
 
@@ -87,23 +99,24 @@ We follow **Conventional Commits** specification for automated changelog generat
 
 #### Types
 
-| Type | Purpose | Changelog Section | Semver Impact |
-|------|---------|-------------------|---------------|
-| `feat` | New feature | Features | MINOR |
-| `fix` | Bug fix | Bug Fixes | PATCH |
-| `docs` | Documentation only | Documentation | - |
-| `style` | Code style (formatting, missing semicolons) | - | - |
-| `refactor` | Code change (no feature/fix) | - | - |
-| `perf` | Performance improvement | Performance | PATCH |
-| `test` | Adding/updating tests | - | - |
-| `build` | Build system changes | - | - |
-| `ci` | CI configuration changes | - | - |
-| `chore` | Other changes | - | - |
-| `revert` | Revert previous commit | - | - |
+| Type       | Purpose                                     | Changelog Section | Semver Impact |
+| ---------- | ------------------------------------------- | ----------------- | ------------- |
+| `feat`     | New feature                                 | Features          | MINOR         |
+| `fix`      | Bug fix                                     | Bug Fixes         | PATCH         |
+| `docs`     | Documentation only                          | Documentation     | -             |
+| `style`    | Code style (formatting, missing semicolons) | -                 | -             |
+| `refactor` | Code change (no feature/fix)                | -                 | -             |
+| `perf`     | Performance improvement                     | Performance       | PATCH         |
+| `test`     | Adding/updating tests                       | -                 | -             |
+| `build`    | Build system changes                        | -                 | -             |
+| `ci`       | CI configuration changes                    | -                 | -             |
+| `chore`    | Other changes                               | -                 | -             |
+| `revert`   | Revert previous commit                      | -                 | -             |
 
 #### Scope Examples
 
 **Web App:**
+
 - `auth` - Authentication/authorization
 - `chat` - Chat interface
 - `voice` - Voice mode
@@ -112,12 +125,14 @@ We follow **Conventional Commits** specification for automated changelog generat
 - `state` - State management
 
 **Admin Panel:**
+
 - `dashboard` - Dashboard features
 - `kb` - Knowledge base management
 - `users` - User management
 - `analytics` - Analytics features
 
 **Shared:**
+
 - `deps` - Dependencies
 - `config` - Configuration
 - `types` - TypeScript types
@@ -185,7 +200,7 @@ Reason: Performance regression in real-time updates.
 
 2. **Body:**
    - Wrap at 72 characters
-   - Explain *what* and *why*, not *how*
+   - Explain _what_ and _why_, not _how_
    - Separate from subject with blank line
 
 3. **Footer:**
@@ -374,11 +389,13 @@ git commit -m "feat(feature): add new feature (#123)"
 ```
 
 **When to use:**
+
 - Feature branches with many commits
 - Bug fix branches
 - Work-in-progress branches with messy history
 
 **Benefits:**
+
 - Clean, linear history on main
 - Easy to revert entire features
 - Better changelog generation
@@ -393,6 +410,7 @@ git merge --no-ff release/v1.2.0
 ```
 
 **When to use:**
+
 - Release branches
 - Hotfix branches (to preserve urgency context)
 - Large feature integrations from develop
@@ -409,6 +427,7 @@ git merge --ff-only feature/VA-123-new-feature
 ```
 
 **When to use:**
+
 - Small, atomic changes
 - Commits already well-structured
 - Documentation updates
@@ -510,20 +529,10 @@ done
 ```json
 {
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{js,jsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md,yml,yaml}": [
-      "prettier --write"
-    ],
-    "*.{css,scss}": [
-      "prettier --write"
-    ]
+    "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
+    "*.{js,jsx}": ["eslint --fix", "prettier --write"],
+    "*.{json,md,yml,yaml}": ["prettier --write"],
+    "*.{css,scss}": ["prettier --write"]
   }
 }
 ```
@@ -534,37 +543,25 @@ done
 
 ```javascript
 module.exports = {
-  extends: ['@commitlint/config-conventional'],
+  extends: ["@commitlint/config-conventional"],
   rules: {
-    'type-enum': [
+    "type-enum": [
       2,
-      'always',
-      [
-        'feat',
-        'fix',
-        'docs',
-        'style',
-        'refactor',
-        'perf',
-        'test',
-        'build',
-        'ci',
-        'chore',
-        'revert'
-      ]
+      "always",
+      ["feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore", "revert"],
     ],
-    'type-case': [2, 'always', 'lower-case'],
-    'type-empty': [2, 'never'],
-    'scope-case': [2, 'always', 'lower-case'],
-    'subject-empty': [2, 'never'],
-    'subject-full-stop': [2, 'never', '.'],
-    'subject-case': [2, 'always', 'lower-case'],
-    'header-max-length': [2, 'always', 72],
-    'body-leading-blank': [2, 'always'],
-    'body-max-line-length': [2, 'always', 100],
-    'footer-leading-blank': [2, 'always'],
-    'footer-max-line-length': [2, 'always', 100]
-  }
+    "type-case": [2, "always", "lower-case"],
+    "type-empty": [2, "never"],
+    "scope-case": [2, "always", "lower-case"],
+    "subject-empty": [2, "never"],
+    "subject-full-stop": [2, "never", "."],
+    "subject-case": [2, "always", "lower-case"],
+    "header-max-length": [2, "always", 72],
+    "body-leading-blank": [2, "always"],
+    "body-max-line-length": [2, "always", 100],
+    "footer-leading-blank": [2, "always"],
+    "footer-max-line-length": [2, "always", 100],
+  },
 };
 ```
 
@@ -648,6 +645,7 @@ Use this checklist for every code review:
 ## Code Review Checklist
 
 ### Functionality
+
 - [ ] Code does what the PR description says
 - [ ] Edge cases handled appropriately
 - [ ] Error handling is comprehensive
@@ -655,6 +653,7 @@ Use this checklist for every code review:
 - [ ] Accessibility requirements met (WCAG 2.1 AA)
 
 ### Code Quality
+
 - [ ] Code is readable and maintainable
 - [ ] No unnecessary complexity
 - [ ] Functions are small and focused (< 50 lines)
@@ -664,6 +663,7 @@ Use this checklist for every code review:
 - [ ] No commented-out code
 
 ### TypeScript/JavaScript
+
 - [ ] Proper TypeScript types (no `any`)
 - [ ] Type safety maintained
 - [ ] Async/await used correctly
@@ -672,6 +672,7 @@ Use this checklist for every code review:
 - [ ] No console.log or debugger statements
 
 ### React Best Practices
+
 - [ ] Components are properly modularized
 - [ ] Hooks used correctly (dependencies array)
 - [ ] No unnecessary re-renders
@@ -681,6 +682,7 @@ Use this checklist for every code review:
 - [ ] Keys used correctly in lists
 
 ### Performance
+
 - [ ] No performance regressions
 - [ ] Expensive operations memoized
 - [ ] Images optimized
@@ -688,6 +690,7 @@ Use this checklist for every code review:
 - [ ] Bundle size impact acceptable
 
 ### Testing
+
 - [ ] Unit tests added for new functions
 - [ ] Integration tests added for new features
 - [ ] Edge cases tested
@@ -696,6 +699,7 @@ Use this checklist for every code review:
 - [ ] Tests are deterministic (no flaky tests)
 
 ### Security
+
 - [ ] Input validation implemented
 - [ ] XSS vulnerabilities addressed
 - [ ] CSRF protection in place
@@ -705,6 +709,7 @@ Use this checklist for every code review:
 - [ ] HIPAA compliance maintained
 
 ### API Integration
+
 - [ ] API calls properly typed
 - [ ] Loading states handled
 - [ ] Error states handled
@@ -713,6 +718,7 @@ Use this checklist for every code review:
 - [ ] Timeouts configured
 
 ### UI/UX
+
 - [ ] Responsive design works on all breakpoints
 - [ ] Loading indicators shown
 - [ ] Error messages are user-friendly
@@ -722,6 +728,7 @@ Use this checklist for every code review:
 - [ ] Color contrast meets WCAG standards
 
 ### Documentation
+
 - [ ] README updated if needed
 - [ ] API documentation updated
 - [ ] Comments added for complex logic
@@ -729,6 +736,7 @@ Use this checklist for every code review:
 - [ ] Changelog updated
 
 ### Git/Process
+
 - [ ] Branch name follows conventions
 - [ ] Commit messages follow conventions
 - [ ] PR description is clear
@@ -744,6 +752,7 @@ Use this checklist for every code review:
 **For Reviewers:**
 
 1. **Initial Assessment (5 minutes)**
+
    ```bash
    # Check out the PR branch
    gh pr checkout 123
@@ -760,6 +769,7 @@ Use this checklist for every code review:
    - Suggest improvements with code examples
 
 3. **Testing (15-30 minutes)**
+
    ```bash
    # Install dependencies
    pnpm install
@@ -781,6 +791,7 @@ Use this checklist for every code review:
 **For PR Authors:**
 
 1. **Before Requesting Review**
+
    ```bash
    # Self-review your changes
    git diff origin/main...HEAD
@@ -808,12 +819,12 @@ Use this checklist for every code review:
 
 #### Required Approvals by Branch
 
-| Target Branch | Required Approvals | Who Can Approve |
-|---------------|-------------------|-----------------|
-| `main` | 2 | Senior developers, tech lead |
-| `develop` | 1 | Any developer |
-| `staging` | 1 | Any developer |
-| Feature branches | 0 | Optional review |
+| Target Branch    | Required Approvals | Who Can Approve              |
+| ---------------- | ------------------ | ---------------------------- |
+| `main`           | 2                  | Senior developers, tech lead |
+| `develop`        | 1                  | Any developer                |
+| `staging`        | 1                  | Any developer                |
+| Feature branches | 0                  | Optional review              |
 
 #### Exception Process
 
@@ -870,8 +881,8 @@ async function fetchUserData(userId: string): Promise<User> {
 
     return await response.json();
   } catch (error) {
-    console.error('Failed to fetch user data:', error);
-    throw new UserFetchError('Unable to load user data', { cause: error });
+    console.error("Failed to fetch user data:", error);
+    throw new UserFetchError("Unable to load user data", { cause: error });
   }
 }
 ```
@@ -926,7 +937,7 @@ interface DataItem {
 }
 
 function processData(data: DataItem[]): number[] {
-  return data.map(item => item.value);
+  return data.map((item) => item.value);
 }
 ```
 
@@ -935,12 +946,12 @@ function processData(data: DataItem[]): number[] {
 ```tsx
 // ❌ Bad: Creates new object on every render
 function UserList() {
-  const style = { color: 'blue' }; // New object each render
+  const style = { color: "blue" }; // New object each render
   return <div style={style}>...</div>;
 }
 
 // ✅ Good: Memoize or use constant
-const STYLE = { color: 'blue' };
+const STYLE = { color: "blue" };
 
 function UserList() {
   return <div style={STYLE}>...</div>;
@@ -948,25 +959,23 @@ function UserList() {
 
 // Or use useMemo for dynamic values
 function UserList({ darkMode }: Props) {
-  const style = useMemo(
-    () => ({ color: darkMode ? 'white' : 'black' }),
-    [darkMode]
-  );
+  const style = useMemo(() => ({ color: darkMode ? "white" : "black" }), [darkMode]);
   return <div style={style}>...</div>;
 }
 ```
 
 ### 2.5 Review Response Time Expectations
 
-| PR Type | Expected Review Time | Maximum Time |
-|---------|---------------------|--------------|
-| Hotfix | 2 hours | 4 hours |
-| Small bug fix (< 50 lines) | 4 hours | 24 hours |
-| Feature (< 200 lines) | 24 hours | 48 hours |
-| Large feature (200+ lines) | 48 hours | 72 hours |
-| Documentation | 24 hours | 48 hours |
+| PR Type                    | Expected Review Time | Maximum Time |
+| -------------------------- | -------------------- | ------------ |
+| Hotfix                     | 2 hours              | 4 hours      |
+| Small bug fix (< 50 lines) | 4 hours              | 24 hours     |
+| Feature (< 200 lines)      | 24 hours             | 48 hours     |
+| Large feature (200+ lines) | 48 hours             | 72 hours     |
+| Documentation              | 24 hours             | 48 hours     |
 
 **If review is delayed:**
+
 - Ping reviewer in Slack after expected time
 - Escalate to tech lead after maximum time
 - Consider splitting large PRs into smaller chunks
@@ -1002,6 +1011,7 @@ function UserList({ darkMode }: Props) {
 #### Unit Test Guidelines
 
 **File Naming:**
+
 - Test files: `ComponentName.test.tsx` or `functionName.test.ts`
 - Test utilities: `test-utils.ts`
 - Mocks: `__mocks__/moduleName.ts`
@@ -1010,78 +1020,82 @@ function UserList({ darkMode }: Props) {
 
 ```tsx
 // src/components/Button.test.tsx
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { Button } from './Button';
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { Button } from "./Button";
 
-describe('Button', () => {
-  describe('Rendering', () => {
-    it('renders with correct text', () => {
+describe("Button", () => {
+  describe("Rendering", () => {
+    it("renders with correct text", () => {
       render(<Button>Click me</Button>);
-      expect(screen.getByRole('button', { name: 'Click me' })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Click me" })).toBeInTheDocument();
     });
 
-    it('renders with loading state', () => {
+    it("renders with loading state", () => {
       render(<Button loading>Click me</Button>);
-      expect(screen.getByRole('button')).toHaveAttribute('disabled');
-      expect(screen.getByTestId('spinner')).toBeInTheDocument();
+      expect(screen.getByRole("button")).toHaveAttribute("disabled");
+      expect(screen.getByTestId("spinner")).toBeInTheDocument();
     });
 
-    it('applies variant styles correctly', () => {
+    it("applies variant styles correctly", () => {
       const { rerender } = render(<Button variant="primary">Primary</Button>);
-      expect(screen.getByRole('button')).toHaveClass('bg-blue-600');
+      expect(screen.getByRole("button")).toHaveClass("bg-blue-600");
 
       rerender(<Button variant="secondary">Secondary</Button>);
-      expect(screen.getByRole('button')).toHaveClass('bg-gray-600');
+      expect(screen.getByRole("button")).toHaveClass("bg-gray-600");
     });
   });
 
-  describe('Interactions', () => {
-    it('calls onClick handler when clicked', () => {
+  describe("Interactions", () => {
+    it("calls onClick handler when clicked", () => {
       const handleClick = vi.fn();
       render(<Button onClick={handleClick}>Click me</Button>);
 
-      fireEvent.click(screen.getByRole('button'));
+      fireEvent.click(screen.getByRole("button"));
 
       expect(handleClick).toHaveBeenCalledTimes(1);
     });
 
-    it('does not call onClick when disabled', () => {
+    it("does not call onClick when disabled", () => {
       const handleClick = vi.fn();
-      render(<Button onClick={handleClick} disabled>Click me</Button>);
+      render(
+        <Button onClick={handleClick} disabled>
+          Click me
+        </Button>,
+      );
 
-      fireEvent.click(screen.getByRole('button'));
+      fireEvent.click(screen.getByRole("button"));
 
       expect(handleClick).not.toHaveBeenCalled();
     });
   });
 
-  describe('Accessibility', () => {
-    it('has correct ARIA attributes', () => {
+  describe("Accessibility", () => {
+    it("has correct ARIA attributes", () => {
       render(<Button aria-label="Close dialog">×</Button>);
-      expect(screen.getByLabelText('Close dialog')).toBeInTheDocument();
+      expect(screen.getByLabelText("Close dialog")).toBeInTheDocument();
     });
 
-    it('is keyboard accessible', () => {
+    it("is keyboard accessible", () => {
       const handleClick = vi.fn();
       render(<Button onClick={handleClick}>Click me</Button>);
 
-      const button = screen.getByRole('button');
+      const button = screen.getByRole("button");
       button.focus();
 
       expect(button).toHaveFocus();
 
-      fireEvent.keyDown(button, { key: 'Enter' });
+      fireEvent.keyDown(button, { key: "Enter" });
       expect(handleClick).toHaveBeenCalled();
     });
   });
 
-  describe('Edge Cases', () => {
-    it('handles rapid clicks gracefully', () => {
+  describe("Edge Cases", () => {
+    it("handles rapid clicks gracefully", () => {
       const handleClick = vi.fn();
       render(<Button onClick={handleClick}>Click me</Button>);
 
-      const button = screen.getByRole('button');
+      const button = screen.getByRole("button");
 
       // Simulate rapid clicks
       for (let i = 0; i < 10; i++) {
@@ -1098,19 +1112,19 @@ describe('Button', () => {
 
 ```tsx
 // src/hooks/useAuth.test.ts
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useAuth } from './useAuth';
-import { authApi } from '@voiceassist/api-client';
+import { renderHook, act, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { useAuth } from "./useAuth";
+import { authApi } from "@voiceassist/api-client";
 
-vi.mock('@voiceassist/api-client');
+vi.mock("@voiceassist/api-client");
 
-describe('useAuth', () => {
+describe("useAuth", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('initializes with null user', () => {
+  it("initializes with null user", () => {
     const { result } = renderHook(() => useAuth());
 
     expect(result.current.user).toBeNull();
@@ -1118,17 +1132,17 @@ describe('useAuth', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  it('logs in successfully', async () => {
-    const mockUser = { id: '1', email: 'test@example.com' };
+  it("logs in successfully", async () => {
+    const mockUser = { id: "1", email: "test@example.com" };
     vi.mocked(authApi.login).mockResolvedValue({
       user: mockUser,
-      token: 'mock-token'
+      token: "mock-token",
     });
 
     const { result } = renderHook(() => useAuth());
 
     act(() => {
-      result.current.login('test@example.com', 'password');
+      result.current.login("test@example.com", "password");
     });
 
     expect(result.current.isLoading).toBe(true);
@@ -1140,26 +1154,26 @@ describe('useAuth', () => {
     });
   });
 
-  it('handles login error', async () => {
-    const mockError = new Error('Invalid credentials');
+  it("handles login error", async () => {
+    const mockError = new Error("Invalid credentials");
     vi.mocked(authApi.login).mockRejectedValue(mockError);
 
     const { result } = renderHook(() => useAuth());
 
     await act(async () => {
-      await result.current.login('test@example.com', 'wrong-password');
+      await result.current.login("test@example.com", "wrong-password");
     });
 
     expect(result.current.error).toEqual(mockError);
     expect(result.current.isAuthenticated).toBe(false);
   });
 
-  it('logs out successfully', async () => {
+  it("logs out successfully", async () => {
     const { result } = renderHook(() => useAuth());
 
     // First login
     await act(async () => {
-      await result.current.login('test@example.com', 'password');
+      await result.current.login("test@example.com", "password");
     });
 
     // Then logout
@@ -1177,49 +1191,49 @@ describe('useAuth', () => {
 
 ```tsx
 // src/utils/date.test.ts
-import { describe, it, expect } from 'vitest';
-import { formatDate, parseDate, isValidDate } from './date';
+import { describe, it, expect } from "vitest";
+import { formatDate, parseDate, isValidDate } from "./date";
 
-describe('Date Utilities', () => {
-  describe('formatDate', () => {
-    it('formats date in default format', () => {
-      const date = new Date('2025-01-15T10:30:00Z');
-      expect(formatDate(date)).toBe('Jan 15, 2025');
+describe("Date Utilities", () => {
+  describe("formatDate", () => {
+    it("formats date in default format", () => {
+      const date = new Date("2025-01-15T10:30:00Z");
+      expect(formatDate(date)).toBe("Jan 15, 2025");
     });
 
-    it('formats date with custom format', () => {
-      const date = new Date('2025-01-15T10:30:00Z');
-      expect(formatDate(date, 'yyyy-MM-dd')).toBe('2025-01-15');
+    it("formats date with custom format", () => {
+      const date = new Date("2025-01-15T10:30:00Z");
+      expect(formatDate(date, "yyyy-MM-dd")).toBe("2025-01-15");
     });
 
-    it('handles invalid date', () => {
-      expect(formatDate(new Date('invalid'))).toBe('Invalid Date');
+    it("handles invalid date", () => {
+      expect(formatDate(new Date("invalid"))).toBe("Invalid Date");
     });
   });
 
-  describe('parseDate', () => {
-    it('parses ISO date string', () => {
-      const result = parseDate('2025-01-15T10:30:00Z');
+  describe("parseDate", () => {
+    it("parses ISO date string", () => {
+      const result = parseDate("2025-01-15T10:30:00Z");
       expect(result).toBeInstanceOf(Date);
       expect(result.getFullYear()).toBe(2025);
     });
 
-    it('returns null for invalid date string', () => {
-      expect(parseDate('not-a-date')).toBeNull();
+    it("returns null for invalid date string", () => {
+      expect(parseDate("not-a-date")).toBeNull();
     });
   });
 
-  describe('isValidDate', () => {
-    it('returns true for valid date', () => {
-      expect(isValidDate(new Date('2025-01-15'))).toBe(true);
+  describe("isValidDate", () => {
+    it("returns true for valid date", () => {
+      expect(isValidDate(new Date("2025-01-15"))).toBe(true);
     });
 
-    it('returns false for invalid date', () => {
-      expect(isValidDate(new Date('invalid'))).toBe(false);
+    it("returns false for invalid date", () => {
+      expect(isValidDate(new Date("invalid"))).toBe(false);
     });
 
-    it('returns false for non-date values', () => {
-      expect(isValidDate('2025-01-15')).toBe(false);
+    it("returns false for non-date values", () => {
+      expect(isValidDate("2025-01-15")).toBe(false);
       expect(isValidDate(null)).toBe(false);
       expect(isValidDate(undefined)).toBe(false);
     });
@@ -1233,72 +1247,72 @@ describe('Date Utilities', () => {
 
 ```tsx
 // src/api/auth.integration.test.ts
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { setupServer } from 'msw/node';
-import { http, HttpResponse } from 'msw';
-import { authApi } from '@voiceassist/api-client';
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { setupServer } from "msw/node";
+import { http, HttpResponse } from "msw";
+import { authApi } from "@voiceassist/api-client";
 
 const server = setupServer();
 
 beforeAll(() => server.listen());
 afterAll(() => server.close());
 
-describe('Auth API Integration', () => {
-  it('successfully logs in user', async () => {
+describe("Auth API Integration", () => {
+  it("successfully logs in user", async () => {
     server.use(
-      http.post('/api/auth/login', () => {
+      http.post("/api/auth/login", () => {
         return HttpResponse.json({
-          user: { id: '1', email: 'test@example.com' },
-          token: 'mock-jwt-token',
-          refreshToken: 'mock-refresh-token'
+          user: { id: "1", email: "test@example.com" },
+          token: "mock-jwt-token",
+          refreshToken: "mock-refresh-token",
         });
-      })
+      }),
     );
 
     const result = await authApi.login({
-      email: 'test@example.com',
-      password: 'password123'
+      email: "test@example.com",
+      password: "password123",
     });
 
     expect(result.user).toMatchObject({
-      id: '1',
-      email: 'test@example.com'
+      id: "1",
+      email: "test@example.com",
     });
-    expect(result.token).toBe('mock-jwt-token');
+    expect(result.token).toBe("mock-jwt-token");
   });
 
-  it('handles 401 authentication error', async () => {
+  it("handles 401 authentication error", async () => {
     server.use(
-      http.post('/api/auth/login', () => {
+      http.post("/api/auth/login", () => {
         return new HttpResponse(null, {
           status: 401,
-          statusText: 'Unauthorized'
+          statusText: "Unauthorized",
         });
-      })
+      }),
     );
 
     await expect(
       authApi.login({
-        email: 'test@example.com',
-        password: 'wrong-password'
-      })
-    ).rejects.toThrow('Unauthorized');
+        email: "test@example.com",
+        password: "wrong-password",
+      }),
+    ).rejects.toThrow("Unauthorized");
   });
 
-  it('refreshes token successfully', async () => {
+  it("refreshes token successfully", async () => {
     server.use(
-      http.post('/api/auth/refresh', () => {
+      http.post("/api/auth/refresh", () => {
         return HttpResponse.json({
-          token: 'new-jwt-token',
-          refreshToken: 'new-refresh-token'
+          token: "new-jwt-token",
+          refreshToken: "new-refresh-token",
         });
-      })
+      }),
     );
 
-    const result = await authApi.refreshToken('old-refresh-token');
+    const result = await authApi.refreshToken("old-refresh-token");
 
-    expect(result.token).toBe('new-jwt-token');
-    expect(result.refreshToken).toBe('new-refresh-token');
+    expect(result.token).toBe("new-jwt-token");
+    expect(result.refreshToken).toBe("new-refresh-token");
   });
 });
 ```
@@ -1307,18 +1321,18 @@ describe('Auth API Integration', () => {
 
 ```tsx
 // src/features/auth/LoginPage.integration.test.tsx
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { LoginPage } from './LoginPage';
-import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
-import { BrowserRouter } from 'react-router-dom';
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { LoginPage } from "./LoginPage";
+import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { retry: false },
-    mutations: { retry: false }
-  }
+    mutations: { retry: false },
+  },
 });
 
 function renderLoginPage() {
@@ -1327,25 +1341,25 @@ function renderLoginPage() {
       <BrowserRouter>
         <LoginPage />
       </BrowserRouter>
-    </QueryClientProvider>
+    </QueryClientProvider>,
   );
 }
 
-describe('LoginPage Integration', () => {
-  it('completes full login flow', async () => {
+describe("LoginPage Integration", () => {
+  it("completes full login flow", async () => {
     const user = userEvent.setup();
     renderLoginPage();
 
     // Fill in email
     const emailInput = screen.getByLabelText(/email/i);
-    await user.type(emailInput, 'test@example.com');
+    await user.type(emailInput, "test@example.com");
 
     // Fill in password
     const passwordInput = screen.getByLabelText(/password/i);
-    await user.type(passwordInput, 'password123');
+    await user.type(passwordInput, "password123");
 
     // Submit form
-    const submitButton = screen.getByRole('button', { name: /log in/i });
+    const submitButton = screen.getByRole("button", { name: /log in/i });
     await user.click(submitButton);
 
     // Verify loading state
@@ -1353,16 +1367,16 @@ describe('LoginPage Integration', () => {
 
     // Verify redirect after successful login
     await waitFor(() => {
-      expect(window.location.pathname).toBe('/dashboard');
+      expect(window.location.pathname).toBe("/dashboard");
     });
   });
 
-  it('shows validation errors', async () => {
+  it("shows validation errors", async () => {
     const user = userEvent.setup();
     renderLoginPage();
 
     // Submit empty form
-    const submitButton = screen.getByRole('button', { name: /log in/i });
+    const submitButton = screen.getByRole("button", { name: /log in/i });
     await user.click(submitButton);
 
     // Verify validation messages
@@ -1370,16 +1384,16 @@ describe('LoginPage Integration', () => {
     expect(screen.getByText(/password is required/i)).toBeInTheDocument();
   });
 
-  it('displays API error message', async () => {
+  it("displays API error message", async () => {
     const user = userEvent.setup();
     renderLoginPage();
 
     // Fill in invalid credentials
-    await user.type(screen.getByLabelText(/email/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'wrong-password');
+    await user.type(screen.getByLabelText(/email/i), "test@example.com");
+    await user.type(screen.getByLabelText(/password/i), "wrong-password");
 
     // Submit form
-    await user.click(screen.getByRole('button', { name: /log in/i }));
+    await user.click(screen.getByRole("button", { name: /log in/i }));
 
     // Verify error message
     await waitFor(() => {
@@ -1395,49 +1409,49 @@ describe('LoginPage Integration', () => {
 
 ```typescript
 // e2e/auth.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Authentication Flow', () => {
-  test('user can log in successfully', async ({ page }) => {
-    await page.goto('/login');
+test.describe("Authentication Flow", () => {
+  test("user can log in successfully", async ({ page }) => {
+    await page.goto("/login");
 
     // Fill login form
-    await page.fill('input[name="email"]', 'test@example.com');
-    await page.fill('input[name="password"]', 'password123');
+    await page.fill('input[name="email"]', "test@example.com");
+    await page.fill('input[name="password"]', "password123");
 
     // Submit
     await page.click('button:has-text("Log In")');
 
     // Verify redirect to dashboard
-    await expect(page).toHaveURL('/dashboard');
+    await expect(page).toHaveURL("/dashboard");
 
     // Verify user menu shows
     await expect(page.locator('[data-testid="user-menu"]')).toBeVisible();
-    await expect(page.locator('[data-testid="user-email"]')).toHaveText('test@example.com');
+    await expect(page.locator('[data-testid="user-email"]')).toHaveText("test@example.com");
   });
 
-  test('shows error for invalid credentials', async ({ page }) => {
-    await page.goto('/login');
+  test("shows error for invalid credentials", async ({ page }) => {
+    await page.goto("/login");
 
-    await page.fill('input[name="email"]', 'test@example.com');
-    await page.fill('input[name="password"]', 'wrong-password');
+    await page.fill('input[name="email"]', "test@example.com");
+    await page.fill('input[name="password"]', "wrong-password");
 
     await page.click('button:has-text("Log In")');
 
     // Verify error message
-    await expect(page.locator('[role="alert"]')).toContainText('Invalid credentials');
+    await expect(page.locator('[role="alert"]')).toContainText("Invalid credentials");
 
     // Verify still on login page
-    await expect(page).toHaveURL('/login');
+    await expect(page).toHaveURL("/login");
   });
 
-  test('user can log out', async ({ page, context }) => {
+  test("user can log out", async ({ page, context }) => {
     // Login first
-    await page.goto('/login');
-    await page.fill('input[name="email"]', 'test@example.com');
-    await page.fill('input[name="password"]', 'password123');
+    await page.goto("/login");
+    await page.fill('input[name="email"]', "test@example.com");
+    await page.fill('input[name="password"]', "password123");
     await page.click('button:has-text("Log In")');
-    await expect(page).toHaveURL('/dashboard');
+    await expect(page).toHaveURL("/dashboard");
 
     // Open user menu
     await page.click('[data-testid="user-menu-button"]');
@@ -1446,11 +1460,11 @@ test.describe('Authentication Flow', () => {
     await page.click('button:has-text("Log Out")');
 
     // Verify redirect to login
-    await expect(page).toHaveURL('/login');
+    await expect(page).toHaveURL("/login");
 
     // Verify token cleared
     const cookies = await context.cookies();
-    expect(cookies.find(c => c.name === 'auth_token')).toBeUndefined();
+    expect(cookies.find((c) => c.name === "auth_token")).toBeUndefined();
   });
 });
 ```
@@ -1459,35 +1473,35 @@ test.describe('Authentication Flow', () => {
 
 ```typescript
 // e2e/voice-mode.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Voice Mode', () => {
+test.describe("Voice Mode", () => {
   test.beforeEach(async ({ page }) => {
     // Login
-    await page.goto('/login');
-    await page.fill('input[name="email"]', 'test@example.com');
-    await page.fill('input[name="password"]', 'password123');
+    await page.goto("/login");
+    await page.fill('input[name="email"]', "test@example.com");
+    await page.fill('input[name="password"]', "password123");
     await page.click('button:has-text("Log In")');
-    await expect(page).toHaveURL('/dashboard');
+    await expect(page).toHaveURL("/dashboard");
   });
 
-  test('starts voice session', async ({ page, context }) => {
+  test("starts voice session", async ({ page, context }) => {
     // Grant microphone permission
-    await context.grantPermissions(['microphone']);
+    await context.grantPermissions(["microphone"]);
 
-    await page.goto('/voice');
+    await page.goto("/voice");
 
     // Click start button
     await page.click('button:has-text("Start Voice Mode")');
 
     // Verify voice mode is active
-    await expect(page.locator('[data-testid="voice-status"]')).toHaveText('Listening...');
+    await expect(page.locator('[data-testid="voice-status"]')).toHaveText("Listening...");
     await expect(page.locator('[data-testid="voice-indicator"]')).toBeVisible();
 
     // Verify WebSocket connection
     const wsMessages = [];
-    page.on('websocket', ws => {
-      ws.on('framereceived', frame => {
+    page.on("websocket", (ws) => {
+      ws.on("framereceived", (frame) => {
         const data = JSON.parse(frame.payload.toString());
         wsMessages.push(data);
       });
@@ -1495,46 +1509,46 @@ test.describe('Voice Mode', () => {
 
     await page.waitForTimeout(1000);
 
-    expect(wsMessages).toContainEqual(
-      expect.objectContaining({ type: 'voice_session_started' })
-    );
+    expect(wsMessages).toContainEqual(expect.objectContaining({ type: "voice_session_started" }));
   });
 
-  test('displays transcript in real-time', async ({ page, context }) => {
-    await context.grantPermissions(['microphone']);
+  test("displays transcript in real-time", async ({ page, context }) => {
+    await context.grantPermissions(["microphone"]);
 
-    await page.goto('/voice');
+    await page.goto("/voice");
     await page.click('button:has-text("Start Voice Mode")');
 
     // Mock WebSocket message
     await page.evaluate(() => {
       // Simulate transcript message
-      window.dispatchEvent(new CustomEvent('ws-message', {
-        detail: {
-          type: 'transcript',
-          text: 'What is hypertension?',
-          isFinal: true
-        }
-      }));
+      window.dispatchEvent(
+        new CustomEvent("ws-message", {
+          detail: {
+            type: "transcript",
+            text: "What is hypertension?",
+            isFinal: true,
+          },
+        }),
+      );
     });
 
     // Verify transcript appears
-    await expect(page.locator('[data-testid="transcript"]')).toContainText('What is hypertension?');
+    await expect(page.locator('[data-testid="transcript"]')).toContainText("What is hypertension?");
   });
 
-  test('stops voice session', async ({ page, context }) => {
-    await context.grantPermissions(['microphone']);
+  test("stops voice session", async ({ page, context }) => {
+    await context.grantPermissions(["microphone"]);
 
-    await page.goto('/voice');
+    await page.goto("/voice");
     await page.click('button:has-text("Start Voice Mode")');
 
-    await expect(page.locator('[data-testid="voice-status"]')).toHaveText('Listening...');
+    await expect(page.locator('[data-testid="voice-status"]')).toHaveText("Listening...");
 
     // Stop voice mode
     await page.click('button:has-text("Stop")');
 
     // Verify stopped
-    await expect(page.locator('[data-testid="voice-status"]')).toHaveText('Stopped');
+    await expect(page.locator('[data-testid="voice-status"]')).toHaveText("Stopped");
     await expect(page.locator('[data-testid="voice-indicator"]')).not.toBeVisible();
   });
 });
@@ -1544,58 +1558,58 @@ test.describe('Voice Mode', () => {
 
 ```tsx
 // src/components/Button.a11y.test.tsx
-import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
-import { axe, toHaveNoViolations } from 'jest-axe';
-import { Button } from './Button';
+import { describe, it, expect } from "vitest";
+import { render } from "@testing-library/react";
+import { axe, toHaveNoViolations } from "jest-axe";
+import { Button } from "./Button";
 
 expect.extend(toHaveNoViolations);
 
-describe('Button Accessibility', () => {
-  it('has no accessibility violations', async () => {
+describe("Button Accessibility", () => {
+  it("has no accessibility violations", async () => {
     const { container } = render(<Button>Click me</Button>);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 
-  it('has no violations when disabled', async () => {
+  it("has no violations when disabled", async () => {
     const { container } = render(<Button disabled>Click me</Button>);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 
-  it('has no violations with icon only', async () => {
+  it("has no violations with icon only", async () => {
     const { container } = render(
       <Button aria-label="Close">
         <CloseIcon />
-      </Button>
+      </Button>,
     );
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 
-  it('maintains focus visibility', () => {
+  it("maintains focus visibility", () => {
     const { getByRole } = render(<Button>Click me</Button>);
-    const button = getByRole('button');
+    const button = getByRole("button");
 
     button.focus();
 
     // Check for visible focus indicator
     const styles = window.getComputedStyle(button);
-    expect(styles.outline).not.toBe('none');
+    expect(styles.outline).not.toBe("none");
   });
 
-  it('supports keyboard navigation', () => {
+  it("supports keyboard navigation", () => {
     const handleClick = vi.fn();
     const { getByRole } = render(<Button onClick={handleClick}>Click me</Button>);
-    const button = getByRole('button');
+    const button = getByRole("button");
 
     // Enter key
-    fireEvent.keyDown(button, { key: 'Enter' });
+    fireEvent.keyDown(button, { key: "Enter" });
     expect(handleClick).toHaveBeenCalled();
 
     // Space key
-    fireEvent.keyDown(button, { key: ' ' });
+    fireEvent.keyDown(button, { key: " " });
     expect(handleClick).toHaveBeenCalledTimes(2);
   });
 });
@@ -1605,17 +1619,17 @@ describe('Button Accessibility', () => {
 
 ```tsx
 // src/components/ChatMessageList.perf.test.tsx
-import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
-import { ChatMessageList } from './ChatMessageList';
+import { describe, it, expect } from "vitest";
+import { render } from "@testing-library/react";
+import { ChatMessageList } from "./ChatMessageList";
 
-describe('ChatMessageList Performance', () => {
-  it('renders 1000 messages in under 500ms', () => {
+describe("ChatMessageList Performance", () => {
+  it("renders 1000 messages in under 500ms", () => {
     const messages = Array.from({ length: 1000 }, (_, i) => ({
       id: String(i),
       text: `Message ${i}`,
-      sender: i % 2 === 0 ? 'user' : 'assistant',
-      timestamp: new Date()
+      sender: i % 2 === 0 ? "user" : "assistant",
+      timestamp: new Date(),
     }));
 
     const startTime = performance.now();
@@ -1626,10 +1640,8 @@ describe('ChatMessageList Performance', () => {
     expect(renderTime).toBeLessThan(500);
   });
 
-  it('does not re-render when unrelated props change', () => {
-    const messages = [
-      { id: '1', text: 'Hello', sender: 'user', timestamp: new Date() }
-    ];
+  it("does not re-render when unrelated props change", () => {
+    const messages = [{ id: "1", text: "Hello", sender: "user", timestamp: new Date() }];
 
     let renderCount = 0;
     const TestComponent = () => {
@@ -1654,46 +1666,39 @@ describe('ChatMessageList Performance', () => {
 `vitest.config.ts`:
 
 ```typescript
-import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react-swc';
-import path from 'path';
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react-swc";
+import path from "path";
 
 export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov'],
-      exclude: [
-        'node_modules/',
-        'src/test/',
-        '**/*.d.ts',
-        '**/*.config.*',
-        '**/mockData/',
-        '**/*.stories.tsx'
-      ],
+      provider: "v8",
+      reporter: ["text", "json", "html", "lcov"],
+      exclude: ["node_modules/", "src/test/", "**/*.d.ts", "**/*.config.*", "**/mockData/", "**/*.stories.tsx"],
       statements: 80,
       branches: 80,
       functions: 80,
-      lines: 80
+      lines: 80,
     },
-    include: ['src/**/*.{test,spec}.{js,ts,jsx,tsx}'],
-    exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
+    include: ["src/**/*.{test,spec}.{js,ts,jsx,tsx}"],
+    exclude: ["node_modules", "dist", ".idea", ".git", ".cache"],
     testTimeout: 10000,
-    hookTimeout: 10000
+    hookTimeout: 10000,
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@voiceassist/ui': path.resolve(__dirname, '../packages/ui/src'),
-      '@voiceassist/types': path.resolve(__dirname, '../packages/types/src'),
-      '@voiceassist/api-client': path.resolve(__dirname, '../packages/api-client/src'),
-      '@voiceassist/utils': path.resolve(__dirname, '../packages/utils/src')
-    }
-  }
+      "@": path.resolve(__dirname, "./src"),
+      "@voiceassist/ui": path.resolve(__dirname, "../packages/ui/src"),
+      "@voiceassist/types": path.resolve(__dirname, "../packages/types/src"),
+      "@voiceassist/api-client": path.resolve(__dirname, "../packages/api-client/src"),
+      "@voiceassist/utils": path.resolve(__dirname, "../packages/utils/src"),
+    },
+  },
 });
 ```
 
@@ -1702,10 +1707,10 @@ export default defineConfig({
 `src/test/setup.ts`:
 
 ```typescript
-import { expect, afterEach, vi } from 'vitest';
-import { cleanup } from '@testing-library/react';
-import * as matchers from '@testing-library/jest-dom/matchers';
-import { toHaveNoViolations } from 'jest-axe';
+import { expect, afterEach, vi } from "vitest";
+import { cleanup } from "@testing-library/react";
+import * as matchers from "@testing-library/jest-dom/matchers";
+import { toHaveNoViolations } from "jest-axe";
 
 // Extend Vitest's expect with jest-dom matchers
 expect.extend(matchers);
@@ -1717,9 +1722,9 @@ afterEach(() => {
 });
 
 // Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(window, "matchMedia", {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -1763,50 +1768,50 @@ global.WebSocket = class WebSocket {
 `playwright.config.ts`:
 
 ```typescript
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: './e2e',
+  testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: [
-    ['html'],
-    ['junit', { outputFile: 'test-results/junit.xml' }],
-    ['json', { outputFile: 'test-results/results.json' }]
+    ["html"],
+    ["junit", { outputFile: "test-results/junit.xml" }],
+    ["json", { outputFile: "test-results/results.json" }],
   ],
   use: {
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:5173',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure'
+    baseURL: process.env.E2E_BASE_URL || "http://localhost:5173",
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
   },
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
     },
     {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      name: "webkit",
+      use: { ...devices["Desktop Safari"] },
     },
     {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
+      name: "Mobile Chrome",
+      use: { ...devices["Pixel 5"] },
     },
     {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
+      name: "Mobile Safari",
+      use: { ...devices["iPhone 12"] },
     },
   ],
   webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:5173',
+    command: "pnpm dev",
+    url: "http://localhost:5173",
     reuseExistingServer: !process.env.CI,
   },
 });
@@ -1854,8 +1859,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -1887,8 +1892,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -1929,8 +1934,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -1974,8 +1979,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -2038,8 +2043,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -2067,12 +2072,12 @@ on:
   push:
     branches: [main]
     tags:
-      - 'v*'
+      - "v*"
 
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy to'
+        description: "Environment to deploy to"
         required: true
         type: choice
         options:
@@ -2100,8 +2105,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -2160,8 +2165,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -2236,11 +2241,7 @@ jobs:
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
-      "env": [
-        "VITE_API_URL",
-        "VITE_WS_URL",
-        "VITE_SENTRY_DSN"
-      ]
+      "env": ["VITE_API_URL", "VITE_WS_URL", "VITE_SENTRY_DSN"]
     },
     "test": {
       "dependsOn": ["build"],
@@ -2281,7 +2282,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        node: ['18', '20']
+        node: ["18", "20"]
 
     steps:
       - uses: actions/checkout@v4
@@ -2291,7 +2292,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: 'pnpm'
+          cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
 ```
@@ -2306,6 +2307,7 @@ jobs:
 ## Pre-Deployment Checklist
 
 ### Code Quality
+
 - [ ] All CI checks passing
 - [ ] Code review approved (2+ reviewers for production)
 - [ ] No console.log or debugger statements
@@ -2313,6 +2315,7 @@ jobs:
 - [ ] Test coverage >= 80%
 
 ### Testing
+
 - [ ] Unit tests passing
 - [ ] Integration tests passing
 - [ ] E2E tests passing
@@ -2321,6 +2324,7 @@ jobs:
 - [ ] Performance tests passing
 
 ### Security
+
 - [ ] Security scan completed (Snyk)
 - [ ] No high/critical vulnerabilities
 - [ ] Secrets not hardcoded
@@ -2328,6 +2332,7 @@ jobs:
 - [ ] API rate limiting tested
 
 ### Documentation
+
 - [ ] README updated
 - [ ] CHANGELOG updated
 - [ ] API documentation updated
@@ -2335,6 +2340,7 @@ jobs:
 - [ ] Deployment notes documented
 
 ### Infrastructure
+
 - [ ] Environment variables configured
 - [ ] Database migrations ready
 - [ ] Rollback plan prepared
@@ -2342,6 +2348,7 @@ jobs:
 - [ ] Backup verified
 
 ### Communication
+
 - [ ] Stakeholders notified
 - [ ] Deployment window scheduled
 - [ ] Support team briefed
@@ -2631,7 +2638,7 @@ echo "✅ Deployment verification complete!"
 
 #### JSDoc Standards
 
-```typescript
+````typescript
 /**
  * Authenticates a user with email and password.
  *
@@ -2650,10 +2657,7 @@ echo "✅ Deployment verification complete!"
  * @see {@link AuthResponse} for response structure
  * @see {@link https://docs.voiceassist.asimo.io/auth|Auth Documentation}
  */
-async function loginUser(
-  email: string,
-  password: string
-): Promise<AuthResponse> {
+async function loginUser(email: string, password: string): Promise<AuthResponse> {
   // Implementation
 }
 
@@ -2698,11 +2702,11 @@ interface User {
   createdAt: Date;
   lastLoginAt?: Date;
 }
-```
+````
 
 #### Component Documentation
 
-```tsx
+````tsx
 /**
  * Button component with multiple variants and states.
  *
@@ -2738,7 +2742,7 @@ export function Button({
    * Visual variant
    * @default 'primary'
    */
-  variant = 'primary',
+  variant = "primary",
 
   /**
    * Loading state - shows spinner and disables interaction
@@ -2766,13 +2770,13 @@ export function Button({
 }: ButtonProps) {
   // Implementation
 }
-```
+````
 
 ### 6.2 README Standards
 
 #### Component README Template
 
-```markdown
+````markdown
 # Button Component
 
 A flexible, accessible button component with multiple variants and states.
@@ -2791,20 +2795,17 @@ A flexible, accessible button component with multiple variants and states.
 ```bash
 pnpm add @voiceassist/ui
 ```
+````
 
 ## Usage
 
 ### Basic Button
 
 ```tsx
-import { Button } from '@voiceassist/ui';
+import { Button } from "@voiceassist/ui";
 
 function App() {
-  return (
-    <Button onClick={() => alert('Clicked!')}>
-      Click Me
-    </Button>
-  );
+  return <Button onClick={() => alert("Clicked!")}>Click Me</Button>;
 }
 ```
 
@@ -2826,24 +2827,24 @@ function App() {
 ### With Icons
 
 ```tsx
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon } from "@heroicons/react/24/outline";
 
 <Button>
   <PlusIcon className="w-5 h-5 mr-2" />
   Add Item
-</Button>
+</Button>;
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `variant` | `'primary' \| 'secondary' \| 'ghost'` | `'primary'` | Visual variant |
-| `loading` | `boolean` | `false` | Shows loading spinner |
-| `disabled` | `boolean` | `false` | Disables interaction |
-| `onClick` | `() => void` | - | Click handler |
-| `children` | `ReactNode` | - | Button content |
-| `className` | `string` | - | Additional CSS classes |
+| Prop        | Type                                  | Default     | Description            |
+| ----------- | ------------------------------------- | ----------- | ---------------------- |
+| `variant`   | `'primary' \| 'secondary' \| 'ghost'` | `'primary'` | Visual variant         |
+| `loading`   | `boolean`                             | `false`     | Shows loading spinner  |
+| `disabled`  | `boolean`                             | `false`     | Disables interaction   |
+| `onClick`   | `() => void`                          | -           | Click handler          |
+| `children`  | `ReactNode`                           | -           | Button content         |
+| `className` | `string`                              | -           | Additional CSS classes |
 
 ## Accessibility
 
@@ -2856,14 +2857,14 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 ## Testing
 
 ```tsx
-import { render, screen, fireEvent } from '@testing-library/react';
-import { Button } from './Button';
+import { render, screen, fireEvent } from "@testing-library/react";
+import { Button } from "./Button";
 
-test('calls onClick when clicked', () => {
+test("calls onClick when clicked", () => {
   const handleClick = vi.fn();
   render(<Button onClick={handleClick}>Click</Button>);
 
-  fireEvent.click(screen.getByRole('button'));
+  fireEvent.click(screen.getByRole("button"));
 
   expect(handleClick).toHaveBeenCalled();
 });
@@ -2877,7 +2878,8 @@ test('calls onClick when clicked', () => {
 ## License
 
 MIT
-```
+
+````
 
 ### 6.3 API Documentation
 
@@ -2942,7 +2944,7 @@ MIT
 export async function login(req: Request, res: Response) {
   // Implementation
 }
-```
+````
 
 ---
 
@@ -2958,60 +2960,63 @@ export async function login(req: Request, res: Response) {
 module.exports = {
   root: true,
   extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:@typescript-eslint/recommended-requiring-type-checking',
-    'plugin:react/recommended',
-    'plugin:react-hooks/recommended',
-    'plugin:jsx-a11y/recommended',
-    'prettier'
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:jsx-a11y/recommended",
+    "prettier",
   ],
-  parser: '@typescript-eslint/parser',
+  parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaVersion: 2022,
-    sourceType: 'module',
+    sourceType: "module",
     ecmaFeatures: {
-      jsx: true
+      jsx: true,
     },
-    project: './tsconfig.json'
+    project: "./tsconfig.json",
   },
-  plugins: ['@typescript-eslint', 'react', 'react-hooks', 'jsx-a11y'],
+  plugins: ["@typescript-eslint", "react", "react-hooks", "jsx-a11y"],
   rules: {
     // TypeScript
-    '@typescript-eslint/no-explicit-any': 'error',
-    '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/no-unused-vars': ['error', {
-      argsIgnorePattern: '^_',
-      varsIgnorePattern: '^_'
-    }],
-    '@typescript-eslint/no-floating-promises': 'error',
-    '@typescript-eslint/await-thenable': 'error',
-    '@typescript-eslint/no-misused-promises': 'error',
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+      },
+    ],
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/await-thenable": "error",
+    "@typescript-eslint/no-misused-promises": "error",
 
     // React
-    'react/react-in-jsx-scope': 'off',  // Not needed in React 17+
-    'react/prop-types': 'off',  // Using TypeScript
-    'react/jsx-uses-react': 'off',
-    'react/jsx-key': 'error',
-    'react/no-array-index-key': 'warn',
-    'react-hooks/rules-of-hooks': 'error',
-    'react-hooks/exhaustive-deps': 'warn',
+    "react/react-in-jsx-scope": "off", // Not needed in React 17+
+    "react/prop-types": "off", // Using TypeScript
+    "react/jsx-uses-react": "off",
+    "react/jsx-key": "error",
+    "react/no-array-index-key": "warn",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
 
     // General
-    'no-console': ['warn', { allow: ['warn', 'error'] }],
-    'no-debugger': 'error',
-    'no-alert': 'warn',
-    'prefer-const': 'error',
-    'no-var': 'error',
-    'eqeqeq': ['error', 'always'],
-    'curly': ['error', 'all']
+    "no-console": ["warn", { allow: ["warn", "error"] }],
+    "no-debugger": "error",
+    "no-alert": "warn",
+    "prefer-const": "error",
+    "no-var": "error",
+    eqeqeq: ["error", "always"],
+    curly: ["error", "all"],
   },
   settings: {
     react: {
-      version: 'detect'
-    }
-  }
+      version: "detect",
+    },
+  },
 };
 ```
 
@@ -3189,22 +3194,22 @@ function UserList() {
 
   return (
     <div>
-      {users.map(user => (
-        <UserCard key={user.id} user={user} style={{ padding: '10px' }} />
+      {users.map((user) => (
+        <UserCard key={user.id} user={user} style={{ padding: "10px" }} />
       ))}
     </div>
   );
 }
 
 // ✅ Good: Memoize style object
-const USER_CARD_STYLE = { padding: '10px' };
+const USER_CARD_STYLE = { padding: "10px" };
 
 function UserList() {
   const users = useUsers();
 
   return (
     <div>
-      {users.map(user => (
+      {users.map((user) => (
         <UserCard key={user.id} user={user} style={USER_CARD_STYLE} />
       ))}
     </div>
@@ -3228,17 +3233,13 @@ function ChatMessages({ messages }: ChatMessagesProps) {
 
   // ✅ Memoize callback functions
   const handleMessageClick = useCallback((messageId: string) => {
-    console.log('Clicked message:', messageId);
+    console.log("Clicked message:", messageId);
   }, []);
 
   return (
     <div>
-      {sortedMessages.map(message => (
-        <Message
-          key={message.id}
-          message={message}
-          onClick={handleMessageClick}
-        />
+      {sortedMessages.map((message) => (
+        <Message key={message.id} message={message} onClick={handleMessageClick} />
       ))}
     </div>
   );
@@ -3249,8 +3250,8 @@ function ChatMessages({ messages }: ChatMessagesProps) {
 
 ```tsx
 // ✅ Code splitting with React.lazy
-const AdminPanel = React.lazy(() => import('./features/admin/AdminPanel'));
-const VoiceMode = React.lazy(() => import('./features/voice/VoiceMode'));
+const AdminPanel = React.lazy(() => import("./features/admin/AdminPanel"));
+const VoiceMode = React.lazy(() => import("./features/voice/VoiceMode"));
 
 function App() {
   return (
@@ -3264,11 +3265,7 @@ function App() {
 }
 
 // ✅ Lazy load images
-<img
-  src={thumbnail}
-  loading="lazy"
-  alt="Thumbnail"
-/>
+<img src={thumbnail} loading="lazy" alt="Thumbnail" />;
 ```
 
 ### 8.2 Bundle Size Optimization
@@ -3300,15 +3297,15 @@ pnpm build
 
 ```typescript
 // ❌ Bad: Imports entire library
-import _ from 'lodash';
+import _ from "lodash";
 const result = _.debounce(fn, 300);
 
 // ✅ Good: Import specific function
-import { debounce } from 'lodash-es';
+import { debounce } from "lodash-es";
 const result = debounce(fn, 300);
 
 // ✅ Better: Use modern alternatives
-import debounce from 'just-debounce-it';  // Smaller package
+import debounce from "just-debounce-it"; // Smaller package
 const result = debounce(fn, 300);
 ```
 
@@ -3340,8 +3337,8 @@ function useSearchUsers(query: string) {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,  // 5 minutes
-      cacheTime: 10 * 60 * 1000,  // 10 minutes
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
     },
   },
 });
@@ -3349,7 +3346,7 @@ const queryClient = new QueryClient({
 // ✅ Use pagination
 function useInfiniteMessages() {
   return useInfiniteQuery({
-    queryKey: ['messages'],
+    queryKey: ["messages"],
     queryFn: ({ pageParam = 0 }) => fetchMessages(pageParam),
     getNextPageParam: (lastPage, pages) => lastPage.nextCursor,
   });
@@ -3364,11 +3361,11 @@ function useInfiniteMessages() {
 
 ```typescript
 // ✅ Validate all user input
-import { z } from 'zod';
+import { z } from "zod";
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(8, 'Password must be at least 8 characters')
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 function LoginForm() {
@@ -3427,6 +3424,7 @@ const API_KEY = import.meta.env.VITE_API_KEY;
 **Issue:** `Module not found: Can't resolve '@voiceassist/ui'`
 
 **Solution:**
+
 ```bash
 # Rebuild shared packages
 pnpm run build --filter @voiceassist/ui
@@ -3444,6 +3442,7 @@ pnpm install
 **Issue:** `Property 'X' does not exist on type 'Y'`
 
 **Solution:**
+
 ```bash
 # Regenerate TypeScript types
 pnpm run type-check
@@ -3457,6 +3456,7 @@ rm -rf apps/*/tsconfig.tsbuildinfo
 **Issue:** Tests failing in CI but passing locally
 
 **Solution:**
+
 ```bash
 # Run tests in CI mode
 CI=true pnpm test
@@ -3540,4 +3540,4 @@ Available in `.vscode/snippets.code-snippets`:
 **Last Updated:** 2025-11-21
 **Maintained By:** VoiceAssist Development Team
 
-*This is a living document. Submit improvements via pull request.*
+_This is a living document. Submit improvements via pull request._
