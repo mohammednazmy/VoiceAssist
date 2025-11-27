@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { featureFlags } from "../config/env";
 
 interface SystemConfig {
   environment: string;
@@ -150,6 +151,18 @@ export function SystemPage() {
       {/* Feature Flags */}
       <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-4">
         <h2 className="text-lg font-semibold text-slate-200">Feature Flags</h2>
+
+        <p className="text-xs text-slate-400">
+          Loaded from deployment config: metrics reporting is
+          <span className="font-semibold text-slate-200">
+            {featureFlags.metrics ? " enabled" : " disabled"}
+          </span>
+          , audit logging is
+          <span className="font-semibold text-slate-200">
+            {featureFlags.logs ? " enabled" : " disabled"}
+          </span>
+          .
+        </p>
 
         <div className="space-y-3">
           <FeatureToggle

@@ -161,7 +161,7 @@ VITE_ENABLE_LOGS=true
 
 ### Production Environment
 
-Create `.env.production` for production builds:
+Production settings are centralized in `deployment/production/configs/admin-panel.env` and loaded automatically by `deploy-admin-fix.sh`:
 
 ```bash
 # API URLs (production)
@@ -170,6 +170,33 @@ VITE_WS_URL=wss://admin.asimo.io/api/ws
 
 # Environment
 VITE_ENV=production
+
+# Features
+VITE_ENABLE_METRICS=true
+VITE_ENABLE_LOGS=true
+```
+
+## Release Checklist
+
+Run this checklist before promoting changes to staging or production:
+
+1. **Select the environment file**: export `ENV_FILE` to either `deployment/production/configs/admin-panel.staging.env` or `deployment/production/configs/admin-panel.env`. Ensure any secrets pulled from the secret manager are loaded into that file before building.
+2. **Build with the selected config**: `cd apps/admin-panel && set -a && source "$ENV_FILE" && set +a && npm run build`. Vite will embed the centralized values for `VITE_ADMIN_API_URL`, `VITE_WS_URL`, and feature flags.
+3. **Publish static assets**: deploy the `dist/` contents to the appropriate bucket/server/CDN origin (e.g., `rsync -av --delete dist/ /var/www/admin.asimo.io/`). Confirm hashed asset filenames to ensure cache busting.
+4. **Invalidate caches**: issue a CDN/edge cache invalidation for `admin.asimo.io` (or staging) and announce that operators should perform a hard refresh to pick up the new bundle.
+5. **Smoke test**: verify login, analytics export, and WebSocket-backed widgets against the targeted API/WS endpoints. Confirm environment/feature flags reflect the expected values in the UI.
+
+### Staging Environment
+
+Use `deployment/production/configs/admin-panel.staging.env` for pre-production validation (loaded by setting `ENV_FILE` when running deployment scripts):
+
+```bash
+# API URLs (staging)
+VITE_ADMIN_API_URL=https://admin-staging.asimo.io/api
+VITE_WS_URL=wss://admin-staging.asimo.io/api/ws
+
+# Environment
+VITE_ENV=staging
 
 # Features
 VITE_ENABLE_METRICS=true

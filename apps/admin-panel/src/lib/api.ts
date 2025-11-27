@@ -1,8 +1,8 @@
+import { apiBaseUrl } from "../config/env";
 import type { APIEnvelope } from "../types";
 
 // Use same origin (proxied via Apache in production)
-// Build timestamp: 2025-11-24T02:26:00Z
-const API_BASE = import.meta.env.VITE_API_URL || "";
+const API_BASE = apiBaseUrl;
 
 export class APIError extends Error {
   code: string;

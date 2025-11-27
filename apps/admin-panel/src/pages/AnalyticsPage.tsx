@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { apiBaseUrl } from '../config/env';
 import { fetchAPI } from '../lib/api';
 
 interface QueryAnalytics {
@@ -67,7 +68,7 @@ export function AnalyticsPage() {
     try {
       const token = localStorage.getItem('auth_token');
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/admin/analytics/export?range=${timeRange}`,
+        `${apiBaseUrl || 'http://localhost:8000'}/api/admin/analytics/export?range=${timeRange}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

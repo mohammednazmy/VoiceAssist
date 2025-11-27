@@ -25,6 +25,17 @@ fi
 echo -e "${YELLOW}Step 1: Navigating to admin panel directory...${NC}"
 cd apps/admin-panel
 
+ENV_FILE=${ENV_FILE:-../deployment/production/configs/admin-panel.env}
+
+if [ -f "$ENV_FILE" ]; then
+    echo -e "${YELLOW}Step 1a: Loading environment from $ENV_FILE...${NC}"
+    set -a
+    source "$ENV_FILE"
+    set +a
+else
+    echo -e "${RED}Warning: Environment file $ENV_FILE not found. Using current shell variables.${NC}"
+fi
+
 echo -e "${YELLOW}Step 2: Installing dependencies...${NC}"
 npm install
 
