@@ -7,12 +7,15 @@ import React, {
 } from "react";
 // import { fetchAPI } from '../lib/api'; // TODO: Use when implementing real auth
 
+type UserRole = "admin" | "viewer";
+
 interface User {
   id: string;
   email: string;
   full_name?: string;
   is_admin: boolean;
   is_active: boolean;
+  role: UserRole;
 }
 
 interface AuthContextType {
@@ -23,6 +26,8 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  role: UserRole;
+  isViewer: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const deriveRole = (incomingRole?: string): UserRole =>
+    incomingRole === "viewer" ? "viewer" : "admin";
+
   // Check for existing session on mount
   useEffect(() => {
     checkAuth();
@@ -40,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkAuth = async () => {
     try {
       const token = localStorage.getItem("auth_token");
+      const storedRole = deriveRole(localStorage.getItem("auth_role") || undefined);
       if (!token) {
         setLoading(false);
         return;
@@ -51,8 +60,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser({
         id: "temp",
         email: "admin",
-        is_admin: true,
+        is_admin: storedRole === "admin",
         is_active: true,
+        role: storedRole,
       });
     } catch (err) {
       console.error("Auth check failed:", err);
@@ -82,18 +92,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         access_token: string;
         refresh_token: string;
         token_type: string;
+        role?: string;
       };
 
       // Store token
       localStorage.setItem("auth_token", response.access_token);
+      const role = deriveRole(response.role);
+      localStorage.setItem("auth_role", role);
 
       // Set a temporary user object (admin panel requires admin login at backend level)
       // The backend validates admin status during login, so if we got tokens, user is admin
       setUser({
         id: "temp",
         email: email,
-        is_admin: true,
+        is_admin: role === "admin",
         is_active: true,
+        role,
       });
     } catch (err: any) {
       setError(err.message || "Login failed");
@@ -104,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_role");
     setUser(null);
   };
 
@@ -117,6 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         isAuthenticated: !!user,
         isAdmin: user?.is_admin || false,
+        role: user?.role || "admin",
+        isViewer: user?.role === "viewer",
       }}
     >
       {children}

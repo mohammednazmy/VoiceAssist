@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchAPI } from '../lib/api';
+import { ServiceStatus } from '../components/dashboard/ServiceStatus';
 
 interface SystemMetrics {
   total_users: number;
@@ -50,71 +51,110 @@ export function DashboardPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-slate-400">Loading dashboard...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="p-4 bg-red-950/50 border border-red-900 rounded-lg text-red-400">
-          {error}
+  const renderMetricCards = () => {
+    if (loading) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 animate-pulse"
+            >
+              <div className="h-3 w-20 bg-slate-800 rounded" />
+              <div className="h-8 w-16 bg-slate-800 rounded mt-3" />
+              <div className="h-2 w-24 bg-slate-900 rounded mt-2" />
+            </div>
+          ))}
         </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <MetricCard
+          title="Total Users"
+          value={metrics?.total_users ?? 0}
+          icon="👥"
+          color="blue"
+        />
+        <MetricCard
+          title="Active Users"
+          value={metrics?.active_users ?? 0}
+          icon="✓"
+          color="green"
+        />
+        <MetricCard
+          title="Admin Users"
+          value={metrics?.admin_users ?? 0}
+          icon="⚙️"
+          color="purple"
+        />
       </div>
     );
-  }
+  };
+
+  const renderServiceCards = () => {
+    if (loading) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 animate-pulse"
+            >
+              <div className="h-3 w-24 bg-slate-800 rounded" />
+              <div className="h-4 w-16 bg-slate-800 rounded mt-4" />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <ServiceCard name="PostgreSQL" healthy={health?.database || false} />
+        <ServiceCard name="Redis" healthy={health?.redis || false} />
+        <ServiceCard name="Qdrant" healthy={health?.qdrant || false} />
+      </div>
+    );
+  };
 
   return (
     <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100">Dashboard</h1>
-        <p className="text-sm text-slate-400 mt-1">
-          System overview and key metrics
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-100">Dashboard</h1>
+          <p className="text-sm text-slate-400 mt-1">
+            System overview and key metrics
+          </p>
+        </div>
+        <ServiceStatus />
       </div>
 
-      {/* User Metrics */}
-      <div>
-        <h2 className="text-lg font-semibold text-slate-200 mb-3">User Metrics</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <MetricCard
-            title="Total Users"
-            value={metrics?.total_users || 0}
-            icon="👥"
-            color="blue"
-          />
-          <MetricCard
-            title="Active Users"
-            value={metrics?.active_users || 0}
-            icon="✓"
-            color="green"
-          />
-          <MetricCard
-            title="Admin Users"
-            value={metrics?.admin_users || 0}
-            icon="⚙️"
-            color="purple"
-          />
+      {error && (
+        <div className="p-4 bg-red-950/50 border border-red-900 rounded-lg text-red-400">
+          {error}
+        </div>
+      )}
+
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-200 mb-3">User Metrics</h2>
+          {renderMetricCards()}
+        </div>
+
+        <div>
+          <h2 className="text-lg font-semibold text-slate-200 mb-3">Service Health</h2>
+          {renderServiceCards()}
         </div>
       </div>
 
-      {/* Service Health */}
-      <div>
-        <h2 className="text-lg font-semibold text-slate-200 mb-3">Service Health</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <ServiceCard name="PostgreSQL" healthy={health?.database || false} />
-          <ServiceCard name="Redis" healthy={health?.redis || false} />
-          <ServiceCard name="Qdrant" healthy={health?.qdrant || false} />
-        </div>
-      </div>
-
-      {/* Last Updated */}
       <div className="text-xs text-slate-500">
-        Last updated: {metrics?.timestamp ? new Date(metrics.timestamp).toLocaleString() : 'Unknown'}
+        {metrics?.timestamp ? (
+          <>Last updated: {new Date(metrics.timestamp).toLocaleString()}</>
+        ) : (
+          'Waiting for first successful sync…'
+        )}
       </div>
     </div>
   );
