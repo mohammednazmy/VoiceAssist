@@ -93,3 +93,38 @@ scrape_configs:
       - targets: ['loki:3100']
         labels:
           service: 'logging'
+
+  # Admin panel uptime + TLS checks via Blackbox Exporter
+  - job_name: 'blackbox-admin-http'
+    metrics_path: /probe
+    params:
+      module: [http_admin]
+    static_configs:
+      - targets:
+          - https://admin.asimo.io/
+        labels:
+          check: 'admin-http'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: 'blackbox-admin-websocket'
+    metrics_path: /probe
+    params:
+      module: [websocket_admin]
+    static_configs:
+      - targets:
+          - https://admin.asimo.io/api/ws
+        labels:
+          check: 'admin-websocket'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

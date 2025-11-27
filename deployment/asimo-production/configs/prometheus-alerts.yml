@@ -15,6 +15,38 @@ groups:
           summary: "VoiceAssist API is down"
           description: "The VoiceAssist API has been down for more than 1 minute."
 
+      # Admin Panel Availability
+      - alert: AdminPanelDown
+        expr: probe_success{job="blackbox-admin-http", check="admin-http"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: admin
+        annotations:
+          summary: "Admin panel is unreachable"
+          description: "HTTPS probe to admin.asimo.io is failing."
+
+      - alert: AdminWebsocketDown
+        expr: probe_success{job="blackbox-admin-websocket", check="admin-websocket"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          component: admin
+        annotations:
+          summary: "Admin websocket endpoint is unreachable"
+          description: "Websocket probe to admin.asimo.io/api/ws is failing."
+
+      # TLS Expiry
+      - alert: AdminTLSExpirySoon
+        expr: (probe_ssl_earliest_cert_expiry{job="blackbox-admin-http", check="admin-http"} - time()) < 86400 * 21
+        for: 10m
+        labels:
+          severity: warning
+          component: admin
+        annotations:
+          summary: "TLS certificate for admin.asimo.io expires soon"
+          description: "Admin certificate expires in less than 21 days ({{ $value | humanizeDuration }} remaining)."
+
       # High Error Rate
       - alert: HighErrorRate
         expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
