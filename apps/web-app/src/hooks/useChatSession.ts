@@ -46,11 +46,19 @@ interface UseChatSessionReturn {
 }
 
 // WebSocket URL - configurable per environment
-const WS_URL =
-  import.meta.env.VITE_WS_URL ||
-  (import.meta.env.DEV
-    ? "ws://localhost:8000/api/realtime/ws"
-    : "wss://api.voiceassist.example.com/ws");
+const DEFAULT_WS_PATH = "/api/realtime/ws";
+
+const WS_URL = (() => {
+  if (import.meta.env.VITE_WS_URL) {
+    return import.meta.env.VITE_WS_URL;
+  }
+
+  if (import.meta.env.DEV) {
+    return `ws://localhost:8000${DEFAULT_WS_PATH}`;
+  }
+
+  return `wss://api.voiceassist.example.com${DEFAULT_WS_PATH}`;
+})();
 
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 const MAX_RECONNECT_ATTEMPTS = 5;

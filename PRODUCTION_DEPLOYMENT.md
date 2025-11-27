@@ -45,7 +45,7 @@ Create `.env` file in `apps/web-app/`:
 ```env
 # API Configuration
 VITE_API_URL=https://api.voiceassist.example.com
-VITE_WS_URL=wss://api.voiceassist.example.com/ws
+VITE_WS_URL=wss://api.voiceassist.example.com/api/realtime/ws
 
 # OpenAI Configuration
 VITE_OPENAI_API_KEY=sk-...
