@@ -4,6 +4,8 @@
 
 This document is your entry point to the project. Choose your path below based on your role and experience level.
 
+**Status update:** All 15 phases are complete and archived summaries live in [docs/archive/](archive/).
+
 ---
 
 ## 🎯 Quick Start
@@ -34,6 +36,11 @@ This document is your entry point to the project. Choose your path below based o
 1. Read [ADMIN_PANEL_SPECS.md](ADMIN_PANEL_SPECS.md) for admin interface
 2. Review [System Settings](ADMIN_PANEL_SPECS.md#system-settings-interface) you'll configure
 3. Follow [INFRASTRUCTURE_SETUP.md](INFRASTRUCTURE_SETUP.md) for deployment
+
+### Choosing API References
+- Use [API_REFERENCE.md](API_REFERENCE.md) for a high-level overview of endpoint groups, concepts, and quick lookups.
+- Use [api-reference/rest-api.md](api-reference/rest-api.md) for endpoint-by-endpoint request/response details and examples.
+- See [../services/api-gateway/README.md](../services/api-gateway/README.md) for the canonical backend service guide.
 
 ---
 
@@ -114,9 +121,14 @@ All documentation is in `/Users/mohammednazmy/VoiceAssist/docs/`. Here's the com
 |----------|---------|----------|
 | **[SERVICE_CATALOG.md](SERVICE_CATALOG.md)** ⭐ | Complete catalog of all 10 microservices | All developers, DevOps |
 | **[SEMANTIC_SEARCH_DESIGN.md](SEMANTIC_SEARCH_DESIGN.md)** ⭐ | Knowledge base, vector search, RAG pipeline | Backend devs, ML |
+| **[api-reference/rest-api.md](api-reference/rest-api.md)** | Endpoint-by-endpoint REST reference | Backend devs |
+| **[API_REFERENCE.md](API_REFERENCE.md)** | High-level API overview and endpoint groups | Backend devs, stakeholders |
+| **[../services/api-gateway/README.md](../services/api-gateway/README.md)** | Canonical API Gateway service guide | Backend devs |
 | **[server/README.md](../server/README.md)** | Backend API documentation | Backend devs |
 | **[web-app/README.md](../web-app/README.md)** | Web app implementation details | Frontend devs |
 | **[admin-panel/README.md](../admin-panel/README.md)** | Admin panel implementation details | Frontend devs |
+
+**Shared packages:** [../packages/api-client/README.md](../packages/api-client/README.md), [../packages/config/README.md](../packages/config/README.md), [../packages/design-tokens/README.md](../packages/design-tokens/README.md), [../packages/telemetry/README.md](../packages/telemetry/README.md), [../packages/types/README.md](../packages/types/README.md), [../packages/ui/README.md](../packages/ui/README.md), [../packages/utils/README.md](../packages/utils/README.md)
 
 ### 🔒 Security & Compliance
 

@@ -23,6 +23,7 @@ VoiceAssist is an enterprise-grade, HIPAA-compliant medical AI assistant platfor
 **Backend V2 (Production Ready):**
 
 - ✅ All 15 development phases complete (Phases 0-15)
+- 📁 Archived phase-by-phase summaries are available in [docs/archive/](docs/archive/)
 - ✅ 35,000+ lines of production-quality code
 - ✅ 250+ automated tests with 95% coverage
 - ✅ Full HIPAA compliance (42/42 requirements met)
@@ -41,6 +42,13 @@ VoiceAssist is an enterprise-grade, HIPAA-compliant medical AI assistant platfor
 - 📋 Remaining: Admin panel, documentation site, and advanced features
 
 See [docs/client-implementation/](docs/client-implementation/) for the complete frontend roadmap.
+
+### Documentation Links
+
+- **High-level API overview:** [docs/API_REFERENCE.md](docs/API_REFERENCE.md) (use for concepts, endpoint groups, and quick lookups)
+- **REST API reference:** [docs/api-reference/rest-api.md](docs/api-reference/rest-api.md) (use for request/response details and examples)
+- **API Gateway service guide:** [services/api-gateway/README.md](services/api-gateway/README.md)
+- **Package READMEs:** `packages/*/README.md` for shared libraries (api-client, config, design-tokens, telemetry, types, ui, utils)
 
 ### Key Highlights
 

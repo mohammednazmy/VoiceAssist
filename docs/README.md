@@ -12,6 +12,9 @@
 - **[START_HERE.md](START_HERE.md)** - Project overview and getting started
 - **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** - Executive summary
 - **[LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md)** - Development environment setup
+- **[API_REFERENCE.md](API_REFERENCE.md)** - High-level API overview and endpoint groups
+- **[api-reference/rest-api.md](api-reference/rest-api.md)** - Detailed REST reference with request/response examples
+- **[../services/api-gateway/README.md](../services/api-gateway/README.md)** - Canonical backend service guide
 
 ### 🏗️ Architecture
 
@@ -41,6 +44,7 @@
   - [PHASE_13_TESTING_DOCS.md](phases/PHASE_13_TESTING_DOCS.md) - ✅ Complete
   - [PHASE_14_PRODUCTION_DEPLOY.md](phases/PHASE_14_PRODUCTION_DEPLOY.md) - ✅ Complete
   - [PHASE_15_COMPLETE_SUMMARY.md](phases/PHASE_15_COMPLETE_SUMMARY.md) - ✅ Complete (Final Review & Handoff)
+- **Archived summaries:** see [archive/](archive/) for all phase completion recaps and historical notes
 
 ### 🔧 Integration Improvements (Phase 7 Enhancement)
 
@@ -77,6 +81,26 @@
 - **[INFRASTRUCTURE_SETUP.md](INFRASTRUCTURE_SETUP.md)** - Infrastructure deployment
 - **[COMPOSE_TO_K8S_MIGRATION.md](COMPOSE_TO_K8S_MIGRATION.md)** - Kubernetes migration guide
 - **[ORCHESTRATION_DESIGN.md](ORCHESTRATION_DESIGN.md)** - Container orchestration
+
+### Backend Services & Shared Packages
+
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| **[SERVICE_CATALOG.md](SERVICE_CATALOG.md)** | Microservices catalog | All developers, DevOps |
+| **[../services/api-gateway/README.md](../services/api-gateway/README.md)** | Canonical API Gateway guide | Backend devs |
+| **[server/README.md](../server/README.md)** | Legacy server stub reference | Backend devs |
+| **[../web-app/README.md](../web-app/README.md)** | Web app implementation details | Frontend devs |
+| **[../admin-panel/README.md](../admin-panel/README.md)** | Admin panel implementation details | Frontend devs |
+
+**Shared packages:**
+
+- [../packages/api-client/README.md](../packages/api-client/README.md)
+- [../packages/config/README.md](../packages/config/README.md)
+- [../packages/design-tokens/README.md](../packages/design-tokens/README.md)
+- [../packages/telemetry/README.md](../packages/telemetry/README.md)
+- [../packages/types/README.md](../packages/types/README.md)
+- [../packages/ui/README.md](../packages/ui/README.md)
+- [../packages/utils/README.md](../packages/utils/README.md)
 
 ---
 
@@ -142,6 +166,8 @@ All runbooks are production-ready with copy-paste commands:
 
 ### API Documentation
 
+- **High-level overview:** [API_REFERENCE.md](API_REFERENCE.md) — use this for conceptual guidance, endpoint group summaries, and quick lookups
+- **REST reference:** [api-reference/rest-api.md](api-reference/rest-api.md) — use this when you need request/response schemas, parameters, and concrete examples
 - **OpenAPI Spec**: Available at `http://localhost:8000/docs` when running
 - **ReDoc**: Available at `http://localhost:8000/redoc`
 
