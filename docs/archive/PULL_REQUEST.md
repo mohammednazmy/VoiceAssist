@@ -15,18 +15,21 @@ This PR completes **Milestone 1** (core web app features) and **Milestone 2** (a
 ### Milestone 1: Core Web App Features (Phases 3-8)
 
 #### Phase 3: Voice Features (Commit: eefee13)
+
 - ✅ Voice transcription with OpenAI Whisper API
 - ✅ Text-to-speech audio playback with OpenAI TTS
 - ✅ Push-to-talk voice input interface
 - ✅ Backend endpoints: `/voice/transcribe`, `/voice/synthesize`
 
 #### Phase 4: File Upload (Commit: 809e156)
+
 - ✅ Drag-and-drop file upload (PDF, PNG, JPG, TXT, MD)
 - ✅ Progress tracking with visual indicators
 - ✅ Image preview generation
 - ✅ Multi-file support (max 5 files, 10MB each)
 
 #### Phase 5: Clinical Context (Commit: 9626960)
+
 - ✅ Demographics form (age, gender, weight, height)
 - ✅ Problems and medications list management
 - ✅ Vital signs tracking (HR, BP, temp, SpO₂)
@@ -34,6 +37,7 @@ This PR completes **Milestone 1** (core web app features) and **Milestone 2** (a
 - ✅ localStorage persistence with HIPAA disclaimer
 
 #### Phase 6: Citations & Sources (Commit: 157e2a3)
+
 - ✅ Citation sidebar with search/filter functionality
 - ✅ Aggregate citations from all messages
 - ✅ Export citations to Markdown/Text
@@ -41,12 +45,14 @@ This PR completes **Milestone 1** (core web app features) and **Milestone 2** (a
 - ✅ ⌘C keyboard shortcut
 
 #### Phase 7: Conversation Export (Commit: 9a51d91)
+
 - ✅ Export conversations to Markdown with formatting
 - ✅ Export conversations to PDF via browser print
 - ✅ Configurable options (timestamps, citations)
 - ✅ Export dialog with conversation statistics
 
 #### Phase 8: Accessibility (Commit: c28ca79)
+
 - ✅ **WCAG 2.1 Level AA compliance** achieved
 - ✅ Skip navigation link for keyboard users
 - ✅ Enhanced focus indicators (3px outline + box-shadow)
@@ -57,12 +63,14 @@ This PR completes **Milestone 1** (core web app features) and **Milestone 2** (a
 ### Milestone 2: Admin Panel (Commit: 957b298)
 
 #### Dashboard Overview
+
 - ✅ Real-time metrics (active sessions, conversations, API calls)
 - ✅ System health monitoring (PostgreSQL, Redis, Qdrant, API Gateway)
 - ✅ Key performance indicators with auto-refresh (30s interval)
 - ✅ Error rate and storage usage tracking
 
 #### Knowledge Base Manager
+
 - ✅ Document upload interface (PDF, TXT, MD, DOCX)
 - ✅ Document list with search/filter
 - ✅ Indexing status tracking (indexed, processing, failed)
@@ -70,6 +78,7 @@ This PR completes **Milestone 1** (core web app features) and **Milestone 2** (a
 - ✅ Storage and chunk statistics
 
 #### Analytics Dashboard
+
 - ✅ Cost breakdown (OpenAI API, storage, compute)
 - ✅ User retention metrics (daily, weekly, monthly)
 - ✅ Top queries tracking with counts
@@ -77,6 +86,7 @@ This PR completes **Milestone 1** (core web app features) and **Milestone 2** (a
 - ✅ Export reports functionality (ready for backend)
 
 #### System Health Monitoring
+
 - ✅ Service health checks with latency tracking
 - ✅ Uptime percentage monitoring
 - ✅ Recent logs viewer with severity levels (info, warn, error)
@@ -86,12 +96,14 @@ This PR completes **Milestone 1** (core web app features) and **Milestone 2** (a
 ### Production Deployment & Performance
 
 #### Performance Optimizations
+
 - ✅ Code splitting with React.lazy() for all routes
 - ✅ Lazy loading to reduce initial bundle size by ~40%
 - ✅ Lighthouse CI configuration with performance targets
 - ✅ Optimized routing with AppRoutes component
 
 #### Deployment Infrastructure
+
 - ✅ Comprehensive deployment guide (PRODUCTION_DEPLOYMENT.md)
 - ✅ Docker deployment configuration
 - ✅ Manual Ubuntu deployment steps
@@ -100,6 +112,7 @@ This PR completes **Milestone 1** (core web app features) and **Milestone 2** (a
 - ✅ Security and performance checklists
 
 #### Testing & Monitoring
+
 - ✅ Lighthouse CI configuration (targets: 90+ scores)
 - ✅ Accessibility testing strategy (axe, WAVE)
 - ✅ Bundle analysis recommendations
@@ -111,6 +124,7 @@ This PR completes **Milestone 1** (core web app features) and **Milestone 2** (a
 ## 📊 Statistics
 
 ### Code Metrics
+
 - **Total Commits**: 11
 - **Components Created**: 20+
 - **Lines of Code**: ~6,500+
@@ -118,12 +132,14 @@ This PR completes **Milestone 1** (core web app features) and **Milestone 2** (a
 - **Keyboard Shortcuts**: 11
 
 ### Features Delivered
+
 - **Phases Completed**: 6 (Phases 3-8)
 - **Milestones**: 2 (M1 Core Features + M2 Admin Panel)
 - **Admin Sections**: 4 (Dashboard, KB, Analytics, System Health)
 - **API Endpoints Ready**: 10+ (awaiting backend implementation)
 
 ### Quality Assurance
+
 - **Accessibility**: WCAG 2.1 Level AA ✅
 - **Performance Target**: Lighthouse 90+ ✅
 - **TypeScript**: 100% coverage
@@ -137,6 +153,7 @@ This PR completes **Milestone 1** (core web app features) and **Milestone 2** (a
 ### Created Files (20+)
 
 **Admin Panel**:
+
 - `apps/web-app/src/pages/admin/AdminDashboard.tsx`
 - `apps/web-app/src/components/admin/DashboardOverview.tsx`
 - `apps/web-app/src/components/admin/KnowledgeBaseManager.tsx`
@@ -144,24 +161,30 @@ This PR completes **Milestone 1** (core web app features) and **Milestone 2** (a
 - `apps/web-app/src/components/admin/SystemHealth.tsx`
 
 **Performance**:
+
 - `apps/web-app/src/AppRoutes.tsx`
 - `apps/web-app/lighthouserc.json`
 
 **Accessibility**:
+
 - `apps/web-app/src/components/accessibility/SkipLink.tsx`
 - `apps/web-app/src/components/accessibility/LiveRegion.tsx`
 
 **Export**:
+
 - `apps/web-app/src/components/export/ExportDialog.tsx`
 - `apps/web-app/src/utils/exportConversation.ts`
 
 **Citations**:
+
 - `apps/web-app/src/components/citations/CitationSidebar.tsx`
 
 **Voice**:
+
 - `services/api-gateway/app/api/voice.py`
 
 **Documentation**:
+
 - `PRODUCTION_DEPLOYMENT.md`
 - `ACCESSIBILITY_AUDIT.md`
 - `WEB_APP_DEVELOPMENT_SUMMARY.md`
@@ -172,6 +195,7 @@ This PR completes **Milestone 1** (core web app features) and **Milestone 2** (a
 - `PULL_REQUEST.md` (this file)
 
 ### Modified Files
+
 - `apps/web-app/src/App.tsx` (optimized with lazy loading)
 - `apps/web-app/src/styles.css` (accessibility utilities)
 - `apps/web-app/src/pages/ChatPage.tsx` (integrations)
@@ -204,6 +228,7 @@ pnpm build && pnpm preview
 ### 2. Test Core Features
 
 **Voice Features**:
+
 - Click microphone icon in chat input
 - Record audio (push-to-talk)
 - Verify transcription appears
@@ -211,6 +236,7 @@ pnpm build && pnpm preview
 - Verify audio playback works
 
 **File Upload**:
+
 - Click attachment icon in chat
 - Drag-and-drop files or browse
 - Verify progress indicators
@@ -218,18 +244,21 @@ pnpm build && pnpm preview
 - Send message with attachments
 
 **Clinical Context**:
+
 - Press ⌘I (or Ctrl+I)
 - Fill out demographics form
 - Add problems and medications
 - Save and verify localStorage persistence
 
 **Citations**:
+
 - Press ⌘C (or Ctrl+C)
 - Verify citations appear in sidebar
 - Test search/filter functionality
 - Export citations to Markdown
 
 **Conversation Export**:
+
 - Click "Export" button in chat header
 - Select format (Markdown or PDF)
 - Configure options (timestamps, citations)
@@ -240,21 +269,25 @@ pnpm build && pnpm preview
 **Access**: Navigate to `/admin`
 
 **Dashboard**:
+
 - Verify metrics display
 - Check system status indicators
 - Test auto-refresh (wait 30s)
 
 **Knowledge Base**:
+
 - Click "Upload Documents"
 - Verify upload interface
 - Test search functionality
 
 **Analytics**:
+
 - Change time range (7d, 30d, 90d)
 - Verify cost breakdown
 - Check retention metrics
 
 **System Health**:
+
 - Verify service health checks
 - Check recent logs
 - Test auto-refresh (10s)
@@ -262,17 +295,20 @@ pnpm build && pnpm preview
 ### 4. Accessibility Testing
 
 **Keyboard Navigation**:
+
 - Tab through entire app
 - Press Tab immediately after page load to see skip link
 - Use keyboard shortcuts (⌘B, ⌘I, ⌘C, ⌘/)
 - Navigate modals with Tab and Escape
 
 **Screen Reader** (Optional):
+
 - Enable VoiceOver (Mac) or NVDA (Windows)
 - Navigate by landmarks
 - Verify announcements when messages arrive
 
 **Visual**:
+
 - Zoom to 200% and verify usability
 - Check focus indicators are visible
 - Verify color contrast
@@ -329,7 +365,7 @@ setMetrics({
 });
 
 // After (production)
-const metricsData = await apiClient.get('/admin/metrics');
+const metricsData = await apiClient.get("/admin/metrics");
 setMetrics(metricsData);
 ```
 
@@ -374,6 +410,7 @@ Complete documentation is provided:
 ## 🚀 Deployment Checklist
 
 ### Pre-Deployment
+
 - [x] All tests passing
 - [x] Lighthouse scores meet targets (90+)
 - [x] Accessibility audit complete (WCAG 2.1 AA)
@@ -383,6 +420,7 @@ Complete documentation is provided:
 - [ ] Domain DNS configured
 
 ### Deployment
+
 - [ ] Build production bundle (`pnpm build`)
 - [ ] Deploy to server (Docker or manual)
 - [ ] Configure nginx with SSL
@@ -390,6 +428,7 @@ Complete documentation is provided:
 - [ ] Test all functionality in production
 
 ### Post-Deployment
+
 - [ ] Verify all routes work
 - [ ] Run Lighthouse on production
 - [ ] Monitor error rates
@@ -401,6 +440,7 @@ Complete documentation is provided:
 ## 🎉 Achievements
 
 ### Milestone 1 Complete ✅
+
 - 6 major phases (Phases 3-8) delivered
 - 15+ components created
 - WCAG 2.1 AA accessibility compliance
@@ -409,6 +449,7 @@ Complete documentation is provided:
 - Production-ready core features
 
 ### Milestone 2 Complete ✅
+
 - Full-featured admin panel
 - 4 admin sections (Dashboard, KB, Analytics, System Health)
 - Real-time monitoring capabilities
@@ -416,6 +457,7 @@ Complete documentation is provided:
 - Professional UI/UX design
 
 ### Performance & Quality ✅
+
 - Code splitting reduces bundle size by ~40%
 - Lighthouse targets: 90+ across all categories
 - TypeScript strict mode throughout

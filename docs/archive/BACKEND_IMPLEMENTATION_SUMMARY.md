@@ -460,10 +460,12 @@ DEEPSEEK_API_KEY: Optional[str] = None
 #### 2. Enhanced Voice Service (`app/services/realtime_voice_service.py`)
 
 **New Data Classes**:
+
 - `TTSProviderConfig`: Safe TTS provider metadata (no raw keys)
 - `STTProviderConfig`: Safe STT provider metadata (no raw keys)
 
 **Enhanced Service Methods**:
+
 - `generate_session_config()`: Create Realtime API session config
 - `get_tts_config()`: Get TTS provider config (OpenAI, ElevenLabs)
 - `get_stt_config()`: Get STT provider config (OpenAI, Deepgram)
@@ -472,6 +474,7 @@ DEEPSEEK_API_KEY: Optional[str] = None
 - `validate_session()`: Session ID format validation
 
 **Provider Support**:
+
 - **OpenAI TTS**: 6 voices (alloy, echo, fable, onyx, nova, shimmer), streaming, 4096 char limit
 - **ElevenLabs TTS**: Stub ready for integration, streaming, 5000 char limit
 - **OpenAI Whisper STT**: 99+ languages, batch-only (no streaming)
@@ -480,11 +483,13 @@ DEEPSEEK_API_KEY: Optional[str] = None
 #### 3. Voice API Endpoints (`app/api/voice.py`)
 
 Existing endpoints enhanced with provider abstraction:
+
 - `POST /voice/transcribe` - Whisper API transcription
 - `POST /voice/synthesize` - OpenAI TTS synthesis
 - `POST /voice/realtime-session` - Generate Realtime API session config
 
 **Response Schema for `/voice/realtime-session`**:
+
 ```json
 {
   "url": "wss://api.openai.com/v1/realtime",
@@ -498,7 +503,7 @@ Existing endpoints enhanced with provider abstraction:
     "modalities": ["text", "audio"],
     "input_audio_format": "pcm16",
     "output_audio_format": "pcm16",
-    "input_audio_transcription": {"model": "whisper-1"},
+    "input_audio_transcription": { "model": "whisper-1" },
     "turn_detection": {
       "type": "server_vad",
       "threshold": 0.5,
@@ -514,6 +519,7 @@ Existing endpoints enhanced with provider abstraction:
 Comprehensive test coverage:
 
 **Unit Tests (always run)**:
+
 - Service initialization and configuration
 - Session config generation and validation
 - Provider config abstraction (TTS/STT)
@@ -521,11 +527,13 @@ Comprehensive test coverage:
 - System instructions generation
 
 **Live Tests (gated by `LIVE_REALTIME_TESTS=1`)**:
+
 - Live session config generation with valid API key
 - TTS provider config with live settings
 - STT provider config with live settings
 
 **Run Tests**:
+
 ```bash
 # Unit tests only (default)
 cd services/api-gateway
@@ -563,12 +571,14 @@ STT_PROVIDER=openai  # Options: openai, deepgram, azure, gcp
 ### Security Considerations
 
 **✅ Implemented**:
+
 - Provider configs never expose raw API keys to clients
 - Only metadata (enabled, supported features) exposed via API
 - API keys stored securely in environment variables
 - Keys marked with security warnings in code comments
 
 **⚠️ For Production**:
+
 - Implement ephemeral token generation for Realtime API
 - Rotate provider API keys regularly
 - Use secrets management service (AWS Secrets Manager, Vault)
@@ -596,6 +606,7 @@ LIVE_OPENAI_TESTS=1 LIVE_REALTIME_TESTS=1 pytest tests/integration/ -v
 ### Manual Testing
 
 **Test `/voice/realtime-session` endpoint**:
+
 ```bash
 # Start backend
 docker-compose up voiceassist-server
@@ -611,6 +622,7 @@ curl -X POST http://localhost:8000/voice/realtime-session \
 ```
 
 **Expected Response**:
+
 ```json
 {
   "url": "wss://api.openai.com/v1/realtime",
@@ -626,6 +638,7 @@ curl -X POST http://localhost:8000/voice/realtime-session \
 ### Future Enhancements
 
 **Phase 2 - Full Provider Integration**:
+
 - [ ] Implement ElevenLabs TTS adapter with voice library
 - [ ] Implement Deepgram STT streaming adapter
 - [ ] Add Azure TTS/STT support
@@ -633,6 +646,7 @@ curl -X POST http://localhost:8000/voice/realtime-session \
 - [ ] Provider health checks and fallback logic
 
 **Phase 3 - Advanced Features**:
+
 - [ ] Voice activity detection (VAD) tuning
 - [ ] Custom voice training/cloning (ElevenLabs)
 - [ ] Multi-language voice routing
@@ -640,6 +654,7 @@ curl -X POST http://localhost:8000/voice/realtime-session \
 - [ ] Real-time audio analytics (sentiment, emotion)
 
 **Phase 4 - Observability**:
+
 - [ ] Voice session metrics (duration, audio quality)
 - [ ] Provider latency tracking
 - [ ] Error rate monitoring per provider

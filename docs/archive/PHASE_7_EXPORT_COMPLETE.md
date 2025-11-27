@@ -13,6 +13,7 @@ Phase 7 focuses on conversation management features. The export functionality ha
 ### 1. Export Utilities (`/utils/exportConversation.ts`)
 
 **Markdown Export:**
+
 - `exportToMarkdown()`: Converts conversation to formatted Markdown
 - Includes conversation title, timestamps, message count
 - Formats messages with role headers (👤 You, 🤖 VoiceAssist)
@@ -21,6 +22,7 @@ Phase 7 focuses on conversation management features. The export functionality ha
 - Clean section separators
 
 **PDF Export:**
+
 - `exportConversationToPDF()`: Uses browser print dialog
 - Converts Markdown to styled HTML
 - Professional print stylesheet
@@ -28,6 +30,7 @@ Phase 7 focuses on conversation management features. The export functionality ha
 - Preserves formatting and links
 
 **Download Helper:**
+
 - `downloadFile()`: Triggers file download
 - Generates filename with title and date
 - Supports custom MIME types
@@ -35,6 +38,7 @@ Phase 7 focuses on conversation management features. The export functionality ha
 ### 2. Export Dialog Component (`/components/export/ExportDialog.tsx`)
 
 **UI Features:**
+
 - Modal dialog with format selection
 - Visual format picker (Markdown vs PDF)
 - Conversation statistics display
@@ -47,6 +51,7 @@ Phase 7 focuses on conversation management features. The export functionality ha
 - Error handling with user-friendly messages
 
 **User Experience:**
+
 - Responsive design
 - Keyboard accessible
 - Click-outside-to-close
@@ -55,12 +60,14 @@ Phase 7 focuses on conversation management features. The export functionality ha
 ### 3. ChatPage Integration
 
 **Export Button:**
+
 - Added to chat header next to other action buttons
 - Download icon
 - Opens export dialog
 - Passes conversation data automatically
 
 **Data Flow:**
+
 - Conversation title from state
 - Messages from useChatSession hook
 - Citations extracted from message metadata
@@ -80,7 +87,7 @@ Phase 7 focuses on conversation management features. The export functionality ha
 
 ## 👤 You
 
-*11/23/2025, 10:30:45 AM*
+_11/23/2025, 10:30:45 AM_
 
 User message content here...
 
@@ -88,7 +95,7 @@ User message content here...
 
 ## 🤖 VoiceAssist
 
-*11/23/2025, 10:31:12 AM*
+_11/23/2025, 10:31:12 AM_
 
 Assistant response content...
 
@@ -122,6 +129,7 @@ Assistant response content...
 ## Phase 7 Status
 
 ### Completed ✅
+
 - ✅ Conversation history with search (pre-existing)
 - ✅ Rename conversations (pre-existing)
 - ✅ Archive conversations (pre-existing)
@@ -129,6 +137,7 @@ Assistant response content...
 - ✅ Export to PDF/Markdown (NEW - commit 9a51d91)
 
 ### Remaining ⏳
+
 - ⏳ Conversation folders/categorization
 - ⏳ Conversation sharing (share links, permissions)
 - ⏳ Conversation templates (create from template, save as template)
@@ -136,10 +145,12 @@ Assistant response content...
 ## Files Modified/Created
 
 **Created:**
+
 - `apps/web-app/src/utils/exportConversation.ts` (200+ lines)
 - `apps/web-app/src/components/export/ExportDialog.tsx` (300+ lines)
 
 **Modified:**
+
 - `apps/web-app/src/pages/ChatPage.tsx`
   - Added ExportDialog import
   - Added isExportDialogOpen state

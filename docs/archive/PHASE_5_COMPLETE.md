@@ -33,6 +33,7 @@ VoiceAssist now provides comprehensive clinical context management with:
 - **Vital Signs**: Temperature, heart rate, blood pressure, respiratory rate, SpO2
 
 All data is:
+
 - ✅ Persisted to backend per conversation/session
 - ✅ Auto-saved with 1-second debounce
 - ✅ Optimistically updated for smooth UX
@@ -99,6 +100,7 @@ export interface ClinicalContextUpdate {
 ```
 
 **Field Mappings:**
+
 - Frontend `weight` → Backend `weightKg`
 - Frontend `height` → Backend `heightCm`
 - Frontend `oxygenSaturation` → Backend `spo2`
@@ -133,6 +135,7 @@ async deleteClinicalContext(
 ```
 
 **Backend Endpoints Used:**
+
 - `POST /clinical-contexts` - Create new context
 - `GET /clinical-contexts/current?session_id={id}` - Get context for session
 - `GET /clinical-contexts/{id}` - Get specific context
@@ -148,6 +151,7 @@ async deleteClinicalContext(
 **Purpose**: Manages clinical context state and API interactions
 
 **Key Features:**
+
 - Automatic loading when sessionId is provided
 - Create/update/delete operations
 - Smart save method (creates or updates based on context existence)
@@ -155,22 +159,24 @@ async deleteClinicalContext(
 - Returns `hasContext` boolean for conditional rendering
 
 **API:**
+
 ```typescript
 const {
-  context,           // ClinicalContext | null
-  isLoading,         // boolean
-  error,             // string | null
-  loadContext,       // () => Promise<void>
-  createContext,     // (data) => Promise<ClinicalContext>
-  updateContext,     // (data) => Promise<ClinicalContext>
-  saveContext,       // (data) => Promise<ClinicalContext>
-  deleteContext,     // () => Promise<void>
-  clearContext,      // () => void
-  hasContext,        // boolean
+  context, // ClinicalContext | null
+  isLoading, // boolean
+  error, // string | null
+  loadContext, // () => Promise<void>
+  createContext, // (data) => Promise<ClinicalContext>
+  updateContext, // (data) => Promise<ClinicalContext>
+  saveContext, // (data) => Promise<ClinicalContext>
+  deleteContext, // () => Promise<void>
+  clearContext, // () => void
+  hasContext, // boolean
 } = useClinicalContext(sessionId);
 ```
 
 **Error Handling:**
+
 - 404 responses are silently ignored (expected when no context exists)
 - Other errors are logged and exposed via `error` state
 
@@ -202,6 +208,7 @@ hasContextData(
 ```
 
 **Why an adapter?**
+
 - Frontend components use nested structure (`demographics.age`)
 - Backend uses flat structure (`age`)
 - Adapter maintains backward compatibility with existing UI
@@ -214,6 +221,7 @@ hasContextData(
 **Changes**: ~30 lines modified
 
 **Before:**
+
 ```typescript
 const [clinicalContext, setClinicalContext] = useState<ClinicalContext>(() => {
   const saved = localStorage.getItem("voiceassist:clinical-context");
@@ -226,6 +234,7 @@ useEffect(() => {
 ```
 
 **After:**
+
 ```typescript
 // Clinical context management
 const clinicalContextHook = useClinicalContext(activeConversationId || undefined);
@@ -239,25 +248,29 @@ const clinicalContext = {
 };
 
 // Handle changes with debounced save
-const handleClinicalContextChange = useCallback((newContext: ClinicalContext) => {
-  setLocalClinicalContext(newContext);
+const handleClinicalContextChange = useCallback(
+  (newContext: ClinicalContext) => {
+    setLocalClinicalContext(newContext);
 
-  if (saveTimeoutRef.current) {
-    clearTimeout(saveTimeoutRef.current);
-  }
-
-  saveTimeoutRef.current = setTimeout(async () => {
-    try {
-      const backendData = frontendToBackend(newContext);
-      await clinicalContextHook.saveContext(backendData);
-    } catch (err) {
-      console.error("Failed to save clinical context:", err);
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
-  }, 1000);
-}, [clinicalContextHook]);
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        const backendData = frontendToBackend(newContext);
+        await clinicalContextHook.saveContext(backendData);
+      } catch (err) {
+        console.error("Failed to save clinical context:", err);
+      }
+    }, 1000);
+  },
+  [clinicalContextHook],
+);
 ```
 
 **Key Improvements:**
+
 - ✅ Data persisted to backend (per conversation)
 - ✅ Optimistic updates (immediate UI feedback)
 - ✅ Debounced saves (1 second delay)
@@ -273,6 +286,7 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
 **Table**: `clinical_contexts`
 
 **Columns:**
+
 - `id` - UUID primary key
 - `user_id` - UUID (foreign key to users)
 - `session_id` - UUID (foreign key to sessions, nullable)
@@ -289,10 +303,12 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
 - `created_at` - DateTime with timezone
 
 **Indexes:**
+
 - `user_id` (for user-scoped queries)
 - `session_id` (for session-scoped queries)
 
 **Relationships:**
+
 - Belongs to `users` (CASCADE on delete)
 - Belongs to `sessions` (SET NULL on delete)
 
@@ -331,6 +347,7 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
    - Returns 404 if not found
 
 **Security:**
+
 - ✅ All endpoints require authentication
 - ✅ User-scoped queries (can't access other users' data)
 - ✅ Session ownership validated
@@ -344,6 +361,7 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
 **Location**: Accessible via button in chat header or keyboard shortcut (Cmd/Ctrl+I)
 
 **Tabs:**
+
 1. **Demographics**
    - Age (number input)
    - Gender (dropdown: male, female, other)
@@ -369,6 +387,7 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
    - Oxygen Saturation (%, integer)
 
 **Features:**
+
 - ✅ View mode vs Edit mode
 - ✅ Empty state with "Add Patient Information" button
 - ✅ "Clear All" button (with confirmation)
@@ -377,6 +396,7 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
 - ✅ Dark mode support
 
 **Auto-Save Behavior:**
+
 - User makes changes → Immediate UI update
 - After 1 second of inactivity → Auto-save to backend
 - No "Save" button needed
@@ -388,15 +408,15 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
 
 **Total Lines Added**: ~380 lines
 
-| Component | Lines | Description |
-|-----------|-------|-------------|
-| packages/types/src/index.ts | 60 | Clinical context types |
-| packages/api-client/src/index.ts | 50 | API client methods |
-| useClinicalContext.ts | 148 | React hook |
-| ClinicalContextAdapter.tsx | 73 | Type adapter |
-| ChatPage.tsx | ~30 | Integration changes |
-| ClinicalContextPanel.tsx | 0 | Already existed |
-| ClinicalContextSidebar.tsx | 0 | Already existed |
+| Component                        | Lines | Description            |
+| -------------------------------- | ----- | ---------------------- |
+| packages/types/src/index.ts      | 60    | Clinical context types |
+| packages/api-client/src/index.ts | 50    | API client methods     |
+| useClinicalContext.ts            | 148   | React hook             |
+| ClinicalContextAdapter.tsx       | 73    | Type adapter           |
+| ChatPage.tsx                     | ~30   | Integration changes    |
+| ClinicalContextPanel.tsx         | 0     | Already existed        |
+| ClinicalContextSidebar.tsx       | 0     | Already existed        |
 
 **Total Files Created**: 2 new files
 **Total Files Modified**: 3 files
@@ -408,6 +428,7 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
 ### Manual Testing
 
 **Demographics:**
+
 - [x] Enter age
 - [x] Select gender
 - [x] Enter weight and height
@@ -416,24 +437,28 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
 - [x] Data loads correctly when opening conversation
 
 **Problems:**
+
 - [x] Add problem
 - [x] Add multiple problems
 - [x] Remove problem
 - [x] Problems persist to backend
 
 **Medications:**
+
 - [x] Add medication
 - [x] Add multiple medications
 - [x] Remove medication
 - [x] Medications persist to backend
 
 **Vitals:**
+
 - [x] Enter all vital signs
 - [x] Enter partial vital signs
 - [x] Vitals persist to backend
 - [x] Vitals display correctly in view mode
 
 **Edge Cases:**
+
 - [x] Empty context (404 handled)
 - [x] Network error (logged, doesn't crash)
 - [x] Switch between conversations (context loads per conversation)
@@ -443,6 +468,7 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
 ### API Testing
 
 **Backend Endpoints:**
+
 - [x] POST /clinical-contexts (creates successfully)
 - [x] GET /clinical-contexts/current (returns context)
 - [x] GET /clinical-contexts/current?session_id=X (filters by session)
@@ -450,6 +476,7 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
 - [x] DELETE /clinical-contexts/{id} (deletes successfully)
 
 **Error Cases:**
+
 - [x] 404 when no context exists (handled gracefully)
 - [x] 401 when not authenticated (redirects to login)
 - [x] 409 when trying to create duplicate (shouldn't happen with saveContext logic)
@@ -461,32 +488,38 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
 ### Debounced Saves
 
 **Implementation:**
+
 - 1 second debounce timeout
 - Cleared on unmount
 - Prevents excessive API calls during rapid typing
 
 **Benefits:**
+
 - Reduces backend load
 - Prevents rate limiting
 - Smooth user experience
 
 **Trade-offs:**
+
 - Potential data loss if user closes tab within 1 second of last change
 - Mitigated by: browser beforeunload warning (not implemented yet)
 
 ### Optimistic Updates
 
 **Implementation:**
+
 - Local state merged with backend state
 - Local state takes precedence
 - Cleared after successful save
 
 **Benefits:**
+
 - Instant UI feedback
 - No perceived latency
 - Better user experience
 
 **Trade-offs:**
+
 - Temporary UI/backend mismatch on errors
 - Mitigated by: error logging and retry logic (future enhancement)
 
@@ -497,15 +530,18 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
 ### Data Privacy
 
 **PHI Warning:**
+
 - ✅ Footer message warns against entering PHI
 - ⚠️ No actual PHI detection or blocking (future enhancement)
 
 **Access Control:**
+
 - ✅ User-scoped queries (can only access own data)
 - ✅ Session ownership validated
 - ✅ Authentication required for all endpoints
 
 **Data Storage:**
+
 - ✅ Stored in PostgreSQL with proper foreign keys
 - ✅ CASCADE delete on user deletion
 - ✅ SET NULL on session deletion
@@ -513,11 +549,13 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
 ### Input Validation
 
 **Frontend:**
+
 - ✅ Number inputs validated (age, weight, height, vitals)
 - ✅ Gender dropdown (constrained values)
 - ✅ No max length on text fields (clinical use case)
 
 **Backend:**
+
 - ✅ Pydantic models validate types
 - ✅ Optional fields allow partial updates
 - ✅ JSONB fields validated as arrays/objects
@@ -551,18 +589,21 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
 ### Planned Enhancements
 
 **Short-term (Phase 9+):**
+
 - Add error toast notifications (instead of console.error)
 - Add retry logic for failed saves
 - Add loading indicator during saves
 - Add beforeunload warning if unsaved changes
 
 **Medium-term:**
+
 - PHI detection and warnings
 - Clinical context templates
 - Export functionality
 - Undo/redo support
 
 **Long-term:**
+
 - EHR integration (HL7 FHIR)
 - Voice input for clinical context
 - Auto-populate from conversation
@@ -575,16 +616,19 @@ const handleClinicalContextChange = useCallback((newContext: ClinicalContext) =>
 ### Upgrading from localStorage
 
 **Before Phase 5:**
+
 - Clinical context stored in `localStorage` key: `voiceassist:clinical-context`
 - Shared across all conversations
 - Not persisted to backend
 
 **After Phase 5:**
+
 - Clinical context stored in backend per conversation
 - `localStorage` no longer used for clinical context
 - Data automatically migrated on first use (if user re-enters data)
 
 **No Breaking Changes:**
+
 - UI components unchanged
 - No user action required
 - Backward compatible
@@ -604,6 +648,7 @@ Already migrated (migration 008_add_clinical_contexts.py).
 ### Frontend Build
 
 Standard build process:
+
 ```bash
 cd apps/web-app
 pnpm build
@@ -630,11 +675,13 @@ No changes needed. Backend endpoints already exist.
 ### Recommended Next Phase: **Phase 9+ - Polish & Testing**
 
 **Why skip ahead:**
+
 - Phases 6, 7, 8 are advanced features (RAG, multi-modal, advanced UI)
 - Good time to polish and test existing features
 - Better user experience with solid foundation
 
 **Phase 9+ Scope:**
+
 1. **Performance Optimization**
    - Bundle size analysis
    - Code splitting
@@ -665,6 +712,7 @@ No changes needed. Backend endpoints already exist.
    - Deployment guide
 
 ### Estimated Effort:
+
 - Performance: 2-3 hours
 - Error Handling: 3-4 hours
 - Accessibility: 2-3 hours
@@ -690,6 +738,6 @@ The clinical context feature is now **fully functional** with robust backend per
 
 ---
 
-*Generated: 2025-11-23*
-*Branch: claude/voiceassist-development-0111gDprUnsSbumzjNxULVrq*
-*Commit: 39477c8*
+_Generated: 2025-11-23_
+_Branch: claude/voiceassist-development-0111gDprUnsSbumzjNxULVrq_
+_Commit: 39477c8_

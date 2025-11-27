@@ -11,30 +11,36 @@ This document summarizes the database query optimizations and advanced caching s
 Added 15+ strategic indexes to optimize common query patterns:
 
 #### User Table Indexes
+
 - `ix_users_last_login` - For DAU/MAU calculations
 - `ix_users_active_last_login` - Composite index for active user filtering
 
 #### Session Table Indexes
+
 - `ix_sessions_user_created` - Composite index for user sessions by date
 - `ix_sessions_created_at` - For recent session queries
 - `ix_sessions_ended_at` - For active vs completed session filtering
 
 #### Messages Table Indexes
+
 - `ix_messages_session_timestamp` - Critical for chat history retrieval (session_id + timestamp)
 - `ix_messages_timestamp` - For time-based message queries
 - `ix_messages_contains_phi` - Partial index for PHI-containing messages
 
 #### Audit Logs Indexes
+
 - `ix_audit_logs_user_timestamp` - Composite index for user audit trails
 - `ix_audit_logs_action` - For action-based queries
 - `ix_audit_logs_action_timestamp` - For action filtering by date
 - `ix_audit_logs_request_id` - For request correlation
 
 #### Feature Flags Indexes
+
 - `ix_feature_flags_name_enabled` - Critical for fast feature flag checks
 - `ix_feature_flags_enabled` - For listing enabled flags
 
 **Performance Impact:**
+
 - Login queries: ~50-70% faster (email index optimization)
 - Message history: ~80% faster (composite session_id + timestamp index)
 - Audit queries: ~60% faster (user_id + timestamp index)
@@ -47,6 +53,7 @@ Added 15+ strategic indexes to optimize common query patterns:
 Comprehensive query monitoring system with SQLAlchemy event listeners:
 
 #### Features:
+
 - **Slow Query Detection**: Automatically logs queries taking >100ms (configurable)
 - **N+1 Query Detection**: Identifies potential N+1 patterns (10+ similar queries)
 - **Prometheus Metrics**:
@@ -57,6 +64,7 @@ Comprehensive query monitoring system with SQLAlchemy event listeners:
   - `db_active_queries` - Currently executing queries
 
 #### Usage:
+
 ```python
 from app.core.query_profiler import setup_query_profiling
 from app.core.database import engine
@@ -66,6 +74,7 @@ setup_query_profiling(engine)
 ```
 
 #### Configuration (via environment variables):
+
 - `SLOW_QUERY_THRESHOLD_MS` - Slow query threshold (default: 100ms)
 - `N_PLUS_ONE_THRESHOLD` - Similar query count to trigger warning (default: 10)
 - `QUERY_PROFILER_ENABLED` - Enable/disable profiling (default: true)
@@ -75,16 +84,19 @@ setup_query_profiling(engine)
 ### 3. Query Optimizations
 
 #### Auth Endpoints (`app/api/auth.py`)
+
 - Added `.limit(1)` to user lookups (email and ID queries)
 - Prevents over-fetching when only one result is needed
 - **Impact**: 10-15% faster authentication queries
 
 #### Admin KB Endpoints (`app/api/admin_kb.py`)
+
 - Enforced maximum limit of 1000 rows for document listings
 - Prevents excessive memory usage and slow responses
 - Added pagination optimization hints in comments
 
 #### Future Optimization Points:
+
 - Add `selectinload()` and `joinedload()` for relationship loading
 - Implement query result limits across all endpoints
 - Use relationship loading strategies to prevent N+1 queries
@@ -96,6 +108,7 @@ setup_query_profiling(engine)
 **Note**: The existing `cache_service.py` already implements a sophisticated multi-level caching system with:
 
 #### Features:
+
 - **Two-Tier Architecture**:
   - L1: In-memory LRU cache (cachetools) - sub-millisecond access
   - L2: Redis distributed cache - cross-instance consistency
@@ -109,6 +122,7 @@ setup_query_profiling(engine)
   - Comprehensive Prometheus metrics
 
 #### Usage:
+
 ```python
 from app.services.cache_service import cache_service
 
@@ -125,6 +139,7 @@ await cache_service.delete_pattern("user:*")
 ```
 
 #### Metrics:
+
 - `cache_hits_total` / `cache_misses_total` - Hit/miss counters by layer
 - `cache_latency_seconds` - Operation latency by layer and operation
 - `cache_entries_total` - Cache size by layer
@@ -137,6 +152,7 @@ await cache_service.delete_pattern("user:*")
 Automatic query result caching with decorators:
 
 #### Features:
+
 - `@cache_result` decorator for functions (sync and async)
 - Automatic cache key generation from function arguments
 - Configurable TTL per decorator
@@ -145,6 +161,7 @@ Automatic query result caching with decorators:
 - Cache-on-mutation support
 
 #### Usage:
+
 ```python
 from app.core.cache_decorators import cache_result, invalidate_cache
 
@@ -160,6 +177,7 @@ await invalidate_namespace("user")
 ```
 
 **Performance Impact:**
+
 - Repeated queries: ~95-99% faster (cache hit)
 - First query: No overhead (<1ms for cache check)
 
@@ -170,11 +188,13 @@ await invalidate_namespace("user")
 Enhanced with three-tier caching architecture:
 
 #### Architecture:
+
 - **L1**: In-memory TTLCache (1-minute TTL) - sub-millisecond access
 - **L2**: Redis distributed cache (5-minute TTL) - cross-instance consistency
 - **L3**: PostgreSQL persistence - source of truth
 
 #### Features:
+
 - Automatic L1 -> L2 -> L3 cascade lookup
 - Cache warming on startup
 - Automatic cache invalidation on updates (all levels)
@@ -182,6 +202,7 @@ Enhanced with three-tier caching architecture:
 - Configurable TTLs per level
 
 #### Usage:
+
 ```python
 from app.services.feature_flags import feature_flag_service
 
@@ -198,12 +219,14 @@ stats = feature_flag_service.get_cache_stats()
 ```
 
 #### Performance Impact:
+
 - L1 hit: <0.1ms (in-memory)
 - L2 hit: ~1-2ms (Redis)
 - L3 hit: ~10-50ms (PostgreSQL)
 - Overall cache hit rate: Expected >95%
 
 #### Statistics:
+
 ```python
 {
     "l1_cache": {
@@ -232,11 +255,13 @@ stats = feature_flag_service.get_cache_stats()
 Specialized caching for RAG operations:
 
 #### Cache Types:
+
 - **Query Embeddings**: 24-hour TTL (embeddings are stable)
 - **Search Results**: 1-hour TTL (balance freshness and performance)
 - **Document Metadata**: 2-hour TTL (relatively stable)
 
 #### Features:
+
 - Query normalization for consistent cache keys
 - Automatic invalidation on document updates
 - Cache key generation from query + filters
@@ -244,6 +269,7 @@ Specialized caching for RAG operations:
 - Hit rate tracking and latency metrics
 
 #### Usage:
+
 ```python
 from app.services.rag_cache import rag_cache
 
@@ -268,11 +294,13 @@ await rag_cache.invalidate_document(document_id)
 ```
 
 #### Performance Impact:
+
 - Embedding cache hit: Saves ~100-300ms (OpenAI API call)
 - Search cache hit: Saves ~500-2000ms (vector DB query)
 - Expected cache hit rate: 60-80% for repeated queries
 
 #### Metrics:
+
 - `rag_cache_hits_total` / `rag_cache_misses_total` - By cache type
 - `rag_cache_invalidations_total` - By invalidation type
 - `rag_search_latency_saved` - Estimated latency saved
@@ -284,24 +312,28 @@ await rag_cache.invalidate_document(document_id)
 Added 30+ new performance metrics:
 
 #### Database Metrics:
+
 - `voiceassist_db_query_duration_seconds` - Query duration histogram by type
 - `voiceassist_db_slow_queries_total` - Slow query counter
 - `voiceassist_db_n_plus_one_warnings_total` - N+1 warnings
 - `voiceassist_db_pool_*` - Connection pool metrics (size, checked_out, utilization)
 
 #### Cache Metrics:
+
 - `voiceassist_cache_hit_rate_percent` - Hit rate by cache type and namespace
 - `voiceassist_cache_operation_duration_seconds` - Operation latency
 - `voiceassist_cache_size_entries` - Cache size
 - `voiceassist_cache_evictions_total` - Eviction counter
 
 #### Endpoint Metrics:
+
 - `voiceassist_endpoint_query_count_total` - Queries per endpoint
 - `voiceassist_endpoint_database_time_seconds` - Database time per endpoint
 - `voiceassist_endpoint_cache_time_seconds` - Cache time per endpoint
 - `voiceassist_response_time_p50/p95/p99_seconds` - Response time percentiles
 
 #### Resource Metrics:
+
 - `voiceassist_memory_usage_bytes` - Process memory
 - `voiceassist_cpu_usage_percent` - CPU usage
 - `voiceassist_thread_count` - Active threads
@@ -313,6 +345,7 @@ Added 30+ new performance metrics:
 Comprehensive performance monitoring dashboard with 9 panels:
 
 #### Panels:
+
 1. **Database Query Performance (P50, P95, P99)** - Query latency percentiles
 2. **Cache Hit Rates** - Hit rates for all cache levels
 3. **DB Connection Pool Utilization** - Pool usage gauge
@@ -324,6 +357,7 @@ Comprehensive performance monitoring dashboard with 9 panels:
 9. **Database Queries per Second** - QPS by query type
 
 #### Features:
+
 - Auto-refresh every 10 seconds
 - 1-hour time window (configurable)
 - Threshold-based color coding
@@ -331,6 +365,7 @@ Comprehensive performance monitoring dashboard with 9 panels:
 - Export/import support
 
 #### Setup:
+
 1. Import dashboard JSON into Grafana
 2. Configure Prometheus data source
 3. Dashboard UID: `voiceassist-performance`
@@ -354,6 +389,7 @@ engine = create_engine(
 ```
 
 ### Pool Statistics:
+
 ```python
 from app.core.database import get_db_pool_stats
 
@@ -446,22 +482,24 @@ curl -X POST http://grafana:3000/api/dashboards/db \
 
 ### Expected Performance Improvements:
 
-| Operation | Before | After | Improvement |
-|-----------|--------|-------|-------------|
-| Login Query | 50ms | 15ms | 70% faster |
-| Message History (100 msgs) | 200ms | 40ms | 80% faster |
-| Feature Flag Check | 10ms | 0.1ms | 99% faster (L1 hit) |
-| RAG Search (cached) | 2000ms | 10ms | 99.5% faster |
-| User Audit Query | 150ms | 60ms | 60% faster |
-| Document List (1000 docs) | 500ms | 200ms | 60% faster |
+| Operation                  | Before | After | Improvement         |
+| -------------------------- | ------ | ----- | ------------------- |
+| Login Query                | 50ms   | 15ms  | 70% faster          |
+| Message History (100 msgs) | 200ms  | 40ms  | 80% faster          |
+| Feature Flag Check         | 10ms   | 0.1ms | 99% faster (L1 hit) |
+| RAG Search (cached)        | 2000ms | 10ms  | 99.5% faster        |
+| User Audit Query           | 150ms  | 60ms  | 60% faster          |
+| Document List (1000 docs)  | 500ms  | 200ms | 60% faster          |
 
 ### Cache Hit Rates (Expected):
+
 - L1 Cache (Feature Flags): 95%+
 - L2 Cache (Redis): 80-90%
 - RAG Embeddings: 70-80%
 - RAG Search Results: 60-70%
 
 ### Resource Usage:
+
 - Memory increase: ~100-200 MB (L1 caches)
 - Redis memory: ~500 MB - 2 GB (depends on usage)
 - CPU decrease: ~20-30% (less DB queries)
@@ -524,24 +562,28 @@ groups:
 ## Best Practices
 
 ### 1. Query Optimization
+
 - Always use indexes for WHERE, JOIN, ORDER BY clauses
 - Add `.limit()` to single-result queries
 - Use `selectinload()` or `joinedload()` for relationships
 - Avoid N+1 queries by eager loading
 
 ### 2. Caching Strategy
+
 - Use L1 cache for hot data (< 1 minute TTL)
 - Use L2 cache for shared data (5-60 minute TTL)
 - Invalidate caches on mutations
 - Monitor cache hit rates
 
 ### 3. Connection Pool
+
 - Keep pool size reasonable (10-30 connections)
 - Set overflow for burst traffic
 - Use pool_pre_ping for health checks
 - Monitor pool utilization
 
 ### 4. Monitoring
+
 - Check Grafana dashboard daily
 - Investigate slow queries
 - Optimize based on N+1 warnings
@@ -554,6 +596,7 @@ groups:
 ### Issue: Slow Queries Detected
 
 **Solution:**
+
 1. Check query in logs
 2. Verify indexes exist: `\d+ table_name`
 3. Analyze query plan: `EXPLAIN ANALYZE SELECT ...`
@@ -562,6 +605,7 @@ groups:
 ### Issue: Low Cache Hit Rate
 
 **Solution:**
+
 1. Check cache TTL configuration
 2. Verify cache keys are consistent
 3. Monitor cache evictions
@@ -570,6 +614,7 @@ groups:
 ### Issue: High Connection Pool Utilization
 
 **Solution:**
+
 1. Check for connection leaks
 2. Increase pool size or overflow
 3. Optimize slow queries
@@ -578,6 +623,7 @@ groups:
 ### Issue: N+1 Query Warnings
 
 **Solution:**
+
 1. Identify the query pattern in logs
 2. Add `selectinload()` or `joinedload()`
 3. Test with profiler
@@ -612,6 +658,7 @@ groups:
 ## Files Created/Modified
 
 ### Created:
+
 1. `services/api-gateway/alembic/versions/005_add_performance_indexes.py` - Database indexes
 2. `services/api-gateway/app/core/query_profiler.py` - Query profiling system
 3. `services/api-gateway/app/core/cache_decorators.py` - Cache decorators
@@ -619,6 +666,7 @@ groups:
 5. `dashboards/performance-metrics.json` - Grafana dashboard
 
 ### Modified:
+
 1. `services/api-gateway/app/api/auth.py` - Query optimizations
 2. `services/api-gateway/app/api/admin_kb.py` - Pagination limits
 3. `services/api-gateway/app/services/feature_flags.py` - Multi-level caching
@@ -630,6 +678,7 @@ groups:
 ## Testing
 
 ### Unit Tests
+
 ```bash
 # Test query profiler
 pytest tests/test_query_profiler.py
@@ -645,6 +694,7 @@ pytest tests/test_feature_flags_cache.py
 ```
 
 ### Integration Tests
+
 ```bash
 # Test with real database
 pytest tests/integration/test_database_optimization.py
@@ -654,6 +704,7 @@ pytest tests/integration/test_cache_performance.py
 ```
 
 ### Performance Tests
+
 ```bash
 # Load test with caching
 locust -f tests/performance/test_cache_load.py

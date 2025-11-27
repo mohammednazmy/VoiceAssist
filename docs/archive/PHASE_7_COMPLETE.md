@@ -24,6 +24,7 @@ Phase 7 has been **fully completed** with all three major features implemented a
 **Implementation**: Backend API + Frontend UI
 
 **Capabilities:**
+
 - Create folders with custom names, colors, and icons
 - Hierarchical folder structure (parent/child relationships)
 - Move folders and conversations between folders
@@ -33,10 +34,12 @@ Phase 7 has been **fully completed** with all three major features implemented a
 - 8 icon options: 📁 📂 🗂️ 📋 📊 💼 🏥 ⚕️
 
 **Components:**
+
 - `FolderDialog.tsx` - Create/edit folder with color & icon picker
 - `useFolders.ts` - Folder state management hook
 
 **API Methods** (11 total):
+
 ```typescript
 getFolders(parentId?) // List folders
 getFolderTree() // Get full hierarchy
@@ -55,6 +58,7 @@ moveConversationToFolder(conversationId, folderId) // Assign conversation
 **Implementation**: Backend API + Frontend UI
 
 **Capabilities:**
+
 - Generate secure share links with unique tokens
 - Password protection (optional, hashed)
 - Configurable expiration (1h, 24h, 7d, 30d)
@@ -66,15 +70,18 @@ moveConversationToFolder(conversationId, folderId) // Assign conversation
 - Share button in chat header
 
 **Components:**
+
 - `ShareDialog.tsx` - Complete share management UI
 - Integrated in ChatPage header
 
 **Share Link Format:**
+
 ```
 https://assist.asimo.io/shared/{secure-token}
 ```
 
 **Features:**
+
 - Secure token generation (32 bytes)
 - Optional password hashing
 - Expiration validation
@@ -88,6 +95,7 @@ https://assist.asimo.io/shared/{secure-token}
 **Implementation**: localStorage-based (MVP, can be migrated to backend)
 
 **Capabilities:**
+
 - Save any conversation as a template
 - Create new conversations from templates
 - Template metadata: name, description, category
@@ -98,11 +106,13 @@ https://assist.asimo.io/shared/{secure-token}
 - Usage tracking
 
 **Components:**
+
 - `SaveAsTemplateDialog.tsx` - Save conversation as template
 - `TemplatePicker.tsx` - Browse and select templates
 - `useTemplates.ts` - Template management hook
 
 **Template Structure:**
+
 ```typescript
 {
   id: string;
@@ -120,6 +130,7 @@ https://assist.asimo.io/shared/{secure-token}
 ```
 
 **Storage:**
+
 - localStorage key: `voiceassist:templates`
 - JSON serialization
 - Full CRUD operations
@@ -155,6 +166,7 @@ Phase 7 Architecture
 ### Database Schema (Backend)
 
 **Folders:**
+
 ```sql
 CREATE TABLE conversation_folders (
   id UUID PRIMARY KEY,
@@ -171,10 +183,12 @@ ALTER TABLE sessions
 ```
 
 **Sharing:**
+
 - Currently in-memory (`_shares` dict)
 - Should be migrated to PostgreSQL for production
 
 **Templates:**
+
 - Client-side localStorage
 - Can be migrated to backend with similar schema as folders
 
@@ -184,18 +198,18 @@ ALTER TABLE sessions
 
 **Total Lines Added**: ~2,500 lines
 
-| Component | Lines | Description |
-|-----------|-------|-------------|
-| Types | 148 | Folder, Sharing, Template types |
-| API Client | 108 | 11 API methods |
-| useFolders.ts | 94 | Folder management hook |
-| useTemplates.ts | 198 | Template management hook |
-| FolderDialog.tsx | 234 | Folder create/edit UI |
-| ShareDialog.tsx | 422 | Share management UI |
-| SaveAsTemplateDialog.tsx | 234 | Save template UI |
-| TemplatePicker.tsx | 336 | Template selection UI |
-| ChatPage.tsx | ~50 | Integration changes |
-| Docs | 344 | Progress documentation |
+| Component                | Lines | Description                     |
+| ------------------------ | ----- | ------------------------------- |
+| Types                    | 148   | Folder, Sharing, Template types |
+| API Client               | 108   | 11 API methods                  |
+| useFolders.ts            | 94    | Folder management hook          |
+| useTemplates.ts          | 198   | Template management hook        |
+| FolderDialog.tsx         | 234   | Folder create/edit UI           |
+| ShareDialog.tsx          | 422   | Share management UI             |
+| SaveAsTemplateDialog.tsx | 234   | Save template UI                |
+| TemplatePicker.tsx       | 336   | Template selection UI           |
+| ChatPage.tsx             | ~50   | Integration changes             |
+| Docs                     | 344   | Progress documentation          |
 
 **Total Files Created**: 7 new files
 **Total Files Modified**: 3 files
@@ -205,6 +219,7 @@ ALTER TABLE sessions
 ## User Experience Features
 
 ### Folders
+
 - ✅ Visual folder tree navigation
 - ✅ Drag-and-drop (planned, not yet implemented)
 - ✅ Color-coded folders
@@ -213,6 +228,7 @@ ALTER TABLE sessions
 - ✅ Circular reference prevention
 
 ### Sharing
+
 - ✅ One-click share link generation
 - ✅ Copy link to clipboard
 - ✅ Password protection
@@ -222,6 +238,7 @@ ALTER TABLE sessions
 - ✅ Access analytics
 
 ### Templates
+
 - ✅ Save conversation as template
 - ✅ Template library with search
 - ✅ Category filtering
@@ -234,6 +251,7 @@ ALTER TABLE sessions
 ## Accessibility
 
 All components include:
+
 - ✅ ARIA labels and roles
 - ✅ Keyboard navigation
 - ✅ Screen reader announcements
@@ -242,6 +260,7 @@ All components include:
 - ✅ Color contrast (WCAG 2.1 AA)
 
 **Keyboard Shortcuts:**
+
 - Escape: Close dialogs
 - Enter: Submit forms (where applicable)
 - Tab: Navigate form fields
@@ -251,6 +270,7 @@ All components include:
 ## Testing Checklist
 
 ### Folders ✅
+
 - [x] Create root folder
 - [x] Create nested folder
 - [x] Edit folder (name, color, icon)
@@ -263,6 +283,7 @@ All components include:
 - [ ] Assign conversation to folder (backend ready, UI pending)
 
 ### Sharing ✅
+
 - [x] Create share link with defaults
 - [x] Create share link with password
 - [x] Create share link with custom expiration
@@ -276,6 +297,7 @@ All components include:
 - [ ] Expiration handling (backend ready)
 
 ### Templates ✅
+
 - [x] Save conversation as template
 - [x] Template name and description
 - [x] Category selection
@@ -294,6 +316,7 @@ All components include:
 ## Known Limitations & Future Enhancements
 
 ### Folders
+
 1. **UI Integration Pending**: FolderDialog is built but not yet integrated into ConversationsSidebar
    - Need to add folder tree view
    - Need to add "Move to Folder" menu option
@@ -304,6 +327,7 @@ All components include:
    - Drag folders to reorganize hierarchy
 
 ### Sharing
+
 1. **In-Memory Storage**: Shares stored in `_shares` dict
    - Should migrate to PostgreSQL for persistence
    - Add share table with foreign keys
@@ -315,6 +339,7 @@ All components include:
    - Need password entry form
 
 ### Templates
+
 1. **Backend Migration**: Currently localStorage only
    - Should create backend API for templates
    - Add template CRUD endpoints
@@ -335,16 +360,19 @@ All components include:
 ## Performance Considerations
 
 ### Folders
+
 - **Tree Loading**: O(n) where n = number of folders
 - **Optimization**: Could implement lazy loading for large folder trees
 - **Memory**: Minimal, folder data is small
 
 ### Sharing
+
 - **In-Memory Limit**: Shares cleared on server restart
 - **Recommendation**: Migrate to PostgreSQL immediately for production
 - **Security**: Tokens are cryptographically secure (32 bytes)
 
 ### Templates
+
 - **localStorage Limit**: 5-10MB typical browser limit
 - **Estimate**: ~100-200 templates before hitting limit
 - **Optimization**: Could implement compression or backend storage
@@ -354,12 +382,14 @@ All components include:
 ## Security Considerations
 
 ### Folders
+
 - ✅ User-scoped queries (folder access controlled by user_id)
 - ✅ Circular reference prevention
 - ✅ Parent validation on create/update
 - ✅ Orphan handling on delete (SET NULL)
 
 ### Sharing
+
 - ✅ Secure token generation (secrets.token_urlsafe(32))
 - ✅ Password hashing (bcrypt)
 - ✅ Expiration validation
@@ -368,11 +398,13 @@ All components include:
 - ⚠️ No rate limiting (should add)
 
 ### Templates
+
 - ✅ Client-side only (no security risk)
 - ⚠️ No PHI protection (user responsible)
 - ⚠️ No sanitization (could XSS if rendered raw)
 
 **Recommendations:**
+
 1. Add rate limiting to share link creation
 2. Migrate shares to PostgreSQL
 3. Add PHI detection/warning for templates
@@ -383,7 +415,9 @@ All components include:
 ## Migration Path to Production
 
 ### Immediate (Required for Production)
+
 1. **Sharing Migration**:
+
    ```sql
    CREATE TABLE conversation_shares (
      id UUID PRIMARY KEY,
@@ -405,6 +439,7 @@ All components include:
    - Read-only conversation display
 
 ### Short-Term (Recommended)
+
 1. **Folder UI Integration**:
    - Update ConversationsSidebar with folder tree
    - Add "Move to Folder" menu option
@@ -416,6 +451,7 @@ All components include:
    - Sync with localStorage (migration)
 
 ### Long-Term (Enhancements)
+
 1. **Advanced Features**:
    - Drag-and-drop folder organization
    - Template variables and substitution
@@ -433,23 +469,29 @@ All components include:
 ## Deployment Notes
 
 ### Environment Variables
+
 No new environment variables required.
 
 ### Database Migrations
+
 Run migration for `conversation_folders` table:
+
 ```bash
 # Already applied in backend
 # No action needed
 ```
 
 ### Frontend Build
+
 Standard build process, no special steps:
+
 ```bash
 cd apps/web-app
 pnpm build
 ```
 
 ### localStorage Persistence
+
 Templates persist across sessions automatically. No server-side configuration needed.
 
 ---
@@ -468,6 +510,7 @@ Templates persist across sessions automatically. No server-side configuration ne
 **Phase 7 is COMPLETE!** Moving to **Phase 4: File Upload & Management**
 
 ### Phase 4 Scope:
+
 1. File upload UI (drag-and-drop, file picker)
 2. Backend integration with `/api/files/*` endpoints
 3. File preview (PDF, images)
@@ -475,6 +518,7 @@ Templates persist across sessions automatically. No server-side configuration ne
 5. Attachment support in chat
 
 ### Estimated Effort:
+
 - File Upload UI: 4-6 hours
 - Backend Integration: 2-3 hours
 - Preview & Management: 3-4 hours
@@ -499,6 +543,6 @@ The conversation management features are now **fully functional** with a clear p
 
 ---
 
-*Generated: 2025-11-23*
-*Branch: claude/voiceassist-development-0111gDprUnsSbumzjNxULVrq*
-*Commits: 4 (32b426e, f42b506, ae5fa53, 59fd84c)*
+_Generated: 2025-11-23_
+_Branch: claude/voiceassist-development-0111gDprUnsSbumzjNxULVrq_
+_Commits: 4 (32b426e, f42b506, ae5fa53, 59fd84c)_

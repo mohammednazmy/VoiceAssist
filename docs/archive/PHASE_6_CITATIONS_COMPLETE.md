@@ -80,13 +80,13 @@ const filteredCitations = useMemo(() => {
       citation.subtitle,
       citation.reference,
       citation.snippet,
-      citation.authors?.join(' '),
+      citation.authors?.join(" "),
       citation.location,
       citation.doi,
       citation.pubmedId,
     ]
       .filter(Boolean)
-      .join(' ')
+      .join(" ")
       .toLowerCase();
 
     return searchableText.includes(query);
@@ -106,11 +106,11 @@ const filteredCitations = useMemo(() => {
 
 ### Keyboard Navigation
 
-| Shortcut | Action |
-|----------|--------|
-| ⌘C / Ctrl+C | Toggle citation sidebar |
-| Esc | Close sidebar |
-| ⌘/ | Show all keyboard shortcuts |
+| Shortcut    | Action                      |
+| ----------- | --------------------------- |
+| ⌘C / Ctrl+C | Toggle citation sidebar     |
+| Esc         | Close sidebar               |
+| ⌘/          | Show all keyboard shortcuts |
 
 ### Mobile Responsiveness
 

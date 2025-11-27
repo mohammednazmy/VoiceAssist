@@ -116,6 +116,36 @@ const category: ColorCategory = "primary";
 const size: FontSize = "lg";
 ```
 
+## Module Exports
+
+The package provides individual module exports for tree-shaking:
+
+```typescript
+// Import everything
+import { colors, typography, spacing } from "@voiceassist/design-tokens";
+
+// Or import specific modules
+import { lightColors, darkColors } from "@voiceassist/design-tokens/colors";
+import { typography } from "@voiceassist/design-tokens/typography";
+import { spacing } from "@voiceassist/design-tokens/spacing";
+import { animations, transitions } from "@voiceassist/design-tokens/animations";
+import { breakpoints, mediaQueries } from "@voiceassist/design-tokens/breakpoints";
+import { shadows, zIndex } from "@voiceassist/design-tokens/elevation";
+```
+
+## Development
+
+```bash
+# Build
+pnpm build
+
+# Watch mode
+pnpm dev
+
+# Type check
+pnpm type-check
+```
+
 ## Contributing
 
 When adding new tokens:

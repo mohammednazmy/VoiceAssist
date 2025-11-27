@@ -17,15 +17,18 @@ Phase 7 focuses on advanced conversation management features including folders, 
 ### 1. Folder Management & Categorization ✅
 
 **Components Created:**
+
 - `apps/web-app/src/hooks/useFolders.ts` - Folder state management hook
 - `apps/web-app/src/components/folders/FolderDialog.tsx` - Create/edit dialog
 
 **Types & API (commit 32b426e):**
+
 - Added `folderId` to `Conversation` interface
 - Created `Folder`, `CreateFolderRequest`, `UpdateFolderRequest` types
 - API client methods: `getFolders()`, `getFolderTree()`, `createFolder()`, `updateFolder()`, `deleteFolder()`, `moveFolder()`, `moveConversationToFolder()`
 
 **Folder Features:**
+
 - ✅ Create folders with custom names
 - ✅ Color selection (7 preset colors)
 - ✅ Icon selection (8 medical/file icons)
@@ -35,6 +38,7 @@ Phase 7 focuses on advanced conversation management features including folders, 
 - ✅ Folder tree view support
 
 **Folder Dialog UI:**
+
 ```typescript
 <FolderDialog
   isOpen={isOpen}
@@ -46,6 +50,7 @@ Phase 7 focuses on advanced conversation management features including folders, 
 ```
 
 **Available Colors:**
+
 - Blue (#3B82F6)
 - Green (#10B981)
 - Yellow (#F59E0B)
@@ -62,13 +67,16 @@ Phase 7 focuses on advanced conversation management features including folders, 
 ### 2. Conversation Sharing ✅
 
 **Components Created:**
+
 - `apps/web-app/src/components/sharing/ShareDialog.tsx` - Complete share management UI
 
 **Types & API (commit 32b426e):**
+
 - Created `ShareRequest`, `ShareResponse`, `ShareLink` types
 - API client methods: `createShareLink()`, `getSharedConversation()`, `listShareLinks()`, `revokeShareLink()`
 
 **Sharing Features:**
+
 - ✅ Generate shareable links with unique tokens
 - ✅ Password protection (optional)
 - ✅ Configurable expiration (1 hour to 30 days)
@@ -80,6 +88,7 @@ Phase 7 focuses on advanced conversation management features including folders, 
 - ✅ Share button in chat header
 
 **ShareDialog UI:**
+
 ```typescript
 <ShareDialog
   isOpen={isOpen}
@@ -90,12 +99,14 @@ Phase 7 focuses on advanced conversation management features including folders, 
 ```
 
 **Expiration Options:**
+
 - 1 hour
 - 24 hours
 - 7 days
 - 30 days
 
 **Share Link Features:**
+
 - Secure token generation (secrets.token_urlsafe(32))
 - Optional password hashing
 - Expiration validation
@@ -103,6 +114,7 @@ Phase 7 focuses on advanced conversation management features including folders, 
 - Share token format: `/shared/{token}`
 
 **ChatPage Integration (commit f42b506):**
+
 - Added Share button next to Export in header
 - Share icon with responsive text label
 - Opens ShareDialog with current conversation context
@@ -114,6 +126,7 @@ Phase 7 focuses on advanced conversation management features including folders, 
 ### 3. Conversation Templates ⏳ NOT STARTED
 
 **Planned Features:**
+
 - Create conversation from template
 - Save conversation as template
 - Template library/picker
@@ -198,6 +211,7 @@ Backend (FastAPI + PostgreSQL)
 ### Data Flow
 
 **Folder Creation:**
+
 ```
 User → FolderDialog → useFolders.createFolder()
      → apiClient.createFolder() → POST /api/folders
@@ -206,6 +220,7 @@ User → FolderDialog → useFolders.createFolder()
 ```
 
 **Share Link Creation:**
+
 ```
 User → ShareDialog → apiClient.createShareLink()
      → POST /api/sessions/{id}/share
@@ -218,10 +233,12 @@ User → ShareDialog → apiClient.createShareLink()
 ## Files Modified/Created
 
 **Commit 32b426e** (Types & API):
+
 - `packages/types/src/index.ts` (148 lines added)
 - `packages/api-client/src/index.ts` (108 lines added)
 
 **Commit f42b506** (UI Components):
+
 - `apps/web-app/src/hooks/useFolders.ts` (94 lines, new)
 - `apps/web-app/src/components/folders/FolderDialog.tsx` (234 lines, new)
 - `apps/web-app/src/components/sharing/ShareDialog.tsx` (422 lines, new)
@@ -234,6 +251,7 @@ User → ShareDialog → apiClient.createShareLink()
 ## Testing Checklist
 
 ### Folder Management
+
 - [ ] Create root folder
 - [ ] Create nested folder
 - [ ] Edit folder (name, color, icon)
@@ -246,6 +264,7 @@ User → ShareDialog → apiClient.createShareLink()
 - [ ] Error handling for circular references
 
 ### Sharing
+
 - [ ] Create share link with defaults
 - [ ] Create share link with password
 - [ ] Create share link with 1h expiration
@@ -331,6 +350,7 @@ User → ShareDialog → apiClient.createShareLink()
 ## Summary
 
 Phase 7 is **66% complete** with folders and sharing fully functional. The remaining work is:
+
 1. Templates implementation (~4-6 hours)
 2. Folder UI integration (~2-3 hours)
 3. Polish and testing (~2-3 hours)
