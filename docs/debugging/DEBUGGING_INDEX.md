@@ -22,6 +22,64 @@ This is the central hub for all VoiceAssist troubleshooting documentation. Use t
 
 ---
 
+## Debug by Symptom
+
+| Symptom                      | Likely Subsystem | First Doc to Read                                | Key Commands                                   |
+| ---------------------------- | ---------------- | ------------------------------------------------ | ---------------------------------------------- |
+| API returns 500 errors       | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | `journalctl -u quran-rtc -n 100 \| grep ERROR` |
+| WebSocket disconnects        | Voice/Realtime   | [Voice Debugging](./DEBUGGING_VOICE_REALTIME.md) | `websocat wss://assist.asimo.io/ws`            |
+| Voice input not working      | Voice/Realtime   | [Voice Debugging](./DEBUGGING_VOICE_REALTIME.md) | Check browser audio permissions                |
+| Pages return 404             | Docs Site        | [Docs Site Debugging](./DEBUGGING_DOCS_SITE.md)  | `ls /var/www/assistdocs.asimo.io/`             |
+| Slow response times          | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | `curl /metrics \| grep http_request_duration`  |
+| Authentication failing       | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | Check JWT token expiry, Redis status           |
+| Search not returning results | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | Check Qdrant connection, embedding status      |
+| UI renders incorrectly       | Frontend         | [Frontend Debugging](./DEBUGGING_FRONTEND.md)    | Browser DevTools Console & Network             |
+| SSL certificate errors       | Infrastructure   | [Debugging Overview](./DEBUGGING_OVERVIEW.md)    | `sudo certbot certificates`                    |
+| Service won't start          | Infrastructure   | [Debugging Overview](./DEBUGGING_OVERVIEW.md)    | `sudo systemctl status <service>`              |
+
+---
+
+## AI Agent Playbook
+
+For AI assistants debugging VoiceAssist issues:
+
+### Required Information to Collect
+
+1. **Error context**: Exact error message, timestamp, affected endpoint
+2. **Logs**: Last 100 lines from relevant service (`journalctl -u <service> -n 100`)
+3. **Health status**: Output of `/health` and `/ready` endpoints
+4. **Recent changes**: Any deployments or config changes in past 24h
+
+### Standard Investigation Steps
+
+```bash
+# 1. Check service status
+sudo systemctl status quran-rtc apache2
+
+# 2. Check recent errors
+journalctl -u quran-rtc --since "30 minutes ago" | grep -i error
+
+# 3. Check health endpoints
+curl -s https://assist.asimo.io/health | jq
+curl -s https://assist.asimo.io/ready | jq
+
+# 4. Check dependencies
+redis-cli ping
+curl -s http://localhost:6333/collections | jq  # Qdrant
+```
+
+### What "Good" vs "Bad" Looks Like
+
+| Check          | Good                                         | Bad                    |
+| -------------- | -------------------------------------------- | ---------------------- |
+| `/health`      | `{"status": "healthy"}`                      | Non-200 or timeout     |
+| `/ready`       | `{"status": "ready", "dependencies": {...}}` | Any dependency `false` |
+| Service status | `active (running)`                           | `failed` or `inactive` |
+| Redis          | `PONG`                                       | Connection refused     |
+| Apache         | `Syntax OK` from configtest                  | Syntax errors          |
+
+---
+
 ## Quick Reference: Subsystem Overview
 
 | Subsystem      | Primary Guide                                    | Key Logs                            | Health Endpoint               |

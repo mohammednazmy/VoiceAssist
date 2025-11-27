@@ -1,13 +1,15 @@
 ---
-title: "Claude Prompts"
-slug: "claude-prompts"
-summary: "This document contains ready-to-use prompts for different types of work on VoiceAssist V2. Copy and paste these prompts into a Claude Code session, fi..."
+title: Claude Prompts Library
+slug: ai/claude-prompts
+summary: Ready-to-use prompts for Claude Code sessions on VoiceAssist - phase implementation, bugfix, documentation, testing.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["agent", "human"]
-tags: ["claude", "prompts"]
+audience: ["agent", "ai-agents", "human"]
+tags: ["claude", "prompts", "ai-agent", "templates"]
+category: ai
+version: "1.0.0"
 ---
 
 # Claude Code Prompt Library

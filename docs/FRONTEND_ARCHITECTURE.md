@@ -6,9 +6,11 @@ status: stable
 stability: beta
 owner: frontend
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "frontend"]
+audience: ["human", "agent", "ai-agents", "frontend"]
 tags: ["architecture", "frontend", "react", "typescript", "monorepo"]
 relatedServices: ["web-app", "admin-panel", "docs-site"]
+category: architecture
+source_of_truth: true
 version: "1.0.0"
 ---
 

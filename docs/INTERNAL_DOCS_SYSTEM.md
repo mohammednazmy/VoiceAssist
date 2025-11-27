@@ -90,7 +90,7 @@ pnpm check:links
 
 **What it checks:**
 
-- Internal markdown links (`[text](./path.md)`)
+- Internal markdown links (e.g., `[text](./other-doc.md)`)
 - Cross-file references
 - Relative path resolution
 

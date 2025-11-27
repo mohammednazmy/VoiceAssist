@@ -500,10 +500,10 @@ This documentation set provides a **comprehensive, production-ready blueprint** 
 
 ## 📚 Additional Resources
 
-- [VoiceAssist Backend Repository](../../../server/)
-- [Existing Project Documentation](../../)
-- [Backend Phase Completion Reports](../../phases/)
-- [HIPAA Compliance Matrix](../../HIPAA_COMPLIANCE_MATRIX.md)
+- [VoiceAssist API Gateway](../../services/api-gateway/)
+- [Existing Project Documentation](../)
+- [Backend Architecture](../BACKEND_ARCHITECTURE.md)
+- [Security Compliance](../SECURITY_COMPLIANCE.md)
 
 ---
 

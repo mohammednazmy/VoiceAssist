@@ -553,9 +553,9 @@ cd apps/web-app && NODE_OPTIONS='--max-old-space-size=4096' npx vitest run
 
 For questions or issues, consult:
 
-- [CLIENT_DEV_ROADMAP.md](docs/client-implementation/CLIENT_DEV_ROADMAP.md)
-- [WEB_APP_FEATURE_SPECS.md](docs/client-implementation/WEB_APP_FEATURE_SPECS.md)
-- [TECHNICAL_ARCHITECTURE.md](docs/client-implementation/TECHNICAL_ARCHITECTURE.md)
+- [CLIENT_DEV_ROADMAP.md](../client-implementation/CLIENT_DEV_ROADMAP.md)
+- [WEB_APP_FEATURE_SPECS.md](../client-implementation/WEB_APP_FEATURE_SPECS.md)
+- [TECHNICAL_ARCHITECTURE.md](../client-implementation/TECHNICAL_ARCHITECTURE.md)
 
 ---
 

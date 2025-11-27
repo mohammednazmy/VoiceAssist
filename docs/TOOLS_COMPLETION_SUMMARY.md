@@ -423,7 +423,7 @@ All tools-related documentation is now comprehensive and cross-linked:
 6. **[OBSERVABILITY.md](OBSERVABILITY.md)** - Tool metrics and monitoring
 7. **[SECURITY_COMPLIANCE.md](SECURITY_COMPLIANCE.md)** - Tool PHI security rules
 8. **[TOOLS_INTEGRATION_SUMMARY.md](TOOLS_INTEGRATION_SUMMARY.md)** - Previous session summary
-9. **[.ai/index.json](.ai/index.json)** - AI agent task index
+9. **[Agent API Reference](ai/AGENT_API_REFERENCE.md)** - AI agent endpoints
 10. **[DOC_INDEX.yml](DOC_INDEX.yml)** - Machine-readable documentation index
 
 ---

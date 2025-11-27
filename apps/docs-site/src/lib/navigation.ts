@@ -333,6 +333,18 @@ export const navigation: NavSection[] = [
         description: "Component status and what's implemented",
         docPaths: ["overview/IMPLEMENTATION_STATUS.md"],
       },
+      {
+        title: "Claude Execution Guide",
+        href: "/ai/claude-guide",
+        description: "Session startup, branching, and safety rules for Claude",
+        docPaths: ["CLAUDE_EXECUTION_GUIDE.md"],
+      },
+      {
+        title: "Claude Prompts",
+        href: "/ai/claude-prompts",
+        description: "Ready-to-use prompt templates for Claude sessions",
+        docPaths: ["CLAUDE_PROMPTS.md"],
+      },
     ],
   },
   {

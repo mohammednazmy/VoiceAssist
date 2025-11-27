@@ -538,7 +538,7 @@ Complete summary of:
 
 ## 📄 License
 
-Internal use only. See [LICENSE](../LICENSE) for details.
+Internal use only. This is a proprietary project.
 
 ---
 

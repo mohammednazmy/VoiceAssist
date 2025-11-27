@@ -1,6 +1,6 @@
 {
   "count": 221,
-  "generated_at": "2025-11-27T22:58:57.744Z",
+  "generated_at": "2025-11-27T23:26:53.527Z",
   "docs": [
     {
       "slug": "continuous-improvement-plan",
@@ -15,22 +15,6 @@
         "ai-agents"
       ],
       "tags": ["roadmap", "planning", "improvements", "future"],
-      "lastUpdated": "Wed Nov 26 2025 18:00:00 GMT-0600 (Central Standard Time)"
-    },
-    {
-      "slug": "security-compliance",
-      "path": "SECURITY_COMPLIANCE.md",
-      "title": "Security & Compliance Guide",
-      "summary": "HIPAA compliance, zero-trust architecture, PHI protection, and security requirements",
-      "status": "draft",
-      "audience": [
-        "developers",
-        "security-engineers",
-        "architects",
-        "compliance-officers",
-        "ai-agents"
-      ],
-      "tags": ["security", "hipaa", "compliance", "phi", "encryption"],
       "lastUpdated": "Wed Nov 26 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
@@ -174,7 +158,8 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "backend"],
+      "audience": ["human", "agent", "ai-agents", "backend"],
+      "category": "architecture",
       "tags": ["architecture", "backend", "fastapi", "microservices"],
       "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
@@ -216,27 +201,29 @@
       "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "claude-execution-guide",
+      "slug": "ai/claude-execution-guide",
       "path": "CLAUDE_EXECUTION_GUIDE.md",
       "title": "Claude Execution Guide",
-      "summary": "This guide provides comprehensive instructions for Claude Code (or other AI assistants) working on the VoiceAssist V2 project. It covers session start...",
+      "summary": "Comprehensive instructions for Claude Code working on VoiceAssist - session startup, branching, safety rules, quality checks.",
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["agent", "human"],
-      "tags": ["claude", "execution", "guide"],
+      "audience": ["agent", "ai-agents", "human"],
+      "category": "ai",
+      "tags": ["claude", "execution", "guide", "ai-agent"],
       "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "claude-prompts",
+      "slug": "ai/claude-prompts",
       "path": "CLAUDE_PROMPTS.md",
-      "title": "Claude Prompts",
-      "summary": "This document contains ready-to-use prompts for different types of work on VoiceAssist V2. Copy and paste these prompts into a Claude Code session, fi...",
+      "title": "Claude Prompts Library",
+      "summary": "Ready-to-use prompts for Claude Code sessions on VoiceAssist - phase implementation, bugfix, documentation, testing.",
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["agent", "human"],
-      "tags": ["claude", "prompts"],
+      "audience": ["agent", "ai-agents", "human"],
+      "category": "ai",
+      "tags": ["claude", "prompts", "ai-agent", "templates"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -476,7 +463,8 @@
       "status": "stable",
       "stability": "beta",
       "owner": "frontend",
-      "audience": ["human", "agent", "frontend"],
+      "audience": ["human", "agent", "ai-agents", "frontend"],
+      "category": "architecture",
       "tags": ["architecture", "frontend", "react", "typescript", "monorepo"],
       "relatedServices": ["web-app", "admin-panel", "docs-site"],
       "lastUpdated": "2025-11-27"
@@ -982,7 +970,8 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "backend", "frontend"],
+      "audience": ["human", "agent", "ai-agents", "backend", "frontend"],
+      "category": "architecture",
       "tags": ["architecture", "websocket", "realtime", "voice", "streaming"],
       "relatedServices": ["api-gateway", "web-app"],
       "lastUpdated": "2025-11-27"
@@ -1036,6 +1025,25 @@
       "lastUpdated": "2025-11-27"
     },
     {
+      "slug": "security/compliance",
+      "path": "SECURITY_COMPLIANCE.md",
+      "title": "Security & Compliance Guide",
+      "summary": "HIPAA compliance, zero-trust architecture, PHI protection, and security requirements for VoiceAssist.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "security",
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "security-engineers",
+        "architects"
+      ],
+      "category": "security",
+      "tags": ["security", "hipaa", "compliance", "phi", "encryption"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
       "slug": "semantic-search-design",
       "path": "SEMANTIC_SEARCH_DESIGN.md",
       "title": "Semantic Search Design",
@@ -1048,15 +1056,17 @@
       "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "service-catalog",
+      "slug": "architecture/service-catalog",
       "path": "SERVICE_CATALOG.md",
       "title": "Service Catalog",
-      "summary": "**Last Updated**: 2025-11-21 (Phase 6: Nextcloud App Integration & Unified Services)",
+      "summary": "Comprehensive catalog of all backend services with implementation details and API contracts.",
       "status": "stable",
       "stability": "production",
-      "owner": "docs",
-      "audience": ["human"],
-      "tags": ["service", "catalog"],
+      "owner": "backend",
+      "audience": ["human", "agent", "ai-agents", "backend", "devops"],
+      "category": "architecture",
+      "tags": ["service", "catalog", "api", "architecture"],
+      "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1175,7 +1185,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "agent", "backend", "frontend", "devops"],
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "backend",
+        "frontend",
+        "devops"
+      ],
+      "category": "architecture",
       "tags": ["architecture", "system-design", "overview"],
       "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
       "lastUpdated": "2025-11-27"

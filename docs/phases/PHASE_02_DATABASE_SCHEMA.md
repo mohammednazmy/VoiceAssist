@@ -18,7 +18,7 @@ tags: ["phase", "database", "schema"]
 >
 > - [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)
 > - [PHASE_00_INITIALIZATION.md](PHASE_00_INITIALIZATION.md)
-> - [CURRENT_PHASE.md](../../CURRENT_PHASE.md)
+> - [Implementation Status](../overview/IMPLEMENTATION_STATUS.md)
 > - [PHASE_STATUS.md](../../PHASE_STATUS.md)
 >
 > **Note**: New V2 phase docs will be created later. Do not use this as an implementation guide for V2.

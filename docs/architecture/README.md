@@ -58,12 +58,13 @@ This directory contains comprehensive architecture documentation for VoiceAssist
 
 ### Development
 
-| Document                                                        | Purpose             |
-| --------------------------------------------------------------- | ------------------- |
-| [CURRENT_PHASE.md](../../CURRENT_PHASE.md)                      | Development status  |
-| [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)         | Phase-by-phase plan |
-| [LOCAL_DEVELOPMENT.md](../LOCAL_DEVELOPMENT.md)                 | Local setup guide   |
-| [testing/E2E_TESTING_GUIDE.md](../testing/E2E_TESTING_GUIDE.md) | Testing strategy    |
+| Document                                                        | Purpose               |
+| --------------------------------------------------------------- | --------------------- |
+| [Implementation Status](../overview/IMPLEMENTATION_STATUS.md)   | Component status      |
+| [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)         | Phase-by-phase plan   |
+| [LOCAL_DEVELOPMENT.md](../LOCAL_DEVELOPMENT.md)                 | Local setup guide     |
+| [testing/E2E_TESTING_GUIDE.md](../testing/E2E_TESTING_GUIDE.md) | Testing strategy      |
+| [Archive: CURRENT_PHASE](../archive/CURRENT_PHASE.md)           | Historical phase info |
 
 ---
 
@@ -212,7 +213,7 @@ For detailed diagrams, see [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md).
 1. Update [UNIFIED_ARCHITECTURE.md](../UNIFIED_ARCHITECTURE.md) first (canonical reference)
 2. Update [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md) if visual changes
 3. Update [SERVICE_CATALOG.md](../SERVICE_CATALOG.md) if service changes
-4. Update [CURRENT_PHASE.md](../../CURRENT_PHASE.md) for phase completion
+4. Update [Implementation Status](../overview/IMPLEMENTATION_STATUS.md) for component status changes
 5. Create phase completion report in `/docs/` (e.g., `PHASE_XX_COMPLETION_REPORT.md`)
 
 **Review Cycle:**

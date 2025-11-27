@@ -1,21 +1,16 @@
 ---
 title: Security & Compliance Guide
-description: HIPAA compliance, zero-trust architecture, PHI protection, and security requirements
-version: 2.0.0
-status: production
-last_updated: 2025-11-27
-audience:
-  - developers
-  - security-engineers
-  - architects
-  - compliance-officers
-  - ai-agents
-tags:
-  - security
-  - hipaa
-  - compliance
-  - phi
-  - encryption
+slug: security/compliance
+summary: HIPAA compliance, zero-trust architecture, PHI protection, and security requirements for VoiceAssist.
+status: stable
+stability: production
+owner: security
+lastUpdated: "2025-11-27"
+audience: ["human", "agent", "ai-agents", "security-engineers", "architects"]
+tags: ["security", "hipaa", "compliance", "phi", "encryption"]
+category: security
+source_of_truth: true
+version: "2.0.0"
 ---
 
 # Security & Compliance Guide

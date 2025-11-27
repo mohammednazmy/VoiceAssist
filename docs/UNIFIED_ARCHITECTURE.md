@@ -6,9 +6,11 @@ status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "backend", "frontend", "devops"]
+audience: ["human", "agent", "ai-agents", "backend", "frontend", "devops"]
 tags: ["architecture", "system-design", "overview"]
 relatedServices: ["api-gateway", "web-app", "admin-panel", "docs-site"]
+category: architecture
+source_of_truth: true
 version: "2.0.0"
 ---
 
@@ -360,7 +362,7 @@ VoiceAssist/
 │       └── E2E_TESTING_GUIDE.md
 ├── docker-compose.yml            # Service orchestration
 ├── .env                          # Environment configuration
-└── CURRENT_PHASE.md              # Development status
+└── PHASE_STATUS.md               # Development status
 ```
 
 ### Logical Service Boundaries
@@ -1321,9 +1323,10 @@ logger.info("user_login_success", extra={
 
 **Development:**
 
-- [CURRENT_PHASE.md](../CURRENT_PHASE.md) - Development status
+- [Implementation Status](overview/IMPLEMENTATION_STATUS.md) - Component status
 - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Phase-by-phase plan
 - [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) - Local setup guide
+- [Archive: CURRENT_PHASE](archive/CURRENT_PHASE.md) - Historical phase info
 
 **Security & Compliance:**
 

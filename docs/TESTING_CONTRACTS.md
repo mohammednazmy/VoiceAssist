@@ -516,9 +516,9 @@ docker compose restart pact-broker
 
 ## Related Documentation
 
-- [E2E Testing Guide](../tests/integration/README.md) - Full integration tests
-- [API Documentation](../docs/API_REFERENCE.md) - OpenAPI specs
-- [Deployment Runbook](operations/runbooks/DEPLOYMENT.md) - Production deployment
+- [E2E Testing Guide](testing/E2E_TESTING_GUIDE.md) - Full integration tests
+- [API Reference](API_REFERENCE.md) - OpenAPI specs
+- [Production Deployment Runbook](PRODUCTION_DEPLOYMENT_RUNBOOK.md) - Production deployment
 
 ---
 

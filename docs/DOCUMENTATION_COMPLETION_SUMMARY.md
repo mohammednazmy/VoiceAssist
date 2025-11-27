@@ -444,7 +444,8 @@ Request creation of PHASE_01 through PHASE_14 before starting implementation.
 
 ### Tracking
 
-- [`../CURRENT_PHASE.md`](../CURRENT_PHASE.md) - Current phase status
+- [Implementation Status](overview/IMPLEMENTATION_STATUS.md) - Component status
+- [Archive: CURRENT_PHASE](archive/CURRENT_PHASE.md) - Historical phase info
 
 ---
 
@@ -453,7 +454,7 @@ Request creation of PHASE_01 through PHASE_14 before starting implementation.
 For questions or clarifications on any documentation:
 
 1. Check the specific document referenced above
-2. Review `CURRENT_PHASE.md` for status
+2. Review Implementation Status for current status
 3. Consult phase document for detailed instructions
 4. Reference `ARCHITECTURE_V2.md` for system context
 

@@ -6,9 +6,11 @@ status: stable
 stability: production
 owner: backend
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "backend", "frontend"]
+audience: ["human", "agent", "ai-agents", "backend", "frontend"]
 tags: ["architecture", "websocket", "realtime", "voice", "streaming"]
 relatedServices: ["api-gateway", "web-app"]
+category: architecture
+source_of_truth: true
 version: "1.0.0"
 ---
 
