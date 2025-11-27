@@ -17,6 +17,7 @@ Security:
 - Token encryption at rest
 """
 
+import base64
 import hashlib
 import secrets
 from dataclasses import dataclass, field
@@ -160,6 +161,7 @@ class OIDCService:
         self._jwks_cache: Dict[str, Dict] = {}
         self._jwks_cache_time: Dict[str, datetime] = {}
         self._discovery_cache: Dict[str, Dict] = {}
+        self._pending_requests: Dict[str, AuthorizationRequest] = {}
 
     def register_provider(self, config: OIDCProviderConfig) -> None:
         """Register an OIDC provider configuration."""
@@ -271,12 +273,8 @@ class OIDCService:
         # Generate random 43-128 character verifier
         code_verifier = secrets.token_urlsafe(64)
 
-        # SHA256 hash and base64url encode for challenge
+        # SHA256 hash and base64url encode for challenge (RFC 7636)
         digest = hashlib.sha256(code_verifier.encode()).digest()
-        code_challenge = secrets.token_urlsafe(0).join(chr(b) for b in digest)
-        # Proper base64url encoding
-        import base64
-
         code_challenge = base64.urlsafe_b64encode(digest).rstrip(b"=").decode()
 
         return code_verifier, code_challenge
@@ -295,8 +293,7 @@ class OIDCService:
 
         config = self.providers.get(provider)
         redirect_uri = config.redirect_uri if config else ""
-
-        return AuthorizationRequest(
+        auth_request = AuthorizationRequest(
             state=self.generate_state(),
             nonce=self.generate_nonce(),
             code_verifier=code_verifier,
@@ -304,6 +301,12 @@ class OIDCService:
             redirect_uri=redirect_uri,
             provider=provider,
         )
+
+        # Track pending request for CSRF protection and nonce validation
+        self._pending_requests[auth_request.state] = auth_request
+        self._cleanup_expired_requests()
+
+        return auth_request
 
     async def get_authorization_url(
         self,
@@ -321,6 +324,11 @@ class OIDCService:
         config = self.providers.get(auth_request.provider)
         if not config:
             raise ValueError(f"Provider not registered: {auth_request.provider}")
+
+        # Ensure the state/nonce pair matches a pending request
+        pending = self._pending_requests.get(auth_request.state)
+        if not pending or pending.nonce != auth_request.nonce:
+            raise ValueError("Authorization request missing or has expired")
 
         params = {
             "response_type": "code",
@@ -399,6 +407,36 @@ class OIDCService:
             expires_in=token_data.get("expires_in", 3600),
             scope=token_data.get("scope"),
         )
+
+    def _cleanup_expired_requests(self) -> None:
+        """Remove stale authorization requests (older than 15 minutes)."""
+        cutoff = datetime.utcnow() - timedelta(minutes=15)
+        expired = [state for state, req in self._pending_requests.items() if req.created_at < cutoff]
+        for state in expired:
+            self._pending_requests.pop(state, None)
+
+    def pop_pending_request(self, state: str) -> Optional[AuthorizationRequest]:
+        """Retrieve and remove a pending authorization request by state."""
+        self._cleanup_expired_requests()
+        return self._pending_requests.pop(state, None)
+
+    async def complete_authorization_flow(
+        self, code: str, state: str, expected_nonce: Optional[str] = None
+    ) -> tuple[OIDCTokens, Optional[OIDCClaims]]:
+        """Helper to validate state/nonce and exchange an authorization code."""
+
+        auth_request = self.pop_pending_request(state)
+        if not auth_request:
+            raise ValueError("Unknown or expired state")
+
+        tokens = await self.exchange_code(code, auth_request)
+
+        claims: Optional[OIDCClaims] = None
+        if tokens.id_token:
+            nonce = expected_nonce or auth_request.nonce
+            claims = await self.validate_id_token(tokens.id_token, nonce, auth_request.provider)
+
+        return tokens, claims
 
     async def refresh_tokens(
         self,

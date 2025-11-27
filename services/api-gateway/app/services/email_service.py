@@ -226,24 +226,60 @@ class EmailService:
 
         self._imap_client: Optional[aioimaplib.IMAP4_SSL] = None
 
+    async def _reset_imap_connection(self) -> None:
+        """Force close current IMAP connection."""
+        if self._imap_client:
+            try:
+                await self._imap_client.logout()
+            except Exception:
+                pass
+        self._imap_client = None
+
     async def _get_imap_connection(self) -> aioimaplib.IMAP4_SSL:
         """Get or create IMAP connection."""
         if self._imap_client is None:
-            if self.use_ssl:
-                self._imap_client = aioimaplib.IMAP4_SSL(
-                    host=self.imap_host,
-                    port=self.imap_port,
-                )
-            else:
-                self._imap_client = aioimaplib.IMAP4(
-                    host=self.imap_host,
-                    port=self.imap_port,
-                )
+            try:
+                if self.use_ssl:
+                    self._imap_client = aioimaplib.IMAP4_SSL(
+                        host=self.imap_host,
+                        port=self.imap_port,
+                    )
+                else:
+                    self._imap_client = aioimaplib.IMAP4(
+                        host=self.imap_host,
+                        port=self.imap_port,
+                    )
 
-            await self._imap_client.wait_hello_from_server()
-            await self._imap_client.login(self.username, self.password)
+                await self._imap_client.wait_hello_from_server()
+                await self._imap_client.login(self.username, self.password)
+            except Exception as exc:
+                logger.error(f"IMAP connection failed: {exc}")
+                await self._reset_imap_connection()
+                raise
 
         return self._imap_client
+
+    async def _execute_imap_command(self, command, *args, **kwargs):
+        """Execute an IMAP command with automatic reconnect."""
+        try:
+            return await command(*args, **kwargs)
+        except Exception:
+            logger.warning("IMAP command failed; resetting connection and retrying")
+            await self._reset_imap_connection()
+            imap = await self._get_imap_connection()
+
+            # If the callable was a bound method on the old IMAP client,
+            # rebind it to the fresh connection so the retry uses the new
+            # socket instead of the closed one.
+            rebound_command = command
+            try:
+                if hasattr(command, "__self__") and hasattr(command, "__name__"):
+                    rebound_command = getattr(imap, command.__name__, command)
+            except Exception:
+                # Fallback to the original callable if rebinding fails
+                pass
+
+            return await rebound_command(*args, **kwargs)
 
     async def close(self) -> None:
         """Close IMAP connection."""
@@ -257,7 +293,7 @@ class EmailService:
     async def list_folders(self) -> List[EmailFolder]:
         """List all email folders."""
         imap = await self._get_imap_connection()
-        response = await imap.list()
+        response = await self._execute_imap_command(imap.list)
 
         if response.result != "OK":
             logger.error(f"Failed to list folders: {response}")
@@ -284,7 +320,8 @@ class EmailService:
         # Get message counts for each folder
         for folder in folders:
             try:
-                status = await imap.status(
+                status = await self._execute_imap_command(
+                    imap.status,
                     f'"{folder.name}"',
                     "(MESSAGES UNSEEN RECENT)",
                 )
@@ -318,13 +355,13 @@ class EmailService:
         """List messages in folder with pagination."""
         imap = await self._get_imap_connection()
 
-        response = await imap.select(folder)
+        response = await self._execute_imap_command(imap.select, folder)
         if response.result != "OK":
             logger.error(f"Failed to select folder {folder}: {response}")
             return PaginatedEmails(messages=[], total=0, page=page, page_size=page_size)
 
         search_criteria = self._build_search_criteria(search_query)
-        response = await imap.search(search_criteria)
+        response = await self._execute_imap_command(imap.search, search_criteria)
         if response.result != "OK":
             logger.error(f"Search failed: {response}")
             return PaginatedEmails(messages=[], total=0, page=page, page_size=page_size)
@@ -420,7 +457,7 @@ class EmailService:
         messages = []
         id_list = ",".join(message_ids)
 
-        response = await imap.fetch(id_list, fetch_parts)
+        response = await self._execute_imap_command(imap.fetch, id_list, fetch_parts)
         if response.result != "OK":
             logger.error(f"Fetch failed: {response}")
             return []
@@ -642,7 +679,7 @@ class EmailService:
     ) -> Optional[Email]:
         """Get full message content."""
         imap = await self._get_imap_connection()
-        response = await imap.select(folder)
+        response = await self._execute_imap_command(imap.select, folder)
         if response.result != "OK":
             return None
         messages = await self._fetch_messages(imap, [message_id], folder, headers_only=False)
@@ -800,12 +837,12 @@ To: {', '.join(str(a) for a in original_message.to_addrs)}
     ) -> bool:
         """Set or remove a flag on a message."""
         imap = await self._get_imap_connection()
-        response = await imap.select(folder)
+        response = await self._execute_imap_command(imap.select, folder)
         if response.result != "OK":
             return False
 
         action = "+FLAGS" if value else "-FLAGS"
-        response = await imap.store(message_id, action, flag.value)
+        response = await self._execute_imap_command(imap.store, message_id, action, flag.value)
         return response.result == "OK"
 
     async def move_message(
@@ -817,19 +854,21 @@ To: {', '.join(str(a) for a in original_message.to_addrs)}
         """Move message to another folder."""
         imap = await self._get_imap_connection()
 
-        response = await imap.select(from_folder)
+        response = await self._execute_imap_command(imap.select, from_folder)
         if response.result != "OK":
             return False
 
-        response = await imap.copy(message_id, to_folder)
+        response = await self._execute_imap_command(imap.copy, message_id, to_folder)
         if response.result != "OK":
             return False
 
-        response = await imap.store(message_id, "+FLAGS", EmailFlag.DELETED.value)
+        response = await self._execute_imap_command(
+            imap.store, message_id, "+FLAGS", EmailFlag.DELETED.value
+        )
         if response.result != "OK":
             return False
 
-        await imap.expunge()
+        await self._execute_imap_command(imap.expunge)
         return True
 
     async def delete_message(
@@ -841,14 +880,16 @@ To: {', '.join(str(a) for a in original_message.to_addrs)}
         """Delete a message."""
         imap = await self._get_imap_connection()
 
-        response = await imap.select(folder)
+        response = await self._execute_imap_command(imap.select, folder)
         if response.result != "OK":
             return False
 
         if permanent:
-            response = await imap.store(message_id, "+FLAGS", EmailFlag.DELETED.value)
+            response = await self._execute_imap_command(
+                imap.store, message_id, "+FLAGS", EmailFlag.DELETED.value
+            )
             if response.result == "OK":
-                await imap.expunge()
+                await self._execute_imap_command(imap.expunge)
                 return True
         else:
             folders = await self.list_folders()
@@ -870,19 +911,23 @@ To: {', '.join(str(a) for a in original_message.to_addrs)}
         thread_id = message.in_reply_to or message.message_id
 
         imap = await self._get_imap_connection()
-        await imap.select(folder)
+        await self._execute_imap_command(imap.select, folder)
 
         message_ids = set()
 
         if thread_id:
-            response = await imap.search(f'HEADER "References" "{thread_id}"')
+            response = await self._execute_imap_command(
+                imap.search, f'HEADER "References" "{thread_id}"'
+            )
             if response.result == "OK":
                 for line in response.lines:
                     if isinstance(line, bytes):
                         line = line.decode()
                     message_ids.update(line.split())
 
-            response = await imap.search(f'HEADER "Message-ID" "{thread_id}"')
+            response = await self._execute_imap_command(
+                imap.search, f'HEADER "Message-ID" "{thread_id}"'
+            )
             if response.result == "OK":
                 for line in response.lines:
                     if isinstance(line, bytes):
