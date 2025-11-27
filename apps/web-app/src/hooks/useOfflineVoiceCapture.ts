@@ -247,7 +247,7 @@ export function useOfflineVoiceCapture({
         }
       };
 
-      mediaRecorder.onerror = (event) => {
+      mediaRecorder.onerror = (_event) => {
         onError?.(new Error("MediaRecorder error"));
         setIsRecording(false);
       };

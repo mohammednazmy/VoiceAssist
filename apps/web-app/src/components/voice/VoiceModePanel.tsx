@@ -65,7 +65,7 @@ export function VoiceModePanel({
   const [userTranscript, setUserTranscript] = useState("");
   const [aiTranscript, setAiTranscript] = useState("");
   const [showSettings, setShowSettings] = useState(false);
-  const [isSynthesizing, setIsSynthesizing] = useState(false);
+  const [_isSynthesizing, _setIsSynthesizing] = useState(false);
 
   // Track pending final transcripts to add to chat
   const pendingAiMessageRef = useRef<string | null>(null);
@@ -88,7 +88,7 @@ export function VoiceModePanel({
     conversationId: conversationId || "default",
     apiClient: apiClient
       ? {
-          transcribeAudio: async (audio: Blob, filename?: string) => {
+          transcribeAudio: async (audio: Blob, _filename?: string) => {
             // Use the API client to transcribe audio
             const result = await apiClient.transcribeAudio(audio);
             return result;

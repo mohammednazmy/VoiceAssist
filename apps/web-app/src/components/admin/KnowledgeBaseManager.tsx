@@ -44,7 +44,7 @@ function apiDocToLocal(doc: AdminKBDocument): Document {
 }
 
 /** Convert detailed API document to local Document type */
-function apiDetailToLocal(doc: AdminKBDocumentDetail): Document {
+function _apiDetailToLocal(doc: AdminKBDocumentDetail): Document {
   const metadata = doc.metadata as { file_size?: number } | undefined;
   return {
     id: doc.document_id,

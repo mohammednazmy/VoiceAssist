@@ -5,7 +5,7 @@
  * Note: Complex state-dependent tests are covered by integration tests.
  */
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
 const mockStartRecording = vi.fn();
