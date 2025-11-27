@@ -33,18 +33,18 @@ VoiceAssist is an enterprise-grade, HIPAA-compliant medical AI assistant platfor
 
 ## Component Status Table
 
-| Component               | Path                    | Status     | Stability  | Owner    | Notes                                            |
-| ----------------------- | ----------------------- | ---------- | ---------- | -------- | ------------------------------------------------ |
-| **API Gateway**         | `services/api-gateway/` | stable     | production | backend  | Canonical backend, 20+ API modules, 40+ services |
-| **Web App**             | `apps/web-app/`         | draft      | beta       | frontend | Phases 0-2 complete, Phase 3 (Voice) starting    |
-| **Admin Panel**         | `apps/admin-panel/`     | stable     | production | frontend | Full dashboard, RBAC, KB management              |
-| **Docs Site**           | `apps/docs-site/`       | draft      | beta       | frontend | Next.js 14, markdown rendering, needs agent APIs |
-| **Legacy Server**       | `server/`               | deprecated | legacy     | backend  | DO NOT USE - kept for reference only             |
-| **Infrastructure**      | `infrastructure/`       | stable     | production | infra    | Terraform, Ansible, Docker Compose               |
-| **HA/DR**               | `ha-dr/`                | stable     | production | sre      | PostgreSQL replication, backup automation        |
-| **Chaos Testing**       | `chaos/`                | stable     | production | sre      | Chaos Toolkit experiments                        |
-| **Security/Compliance** | `security/`             | stable     | production | security | HIPAA 42/42 requirements met                     |
-| **Shared Packages**     | `packages/`             | stable     | beta       | frontend | 7 packages: ui, types, utils, api-client, etc.   |
+| Component               | Path                    | Status     | Stability  | Owner    | Notes                                                                                |
+| ----------------------- | ----------------------- | ---------- | ---------- | -------- | ------------------------------------------------------------------------------------ |
+| **API Gateway**         | `services/api-gateway/` | stable     | production | backend  | Canonical backend, 20+ API modules, 40+ services                                     |
+| **Web App**             | `apps/web-app/`         | draft      | beta       | frontend | Phases 0-2 complete, Phase 3 (Voice) starting                                        |
+| **Admin Panel**         | `apps/admin-panel/`     | stable     | production | frontend | Full dashboard, RBAC, KB management                                                  |
+| **Docs Site**           | `apps/docs-site/`       | stable     | production | docs     | Next.js 14 static export at https://assistdocs.asimo.io with AI agent JSON endpoints |
+| **Legacy Server**       | `server/`               | deprecated | legacy     | backend  | DO NOT USE - kept for reference only                                                 |
+| **Infrastructure**      | `infrastructure/`       | stable     | production | infra    | Terraform, Ansible, Docker Compose                                                   |
+| **HA/DR**               | `ha-dr/`                | stable     | production | sre      | PostgreSQL replication, backup automation                                            |
+| **Chaos Testing**       | `chaos/`                | stable     | production | sre      | Chaos Toolkit experiments                                                            |
+| **Security/Compliance** | `security/`             | stable     | production | security | HIPAA 42/42 requirements met                                                         |
+| **Shared Packages**     | `packages/`             | stable     | beta       | frontend | 7 packages: ui, types, utils, api-client, etc.                                       |
 
 ---
 

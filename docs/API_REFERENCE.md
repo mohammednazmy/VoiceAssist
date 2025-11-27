@@ -79,12 +79,14 @@ For complete documentation with request/response examples, see [api-reference/re
 
 The docs site provides machine-readable JSON endpoints for AI agents:
 
-| Endpoint                  | Description                       |
-| ------------------------- | --------------------------------- |
-| `GET /agent/index.json`   | Documentation system metadata     |
-| `GET /agent/docs.json`    | Full document list with filtering |
-| `GET /agent/search?q=...` | Full-text search                  |
+| Endpoint                 | Description                             |
+| ------------------------ | --------------------------------------- |
+| `GET /agent/index.json`  | Documentation system metadata           |
+| `GET /agent/docs.json`   | Full document list with metadata        |
+| `GET /search-index.json` | Full-text search index (Fuse.js format) |
 
 **Base URL:** `https://assistdocs.asimo.io`
+
+**Note:** All endpoints are static JSON. Use search-index.json with client-side Fuse.js for search.
 
 For full details, see [Agent API Reference](ai/AGENT_API_REFERENCE.md).

@@ -9,7 +9,7 @@ lastUpdated: "2025-11-27"
 audience: ["agent", "backend"]
 tags: ["api", "ai-agent", "json", "documentation"]
 relatedServices: ["docs-site"]
-version: "1.0.0"
+version: "1.1.0"
 ---
 
 # Agent API Reference
@@ -22,11 +22,14 @@ The VoiceAssist documentation site exposes machine-readable JSON endpoints desig
 
 ## Endpoints Overview
 
-| Endpoint            | Method | Purpose                                     |
-| ------------------- | ------ | ------------------------------------------- |
-| `/agent/index.json` | GET    | Documentation system metadata and discovery |
-| `/agent/docs.json`  | GET    | Full document list with filtering           |
-| `/agent/search`     | GET    | Full-text search across all documentation   |
+| Endpoint             | Method | Purpose                                     |
+| -------------------- | ------ | ------------------------------------------- |
+| `/agent/index.json`  | GET    | Documentation system metadata and discovery |
+| `/agent/docs.json`   | GET    | Full document list with metadata            |
+| `/search-index.json` | GET    | Full-text search index (Fuse.js format)     |
+| `/sitemap.xml`       | GET    | XML sitemap for crawlers                    |
+
+**Note:** All endpoints are static JSON files generated at build time. There is no dynamic search endpoint - use the search-index.json with client-side Fuse.js for full-text search.
 
 ---
 
@@ -45,76 +48,57 @@ Host: assistdocs.asimo.io
 
 ```json
 {
-  "version": "1.0.0",
-  "generated_at": "2025-11-27T12:00:00.000Z",
-  "description": "VoiceAssist Documentation API for AI Agents",
-  "project": {
-    "name": "VoiceAssist",
-    "description": "Enterprise-grade, HIPAA-compliant medical AI assistant platform",
-    "repository": "https://github.com/mohammednazmy/VoiceAssist"
-  },
+  "version": "1.0",
+  "generated_at": "2025-11-27T21:21:55.185Z",
+  "description": "VoiceAssist documentation index for AI agents and integrations",
   "endpoints": {
-    "index": {
-      "url": "/agent/index.json",
-      "description": "This index - documentation system metadata"
+    "docs_list": {
+      "path": "/agent/docs.json",
+      "description": "Full list of all documentation with metadata",
+      "method": "GET",
+      "response_format": "JSON array of DocIndexEntry objects"
     },
-    "docs": {
-      "url": "/agent/docs.json",
-      "description": "Full document list with metadata"
-    },
-    "search": {
-      "url": "/agent/search",
-      "description": "Search documentation (query param: q)",
-      "example": "/agent/search?q=authentication"
-    },
-    "sitemap": {
-      "url": "/sitemap.xml",
-      "description": "XML sitemap for all documentation pages"
+    "search_index": {
+      "path": "/search-index.json",
+      "description": "Full-text search index for client-side searching",
+      "method": "GET",
+      "response_format": "JSON with 'docs' array for Fuse.js"
     }
   },
-  "documentation": {
-    "architecture": {
-      "slug": "architecture/unified",
-      "description": "System architecture overview"
-    },
-    "api_reference": {
-      "slug": "api-reference/rest-api",
-      "description": "REST API documentation"
-    },
-    "agent_onboarding": {
-      "slug": "ai/agent-onboarding",
-      "description": "Quick start guide for AI agents"
-    },
-    "implementation_status": {
-      "slug": "overview/implementation-status",
-      "description": "Component status and roadmap"
+  "schema": {
+    "DocIndexEntry": {
+      "slug": "string - URL-friendly identifier",
+      "path": "string - Relative path to markdown file",
+      "title": "string - Document title",
+      "summary": "string? - Brief description",
+      "status": "draft|experimental|stable|deprecated",
+      "stability": "production|beta|experimental|legacy",
+      "owner": "backend|frontend|infra|sre|docs|product|security|mixed",
+      "audience": "string[] - Target readers",
+      "tags": "string[] - Categorization tags",
+      "relatedServices": "string[] - Related service names",
+      "lastUpdated": "string - ISO date"
     }
   },
-  "metadata_schema": {
-    "required_fields": ["title", "slug", "status", "lastUpdated"],
-    "status_values": ["draft", "experimental", "stable", "deprecated"],
-    "stability_values": ["production", "beta", "experimental", "legacy"],
-    "audience_values": ["human", "agent", "backend", "frontend", "devops", "admin", "user"]
-  },
-  "tips": [
-    "Use /agent/docs.json to get all documents with metadata",
-    "Filter by audience=['agent'] for AI-specific documentation",
-    "Check status='stable' for production-ready docs",
-    "The 'summary' field provides a one-line description"
+  "usage_notes": [
+    "Use docs.json for browsing and filtering documentation",
+    "Use search-index.json with Fuse.js for full-text search",
+    "All paths are relative to the docs/ directory",
+    "Filter client-side by status, audience, tags, etc."
   ]
 }
 ```
 
 ### Caching
 
-- `Cache-Control: public, s-maxage=3600, stale-while-revalidate=86400`
-- Cached for 1 hour, stale-while-revalidate for 24 hours
+- `Cache-Control: max-age=3600, public`
+- Cached for 1 hour
 
 ---
 
 ## GET /agent/docs.json
 
-Returns a list of all documentation with metadata. Supports filtering.
+Returns a list of all documentation with metadata. **Filtering is done client-side.**
 
 ### Request
 
@@ -123,32 +107,15 @@ GET /agent/docs.json HTTP/1.1
 Host: assistdocs.asimo.io
 ```
 
-### Query Parameters
-
-| Parameter   | Type   | Description               | Example                 |
-| ----------- | ------ | ------------------------- | ----------------------- |
-| `status`    | string | Filter by document status | `?status=stable`        |
-| `audience`  | string | Filter by target audience | `?audience=agent`       |
-| `tag`       | string | Filter by tag             | `?tag=api`              |
-| `owner`     | string | Filter by team ownership  | `?owner=backend`        |
-| `stability` | string | Filter by stability level | `?stability=production` |
-
 ### Response
 
 ```json
 {
-  "count": 42,
-  "generated_at": "2025-11-27T12:00:00.000Z",
-  "filters": {
-    "status": null,
-    "audience": null,
-    "tag": null,
-    "owner": null,
-    "stability": null
-  },
+  "count": 276,
+  "generated_at": "2025-11-27T21:21:55.185Z",
   "docs": [
     {
-      "slug": "ai/agent-onboarding",
+      "slug": "ai-agent-onboarding",
       "path": "ai/AGENT_ONBOARDING.md",
       "title": "AI Agent Onboarding Guide",
       "summary": "Quick context, repository structure, critical rules, and common tasks for AI coding assistants.",
@@ -161,118 +128,107 @@ Host: assistdocs.asimo.io
       "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "overview/implementation-status",
+      "slug": "implementation-status",
       "path": "overview/IMPLEMENTATION_STATUS.md",
       "title": "Implementation Status",
       "summary": "Single source of truth for all component status...",
       "status": "stable",
       "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "agent"],
-      "tags": ["status", "roadmap"],
+      "owner": "mixed",
+      "audience": ["human", "agent", "backend", "frontend", "devops"],
+      "tags": ["status", "overview", "components", "roadmap"],
       "lastUpdated": "2025-11-27"
     }
   ]
 }
 ```
 
-### Example: Filter for AI Agent Docs
+### Client-Side Filtering Examples
 
-```http
-GET /agent/docs.json?audience=agent&status=stable HTTP/1.1
-Host: assistdocs.asimo.io
-```
+Since filtering is done client-side, here are JavaScript examples:
 
-### Example: Filter for Backend Documentation
+```javascript
+// Fetch all docs
+const response = await fetch("https://assistdocs.asimo.io/agent/docs.json");
+const data = await response.json();
 
-```http
-GET /agent/docs.json?owner=backend&stability=production HTTP/1.1
-Host: assistdocs.asimo.io
+// Filter for agent-targeted docs
+const agentDocs = data.docs.filter((doc) => doc.audience && doc.audience.includes("agent"));
+
+// Filter for stable production docs
+const stableDocs = data.docs.filter((doc) => doc.status === "stable" && doc.stability === "production");
+
+// Filter by tag
+const apiDocs = data.docs.filter((doc) => doc.tags && doc.tags.includes("api"));
+
+// Filter by owner
+const backendDocs = data.docs.filter((doc) => doc.owner === "backend");
 ```
 
 ### Caching
 
-- `Cache-Control: public, s-maxage=300, stale-while-revalidate=3600`
-- Cached for 5 minutes, stale-while-revalidate for 1 hour
+- `Cache-Control: max-age=3600, public`
+- Cached for 1 hour
 
 ---
 
-## GET /agent/search
+## GET /search-index.json
 
-Full-text search across all documentation.
+Full-text search index designed for use with [Fuse.js](https://fusejs.io/).
 
 ### Request
 
 ```http
-GET /agent/search?q=authentication HTTP/1.1
+GET /search-index.json HTTP/1.1
 Host: assistdocs.asimo.io
 ```
 
-### Query Parameters
-
-| Parameter | Type   | Required | Description                     |
-| --------- | ------ | -------- | ------------------------------- |
-| `q`       | string | Yes      | Search query (min 2 characters) |
-| `limit`   | number | No       | Maximum results (default: 20)   |
-
-### Response
+### Response Structure
 
 ```json
 {
-  "query": "authentication",
-  "count": 5,
-  "generated_at": "2025-11-27T12:00:00.000Z",
-  "results": [
+  "docs": [
     {
-      "slug": "api-reference/rest-api",
-      "path": "api-reference/rest-api.md",
-      "title": "REST API Reference",
-      "summary": "Complete REST API documentation",
-      "status": "stable",
-      "score": 150,
-      "snippet": "...JWT authentication flow using access and refresh tokens..."
-    },
-    {
-      "slug": "security-compliance",
-      "path": "SECURITY_COMPLIANCE.md",
-      "title": "Security & Compliance",
-      "summary": "Security architecture and HIPAA compliance",
-      "status": "stable",
-      "score": 120,
-      "snippet": "...authentication mechanisms include OAuth 2.0..."
+      "title": "AI Agent Onboarding Guide",
+      "slug": "ai/agent-onboarding",
+      "content": "Full document content for search indexing...",
+      "summary": "Quick context, repository structure...",
+      "tags": ["onboarding", "ai-agent"]
     }
   ]
 }
 ```
 
-### Scoring Algorithm
+### Client-Side Search Example
 
-Results are ranked by relevance:
+```javascript
+import Fuse from "fuse.js";
 
-| Match Location        | Score Weight |
-| --------------------- | ------------ |
-| Title (exact match)   | +100         |
-| Title (word match)    | +20 per word |
-| Summary (exact match) | +50          |
-| Summary (word match)  | +10 per word |
-| Tags (exact match)    | +30          |
-| Tags (word match)     | +15 per word |
-| Content (exact match) | +20          |
-| Content (word match)  | +3 per word  |
+// Fetch search index
+const response = await fetch("https://assistdocs.asimo.io/search-index.json");
+const { docs } = await response.json();
 
-### Error Response
+// Configure Fuse.js
+const fuse = new Fuse(docs, {
+  keys: [
+    { name: "title", weight: 0.4 },
+    { name: "summary", weight: 0.3 },
+    { name: "tags", weight: 0.2 },
+    { name: "content", weight: 0.1 },
+  ],
+  threshold: 0.3,
+  includeScore: true,
+});
 
-```json
-{
-  "error": "Query parameter 'q' is required and must be at least 2 characters",
-  "example": "/agent/search?q=authentication"
-}
+// Search
+const results = fuse.search("authentication");
+// Returns: [{ item: {...}, score: 0.123 }, ...]
 ```
 
 ### Caching
 
-- `Cache-Control: public, s-maxage=60, stale-while-revalidate=300`
-- Cached for 1 minute, stale-while-revalidate for 5 minutes
+- `Cache-Control: max-age=3600, public`
+- Cached for 1 hour
 
 ---
 
@@ -288,30 +244,30 @@ GET /agent/index.json
 
 Learn available endpoints, metadata schema, and key documents.
 
-### 2. Get Relevant Documents
+### 2. Get All Documents
 
 ```http
-GET /agent/docs.json?audience=agent&status=stable
+GET /agent/docs.json
 ```
 
-Filter for AI-specific, production-ready documentation.
+Fetch the full document list and filter client-side.
 
 ### 3. Search for Specific Topics
 
 ```http
-GET /agent/search?q=api+endpoints
+GET /search-index.json
 ```
 
-Find documentation on specific topics.
+Download the search index and use Fuse.js for full-text search.
 
 ### 4. Read Priority Documents
 
-Based on the index, prioritize:
+Based on the index, prioritize reading:
 
-1. `ai/agent-onboarding` - Quick start for agents
-2. `overview/implementation-status` - What's implemented
-3. `api-reference/rest-api` - API details
-4. `architecture/unified` - System design
+1. `/ai/onboarding` - Quick start for agents
+2. `/ai/status` - Implementation status
+3. `/ai/api` - This document (Agent API Reference)
+4. `/docs/overview/IMPLEMENTATION_STATUS` - Detailed component status
 
 ---
 
@@ -324,7 +280,7 @@ Based on the index, prioritize:
 | `stable`       | Production-ready, reviewed | Safe to use as authoritative |
 | `experimental` | May change                 | Use with caution             |
 | `draft`        | Incomplete                 | Avoid for critical decisions |
-| `deprecated`   | Superseded                 | Check `replacedBy` field     |
+| `deprecated`   | Superseded                 | Check for replacement docs   |
 
 ### Audience Field
 
@@ -346,6 +302,17 @@ Documents with `audience: ["agent"]` are specifically designed for AI assistants
 
 ---
 
+## Live Endpoints
+
+Test the endpoints directly:
+
+- **Index:** https://assistdocs.asimo.io/agent/index.json
+- **Docs:** https://assistdocs.asimo.io/agent/docs.json
+- **Search Index:** https://assistdocs.asimo.io/search-index.json
+- **Sitemap:** https://assistdocs.asimo.io/sitemap.xml
+
+---
+
 ## Related Documentation
 
 - [Agent Onboarding Guide](./AGENT_ONBOARDING.md) - Quick start for AI agents
@@ -356,6 +323,7 @@ Documents with `audience: ["agent"]` are specifically designed for AI assistants
 
 ## Version History
 
-| Version | Date       | Changes         |
-| ------- | ---------- | --------------- |
-| 1.0.0   | 2025-11-27 | Initial release |
+| Version | Date       | Changes                                  |
+| ------- | ---------- | ---------------------------------------- |
+| 1.1.0   | 2025-11-27 | Updated to reflect static JSON endpoints |
+| 1.0.0   | 2025-11-27 | Initial release                          |

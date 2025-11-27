@@ -257,17 +257,19 @@ alembic downgrade -1
 
 The docs site exposes JSON endpoints for programmatic access:
 
-| Endpoint                  | Purpose                           |
-| ------------------------- | --------------------------------- |
-| `GET /agent/index.json`   | Documentation system metadata     |
-| `GET /agent/docs.json`    | Full document list with filtering |
-| `GET /agent/search?q=...` | Full-text search                  |
+| Endpoint                 | Purpose                                 |
+| ------------------------ | --------------------------------------- |
+| `GET /agent/index.json`  | Documentation system metadata           |
+| `GET /agent/docs.json`   | Full document list with filtering       |
+| `GET /search-index.json` | Full-text search index (Fuse.js format) |
 
 **Example: Get all stable docs for agents:**
 
 ```
-GET https://assistdocs.asimo.io/agent/docs.json?audience=agent&status=stable
+GET https://assistdocs.asimo.io/agent/docs.json
 ```
+
+**Note:** Filter client-side by status, audience, tags. The search-index.json is designed for client-side full-text search using Fuse.js.
 
 See [Agent API Reference](./AGENT_API_REFERENCE.md) for full details.
 

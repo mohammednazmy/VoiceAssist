@@ -1,6 +1,6 @@
 {
-  "count": 215,
-  "generated_at": "2025-11-27T21:21:55.268Z",
+  "count": 220,
+  "generated_at": "2025-11-27T21:51:31.877Z",
   "docs": [
     {
       "slug": "continuous-improvement-plan",
@@ -187,6 +187,79 @@
       "audience": ["human", "agent", "backend", "frontend"],
       "tags": ["api", "rest", "reference", "endpoints", "examples"],
       "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "debugging/backend",
+      "path": "debugging/DEBUGGING_BACKEND.md",
+      "title": "Backend Debugging Guide",
+      "summary": "Debug API Gateway, database, cache, and backend services in VoiceAssist.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "agent", "backend"],
+      "tags": ["debugging", "runbook", "backend", "api-gateway", "database"],
+      "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "debugging/docs-site",
+      "path": "debugging/DEBUGGING_DOCS_SITE.md",
+      "title": "Docs Site Debugging Guide",
+      "summary": "Debug Next.js docs site, static export, Apache routing, and documentation issues.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human", "agent", "frontend"],
+      "tags": ["debugging", "runbook", "docs-site", "nextjs", "apache"],
+      "relatedServices": ["docs-site"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "debugging/frontend",
+      "path": "debugging/DEBUGGING_FRONTEND.md",
+      "title": "Frontend Debugging Guide",
+      "summary": "Debug React web app, admin panel, and frontend issues in VoiceAssist.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human", "agent", "frontend"],
+      "tags": ["debugging", "runbook", "frontend", "react", "web-app"],
+      "relatedServices": ["web-app", "admin-panel"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "debugging/overview",
+      "path": "debugging/DEBUGGING_OVERVIEW.md",
+      "title": "Debugging Overview",
+      "summary": "High-level guide on how to debug VoiceAssist - logs, metrics, common symptoms, and where to look.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "sre",
+      "audience": ["human", "agent", "backend", "frontend"],
+      "tags": ["debugging", "runbook", "incident", "logs", "metrics"],
+      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "debugging/voice-realtime",
+      "path": "debugging/DEBUGGING_VOICE_REALTIME.md",
+      "title": "Voice & Realtime Debugging Guide",
+      "summary": "Debug WebSocket connections, STT, TTS, and voice pipeline issues in VoiceAssist.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "agent", "backend", "frontend"],
+      "tags": [
+        "debugging",
+        "runbook",
+        "voice",
+        "realtime",
+        "websocket",
+        "stt",
+        "tts"
+      ],
+      "relatedServices": ["api-gateway", "web-app"],
       "lastUpdated": "2025-11-27"
     },
     {
