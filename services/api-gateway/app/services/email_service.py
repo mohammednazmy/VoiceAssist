@@ -267,7 +267,19 @@ class EmailService:
             logger.warning("IMAP command failed; resetting connection and retrying")
             await self._reset_imap_connection()
             imap = await self._get_imap_connection()
-            return await command(*args, **kwargs)
+
+            # If the callable was a bound method on the old IMAP client,
+            # rebind it to the fresh connection so the retry uses the new
+            # socket instead of the closed one.
+            rebound_command = command
+            try:
+                if hasattr(command, "__self__") and hasattr(command, "__name__"):
+                    rebound_command = getattr(imap, command.__name__, command)
+            except Exception:
+                # Fallback to the original callable if rebinding fails
+                pass
+
+            return await rebound_command(*args, **kwargs)
 
     async def close(self) -> None:
         """Close IMAP connection."""
