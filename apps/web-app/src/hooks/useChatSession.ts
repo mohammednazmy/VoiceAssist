@@ -20,6 +20,8 @@ import { useAuth } from "./useAuth";
 import { createAttachmentsApi } from "../lib/api/attachmentsApi";
 import { websocketLog } from "../lib/logger";
 
+const DEFAULT_GATEWAY = "https://api.voiceassist.example.com";
+
 interface UseChatSessionOptions {
   conversationId: string | undefined;
   initialMessages?: Message[];
@@ -44,11 +46,19 @@ interface UseChatSessionReturn {
 }
 
 // WebSocket URL - configurable per environment
-const WS_URL =
-  import.meta.env.VITE_WS_URL ||
-  (import.meta.env.DEV
-    ? "ws://localhost:8000/api/realtime/ws"
-    : "wss://assist.asimo.io/api/realtime/ws");
+const DEFAULT_WS_PATH = "/api/realtime/ws";
+
+const WS_URL = (() => {
+  if (import.meta.env.VITE_WS_URL) {
+    return import.meta.env.VITE_WS_URL;
+  }
+
+  if (import.meta.env.DEV) {
+    return `ws://localhost:8000${DEFAULT_WS_PATH}`;
+  }
+
+  return `wss://api.voiceassist.example.com${DEFAULT_WS_PATH}`;
+})();
 
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -97,7 +107,7 @@ export function useChatSession(
 
   // Create attachments API client
   const attachmentsApi = createAttachmentsApi(
-    import.meta.env.VITE_API_URL || "http://localhost:8000",
+    import.meta.env.VITE_API_URL || DEFAULT_GATEWAY,
     () => tokens?.accessToken || null,
   );
 

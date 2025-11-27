@@ -130,7 +130,7 @@ Create `.env.local` for local development:
 ```bash
 # API URLs (local development)
 VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000/ws
+VITE_WS_URL=ws://localhost:8000/api/realtime/ws
 
 # Environment
 VITE_ENV=development
@@ -150,7 +150,7 @@ Create `.env.production` for production builds:
 ```bash
 # API URLs (production)
 VITE_API_URL=https://voice.asimo.io
-VITE_WS_URL=wss://voice.asimo.io/ws
+VITE_WS_URL=wss://voice.asimo.io/api/realtime/ws
 
 # Environment
 VITE_ENV=production

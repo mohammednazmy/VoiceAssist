@@ -29,12 +29,9 @@ export function DashboardPage() {
 
   const loadData = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      const headers = { Authorization: `Bearer ${token}` };
-
       const [metricsData, healthData] = await Promise.all([
-        fetchAPI<SystemMetrics>('/api/admin/panel/summary', { headers }),
-        fetchAPI<ServiceHealth>('/health', { headers }).catch(() => ({
+        fetchAPI<SystemMetrics>('/api/admin/panel/summary'),
+        fetchAPI<ServiceHealth>('/health').catch(() => ({
           database: true,
           redis: true,
           qdrant: true,

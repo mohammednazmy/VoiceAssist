@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { fetchAPI } from '../lib/api';
+import { getApiClient } from '../lib/apiClient';
 
 interface QueryAnalytics {
   total_queries: number;
@@ -35,6 +36,7 @@ export function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d');
+  const apiClient = getApiClient();
 
   useEffect(() => {
     loadAnalytics();
@@ -43,13 +45,10 @@ export function AnalyticsPage() {
   const loadAnalytics = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('auth_token');
-      const headers = { Authorization: `Bearer ${token}` };
-
       const [queryData, responseData, trendsData] = await Promise.all([
-        fetchAPI<QueryAnalytics>(`/api/admin/analytics/queries?range=${timeRange}`, { headers }),
-        fetchAPI<ResponseTimeData>(`/api/admin/analytics/response-times?range=${timeRange}`, { headers }),
-        fetchAPI<UsageTrends>(`/api/admin/analytics/trends?range=${timeRange}`, { headers }),
+        fetchAPI<QueryAnalytics>(`/api/admin/analytics/queries?range=${timeRange}`),
+        fetchAPI<ResponseTimeData>(`/api/admin/analytics/response-times?range=${timeRange}`),
+        fetchAPI<UsageTrends>(`/api/admin/analytics/trends?range=${timeRange}`),
       ]);
 
       setQueryAnalytics(queryData);
@@ -65,17 +64,11 @@ export function AnalyticsPage() {
 
   const exportReport = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/admin/analytics/export?range=${timeRange}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (!response.ok) throw new Error('Export failed');
-
-      const blob = await response.blob();
+      const blob = await apiClient.request<Blob>({
+        url: `/api/admin/analytics/export?range=${timeRange}`,
+        method: 'GET',
+        responseType: 'blob',
+      });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
