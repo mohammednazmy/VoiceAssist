@@ -395,7 +395,7 @@ npm run dev
 ### Documentation Site
 
 ```bash
-cd ~/VoiceAssist/docs-site
+cd ~/VoiceAssist/apps/docs-site
 npm install
 npm run dev
 ```
