@@ -437,3 +437,57 @@ class SearchAggregator:
             citations.append(citation)
 
         return citations
+
+    def synthesize_across_documents(self, search_results: List[SearchResult]) -> Dict[str, Any]:
+        """Create a cross-document synthesis summary.
+
+        Groups results by document and returns a condensed context string and
+        lightweight metadata for auditing.
+        """
+
+        if not search_results:
+            return {"context": "", "documents": []}
+
+        grouped: Dict[str, Dict[str, Any]] = {}
+        for result in search_results:
+            doc_group = grouped.setdefault(
+                result.document_id,
+                {
+                    "title": result.metadata.get("title", "Untitled"),
+                    "score": 0.0,
+                    "chunks": [],
+                },
+            )
+            doc_group["score"] = max(doc_group["score"], result.score)
+            doc_group["chunks"].append(result.content)
+
+        context_sections: List[str] = []
+        documents_meta: List[Dict[str, Any]] = []
+
+        for idx, (document_id, doc) in enumerate(grouped.items(), start=1):
+            snippet = " ".join(doc["chunks"][:2])
+            snippet = (snippet[:600] + "…") if len(snippet) > 600 else snippet
+            context_sections.append(f"[Doc {idx}: {doc['title']}] {snippet}")
+            documents_meta.append(
+                {
+                    "document_id": document_id,
+                    "title": doc["title"],
+                    "score": doc["score"],
+                    "chunks": len(doc["chunks"]),
+                }
+            )
+
+        return {"context": "\n\n".join(context_sections), "documents": documents_meta}
+
+    def confidence_score(self, search_results: List[SearchResult]) -> float:
+        """Estimate confidence for retrieval stage based on scores and coverage."""
+
+        if not search_results:
+            return 0.2
+
+        top_scores = sorted([r.score for r in search_results], reverse=True)[:3]
+        avg_top = sum(top_scores) / len(top_scores)
+        doc_coverage = len({r.document_id for r in search_results})
+        coverage_boost = min(doc_coverage / 5, 1.0) * 0.2
+        normalized = min(max(avg_top, 0.0), 1.0)
+        return min(1.0, 0.6 * normalized + coverage_boost + 0.2)

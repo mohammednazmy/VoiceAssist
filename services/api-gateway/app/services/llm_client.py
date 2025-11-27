@@ -89,6 +89,8 @@ class LLMRequest:
     max_tokens: int = 512
     phi_present: bool = False
     trace_id: Optional[str] = None
+    model_override: Optional[str] = None
+    model_provider: Optional[str] = None
 
 
 @dataclass
@@ -202,23 +204,26 @@ class LLMClient:
         # Safety: normalize whitespace in prompt
         req.prompt = " ".join(req.prompt.split())
 
+        # Determine routing family
+        adapter_requests_local = req.model_provider not in (None, "openai", "cloud")
+        family: ModelFamily = "local" if (req.phi_present or adapter_requests_local) else "cloud"
+
         # Safety: enforce max_tokens limits (see ORCHESTRATION_DESIGN.md)
         # Cloud models: up to 4096 tokens, Local models: up to 2048 tokens
-        max_allowed_tokens = 4096 if not req.phi_present else 2048
+        max_allowed_tokens = 2048 if family == "local" else 4096
         if req.max_tokens > max_allowed_tokens:
             logger.warning(
                 "max_tokens=%d exceeds limit=%d for family=%s, capping. trace_id=%s",
                 req.max_tokens,
                 max_allowed_tokens,
-                "local" if req.phi_present else "cloud",
+                family,
                 req.trace_id,
             )
             req.max_tokens = max_allowed_tokens
 
-        family: ModelFamily = "local" if req.phi_present else "cloud"
-        if req.phi_present and not self.has_local_model:
-            # Defensive: callers should not route PHI here without a local model
-            raise RuntimeError("PHI present but no local LLM configured")
+        if family == "local" and not self.has_local_model:
+            # Defensive: callers should not route to local path without a local model
+            raise RuntimeError("Local model requested but not configured")
         logger.debug(
             "LLMClient.generate: family=%s intent=%s phi_present=%s trace_id=%s",
             family,
@@ -247,7 +252,9 @@ class LLMClient:
             )
             raise RuntimeError("OpenAI API key not configured. Cannot call cloud model.")
 
-        logger.info("Calling cloud model %s trace_id=%s", self.cloud_model, req.trace_id)
+        model_name = req.model_override or self.cloud_model
+
+        logger.info("Calling cloud model %s trace_id=%s", model_name, req.trace_id)
 
         backoff_seconds = [1, 2, 4]
         last_error: Optional[Exception] = None
@@ -261,7 +268,7 @@ class LLMClient:
                 # Call OpenAI Chat Completions API with timeout
                 response: ChatCompletion = await asyncio.wait_for(
                     self.openai_client.chat.completions.create(
-                        model=self.cloud_model,
+                        model=model_name,
                         messages=[
                             {"role": "system", "content": system_message},
                             {"role": "user", "content": req.prompt},
@@ -286,7 +293,7 @@ class LLMClient:
 
                 logger.info(
                     "Cloud model call successful: model=%s tokens=%d latency=%.2fms finish=%s trace_id=%s",
-                    self.cloud_model,
+                    model_name,
                     total_tokens,
                     latency_ms,
                     finish_reason,
@@ -296,12 +303,12 @@ class LLMClient:
                 # Calculate and track cost
                 input_tokens = usage.prompt_tokens if usage else 0
                 output_tokens = usage.completion_tokens if usage else 0
-                cost_usd = calculate_cost(self.cloud_model, input_tokens, output_tokens)
+                cost_usd = calculate_cost(model_name, input_tokens, output_tokens)
 
                 # Track metrics via Prometheus
                 if usage:
-                    openai_tokens_used_total.labels(model=self.cloud_model, token_type="prompt").inc(input_tokens)
-                    openai_tokens_used_total.labels(model=self.cloud_model, token_type="completion").inc(output_tokens)
+                    openai_tokens_used_total.labels(model=model_name, token_type="prompt").inc(input_tokens)
+                    openai_tokens_used_total.labels(model=model_name, token_type="completion").inc(output_tokens)
                     openai_api_cost_dollars.inc(cost_usd)
 
                 logger.debug(
@@ -315,7 +322,7 @@ class LLMClient:
 
                 return LLMResponse(
                     text=text,
-                    model_name=self.cloud_model,
+                    model_name=model_name,
                     model_family="cloud",
                     used_tokens=total_tokens,
                     latency_ms=latency_ms,
@@ -330,7 +337,7 @@ class LLMClient:
                 logger.error(
                     "Cloud model call timed out (attempt %d) model=%s trace_id=%s",
                     attempt,
-                    self.cloud_model,
+                    model_name,
                     req.trace_id,
                 )
             except Exception as e:
@@ -339,7 +346,7 @@ class LLMClient:
                 logger.error(
                     "Cloud model call failed (attempt %d): model=%s error=%s latency=%.2fms trace_id=%s",
                     attempt,
-                    self.cloud_model,
+                    model_name,
                     str(e),
                     latency_ms,
                     req.trace_id,
@@ -348,7 +355,7 @@ class LLMClient:
 
             await asyncio.sleep(delay)
 
-        raise RuntimeError(f"Failed to call cloud model {self.cloud_model} after retries: {last_error}") from last_error
+        raise RuntimeError(f"Failed to call cloud model {model_name} after retries: {last_error}") from last_error
 
     async def stream_generate(
         self,
@@ -365,6 +372,12 @@ class LLMClient:
         Returns:
             LLMResponse with aggregated text and usage metadata
         """
+        adapter_requests_local = req.model_provider not in (None, "openai", "cloud")
+        family: ModelFamily = "local" if (req.phi_present or adapter_requests_local) else "cloud"
+
+        if family == "local":
+            return await self._call_local(req)
+
         if not self.openai_client:
             logger.error(
                 "OpenAI client not initialized. API key missing. trace_id=%s",
@@ -376,11 +389,13 @@ class LLMClient:
             raise ValueError("Prompt cannot be empty")
 
         req.prompt = " ".join(req.prompt.split())
-        max_allowed_tokens = 4096 if not req.phi_present else 2048
+        max_allowed_tokens = 2048 if family == "local" else 4096
         if req.max_tokens > max_allowed_tokens:
             req.max_tokens = max_allowed_tokens
 
-        logger.info("Streaming cloud model %s trace_id=%s", self.cloud_model, req.trace_id)
+        model_name = req.model_override or self.cloud_model
+
+        logger.info("Streaming cloud model %s trace_id=%s", model_name, req.trace_id)
 
         full_text: list[str] = []
         start_time = time.time()
@@ -389,7 +404,7 @@ class LLMClient:
 
         try:
             stream = await self.openai_client.chat.completions.create(
-                model=self.cloud_model,
+                model=model_name,
                 messages=[
                     {"role": "system", "content": self._system_prompt_for_intent(req.intent)},
                     {"role": "user", "content": req.prompt},
@@ -423,16 +438,16 @@ class LLMClient:
             input_tokens = usage.prompt_tokens if usage else 0
             output_tokens = usage.completion_tokens if usage else 0
             total_tokens = usage.total_tokens if usage else input_tokens + output_tokens
-            cost_usd = calculate_cost(self.cloud_model, input_tokens, output_tokens) if usage else 0.0
+            cost_usd = calculate_cost(model_name, input_tokens, output_tokens) if usage else 0.0
 
             if usage:
-                openai_tokens_used_total.labels(model=self.cloud_model, token_type="prompt").inc(input_tokens)
-                openai_tokens_used_total.labels(model=self.cloud_model, token_type="completion").inc(output_tokens)
+                openai_tokens_used_total.labels(model=model_name, token_type="prompt").inc(input_tokens)
+                openai_tokens_used_total.labels(model=model_name, token_type="completion").inc(output_tokens)
                 openai_api_cost_dollars.inc(cost_usd)
 
             return LLMResponse(
                 text=aggregated_text,
-                model_name=self.cloud_model,
+                model_name=model_name,
                 model_family="cloud",
                 used_tokens=total_tokens,
                 latency_ms=latency_ms,
@@ -466,14 +481,16 @@ class LLMClient:
         if not self.has_local_model or not self.local_client:
             raise RuntimeError("Local model requested but not configured")
 
-        logger.info("Calling local model %s trace_id=%s", self.local_model, req.trace_id)
+        model_name = req.model_override or self.local_model
+
+        logger.info("Calling local model %s trace_id=%s", model_name, req.trace_id)
 
         start_time = time.time()
         try:
             response = await self.local_client.post(
                 "/v1/chat/completions",
                 json={
-                    "model": self.local_model,
+                    "model": model_name,
                     "messages": [
                         {
                             "role": "system",
@@ -497,7 +514,7 @@ class LLMClient:
             latency_ms = (time.time() - start_time) * 1000
             logger.info(
                 "Local model call successful: model=%s tokens=%d latency=%.2fms finish=%s trace_id=%s",
-                self.local_model,
+                model_name,
                 total_tokens,
                 latency_ms,
                 finish_reason,
@@ -506,7 +523,7 @@ class LLMClient:
 
             return LLMResponse(
                 text=text,
-                model_name=self.local_model,
+                model_name=model_name,
                 model_family="local",
                 used_tokens=total_tokens,
                 latency_ms=latency_ms,

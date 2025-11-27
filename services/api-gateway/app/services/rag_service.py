@@ -20,14 +20,17 @@ Future enhancements:
 from __future__ import annotations
 
 import asyncio
+import logging
 from datetime import datetime, timezone
 from typing import Awaitable, Callable, List, Optional
 
 from app.core.config import settings
 from app.services.intent_classifier import IntentClassifier
 from app.services.llm_client import LLMClient, LLMRequest, LLMResponse
+from app.services.model_adapters import ModelAdapter, ModelAdapterRegistry
 from app.services.openai_realtime_client import OpenAIRealtimeClient
 from app.services.phi_detector import PHIDetector
+from app.services.query_expansion import QueryExpansionConfig, QueryExpansionService
 from app.services.realtime_voice_service import realtime_voice_service
 from app.services.search_aggregator import SearchAggregator
 from pydantic import BaseModel, Field
@@ -53,7 +56,7 @@ class Citation(BaseModel):
     pages: Optional[str] = None
     doi: Optional[str] = None
     pmid: Optional[str] = None
-    relevance_score: Optional[int] = None
+    relevance_score: Optional[float] = None
     quoted_text: Optional[str] = None
     context: Optional[dict] = None
 
@@ -73,9 +76,13 @@ class QueryResponse(BaseModel):
     message_id: str
     answer: str
     created_at: datetime
-    citations: List[Citation] = []
+    citations: List[Citation] = Field(default_factory=list)
     tokens: Optional[int] = None
     model: Optional[str] = None
+    model_provider: Optional[str] = None
+    model_confidence: Optional[float] = None
+    retrieval_confidence: Optional[float] = None
+    reasoning_path: List[dict] = Field(default_factory=list)
     finish_reason: Optional[str] = None
 
 
@@ -95,6 +102,11 @@ class QueryOrchestrator:
         enable_rag: bool = True,
         rag_top_k: int = 5,
         rag_score_threshold: float = 0.7,
+        enable_query_decomposition: bool | None = None,
+        enable_multi_hop: bool | None = None,
+        search_aggregator: SearchAggregator | None = None,
+        query_expansion_service: QueryExpansionService | None = None,
+        model_registry: ModelAdapterRegistry | None = None,
     ):
         """
         Initialize QueryOrchestrator with RAG support.
@@ -113,13 +125,50 @@ class QueryOrchestrator:
             local_timeout_sec=settings.LOCAL_LLM_TIMEOUT_SEC,
             local_model=settings.LOCAL_LLM_MODEL or "local-clinical-llm",
         )
-        self.search_aggregator = SearchAggregator() if enable_rag else None
+        self.search_aggregator = search_aggregator or (SearchAggregator() if enable_rag else None)
         self.phi_detector = PHIDetector()
         self.intent_classifier = IntentClassifier()
         self.realtime_client = OpenAIRealtimeClient()
         self.enable_rag = enable_rag
         self.rag_top_k = rag_top_k
         self.rag_score_threshold = rag_score_threshold
+        self.enable_query_decomposition = (
+            settings.ENABLE_QUERY_DECOMPOSITION if enable_query_decomposition is None else enable_query_decomposition
+        )
+        self.enable_multi_hop = settings.ENABLE_MULTI_HOP_RETRIEVAL if enable_multi_hop is None else enable_multi_hop
+        self.query_expander = query_expansion_service or QueryExpansionService(QueryExpansionConfig(enable_llm=False))
+        self.model_registry = model_registry or ModelAdapterRegistry()
+
+    async def _run_retrieval(self, query: str) -> tuple[list, str, List[dict], float]:
+        """Run single or multi-hop retrieval with optional synthesis."""
+
+        if not self.enable_rag or not self.search_aggregator:
+            return [], "", [], 0.0
+
+        sub_queries = [query]
+        if self.enable_multi_hop and self.enable_query_decomposition:
+            try:
+                sub_queries = await self.query_expander.decompose(query)
+            except Exception:
+                sub_queries = [query]
+
+        hop_traces: List[dict] = []
+        aggregated_results = []
+
+        for hop_idx, sub_query in enumerate(sub_queries, start=1):
+            hop_results = await self.search_aggregator.search(
+                query=sub_query,
+                top_k=self.rag_top_k,
+                score_threshold=self.rag_score_threshold,
+            )
+            hop_traces.append({"hop": hop_idx, "query": sub_query, "results": len(hop_results)})
+            aggregated_results.extend(hop_results)
+
+        synthesized_context = ""
+        if aggregated_results:
+            synthesis = self.search_aggregator.synthesize_across_documents(aggregated_results)
+            synthesized_context = synthesis.get("context", "") or self.search_aggregator.format_context_for_rag(aggregated_results)
+        return aggregated_results, synthesized_context, hop_traces, self.search_aggregator.confidence_score(aggregated_results)
 
     async def _prepare_llm_request(
         self,
@@ -128,24 +177,9 @@ class QueryOrchestrator:
         trace_id: Optional[str],
     ) -> tuple[LLMRequest, list, str, bool, str]:
         """Prepare prompt, RAG context, and LLM request for streaming or non-streaming paths."""
-        # Step 1: Perform semantic search if RAG is enabled
-        search_results = []
-        if self.enable_rag and self.search_aggregator:
-            try:
-                search_results = await self.search_aggregator.search(
-                    query=request.query,
-                    top_k=self.rag_top_k,
-                    score_threshold=self.rag_score_threshold,
-                )
-            except Exception as e:  # noqa: BLE001
-                import logging
-
-                logging.error(f"Error performing RAG search: {e}", exc_info=True)
-
-        # Step 2: Assemble context from search results
-        context = ""
-        if search_results:
-            context = self.search_aggregator.format_context_for_rag(search_results)
+        search_results, context, reasoning_path, retrieval_confidence = await self._run_retrieval(
+            request.query
+        )
 
         # Step 3: Build prompt with context and clinical context
         prompt_parts = [
@@ -204,8 +238,6 @@ Instructions:
         llm_phi_flag = phi_result.contains_phi and self.llm_client.has_local_model
 
         if phi_result.contains_phi:
-            import logging
-
             logging.warning(
                 f"PHI detected in query: types={phi_result.phi_types}, "
                 f"confidence={phi_result.confidence}, trace_id={trace_id}"
@@ -219,6 +251,19 @@ Instructions:
 
         # Step 5: Intent Classification
         intent = self.intent_classifier.classify(query=request.query, clinical_context=clinical_context)
+        adapter: ModelAdapter | None = None
+        try:
+            adapter = self.model_registry.select_for_intent(intent)
+        except Exception:
+            adapter = None
+
+        if adapter and adapter.provider != "openai" and not self.llm_client.has_local_model:
+            logging.warning(
+                "Local adapter %s selected but no local LLM configured; falling back to default cloud model. trace_id=%s",
+                adapter.key,
+                trace_id,
+            )
+            adapter = self.model_registry.get("default") or None
 
         llm_request = LLMRequest(
             prompt=sanitized_prompt,
@@ -227,9 +272,34 @@ Instructions:
             max_tokens=512,
             phi_present=llm_phi_flag,
             trace_id=trace_id,
+            model_override=adapter.model_id if adapter else None,
+            model_provider=adapter.provider if adapter else None,
         )
 
-        return llm_request, search_results, prompt, phi_result.contains_phi, intent
+        return (
+            llm_request,
+            search_results,
+            prompt,
+            phi_result.contains_phi,
+            intent,
+            adapter,
+            reasoning_path,
+            retrieval_confidence,
+        )
+
+    @staticmethod
+    def _resolve_model_provider(
+        adapter: ModelAdapter | None,
+        llm_request: LLMRequest,
+        llm_response: LLMResponse,
+    ) -> str | None:
+        """Return a user-facing provider label for response metadata."""
+
+        if adapter and adapter.provider:
+            return adapter.provider
+        if llm_request.model_provider:
+            return llm_request.model_provider
+        return "openai" if llm_response.model_family == "cloud" else "local"
 
     async def handle_query(
         self,
@@ -257,9 +327,16 @@ Instructions:
         now = datetime.now(timezone.utc)
         message_id = f"msg-{int(now.timestamp())}"
 
-        llm_request, search_results, _prompt, _phi_present, intent = await self._prepare_llm_request(
-            request=request, clinical_context=clinical_context, trace_id=trace_id
-        )
+        (
+            llm_request,
+            search_results,
+            _prompt,
+            _phi_present,
+            intent,
+            adapter,
+            reasoning_path,
+            retrieval_confidence,
+        ) = await self._prepare_llm_request(request=request, clinical_context=clinical_context, trace_id=trace_id)
 
         import logging
 
@@ -301,6 +378,10 @@ Instructions:
             citations=citations,
             tokens=llm_response.used_tokens,
             model=llm_response.model_name,
+            model_provider=self._resolve_model_provider(adapter, llm_request, llm_response),
+            model_confidence=(adapter.confidence if adapter else None),
+            retrieval_confidence=retrieval_confidence if retrieval_confidence else None,
+            reasoning_path=reasoning_path,
             finish_reason=llm_response.finish_reason,
         )
 
@@ -346,9 +427,16 @@ Instructions:
         now = datetime.now(timezone.utc)
         message_id = f"msg-{int(now.timestamp())}"
 
-        llm_request, search_results, _prompt, _phi_present, intent = await self._prepare_llm_request(
-            request=request, clinical_context=clinical_context, trace_id=trace_id
-        )
+        (
+            llm_request,
+            search_results,
+            _prompt,
+            _phi_present,
+            intent,
+            adapter,
+            reasoning_path,
+            retrieval_confidence,
+        ) = await self._prepare_llm_request(request=request, clinical_context=clinical_context, trace_id=trace_id)
 
         async def _emit_chunk(text: str):
             if on_chunk:
@@ -391,5 +479,9 @@ Instructions:
             citations=citations,
             tokens=llm_response.used_tokens,
             model=llm_response.model_name,
+            model_provider=self._resolve_model_provider(adapter, llm_request, llm_response),
+            model_confidence=(adapter.confidence if adapter else None),
+            retrieval_confidence=retrieval_confidence if retrieval_confidence else None,
+            reasoning_path=reasoning_path,
             finish_reason=llm_response.finish_reason,
         )
