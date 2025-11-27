@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "completion", "report"]
+category: planning
 ---
 
 # Phase 2 Completion Report: Security Foundation & Nextcloud Integration

@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["frontend"]
 tags: ["web", "app", "feature", "specs"]
+category: planning
 ---
 
 # VoiceAssist Web App - Comprehensive Feature Specifications

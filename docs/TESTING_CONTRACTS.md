@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["testing", "contracts"]
+category: testing
 ---
 
 # Contract Testing Guide

@@ -101,7 +101,7 @@ socket.onclose = (event) => {
 2. Check server logs for connection drops:
 
 ```bash
-journalctl -u quran-rtc --since "10 minutes ago" | grep -i "websocket\|disconnect"
+docker logs voiceassist-server --since "10m" 2>&1 | grep -i "websocket\|disconnect"
 ```
 
 3. Implement heartbeat/ping:
@@ -200,7 +200,7 @@ if (audioContext.state === "suspended") {
 1. Check STT service logs:
 
 ```bash
-journalctl -u quran-rtc --since "5 minutes ago" | grep -i "stt\|transcri\|whisper"
+docker logs voiceassist-server --since "5m" 2>&1 | grep -i "stt\|transcri\|whisper"
 ```
 
 2. Verify audio is being sent:

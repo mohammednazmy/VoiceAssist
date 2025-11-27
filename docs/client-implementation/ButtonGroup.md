@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["buttongroup"]
+category: planning
 ---
 
 # ButtonGroup Component

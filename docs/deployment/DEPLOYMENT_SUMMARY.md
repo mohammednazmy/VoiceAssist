@@ -8,6 +8,7 @@ owner: infra
 lastUpdated: "2025-11-27"
 audience: ["devops", "sre"]
 tags: ["deployment", "summary"]
+category: deployment
 ---
 
 # VoiceAssist Deployment Summary - asimo.io

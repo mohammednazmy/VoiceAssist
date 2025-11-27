@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["local", "development"]
+category: reference
 ---
 
 # Local Development Guide (MacBook Pro)

@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["backend"]
 tags: ["api", "reference"]
+category: api
 ---
 
 # Client API Reference

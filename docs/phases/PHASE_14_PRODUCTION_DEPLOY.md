@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "production", "deploy"]
+category: planning
 ---
 
 # Phase 14: Production Deployment

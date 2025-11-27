@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["devops", "sre"]
 tags: ["deployment", "complete"]
+category: reference
 ---
 
 # Phase 8 Backend Features - Deployment Complete ✅

@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["development", "workflow"]
+category: planning
 ---
 
 # VoiceAssist Development Workflow Guide

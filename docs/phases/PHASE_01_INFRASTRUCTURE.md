@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["devops", "sre"]
 tags: ["phase", "infrastructure"]
+category: planning
 ---
 
 # Phase 1: Core Infrastructure & Database Setup

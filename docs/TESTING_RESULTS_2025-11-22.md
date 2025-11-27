@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["testing", "results", "2025"]
+category: testing
 ---
 
 # Testing Results & Manual Test Guide
@@ -607,8 +608,8 @@ This document outlines the testing that has been performed and provides a manual
 ## Test Summary
 
 **Total Tests:** 24
-**Passed:** **_ / 24
-**Failed:** _** / 24
+**Passed:** **\_ / 24
+**Failed:** \_** / 24
 **Not Tested:** \_\_\_ / 24
 
 **Overall Status:** ⏳ Awaiting Manual Testing
@@ -673,5 +674,5 @@ This document outlines the testing that has been performed and provides a manual
 ---
 
 **Testing Started:** 2025-11-22
-**Testing Completed:** ****\_\_\_\_****
-**Tester Signature:** ****\_\_\_\_****
+**Testing Completed:** \***\*\_\_\_\_\*\***
+**Tester Signature:** \***\*\_\_\_\_\*\***

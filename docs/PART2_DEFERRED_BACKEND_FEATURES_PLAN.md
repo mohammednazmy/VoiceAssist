@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["backend"]
 tags: ["part2", "deferred", "backend", "features"]
+category: planning
 ---
 
 # Part 2: Deferred Backend Features Implementation Plan

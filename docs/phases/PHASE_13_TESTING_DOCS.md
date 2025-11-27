@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "testing", "docs"]
+category: planning
 ---
 
 # Phase 13: End-to-End Testing & Documentation

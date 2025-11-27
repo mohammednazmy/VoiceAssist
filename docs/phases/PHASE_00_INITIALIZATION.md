@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "initialization"]
+category: planning
 ---
 
 # Phase 0: Project Initialization & Architecture Setup

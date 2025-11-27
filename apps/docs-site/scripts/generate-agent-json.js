@@ -182,7 +182,7 @@ function scanDocsDir(dir, basePath = "") {
  */
 function generateAgentIndex() {
   return {
-    version: "1.0",
+    version: "1.1",
     generated_at: new Date().toISOString(),
     description:
       "VoiceAssist documentation index for AI agents and integrations",
@@ -198,6 +198,19 @@ function generateAgentIndex() {
         description: "Full-text search index for client-side searching",
         method: "GET",
         response_format: "JSON with 'docs' array for Fuse.js",
+      },
+      tasks: {
+        path: "/agent/tasks.json",
+        description:
+          "Common tasks AI agents can perform with commands and prerequisites",
+        method: "GET",
+        response_format: "JSON with 'tasks' array of TaskEntry objects",
+      },
+      schema: {
+        path: "/agent/schema.json",
+        description: "JSON Schema definitions for all agent API responses",
+        method: "GET",
+        response_format: "JSON Schema (draft-07)",
       },
     },
     schema: {

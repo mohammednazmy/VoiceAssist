@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["devops", "sre"]
 tags: ["infrastructure", "code"]
+category: deployment
 ---
 
 # Infrastructure as Code Guide

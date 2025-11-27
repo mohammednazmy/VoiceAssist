@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["all", "phases", "summary"]
+category: planning
 ---
 
 # VoiceAssist V2 All Phases Summary (Phase 0-14)

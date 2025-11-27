@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["message", "edit", "progress"]
+category: reference
 ---
 
 # Message Editing & Regeneration - Implementation Progress

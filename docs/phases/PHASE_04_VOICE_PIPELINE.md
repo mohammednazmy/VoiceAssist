@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "voice", "pipeline"]
+category: planning
 ---
 
 # Phase 4: Voice Pipeline & Realtime Conversations

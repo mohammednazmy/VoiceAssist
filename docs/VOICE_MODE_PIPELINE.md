@@ -8,6 +8,7 @@ owner: backend
 lastUpdated: "2025-11-27"
 audience: ["human", "agent", "backend", "frontend"]
 tags: ["voice", "realtime", "websocket", "openai", "api"]
+category: reference
 relatedServices: ["api-gateway", "web-app"]
 ---
 

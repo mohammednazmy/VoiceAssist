@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["frontend"]
 tags: ["testing", "guide"]
+category: planning
 ---
 
 # Client Testing Guide

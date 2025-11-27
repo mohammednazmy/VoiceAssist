@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "optimization", "recommendations"]
+category: planning
 ---
 
 # Phase 0 & 1 Optimization Recommendations

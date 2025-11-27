@@ -8,6 +8,7 @@ owner: sre
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["business", "metrics"]
+category: operations
 ---
 
 # Business Metrics Guide

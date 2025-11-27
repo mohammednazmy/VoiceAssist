@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "load", "testing"]
+category: planning
 ---
 
 # Phase 10: Load Testing & Performance Tuning

@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["testing", "phase2"]
+category: planning
 ---
 
 # Phase 2 Testing Plan: Chat Interface

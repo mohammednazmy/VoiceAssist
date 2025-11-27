@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "export", "complete"]
+category: reference
 ---
 
 # Phase 7 (Partial): Conversation Management - Export Feature ✓

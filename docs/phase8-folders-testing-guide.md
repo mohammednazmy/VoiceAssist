@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["frontend"]
 tags: ["phase8", "folders", "testing", "guide"]
+category: testing
 ---
 
 # Phase 8 Folders Feature - Manual Testing Guide
@@ -77,7 +78,7 @@ This guide provides comprehensive manual testing steps for the new Folders featu
 - ✅ Empty state message if no folders created yet
 
 **Pass/Fail**: \***\*\_\_\_\*\***
-**Notes**: ********\*\*\*\*********\_\_\_********\*\*\*\*********
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -108,7 +109,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 ```
 
 **Pass/Fail**: \***\*\_\_\_\*\***
-**Notes**: ********\*\*\*\*********\_\_\_********\*\*\*\*********
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -131,7 +132,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 - ✅ API call: `POST /api/folders` with `parent_folder_id` set
 
 **Pass/Fail**: \***\*\_\_\_\*\***
-**Notes**: ********\*\*\*\*********\_\_\_********\*\*\*\*********
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -155,7 +156,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 - ✅ Multiple folders can be expanded simultaneously
 
 **Pass/Fail**: \***\*\_\_\_\*\***
-**Notes**: ********\*\*\*\*********\_\_\_********\*\*\*\*********
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -182,7 +183,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 - ✅ Empty state shows if folder has no conversations
 
 **Pass/Fail**: \***\*\_\_\_\*\***
-**Notes**: ********\*\*\*\*********\_\_\_********\*\*\*\*********
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -225,7 +226,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 ```
 
 **Pass/Fail**: \***\*\_\_\_\*\***
-**Notes**: ********\*\*\*\*********\_\_\_********\*\*\*\*********
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -248,7 +249,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 - ✅ Toast notification: "Conversation moved to root level"
 
 **Pass/Fail**: \***\*\_\_\_\*\***
-**Notes**: ********\*\*\*\*********\_\_\_********\*\*\*\*********
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -283,7 +284,7 @@ curl -X PUT -H "Authorization: Bearer $TOKEN" \
 ```
 
 **Pass/Fail**: \***\*\_\_\_\*\***
-**Notes**: ********\*\*\*\*********\_\_\_********\*\*\*\*********
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -315,7 +316,7 @@ SELECT id, title, folder_id FROM sessions WHERE user_id = 'USER_ID';
 ```
 
 **Pass/Fail**: \***\*\_\_\_\*\***
-**Notes**: ********\*\*\*\*********\_\_\_********\*\*\*\*********
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -344,7 +345,7 @@ SELECT id, title, folder_id FROM sessions WHERE user_id = 'USER_ID';
 - ✅ Filtering works correctly at any depth
 
 **Pass/Fail**: \***\*\_\_\_\*\***
-**Notes**: ********\*\*\*\*********\_\_\_********\*\*\*\*********
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -370,7 +371,7 @@ SELECT id, title, folder_id FROM sessions WHERE user_id = 'USER_ID';
 - ✅ More vertical space for conversations when hidden
 
 **Pass/Fail**: \***\*\_\_\_\*\***
-**Notes**: ********\*\*\*\*********\_\_\_********\*\*\*\*********
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -396,7 +397,7 @@ SELECT id, title, folder_id FROM sessions WHERE user_id = 'USER_ID';
 - ✅ State remains consistent (no phantom folders)
 
 **Pass/Fail**: \***\*\_\_\_\*\***
-**Notes**: ********\*\*\*\*********\_\_\_********\*\*\*\*********
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -423,7 +424,7 @@ SELECT id, title, folder_id FROM sessions WHERE user_id = 'USER_ID';
 - ✅ Keyboard shortcuts work (Enter, Escape in edit mode)
 
 **Pass/Fail**: \***\*\_\_\_\*\***
-**Notes**: ********\*\*\*\*********\_\_\_********\*\*\*\*********
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -448,7 +449,7 @@ SELECT id, title, folder_id FROM sessions WHERE user_id = 'USER_ID';
 - ✅ Scroll performance smooth (max-h-64 overflow-y-auto works)
 
 **Pass/Fail**: \***\*\_\_\_\*\***
-**Notes**: ********\*\*\*\*********\_\_\_********\*\*\*\*********
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -476,7 +477,7 @@ SELECT id, title, folder_id FROM sessions WHERE user_id = 'USER_ID';
 - ✅ folder_id persists in database
 
 **Pass/Fail**: \***\*\_\_\_\*\***
-**Notes**: ********\*\*\*\*********\_\_\_********\*\*\*\*********
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 

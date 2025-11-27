@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["part3", "platform", "enhancements", "plan"]
+category: planning
 ---
 
 # Part 3: Platform Enhancements - Implementation Plan

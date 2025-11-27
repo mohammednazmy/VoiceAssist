@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["docs", "site", "path", "resolution"]
+category: planning
 ---
 
 # Docs Site Path Resolution Plan

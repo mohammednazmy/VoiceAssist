@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["frontend"]
 tags: ["load", "testing", "guide"]
+category: testing
 ---
 
 # VoiceAssist Load Testing Guide
@@ -556,6 +557,7 @@ Open these dashboards before starting tests:
    - Database and cache performance
 
 3. **Autoscaling Monitoring**:
+
    ```
    http://grafana:3000/d/voiceassist-autoscaling
    ```

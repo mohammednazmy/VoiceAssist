@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["frontend"]
 tags: ["voice", "mode", "settings", "guide"]
+category: operations
 ---
 
 # Voice Mode Settings Guide

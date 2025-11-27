@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["integration", "improvements", "phase"]
+category: planning
 ---
 
 # Integration Improvements for Phase 0-8

@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["documentation", "created"]
+category: reference
 ---
 
 # Documentation Created - November 22, 2025

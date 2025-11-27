@@ -8,6 +8,7 @@ owner: backend
 lastUpdated: "2025-11-27"
 audience: ["human", "agent", "backend", "frontend"]
 tags: ["api", "rest", "reference", "endpoints", "examples"]
+category: api
 relatedServices: ["api-gateway"]
 version: "2.0.0"
 ---

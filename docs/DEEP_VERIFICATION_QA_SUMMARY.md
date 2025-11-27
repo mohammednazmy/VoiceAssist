@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["deep", "verification", "summary"]
+category: reference
 ---
 
 # Deep Verification + Refinement QA Summary

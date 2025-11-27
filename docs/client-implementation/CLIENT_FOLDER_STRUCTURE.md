@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["client", "folder", "structure"]
+category: planning
 ---
 
 # Client Folder Structure

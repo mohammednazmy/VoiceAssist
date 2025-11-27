@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["feature", "flags"]
+category: reference
 ---
 
 # Feature Flags System

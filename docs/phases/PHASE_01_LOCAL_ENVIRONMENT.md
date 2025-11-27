@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "local", "environment"]
+category: planning
 ---
 
 # Phase 1: Local Development Environment

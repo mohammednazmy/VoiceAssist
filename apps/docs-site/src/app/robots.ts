@@ -18,17 +18,33 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         disallow: ["/api/", "/_next/"],
       },
+      // OpenAI crawlers
       {
         userAgent: "GPTBot",
-        allow: ["/", "/agent/", "/docs/"],
+        allow: ["/", "/agent/", "/docs/", "/search-index.json", "/sitemap.xml"],
       },
+      // Anthropic crawlers
       {
         userAgent: "Claude-Web",
-        allow: ["/", "/agent/", "/docs/"],
+        allow: ["/", "/agent/", "/docs/", "/search-index.json", "/sitemap.xml"],
       },
       {
         userAgent: "Anthropic-AI",
-        allow: ["/", "/agent/", "/docs/"],
+        allow: ["/", "/agent/", "/docs/", "/search-index.json", "/sitemap.xml"],
+      },
+      {
+        userAgent: "ClaudeBot",
+        allow: ["/", "/agent/", "/docs/", "/search-index.json", "/sitemap.xml"],
+      },
+      // Google AI crawlers
+      {
+        userAgent: "Google-Extended",
+        allow: ["/", "/agent/", "/docs/", "/search-index.json", "/sitemap.xml"],
+      },
+      // Perplexity
+      {
+        userAgent: "PerplexityBot",
+        allow: ["/", "/agent/", "/docs/", "/search-index.json", "/sitemap.xml"],
       },
     ],
     sitemap: `${BASE_URL}/sitemap.xml`,

@@ -1,0 +1,132 @@
+{
+  "version": "1.0",
+  "generated_at": "2025-11-27T23:30:00.000Z",
+  "description": "Common tasks AI agents can perform on VoiceAssist documentation and systems",
+  "tasks": [
+    {
+      "id": "debug-api-error",
+      "name": "Debug API Error",
+      "description": "Investigate and resolve API errors (500, 401, 404, etc.)",
+      "category": "debugging",
+      "docs": ["/debugging/backend", "/debugging/index"],
+      "commands": [
+        "docker logs voiceassist-server --tail 100 | grep -i error",
+        "curl https://assist.asimo.io/health",
+        "curl https://assist.asimo.io/ready"
+      ],
+      "prerequisites": ["Docker access", "curl"]
+    },
+    {
+      "id": "debug-websocket",
+      "name": "Debug WebSocket Issues",
+      "description": "Investigate WebSocket connection problems and voice realtime issues",
+      "category": "debugging",
+      "docs": ["/debugging/voice-realtime"],
+      "commands": [
+        "docker logs voiceassist-server --since 10m | grep -i websocket",
+        "websocat wss://assist.asimo.io/ws"
+      ],
+      "prerequisites": ["Docker access", "websocat"]
+    },
+    {
+      "id": "debug-frontend",
+      "name": "Debug Frontend Issues",
+      "description": "Investigate React web app and admin panel issues",
+      "category": "debugging",
+      "docs": ["/debugging/frontend"],
+      "commands": ["Browser DevTools Console", "Browser DevTools Network"],
+      "prerequisites": ["Browser DevTools"]
+    },
+    {
+      "id": "debug-docs-site",
+      "name": "Debug Documentation Site",
+      "description": "Investigate docs site issues (404s, search, agent endpoints)",
+      "category": "debugging",
+      "docs": ["/debugging/docs-site"],
+      "commands": [
+        "curl https://assistdocs.asimo.io/agent/index.json",
+        "ls /var/www/assistdocs.asimo.io/"
+      ],
+      "prerequisites": ["curl", "SSH access"]
+    },
+    {
+      "id": "check-health",
+      "name": "Check System Health",
+      "description": "Verify all services are healthy and responding",
+      "category": "operations",
+      "docs": ["/debugging/overview", "/debugging/index"],
+      "commands": [
+        "docker ps --filter name=voiceassist",
+        "curl https://assist.asimo.io/health",
+        "curl https://assistdocs.asimo.io/agent/index.json"
+      ],
+      "prerequisites": ["Docker access", "curl"]
+    },
+    {
+      "id": "deploy-docs",
+      "name": "Deploy Documentation",
+      "description": "Build and deploy the documentation site",
+      "category": "deployment",
+      "docs": ["/debugging/docs-site"],
+      "commands": [
+        "cd apps/docs-site && pnpm build",
+        "sudo rsync -av out/ /var/www/assistdocs.asimo.io/"
+      ],
+      "prerequisites": ["pnpm", "rsync", "SSH access"]
+    },
+    {
+      "id": "validate-metadata",
+      "name": "Validate Documentation Metadata",
+      "description": "Check all documentation files have valid frontmatter",
+      "category": "operations",
+      "docs": ["/ai/agent-onboarding"],
+      "commands": [
+        "pnpm validate:metadata",
+        "curl https://assistdocs.asimo.io/agent/docs.json | jq '.count'"
+      ],
+      "prerequisites": ["pnpm", "jq"]
+    },
+    {
+      "id": "search-docs",
+      "name": "Search Documentation",
+      "description": "Find documentation by topic, keyword, or category",
+      "category": "reference",
+      "docs": ["/ai/agent-api-reference"],
+      "commands": [
+        "curl https://assistdocs.asimo.io/agent/docs.json",
+        "curl https://assistdocs.asimo.io/search-index.json"
+      ],
+      "prerequisites": ["curl"]
+    },
+    {
+      "id": "check-ssl",
+      "name": "Check SSL Certificates",
+      "description": "Verify SSL certificates are valid and not expiring soon",
+      "category": "operations",
+      "docs": ["/debugging/overview"],
+      "commands": [
+        "sudo certbot certificates",
+        "echo | openssl s_client -connect assist.asimo.io:443 2>/dev/null | openssl x509 -noout -dates"
+      ],
+      "prerequisites": ["certbot", "openssl"]
+    },
+    {
+      "id": "view-logs",
+      "name": "View Service Logs",
+      "description": "View logs from VoiceAssist containers",
+      "category": "debugging",
+      "docs": ["/debugging/backend", "/debugging/overview"],
+      "commands": [
+        "docker logs voiceassist-server -f",
+        "docker logs voiceassist-server --tail 100"
+      ],
+      "prerequisites": ["Docker access"]
+    }
+  ],
+  "categories": {
+    "debugging": "Investigate and resolve issues",
+    "operations": "Monitor and maintain systems",
+    "deployment": "Deploy and update services",
+    "reference": "Look up documentation and information"
+  }
+}

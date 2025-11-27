@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["architecture"]
+category: overview
 ---
 
 # Architecture Overview

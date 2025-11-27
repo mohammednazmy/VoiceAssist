@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["project", "handoff", "package"]
+category: planning
 ---
 
 # VoiceAssist Project Handoff Package
@@ -872,9 +873,9 @@ The VoiceAssist project has been successfully completed and is ready for product
 
 **Handoff Approved:**
 
-**Development Lead:** **********\_**********
-**Operations Lead:** **********\_**********
-**Security Lead:** **********\_**********
-**Project Manager:** **********\_**********
+**Development Lead:** ****\*\*****\_****\*\*****
+**Operations Lead:** ****\*\*****\_****\*\*****
+**Security Lead:** ****\*\*****\_****\*\*****
+**Project Manager:** ****\*\*****\_****\*\*****
 
-**Date:** **********\_**********
+**Date:** ****\*\*****\_****\*\*****

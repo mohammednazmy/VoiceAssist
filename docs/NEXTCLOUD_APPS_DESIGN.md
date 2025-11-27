@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["nextcloud", "apps", "design"]
+category: reference
 ---
 
 # Nextcloud Apps Design (Phase 6)

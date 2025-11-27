@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["readme"]
+category: planning
 ---
 
 # VoiceAssist Client Implementation - Planning Documentation

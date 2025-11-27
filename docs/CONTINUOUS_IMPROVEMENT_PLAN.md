@@ -1,19 +1,15 @@
 ---
 title: Continuous Improvement Plan
-description: Post-launch roadmap for enhancements, deferred features, and new capabilities
-version: 1.0.0
-status: active
-last_updated: 2025-11-27
-audience:
-  - developers
-  - project-managers
-  - stakeholders
-  - ai-agents
-tags:
-  - roadmap
-  - planning
-  - improvements
-  - future
+slug: overview/continuous-improvement-plan
+summary: Post-launch roadmap for enhancements, deferred features, and new capabilities
+status: stable
+stability: production
+owner: product
+lastUpdated: "2025-11-27"
+audience: ["human", "agent", "ai-agents", "developers", "project-managers"]
+tags: ["roadmap", "planning", "improvements", "future"]
+category: planning
+version: "1.0.0"
 ---
 
 # VoiceAssist Continuous Improvement Plan

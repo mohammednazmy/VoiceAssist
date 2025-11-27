@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["master", "implementation", "plan"]
+category: planning
 ---
 
 # VoiceAssist Client Applications - Master Implementation Plan

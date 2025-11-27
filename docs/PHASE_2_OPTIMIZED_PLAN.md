@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "optimized", "plan"]
+category: planning
 ---
 
 # Phase 2: Optimized Security & Nextcloud Integration Plan

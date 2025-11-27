@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["code", "examples"]
+category: planning
 ---
 
 # Code Examples Reference

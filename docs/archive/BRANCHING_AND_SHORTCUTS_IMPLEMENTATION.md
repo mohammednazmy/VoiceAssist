@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["branching", "and", "shortcuts", "implementation"]
+category: reference
 ---
 
 # Conversation Branching and Keyboard Shortcuts Implementation Plan

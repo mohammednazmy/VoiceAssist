@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["backend"]
 tags: ["backend", "skeleton", "verification"]
+category: reference
 ---
 
 # Backend Skeleton Verification Summary

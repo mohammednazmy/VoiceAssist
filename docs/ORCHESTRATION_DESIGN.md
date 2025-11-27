@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["orchestration", "design"]
+category: reference
 ---
 
 # VoiceAssist V2 - Query Orchestration Design

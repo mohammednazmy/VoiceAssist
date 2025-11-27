@@ -1,22 +1,7 @@
 {
   "count": 221,
-  "generated_at": "2025-11-27T23:26:53.527Z",
+  "generated_at": "2025-11-27T23:51:42.844Z",
   "docs": [
-    {
-      "slug": "continuous-improvement-plan",
-      "path": "CONTINUOUS_IMPROVEMENT_PLAN.md",
-      "title": "Continuous Improvement Plan",
-      "summary": "Post-launch roadmap for enhancements, deferred features, and new capabilities",
-      "status": "draft",
-      "audience": [
-        "developers",
-        "project-managers",
-        "stakeholders",
-        "ai-agents"
-      ],
-      "tags": ["roadmap", "planning", "improvements", "future"],
-      "lastUpdated": "Wed Nov 26 2025 18:00:00 GMT-0600 (Central Standard Time)"
-    },
     {
       "slug": "accessibility-audit",
       "path": "ACCESSIBILITY_AUDIT.md",
@@ -26,6 +11,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["accessibility", "audit"],
       "lastUpdated": "2025-11-27"
     },
@@ -38,6 +24,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["devops", "sre"],
+      "category": "deployment",
       "tags": ["admin", "panel", "deployment"],
       "lastUpdated": "2025-11-27"
     },
@@ -50,6 +37,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["devops", "sre"],
+      "category": "operations",
       "tags": ["admin", "panel", "implementation", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -62,6 +50,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["devops", "sre"],
+      "category": "operations",
       "tags": ["admin", "panel", "login", "fix"],
       "lastUpdated": "2025-11-27"
     },
@@ -74,6 +63,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["devops", "sre"],
+      "category": "operations",
       "tags": ["admin", "panel", "login", "fix"],
       "lastUpdated": "2025-11-27"
     },
@@ -86,6 +76,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["devops", "sre"],
+      "category": "operations",
       "tags": ["admin", "panel", "specs"],
       "lastUpdated": "2025-11-27"
     },
@@ -98,6 +89,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["all", "phases", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -110,6 +102,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "operations",
       "tags": ["ansible", "guide"],
       "lastUpdated": "2025-11-27"
     },
@@ -122,6 +115,7 @@
       "stability": "production",
       "owner": "backend",
       "audience": ["human", "agent", "backend", "frontend"],
+      "category": "api",
       "tags": ["api", "rest", "reference", "endpoints"],
       "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
@@ -135,6 +129,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "architecture",
       "tags": ["architecture"],
       "lastUpdated": "2025-11-27"
     },
@@ -147,6 +142,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "architecture",
       "tags": ["architecture"],
       "lastUpdated": "2025-11-27"
     },
@@ -173,6 +169,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["backend"],
+      "category": "reference",
       "tags": ["backend", "skeleton", "verification"],
       "lastUpdated": "2025-11-27"
     },
@@ -185,6 +182,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "testing",
       "tags": ["chaos", "engineering"],
       "lastUpdated": "2025-11-27"
     },
@@ -197,6 +195,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "operations",
       "tags": ["cicd", "guide"],
       "lastUpdated": "2025-11-27"
     },
@@ -235,6 +234,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["compose", "first", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -247,6 +247,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["compose", "k8s", "migration"],
       "lastUpdated": "2025-11-27"
     },
@@ -259,7 +260,27 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["configuration", "reference"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "overview/continuous-improvement-plan",
+      "path": "CONTINUOUS_IMPROVEMENT_PLAN.md",
+      "title": "Continuous Improvement Plan",
+      "summary": "Post-launch roadmap for enhancements, deferred features, and new capabilities",
+      "status": "stable",
+      "stability": "production",
+      "owner": "product",
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "developers",
+        "project-managers"
+      ],
+      "category": "planning",
+      "tags": ["roadmap", "planning", "improvements", "future"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -271,6 +292,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["continuous", "improvement", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -283,6 +305,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["data", "model"],
       "lastUpdated": "2025-11-27"
     },
@@ -295,6 +318,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["deep", "verification", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -307,6 +331,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["devops", "sre"],
+      "category": "deployment",
       "tags": ["deployment", "guide"],
       "lastUpdated": "2025-11-27"
     },
@@ -319,6 +344,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["devops", "sre"],
+      "category": "deployment",
       "tags": ["deployment", "summary", "asimo"],
       "lastUpdated": "2025-11-27"
     },
@@ -331,6 +357,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["development", "phases"],
       "lastUpdated": "2025-11-27"
     },
@@ -343,6 +370,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["development", "phases"],
       "lastUpdated": "2025-11-27"
     },
@@ -355,6 +383,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["development", "setup"],
       "lastUpdated": "2025-11-27"
     },
@@ -367,6 +396,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["sre", "backend", "frontend"],
+      "category": "debugging",
       "tags": ["disaster", "recovery", "runbook"],
       "lastUpdated": "2025-11-27"
     },
@@ -379,6 +409,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["documentation", "completion", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -391,6 +422,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human", "agent", "docs"],
+      "category": "reference",
       "tags": ["documentation", "metadata", "standards", "frontmatter"],
       "relatedServices": ["docs-site"],
       "lastUpdated": "2025-11-27"
@@ -404,6 +436,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["documentation", "site", "specs"],
       "lastUpdated": "2025-11-27"
     },
@@ -416,6 +449,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["enhancement", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -428,6 +462,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["feature", "flags"],
       "lastUpdated": "2025-11-27"
     },
@@ -440,6 +475,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["file"],
       "lastUpdated": "2025-11-27"
     },
@@ -452,6 +488,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["final", "documentation", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -478,6 +515,7 @@
       "stability": "beta",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "planning",
       "tags": ["frontend", "completion", "plan"],
       "lastUpdated": "2025-11-27"
     },
@@ -490,6 +528,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "reference",
       "tags": ["frontend", "verification", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -502,6 +541,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "security",
       "tags": ["hipaa", "compliance", "matrix"],
       "lastUpdated": "2025-11-27"
     },
@@ -514,6 +554,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["devops", "sre"],
+      "category": "deployment",
       "tags": ["infrastructure", "code"],
       "lastUpdated": "2025-11-27"
     },
@@ -526,6 +567,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["devops", "sre"],
+      "category": "deployment",
       "tags": ["infrastructure", "setup"],
       "lastUpdated": "2025-11-27"
     },
@@ -538,6 +580,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["integration", "handoff"],
       "lastUpdated": "2025-11-27"
     },
@@ -550,6 +593,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["integration", "improvements", "phase"],
       "lastUpdated": "2025-11-27"
     },
@@ -562,6 +606,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human", "backend", "frontend", "devops"],
+      "category": "reference",
       "tags": ["documentation", "tooling", "ci-cd", "quality"],
       "relatedServices": ["docs-site"],
       "lastUpdated": "2025-11-27"
@@ -575,6 +620,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "testing",
       "tags": ["load", "testing", "guide"],
       "lastUpdated": "2025-11-27"
     },
@@ -587,6 +633,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["local", "development"],
       "lastUpdated": "2025-11-27"
     },
@@ -599,6 +646,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["login", "500", "fix", "2025"],
       "lastUpdated": "2025-11-27"
     },
@@ -611,6 +659,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["medical", "features"],
       "lastUpdated": "2025-11-27"
     },
@@ -623,6 +672,7 @@
       "stability": "experimental",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["message", "edit", "progress"],
       "lastUpdated": "2025-11-27"
     },
@@ -635,6 +685,7 @@
       "stability": "beta",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["nextcloud", "apps", "design"],
       "lastUpdated": "2025-11-27"
     },
@@ -647,6 +698,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["nextcloud", "integration"],
       "lastUpdated": "2025-11-27"
     },
@@ -659,6 +711,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["oauth", "login", "config"],
       "lastUpdated": "2025-11-27"
     },
@@ -671,6 +724,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["observability"],
       "lastUpdated": "2025-11-27"
     },
@@ -683,6 +737,7 @@
       "stability": "beta",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["orchestration", "design"],
       "lastUpdated": "2025-11-27"
     },
@@ -695,6 +750,7 @@
       "stability": "beta",
       "owner": "docs",
       "audience": ["backend"],
+      "category": "planning",
       "tags": ["part2", "deferred", "backend", "features"],
       "lastUpdated": "2025-11-27"
     },
@@ -707,6 +763,7 @@
       "stability": "beta",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["part3", "platform", "enhancements", "plan"],
       "lastUpdated": "2025-11-27"
     },
@@ -719,6 +776,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["performance", "benchmarks"],
       "lastUpdated": "2025-11-27"
     },
@@ -731,6 +789,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "operations",
       "tags": ["performance", "tuning", "guide"],
       "lastUpdated": "2025-11-27"
     },
@@ -743,6 +802,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
@@ -755,6 +815,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "enhancements", "report"],
       "lastUpdated": "2025-11-27"
     },
@@ -767,6 +828,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
@@ -779,6 +841,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
@@ -791,6 +854,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
@@ -803,6 +867,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
@@ -815,6 +880,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
@@ -827,6 +893,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["backend"],
+      "category": "api",
       "tags": ["phase", "api", "contracts"],
       "lastUpdated": "2025-11-27"
     },
@@ -839,6 +906,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
@@ -851,6 +919,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
@@ -863,6 +932,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
@@ -875,6 +945,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "optimization", "recommendations"],
       "lastUpdated": "2025-11-27"
     },
@@ -887,6 +958,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
@@ -899,6 +971,7 @@
       "stability": "beta",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "optimized", "plan"],
       "lastUpdated": "2025-11-27"
     },
@@ -911,6 +984,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "template"],
       "lastUpdated": "2025-11-27"
     },
@@ -923,6 +997,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["devops", "sre"],
+      "category": "debugging",
       "tags": ["production", "deployment", "runbook"],
       "lastUpdated": "2025-11-27"
     },
@@ -935,6 +1010,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["production", "readiness", "checklist"],
       "lastUpdated": "2025-11-27"
     },
@@ -947,6 +1023,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["project", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -959,6 +1036,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["readme"],
       "lastUpdated": "2025-11-27"
     },
@@ -985,6 +1063,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["remaining", "message", "edit", "work"],
       "lastUpdated": "2025-11-27"
     },
@@ -997,6 +1076,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["roadmap"],
       "lastUpdated": "2025-11-27"
     },
@@ -1009,6 +1089,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["rto", "rpo", "documentation"],
       "lastUpdated": "2025-11-27"
     },
@@ -1021,6 +1102,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "security",
       "tags": ["security"],
       "lastUpdated": "2025-11-27"
     },
@@ -1052,6 +1134,7 @@
       "stability": "beta",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["semantic", "search", "design"],
       "lastUpdated": "2025-11-27"
     },
@@ -1078,6 +1161,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "overview",
       "tags": ["start", "here"],
       "lastUpdated": "2025-11-27"
     },
@@ -1090,6 +1174,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["system", "review", "2025"],
       "lastUpdated": "2025-11-27"
     },
@@ -1102,6 +1187,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "deployment",
       "tags": ["terraform", "guide"],
       "lastUpdated": "2025-11-27"
     },
@@ -1114,6 +1200,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "testing",
       "tags": ["testing", "contracts"],
       "lastUpdated": "2025-11-27"
     },
@@ -1126,6 +1213,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "testing",
       "tags": ["testing", "guide"],
       "lastUpdated": "2025-11-27"
     },
@@ -1138,6 +1226,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "testing",
       "tags": ["testing", "results", "2025"],
       "lastUpdated": "2025-11-27"
     },
@@ -1150,6 +1239,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["tools", "and", "integrations"],
       "lastUpdated": "2025-11-27"
     },
@@ -1162,6 +1252,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["tools", "completion", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -1174,6 +1265,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["tools", "integration", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -1207,6 +1299,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "operations",
       "tags": ["user", "guide"],
       "lastUpdated": "2025-11-27"
     },
@@ -1219,6 +1312,7 @@
       "stability": "production",
       "owner": "backend",
       "audience": ["human", "agent", "backend", "frontend"],
+      "category": "reference",
       "tags": ["voice", "realtime", "websocket", "openai", "api"],
       "relatedServices": ["api-gateway", "web-app"],
       "lastUpdated": "2025-11-27"
@@ -1232,6 +1326,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "operations",
       "tags": ["voice", "mode", "settings", "guide"],
       "lastUpdated": "2025-11-27"
     },
@@ -1244,6 +1339,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["voice", "ready", "state", "2025"],
       "lastUpdated": "2025-11-27"
     },
@@ -1256,6 +1352,7 @@
       "stability": "production",
       "owner": "backend",
       "audience": ["human", "agent", "backend", "frontend"],
+      "category": "reference",
       "tags": ["websocket", "protocol", "api", "realtime", "streaming"],
       "relatedServices": ["api-gateway", "web-app"],
       "lastUpdated": "2025-11-27"
@@ -1269,6 +1366,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "reference",
       "tags": ["web", "app", "specs"],
       "lastUpdated": "2025-11-27"
     },
@@ -1281,6 +1379,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "reference",
       "tags": ["web", "app", "wireframes"],
       "lastUpdated": "2025-11-27"
     },
@@ -1293,6 +1392,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "operations",
       "tags": ["feature", "parity"],
       "lastUpdated": "2025-11-27"
     },
@@ -1333,6 +1433,7 @@
       "stability": "production",
       "owner": "backend",
       "audience": ["human", "agent", "backend", "frontend"],
+      "category": "api",
       "tags": ["api", "routes", "auto-generated"],
       "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
@@ -1346,6 +1447,7 @@
       "stability": "production",
       "owner": "backend",
       "audience": ["human", "agent", "backend", "frontend"],
+      "category": "api",
       "tags": ["api", "rest", "reference", "endpoints", "examples"],
       "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
@@ -1359,6 +1461,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "architecture",
       "tags": ["architecture", "diagrams"],
       "lastUpdated": "2025-11-27"
     },
@@ -1371,6 +1474,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "architecture",
       "tags": ["readme"],
       "lastUpdated": "2025-11-27"
     },
@@ -1383,6 +1487,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["backend"],
+      "category": "reference",
       "tags": ["backend", "implementation", "plan"],
       "lastUpdated": "2025-11-27"
     },
@@ -1395,6 +1500,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["backend"],
+      "category": "reference",
       "tags": ["backend", "implementation", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -1407,6 +1513,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["branching", "and", "shortcuts", "implementation"],
       "lastUpdated": "2025-11-27"
     },
@@ -1419,6 +1526,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["changes", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -1431,6 +1539,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["current", "phase"],
       "lastUpdated": "2025-11-27"
     },
@@ -1443,6 +1552,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["devops", "sre"],
+      "category": "reference",
       "tags": ["deployment", "complete"],
       "lastUpdated": "2025-11-27"
     },
@@ -1455,6 +1565,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["design", "system", "implementation", "plan"],
       "lastUpdated": "2025-11-27"
     },
@@ -1467,6 +1578,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["development", "log"],
       "lastUpdated": "2025-11-27"
     },
@@ -1479,6 +1591,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["development", "session", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -1491,6 +1604,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["dev", "cors", "fix", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -1503,6 +1617,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["documentation", "created"],
       "lastUpdated": "2025-11-27"
     },
@@ -1515,6 +1630,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "reference",
       "tags": ["frontend", "phase1", "phase2", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -1527,6 +1643,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "reference",
       "tags": ["frontend", "phase8", "tests"],
       "lastUpdated": "2025-11-27"
     },
@@ -1539,6 +1656,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -1551,6 +1669,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -1563,6 +1682,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["phase", "locust", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -1575,6 +1695,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["phase", "optimization", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -1587,6 +1708,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["phase", "voice", "complete"],
       "lastUpdated": "2025-11-27"
     },
@@ -1599,6 +1721,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["phase", "complete"],
       "lastUpdated": "2025-11-27"
     },
@@ -1611,6 +1734,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["phase", "citations", "complete"],
       "lastUpdated": "2025-11-27"
     },
@@ -1623,6 +1747,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["phase", "complete"],
       "lastUpdated": "2025-11-27"
     },
@@ -1635,6 +1760,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["phase", "conversation", "management", "progress"],
       "lastUpdated": "2025-11-27"
     },
@@ -1647,6 +1773,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["phase", "export", "complete"],
       "lastUpdated": "2025-11-27"
     },
@@ -1659,6 +1786,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["phase", "accessibility", "complete"],
       "lastUpdated": "2025-11-27"
     },
@@ -1671,6 +1799,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["plan"],
       "lastUpdated": "2025-11-27"
     },
@@ -1683,6 +1812,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["pull", "request"],
       "lastUpdated": "2025-11-27"
     },
@@ -1695,6 +1825,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["readme"],
       "lastUpdated": "2025-11-27"
     },
@@ -1707,6 +1838,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["realtime", "sanity", "check"],
       "lastUpdated": "2025-11-27"
     },
@@ -1719,6 +1851,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["session", "summary", "2025", "phase"],
       "lastUpdated": "2025-11-27"
     },
@@ -1731,6 +1864,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["session", "summary", "2025", "phase"],
       "lastUpdated": "2025-11-27"
     },
@@ -1743,6 +1877,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["voice", "endpoint", "fix"],
       "lastUpdated": "2025-11-27"
     },
@@ -1755,6 +1890,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["voice", "mode", "enhancement", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -1767,6 +1903,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["voice", "realtime", "integration"],
       "lastUpdated": "2025-11-27"
     },
@@ -1779,6 +1916,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "reference",
       "tags": ["web", "app", "development", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -1791,6 +1929,7 @@
       "stability": "legacy",
       "owner": "docs",
       "audience": ["human"],
+      "category": "reference",
       "tags": ["work", "completed", "2025"],
       "lastUpdated": "2025-11-27"
     },
@@ -1803,6 +1942,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["devops", "sre"],
+      "category": "planning",
       "tags": ["admin", "panel", "feature", "specs"],
       "lastUpdated": "2025-11-27"
     },
@@ -1815,6 +1955,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["backend"],
+      "category": "api",
       "tags": ["api", "reference"],
       "lastUpdated": "2025-11-27"
     },
@@ -1827,6 +1968,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["architecture", "overview"],
       "lastUpdated": "2025-11-27"
     },
@@ -1839,6 +1981,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["buttongroup"],
       "lastUpdated": "2025-11-27"
     },
@@ -1851,6 +1994,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["client", "dev", "roadmap"],
       "lastUpdated": "2025-11-27"
     },
@@ -1863,6 +2007,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["client", "folder", "structure"],
       "lastUpdated": "2025-11-27"
     },
@@ -1875,6 +2020,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["code", "examples"],
       "lastUpdated": "2025-11-27"
     },
@@ -1887,6 +2033,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["component", "library"],
       "lastUpdated": "2025-11-27"
     },
@@ -1899,6 +2046,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["conversations", "and", "routing"],
       "lastUpdated": "2025-11-27"
     },
@@ -1911,6 +2059,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["development", "workflow"],
       "lastUpdated": "2025-11-27"
     },
@@ -1935,6 +2084,7 @@
       "stability": "beta",
       "owner": "frontend",
       "audience": ["frontend"],
+      "category": "planning",
       "tags": ["frontend", "phase3", "plan"],
       "lastUpdated": "2025-11-27"
     },
@@ -1947,6 +2097,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["frontend"],
+      "category": "planning",
       "tags": ["integration", "guide"],
       "lastUpdated": "2025-11-27"
     },
@@ -1959,6 +2110,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["iconbutton"],
       "lastUpdated": "2025-11-27"
     },
@@ -1971,6 +2123,7 @@
       "stability": "beta",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["master", "implementation", "plan"],
       "lastUpdated": "2025-11-27"
     },
@@ -1983,6 +2136,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["open", "questions"],
       "lastUpdated": "2025-11-27"
     },
@@ -1995,6 +2149,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["readme"],
       "lastUpdated": "2025-11-27"
     },
@@ -2007,6 +2162,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["realtime", "proxy", "spec"],
       "lastUpdated": "2025-11-27"
     },
@@ -2019,6 +2175,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["technical", "architecture"],
       "lastUpdated": "2025-11-27"
     },
@@ -2031,6 +2188,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["frontend"],
+      "category": "planning",
       "tags": ["testing", "guide"],
       "lastUpdated": "2025-11-27"
     },
@@ -2043,6 +2201,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["testing", "phase2"],
       "lastUpdated": "2025-11-27"
     },
@@ -2055,6 +2214,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["testing", "phase3"],
       "lastUpdated": "2025-11-27"
     },
@@ -2067,6 +2227,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["frontend"],
+      "category": "planning",
       "tags": ["web", "app", "feature", "specs"],
       "lastUpdated": "2025-11-27"
     },
@@ -2079,6 +2240,7 @@
       "stability": "production",
       "owner": "backend",
       "audience": ["backend"],
+      "category": "planning",
       "tags": ["rest", "api"],
       "lastUpdated": "2025-11-27"
     },
@@ -2091,6 +2253,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "overview",
       "tags": ["architecture"],
       "lastUpdated": "2025-11-27"
     },
@@ -2103,6 +2266,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["proxy", "spec"],
       "lastUpdated": "2025-11-27"
     },
@@ -2251,6 +2415,7 @@
       "stability": "production",
       "owner": "infra",
       "audience": ["devops", "sre"],
+      "category": "deployment",
       "tags": ["deployment", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -2263,6 +2428,7 @@
       "stability": "production",
       "owner": "frontend",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "breakdown"],
       "lastUpdated": "2025-11-27"
     },
@@ -2275,6 +2441,7 @@
       "stability": "production",
       "owner": "infra",
       "audience": ["human"],
+      "category": "operations",
       "tags": ["docs", "domain"],
       "lastUpdated": "2025-11-27"
     },
@@ -2287,6 +2454,7 @@
       "stability": "production",
       "owner": "sre",
       "audience": ["human"],
+      "category": "operations",
       "tags": ["business", "metrics"],
       "lastUpdated": "2025-11-27"
     },
@@ -2299,6 +2467,7 @@
       "stability": "production",
       "owner": "sre",
       "audience": ["human"],
+      "category": "operations",
       "tags": ["connection", "pool", "optimization"],
       "lastUpdated": "2025-11-27"
     },
@@ -2311,6 +2480,7 @@
       "stability": "production",
       "owner": "sre",
       "audience": ["devops", "backend", "admin"],
+      "category": "operations",
       "tags": ["operations", "overview", "runbooks", "sre"],
       "relatedServices": ["api-gateway", "web-app", "admin-panel"],
       "lastUpdated": "2025-11-27"
@@ -2324,6 +2494,7 @@
       "stability": "production",
       "owner": "sre",
       "audience": ["devops", "backend", "admin"],
+      "category": "operations",
       "tags": ["slo", "reliability", "metrics", "operations"],
       "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
@@ -2337,6 +2508,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["human"],
+      "category": "security",
       "tags": ["analytics", "data", "policy"],
       "lastUpdated": "2025-11-27"
     },
@@ -2349,6 +2521,7 @@
       "stability": "production",
       "owner": "sre",
       "audience": ["devops"],
+      "category": "debugging",
       "tags": [
         "runbook",
         "backup",
@@ -2368,6 +2541,7 @@
       "stability": "production",
       "owner": "sre",
       "audience": ["devops", "backend"],
+      "category": "debugging",
       "tags": ["runbook", "deployment", "operations", "production"],
       "relatedServices": ["api-gateway", "web-app", "admin-panel"],
       "lastUpdated": "2025-11-27"
@@ -2381,6 +2555,7 @@
       "stability": "production",
       "owner": "sre",
       "audience": ["devops", "backend", "admin"],
+      "category": "debugging",
       "tags": ["runbook", "incident", "operations", "on-call"],
       "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
@@ -2394,6 +2569,7 @@
       "stability": "production",
       "owner": "sre",
       "audience": ["devops", "backend"],
+      "category": "debugging",
       "tags": ["runbook", "monitoring", "observability", "metrics", "alerting"],
       "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
@@ -2407,6 +2583,7 @@
       "stability": "production",
       "owner": "sre",
       "audience": ["devops", "backend"],
+      "category": "debugging",
       "tags": ["runbook", "scaling", "performance", "infrastructure"],
       "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
@@ -2420,6 +2597,7 @@
       "stability": "production",
       "owner": "sre",
       "audience": ["devops", "backend"],
+      "category": "debugging",
       "tags": ["runbook", "troubleshooting", "operations", "debugging"],
       "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
@@ -2433,6 +2611,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "overview",
       "tags": ["architecture"],
       "lastUpdated": "2025-11-27"
     },
@@ -2466,6 +2645,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["final", "code", "review"],
       "lastUpdated": "2025-11-27"
     },
@@ -2478,6 +2658,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["project", "handoff", "package"],
       "lastUpdated": "2025-11-27"
     },
@@ -2490,6 +2671,7 @@
       "stability": "production",
       "owner": "docs",
       "audience": ["frontend"],
+      "category": "testing",
       "tags": ["phase8", "folders", "testing", "guide"],
       "lastUpdated": "2025-11-27"
     },
@@ -2502,6 +2684,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "initialization"],
       "lastUpdated": "2025-11-27"
     },
@@ -2514,6 +2697,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["devops", "sre"],
+      "category": "planning",
       "tags": ["phase", "infrastructure"],
       "lastUpdated": "2025-11-27"
     },
@@ -2526,6 +2710,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "local", "environment"],
       "lastUpdated": "2025-11-27"
     },
@@ -2538,6 +2723,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["backend"],
+      "category": "planning",
       "tags": ["phase", "database", "schema"],
       "lastUpdated": "2025-11-27"
     },
@@ -2550,6 +2736,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "security", "nextcloud"],
       "lastUpdated": "2025-11-27"
     },
@@ -2562,6 +2749,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "microservices"],
       "lastUpdated": "2025-11-27"
     },
@@ -2574,6 +2762,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "voice", "pipeline"],
       "lastUpdated": "2025-11-27"
     },
@@ -2586,6 +2775,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "medical"],
       "lastUpdated": "2025-11-27"
     },
@@ -2598,6 +2788,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "nextcloud", "apps"],
       "lastUpdated": "2025-11-27"
     },
@@ -2610,6 +2801,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["devops", "sre"],
+      "category": "planning",
       "tags": ["phase", "admin", "panel"],
       "lastUpdated": "2025-11-27"
     },
@@ -2622,6 +2814,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "observability"],
       "lastUpdated": "2025-11-27"
     },
@@ -2634,6 +2827,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "iac", "cicd"],
       "lastUpdated": "2025-11-27"
     },
@@ -2646,6 +2840,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "load", "testing"],
       "lastUpdated": "2025-11-27"
     },
@@ -2658,6 +2853,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -2670,6 +2866,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "security", "hipaa"],
       "lastUpdated": "2025-11-27"
     },
@@ -2682,6 +2879,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -2694,6 +2892,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase"],
       "lastUpdated": "2025-11-27"
     },
@@ -2706,6 +2905,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -2718,6 +2918,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "testing", "docs"],
       "lastUpdated": "2025-11-27"
     },
@@ -2730,6 +2931,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -2742,6 +2944,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "production", "deploy"],
       "lastUpdated": "2025-11-27"
     },
@@ -2754,6 +2957,7 @@
       "stability": "production",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -2766,6 +2970,7 @@
       "stability": "beta",
       "owner": "mixed",
       "audience": ["human"],
+      "category": "planning",
       "tags": ["docs", "site", "path", "resolution"],
       "lastUpdated": "2025-11-27"
     },
@@ -2778,6 +2983,7 @@
       "stability": "production",
       "owner": "sre",
       "audience": ["frontend"],
+      "category": "testing",
       "tags": ["e2e", "testing", "guide"],
       "lastUpdated": "2025-11-27"
     }

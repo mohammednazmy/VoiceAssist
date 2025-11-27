@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["semantic", "search", "design"]
+category: reference
 ---
 
 # Semantic Search & Knowledge Base Design

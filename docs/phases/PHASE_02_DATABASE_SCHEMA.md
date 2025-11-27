@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["backend"]
 tags: ["phase", "database", "schema"]
+category: planning
 ---
 
 # Phase 2: Database Schema & Models

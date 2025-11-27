@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["development", "setup"]
+category: reference
 ---
 
 # VoiceAssist Development Setup Guide

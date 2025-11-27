@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human", "agent", "docs"]
 tags: ["documentation", "metadata", "standards", "frontmatter"]
+category: reference
 relatedServices: ["docs-site"]
 version: "1.0.0"
 ---

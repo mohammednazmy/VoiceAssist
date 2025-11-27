@@ -8,6 +8,7 @@ owner: sre
 lastUpdated: "2025-11-27"
 audience: ["frontend"]
 tags: ["e2e", "testing", "guide"]
+category: testing
 ---
 
 # End-to-End Testing Guide (Phase 7 - P2.2)

@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "security", "nextcloud"]
+category: planning
 ---
 
 # Phase 2: Security Foundation & Nextcloud Integration

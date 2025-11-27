@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "microservices"]
+category: planning
 ---
 
 # Phase 3: API Gateway & Core Services

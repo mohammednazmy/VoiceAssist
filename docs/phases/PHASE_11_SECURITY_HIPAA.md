@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "security", "hipaa"]
+category: planning
 ---
 
 # Phase 11: Security Hardening & HIPAA Compliance

@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["backend"]
 tags: ["phase", "api", "contracts"]
+category: api
 ---
 
 # Phase 8 API Contracts

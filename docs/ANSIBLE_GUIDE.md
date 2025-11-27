@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["frontend"]
 tags: ["ansible", "guide"]
+category: operations
 ---
 
 # Ansible Guide

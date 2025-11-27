@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["analytics", "data", "policy"]
+category: security
 ---
 
 # VoiceAssist Web Analytics Data Policy

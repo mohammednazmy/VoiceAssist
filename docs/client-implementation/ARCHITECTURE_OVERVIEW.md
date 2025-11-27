@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["architecture", "overview"]
+category: planning
 ---
 
 # VoiceAssist Client Architecture Overview

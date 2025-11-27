@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["open", "questions"]
+category: planning
 ---
 
 # VoiceAssist Client Development - Open Questions & Decisions

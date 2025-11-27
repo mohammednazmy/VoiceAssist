@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["data", "model"]
+category: reference
 ---
 
 # VoiceAssist V2 - Canonical Data Model

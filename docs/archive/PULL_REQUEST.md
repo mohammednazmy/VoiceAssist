@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["pull", "request"]
+category: reference
 ---
 
 # Pull Request: VoiceAssist Web App - Milestone 1 & 2 Complete

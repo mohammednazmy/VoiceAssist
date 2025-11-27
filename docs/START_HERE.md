@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["start", "here"]
+category: overview
 ---
 
 # 🚀 VoiceAssist V2 - Start Here

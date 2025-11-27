@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["devops", "sre"]
 tags: ["deployment", "summary", "asimo"]
+category: deployment
 ---
 
 # VoiceAssist Production Deployment Summary - asimo.io

@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["architecture"]
+category: architecture
 ---
 
 > **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**

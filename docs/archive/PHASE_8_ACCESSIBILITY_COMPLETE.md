@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "accessibility", "complete"]
+category: reference
 ---
 
 # Phase 8: Polish & Optimize - Accessibility (WCAG 2.1 AA) ✓

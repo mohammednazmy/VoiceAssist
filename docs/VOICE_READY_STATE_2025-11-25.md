@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["voice", "ready", "state", "2025"]
+category: reference
 ---
 
 # VoiceAssist Voice-Ready State - November 25, 2025

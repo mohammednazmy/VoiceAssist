@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["backend"]
 tags: ["backend", "implementation", "plan"]
+category: reference
 ---
 
 # Backend Implementation Plan for Frontend Features

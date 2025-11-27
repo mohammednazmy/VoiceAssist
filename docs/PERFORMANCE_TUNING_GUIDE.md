@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["frontend"]
 tags: ["performance", "tuning", "guide"]
+category: operations
 ---
 
 # VoiceAssist Performance Tuning Guide

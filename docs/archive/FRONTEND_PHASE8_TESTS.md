@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["frontend"]
 tags: ["frontend", "phase8", "tests"]
+category: reference
 ---
 
 # Frontend Phase 8 Test Coverage

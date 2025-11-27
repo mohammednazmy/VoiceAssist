@@ -8,6 +8,7 @@ owner: backend
 lastUpdated: "2025-11-27"
 audience: ["backend"]
 tags: ["rest", "api"]
+category: planning
 ---
 
 # Client REST API Reference

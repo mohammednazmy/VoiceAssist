@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["development", "phases"]
+category: planning
 ---
 
 > **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**

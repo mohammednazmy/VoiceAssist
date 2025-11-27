@@ -8,6 +8,7 @@ owner: sre
 lastUpdated: "2025-11-27"
 audience: ["devops", "backend", "admin"]
 tags: ["operations", "overview", "runbooks", "sre"]
+category: operations
 relatedServices: ["api-gateway", "web-app", "admin-panel"]
 version: "1.0.0"
 ---

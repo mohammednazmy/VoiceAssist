@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["devops", "sre"]
 tags: ["admin", "panel", "deployment"]
+category: deployment
 ---
 
 # Admin Panel Deployment Summary

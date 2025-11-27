@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["technical", "architecture"]
+category: planning
 ---
 
 # VoiceAssist Client Applications - Technical Architecture

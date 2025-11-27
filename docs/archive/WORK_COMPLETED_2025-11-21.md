@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["work", "completed", "2025"]
+category: reference
 ---
 
 # VoiceAssist V2 - Integration Improvements Completed

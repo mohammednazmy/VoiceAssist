@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["final", "documentation", "summary"]
+category: reference
 ---
 
 # VoiceAssist V2 - Final Documentation Pass Summary

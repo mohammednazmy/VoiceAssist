@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "conversation", "management", "progress"]
+category: reference
 ---
 
 # Phase 7: Conversation Management - Progress Report

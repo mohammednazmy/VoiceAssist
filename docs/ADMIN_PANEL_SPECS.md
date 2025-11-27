@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["devops", "sre"]
 tags: ["admin", "panel", "specs"]
+category: operations
 ---
 
 # Admin Panel Specifications

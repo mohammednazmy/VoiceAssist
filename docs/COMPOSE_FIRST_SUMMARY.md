@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["compose", "first", "summary"]
+category: reference
 ---
 
 # Compose-First Strategy - Implementation Summary

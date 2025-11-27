@@ -8,6 +8,7 @@ owner: infra
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["docs", "domain"]
+category: operations
 ---
 
 # Documentation Site Deployment & DNS

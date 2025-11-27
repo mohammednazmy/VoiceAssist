@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human", "backend", "frontend", "devops"]
 tags: ["documentation", "tooling", "ci-cd", "quality"]
+category: reference
 relatedServices: ["docs-site"]
 ---
 

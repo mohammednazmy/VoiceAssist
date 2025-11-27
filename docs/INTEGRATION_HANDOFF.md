@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["integration", "handoff"]
+category: reference
 ---
 
 # Integration Improvements Handoff Document

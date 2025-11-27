@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["system", "review", "2025"]
+category: reference
 ---
 
 # VoiceAssist System Review - 2025-11-22

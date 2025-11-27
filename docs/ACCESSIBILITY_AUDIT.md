@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["accessibility", "audit"]
+category: reference
 ---
 
 # VoiceAssist Web App - Accessibility Audit & Improvements

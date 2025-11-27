@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "nextcloud", "apps"]
+category: planning
 ---
 
 # Phase 6: Nextcloud Apps Integration

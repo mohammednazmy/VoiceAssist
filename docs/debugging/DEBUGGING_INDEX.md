@@ -24,18 +24,18 @@ This is the central hub for all VoiceAssist troubleshooting documentation. Use t
 
 ## Debug by Symptom
 
-| Symptom                      | Likely Subsystem | First Doc to Read                                | Key Commands                                   |
-| ---------------------------- | ---------------- | ------------------------------------------------ | ---------------------------------------------- |
-| API returns 500 errors       | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | `journalctl -u quran-rtc -n 100 \| grep ERROR` |
-| WebSocket disconnects        | Voice/Realtime   | [Voice Debugging](./DEBUGGING_VOICE_REALTIME.md) | `websocat wss://assist.asimo.io/ws`            |
-| Voice input not working      | Voice/Realtime   | [Voice Debugging](./DEBUGGING_VOICE_REALTIME.md) | Check browser audio permissions                |
-| Pages return 404             | Docs Site        | [Docs Site Debugging](./DEBUGGING_DOCS_SITE.md)  | `ls /var/www/assistdocs.asimo.io/`             |
-| Slow response times          | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | `curl /metrics \| grep http_request_duration`  |
-| Authentication failing       | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | Check JWT token expiry, Redis status           |
-| Search not returning results | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | Check Qdrant connection, embedding status      |
-| UI renders incorrectly       | Frontend         | [Frontend Debugging](./DEBUGGING_FRONTEND.md)    | Browser DevTools Console & Network             |
-| SSL certificate errors       | Infrastructure   | [Debugging Overview](./DEBUGGING_OVERVIEW.md)    | `sudo certbot certificates`                    |
-| Service won't start          | Infrastructure   | [Debugging Overview](./DEBUGGING_OVERVIEW.md)    | `sudo systemctl status <service>`              |
+| Symptom                      | Likely Subsystem | First Doc to Read                                | Key Commands                                              |
+| ---------------------------- | ---------------- | ------------------------------------------------ | --------------------------------------------------------- |
+| API returns 500 errors       | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | `docker logs voiceassist-server --tail 100 \| grep ERROR` |
+| WebSocket disconnects        | Voice/Realtime   | [Voice Debugging](./DEBUGGING_VOICE_REALTIME.md) | `websocat wss://assist.asimo.io/ws`                       |
+| Voice input not working      | Voice/Realtime   | [Voice Debugging](./DEBUGGING_VOICE_REALTIME.md) | Check browser audio permissions                           |
+| Pages return 404             | Docs Site        | [Docs Site Debugging](./DEBUGGING_DOCS_SITE.md)  | `ls /var/www/assistdocs.asimo.io/`                        |
+| Slow response times          | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | `curl /metrics \| grep http_request_duration`             |
+| Authentication failing       | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | Check JWT token expiry, Redis status                      |
+| Search not returning results | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | Check Qdrant connection, embedding status                 |
+| UI renders incorrectly       | Frontend         | [Frontend Debugging](./DEBUGGING_FRONTEND.md)    | Browser DevTools Console & Network                        |
+| SSL certificate errors       | Infrastructure   | [Debugging Overview](./DEBUGGING_OVERVIEW.md)    | `sudo certbot certificates`                               |
+| Service won't start          | Infrastructure   | [Debugging Overview](./DEBUGGING_OVERVIEW.md)    | `sudo systemctl status <service>`                         |
 
 ---
 
@@ -53,18 +53,19 @@ For AI assistants debugging VoiceAssist issues:
 ### Standard Investigation Steps
 
 ```bash
-# 1. Check service status
-sudo systemctl status quran-rtc apache2
+# 1. Check container status
+docker ps --filter name=voiceassist
+docker logs voiceassist-server --tail 50
 
 # 2. Check recent errors
-journalctl -u quran-rtc --since "30 minutes ago" | grep -i error
+docker logs voiceassist-server --since "30m" 2>&1 | grep -i error
 
 # 3. Check health endpoints
 curl -s https://assist.asimo.io/health | jq
 curl -s https://assist.asimo.io/ready | jq
 
 # 4. Check dependencies
-redis-cli ping
+docker exec voiceassist-redis redis-cli ping
 curl -s http://localhost:6333/collections | jq  # Qdrant
 ```
 
@@ -84,11 +85,11 @@ curl -s http://localhost:6333/collections | jq  # Qdrant
 
 | Subsystem      | Primary Guide                                    | Key Logs                            | Health Endpoint               |
 | -------------- | ------------------------------------------------ | ----------------------------------- | ----------------------------- |
-| Backend/API    | [Backend Debugging](./DEBUGGING_BACKEND.md)      | `journalctl -u quran-rtc`           | `/health`, `/ready`           |
+| Backend/API    | [Backend Debugging](./DEBUGGING_BACKEND.md)      | `docker logs voiceassist-server`    | `/health`, `/ready`           |
 | Frontend/Web   | [Frontend Debugging](./DEBUGGING_FRONTEND.md)    | Browser Console, Network Tab        | N/A (static)                  |
-| Voice/Realtime | [Voice Debugging](./DEBUGGING_VOICE_REALTIME.md) | `journalctl -u quran-rtc`           | `/ws` endpoint                |
+| Voice/Realtime | [Voice Debugging](./DEBUGGING_VOICE_REALTIME.md) | `docker logs voiceassist-server`    | `/ws` endpoint                |
 | Docs Site      | [Docs Site Debugging](./DEBUGGING_DOCS_SITE.md)  | `/var/log/apache2/assistdocs-*.log` | `/agent/index.json`           |
-| Infrastructure | [Overview](./DEBUGGING_OVERVIEW.md)              | `journalctl`, Apache logs           | Apache status, systemd status |
+| Infrastructure | [Overview](./DEBUGGING_OVERVIEW.md)              | `docker logs`, Apache logs          | Docker health, systemd status |
 
 ---
 
@@ -101,11 +102,11 @@ curl -s http://localhost:6333/collections | jq  # Qdrant
 **Key Logs:**
 
 ```bash
-# API Gateway logs
-journalctl -u quran-rtc -f
+# API Gateway logs (Docker container)
+docker logs voiceassist-server -f
 
 # With error filtering
-journalctl -u quran-rtc -n 100 --no-pager | grep -i error
+docker logs voiceassist-server --tail 100 2>&1 | grep -i error
 ```
 
 **Key Health Endpoints:**
@@ -151,8 +152,8 @@ journalctl -u quran-rtc -n 100 --no-pager | grep -i error
 **Key Logs:**
 
 ```bash
-# Voice service logs
-journalctl -u quran-rtc --since "10 minutes ago" | grep -i "websocket\|stt\|tts\|voice"
+# Voice service logs (Docker container)
+docker logs voiceassist-server --since "10m" 2>&1 | grep -i "websocket\|stt\|tts\|voice"
 ```
 
 **Key Health Endpoints:**
@@ -201,8 +202,11 @@ sudo tail -f /var/log/apache2/assistdocs-access.log
 **Key Services:**
 
 ```bash
-# Check all major services
-sudo systemctl status quran-rtc apache2 redis-server
+# Check all major Docker containers
+docker ps --filter name=voiceassist
+
+# Check Apache
+sudo systemctl status apache2
 
 # Check systemd for failures
 sudo systemctl list-units --failed
@@ -261,7 +265,7 @@ Log format is structured JSON with trace IDs:
 ### 1. API Error Investigation
 
 1. Check health endpoints: `curl /health && curl /ready`
-2. Review recent errors: `journalctl -u quran-rtc -n 100 | grep ERROR`
+2. Review recent errors: `docker logs voiceassist-server --tail 100 | grep ERROR`
 3. Check dependencies: Redis, PostgreSQL, Qdrant
 4. Look for trace ID in logs to follow request path
 

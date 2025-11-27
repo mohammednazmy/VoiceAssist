@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["frontend"]
 tags: ["cicd", "guide"]
+category: operations
 ---
 
 # CI/CD Pipeline Guide

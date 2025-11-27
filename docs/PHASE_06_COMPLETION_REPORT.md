@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "completion", "report"]
+category: planning
 ---
 
 # Phase 6 Completion Report: Nextcloud App Integration & Unified Services (MVP)

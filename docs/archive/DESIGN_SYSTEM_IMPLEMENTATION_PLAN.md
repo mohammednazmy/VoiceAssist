@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["design", "system", "implementation", "plan"]
+category: reference
 ---
 
 # VoiceAssist Design System Implementation Plan

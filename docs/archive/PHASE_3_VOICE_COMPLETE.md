@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "voice", "complete"]
+category: reference
 ---
 
 # Phase 3: Voice Features - COMPLETE ✓

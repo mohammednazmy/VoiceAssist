@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "medical"]
+category: planning
 ---
 
 # Phase 5: Medical Knowledge Base & RAG System

@@ -8,6 +8,7 @@ owner: sre
 lastUpdated: "2025-11-27"
 audience: ["devops", "backend", "admin"]
 tags: ["runbook", "incident", "operations", "on-call"]
+category: debugging
 relatedServices: ["api-gateway"]
 version: "1.0.0"
 ---

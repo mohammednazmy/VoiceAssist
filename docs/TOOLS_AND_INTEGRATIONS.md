@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["tools", "and", "integrations"]
+category: reference
 ---
 
 # VoiceAssist V2 - Tools and Integrations

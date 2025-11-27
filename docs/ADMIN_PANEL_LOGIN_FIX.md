@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["devops", "sre"]
 tags: ["admin", "panel", "login", "fix"]
+category: operations
 ---
 
 # Admin Panel Login Fix - CORS & API Configuration

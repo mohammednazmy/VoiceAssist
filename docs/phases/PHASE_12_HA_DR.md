@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase"]
+category: planning
 ---
 
 # Phase 12: High Availability & Disaster Recovery

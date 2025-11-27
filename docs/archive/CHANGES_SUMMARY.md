@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["changes", "summary"]
+category: reference
 ---
 
 # System Review & WebSocket Protocol Fixes - Change Summary

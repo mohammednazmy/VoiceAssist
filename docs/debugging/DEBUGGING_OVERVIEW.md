@@ -40,7 +40,7 @@ This guide provides a high-level overview of debugging VoiceAssist components. F
 
 ### Backend Logs
 
-**Location:** `journalctl -u quran-rtc -f` (systemd) or `docker logs api-gateway`
+**Location:** `docker logs voiceassist-server -f` (VoiceAssist runs in Docker)
 
 **Key Log Files:**
 
@@ -116,11 +116,11 @@ This guide provides a high-level overview of debugging VoiceAssist components. F
 ### 1. Reproduce the Issue
 
 ```bash
-# Check service status
-sudo systemctl status quran-rtc api-gateway
+# Check container status
+docker ps --filter name=voiceassist
 
 # Watch logs in real-time
-journalctl -u quran-rtc -f
+docker logs voiceassist-server -f
 
 # Test API directly
 curl -X GET http://localhost:8000/health
@@ -158,8 +158,8 @@ curl http://localhost:6333/collections
 # Recent commits
 git log --oneline -10
 
-# Recent deployments
-journalctl -u quran-rtc --since "1 hour ago"
+# Recent logs from past hour
+docker logs voiceassist-server --since "1h"
 ```
 
 ---

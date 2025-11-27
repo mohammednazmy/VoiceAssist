@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["frontend"]
 tags: ["frontend", "phase1", "phase2", "summary"]
+category: reference
 ---
 
 # Frontend Development - Phase 1 & Phase 2 Summary

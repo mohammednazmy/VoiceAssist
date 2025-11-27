@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["architecture", "diagrams"]
+category: architecture
 ---
 
 # VoiceAssist V2 - Architecture Diagrams

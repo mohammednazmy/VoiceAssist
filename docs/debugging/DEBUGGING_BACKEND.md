@@ -33,35 +33,35 @@ version: "1.0.0"
 
 **Steps to Investigate:**
 
-1. Check API Gateway logs:
+1. Check API Gateway logs (Docker container):
 
 ```bash
-journalctl -u quran-rtc -n 100 --no-pager | grep -i error
+docker logs voiceassist-server --tail 100 2>&1 | grep -i error
 ```
 
 2. Look for stack traces:
 
 ```bash
-journalctl -u quran-rtc --since "10 minutes ago" | grep -A 20 "Traceback"
+docker logs voiceassist-server --since "10m" 2>&1 | grep -A 20 "Traceback"
 ```
 
 3. Check health endpoints:
 
 ```bash
-curl http://localhost:8000/health
-curl http://localhost:8000/ready
+curl http://localhost:8200/health
+curl http://localhost:8200/ready
 ```
 
 4. Verify environment variables:
 
 ```bash
-# Check if critical vars are set
-grep -E "DATABASE_URL|REDIS_URL|OPENAI_API_KEY" /etc/systemd/system/quran-rtc.service.d/override.conf
+# Check if critical vars are set in .env
+grep -E "DATABASE_URL|REDIS_URL|OPENAI_API_KEY" /home/asimo/VoiceAssist/.env
 ```
 
 **Relevant Logs:**
 
-- `journalctl -u quran-rtc`
+- `docker logs voiceassist-server`
 - Structured JSON logs with `trace_id`
 
 **Relevant Code Paths:**
@@ -260,7 +260,7 @@ redis-cli slowlog get 10
 1. Check recent OpenAI calls:
 
 ```bash
-journalctl -u quran-rtc --since "1 hour ago" | grep -i "openai\|rate\|429"
+docker logs voiceassist-server --since "1h" 2>&1 | grep -i "openai\|rate\|429"
 ```
 
 2. Check API key validity:

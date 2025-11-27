@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["readme"]
+category: architecture
 ---
 
 # VoiceAssist V2 - Architecture Documentation

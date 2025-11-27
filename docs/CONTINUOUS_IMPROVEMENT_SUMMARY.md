@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["continuous", "improvement", "summary"]
+category: reference
 ---
 
 # Continuous Improvement Plan - Executive Summary

@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["oauth", "login", "config"]
+category: reference
 ---
 
 # OAuth Login Configuration Guide

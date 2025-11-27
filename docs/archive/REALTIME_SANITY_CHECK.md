@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["realtime", "sanity", "check"]
+category: reference
 ---
 
 # OpenAI Realtime API Integration - Sanity Check

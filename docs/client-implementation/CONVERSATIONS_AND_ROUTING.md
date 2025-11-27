@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["conversations", "and", "routing"]
+category: planning
 ---
 
 # Conversations and Routing

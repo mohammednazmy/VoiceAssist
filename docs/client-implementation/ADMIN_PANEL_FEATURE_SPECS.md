@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["devops", "sre"]
 tags: ["admin", "panel", "feature", "specs"]
+category: planning
 ---
 
 # VoiceAssist Admin Panel - Feature Specifications

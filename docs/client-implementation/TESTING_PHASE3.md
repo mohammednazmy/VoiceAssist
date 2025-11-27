@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["testing", "phase3"]
+category: planning
 ---
 
 # Phase 3 Testing

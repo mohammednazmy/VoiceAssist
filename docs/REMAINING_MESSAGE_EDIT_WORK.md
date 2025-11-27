@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["remaining", "message", "edit", "work"]
+category: reference
 ---
 
 # Message Editing & Regeneration - Remaining Implementation

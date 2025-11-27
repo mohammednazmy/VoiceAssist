@@ -8,6 +8,7 @@ owner: backend
 lastUpdated: "2025-11-27"
 audience: ["human", "agent", "backend", "frontend"]
 tags: ["api", "routes", "auto-generated"]
+category: api
 relatedServices: ["api-gateway"]
 version: "1.0.0"
 ---

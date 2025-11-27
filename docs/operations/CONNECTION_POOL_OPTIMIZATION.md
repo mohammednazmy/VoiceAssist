@@ -8,6 +8,7 @@ owner: sre
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["connection", "pool", "optimization"]
+category: operations
 ---
 
 # Connection Pool Optimization Guide

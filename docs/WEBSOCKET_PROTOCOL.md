@@ -8,6 +8,7 @@ owner: backend
 lastUpdated: "2025-11-27"
 audience: ["human", "agent", "backend", "frontend"]
 tags: ["websocket", "protocol", "api", "realtime", "streaming"]
+category: reference
 relatedServices: ["api-gateway", "web-app"]
 ---
 

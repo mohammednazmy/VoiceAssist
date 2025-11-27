@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "iac", "cicd"]
+category: planning
 ---
 
 # Phase 9: Infrastructure as Code & CI/CD

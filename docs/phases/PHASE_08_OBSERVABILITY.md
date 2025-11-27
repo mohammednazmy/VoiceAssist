@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "observability"]
+category: planning
 ---
 
 # Phase 8: Tracing, Metrics & Logging

@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["roadmap"]
+category: planning
 ---
 
 # VoiceAssist V2 Development Roadmap (15 Phases)

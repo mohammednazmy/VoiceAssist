@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["frontend"]
 tags: ["frontend", "verification", "summary"]
+category: reference
 ---
 
 # Frontend Verification & Refinement Summary

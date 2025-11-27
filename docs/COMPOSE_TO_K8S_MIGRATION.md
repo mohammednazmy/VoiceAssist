@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["compose", "k8s", "migration"]
+category: reference
 ---
 
 # Docker Compose to Kubernetes Migration Guide

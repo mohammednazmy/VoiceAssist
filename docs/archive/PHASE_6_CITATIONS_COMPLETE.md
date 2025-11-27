@@ -8,6 +8,7 @@ owner: docs
 lastUpdated: "2025-11-27"
 audience: ["human"]
 tags: ["phase", "citations", "complete"]
+category: reference
 ---
 
 # Phase 6: Citations & Sources UI - COMPLETE ✓

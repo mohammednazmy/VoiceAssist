@@ -8,6 +8,7 @@ owner: sre
 lastUpdated: "2025-11-27"
 audience: ["devops", "backend"]
 tags: ["runbook", "deployment", "operations", "production"]
+category: debugging
 relatedServices: ["api-gateway", "web-app", "admin-panel"]
 version: "1.0.0"
 ---

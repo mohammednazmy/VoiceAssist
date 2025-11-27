@@ -8,6 +8,7 @@ owner: frontend
 lastUpdated: "2025-11-27"
 audience: ["frontend"]
 tags: ["frontend", "phase3", "plan"]
+category: planning
 ---
 
 # Frontend Phase 3 Plan - Web App UX & Voice Enhancements

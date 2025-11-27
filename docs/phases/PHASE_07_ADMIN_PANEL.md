@@ -8,6 +8,7 @@ owner: mixed
 lastUpdated: "2025-11-27"
 audience: ["devops", "sre"]
 tags: ["phase", "admin", "panel"]
+category: planning
 ---
 
 # Phase 7: Admin Panel & RBAC
