@@ -1,5 +1,6 @@
 import { Metadata } from "next";
-import { loadDoc, loadClientImplDoc } from "@/lib/docs";
+import { loadDoc } from "@/lib/docs";
+import { loadMdxContent } from "@/lib/mdx";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import Link from "next/link";
 
@@ -9,8 +10,8 @@ export const metadata: Metadata = {
     "VoiceAssist deployment guide for production and staging environments",
 };
 
-export default function DeploymentPage() {
-  const deploymentGuide = loadDoc("DEPLOYMENT_GUIDE.md");
+export default async function DeploymentPage() {
+  const deploymentGuide = await loadMdxContent("operations/deployment.mdx");
   const adminDeployment = loadDoc("ADMIN_PANEL_DEPLOYMENT.md");
   const infraDoc = loadDoc("infra/INFRASTRUCTURE.md");
 
@@ -94,7 +95,9 @@ export default function DeploymentPage() {
       <div className="space-y-12">
         {deploymentGuide && (
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-            <MarkdownRenderer content={deploymentGuide.content} />
+            <article className="prose prose-slate max-w-none dark:prose-invert">
+              {deploymentGuide.content}
+            </article>
           </div>
         )}
 

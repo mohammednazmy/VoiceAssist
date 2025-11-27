@@ -67,3 +67,24 @@ body {
 .dark .sidebar-link-active {
   @apply bg-primary-900/30 text-primary-300 border-primary-400;
 }
+
+/* Rehype Pretty Code styling */
+[data-rehype-pretty-code-figure] {
+  @apply my-6 overflow-hidden rounded-xl border border-slate-200 bg-slate-900 shadow-sm dark:border-slate-800;
+}
+
+[data-rehype-pretty-code-figure] code {
+  background: none !important;
+}
+
+[data-rehype-pretty-code-title] {
+  @apply bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200;
+}
+
+[data-rehype-pretty-code-figure] pre {
+  @apply m-0 bg-transparent p-4 text-sm text-slate-50;
+}
+
+[data-highlighted-line] {
+  @apply block rounded bg-slate-800/70 px-3 py-0.5;
+}
