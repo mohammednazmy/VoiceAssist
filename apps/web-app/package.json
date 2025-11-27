@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
+    "idb": "^8.0.2",
     "@sentry/browser": "^8.42.0",
     "@tanstack/react-query": "^5.0.0",
     "i18next": "^25.6.3",
