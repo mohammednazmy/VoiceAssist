@@ -9,7 +9,7 @@ import type { Citation } from "../../types";
 import type { Message } from "@voiceassist/types";
 
 /** Type filter options */
-type TypeFilter = "all" | "kb" | "pubmed" | "guideline";
+type TypeFilter = "all" | "kb" | "pubmed" | "guideline" | "openevidence" | "external";
 
 /** Citation with message reference for jump-to functionality */
 interface CitationWithMessage {
@@ -100,6 +100,9 @@ export function CitationSidebar({
     ) {
       return "guideline";
     }
+    if (citation.sourceType === "openevidence" || citation.source === "openevidence") {
+      return "openevidence";
+    }
     // Check for PubMed (source or pubmedId, not just DOI)
     if (citation.source === "pubmed" || citation.pubmedId) {
       return "pubmed";
@@ -108,8 +111,8 @@ export function CitationSidebar({
     if (citation.source === "kb") {
       return "kb";
     }
-    // Default to kb for other sources
-    return "kb";
+    // Default to external bucket for everything else
+    return "external";
   };
 
   // Filter citations based on search, type, and message filters
@@ -266,34 +269,38 @@ export function CitationSidebar({
             </div>
 
             {/* Type Filter Pills */}
-            <div
-              className="flex flex-wrap gap-2"
-              role="group"
-              aria-label="Filter by type"
-            >
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by type">
               {(
                 [
                   { value: "all", label: "All" },
                   { value: "kb", label: "Knowledge Base" },
                   { value: "pubmed", label: "PubMed / DOI" },
                   { value: "guideline", label: "Guidelines" },
+                  { value: "openevidence", label: "OpenEvidence" },
+                  { value: "external", label: "External" },
                 ] as const
-              ).map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setTypeFilter(option.value)}
-                  className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
-                    typeFilter === option.value
-                      ? "bg-primary-500 text-white"
-                      : "bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600"
-                  }`}
-                  aria-pressed={typeFilter === option.value}
-                  data-testid={`type-filter-${option.value}`}
-                >
-                  {option.label}
-                </button>
-              ))}
+              )
+                .filter(
+                  (option) =>
+                    option.value === "all" ||
+                    allCitations.some((citation) => getCitationType(citation) === option.value),
+                )
+                .map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setTypeFilter(option.value)}
+                    className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
+                      typeFilter === option.value
+                        ? "bg-primary-500 text-white"
+                        : "bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600"
+                    }`}
+                    aria-pressed={typeFilter === option.value}
+                    data-testid={`type-filter-${option.value}`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
             </div>
 
             {/* Message Filter Dropdown */}

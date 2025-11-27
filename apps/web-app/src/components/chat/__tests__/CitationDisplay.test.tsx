@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CitationDisplay } from "../CitationDisplay";
 import type { Citation } from "@voiceassist/types";
@@ -60,12 +60,16 @@ describe("CitationDisplay", () => {
   describe("source type badges", () => {
     it("should show KB badge for knowledge base citations", () => {
       render(<CitationDisplay citations={[kbCitation]} />);
-      expect(screen.getByText(/knowledge base/i)).toBeInTheDocument();
+
+      const citationButton = screen.getByRole("button", { expanded: false });
+      expect(within(citationButton).getByText(/knowledge base/i)).toBeInTheDocument();
     });
 
     it("should show external link badge for URL citations", () => {
       render(<CitationDisplay citations={[urlCitation]} />);
-      expect(screen.getByText(/external link/i)).toBeInTheDocument();
+
+      const citationButton = screen.getByRole("button", { expanded: false });
+      expect(within(citationButton).getByText(/external link/i)).toBeInTheDocument();
     });
 
     it("should show page number when present", () => {
@@ -262,6 +266,28 @@ describe("CitationDisplay", () => {
       await user.click(expandedButton);
       const collapsedButton = screen.getByRole("button", { expanded: false });
       expect(collapsedButton).toHaveAttribute("aria-expanded", "false");
+    });
+  });
+
+  describe("source filters", () => {
+    it("should filter citations by selected source", async () => {
+      const user = userEvent.setup();
+      render(<CitationDisplay citations={[kbCitation, urlCitation]} />);
+
+      // Click the External Link filter pill
+      const externalFilter = screen.getByRole("button", {
+        name: /external link/i,
+      });
+      await user.click(externalFilter);
+
+      const citationButtons = screen.getAllByRole("button", { expanded: false });
+      expect(citationButtons).toHaveLength(1);
+      expect(
+        within(citationButtons[0]).queryByText(/knowledge base/i),
+      ).not.toBeInTheDocument();
+      expect(
+        within(citationButtons[0]).getByText(/external link/i),
+      ).toBeInTheDocument();
     });
   });
 });

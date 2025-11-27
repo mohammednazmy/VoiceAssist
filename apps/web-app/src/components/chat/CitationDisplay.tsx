@@ -12,6 +12,20 @@ export interface CitationDisplayProps {
   enableExport?: boolean;
 }
 
+const getSourceKey = (citation: Citation): string =>
+  (citation.sourceType || citation.source || "unknown").toLowerCase();
+
+const getSourceLabel = (citation: Citation): string => {
+  const key = getSourceKey(citation);
+  if (key === "kb") return "Knowledge Base";
+  if (key === "pubmed") return "PubMed";
+  if (key === "openevidence") return "OpenEvidence";
+  if (key === "guideline") return "Guideline";
+  if (key === "url") return "External Link";
+  if (key === "doi") return "DOI";
+  return "External";
+};
+
 // Helper function to export citations as Markdown
 const exportAsMarkdown = (citations: Citation[]): string => {
   let markdown = "# Citations\n\n";
@@ -147,7 +161,37 @@ export function CitationDisplay({
 }: CitationDisplayProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
   const toast = useToastContext();
+
+  const availableSources = Array.from(
+    new Set(citations.map((citation) => getSourceKey(citation))),
+  ).filter(Boolean);
+
+  const filteredCitations =
+    sourceFilter === "all"
+      ? citations
+      : citations.filter((citation) => getSourceKey(citation) === sourceFilter);
+
+  const visibleCitations = filteredCitations;
+  const totalCount = citations.length;
+  const visibleCount = visibleCitations.length;
+  const countLabel =
+    sourceFilter === "all"
+      ? totalCount === 1
+        ? "1 Source"
+        : `${totalCount} Sources`
+      : `${visibleCount} of ${totalCount} Sources`;
+
+  const formatSourceKey = (key: string) => {
+    if (key === "kb") return "Knowledge Base";
+    if (key === "pubmed") return "PubMed";
+    if (key === "openevidence") return "OpenEvidence";
+    if (key === "guideline") return "Guideline";
+    if (key === "url") return "External Link";
+    if (key === "doi") return "DOI";
+    return key.charAt(0).toUpperCase() + key.slice(1);
+  };
 
   const toggleExpanded = (id: string) => {
     setExpandedIds((prev) => {
@@ -175,13 +219,13 @@ export function CitationDisplay({
   };
 
   const handleExportMarkdown = () => {
-    const markdown = exportAsMarkdown(citations);
+    const markdown = exportAsMarkdown(visibleCitations);
     const timestamp = new Date().toISOString().split("T")[0];
     downloadFile(markdown, `citations-${timestamp}.md`, "text/markdown");
   };
 
   const handleExportText = () => {
-    const markdown = exportAsMarkdown(citations);
+    const markdown = exportAsMarkdown(visibleCitations);
     // Convert markdown to plain text (simple approach)
     const plainText = markdown
       .replace(/^#{1,6}\s+/gm, "")
@@ -202,7 +246,7 @@ export function CitationDisplay({
       {/* Header with export buttons */}
       <div className="flex items-center justify-between">
         <div className="text-xs font-medium text-neutral-600">
-          {citations.length === 1 ? "1 Source" : `${citations.length} Sources`}
+          {countLabel}
         </div>
 
         {enableExport && citations.length > 0 && (
@@ -253,7 +297,43 @@ export function CitationDisplay({
         )}
       </div>
 
-      {citations.map((citation, index) => {
+      {availableSources.length > 1 && (
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter citations by source">
+          <button
+            onClick={() => setSourceFilter("all")}
+            className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
+              sourceFilter === "all"
+                ? "bg-primary-100 text-primary-800 border-primary-200"
+                : "bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100"
+            }`}
+            aria-pressed={sourceFilter === "all"}
+          >
+            All sources
+          </button>
+          {availableSources.map((sourceKey) => (
+            <button
+              key={sourceKey}
+              onClick={() => setSourceFilter(sourceKey)}
+              className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
+                sourceFilter === sourceKey
+                  ? "bg-primary-100 text-primary-800 border-primary-200"
+                  : "bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100"
+              }`}
+              aria-pressed={sourceFilter === sourceKey}
+            >
+              {formatSourceKey(sourceKey)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {visibleCount === 0 && totalCount > 0 && (
+        <div className="text-xs text-neutral-500" role="status">
+          No citations match this source filter.
+        </div>
+      )}
+
+      {visibleCitations.map((citation, index) => {
         const isExpanded = expandedIds.has(citation.id);
         const sourceLabel =
           citation.title ||
@@ -277,6 +357,9 @@ export function CitationDisplay({
                 </span>
 
                 <div className="flex items-center space-x-2">
+                  <span className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-neutral-100 text-neutral-700 rounded-full">
+                    {getSourceLabel(citation)}
+                  </span>
                   {citation.source === "kb" ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"

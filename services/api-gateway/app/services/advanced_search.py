@@ -211,6 +211,7 @@ class AdvancedSearchAggregator:
                 query=expanded_query,
                 top_k=top_k * 3,  # Get more for re-ranking
                 strategy=strategy,
+                filters=filters,
             )
         else:
             # Fall back to vector-only search
@@ -218,6 +219,7 @@ class AdvancedSearchAggregator:
                 query=expanded_query,
                 top_k=top_k * 3,
                 strategy=SearchStrategy.VECTOR_ONLY,
+                filters=filters,
             )
 
         metrics.search_time_ms = (time.time() - search_start) * 1000
@@ -367,7 +369,10 @@ class AdvancedSearchAggregator:
 
         for i, result in enumerate(results, 1):
             source = result.title or result.source_type or "Unknown source"
-            context_parts.append(f"\n[{i}] {source}:\n{result.content}\n")
+            source_tag = (result.source_type or result.metadata.get("source_type") or "source").upper()
+            context_parts.append(
+                f"\n[{i} | {source_tag}] {source}:\n{result.content}\n"
+            )
 
         formatted_context = "\n".join(context_parts)
         return results, formatted_context
@@ -422,9 +427,10 @@ class AdvancedSearchAggregator:
 
         for i, result in enumerate(results, 1):
             source = result.title or result.source_type or "Source"
+            source_tag = (result.source_type or result.metadata.get("source_type") or "source").upper()
             score_str = f"(relevance: {result.score:.2f})"
 
-            entry = f"\n[{i}] {source} {score_str}:\n{result.content}\n"
+            entry = f"\n[{i} | {source_tag}] {source} {score_str}:\n{result.content}\n"
             entry_tokens = len(entry) * tokens_per_char
 
             if estimated_tokens + entry_tokens > max_tokens:

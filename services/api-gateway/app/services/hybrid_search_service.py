@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import openai
 from app.core.config import settings
 from app.services.cache_service import cache_service, generate_cache_key
+from qdrant_client.models import FieldCondition, Filter, MatchAny, MatchValue
 
 logger = logging.getLogger(__name__)
 
@@ -246,11 +247,44 @@ class HybridSearchService:
             logger.error(f"Error generating embedding: {e}")
             raise
 
+    def _build_filter(self, filters: Optional[Dict[str, Any]]) -> Optional[Filter]:
+        """Convert simple dict filters into a Qdrant filter."""
+
+        if not filters:
+            return None
+
+        must: List[FieldCondition] = []
+        for key, value in filters.items():
+            if isinstance(value, (list, tuple, set)):
+                must.append(FieldCondition(key=key, match=MatchAny(any=list(value))))
+            else:
+                must.append(FieldCondition(key=key, match=MatchValue(value=value)))
+
+        return Filter(must=must)
+
+    def _metadata_matches_filters(
+        self, metadata: Dict[str, Any], filters: Optional[Dict[str, Any]]
+    ) -> bool:
+        """Check if metadata satisfies filter conditions."""
+
+        if not filters:
+            return True
+
+        for key, expected in filters.items():
+            if isinstance(expected, (list, tuple, set)):
+                if metadata.get(key) not in expected:
+                    return False
+            else:
+                if metadata.get(key) != expected:
+                    return False
+        return True
+
     async def _vector_search(
         self,
         query: str,
         top_k: int,
         score_threshold: float = 0.0,
+        filters: Optional[Dict[str, Any]] = None,
     ) -> List[SearchResult]:
         """Perform vector search using Qdrant."""
         if not self.qdrant_enabled or not self.qdrant_client:
@@ -260,6 +294,7 @@ class HybridSearchService:
             query_embedding = await self._generate_embedding(query)
 
             # Execute Qdrant search in thread pool
+            search_filter = self._build_filter(filters)
             results = await asyncio.wait_for(
                 asyncio.to_thread(
                     self.qdrant_client.search,
@@ -267,6 +302,7 @@ class HybridSearchService:
                     query_vector=query_embedding,
                     limit=top_k,
                     score_threshold=score_threshold,
+                    query_filter=search_filter,
                 ),
                 timeout=5,
             )
@@ -302,6 +338,7 @@ class HybridSearchService:
         self,
         query: str,
         top_k: int,
+        filters: Optional[Dict[str, Any]] = None,
     ) -> List[SearchResult]:
         """Perform BM25 keyword search."""
         try:
@@ -310,7 +347,7 @@ class HybridSearchService:
             search_results = []
             for doc_id, score in results:
                 doc = self.bm25_index.get_document(doc_id)
-                if doc:
+                if doc and self._metadata_matches_filters(doc.get("metadata", {}), filters):
                     search_results.append(
                         SearchResult(
                             chunk_id=doc_id,
@@ -484,6 +521,7 @@ class HybridSearchService:
         top_k: int = 10,
         strategy: SearchStrategy = SearchStrategy.AUTO,
         score_threshold: Optional[float] = None,
+        filters: Optional[Dict[str, Any]] = None,
     ) -> List[SearchResult]:
         """
         Perform hybrid search.
@@ -506,16 +544,16 @@ class HybridSearchService:
 
         # Execute search based on strategy
         if strategy == SearchStrategy.VECTOR_ONLY:
-            results = await self._vector_search(query, top_k, threshold)
+            results = await self._vector_search(query, top_k, threshold, filters)
 
         elif strategy == SearchStrategy.BM25_ONLY:
-            results = await self._bm25_search(query, top_k)
+            results = await self._bm25_search(query, top_k, filters)
             results = [r for r in results if r.score >= threshold]
 
         elif strategy == SearchStrategy.HYBRID:
             # Execute both searches in parallel
-            vector_task = self._vector_search(query, top_k * 2, 0.0)
-            bm25_task = self._bm25_search(query, top_k * 2)
+            vector_task = self._vector_search(query, top_k * 2, 0.0, filters)
+            bm25_task = self._bm25_search(query, top_k * 2, filters)
 
             vector_results, bm25_results = await asyncio.gather(vector_task, bm25_task)
 
@@ -539,6 +577,7 @@ class HybridSearchService:
         query: str,
         top_k: int = 10,
         expand_query: bool = True,
+        filters: Optional[Dict[str, Any]] = None,
     ) -> List[SearchResult]:
         """
         Search with optional query expansion.
@@ -557,7 +596,7 @@ class HybridSearchService:
         # Search with all queries and merge results
         all_results = []
         for q in queries:
-            results = await self.search(q, top_k=top_k)
+            results = await self.search(q, top_k=top_k, filters=filters)
             all_results.append(results)
 
         if len(all_results) == 1:

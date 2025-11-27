@@ -1,8 +1,15 @@
 import pytest
 from fastapi import HTTPException
 
-from services.api-gateway.app.core.dependencies import get_current_admin_user
-from services.api-gateway.app.models.user import User
+from tests.integration.api_gateway_loader import load_api_gateway_module
+
+core_dependencies = load_api_gateway_module(
+    "core/dependencies.py", "api_gateway_core_dependencies"
+)
+user_model = load_api_gateway_module("models/user.py", "api_gateway_user_model")
+
+get_current_admin_user = core_dependencies.get_current_admin_user
+User = user_model.User
 
 @pytest.mark.smoke
 def test_get_current_admin_user_denies_non_admin():

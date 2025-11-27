@@ -12,6 +12,7 @@ export interface Citation {
     | "uptodate"
     | "pubmed"
     | string;
+  sourceTag?: string;
   title?: string;
   subtitle?: string;
   location?: string; // e.g., "ch. 252", "p. 2987"

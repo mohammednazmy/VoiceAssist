@@ -33,7 +33,7 @@ from app.core.config import settings
 from app.core.metrics import rag_embedding_tokens_total, rag_query_duration_seconds, rag_search_results_total
 from app.services.cache_service import cache_service, generate_cache_key
 from qdrant_client import QdrantClient
-from qdrant_client.models import FieldCondition, Filter, MatchValue
+from qdrant_client.models import FieldCondition, Filter, MatchAny, MatchValue
 
 logger = logging.getLogger(__name__)
 
@@ -199,9 +199,14 @@ class SearchAggregator:
                 if filter_conditions:
                     filter_must = []
                     for key, value in filter_conditions.items():
-                        filter_must.append(
-                            FieldCondition(key=key, match=MatchValue(value=value))
-                        )
+                        if isinstance(value, (list, tuple, set)):
+                            filter_must.append(
+                                FieldCondition(key=key, match=MatchAny(any=list(value)))
+                            )
+                        else:
+                            filter_must.append(
+                                FieldCondition(key=key, match=MatchValue(value=value))
+                            )
                     search_filter = Filter(must=filter_must)
 
                 # Perform vector search in Qdrant off the event loop
@@ -398,8 +403,10 @@ class SearchAggregator:
 
         context_parts = []
         for i, result in enumerate(search_results, 1):
+            source_type = result.metadata.get("source_type", "unknown")
+            source_tag = source_type.upper()
             context_parts.append(
-                f"[Source {i}] {result.metadata.get('title', 'Unknown')} "
+                f"[Source {i} | {source_tag}] {result.metadata.get('title', 'Unknown')} "
                 f"(Score: {result.score:.2f})\n{result.content}\n"
             )
 
@@ -433,6 +440,7 @@ class SearchAggregator:
                 "title": result.metadata.get("title", "Untitled"),
                 "url": result.metadata.get("url"),
                 "relevance_score": result.score,
+                "source_tag": result.metadata.get("source_type", "unknown").upper(),
             }
             citations.append(citation)
 
