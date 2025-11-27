@@ -73,7 +73,9 @@ class AuditService:
         if user:
             user_id = str(user.id)
             user_email = user.email
-            user_role = "admin" if user.is_admin else "user"
+            user_role = getattr(user, "admin_role", None) or (
+                "admin" if user.is_admin else "user"
+            )
 
         # Extract request info from Request object if provided
         if request:

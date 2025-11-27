@@ -6,12 +6,18 @@ from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_admin_user, get_current_user
-from app.core.security import get_password_hash, verify_password
+from app.core.security import (
+    get_password_hash,
+    verify_password,
+    get_refresh_token_ttl_seconds,
+)
 from app.models.user import User
 from app.schemas.auth import PasswordChange, UserResponse
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
+from app.services.token_revocation import token_revocation_service
+from app.services.admin_audit_log_service import admin_audit_log_service
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -87,12 +93,18 @@ async def change_password(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect current password"
         )
 
-    # Update password
+    # Update password and record change
+    now = datetime.now(timezone.utc)
     current_user.hashed_password = get_password_hash(password_data.new_password)
-    current_user.updated_at = datetime.now(timezone.utc)
+    current_user.password_changed_at = now
+    current_user.updated_at = now
     db.commit()
 
-    return {"message": "Password updated successfully"}
+    await token_revocation_service.revoke_all_user_tokens(
+        str(current_user.id), ttl_seconds=get_refresh_token_ttl_seconds()
+    )
+
+    return {"message": "Password updated successfully. Please login again."}
 
 
 @router.delete("/me")
@@ -141,6 +153,7 @@ async def list_users(
             "full_name": user.full_name,
             "is_active": user.is_active,
             "is_admin": user.is_admin,
+            "admin_role": user.admin_role,
             "created_at": user.created_at.isoformat() if user.created_at else None,
             "last_login": user.last_login.isoformat() if user.last_login else None,
         }
@@ -197,6 +210,19 @@ async def update_user(
         )
 
     # Update fields if provided
+    role_before = user.admin_role
+    incoming_role = user_update.get("admin_role")
+    if incoming_role and incoming_role not in {"admin", "viewer", "user"}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid admin role",
+        )
+    if incoming_role and user.id == current_user.id and incoming_role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot remove your own admin privileges",
+        )
+
     if "is_active" in user_update:
         # Don't allow deactivating yourself
         if user.id == current_user.id and not user_update["is_active"]:
@@ -214,6 +240,11 @@ async def update_user(
                 detail="Cannot remove your own admin privileges",
             )
         user.is_admin = user_update["is_admin"]
+        incoming_role = "admin" if user.is_admin else (incoming_role or "user")
+
+    if incoming_role:
+        user.admin_role = incoming_role
+        user.is_admin = incoming_role == "admin"
 
     if "full_name" in user_update:
         user.full_name = user_update["full_name"]
@@ -222,6 +253,16 @@ async def update_user(
     db.commit()
     db.refresh(user)
 
+    if user.admin_role != role_before:
+        admin_audit_log_service.log_action(
+            db=db,
+            actor=current_user,
+            action="user.role_change",
+            target_type="user",
+            target_id=str(user.id),
+            metadata={"from": role_before, "to": user.admin_role},
+        )
+
     return success_response(
         {
             "id": str(user.id),
@@ -229,6 +270,7 @@ async def update_user(
             "full_name": user.full_name,
             "is_active": user.is_active,
             "is_admin": user.is_admin,
+            "admin_role": user.admin_role,
             "created_at": user.created_at.isoformat() if user.created_at else None,
             "message": "User updated successfully",
         }
@@ -310,9 +352,21 @@ async def promote_to_admin(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
+    role_before = user.admin_role
     user.is_admin = True
+    user.admin_role = "admin"
     user.updated_at = datetime.now(timezone.utc)
     db.commit()
+
+    if user.admin_role != role_before:
+        admin_audit_log_service.log_action(
+            db=db,
+            actor=current_user,
+            action="user.role_change",
+            target_type="user",
+            target_id=str(user.id),
+            metadata={"from": role_before, "to": user.admin_role},
+        )
 
     return {"message": f"User {user.email} promoted to admin"}
 
@@ -342,8 +396,20 @@ async def revoke_admin_privileges(
             detail="Cannot revoke your own admin privileges",
         )
 
+    role_before = user.admin_role
     user.is_admin = False
+    user.admin_role = "user"
     user.updated_at = datetime.now(timezone.utc)
     db.commit()
+
+    if user.admin_role != role_before:
+        admin_audit_log_service.log_action(
+            db=db,
+            actor=current_user,
+            action="user.role_change",
+            target_type="user",
+            target_id=str(user.id),
+            metadata={"from": role_before, "to": user.admin_role},
+        )
 
     return {"message": f"Admin privileges revoked from {user.email}"}

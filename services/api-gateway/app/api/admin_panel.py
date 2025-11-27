@@ -21,9 +21,13 @@ from typing import Dict, Optional
 
 from app.core.api_envelope import success_response
 from app.core.database import get_db, get_db_pool_stats, get_redis_pool_stats, redis_client
-from app.core.dependencies import get_current_admin_user
+from app.core.dependencies import (
+    ensure_admin_privileges,
+    get_current_admin_or_viewer,
+)
 from app.models.audit_log import AuditLog
 from app.models.user import User
+from app.services.admin_audit_log_service import admin_audit_log_service
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import Date, cast, desc, func
@@ -149,6 +153,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     full_name: str
     is_admin: bool = False
+    admin_role: str = "user"
     is_active: bool = True
 
 
@@ -158,6 +163,7 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     full_name: Optional[str] = None
     is_admin: Optional[bool] = None
+    admin_role: Optional[str] = None
     is_active: Optional[bool] = None
 
 
@@ -168,6 +174,7 @@ class UserResponse(BaseModel):
     email: str
     full_name: Optional[str]
     is_admin: bool
+    admin_role: str
     is_active: bool
     created_at: str
     last_login: Optional[str]
@@ -190,6 +197,30 @@ class AuditLogEntryResponse(BaseModel):
     details: Optional[str]
 
 
+ALLOWED_ADMIN_ROLES = {"admin", "viewer", "user"}
+
+
+def resolve_admin_role(
+    current_role: str, incoming_admin_flag: Optional[bool], incoming_role: Optional[str]
+) -> str:
+    """Determine the resulting admin role based on incoming values."""
+
+    if incoming_role:
+        if incoming_role not in ALLOWED_ADMIN_ROLES:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid admin role specified",
+            )
+        role = incoming_role
+    else:
+        role = current_role
+
+    if incoming_admin_flag is not None:
+        role = "admin" if incoming_admin_flag else ("viewer" if role == "viewer" else "user")
+
+    return role
+
+
 # ============================================================================
 # System Summary Endpoint
 # ============================================================================
@@ -199,7 +230,7 @@ class AuditLogEntryResponse(BaseModel):
 async def get_system_summary(
     request: Request,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ) -> Dict:
     """Return a simple system summary for the admin dashboard."""
     total_users = db.query(User).count()
@@ -224,7 +255,7 @@ async def get_system_summary(
 @router.get("/websocket-status")
 async def get_websocket_status(
     request: Request,
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ) -> Dict:
     """Return WebSocket connection status for admin dashboard."""
     # Get pool stats
@@ -278,7 +309,7 @@ async def get_websocket_status(
 async def list_users(
     request: Request,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
     offset: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     search: Optional[str] = Query(None),
@@ -310,6 +341,7 @@ async def list_users(
             "email": user.email,
             "full_name": user.full_name,
             "is_admin": user.is_admin,
+            "admin_role": user.admin_role,
             "is_active": user.is_active,
             "created_at": user.created_at.isoformat() if user.created_at else None,
             "last_login": user.last_login.isoformat() if user.last_login else None,
@@ -333,7 +365,7 @@ async def get_user(
     request: Request,
     user_id: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ) -> Dict:
     """Get a single user by ID."""
     user = db.query(User).filter(User.id == user_id).first()
@@ -345,6 +377,7 @@ async def get_user(
         "email": user.email,
         "full_name": user.full_name,
         "is_admin": user.is_admin,
+        "admin_role": user.admin_role,
         "is_active": user.is_active,
         "created_at": user.created_at.isoformat() if user.created_at else None,
         "last_login": user.last_login.isoformat() if user.last_login else None,
@@ -360,15 +393,21 @@ async def update_user(
     user_id: str,
     user_update: UserUpdate,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ) -> Dict:
     """Update a user's information."""
+    ensure_admin_privileges(current_admin_user)
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    update_data = user_update.model_dump(exclude_unset=True)
+    incoming_role = update_data.pop("admin_role", None)
+    incoming_admin_flag = update_data.pop("is_admin", None)
+    desired_role = resolve_admin_role(user.admin_role, incoming_admin_flag, incoming_role)
+
     # Prevent admin from demoting themselves
-    if str(user.id) == str(current_admin_user.id) and user_update.is_admin is False:
+    if str(user.id) == str(current_admin_user.id) and desired_role != "admin":
         raise HTTPException(status_code=400, detail="Cannot remove your own admin privileges")
 
     # Capture original values for audit
@@ -376,18 +415,22 @@ async def update_user(
         "email": user.email,
         "full_name": user.full_name,
         "is_admin": user.is_admin,
+        "admin_role": user.admin_role,
         "is_active": user.is_active,
     }
 
     # Update fields
-    update_data = user_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(user, field, value)
+
+    user.admin_role = desired_role
+    user.is_admin = desired_role == "admin"
 
     db.commit()
     db.refresh(user)
 
     # Log audit event
+    audit_updates = {**update_data, "admin_role": user.admin_role, "is_admin": user.is_admin}
     log_audit_event(
         db=db,
         action="user.update",
@@ -396,15 +439,31 @@ async def update_user(
         resource_type="user",
         resource_id=user_id,
         success=True,
-        details=json.dumps({"original": original_values, "updated": update_data}),
+        details=json.dumps({"original": original_values, "updated": audit_updates}),
         request=request,
     )
+
+    if user.admin_role != original_values["admin_role"]:
+        admin_audit_log_service.log_action(
+            db=db,
+            actor=current_admin_user,
+            action="user.role_change",
+            target_type="user",
+            target_id=user_id,
+            success=True,
+            metadata={
+                "from": original_values["admin_role"],
+                "to": user.admin_role,
+            },
+            request=request,
+        )
 
     data = {
         "id": str(user.id),
         "email": user.email,
         "full_name": user.full_name,
         "is_admin": user.is_admin,
+        "admin_role": user.admin_role,
         "is_active": user.is_active,
         "created_at": user.created_at.isoformat() if user.created_at else None,
         "last_login": user.last_login.isoformat() if user.last_login else None,
@@ -419,9 +478,10 @@ async def delete_user(
     request: Request,
     user_id: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ) -> Dict:
     """Delete a user (soft delete by deactivating)."""
+    ensure_admin_privileges(current_admin_user)
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -526,7 +586,7 @@ def _fetch_metrics_from_db(db: Session, days: int) -> Dict:
 async def get_system_metrics(
     request: Request,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
     days: int = Query(7, ge=1, le=90),
 ) -> Dict:
     """Return system metrics for dashboard charts with caching."""
@@ -564,7 +624,7 @@ async def get_system_metrics(
 async def get_audit_logs(
     request: Request,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
     level: Optional[str] = Query(None),

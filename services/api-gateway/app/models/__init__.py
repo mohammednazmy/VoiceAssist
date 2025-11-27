@@ -1,5 +1,6 @@
 """Database models"""
 
+from app.models.admin_audit_log import AdminAuditLog
 from app.models.audit_log import AuditLog
 from app.models.document import Document
 from app.models.feature_flag import FeatureFlag
@@ -11,6 +12,7 @@ from app.models.user import User
 from app.models.user_feature_flag import UserFeatureFlag
 
 __all__ = [
+    "AdminAuditLog",
     "AuditLog",
     "User",
     "Session",

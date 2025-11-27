@@ -10,7 +10,10 @@ from typing import Any, Dict, List, Optional
 
 from app.core.api_envelope import ErrorCodes, error_response, success_response
 from app.core.database import get_db
-from app.core.dependencies import get_current_admin_user
+from app.core.dependencies import (
+    ensure_admin_privileges,
+    get_current_admin_or_viewer,
+)
 from app.core.logging import get_logger
 from app.models.feature_flag import FeatureFlagType
 from app.models.user import User
@@ -84,7 +87,7 @@ class FeatureFlagListResponse(BaseModel):
 @router.get("", response_model=dict)
 async def list_feature_flags(
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """List all feature flags.
 
@@ -115,7 +118,7 @@ async def list_feature_flags(
 async def get_feature_flag(
     flag_name: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Get a specific feature flag.
 
@@ -151,7 +154,7 @@ async def get_feature_flag(
 async def create_feature_flag(
     flag_data: FeatureFlagCreate,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Create a new feature flag.
 
@@ -162,6 +165,7 @@ async def create_feature_flag(
 
     Requires: Admin authentication
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         # Check if flag already exists
         existing_flag = await feature_flag_service.get_flag(flag_data.name, db)
@@ -207,7 +211,7 @@ async def update_feature_flag(
     flag_name: str,
     flag_update: FeatureFlagUpdate,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Update an existing feature flag.
 
@@ -219,6 +223,7 @@ async def update_feature_flag(
 
     Requires: Admin authentication
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         # Check if flag exists
         existing_flag = await feature_flag_service.get_flag(flag_name, db)
@@ -263,7 +268,7 @@ async def update_feature_flag(
 async def delete_feature_flag(
     flag_name: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Delete a feature flag.
 
@@ -274,6 +279,7 @@ async def delete_feature_flag(
 
     Requires: Admin authentication
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         # Check if flag exists
         existing_flag = await feature_flag_service.get_flag(flag_name, db)
@@ -310,7 +316,7 @@ async def delete_feature_flag(
 async def toggle_feature_flag(
     flag_name: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Toggle a boolean feature flag.
 
@@ -321,6 +327,7 @@ async def toggle_feature_flag(
 
     Requires: Admin authentication
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         # Get current flag
         existing_flag = await feature_flag_service.get_flag(flag_name, db)

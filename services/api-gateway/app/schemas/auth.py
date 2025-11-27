@@ -3,6 +3,7 @@ Authentication request and response schemas
 """
 
 from datetime import datetime
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
@@ -31,6 +32,8 @@ class TokenResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int  # seconds until expiration
+    refresh_expires_in: Optional[int] = None
+    role: Optional[str] = None
 
 
 class TokenRefresh(BaseModel):
@@ -56,6 +59,7 @@ class UserResponse(BaseModel):
     full_name: str
     is_active: bool
     is_admin: bool
+    admin_role: Optional[str] = None
     nextcloud_user_id: Optional[str] = None
     created_at: datetime
     last_login: Optional[datetime] = None

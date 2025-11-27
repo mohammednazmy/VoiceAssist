@@ -74,8 +74,8 @@ def create_refresh_token(
         expire = datetime.now(timezone.utc) + expires_delta
     else:
         expire = datetime.now(timezone.utc) + timedelta(
-            days=7
-        )  # Refresh tokens last 7 days
+            minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES
+        )
 
     to_encode.update(
         {"exp": expire, "iat": datetime.now(timezone.utc), "type": "refresh"}
@@ -127,3 +127,9 @@ def verify_token(token: str, token_type: str = "access") -> Optional[Dict[str, A
         return None
 
     return payload
+
+
+def get_refresh_token_ttl_seconds() -> int:
+    """Helper for computing refresh token TTL in seconds."""
+
+    return int(timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES).total_seconds())
