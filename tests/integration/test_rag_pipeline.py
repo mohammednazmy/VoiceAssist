@@ -123,22 +123,31 @@ async def test_query_orchestrator_multi_hop_confidence(monkeypatch):
 
 
 def test_model_adapter_registry_toggles(monkeypatch):
-    registry = ModelAdapterRegistry(pubmedbert_enabled=False, biogpt_enabled=True)
+    # With no local model, even enabled adapters fall back to default
+    registry = ModelAdapterRegistry(pubmedbert_enabled=False, biogpt_enabled=True, has_local_model=False)
 
     adapter = registry.select_for_intent("guideline")
     assert adapter.key == "default"
 
     adapter = registry.select_for_intent("diagnosis")
-    assert adapter.key in {"biogpt", "default"}
+    assert adapter.key == "default"  # Falls back because no local model
+
+    # With local model available, biogpt adapter should be selected for diagnosis
+    registry_with_local = ModelAdapterRegistry(pubmedbert_enabled=False, biogpt_enabled=True, has_local_model=True)
+    adapter = registry_with_local.select_for_intent("diagnosis")
+    assert adapter.key == "biogpt"
 
 
 @pytest.mark.asyncio
 async def test_prepare_llm_request_routes_local_adapter(monkeypatch):
+    # Create registry with local model available to enable local adapters
+    local_registry = ModelAdapterRegistry(has_local_model=True)
     orchestrator = QueryOrchestrator(
         enable_rag=False,
         search_aggregator=StubAggregator(),
         enable_multi_hop=False,
         enable_query_decomposition=False,
+        model_registry=local_registry,
     )
     orchestrator.llm_client.has_local_model = True
 

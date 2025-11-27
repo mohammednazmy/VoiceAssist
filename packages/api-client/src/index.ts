@@ -173,6 +173,26 @@ export class VoiceAssistApiClient {
     return fn();
   }
 
+  /**
+   * Execute an arbitrary HTTP request using the configured Axios client.
+   * This is useful for endpoints that don't yet have a dedicated helper.
+   */
+  async request<T = any>(config: AxiosRequestConfig): Promise<T> {
+    const exec = async () => {
+      const response = await this.client.request<T>(config);
+      return response.data;
+    };
+
+    return this.withRetryIfEnabled(exec);
+  }
+
+  /**
+   * Expose the configured base URL for diagnostic and display purposes
+   */
+  getBaseUrl(): string {
+    return this.config.baseURL;
+  }
+
   // =========================================================================
   // Authentication
   // =========================================================================

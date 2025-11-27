@@ -167,8 +167,15 @@ class QueryOrchestrator:
         synthesized_context = ""
         if aggregated_results:
             synthesis = self.search_aggregator.synthesize_across_documents(aggregated_results)
-            synthesized_context = synthesis.get("context", "") or self.search_aggregator.format_context_for_rag(aggregated_results)
-        return aggregated_results, synthesized_context, hop_traces, self.search_aggregator.confidence_score(aggregated_results)
+            synthesized_context = synthesis.get("context", "") or self.search_aggregator.format_context_for_rag(
+                aggregated_results
+            )
+        return (
+            aggregated_results,
+            synthesized_context,
+            hop_traces,
+            self.search_aggregator.confidence_score(aggregated_results),
+        )
 
     async def _prepare_llm_request(
         self,
@@ -177,9 +184,7 @@ class QueryOrchestrator:
         trace_id: Optional[str],
     ) -> tuple[LLMRequest, list, str, bool, str]:
         """Prepare prompt, RAG context, and LLM request for streaming or non-streaming paths."""
-        search_results, context, reasoning_path, retrieval_confidence = await self._run_retrieval(
-            request.query
-        )
+        search_results, context, reasoning_path, retrieval_confidence = await self._run_retrieval(request.query)
 
         # Step 3: Build prompt with context and clinical context
         prompt_parts = [
@@ -259,7 +264,8 @@ Instructions:
 
         if adapter and adapter.provider != "openai" and not self.llm_client.has_local_model:
             logging.warning(
-                "Local adapter %s selected but no local LLM configured; falling back to default cloud model. trace_id=%s",
+                "Local adapter %s selected but no local LLM configured; "
+                "falling back to default cloud model. trace_id=%s",
                 adapter.key,
                 trace_id,
             )

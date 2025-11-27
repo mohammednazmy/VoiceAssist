@@ -5,11 +5,18 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-// import { fetchAPI } from '../lib/api'; // TODO: Use when implementing real auth
+import {
+  getApiClient,
+  persistRole,
+  persistTokens,
+  clearTokens,
+  getStoredRole,
+} from "../lib/apiClient";
+import type { User as ApiUser } from "@voiceassist/types";
 
 type UserRole = "admin" | "viewer";
 
-interface User {
+interface AdminUser {
   id: string;
   email: string;
   full_name?: string;
@@ -19,7 +26,7 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: AdminUser | null;
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
@@ -33,12 +40,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const deriveRole = (incomingRole?: string): UserRole =>
     incomingRole === "viewer" ? "viewer" : "admin";
+
+  const apiClient = getApiClient();
 
   // Check for existing session on mount
   useEffect(() => {
@@ -47,26 +56,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
+      const storedRole = deriveRole(getStoredRole() || undefined);
       const token = localStorage.getItem("auth_token");
-      const storedRole = deriveRole(localStorage.getItem("auth_role") || undefined);
       if (!token) {
         setLoading(false);
         return;
       }
 
-      // If we have a token, assume it's valid
-      // The backend will reject invalid tokens on API calls anyway
-      // Note: /api/auth/me endpoint has serialization issues, so we skip it for now
+      const profile: ApiUser = await apiClient.getCurrentUser();
+      const role = deriveRole(profile.role || storedRole);
+      persistRole(role);
+
       setUser({
-        id: "temp",
-        email: "admin",
-        is_admin: storedRole === "admin",
+        id: profile.id,
+        email: profile.email,
+        full_name: profile.name,
+        is_admin: role === "admin",
         is_active: true,
-        role: storedRole,
+        role,
       });
     } catch (err) {
       console.error("Auth check failed:", err);
-      localStorage.removeItem("auth_token");
+      clearTokens();
     } finally {
       setLoading(false);
     }
@@ -75,50 +86,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       setError(null);
-      // Auth endpoints return flat responses, not wrapped in APIEnvelope
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const tokens = await apiClient.login({ email, password });
+      persistTokens(tokens.accessToken, tokens.refreshToken);
 
-      if (!res.ok) {
-        throw new Error(`Login failed: ${res.statusText}`);
-      }
+      const profile = await apiClient.getCurrentUser();
+      const role = deriveRole(profile.role);
+      persistRole(role);
 
-      const response = (await res.json()) as {
-        access_token: string;
-        refresh_token: string;
-        token_type: string;
-        role?: string;
-      };
-
-      // Store token
-      localStorage.setItem("auth_token", response.access_token);
-      const role = deriveRole(response.role);
-      localStorage.setItem("auth_role", role);
-
-      // Set a temporary user object (admin panel requires admin login at backend level)
-      // The backend validates admin status during login, so if we got tokens, user is admin
       setUser({
-        id: "temp",
-        email: email,
+        id: profile.id,
+        email: profile.email,
+        full_name: profile.name,
         is_admin: role === "admin",
         is_active: true,
         role,
       });
     } catch (err: any) {
       setError(err.message || "Login failed");
-      localStorage.removeItem("auth_token");
+      clearTokens();
       throw err;
     }
   };
 
   const logout = () => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_role");
+    clearTokens();
     setUser(null);
   };
 

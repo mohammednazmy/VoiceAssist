@@ -3,6 +3,12 @@
 The registry exposes configuration-driven adapters for domain-specific
 models (e.g., BioGPT, PubMedBERT) so the orchestrator can surface
 model provenance and selection metadata in responses.
+
+NOTE: Local adapters (BioGPT, PubMedBERT) are only enabled when:
+1. The adapter is explicitly enabled in config (ENABLE_*_ADAPTER=True)
+2. A local LLM endpoint is configured (LOCAL_LLM_URL is set)
+
+This prevents attempts to call OpenAI with local model IDs.
 """
 
 from __future__ import annotations
@@ -35,17 +41,27 @@ class ModelAdapterRegistry:
         self,
         pubmedbert_enabled: Optional[bool] = None,
         biogpt_enabled: Optional[bool] = None,
+        has_local_model: Optional[bool] = None,
     ) -> None:
         self._adapters: Dict[str, ModelAdapter] = {}
 
         pubmedbert_id = settings.PUBMEDBERT_MODEL_ID or "microsoft/BiomedNLP-PubMedBERT"
         biogpt_id = settings.BIOGPT_MODEL_ID or "microsoft/biogpt"
 
+        # Local adapters require both explicit enablement AND a local LLM endpoint
+        local_available = has_local_model if has_local_model is not None else bool(settings.LOCAL_LLM_URL)
+        pubmedbert_effective = (
+            settings.ENABLE_PUBMEDBERT_ADAPTER if pubmedbert_enabled is None else pubmedbert_enabled
+        ) and local_available
+        biogpt_effective = (
+            settings.ENABLE_BIOGPT_ADAPTER if biogpt_enabled is None else biogpt_enabled
+        ) and local_available
+
         self._adapters["pubmedbert"] = ModelAdapter(
             key="pubmedbert",
             model_id=pubmedbert_id,
             provider="hf-local",
-            enabled=settings.ENABLE_PUBMEDBERT_ADAPTER if pubmedbert_enabled is None else pubmedbert_enabled,
+            enabled=pubmedbert_effective,
             description="PubMedBERT encoder for biomedical literature grounding",
             specialization="research",
             context_window=2048,
@@ -57,7 +73,7 @@ class ModelAdapterRegistry:
             key="biogpt",
             model_id=biogpt_id,
             provider="hf-local",
-            enabled=settings.ENABLE_BIOGPT_ADAPTER if biogpt_enabled is None else biogpt_enabled,
+            enabled=biogpt_effective,
             description="BioGPT generator for clinical summarization and reasoning",
             specialization="clinical",
             context_window=4096,
@@ -94,4 +110,3 @@ class ModelAdapterRegistry:
         if intent in {"guideline", "summary", "research"} and self._adapters["pubmedbert"].enabled:
             return self._adapters["pubmedbert"]
         return self._adapters["default"]
-

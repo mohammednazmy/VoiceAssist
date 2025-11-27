@@ -140,8 +140,8 @@ class MedicalGraphic:
 
     id: str
     title: str
-    description: Optional[str] = None
     image_url: str
+    description: Optional[str] = None
     thumbnail_url: Optional[str] = None
     topic_id: Optional[str] = None
 

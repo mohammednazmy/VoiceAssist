@@ -60,10 +60,10 @@ from app.services.oidc_service import (
     OIDCTokens,
 )
 from app.services.pubmed_enhanced_service import (
-    ArticleType,
     CitationNetwork,
     ClinicalTrial,
     EnhancedPubMedService,
+    PublicationType,
     PubMedArticle,
 )
 from app.services.pubmed_enhanced_service import SearchResult as PubMedSearchResult
@@ -183,7 +183,7 @@ __all__ = [
     "PubMedSearchResult",
     "CitationNetwork",
     "ClinicalTrial",
-    "ArticleType",
+    "PublicationType",
     "MedicalCalculators",
     "CalculatorResult",
     "Sex",

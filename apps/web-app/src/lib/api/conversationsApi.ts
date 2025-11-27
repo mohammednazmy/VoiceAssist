@@ -389,7 +389,8 @@ let defaultInstance: ConversationsApiClient | null = null;
  */
 export function getDefaultConversationsApi(): ConversationsApiClient {
   if (!defaultInstance) {
-    const baseUrl = import.meta.env.VITE_API_URL || "";
+    const baseUrl =
+      import.meta.env.VITE_API_URL || "https://api.voiceassist.example.com";
     defaultInstance = createConversationsApi(baseUrl, () => {
       // Get token from auth store or localStorage
       const authData = localStorage.getItem("auth-storage");

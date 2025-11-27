@@ -3,8 +3,9 @@
  * Query analytics, response times, usage trends, and export reports
  */
 
-import { useEffect, useState } from 'react';
-import { fetchAPI } from '../lib/api';
+import { useEffect, useState } from "react";
+import { fetchAPI } from "../lib/api";
+import { getApiClient } from "../lib/apiClient";
 
 interface QueryAnalytics {
   total_queries: number;
@@ -29,12 +30,17 @@ interface UsageTrends {
 }
 
 export function AnalyticsPage() {
-  const [queryAnalytics, setQueryAnalytics] = useState<QueryAnalytics | null>(null);
-  const [responseTimes, setResponseTimes] = useState<ResponseTimeData | null>(null);
+  const [queryAnalytics, setQueryAnalytics] = useState<QueryAnalytics | null>(
+    null,
+  );
+  const [responseTimes, setResponseTimes] = useState<ResponseTimeData | null>(
+    null,
+  );
   const [usageTrends, setUsageTrends] = useState<UsageTrends | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d');
+  const [timeRange, setTimeRange] = useState<"24h" | "7d" | "30d">("7d");
+  const apiClient = getApiClient();
 
   useEffect(() => {
     loadAnalytics();
@@ -43,13 +49,14 @@ export function AnalyticsPage() {
   const loadAnalytics = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('auth_token');
-      const headers = { Authorization: `Bearer ${token}` };
-
       const [queryData, responseData, trendsData] = await Promise.all([
-        fetchAPI<QueryAnalytics>(`/api/admin/analytics/queries?range=${timeRange}`, { headers }),
-        fetchAPI<ResponseTimeData>(`/api/admin/analytics/response-times?range=${timeRange}`, { headers }),
-        fetchAPI<UsageTrends>(`/api/admin/analytics/trends?range=${timeRange}`, { headers }),
+        fetchAPI<QueryAnalytics>(
+          `/api/admin/analytics/queries?range=${timeRange}`,
+        ),
+        fetchAPI<ResponseTimeData>(
+          `/api/admin/analytics/response-times?range=${timeRange}`,
+        ),
+        fetchAPI<UsageTrends>(`/api/admin/analytics/trends?range=${timeRange}`),
       ]);
 
       setQueryAnalytics(queryData);
@@ -57,7 +64,7 @@ export function AnalyticsPage() {
       setUsageTrends(trendsData);
       setError(null);
     } catch (err: any) {
-      setError(err.message || 'Failed to load analytics');
+      setError(err.message || "Failed to load analytics");
     } finally {
       setLoading(false);
     }
@@ -65,27 +72,21 @@ export function AnalyticsPage() {
 
   const exportReport = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/admin/analytics/export?range=${timeRange}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (!response.ok) throw new Error('Export failed');
-
-      const blob = await response.blob();
+      const blob = await apiClient.request<Blob>({
+        url: `/api/admin/analytics/export?range=${timeRange}`,
+        method: "GET",
+        responseType: "blob",
+      });
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `analytics-report-${timeRange}-${new Date().toISOString().split('T')[0]}.pdf`;
+      a.download = `analytics-report-${timeRange}-${new Date().toISOString().split("T")[0]}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err: any) {
-      alert(err.message || 'Failed to export report');
+      alert(err.message || "Failed to export report");
     }
   };
 
@@ -142,7 +143,9 @@ export function AnalyticsPage() {
 
       {/* Query Analytics */}
       <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-slate-200 mb-4">Query Analytics</h2>
+        <h2 className="text-lg font-semibold text-slate-200 mb-4">
+          Query Analytics
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Summary Stats */}
@@ -163,12 +166,19 @@ export function AnalyticsPage() {
 
           {/* Top Query Types */}
           <div>
-            <h3 className="text-sm font-medium text-slate-300 mb-3">Top Query Types</h3>
+            <h3 className="text-sm font-medium text-slate-300 mb-3">
+              Top Query Types
+            </h3>
             <div className="space-y-2">
               {queryAnalytics?.top_query_types.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between bg-slate-800/30 rounded p-2">
+                <div
+                  key={idx}
+                  className="flex items-center justify-between bg-slate-800/30 rounded p-2"
+                >
                   <span className="text-sm text-slate-300">{item.type}</span>
-                  <span className="text-sm font-medium text-blue-400">{item.count}</span>
+                  <span className="text-sm font-medium text-blue-400">
+                    {item.count}
+                  </span>
                 </div>
               ))}
             </div>
@@ -177,7 +187,9 @@ export function AnalyticsPage() {
 
         {/* Popular Topics */}
         <div className="mt-6">
-          <h3 className="text-sm font-medium text-slate-300 mb-3">Popular Topics</h3>
+          <h3 className="text-sm font-medium text-slate-300 mb-3">
+            Popular Topics
+          </h3>
           <div className="flex flex-wrap gap-2">
             {queryAnalytics?.popular_topics.map((topic, idx) => (
               <span
@@ -194,42 +206,58 @@ export function AnalyticsPage() {
 
       {/* Response Time Histogram */}
       <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-slate-200 mb-4">Response Time Distribution</h2>
+        <h2 className="text-lg font-semibold text-slate-200 mb-4">
+          Response Time Distribution
+        </h2>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-slate-800/50 rounded-lg p-3">
             <div className="text-xs text-slate-400">P50 (Median)</div>
-            <div className="text-2xl font-bold text-green-400">{responseTimes?.p50}ms</div>
+            <div className="text-2xl font-bold text-green-400">
+              {responseTimes?.p50}ms
+            </div>
           </div>
           <div className="bg-slate-800/50 rounded-lg p-3">
             <div className="text-xs text-slate-400">P95</div>
-            <div className="text-2xl font-bold text-yellow-400">{responseTimes?.p95}ms</div>
+            <div className="text-2xl font-bold text-yellow-400">
+              {responseTimes?.p95}ms
+            </div>
           </div>
           <div className="bg-slate-800/50 rounded-lg p-3">
             <div className="text-xs text-slate-400">P99</div>
-            <div className="text-2xl font-bold text-orange-400">{responseTimes?.p99}ms</div>
+            <div className="text-2xl font-bold text-orange-400">
+              {responseTimes?.p99}ms
+            </div>
           </div>
           <div className="bg-slate-800/50 rounded-lg p-3">
             <div className="text-xs text-slate-400">Average</div>
-            <div className="text-2xl font-bold text-blue-400">{responseTimes?.avg}ms</div>
+            <div className="text-2xl font-bold text-blue-400">
+              {responseTimes?.avg}ms
+            </div>
           </div>
         </div>
 
         {/* Histogram */}
         <div className="space-y-2">
           {responseTimes?.histogram.map((bucket, idx) => {
-            const maxCount = Math.max(...(responseTimes.histogram.map(b => b.count) || [1]));
+            const maxCount = Math.max(
+              ...(responseTimes.histogram.map((b) => b.count) || [1]),
+            );
             const percentage = (bucket.count / maxCount) * 100;
 
             return (
               <div key={idx} className="flex items-center space-x-3">
-                <div className="w-24 text-xs text-slate-400 text-right">{bucket.bucket}</div>
+                <div className="w-24 text-xs text-slate-400 text-right">
+                  {bucket.bucket}
+                </div>
                 <div className="flex-1 bg-slate-800 rounded-full h-6 overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center px-2"
                     style={{ width: `${percentage}%` }}
                   >
-                    <span className="text-xs text-white font-medium">{bucket.count}</span>
+                    <span className="text-xs text-white font-medium">
+                      {bucket.count}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -240,7 +268,9 @@ export function AnalyticsPage() {
 
       {/* Usage Trends */}
       <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-slate-200 mb-4">Usage Trends</h2>
+        <h2 className="text-lg font-semibold text-slate-200 mb-4">
+          Usage Trends
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="bg-gradient-to-br from-green-900/30 to-green-950/20 border border-green-800 rounded-lg p-4">
@@ -260,15 +290,24 @@ export function AnalyticsPage() {
         {/* Simplified Trend Chart (ASCII-style) */}
         <div className="space-y-4">
           <div>
-            <h3 className="text-sm font-medium text-slate-300 mb-2">Daily Active Users</h3>
+            <h3 className="text-sm font-medium text-slate-300 mb-2">
+              Daily Active Users
+            </h3>
             <div className="bg-slate-800/30 rounded-lg p-3 font-mono text-xs text-slate-400">
               {usageTrends?.daily_users.slice(-7).map((day, idx) => {
-                const maxUsers = Math.max(...(usageTrends.daily_users.map(d => d.count) || [1]));
+                const maxUsers = Math.max(
+                  ...(usageTrends.daily_users.map((d) => d.count) || [1]),
+                );
                 const bars = Math.round((day.count / maxUsers) * 40);
                 return (
                   <div key={idx} className="flex items-center space-x-2">
-                    <span className="w-16">{new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                    <span className="text-blue-400">{'█'.repeat(bars)}</span>
+                    <span className="w-16">
+                      {new Date(day.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+                    <span className="text-blue-400">{"█".repeat(bars)}</span>
                     <span>{day.count}</span>
                   </div>
                 );
@@ -277,15 +316,24 @@ export function AnalyticsPage() {
           </div>
 
           <div>
-            <h3 className="text-sm font-medium text-slate-300 mb-2">Daily Queries</h3>
+            <h3 className="text-sm font-medium text-slate-300 mb-2">
+              Daily Queries
+            </h3>
             <div className="bg-slate-800/30 rounded-lg p-3 font-mono text-xs text-slate-400">
               {usageTrends?.daily_queries.slice(-7).map((day, idx) => {
-                const maxQueries = Math.max(...(usageTrends.daily_queries.map(d => d.count) || [1]));
+                const maxQueries = Math.max(
+                  ...(usageTrends.daily_queries.map((d) => d.count) || [1]),
+                );
                 const bars = Math.round((day.count / maxQueries) * 40);
                 return (
                   <div key={idx} className="flex items-center space-x-2">
-                    <span className="w-16">{new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                    <span className="text-purple-400">{'█'.repeat(bars)}</span>
+                    <span className="w-16">
+                      {new Date(day.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+                    <span className="text-purple-400">{"█".repeat(bars)}</span>
                     <span>{day.count}</span>
                   </div>
                 );

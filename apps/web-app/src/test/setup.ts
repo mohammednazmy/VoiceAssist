@@ -7,6 +7,16 @@ import "@testing-library/jest-dom";
 import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 
+// Some CI terminals report a column width of 0, which breaks Vitest's dot
+// reporter when it tries to render progress rows. Ensure a sane default so the
+// reporter can't compute Infinity rows and throw during test runs.
+if (process.stdout && process.stdout.columns === 0) {
+  process.stdout.columns = 80;
+}
+if (process.stderr && process.stderr.columns === 0) {
+  process.stderr.columns = 80;
+}
+
 // Workaround for jsdom/webidl-conversions issue
 // See: https://github.com/jsdom/jsdom/issues/3363
 if (typeof globalThis.WeakRef === "undefined") {
@@ -28,6 +38,16 @@ afterEach(() => {
 
 // Mock environment variables
 vi.stubEnv("VITE_API_URL", "http://localhost:8000");
+
+// Mock the PWA virtual module used by usePWA to avoid Vite-specific imports
+// during Vitest runs.
+vi.mock("virtual:pwa-register/react", () => ({
+  useRegisterSW: () => ({
+    needRefresh: [false, vi.fn()],
+    offlineReady: [false, vi.fn()],
+    updateServiceWorker: vi.fn(),
+  }),
+}));
 
 // Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {
@@ -165,6 +185,36 @@ const mockIDBDatabase = () => ({
   databases: vi.fn(() => Promise.resolve([])),
   cmp: vi.fn(),
 };
+
+// Mock navigator.mediaDevices for voice mode tests
+Object.defineProperty(global.navigator, "mediaDevices", {
+  writable: true,
+  value: {
+    getUserMedia: vi.fn().mockResolvedValue({
+      getTracks: () => [],
+      getAudioTracks: () => [],
+      getVideoTracks: () => [],
+      stop: vi.fn(),
+    }),
+    enumerateDevices: vi.fn().mockResolvedValue([
+      {
+        deviceId: "default",
+        kind: "audioinput",
+        label: "Default Microphone",
+        groupId: "",
+      },
+      {
+        deviceId: "default",
+        kind: "audiooutput",
+        label: "Default Speaker",
+        groupId: "",
+      },
+    ]),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  },
+});
 
 // Mock WebSocket for useChatSession tests
 (global as any).WebSocket = class MockWebSocket {

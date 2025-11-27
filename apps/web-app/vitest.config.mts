@@ -60,6 +60,10 @@ export default defineConfig({
       { find: '@voiceassist/utils', replacement: path.resolve(__dirname, '../../packages/utils/src') },
       // Mock react-syntax-highlighter and all its sub-imports
       { find: /^react-syntax-highlighter(.*)$/, replacement: path.resolve(__dirname, './src/__mocks__/react-syntax-highlighter.tsx') },
+      {
+        find: 'virtual:pwa-register/react',
+        replacement: path.resolve(__dirname, './src/__mocks__/virtual-pwa-register-react.ts'),
+      },
     ],
   },
 });

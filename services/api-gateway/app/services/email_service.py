@@ -14,6 +14,7 @@ Works with any IMAP/SMTP server including Nextcloud Mail.
 
 import email
 import email.utils
+import functools
 import re
 import uuid
 from dataclasses import dataclass, field
@@ -268,18 +269,34 @@ class EmailService:
             await self._reset_imap_connection()
             imap = await self._get_imap_connection()
 
-            # If the callable was a bound method on the old IMAP client,
-            # rebind it to the fresh connection so the retry uses the new
-            # socket instead of the closed one.
-            rebound_command = command
-            try:
-                if hasattr(command, "__self__") and hasattr(command, "__name__"):
-                    rebound_command = getattr(imap, command.__name__, command)
-            except Exception:
-                # Fallback to the original callable if rebinding fails
-                pass
-
+            rebound_command = self._rebind_imap_callable(command, imap)
             return await rebound_command(*args, **kwargs)
+
+    def _rebind_imap_callable(self, command, imap):
+        """Rebind an IMAP callable to a fresh client instance when possible."""
+
+        def _rebind(cmd):
+            # Handle functools.partial wrapping bound methods
+            if isinstance(cmd, functools.partial):
+                rebound_inner = _rebind(cmd.func)
+                return functools.partial(rebound_inner, *cmd.args, **(cmd.keywords or {}))
+
+            # Rebind bound methods using their underlying function
+            if getattr(cmd, "__self__", None) is not None:
+                func = getattr(cmd, "__func__", None)
+                if func is not None:
+                    return func.__get__(imap, type(imap))
+
+                name = getattr(cmd, "__name__", None)
+                if name and hasattr(imap, name):
+                    return getattr(imap, name)
+
+            return cmd
+
+        rebound = _rebind(command)
+        if rebound is not command:
+            logger.debug("Rebound IMAP command to refreshed connection")
+        return rebound
 
     async def close(self) -> None:
         """Close IMAP connection."""
@@ -862,9 +879,7 @@ To: {', '.join(str(a) for a in original_message.to_addrs)}
         if response.result != "OK":
             return False
 
-        response = await self._execute_imap_command(
-            imap.store, message_id, "+FLAGS", EmailFlag.DELETED.value
-        )
+        response = await self._execute_imap_command(imap.store, message_id, "+FLAGS", EmailFlag.DELETED.value)
         if response.result != "OK":
             return False
 
@@ -885,9 +900,7 @@ To: {', '.join(str(a) for a in original_message.to_addrs)}
             return False
 
         if permanent:
-            response = await self._execute_imap_command(
-                imap.store, message_id, "+FLAGS", EmailFlag.DELETED.value
-            )
+            response = await self._execute_imap_command(imap.store, message_id, "+FLAGS", EmailFlag.DELETED.value)
             if response.result == "OK":
                 await self._execute_imap_command(imap.expunge)
                 return True
@@ -916,18 +929,14 @@ To: {', '.join(str(a) for a in original_message.to_addrs)}
         message_ids = set()
 
         if thread_id:
-            response = await self._execute_imap_command(
-                imap.search, f'HEADER "References" "{thread_id}"'
-            )
+            response = await self._execute_imap_command(imap.search, f'HEADER "References" "{thread_id}"')
             if response.result == "OK":
                 for line in response.lines:
                     if isinstance(line, bytes):
                         line = line.decode()
                     message_ids.update(line.split())
 
-            response = await self._execute_imap_command(
-                imap.search, f'HEADER "Message-ID" "{thread_id}"'
-            )
+            response = await self._execute_imap_command(imap.search, f'HEADER "Message-ID" "{thread_id}"')
             if response.result == "OK":
                 for line in response.lines:
                     if isinstance(line, bytes):
