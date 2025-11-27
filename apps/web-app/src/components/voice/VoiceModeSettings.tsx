@@ -2,6 +2,8 @@
  * Voice Mode Settings Modal
  * Allows users to configure voice settings including voice selection,
  * language, VAD sensitivity, and behavior preferences.
+ *
+ * Phase 9.3: Added audio device, playback speed, keyboard shortcuts
  */
 
 import { useCallback } from "react";
@@ -9,9 +11,12 @@ import {
   useVoiceSettingsStore,
   VOICE_OPTIONS,
   LANGUAGE_OPTIONS,
+  PLAYBACK_SPEED_OPTIONS,
   type VoiceOption,
   type LanguageOption,
 } from "../../stores/voiceSettingsStore";
+import { AudioDeviceSelector } from "./AudioDeviceSelector";
+import { PlaybackSpeedControl } from "./PlaybackSpeedControl";
 
 export interface VoiceModeSettingsProps {
   isOpen: boolean;
@@ -25,11 +30,21 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
     vadSensitivity,
     autoStartOnOpen,
     showStatusHints,
+    // Phase 9.3 additions
+    selectedAudioDeviceId,
+    playbackSpeed,
+    keyboardShortcutsEnabled,
+    showFrequencySpectrum,
     setVoice,
     setLanguage,
     setVadSensitivity,
     setAutoStartOnOpen,
     setShowStatusHints,
+    // Phase 9.3 additions
+    setSelectedAudioDeviceId,
+    setPlaybackSpeed,
+    setKeyboardShortcutsEnabled,
+    setShowFrequencySpectrum,
     reset,
   } = useVoiceSettingsStore();
 
@@ -74,7 +89,7 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
       data-testid="voice-settings-modal"
     >
       <div
-        className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6"
+        className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -226,6 +241,80 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
               data-testid="show-hints-checkbox"
             />
           </div>
+
+          {/* Section Divider */}
+          <div className="border-t border-neutral-200 pt-5">
+            <h3 className="text-sm font-semibold text-neutral-800 mb-4">
+              Advanced Settings
+            </h3>
+          </div>
+
+          {/* Audio Device Selection */}
+          <AudioDeviceSelector
+            selectedDeviceId={selectedAudioDeviceId || undefined}
+            onDeviceSelect={setSelectedAudioDeviceId}
+          />
+
+          {/* Playback Speed Control */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              AI Response Playback Speed
+            </label>
+            <PlaybackSpeedControl
+              speed={playbackSpeed}
+              onSpeedChange={setPlaybackSpeed}
+              variant="buttons"
+            />
+            <p className="text-xs text-neutral-500 mt-1">
+              Adjust how fast AI audio responses play
+            </p>
+          </div>
+
+          {/* Keyboard Shortcuts Toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label
+                htmlFor="keyboard-shortcuts"
+                className="text-sm font-medium text-neutral-700"
+              >
+                Keyboard shortcuts
+              </label>
+              <p className="text-xs text-neutral-500">
+                Use Space to toggle recording, Esc to cancel
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              id="keyboard-shortcuts"
+              checked={keyboardShortcutsEnabled}
+              onChange={(e) => setKeyboardShortcutsEnabled(e.target.checked)}
+              className="w-5 h-5 rounded border-neutral-300 text-primary-500 focus:ring-primary-500"
+              data-testid="keyboard-shortcuts-checkbox"
+            />
+          </div>
+
+          {/* Frequency Spectrum Toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label
+                htmlFor="show-spectrum"
+                className="text-sm font-medium text-neutral-700"
+              >
+                Show frequency spectrum
+              </label>
+              <p className="text-xs text-neutral-500">
+                Display detailed audio frequency visualization
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              id="show-spectrum"
+              checked={showFrequencySpectrum}
+              onChange={(e) => setShowFrequencySpectrum(e.target.checked)}
+              className="w-5 h-5 rounded border-neutral-300 text-primary-500 focus:ring-primary-500"
+              data-testid="show-spectrum-checkbox"
+            />
+          </div>
         </div>
 
         {/* Current Config Summary */}
@@ -234,7 +323,10 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
             <strong>Current:</strong>{" "}
             {VOICE_OPTIONS.find((v) => v.value === voice)?.label} voice,{" "}
             {LANGUAGE_OPTIONS.find((l) => l.value === language)?.label},{" "}
-            {vadSensitivity}% sensitivity
+            {vadSensitivity}% sensitivity,{" "}
+            {PLAYBACK_SPEED_OPTIONS.find((s) => s.value === playbackSpeed)
+              ?.label || "1x"}{" "}
+            playback
           </p>
         </div>
 
