@@ -77,6 +77,7 @@ class SearchResultResponse(BaseModel):
     title: Optional[str] = None
     source_type: Optional[str] = None
     url: Optional[str] = None
+    source_tag: Optional[str] = None
     metadata: Dict[str, Any] = {}
 
 
@@ -101,6 +102,7 @@ class SearchMetricsResponse(BaseModel):
 
 def result_to_response(result: AdvancedSearchResult) -> Dict[str, Any]:
     """Convert internal result to API response format."""
+    source_tag = (result.source_type or result.metadata.get("source_type") or "unknown").upper()
     return {
         "chunk_id": result.chunk_id,
         "document_id": result.document_id,
@@ -109,6 +111,7 @@ def result_to_response(result: AdvancedSearchResult) -> Dict[str, Any]:
         "title": result.title,
         "source_type": result.source_type,
         "url": result.url,
+        "source_tag": source_tag,
         "metadata": result.metadata,
         "search_method": result.search_method,
     }
@@ -178,6 +181,9 @@ async def advanced_search(
             "total_results": len(results),
         }
 
+        if request.filters:
+            response_data["applied_filters"] = request.filters
+
         if request.include_metrics:
             response_data["metrics"] = metrics_to_response(metrics)
 
@@ -195,6 +201,10 @@ async def advanced_search(
 async def simple_search(
     q: str = Query(..., description="Search query", min_length=1),
     top_k: int = Query(10, ge=1, le=50, description="Number of results"),
+    source_types: Optional[List[str]] = Query(
+        None,
+        description="Optional source_type filters (e.g., pubmed, guideline)",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -205,10 +215,13 @@ async def simple_search(
     try:
         search = get_advanced_search()
 
+        filters = {"source_type": source_types} if source_types else None
+
         results, metrics = await search.search(
             query=q,
             top_k=top_k,
             mode=SearchMode.BALANCED,
+            filters=filters,
         )
 
         return success_response(
@@ -217,6 +230,7 @@ async def simple_search(
                 "results": [result_to_response(r) for r in results],
                 "total_results": len(results),
                 "time_ms": round(metrics.total_time_ms, 2),
+                "applied_filters": filters or {},
             }
         )
 

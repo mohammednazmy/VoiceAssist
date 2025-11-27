@@ -47,6 +47,11 @@ from app.core.logging import configure_logging, get_logger
 from app.core.middleware import MetricsMiddleware, RequestTracingMiddleware, SecurityHeadersMiddleware
 from app.middleware.voice_auth import VoiceAuthMiddleware
 from app.core.sentry import init_sentry
+from app.services.external_connectors import (
+    ExternalSyncScheduler,
+    OpenEvidenceConnector,
+    PubMedConnector,
+)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -191,6 +196,27 @@ async def startup_event():
         token_expiry_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
     )
 
+    # Start periodic sync for external evidence sources when enabled
+    if settings.EXTERNAL_SYNC_ENABLED and settings.ENVIRONMENT != "test":
+        app.state.external_sync_scheduler = ExternalSyncScheduler(
+            connectors=[
+                OpenEvidenceConnector(
+                    api_key=settings.OPENEVIDENCE_API_KEY,
+                    base_url=settings.OPENEVIDENCE_BASE_URL,
+                ),
+                PubMedConnector(
+                    api_key=settings.PUBMED_API_KEY,
+                    tool_email=settings.PUBMED_TOOL_EMAIL,
+                ),
+            ],
+            default_interval_minutes=settings.EXTERNAL_SYNC_INTERVAL_MINUTES,
+            per_connector_intervals={
+                "openevidence": settings.OPENEVIDENCE_SYNC_MINUTES,
+                "pubmed": settings.PUBMED_SYNC_MINUTES,
+            },
+        )
+        await app.state.external_sync_scheduler.start()
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -200,6 +226,10 @@ async def shutdown_event():
         app_name=settings.APP_NAME,
         version=settings.APP_VERSION,
     )
+
+    scheduler = getattr(app.state, "external_sync_scheduler", None)
+    if scheduler:
+        await scheduler.stop()
 
 
 if __name__ == "__main__":

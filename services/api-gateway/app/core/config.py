@@ -127,6 +127,16 @@ class Settings(BaseSettings):
     CACHE_L1_MAX_SIZE: int = 1000  # Max entries in L1 cache
     CACHE_DEFAULT_TTL: int = 600  # Default TTL in seconds (10 minutes)
 
+    # External evidence sources
+    EXTERNAL_SYNC_ENABLED: bool = True
+    EXTERNAL_SYNC_INTERVAL_MINUTES: int = 180
+    OPENEVIDENCE_API_KEY: Optional[str] = None
+    OPENEVIDENCE_BASE_URL: str = "https://api.openevidence.com"
+    OPENEVIDENCE_SYNC_MINUTES: int = 240
+    PUBMED_API_KEY: Optional[str] = None
+    PUBMED_TOOL_EMAIL: Optional[str] = None
+    PUBMED_SYNC_MINUTES: int = 180
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
 
 

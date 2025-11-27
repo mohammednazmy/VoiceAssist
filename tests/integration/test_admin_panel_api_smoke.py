@@ -1,7 +1,9 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from services.api-gateway.app.main import app
+from tests.integration.api_gateway_loader import load_api_gateway_module
+
+app = load_api_gateway_module("main.py", "api_gateway_main").app
 
 @pytest.mark.smoke
 def test_admin_panel_summary_route_exists():
