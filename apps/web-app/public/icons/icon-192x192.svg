@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6"/>
+      <stop offset="100%" style="stop-color:#2563eb"/>
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="96" cy="96" r="88" fill="url(#bg)"/>
+  <!-- Microphone icon -->
+  <rect x="72" y="48" width="48" height="72" rx="24" fill="white"/>
+  <rect x="84" y="128" width="24" height="20" fill="white"/>
+  <rect x="64" y="144" width="64" height="8" rx="4" fill="white"/>
+  <!-- Sound waves -->
+  <path d="M48 80 Q40 96 48 112" stroke="white" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M32 64 Q16 96 32 128" stroke="white" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <path d="M144 80 Q152 96 144 112" stroke="white" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M160 64 Q176 96 160 128" stroke="white" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.7"/>
+</svg>
