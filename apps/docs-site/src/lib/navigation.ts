@@ -266,6 +266,47 @@ export const navigation: NavSection[] = [
     ],
   },
   {
+    title: "Operations",
+    items: [
+      {
+        title: "Debugging Overview",
+        href: "/operations/debugging",
+        description: "Where to look for issues and how to investigate",
+        docPaths: ["debugging/DEBUGGING_OVERVIEW.md"],
+      },
+      {
+        title: "Backend Debugging",
+        href: "/operations/debugging-backend",
+        description: "API Gateway, database, cache troubleshooting",
+        docPaths: ["debugging/DEBUGGING_BACKEND.md"],
+      },
+      {
+        title: "Frontend Debugging",
+        href: "/operations/debugging-frontend",
+        description: "Web app, React components, browser issues",
+        docPaths: ["debugging/DEBUGGING_FRONTEND.md"],
+      },
+      {
+        title: "Voice & Realtime",
+        href: "/operations/debugging-voice",
+        description: "WebSocket, STT, TTS troubleshooting",
+        docPaths: ["debugging/DEBUGGING_VOICE_REALTIME.md"],
+      },
+      {
+        title: "Docs Site Debugging",
+        href: "/operations/debugging-docs",
+        description: "Next.js, static export, Apache issues",
+        docPaths: ["debugging/DEBUGGING_DOCS_SITE.md"],
+      },
+      {
+        title: "Runbooks",
+        href: "/operations/runbooks",
+        description: "Step-by-step incident response procedures",
+        docPaths: ["operations/OPERATIONS_OVERVIEW.md"],
+      },
+    ],
+  },
+  {
     title: "For AI Agents",
     items: [
       {

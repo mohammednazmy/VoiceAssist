@@ -156,10 +156,16 @@ All documentation is in the `docs/` directory. Here's the complete index:
 
 | Document                                                   | Purpose                                                  | Audience                   |
 | ---------------------------------------------------------- | -------------------------------------------------------- | -------------------------- |
-| **[.ai/README.md](../.ai/README.md)** ⭐                   | AI agent navigation guide, how to use index.json         | Claude Code, AI assistants |
-| **[.ai/index.json](../.ai/index.json)** ⭐                 | Machine-readable project index, task-to-docs mapping     | Claude Code, AI assistants |
+| **[Agent Onboarding](ai/AGENT_ONBOARDING.md)** ⭐          | Quick start guide for AI coding assistants               | Claude Code, AI assistants |
+| **[Agent API Reference](ai/AGENT_API_REFERENCE.md)** ⭐    | Machine-readable JSON endpoints for agents               | Claude Code, AI assistants |
 | **[CLAUDE_EXECUTION_GUIDE.md](CLAUDE_EXECUTION_GUIDE.md)** | Session startup, branching, safety rules, quality checks | Claude Code, AI assistants |
 | **[CLAUDE_PROMPTS.md](CLAUDE_PROMPTS.md)**                 | Ready-to-use prompts for common development tasks        | Claude Code, AI assistants |
+
+**Machine-Readable Endpoints (web):**
+
+- `GET /agent/index.json` - Documentation system metadata
+- `GET /agent/docs.json` - Full document list with filtering
+- `GET /search-index.json` - Full-text search index (Fuse.js format)
 
 ### 📋 Phase Documents (Development Plan)
 
@@ -450,35 +456,35 @@ I want to work on Phase [N]. Please:
 
 ---
 
-## 📇 Machine-Readable Documentation Index
+## 📇 Machine-Readable Documentation API
 
-For AI assistants and automated tooling, VoiceAssist V2 provides machine-readable documentation indexes:
+For AI assistants and automated tooling, VoiceAssist provides machine-readable JSON endpoints:
 
-### DOC_INDEX.yml
+### Web API Endpoints
 
-**Location**: [`docs/DOC_INDEX.yml`](DOC_INDEX.yml)
+**Base URL**: `https://assistdocs.asimo.io`
 
-**Purpose**: Canonical registry of all project documentation with metadata for AI assistants.
-
-**Contents**:
-
-- 30+ documented files with unique IDs, paths, titles, categories, audiences, summaries
-- Task-to-docs mappings (e.g., "implement_backend" → list of relevant docs)
+| Endpoint             | Purpose                                        |
+| -------------------- | ---------------------------------------------- |
+| `/agent/index.json`  | Documentation system metadata and discovery    |
+| `/agent/docs.json`   | Full document list with metadata for filtering |
+| `/search-index.json` | Full-text search index (Fuse.js format)        |
+| `/sitemap.xml`       | XML sitemap for crawlers                       |
 
 **Usage by AI Agents**:
 
-1. Read DOC_INDEX.yml to understand documentation structure
-2. Look up doc IDs to find file paths
-3. Use `task_mappings` to find relevant docs for specific tasks
-4. Follow `related` links to discover connected documentation
+1. Fetch `/agent/index.json` to understand available endpoints and schema
+2. Fetch `/agent/docs.json` to get all documents with metadata
+3. Filter client-side by `status`, `audience`, `tags`, etc.
+4. Use `/search-index.json` with Fuse.js for full-text search
 
-### .ai/index.json
+See the [Agent API Reference](ai/AGENT_API_REFERENCE.md) for complete details.
 
-**Location**: [`.ai/index.json`](../.ai/index.json)
+### DOC_INDEX.yml (Legacy)
 
-**Purpose**: Fast lookup index for AI agents with task mappings and dependency graphs.
+**Location**: [`docs/DOC_INDEX.yml`](DOC_INDEX.yml)
 
-See [.ai/README.md](../.ai/README.md) for complete AI agent navigation guide.
+**Purpose**: Canonical registry of all project documentation with metadata. This YAML file is still available for local tooling but the web JSON endpoints are preferred for programmatic access.
 
 ---
 

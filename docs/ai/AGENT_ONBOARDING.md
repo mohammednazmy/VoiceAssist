@@ -335,9 +335,21 @@ pnpm dev
 - Run `alembic upgrade head` for latest schema
 - Check Redis is running for cache tests
 
+### Debugging Guides
+
+For detailed troubleshooting, see the debugging documentation:
+
+| Guide                                                      | Purpose                               |
+| ---------------------------------------------------------- | ------------------------------------- |
+| [Debugging Overview](../debugging/DEBUGGING_OVERVIEW.md)   | Quick symptom-to-guide reference      |
+| [Backend Debugging](../debugging/DEBUGGING_BACKEND.md)     | API Gateway, database, cache issues   |
+| [Frontend Debugging](../debugging/DEBUGGING_FRONTEND.md)   | React, browser, network issues        |
+| [Voice/Realtime](../debugging/DEBUGGING_VOICE_REALTIME.md) | WebSocket, STT, TTS issues            |
+| [Docs Site](../debugging/DEBUGGING_DOCS_SITE.md)           | Next.js, static export, Apache issues |
+
 ### Getting Help
 
-1. Check `docs/operations/runbooks/TROUBLESHOOTING.md`
+1. Check the [Debugging Overview](../debugging/DEBUGGING_OVERVIEW.md) for common symptoms
 2. Search existing docs in `docs/`
 3. Check test files for usage examples
 
