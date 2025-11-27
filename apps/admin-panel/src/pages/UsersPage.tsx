@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { fetchAPI } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -18,22 +18,23 @@ export function UsersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { isViewer } = useAuth();
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
       const data = await fetchAPI<User[]>("/api/users");
       setUsers(data);
       setError(null);
-    } catch (err: any) {
-      setError(err.message || "Failed to load users");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to load users";
+      setError(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     if (isViewer) return;
@@ -43,8 +44,9 @@ export function UsersPage() {
         body: JSON.stringify({ is_active: !currentStatus }),
       });
       await loadUsers();
-    } catch (err: any) {
-      alert(err.message || "Failed to update user");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to update user";
+      alert(message);
     }
   };
 
@@ -64,8 +66,9 @@ export function UsersPage() {
         body: JSON.stringify({ is_admin: !currentStatus }),
       });
       await loadUsers();
-    } catch (err: any) {
-      alert(err.message || "Failed to update user role");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to update user role";
+      alert(message);
     }
   };
 

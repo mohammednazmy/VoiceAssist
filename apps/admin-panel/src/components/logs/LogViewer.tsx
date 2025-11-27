@@ -56,12 +56,19 @@ export function LogViewer() {
   const loadLogs = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        range: filters.timeframe,
-        level: filters.level,
-        service: filters.service,
-        search: filters.search,
-      });
+      const params = new URLSearchParams({ range: filters.timeframe });
+
+      if (filters.level !== "all") {
+        params.set("level", filters.level);
+      }
+
+      if (filters.service.trim()) {
+        params.set("service", filters.service.trim());
+      }
+
+      if (filters.search.trim()) {
+        params.set("search", filters.search.trim());
+      }
 
       const data = await fetchAPI<{ logs: LogEntry[] }>(
         `/api/admin/logs?${params.toString()}`,
@@ -100,6 +107,7 @@ export function LogViewer() {
     return () => {
       unsubscribeStatus();
       unsubscribeMessages();
+      websocketService.disconnect();
     };
   }, [handleIncomingLog]);
 

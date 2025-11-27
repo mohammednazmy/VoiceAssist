@@ -15,7 +15,7 @@ export function KnowledgeBasePage() {
     setUploading(true);
     try {
       // TODO: Implement uploadDocument when backend is ready
-      console.log("Uploading file:", file.name);
+      console.warn("Uploading file (demo):", file.name);
       await new Promise((resolve) => setTimeout(resolve, 1000));
       alert("Document uploaded successfully! (demo)");
     } catch (err: unknown) {

@@ -24,9 +24,11 @@ export function useAdminSummary() {
         if (!cancelled) {
           setSummary(data);
         }
-      } catch (e: any) {
-        console.warn('Admin summary fetch failed, using demo values:', e?.message);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        console.warn('Admin summary fetch failed, using demo values:', message);
         if (!cancelled) {
+          setError({ code: 'demo', message });
           setSummary({
             total_users: 3,
             active_users: 3,

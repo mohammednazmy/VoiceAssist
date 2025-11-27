@@ -4,6 +4,7 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from "react";
 // import { fetchAPI } from '../lib/api'; // TODO: Use when implementing real auth
 
@@ -37,15 +38,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const deriveRole = (incomingRole?: string): UserRole =>
-    incomingRole === "viewer" ? "viewer" : "admin";
+  const deriveRole = useCallback(
+    (incomingRole?: string): UserRole =>
+      incomingRole === "viewer" ? "viewer" : "admin",
+    [],
+  );
 
-  // Check for existing session on mount
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const token = localStorage.getItem("auth_token");
       const storedRole = deriveRole(localStorage.getItem("auth_role") || undefined);
@@ -70,7 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [deriveRole]);
+
+  // Check for existing session on mount
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -109,8 +113,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         is_active: true,
         role,
       });
-    } catch (err: any) {
-      setError(err.message || "Login failed");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Login failed";
+      setError(message);
       localStorage.removeItem("auth_token");
       throw err;
     }

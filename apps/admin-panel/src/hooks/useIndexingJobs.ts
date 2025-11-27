@@ -30,9 +30,11 @@ export function useIndexingJobs() {
         // Returns APIEnvelope<IndexingJob[]> - fetchAPI unwraps to IndexingJob[]
         const data = await fetchAPI<IndexingJob[]>('/api/admin/kb/jobs');
         if (!cancelled) setJobs(data);
-      } catch (e: any) {
-        console.warn('Falling back to demo indexing jobs:', e?.message);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        console.warn('Falling back to demo indexing jobs:', message);
         if (!cancelled) {
+          setError({ code: 'demo', message });
           setJobs([
             {
               id: 'job-1',

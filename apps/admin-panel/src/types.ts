@@ -32,7 +32,7 @@ export interface ChatMessage {
     cost?: number;
     phiDetected?: boolean;
     routingDecision?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   createdAt: string;
   // Legacy: citations may appear at top level for backward compatibility

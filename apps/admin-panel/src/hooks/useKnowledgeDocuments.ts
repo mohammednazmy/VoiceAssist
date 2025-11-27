@@ -32,9 +32,11 @@ export function useKnowledgeDocuments() {
         // Returns APIEnvelope<KnowledgeDocument[]> - fetchAPI unwraps to KnowledgeDocument[]
         const data = await fetchAPI<KnowledgeDocument[]>('/api/admin/kb/documents');
         if (!cancelled) setDocs(data);
-      } catch (e: any) {
-        console.warn('Falling back to demo KB data:', e?.message);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        console.warn('Falling back to demo KB data:', message);
         if (!cancelled) {
+          setError({ code: 'demo', message });
           setDocs([
             {
               id: 'doc-harrisons-hf',
