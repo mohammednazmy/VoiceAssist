@@ -74,6 +74,41 @@
   pre code {
     @apply bg-transparent p-0;
   }
+
+  /* Form defaults aligned to design tokens */
+  button,
+  input,
+  select,
+  textarea {
+    font-family: var(--font-family-sans);
+    transition:
+      background-color var(--transition-normal),
+      border-color var(--transition-fast),
+      color var(--transition-fast),
+      box-shadow var(--transition-fast);
+  }
+
+  button {
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    background-color: var(--color-surface-button-primary);
+    color: var(--color-text-inverse);
+  }
+
+  input,
+  select,
+  textarea {
+    background-color: var(--color-surface-input);
+    color: var(--color-text-primary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-default);
+  }
+
+  input:hover,
+  select:hover,
+  textarea:hover {
+    border-color: var(--color-border-strong);
+  }
 }
 
 /* ===================================

@@ -17,23 +17,23 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-all duration-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-all duration-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-border-focus focus-visible:ring-offset-background-primary disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
         primary:
-          'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 focus-visible:ring-primary-500 dark:bg-primary-600 dark:hover:bg-primary-500',
+          'bg-surface-button-primary text-text-inverse hover:bg-surface-button-primary-hover active:bg-primary-700 dark:active:bg-primary-600 shadow-sm',
         secondary:
-          'bg-secondary-600 text-white hover:bg-secondary-700 active:bg-secondary-800 focus-visible:ring-secondary-500 dark:bg-secondary-600 dark:hover:bg-secondary-500',
+          'bg-surface-button-secondary text-text-inverse hover:bg-surface-button-secondary-hover active:bg-secondary-700 shadow-sm',
         outline:
-          'border-2 border-neutral-300 bg-transparent hover:bg-neutral-50 active:bg-neutral-100 focus-visible:ring-neutral-500 dark:border-neutral-600 dark:hover:bg-neutral-800 dark:active:bg-neutral-700',
+          'border-2 border-border-default bg-surface-button-outline text-text-primary hover:bg-surface-button-outline-hover hover:border-border-strong active:bg-surface-button-outline-hover',
         ghost:
-          'bg-transparent hover:bg-neutral-100 active:bg-neutral-200 focus-visible:ring-neutral-500 dark:hover:bg-neutral-800 dark:active:bg-neutral-700',
+          'bg-surface-button-ghost text-text-primary hover:bg-surface-button-ghost-hover active:bg-neutral-200 dark:active:bg-neutral-700',
         danger:
-          'bg-error-600 text-white hover:bg-error-700 active:bg-error-800 focus-visible:ring-error-500 dark:bg-error-600 dark:hover:bg-error-500',
+          'bg-surface-button-danger text-text-inverse hover:bg-surface-button-danger-hover active:bg-error-700 shadow-sm',
         success:
-          'bg-success-600 text-white hover:bg-success-700 active:bg-success-800 focus-visible:ring-success-500 dark:bg-success-600 dark:hover:bg-success-500',
-        link: 'text-primary-600 underline-offset-4 hover:underline focus-visible:ring-primary-500 dark:text-primary-400',
+          'bg-success-600 text-text-inverse hover:bg-success-700 active:bg-success-800 shadow-sm',
+        link: 'text-text-link underline-offset-4 hover:text-text-link-hover focus-visible:ring-border-focus dark:text-primary-400',
       },
       size: {
         sm: 'h-8 px-3 text-sm',

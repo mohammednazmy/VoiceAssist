@@ -3,7 +3,7 @@
  * New user registration with email/password and password strength indicator
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type KeyboardEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -90,8 +90,21 @@ export function RegisterPage() {
     }
   };
 
+  const handleShortcutSubmit = (
+    event: KeyboardEvent<HTMLFormElement>
+  ) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+      event.preventDefault();
+      void handleSubmit(onSubmit)();
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
+    <main
+      id="main-content"
+      role="main"
+      className="flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12"
+    >
       <div className="w-full max-w-md">
         <Card>
           <CardHeader className="space-y-1">
@@ -119,10 +132,14 @@ export function RegisterPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              onKeyDown={handleShortcutSubmit}
+              className="space-y-4"
+            >
               {authError && (
                 <div
-                  className="rounded-md bg-error-50 p-4 text-sm text-error-800"
+                  className="rounded-md bg-error-50 p-4 text-sm text-text-error"
                   role="alert"
                   aria-live="polite"
                 >
@@ -146,7 +163,7 @@ export function RegisterPage() {
                   aria-describedby={errors.name ? 'name-error' : undefined}
                 />
                 {errors.name && (
-                  <p id="name-error" className="text-sm text-error-600" role="alert">
+                  <p id="name-error" className="text-sm text-text-error" role="alert">
                     {errors.name.message}
                   </p>
                 )}
@@ -168,7 +185,7 @@ export function RegisterPage() {
                   aria-describedby={errors.email ? 'email-error' : undefined}
                 />
                 {errors.email && (
-                  <p id="email-error" className="text-sm text-error-600" role="alert">
+                  <p id="email-error" className="text-sm text-text-error" role="alert">
                     {errors.email.message}
                   </p>
                 )}
@@ -261,7 +278,7 @@ export function RegisterPage() {
                 )}
 
                 {errors.password && (
-                  <p id="password-error" className="text-sm text-error-600" role="alert">
+                  <p id="password-error" className="text-sm text-text-error" role="alert">
                     {errors.password.message}
                   </p>
                 )}
@@ -338,22 +355,24 @@ export function RegisterPage() {
                 {errors.confirmPassword && (
                   <p
                     id="confirm-password-error"
-                    className="text-sm text-error-600"
+                    className="text-sm text-text-error"
                     role="alert"
                   >
                     {errors.confirmPassword.message}
                   </p>
                 )}
-              </div>
+            </div>
 
-              <Button
-                type="submit"
-                fullWidth
-                disabled={isLoading}
-                className="mt-6"
-              >
-                {isLoading ? 'Creating account...' : 'Create account'}
-              </Button>
+            <Button
+              type="submit"
+              fullWidth
+              disabled={isLoading}
+              className="mt-6"
+              aria-label="Create your VoiceAssist account"
+              aria-keyshortcuts="Enter Control+Enter Meta+Enter"
+            >
+              {isLoading ? 'Creating account...' : 'Create account'}
+            </Button>
             </form>
 
             <div className="relative my-6">
@@ -404,6 +423,6 @@ export function RegisterPage() {
           </a>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

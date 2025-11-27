@@ -3,7 +3,7 @@
  * Upload and manage medical documents for knowledge base
  */
 
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, type KeyboardEvent } from 'react';
 import { Button, Card, CardHeader, CardTitle, CardContent } from '@voiceassist/ui';
 import { useAuth } from '../hooks/useAuth';
 
@@ -23,6 +23,14 @@ export function DocumentsPage() {
     progress: 0,
   });
   const [category, setCategory] = useState('general');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUploadShortcut = (event: KeyboardEvent<HTMLDivElement>) => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'u') {
+      event.preventDefault();
+      void handleUpload();
+    }
+  };
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -114,7 +122,10 @@ export function DocumentsPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div
+      className="max-w-4xl mx-auto space-y-6"
+      onKeyDown={handleUploadShortcut}
+    >
       <div>
         <h1 className="text-3xl font-bold text-neutral-900">Documents</h1>
         <p className="mt-2 text-neutral-600">
@@ -130,8 +141,20 @@ export function DocumentsPage() {
         <CardContent className="space-y-4">
           {/* File Input */}
           <div>
-            <label htmlFor="file-upload" className="block">
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-neutral-300 border-dashed rounded-md hover:border-primary-500 transition-colors cursor-pointer">
+            <label
+              htmlFor="file-upload"
+              className="block"
+              role="button"
+              tabIndex={0}
+              aria-label="Choose files to upload"
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
+            >
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-border-default border-dashed rounded-md hover:border-border-focus transition-colors cursor-pointer bg-surface-input">
                 <div className="space-y-1 text-center">
                   <svg
                     className="mx-auto h-12 w-12 text-neutral-400"
@@ -164,6 +187,7 @@ export function DocumentsPage() {
                 multiple
                 accept=".pdf,.docx,.txt,.md,.doc"
                 onChange={handleFileSelect}
+                ref={fileInputRef}
                 className="sr-only"
               />
             </label>
@@ -178,7 +202,7 @@ export function DocumentsPage() {
               id="category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-border-default rounded-md bg-surface-input text-text-primary focus:outline-none focus:ring-2 focus:ring-border-focus focus:ring-offset-2 focus:ring-offset-background-primary hover:border-border-strong"
             >
               <option value="general">General Medical</option>
               <option value="cardiology">Cardiology</option>
@@ -289,6 +313,8 @@ export function DocumentsPage() {
               onClick={handleUpload}
               disabled={selectedFiles.length === 0 || uploadState.status === 'uploading'}
               size="lg"
+              aria-label="Upload selected documents"
+              aria-keyshortcuts="Control+U Meta+U"
             >
               {uploadState.status === 'uploading' ? 'Uploading...' : 'Upload Documents'}
             </Button>
