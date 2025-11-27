@@ -47,7 +47,7 @@ from sqlalchemy.orm import Session
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/api/voice", tags=["voice"])
+router = APIRouter(prefix="/voice", tags=["voice"])
 
 
 class SynthesizeRequest(BaseModel):

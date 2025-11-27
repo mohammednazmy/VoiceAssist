@@ -249,6 +249,35 @@ export function useChatSession(
             // Heartbeat response
             break;
           }
+
+          case "history": {
+            // Receive message history on connect
+            if (data.messages && Array.isArray(data.messages)) {
+              websocketLog.debug(
+                `Received ${data.messages.length} history messages`,
+              );
+              const historyMessages: Message[] = data.messages.map(
+                (msg: any) => ({
+                  id: msg.id,
+                  role: msg.role,
+                  content: msg.content,
+                  timestamp: msg.timestamp || Date.now(),
+                  citations: msg.citations || [],
+                  metadata: msg.metadata || {},
+                }),
+              );
+              // Replace messages with history (merge with any provided initialMessages)
+              setMessages((prev) => {
+                // Keep any messages that aren't in history (e.g., optimistic updates)
+                const historyIds = new Set(historyMessages.map((m) => m.id));
+                const nonHistoryMessages = prev.filter(
+                  (m) => !historyIds.has(m.id),
+                );
+                return [...historyMessages, ...nonHistoryMessages];
+              });
+            }
+            break;
+          }
         }
       } catch (error) {
         websocketLog.error("Failed to parse message:", error);

@@ -19,8 +19,10 @@ from typing import Any, Dict
 from app.core.business_metrics import rag_citations_per_query, rag_queries_total
 from app.core.database import get_db
 from app.core.logging import get_logger
+from app.core.security import verify_token
 from app.models.message import Message
 from app.models.session import Session as ChatSession
+from app.models.user import User
 from app.schemas.websocket import (
     create_chunk_event,
     create_connected_event,
@@ -141,6 +143,10 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
     """
     WebSocket endpoint for realtime chat communication.
 
+    Query Parameters:
+    - token: JWT access token for authentication (required)
+    - conversationId: Conversation/session ID to connect to (optional)
+
     Message Protocol (Updated to match frontend expectations):
     ----------------------------------------------------------
 
@@ -163,6 +169,11 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
         "timestamp": "2025-11-22T00:00:00.000Z",
         "protocol_version": "1.0",
         "capabilities": ["text_streaming"]
+    }
+
+    {
+        "type": "history",
+        "messages": [...]  // Previous messages if conversationId provided
     }
 
     {
@@ -203,11 +214,83 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
     - VAD events (speech_start, speech_end)
     - Turn-taking events (interrupt, resume)
     """
-    # For MVP, use a simple UUID-based client ID
-    # In production, this should be derived from authenticated user
-    import uuid
+    import uuid as uuid_module
 
-    client_id = str(uuid.uuid4())
+    # Authenticate via query param token
+    token = websocket.query_params.get("token")
+    conversation_id = websocket.query_params.get("conversationId")
+
+    if not token:
+        await websocket.accept()
+        error_event = create_error_event(
+            error_code="UNAUTHORIZED",
+            error_message="Missing authentication token",
+            timestamp=datetime.now(timezone.utc),
+        )
+        await websocket.send_json(error_event)
+        await websocket.close(code=1008)  # Policy Violation
+        return
+
+    # Verify JWT token
+    payload = verify_token(token)
+    if not payload or payload.get("type") != "access":
+        await websocket.accept()
+        error_event = create_error_event(
+            error_code="UNAUTHORIZED",
+            error_message="Invalid or expired token",
+            timestamp=datetime.now(timezone.utc),
+        )
+        await websocket.send_json(error_event)
+        await websocket.close(code=1008)
+        return
+
+    user_id = payload.get("sub")
+    if not user_id:
+        await websocket.accept()
+        error_event = create_error_event(
+            error_code="UNAUTHORIZED",
+            error_message="Invalid token payload",
+            timestamp=datetime.now(timezone.utc),
+        )
+        await websocket.send_json(error_event)
+        await websocket.close(code=1008)
+        return
+
+    # Verify user exists
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        await websocket.accept()
+        error_event = create_error_event(
+            error_code="UNAUTHORIZED",
+            error_message="User not found",
+            timestamp=datetime.now(timezone.utc),
+        )
+        await websocket.send_json(error_event)
+        await websocket.close(code=1008)
+        return
+
+    # Use user ID as client ID for authenticated sessions
+    client_id = str(user_id)
+
+    # Verify conversation ownership if conversationId provided
+    session_obj: ChatSession | None = None
+    if conversation_id:
+        try:
+            session_uuid = uuid_module.UUID(conversation_id)
+            session_obj = db.query(ChatSession).filter(ChatSession.id == session_uuid).first()
+            if session_obj and str(session_obj.user_id) != str(user_id):
+                await websocket.accept()
+                error_event = create_error_event(
+                    error_code="FORBIDDEN",
+                    error_message="Access denied to conversation",
+                    timestamp=datetime.now(timezone.utc),
+                )
+                await websocket.send_json(error_event)
+                await websocket.close(code=1008)
+                return
+        except ValueError:
+            # Invalid UUID format, ignore and proceed without session
+            logger.warning(f"Invalid conversation ID format: {conversation_id}")
 
     await manager.connect(websocket, client_id)
 
@@ -216,6 +299,46 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
         connected_event = create_connected_event(client_id=client_id, timestamp=datetime.now(timezone.utc))
         await websocket.send_json(connected_event)
 
+        # Send message history if conversation exists
+        if session_obj:
+            messages = (
+                db.query(Message)
+                .filter(Message.session_id == session_obj.id)
+                .order_by(Message.created_at.asc())
+                .limit(100)  # Limit history to last 100 messages
+                .all()
+            )
+            if messages:
+                history_messages = []
+                for msg in messages:
+                    msg_dict = {
+                        "id": str(msg.id),
+                        "role": msg.role,
+                        "content": msg.content,
+                        "timestamp": int(msg.created_at.timestamp() * 1000) if msg.created_at else 0,
+                    }
+                    # Include citations from metadata if present
+                    if msg.message_metadata and "citations" in msg.message_metadata:
+                        msg_dict["citations"] = msg.message_metadata["citations"]
+                    history_messages.append(msg_dict)
+
+                history_event = {
+                    "type": "history",
+                    "messages": history_messages,
+                    "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+                }
+                await websocket.send_json(history_event)
+
+        logger.info(
+            "WebSocket authenticated and connected",
+            extra={
+                "client_id": client_id,
+                "user_id": user_id,
+                "conversation_id": conversation_id,
+                "history_loaded": session_obj is not None,
+            },
+        )
+
         while True:
             # Receive message from client
             data = await websocket.receive_json()
@@ -223,10 +346,15 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
 
             logger.info(
                 "Received WebSocket message",
-                extra={"client_id": client_id, "message_type": message_type},
+                extra={"client_id": client_id, "message_type": message_type, "user_id": user_id},
             )
 
             if message_type == "message":
+                # Override session_id with the authenticated conversation if not provided
+                if session_obj and not data.get("session_id"):
+                    data["session_id"] = str(session_obj.id)
+                # Pass user_id for ownership validation
+                data["_user_id"] = user_id
                 # Process chat message
                 await handle_chat_message(websocket, client_id, data, db)
 
@@ -245,10 +373,10 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
 
     except WebSocketDisconnect:
         manager.disconnect(client_id)
-        logger.info(f"Client disconnected: {client_id}")
+        logger.info(f"Client disconnected: {client_id}", extra={"user_id": user_id})
 
     except Exception as e:
-        logger.error(f"WebSocket error: {str(e)}", exc_info=True)
+        logger.error(f"WebSocket error: {str(e)}", exc_info=True, extra={"user_id": user_id})
         # Try to send error, but don't fail if socket is already closed
         await manager.send_error(client_id, "INTERNAL_ERROR", str(e))
         manager.disconnect(client_id)
@@ -268,6 +396,8 @@ async def handle_chat_message(websocket: WebSocket, client_id: str, data: Dict[s
     session_id = data.get("session_id")
     clinical_context_id = data.get("clinical_context_id")
     attachments = data.get("attachments") or []
+    # User ID passed from authenticated WebSocket handler
+    user_id = data.get("_user_id")
 
     logger.info(
         "Processing chat message",
@@ -276,6 +406,7 @@ async def handle_chat_message(websocket: WebSocket, client_id: str, data: Dict[s
             "message_id": message_id,
             "has_session": bool(session_id),
             "has_context": bool(clinical_context_id),
+            "user_id": user_id,
         },
     )
 
@@ -294,6 +425,14 @@ async def handle_chat_message(websocket: WebSocket, client_id: str, data: Dict[s
                         client_id,
                         "INVALID_SESSION",
                         f"Session {session_id} not found",
+                    )
+                    return
+                # Verify session ownership if user_id is available
+                if user_id and str(session_obj.user_id) != str(user_id):
+                    await manager.send_error(
+                        client_id,
+                        "FORBIDDEN",
+                        "Access denied to this conversation",
                     )
                     return
             except ValueError:
