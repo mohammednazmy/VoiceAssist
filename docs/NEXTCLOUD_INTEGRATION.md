@@ -55,6 +55,25 @@ NEXTCLOUD_DB_PASSWORD=<from .env>          # Nextcloud database password
 - CardDAV contacts integration
 - Full user provisioning workflow
 
+### Deployment Steps for OIDC, Contacts, and Email
+
+1. **Configure OIDC providers (API Gateway):**
+   - Set `NEXTCLOUD_URL`, `NEXTCLOUD_OAUTH_CLIENT_ID`, `NEXTCLOUD_OAUTH_CLIENT_SECRET`, and `NEXTCLOUD_OAUTH_REDIRECT_URI` in `.env` for Nextcloud SSO.
+   - Optionally set `GOOGLE_OAUTH_CLIENT_ID/SECRET` or `MICROSOFT_CLIENT_ID/SECRET` with their redirect URIs if federating logins.
+   - Restart the API Gateway; `configure_oidc_from_settings()` registers providers and caches JWKS for validation.
+
+2. **Enable CardDAV + contacts:**
+   - Provide `NEXTCLOUD_WEBDAV_URL`, `NEXTCLOUD_CALDAV_USERNAME`, and `NEXTCLOUD_CALDAV_PASSWORD` for CardDAV access.
+   - The `CardDAVService` now supports sync tokens; call `/api/integrations/contacts` endpoints to keep address books in sync.
+
+3. **Finalize IMAP/SMTP email:**
+   - Supply `EMAIL_IMAP_HOST`, `EMAIL_IMAP_PORT`, `EMAIL_SMTP_HOST`, `EMAIL_SMTP_PORT`, `EMAIL_USERNAME`, and `EMAIL_PASSWORD` in `.env`.
+   - The email service will reconnect automatically on IMAP failures and respects TLS/STARTTLS based on configuration.
+
+4. **Package and install Nextcloud apps:**
+   - Run `bash nextcloud-apps/package.sh` to create `build/*.tar.gz` archives for `voiceassist-client`, `voiceassist-admin`, and `voiceassist-docs`.
+   - Upload/enable the apps in Nextcloud; routes under `/apps/<app>/api/*` mirror API Gateway endpoints for calendar, files, contacts, and email.
+
 ### Quick Start (Phase 2)
 
 If you have Phase 2 installed, Nextcloud is already running:
