@@ -1196,16 +1196,11 @@ Admin panel requires `admin` role. Future: viewer role with read-only access.
 
 ## Build & Deploy
 
-```bash
-# Production build
-npm run build
+- Production builds run with `npm run build` (Vite picks up `.env.production` pointing to `https://admin.asimo.io`).
+- GitHub Actions workflow **Admin Panel Build & Deploy** builds the panel on pushes to `main`, publishes the `dist/` artifact, and syncs it to `/var/www/admin/` via SSH using the configured deploy secrets.
+- Post-deploy smoke checks verify login, dashboard metrics, and knowledge-base listing against `https://admin.asimo.io`.
 
-# Preview
-npm run preview
-
-# Deploy
-rsync -avz dist/ user@asimo.io:/var/www/admin/
-```
+Manual preview remains available via `npm run preview`.
 
 ## Troubleshooting
 
