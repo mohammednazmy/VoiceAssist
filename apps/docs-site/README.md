@@ -2,7 +2,22 @@
 
 Technical documentation for the VoiceAssist platform, automatically rendering markdown files from the `docs/` directory.
 
-**URL**: https://docs.asimo.io
+**URL**: https://docs.asimo.io (assistdocs.asimo.io redirects here)
+
+## Deployment & DNS
+- **Hosting**: Apache2 reverse proxy → `next start` on port **3001**
+- **Canonical domain**: `docs.asimo.io`
+- **Secondary domain**: `assistdocs.asimo.io` (301 to canonical on HTTP and HTTPS)
+- **DNS**:
+  - `docs.asimo.io` → CNAME to production apex/load balancer
+  - `assistdocs.asimo.io` → CNAME to `docs.asimo.io`
+
+### Environment
+Set at deploy time (or rely on defaults in `next.config.js`):
+- `NEXT_PUBLIC_DOCS_HOST` (default: `docs.asimo.io`)
+- `NEXT_PUBLIC_SECONDARY_DOCS_HOST` (default: `assistdocs.asimo.io`)
+
+The config enforces a redirect from the secondary host to the canonical host.
 
 ## Technology Stack
 

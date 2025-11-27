@@ -9,11 +9,11 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 │                    VoiceAssist Platform                      │
 │                                                              │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌────────────┐ │
-│  │  assist.asimo.io │  │ admin.asimo.io   │  │assistdocs  │ │
-│  │                  │  │                  │  │.asimo.io   │ │
-│  │   Main Web App   │  │  Admin Panel &   │  │            │ │
-│  │   Chat Interface │  │  KB Editor       │  │ Technical  │ │
-│  │   Real-time      │  │  User Mgmt       │  │ Docs Site  │ │
+│  │  assist.asimo.io │  │ admin.asimo.io   │  │ docs.asimo │ │
+│  │                  │  │                  │  │ .io        │ │
+│  │   Main Web App   │  │  Admin Panel &   │  │ Docs Hub   │ │
+│  │   Chat Interface │  │  KB Editor       │  │ (canonical)│ │
+│  │   Real-time      │  │  User Mgmt       │  │            │ │
 │  │   Messaging      │  │  Settings        │  │            │ │
 │  └────────┬─────────┘  └────────┬─────────┘  └─────┬──────┘ │
 │           │                     │                   │        │
@@ -34,8 +34,8 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 │              ▼                                               │
 │     ┌────────────────┐                                       │
 │     │                │                                       │
-│     │  Static Files  │                                       │
-│     │  (Markdown)    │                                       │
+│     │  Next.js +     │                                       │
+│     │  Markdown docs │                                       │
 │     └────────────────┘                                       │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -101,7 +101,7 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 
 ---
 
-#### 3. assistdocs.asimo.io (Documentation)
+#### 3. docs.asimo.io (Documentation)
 **Primary Purpose:** Technical documentation and API reference
 
 **Key Features:**
@@ -113,10 +113,10 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 - Deployment guides
 
 **Technology Stack:**
-- Static Markdown files
-- MkDocs or similar static site generator
-- Syntax highlighting for code examples
-- Search functionality
+- Next.js 14 (App Router)
+- Markdown content sourced from monorepo `docs/`
+- Tailwind Typography styling
+- Reverse proxy at Apache2 → Next.js runtime on port 3001
 - Version control via Git
 
 **Content Structure:**
@@ -618,14 +618,14 @@ pnpm build
 **Static Hosting:**
 - Main app (`assist.asimo.io`) served via CDN or static hosting
 - Admin panel (`admin.asimo.io`) served separately
-- Docs site (`assistdocs.asimo.io`) served as static markdown
+- Docs site (`docs.asimo.io`) proxied to Next.js runtime with `assistdocs.asimo.io` 301-redirected to the canonical host
 
 **Environment Variables:**
 ```bash
 VITE_API_URL=https://assist.asimo.io/api
 VITE_WS_URL=wss://assist.asimo.io/api/realtime
 VITE_ADMIN_URL=https://admin.asimo.io
-VITE_DOCS_URL=https://assistdocs.asimo.io
+VITE_DOCS_URL=https://docs.asimo.io
 ```
 
 ---
