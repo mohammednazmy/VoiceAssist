@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
+    "package": "mkdir -p ../../artifacts && tar -czf ../../artifacts/docs-site.tar.gz -C out .",
+    "deploy": "pnpm run build && pnpm run package",
     "start": "next start -p 3001",
     "lint": "next lint",
     "type-check": "tsc --noEmit"

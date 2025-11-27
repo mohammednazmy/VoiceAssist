@@ -1,9 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
-  // Enable static export for docs site
-  // output: 'export',
-  // images: { unoptimized: true },
+  // Use static exports to generate a CDN-friendly bundle for docs hosting
+  output: "export",
+  images: {
+    unoptimized: true,
+  },
 
   // Allow reading markdown files from docs directory
   experimental: {
