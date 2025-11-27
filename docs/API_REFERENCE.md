@@ -72,3 +72,19 @@ Authorization: Bearer <access_token>
 - **OpenAPI JSON:** `http://localhost:8000/openapi.json` (downloadable spec)
 
 For complete documentation with request/response examples, see [api-reference/rest-api.md](api-reference/rest-api.md).
+
+---
+
+## Documentation API (For AI Agents)
+
+The docs site provides machine-readable JSON endpoints for AI agents:
+
+| Endpoint                  | Description                       |
+| ------------------------- | --------------------------------- |
+| `GET /agent/index.json`   | Documentation system metadata     |
+| `GET /agent/docs.json`    | Full document list with filtering |
+| `GET /agent/search?q=...` | Full-text search                  |
+
+**Base URL:** `https://assistdocs.asimo.io`
+
+For full details, see [Agent API Reference](ai/AGENT_API_REFERENCE.md).

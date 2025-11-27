@@ -3,10 +3,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
-import { getGitHubEditUrl, loadDoc } from "@/lib/docs";
+import { getGitHubEditUrl, listAllDocPaths, loadDoc } from "@/lib/docs";
 
 interface DocPageProps {
   params: { slug: string[] };
+}
+
+/**
+ * Generate static params for all docs at build time (required for output: export)
+ */
+export function generateStaticParams() {
+  const docPaths = listAllDocPaths();
+  return docPaths.map((docPath) => ({
+    slug: docPath.split("/"),
+  }));
 }
 
 const formatTitle = (slugParts: string[]) =>

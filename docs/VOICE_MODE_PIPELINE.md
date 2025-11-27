@@ -1,10 +1,37 @@
+---
+title: Voice Mode Pipeline
+slug: voice/pipeline
+summary: Unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy.
+status: stable
+stability: production
+owner: backend
+lastUpdated: "2025-11-27"
+audience: ["human", "agent", "backend", "frontend"]
+tags: ["voice", "realtime", "websocket", "openai", "api"]
+relatedServices: ["api-gateway", "web-app"]
+---
+
 # Voice Mode Pipeline
 
 > **Status**: Production-ready
-> **Branch**: `claude/voice-pipeline-unified-20251125072935`
-> **Last Updated**: 2025-11-25
+> **Last Updated**: 2025-11-27
 
 This document describes the unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy. It serves as the canonical reference for developers working on real-time voice features.
+
+## Implementation Status
+
+| Component                  | Status      | Location                                               |
+| -------------------------- | ----------- | ------------------------------------------------------ |
+| Backend session endpoint   | **Live**    | `services/api-gateway/app/api/voice.py`                |
+| Ephemeral token generation | **Live**    | `app/services/realtime_voice_service.py`               |
+| Voice metrics endpoint     | **Live**    | `POST /api/voice/metrics`                              |
+| Frontend voice hook        | **Live**    | `apps/web-app/src/hooks/useRealtimeVoiceSession.ts`    |
+| Voice settings store       | **Live**    | `apps/web-app/src/stores/voiceSettingsStore.ts`        |
+| Voice UI panel             | **Live**    | `apps/web-app/src/components/voice/VoiceModePanel.tsx` |
+| Chat timeline integration  | **Live**    | Voice messages appear in chat                          |
+| E2E test suite             | **Passing** | 95 tests across unit/integration/E2E                   |
+
+> **Full status:** See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for all components.
 
 ## Overview
 

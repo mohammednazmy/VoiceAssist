@@ -93,7 +93,7 @@ function scanForSitemap(dir: string, basePath: string = ""): SitemapEntry[] {
 export default function sitemap(): MetadataRoute.Sitemap {
   const docEntries = scanForSitemap(DOCS_DIR);
 
-  // Add static pages
+  // Add static pages and hub pages
   const staticPages: SitemapEntry[] = [
     {
       url: BASE_URL,
@@ -101,11 +101,49 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "daily",
       priority: 1.0,
     },
+    // Agent API endpoints
     {
       url: `${BASE_URL}/agent/index.json`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.9,
+    },
+    {
+      url: `${BASE_URL}/agent/docs.json`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
+    // Key hub pages
+    {
+      url: `${BASE_URL}/ai/onboarding`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.95,
+    },
+    {
+      url: `${BASE_URL}/ai/api`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    {
+      url: `${BASE_URL}/ai/status`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
+      url: `${BASE_URL}/dev/architecture`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.85,
+    },
+    {
+      url: `${BASE_URL}/reference/api`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.85,
     },
   ];
 

@@ -173,9 +173,14 @@ export function parseMetadata(
   const prefix = filePath ? `[${filePath}] ` : "";
 
   // Handle field name migrations
-  const lastUpdated = (rawData.lastUpdated ||
-    rawData.last_updated ||
-    "") as string;
+  // Convert Date objects to ISO strings (gray-matter parses dates)
+  const rawDate = rawData.lastUpdated || rawData.last_updated;
+  let lastUpdated = "";
+  if (rawDate instanceof Date) {
+    lastUpdated = rawDate.toISOString().split("T")[0];
+  } else if (typeof rawDate === "string") {
+    lastUpdated = rawDate;
+  }
   const summary = (rawData.summary || rawData.description || "") as string;
 
   // Derive slug from path if not provided
@@ -446,9 +451,17 @@ export function loadClientImplDoc(filename: string): DocContent | null {
     const fileContents = fs.readFileSync(fullPath, "utf8");
     const { data, content } = matter(fileContents);
 
+    // Parse and validate metadata
+    const { metadata, validation } = parseMetadata(
+      data as Record<string, unknown>,
+      filename,
+    );
+
     return {
       content,
-      frontmatter: data,
+      frontmatter: metadata,
+      path: filename,
+      validation,
     };
   } catch (error) {
     console.error(`Error loading document ${filename}:`, error);
@@ -471,9 +484,17 @@ export function loadWebAppDoc(relativePath: string): DocContent | null {
     const fileContents = fs.readFileSync(fullPath, "utf8");
     const { data, content } = matter(fileContents);
 
+    // Parse and validate metadata
+    const { metadata, validation } = parseMetadata(
+      data as Record<string, unknown>,
+      relativePath,
+    );
+
     return {
       content,
-      frontmatter: data,
+      frontmatter: metadata,
+      path: relativePath,
+      validation,
     };
   } catch (error) {
     console.error(`Error loading document ${relativePath}:`, error);
@@ -498,6 +519,41 @@ export function listDocsInDirectory(relativePath: string = ""): string[] {
     console.error(`Error listing docs in ${relativePath}:`, error);
     return [];
   }
+}
+
+/**
+ * Recursively list all markdown files in the docs directory
+ * Returns paths relative to the docs directory (without .md extension)
+ */
+export function listAllDocPaths(relativePath: string = ""): string[] {
+  const fullPath = path.join(DOCS_DIR, relativePath);
+  const paths: string[] = [];
+
+  try {
+    if (!fs.existsSync(fullPath)) {
+      return [];
+    }
+
+    const items = fs.readdirSync(fullPath, { withFileTypes: true });
+
+    for (const item of items) {
+      const itemRelativePath = relativePath
+        ? `${relativePath}/${item.name}`
+        : item.name;
+
+      if (item.isDirectory() && !item.name.startsWith(".")) {
+        // Recursively process subdirectories
+        paths.push(...listAllDocPaths(itemRelativePath));
+      } else if (item.isFile() && item.name.endsWith(".md")) {
+        // Add markdown files (without .md extension)
+        paths.push(itemRelativePath.replace(/\.md$/, ""));
+      }
+    }
+  } catch (error) {
+    console.error(`Error listing docs recursively in ${relativePath}:`, error);
+  }
+
+  return paths;
 }
 
 /**

@@ -16,7 +16,12 @@ version: "1.0.0"
 
 **Last Updated**: 2025-11-27
 **Status**: Production Ready
-**Protocol Spec**: [WEBSOCKET_PROTOCOL.md](WEBSOCKET_PROTOCOL.md)
+
+**Related Documentation:**
+
+- [WebSocket Protocol](WEBSOCKET_PROTOCOL.md) - Wire protocol specification
+- [Voice Mode Pipeline](VOICE_MODE_PIPELINE.md) - Voice-specific implementation
+- [Implementation Status](overview/IMPLEMENTATION_STATUS.md) - Component status
 
 ---
 

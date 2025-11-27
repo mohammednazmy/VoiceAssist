@@ -258,10 +258,33 @@ export const navigation: NavSection[] = [
         docPaths: ["TOOLS_AND_INTEGRATIONS.md"],
       },
       {
-        title: "AI Agent Guide",
-        href: "/dev/ai-agents",
-        description: "Onboarding guide for AI coding assistants",
+        title: "Documentation System",
+        href: "/dev/docs-system",
+        description: "Validation scripts and quality gates",
+        docPaths: ["INTERNAL_DOCS_SYSTEM.md"],
+      },
+    ],
+  },
+  {
+    title: "For AI Agents",
+    items: [
+      {
+        title: "Agent Onboarding",
+        href: "/ai/onboarding",
+        description: "Quick start guide for AI coding assistants",
         docPaths: ["ai/AGENT_ONBOARDING.md"],
+      },
+      {
+        title: "Agent API Reference",
+        href: "/ai/api",
+        description: "Machine-readable JSON endpoints for agents",
+        docPaths: ["ai/AGENT_API_REFERENCE.md"],
+      },
+      {
+        title: "Implementation Status",
+        href: "/ai/status",
+        description: "Component status and what's implemented",
+        docPaths: ["overview/IMPLEMENTATION_STATUS.md"],
       },
     ],
   },

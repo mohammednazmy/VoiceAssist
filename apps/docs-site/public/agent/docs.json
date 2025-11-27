@@ -1,0 +1,1653 @@
+{
+  "count": 215,
+  "generated_at": "2025-11-27T21:21:55.268Z",
+  "docs": [
+    {
+      "slug": "continuous-improvement-plan",
+      "path": "CONTINUOUS_IMPROVEMENT_PLAN.md",
+      "title": "Continuous Improvement Plan",
+      "summary": "Post-launch roadmap for enhancements, deferred features, and new capabilities",
+      "status": "draft",
+      "tags": ["roadmap", "planning", "improvements", "future"],
+      "lastUpdated": "Wed Nov 26 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "security-compliance",
+      "path": "SECURITY_COMPLIANCE.md",
+      "title": "Security & Compliance Guide",
+      "summary": "HIPAA compliance, zero-trust architecture, PHI protection, and security requirements",
+      "status": "draft",
+      "tags": ["security", "hipaa", "compliance", "phi", "encryption"],
+      "lastUpdated": "Wed Nov 26 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "api-reference/overview",
+      "path": "API_REFERENCE.md",
+      "title": "API Reference",
+      "summary": "High-level API overview, endpoint groups, and quick reference for the VoiceAssist API.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "agent", "backend", "frontend"],
+      "tags": ["api", "rest", "reference", "endpoints"],
+      "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "architecture/backend",
+      "path": "BACKEND_ARCHITECTURE.md",
+      "title": "Backend Architecture",
+      "summary": "Backend structure and production layout using FastAPI in services/api-gateway.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "agent", "backend"],
+      "tags": ["architecture", "backend", "fastapi", "microservices"],
+      "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "docs/metadata-standard",
+      "path": "DOCUMENTATION_METADATA_STANDARD.md",
+      "title": "Documentation Metadata Standard",
+      "summary": "Defines the YAML frontmatter schema used across all VoiceAssist documentation for consistency and machine-readability.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human", "agent"],
+      "tags": ["documentation", "metadata", "standards", "frontmatter"],
+      "relatedServices": ["docs-site"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "architecture/frontend",
+      "path": "FRONTEND_ARCHITECTURE.md",
+      "title": "Frontend Architecture",
+      "summary": "Client applications architecture - pnpm monorepo with React, TypeScript, and shared packages.",
+      "status": "stable",
+      "stability": "beta",
+      "owner": "frontend",
+      "audience": ["human", "agent", "frontend"],
+      "tags": ["architecture", "frontend", "react", "typescript", "monorepo"],
+      "relatedServices": ["web-app", "admin-panel", "docs-site"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "internal-docs-system",
+      "path": "INTERNAL_DOCS_SYSTEM.md",
+      "title": "Internal Documentation System",
+      "summary": "Developer guide for documentation tooling, validation scripts, and quality gates.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human", "backend", "frontend", "devops"],
+      "tags": ["documentation", "tooling", "ci-cd", "quality"],
+      "relatedServices": ["docs-site"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "architecture/realtime",
+      "path": "REALTIME_ARCHITECTURE.md",
+      "title": "Real-time Architecture",
+      "summary": "WebSocket communication, voice processing, and streaming response architecture.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "agent", "backend", "frontend"],
+      "tags": ["architecture", "websocket", "realtime", "voice", "streaming"],
+      "relatedServices": ["api-gateway", "web-app"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "architecture/unified",
+      "path": "UNIFIED_ARCHITECTURE.md",
+      "title": "Unified Architecture Documentation",
+      "summary": "Comprehensive system architecture covering all components, data flows, and integration points.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human", "agent", "backend", "frontend", "devops"],
+      "tags": ["architecture", "system-design", "overview"],
+      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "voice/pipeline",
+      "path": "VOICE_MODE_PIPELINE.md",
+      "title": "Voice Mode Pipeline",
+      "summary": "Unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "agent", "backend", "frontend"],
+      "tags": ["voice", "realtime", "websocket", "openai", "api"],
+      "relatedServices": ["api-gateway", "web-app"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "api-reference/websocket",
+      "path": "WEBSOCKET_PROTOCOL.md",
+      "title": "WebSocket Protocol Specification",
+      "summary": "Real-time bidirectional communication protocol for chat streaming and voice.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "agent", "backend", "frontend"],
+      "tags": ["websocket", "protocol", "api", "realtime", "streaming"],
+      "relatedServices": ["api-gateway", "web-app"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "ai/agent-api-reference",
+      "path": "ai/AGENT_API_REFERENCE.md",
+      "title": "Agent API Reference",
+      "summary": "Machine-readable JSON API endpoints for AI agents to discover and search documentation.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["agent", "backend"],
+      "tags": ["api", "ai-agent", "json", "documentation"],
+      "relatedServices": ["docs-site"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "ai/agent-onboarding",
+      "path": "ai/AGENT_ONBOARDING.md",
+      "title": "AI Agent Onboarding Guide",
+      "summary": "Quick context, repository structure, critical rules, and common tasks for AI coding assistants.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["agent"],
+      "tags": ["onboarding", "ai-agent", "getting-started"],
+      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "api-reference/routes",
+      "path": "api-reference/API_ROUTES.md",
+      "title": "API Routes Reference",
+      "summary": "Auto-generated route listing from OpenAPI specification.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "agent", "backend", "frontend"],
+      "tags": ["api", "routes", "auto-generated"],
+      "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "api-reference/rest-api",
+      "path": "api-reference/rest-api.md",
+      "title": "REST API Reference",
+      "summary": "Complete REST API documentation with request/response examples.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "agent", "backend", "frontend"],
+      "tags": ["api", "rest", "reference", "endpoints", "examples"],
+      "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "operations/overview",
+      "path": "operations/OPERATIONS_OVERVIEW.md",
+      "title": "Operations Overview",
+      "summary": "Central hub for operations documentation, runbooks, SLOs, and compliance.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "sre",
+      "audience": ["devops", "backend", "admin"],
+      "tags": ["operations", "overview", "runbooks", "sre"],
+      "relatedServices": ["api-gateway", "web-app", "admin-panel"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "operations/slo-definitions",
+      "path": "operations/SLO_DEFINITIONS.md",
+      "title": "Service Level Objectives (SLOs)",
+      "summary": "Reliability targets balancing user expectations with engineering effort.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "sre",
+      "audience": ["devops", "backend", "admin"],
+      "tags": ["slo", "reliability", "metrics", "operations"],
+      "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "operations/runbooks/backup-restore",
+      "path": "operations/runbooks/BACKUP_RESTORE.md",
+      "title": "Backup & Restore Runbook",
+      "summary": "Comprehensive guide for backup and restore operations in VoiceAssist V2.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "sre",
+      "audience": ["devops"],
+      "tags": [
+        "runbook",
+        "backup",
+        "restore",
+        "disaster-recovery",
+        "operations"
+      ],
+      "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "operations/runbooks/deployment",
+      "path": "operations/runbooks/DEPLOYMENT.md",
+      "title": "Deployment Runbook",
+      "summary": "Step-by-step guide for deploying VoiceAssist V2 to production.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "sre",
+      "audience": ["devops", "backend"],
+      "tags": ["runbook", "deployment", "operations", "production"],
+      "relatedServices": ["api-gateway", "web-app", "admin-panel"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "operations/runbooks/incident-response",
+      "path": "operations/runbooks/INCIDENT_RESPONSE.md",
+      "title": "Incident Response Runbook",
+      "summary": "Comprehensive guide for handling incidents in VoiceAssist V2.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "sre",
+      "audience": ["devops", "backend", "admin"],
+      "tags": ["runbook", "incident", "operations", "on-call"],
+      "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "operations/runbooks/monitoring",
+      "path": "operations/runbooks/MONITORING.md",
+      "title": "Monitoring Runbook",
+      "summary": "Comprehensive guide for monitoring and observability in VoiceAssist V2.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "sre",
+      "audience": ["devops", "backend"],
+      "tags": ["runbook", "monitoring", "observability", "metrics", "alerting"],
+      "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "operations/runbooks/scaling",
+      "path": "operations/runbooks/SCALING.md",
+      "title": "Scaling Runbook",
+      "summary": "Comprehensive guide for scaling VoiceAssist V2 infrastructure.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "sre",
+      "audience": ["devops", "backend"],
+      "tags": ["runbook", "scaling", "performance", "infrastructure"],
+      "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "operations/runbooks/troubleshooting",
+      "path": "operations/runbooks/TROUBLESHOOTING.md",
+      "title": "Troubleshooting Runbook",
+      "summary": "Comprehensive troubleshooting guide for VoiceAssist V2 common issues.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "sre",
+      "audience": ["devops", "backend"],
+      "tags": ["runbook", "troubleshooting", "operations", "debugging"],
+      "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "overview/implementation-status",
+      "path": "overview/IMPLEMENTATION_STATUS.md",
+      "title": "Implementation Status",
+      "summary": "Single source of truth for component status, stability, and deployment state across VoiceAssist.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["human", "agent", "backend", "frontend", "devops"],
+      "tags": ["status", "overview", "components", "roadmap"],
+      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "accessibility-audit",
+      "path": "ACCESSIBILITY_AUDIT.md",
+      "title": "ACCESSIBILITY AUDIT",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "admin-panel-deployment",
+      "path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "title": "ADMIN PANEL DEPLOYMENT",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "admin-panel-implementation-summary",
+      "path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
+      "title": "ADMIN PANEL IMPLEMENTATION SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "admin-panel-login-fix",
+      "path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "title": "ADMIN PANEL LOGIN FIX",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "admin-panel-login-fix-complete",
+      "path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md",
+      "title": "ADMIN PANEL LOGIN FIX COMPLETE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "admin-panel-specs",
+      "path": "ADMIN_PANEL_SPECS.md",
+      "title": "ADMIN PANEL SPECS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "all-phases-summary",
+      "path": "ALL_PHASES_SUMMARY.md",
+      "title": "ALL PHASES SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "ansible-guide",
+      "path": "ANSIBLE_GUIDE.md",
+      "title": "ANSIBLE GUIDE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "architecture",
+      "path": "ARCHITECTURE.md",
+      "title": "ARCHITECTURE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "architecture-v2",
+      "path": "ARCHITECTURE_V2.md",
+      "title": "ARCHITECTURE V2",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "backend-skeleton-verification",
+      "path": "BACKEND_SKELETON_VERIFICATION.md",
+      "title": "BACKEND SKELETON VERIFICATION",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "chaos-engineering",
+      "path": "CHAOS_ENGINEERING.md",
+      "title": "CHAOS ENGINEERING",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "cicd-guide",
+      "path": "CICD_GUIDE.md",
+      "title": "CICD GUIDE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "claude-execution-guide",
+      "path": "CLAUDE_EXECUTION_GUIDE.md",
+      "title": "CLAUDE EXECUTION GUIDE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "claude-prompts",
+      "path": "CLAUDE_PROMPTS.md",
+      "title": "CLAUDE PROMPTS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "compose-first-summary",
+      "path": "COMPOSE_FIRST_SUMMARY.md",
+      "title": "COMPOSE FIRST SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "compose-to-k8s-migration",
+      "path": "COMPOSE_TO_K8S_MIGRATION.md",
+      "title": "COMPOSE TO K8S MIGRATION",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "configuration-reference",
+      "path": "CONFIGURATION_REFERENCE.md",
+      "title": "CONFIGURATION REFERENCE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "continuous-improvement-summary",
+      "path": "CONTINUOUS_IMPROVEMENT_SUMMARY.md",
+      "title": "CONTINUOUS IMPROVEMENT SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "data-model",
+      "path": "DATA_MODEL.md",
+      "title": "DATA MODEL",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "deep-verification-qa-summary",
+      "path": "DEEP_VERIFICATION_QA_SUMMARY.md",
+      "title": "DEEP VERIFICATION QA SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "deployment-guide",
+      "path": "DEPLOYMENT_GUIDE.md",
+      "title": "DEPLOYMENT GUIDE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "deployment-summary-asimo",
+      "path": "DEPLOYMENT_SUMMARY_ASIMO.md",
+      "title": "DEPLOYMENT SUMMARY ASIMO",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "development-phases",
+      "path": "DEVELOPMENT_PHASES.md",
+      "title": "DEVELOPMENT PHASES",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "development-phases-v2",
+      "path": "DEVELOPMENT_PHASES_V2.md",
+      "title": "DEVELOPMENT PHASES V2",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "development-setup",
+      "path": "DEVELOPMENT_SETUP.md",
+      "title": "DEVELOPMENT SETUP",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "disaster-recovery-runbook",
+      "path": "DISASTER_RECOVERY_RUNBOOK.md",
+      "title": "DISASTER RECOVERY RUNBOOK",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "documentation-completion-summary",
+      "path": "DOCUMENTATION_COMPLETION_SUMMARY.md",
+      "title": "DOCUMENTATION COMPLETION SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "documentation-site-specs",
+      "path": "DOCUMENTATION_SITE_SPECS.md",
+      "title": "DOCUMENTATION SITE SPECS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "enhancement-summary",
+      "path": "ENHANCEMENT_SUMMARY.md",
+      "title": "ENHANCEMENT SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "feature-flags",
+      "path": "FEATURE_FLAGS.md",
+      "title": "FEATURE FLAGS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "file",
+      "path": "FILE.md",
+      "title": "FILE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "final-documentation-summary",
+      "path": "FINAL_DOCUMENTATION_SUMMARY.md",
+      "title": "FINAL DOCUMENTATION SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "frontend-completion-plan",
+      "path": "FRONTEND_COMPLETION_PLAN.md",
+      "title": "FRONTEND COMPLETION PLAN",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "frontend-verification-summary",
+      "path": "FRONTEND_VERIFICATION_SUMMARY.md",
+      "title": "FRONTEND VERIFICATION SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "hipaa-compliance-matrix",
+      "path": "HIPAA_COMPLIANCE_MATRIX.md",
+      "title": "HIPAA COMPLIANCE MATRIX",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "infrastructure-as-code",
+      "path": "INFRASTRUCTURE_AS_CODE.md",
+      "title": "INFRASTRUCTURE AS CODE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "infrastructure-setup",
+      "path": "INFRASTRUCTURE_SETUP.md",
+      "title": "INFRASTRUCTURE SETUP",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "integration-handoff",
+      "path": "INTEGRATION_HANDOFF.md",
+      "title": "INTEGRATION HANDOFF",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "integration-improvements-phase-0-8",
+      "path": "INTEGRATION_IMPROVEMENTS_PHASE_0-8.md",
+      "title": "INTEGRATION IMPROVEMENTS PHASE 0-8",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "load-testing-guide",
+      "path": "LOAD_TESTING_GUIDE.md",
+      "title": "LOAD TESTING GUIDE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "local-development",
+      "path": "LOCAL_DEVELOPMENT.md",
+      "title": "LOCAL DEVELOPMENT",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "login-500-fix-2025-11-25",
+      "path": "LOGIN_500_FIX_2025-11-25.md",
+      "title": "LOGIN 500 FIX 2025-11-25",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "medical-features",
+      "path": "MEDICAL_FEATURES.md",
+      "title": "MEDICAL FEATURES",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "message-edit-progress",
+      "path": "MESSAGE_EDIT_PROGRESS.md",
+      "title": "MESSAGE EDIT PROGRESS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "nextcloud-apps-design",
+      "path": "NEXTCLOUD_APPS_DESIGN.md",
+      "title": "NEXTCLOUD APPS DESIGN",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "nextcloud-integration",
+      "path": "NEXTCLOUD_INTEGRATION.md",
+      "title": "NEXTCLOUD INTEGRATION",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "oauth-login-config",
+      "path": "OAUTH_LOGIN_CONFIG.md",
+      "title": "OAUTH LOGIN CONFIG",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "observability",
+      "path": "OBSERVABILITY.md",
+      "title": "OBSERVABILITY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "orchestration-design",
+      "path": "ORCHESTRATION_DESIGN.md",
+      "title": "ORCHESTRATION DESIGN",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "part2-deferred-backend-features-plan",
+      "path": "PART2_DEFERRED_BACKEND_FEATURES_PLAN.md",
+      "title": "PART2 DEFERRED BACKEND FEATURES PLAN",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "part3-platform-enhancements-plan",
+      "path": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md",
+      "title": "PART3 PLATFORM ENHANCEMENTS PLAN",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "performance-benchmarks",
+      "path": "PERFORMANCE_BENCHMARKS.md",
+      "title": "PERFORMANCE BENCHMARKS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "performance-tuning-guide",
+      "path": "PERFORMANCE_TUNING_GUIDE.md",
+      "title": "PERFORMANCE TUNING GUIDE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-02-completion-report",
+      "path": "PHASE_02_COMPLETION_REPORT.md",
+      "title": "PHASE 02 COMPLETION REPORT",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-02-enhancements-report",
+      "path": "PHASE_02_ENHANCEMENTS_REPORT.md",
+      "title": "PHASE 02 ENHANCEMENTS REPORT",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-03-completion-report",
+      "path": "PHASE_03_COMPLETION_REPORT.md",
+      "title": "PHASE 03 COMPLETION REPORT",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-04-completion-report",
+      "path": "PHASE_04_COMPLETION_REPORT.md",
+      "title": "PHASE 04 COMPLETION REPORT",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-05-completion-report",
+      "path": "PHASE_05_COMPLETION_REPORT.md",
+      "title": "PHASE 05 COMPLETION REPORT",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-06-completion-report",
+      "path": "PHASE_06_COMPLETION_REPORT.md",
+      "title": "PHASE 06 COMPLETION REPORT",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-07-completion-report",
+      "path": "PHASE_07_COMPLETION_REPORT.md",
+      "title": "PHASE 07 COMPLETION REPORT",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-08-api-contracts",
+      "path": "PHASE_08_API_CONTRACTS.md",
+      "title": "PHASE 08 API CONTRACTS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-08-completion-report",
+      "path": "PHASE_08_COMPLETION_REPORT.md",
+      "title": "PHASE 08 COMPLETION REPORT",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-09-completion-report",
+      "path": "PHASE_09_COMPLETION_REPORT.md",
+      "title": "PHASE 09 COMPLETION REPORT",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-0-1-completion-report",
+      "path": "PHASE_0_1_COMPLETION_REPORT.md",
+      "title": "PHASE 0 1 COMPLETION REPORT",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-0-1-optimization-recommendations",
+      "path": "PHASE_0_1_OPTIMIZATION_RECOMMENDATIONS.md",
+      "title": "PHASE 0 1 OPTIMIZATION RECOMMENDATIONS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-10-completion-report",
+      "path": "PHASE_10_COMPLETION_REPORT.md",
+      "title": "PHASE 10 COMPLETION REPORT",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-2-optimized-plan",
+      "path": "PHASE_2_OPTIMIZED_PLAN.md",
+      "title": "PHASE 2 OPTIMIZED PLAN",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-template",
+      "path": "PHASE_TEMPLATE.md",
+      "title": "PHASE TEMPLATE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "production-deployment-runbook",
+      "path": "PRODUCTION_DEPLOYMENT_RUNBOOK.md",
+      "title": "PRODUCTION DEPLOYMENT RUNBOOK",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "production-readiness-checklist",
+      "path": "PRODUCTION_READINESS_CHECKLIST.md",
+      "title": "PRODUCTION READINESS CHECKLIST",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "project-summary",
+      "path": "PROJECT_SUMMARY.md",
+      "title": "PROJECT SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "readme",
+      "path": "README.md",
+      "title": "README",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "remaining-message-edit-work",
+      "path": "REMAINING_MESSAGE_EDIT_WORK.md",
+      "title": "REMAINING MESSAGE EDIT WORK",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "roadmap",
+      "path": "ROADMAP.md",
+      "title": "ROADMAP",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "rto-rpo-documentation",
+      "path": "RTO_RPO_DOCUMENTATION.md",
+      "title": "RTO RPO DOCUMENTATION",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "security",
+      "path": "SECURITY.md",
+      "title": "SECURITY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "semantic-search-design",
+      "path": "SEMANTIC_SEARCH_DESIGN.md",
+      "title": "SEMANTIC SEARCH DESIGN",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "service-catalog",
+      "path": "SERVICE_CATALOG.md",
+      "title": "SERVICE CATALOG",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "start-here",
+      "path": "START_HERE.md",
+      "title": "START HERE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "system-review-2025-11-22",
+      "path": "SYSTEM_REVIEW_2025-11-22.md",
+      "title": "SYSTEM REVIEW 2025-11-22",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "terraform-guide",
+      "path": "TERRAFORM_GUIDE.md",
+      "title": "TERRAFORM GUIDE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "testing-contracts",
+      "path": "TESTING_CONTRACTS.md",
+      "title": "TESTING CONTRACTS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "testing-guide",
+      "path": "TESTING_GUIDE.md",
+      "title": "TESTING GUIDE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "testing-results-2025-11-22",
+      "path": "TESTING_RESULTS_2025-11-22.md",
+      "title": "TESTING RESULTS 2025-11-22",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "tools-and-integrations",
+      "path": "TOOLS_AND_INTEGRATIONS.md",
+      "title": "TOOLS AND INTEGRATIONS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "tools-completion-summary",
+      "path": "TOOLS_COMPLETION_SUMMARY.md",
+      "title": "TOOLS COMPLETION SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "tools-integration-summary",
+      "path": "TOOLS_INTEGRATION_SUMMARY.md",
+      "title": "TOOLS INTEGRATION SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "user-guide",
+      "path": "USER_GUIDE.md",
+      "title": "USER GUIDE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "voice-mode-settings-guide",
+      "path": "VOICE_MODE_SETTINGS_GUIDE.md",
+      "title": "VOICE MODE SETTINGS GUIDE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "voice-ready-state-2025-11-25",
+      "path": "VOICE_READY_STATE_2025-11-25.md",
+      "title": "VOICE READY STATE 2025-11-25",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "web-app-specs",
+      "path": "WEB_APP_SPECS.md",
+      "title": "WEB APP SPECS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "web-app-wireframes",
+      "path": "WEB_APP_WIREFRAMES.md",
+      "title": "WEB APP WIREFRAMES",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "feature-parity",
+      "path": "admin/feature-parity.md",
+      "title": "feature-parity",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "architecture-diagrams",
+      "path": "architecture/ARCHITECTURE_DIAGRAMS.md",
+      "title": "ARCHITECTURE DIAGRAMS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "readme",
+      "path": "architecture/README.md",
+      "title": "README",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "backend-implementation-plan",
+      "path": "archive/BACKEND_IMPLEMENTATION_PLAN.md",
+      "title": "BACKEND IMPLEMENTATION PLAN",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "backend-implementation-summary",
+      "path": "archive/BACKEND_IMPLEMENTATION_SUMMARY.md",
+      "title": "BACKEND IMPLEMENTATION SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "branching-and-shortcuts-implementation",
+      "path": "archive/BRANCHING_AND_SHORTCUTS_IMPLEMENTATION.md",
+      "title": "BRANCHING AND SHORTCUTS IMPLEMENTATION",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "changes-summary",
+      "path": "archive/CHANGES_SUMMARY.md",
+      "title": "CHANGES SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "current-phase",
+      "path": "archive/CURRENT_PHASE.md",
+      "title": "CURRENT PHASE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "deployment-complete",
+      "path": "archive/DEPLOYMENT_COMPLETE.md",
+      "title": "DEPLOYMENT COMPLETE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "design-system-implementation-plan",
+      "path": "archive/DESIGN_SYSTEM_IMPLEMENTATION_PLAN.md",
+      "title": "DESIGN SYSTEM IMPLEMENTATION PLAN",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "development-log",
+      "path": "archive/DEVELOPMENT_LOG.md",
+      "title": "DEVELOPMENT LOG",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "development-session-summary",
+      "path": "archive/DEVELOPMENT_SESSION_SUMMARY.md",
+      "title": "DEVELOPMENT SESSION SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "dev-cors-fix-summary",
+      "path": "archive/DEV_CORS_FIX_SUMMARY.md",
+      "title": "DEV CORS FIX SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "documentation-created",
+      "path": "archive/DOCUMENTATION_CREATED.md",
+      "title": "DOCUMENTATION CREATED",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "frontend-phase1-phase2-summary",
+      "path": "archive/FRONTEND_PHASE1_PHASE2_SUMMARY.md",
+      "title": "FRONTEND PHASE1 PHASE2 SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "frontend-phase8-tests",
+      "path": "archive/FRONTEND_PHASE8_TESTS.md",
+      "title": "FRONTEND PHASE8 TESTS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-09-complete-summary",
+      "path": "archive/PHASE_09_COMPLETE_SUMMARY.md",
+      "title": "PHASE 09 COMPLETE SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-10-complete-summary",
+      "path": "archive/PHASE_10_COMPLETE_SUMMARY.md",
+      "title": "PHASE 10 COMPLETE SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-10-locust-summary",
+      "path": "archive/PHASE_10_LOCUST_SUMMARY.md",
+      "title": "PHASE 10 LOCUST SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-10-optimization-summary",
+      "path": "archive/PHASE_10_OPTIMIZATION_SUMMARY.md",
+      "title": "PHASE 10 OPTIMIZATION SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-3-voice-complete",
+      "path": "archive/PHASE_3_VOICE_COMPLETE.md",
+      "title": "PHASE 3 VOICE COMPLETE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-5-complete",
+      "path": "archive/PHASE_5_COMPLETE.md",
+      "title": "PHASE 5 COMPLETE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-6-citations-complete",
+      "path": "archive/PHASE_6_CITATIONS_COMPLETE.md",
+      "title": "PHASE 6 CITATIONS COMPLETE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-7-complete",
+      "path": "archive/PHASE_7_COMPLETE.md",
+      "title": "PHASE 7 COMPLETE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-7-conversation-management-progress",
+      "path": "archive/PHASE_7_CONVERSATION_MANAGEMENT_PROGRESS.md",
+      "title": "PHASE 7 CONVERSATION MANAGEMENT PROGRESS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-7-export-complete",
+      "path": "archive/PHASE_7_EXPORT_COMPLETE.md",
+      "title": "PHASE 7 EXPORT COMPLETE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-8-accessibility-complete",
+      "path": "archive/PHASE_8_ACCESSIBILITY_COMPLETE.md",
+      "title": "PHASE 8 ACCESSIBILITY COMPLETE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "plan",
+      "path": "archive/PLAN.md",
+      "title": "PLAN",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "pull-request",
+      "path": "archive/PULL_REQUEST.md",
+      "title": "PULL REQUEST",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "readme",
+      "path": "archive/README.md",
+      "title": "README",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "realtime-sanity-check",
+      "path": "archive/REALTIME_SANITY_CHECK.md",
+      "title": "REALTIME SANITY CHECK",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "session-summary-2025-11-21-phase-10",
+      "path": "archive/SESSION_SUMMARY_2025-11-21_PHASE_10.md",
+      "title": "SESSION SUMMARY 2025-11-21 PHASE 10",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "session-summary-2025-11-21-phase-9",
+      "path": "archive/SESSION_SUMMARY_2025-11-21_PHASE_9.md",
+      "title": "SESSION SUMMARY 2025-11-21 PHASE 9",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "voice-endpoint-fix",
+      "path": "archive/VOICE_ENDPOINT_FIX.md",
+      "title": "VOICE ENDPOINT FIX",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "voice-mode-enhancement-summary",
+      "path": "archive/VOICE_MODE_ENHANCEMENT_SUMMARY.md",
+      "title": "VOICE MODE ENHANCEMENT SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "voice-realtime-integration",
+      "path": "archive/VOICE_REALTIME_INTEGRATION.md",
+      "title": "VOICE REALTIME INTEGRATION",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "web-app-development-summary",
+      "path": "archive/WEB_APP_DEVELOPMENT_SUMMARY.md",
+      "title": "WEB APP DEVELOPMENT SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "work-completed-2025-11-21",
+      "path": "archive/WORK_COMPLETED_2025-11-21.md",
+      "title": "WORK COMPLETED 2025-11-21",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "admin-panel-feature-specs",
+      "path": "client-implementation/ADMIN_PANEL_FEATURE_SPECS.md",
+      "title": "ADMIN PANEL FEATURE SPECS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "api-reference",
+      "path": "client-implementation/API_REFERENCE.md",
+      "title": "API REFERENCE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "architecture-overview",
+      "path": "client-implementation/ARCHITECTURE_OVERVIEW.md",
+      "title": "ARCHITECTURE OVERVIEW",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "buttongroup",
+      "path": "client-implementation/ButtonGroup.md",
+      "title": "ButtonGroup",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "client-dev-roadmap",
+      "path": "client-implementation/CLIENT_DEV_ROADMAP.md",
+      "title": "CLIENT DEV ROADMAP",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "client-folder-structure",
+      "path": "client-implementation/CLIENT_FOLDER_STRUCTURE.md",
+      "title": "CLIENT FOLDER STRUCTURE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "code-examples",
+      "path": "client-implementation/CODE_EXAMPLES.md",
+      "title": "CODE EXAMPLES",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "component-library",
+      "path": "client-implementation/COMPONENT_LIBRARY.md",
+      "title": "COMPONENT LIBRARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "conversations-and-routing",
+      "path": "client-implementation/CONVERSATIONS_AND_ROUTING.md",
+      "title": "CONVERSATIONS AND ROUTING",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "development-workflow",
+      "path": "client-implementation/DEVELOPMENT_WORKFLOW.md",
+      "title": "DEVELOPMENT WORKFLOW",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "docs-site-feature-specs",
+      "path": "client-implementation/DOCS_SITE_FEATURE_SPECS.md",
+      "title": "DOCS SITE FEATURE SPECS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "frontend-phase3-plan",
+      "path": "client-implementation/FRONTEND_PHASE3_PLAN.md",
+      "title": "FRONTEND PHASE3 PLAN",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "integration-guide",
+      "path": "client-implementation/INTEGRATION_GUIDE.md",
+      "title": "INTEGRATION GUIDE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "iconbutton",
+      "path": "client-implementation/IconButton.md",
+      "title": "IconButton",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "master-implementation-plan",
+      "path": "client-implementation/MASTER_IMPLEMENTATION_PLAN.md",
+      "title": "MASTER IMPLEMENTATION PLAN",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "open-questions",
+      "path": "client-implementation/OPEN_QUESTIONS.md",
+      "title": "OPEN QUESTIONS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "readme",
+      "path": "client-implementation/README.md",
+      "title": "README",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "realtime-proxy-spec",
+      "path": "client-implementation/REALTIME_PROXY_SPEC.md",
+      "title": "REALTIME PROXY SPEC",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "technical-architecture",
+      "path": "client-implementation/TECHNICAL_ARCHITECTURE.md",
+      "title": "TECHNICAL ARCHITECTURE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "testing-guide",
+      "path": "client-implementation/TESTING_GUIDE.md",
+      "title": "TESTING GUIDE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "testing-phase2",
+      "path": "client-implementation/TESTING_PHASE2.md",
+      "title": "TESTING PHASE2",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "testing-phase3",
+      "path": "client-implementation/TESTING_PHASE3.md",
+      "title": "TESTING PHASE3",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "web-app-feature-specs",
+      "path": "client-implementation/WEB_APP_FEATURE_SPECS.md",
+      "title": "WEB APP FEATURE SPECS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "rest-api",
+      "path": "client-implementation/api-reference/rest-api.md",
+      "title": "rest-api",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "architecture",
+      "path": "client-implementation/overview/ARCHITECTURE.md",
+      "title": "ARCHITECTURE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "proxy-spec",
+      "path": "client-implementation/realtime/proxy-spec.md",
+      "title": "proxy-spec",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "deployment-summary",
+      "path": "deployment/DEPLOYMENT_SUMMARY.md",
+      "title": "DEPLOYMENT SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-1-breakdown",
+      "path": "design-system/PHASE_1_BREAKDOWN.md",
+      "title": "PHASE 1 BREAKDOWN",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "docs-domain",
+      "path": "infra/DOCS_DOMAIN.md",
+      "title": "DOCS DOMAIN",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "business-metrics",
+      "path": "operations/BUSINESS_METRICS.md",
+      "title": "BUSINESS METRICS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "connection-pool-optimization",
+      "path": "operations/CONNECTION_POOL_OPTIMIZATION.md",
+      "title": "CONNECTION POOL OPTIMIZATION",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "analytics-data-policy",
+      "path": "operations/compliance/ANALYTICS_DATA_POLICY.md",
+      "title": "ANALYTICS DATA POLICY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "architecture",
+      "path": "overview/ARCHITECTURE.md",
+      "title": "ARCHITECTURE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "final-code-review",
+      "path": "phase-15-final-review/FINAL_CODE_REVIEW.md",
+      "title": "FINAL CODE REVIEW",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "project-handoff-package",
+      "path": "phase-15-final-review/PROJECT_HANDOFF_PACKAGE.md",
+      "title": "PROJECT HANDOFF PACKAGE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase8-folders-testing-guide",
+      "path": "phase8-folders-testing-guide.md",
+      "title": "phase8-folders-testing-guide",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-00-initialization",
+      "path": "phases/PHASE_00_INITIALIZATION.md",
+      "title": "PHASE 00 INITIALIZATION",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-01-infrastructure",
+      "path": "phases/PHASE_01_INFRASTRUCTURE.md",
+      "title": "PHASE 01 INFRASTRUCTURE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-01-local-environment",
+      "path": "phases/PHASE_01_LOCAL_ENVIRONMENT.md",
+      "title": "PHASE 01 LOCAL ENVIRONMENT",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-02-database-schema",
+      "path": "phases/PHASE_02_DATABASE_SCHEMA.md",
+      "title": "PHASE 02 DATABASE SCHEMA",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-02-security-nextcloud",
+      "path": "phases/PHASE_02_SECURITY_NEXTCLOUD.md",
+      "title": "PHASE 02 SECURITY NEXTCLOUD",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-03-microservices",
+      "path": "phases/PHASE_03_MICROSERVICES.md",
+      "title": "PHASE 03 MICROSERVICES",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-04-voice-pipeline",
+      "path": "phases/PHASE_04_VOICE_PIPELINE.md",
+      "title": "PHASE 04 VOICE PIPELINE",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-05-medical-ai",
+      "path": "phases/PHASE_05_MEDICAL_AI.md",
+      "title": "PHASE 05 MEDICAL AI",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-06-nextcloud-apps",
+      "path": "phases/PHASE_06_NEXTCLOUD_APPS.md",
+      "title": "PHASE 06 NEXTCLOUD APPS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-07-admin-panel",
+      "path": "phases/PHASE_07_ADMIN_PANEL.md",
+      "title": "PHASE 07 ADMIN PANEL",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-08-observability",
+      "path": "phases/PHASE_08_OBSERVABILITY.md",
+      "title": "PHASE 08 OBSERVABILITY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-09-iac-cicd",
+      "path": "phases/PHASE_09_IAC_CICD.md",
+      "title": "PHASE 09 IAC CICD",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-10-load-testing",
+      "path": "phases/PHASE_10_LOAD_TESTING.md",
+      "title": "PHASE 10 LOAD TESTING",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-11-complete-summary",
+      "path": "phases/PHASE_11_COMPLETE_SUMMARY.md",
+      "title": "PHASE 11 COMPLETE SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-11-security-hipaa",
+      "path": "phases/PHASE_11_SECURITY_HIPAA.md",
+      "title": "PHASE 11 SECURITY HIPAA",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-12-complete-summary",
+      "path": "phases/PHASE_12_COMPLETE_SUMMARY.md",
+      "title": "PHASE 12 COMPLETE SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-12-ha-dr",
+      "path": "phases/PHASE_12_HA_DR.md",
+      "title": "PHASE 12 HA DR",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-13-complete-summary",
+      "path": "phases/PHASE_13_COMPLETE_SUMMARY.md",
+      "title": "PHASE 13 COMPLETE SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-13-testing-docs",
+      "path": "phases/PHASE_13_TESTING_DOCS.md",
+      "title": "PHASE 13 TESTING DOCS",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-14-complete-summary",
+      "path": "phases/PHASE_14_COMPLETE_SUMMARY.md",
+      "title": "PHASE 14 COMPLETE SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-14-production-deploy",
+      "path": "phases/PHASE_14_PRODUCTION_DEPLOY.md",
+      "title": "PHASE 14 PRODUCTION DEPLOY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "phase-15-complete-summary",
+      "path": "phases/PHASE_15_COMPLETE_SUMMARY.md",
+      "title": "PHASE 15 COMPLETE SUMMARY",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "docs-site-path-resolution-plan",
+      "path": "plans/DOCS_SITE_PATH_RESOLUTION_PLAN.md",
+      "title": "DOCS SITE PATH RESOLUTION PLAN",
+      "status": "draft",
+      "lastUpdated": ""
+    },
+    {
+      "slug": "e2e-testing-guide",
+      "path": "testing/E2E_TESTING_GUIDE.md",
+      "title": "E2E TESTING GUIDE",
+      "status": "draft",
+      "lastUpdated": ""
+    }
+  ]
+}
