@@ -255,7 +255,7 @@ export function AudioPlayerEnhanced({
         {allowBargeIn && isPlaying && (
           <Button
             type="button"
-            variant="destructive"
+            variant="danger"
             size="sm"
             onClick={handleBargeIn}
             className="flex-shrink-0"

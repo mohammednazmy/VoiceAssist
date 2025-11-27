@@ -68,7 +68,7 @@ export function VoiceModePanel({
   const [showSettings, setShowSettings] = useState(false);
   const [showPendingRecordings, setShowPendingRecordings] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [_isSynthesizing, _setIsSynthesizing] = useState(false);
+  const [isSynthesizing, setIsSynthesizing] = useState(false);
 
   // Track pending final transcripts to add to chat
   const pendingAiMessageRef = useRef<string | null>(null);

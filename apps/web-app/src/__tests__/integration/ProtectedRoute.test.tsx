@@ -56,7 +56,7 @@ describe("ProtectedRoute Integration", () => {
       id: "1",
       email: "test@example.com",
       name: "Test User",
-      role: "user",
+      role: "patient",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -161,7 +161,7 @@ describe("ProtectedRoute Integration", () => {
       id: "1",
       email: "test@example.com",
       name: "Test User",
-      role: "user",
+      role: "patient",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

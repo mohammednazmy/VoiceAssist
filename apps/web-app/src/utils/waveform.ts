@@ -35,7 +35,7 @@ export class WaveformVisualizer {
   private canvasCtx: CanvasRenderingContext2D;
   private audioContext: AudioContext;
   private analyser: AnalyserNode;
-  private dataArray: Uint8Array;
+  private dataArray: Uint8Array<ArrayBuffer>;
   private config: WaveformConfig;
   private rafId: number | null = null;
   private isActive: boolean = false;
@@ -62,7 +62,7 @@ export class WaveformVisualizer {
     this.analyser.smoothingTimeConstant = this.config.smoothingTimeConstant;
 
     // Create data array for time domain data
-    this.dataArray = new Uint8Array(this.analyser.fftSize);
+    this.dataArray = new Uint8Array(new ArrayBuffer(this.analyser.fftSize));
 
     // Initialize canvas
     this.clearCanvas();
@@ -111,7 +111,7 @@ export class WaveformVisualizer {
     // Update analyser if relevant config changed
     if (config.fftSize !== undefined) {
       this.analyser.fftSize = this.config.fftSize;
-      this.dataArray = new Uint8Array(this.analyser.fftSize);
+      this.dataArray = new Uint8Array(new ArrayBuffer(this.analyser.fftSize));
     }
 
     if (config.smoothingTimeConstant !== undefined) {
@@ -276,7 +276,7 @@ export class CircularWaveformVisualizer {
   private canvasCtx: CanvasRenderingContext2D;
   private audioContext: AudioContext;
   private analyser: AnalyserNode;
-  private dataArray: Uint8Array;
+  private dataArray: Uint8Array<ArrayBuffer>;
   private rafId: number | null = null;
   private isActive: boolean = false;
   private radius: number;
@@ -298,7 +298,7 @@ export class CircularWaveformVisualizer {
     this.audioContext = new AudioContext();
     this.analyser = this.audioContext.createAnalyser();
     this.analyser.fftSize = 512;
-    this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+    this.dataArray = new Uint8Array(new ArrayBuffer(this.analyser.frequencyBinCount));
   }
 
   async connect(stream: MediaStream): Promise<void> {

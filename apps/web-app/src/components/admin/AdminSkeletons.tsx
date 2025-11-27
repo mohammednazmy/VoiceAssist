@@ -5,12 +5,14 @@
 
 interface SkeletonProps {
   className?: string;
+  height?: string | number;
 }
 
-function Skeleton({ className = "" }: SkeletonProps) {
+function Skeleton({ className = "", height }: SkeletonProps) {
   return (
     <div
       className={`animate-pulse bg-neutral-200 rounded ${className}`}
+      style={height ? { height } : undefined}
       aria-hidden="true"
     />
   );
@@ -41,7 +43,7 @@ export function ChartSkeleton({ height = 150 }: { height?: number }) {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <Skeleton className="h-5 w-32 mb-4" />
-      <Skeleton className={`w-full`} style={{ height }} />
+      <Skeleton className="w-full" height={height} />
     </div>
   );
 }

@@ -186,10 +186,10 @@ export function captureVoiceError(
 
   const breadcrumb = context?.breadcrumb
     ? {
-        type: "info",
+        type: "info" as const,
         category: "voice",
         message: context.breadcrumb,
-        level: "info",
+        level: "info" as const,
       }
     : undefined;
 

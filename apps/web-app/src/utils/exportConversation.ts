@@ -18,8 +18,8 @@ export function exportToMarkdown(
   if (includeTimestamps && messages.length > 0) {
     const firstMessage = messages[0];
     const lastMessage = messages[messages.length - 1];
-    markdown += `**Started:** ${new Date(firstMessage.createdAt).toLocaleString()}\n`;
-    markdown += `**Last Updated:** ${new Date(lastMessage.createdAt).toLocaleString()}\n`;
+    markdown += `**Started:** ${new Date(firstMessage.timestamp).toLocaleString()}\n`;
+    markdown += `**Last Updated:** ${new Date(lastMessage.timestamp).toLocaleString()}\n`;
     markdown += `**Messages:** ${messages.length}\n\n`;
     markdown += '---\n\n';
   }
@@ -30,7 +30,7 @@ export function exportToMarkdown(
     markdown += `## ${role}\n\n`;
 
     if (includeTimestamps) {
-      markdown += `*${new Date(message.createdAt).toLocaleString()}*\n\n`;
+      markdown += `*${new Date(message.timestamp).toLocaleString()}*\n\n`;
     }
 
     // Add message content

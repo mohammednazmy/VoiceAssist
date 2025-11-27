@@ -230,7 +230,7 @@ export function ProfilePage() {
               <dt className="text-sm font-medium text-text-secondary">Role</dt>
               <dd>
                 <Badge variant="secondary" size="md">
-                  {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1) || 'User'}
+                  {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
                 </Badge>
               </dd>
             </div>

@@ -162,7 +162,7 @@ describe("useToast", () => {
   it("should return unique toast IDs", () => {
     const { result } = renderHook(() => useToast());
 
-    let id1: string, id2: string, id3: string;
+    let id1 = "", id2 = "", id3 = "";
     act(() => {
       id1 = result.current.success("Toast 1");
       id2 = result.current.error("Toast 2");

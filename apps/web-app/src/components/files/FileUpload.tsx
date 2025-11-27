@@ -100,7 +100,7 @@ export function FileUpload({
           );
 
           // Upload to backend
-          const document = await apiClient.uploadDocument(file, "chat-attachment");
+          const document = await apiClient.uploadDocument(file, "chat-attachment") as { id: string; url?: string };
 
           // Update progress
           setUploadingFiles((prev) =>

@@ -6,8 +6,10 @@ import { ToolConfirmationDialog } from './ToolConfirmationDialog';
 
 export function Chat() {
   const [input, setInput] = useState('');
-  const { messages, loading, error, sendMessage } = useChatSession();
+  const [conversationId] = useState<string | undefined>('demo-conversation');
+  const { messages, connectionStatus, sendMessage } = useChatSession({ conversationId });
   const tool = useToolConfirmation();
+  const loading = connectionStatus === 'connecting' || connectionStatus === 'reconnecting';
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -39,7 +41,7 @@ export function Chat() {
             <div key={m.id} className="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">
               <div className="text-xs text-slate-500 mb-1">
                 {m.role === 'assistant' ? 'Assistant' : 'You'} ·{' '}
-                {new Date(m.createdAt).toLocaleTimeString()}
+                {new Date(m.timestamp).toLocaleTimeString()}
               </div>
               <div className="whitespace-pre-wrap text-slate-100">{m.content}</div>
               {m.citations && m.citations.length > 0 && (
@@ -52,7 +54,7 @@ export function Chat() {
               )}
             </div>
           ))}
-          {error && <div className="text-xs text-red-400">{error}</div>}
+          {connectionStatus === 'failed' && <div className="text-xs text-red-400">Connection failed</div>}
         </div>
         <form onSubmit={onSubmit} className="border-t border-slate-800 px-6 py-3 flex gap-2">
           <input

@@ -24,6 +24,7 @@ export interface Citation {
   sourceId?: string;
   authors?: string[];
   publicationYear?: number;
+  journal?: string; // Journal name for academic citations
   snippet?: string;
   relevanceScore?: number;
   metadata?: Record<string, any>; // Additional metadata

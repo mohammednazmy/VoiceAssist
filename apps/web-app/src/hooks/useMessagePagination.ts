@@ -109,7 +109,7 @@ export function useMessagePagination(
     try {
       // First, fetch page 1 to get total count and calculate last page
       const firstResponse = await fetchMessages(1, pageSize);
-      const total = firstResponse.total;
+      const total = firstResponse.totalCount;
       setTotalCount(total);
 
       if (total === 0) {

@@ -97,7 +97,7 @@ const mockIDBObjectStore = () => ({
   clear: vi.fn(() => mockIDBRequest()),
   getAll: vi.fn(() => {
     const request = mockIDBRequest();
-    request.result = [];
+    (request as any).result = [];
     setTimeout(() => {
       if (request.onsuccess) (request as any).onsuccess({ target: request });
     }, 0);
@@ -156,7 +156,7 @@ const mockIDBDatabase = () => ({
   open: vi.fn((_name: string) => {
     const request = mockIDBRequest();
     setTimeout(() => {
-      request.result = mockIDBDatabase();
+      (request as any).result = mockIDBDatabase();
       if (request.onsuccess) (request as any).onsuccess({ target: request });
     }, 0);
     return request;

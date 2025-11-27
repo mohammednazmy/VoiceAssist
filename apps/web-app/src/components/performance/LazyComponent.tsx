@@ -95,7 +95,8 @@ export function createLazyComponent<P extends object>(
       <div ref={ref}>
         {hasBeenVisible ? (
           <Suspense fallback={fallback}>
-            <LazyComp {...props} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <LazyComp {...(props as any)} />
           </Suspense>
         ) : (
           fallback

@@ -217,7 +217,7 @@ export function ChatPage() {
             MESSAGE_PAGE_SIZE,
           );
 
-          const total = firstPageResponse.total;
+          const total = firstPageResponse.totalCount;
           setTotalMessageCount(total);
 
           if (total === 0) {
@@ -398,7 +398,6 @@ export function ChatPage() {
       addMessage({
         role: "user",
         content,
-        metadata: { source: "voice" },
       });
     },
     [addMessage],
@@ -409,7 +408,6 @@ export function ChatPage() {
       addMessage({
         role: "assistant",
         content,
-        metadata: { source: "voice" },
       });
     },
     [addMessage],
@@ -480,7 +478,7 @@ export function ChatPage() {
   );
 
   // Handle branch request from message - shows preview instead of directly creating
-  const handleBranchFromMessage = useCallback((messageId: string) => {
+  const handleBranchFromMessage = useCallback(async (messageId: string): Promise<void> => {
     setBranchPreviewMessageId(messageId);
   }, []);
 

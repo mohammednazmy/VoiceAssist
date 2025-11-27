@@ -273,8 +273,10 @@ export function BranchTree({
       } else {
         // Limit to 2 selections
         if (next.size >= 2) {
-          const first = next.values().next().value;
-          next.delete(first);
+          const firstValue = next.values().next().value;
+          if (firstValue !== undefined) {
+            next.delete(firstValue);
+          }
         }
         next.add(branchId);
       }
