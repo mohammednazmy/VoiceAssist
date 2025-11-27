@@ -69,6 +69,17 @@ class Settings(BaseSettings):
     LOCAL_LLM_MODEL: Optional[str] = None
     LOCAL_LLM_TIMEOUT_SEC: int = 15
 
+    # Specialized model adapters
+    ENABLE_PUBMEDBERT_ADAPTER: bool = True
+    ENABLE_BIOGPT_ADAPTER: bool = True
+    PUBMEDBERT_MODEL_ID: Optional[str] = None
+    BIOGPT_MODEL_ID: Optional[str] = None
+    MODEL_SELECTION_DEFAULT: str = "gpt-4o"
+
+    # Retrieval configuration
+    ENABLE_QUERY_DECOMPOSITION: bool = True
+    ENABLE_MULTI_HOP_RETRIEVAL: bool = True
+
     # Voice/TTS settings (wire-up placeholder)
     TTS_PROVIDER: Optional[str] = None  # e.g., "openai", "elevenlabs", "azure", "gcp"
     TTS_ENDPOINT: Optional[str] = None

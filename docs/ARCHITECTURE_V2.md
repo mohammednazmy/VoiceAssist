@@ -248,6 +248,11 @@ The backend uses a **monorepo-first, microservices-ready** architecture:
 
 **Note:** In Phases 0-10, these services are modules/routers within the single FastAPI app. In Phases 11-14, they can be extracted to separate containers if needed.
 
+**Medical KB / RAG Enhancements (Phase 12 hardening):**
+- Model adapter registry exposes BioGPT and PubMedBERT behind feature toggles (`ENABLE_BIOGPT_ADAPTER`, `ENABLE_PUBMEDBERT_ADAPTER`) while keeping the default OpenAI model visible in API metadata.
+- Query orchestrator now performs query decomposition and multi-hop retrieval when enabled (`ENABLE_QUERY_DECOMPOSITION`, `ENABLE_MULTI_HOP_RETRIEVAL`), synthesizing context across documents before calling the LLM.
+- Responses surface model provenance, selection confidence, retrieval confidence, and reasoning path data so downstream clients can render transparency badges without additional lookups.
+
 ### 2. Kubernetes Orchestration
 
 **Local Development:** K3s (lightweight K8s)
