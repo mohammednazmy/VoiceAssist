@@ -6,7 +6,7 @@ This module provides services for:
 - Voice authentication (speaker verification)
 - OpenAI Realtime API integration
 - RAG pipeline orchestration
-- External API integrations (Nextcloud, CalDAV, etc.)
+- External API integrations (Nextcloud, CalDAV, CardDAV, Email, OIDC)
 """
 
 from app.services.audio_processor import (
@@ -15,6 +15,19 @@ from app.services.audio_processor import (
     EchoCanceller,
     NoiseSuppressor,
     StreamingAudioProcessor,
+)
+from app.services.caldav_service import CalDAVService, CalendarEvent
+from app.services.carddav_service import AddressBook, CardDAVService, Contact, ContactSearchQuery
+from app.services.carddav_service import EmailAddress as CardEmailAddress
+from app.services.carddav_service import EmailType, PhoneNumber, PhoneType, PostalAddress
+from app.services.email_service import Email, EmailFolder, EmailService, EmailThread
+from app.services.oidc_service import (
+    AuthorizationRequest,
+    OIDCClaims,
+    OIDCProvider,
+    OIDCProviderConfig,
+    OIDCService,
+    OIDCTokens,
 )
 from app.services.realtime_voice_service import RealtimeVoiceService, realtime_voice_service
 from app.services.voice_activity_detector import SpeechState, StreamingVAD, VADConfig, VoiceActivityDetector
@@ -60,4 +73,29 @@ __all__ = [
     # Realtime Voice Service
     "RealtimeVoiceService",
     "realtime_voice_service",
+    # OIDC Authentication
+    "OIDCService",
+    "OIDCProvider",
+    "OIDCProviderConfig",
+    "OIDCTokens",
+    "OIDCClaims",
+    "AuthorizationRequest",
+    # CalDAV Calendar
+    "CalDAVService",
+    "CalendarEvent",
+    # CardDAV Contacts
+    "CardDAVService",
+    "Contact",
+    "AddressBook",
+    "ContactSearchQuery",
+    "PhoneNumber",
+    "PhoneType",
+    "CardEmailAddress",
+    "EmailType",
+    "PostalAddress",
+    # Email Service
+    "EmailService",
+    "Email",
+    "EmailFolder",
+    "EmailThread",
 ]
