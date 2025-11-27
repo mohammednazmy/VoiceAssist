@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchAPI } from "../lib/api";
+import { useAuth } from "../contexts/AuthContext";
 
 interface User {
   id: string;
@@ -15,12 +16,14 @@ export function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { isViewer } = useAuth();
 
   useEffect(() => {
     loadUsers();
   }, []);
 
   const loadUsers = async () => {
+    setLoading(true);
     try {
       const data = await fetchAPI<User[]>("/api/users");
       setUsers(data);
@@ -33,6 +36,7 @@ export function UsersPage() {
   };
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
+    if (isViewer) return;
     try {
       await fetchAPI(`/api/users/${userId}`, {
         method: "PATCH",
@@ -45,6 +49,7 @@ export function UsersPage() {
   };
 
   const toggleAdminRole = async (userId: string, currentStatus: boolean) => {
+    if (isViewer) return;
     if (
       !confirm(
         `Are you sure you want to ${currentStatus ? "remove" : "grant"} admin privileges?`,
@@ -64,13 +69,73 @@ export function UsersPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-slate-400">Loading users...</div>
-      </div>
-    );
-  }
+  const renderTableRows = () => {
+    if (loading) {
+      return Array.from({ length: 5 }).map((_, idx) => (
+        <tr key={idx} className="divide-x divide-slate-900 bg-slate-900/30 animate-pulse">
+          {Array.from({ length: 6 }).map((__, cellIdx) => (
+            <td key={cellIdx} className="px-4 py-3">
+              <div className="h-3 w-full max-w-[140px] bg-slate-800 rounded" />
+            </td>
+          ))}
+        </tr>
+      ));
+    }
+
+    return users.map((user) => (
+      <tr key={user.id} className="hover:bg-slate-800/50">
+        <td className="px-4 py-3 text-sm text-slate-300">{user.email}</td>
+        <td className="px-4 py-3 text-sm text-slate-300">{user.full_name || "-"}</td>
+        <td className="px-4 py-3 text-sm">
+          <span
+            className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
+              user.is_admin
+                ? "bg-purple-900/50 text-purple-400 border border-purple-800"
+                : "bg-slate-800 text-slate-400 border border-slate-700"
+            }`}
+          >
+            {user.is_admin ? "Admin" : "User"}
+          </span>
+        </td>
+        <td className="px-4 py-3 text-sm">
+          <span
+            className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
+              user.is_active
+                ? "bg-green-900/50 text-green-400 border border-green-800"
+                : "bg-red-900/50 text-red-400 border border-red-800"
+            }`}
+          >
+            {user.is_active ? "Active" : "Inactive"}
+          </span>
+        </td>
+        <td className="px-4 py-3 text-sm text-slate-400">
+          {new Date(user.created_at).toLocaleDateString()}
+        </td>
+        <td className="px-4 py-3 text-sm text-right space-x-2">
+          <button
+            onClick={() => toggleAdminRole(user.id, user.is_admin)}
+            disabled={isViewer}
+            className="text-purple-400 hover:text-purple-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title={user.is_admin ? "Remove admin" : "Make admin"}
+          >
+            {user.is_admin ? "⚙️→👤" : "👤→⚙️"}
+          </button>
+          <button
+            onClick={() => toggleUserStatus(user.id, user.is_active)}
+            disabled={isViewer}
+            className={`${
+              user.is_active
+                ? "text-yellow-400 hover:text-yellow-300"
+                : "text-green-400 hover:text-green-300"
+            } transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+            title={user.is_active ? "Deactivate" : "Activate"}
+          >
+            {user.is_active ? "🔒" : "🔓"}
+          </button>
+        </td>
+      </tr>
+    ));
+  };
 
   return (
     <div className="flex-1 p-6 space-y-6 overflow-y-auto">
@@ -83,19 +148,31 @@ export function UsersPage() {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors"
+          disabled={isViewer}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-950 disabled:text-slate-400 text-white rounded-md text-sm font-medium transition-colors"
         >
           + Create User
         </button>
       </div>
 
-      {error && (
-        <div className="p-4 bg-red-950/50 border border-red-900 rounded-lg text-red-400">
-          {error}
+      {isViewer && (
+        <div className="p-3 bg-amber-950/40 border border-amber-900 rounded-md text-amber-300 text-sm">
+          Viewer role is read-only. User creation and status changes are disabled.
         </div>
       )}
 
-      {/* Users Table */}
+      {error && (
+        <div className="p-4 bg-red-950/50 border border-red-900 rounded-lg text-red-400 flex items-center justify-between gap-4">
+          <span>{error}</span>
+          <button
+            onClick={loadUsers}
+            className="px-3 py-1 text-xs bg-red-900/50 border border-red-800 rounded-md text-red-100 hover:bg-red-900"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       <div className="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden">
         <table className="w-full">
           <thead className="bg-slate-900 border-b border-slate-800">
@@ -120,75 +197,18 @@ export function UsersPage() {
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800">
-            {users.map((user) => (
-              <tr key={user.id} className="hover:bg-slate-800/50">
-                <td className="px-4 py-3 text-sm text-slate-300">
-                  {user.email}
-                </td>
-                <td className="px-4 py-3 text-sm text-slate-300">
-                  {user.full_name || "-"}
-                </td>
-                <td className="px-4 py-3 text-sm">
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
-                      user.is_admin
-                        ? "bg-purple-900/50 text-purple-400 border border-purple-800"
-                        : "bg-slate-800 text-slate-400 border border-slate-700"
-                    }`}
-                  >
-                    {user.is_admin ? "Admin" : "User"}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm">
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
-                      user.is_active
-                        ? "bg-green-900/50 text-green-400 border border-green-800"
-                        : "bg-red-900/50 text-red-400 border border-red-800"
-                    }`}
-                  >
-                    {user.is_active ? "Active" : "Inactive"}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm text-slate-400">
-                  {new Date(user.created_at).toLocaleDateString()}
-                </td>
-                <td className="px-4 py-3 text-sm text-right space-x-2">
-                  <button
-                    onClick={() => toggleAdminRole(user.id, user.is_admin)}
-                    className="text-purple-400 hover:text-purple-300 transition-colors"
-                    title={user.is_admin ? "Remove admin" : "Make admin"}
-                  >
-                    {user.is_admin ? "⚙️→👤" : "👤→⚙️"}
-                  </button>
-                  <button
-                    onClick={() => toggleUserStatus(user.id, user.is_active)}
-                    className={`${
-                      user.is_active
-                        ? "text-yellow-400 hover:text-yellow-300"
-                        : "text-green-400 hover:text-green-300"
-                    } transition-colors`}
-                    title={user.is_active ? "Deactivate" : "Activate"}
-                  >
-                    {user.is_active ? "🔒" : "🔓"}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
+          <tbody className="divide-y divide-slate-800">{renderTableRows()}</tbody>
         </table>
 
-        {users.length === 0 && (
+        {!loading && users.length === 0 && !error && (
           <div className="p-8 text-center text-slate-400">
-            No users found. Click "Create User" to add one.
+            No users found. {isViewer ? "Contact an admin to add users." : "Click \"Create User\" to add one."}
           </div>
         )}
       </div>
 
       <div className="text-xs text-slate-500">
-        Total users: {users.length} | Active:{" "}
-        {users.filter((u) => u.is_active).length} | Admins:{" "}
+        Total users: {users.length} | Active: {users.filter((u) => u.is_active).length} | Admins: {" "}
         {users.filter((u) => u.is_admin).length}
       </div>
 
@@ -196,12 +216,9 @@ export function UsersPage() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-lg font-bold text-slate-100 mb-4">
-              Create New User
-            </h2>
+            <h2 className="text-lg font-bold text-slate-100 mb-4">Create New User</h2>
             <p className="text-sm text-slate-400 mb-4">
-              User creation UI coming soon. Use the backend API directly for
-              now.
+              User creation UI coming soon. Use the backend API directly for now.
             </p>
             <button
               onClick={() => setShowCreateModal(false)}
