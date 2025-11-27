@@ -16,6 +16,8 @@ import {
   MetricsChartsSkeleton,
   WebSocketStatusSkeleton,
   AdminPageSkeleton,
+  FeatureFlagsSkeleton,
+  CacheManagerSkeleton,
 } from "../../components/admin/AdminSkeletons";
 
 // Lazy load admin sub-components for code splitting
@@ -57,6 +59,16 @@ const MetricsCharts = lazy(() =>
 const WebSocketStatusPanel = lazy(() =>
   import("../../components/admin/WebSocketStatusPanel").then((m) => ({
     default: m.WebSocketStatusPanel,
+  })),
+);
+const FeatureFlagsManager = lazy(() =>
+  import("../../components/admin/FeatureFlagsManager").then((m) => ({
+    default: m.FeatureFlagsManager,
+  })),
+);
+const CacheManager = lazy(() =>
+  import("../../components/admin/CacheManager").then((m) => ({
+    default: m.CacheManager,
   })),
 );
 
@@ -278,6 +290,67 @@ export default function AdminDashboard() {
                 <span>Audit Logs</span>
               </Link>
             </li>
+
+            {/* Phase 8.3: Configuration section */}
+            <li className="pt-4 mt-4 border-t border-neutral-200">
+              <span className="px-3 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+                Configuration
+              </span>
+            </li>
+
+            <li>
+              <Link
+                to="/admin/feature-flags"
+                className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive("/admin/feature-flags")
+                    ? "bg-primary-50 text-primary-700"
+                    : "text-neutral-700 hover:bg-neutral-100"
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 016.208.682l.108.054a9 9 0 006.086.71l3.114-.732a48.524 48.524 0 01-.005-10.499l-3.11.732a9 9 0 01-6.085-.711l-.108-.054a9 9 0 00-6.208-.682L3 4.5M3 15V4.5"
+                  />
+                </svg>
+                <span>Feature Flags</span>
+              </Link>
+            </li>
+
+            <li>
+              <Link
+                to="/admin/cache"
+                className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive("/admin/cache")
+                    ? "bg-primary-50 text-primary-700"
+                    : "text-neutral-700 hover:bg-neutral-100"
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"
+                  />
+                </svg>
+                <span>Cache</span>
+              </Link>
+            </li>
           </ul>
         </nav>
       </aside>
@@ -349,6 +422,23 @@ export default function AdminDashboard() {
               element={
                 <Suspense fallback={<AuditLogSkeleton />}>
                   <AuditLogViewer />
+                </Suspense>
+              }
+            />
+            {/* Phase 8.3: Configuration routes */}
+            <Route
+              path="feature-flags"
+              element={
+                <Suspense fallback={<FeatureFlagsSkeleton />}>
+                  <FeatureFlagsManager />
+                </Suspense>
+              }
+            />
+            <Route
+              path="cache"
+              element={
+                <Suspense fallback={<CacheManagerSkeleton />}>
+                  <CacheManager />
                 </Suspense>
               }
             />

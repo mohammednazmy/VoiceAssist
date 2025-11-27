@@ -2,6 +2,10 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { App } from "./App";
 import { initSentry } from "./lib/sentry";
+
+// Initialize i18n before rendering
+import "./i18n";
+
 import "./styles.css";
 
 // Initialize Sentry error tracking first

@@ -278,3 +278,70 @@ select:focus-visible {
 .dark * {
   scrollbar-color: var(--color-neutral-600) var(--color-neutral-800);
 }
+
+/* ===================================
+   RTL (Right-to-Left) Support
+   Phase 9.1: Multi-language support
+   =================================== */
+
+/* Base RTL direction */
+[dir='rtl'] {
+  text-align: right;
+}
+
+/* Flip horizontal margins and paddings in RTL */
+[dir='rtl'] .ml-auto {
+  margin-left: unset;
+  margin-right: auto;
+}
+
+[dir='rtl'] .mr-auto {
+  margin-right: unset;
+  margin-left: auto;
+}
+
+/* Flip flexbox justify in RTL */
+[dir='rtl'] .justify-end {
+  justify-content: flex-start;
+}
+
+[dir='rtl'] .justify-start {
+  justify-content: flex-end;
+}
+
+/* RTL-aware icon flipping */
+[dir='rtl'] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* Preserve LTR for specific elements (like code, numbers) */
+[dir='rtl'] .ltr-preserve {
+  direction: ltr;
+  text-align: left;
+}
+
+[dir='rtl'] code,
+[dir='rtl'] pre {
+  direction: ltr;
+  text-align: left;
+}
+
+/* RTL-aware positioning */
+[dir='rtl'] .right-0 {
+  right: unset;
+  left: 0;
+}
+
+[dir='rtl'] .left-0 {
+  left: unset;
+  right: 0;
+}
+
+/* RTL-aware text alignment utilities */
+.text-start {
+  text-align: start;
+}
+
+.text-end {
+  text-align: end;
+}
