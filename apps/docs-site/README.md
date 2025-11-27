@@ -187,3 +187,92 @@ The site loads documentation from:
 - `docs/overview/` - Platform overviews
 - `docs/voice/` - Voice mode documentation
 - `docs/infra/` - Infrastructure documentation
+
+---
+
+## AI Agent Endpoints
+
+The docs site exposes machine-readable JSON endpoints for AI agents:
+
+| Endpoint                  | Description                       |
+| ------------------------- | --------------------------------- |
+| `GET /agent/index.json`   | Documentation system metadata     |
+| `GET /agent/docs.json`    | Full document list with filtering |
+| `GET /agent/search?q=...` | Full-text search                  |
+
+See `docs/ai/AGENT_API_REFERENCE.md` for full documentation.
+
+---
+
+## SEO & Crawling
+
+The site automatically generates:
+
+- **`/sitemap.xml`** - Dynamic sitemap from all markdown files in `docs/`
+- **`/robots.txt`** - Crawler instructions (allows AI bots like GPTBot, Claude-Web)
+
+Both are generated from `src/app/sitemap.ts` and `src/app/robots.ts`.
+
+---
+
+## Validation Scripts
+
+| Command                  | Description                              |
+| ------------------------ | ---------------------------------------- |
+| `pnpm validate:metadata` | Validate YAML frontmatter against schema |
+| `pnpm check:links`       | Check for broken internal links          |
+| `pnpm validate:all`      | Run all validations                      |
+| `pnpm generate:api-docs` | Regenerate API docs from OpenAPI         |
+
+See `docs/INTERNAL_DOCS_SYSTEM.md` for details.
+
+---
+
+## Deployment
+
+### Canonical URL
+
+**Production URL:** `https://assistdocs.asimo.io`
+
+### Apache Reverse Proxy
+
+The docs site runs on port 3001 behind Apache:
+
+```apache
+<VirtualHost *:443>
+    ServerName assistdocs.asimo.io
+
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/assistdocs.asimo.io/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/assistdocs.asimo.io/privkey.pem
+
+    ProxyPass / http://127.0.0.1:3001/
+    ProxyPassReverse / http://127.0.0.1:3001/
+</VirtualHost>
+```
+
+### SSL Renewal
+
+SSL certificates are managed by Certbot:
+
+```bash
+# Check certificate status
+sudo certbot certificates
+
+# Renew certificates
+sudo certbot renew
+
+# Reload Apache after renewal
+sudo systemctl reload apache2
+```
+
+Automatic renewal via cron/systemd timer.
+
+---
+
+## Version History
+
+| Version | Date       | Changes                                         |
+| ------- | ---------- | ----------------------------------------------- |
+| 1.1.0   | 2025-11-27 | Added agent API endpoints, metadata UI, sitemap |
+| 1.0.0   | 2025-11-26 | Initial release                                 |

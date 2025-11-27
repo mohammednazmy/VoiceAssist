@@ -248,6 +248,28 @@ alembic downgrade -1
 | Development Setup        | `docs/DEVELOPMENT_SETUP.md`      |
 | Deployment Guide         | `docs/DEPLOYMENT_GUIDE.md`       |
 | Operations Runbooks      | `docs/operations/runbooks/`      |
+| Agent API Reference      | `docs/ai/AGENT_API_REFERENCE.md` |
+| Docs System Internals    | `docs/INTERNAL_DOCS_SYSTEM.md`   |
+
+---
+
+## Machine-Readable Documentation API
+
+The docs site exposes JSON endpoints for programmatic access:
+
+| Endpoint                  | Purpose                           |
+| ------------------------- | --------------------------------- |
+| `GET /agent/index.json`   | Documentation system metadata     |
+| `GET /agent/docs.json`    | Full document list with filtering |
+| `GET /agent/search?q=...` | Full-text search                  |
+
+**Example: Get all stable docs for agents:**
+
+```
+GET https://assistdocs.asimo.io/agent/docs.json?audience=agent&status=stable
+```
+
+See [Agent API Reference](./AGENT_API_REFERENCE.md) for full details.
 
 ---
 

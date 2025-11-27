@@ -8,7 +8,10 @@ import { PageFrame } from "@/components/PageFrame";
 
 const inter = Inter({ subsets: ["latin"] });
 
+const CANONICAL_URL = "https://assistdocs.asimo.io";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(CANONICAL_URL),
   title: {
     default: "VoiceAssist Documentation",
     template: "%s | VoiceAssist Docs",
@@ -21,7 +24,34 @@ export const metadata: Metadata = {
     "medical AI",
     "voice assistant",
     "healthcare",
+    "HIPAA",
+    "API",
   ],
+  openGraph: {
+    title: "VoiceAssist Documentation",
+    description:
+      "Comprehensive documentation for VoiceAssist - Enterprise Medical AI Assistant",
+    url: CANONICAL_URL,
+    siteName: "VoiceAssist Docs",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "VoiceAssist Documentation",
+    description:
+      "Comprehensive documentation for VoiceAssist - Enterprise Medical AI Assistant",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
+  alternates: {
+    canonical: CANONICAL_URL,
+  },
 };
 
 export default function RootLayout({

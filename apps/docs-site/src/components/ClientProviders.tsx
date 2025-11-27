@@ -1,10 +1,41 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { I18nextProvider } from "react-i18next";
-import { createTelemetryClient } from "@voiceassist/telemetry";
 import i18n, { getLanguageDirection, supportedLanguages } from "@/lib/i18n";
-import { LocaleSwitcher } from "@voiceassist/ui";
+
+/** Simple locale switcher for docs site */
+function LocaleSwitcher({
+  languages,
+}: {
+  languages: readonly {
+    readonly code: string;
+    readonly name: string;
+    readonly dir?: string;
+  }[];
+}) {
+  const [currentLang, setCurrentLang] = useState(i18n.language);
+
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLang = e.target.value;
+    i18n.changeLanguage(newLang);
+    setCurrentLang(newLang);
+  };
+
+  return (
+    <select
+      value={currentLang}
+      onChange={handleChange}
+      className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-800"
+    >
+      {languages.map((lang) => (
+        <option key={lang.code} value={lang.code}>
+          {lang.name}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -13,16 +44,17 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
     document.documentElement.lang = i18n.language;
   }, []);
 
+  // Telemetry tracking (optional - only if env vars are set)
   useEffect(() => {
-    const telemetry = createTelemetryClient({
-      sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-      grafanaUrl: process.env.NEXT_PUBLIC_GRAFANA_ENDPOINT,
-      grafanaToken: process.env.NEXT_PUBLIC_GRAFANA_TOKEN,
-      environment: process.env.NODE_ENV,
-      app: "docs-site",
-    });
-
-    telemetry.trackWebVitals();
+    if (
+      typeof window !== "undefined" &&
+      process.env.NODE_ENV === "production"
+    ) {
+      // Web vitals tracking could be added here if needed
+      console.log(
+        "[docs-site] Telemetry disabled - using standalone docs site",
+      );
+    }
   }, []);
 
   return (

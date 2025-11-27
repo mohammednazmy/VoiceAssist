@@ -79,7 +79,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
 
   const highlightText = (
     text: string,
-    matches: Fuse.FuseResultMatch[] | undefined,
+    matches: readonly Fuse.FuseResultMatch[] | undefined,
     key: string,
   ) => {
     const match = matches?.find((m) => m.key === key);
