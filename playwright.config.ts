@@ -79,6 +79,14 @@ export default defineConfig({
       name: 'Mobile Safari',
       use: { ...devices['iPhone 12'] },
     },
+
+    {
+      name: 'smoke-gateway',
+      testMatch: /smoke-.*\.spec\.ts/,
+      use: {
+        baseURL: process.env.CLIENT_GATEWAY_URL || 'http://localhost:8080',
+      },
+    },
   ],
 
   /* Run your local dev server before starting the tests */

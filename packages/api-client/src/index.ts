@@ -38,6 +38,37 @@ import type {
 } from "@voiceassist/types";
 import { withRetry, type RetryConfig } from "./retry";
 
+type CryptoLike = {
+  randomUUID?: () => string;
+  getRandomValues?: (array: Uint8Array) => Uint8Array;
+};
+
+const cryptoApi: CryptoLike | undefined =
+  typeof crypto !== "undefined" ? (crypto as CryptoLike) : undefined;
+
+const randomHex = (length: number): string => {
+  if (cryptoApi?.getRandomValues) {
+    const bytes = new Uint8Array(Math.ceil(length / 2));
+    cryptoApi.getRandomValues(bytes);
+    return Array.from(bytes)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("")
+      .slice(0, length);
+  }
+  return Math.random()
+    .toString(16)
+    .slice(2, 2 + length)
+    .padEnd(length, "0");
+};
+
+const buildTraceparent = (): string => {
+  const traceId = (
+    cryptoApi?.randomUUID?.().replace(/-/g, "") || randomHex(32)
+  ).slice(0, 32);
+  const spanId = randomHex(16).slice(0, 16);
+  return `00-${traceId}-${spanId}-01`;
+};
+
 export interface ApiClientConfig {
   baseURL: string;
   timeout?: number;
@@ -46,6 +77,8 @@ export interface ApiClientConfig {
   enableRetry?: boolean;
   retryConfig?: Partial<RetryConfig>;
   onRetry?: (attempt: number, error: any) => void;
+  correlationId?: string;
+  environment?: "staging" | "production" | string;
 }
 
 /** Admin KB document in list response */
@@ -128,17 +161,24 @@ export interface CacheStats {
 export class VoiceAssistApiClient {
   private client: AxiosInstance;
   private config: ApiClientConfig;
+  private correlationId: string;
 
   constructor(config: ApiClientConfig) {
     this.config = {
       enableRetry: true, // Enable retry by default
       ...config,
     };
+
+    this.correlationId =
+      this.config.correlationId ||
+      cryptoApi?.randomUUID?.() ||
+      `corr-${randomHex(16)}`;
     this.client = axios.create({
       baseURL: config.baseURL,
       timeout: config.timeout || 30000,
       headers: {
         "Content-Type": "application/json",
+        "X-Client-Env": this.config.environment || "staging",
       },
     });
 
@@ -147,6 +187,15 @@ export class VoiceAssistApiClient {
       const token = this.config.getAccessToken?.();
       if (token && requestConfig.headers) {
         requestConfig.headers.Authorization = `Bearer ${token}`;
+      }
+
+      const traceparent = buildTraceparent();
+
+      if (requestConfig.headers) {
+        requestConfig.headers["X-Correlation-ID"] =
+          requestConfig.headers["X-Correlation-ID"] || this.correlationId;
+        requestConfig.headers["traceparent"] =
+          requestConfig.headers["traceparent"] || traceparent;
       }
       return requestConfig;
     });

@@ -14,10 +14,12 @@ import { ToastProvider } from "./contexts/ToastContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { PWAPrompt } from "./components/PWAPrompt";
-import { AnalyticsProvider, ErrorBoundary } from "./lib/analytics";
+import { ErrorBoundary } from "./lib/analytics";
 import { SkipLinks } from "./lib/accessibility/SkipLinks";
 import { AccessibilityProvider } from "./lib/accessibility/AccessibilitySettings";
 import { AnnouncerProvider } from "./lib/accessibility/Announcer";
+import { LanguageToolbar } from "./components/LanguageToolbar";
+import { AnalyticsOptInLayout } from "./components/layout/AnalyticsOptInLayout";
 
 // Analytics configuration - set provider and domain in environment
 const analyticsConfig = {
@@ -43,7 +45,7 @@ const skipLinks = [
 export function App() {
   return (
     <ErrorBoundary showDialog={true}>
-      <AnalyticsProvider config={analyticsConfig}>
+      <AnalyticsOptInLayout config={analyticsConfig}>
         <AccessibilityProvider>
           <AnnouncerProvider>
             <BrowserRouter
@@ -58,6 +60,7 @@ export function App() {
               <LanguageProvider>
                 <ThemeProvider>
                   <ToastProvider>
+                    <LanguageToolbar />
                     <AppRoutes />
                     <PWAPrompt />
                   </ToastProvider>
@@ -66,7 +69,7 @@ export function App() {
             </BrowserRouter>
           </AnnouncerProvider>
         </AccessibilityProvider>
-      </AnalyticsProvider>
+      </AnalyticsOptInLayout>
     </ErrorBoundary>
   );
 }

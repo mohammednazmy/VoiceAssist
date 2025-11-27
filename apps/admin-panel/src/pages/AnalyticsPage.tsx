@@ -3,9 +3,11 @@
  * Query analytics, response times, usage trends, and export reports
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { fetchAPI } from "../lib/api";
 import { getApiClient } from "../lib/apiClient";
+
+type AnalyticsRange = "24h" | "7d" | "30d";
 
 interface QueryAnalytics {
   total_queries: number;
@@ -39,14 +41,10 @@ export function AnalyticsPage() {
   const [usageTrends, setUsageTrends] = useState<UsageTrends | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [timeRange, setTimeRange] = useState<"24h" | "7d" | "30d">("7d");
+  const [timeRange, setTimeRange] = useState<AnalyticsRange>("7d");
   const apiClient = getApiClient();
 
-  useEffect(() => {
-    loadAnalytics();
-  }, [timeRange]);
-
-  const loadAnalytics = async () => {
+  const loadAnalytics = useCallback(async () => {
     setLoading(true);
     try {
       const [queryData, responseData, trendsData] = await Promise.all([
@@ -63,12 +61,18 @@ export function AnalyticsPage() {
       setResponseTimes(responseData);
       setUsageTrends(trendsData);
       setError(null);
-    } catch (err: any) {
-      setError(err.message || "Failed to load analytics");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to load analytics";
+      setError(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange]);
+
+  useEffect(() => {
+    loadAnalytics();
+  }, [loadAnalytics]);
 
   const exportReport = async () => {
     try {
@@ -85,8 +89,10 @@ export function AnalyticsPage() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (err: any) {
-      alert(err.message || "Failed to export report");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to export report";
+      alert(message);
     }
   };
 
@@ -123,7 +129,7 @@ export function AnalyticsPage() {
           {/* Time Range Selector */}
           <select
             value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value as any)}
+            onChange={(e) => setTimeRange(e.target.value as AnalyticsRange)}
             className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="24h">Last 24 Hours</option>

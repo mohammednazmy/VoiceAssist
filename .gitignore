@@ -51,6 +51,11 @@ out/
 build/
 dist/
 
+apps/docs-site/public/search-index.json
+
+artifacts/
+
+
 # Turbo
 .turbo/
 

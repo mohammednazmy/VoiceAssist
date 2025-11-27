@@ -9,10 +9,8 @@ Provides endpoints for administrators to manage the multi-level cache:
 These endpoints require admin authentication.
 """
 
-from typing import Any, Dict
-
 from app.core.api_envelope import success_response
-from app.core.dependencies import get_current_admin_user
+from app.core.dependencies import ensure_admin_privileges, get_current_admin_or_viewer
 from app.core.logging import get_logger
 from app.models.user import User
 from app.services.cache_service import cache_service
@@ -41,7 +39,9 @@ class CacheInvalidateRequest(BaseModel):
 
 
 @router.get("/stats", response_model=dict)
-async def get_cache_stats(current_admin_user: User = Depends(get_current_admin_user)):
+async def get_cache_stats(
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+):
     """
     Get cache statistics for monitoring.
 
@@ -79,7 +79,9 @@ async def get_cache_stats(current_admin_user: User = Depends(get_current_admin_u
 
 
 @router.post("/clear", response_model=dict)
-async def clear_cache(current_admin_user: User = Depends(get_current_admin_user)):
+async def clear_cache(
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+):
     """
     Clear all caches (L1 and L2).
 
@@ -89,6 +91,8 @@ async def clear_cache(current_admin_user: User = Depends(get_current_admin_user)
     Returns:
         Success status
     """
+    ensure_admin_privileges(current_admin_user)
+
     try:
         success = await cache_service.clear()
 
@@ -104,11 +108,7 @@ async def clear_cache(current_admin_user: User = Depends(get_current_admin_user)
         return success_response(
             data={
                 "success": success,
-                "message": (
-                    "All caches cleared successfully"
-                    if success
-                    else "Failed to clear caches"
-                ),
+                "message": ("All caches cleared successfully" if success else "Failed to clear caches"),
             },
             version="2.0.0",
         )
@@ -127,10 +127,8 @@ async def clear_cache(current_admin_user: User = Depends(get_current_admin_user)
 
 @router.post("/invalidate", response_model=dict)
 async def invalidate_cache_pattern(
-    pattern: str = Query(
-        ..., description="Redis key pattern to invalidate (e.g., 'rag_query:*')"
-    ),
-    current_admin_user: User = Depends(get_current_admin_user),
+    pattern: str = Query(..., description="Redis key pattern to invalidate (e.g., 'rag_query:*')"),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """
     Invalidate cache entries matching a pattern.
@@ -143,6 +141,8 @@ async def invalidate_cache_pattern(
     Returns:
         Number of keys deleted
     """
+    ensure_admin_privileges(current_admin_user)
+
     try:
         deleted_count = await cache_service.delete_pattern(pattern)
 

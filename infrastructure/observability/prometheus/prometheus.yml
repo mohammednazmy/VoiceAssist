@@ -1,11 +1,11 @@
 # Prometheus Configuration for VoiceAssist (Phase 7 Integration Improvements - P2.1)
 
 global:
-  scrape_interval: 15s  # Scrape targets every 15 seconds
-  evaluation_interval: 15s  # Evaluate rules every 15 seconds
+  scrape_interval: 15s # Scrape targets every 15 seconds
+  evaluation_interval: 15s # Evaluate rules every 15 seconds
   external_labels:
-    cluster: 'voiceassist'
-    environment: 'development'
+    cluster: "voiceassist"
+    environment: "development"
 
 # Alertmanager configuration (optional - add later)
 # alerting:
@@ -22,22 +22,30 @@ rule_files:
 # Scrape configurations
 scrape_configs:
   # Self-monitoring: Prometheus
-  - job_name: 'prometheus'
+  - job_name: "prometheus"
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ["localhost:9090"]
         labels:
-          service: 'prometheus'
+          service: "prometheus"
 
   # VoiceAssist API Gateway
-  - job_name: 'voiceassist'
-    scrape_interval: 10s  # More frequent scraping for API metrics
+  - job_name: "voiceassist"
+    scrape_interval: 10s # More frequent scraping for API metrics
     static_configs:
-      - targets: ['voiceassist-server:8000']
+      - targets: ["voiceassist-server:8000"]
         labels:
-          service: 'api-gateway'
-          component: 'backend'
-    metrics_path: '/metrics'
-    scheme: 'http'
+          service: "api-gateway"
+          component: "backend"
+    metrics_path: "/metrics"
+    scheme: "http"
+
+  # Frontend gateway and client delivery (nginx exporter)
+  - job_name: "frontend-gateway"
+    static_configs:
+      - targets: ["frontend-metrics:9113"]
+        labels:
+          service: "frontend-gateway"
+          component: "client-delivery"
 
   # PostgreSQL Exporter (if added)
   # - job_name: 'postgres'

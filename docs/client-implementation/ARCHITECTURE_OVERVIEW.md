@@ -9,11 +9,11 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 │                    VoiceAssist Platform                      │
 │                                                              │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌────────────┐ │
-│  │  assist.asimo.io │  │ admin.asimo.io   │  │assistdocs  │ │
-│  │                  │  │                  │  │.asimo.io   │ │
-│  │   Main Web App   │  │  Admin Panel &   │  │            │ │
-│  │   Chat Interface │  │  KB Editor       │  │ Technical  │ │
-│  │   Real-time      │  │  User Mgmt       │  │ Docs Site  │ │
+│  │  assist.asimo.io │  │ admin.asimo.io   │  │ docs.asimo │ │
+│  │                  │  │                  │  │ .io        │ │
+│  │   Main Web App   │  │  Admin Panel &   │  │ Docs Hub   │ │
+│  │   Chat Interface │  │  KB Editor       │  │ (canonical)│ │
+│  │   Real-time      │  │  User Mgmt       │  │            │ │
 │  │   Messaging      │  │  Settings        │  │            │ │
 │  └────────┬─────────┘  └────────┬─────────┘  └─────┬──────┘ │
 │           │                     │                   │        │
@@ -34,8 +34,8 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 │              ▼                                               │
 │     ┌────────────────┐                                       │
 │     │                │                                       │
-│     │  Static Files  │                                       │
-│     │  (Markdown)    │                                       │
+│     │  Next.js +     │                                       │
+│     │  Markdown docs │                                       │
 │     └────────────────┘                                       │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -43,9 +43,11 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 ### Domain Purposes
 
 #### 1. assist.asimo.io (Main Application)
+
 **Primary Purpose:** End-user chat interface with real-time AI assistant
 
 **Key Features:**
+
 - Chat interface with WebSocket streaming
 - Message history with virtualization
 - Citation display and references
@@ -55,6 +57,7 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 - User authentication and session management
 
 **Technology Stack:**
+
 - React 18.2+ with TypeScript
 - Vite build system
 - React Router v6
@@ -64,6 +67,7 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 - WebSocket for real-time communication
 
 **Key Endpoints:**
+
 - `GET /` - Main app (SPA)
 - `GET /api/health` - Health check
 - `POST /api/auth/login` - Authentication
@@ -76,9 +80,11 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 ---
 
 #### 2. admin.asimo.io (Administration)
+
 **Primary Purpose:** Administrative control panel and knowledge base management
 
 **Key Features:**
+
 - User management and roles
 - Knowledge base editing
 - Document upload and indexing
@@ -87,12 +93,14 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 - Audit logs
 
 **Technology Stack:**
+
 - React 18.2+ with TypeScript
 - Shared component library with main app
 - Tailwind CSS for styling
 - Role-based access control (RBAC)
 
 **Key Endpoints:**
+
 - `GET /` - Admin panel (SPA)
 - `GET /api/admin/users` - User management
 - `POST /api/admin/kb/upload` - Document upload
@@ -101,10 +109,12 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 
 ---
 
-#### 3. assistdocs.asimo.io (Documentation)
+#### 3. docs.asimo.io (Documentation)
+
 **Primary Purpose:** Technical documentation and API reference
 
 **Key Features:**
+
 - Comprehensive technical documentation
 - API reference documentation
 - Integration guides
@@ -113,13 +123,15 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 - Deployment guides
 
 **Technology Stack:**
-- Static Markdown files
-- MkDocs or similar static site generator
-- Syntax highlighting for code examples
-- Search functionality
+
+- Next.js 14 (App Router)
+- Markdown content sourced from monorepo `docs/`
+- Tailwind Typography styling
+- Reverse proxy at Apache2 → Next.js runtime on port 3001
 - Version control via Git
 
 **Content Structure:**
+
 ```
 docs/
 ├── overview/
@@ -311,11 +323,13 @@ packages/
 ### WebSocket Protocol
 
 **Connection URL:**
+
 ```
 wss://assist.asimo.io/api/realtime?conversationId={id}&token={jwt}
 ```
 
 **Event Types:**
+
 - `delta` - Incremental text update during streaming
 - `chunk` - Complete text chunk
 - `message.done` - Final message with citations and metadata
@@ -337,18 +351,19 @@ VoiceAssist implements a first-class conversation management system that allows 
 
 ```typescript
 interface Conversation {
-  id: string;                      // Unique conversation identifier
-  userId: string;                  // Owner of the conversation
-  title: string;                   // User-editable title
-  createdAt: string;               // ISO timestamp
-  updatedAt: string;               // ISO timestamp
-  messageCount: number;            // Total messages in conversation
-  archived?: boolean;              // Soft-delete flag
-  lastMessagePreview?: string;     // Snippet of last message
+  id: string; // Unique conversation identifier
+  userId: string; // Owner of the conversation
+  title: string; // User-editable title
+  createdAt: string; // ISO timestamp
+  updatedAt: string; // ISO timestamp
+  messageCount: number; // Total messages in conversation
+  archived?: boolean; // Soft-delete flag
+  lastMessagePreview?: string; // Snippet of last message
 }
 ```
 
 **Key Fields:**
+
 - `id` - UUID generated on creation, used in URLs and WebSocket connections
 - `title` - Defaults to "New Conversation", user can rename inline
 - `archived` - Soft delete flag, archived conversations hidden from main list
@@ -357,6 +372,7 @@ interface Conversation {
 ### Conversation Routing Model
 
 **URL Structure:**
+
 ```
 /chat                    → Auto-creates conversation, redirects to /chat/:id
 /chat/:conversationId    → Loads specific conversation with history
@@ -417,9 +433,11 @@ interface Conversation {
 ### UI Components
 
 #### ConversationList Component
+
 **Location:** `apps/web-app/src/components/conversations/ConversationList.tsx`
 
 **Responsibilities:**
+
 - Fetches and displays list of conversations
 - Handles create, rename, archive, delete operations
 - Sorts by most recently updated
@@ -427,6 +445,7 @@ interface Conversation {
 - Loading, error, and empty states
 
 **States:**
+
 ```typescript
 - Loading: Shows spinner while fetching conversations
 - Error: Shows error message with retry button
@@ -435,6 +454,7 @@ interface Conversation {
 ```
 
 **Actions:**
+
 ```typescript
 - Create: Creates new conversation, navigates to /chat/:id
 - Click: Navigates to /chat/:conversationId
@@ -444,9 +464,11 @@ interface Conversation {
 ```
 
 #### ConversationListItem Component
+
 **Location:** `apps/web-app/src/components/conversations/ConversationListItem.tsx`
 
 **Features:**
+
 - Displays title, last message preview, relative timestamp
 - Active state highlighting (current conversation)
 - Inline editing for rename (focus, Enter saves, Escape cancels)
@@ -454,15 +476,18 @@ interface Conversation {
 - Delete confirmation dialog to prevent accidents
 
 **UX Patterns:**
+
 - Truncates long titles and previews with ellipsis
 - Relative timestamps ("2 minutes ago", "3 hours ago")
 - Keyboard navigation support (Enter, Escape, Tab)
 - Confirmation dialog for destructive delete action
 
 #### MainLayout Integration
+
 **Location:** `apps/web-app/src/components/layout/MainLayout.tsx`
 
 **Behavior:**
+
 - Detects chat routes via `useLocation()` hook
 - Conditionally renders ConversationList in sidebar when on `/chat` routes
 - Shows traditional navigation (Home, Settings, etc.) on other routes
@@ -480,9 +505,11 @@ const isChatRoute = location.pathname.startsWith('/chat');
 ```
 
 #### ChatPage Integration
+
 **Location:** `apps/web-app/src/pages/ChatPage.tsx`
 
 **Conversation Initialization:**
+
 ```typescript
 1. Extract conversationId from URL params
 2. If no conversationId:
@@ -498,6 +525,7 @@ const isChatRoute = location.pathname.startsWith('/chat');
 ```
 
 **Error Handling:**
+
 - `not-found`: Conversation doesn't exist (404)
 - `failed-create`: Couldn't create conversation
 - `failed-load`: Network error loading conversation
@@ -506,6 +534,7 @@ const isChatRoute = location.pathname.startsWith('/chat');
 ### API Integration
 
 **Conversation Endpoints:**
+
 ```typescript
 GET    /api/conversations           // List conversations
 GET    /api/conversations/:id       // Get specific conversation
@@ -515,12 +544,14 @@ DELETE /api/conversations/:id       // Delete conversation
 ```
 
 **Message Endpoints:**
+
 ```typescript
 GET    /api/conversations/:id/messages  // Get conversation history
 POST   /api/conversations/:id/messages  // Send message (REST fallback)
 ```
 
 **WebSocket Connection:**
+
 ```
 wss://assist.asimo.io/api/realtime?conversationId={id}&token={jwt}
 ```
@@ -528,16 +559,19 @@ wss://assist.asimo.io/api/realtime?conversationId={id}&token={jwt}
 ### State Management
 
 **Conversation State:**
+
 - Conversation list managed locally in `ConversationList` component
 - Active conversation stored in `ChatPage` component state
 - Message history synced between initial load and WebSocket updates
 
 **Message State:**
+
 - Initial messages loaded from REST API (`GET /messages`)
 - New messages received via WebSocket streaming
 - Combined into single message array in `useChatSession` hook
 
 **Navigation State:**
+
 - Active conversation highlighted in sidebar list
 - URL param (`conversationId`) drives conversation loading
 - Browser back/forward properly switches conversations
@@ -545,17 +579,20 @@ wss://assist.asimo.io/api/realtime?conversationId={id}&token={jwt}
 ### Performance Considerations
 
 **Conversation List:**
+
 - Fetches up to 50 most recent conversations
 - Sorted by `updatedAt` on backend for efficiency
 - Frontend filtering for archived vs active
 - Pagination can be added if user has >50 conversations
 
 **Message History:**
+
 - Loads last 50 messages on conversation switch
 - Older messages can be lazy-loaded on scroll to top
 - Virtualized message rendering handles 1000+ messages
 
 **WebSocket Cleanup:**
+
 - Automatic disconnect when switching conversations
 - `useEffect` cleanup ensures no lingering connections
 - Reconnection logic prevents duplicate connections
@@ -586,6 +623,7 @@ apps/web-app/src/
 ```
 
 **Test Stack:**
+
 - Vitest 4.0+ for test runner
 - @testing-library/react for component testing
 - @testing-library/user-event for user interactions
@@ -616,16 +654,18 @@ pnpm build
 ### Production Deployment
 
 **Static Hosting:**
+
 - Main app (`assist.asimo.io`) served via CDN or static hosting
 - Admin panel (`admin.asimo.io`) served separately
-- Docs site (`assistdocs.asimo.io`) served as static markdown
+- Docs site (`docs.asimo.io`) proxied to Next.js runtime with `assistdocs.asimo.io` 301-redirected to the canonical host
 
 **Environment Variables:**
+
 ```bash
 VITE_API_URL=https://assist.asimo.io/api
 VITE_WS_URL=wss://assist.asimo.io/api/realtime
 VITE_ADMIN_URL=https://admin.asimo.io
-VITE_DOCS_URL=https://assistdocs.asimo.io
+VITE_DOCS_URL=https://docs.asimo.io
 ```
 
 ---
@@ -666,18 +706,21 @@ VITE_DOCS_URL=https://assistdocs.asimo.io
 ## Security Considerations
 
 ### Authentication
+
 - JWT-based authentication with refresh tokens
 - Tokens stored in memory (not localStorage for XSS protection)
 - Automatic token refresh before expiration
 - Protected routes with `ProtectedRoute` component
 
 ### WebSocket Security
+
 - Token-based authentication in WebSocket URL
 - Connection validation on server
 - Rate limiting on message sending
 - Input sanitization on both client and server
 
 ### Content Security
+
 - Markdown sanitization via `react-markdown`
 - XSS prevention with proper escaping
 - HTTPS-only connections
@@ -690,18 +733,21 @@ VITE_DOCS_URL=https://assistdocs.asimo.io
 ### Client-Side Metrics
 
 **Performance Metrics:**
+
 - Message render time
 - WebSocket connection latency
 - Streaming latency (first token, total time)
 - Component re-render counts
 
 **Error Tracking:**
+
 - Error boundaries for graceful degradation
 - WebSocket connection errors
 - API request failures
 - User interaction errors
 
 **User Analytics:**
+
 - Message send frequency
 - Average conversation length
 - Feature usage (citations, attachments)

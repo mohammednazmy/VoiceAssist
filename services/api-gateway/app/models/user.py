@@ -3,7 +3,7 @@ User model
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.database import Base
 from sqlalchemy import Boolean, Column, DateTime, String
@@ -21,6 +21,12 @@ class User(Base):
     hashed_password = Column(String(255), nullable=True)  # Null for SSO users
     is_active = Column(Boolean, default=True, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)
+    admin_role = Column(String(50), default="user", nullable=False)
+    password_changed_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     # Nextcloud integration
     nextcloud_user_id = Column(String(255), unique=True, nullable=True, index=True)

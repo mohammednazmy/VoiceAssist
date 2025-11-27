@@ -22,38 +22,38 @@ export default function HomePage() {
           <QuickLinkCard
             title="Getting Started"
             description="Learn the basics and get up and running quickly"
-            href="/overview/project-summary"
+            href="/getting-started/quick-start"
             icon="🚀"
           />
           <QuickLinkCard
-            title="Architecture"
-            description="Understand the system design and components"
-            href="/architecture"
-            icon="🏗️"
-          />
-          <QuickLinkCard
-            title="Web App"
-            description="Frontend implementation details and features"
-            href="/frontend/web-app"
-            icon="💻"
-          />
-          <QuickLinkCard
             title="Voice Mode"
-            description="Real-time voice interaction pipeline"
-            href="/frontend/voice"
+            description="Understand the real-time voice pipeline"
+            href="/user-guide/voice"
             icon="🎙️"
           />
           <QuickLinkCard
-            title="Testing"
-            description="Testing strategy and results"
-            href="/operations/testing"
-            icon="🧪"
+            title="Medical Features"
+            description="See how the clinical knowledge base works"
+            href="/medical/overview"
+            icon="🩺"
           />
           <QuickLinkCard
-            title="Deployment"
-            description="Deployment guides and operations"
-            href="/operations/deployment"
-            icon="🚢"
+            title="Admin Guide"
+            description="Configure users, models, and integrations"
+            href="/admin/overview"
+            icon="🛠️"
+          />
+          <QuickLinkCard
+            title="Configuration"
+            description="Tune environment and platform settings"
+            href="/getting-started/configuration"
+            icon="⚙️"
+          />
+          <QuickLinkCard
+            title="Reference"
+            description="Commands, shortcuts, and glossary"
+            href="/reference/voice-commands"
+            icon="📖"
           />
         </div>
       </div>

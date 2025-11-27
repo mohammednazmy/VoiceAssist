@@ -1,25 +1,26 @@
-import { useState, FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 export function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
       await login(email, password);
-      navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
+      navigate("/dashboard");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Login failed";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -29,8 +30,12 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-950">
       <div className="w-full max-w-md p-8 space-y-6 bg-slate-900 rounded-lg border border-slate-800">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-100">VoiceAssist Admin</h1>
-          <p className="mt-2 text-sm text-slate-400">Sign in to access the admin panel</p>
+          <h1 className="text-2xl font-bold text-slate-100">
+            VoiceAssist Admin
+          </h1>
+          <p className="mt-2 text-sm text-slate-400">
+            Sign in to access the admin panel
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -41,7 +46,10 @@ export function LoginPage() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-300">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-slate-300"
+            >
               Email
             </label>
             <input
@@ -56,7 +64,10 @@ export function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-300">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-slate-300"
+            >
               Password
             </label>
             <input
@@ -75,7 +86,7 @@ export function LoginPage() {
             disabled={loading}
             className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
           >
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 

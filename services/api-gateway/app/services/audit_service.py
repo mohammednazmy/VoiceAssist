@@ -3,14 +3,16 @@ Audit logging service for tracking user actions and system events.
 
 HIPAA Compliance: All access to PHI and authentication events must be logged.
 """
+
+import logging
 from datetime import datetime, timedelta, timezone
-from sqlalchemy.orm import Session
-from fastapi import Request
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
+from app.core.request_id import get_request_id
 from app.models.audit_log import AuditLog
 from app.models.user import User
-from app.core.request_id import get_request_id
-import logging
+from fastapi import Request
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +43,7 @@ class AuditService:
         status_code: Optional[str] = None,
         error_message: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
-        service_name: str = "api-gateway"
+        service_name: str = "api-gateway",
     ) -> AuditLog:
         """
         Create an audit log entry.
@@ -73,7 +75,7 @@ class AuditService:
         if user:
             user_id = str(user.id)
             user_email = user.email
-            user_role = "admin" if user.is_admin else "user"
+            user_role = getattr(user, "admin_role", None) or ("admin" if user.is_admin else "user")
 
         # Extract request info from Request object if provided
         if request:
@@ -98,7 +100,7 @@ class AuditService:
             success=success,
             status_code=status_code,
             error_message=error_message,
-            metadata=metadata
+            metadata=metadata,
         )
 
         # Calculate integrity hash
@@ -114,16 +116,15 @@ class AuditService:
             log_level = logging.INFO if success else logging.WARNING
             logger.log(
                 log_level,
-                f"Audit: {action} by {user_email or 'system'} - "
-                f"{'success' if success else 'failed'}",
+                f"Audit: {action} by {user_email or 'system'} - " f"{'success' if success else 'failed'}",
                 extra={
                     "audit_log_id": str(audit_log.id),
                     "request_id": request_id,
                     "user_id": user_id,
                     "action": action,
                     "resource_type": resource_type,
-                    "success": success
-                }
+                    "success": success,
+                },
             )
 
             return audit_log
@@ -141,7 +142,7 @@ class AuditService:
         request: Request,
         success: bool,
         error_message: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> AuditLog:
         """
         Log authentication-related events.
@@ -156,7 +157,7 @@ class AuditService:
             resource_type="authentication",
             request=request,
             error_message=error_message,
-            metadata=metadata
+            metadata=metadata,
         )
 
     @staticmethod
@@ -178,12 +179,7 @@ class AuditService:
         return audit_log.verify_integrity()
 
     @staticmethod
-    def get_user_audit_trail(
-        db: Session,
-        user_id: str,
-        limit: int = 100,
-        offset: int = 0
-    ) -> list[AuditLog]:
+    def get_user_audit_trail(db: Session, user_id: str, limit: int = 100, offset: int = 0) -> list[AuditLog]:
         """
         Get audit trail for a specific user.
 
@@ -206,11 +202,7 @@ class AuditService:
         )
 
     @staticmethod
-    def get_recent_failed_logins(
-        db: Session,
-        minutes: int = 30,
-        limit: int = 100
-    ) -> list[AuditLog]:
+    def get_recent_failed_logins(db: Session, minutes: int = 30, limit: int = 100) -> list[AuditLog]:
         """
         Get recent failed login attempts for security monitoring.
 
@@ -222,16 +214,14 @@ class AuditService:
         Returns:
             List of failed login audit logs
         """
-        from datetime import datetime, timedelta
-
         cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=minutes)
 
         return (
             db.query(AuditLog)
             .filter(
                 AuditLog.action == "login",
-                AuditLog.success == False,
-                AuditLog.timestamp >= cutoff_time
+                AuditLog.success.is_(False),
+                AuditLog.timestamp >= cutoff_time,
             )
             .order_by(AuditLog.timestamp.desc())
             .limit(limit)

@@ -1,15 +1,18 @@
 """
 Structured logging configuration using structlog
 """
+
 import logging
 import sys
-import structlog
 
+import structlog
 from app.core.config import settings
 
 
 def configure_logging():
     """Configure structured logging for the application"""
+    # Import lazily to avoid circular import
+    from app.services.log_stream_service import get_log_stream_handler
 
     # Determine log level
     log_level = logging.DEBUG if settings.DEBUG else logging.INFO
@@ -20,6 +23,11 @@ def configure_logging():
         stream=sys.stdout,
         level=log_level,
     )
+
+    # Attach streaming handler for WebSocket log subscribers
+    streaming_handler = get_log_stream_handler()
+    streaming_handler.setLevel(log_level)
+    logging.getLogger().addHandler(streaming_handler)
 
     # Configure structlog
     structlog.configure(

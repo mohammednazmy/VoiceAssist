@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { fetchAPI } from '../lib/api';
-import type { APIErrorShape } from '../types';
+import { useEffect, useState } from "react";
+import { fetchAPI } from "../lib/api";
+import type { APIErrorShape } from "../types";
 
 export interface AdminSummary {
   total_users: number;
@@ -20,13 +20,15 @@ export function useAdminSummary() {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchAPI<AdminSummary>('/api/admin/panel/summary');
+        const data = await fetchAPI<AdminSummary>("/api/admin/panel/summary");
         if (!cancelled) {
           setSummary(data);
         }
-      } catch (e: any) {
-        console.warn('Admin summary fetch failed, using demo values:', e?.message);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        console.warn("Admin summary fetch failed, using demo values:", message);
         if (!cancelled) {
+          setError({ code: "demo", message });
           setSummary({
             total_users: 3,
             active_users: 3,

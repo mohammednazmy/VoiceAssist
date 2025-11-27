@@ -90,7 +90,12 @@ describe("useConversations", () => {
         pageSize: 100,
       });
 
-      (mockApiClient.getMessages as any).mockResolvedValue(mockMessages);
+      (mockApiClient.getMessages as any).mockResolvedValue({
+        items: mockMessages,
+        total: mockMessages.length,
+        page: 1,
+        pageSize: 50,
+      });
 
       const { result } = renderHook(() => useConversations());
 
@@ -166,7 +171,12 @@ describe("useConversations", () => {
         pageSize: 100,
       });
 
-      (mockApiClient.getMessages as any).mockResolvedValue(mockMessages);
+      (mockApiClient.getMessages as any).mockResolvedValue({
+        items: mockMessages,
+        total: mockMessages.length,
+        page: 1,
+        pageSize: 50,
+      });
 
       const { result } = renderHook(() => useConversations());
 

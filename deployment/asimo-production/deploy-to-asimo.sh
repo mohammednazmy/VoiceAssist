@@ -35,6 +35,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 DEPLOYMENT_DIR="/opt/voiceassist"
 DOMAIN="assist.asimo.io"
+ADMIN_DOMAIN="admin.asimo.io"
 MONITOR_DOMAIN="monitor.asimo.io"
 ADMIN_EMAIL="admin@asimo.io"
 
@@ -121,6 +122,7 @@ check_prerequisites() {
         command -v docker compose >/dev/null 2>&1 || missing_tools+=("docker-compose")
     }
     command -v apache2 >/dev/null 2>&1 || missing_tools+=("apache2")
+    dpkg -s libapache2-mod-security2 >/dev/null 2>&1 || missing_tools+=("libapache2-mod-security2")
     command -v certbot >/dev/null 2>&1 || {
         if ! $SKIP_SSL; then
             missing_tools+=("certbot")
@@ -144,6 +146,9 @@ check_prerequisites() {
                     ;;
                 apache2)
                     apt-get install -y apache2
+                    ;;
+                libapache2-mod-security2)
+                    apt-get install -y libapache2-mod-security2
                     ;;
                 certbot)
                     apt-get install -y certbot python3-certbot-apache
@@ -221,7 +226,7 @@ DEBUG=false
 #==============================================
 DOMAIN=$DOMAIN
 API_URL=https://$DOMAIN
-ALLOWED_ORIGINS=https://$DOMAIN,https://$MONITOR_DOMAIN
+ALLOWED_ORIGINS=https://$DOMAIN,https://$ADMIN_DOMAIN,https://$MONITOR_DOMAIN
 
 #==============================================
 # Database
@@ -318,7 +323,7 @@ configure_apache_reverse_proxy() {
     fi
 
     # Enable required Apache modules
-    a2enmod proxy proxy_http proxy_wstunnel headers ssl rewrite
+    a2enmod proxy proxy_http proxy_wstunnel headers ssl rewrite security2
 
     # Create VirtualHost configuration
     cat > "/etc/apache2/sites-available/$DOMAIN.conf" << 'EOF'
@@ -384,6 +389,109 @@ EOF
     systemctl reload apache2
 
     log_success "Apache reverse proxy configured for $DOMAIN"
+}
+
+configure_admin_proxy() {
+    log_info "Configuring Apache reverse proxy for $ADMIN_DOMAIN (Admin Panel)..."
+
+    if $DRY_RUN; then
+        log_info "[DRY RUN] Would configure Apache for $ADMIN_DOMAIN"
+        return 0
+    fi
+
+    # Ensure required modules are enabled (including WAF)
+    a2enmod proxy proxy_http proxy_wstunnel headers ssl rewrite security2
+
+    # Enable blocking mode for ModSecurity
+    if [ -f /etc/modsecurity/modsecurity.conf ]; then
+        sed -i 's/^SecRuleEngine.*/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf
+    fi
+
+    cat > "/etc/apache2/sites-available/$ADMIN_DOMAIN.conf" << 'EOF'
+<VirtualHost *:80>
+    ServerName admin.asimo.io
+    ServerAdmin admin@asimo.io
+
+    # Redirect all HTTP to HTTPS
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}$1 [R=301,L]
+
+    ErrorLog ${APACHE_LOG_DIR}/admin-voiceassist-error.log
+    CustomLog ${APACHE_LOG_DIR}/admin-voiceassist-access.log combined
+</VirtualHost>
+
+<IfModule mod_ssl.c>
+<VirtualHost *:443>
+    ServerName admin.asimo.io
+    ServerAdmin admin@asimo.io
+
+    # SSL Configuration (managed by certbot)
+    SSLEngine on
+
+    # Security Headers
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # CORS Headers
+    Header always set Access-Control-Allow-Origin "https://admin.asimo.io"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+
+    # Proxy Configuration
+    ProxyPreserveHost On
+    ProxyTimeout 300
+
+    # WebSocket Support
+    RewriteEngine On
+    RewriteCond %{HTTP:Upgrade} =websocket [NC]
+    RewriteRule /(.*)           ws://127.0.0.1:8200/admin/$1 [P,L]
+    RewriteCond %{HTTP:Upgrade} !=websocket [NC]
+    RewriteRule /(.*)           http://127.0.0.1:8200/admin/$1 [P,L]
+
+    # Proxy to VoiceAssist Admin Panel (port 8200, /admin path)
+    ProxyPass / http://127.0.0.1:8200/admin/
+    ProxyPassReverse / http://127.0.0.1:8200/admin/
+
+    # WAF + Rate Limiting for admin endpoints and WebSockets
+    <IfModule security2_module>
+        SecRuleEngine On
+        SecRequestBodyAccess On
+        SecResponseBodyAccess Off
+        SecDefaultAction "phase:1,log,pass"
+        SecDefaultAction "phase:2,log,pass"
+
+        # Rate limit admin API routes (100 requests/min per IP)
+        SecRule REQUEST_URI "^/api/admin" "id:1000001,phase:1,pass,nolog,initcol:ip=%{REMOTE_ADDR},setvar:ip.admin_req_counter=+1,expirevar:ip.admin_req_counter=60"
+        SecRule IP:admin_req_counter "@gt 100" "id:1000002,phase:1,deny,status:429,log,msg:'Admin route rate limit exceeded'"
+
+        # Rate limit WebSocket upgrade requests (60 upgrades/min per IP)
+        SecRule REQUEST_HEADERS:Upgrade "(?i)websocket" "id:1000003,phase:1,pass,nolog,initcol:ip=%{REMOTE_ADDR},setvar:ip.admin_ws_counter=+1,expirevar:ip.admin_ws_counter=60"
+        SecRule IP:admin_ws_counter "@gt 60" "id:1000004,phase:1,deny,status:429,log,msg:'Admin websocket rate limit exceeded'"
+    </IfModule>
+
+    # Logging
+    ErrorLog ${APACHE_LOG_DIR}/admin-voiceassist-error.log
+    CustomLog ${APACHE_LOG_DIR}/admin-voiceassist-access.log combined
+    LogFormat "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" proxy
+    CustomLog ${APACHE_LOG_DIR}/admin-voiceassist-proxy.log proxy
+</VirtualHost>
+</IfModule>
+EOF
+
+    # Enable the site
+    a2ensite "$ADMIN_DOMAIN.conf"
+
+    # Test Apache configuration
+    apache2ctl configtest
+
+    # Reload Apache
+    systemctl reload apache2
+
+    log_success "Apache reverse proxy configured for $ADMIN_DOMAIN"
 }
 
 configure_monitoring_proxy() {
@@ -472,6 +580,11 @@ setup_ssl_certificates() {
         log_warning "SSL setup for $DOMAIN failed (may already exist)"
     }
 
+    # Setup SSL for admin domain
+    certbot --apache -d "$ADMIN_DOMAIN" --non-interactive --agree-tos -m "$ADMIN_EMAIL" || {
+        log_warning "SSL setup for $ADMIN_DOMAIN failed (may already exist)"
+    }
+
     # Setup SSL for monitoring domain
     certbot --apache -d "$MONITOR_DOMAIN" --non-interactive --agree-tos -m "$ADMIN_EMAIL" || {
         log_warning "SSL setup for $MONITOR_DOMAIN failed (may already exist)"
@@ -529,8 +642,8 @@ deploy_monitoring_stack() {
     cd "$DEPLOYMENT_DIR"
 
     # Deploy monitoring services
-    if [ -f "infrastructure/observability/docker-compose.monitoring.yml" ]; then
-        docker compose -f infrastructure/observability/docker-compose.monitoring.yml up -d
+    if [ -f "deployment/asimo-production/docker-compose.monitoring.yml" ]; then
+        docker compose -f deployment/asimo-production/docker-compose.monitoring.yml up -d
     else
         log_warning "Monitoring compose file not found, creating basic setup..."
         # The monitoring setup will be handled in a separate step
@@ -550,6 +663,19 @@ setup_log_rotation() {
     # Create logrotate configuration
     cat > /etc/logrotate.d/voiceassist << 'EOF'
 /var/log/apache2/assist-*.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    notifempty
+    create 0640 www-data adm
+    sharedscripts
+    postrotate
+        systemctl reload apache2 > /dev/null 2>&1
+    endscript
+}
+
+/var/log/apache2/admin-voiceassist-*.log {
     daily
     rotate 14
     compress
@@ -640,11 +766,20 @@ setup_health_monitoring() {
 # VoiceAssist Health Check Script
 
 DOMAIN="assist.asimo.io"
+ADMIN_DOMAIN="admin.asimo.io"
 ALERT_EMAIL="admin@asimo.io"
 
 check_api() {
     if ! curl -sf "https://$DOMAIN/health" > /dev/null; then
         echo "API health check failed" | mail -s "VoiceAssist Alert: API Down" "$ALERT_EMAIL"
+        return 1
+    fi
+    return 0
+}
+
+check_admin() {
+    if ! curl -sf "https://$ADMIN_DOMAIN" > /dev/null; then
+        echo "Admin panel health check failed" | mail -s "VoiceAssist Alert: Admin Panel Down" "$ALERT_EMAIL"
         return 1
     fi
     return 0
@@ -660,6 +795,7 @@ check_docker() {
 
 main() {
     check_api
+    check_admin
     check_docker
 }
 
@@ -750,6 +886,7 @@ display_summary() {
     log_info "VoiceAssist Production Deployment Summary"
     log_info "=========================================="
     log_info "Main API:        https://$DOMAIN"
+    log_info "Admin Panel:     https://$ADMIN_DOMAIN"
     log_info "Monitoring:      https://$MONITOR_DOMAIN"
     log_info "Deployment Dir:  $DEPLOYMENT_DIR"
     log_info "=========================================="
@@ -758,6 +895,7 @@ display_summary() {
     log_info "  - API Gateway:   https://$DOMAIN"
     log_info "  - Health Check:  https://$DOMAIN/health"
     log_info "  - API Docs:      https://$DOMAIN/docs"
+    log_info "  - Admin Panel:   https://$ADMIN_DOMAIN"
     log_info "  - Grafana:       https://$MONITOR_DOMAIN (default: admin/admin)"
     log_info "  - Prometheus:    http://localhost:9090"
     log_info "  - Jaeger:        http://localhost:16686"
@@ -793,6 +931,7 @@ main() {
     copy_project_files
     create_production_env
     configure_apache_reverse_proxy
+    configure_admin_proxy
     configure_monitoring_proxy
     setup_ssl_certificates
     deploy_backend_services

@@ -1,0 +1,163 @@
+name: Admin Panel Build & Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/admin-panel/**"
+      - ".github/workflows/admin-panel-deploy.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "apps/admin-panel/**"
+      - ".github/workflows/admin-panel-deploy.yml"
+  workflow_dispatch:
+
+env:
+  ADMIN_PANEL_URL: https://admin.asimo.io
+
+jobs:
+  build-admin-panel:
+    name: Build admin panel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.23.0
+
+      - name: Get pnpm store directory
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --filter voiceassist-admin --frozen-lockfile
+
+      - name: Build admin panel (production)
+        working-directory: apps/admin-panel
+        env:
+          # API URL should include /api path prefix since Apache proxies /api/* to backend
+          VITE_API_URL: ${{ env.ADMIN_PANEL_URL }}/api
+          VITE_WS_URL: wss://admin.asimo.io/api/realtime/ws
+        run: pnpm build -- --mode production
+
+      - name: Upload admin panel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-panel-dist
+          path: apps/admin-panel/dist
+          if-no-files-found: error
+          retention-days: 14
+
+  deploy-admin-panel:
+    name: Deploy admin panel
+    needs: build-admin-panel
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    environment: production
+    env:
+      DEPLOY_HOST: ${{ secrets.ADMIN_PANEL_DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.ADMIN_PANEL_DEPLOY_USER }}
+      DEPLOY_PORT: ${{ secrets.ADMIN_PANEL_DEPLOY_PORT }}
+      DEPLOY_SSH_KEY: ${{ secrets.ADMIN_PANEL_DEPLOY_KEY }}
+      DEPLOY_PATH: /var/www/admin/
+
+    steps:
+      - name: Ensure deployment secrets are present
+        run: |
+          if [ -z "${DEPLOY_HOST}" ] || [ -z "${DEPLOY_USER}" ] || [ -z "${DEPLOY_SSH_KEY}" ]; then
+            echo "Deployment secrets are missing."
+            exit 1
+          fi
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: admin-panel-dist
+          path: admin-panel-dist
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p "${DEPLOY_PORT:-22}" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Sync dist to server
+        run: |
+          set -euo pipefail
+          ARTIFACT_DIR="admin-panel-dist/apps/admin-panel/dist"
+          if [ ! -d "$ARTIFACT_DIR" ]; then
+            echo "Expected dist directory not found at $ARTIFACT_DIR"
+            ls -la admin-panel-dist
+            exit 1
+          fi
+          rsync -avz --delete -e "ssh -p ${DEPLOY_PORT:-22}" "${ARTIFACT_DIR}/" "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH"
+
+  smoke-tests:
+    name: Post-deploy smoke tests
+    needs: deploy-admin-panel
+    runs-on: ubuntu-latest
+    if: needs.deploy-admin-panel.result == 'success'
+    env:
+      ADMIN_PANEL_EMAIL: ${{ secrets.ADMIN_PANEL_SMOKE_EMAIL }}
+      ADMIN_PANEL_PASSWORD: ${{ secrets.ADMIN_PANEL_SMOKE_PASSWORD }}
+      ADMIN_PANEL_URL: ${{ env.ADMIN_PANEL_URL }}
+
+    steps:
+      - name: Validate smoke test secrets
+        run: |
+          if [ -z "${ADMIN_PANEL_EMAIL}" ] || [ -z "${ADMIN_PANEL_PASSWORD}" ]; then
+            echo "Smoke test credentials are missing."
+            exit 1
+          fi
+
+      - name: Install HTTP utilities
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Run smoke checks
+        run: |
+          set -euo pipefail
+
+          echo "Authenticating against ${ADMIN_PANEL_URL}..."
+          LOGIN_RESPONSE=$(curl -fsS -X POST "${ADMIN_PANEL_URL}/api/auth/login" \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"${ADMIN_PANEL_EMAIL}\",\"password\":\"${ADMIN_PANEL_PASSWORD}\"}")
+          ACCESS_TOKEN=$(echo "$LOGIN_RESPONSE" | jq -r '.access_token')
+
+          if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ]; then
+            echo "Failed to retrieve access token"
+            exit 1
+          fi
+
+          echo "Checking dashboard metrics summary..."
+          SUMMARY_RESPONSE=$(curl -fsS -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            "${ADMIN_PANEL_URL}/api/admin/panel/summary")
+          echo "$SUMMARY_RESPONSE" | jq -e '.success == true' > /dev/null
+
+          echo "Fetching knowledge base documents..."
+          KB_RESPONSE=$(curl -fsS -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            "${ADMIN_PANEL_URL}/api/admin/kb/documents")
+          echo "$KB_RESPONSE" | jq -e '.success == true and (.data | length >= 0)' > /dev/null
+
+          echo "Smoke checks passed"

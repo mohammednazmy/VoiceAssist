@@ -4,6 +4,8 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
+  useRef,
 } from "react";
 import {
   getApiClient,
@@ -39,53 +41,144 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+type DecodedToken = {
+  sub?: string;
+  email?: string;
+  role?: string;
+  exp?: number;
+};
+
+const decodeToken = (token?: string): DecodedToken | null => {
+  if (!token) return null;
+  try {
+    const [, payload] = token.split(".");
+    return JSON.parse(atob(payload)) as DecodedToken;
+  } catch (err) {
+    console.warn("Failed to decode token", err);
+    return null;
+  }
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const refreshTimeout = useRef<number | null>(null);
 
-  const deriveRole = (incomingRole?: string): UserRole =>
-    incomingRole === "viewer" ? "viewer" : "admin";
+  const deriveRole = useCallback(
+    (incomingRole?: string): UserRole =>
+      incomingRole === "viewer" ? "viewer" : "admin",
+    [],
+  );
 
   const apiClient = getApiClient();
 
-  // Check for existing session on mount
-  useEffect(() => {
-    checkAuth();
-  }, []);
+  const scheduleRefresh = useCallback(
+    (accessToken: string) => {
+      const decoded = decodeToken(accessToken);
+      if (!decoded?.exp) return;
 
-  const checkAuth = async () => {
+      if (refreshTimeout.current) {
+        window.clearTimeout(refreshTimeout.current);
+      }
+
+      // Refresh 30 seconds before expiry, minimum 5 seconds
+      const delay = Math.max(decoded.exp * 1000 - Date.now() - 30_000, 5_000);
+      refreshTimeout.current = window.setTimeout(async () => {
+        try {
+          const refreshToken = localStorage.getItem("refresh_token");
+          if (refreshToken) {
+            const tokens = await apiClient.refreshToken(refreshToken);
+            persistTokens(tokens.accessToken, tokens.refreshToken);
+            scheduleRefresh(tokens.accessToken);
+          }
+        } catch {
+          clearTokens();
+          setUser(null);
+        }
+      }, delay);
+    },
+    [apiClient],
+  );
+
+  const checkAuth = useCallback(async () => {
     try {
       const storedRole = deriveRole(getStoredRole() || undefined);
       const token = localStorage.getItem("auth_token");
+
       if (!token) {
         setLoading(false);
         return;
       }
 
-      const profile: ApiUser = await apiClient.getCurrentUser();
-      const role = deriveRole(profile.role || storedRole);
-      persistRole(role);
+      const decoded = decodeToken(token);
 
-      setUser({
-        id: profile.id,
-        email: profile.email,
-        full_name: profile.name,
-        is_admin: role === "admin",
-        is_active: true,
-        role,
-      });
+      // Check if token is still valid
+      if (decoded?.exp && decoded.exp * 1000 > Date.now()) {
+        const profile: ApiUser = await apiClient.getCurrentUser();
+        const role = deriveRole(profile.role || storedRole);
+        persistRole(role);
+
+        setUser({
+          id: profile.id,
+          email: profile.email,
+          full_name: profile.name,
+          is_admin: role === "admin",
+          is_active: true,
+          role,
+        });
+
+        scheduleRefresh(token);
+        return;
+      }
+
+      // Try to refresh if token expired
+      const refreshToken = localStorage.getItem("refresh_token");
+      if (refreshToken) {
+        const tokens = await apiClient.refreshToken(refreshToken);
+        persistTokens(tokens.accessToken, tokens.refreshToken);
+
+        const profile = await apiClient.getCurrentUser();
+        const role = deriveRole(profile.role || storedRole);
+        persistRole(role);
+
+        setUser({
+          id: profile.id,
+          email: profile.email,
+          full_name: profile.name,
+          is_admin: role === "admin",
+          is_active: true,
+          role,
+        });
+
+        scheduleRefresh(tokens.accessToken);
+        return;
+      }
+
+      clearTokens();
     } catch (err) {
       console.error("Auth check failed:", err);
       clearTokens();
     } finally {
       setLoading(false);
     }
-  };
+  }, [deriveRole, apiClient, scheduleRefresh]);
+
+  // Check for existing session on mount
+  useEffect(() => {
+    checkAuth();
+    return () => {
+      if (refreshTimeout.current) {
+        window.clearTimeout(refreshTimeout.current);
+      }
+    };
+  }, [checkAuth]);
 
   const login = async (email: string, password: string) => {
     try {
       setError(null);
+      setLoading(true);
+
       const tokens = await apiClient.login({ email, password });
       persistTokens(tokens.accessToken, tokens.refreshToken);
 
@@ -101,14 +194,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         is_active: true,
         role,
       });
-    } catch (err: any) {
-      setError(err.message || "Login failed");
+
+      scheduleRefresh(tokens.accessToken);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Login failed";
+      setError(message);
       clearTokens();
       throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = () => {
+    if (refreshTimeout.current) {
+      window.clearTimeout(refreshTimeout.current);
+      refreshTimeout.current = null;
+    }
     clearTokens();
     setUser(null);
   };

@@ -35,6 +35,9 @@ resources:
   # PodDisruptionBudgets
   - pod-disruption-budget.yaml
 
+  # Frontend gateway + metrics
+  - frontend-gateway.yaml
+
   # Metrics Server (if not already installed)
   # Uncomment if needed:
   # - metrics-server.yaml

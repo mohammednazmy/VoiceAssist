@@ -10,7 +10,6 @@ Provides endpoints for administrators to manage the medical knowledge base:
 These endpoints require admin authentication.
 """
 
-import logging
 import time
 import uuid
 from datetime import datetime, timezone
@@ -24,12 +23,13 @@ from app.core.business_metrics import (
     kb_indexing_duration,
 )
 from app.core.database import get_db
-from app.core.dependencies import get_current_admin_user
+from app.core.dependencies import ensure_admin_privileges, get_current_admin_or_viewer
 from app.core.logging import get_logger
-from app.models.user import User
 from app.models.document import Document
+from app.models.user import User
+from app.services.admin_audit_log_service import admin_audit_log_service
 from app.services.kb_indexer import IndexingResult, KBIndexer
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Request, UploadFile, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -79,7 +79,8 @@ async def upload_document(
     title: Optional[str] = None,
     source_type: str = "uploaded",
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+    request: Request = None,
 ):
     """
     Upload and index a document to the knowledge base.
@@ -103,6 +104,7 @@ async def upload_document(
     Returns:
         Upload result with document ID and indexing status
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         # Validate file type
         allowed_extensions = [".txt", ".pdf"]
@@ -191,9 +193,7 @@ async def upload_document(
 
             # Track upload metrics (P3.3 - Business Metrics)
             file_type = file_extension.lstrip(".")
-            kb_document_uploads_total.labels(
-                source_type=source_type, file_type=file_type
-            ).inc()
+            kb_document_uploads_total.labels(source_type=source_type, file_type=file_type).inc()
             kb_chunks_total.inc(result.chunks_indexed)
             kb_documents_total.inc()
 
@@ -206,10 +206,30 @@ async def upload_document(
             )
 
             logger.info(f"Successfully uploaded and indexed document: {document_id}")
+            admin_audit_log_service.log_action(
+                db=db,
+                actor=current_admin_user,
+                action="kb.upload",
+                target_type="document",
+                target_id=document_id,
+                metadata={"title": doc_title, "source_type": source_type},
+                request=request,
+            )
 
             return success_response(data=response_data.model_dump(), version="2.0.0")
         else:
             logger.error(f"Failed to index document: {result.error_message}")
+
+            admin_audit_log_service.log_action(
+                db=db,
+                actor=current_admin_user,
+                action="kb.upload",
+                target_type="document",
+                target_id=document_id,
+                success=False,
+                metadata={"error": result.error_message},
+                request=request,
+            )
 
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -221,6 +241,16 @@ async def upload_document(
 
     except Exception as e:
         logger.error(f"Error uploading document: {e}", exc_info=True)
+
+        admin_audit_log_service.log_action(
+            db=db,
+            actor=current_admin_user,
+            action="kb.upload",
+            target_type="document",
+            success=False,
+            metadata={"error": str(e)},
+            request=request,
+        )
 
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -237,7 +267,7 @@ async def list_documents(
     limit: int = 50,
     source_type: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """
     List all documents in the knowledge base.
@@ -290,7 +320,8 @@ async def list_documents(
         response_data = DocumentListResponse(documents=document_list, total=total)
 
         logger.info(
-            f"Listed {len(document_list)} documents: skip={skip}, limit={limit}, source_type={source_type}, total={total}"
+            f"Listed {len(document_list)} documents: "
+            f"skip={skip}, limit={limit}, source_type={source_type}, total={total}"
         )
 
         return success_response(data=response_data.model_dump(), version="2.0.0")
@@ -311,7 +342,8 @@ async def list_documents(
 async def delete_document(
     document_id: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+    request: Request = None,
 ):
     """
     Delete a document from the knowledge base.
@@ -325,13 +357,10 @@ async def delete_document(
     Returns:
         Deletion status
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         # Delete from PostgreSQL metadata store
-        document = (
-            db.query(Document)
-            .filter(Document.document_id == document_id)
-            .first()
-        )
+        document = db.query(Document).filter(Document.document_id == document_id).first()
 
         if not document:
             return JSONResponse(
@@ -354,6 +383,16 @@ async def delete_document(
             f"(vector_db={'success' if vector_success else 'failed'}, metadata=success)"
         )
 
+        admin_audit_log_service.log_action(
+            db=db,
+            actor=current_admin_user,
+            action="kb.delete",
+            target_type="document",
+            target_id=document_id,
+            metadata={"vector_deleted": vector_success},
+            request=request,
+        )
+
         return success_response(
             data={
                 "document_id": document_id,
@@ -365,6 +404,17 @@ async def delete_document(
 
     except Exception as e:
         logger.error(f"Error deleting document {document_id}: {e}", exc_info=True)
+
+        admin_audit_log_service.log_action(
+            db=db,
+            actor=current_admin_user,
+            action="kb.delete",
+            target_type="document",
+            target_id=document_id,
+            success=False,
+            metadata={"error": str(e)},
+            request=request,
+        )
 
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -379,7 +429,7 @@ async def delete_document(
 async def get_document(
     document_id: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """
     Get detailed information about a specific document.
@@ -395,11 +445,7 @@ async def get_document(
     """
     try:
         # Query database for document metadata
-        document = (
-            db.query(Document)
-            .filter(Document.document_id == document_id)
-            .first()
-        )
+        document = db.query(Document).filter(Document.document_id == document_id).first()
 
         if not document:
             return JSONResponse(

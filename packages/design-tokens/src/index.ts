@@ -132,3 +132,20 @@ export const tokens = {
   elevation: require("./elevation").elevation,
   focusRings: require("./elevation").focusRings,
 };
+
+export const designSystem = {
+  light: {
+    colors: require("./colors").lightColors,
+    elevation: require("./elevation").elevation,
+    focus: require("./elevation").focusRings,
+  },
+  dark: {
+    colors: require("./colors").darkColors,
+    elevation: require("./elevation").elevationDark,
+    focus: require("./elevation").focusRingsDark,
+  },
+  typography: require("./typography").typography,
+  spacing: require("./spacing").spacing,
+  borderRadius: require("./spacing").borderRadius,
+  shadows: require("./spacing").shadows,
+};

@@ -1,7 +1,6 @@
-
-import { useEffect, useState } from 'react';
-import type { APIErrorShape } from '../types';
-import { fetchAPI } from '../lib/api';
+import { useEffect, useState } from "react";
+import type { APIErrorShape } from "../types";
+import { fetchAPI } from "../lib/api";
 
 // Simplified KnowledgeDocument for admin list view
 // Full canonical definition in DATA_MODEL.md includes 20+ fields:
@@ -9,10 +8,10 @@ import { fetchAPI } from '../lib/api';
 // authors, publicationYear, publisher, edition, isbn, doi, etc.
 export interface KnowledgeDocument {
   id: string;
-  name: string;  // Maps to 'title' in canonical model
-  type: 'textbook' | 'journal' | 'guideline' | 'note' | string;  // Maps to 'documentType'
-  indexed: boolean;  // Maps to 'isIndexed'
-  version?: string;  // Simplified from canonical 'version' (number)
+  name: string; // Maps to 'title' in canonical model
+  type: "textbook" | "journal" | "guideline" | "note" | string; // Maps to 'documentType'
+  indexed: boolean; // Maps to 'isIndexed'
+  version?: string; // Simplified from canonical 'version' (number)
   lastIndexedAt?: string;
 }
 
@@ -29,27 +28,34 @@ export function useKnowledgeDocuments() {
       try {
         // Try real backend; fall back to demo data on failure
         // API path from ADMIN_PANEL_SPECS.md: GET /api/admin/kb/documents
-        // Returns APIEnvelope<KnowledgeDocument[]> - fetchAPI unwraps to KnowledgeDocument[]
-        const data = await fetchAPI<KnowledgeDocument[]>('/api/admin/kb/documents');
+        // Returns APIEnvelope<{documents: KnowledgeDocument[], total: number}>
+        const response = await fetchAPI<
+          | { documents: KnowledgeDocument[]; total: number }
+          | KnowledgeDocument[]
+        >("/api/admin/kb/documents");
+        // Handle both array and object response formats for backwards compatibility
+        const data = Array.isArray(response) ? response : response.documents;
         if (!cancelled) setDocs(data);
-      } catch (e: any) {
-        console.warn('Falling back to demo KB data:', e?.message);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        console.warn("Falling back to demo KB data:", message);
         if (!cancelled) {
+          setError({ code: "demo", message });
           setDocs([
             {
-              id: 'doc-harrisons-hf',
+              id: "doc-harrisons-hf",
               name: "Harrison's · Heart Failure",
-              type: 'textbook',
+              type: "textbook",
               indexed: true,
-              version: 'v1',
+              version: "v1",
               lastIndexedAt: new Date().toISOString(),
             },
             {
-              id: 'doc-aha-2022-hf',
-              name: 'AHA/ACC/HFSA 2022 HF Guideline',
-              type: 'guideline',
+              id: "doc-aha-2022-hf",
+              name: "AHA/ACC/HFSA 2022 HF Guideline",
+              type: "guideline",
               indexed: true,
-              version: 'v1',
+              version: "v1",
               lastIndexedAt: new Date().toISOString(),
             },
           ]);

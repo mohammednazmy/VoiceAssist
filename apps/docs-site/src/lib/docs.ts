@@ -4,10 +4,10 @@ import matter from "gray-matter";
 
 // Path to the docs directory (relative to monorepo root)
 // In production, DOCS_DIR can be set via environment variable
-const DOCS_DIR =
+export const DOCS_DIR =
   process.env.DOCS_DIR || path.join(process.cwd(), "..", "..", "docs");
-const CLIENT_IMPL_DIR = path.join(DOCS_DIR, "client-implementation");
-const WEB_APP_DIR = path.join(process.cwd(), "..", "web-app");
+export const CLIENT_IMPL_DIR = path.join(DOCS_DIR, "client-implementation");
+export const WEB_APP_DIR = path.join(process.cwd(), "..", "web-app");
 
 // GitHub repository for "Edit this page" links
 const GITHUB_REPO = "mohammednazmy/VoiceAssist";
@@ -23,10 +23,39 @@ export interface DocContent {
 }
 
 /**
+ * Validate that a resolved path stays within the allowed base directory
+ * Prevents path traversal attacks (e.g., ../../../etc/passwd)
+ */
+function isPathWithinBase(basePath: string, targetPath: string): boolean {
+  const resolvedBase = path.resolve(basePath);
+  const resolvedTarget = path.resolve(targetPath);
+  return (
+    resolvedTarget.startsWith(resolvedBase + path.sep) ||
+    resolvedTarget === resolvedBase
+  );
+}
+
+/**
  * Load a markdown document from the docs directory
  */
 export function loadDoc(relativePath: string): DocContent | null {
+  // Sanitize: reject paths with path traversal sequences
+  if (relativePath.includes("..") || path.isAbsolute(relativePath)) {
+    console.warn(
+      `Invalid path rejected (path traversal attempt): ${relativePath}`,
+    );
+    return null;
+  }
+
   const fullPath = path.join(DOCS_DIR, relativePath);
+
+  // Double-check the resolved path stays within DOCS_DIR
+  if (!isPathWithinBase(DOCS_DIR, fullPath)) {
+    console.warn(
+      `Path traversal blocked: ${relativePath} resolves outside docs directory`,
+    );
+    return null;
+  }
 
   try {
     if (!fs.existsSync(fullPath)) {

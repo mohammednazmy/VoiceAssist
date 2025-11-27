@@ -45,6 +45,16 @@
     },
     "clean": {
       "cache": false
+    },
+    "deploy": {
+      "dependsOn": [
+        "build"
+      ],
+      "outputs": [
+        "out/**",
+        "artifacts/**",
+        "../../artifacts/docs-site.tar.gz"
+      ]
     }
   }
 }

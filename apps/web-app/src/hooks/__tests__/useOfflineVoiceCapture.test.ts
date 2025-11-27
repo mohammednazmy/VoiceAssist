@@ -173,12 +173,27 @@ class MockMediaStream {
 const mockGetUserMedia = vi.fn(() =>
   Promise.resolve(new MockMediaStream() as unknown as MediaStream),
 );
-Object.defineProperty(navigator, "mediaDevices", {
-  value: {
-    getUserMedia: mockGetUserMedia,
-  },
-  configurable: true,
-});
+
+// Store original mediaDevices if it exists
+const originalMediaDevices = navigator.mediaDevices;
+
+// Try to redefine mediaDevices - JSDOM may have it as non-configurable
+try {
+  Object.defineProperty(navigator, "mediaDevices", {
+    value: {
+      getUserMedia: mockGetUserMedia,
+    },
+    configurable: true,
+    writable: true,
+  });
+} catch {
+  // If we can't redefine the property, spy on the existing one
+  if (navigator.mediaDevices) {
+    vi.spyOn(navigator.mediaDevices, "getUserMedia").mockImplementation(
+      mockGetUserMedia,
+    );
+  }
+}
 
 // Mock navigator.onLine
 let mockOnline = true;

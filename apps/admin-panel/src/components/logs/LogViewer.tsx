@@ -56,12 +56,19 @@ export function LogViewer() {
   const loadLogs = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        range: filters.timeframe,
-        level: filters.level,
-        service: filters.service,
-        search: filters.search,
-      });
+      const params = new URLSearchParams({ range: filters.timeframe });
+
+      if (filters.level !== "all") {
+        params.set("level", filters.level);
+      }
+
+      if (filters.service.trim()) {
+        params.set("service", filters.service.trim());
+      }
+
+      if (filters.search.trim()) {
+        params.set("search", filters.search.trim());
+      }
 
       const data = await fetchAPI<{ logs: LogEntry[] }>(
         `/api/admin/logs?${params.toString()}`,
@@ -71,7 +78,8 @@ export function LogViewer() {
       setLastUpdated(new Date().toISOString());
       setError(null);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unable to load logs";
+      const message =
+        err instanceof Error ? err.message : "Unable to load logs";
       setError(message);
     } finally {
       setLoading(false);
@@ -88,7 +96,8 @@ export function LogViewer() {
   );
 
   useEffect(() => {
-    const unsubscribeStatus = websocketService.subscribeStatus(setConnectionStatus);
+    const unsubscribeStatus =
+      websocketService.subscribeStatus(setConnectionStatus);
     const unsubscribeMessages = websocketService.subscribeMessages((event) => {
       if (!isLogEvent(event)) return;
       const payload = event.payload as LogEntry;
@@ -100,6 +109,7 @@ export function LogViewer() {
     return () => {
       unsubscribeStatus();
       unsubscribeMessages();
+      websocketService.disconnect();
     };
   }, [handleIncomingLog]);
 
@@ -110,7 +120,8 @@ export function LogViewer() {
   const filteredLogs = useMemo(() => {
     return logs
       .filter((log) => {
-        const matchesLevel = filters.level === "all" || log.level === filters.level;
+        const matchesLevel =
+          filters.level === "all" || log.level === filters.level;
         const matchesService =
           filters.service.trim() === "" ||
           log.service?.toLowerCase().includes(filters.service.toLowerCase());
@@ -121,7 +132,8 @@ export function LogViewer() {
         return matchesLevel && matchesService && matchesSearch && withinWindow;
       })
       .sort(
-        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+        (a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
       );
   }, [filters.level, filters.search, filters.service, filters.timeframe, logs]);
 
@@ -132,7 +144,8 @@ export function LogViewer() {
           <h2 className="text-lg font-semibold text-slate-100">Logs</h2>
           <p className="text-xs text-slate-400">
             WebSocket status: {connectionStatus}
-            {lastUpdated && ` · Last updated ${new Date(lastUpdated).toLocaleTimeString()}`}
+            {lastUpdated &&
+              ` · Last updated ${new Date(lastUpdated).toLocaleTimeString()}`}
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-300">
@@ -170,7 +183,9 @@ export function LogViewer() {
         ) : error ? (
           <div className="p-4 text-red-300 text-sm">{error}</div>
         ) : filteredLogs.length === 0 ? (
-          <div className="p-6 text-slate-400 text-sm">No logs match the selected filters.</div>
+          <div className="p-6 text-slate-400 text-sm">
+            No logs match the selected filters.
+          </div>
         ) : (
           <div className="max-h-[480px] overflow-y-auto divide-y divide-slate-800">
             {filteredLogs.map((log) => (
@@ -199,7 +214,10 @@ export function LogViewer() {
                 <span className="col-span-2 text-slate-300 truncate">
                   {log.service || "-"}
                 </span>
-                <span className="col-span-5 text-slate-100 truncate" title={log.message}>
+                <span
+                  className="col-span-5 text-slate-100 truncate"
+                  title={log.message}
+                >
                   {log.message}
                 </span>
               </div>

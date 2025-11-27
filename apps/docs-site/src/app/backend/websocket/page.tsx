@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { loadDoc, loadClientImplDoc } from "@/lib/docs";
+import { loadMdxContent } from "@/lib/mdx";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 export const metadata: Metadata = {
@@ -8,8 +9,9 @@ export const metadata: Metadata = {
     "VoiceAssist WebSocket protocol specification for real-time communication",
 };
 
-export default function WebSocketPage() {
-  const websocketDoc = loadDoc("WEBSOCKET_PROTOCOL.md");
+export default async function WebSocketPage() {
+  const websocketDoc = await loadMdxContent("backend/websocket-protocol.mdx");
+  const legacySpec = loadDoc("WEBSOCKET_PROTOCOL.md");
   const realtimeSpec = loadClientImplDoc("REALTIME_PROXY_SPEC.md");
 
   return (
@@ -59,7 +61,15 @@ export default function WebSocketPage() {
       <div className="space-y-12">
         {websocketDoc && (
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-            <MarkdownRenderer content={websocketDoc.content} />
+            <article className="prose prose-slate max-w-none dark:prose-invert">
+              {websocketDoc.content}
+            </article>
+          </div>
+        )}
+
+        {!websocketDoc && legacySpec && (
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+            <MarkdownRenderer content={legacySpec.content} />
           </div>
         )}
 

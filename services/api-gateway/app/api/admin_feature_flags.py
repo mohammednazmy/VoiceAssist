@@ -10,12 +10,12 @@ from typing import Any, Dict, List, Optional
 
 from app.core.api_envelope import ErrorCodes, error_response, success_response
 from app.core.database import get_db
-from app.core.dependencies import get_current_admin_user
+from app.core.dependencies import ensure_admin_privileges, get_current_admin_or_viewer
 from app.core.logging import get_logger
 from app.models.feature_flag import FeatureFlagType
 from app.models.user import User
 from app.services.feature_flags import feature_flag_service
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -31,21 +31,11 @@ class FeatureFlagCreate(BaseModel):
 
     name: str = Field(..., description="Unique feature flag identifier", max_length=255)
     description: str = Field(..., description="Human-readable description")
-    flag_type: FeatureFlagType = Field(
-        default=FeatureFlagType.BOOLEAN, description="Type of flag value"
-    )
-    enabled: bool = Field(
-        default=False, description="Initial enabled state (for boolean flags)"
-    )
-    value: Optional[Any] = Field(
-        default=None, description="Initial value (for non-boolean flags)"
-    )
-    default_value: Optional[Any] = Field(
-        default=None, description="Default value when flag not found"
-    )
-    metadata: Optional[Dict] = Field(
-        default=None, description="Additional metadata (tags, owner, etc.)"
-    )
+    flag_type: FeatureFlagType = Field(default=FeatureFlagType.BOOLEAN, description="Type of flag value")
+    enabled: bool = Field(default=False, description="Initial enabled state (for boolean flags)")
+    value: Optional[Any] = Field(default=None, description="Initial value (for non-boolean flags)")
+    default_value: Optional[Any] = Field(default=None, description="Default value when flag not found")
+    metadata: Optional[Dict] = Field(default=None, description="Additional metadata (tags, owner, etc.)")
 
 
 class FeatureFlagUpdate(BaseModel):
@@ -84,7 +74,7 @@ class FeatureFlagListResponse(BaseModel):
 @router.get("", response_model=dict)
 async def list_feature_flags(
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """List all feature flags.
 
@@ -99,23 +89,19 @@ async def list_feature_flags(
 
         response = FeatureFlagListResponse(flags=flags_data, total=len(flags_data))
 
-        logger.info(
-            f"Admin {current_admin_user.email} listed {len(flags_data)} feature flags"
-        )
+        logger.info(f"Admin {current_admin_user.email} listed {len(flags_data)} feature flags")
 
         return success_response(data=response.model_dump(), version="2.0.0")
     except Exception as e:
         logger.error(f"Failed to list feature flags: {e}", exc_info=True)
-        return error_response(
-            code=ErrorCodes.INTERNAL_ERROR, message="Failed to list feature flags"
-        )
+        return error_response(code=ErrorCodes.INTERNAL_ERROR, message="Failed to list feature flags")
 
 
 @router.get("/{flag_name}", response_model=dict)
 async def get_feature_flag(
     flag_name: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Get a specific feature flag.
 
@@ -135,23 +121,19 @@ async def get_feature_flag(
                 message=f"Feature flag '{flag_name}' not found",
             )
 
-        logger.info(
-            f"Admin {current_admin_user.email} retrieved feature flag: {flag_name}"
-        )
+        logger.info(f"Admin {current_admin_user.email} retrieved feature flag: {flag_name}")
 
         return success_response(data=flag.to_dict(), version="2.0.0")
     except Exception as e:
         logger.error(f"Failed to get feature flag '{flag_name}': {e}", exc_info=True)
-        return error_response(
-            code=ErrorCodes.INTERNAL_ERROR, message="Failed to retrieve feature flag"
-        )
+        return error_response(code=ErrorCodes.INTERNAL_ERROR, message="Failed to retrieve feature flag")
 
 
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def create_feature_flag(
     flag_data: FeatureFlagCreate,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Create a new feature flag.
 
@@ -162,6 +144,7 @@ async def create_feature_flag(
 
     Requires: Admin authentication
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         # Check if flag already exists
         existing_flag = await feature_flag_service.get_flag(flag_data.name, db)
@@ -184,22 +167,14 @@ async def create_feature_flag(
         )
 
         if not flag:
-            return error_response(
-                code=ErrorCodes.INTERNAL_ERROR, message="Failed to create feature flag"
-            )
+            return error_response(code=ErrorCodes.INTERNAL_ERROR, message="Failed to create feature flag")
 
-        logger.info(
-            f"Admin {current_admin_user.email} created feature flag: {flag_data.name}"
-        )
+        logger.info(f"Admin {current_admin_user.email} created feature flag: {flag_data.name}")
 
         return success_response(data=flag.to_dict(), version="2.0.0")
     except Exception as e:
-        logger.error(
-            f"Failed to create feature flag '{flag_data.name}': {e}", exc_info=True
-        )
-        return error_response(
-            code=ErrorCodes.INTERNAL_ERROR, message="Failed to create feature flag"
-        )
+        logger.error(f"Failed to create feature flag '{flag_data.name}': {e}", exc_info=True)
+        return error_response(code=ErrorCodes.INTERNAL_ERROR, message="Failed to create feature flag")
 
 
 @router.patch("/{flag_name}", response_model=dict)
@@ -207,7 +182,7 @@ async def update_feature_flag(
     flag_name: str,
     flag_update: FeatureFlagUpdate,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Update an existing feature flag.
 
@@ -219,6 +194,7 @@ async def update_feature_flag(
 
     Requires: Admin authentication
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         # Check if flag exists
         existing_flag = await feature_flag_service.get_flag(flag_name, db)
@@ -243,27 +219,21 @@ async def update_feature_flag(
         )
 
         if not flag:
-            return error_response(
-                code=ErrorCodes.INTERNAL_ERROR, message="Failed to update feature flag"
-            )
+            return error_response(code=ErrorCodes.INTERNAL_ERROR, message="Failed to update feature flag")
 
-        logger.info(
-            f"Admin {current_admin_user.email} updated feature flag: {flag_name}"
-        )
+        logger.info(f"Admin {current_admin_user.email} updated feature flag: {flag_name}")
 
         return success_response(data=flag.to_dict(), version="2.0.0")
     except Exception as e:
         logger.error(f"Failed to update feature flag '{flag_name}': {e}", exc_info=True)
-        return error_response(
-            code=ErrorCodes.INTERNAL_ERROR, message="Failed to update feature flag"
-        )
+        return error_response(code=ErrorCodes.INTERNAL_ERROR, message="Failed to update feature flag")
 
 
 @router.delete("/{flag_name}", response_model=dict)
 async def delete_feature_flag(
     flag_name: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Delete a feature flag.
 
@@ -274,6 +244,7 @@ async def delete_feature_flag(
 
     Requires: Admin authentication
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         # Check if flag exists
         existing_flag = await feature_flag_service.get_flag(flag_name, db)
@@ -287,13 +258,9 @@ async def delete_feature_flag(
         success = await feature_flag_service.delete_flag(flag_name, db)
 
         if not success:
-            return error_response(
-                code=ErrorCodes.INTERNAL_ERROR, message="Failed to delete feature flag"
-            )
+            return error_response(code=ErrorCodes.INTERNAL_ERROR, message="Failed to delete feature flag")
 
-        logger.info(
-            f"Admin {current_admin_user.email} deleted feature flag: {flag_name}"
-        )
+        logger.info(f"Admin {current_admin_user.email} deleted feature flag: {flag_name}")
 
         return success_response(
             data={"message": f"Feature flag '{flag_name}' deleted successfully"},
@@ -301,16 +268,14 @@ async def delete_feature_flag(
         )
     except Exception as e:
         logger.error(f"Failed to delete feature flag '{flag_name}': {e}", exc_info=True)
-        return error_response(
-            code=ErrorCodes.INTERNAL_ERROR, message="Failed to delete feature flag"
-        )
+        return error_response(code=ErrorCodes.INTERNAL_ERROR, message="Failed to delete feature flag")
 
 
 @router.post("/{flag_name}/toggle", response_model=dict)
 async def toggle_feature_flag(
     flag_name: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Toggle a boolean feature flag.
 
@@ -321,6 +286,7 @@ async def toggle_feature_flag(
 
     Requires: Admin authentication
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         # Get current flag
         existing_flag = await feature_flag_service.get_flag(flag_name, db)
@@ -343,18 +309,11 @@ async def toggle_feature_flag(
         )
 
         if not flag:
-            return error_response(
-                code=ErrorCodes.INTERNAL_ERROR, message="Failed to toggle feature flag"
-            )
+            return error_response(code=ErrorCodes.INTERNAL_ERROR, message="Failed to toggle feature flag")
 
-        logger.info(
-            f"Admin {current_admin_user.email} toggled feature flag '{flag_name}' "
-            f"to {new_enabled_state}"
-        )
+        logger.info(f"Admin {current_admin_user.email} toggled feature flag '{flag_name}' " f"to {new_enabled_state}")
 
         return success_response(data=flag.to_dict(), version="2.0.0")
     except Exception as e:
         logger.error(f"Failed to toggle feature flag '{flag_name}': {e}", exc_info=True)
-        return error_response(
-            code=ErrorCodes.INTERNAL_ERROR, message="Failed to toggle feature flag"
-        )
+        return error_response(code=ErrorCodes.INTERNAL_ERROR, message="Failed to toggle feature flag")

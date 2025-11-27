@@ -8,7 +8,7 @@
 #
 ################################################################################
 
-version: '3.8'
+version: "3.8"
 
 services:
   # API Gateway - Production Configuration
@@ -20,13 +20,14 @@ services:
       - WORKERS=4
       - MAX_REQUESTS=1000
       - MAX_REQUESTS_JITTER=100
+      - ALLOWED_ORIGINS=https://voiceassist.example.com,https://staging.voiceassist.example.com,https://monitor.asimo.io,https://frontend-gateway
     deploy:
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 4G
         reservations:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 2G
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -53,10 +54,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 4G
         reservations:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 2G
     logging:
       driver: "json-file"
@@ -86,10 +87,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 8G
         reservations:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 4G
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
@@ -154,10 +155,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 3G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 2G
     volumes:
       - redis_data_prod:/data
@@ -182,10 +183,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 4G
         reservations:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 2G
     volumes:
       - qdrant_data_prod:/qdrant/storage
@@ -216,10 +217,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 4G
         reservations:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 2G
     volumes:
       - nextcloud_data_prod:/var/www/html
@@ -239,10 +240,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 2G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 1G
     volumes:
       - nextcloud_db_data_prod:/var/lib/mysql
@@ -261,10 +262,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 2G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 1G
     volumes:
       - prometheus_data_prod:/prometheus
@@ -294,10 +295,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 2G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 1G
     volumes:
       - grafana_data_prod:/var/lib/grafana
@@ -318,10 +319,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 2G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 1G
     logging:
       driver: "json-file"
@@ -338,10 +339,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 2G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 1G
     volumes:
       - loki_data_prod:/loki
@@ -373,10 +374,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 256M
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
@@ -391,6 +392,77 @@ services:
     labels:
       - "com.voiceassist.service=nginx"
       - "com.voiceassist.environment=production"
+
+  # Frontend applications served behind gateway
+  web-app:
+    build:
+      context: ../../apps/web-app
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - VITE_API_BASE_URL=https://voiceassist.example.com/api
+      - VITE_APP_ENV=production
+    networks:
+      - default
+
+  admin-panel:
+    build:
+      context: ../../apps/admin-panel
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - VITE_API_BASE_URL=https://voiceassist.example.com/api
+      - VITE_APP_ENV=production
+    networks:
+      - default
+
+  docs-site:
+    build:
+      context: ../../apps/docs-site
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - NODE_ENV=production
+    networks:
+      - default
+
+  frontend-gateway:
+    image: nginx:stable-alpine
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../../infrastructure/docker/frontend-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web-app
+      - admin-panel
+      - docs-site
+      - voiceassist-server
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.voiceassist.service=frontend-gateway"
+      - "com.voiceassist.environment=production"
+    networks:
+      - default
+
+  frontend-metrics:
+    image: nginx/nginx-prometheus-exporter:1.3.0
+    restart: always
+    command:
+      - "-nginx.scrape-uri=http://frontend-gateway:8080/stub_status"
+    ports:
+      - "9113:9113"
+    depends_on:
+      - frontend-gateway
+    labels:
+      - "com.voiceassist.service=frontend-metrics"
+      - "com.voiceassist.environment=production"
+    networks:
+      - default
 
 volumes:
   postgres_data_prod:

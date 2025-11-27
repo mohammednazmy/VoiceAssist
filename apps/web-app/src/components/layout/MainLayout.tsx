@@ -23,6 +23,7 @@ import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 import { useTheme } from "../../contexts/ThemeContext";
 import { ConversationList } from "../conversations/ConversationList";
 import { SkipLink } from "../accessibility/SkipLink";
+import { FeedbackWidget } from "../feedback/FeedbackWidget";
 
 export function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -563,6 +564,7 @@ export function MainLayout() {
           <Outlet />
         </main>
       </div>
+      <FeedbackWidget />
     </div>
   );
 }
