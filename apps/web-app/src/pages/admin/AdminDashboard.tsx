@@ -60,6 +60,13 @@ const WebSocketStatusPanel = lazy(() =>
   })),
 );
 
+// Phase 11: Voice Metrics Dashboard
+const VoiceMetricsDashboard = lazy(() =>
+  import("../../components/admin/VoiceMetricsDashboard").then((m) => ({
+    default: m.VoiceMetricsDashboard,
+  })),
+);
+
 export default function AdminDashboard() {
   const location = useLocation();
 
@@ -252,6 +259,34 @@ export default function AdminDashboard() {
               </Link>
             </li>
 
+            {/* Phase 11: Voice Metrics */}
+            <li>
+              <Link
+                to="/admin/voice-metrics"
+                className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive("/admin/voice-metrics")
+                    ? "bg-primary-50 text-primary-700"
+                    : "text-neutral-700 hover:bg-neutral-100"
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"
+                  />
+                </svg>
+                <span>Voice Health</span>
+              </Link>
+            </li>
+
             <li>
               <Link
                 to="/admin/audit-logs"
@@ -349,6 +384,15 @@ export default function AdminDashboard() {
               element={
                 <Suspense fallback={<AuditLogSkeleton />}>
                   <AuditLogViewer />
+                </Suspense>
+              }
+            />
+            {/* Phase 11: Voice Metrics Dashboard */}
+            <Route
+              path="voice-metrics"
+              element={
+                <Suspense fallback={<AdminPageSkeleton />}>
+                  <VoiceMetricsDashboard />
                 </Suspense>
               }
             />
