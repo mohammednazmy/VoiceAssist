@@ -8,6 +8,13 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", ".storybook/**/*"],
-  "exclude": ["node_modules", "dist", "storybook-static"]
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "storybook-static",
+    "src/stories/**/*",
+    "src/test/**/*",
+    "src/**/__tests__/**/*"
+  ]
 }
