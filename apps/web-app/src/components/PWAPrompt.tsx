@@ -65,6 +65,7 @@ export function PWAPrompt() {
           <button
             onClick={dismiss}
             className="flex-shrink-0 text-neutral-400 hover:text-neutral-500"
+            aria-label="Dismiss update notice"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -118,6 +119,7 @@ export function PWAPrompt() {
           <button
             onClick={dismiss}
             className="flex-shrink-0 text-green-500 hover:text-green-600"
+            aria-label="Dismiss offline ready notice"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -185,6 +187,7 @@ export function PWAPrompt() {
           <button
             onClick={dismiss}
             className="flex-shrink-0 text-neutral-400 hover:text-neutral-500"
+            aria-label="Dismiss install prompt"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
