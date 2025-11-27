@@ -207,6 +207,59 @@ export function MetricsCharts() {
     loadMetrics();
   }, [loadMetrics]);
 
+  // Memoize derived distribution data to prevent unnecessary recalculations
+  // All hooks must be called before any conditional returns
+  const userDistribution = useMemo(
+    () =>
+      metrics?.user_distribution
+        ? [
+            {
+              label: "Active",
+              value: metrics.user_distribution.active,
+              color: "#22c55e",
+            },
+            {
+              label: "Inactive",
+              value: metrics.user_distribution.inactive,
+              color: "#ef4444",
+            },
+          ]
+        : [],
+    [metrics?.user_distribution],
+  );
+
+  const roleDistribution = useMemo(
+    () =>
+      metrics?.user_distribution
+        ? [
+            {
+              label: "Admins",
+              value: metrics.user_distribution.admins,
+              color: "#8b5cf6",
+            },
+            {
+              label: "Regular",
+              value: metrics.user_distribution.regular,
+              color: "#3b82f6",
+            },
+          ]
+        : [],
+    [metrics?.user_distribution],
+  );
+
+  // Memoize summary stats calculation
+  const summaryStats = useMemo(
+    () => ({
+      totalUsers: metrics?.user_distribution?.total ?? 0,
+      activeUsers: metrics?.user_distribution?.active ?? 0,
+      admins: metrics?.user_distribution?.admins ?? 0,
+      newRegistrations:
+        metrics?.daily_registrations?.reduce((sum, d) => sum + d.count, 0) ?? 0,
+    }),
+    [metrics?.user_distribution, metrics?.daily_registrations],
+  );
+
+  // Early returns after all hooks have been called
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
@@ -238,36 +291,6 @@ export function MetricsCharts() {
       </div>
     );
   }
-
-  const userDistribution = metrics?.user_distribution
-    ? [
-        {
-          label: "Active",
-          value: metrics.user_distribution.active,
-          color: "#22c55e",
-        },
-        {
-          label: "Inactive",
-          value: metrics.user_distribution.inactive,
-          color: "#ef4444",
-        },
-      ]
-    : [];
-
-  const roleDistribution = metrics?.user_distribution
-    ? [
-        {
-          label: "Admins",
-          value: metrics.user_distribution.admins,
-          color: "#8b5cf6",
-        },
-        {
-          label: "Regular",
-          value: metrics.user_distribution.regular,
-          color: "#3b82f6",
-        },
-      ]
-    : [];
 
   return (
     <div className="space-y-6">
@@ -341,28 +364,25 @@ export function MetricsCharts() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center p-4 bg-neutral-50 rounded-lg">
             <p className="text-3xl font-bold text-neutral-900">
-              {metrics?.user_distribution.total || 0}
+              {summaryStats.totalUsers}
             </p>
             <p className="text-sm text-neutral-600">Total Users</p>
           </div>
           <div className="text-center p-4 bg-green-50 rounded-lg">
             <p className="text-3xl font-bold text-green-600">
-              {metrics?.user_distribution.active || 0}
+              {summaryStats.activeUsers}
             </p>
             <p className="text-sm text-green-700">Active Users</p>
           </div>
           <div className="text-center p-4 bg-purple-50 rounded-lg">
             <p className="text-3xl font-bold text-purple-600">
-              {metrics?.user_distribution.admins || 0}
+              {summaryStats.admins}
             </p>
             <p className="text-sm text-purple-700">Admins</p>
           </div>
           <div className="text-center p-4 bg-blue-50 rounded-lg">
             <p className="text-3xl font-bold text-blue-600">
-              {metrics?.daily_registrations?.reduce(
-                (sum, d) => sum + d.count,
-                0,
-              ) || 0}
+              {summaryStats.newRegistrations}
             </p>
             <p className="text-sm text-blue-700">New Registrations</p>
           </div>

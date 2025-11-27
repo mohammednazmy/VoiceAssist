@@ -31,6 +31,7 @@ from app.core.metrics import (
     voice_stt_latency_seconds,
     voice_transcripts_total,
 )
+from app.core.middleware import rate_limit
 from app.core.security import verify_token
 from app.core.sentry import capture_slo_violation
 from app.core.slo import check_slo_violations, log_slo_violations
@@ -39,7 +40,7 @@ from app.models.session import Session as ChatSession
 from app.models.user import User
 from app.services.rag_service import QueryOrchestrator, QueryRequest
 from app.services.realtime_voice_service import realtime_voice_service
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -606,7 +607,9 @@ async def post_voice_metrics(
     summary="Relay final voice transcript to RAG",
     description="Persists the user transcript, runs RAG, persists assistant reply, and returns the answer.",
 )
+@rate_limit(calls=30, period=60, key_prefix="voice_relay")  # 30 calls per minute per user
 async def relay_voice_transcript(
+    request: Request,  # Required for rate limiting
     payload: VoiceRelayRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),

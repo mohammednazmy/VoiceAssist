@@ -3,17 +3,62 @@
  * Main admin panel with metrics, KB management, and analytics
  *
  * Phase 8.3: Added user management, metrics charts, audit logs, WebSocket status
+ * Performance: Lazy loading for sub-components, error boundaries
  */
 
+import { lazy, Suspense } from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
-import { DashboardOverview } from "../../components/admin/DashboardOverview";
-import { KnowledgeBaseManager } from "../../components/admin/KnowledgeBaseManager";
-import { AnalyticsDashboard } from "../../components/admin/AnalyticsDashboard";
-import { SystemHealth } from "../../components/admin/SystemHealth";
-import { UserManagement } from "../../components/admin/UserManagement";
-import { AuditLogViewer } from "../../components/admin/AuditLogViewer";
-import { MetricsCharts } from "../../components/admin/MetricsCharts";
-import { WebSocketStatusPanel } from "../../components/admin/WebSocketStatusPanel";
+import { AdminErrorBoundary } from "../../components/admin/AdminErrorBoundary";
+import {
+  DashboardOverviewSkeleton,
+  UserManagementSkeleton,
+  AuditLogSkeleton,
+  MetricsChartsSkeleton,
+  WebSocketStatusSkeleton,
+  AdminPageSkeleton,
+} from "../../components/admin/AdminSkeletons";
+
+// Lazy load admin sub-components for code splitting
+const DashboardOverview = lazy(() =>
+  import("../../components/admin/DashboardOverview").then((m) => ({
+    default: m.DashboardOverview,
+  })),
+);
+const KnowledgeBaseManager = lazy(() =>
+  import("../../components/admin/KnowledgeBaseManager").then((m) => ({
+    default: m.KnowledgeBaseManager,
+  })),
+);
+const AnalyticsDashboard = lazy(() =>
+  import("../../components/admin/AnalyticsDashboard").then((m) => ({
+    default: m.AnalyticsDashboard,
+  })),
+);
+const SystemHealth = lazy(() =>
+  import("../../components/admin/SystemHealth").then((m) => ({
+    default: m.SystemHealth,
+  })),
+);
+const UserManagement = lazy(() =>
+  import("../../components/admin/UserManagement").then((m) => ({
+    default: m.UserManagement,
+  })),
+);
+const AuditLogViewer = lazy(() =>
+  import("../../components/admin/AuditLogViewer").then((m) => ({
+    default: m.AuditLogViewer,
+  })),
+);
+const MetricsCharts = lazy(() =>
+  import("../../components/admin/MetricsCharts").then((m) => ({
+    default: m.MetricsCharts,
+  })),
+);
+const WebSocketStatusPanel = lazy(() =>
+  import("../../components/admin/WebSocketStatusPanel").then((m) => ({
+    default: m.WebSocketStatusPanel,
+  })),
+);
 
 export default function AdminDashboard() {
   const location = useLocation();
@@ -239,35 +284,76 @@ export default function AdminDashboard() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <Routes>
-          <Route
-            index
-            element={
-              <>
-                <DashboardOverview />
-                <div className="px-6 pb-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <WebSocketStatusPanel />
+        <AdminErrorBoundary>
+          <Routes>
+            <Route
+              index
+              element={
+                <Suspense fallback={<DashboardOverviewSkeleton />}>
+                  <DashboardOverview />
+                  <div className="px-6 pb-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <Suspense fallback={<WebSocketStatusSkeleton />}>
+                        <WebSocketStatusPanel />
+                      </Suspense>
+                    </div>
                   </div>
-                </div>
-              </>
-            }
-          />
-          <Route path="knowledge-base" element={<KnowledgeBaseManager />} />
-          <Route path="analytics" element={<AnalyticsDashboard />} />
-          <Route path="system" element={<SystemHealth />} />
-          {/* Phase 8.3: New routes */}
-          <Route path="users" element={<UserManagement />} />
-          <Route
-            path="metrics"
-            element={
-              <div className="p-6">
-                <MetricsCharts />
-              </div>
-            }
-          />
-          <Route path="audit-logs" element={<AuditLogViewer />} />
-        </Routes>
+                </Suspense>
+              }
+            />
+            <Route
+              path="knowledge-base"
+              element={
+                <Suspense fallback={<AdminPageSkeleton />}>
+                  <KnowledgeBaseManager />
+                </Suspense>
+              }
+            />
+            <Route
+              path="analytics"
+              element={
+                <Suspense fallback={<AdminPageSkeleton />}>
+                  <AnalyticsDashboard />
+                </Suspense>
+              }
+            />
+            <Route
+              path="system"
+              element={
+                <Suspense fallback={<AdminPageSkeleton />}>
+                  <SystemHealth />
+                </Suspense>
+              }
+            />
+            {/* Phase 8.3: New routes with lazy loading */}
+            <Route
+              path="users"
+              element={
+                <Suspense fallback={<UserManagementSkeleton />}>
+                  <UserManagement />
+                </Suspense>
+              }
+            />
+            <Route
+              path="metrics"
+              element={
+                <Suspense fallback={<MetricsChartsSkeleton />}>
+                  <div className="p-6">
+                    <MetricsCharts />
+                  </div>
+                </Suspense>
+              }
+            />
+            <Route
+              path="audit-logs"
+              element={
+                <Suspense fallback={<AuditLogSkeleton />}>
+                  <AuditLogViewer />
+                </Suspense>
+              }
+            />
+          </Routes>
+        </AdminErrorBoundary>
       </main>
     </div>
   );

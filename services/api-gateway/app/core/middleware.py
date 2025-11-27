@@ -1,17 +1,107 @@
 """
 Custom middleware for security, rate limiting, and request tracing
 """
-import uuid
+
 import time
-from fastapi import Request
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
+import uuid
+from functools import wraps
+from typing import Callable, Optional
+
 import structlog
-
-from app.core.config import settings
-
+from app.core.database import redis_client
+from fastapi import HTTPException, Request
+from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = structlog.get_logger(__name__)
+
+
+# ============================================================================
+# Rate Limiting Decorator
+# ============================================================================
+
+
+def rate_limit(
+    calls: int = 10,
+    period: int = 60,
+    key_prefix: str = "ratelimit",
+    key_func: Optional[Callable[[Request], str]] = None,
+):
+    """
+    Rate limiting decorator for FastAPI endpoints.
+
+    Args:
+        calls: Maximum number of calls allowed in the period
+        period: Time period in seconds
+        key_prefix: Prefix for the Redis key
+        key_func: Optional function to generate a custom rate limit key from request
+
+    Usage:
+        @router.post("/endpoint")
+        @rate_limit(calls=10, period=60)
+        async def my_endpoint(request: Request, ...):
+            ...
+    """
+
+    def decorator(func: Callable):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            # Find the request object in args or kwargs
+            request = kwargs.get("request")
+            if request is None:
+                for arg in args:
+                    if isinstance(arg, Request):
+                        request = arg
+                        break
+
+            if request is None:
+                # No request object found, skip rate limiting
+                return await func(*args, **kwargs)
+
+            # Generate rate limit key
+            if key_func:
+                identifier = key_func(request)
+            else:
+                # Default: use client IP or user ID if authenticated
+                user_id = getattr(request.state, "user_id", None)
+                if user_id:
+                    identifier = f"user:{user_id}"
+                else:
+                    identifier = f"ip:{request.client.host if request.client else 'unknown'}"
+
+            redis_key = f"{key_prefix}:{request.url.path}:{identifier}"
+
+            try:
+                # Get current count
+                current = redis_client.get(redis_key)
+                current_count = int(current) if current else 0
+
+                if current_count >= calls:
+                    # Get TTL for retry-after header
+                    ttl = redis_client.ttl(redis_key)
+                    raise HTTPException(
+                        status_code=429,
+                        detail=f"Rate limit exceeded. Try again in {ttl} seconds.",
+                        headers={"Retry-After": str(ttl)},
+                    )
+
+                # Increment counter
+                pipe = redis_client.pipeline()
+                pipe.incr(redis_key)
+                if current_count == 0:
+                    pipe.expire(redis_key, period)
+                pipe.execute()
+
+            except HTTPException:
+                raise
+            except Exception as e:
+                # If Redis is unavailable, log and allow the request
+                logger.warning(f"Rate limiting failed: {e}")
+
+            return await func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):

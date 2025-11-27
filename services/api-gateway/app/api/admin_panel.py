@@ -1,51 +1,148 @@
-"""Admin Panel API endpoints (Phase 7 + Phase 8.3 enhancements).
+"""Admin Panel API endpoints (Phase 7 + Phase 8.3 + Phase 8 Improvements).
 
 Provides system summary information for the Admin Panel dashboard.
 
 Phase 7: Basic summary endpoint
 Phase 8.3: WebSocket status, user management, metrics, audit logs
+Phase 8 Improvements:
+- Database-backed audit logs (persistent)
+- Redis-backed WebSocket session tracking (distributed)
+- Optimized database queries (aggregated)
+- Redis caching for metrics
+- Audit logging for all admin actions
 """
 
 from __future__ import annotations
 
+import json
+import logging
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from app.core.api_envelope import success_response
-from app.core.database import get_db, get_db_pool_stats, get_redis_pool_stats
+from app.core.database import get_db, get_db_pool_stats, get_redis_pool_stats, redis_client
 from app.core.dependencies import get_current_admin_user
+from app.models.audit_log import AuditLog
 from app.models.user import User
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, EmailStr
-from sqlalchemy import desc, func
+from sqlalchemy import Date, cast, desc, func
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/admin/panel", tags=["admin", "panel"])
 
-# Track active WebSocket connections (updated by realtime module)
-_active_websocket_sessions: Dict[str, dict] = {}
+# Redis keys for WebSocket session tracking and caching
+REDIS_WS_SESSIONS_KEY = "voiceassist:ws:sessions"
+REDIS_METRICS_CACHE_KEY = "voiceassist:admin:metrics"
+METRICS_CACHE_TTL = 60  # Cache metrics for 60 seconds
+
+
+# ============================================================================
+# Audit Log Helper Functions (Database-backed)
+# ============================================================================
+
+
+def log_audit_event(
+    db: Session,
+    action: str,
+    user_id: Optional[str] = None,
+    user_email: Optional[str] = None,
+    resource_type: Optional[str] = None,
+    resource_id: Optional[str] = None,
+    success: bool = True,
+    details: Optional[str] = None,
+    request: Optional[Request] = None,
+) -> AuditLog:
+    """Log an audit event to the database.
+
+    Args:
+        db: Database session
+        action: Action performed (e.g., 'user.update', 'user.delete')
+        user_id: ID of user performing the action
+        user_email: Email of user performing the action
+        resource_type: Type of resource affected (e.g., 'user', 'session')
+        resource_id: ID of the affected resource
+        success: Whether the action was successful
+        details: Additional details (JSON string)
+        request: FastAPI request object for context
+    """
+    entry = AuditLog(
+        user_id=user_id,
+        user_email=user_email,
+        action=action,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        success=success,
+        additional_data={"details": details} if details else None,
+        request_id=getattr(request.state, "trace_id", None) if request else None,
+        ip_address=request.client.host if request and request.client else None,
+        user_agent=request.headers.get("user-agent", "")[:500] if request else None,
+        endpoint=str(request.url.path) if request else None,
+    )
+    # Calculate integrity hash
+    entry.hash = entry.calculate_hash()
+
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+
+# ============================================================================
+# WebSocket Session Tracking (Redis-backed for distributed deployments)
+# ============================================================================
 
 
 def register_websocket_session(session_id: str, user_id: str, session_type: str):
-    """Register a new WebSocket session (called from realtime handlers)."""
-    _active_websocket_sessions[session_id] = {
-        "user_id": user_id,
-        "type": session_type,
-        "connected_at": datetime.now(timezone.utc).isoformat(),
-    }
+    """Register a new WebSocket session in Redis."""
+    try:
+        session_data = json.dumps(
+            {
+                "user_id": user_id,
+                "type": session_type,
+                "connected_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+        redis_client.hset(REDIS_WS_SESSIONS_KEY, session_id, session_data)
+        # Set expiry on the hash (auto-cleanup stale sessions after 24h)
+        redis_client.expire(REDIS_WS_SESSIONS_KEY, 86400)
+    except Exception as e:
+        logger.warning(f"Failed to register WebSocket session in Redis: {e}")
 
 
 def unregister_websocket_session(session_id: str):
-    """Unregister a WebSocket session (called from realtime handlers)."""
-    _active_websocket_sessions.pop(session_id, None)
+    """Unregister a WebSocket session from Redis."""
+    try:
+        redis_client.hdel(REDIS_WS_SESSIONS_KEY, session_id)
+    except Exception as e:
+        logger.warning(f"Failed to unregister WebSocket session from Redis: {e}")
+
+
+def get_all_websocket_sessions() -> Dict[str, dict]:
+    """Get all active WebSocket sessions from Redis."""
+    try:
+        sessions = redis_client.hgetall(REDIS_WS_SESSIONS_KEY)
+        return {sid: json.loads(data) if isinstance(data, str) else data for sid, data in sessions.items()}
+    except Exception as e:
+        logger.warning(f"Failed to get WebSocket sessions from Redis: {e}")
+        return {}
 
 
 def get_active_websocket_count() -> int:
     """Get count of active WebSocket sessions."""
-    return len(_active_websocket_sessions)
+    try:
+        return redis_client.hlen(REDIS_WS_SESSIONS_KEY)
+    except Exception:
+        return 0
 
 
-# Pydantic models for request/response
+# ============================================================================
+# Pydantic Models
+# ============================================================================
+
+
 class UserCreate(BaseModel):
     """Request model for creating a user."""
 
@@ -79,14 +176,23 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
-class AuditLogEntry(BaseModel):
+class AuditLogEntryResponse(BaseModel):
     """Response model for audit log entry."""
 
     timestamp: str
     level: str
     action: str
     user_id: Optional[str]
+    user_email: Optional[str]
+    resource_type: Optional[str]
+    resource_id: Optional[str]
+    success: bool
     details: Optional[str]
+
+
+# ============================================================================
+# System Summary Endpoint
+# ============================================================================
 
 
 @router.get("/summary")
@@ -95,14 +201,7 @@ async def get_system_summary(
     db: Session = Depends(get_db),
     current_admin_user: User = Depends(get_current_admin_user),
 ) -> Dict:
-    """Return a simple system summary for the admin dashboard.
-
-    This endpoint is intended as a Phase 7 MVP and returns:
-    - total_users: Count of user records
-    - active_users: Count of active user records
-    - admin_users: Count of admin users
-    - timestamp: ISO8601 timestamp
-    """
+    """Return a simple system summary for the admin dashboard."""
     total_users = db.query(User).count()
     active_users = db.query(User).filter(User.is_active.is_(True)).count()
     admin_users = db.query(User).filter(User.is_admin.is_(True)).count()
@@ -118,7 +217,7 @@ async def get_system_summary(
 
 
 # ============================================================================
-# Phase 8.3: WebSocket Status Monitoring
+# WebSocket Status Monitoring
 # ============================================================================
 
 
@@ -127,14 +226,7 @@ async def get_websocket_status(
     request: Request,
     current_admin_user: User = Depends(get_current_admin_user),
 ) -> Dict:
-    """Return WebSocket connection status for admin dashboard.
-
-    Returns:
-    - active_connections: Count of active WebSocket connections
-    - connections_by_type: Breakdown by connection type (chat, voice)
-    - recent_connections: List of recent connection events
-    - pool_stats: Connection pool statistics
-    """
+    """Return WebSocket connection status for admin dashboard."""
     # Get pool stats
     try:
         db_stats = get_db_pool_stats()
@@ -143,9 +235,12 @@ async def get_websocket_status(
         db_stats = {"size": 0, "checked_out": 0, "checked_in": 0}
         redis_stats = {"max_connections": 0, "in_use_connections": 0}
 
+    # Get sessions from Redis
+    sessions = get_all_websocket_sessions()
+
     # Count connections by type
     connections_by_type = {"chat": 0, "voice": 0, "other": 0}
-    for session_info in _active_websocket_sessions.values():
+    for session_info in sessions.values():
         conn_type = session_info.get("type", "other")
         if conn_type in connections_by_type:
             connections_by_type[conn_type] += 1
@@ -154,13 +249,13 @@ async def get_websocket_status(
 
     # Get recent connections (last 10)
     recent_connections = sorted(
-        [{"session_id": sid, **info} for sid, info in _active_websocket_sessions.items()],
+        [{"session_id": sid, **info} for sid, info in sessions.items()],
         key=lambda x: x.get("connected_at", ""),
         reverse=True,
     )[:10]
 
     data = {
-        "active_connections": len(_active_websocket_sessions),
+        "active_connections": len(sessions),
         "connections_by_type": connections_by_type,
         "recent_connections": recent_connections,
         "pool_stats": {
@@ -175,7 +270,7 @@ async def get_websocket_status(
 
 
 # ============================================================================
-# Phase 8.3: User Management CRUD
+# User Management CRUD (with Audit Logging)
 # ============================================================================
 
 
@@ -190,15 +285,7 @@ async def list_users(
     is_active: Optional[bool] = Query(None),
     is_admin: Optional[bool] = Query(None),
 ) -> Dict:
-    """List users with pagination and filtering.
-
-    Args:
-        offset: Number of records to skip
-        limit: Maximum number of records to return
-        search: Search term for email or full_name
-        is_active: Filter by active status
-        is_admin: Filter by admin status
-    """
+    """List users with pagination and filtering."""
     query = db.query(User)
 
     # Apply filters
@@ -284,6 +371,14 @@ async def update_user(
     if str(user.id) == str(current_admin_user.id) and user_update.is_admin is False:
         raise HTTPException(status_code=400, detail="Cannot remove your own admin privileges")
 
+    # Capture original values for audit
+    original_values = {
+        "email": user.email,
+        "full_name": user.full_name,
+        "is_admin": user.is_admin,
+        "is_active": user.is_active,
+    }
+
     # Update fields
     update_data = user_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -291,6 +386,19 @@ async def update_user(
 
     db.commit()
     db.refresh(user)
+
+    # Log audit event
+    log_audit_event(
+        db=db,
+        action="user.update",
+        user_id=str(current_admin_user.id),
+        user_email=current_admin_user.email,
+        resource_type="user",
+        resource_id=user_id,
+        success=True,
+        details=json.dumps({"original": original_values, "updated": update_data}),
+        request=request,
+    )
 
     data = {
         "id": str(user.id),
@@ -322,9 +430,25 @@ async def delete_user(
     if str(user.id) == str(current_admin_user.id):
         raise HTTPException(status_code=400, detail="Cannot delete your own account")
 
+    # Capture user email for audit before deactivation
+    target_email = user.email
+
     # Soft delete - deactivate the user
     user.is_active = False
     db.commit()
+
+    # Log audit event
+    log_audit_event(
+        db=db,
+        action="user.deactivate",
+        user_id=str(current_admin_user.id),
+        user_email=current_admin_user.email,
+        resource_type="user",
+        resource_id=user_id,
+        success=True,
+        details=json.dumps({"deactivated_user_email": target_email}),
+        request=request,
+    )
 
     data = {"message": "User deactivated successfully", "user_id": user_id}
     trace_id = getattr(request.state, "trace_id", None)
@@ -332,54 +456,58 @@ async def delete_user(
 
 
 # ============================================================================
-# Phase 8.3: System Metrics for Charts
+# System Metrics (Optimized Queries + Redis Caching)
 # ============================================================================
 
 
-@router.get("/metrics")
-async def get_system_metrics(
-    request: Request,
-    db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
-    days: int = Query(7, ge=1, le=90),
-) -> Dict:
-    """Return system metrics for dashboard charts.
-
-    Args:
-        days: Number of days to include in the metrics (1-90)
-    """
+def _fetch_metrics_from_db(db: Session, days: int) -> Dict:
+    """Fetch metrics from database using optimized aggregated queries."""
     now = datetime.now(timezone.utc)
+    start_date = now - timedelta(days=days)
 
-    # Get daily user registration counts
+    # Optimized: Single aggregated query for daily registrations
+    registration_query = (
+        db.query(
+            cast(User.created_at, Date).label("date"),
+            func.count(User.id).label("count"),
+        )
+        .filter(User.created_at >= start_date)
+        .group_by(cast(User.created_at, Date))
+        .order_by(cast(User.created_at, Date))
+        .all()
+    )
+
+    # Optimized: Single aggregated query for daily active users
+    active_query = (
+        db.query(
+            cast(User.last_login, Date).label("date"),
+            func.count(User.id).label("count"),
+        )
+        .filter(User.last_login >= start_date)
+        .group_by(cast(User.last_login, Date))
+        .order_by(cast(User.last_login, Date))
+        .all()
+    )
+
+    # Convert to dict for easy lookup
+    reg_by_date = {str(row.date): row.count for row in registration_query}
+    active_by_date = {str(row.date): row.count for row in active_query}
+
+    # Build daily arrays with all dates
     daily_registrations = []
     daily_active_users = []
+    for i in range(days - 1, -1, -1):
+        date = (now - timedelta(days=i)).date()
+        date_str = str(date)
+        daily_registrations.append({"date": date_str, "count": reg_by_date.get(date_str, 0)})
+        daily_active_users.append({"date": date_str, "count": active_by_date.get(date_str, 0)})
 
-    for i in range(days):
-        day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
-        day_end = day_start + timedelta(days=1)
-
-        # Count registrations for this day
-        reg_count = (
-            db.query(func.count(User.id)).filter(User.created_at >= day_start, User.created_at < day_end).scalar() or 0
-        )
-        daily_registrations.append({"date": day_start.strftime("%Y-%m-%d"), "count": reg_count})
-
-        # Count logins for this day
-        active_count = (
-            db.query(func.count(User.id)).filter(User.last_login >= day_start, User.last_login < day_end).scalar() or 0
-        )
-        daily_active_users.append({"date": day_start.strftime("%Y-%m-%d"), "count": active_count})
-
-    # Reverse to show oldest first
-    daily_registrations.reverse()
-    daily_active_users.reverse()
-
-    # Get user role distribution
+    # User distribution (single query with aggregates)
     total_users = db.query(func.count(User.id)).scalar() or 0
     admin_users = db.query(func.count(User.id)).filter(User.is_admin.is_(True)).scalar() or 0
     active_users = db.query(func.count(User.id)).filter(User.is_active.is_(True)).scalar() or 0
 
-    data = {
+    return {
         "daily_registrations": daily_registrations,
         "daily_active_users": daily_active_users,
         "user_distribution": {
@@ -393,69 +521,103 @@ async def get_system_metrics(
         "timestamp": now.isoformat() + "Z",
     }
 
+
+@router.get("/metrics")
+async def get_system_metrics(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_user),
+    days: int = Query(7, ge=1, le=90),
+) -> Dict:
+    """Return system metrics for dashboard charts with caching."""
+    cache_key = f"{REDIS_METRICS_CACHE_KEY}:{days}"
+
+    # Try to get from cache
+    try:
+        cached = redis_client.get(cache_key)
+        if cached:
+            data = json.loads(cached)
+            trace_id = getattr(request.state, "trace_id", None)
+            return success_response(data, trace_id=trace_id)
+    except Exception as e:
+        logger.debug(f"Cache miss or error: {e}")
+
+    # Fetch from database
+    data = _fetch_metrics_from_db(db, days)
+
+    # Cache the result
+    try:
+        redis_client.setex(cache_key, METRICS_CACHE_TTL, json.dumps(data))
+    except Exception as e:
+        logger.debug(f"Failed to cache metrics: {e}")
+
     trace_id = getattr(request.state, "trace_id", None)
     return success_response(data, trace_id=trace_id)
 
 
 # ============================================================================
-# Phase 8.3: Audit Log Viewer
+# Audit Log Viewer (Database-backed)
 # ============================================================================
-
-# In-memory audit log buffer (for demo - in production use database or log service)
-_audit_log_buffer: List[Dict] = []
-MAX_AUDIT_LOG_SIZE = 1000
-
-
-def log_audit_event(action: str, user_id: Optional[str] = None, details: Optional[str] = None):
-    """Log an audit event (called from various parts of the application)."""
-    entry = {
-        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
-        "level": "info",
-        "action": action,
-        "user_id": user_id,
-        "details": details,
-    }
-    _audit_log_buffer.append(entry)
-
-    # Keep buffer size limited
-    while len(_audit_log_buffer) > MAX_AUDIT_LOG_SIZE:
-        _audit_log_buffer.pop(0)
 
 
 @router.get("/audit-logs")
 async def get_audit_logs(
     request: Request,
+    db: Session = Depends(get_db),
     current_admin_user: User = Depends(get_current_admin_user),
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
     level: Optional[str] = Query(None),
     action: Optional[str] = Query(None),
 ) -> Dict:
-    """Return audit log entries with filtering and pagination.
+    """Return audit log entries with filtering and pagination from database."""
+    query = db.query(AuditLog)
 
-    Args:
-        offset: Number of records to skip
-        limit: Maximum number of records to return
-        level: Filter by log level (info, warn, error)
-        action: Filter by action type
-    """
-    # Filter logs
-    filtered_logs = _audit_log_buffer.copy()
-
-    if level:
-        filtered_logs = [log for log in filtered_logs if log.get("level") == level]
+    # Apply filters
     if action:
-        filtered_logs = [log for log in filtered_logs if action.lower() in log.get("action", "").lower()]
+        query = query.filter(AuditLog.action.ilike(f"%{action}%"))
 
     # Sort by timestamp descending (most recent first)
-    filtered_logs.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+    query = query.order_by(desc(AuditLog.timestamp))
+
+    # Get total count
+    total = query.count()
 
     # Apply pagination
-    total = len(filtered_logs)
-    paginated_logs = filtered_logs[offset : offset + limit]
+    logs = query.offset(offset).limit(limit).all()
+
+    # Convert to response format
+    log_list = []
+    for log in logs:
+        # Determine level based on success
+        log_level = "info" if log.success else "error"
+        if level and log_level != level:
+            continue
+
+        details = None
+        if log.additional_data:
+            details = (
+                log.additional_data.get("details")
+                if isinstance(log.additional_data, dict)
+                else str(log.additional_data)
+            )
+
+        log_list.append(
+            {
+                "timestamp": log.timestamp.isoformat() if log.timestamp else None,
+                "level": log_level,
+                "action": log.action,
+                "user_id": str(log.user_id) if log.user_id else None,
+                "user_email": log.user_email,
+                "resource_type": log.resource_type,
+                "resource_id": log.resource_id,
+                "success": log.success,
+                "details": details,
+            }
+        )
 
     data = {
-        "logs": paginated_logs,
+        "logs": log_list,
         "total": total,
         "offset": offset,
         "limit": limit,
