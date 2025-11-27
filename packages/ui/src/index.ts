@@ -111,6 +111,21 @@ export type {
   DropdownMenuSeparatorProps,
 } from "./components/DropdownMenu";
 
+// Feedback Components
+export { FeedbackRating } from "./components/FeedbackRating";
+export type {
+  FeedbackRatingProps,
+  FeedbackRatingValue,
+} from "./components/FeedbackRating";
+
+export { FeedbackForm } from "./components/FeedbackForm";
+export type {
+  FeedbackFormProps,
+  FeedbackFormData,
+  FeedbackCategory,
+  FeedbackSeverity,
+} from "./components/FeedbackForm";
+
 // Providers
 export { ThemeProvider, useTheme } from "./providers";
 export type { Theme, ResolvedTheme, ThemeContextValue } from "./providers";
