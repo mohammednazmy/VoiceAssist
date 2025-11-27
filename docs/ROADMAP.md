@@ -5,7 +5,7 @@ This is the canonical V2 development roadmap for VoiceAssist. It presents a **15
 **For detailed phase documentation, see:**
 - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Complete phase descriptions
 - [ALL_PHASES_SUMMARY.md](ALL_PHASES_SUMMARY.md) - Quick phase summary
-- [CURRENT_PHASE.md](../CURRENT_PHASE.md) - Current implementation status
+- [CURRENT_PHASE.md](archive/CURRENT_PHASE.md) - Current implementation status
 - Individual phase docs in [docs/phases/](phases/)
 
 ---
@@ -48,7 +48,7 @@ This is the canonical V2 development roadmap for VoiceAssist. It presents a **15
 - Docker Desktop installed and configured
 - Initial architecture documentation created
 - Base docker-compose.yml skeleton
-- CURRENT_PHASE.md tracking system initialized
+- [CURRENT_PHASE.md](archive/CURRENT_PHASE.md) tracking system initialized
 - Git repository with proper .gitignore
 
 **Dependencies**: None (starting point)
@@ -509,7 +509,7 @@ Phase 11 (Security)   Phase 12 (HA/DR)
 - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Detailed phase descriptions
 - [ALL_PHASES_SUMMARY.md](ALL_PHASES_SUMMARY.md) - Quick phase reference
 - [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture
-- [CURRENT_PHASE.md](../CURRENT_PHASE.md) - Current implementation status
+- [CURRENT_PHASE.md](archive/CURRENT_PHASE.md) - Current implementation status
 - [START_HERE.md](START_HERE.md) - Project orientation
 
 ---

@@ -274,6 +274,36 @@ export const navigation: NavSection[] = [
         description: "Release history",
         docPaths: ["FINAL_DOCUMENTATION_SUMMARY.md"],
       },
+      {
+        title: "API Reference",
+        href: "/reference/api",
+        description: "REST endpoints, gateway routing, and OpenAPI details",
+        docPaths: [
+          "API_REFERENCE.md",
+          "api-reference/rest-api.md",
+          "services/api-gateway/README.md",
+        ],
+      },
+      {
+        title: "Packages",
+        href: "/reference/all-docs",
+        description: "Monorepo package READMEs and shared utilities",
+        docPaths: [
+          "packages/api-client/README.md",
+          "packages/config/README.md",
+          "packages/design-tokens/README.md",
+          "packages/telemetry/README.md",
+          "packages/types/README.md",
+          "packages/ui/README.md",
+          "packages/utils/README.md",
+        ],
+      },
+      {
+        title: "Documentation Archive",
+        href: "/reference/all-docs",
+        description: "Historical documents preserved for context",
+        docPaths: ["archive/README.md"],
+      },
     ],
   },
 ];

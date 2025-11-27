@@ -432,6 +432,7 @@ I want to work on Phase [N]. Please:
 - **Phase docs**: `docs/phases/`
 - **Applications**: `apps/{web-app,admin-panel,docs-site}/`
 - **Services**: `services/api-gateway/`
+- **Server**: `server/`
 
 ### Key Technologies
 
