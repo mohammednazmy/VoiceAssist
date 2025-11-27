@@ -9,9 +9,29 @@ export const DOCS_DIR =
 export const CLIENT_IMPL_DIR = path.join(DOCS_DIR, "client-implementation");
 export const WEB_APP_DIR = path.join(process.cwd(), "..", "web-app");
 
+// Project root directory (parent of docs/)
+export const PROJECT_ROOT = path.join(DOCS_DIR, "..");
+
 // GitHub repository for "Edit this page" links
 const GITHUB_REPO = "mohammednazmy/VoiceAssist";
 const GITHUB_BRANCH = "main";
+
+/**
+ * Path prefix configuration for loadDocWithPrefix()
+ *
+ * Supported prefixes:
+ * - No prefix: Relative to docs/ directory (e.g., "START_HERE.md" → docs/START_HERE.md)
+ * - @root/: Relative to project root (e.g., "@root/packages/ui/README.md" → packages/ui/README.md)
+ *
+ * Example usage in navigation.ts:
+ *   docPaths: [
+ *     "ARCHITECTURE.md",                      // → docs/ARCHITECTURE.md
+ *     "@root/services/api-gateway/README.md"  // → services/api-gateway/README.md
+ *   ]
+ */
+const PATH_PREFIXES: Record<string, string> = {
+  "@root/": PROJECT_ROOT,
+};
 
 export interface DocContent {
   content: string;
@@ -72,6 +92,64 @@ export function loadDoc(relativePath: string): DocContent | null {
     };
   } catch (error) {
     console.error(`Error loading document ${relativePath}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Load a markdown document with prefix support for multiple base directories.
+ *
+ * Supported path formats:
+ * - "filename.md" or "subdir/filename.md" → loads from docs/ directory
+ * - "@root/path/to/file.md" → loads from project root
+ *
+ * @param docPath - Path with optional prefix (e.g., "@root/packages/ui/README.md")
+ * @returns Document content or null if not found/invalid
+ */
+export function loadDocWithPrefix(docPath: string): DocContent | null {
+  let basePath = DOCS_DIR;
+  let relativePath = docPath;
+
+  // Check for known prefixes and resolve base path
+  for (const [prefix, baseDir] of Object.entries(PATH_PREFIXES)) {
+    if (docPath.startsWith(prefix)) {
+      basePath = baseDir;
+      relativePath = docPath.slice(prefix.length);
+      break;
+    }
+  }
+
+  // Security: reject path traversal sequences
+  if (relativePath.includes("..") || path.isAbsolute(relativePath)) {
+    console.warn(`Invalid path rejected (path traversal attempt): ${docPath}`);
+    return null;
+  }
+
+  const fullPath = path.join(basePath, relativePath);
+
+  // Security: ensure resolved path stays within the base directory
+  if (!isPathWithinBase(basePath, fullPath)) {
+    console.warn(
+      `Path traversal blocked: ${docPath} resolves outside allowed directory`,
+    );
+    return null;
+  }
+
+  try {
+    if (!fs.existsSync(fullPath)) {
+      // Silent return - DocPage handles missing docs gracefully with "Content coming soon"
+      return null;
+    }
+
+    const fileContents = fs.readFileSync(fullPath, "utf8");
+    const { data, content } = matter(fileContents);
+
+    return {
+      content,
+      frontmatter: data,
+    };
+  } catch (error) {
+    console.error(`Error loading document ${docPath}:`, error);
     return null;
   }
 }
@@ -228,4 +306,40 @@ export function getGitHubEditUrl(relativePath: string): string {
  */
 export function getGitHubViewUrl(relativePath: string): string {
   return `https://github.com/${GITHUB_REPO}/blob/${GITHUB_BRANCH}/docs/${relativePath}`;
+}
+
+/**
+ * Generate GitHub edit URL for a document with prefix support
+ * @param docPath - Path with optional prefix (e.g., "@root/packages/ui/README.md")
+ */
+export function getGitHubEditUrlWithPrefix(docPath: string): string {
+  let repoPath: string;
+
+  if (docPath.startsWith("@root/")) {
+    // Remove @root/ prefix - path is relative to repo root
+    repoPath = docPath.slice(6);
+  } else {
+    // Default: path is relative to docs/
+    repoPath = `docs/${docPath}`;
+  }
+
+  return `https://github.com/${GITHUB_REPO}/edit/${GITHUB_BRANCH}/${repoPath}`;
+}
+
+/**
+ * Generate GitHub view URL for a document with prefix support
+ * @param docPath - Path with optional prefix (e.g., "@root/packages/ui/README.md")
+ */
+export function getGitHubViewUrlWithPrefix(docPath: string): string {
+  let repoPath: string;
+
+  if (docPath.startsWith("@root/")) {
+    // Remove @root/ prefix - path is relative to repo root
+    repoPath = docPath.slice(6);
+  } else {
+    // Default: path is relative to docs/
+    repoPath = `docs/${docPath}`;
+  }
+
+  return `https://github.com/${GITHUB_REPO}/blob/${GITHUB_BRANCH}/${repoPath}`;
 }

@@ -1,3 +1,21 @@
+/**
+ * Navigation configuration for the documentation site.
+ *
+ * docPaths can use these prefixes to load documents from different locations:
+ * - No prefix: Relative to docs/ directory (e.g., "START_HERE.md" → docs/START_HERE.md)
+ * - @root/: Relative to project root (e.g., "@root/packages/ui/README.md" → packages/ui/README.md)
+ *
+ * Examples:
+ *   docPaths: [
+ *     "ARCHITECTURE.md",                      // → docs/ARCHITECTURE.md
+ *     "api-reference/rest-api.md",            // → docs/api-reference/rest-api.md
+ *     "@root/services/api-gateway/README.md", // → services/api-gateway/README.md
+ *     "@root/packages/ui/README.md",          // → packages/ui/README.md
+ *   ]
+ *
+ * See docs.ts for the loadDocWithPrefix() implementation.
+ */
+
 export interface NavItem {
   title: string;
   href: string;
@@ -281,7 +299,7 @@ export const navigation: NavSection[] = [
         docPaths: [
           "API_REFERENCE.md",
           "api-reference/rest-api.md",
-          "services/api-gateway/README.md",
+          "@root/services/api-gateway/README.md",
         ],
       },
       {
@@ -289,13 +307,13 @@ export const navigation: NavSection[] = [
         href: "/reference/all-docs",
         description: "Monorepo package READMEs and shared utilities",
         docPaths: [
-          "packages/api-client/README.md",
-          "packages/config/README.md",
-          "packages/design-tokens/README.md",
-          "packages/telemetry/README.md",
-          "packages/types/README.md",
-          "packages/ui/README.md",
-          "packages/utils/README.md",
+          "@root/packages/api-client/README.md",
+          "@root/packages/config/README.md",
+          "@root/packages/design-tokens/README.md",
+          "@root/packages/telemetry/README.md",
+          "@root/packages/types/README.md",
+          "@root/packages/ui/README.md",
+          "@root/packages/utils/README.md",
         ],
       },
       {

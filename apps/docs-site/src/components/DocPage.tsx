@@ -1,4 +1,4 @@
-import { loadDoc } from "@/lib/docs";
+import { loadDocWithPrefix } from "@/lib/docs";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 
 interface DocPageProps {
@@ -8,16 +8,18 @@ interface DocPageProps {
 }
 
 function formatDocName(docPath: string) {
-  const name = docPath.split("/").pop() || docPath;
+  // Remove @root/ prefix for display
+  const cleanPath = docPath.replace(/^@root\//, "");
+  const name = cleanPath.split("/").pop() || cleanPath;
   return name.replace(/_/g, " ").replace(/\.md$/i, "");
 }
 
 export function DocPage({ title, description, docPaths }: DocPageProps) {
   const loadedDocs = docPaths
-    .map((path) => ({ path, doc: loadDoc(path) }))
+    .map((path) => ({ path, doc: loadDocWithPrefix(path) }))
     .filter((entry) => entry.doc !== null) as {
     path: string;
-    doc: NonNullable<ReturnType<typeof loadDoc>>;
+    doc: NonNullable<ReturnType<typeof loadDocWithPrefix>>;
   }[];
 
   const combinedContent = loadedDocs
