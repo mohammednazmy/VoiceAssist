@@ -20,6 +20,7 @@ import { WaveformVisualizer } from "../../utils/waveform";
 import { VoiceModeSettings } from "./VoiceModeSettings";
 import { VoiceMetricsDisplay } from "./VoiceMetricsDisplay";
 import { VoiceTranscriptPreview } from "./VoiceTranscriptPreview";
+import { PendingRecordingsPanel } from "./PendingRecordingsPanel";
 import {
   useVoiceSettingsStore,
   VOICE_OPTIONS,
@@ -65,6 +66,8 @@ export function VoiceModePanel({
   const [userTranscript, setUserTranscript] = useState("");
   const [aiTranscript, setAiTranscript] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [showPendingRecordings, setShowPendingRecordings] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [_isSynthesizing, _setIsSynthesizing] = useState(false);
 
   // Track pending final transcripts to add to chat
@@ -84,6 +87,8 @@ export function VoiceModePanel({
     stopRecording: stopOfflineRecording,
     cancelRecording: cancelOfflineRecording,
     syncPendingRecordings,
+    getPendingRecordings,
+    deleteRecording,
   } = useOfflineVoiceCapture({
     conversationId: conversationId || "default",
     apiClient: apiClient
@@ -343,6 +348,18 @@ export function VoiceModePanel({
     setAiTranscript("");
   };
 
+  /**
+   * Handle sync with loading state
+   */
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      await syncPendingRecordings();
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
     <div
       className="bg-white border-2 border-primary-500 rounded-lg shadow-xl p-4 sm:p-6 space-y-3 sm:space-y-4"
@@ -392,11 +409,11 @@ export function VoiceModePanel({
           {pendingCount > 0 && (
             <button
               type="button"
-              onClick={syncPendingRecordings}
+              onClick={() => setShowPendingRecordings(true)}
               className="relative flex items-center space-x-1 px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-full transition-colors"
-              aria-label={`${pendingCount} pending recording${pendingCount > 1 ? "s" : ""} - click to sync`}
+              aria-label={`${pendingCount} pending recording${pendingCount > 1 ? "s" : ""} - click to manage`}
               data-testid="pending-recordings-badge"
-              title="Click to sync pending recordings"
+              title="Click to manage pending recordings"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -1029,6 +1046,27 @@ export function VoiceModePanel({
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
       />
+
+      {/* Pending Recordings Modal */}
+      {showPendingRecordings && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowPendingRecordings(false);
+            }
+          }}
+        >
+          <PendingRecordingsPanel
+            getPendingRecordings={getPendingRecordings}
+            deleteRecording={deleteRecording}
+            syncPendingRecordings={handleSync}
+            isSyncing={isSyncing}
+            isOffline={isOfflineMode}
+            onClose={() => setShowPendingRecordings(false)}
+          />
+        </div>
+      )}
     </div>
   );
 }

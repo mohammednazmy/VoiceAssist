@@ -82,6 +82,49 @@ export interface AdminKBUploadResponse {
   message: string;
 }
 
+/** Feature Flag configuration */
+export interface FeatureFlag {
+  name: string;
+  enabled: boolean;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  rollout_percentage?: number;
+  user_groups?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+/** Request to create a new feature flag */
+export interface CreateFeatureFlagRequest {
+  name: string;
+  enabled?: boolean;
+  description: string;
+  rollout_percentage?: number;
+  user_groups?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+/** Request to update an existing feature flag */
+export interface UpdateFeatureFlagRequest {
+  enabled?: boolean;
+  description?: string;
+  rollout_percentage?: number;
+  user_groups?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+/** Cache statistics */
+export interface CacheStats {
+  total_keys: number;
+  memory_used_bytes: number;
+  memory_used_human: string;
+  hit_rate: number;
+  miss_rate: number;
+  uptime_seconds: number;
+  connected_clients: number;
+  keys_by_prefix: Record<string, number>;
+}
+
 export class VoiceAssistApiClient {
   private client: AxiosInstance;
   private config: ApiClientConfig;
@@ -904,6 +947,85 @@ export class VoiceAssistApiClient {
         responseType: "blob",
       },
     );
+    return response.data;
+  }
+
+  // =========================================================================
+  // Admin Feature Flags
+  // =========================================================================
+
+  async getFeatureFlags(): Promise<FeatureFlag[]> {
+    const response = await this.client.get<FeatureFlag[]>(
+      "/admin/feature-flags",
+    );
+    return response.data;
+  }
+
+  async getFeatureFlag(flagName: string): Promise<FeatureFlag> {
+    const response = await this.client.get<FeatureFlag>(
+      `/admin/feature-flags/${flagName}`,
+    );
+    return response.data;
+  }
+
+  async createFeatureFlag(
+    flag: CreateFeatureFlagRequest,
+  ): Promise<FeatureFlag> {
+    const response = await this.client.post<FeatureFlag>(
+      "/admin/feature-flags",
+      flag,
+    );
+    return response.data;
+  }
+
+  async updateFeatureFlag(
+    flagName: string,
+    updates: UpdateFeatureFlagRequest,
+  ): Promise<FeatureFlag> {
+    const response = await this.client.patch<FeatureFlag>(
+      `/admin/feature-flags/${flagName}`,
+      updates,
+    );
+    return response.data;
+  }
+
+  async deleteFeatureFlag(flagName: string): Promise<void> {
+    await this.client.delete(`/admin/feature-flags/${flagName}`);
+  }
+
+  async toggleFeatureFlag(flagName: string): Promise<FeatureFlag> {
+    const response = await this.client.post<FeatureFlag>(
+      `/admin/feature-flags/${flagName}/toggle`,
+    );
+    return response.data;
+  }
+
+  // =========================================================================
+  // Admin Cache Management
+  // =========================================================================
+
+  async getCacheStats(): Promise<CacheStats> {
+    const response = await this.client.get<CacheStats>("/admin/cache/stats");
+    return response.data;
+  }
+
+  async clearCache(): Promise<{ status: string; message: string }> {
+    const response = await this.client.post<{
+      status: string;
+      message: string;
+    }>("/admin/cache/clear");
+    return response.data;
+  }
+
+  async invalidateCachePattern(
+    pattern: string,
+  ): Promise<{ status: string; keys_invalidated: number }> {
+    const response = await this.client.post<{
+      status: string;
+      keys_invalidated: number;
+    }>("/admin/cache/invalidate", null, {
+      params: { pattern },
+    });
     return response.data;
   }
 

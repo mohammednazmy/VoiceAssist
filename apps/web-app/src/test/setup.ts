@@ -73,6 +73,99 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
+// Mock IndexedDB for offline voice capture tests
+// jsdom doesn't support IndexedDB, so we provide a minimal mock
+const mockIDBRequest = () => ({
+  result: null,
+  error: null,
+  source: null,
+  transaction: null,
+  readyState: "done" as const,
+  onerror: null,
+  onsuccess: null,
+  onupgradeneeded: null,
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+});
+
+const mockIDBObjectStore = () => ({
+  add: vi.fn(() => mockIDBRequest()),
+  put: vi.fn(() => mockIDBRequest()),
+  get: vi.fn(() => mockIDBRequest()),
+  delete: vi.fn(() => mockIDBRequest()),
+  clear: vi.fn(() => mockIDBRequest()),
+  getAll: vi.fn(() => {
+    const request = mockIDBRequest();
+    request.result = [];
+    setTimeout(() => {
+      if (request.onsuccess) (request as any).onsuccess({ target: request });
+    }, 0);
+    return request;
+  }),
+  openCursor: vi.fn(() => mockIDBRequest()),
+  createIndex: vi.fn(),
+  index: vi.fn(),
+  count: vi.fn(() => mockIDBRequest()),
+  name: "",
+  keyPath: null,
+  indexNames: { length: 0, contains: () => false, item: () => null },
+  transaction: null,
+  autoIncrement: false,
+});
+
+const mockIDBTransaction = () => ({
+  objectStore: vi.fn(() => mockIDBObjectStore()),
+  abort: vi.fn(),
+  commit: vi.fn(),
+  db: null as any,
+  error: null,
+  mode: "readwrite" as const,
+  objectStoreNames: { length: 0, contains: () => false, item: () => null },
+  oncomplete: null,
+  onerror: null,
+  onabort: null,
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+  durability: "default" as const,
+});
+
+const mockIDBDatabase = () => ({
+  name: "voice-recordings",
+  version: 1,
+  objectStoreNames: {
+    length: 1,
+    contains: () => true,
+    item: () => "recordings",
+  },
+  createObjectStore: vi.fn(() => mockIDBObjectStore()),
+  deleteObjectStore: vi.fn(),
+  transaction: vi.fn(() => mockIDBTransaction()),
+  close: vi.fn(),
+  onabort: null,
+  onclose: null,
+  onerror: null,
+  onversionchange: null,
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+});
+
+(global as any).indexedDB = {
+  open: vi.fn((_name: string) => {
+    const request = mockIDBRequest();
+    setTimeout(() => {
+      request.result = mockIDBDatabase();
+      if (request.onsuccess) (request as any).onsuccess({ target: request });
+    }, 0);
+    return request;
+  }),
+  deleteDatabase: vi.fn(() => mockIDBRequest()),
+  databases: vi.fn(() => Promise.resolve([])),
+  cmp: vi.fn(),
+};
+
 // Mock WebSocket for useChatSession tests
 (global as any).WebSocket = class MockWebSocket {
   onopen?: () => void;
