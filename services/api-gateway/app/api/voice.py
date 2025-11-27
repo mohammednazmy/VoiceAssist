@@ -40,6 +40,7 @@ from app.models.session import Session as ChatSession
 from app.models.user import User
 from app.services.rag_service import QueryOrchestrator, QueryRequest
 from app.services.realtime_voice_service import realtime_voice_service
+from app.services.voice_authentication import voice_auth_service
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -832,3 +833,283 @@ async def voice_relay_websocket(websocket: WebSocket, db: Session = Depends(get_
         except Exception:
             pass
         await websocket.close(code=1011)
+
+
+# ==============================================================================
+# Voice Authentication Endpoints
+# ==============================================================================
+
+
+class VoiceAuthStartResponse(BaseModel):
+    """Response for starting voice enrollment"""
+
+    status: str
+    message: str
+    min_samples: int
+    max_samples: int
+
+
+class VoiceAuthSampleResponse(BaseModel):
+    """Response for adding enrollment sample"""
+
+    success: bool
+    message: str
+    samples_collected: int
+    samples_needed: int
+
+
+class VoiceAuthCompleteResponse(BaseModel):
+    """Response for completing enrollment"""
+
+    success: bool
+    message: str
+
+
+class VoiceAuthVerifyResponse(BaseModel):
+    """Response for voice verification"""
+
+    verified: bool
+    confidence: float
+    status: str
+    details: dict | None = None
+
+
+class VoiceAuthStatusResponse(BaseModel):
+    """Response for enrollment status"""
+
+    enrolled: bool
+    status: str
+    sample_count: int | None = None
+    created_at: float | None = None
+
+
+@router.post(
+    "/auth/enroll/start",
+    response_model=VoiceAuthStartResponse,
+    summary="Start voice enrollment",
+    description="Begin voice biometric enrollment process",
+)
+async def start_voice_enrollment(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Start voice enrollment for the authenticated user.
+
+    The enrollment process requires multiple voice samples (typically 3-10)
+    to create a reliable voice print for speaker verification.
+    """
+    user_id = str(current_user.id)
+
+    # Check if already enrolled
+    if voice_auth_service.is_enrolled(user_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User already enrolled. Delete existing voice print first.",
+        )
+
+    # Start enrollment session
+    voice_auth_service.start_enrollment(user_id)
+
+    logger.info(
+        f"Started voice enrollment for user {user_id}",
+        extra={"user_id": user_id},
+    )
+
+    return VoiceAuthStartResponse(
+        status="in_progress",
+        message="Enrollment started. Please provide voice samples.",
+        min_samples=voice_auth_service.config.min_enrollment_samples,
+        max_samples=voice_auth_service.config.max_enrollment_samples,
+    )
+
+
+@router.post(
+    "/auth/enroll/sample",
+    response_model=VoiceAuthSampleResponse,
+    summary="Add enrollment sample",
+    description="Add a voice sample to the enrollment process",
+)
+async def add_enrollment_sample(
+    audio: UploadFile = File(..., description="Voice sample (WAV/PCM16)"),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Add a voice sample to the enrollment process.
+
+    The audio should be clear speech (2-10 seconds) with minimal background noise.
+    """
+    user_id = str(current_user.id)
+
+    # Read audio data
+    audio_data = await audio.read()
+
+    # Validate size (max 5MB)
+    if len(audio_data) > 5 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Audio file too large (max 5MB)",
+        )
+
+    # Add sample
+    success, message = voice_auth_service.add_enrollment_sample(user_id, audio_data)
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message,
+        )
+
+    # Get current status
+    status_info = voice_auth_service.get_enrollment_status(user_id)
+    samples_collected = status_info.get("sample_count", 0)
+    samples_needed = max(0, voice_auth_service.config.min_enrollment_samples - samples_collected)
+
+    return VoiceAuthSampleResponse(
+        success=True,
+        message=message,
+        samples_collected=samples_collected,
+        samples_needed=samples_needed,
+    )
+
+
+@router.post(
+    "/auth/enroll/complete",
+    response_model=VoiceAuthCompleteResponse,
+    summary="Complete voice enrollment",
+    description="Finalize voice enrollment and create voice print",
+)
+async def complete_voice_enrollment(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Complete the voice enrollment process and create the voice print.
+
+    Must have collected minimum required samples before calling.
+    """
+    user_id = str(current_user.id)
+
+    success, message = voice_auth_service.complete_enrollment(user_id)
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message,
+        )
+
+    logger.info(
+        f"Completed voice enrollment for user {user_id}",
+        extra={"user_id": user_id},
+    )
+
+    return VoiceAuthCompleteResponse(
+        success=True,
+        message=message,
+    )
+
+
+@router.post(
+    "/auth/verify",
+    response_model=VoiceAuthVerifyResponse,
+    summary="Verify voice",
+    description="Verify speaker identity using voice biometrics",
+)
+async def verify_voice(
+    audio: UploadFile = File(..., description="Voice sample for verification"),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Verify the speaker's identity using their voice.
+
+    Compares the provided audio against the enrolled voice print.
+    """
+    user_id = str(current_user.id)
+
+    # Check if enrolled
+    if not voice_auth_service.is_enrolled(user_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User not enrolled. Complete enrollment first.",
+        )
+
+    # Read audio data
+    audio_data = await audio.read()
+
+    # Validate size
+    if len(audio_data) > 5 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Audio file too large (max 5MB)",
+        )
+
+    # Verify
+    result = voice_auth_service.verify(user_id, audio_data)
+
+    logger.info(
+        f"Voice verification for user {user_id}: {result.status.value}",
+        extra={
+            "user_id": user_id,
+            "verified": result.verified,
+            "confidence": result.confidence,
+        },
+    )
+
+    return VoiceAuthVerifyResponse(
+        verified=result.verified,
+        confidence=result.confidence,
+        status=result.status.value,
+        details=result.details,
+    )
+
+
+@router.get(
+    "/auth/status",
+    response_model=VoiceAuthStatusResponse,
+    summary="Get enrollment status",
+    description="Get voice biometric enrollment status for current user",
+)
+async def get_voice_auth_status(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get the voice biometric enrollment status for the authenticated user.
+    """
+    user_id = str(current_user.id)
+    status_info = voice_auth_service.get_enrollment_status(user_id)
+
+    return VoiceAuthStatusResponse(
+        enrolled=status_info["status"] == "enrolled",
+        status=status_info["status"],
+        sample_count=status_info.get("sample_count"),
+        created_at=status_info.get("created_at"),
+    )
+
+
+@router.delete(
+    "/auth/voiceprint",
+    summary="Delete voice print",
+    description="Delete enrolled voice print for current user",
+)
+async def delete_voice_print(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Delete the enrolled voice print for the authenticated user.
+
+    This allows re-enrollment with fresh samples.
+    """
+    user_id = str(current_user.id)
+
+    if not voice_auth_service.is_enrolled(user_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No voice print found for user",
+        )
+
+    voice_auth_service.delete_voice_print(user_id)
+
+    logger.info(
+        f"Deleted voice print for user {user_id}",
+        extra={"user_id": user_id},
+    )
+
+    return {"status": "deleted", "message": "Voice print deleted successfully"}

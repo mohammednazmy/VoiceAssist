@@ -2,6 +2,7 @@
  * Main Application Component
  * Performance-optimized with lazy loading and code splitting
  *
+ * Phase 9.1: Added i18n and RTL support
  * Phase 9.2: PWA Support
  * Phase 11: Analytics & Observability
  * Phase 12: Accessibility & Compliance
@@ -11,6 +12,7 @@ import { BrowserRouter } from "react-router-dom";
 import { AppRoutes } from "./AppRoutes";
 import { ToastProvider } from "./contexts/ToastContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import { PWAPrompt } from "./components/PWAPrompt";
 import { AnalyticsProvider, ErrorBoundary } from "./lib/analytics";
 import { SkipLinks } from "./lib/accessibility/SkipLinks";
@@ -53,12 +55,14 @@ export function App() {
               }}
             >
               <SkipLinks links={skipLinks} />
-              <ThemeProvider>
-                <ToastProvider>
-                  <AppRoutes />
-                  <PWAPrompt />
-                </ToastProvider>
-              </ThemeProvider>
+              <LanguageProvider>
+                <ThemeProvider>
+                  <ToastProvider>
+                    <AppRoutes />
+                    <PWAPrompt />
+                  </ToastProvider>
+                </ThemeProvider>
+              </LanguageProvider>
             </BrowserRouter>
           </AnnouncerProvider>
         </AccessibilityProvider>
