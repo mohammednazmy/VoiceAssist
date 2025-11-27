@@ -584,6 +584,42 @@ class VoiceAuthenticationService:
             return True
         return False
 
+    def issue_session_token(self, user_id: str, session_id: str) -> str:
+        """Create a signed token binding a user to a voice session."""
+
+        payload = {
+            "user_id": user_id,
+            "session_id": session_id,
+            "issued_at": int(time.time()),
+        }
+        payload_json = json.dumps(payload, separators=(",", ":"), sort_keys=True)
+        payload_b64 = base64.urlsafe_b64encode(payload_json.encode()).decode()
+
+        signature = hmac.new(
+            settings.JWT_SECRET.encode(), payload_b64.encode(), hashlib.sha256
+        ).digest()
+        signature_b64 = base64.urlsafe_b64encode(signature).decode()
+        return f"{payload_b64}.{signature_b64}"
+
+    def validate_session_token(self, token: str) -> dict:
+        """Validate and decode a voice session token."""
+
+        if not token or "." not in token:
+            raise ValueError("Malformed voice session token")
+
+        payload_b64, signature_b64 = token.split(".", 1)
+        expected_sig = hmac.new(
+            settings.JWT_SECRET.encode(), payload_b64.encode(), hashlib.sha256
+        ).digest()
+        expected_sig_b64 = base64.urlsafe_b64encode(expected_sig).decode()
+
+        if not hmac.compare_digest(signature_b64, expected_sig_b64):
+            raise ValueError("Voice session signature mismatch")
+
+        payload_json = base64.urlsafe_b64decode(payload_b64).decode()
+        payload = json.loads(payload_json)
+        return payload
+
     def get_enrollment_status(self, user_id: str) -> Dict[str, Any]:
         """Get enrollment status for a user."""
         if user_id in self._voice_prints:

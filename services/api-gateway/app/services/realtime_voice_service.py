@@ -272,6 +272,7 @@ class RealtimeVoiceService:
         voice: str | None = None,
         language: str | None = None,
         vad_sensitivity: int | None = None,
+        enable_noise_suppression: bool | None = None,
     ) -> Dict[str, Any]:
         """
         Generate session configuration for OpenAI Realtime API.
@@ -316,6 +317,10 @@ class RealtimeVoiceService:
         else:
             vad_threshold = 0.5  # Default threshold
 
+        # Determine noise suppression preference (defaults to settings or True)
+        if enable_noise_suppression is None:
+            enable_noise_suppression = True
+
         # Generate unique session ID for tracking
         session_id = f"rtc_{user_id}_{secrets.token_urlsafe(16)}"
 
@@ -355,6 +360,10 @@ class RealtimeVoiceService:
                     "prefix_padding_ms": 300,
                     "silence_duration_ms": 500,
                 },
+            },
+            "audio_enhancements": {
+                "noise_suppression": enable_noise_suppression,
+                "vad_threshold": round(vad_threshold, 2),
             },
         }
 

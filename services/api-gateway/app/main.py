@@ -45,6 +45,7 @@ from app.core import business_metrics  # noqa: F401
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import MetricsMiddleware, RequestTracingMiddleware, SecurityHeadersMiddleware
+from app.middleware.voice_auth import VoiceAuthMiddleware
 from app.core.sentry import init_sentry
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -130,6 +131,9 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["X-Correlation-ID"],
 )
+
+# 5. Voice auth middleware to validate voice session headers
+app.add_middleware(VoiceAuthMiddleware)
 
 # Include routers
 app.include_router(health.router, tags=["health"])

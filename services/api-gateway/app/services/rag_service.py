@@ -26,7 +26,9 @@ from typing import Awaitable, Callable, List, Optional
 from app.core.config import settings
 from app.services.intent_classifier import IntentClassifier
 from app.services.llm_client import LLMClient, LLMRequest, LLMResponse
+from app.services.openai_realtime_client import OpenAIRealtimeClient
 from app.services.phi_detector import PHIDetector
+from app.services.realtime_voice_service import realtime_voice_service
 from app.services.search_aggregator import SearchAggregator
 from pydantic import BaseModel, Field
 
@@ -114,6 +116,7 @@ class QueryOrchestrator:
         self.search_aggregator = SearchAggregator() if enable_rag else None
         self.phi_detector = PHIDetector()
         self.intent_classifier = IntentClassifier()
+        self.realtime_client = OpenAIRealtimeClient()
         self.enable_rag = enable_rag
         self.rag_top_k = rag_top_k
         self.rag_score_threshold = rag_score_threshold
@@ -299,6 +302,27 @@ Instructions:
             tokens=llm_response.used_tokens,
             model=llm_response.model_name,
             finish_reason=llm_response.finish_reason,
+        )
+
+    async def prepare_realtime_session(
+        self,
+        user_id: str,
+        conversation_id: str | None = None,
+        voice: str | None = None,
+        language: str | None = None,
+        vad_sensitivity: int | None = None,
+    ) -> dict:
+        """Expose realtime session config for voice-first clients."""
+
+        if not self.realtime_client.is_enabled():
+            raise ValueError("Realtime client is not enabled")
+
+        return await realtime_voice_service.generate_session_config(
+            user_id=user_id,
+            conversation_id=conversation_id,
+            voice=voice,
+            language=language,
+            vad_sensitivity=vad_sensitivity,
         )
 
     async def stream_query(
