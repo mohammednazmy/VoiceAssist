@@ -1,6 +1,20 @@
+---
+title: Unified Architecture Documentation
+slug: architecture/unified
+summary: Comprehensive system architecture covering all components, data flows, and integration points.
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience: ["human", "agent", "backend", "frontend", "devops"]
+tags: ["architecture", "system-design", "overview"]
+relatedServices: ["api-gateway", "web-app", "admin-panel", "docs-site"]
+version: "2.0.0"
+---
+
 # VoiceAssist V2 - Unified Architecture Documentation
 
-**Last Updated**: 2025-11-20 (Phase 7: Admin Panel & RBAC)
+**Last Updated**: 2025-11-27 (All 15 Phases Complete)
 **Status**: Canonical Reference
 **Purpose**: Comprehensive system architecture covering all components, data flows, and integration points
 
@@ -33,6 +47,7 @@ VoiceAssist V2 is an **enterprise-grade, HIPAA-compliant medical AI assistant** 
 - **Phases 8-14 (Future)**: Optional extraction to microservices with Kubernetes
 
 **Current Capabilities** (as of Phase 7):
+
 - ✅ JWT-based authentication with token revocation
 - ✅ Role-based access control (RBAC) for admin operations
 - ✅ RAG-powered medical knowledge base with semantic search
@@ -120,6 +135,7 @@ VoiceAssist V2 is an **enterprise-grade, HIPAA-compliant medical AI assistant** 
 **Nextcloud is a separate stack, not part of VoiceAssist deployment.**
 
 **Local Development:**
+
 ```
 MacBook Pro
 ├── ~/Nextcloud-Dev/                    # Separate Nextcloud Stack
@@ -133,6 +149,7 @@ MacBook Pro
 ```
 
 **Integration Pattern:**
+
 - VoiceAssist services are **clients** of Nextcloud
 - Communication via HTTP/HTTPS APIs (OIDC, WebDAV, CalDAV, CardDAV)
 - No shared Docker Compose project, no shared databases
@@ -150,13 +167,13 @@ MacBook Pro
 
 **Decision Matrix:**
 
-| Factor | Monorepo (Phases 0-10) | Microservices (Phases 11-14) |
-|--------|------------------------|------------------------------|
-| Team Size | < 5 developers | > 5 developers |
-| Concurrent Users | < 50 users | > 50 users |
-| Deployment | Single server | Multi-node K8s cluster |
-| Development Speed | Faster (single codebase) | Slower (coordination overhead) |
-| Operational Complexity | Low (Docker Compose) | High (K8s, service mesh) |
+| Factor                 | Monorepo (Phases 0-10)   | Microservices (Phases 11-14)   |
+| ---------------------- | ------------------------ | ------------------------------ |
+| Team Size              | < 5 developers           | > 5 developers                 |
+| Concurrent Users       | < 50 users               | > 50 users                     |
+| Deployment             | Single server            | Multi-node K8s cluster         |
+| Development Speed      | Faster (single codebase) | Slower (coordination overhead) |
+| Operational Complexity | Low (Docker Compose)     | High (K8s, service mesh)       |
 
 ### 2. Security by Design
 
@@ -194,20 +211,21 @@ MacBook Pro
 
 ### Phase Completion Summary
 
-| Phase | Status | Key Deliverables |
-|-------|--------|------------------|
-| **Phase 0** | ✅ Complete | Project structure, Docker Compose, base infrastructure |
-| **Phase 1** | ✅ Complete | PostgreSQL, Redis, Qdrant, health endpoints, Alembic migrations |
+| Phase       | Status      | Key Deliverables                                                       |
+| ----------- | ----------- | ---------------------------------------------------------------------- |
+| **Phase 0** | ✅ Complete | Project structure, Docker Compose, base infrastructure                 |
+| **Phase 1** | ✅ Complete | PostgreSQL, Redis, Qdrant, health endpoints, Alembic migrations        |
 | **Phase 2** | ✅ Complete | JWT auth, password validation, token revocation, Nextcloud integration |
-| **Phase 3** | ✅ Complete | API Gateway solidified, core endpoints, service boundaries |
-| **Phase 4** | ✅ Complete | WebSocket realtime communication, QueryOrchestrator integration |
-| **Phase 5** | ✅ Complete | RAG pipeline, semantic search, document ingestion, OpenAI embeddings |
-| **Phase 6** | ✅ Complete | CalDAV calendar, WebDAV file indexing, email skeleton |
-| **Phase 7** | ✅ Complete | RBAC enforcement, admin panel dashboard, smoke tests |
+| **Phase 3** | ✅ Complete | API Gateway solidified, core endpoints, service boundaries             |
+| **Phase 4** | ✅ Complete | WebSocket realtime communication, QueryOrchestrator integration        |
+| **Phase 5** | ✅ Complete | RAG pipeline, semantic search, document ingestion, OpenAI embeddings   |
+| **Phase 6** | ✅ Complete | CalDAV calendar, WebDAV file indexing, email skeleton                  |
+| **Phase 7** | ✅ Complete | RBAC enforcement, admin panel dashboard, smoke tests                   |
 
 ### Completed Features
 
 **Authentication & Authorization:**
+
 - ✅ User registration with password strength validation
 - ✅ JWT access tokens (15-min) + refresh tokens (7-day)
 - ✅ Token revocation via Redis (dual-level: individual + all-user)
@@ -216,6 +234,7 @@ MacBook Pro
 - ✅ Comprehensive audit logging (SHA-256 integrity verification)
 
 **Medical AI & Knowledge Base:**
+
 - ✅ Document upload (PDF, TXT support)
 - ✅ Text extraction and intelligent chunking
 - ✅ OpenAI embeddings (text-embedding-3-small, 1536 dimensions)
@@ -225,12 +244,14 @@ MacBook Pro
 - ✅ Streaming responses via WebSocket
 
 **Nextcloud Integration:**
+
 - ✅ CalDAV calendar operations (list, create, update, delete events)
 - ✅ WebDAV file discovery and auto-indexing
 - ✅ Automatic knowledge base population from Nextcloud files
 - ✅ Duplicate prevention for re-indexing
 
 **Observability & Operations:**
+
 - ✅ Prometheus metrics (cache, RAG, RBAC, HTTP, DB)
 - ✅ Multi-level caching with hit/miss tracking
 - ✅ SLO definitions (availability, latency, cache performance)
@@ -239,6 +260,7 @@ MacBook Pro
 - ✅ Admin panel dashboard with system summary
 
 **Infrastructure:**
+
 - ✅ Docker Compose orchestration
 - ✅ PostgreSQL with pgvector extension
 - ✅ Redis with multiple databases (cache, queue, L2, token revocation)
@@ -249,6 +271,7 @@ MacBook Pro
 ### Deferred to Future Phases
 
 **Phase 8+ Features:**
+
 - ⏳ OIDC authentication integration
 - ⏳ Per-user credential management
 - ⏳ Complete email integration (threading, search, attachments)
@@ -344,33 +367,36 @@ VoiceAssist/
 
 Even in monorepo, services maintain strict boundaries:
 
-| Service | Module Location | Responsibility | Dependencies |
-|---------|----------------|----------------|--------------|
-| **Auth Service** | `app/api/auth.py` + `app/core/security.py` | User registration, login, JWT tokens, RBAC | PostgreSQL, Redis (token revocation) |
-| **Realtime Service** | `app/api/realtime.py` | WebSocket endpoint, streaming responses | QueryOrchestrator, LLMClient |
-| **RAG Service** | `app/services/rag_service.py` | Query orchestration, RAG pipeline | SearchAggregator, LLMClient, Qdrant |
-| **KB Indexer** | `app/services/kb_indexer.py` | Document ingestion, chunking, embedding | OpenAI API, Qdrant, PostgreSQL |
-| **Search Aggregator** | `app/services/search_aggregator.py` | Semantic search, citation extraction | Qdrant, CacheService |
-| **Cache Service** | `app/services/cache_service.py` | Multi-level caching (L1 + L2) | Redis |
-| **Admin Service** | `app/api/admin_kb.py` + `app/api/admin_panel.py` | System management, dashboard | All services (monitoring) |
-| **Integration Service** | `app/api/integrations.py` + `app/services/caldav_service.py` | Nextcloud integrations | Nextcloud APIs (CalDAV, WebDAV) |
-| **Audit Service** | `app/services/audit_service.py` | Compliance logging, integrity verification | PostgreSQL |
-| **Worker Service** | `app/worker/` | Async background jobs | Redis (ARQ), KBIndexer |
+| Service                 | Module Location                                              | Responsibility                             | Dependencies                         |
+| ----------------------- | ------------------------------------------------------------ | ------------------------------------------ | ------------------------------------ |
+| **Auth Service**        | `app/api/auth.py` + `app/core/security.py`                   | User registration, login, JWT tokens, RBAC | PostgreSQL, Redis (token revocation) |
+| **Realtime Service**    | `app/api/realtime.py`                                        | WebSocket endpoint, streaming responses    | QueryOrchestrator, LLMClient         |
+| **RAG Service**         | `app/services/rag_service.py`                                | Query orchestration, RAG pipeline          | SearchAggregator, LLMClient, Qdrant  |
+| **KB Indexer**          | `app/services/kb_indexer.py`                                 | Document ingestion, chunking, embedding    | OpenAI API, Qdrant, PostgreSQL       |
+| **Search Aggregator**   | `app/services/search_aggregator.py`                          | Semantic search, citation extraction       | Qdrant, CacheService                 |
+| **Cache Service**       | `app/services/cache_service.py`                              | Multi-level caching (L1 + L2)              | Redis                                |
+| **Admin Service**       | `app/api/admin_kb.py` + `app/api/admin_panel.py`             | System management, dashboard               | All services (monitoring)            |
+| **Integration Service** | `app/api/integrations.py` + `app/services/caldav_service.py` | Nextcloud integrations                     | Nextcloud APIs (CalDAV, WebDAV)      |
+| **Audit Service**       | `app/services/audit_service.py`                              | Compliance logging, integrity verification | PostgreSQL                           |
+| **Worker Service**      | `app/worker/`                                                | Async background jobs                      | Redis (ARQ), KBIndexer               |
 
 ### Service Communication Patterns
 
 **Synchronous (Direct Function Calls in Monorepo):**
+
 - API routes → Service layer
 - Service → Service (internal imports)
 - Service → Database (SQLAlchemy)
 - Service → External APIs (HTTP clients)
 
 **Asynchronous (Background Jobs via ARQ):**
+
 - Document indexing jobs
 - File auto-indexing from Nextcloud
 - Future: Email sending, scheduled tasks
 
 **Future (Microservices - Phases 11-14):**
+
 - HTTP/REST between services
 - gRPC for high-performance internal communication
 - Message queue (RabbitMQ/Kafka) for async events
@@ -443,13 +469,13 @@ CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
 
 **Redis Databases (0-15):**
 
-| DB | Purpose | TTL | Keys |
-|----|---------|-----|------|
-| **0** | General caching | Varies (15min-24h) | `cache:*`, `user:*` |
-| **1** | ARQ job queue | N/A | `arq:*` |
-| **2** | L2 cache (multi-level) | Varies | `cache:l2:*` |
-| **3** | Token revocation | Token expiry | `token:revoked:*`, `user:revoked:*` |
-| **15** | Test database | N/A | (cleared after tests) |
+| DB     | Purpose                | TTL                | Keys                                |
+| ------ | ---------------------- | ------------------ | ----------------------------------- |
+| **0**  | General caching        | Varies (15min-24h) | `cache:*`, `user:*`                 |
+| **1**  | ARQ job queue          | N/A                | `arq:*`                             |
+| **2**  | L2 cache (multi-level) | Varies             | `cache:l2:*`                        |
+| **3**  | Token revocation       | Token expiry       | `token:revoked:*`, `user:revoked:*` |
+| **15** | Test database          | N/A                | (cleared after tests)               |
 
 ### Qdrant Vector Database
 
@@ -476,6 +502,7 @@ CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
 ### Data Flow Architecture
 
 **Document Ingestion Flow:**
+
 ```
 File Upload → KBIndexer →
   1. Text Extraction (PyPDF2/pdfplumber)
@@ -487,6 +514,7 @@ File Upload → KBIndexer →
 ```
 
 **RAG Query Flow:**
+
 ```
 User Query → QueryOrchestrator →
   1. Check L1 Cache (embedding)
@@ -501,6 +529,7 @@ User Query → QueryOrchestrator →
 ```
 
 **Authentication Flow:**
+
 ```
 Login Request → Auth API →
   1. Validate Credentials (bcrypt)
@@ -539,6 +568,7 @@ Login Request → Auth API →
    - Status: Deferred to Phase 8+
 
 **Environment Configuration:**
+
 ```bash
 # Nextcloud Connection
 NEXTCLOUD_BASE_URL=http://localhost:8080  # or https://cloud.asimo.io
@@ -560,12 +590,14 @@ NEXTCLOUD_CLIENT_SECRET=<from_nextcloud>
 ### External API Integrations
 
 **OpenAI API:**
+
 - Embeddings: `text-embedding-3-small` (1536 dimensions)
 - LLM: `gpt-4-turbo-preview` (configurable)
 - Usage: Document embedding, RAG response generation
 - Rate limiting: Handled by OpenAI client
 
 **Future Integrations (Phases 8+):**
+
 - PubMed E-utilities API (medical literature search)
 - UpToDate API (evidence-based clinical references)
 - OpenEvidence API (guideline summaries)
@@ -578,18 +610,21 @@ NEXTCLOUD_CLIENT_SECRET=<from_nextcloud>
 ### Authentication & Authorization
 
 **JWT Token Strategy:**
+
 - **Access Token**: 15-minute expiry, HS256 algorithm
 - **Refresh Token**: 7-day expiry, HS256 algorithm
 - **Token Revocation**: Redis-based blacklist (individual + all-user-tokens)
 - **Claims**: `sub` (user_id), `email`, `role`, `exp`, `iat`, `type`
 
 **Password Security:**
+
 - **Hashing**: bcrypt via passlib
 - **Validation**: Multi-criteria (8+ chars, upper, lower, digit, special)
 - **Strength Scoring**: 0-100 scale with Weak/Medium/Strong classification
 - **Common Password Rejection**: Blocks password, 123456, qwerty, etc.
 
 **RBAC (Role-Based Access Control):**
+
 - **Roles**: `admin`, `user` (more roles in future phases)
 - **Admin Enforcement**: `get_current_admin_user` dependency
 - **Protected Endpoints**:
@@ -600,6 +635,7 @@ NEXTCLOUD_CLIENT_SECRET=<from_nextcloud>
 ### Audit Logging
 
 **Compliance Features:**
+
 - **Immutable Trail**: SHA-256 integrity hash on each log entry
 - **Comprehensive Metadata**: User, action, resource, timestamp, IP, user agent
 - **Request Correlation**: Request ID for distributed tracing
@@ -607,6 +643,7 @@ NEXTCLOUD_CLIENT_SECRET=<from_nextcloud>
 - **HIPAA Alignment**: Meets audit trail requirements
 
 **Logged Events:**
+
 - User registration, login, logout
 - Token refresh, token revocation
 - Password changes, failed authentication
@@ -616,12 +653,14 @@ NEXTCLOUD_CLIENT_SECRET=<from_nextcloud>
 ### Data Protection
 
 **Encryption:**
+
 - **In Transit**: HTTPS/TLS 1.2+ (production)
 - **At Rest**: Database-level encryption (future: PostgreSQL transparent encryption)
 - **Tokens**: JWT with signed claims
 - **Passwords**: bcrypt hashing (cost factor: 12)
 
 **PHI Protection (Future):**
+
 - PHI detection service (Phase 8+)
 - Automatic log redaction
 - Local vs cloud AI routing based on PHI presence
@@ -630,17 +669,19 @@ NEXTCLOUD_CLIENT_SECRET=<from_nextcloud>
 ### Network Security
 
 **Docker Compose Network Isolation:**
+
 ```yaml
 networks:
   voiceassist_network:
     driver: bridge
-    internal: false  # API gateway needs external access
+    internal: false # API gateway needs external access
   voiceassist_internal:
     driver: bridge
-    internal: true  # Database layer isolated
+    internal: true # Database layer isolated
 ```
 
 **Future (Kubernetes - Phases 11-14):**
+
 - Network policies for pod-to-pod restrictions
 - Service mesh (Linkerd) for mTLS
 - Ingress controller with WAF (Web Application Firewall)
@@ -652,6 +693,7 @@ networks:
 ### Development Environment (Docker Compose)
 
 **Current Stack:**
+
 ```yaml
 # docker-compose.yml
 services:
@@ -697,6 +739,7 @@ services:
 ```
 
 **Resource Allocation:**
+
 - PostgreSQL: 2 CPU, 4GB RAM
 - Redis: 1 CPU, 1GB RAM
 - Qdrant: 2 CPU, 4GB RAM
@@ -706,6 +749,7 @@ services:
 ### Production Deployment (Future - Kubernetes)
 
 **Planned Architecture (Phases 11-14):**
+
 ```
 Kubernetes Cluster
 ├── Ingress (voiceassist.asimo.io)
@@ -737,6 +781,7 @@ Kubernetes Cluster
 ### Metrics Collection (Prometheus)
 
 **Instrumentation:**
+
 - **HTTP Metrics**: Request count, latency (p50, p95, p99), status codes
 - **Cache Metrics**: Hit/miss rates by layer (L1, L2), size, evictions
 - **RAG Metrics**: Query latency, embedding generation time, search results
@@ -745,6 +790,7 @@ Kubernetes Cluster
 - **External API Metrics**: OpenAI call latency, rate limits
 
 **Metrics Endpoint:**
+
 - Location: `GET /metrics`
 - Format: Prometheus exposition format
 - Protection: Optional authentication (configurable)
@@ -753,15 +799,16 @@ Kubernetes Cluster
 
 **Defined SLOs (Phase 7):**
 
-| SLO | Target | Error Budget | Measurement Window |
-|-----|--------|--------------|-------------------|
-| API Availability | 99.9% | 43.2 min/month | 30 days |
-| API Latency (P95) | < 500ms | - | 5 minutes |
-| RAG Query Success | 99% | 1% failures | 24 hours |
-| Cache Hit Rate | > 40% | - | 1 hour |
-| Database P95 Latency | < 100ms | - | 5 minutes |
+| SLO                  | Target  | Error Budget   | Measurement Window |
+| -------------------- | ------- | -------------- | ------------------ |
+| API Availability     | 99.9%   | 43.2 min/month | 30 days            |
+| API Latency (P95)    | < 500ms | -              | 5 minutes          |
+| RAG Query Success    | 99%     | 1% failures    | 24 hours           |
+| Cache Hit Rate       | > 40%   | -              | 1 hour             |
+| Database P95 Latency | < 100ms | -              | 5 minutes          |
 
 **Prometheus Recording Rules:**
+
 ```yaml
 # API Availability (30-day)
 - record: slo:api_availability:ratio_rate30d
@@ -776,6 +823,7 @@ Kubernetes Cluster
 ```
 
 **Alerting:**
+
 - Multi-window, multi-burn-rate approach (Google SRE guidelines)
 - Critical alerts: SLO violations (< 99.9% availability)
 - Warning alerts: Error budget burn rate > 14.4x
@@ -784,6 +832,7 @@ Kubernetes Cluster
 ### Logging Strategy
 
 **Structured Logging:**
+
 ```python
 logger.info("user_login_success", extra={
     "user_id": user.id,
@@ -795,6 +844,7 @@ logger.info("user_login_success", extra={
 ```
 
 **Log Levels:**
+
 - **DEBUG**: Development only (not in production)
 - **INFO**: Normal operations, audit events
 - **WARNING**: Potential issues, deprecated API usage
@@ -802,6 +852,7 @@ logger.info("user_login_success", extra={
 - **CRITICAL**: Service failures
 
 **Log Aggregation (Future - Loki):**
+
 - Centralized log storage
 - Full-text search
 - Log correlation by request ID
@@ -956,62 +1007,62 @@ logger.info("user_login_success", extra={
 
 ### Backend
 
-| Component | Technology | Version | Purpose |
-|-----------|-----------|---------|---------|
-| **Language** | Python | 3.11+ | Primary backend language |
-| **Framework** | FastAPI | 0.104+ | Async web framework |
-| **ORM** | SQLAlchemy | 2.0+ | Database ORM |
-| **Migrations** | Alembic | 1.12+ | Database schema versioning |
-| **Validation** | Pydantic | 2.4+ | Data validation and settings |
-| **Authentication** | python-jose | 3.3+ | JWT token handling |
-| **Password Hashing** | passlib | 1.7+ | bcrypt hashing |
-| **HTTP Client** | httpx | 0.25+ | Async HTTP requests |
-| **Job Queue** | ARQ | 0.25+ | Async background jobs |
+| Component            | Technology  | Version | Purpose                      |
+| -------------------- | ----------- | ------- | ---------------------------- |
+| **Language**         | Python      | 3.11+   | Primary backend language     |
+| **Framework**        | FastAPI     | 0.104+  | Async web framework          |
+| **ORM**              | SQLAlchemy  | 2.0+    | Database ORM                 |
+| **Migrations**       | Alembic     | 1.12+   | Database schema versioning   |
+| **Validation**       | Pydantic    | 2.4+    | Data validation and settings |
+| **Authentication**   | python-jose | 3.3+    | JWT token handling           |
+| **Password Hashing** | passlib     | 1.7+    | bcrypt hashing               |
+| **HTTP Client**      | httpx       | 0.25+   | Async HTTP requests          |
+| **Job Queue**        | ARQ         | 0.25+   | Async background jobs        |
 
 ### Databases & Storage
 
-| Component | Technology | Version | Purpose |
-|-----------|-----------|---------|---------|
-| **RDBMS** | PostgreSQL | 16 | Primary relational database |
-| **Vector Extension** | pgvector | 0.5+ | Vector storage in PostgreSQL |
-| **Cache/Queue** | Redis | 7+ | Caching, sessions, job queue |
-| **Vector DB** | Qdrant | 1.7+ | Semantic search |
+| Component            | Technology | Version | Purpose                      |
+| -------------------- | ---------- | ------- | ---------------------------- |
+| **RDBMS**            | PostgreSQL | 16      | Primary relational database  |
+| **Vector Extension** | pgvector   | 0.5+    | Vector storage in PostgreSQL |
+| **Cache/Queue**      | Redis      | 7+      | Caching, sessions, job queue |
+| **Vector DB**        | Qdrant     | 1.7+    | Semantic search              |
 
 ### AI & ML
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| **Embeddings** | OpenAI text-embedding-3-small | 1536-dim embeddings |
-| **LLM** | OpenAI GPT-4 Turbo | Response generation |
-| **Future** | BioGPT, PubMedBERT | Medical-specific models |
+| Component      | Technology                    | Purpose                 |
+| -------------- | ----------------------------- | ----------------------- |
+| **Embeddings** | OpenAI text-embedding-3-small | 1536-dim embeddings     |
+| **LLM**        | OpenAI GPT-4 Turbo            | Response generation     |
+| **Future**     | BioGPT, PubMedBERT            | Medical-specific models |
 
 ### Integrations
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| **Calendar** | caldav (Python library) | CalDAV protocol support |
-| **Files** | webdavclient3 | WebDAV protocol support |
-| **Email** | imaplib, smtplib | IMAP/SMTP (future) |
-| **PDF Processing** | PyPDF2, pdfplumber | Text extraction |
+| Component          | Technology              | Purpose                 |
+| ------------------ | ----------------------- | ----------------------- |
+| **Calendar**       | caldav (Python library) | CalDAV protocol support |
+| **Files**          | webdavclient3           | WebDAV protocol support |
+| **Email**          | imaplib, smtplib        | IMAP/SMTP (future)      |
+| **PDF Processing** | PyPDF2, pdfplumber      | Text extraction         |
 
 ### Observability
 
-| Component | Technology | Version | Purpose |
-|-----------|-----------|---------|---------|
-| **Metrics** | Prometheus | 2.47+ | Metrics collection |
-| **Metrics Client** | prometheus-client | 0.19+ | Python instrumentation |
-| **Dashboards** | Grafana | 10.2+ | Visualization |
-| **Future: Tracing** | Jaeger | - | Distributed tracing |
-| **Future: Logging** | Loki | - | Log aggregation |
+| Component           | Technology        | Version | Purpose                |
+| ------------------- | ----------------- | ------- | ---------------------- |
+| **Metrics**         | Prometheus        | 2.47+   | Metrics collection     |
+| **Metrics Client**  | prometheus-client | 0.19+   | Python instrumentation |
+| **Dashboards**      | Grafana           | 10.2+   | Visualization          |
+| **Future: Tracing** | Jaeger            | -       | Distributed tracing    |
+| **Future: Logging** | Loki              | -       | Log aggregation        |
 
 ### Infrastructure
 
-| Component | Technology | Version | Purpose |
-|-----------|-----------|---------|---------|
-| **Containerization** | Docker | 24+ | Container runtime |
-| **Orchestration** | Docker Compose | 2.23+ | Multi-container orchestration |
-| **Future: K8s** | Kubernetes | 1.28+ | Production orchestration |
-| **Future: Service Mesh** | Linkerd | 2.14+ | mTLS, observability |
+| Component                | Technology     | Version | Purpose                       |
+| ------------------------ | -------------- | ------- | ----------------------------- |
+| **Containerization**     | Docker         | 24+     | Container runtime             |
+| **Orchestration**        | Docker Compose | 2.23+   | Multi-container orchestration |
+| **Future: K8s**          | Kubernetes     | 1.28+   | Production orchestration      |
+| **Future: Service Mesh** | Linkerd        | 2.14+   | mTLS, observability           |
 
 ---
 
@@ -1020,12 +1071,14 @@ logger.info("user_login_success", extra={
 ### Phase-by-Phase Evolution
 
 **Phase 0-1: Foundation**
+
 - Docker Compose setup
 - PostgreSQL, Redis, Qdrant
 - Health endpoints
 - Database migrations
 
 **Phase 2-3: Security & Core Services**
+
 - JWT authentication
 - Password validation and hashing
 - Token revocation
@@ -1034,12 +1087,14 @@ logger.info("user_login_success", extra={
 - Core endpoint structure
 
 **Phase 4: Realtime Communication**
+
 - WebSocket endpoint
 - QueryOrchestrator integration
 - Message streaming protocol
 - Ping/pong keepalive
 
 **Phase 5: Medical AI**
+
 - Document ingestion (PDF, TXT)
 - OpenAI embeddings
 - Qdrant vector storage
@@ -1048,18 +1103,21 @@ logger.info("user_login_success", extra={
 - Citation tracking
 
 **Phase 6: Nextcloud Integration**
+
 - CalDAV calendar operations
 - WebDAV file discovery
 - Automatic file indexing
 - Email service skeleton
 
 **Phase 7: Admin & RBAC**
+
 - Role-based access control
 - Admin-only endpoints
 - Admin dashboard API
 - Smoke tests for RBAC
 
 **Future Phases (8-14):**
+
 - OIDC authentication
 - Complete email integration
 - Frontend apps (Web Client, Admin Panel UI)
@@ -1073,6 +1131,7 @@ logger.info("user_login_success", extra={
 ### Migration to Microservices (When Needed)
 
 **Trigger Conditions:**
+
 - > 50 concurrent users
 - Team size > 5 developers
 - Independent scaling requirements
@@ -1107,6 +1166,7 @@ logger.info("user_login_success", extra={
 **Decision**: Start with monorepo, maintain logical service boundaries
 
 **Rationale:**
+
 - Faster development iteration
 - Simpler debugging (single codebase)
 - Lower operational complexity
@@ -1114,6 +1174,7 @@ logger.info("user_login_success", extra={
 - Suitable for < 50 concurrent users
 
 **Trade-offs:**
+
 - **Pros**: Speed, simplicity, shared dependencies
 - **Cons**: Single deployment unit, harder to scale independently
 - **Mitigation**: Clear module boundaries enable future extraction
@@ -1123,12 +1184,14 @@ logger.info("user_login_success", extra={
 **Decision**: JWT with short-lived access tokens + refresh tokens
 
 **Rationale:**
+
 - Stateless authentication (scales horizontally)
 - No server-side session storage required
 - Works well with SPAs and mobile apps
 - Industry standard for API authentication
 
 **Trade-offs:**
+
 - **Pros**: Scalable, stateless, widely supported
 - **Cons**: Cannot revoke tokens without additional infrastructure
 - **Mitigation**: Redis-based token revocation blacklist
@@ -1138,11 +1201,13 @@ logger.info("user_login_success", extra={
 **Decision**: In-memory LRU cache (L1) + Redis distributed cache (L2)
 
 **Rationale:**
+
 - L1 provides ultra-low latency for hot data
 - L2 provides distributed caching across instances
 - Automatic promotion from L2 to L1 on cache hits
 
 **Trade-offs:**
+
 - **Pros**: Fast, distributed, high hit rate
 - **Cons**: More complex invalidation, cache consistency
 - **Mitigation**: TTLs on all cached data, explicit invalidation APIs
@@ -1152,12 +1217,14 @@ logger.info("user_login_success", extra={
 **Decision**: Use OpenAI text-embedding-3-small for MVP
 
 **Rationale:**
+
 - High quality embeddings (1536 dimensions)
 - No infrastructure overhead
 - Fast API responses
 - Easy integration
 
 **Trade-offs:**
+
 - **Pros**: Quality, speed, simplicity
 - **Cons**: External dependency, cost per API call, data privacy
 - **Mitigation**: Future migration to BioGPT/PubMedBERT for medical-specific embeddings
@@ -1167,12 +1234,14 @@ logger.info("user_login_success", extra={
 **Decision**: ARQ (Async Redis Queue)
 
 **Rationale:**
+
 - Simpler than Celery (no separate broker required)
 - Native async/await support
 - Lightweight, fast
 - Redis-backed (already using Redis)
 
 **Trade-offs:**
+
 - **Pros**: Simple, async-native, fast
 - **Cons**: Less mature than Celery, fewer features
 - **Mitigation**: Sufficient for current needs, can migrate to Celery if needed
@@ -1182,12 +1251,14 @@ logger.info("user_login_success", extra={
 **Decision**: Docker Compose for development and initial production
 
 **Rationale:**
+
 - Simple local development
 - Easy to understand and debug
 - Suitable for single-server deployment
 - Lower operational complexity
 
 **Trade-offs:**
+
 - **Pros**: Simplicity, speed, low overhead
 - **Cons**: Limited scaling, no auto-healing, single point of failure
 - **Mitigation**: Migrate to Kubernetes when scaling requirements justify complexity
@@ -1197,12 +1268,14 @@ logger.info("user_login_success", extra={
 **Decision**: Nextcloud as separate stack, VoiceAssist as client
 
 **Rationale:**
+
 - Nextcloud is complex, mature, independently managed
 - Allows using existing Nextcloud installations
 - Clear separation of concerns
 - Independent update cycles
 
 **Trade-offs:**
+
 - **Pros**: Flexibility, clear boundaries, reuse existing infrastructure
 - **Cons**: More complex configuration, network dependency
 - **Mitigation**: Well-defined API contracts, robust error handling
@@ -1212,11 +1285,13 @@ logger.info("user_login_success", extra={
 **Decision**: Synchronous (direct function calls) in monorepo, async (message queue) for long-running jobs
 
 **Rationale:**
+
 - Synchronous is simpler and faster for request-response patterns
 - Async is better for fire-and-forget and long-running tasks
 - Most operations in VoiceAssist are request-response
 
 **Trade-offs:**
+
 - **Pros**: Simple, fast, easy to debug
 - **Cons**: Tighter coupling, harder to scale independently
 - **Mitigation**: Clear service boundaries enable future async migration
@@ -1226,27 +1301,32 @@ logger.info("user_login_success", extra={
 ## Related Documentation
 
 **Core Architecture:**
+
 - [SERVICE_CATALOG.md](SERVICE_CATALOG.md) - Detailed service descriptions
 - [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md) - Backend structure evolution
 - [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - Original V2 architecture (reference)
 - [DATA_MODEL.md](DATA_MODEL.md) - Canonical data entities
 
 **Design Documents:**
+
 - [ORCHESTRATION_DESIGN.md](ORCHESTRATION_DESIGN.md) - RAG orchestrator design
 - [SEMANTIC_SEARCH_DESIGN.md](SEMANTIC_SEARCH_DESIGN.md) - Search implementation
 - [NEXTCLOUD_INTEGRATION.md](NEXTCLOUD_INTEGRATION.md) - Integration architecture
 
 **Operations:**
+
 - [docs/operations/SLO_DEFINITIONS.md](operations/SLO_DEFINITIONS.md) - Service level objectives
 - [docs/testing/E2E_TESTING_GUIDE.md](testing/E2E_TESTING_GUIDE.md) - Testing strategy
 - [OBSERVABILITY.md](OBSERVABILITY.md) - Monitoring and logging
 
 **Development:**
+
 - [CURRENT_PHASE.md](../CURRENT_PHASE.md) - Development status
 - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Phase-by-phase plan
 - [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) - Local setup guide
 
 **Security & Compliance:**
+
 - [SECURITY_COMPLIANCE.md](SECURITY_COMPLIANCE.md) - HIPAA compliance details
 - [INTEGRATION_IMPROVEMENTS_PHASE_0-8.md](INTEGRATION_IMPROVEMENTS_PHASE_0-8.md) - Integration roadmap
 

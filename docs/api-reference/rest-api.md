@@ -1,8 +1,24 @@
+---
+title: REST API Reference
+slug: api-reference/rest-api
+summary: Complete REST API documentation with request/response examples.
+status: stable
+stability: production
+owner: backend
+lastUpdated: "2025-11-27"
+audience: ["human", "agent", "backend", "frontend"]
+tags: ["api", "rest", "reference", "endpoints", "examples"]
+relatedServices: ["api-gateway"]
+version: "2.0.0"
+---
+
 # VoiceAssist REST API Reference
 
 **Version:** 2.0
 **Base URL:** `https://assist.asimo.io/api` (production) or `http://localhost:8000/api` (development)
 **Last Updated:** 2025-11-27
+
+> **See Also:** [Auto-generated API Routes](API_ROUTES.md) - Complete route listing from OpenAPI spec
 
 ---
 

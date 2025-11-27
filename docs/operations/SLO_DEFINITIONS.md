@@ -1,7 +1,21 @@
+---
+title: Service Level Objectives (SLOs)
+slug: operations/slo-definitions
+summary: Reliability targets balancing user expectations with engineering effort.
+status: stable
+stability: production
+owner: sre
+lastUpdated: "2025-11-27"
+audience: ["devops", "backend", "admin"]
+tags: ["slo", "reliability", "metrics", "operations"]
+relatedServices: ["api-gateway"]
+version: "1.0.0"
+---
+
 # Service Level Objectives (SLOs) - VoiceAssist V2
 
 **Version:** 1.0
-**Last Updated:** 2025-11-21
+**Last Updated:** 2025-11-27
 **Owner:** Platform Engineering Team
 
 ## Overview
@@ -17,6 +31,7 @@ This document defines the Service Level Objectives (SLOs) for VoiceAssist V2. SL
 ### Error Budget
 
 An error budget is the maximum allowed unreliability before violating an SLO. For a 99.9% availability target over 30 days:
+
 - **Allowed downtime**: 43.2 minutes/month
 - **Allowed errors**: 0.1% of requests
 
@@ -26,12 +41,13 @@ An error budget is the maximum allowed unreliability before violating an SLO. Fo
 
 **Objective:** API endpoints should be available and responsive
 
-| Metric | Target | Measurement Window | Error Budget |
-|--------|--------|-------------------|--------------|
-| Availability | 99.9% | 30 days | 43.2 min/month |
-| Success Rate | 99.5% | 30 days | 0.5% errors |
+| Metric       | Target | Measurement Window | Error Budget   |
+| ------------ | ------ | ------------------ | -------------- |
+| Availability | 99.9%  | 30 days            | 43.2 min/month |
+| Success Rate | 99.5%  | 30 days            | 0.5% errors    |
 
 **SLI Definition:**
+
 ```promql
 # Availability: Percentage of requests returning 2xx/3xx status
 sum(rate(http_requests_total{status_code=~"2..|3.."}[5m]))
@@ -47,11 +63,13 @@ sum(rate(http_requests_total[5m]))
 ```
 
 **Rationale:**
+
 - 99.9% availability is industry standard for non-critical services
 - Allows for planned maintenance and incident recovery
 - Balances reliability with development velocity
 
 **Exclusions:**
+
 - Planned maintenance windows (announced 48h in advance)
 - User errors (4xx responses except 429 rate limiting)
 - External service failures (OpenAI, Nextcloud) beyond our control
@@ -62,13 +80,14 @@ sum(rate(http_requests_total[5m]))
 
 **Objective:** API requests should complete quickly
 
-| Percentile | Target | Measurement Window |
-|-----------|--------|-------------------|
-| P50 (median) | < 200ms | 5 minutes |
-| P95 | < 500ms | 5 minutes |
-| P99 | < 1000ms | 5 minutes |
+| Percentile   | Target   | Measurement Window |
+| ------------ | -------- | ------------------ |
+| P50 (median) | < 200ms  | 5 minutes          |
+| P95          | < 500ms  | 5 minutes          |
+| P99          | < 1000ms | 5 minutes          |
 
 **SLI Definition:**
+
 ```promql
 # P95 latency
 histogram_quantile(0.95,
@@ -82,11 +101,13 @@ histogram_quantile(0.99,
 ```
 
 **Rationale:**
+
 - P50 target ensures fast response for majority of requests
 - P95/P99 targets catch tail latency issues
 - Targets aligned with user patience thresholds (< 1s for interactivity)
 
 **Critical Endpoints:**
+
 - `/api/auth/login`: P95 < 300ms (authentication is time-sensitive)
 - `/api/realtime/query`: P95 < 2000ms (RAG queries are more complex)
 - `/health`: P95 < 100ms (health checks must be fast)
@@ -97,13 +118,14 @@ histogram_quantile(0.99,
 
 **Objective:** RAG queries should return relevant, accurate results
 
-| Metric | Target | Measurement Window |
-|--------|--------|-------------------|
-| Query Success Rate | 99% | 30 days |
-| Cache Hit Rate | > 30% | 24 hours |
-| Average Search Results | > 2 results | 24 hours |
+| Metric                 | Target      | Measurement Window |
+| ---------------------- | ----------- | ------------------ |
+| Query Success Rate     | 99%         | 30 days            |
+| Cache Hit Rate         | > 30%       | 24 hours           |
+| Average Search Results | > 2 results | 24 hours           |
 
 **SLI Definition:**
+
 ```promql
 # Query Success Rate
 sum(rate(rag_query_duration_seconds_count{stage="total"}[5m]))
@@ -120,6 +142,7 @@ avg(rag_search_results_total)
 ```
 
 **Rationale:**
+
 - 99% success rate allows for edge cases and system issues
 - 30% cache hit rate indicates effective caching strategy
 - 2+ results ensure users get actionable information
@@ -130,13 +153,14 @@ avg(rag_search_results_total)
 
 **Objective:** Database operations should be fast and reliable
 
-| Metric | Target | Measurement Window |
-|--------|--------|-------------------|
-| Query P95 Latency | < 100ms | 5 minutes |
-| Connection Success Rate | 99.9% | 30 days |
-| Connection Pool Utilization | < 80% | 5 minutes |
+| Metric                      | Target  | Measurement Window |
+| --------------------------- | ------- | ------------------ |
+| Query P95 Latency           | < 100ms | 5 minutes          |
+| Connection Success Rate     | 99.9%   | 30 days            |
+| Connection Pool Utilization | < 80%   | 5 minutes          |
 
 **SLI Definition:**
+
 ```promql
 # Query Latency P95
 histogram_quantile(0.95,
@@ -157,6 +181,7 @@ sum(db_connections_total{state="in_use"})
 ```
 
 **Rationale:**
+
 - 100ms P95 ensures responsive API layer
 - High connection success rate prevents cascading failures
 - 80% pool utilization threshold leaves headroom for spikes
@@ -167,13 +192,14 @@ sum(db_connections_total{state="in_use"})
 
 **Objective:** Cache should provide performance improvements
 
-| Metric | Target | Measurement Window |
-|--------|--------|-------------------|
-| Overall Hit Rate | > 40% | 24 hours |
-| L1 Cache Hit Rate | > 60% (of hits) | 24 hours |
-| Cache Operation Latency | P95 < 10ms | 5 minutes |
+| Metric                  | Target          | Measurement Window |
+| ----------------------- | --------------- | ------------------ |
+| Overall Hit Rate        | > 40%           | 24 hours           |
+| L1 Cache Hit Rate       | > 60% (of hits) | 24 hours           |
+| Cache Operation Latency | P95 < 10ms      | 5 minutes          |
 
 **SLI Definition:**
+
 ```promql
 # Overall Cache Hit Rate
 sum(rate(cache_hits_total[1h]))
@@ -192,6 +218,7 @@ histogram_quantile(0.95,
 ```
 
 **Rationale:**
+
 - 40% overall hit rate demonstrates effective caching
 - 60% L1 hit rate shows hot data staying in fast cache
 - Sub-10ms latency ensures cache doesn't become bottleneck
@@ -202,13 +229,14 @@ histogram_quantile(0.95,
 
 **Objective:** Document uploads should complete reliably
 
-| Metric | Target | Measurement Window |
-|--------|--------|-------------------|
-| Job Success Rate | 95% | 7 days |
-| Processing Time P95 | < 2 minutes | 7 days |
-| Queue Depth | < 100 jobs | 5 minutes |
+| Metric              | Target      | Measurement Window |
+| ------------------- | ----------- | ------------------ |
+| Job Success Rate    | 95%         | 7 days             |
+| Processing Time P95 | < 2 minutes | 7 days             |
+| Queue Depth         | < 100 jobs  | 5 minutes          |
 
 **SLI Definition:**
+
 ```promql
 # Job Success Rate
 sum(rate(document_processing_jobs_total{status="completed"}[1h]))
@@ -225,6 +253,7 @@ sum(arq_queue_depth)
 ```
 
 **Rationale:**
+
 - 95% success rate accounts for malformed documents and external API failures
 - 2-minute P95 ensures users don't wait excessively
 - Queue depth threshold prevents backlog accumulation
@@ -368,6 +397,7 @@ Grafana dashboard panels for SLO tracking:
 ### External Dependencies
 
 Failures of external services are tracked separately:
+
 - OpenAI API failures: Tracked but excluded from API availability SLO
 - Nextcloud unavailability: Tracked separately
 - DNS/network issues: Excluded if beyond our control
@@ -419,6 +449,7 @@ Failures of external services are tracked separately:
 ## Contact
 
 For SLO-related questions:
+
 - **Slack**: #platform-sre
 - **On-call**: PagerDuty escalation
 - **Documentation**: This file and `/docs/operations/RUNBOOKS.md`

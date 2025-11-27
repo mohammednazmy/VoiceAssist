@@ -1,6 +1,20 @@
+---
+title: Monitoring Runbook
+slug: operations/runbooks/monitoring
+summary: Comprehensive guide for monitoring and observability in VoiceAssist V2.
+status: stable
+stability: production
+owner: sre
+lastUpdated: "2025-11-27"
+audience: ["devops", "backend"]
+tags: ["runbook", "monitoring", "observability", "metrics", "alerting"]
+relatedServices: ["api-gateway"]
+version: "1.0.0"
+---
+
 # Monitoring Runbook
 
-**Last Updated**: 2025-11-21 (Phase 7 - P3.2)
+**Last Updated**: 2025-11-27
 **Purpose**: Comprehensive guide for monitoring and observability in VoiceAssist V2
 
 ---
@@ -21,12 +35,12 @@ PagerDuty/Slack/Email
 
 ### Key Monitoring Components
 
-| Component | Purpose | Port | Dashboard |
-|-----------|---------|------|-----------|
-| **Prometheus** | Metrics collection & storage | 9090 | http://localhost:9090 |
-| **Grafana** | Metrics visualization | 3000 | http://localhost:3000 |
-| **AlertManager** | Alert routing & management | 9093 | http://localhost:9093 |
-| **Application Metrics** | Custom app metrics | 8000/metrics | http://localhost:8000/metrics |
+| Component               | Purpose                      | Port         | Dashboard                     |
+| ----------------------- | ---------------------------- | ------------ | ----------------------------- |
+| **Prometheus**          | Metrics collection & storage | 9090         | http://localhost:9090         |
+| **Grafana**             | Metrics visualization        | 3000         | http://localhost:3000         |
+| **AlertManager**        | Alert routing & management   | 9093         | http://localhost:9093         |
+| **Application Metrics** | Custom app metrics           | 8000/metrics | http://localhost:8000/metrics |
 
 ---
 
@@ -46,11 +60,11 @@ services:
       - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml
       - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=30d'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
 
   grafana:
     image: grafana/grafana:latest
@@ -75,17 +89,17 @@ services:
       - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
       - alertmanager_data:/alertmanager
     command:
-      - '--config.file=/etc/alertmanager/alertmanager.yml'
-      - '--storage.path=/alertmanager'
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
 
   node-exporter:
     image: prom/node-exporter:latest
     ports:
       - "9100:9100"
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -123,52 +137,52 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    cluster: 'voiceassist-prod'
-    environment: 'production'
+    cluster: "voiceassist-prod"
+    environment: "production"
 
 # Load alerting rules
 rule_files:
-  - '/etc/prometheus/alerts.yml'
+  - "/etc/prometheus/alerts.yml"
 
 # Alertmanager configuration
 alerting:
   alertmanagers:
     - static_configs:
-        - targets: ['alertmanager:9093']
+        - targets: ["alertmanager:9093"]
 
 # Scrape configurations
 scrape_configs:
   # VoiceAssist Application
-  - job_name: 'voiceassist-app'
+  - job_name: "voiceassist-app"
     static_configs:
-      - targets: ['voiceassist-server:8000']
-    metrics_path: '/metrics'
+      - targets: ["voiceassist-server:8000"]
+    metrics_path: "/metrics"
     scrape_interval: 10s
 
   # PostgreSQL
-  - job_name: 'postgresql'
+  - job_name: "postgresql"
     static_configs:
-      - targets: ['postgres-exporter:9187']
+      - targets: ["postgres-exporter:9187"]
 
   # Redis
-  - job_name: 'redis'
+  - job_name: "redis"
     static_configs:
-      - targets: ['redis-exporter:9121']
+      - targets: ["redis-exporter:9121"]
 
   # Node metrics
-  - job_name: 'node'
+  - job_name: "node"
     static_configs:
-      - targets: ['node-exporter:9100']
+      - targets: ["node-exporter:9100"]
 
   # Prometheus itself
-  - job_name: 'prometheus'
+  - job_name: "prometheus"
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ["localhost:9090"]
 
   # Grafana
-  - job_name: 'grafana'
+  - job_name: "grafana"
     static_configs:
-      - targets: ['grafana:3000']
+      - targets: ["grafana:3000"]
 ```
 
 ### Alert Rules
@@ -318,12 +332,12 @@ groups:
 # Create monitoring/alertmanager.yml
 global:
   resolve_timeout: 5m
-  slack_api_url: '${SLACK_WEBHOOK_URL}'
+  slack_api_url: "${SLACK_WEBHOOK_URL}"
 
 # Default route
 route:
-  receiver: 'default'
-  group_by: ['alertname', 'cluster', 'service']
+  receiver: "default"
+  group_by: ["alertname", "cluster", "service"]
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 12h
@@ -332,64 +346,64 @@ route:
     # Critical alerts -> PagerDuty + Slack
     - match:
         severity: critical
-      receiver: 'pagerduty-critical'
+      receiver: "pagerduty-critical"
       continue: true
 
     - match:
         severity: critical
-      receiver: 'slack-critical'
+      receiver: "slack-critical"
 
     # Warning alerts -> Slack only
     - match:
         severity: warning
-      receiver: 'slack-warnings'
+      receiver: "slack-warnings"
 
 # Receivers
 receivers:
-  - name: 'default'
+  - name: "default"
     slack_configs:
-      - channel: '#voiceassist-alerts'
-        title: 'VoiceAssist Alert'
+      - channel: "#voiceassist-alerts"
+        title: "VoiceAssist Alert"
         text: '{{ range .Alerts }}{{ .Annotations.summary }}\n{{ .Annotations.description }}\n{{ end }}'
 
-  - name: 'pagerduty-critical'
+  - name: "pagerduty-critical"
     pagerduty_configs:
-      - service_key: '${PAGERDUTY_SERVICE_KEY}'
-        description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
+      - service_key: "${PAGERDUTY_SERVICE_KEY}"
+        description: "{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}"
 
-  - name: 'slack-critical'
+  - name: "slack-critical"
     slack_configs:
-      - channel: '#voiceassist-critical'
-        username: 'AlertManager'
-        color: 'danger'
-        title: '🔴 CRITICAL: {{ .GroupLabels.alertname }}'
+      - channel: "#voiceassist-critical"
+        username: "AlertManager"
+        color: "danger"
+        title: "🔴 CRITICAL: {{ .GroupLabels.alertname }}"
         text: |
           *Summary:* {{ .CommonAnnotations.summary }}
           *Description:* {{ .CommonAnnotations.description }}
           *Severity:* {{ .GroupLabels.severity }}
           *Component:* {{ .GroupLabels.component }}
 
-  - name: 'slack-warnings'
+  - name: "slack-warnings"
     slack_configs:
-      - channel: '#voiceassist-alerts'
-        username: 'AlertManager'
-        color: 'warning'
-        title: '⚠️  WARNING: {{ .GroupLabels.alertname }}'
+      - channel: "#voiceassist-alerts"
+        username: "AlertManager"
+        color: "warning"
+        title: "⚠️  WARNING: {{ .GroupLabels.alertname }}"
         text: |
           *Summary:* {{ .CommonAnnotations.summary }}
           *Description:* {{ .CommonAnnotations.description }}
           *Severity:* {{ .GroupLabels.severity }}
           *Component:* {{ .GroupLabels.component }}
 
-  - name: 'email-ops'
+  - name: "email-ops"
     email_configs:
-      - to: 'ops-team@voiceassist.local'
-        from: 'alertmanager@voiceassist.local'
-        smarthost: 'smtp.gmail.com:587'
-        auth_username: '${SMTP_USERNAME}'
-        auth_password: '${SMTP_PASSWORD}'
+      - to: "ops-team@voiceassist.local"
+        from: "alertmanager@voiceassist.local"
+        smarthost: "smtp.gmail.com:587"
+        auth_username: "${SMTP_USERNAME}"
+        auth_password: "${SMTP_PASSWORD}"
         headers:
-          Subject: '[VoiceAssist] {{ .GroupLabels.alertname }}'
+          Subject: "[VoiceAssist] {{ .GroupLabels.alertname }}"
 ```
 
 ### Deploy Monitoring Stack
@@ -439,9 +453,9 @@ datasources:
 apiVersion: 1
 
 providers:
-  - name: 'VoiceAssist'
+  - name: "VoiceAssist"
     orgId: 1
-    folder: 'VoiceAssist V2'
+    folder: "VoiceAssist V2"
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30
@@ -926,11 +940,11 @@ scrape_configs:
       - host: unix:///var/run/docker.sock
         refresh_interval: 5s
     relabel_configs:
-      - source_labels: ['__meta_docker_container_name']
-        regex: '/(.*)'
-        target_label: 'container'
-      - source_labels: ['__meta_docker_container_log_stream']
-        target_label: 'stream'
+      - source_labels: ["__meta_docker_container_name"]
+        regex: "/(.*)"
+        target_label: "container"
+      - source_labels: ["__meta_docker_container_log_stream"]
+        target_label: "stream"
 ```
 
 ```bash

@@ -33,12 +33,257 @@ const PATH_PREFIXES: Record<string, string> = {
   "@root/": PROJECT_ROOT,
 };
 
+// ============================================================================
+// METADATA SCHEMA (see docs/DOCUMENTATION_METADATA_STANDARD.md)
+// ============================================================================
+
+/** Document maturity status */
+export type DocStatus = "draft" | "experimental" | "stable" | "deprecated";
+
+/** Feature stability level */
+export type DocStability = "production" | "beta" | "experimental" | "legacy";
+
+/** Team/area ownership */
+export type DocOwner =
+  | "backend"
+  | "frontend"
+  | "infra"
+  | "sre"
+  | "docs"
+  | "product"
+  | "security"
+  | "mixed";
+
+/** Target audience */
+export type DocAudience =
+  | "human"
+  | "agent"
+  | "backend"
+  | "frontend"
+  | "devops"
+  | "admin"
+  | "user";
+
+/**
+ * Standardized document metadata schema.
+ * See docs/DOCUMENTATION_METADATA_STANDARD.md for field definitions.
+ */
+export interface DocMetadata {
+  // Required fields
+  title: string;
+  slug: string;
+  status: DocStatus;
+  lastUpdated: string;
+
+  // Recommended fields
+  summary?: string;
+  stability?: DocStability;
+  owner?: DocOwner;
+  audience?: DocAudience[];
+  tags?: string[];
+
+  // Optional fields
+  relatedServices?: string[];
+  version?: string;
+  deprecated?: boolean;
+  replacedBy?: string;
+
+  // Legacy field mapping (for backwards compatibility)
+  description?: string; // Maps to summary
+}
+
+/**
+ * Validation result for document metadata
+ */
+export interface MetadataValidation {
+  valid: boolean;
+  warnings: string[];
+  errors: string[];
+}
+
+/**
+ * Document content with typed metadata
+ */
 export interface DocContent {
   content: string;
-  frontmatter: {
-    title?: string;
-    description?: string;
-    [key: string]: unknown;
+  frontmatter: DocMetadata;
+  path?: string;
+  validation?: MetadataValidation;
+}
+
+/**
+ * Lightweight doc entry for indexes
+ */
+export interface DocIndexEntry {
+  slug: string;
+  path: string;
+  title: string;
+  summary?: string;
+  status: DocStatus;
+  stability?: DocStability;
+  owner?: DocOwner;
+  audience?: DocAudience[];
+  tags?: string[];
+  relatedServices?: string[];
+  lastUpdated: string;
+}
+
+// Valid enum values for validation
+const VALID_STATUS: DocStatus[] = [
+  "draft",
+  "experimental",
+  "stable",
+  "deprecated",
+];
+const VALID_STABILITY: DocStability[] = [
+  "production",
+  "beta",
+  "experimental",
+  "legacy",
+];
+const VALID_OWNER: DocOwner[] = [
+  "backend",
+  "frontend",
+  "infra",
+  "sre",
+  "docs",
+  "product",
+  "security",
+  "mixed",
+];
+const VALID_AUDIENCE: DocAudience[] = [
+  "human",
+  "agent",
+  "backend",
+  "frontend",
+  "devops",
+  "admin",
+  "user",
+];
+
+/**
+ * Normalize and validate frontmatter data into typed DocMetadata
+ */
+export function parseMetadata(
+  rawData: Record<string, unknown>,
+  filePath?: string,
+): { metadata: DocMetadata; validation: MetadataValidation } {
+  const warnings: string[] = [];
+  const errors: string[] = [];
+  const prefix = filePath ? `[${filePath}] ` : "";
+
+  // Handle field name migrations
+  const lastUpdated = (rawData.lastUpdated ||
+    rawData.last_updated ||
+    "") as string;
+  const summary = (rawData.summary || rawData.description || "") as string;
+
+  // Derive slug from path if not provided
+  let slug = rawData.slug as string;
+  if (!slug && filePath) {
+    slug = filePath.replace(/\.md$/i, "").replace(/\\/g, "/");
+  }
+
+  // Validate required fields
+  if (!rawData.title) {
+    warnings.push(`${prefix}Missing required field: title`);
+  }
+  if (!slug) {
+    warnings.push(`${prefix}Missing required field: slug`);
+  }
+  if (!rawData.status) {
+    warnings.push(`${prefix}Missing required field: status`);
+  }
+  if (!lastUpdated) {
+    warnings.push(`${prefix}Missing required field: lastUpdated`);
+  }
+
+  // Validate enum values
+  const status = rawData.status as DocStatus;
+  if (status && !VALID_STATUS.includes(status)) {
+    warnings.push(
+      `${prefix}Invalid status value: ${status}. Must be one of: ${VALID_STATUS.join(", ")}`,
+    );
+  }
+
+  const stability = rawData.stability as DocStability;
+  if (stability && !VALID_STABILITY.includes(stability)) {
+    warnings.push(
+      `${prefix}Invalid stability value: ${stability}. Must be one of: ${VALID_STABILITY.join(", ")}`,
+    );
+  }
+
+  const owner = rawData.owner as DocOwner;
+  if (owner && !VALID_OWNER.includes(owner)) {
+    warnings.push(
+      `${prefix}Invalid owner value: ${owner}. Must be one of: ${VALID_OWNER.join(", ")}`,
+    );
+  }
+
+  // Validate audience array
+  const audience = rawData.audience as DocAudience[] | undefined;
+  if (audience && Array.isArray(audience)) {
+    for (const a of audience) {
+      if (!VALID_AUDIENCE.includes(a)) {
+        warnings.push(
+          `${prefix}Invalid audience value: ${a}. Must be one of: ${VALID_AUDIENCE.join(", ")}`,
+        );
+      }
+    }
+  }
+
+  // Validate date format (YYYY-MM-DD)
+  if (lastUpdated && !/^\d{4}-\d{2}-\d{2}$/.test(lastUpdated)) {
+    warnings.push(
+      `${prefix}Invalid date format for lastUpdated: ${lastUpdated}. Use ISO format: YYYY-MM-DD`,
+    );
+  }
+
+  const metadata: DocMetadata = {
+    title: (rawData.title as string) || "Untitled",
+    slug: slug || "unknown",
+    status: VALID_STATUS.includes(status) ? status : "draft",
+    lastUpdated: lastUpdated || new Date().toISOString().split("T")[0],
+    summary,
+    stability: VALID_STABILITY.includes(stability) ? stability : undefined,
+    owner: VALID_OWNER.includes(owner) ? owner : undefined,
+    audience: audience?.filter((a) => VALID_AUDIENCE.includes(a)),
+    tags: Array.isArray(rawData.tags) ? (rawData.tags as string[]) : undefined,
+    relatedServices: Array.isArray(rawData.relatedServices)
+      ? (rawData.relatedServices as string[])
+      : undefined,
+    version: rawData.version as string | undefined,
+    deprecated: rawData.deprecated as boolean | undefined,
+    replacedBy: rawData.replacedBy as string | undefined,
+    description: summary, // Keep for backwards compatibility
+  };
+
+  return {
+    metadata,
+    validation: {
+      valid: errors.length === 0,
+      warnings,
+      errors,
+    },
+  };
+}
+
+/**
+ * Convert DocContent to DocIndexEntry for lightweight indexes
+ */
+export function toIndexEntry(doc: DocContent, filePath: string): DocIndexEntry {
+  return {
+    slug: doc.frontmatter.slug,
+    path: filePath,
+    title: doc.frontmatter.title,
+    summary: doc.frontmatter.summary,
+    status: doc.frontmatter.status,
+    stability: doc.frontmatter.stability,
+    owner: doc.frontmatter.owner,
+    audience: doc.frontmatter.audience,
+    tags: doc.frontmatter.tags,
+    relatedServices: doc.frontmatter.relatedServices,
+    lastUpdated: doc.frontmatter.lastUpdated,
   };
 }
 
@@ -86,9 +331,25 @@ export function loadDoc(relativePath: string): DocContent | null {
     const fileContents = fs.readFileSync(fullPath, "utf8");
     const { data, content } = matter(fileContents);
 
+    // Parse and validate metadata
+    const { metadata, validation } = parseMetadata(
+      data as Record<string, unknown>,
+      relativePath,
+    );
+
+    // Log validation warnings in development
+    if (
+      process.env.NODE_ENV === "development" &&
+      validation.warnings.length > 0
+    ) {
+      validation.warnings.forEach((w) => console.warn(w));
+    }
+
     return {
       content,
-      frontmatter: data,
+      frontmatter: metadata,
+      path: relativePath,
+      validation,
     };
   } catch (error) {
     console.error(`Error loading document ${relativePath}:`, error);
@@ -144,9 +405,25 @@ export function loadDocWithPrefix(docPath: string): DocContent | null {
     const fileContents = fs.readFileSync(fullPath, "utf8");
     const { data, content } = matter(fileContents);
 
+    // Parse and validate metadata
+    const { metadata, validation } = parseMetadata(
+      data as Record<string, unknown>,
+      docPath,
+    );
+
+    // Log validation warnings in development
+    if (
+      process.env.NODE_ENV === "development" &&
+      validation.warnings.length > 0
+    ) {
+      validation.warnings.forEach((w) => console.warn(w));
+    }
+
     return {
       content,
-      frontmatter: data,
+      frontmatter: metadata,
+      path: docPath,
+      validation,
     };
   } catch (error) {
     console.error(`Error loading document ${docPath}:`, error);

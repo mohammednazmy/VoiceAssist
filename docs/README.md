@@ -7,6 +7,14 @@
 
 ## 📚 Quick Navigation
 
+### 🤖 For AI Agents
+
+If you're an AI coding assistant (Claude, GPT, Copilot, etc.):
+
+- **[ai/AGENT_ONBOARDING.md](ai/AGENT_ONBOARDING.md)** - Start here for quick context, repository structure, critical rules, and common tasks
+- **[overview/IMPLEMENTATION_STATUS.md](overview/IMPLEMENTATION_STATUS.md)** - Single source of truth for component status
+- **Key Rule:** Use `services/api-gateway/` for backend work (NOT `server/` which is deprecated)
+
 ### 🚀 Start Here
 
 - **[START_HERE.md](START_HERE.md)** - Project overview and getting started
@@ -20,6 +28,9 @@
 
 - **[UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md)** - Complete system architecture (PRIMARY)
 - **[BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md)** - Backend service architecture
+- **[FRONTEND_ARCHITECTURE.md](FRONTEND_ARCHITECTURE.md)** - Frontend monorepo architecture
+- **[REALTIME_ARCHITECTURE.md](REALTIME_ARCHITECTURE.md)** - WebSocket and streaming architecture
+- **[SECURITY_COMPLIANCE.md](SECURITY_COMPLIANCE.md)** - Security model and HIPAA compliance
 - **[architecture/ARCHITECTURE_DIAGRAMS.md](architecture/ARCHITECTURE_DIAGRAMS.md)** - Visual diagrams
 - **[DATA_MODEL.md](DATA_MODEL.md)** - Database schema and relationships
 - **[SERVICE_CATALOG.md](SERVICE_CATALOG.md)** - Microservices catalog

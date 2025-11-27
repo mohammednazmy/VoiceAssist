@@ -49,7 +49,7 @@ function buildOperationsByTag(spec: GeneratedApiSpec): {
 } {
   const operationsByTag: OperationsByTag = {};
   const tagDescriptions = new Map<string, string | undefined>();
-  const tagOrder = spec.tags?.map((tag) => tag.name) ?? [];
+  const tagOrder: string[] = spec.tags?.map((tag) => tag.name) ?? [];
 
   spec.tags?.forEach((tag) => {
     tagDescriptions.set(tag.name, tag.description);
@@ -147,11 +147,6 @@ export default function ApiReferencePage() {
                 )}
               </li>
             ))}
-            {spec.servers?.length === 0 && (
-              <li className="text-xs text-blue-700 dark:text-blue-200">
-                No servers defined in the OpenAPI spec.
-              </li>
-            )}
           </ul>
         </div>
 
@@ -278,26 +273,41 @@ export default function ApiReferencePage() {
                       </div>
                     )}
 
-                    {operation.requestBody && (
-                      <div className="mt-3 space-y-2">
-                        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                          Request body
-                        </h4>
-                        <div className="rounded border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950/40">
-                          {operation.requestBody.contentType && (
-                            <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                              {operation.requestBody.contentType}
-                            </span>
-                          )}
-                          {operation.requestBody.description && (
-                            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                              {operation.requestBody.description}
-                            </p>
-                          )}
-                          <SchemaBlock schema={operation.requestBody.schema} />
+                    {(() => {
+                      const op = operation as Record<string, unknown>;
+                      const reqBody = op.requestBody as
+                        | Record<string, unknown>
+                        | undefined;
+                      if (!reqBody) return null;
+                      const contentType =
+                        typeof reqBody.contentType === "string"
+                          ? reqBody.contentType
+                          : null;
+                      const description =
+                        typeof reqBody.description === "string"
+                          ? reqBody.description
+                          : null;
+                      return (
+                        <div className="mt-3 space-y-2">
+                          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            Request body
+                          </h4>
+                          <div className="rounded border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950/40">
+                            {contentType && (
+                              <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                {contentType}
+                              </span>
+                            )}
+                            {description && (
+                              <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                                {description}
+                              </p>
+                            )}
+                            <SchemaBlock schema={reqBody.schema} />
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {operation.responses.length > 0 && (
                       <div className="mt-3 space-y-2">
@@ -305,29 +315,32 @@ export default function ApiReferencePage() {
                           Responses
                         </h4>
                         <div className="space-y-2">
-                          {operation.responses.map((response) => (
-                            <div
-                              key={`${operation.id}-${response.status}`}
-                              className="rounded border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950/40"
-                            >
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                                  {response.status}
-                                </span>
-                                {response.description && (
-                                  <span className="text-xs text-slate-600 dark:text-slate-400">
-                                    {response.description}
+                          {operation.responses.map((response) => {
+                            const resp = response as Record<string, unknown>;
+                            return (
+                              <div
+                                key={`${operation.id}-${response.status}`}
+                                className="rounded border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950/40"
+                              >
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                    {response.status}
                                   </span>
+                                  {response.description && (
+                                    <span className="text-xs text-slate-600 dark:text-slate-400">
+                                      {response.description}
+                                    </span>
+                                  )}
+                                </div>
+                                {response.contentTypes.length > 0 && (
+                                  <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                    {response.contentTypes.join(", ")}
+                                  </p>
                                 )}
+                                <SchemaBlock schema={resp.schema} />
                               </div>
-                              {response.contentTypes.length > 0 && (
-                                <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                  {response.contentTypes.join(", ")}
-                                </p>
-                              )}
-                              <SchemaBlock schema={response.schema} />
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}

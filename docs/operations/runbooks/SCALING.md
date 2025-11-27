@@ -1,6 +1,20 @@
+---
+title: Scaling Runbook
+slug: operations/runbooks/scaling
+summary: Comprehensive guide for scaling VoiceAssist V2 infrastructure.
+status: stable
+stability: production
+owner: sre
+lastUpdated: "2025-11-27"
+audience: ["devops", "backend"]
+tags: ["runbook", "scaling", "performance", "infrastructure"]
+relatedServices: ["api-gateway"]
+version: "1.0.0"
+---
+
 # Scaling Runbook
 
-**Last Updated**: 2025-11-21 (Phase 7 - P3.2)
+**Last Updated**: 2025-11-27
 **Purpose**: Comprehensive guide for scaling VoiceAssist V2 infrastructure
 
 ---
@@ -21,12 +35,12 @@ VoiceAssist Server (Scalable)
 
 ### Scaling Strategy
 
-| Component | Type | Method | Max Recommended |
-|-----------|------|--------|-----------------|
-| **VoiceAssist Server** | Stateless | Horizontal | 10+ instances |
-| **PostgreSQL** | Stateful | Vertical + Read Replicas | 1 primary + 5 replicas |
-| **Redis** | Stateful | Vertical + Cluster | 6 nodes (3 master + 3 slave) |
-| **Qdrant** | Stateful | Horizontal + Sharding | 6+ nodes |
+| Component              | Type      | Method                   | Max Recommended              |
+| ---------------------- | --------- | ------------------------ | ---------------------------- |
+| **VoiceAssist Server** | Stateless | Horizontal               | 10+ instances                |
+| **PostgreSQL**         | Stateful  | Vertical + Read Replicas | 1 primary + 5 replicas       |
+| **Redis**              | Stateful  | Vertical + Cluster       | 6 nodes (3 master + 3 slave) |
+| **Qdrant**             | Stateful  | Horizontal + Sharding    | 6+ nodes                     |
 
 ---
 
@@ -37,6 +51,7 @@ VoiceAssist Server (Scalable)
 #### Immediate Scaling (Reactive)
 
 Scale **immediately** if:
+
 - CPU usage > 80% for 10+ minutes
 - Memory usage > 85%
 - Response time > 2 seconds (p95)
@@ -47,6 +62,7 @@ Scale **immediately** if:
 #### Planned Scaling (Proactive)
 
 Schedule scaling if:
+
 - Expected traffic increase (events, marketing campaigns)
 - New feature launch with heavy load
 - Approaching 70% capacity on any metric
@@ -147,10 +163,10 @@ services:
       replicas: 3
       resources:
         limits:
-          cpus: '2'
+          cpus: "2"
           memory: 2G
         reservations:
-          cpus: '1'
+          cpus: "1"
           memory: 1G
 ```
 
@@ -290,11 +306,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '4'        # Increased from 2
-          memory: 4G       # Increased from 2G
+          cpus: "4" # Increased from 2
+          memory: 4G # Increased from 2G
         reservations:
-          cpus: '2'        # Increased from 1
-          memory: 2G       # Increased from 1G
+          cpus: "2" # Increased from 1
+          memory: 2G # Increased from 1G
 ```
 
 ```bash
@@ -339,21 +355,21 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '4'
+          cpus: "4"
           memory: 8G
         reservations:
-          cpus: '2'
+          cpus: "2"
           memory: 4G
     command:
       - "postgres"
       - "-c"
-      - "max_connections=200"          # Increased from 100
+      - "max_connections=200" # Increased from 100
       - "-c"
-      - "shared_buffers=2GB"           # Increased from 256MB
+      - "shared_buffers=2GB" # Increased from 256MB
       - "-c"
-      - "effective_cache_size=6GB"     # Increased
+      - "effective_cache_size=6GB" # Increased
       - "-c"
-      - "maintenance_work_mem=512MB"   # Increased
+      - "maintenance_work_mem=512MB" # Increased
       - "-c"
       - "checkpoint_completion_target=0.9"
       - "-c"
@@ -365,11 +381,11 @@ services:
       - "-c"
       - "effective_io_concurrency=200"
       - "-c"
-      - "work_mem=10MB"                # Increased
+      - "work_mem=10MB" # Increased
       - "-c"
       - "min_wal_size=1GB"
       - "-c"
-      - "max_wal_size=4GB"             # Increased
+      - "max_wal_size=4GB" # Increased
 ```
 
 ```bash
@@ -497,14 +513,14 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 4G       # Increased from 2G
+          cpus: "2"
+          memory: 4G # Increased from 2G
         reservations:
-          cpus: '1'
+          cpus: "1"
           memory: 2G
     command:
       - redis-server
-      - --maxmemory 3gb   # Increased from 1gb
+      - --maxmemory 3gb # Increased from 1gb
       - --maxmemory-policy allkeys-lru
 ```
 
@@ -668,10 +684,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '4'        # Increased from 2
-          memory: 8G       # Increased from 4G
+          cpus: "4" # Increased from 2
+          memory: 8G # Increased from 4G
         reservations:
-          cpus: '2'
+          cpus: "2"
           memory: 4G
 ```
 
@@ -836,47 +852,48 @@ locust -f locustfile.py --host=http://localhost:8000 \
 
 ```javascript
 // Create loadtest.js
-import http from 'k6/http';
-import { check, sleep } from 'k6';
+import http from "k6/http";
+import { check, sleep } from "k6";
 
 export let options = {
   stages: [
-    { duration: '2m', target: 50 },  // Ramp up to 50 users
-    { duration: '5m', target: 50 },  // Stay at 50 users
-    { duration: '2m', target: 100 }, // Ramp up to 100 users
-    { duration: '5m', target: 100 }, // Stay at 100 users
-    { duration: '2m', target: 0 },   // Ramp down
+    { duration: "2m", target: 50 }, // Ramp up to 50 users
+    { duration: "5m", target: 50 }, // Stay at 50 users
+    { duration: "2m", target: 100 }, // Ramp up to 100 users
+    { duration: "5m", target: 100 }, // Stay at 100 users
+    { duration: "2m", target: 0 }, // Ramp down
   ],
   thresholds: {
-    http_req_duration: ['p(95)<500'], // 95% of requests under 500ms
-    http_req_failed: ['rate<0.01'],   // Less than 1% errors
+    http_req_duration: ["p(95)<500"], // 95% of requests under 500ms
+    http_req_failed: ["rate<0.01"], // Less than 1% errors
   },
 };
 
 export default function () {
   // Login
-  let loginRes = http.post('http://localhost:8000/api/auth/login',
+  let loginRes = http.post(
+    "http://localhost:8000/api/auth/login",
     JSON.stringify({
-      email: 'test@example.com',
-      password: 'password'
+      email: "test@example.com",
+      password: "password",
     }),
-    { headers: { 'Content-Type': 'application/json' } }
+    { headers: { "Content-Type": "application/json" } },
   );
 
   check(loginRes, {
-    'login successful': (r) => r.status === 200,
+    "login successful": (r) => r.status === 200,
   });
 
-  let token = loginRes.json('access_token');
+  let token = loginRes.json("access_token");
 
   // Make authenticated requests
   let headers = {
-    'Authorization': `Bearer ${token}`,
+    Authorization: `Bearer ${token}`,
   };
 
-  let profileRes = http.get('http://localhost:8000/api/users/me', { headers });
+  let profileRes = http.get("http://localhost:8000/api/users/me", { headers });
   check(profileRes, {
-    'profile retrieved': (r) => r.status === 200,
+    "profile retrieved": (r) => r.status === 200,
   });
 
   sleep(1);

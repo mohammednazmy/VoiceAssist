@@ -1,3 +1,19 @@
+---
+title: Web Application
+description: User-facing medical AI assistant - React/TypeScript SPA
+version: 1.0.0
+status: in-development
+last_updated: 2025-11-27
+audience:
+  - frontend-developers
+  - ai-agents
+tags:
+  - frontend
+  - react
+  - typescript
+  - spa
+---
+
 # VoiceAssist Web Application
 
 ## Overview

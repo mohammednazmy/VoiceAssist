@@ -1,3 +1,23 @@
+---
+title: Security & Compliance Guide
+description: HIPAA compliance, zero-trust architecture, PHI protection, and security requirements
+version: 2.0.0
+status: production
+last_updated: 2025-11-27
+audience:
+  - developers
+  - security-engineers
+  - architects
+  - compliance-officers
+  - ai-agents
+tags:
+  - security
+  - hipaa
+  - compliance
+  - phi
+  - encryption
+---
+
 # Security & Compliance Guide
 
 ## Overview
@@ -29,48 +49,57 @@ VoiceAssist implements the following HIPAA Security Rule requirements:
 #### Administrative Safeguards
 
 **1. Security Management Process**
+
 - Risk Analysis: Annual security risk assessments
 - Risk Management: Documented mitigation strategies
 - Sanction Policy: Employee discipline for violations
 - Information System Activity Review: Regular audit log reviews
 
 **2. Assigned Security Responsibility**
+
 - Designated Security Official (Admin role)
 - Security incident response team
 - Regular security training
 
 **3. Workforce Security**
+
 - Authorization/Supervision procedures
 - Workforce clearance procedures
 - Termination procedures (access revocation)
 
 **4. Information Access Management**
+
 - Access Authorization policies
 - Access Establishment/Modification procedures
 - Role-Based Access Control (RBAC)
 
 **5. Security Awareness and Training**
+
 - Security reminders (quarterly)
 - Protection from malicious software
 - Log-in monitoring
 - Password management training
 
 **6. Security Incident Procedures**
+
 - Incident response plan
 - Incident reporting procedures
 - Incident documentation
 
 **7. Contingency Plan**
+
 - Data backup plan (automated daily backups)
 - Disaster recovery plan
 - Emergency mode operation plan
 - Testing and revision procedures
 
 **8. Evaluation**
+
 - Annual security evaluations
 - Periodic technical and non-technical evaluations
 
 **9. Business Associate Agreements**
+
 - OpenAI API (Business Associate Agreement required)
 - UpToDate API (BAA required)
 - OpenEvidence API (BAA required)
@@ -79,21 +108,25 @@ VoiceAssist implements the following HIPAA Security Rule requirements:
 #### Physical Safeguards
 
 **1. Facility Access Controls**
+
 - Contingency operations (backup power, redundancy)
 - Facility security plan (datacenter access controls)
 - Access control and validation procedures
 - Maintenance records
 
 **2. Workstation Use**
+
 - Workstation security policies
 - Screen lock requirements (5 minutes idle)
 - Encrypted workstations
 
 **3. Workstation Security**
+
 - Physical security of workstations
 - Restricted access to terminals
 
 **4. Device and Media Controls**
+
 - Disposal procedures (secure wipe/destroy)
 - Media re-use procedures
 - Accountability tracking
@@ -102,6 +135,7 @@ VoiceAssist implements the following HIPAA Security Rule requirements:
 #### Technical Safeguards
 
 **1. Access Control**
+
 - Unique User Identification (via JWT tokens with email, Phase 2; Nextcloud OIDC in Phase 6+)
 - Emergency Access Procedure (admin override)
 - Automatic Logoff (access tokens expire after 15 minutes, refresh tokens after 7 days)
@@ -109,34 +143,38 @@ VoiceAssist implements the following HIPAA Security Rule requirements:
 - Rate limiting on authentication endpoints to prevent brute force attacks
 
 **2. Audit Controls**
+
 - Hardware, software, and procedural mechanisms to record and examine activity
 
 **3. Integrity**
+
 - Mechanism to authenticate ePHI is not improperly altered or destroyed
 - Digital signatures for critical data
 
 **4. Person or Entity Authentication**
+
 - Verify that a person or entity seeking access is who they claim to be
 - Multi-factor authentication available
 
 **5. Transmission Security**
+
 - Integrity controls (checksums, digital signatures)
 - Encryption (TLS 1.3 for all network communications)
 
 ### HIPAA Implementation in VoiceAssist
 
-| HIPAA Requirement | VoiceAssist Implementation |
-|------------------|----------------------------|
-| Access Control | RBAC via JWT tokens (Phase 2), Nextcloud OIDC integration (Phase 6+) |
-| Audit Logging | Comprehensive audit logs (all PHI access tracked) |
-| Authentication | JWT with bcrypt password hashing (Phase 2), OIDC/OAuth2 + optional MFA (Phase 6+) |
-| Encryption at Rest | AES-256 encryption for database and file storage |
-| Encryption in Transit | TLS 1.3 for all communications |
-| Data Backup | Automated daily backups with encryption |
-| Emergency Access | Admin override with audit trail |
-| Session Management | Access tokens (15-min), refresh tokens (7-day), rate limiting on auth endpoints |
-| PHI Minimization | PHI detection service redacts unnecessary PHI |
-| Audit Trail | Immutable audit logs stored separately |
+| HIPAA Requirement     | VoiceAssist Implementation                                                        |
+| --------------------- | --------------------------------------------------------------------------------- |
+| Access Control        | RBAC via JWT tokens (Phase 2), Nextcloud OIDC integration (Phase 6+)              |
+| Audit Logging         | Comprehensive audit logs (all PHI access tracked)                                 |
+| Authentication        | JWT with bcrypt password hashing (Phase 2), OIDC/OAuth2 + optional MFA (Phase 6+) |
+| Encryption at Rest    | AES-256 encryption for database and file storage                                  |
+| Encryption in Transit | TLS 1.3 for all communications                                                    |
+| Data Backup           | Automated daily backups with encryption                                           |
+| Emergency Access      | Admin override with audit trail                                                   |
+| Session Management    | Access tokens (15-min), refresh tokens (7-day), rate limiting on auth endpoints   |
+| PHI Minimization      | PHI detection service redacts unnecessary PHI                                     |
+| Audit Trail           | Immutable audit logs stored separately                                            |
 
 ---
 
@@ -155,6 +193,7 @@ VoiceAssist implements the following HIPAA Security Rule requirements:
 #### 1. Service-to-Service Authentication
 
 **Docker Compose (Phases 0-10):**
+
 ```yaml
 # Each service authenticates via API keys
 services:
@@ -169,6 +208,7 @@ services:
 ```
 
 **Kubernetes (Phases 11-14):**
+
 ```yaml
 # Service mesh (Linkerd) provides mTLS
 ---
@@ -184,15 +224,17 @@ spec:
 #### 2. Network Segmentation
 
 **Docker Compose:**
+
 ```yaml
 networks:
-  public:  # API Gateway only
-  internal:  # Microservices
-  database:  # Database access only
-    internal: true  # No external access
+  public: # API Gateway only
+  internal: # Microservices
+  database: # Database access only
+    internal: true # No external access
 ```
 
 **Kubernetes:**
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -203,22 +245,22 @@ spec:
     matchLabels:
       app: api-gateway
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  - from:
-    - podSelector: {}
-    ports:
-    - protocol: TCP
-      port: 8000
+    - from:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 8000
   egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: auth-service
-    ports:
-    - protocol: TCP
-      port: 8002
+    - to:
+        - podSelector:
+            matchLabels:
+              app: auth-service
+      ports:
+        - protocol: TCP
+          port: 8002
 ```
 
 #### 3. Identity-Based Access
@@ -316,6 +358,7 @@ async def security_middleware(request: Request, call_next):
 #### 1. Database Encryption
 
 **PostgreSQL (Transparent Data Encryption):**
+
 ```sql
 -- Enable pgcrypto extension
 CREATE EXTENSION pgcrypto;
@@ -351,6 +394,7 @@ FROM medical_records;
 ```
 
 **Application-Level Encryption:**
+
 ```python
 from cryptography.fernet import Fernet
 import os
@@ -465,6 +509,7 @@ echo "Encrypted backups created"
 #### 1. TLS Configuration
 
 **Traefik TLS Configuration:**
+
 ```yaml
 # traefik.yml
 entryPoints:
@@ -489,6 +534,7 @@ tls:
 #### 2. Internal Service Communication
 
 **Docker Compose (Phases 0-10):**
+
 ```yaml
 # Use internal networks + API key authentication
 services:
@@ -502,6 +548,7 @@ services:
 ```
 
 **Kubernetes (Phases 11-14):**
+
 ```yaml
 # Linkerd provides automatic mTLS
 ---
@@ -511,12 +558,12 @@ metadata:
   name: medical-kb
 spec:
   routes:
-  - condition:
-      method: GET
-      pathRegex: /api/.*
-    name: api-route
-    isRetryable: false
-    timeout: 30s
+    - condition:
+        method: GET
+        pathRegex: /api/.*
+      name: api-route
+      isRetryable: false
+      timeout: 30s
 ```
 
 #### 3. Client-to-Server (WebRTC Voice)
@@ -524,20 +571,18 @@ spec:
 ```javascript
 // WebRTC with DTLS-SRTP encryption
 const peerConnection = new RTCPeerConnection({
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' }
-  ],
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
   // Force DTLS-SRTP encryption
-  bundlePolicy: 'max-bundle',
-  rtcpMuxPolicy: 'require'
+  bundlePolicy: "max-bundle",
+  rtcpMuxPolicy: "require",
 });
 
 // Verify encryption is active
-peerConnection.getStats().then(stats => {
-  stats.forEach(report => {
-    if (report.type === 'transport') {
-      console.log('DTLS State:', report.dtlsState);  // Must be 'connected'
-      console.log('SRTP Cipher:', report.srtpCipher);  // e.g., 'AES_CM_128_HMAC_SHA1_80'
+peerConnection.getStats().then((stats) => {
+  stats.forEach((report) => {
+    if (report.type === "transport") {
+      console.log("DTLS State:", report.dtlsState); // Must be 'connected'
+      console.log("SRTP Cipher:", report.srtpCipher); // e.g., 'AES_CM_128_HMAC_SHA1_80'
     }
   });
 });
@@ -550,6 +595,7 @@ peerConnection.getStats().then(stats => {
 ### Authentication Flow (Phase 2: JWT-based)
 
 **Current Implementation (Phase 2):**
+
 ```
 1. User → Web App (email + password)
 2. Web App → API Gateway POST /api/auth/login
@@ -564,6 +610,7 @@ peerConnection.getStats().then(stats => {
 ```
 
 **JWT Token Details (Phase 2 Enhancements):**
+
 - **Access Token**: 15-minute expiry, HS256 algorithm, contains user ID + email + role
 - **Refresh Token**: 7-day expiry, used to obtain new access tokens
 - **Token Revocation** (`app/services/token_revocation.py`):
@@ -595,6 +642,7 @@ peerConnection.getStats().then(stats => {
   - Request ID correlation in metadata
 
 **Future Enhancement (Phase 6+):**
+
 ```
 Full OIDC integration with Nextcloud:
 1. User → VoiceAssist Web App
@@ -615,14 +663,14 @@ Full OIDC integration with Nextcloud:
 
 ### Authorization Levels
 
-| Role | Permissions |
-|------|-------------|
-| **Admin** | Full system access, user management, audit log access |
-| **Doctor** | Read/write patient records, prescribe medications, view medical knowledge |
-| **Nurse** | Read/write patient records, limited prescribing, view medical knowledge |
-| **Patient** | Read own records only, limited voice assistant access |
-| **Researcher** | Read de-identified data only, no PHI access |
-| **API Service** | Service-specific permissions (e.g., file-indexer can read files) |
+| Role            | Permissions                                                               |
+| --------------- | ------------------------------------------------------------------------- |
+| **Admin**       | Full system access, user management, audit log access                     |
+| **Doctor**      | Read/write patient records, prescribe medications, view medical knowledge |
+| **Nurse**       | Read/write patient records, limited prescribing, view medical knowledge   |
+| **Patient**     | Read own records only, limited voice assistant access                     |
+| **Researcher**  | Read de-identified data only, no PHI access                               |
+| **API Service** | Service-specific permissions (e.g., file-indexer can read files)          |
 
 ### RBAC Implementation
 
@@ -834,20 +882,21 @@ VoiceAssist's tools system (see [TOOLS_AND_INTEGRATIONS.md](TOOLS_AND_INTEGRATIO
 
 All tools are classified by their ability to handle PHI:
 
-| Tool Name | Allows PHI | Execution Location | External API | Rationale |
-|-----------|------------|-------------------|--------------|-----------|
-| `get_calendar_events` | ✅ Yes | Local/Nextcloud | No | Calendar data may contain patient appointments |
-| `create_calendar_event` | ✅ Yes | Local/Nextcloud | No | Event titles/descriptions may reference patients |
-| `search_nextcloud_files` | ✅ Yes | Local/Nextcloud | No | File names and metadata may contain PHI |
-| `retrieve_nextcloud_file` | ✅ Yes | Local/Nextcloud | No | File contents are clinical documents with PHI |
-| `calculate_medical_score` | ✅ Yes | Local compute | No | Calculations use patient-specific data (age, labs, etc.) |
-| `generate_differential_diagnosis` | ✅ Yes | Local LLM | No | DDx generated from patient symptoms and history |
-| `search_openevidence` | ❌ No | External API | Yes | External service - PHI must be stripped before sending |
-| `search_pubmed` | ❌ No | External API | Yes | External service - PHI must be stripped before sending |
-| `search_medical_guidelines` | ❌ No | Local vector DB | No | General medical knowledge, no patient data |
-| `web_search_medical` | ❌ No | External API | Yes | External service - PHI must be stripped before sending |
+| Tool Name                         | Allows PHI | Execution Location | External API | Rationale                                                |
+| --------------------------------- | ---------- | ------------------ | ------------ | -------------------------------------------------------- |
+| `get_calendar_events`             | ✅ Yes     | Local/Nextcloud    | No           | Calendar data may contain patient appointments           |
+| `create_calendar_event`           | ✅ Yes     | Local/Nextcloud    | No           | Event titles/descriptions may reference patients         |
+| `search_nextcloud_files`          | ✅ Yes     | Local/Nextcloud    | No           | File names and metadata may contain PHI                  |
+| `retrieve_nextcloud_file`         | ✅ Yes     | Local/Nextcloud    | No           | File contents are clinical documents with PHI            |
+| `calculate_medical_score`         | ✅ Yes     | Local compute      | No           | Calculations use patient-specific data (age, labs, etc.) |
+| `generate_differential_diagnosis` | ✅ Yes     | Local LLM          | No           | DDx generated from patient symptoms and history          |
+| `search_openevidence`             | ❌ No      | External API       | Yes          | External service - PHI must be stripped before sending   |
+| `search_pubmed`                   | ❌ No      | External API       | Yes          | External service - PHI must be stripped before sending   |
+| `search_medical_guidelines`       | ❌ No      | Local vector DB    | No           | General medical knowledge, no patient data               |
+| `web_search_medical`              | ❌ No      | External API       | Yes          | External service - PHI must be stripped before sending   |
 
 **Key Principles:**
+
 1. **Local PHI Tools**: Tools that access PHI (calendar, files, calculations, DDx) execute locally or via Nextcloud (same network)
 2. **External Non-PHI Tools**: Tools that call external APIs (OpenEvidence, PubMed, web search) must never receive PHI
 3. **PHI Detection**: All tool arguments are scanned for PHI before execution
@@ -1058,11 +1107,13 @@ When PHI is detected in arguments to a non-PHI tool:
 ```
 
 **Frontend Handling:**
+
 - Display user-friendly error message
 - Suggest alternative tools that allow PHI
 - Allow user to rephrase query without PHI
 
 **Related Documentation:**
+
 - [TOOLS_AND_INTEGRATIONS.md](TOOLS_AND_INTEGRATIONS.md) - Complete tools specification with PHI classification
 - [ORCHESTRATION_DESIGN.md](ORCHESTRATION_DESIGN.md) - Tool execution flow with PHI checks
 - [DATA_MODEL.md](DATA_MODEL.md) - ToolCall entity with `phi_detected` field
@@ -1077,6 +1128,7 @@ When PHI is detected in arguments to a non-PHI tool:
 ### Audit Log Requirements
 
 Every access to PHI must be logged with:
+
 1. **Who**: User ID, role, email
 2. **What**: Action performed (read, write, delete, authentication events)
 3. **When**: Timestamp (UTC with timezone support)
@@ -1089,6 +1141,7 @@ Every access to PHI must be logged with:
 **✅ IMPLEMENTED** - Comprehensive audit logging system deployed in Phase 2:
 
 **Key Features**:
+
 - **Immutable audit trail** with SHA-256 integrity verification
 - **Authentication event logging** (registration, login, logout, token refresh/revocation)
 - **Comprehensive metadata capture** including IP address, user agent, request ID
@@ -1100,10 +1153,12 @@ Every access to PHI must be logged with:
 **Database Schema**: `audit_logs` table (PostgreSQL with JSONB)
 
 **Service Layer**:
+
 - `app/services/audit_service.py` - Audit logging service
 - `app/models/audit_log.py` - Audit log ORM model
 
 **Usage in Authentication Flow**:
+
 - All authentication events automatically logged
 - Token revocation events captured
 - Failed login attempts tracked
@@ -1296,22 +1351,22 @@ spec:
     matchLabels:
       app: api-gateway
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  - from:
-    - namespaceSelector: {}  # From any namespace
-    ports:
-    - protocol: TCP
-      port: 8000
+    - from:
+        - namespaceSelector: {} # From any namespace
+      ports:
+        - protocol: TCP
+          port: 8000
   egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: auth-service
-    ports:
-    - protocol: TCP
-      port: 8002
+    - to:
+        - podSelector:
+            matchLabels:
+              app: auth-service
+      ports:
+        - protocol: TCP
+          port: 8002
 
 ---
 # Database only accessible by specific services
@@ -1325,21 +1380,21 @@ spec:
     matchLabels:
       app: postgres
   policyTypes:
-  - Ingress
+    - Ingress
   ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: api-gateway
-    - podSelector:
-        matchLabels:
-          app: auth-service
-    - podSelector:
-        matchLabels:
-          app: medical-kb
-    ports:
-    - protocol: TCP
-      port: 5432
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+        - podSelector:
+            matchLabels:
+              app: auth-service
+        - podSelector:
+            matchLabels:
+              app: medical-kb
+      ports:
+        - protocol: TCP
+          port: 5432
 ```
 
 ---
@@ -1348,14 +1403,14 @@ spec:
 
 ### Retention Policy
 
-| Data Type | Retention Period | Disposal Method |
-|-----------|-----------------|-----------------|
-| Medical Records | 6 years after last visit | Secure wipe + shred (physical) |
-| Audit Logs | 6 years | Encrypted archive, then secure wipe |
-| Voice Recordings | 30 days (unless saved) | Secure wipe |
-| Temporary Files | 24 hours | Automatic secure deletion |
-| Backups | 30 days (rolling) | Encrypt, then secure wipe |
-| De-identified Data | Indefinite | N/A (no PHI) |
+| Data Type          | Retention Period         | Disposal Method                     |
+| ------------------ | ------------------------ | ----------------------------------- |
+| Medical Records    | 6 years after last visit | Secure wipe + shred (physical)      |
+| Audit Logs         | 6 years                  | Encrypted archive, then secure wipe |
+| Voice Recordings   | 30 days (unless saved)   | Secure wipe                         |
+| Temporary Files    | 24 hours                 | Automatic secure deletion           |
+| Backups            | 30 days (rolling)        | Encrypt, then secure wipe           |
+| De-identified Data | Indefinite               | N/A (no PHI)                        |
 
 ### Secure Deletion
 
@@ -1419,32 +1474,38 @@ def cleanup_expired_files():
 ### Incident Response Plan
 
 #### 1. Preparation
+
 - Incident response team identified
 - Contact list maintained
 - Incident response playbooks documented
 - Regular drills conducted (quarterly)
 
 #### 2. Detection & Analysis
+
 - 24/7 monitoring via Prometheus/Grafana
 - Automated alerts for suspicious activity
 - Log analysis for anomalies
 - User reports
 
 #### 3. Containment
+
 - **Short-term**: Isolate affected systems, revoke compromised credentials
 - **Long-term**: Apply patches, update firewall rules
 
 #### 4. Eradication
+
 - Remove malware/backdoors
 - Close vulnerabilities
 - Reset all passwords
 
 #### 5. Recovery
+
 - Restore from clean backups
 - Verify system integrity
 - Gradual service restoration
 
 #### 6. Post-Incident
+
 - Incident report (within 60 days for HIPAA breach)
 - Lessons learned meeting
 - Update security controls
@@ -1453,6 +1514,7 @@ def cleanup_expired_files():
 ### Security Incident Examples
 
 **Unauthorized Access Attempt:**
+
 ```python
 # Alert triggered when multiple failed login attempts
 @app.middleware("http")
@@ -1479,6 +1541,7 @@ async def detect_brute_force(request: Request, call_next):
 ```
 
 **Data Breach Response:**
+
 ```python
 async def handle_data_breach(affected_users: List[str], breach_type: str):
     """
@@ -1544,7 +1607,7 @@ groups:
 
       # Unusual data export volume
       - alert: UnusualDataExport
-        expr: rate(data_export_bytes_total[10m]) > 1000000000  # 1GB/10min
+        expr: rate(data_export_bytes_total[10m]) > 1000000000 # 1GB/10min
         for: 5m
         labels:
           severity: critical

@@ -16,7 +16,11 @@
     "type-check": "tsc --noEmit",
     "generate-search-index": "node scripts/generate-search-index.js",
     "validate-docs": "node ./scripts/validate-docs.mjs",
-    "generate:api-reference": "node ./scripts/generate-api-reference.mjs"
+    "validate:metadata": "npx ts-node scripts/validate-metadata.ts",
+    "check:links": "npx ts-node scripts/check-links.ts",
+    "validate:all": "pnpm run validate:metadata && pnpm run check:links",
+    "generate:api-reference": "node ./scripts/generate-api-reference.mjs",
+    "generate:api-docs": "cd ../../services/api-gateway && python3 tools/generate_api_docs.py --format all"
   },
   "dependencies": {
     "fuse.js": "^6.6.2",

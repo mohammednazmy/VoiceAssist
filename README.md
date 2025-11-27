@@ -50,6 +50,14 @@ See [docs/client-implementation/](docs/client-implementation/) for the complete 
 - **API Gateway service guide:** [services/api-gateway/README.md](services/api-gateway/README.md)
 - **Package READMEs:** `packages/*/README.md` for shared libraries (api-client, config, design-tokens, telemetry, types, ui, utils)
 
+### For AI Agents
+
+If you're an AI coding assistant (Claude, GPT, Copilot, etc.), start here:
+
+- **[AI Agent Onboarding Guide](docs/ai/AGENT_ONBOARDING.md)** - Quick context, repository structure, critical rules, and common tasks
+- **[Implementation Status](docs/overview/IMPLEMENTATION_STATUS.md)** - Single source of truth for component status
+- **Key Rule:** Use `services/api-gateway/` for backend work (NOT `server/` which is deprecated)
+
 ### Key Highlights
 
 - ✅ **Production Ready** - Complete with HA/DR, monitoring, and security hardening

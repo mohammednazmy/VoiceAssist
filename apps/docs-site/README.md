@@ -1,3 +1,20 @@
+---
+title: Documentation Site
+description: Technical documentation website - Next.js 14 with markdown rendering
+version: 1.0.0
+status: in-development
+last_updated: 2025-11-27
+audience:
+  - frontend-developers
+  - technical-writers
+  - ai-agents
+tags:
+  - frontend
+  - nextjs
+  - documentation
+  - markdown
+---
+
 # VoiceAssist Documentation Site
 
 Technical documentation for the VoiceAssist platform, automatically rendering markdown files from the `docs/` directory.

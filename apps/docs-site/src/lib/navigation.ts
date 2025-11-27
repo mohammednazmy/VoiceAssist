@@ -237,7 +237,13 @@ export const navigation: NavSection[] = [
         title: "Architecture",
         href: "/dev/architecture",
         description: "System overview and component diagrams",
-        docPaths: ["UNIFIED_ARCHITECTURE.md", "ARCHITECTURE.md"],
+        docPaths: [
+          "UNIFIED_ARCHITECTURE.md",
+          "BACKEND_ARCHITECTURE.md",
+          "FRONTEND_ARCHITECTURE.md",
+          "REALTIME_ARCHITECTURE.md",
+          "SECURITY_COMPLIANCE.md",
+        ],
       },
       {
         title: "Contributing",
@@ -250,6 +256,12 @@ export const navigation: NavSection[] = [
         href: "/dev/extending",
         description: "Adding tools and integrations",
         docPaths: ["TOOLS_AND_INTEGRATIONS.md"],
+      },
+      {
+        title: "AI Agent Guide",
+        href: "/dev/ai-agents",
+        description: "Onboarding guide for AI coding assistants",
+        docPaths: ["ai/AGENT_ONBOARDING.md"],
       },
     ],
   },
