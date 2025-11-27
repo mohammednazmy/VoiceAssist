@@ -14,24 +14,104 @@ Phase 8 Improvements:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional
 
 from app.core.api_envelope import success_response
 from app.core.database import get_db, get_db_pool_stats, get_redis_pool_stats, redis_client
 from app.core.dependencies import get_current_admin_user
+from app.core.security import verify_token
 from app.models.audit_log import AuditLog
 from app.models.user import User
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from app.services.log_stream_service import (
+    get_buffered_logs,
+    register_log_listener,
+    unregister_log_listener,
+)
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, EmailStr
-from sqlalchemy import Date, cast, desc, func
+from sqlalchemy import Date, cast, desc, func, text
 from sqlalchemy.orm import Session
+from starlette.websockets import WebSocketState
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/admin/panel", tags=["admin", "panel"])
+logs_router = APIRouter(prefix="/api/admin", tags=["admin", "logs"])
+
+
+def _parse_since_param(value: Optional[str]) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+    except ValueError:
+        try:
+            return datetime.fromtimestamp(float(value), tz=timezone.utc)
+        except (TypeError, ValueError):
+            return None
+
+
+def _websocket_connected(websocket: WebSocket) -> bool:
+    try:
+        return (
+            websocket.client_state == WebSocketState.CONNECTED
+            and websocket.application_state == WebSocketState.CONNECTED
+        )
+    except Exception:
+        return False
+
+
+async def _safe_ws_send(websocket: WebSocket, payload: Dict) -> bool:
+    if not _websocket_connected(websocket):
+        return False
+    try:
+        await websocket.send_json(payload)
+        return True
+    except WebSocketDisconnect:
+        return False
+    except Exception as exc:  # pragma: no cover - defensive logging
+        logger.warning(f"Failed to send WebSocket payload: {exc}")
+        return False
+
+
+async def _authenticate_admin_websocket(websocket: WebSocket, db: Session) -> Optional[User]:
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.accept()
+        await _safe_ws_send(
+            websocket,
+            {"type": "error", "error": {"code": "UNAUTHORIZED", "message": "Missing token"}},
+        )
+        await websocket.close(code=1008)
+        return None
+
+    payload = verify_token(token)
+    if not payload or payload.get("type") != "access":
+        await websocket.accept()
+        await _safe_ws_send(
+            websocket,
+            {"type": "error", "error": {"code": "UNAUTHORIZED", "message": "Invalid token"}},
+        )
+        await websocket.close(code=1008)
+        return None
+
+    user_id = payload.get("sub")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or not user.is_admin:
+        await websocket.accept()
+        await _safe_ws_send(
+            websocket,
+            {"type": "error", "error": {"code": "FORBIDDEN", "message": "Admin access required"}},
+        )
+        await websocket.close(code=1008)
+        return None
+
+    return user
 
 # Redis keys for WebSocket session tracking and caching
 REDIS_WS_SESSIONS_KEY = "voiceassist:ws:sessions"
@@ -195,6 +275,49 @@ class AuditLogEntryResponse(BaseModel):
 # ============================================================================
 
 
+def _measure_service_latency(db: Session) -> Dict[str, float]:
+    latencies: Dict[str, float] = {}
+    start = time.perf_counter()
+    try:
+        db.execute(text("SELECT 1"))
+        latencies["database_ms"] = (time.perf_counter() - start) * 1000
+    except Exception:
+        latencies["database_ms"] = -1
+
+    redis_start = time.perf_counter()
+    try:
+        redis_client.ping()
+        latencies["redis_ms"] = (time.perf_counter() - redis_start) * 1000
+    except Exception:
+        latencies["redis_ms"] = -1
+
+    return latencies
+
+
+def build_system_summary(db: Session) -> Dict:
+    total_users = db.query(User).count()
+    active_users = db.query(User).filter(User.is_active.is_(True)).count()
+    admin_users = db.query(User).filter(User.is_admin.is_(True)).count()
+    latest_user_created = db.query(func.max(User.created_at)).scalar()
+    latest_login = db.query(func.max(User.last_login)).scalar()
+    latest_audit = db.query(func.max(AuditLog.timestamp)).scalar()
+
+    service_latency = _measure_service_latency(db)
+
+    return {
+        "total_users": total_users,
+        "active_users": active_users,
+        "admin_users": admin_users,
+        "last_updated": {
+            "user_created": latest_user_created.isoformat() + "Z" if latest_user_created else None,
+            "last_login": latest_login.isoformat() + "Z" if latest_login else None,
+            "audit_log": latest_audit.isoformat() + "Z" if latest_audit else None,
+        },
+        "service_latency_ms": service_latency,
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+    }
+
+
 @router.get("/summary")
 async def get_system_summary(
     request: Request,
@@ -202,18 +325,81 @@ async def get_system_summary(
     current_admin_user: User = Depends(get_current_admin_user),
 ) -> Dict:
     """Return a simple system summary for the admin dashboard."""
-    total_users = db.query(User).count()
-    active_users = db.query(User).filter(User.is_active.is_(True)).count()
-    admin_users = db.query(User).filter(User.is_admin.is_(True)).count()
-
-    data = {
-        "total_users": total_users,
-        "active_users": active_users,
-        "admin_users": admin_users,
-        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
-    }
+    data = build_system_summary(db)
     trace_id = getattr(request.state, "trace_id", None)
     return success_response(data, trace_id=trace_id)
+
+
+@router.websocket("/summary/ws")
+async def stream_system_summary(websocket: WebSocket, db: Session = Depends(get_db)):
+    """WebSocket stream that periodically emits system summary metrics."""
+
+    user = await _authenticate_admin_websocket(websocket, db)
+    if not user:
+        return
+
+    await websocket.accept()
+    session_id = f"admin-summary-{user.id}"
+    register_websocket_session(session_id, str(user.id), "admin_summary")
+
+    send_queue: asyncio.Queue = asyncio.Queue(maxsize=25)
+
+    async def enqueue(payload: Dict):
+        if send_queue.full():
+            try:
+                _ = send_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                pass
+        try:
+            send_queue.put_nowait(payload)
+        except asyncio.QueueFull:
+            logger.warning("Dropping summary payload due to backpressure", extra={"user_id": str(user.id)})
+
+    async def producer():
+        while _websocket_connected(websocket):
+            payload = {"type": "summary", "data": build_system_summary(db)}
+            await enqueue(payload)
+            await asyncio.sleep(5)
+
+    async def consumer():
+        while _websocket_connected(websocket):
+            message = await send_queue.get()
+            sent = await _safe_ws_send(websocket, message)
+            if not sent:
+                break
+
+    async def receiver():
+        while _websocket_connected(websocket):
+            try:
+                incoming = await websocket.receive_json()
+            except WebSocketDisconnect:
+                break
+            message_type = incoming.get("type")
+            if message_type == "ping":
+                await _safe_ws_send(
+                    websocket,
+                    {
+                        "type": "pong",
+                        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+                        "backlog": send_queue.qsize(),
+                    },
+                )
+
+    producer_task = asyncio.create_task(producer())
+    consumer_task = asyncio.create_task(consumer())
+    receiver_task = asyncio.create_task(receiver())
+
+    try:
+        await asyncio.wait(
+            [producer_task, consumer_task, receiver_task],
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+    finally:
+        producer_task.cancel()
+        consumer_task.cancel()
+        receiver_task.cancel()
+        unregister_websocket_session(session_id)
+        await websocket.close()
 
 
 # ============================================================================
@@ -625,3 +811,113 @@ async def get_audit_logs(
 
     trace_id = getattr(request.state, "trace_id", None)
     return success_response(data, trace_id=trace_id)
+
+
+# ============================================================================
+# Structured Log Streaming (WebSocket compatible)
+# ============================================================================
+
+
+@logs_router.get("/logs")
+async def list_logs(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_user),
+    service: Optional[str] = Query(None),
+    level: Optional[str] = Query(None),
+    since: Optional[str] = Query(None),
+):
+    """Return buffered logs with optional filtering for initial page load."""
+
+    since_dt = _parse_since_param(since)
+    filters = {"service": service, "level": level, "since": since_dt}
+    logs = get_buffered_logs(filters)
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response({"logs": logs, "count": len(logs)}, trace_id=trace_id)
+
+
+@logs_router.websocket("/logs")
+async def stream_logs(websocket: WebSocket, db: Session = Depends(get_db)):
+    """Stream application logs with filtering, ping/pong, and backpressure handling."""
+
+    service = websocket.query_params.get("service")
+    level = websocket.query_params.get("level")
+    since_raw = websocket.query_params.get("since")
+    since = _parse_since_param(since_raw)
+
+    user = await _authenticate_admin_websocket(websocket, db)
+    if not user:
+        return
+
+    await websocket.accept()
+    session_id = f"admin-logs-{user.id}"
+    register_websocket_session(session_id, str(user.id), "admin_logs")
+
+    filters = {"service": service, "level": level, "since": since}
+    listener_id, listener_queue = register_log_listener(filters)
+    send_queue: asyncio.Queue = asyncio.Queue(maxsize=50)
+
+    async def enqueue(payload: Dict):
+        if send_queue.full():
+            try:
+                _ = send_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                pass
+        try:
+            send_queue.put_nowait(payload)
+        except asyncio.QueueFull:
+            logger.warning("Dropping log payload due to backpressure", extra={"user_id": str(user.id)})
+
+    # Send buffered history first
+    buffered_logs = get_buffered_logs(filters)
+    for entry in buffered_logs:
+        await enqueue({"type": "log", "data": entry})
+
+    async def forward_new_logs():
+        while _websocket_connected(websocket):
+            try:
+                entry = await listener_queue.get()
+            except asyncio.CancelledError:
+                break
+            await enqueue({"type": "log", "data": entry})
+
+    async def consumer():
+        while _websocket_connected(websocket):
+            message = await send_queue.get()
+            sent = await _safe_ws_send(websocket, message)
+            if not sent:
+                break
+
+    async def receiver():
+        while _websocket_connected(websocket):
+            try:
+                incoming = await websocket.receive_json()
+            except WebSocketDisconnect:
+                break
+            msg_type = incoming.get("type")
+            if msg_type == "ping":
+                await _safe_ws_send(
+                    websocket,
+                    {
+                        "type": "pong",
+                        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+                        "backlog": send_queue.qsize(),
+                    },
+                )
+
+    forward_task = asyncio.create_task(forward_new_logs())
+    consumer_task = asyncio.create_task(consumer())
+    receiver_task = asyncio.create_task(receiver())
+
+    try:
+        await asyncio.wait(
+            [forward_task, consumer_task, receiver_task],
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+    finally:
+        forward_task.cancel()
+        consumer_task.cancel()
+        receiver_task.cancel()
+        unregister_log_listener(listener_id)
+        unregister_websocket_session(session_id)
+        await websocket.close()

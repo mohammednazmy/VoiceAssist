@@ -152,6 +152,7 @@ app.include_router(voice.router, prefix="/api")  # Milestone 1 Phase 3: Voice fe
 app.include_router(admin_kb.router)  # Phase 5: KB Management
 app.include_router(integrations.router)  # Phase 6: Nextcloud integrations
 app.include_router(admin_panel.router)  # Phase 7: Admin Panel API
+app.include_router(admin_panel.logs_router)  # Admin log streaming endpoints
 app.include_router(admin_cache.router)  # Phase 7: Cache Management API (P2.1)
 app.include_router(admin_feature_flags.router)  # Phase 7: Feature Flags API (P3.1)
 app.include_router(attachments.router, prefix="/api")  # Phase 8: File attachments in chat

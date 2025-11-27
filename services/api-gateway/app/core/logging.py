@@ -6,6 +6,7 @@ import sys
 import structlog
 
 from app.core.config import settings
+from app.services.log_stream_service import get_log_stream_handler
 
 
 def configure_logging():
@@ -20,6 +21,11 @@ def configure_logging():
         stream=sys.stdout,
         level=log_level,
     )
+
+    # Attach streaming handler for WebSocket log subscribers
+    streaming_handler = get_log_stream_handler()
+    streaming_handler.setLevel(log_level)
+    logging.getLogger().addHandler(streaming_handler)
 
     # Configure structlog
     structlog.configure(
