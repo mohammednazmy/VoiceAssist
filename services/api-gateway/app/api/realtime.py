@@ -396,6 +396,8 @@ async def handle_chat_message(websocket: WebSocket, client_id: str, data: Dict[s
     session_id = data.get("session_id")
     clinical_context_id = data.get("clinical_context_id")
     attachments = data.get("attachments") or []
+    # Client-provided message ID for idempotency and attachment sync
+    client_message_id = data.get("client_message_id")
     # User ID passed from authenticated WebSocket handler
     user_id = data.get("_user_id")
 
@@ -450,6 +452,7 @@ async def handle_chat_message(websocket: WebSocket, client_id: str, data: Dict[s
                 session_id=session_obj.id,
                 role="user",
                 content=user_message,
+                client_message_id=client_message_id,  # Store client ID for attachment sync
                 message_metadata={
                     "source": "realtime_ws",
                     "clinical_context_id": clinical_context_id,
@@ -466,8 +469,18 @@ async def handle_chat_message(websocket: WebSocket, client_id: str, data: Dict[s
                 extra={
                     "session_id": session_id,
                     "message_id": user_db_message_id,
+                    "client_message_id": client_message_id,
                 },
             )
+
+            # Send user_message.created event so frontend can sync message ID for attachments
+            user_created_event = {
+                "type": "user_message.created",
+                "messageId": user_db_message_id,
+                "clientMessageId": client_message_id,
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+            }
+            await safe_send_json(websocket, user_created_event)
 
         # Create query request for orchestrator
         query_request = QueryRequest(

@@ -54,6 +54,11 @@ const OAuthCallbackPage = lazy(() =>
     default: m.OAuthCallbackPage,
   })),
 );
+const SharedConversationPage = lazy(() =>
+  import("./pages/SharedConversationPage").then((m) => ({
+    default: m.SharedConversationPage,
+  })),
+);
 
 export function AppRoutes() {
   return (
@@ -66,6 +71,7 @@ export function AppRoutes() {
           path="/auth/callback/:provider"
           element={<OAuthCallbackPage />}
         />
+        <Route path="/shared/:token" element={<SharedConversationPage />} />
 
         {/* Protected routes */}
         <Route
