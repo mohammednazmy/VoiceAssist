@@ -92,6 +92,7 @@ class RealtimeSessionResponse(BaseModel):
     conversation_id: str | None
     auth: RealtimeAuthInfo  # Ephemeral token auth (secure, no raw API key)
     voice_config: dict
+    audio_enhancements: dict | None = None
 
 
 class VoiceRelayRequest(BaseModel):

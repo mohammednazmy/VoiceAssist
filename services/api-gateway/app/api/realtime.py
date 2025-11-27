@@ -19,6 +19,7 @@ from typing import Any, Dict
 from app.core.business_metrics import rag_citations_per_query, rag_queries_total
 from app.core.database import get_db
 from app.core.logging import get_logger
+from app.core.dependencies import get_current_user
 from app.core.security import verify_token
 from app.models.message import Message
 from app.models.session import Session as ChatSession
@@ -31,7 +32,9 @@ from app.schemas.websocket import (
     create_pong_event,
 )
 from app.services.rag_service import QueryOrchestrator, QueryRequest
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from app.services.webrtc_signaling import signaling_service
+from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from starlette.websockets import WebSocketState
 
@@ -136,6 +139,114 @@ class ConnectionManager:
 
 # Global connection manager instance
 manager = ConnectionManager()
+
+
+class WebRTCOffer(BaseModel):
+    session_id: str
+    sdp: str
+
+
+class WebRTCAnswer(BaseModel):
+    session_id: str
+    sdp: str
+
+
+class ICECandidatePayload(BaseModel):
+    session_id: str
+    candidate: dict
+
+
+class WebRTCSessionResponse(BaseModel):
+    session_id: str
+    offer: str | None = None
+    answer: str | None = None
+    ice_candidates: list[dict]
+    processing: dict
+
+
+@router.post("/webrtc/offer", response_model=WebRTCSessionResponse)
+async def post_webrtc_offer(
+    payload: WebRTCOffer, current_user: User = Depends(get_current_user)
+):
+    session = signaling_service.register_offer(
+        session_id=payload.session_id, user_id=str(current_user.id), sdp=payload.sdp
+    )
+    return WebRTCSessionResponse(
+        session_id=session.session_id,
+        offer=session.offer_sdp,
+        answer=session.answer_sdp,
+        ice_candidates=session.ice_candidates,
+        processing={
+            "vad_threshold": session.vad_threshold,
+            "noise_suppression": session.noise_suppression,
+        },
+    )
+
+
+@router.post("/webrtc/answer", response_model=WebRTCSessionResponse)
+async def post_webrtc_answer(
+    payload: WebRTCAnswer, current_user: User = Depends(get_current_user)
+):
+    session = signaling_service.register_answer(
+        session_id=payload.session_id, user_id=str(current_user.id), sdp=payload.sdp
+    )
+    if not session:
+        raise HTTPException(status_code=400, detail="Unknown WebRTC session")
+
+    return WebRTCSessionResponse(
+        session_id=session.session_id,
+        offer=session.offer_sdp,
+        answer=session.answer_sdp,
+        ice_candidates=session.ice_candidates,
+        processing={
+            "vad_threshold": session.vad_threshold,
+            "noise_suppression": session.noise_suppression,
+        },
+    )
+
+
+@router.post("/webrtc/candidate", response_model=WebRTCSessionResponse)
+async def post_webrtc_candidate(
+    payload: ICECandidatePayload, current_user: User = Depends(get_current_user)
+):
+    session = signaling_service.add_ice_candidate(
+        session_id=payload.session_id,
+        user_id=str(current_user.id),
+        candidate=payload.candidate,
+    )
+    if not session:
+        raise HTTPException(status_code=400, detail="Unknown WebRTC session")
+
+    return WebRTCSessionResponse(
+        session_id=session.session_id,
+        offer=session.offer_sdp,
+        answer=session.answer_sdp,
+        ice_candidates=session.ice_candidates,
+        processing={
+            "vad_threshold": session.vad_threshold,
+            "noise_suppression": session.noise_suppression,
+        },
+    )
+
+
+@router.get("/webrtc/{session_id}", response_model=WebRTCSessionResponse)
+async def get_webrtc_state(
+    session_id: str, current_user: User = Depends(get_current_user)
+):
+    session = signaling_service.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="WebRTC session not found")
+
+    return WebRTCSessionResponse(
+        session_id=session.session_id,
+        offer=session.offer_sdp,
+        answer=session.answer_sdp,
+        ice_candidates=session.ice_candidates,
+        processing={
+            "vad_threshold": session.vad_threshold,
+            "noise_suppression": session.noise_suppression,
+        },
+    )
 
 
 @router.websocket("/ws")

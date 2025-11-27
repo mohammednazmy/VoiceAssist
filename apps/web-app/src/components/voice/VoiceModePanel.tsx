@@ -27,6 +27,7 @@ import {
   LANGUAGE_OPTIONS,
 } from "../../stores/voiceSettingsStore";
 import { useAuth } from "../../hooks/useAuth";
+import { useWebRTCClient } from "../../hooks/useWebRTCClient";
 
 /**
  * Format duration in seconds to MM:SS display
@@ -76,6 +77,15 @@ export function VoiceModePanel({
   // Voice settings from store
   const { voice, language, showStatusHints } = useVoiceSettingsStore();
   const { apiClient } = useAuth();
+
+  const {
+    state: webRTCState,
+    vadState,
+    noiseSuppressionEnabled,
+    connect: connectWebRTC,
+    disconnect: disconnectWebRTC,
+    bargeIn,
+  } = useWebRTCClient({ sessionId: conversationId || "voice-webrtc" });
 
   // Initialize offline voice capture hook
   const {
@@ -220,6 +230,14 @@ export function VoiceModePanel({
     },
     autoConnect: false, // Manual connect
   });
+
+  useEffect(() => {
+    if (isConnected) {
+      void connectWebRTC();
+    } else {
+      disconnectWebRTC();
+    }
+  }, [isConnected, connectWebRTC, disconnectWebRTC]);
 
   /**
    * Play queued audio chunks
@@ -402,7 +420,7 @@ export function VoiceModePanel({
               {LANGUAGE_OPTIONS.find((l) => l.value === language)?.label}
             </p>
           </div>
-        </div>
+          </div>
 
         <div className="flex items-center space-x-2">
           {/* Pending recordings indicator */}
@@ -509,6 +527,29 @@ export function VoiceModePanel({
             </svg>
           </button>
         </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 rounded-lg bg-neutral-50 border px-3 py-2">
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${vadState === "speaking" ? "bg-green-100 text-green-800" : "bg-neutral-200 text-neutral-700"}`}
+          data-testid="vad-indicator"
+        >
+          VAD: {vadState === "speaking" ? "Speaking" : "Silence"}
+        </span>
+        <span className="text-xs text-neutral-600" data-testid="noise-suppression">
+          Noise suppression {noiseSuppressionEnabled ? "enabled" : "disabled"}
+        </span>
+        <span className="text-xs text-neutral-600" data-testid="webrtc-state">
+          WebRTC {webRTCState}
+        </span>
+        <button
+          type="button"
+          onClick={bargeIn}
+          className="text-xs px-3 py-1 rounded-full bg-primary-50 text-primary-700 hover:bg-primary-100"
+          aria-label="Interrupt playback and capture"
+        >
+          Barge-in
+        </button>
       </div>
 
       {/* Connection Status */}
