@@ -16,14 +16,13 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../lib/utils';
 
 const inputVariants = cva(
-  'flex w-full rounded-md border bg-background-primary px-3 py-2 text-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-disabled focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+  'flex w-full rounded-md border border-border-default bg-surface-input px-3 py-2 text-sm text-text-primary shadow-sm transition-colors duration-normal file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-disabled focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background-primary hover:border-border-strong focus-visible:bg-surface-input-focus disabled:cursor-not-allowed disabled:opacity-50',
   {
     variants: {
       variant: {
-        default:
-          'border-border-default focus-visible:ring-primary-500 hover:border-border-strong',
+        default: '',
         error:
-          'border-error-500 focus-visible:ring-error-500',
+          'border-border-error focus-visible:ring-border-error focus-visible:bg-surface-input',
       },
       inputSize: {
         sm: 'h-8 text-xs',
@@ -116,7 +115,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className="text-sm font-medium text-text-primary"
           >
             {label}
-            {required && <span className="text-error-600 ml-1">*</span>}
+            {required && <span className="text-text-error ml-1">*</span>}
           </label>
         )}
 
@@ -158,7 +157,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {error && errorMessage && (
           <p
             id={errorMessageId}
-            className="text-sm text-error-600"
+            className="text-sm text-text-error"
             role="alert"
           >
             {errorMessage}

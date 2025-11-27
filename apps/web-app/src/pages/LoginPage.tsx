@@ -7,7 +7,7 @@
  * - User-friendly error messages based on HTTP status codes
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type KeyboardEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -77,8 +77,21 @@ export function LoginPage() {
     loginWithOAuth(provider);
   };
 
+  const handleShortcutSubmit = (
+    event: KeyboardEvent<HTMLFormElement>
+  ) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      event.preventDefault();
+      void handleSubmit(onSubmit)();
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
+    <main
+      id="main-content"
+      role="main"
+      className="flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12"
+    >
       <div className="w-full max-w-md">
         <Card>
           <CardHeader className="space-y-1">
@@ -106,10 +119,14 @@ export function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              onKeyDown={handleShortcutSubmit}
+              className="space-y-4"
+            >
               {displayError && (
                 <div
-                  className="rounded-md bg-error-50 p-4 text-sm text-error-800"
+                  className="rounded-md bg-error-50 p-4 text-sm text-text-error"
                   role="alert"
                   aria-live="polite"
                 >
@@ -135,7 +152,7 @@ export function LoginPage() {
                 {errors.email && (
                   <p
                     id="email-error"
-                    className="text-sm text-error-600"
+                    className="text-sm text-text-error"
                     role="alert"
                   >
                     {errors.email.message}
@@ -218,7 +235,7 @@ export function LoginPage() {
                 {errors.password && (
                   <p
                     id="password-error"
-                    className="text-sm text-error-600"
+                    className="text-sm text-text-error"
                     role="alert"
                   >
                     {errors.password.message}
@@ -231,6 +248,8 @@ export function LoginPage() {
                 fullWidth
                 disabled={isLoading}
                 className="mt-6"
+                aria-label="Sign in to VoiceAssist"
+                aria-keyshortcuts="Enter Control+Enter Meta+Enter"
               >
                 {isLoading ? "Signing in..." : "Sign in"}
               </Button>
@@ -302,6 +321,6 @@ export function LoginPage() {
           </a>
         </p>
       </div>
-    </div>
+    </main>
   );
 }
