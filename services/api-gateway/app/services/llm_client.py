@@ -90,6 +90,7 @@ class LLMRequest:
     phi_present: bool = False
     trace_id: Optional[str] = None
     model_override: Optional[str] = None
+    model_provider: Optional[str] = None
 
 
 @dataclass
@@ -203,23 +204,26 @@ class LLMClient:
         # Safety: normalize whitespace in prompt
         req.prompt = " ".join(req.prompt.split())
 
+        # Determine routing family
+        adapter_requests_local = req.model_provider not in (None, "openai", "cloud")
+        family: ModelFamily = "local" if (req.phi_present or adapter_requests_local) else "cloud"
+
         # Safety: enforce max_tokens limits (see ORCHESTRATION_DESIGN.md)
         # Cloud models: up to 4096 tokens, Local models: up to 2048 tokens
-        max_allowed_tokens = 4096 if not req.phi_present else 2048
+        max_allowed_tokens = 2048 if family == "local" else 4096
         if req.max_tokens > max_allowed_tokens:
             logger.warning(
                 "max_tokens=%d exceeds limit=%d for family=%s, capping. trace_id=%s",
                 req.max_tokens,
                 max_allowed_tokens,
-                "local" if req.phi_present else "cloud",
+                family,
                 req.trace_id,
             )
             req.max_tokens = max_allowed_tokens
 
-        family: ModelFamily = "local" if req.phi_present else "cloud"
-        if req.phi_present and not self.has_local_model:
-            # Defensive: callers should not route PHI here without a local model
-            raise RuntimeError("PHI present but no local LLM configured")
+        if family == "local" and not self.has_local_model:
+            # Defensive: callers should not route to local path without a local model
+            raise RuntimeError("Local model requested but not configured")
         logger.debug(
             "LLMClient.generate: family=%s intent=%s phi_present=%s trace_id=%s",
             family,
@@ -368,6 +372,12 @@ class LLMClient:
         Returns:
             LLMResponse with aggregated text and usage metadata
         """
+        adapter_requests_local = req.model_provider not in (None, "openai", "cloud")
+        family: ModelFamily = "local" if (req.phi_present or adapter_requests_local) else "cloud"
+
+        if family == "local":
+            return await self._call_local(req)
+
         if not self.openai_client:
             logger.error(
                 "OpenAI client not initialized. API key missing. trace_id=%s",
@@ -379,7 +389,7 @@ class LLMClient:
             raise ValueError("Prompt cannot be empty")
 
         req.prompt = " ".join(req.prompt.split())
-        max_allowed_tokens = 4096 if not req.phi_present else 2048
+        max_allowed_tokens = 2048 if family == "local" else 4096
         if req.max_tokens > max_allowed_tokens:
             req.max_tokens = max_allowed_tokens
 

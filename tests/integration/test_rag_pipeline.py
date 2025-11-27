@@ -1,6 +1,7 @@
 import os
 import sys
 import types
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -129,3 +130,60 @@ def test_model_adapter_registry_toggles(monkeypatch):
 
     adapter = registry.select_for_intent("diagnosis")
     assert adapter.key in {"biogpt", "default"}
+
+
+@pytest.mark.asyncio
+async def test_prepare_llm_request_routes_local_adapter(monkeypatch):
+    orchestrator = QueryOrchestrator(
+        enable_rag=False,
+        search_aggregator=StubAggregator(),
+        enable_multi_hop=False,
+        enable_query_decomposition=False,
+    )
+    orchestrator.llm_client.has_local_model = True
+
+    monkeypatch.setattr(orchestrator, "_run_retrieval", AsyncMock(return_value=([], "", [], 0.71)))
+    monkeypatch.setattr(orchestrator.intent_classifier, "classify", lambda query, clinical_context=None: "diagnosis")
+
+    phi_stub = types.SimpleNamespace(contains_phi=False, phi_types=[], confidence=0.0)
+    monkeypatch.setattr(orchestrator.phi_detector, "detect", lambda text, clinical_context=None: phi_stub)
+    monkeypatch.setattr(orchestrator.phi_detector, "sanitize", lambda prompt: prompt)
+
+    llm_request, *_ = await orchestrator._prepare_llm_request(
+        request=QueryRequest(query="Non-PHI clinical question", session_id="s-local"),
+        clinical_context=None,
+        trace_id="trace-local",
+    )
+
+    assert llm_request.model_provider == "hf-local"
+    assert llm_request.model_override
+    assert not llm_request.phi_present
+
+
+@pytest.mark.asyncio
+async def test_prepare_llm_request_falls_back_without_local(monkeypatch):
+    from app.core.config import settings
+
+    orchestrator = QueryOrchestrator(
+        enable_rag=False,
+        search_aggregator=StubAggregator(),
+        enable_multi_hop=False,
+        enable_query_decomposition=False,
+    )
+    orchestrator.llm_client.has_local_model = False
+
+    monkeypatch.setattr(orchestrator, "_run_retrieval", AsyncMock(return_value=([], "", [], 0.71)))
+    monkeypatch.setattr(orchestrator.intent_classifier, "classify", lambda query, clinical_context=None: "diagnosis")
+
+    phi_stub = types.SimpleNamespace(contains_phi=False, phi_types=[], confidence=0.0)
+    monkeypatch.setattr(orchestrator.phi_detector, "detect", lambda text, clinical_context=None: phi_stub)
+    monkeypatch.setattr(orchestrator.phi_detector, "sanitize", lambda prompt: prompt)
+
+    llm_request, *_ = await orchestrator._prepare_llm_request(
+        request=QueryRequest(query="Non-PHI clinical question", session_id="s-cloud"),
+        clinical_context=None,
+        trace_id="trace-cloud",
+    )
+
+    assert llm_request.model_override == settings.MODEL_SELECTION_DEFAULT
+    assert llm_request.model_provider in (None, "openai")

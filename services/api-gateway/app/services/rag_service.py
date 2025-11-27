@@ -20,6 +20,7 @@ Future enhancements:
 from __future__ import annotations
 
 import asyncio
+import logging
 from datetime import datetime, timezone
 from typing import Awaitable, Callable, List, Optional
 
@@ -237,8 +238,6 @@ Instructions:
         llm_phi_flag = phi_result.contains_phi and self.llm_client.has_local_model
 
         if phi_result.contains_phi:
-            import logging
-
             logging.warning(
                 f"PHI detected in query: types={phi_result.phi_types}, "
                 f"confidence={phi_result.confidence}, trace_id={trace_id}"
@@ -258,6 +257,14 @@ Instructions:
         except Exception:
             adapter = None
 
+        if adapter and adapter.provider != "openai" and not self.llm_client.has_local_model:
+            logging.warning(
+                "Local adapter %s selected but no local LLM configured; falling back to default cloud model. trace_id=%s",
+                adapter.key,
+                trace_id,
+            )
+            adapter = self.model_registry.get("default") or None
+
         llm_request = LLMRequest(
             prompt=sanitized_prompt,
             intent=intent,
@@ -266,6 +273,7 @@ Instructions:
             phi_present=llm_phi_flag,
             trace_id=trace_id,
             model_override=adapter.model_id if adapter else None,
+            model_provider=adapter.provider if adapter else None,
         )
 
         return (
