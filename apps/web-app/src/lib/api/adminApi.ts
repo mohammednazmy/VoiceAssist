@@ -128,6 +128,47 @@ export interface AuditLogsResponse {
   limit: number;
 }
 
+// Phase 8.3: Feature Flags
+export interface FeatureFlag {
+  name: string;
+  enabled: boolean;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  rollout_percentage?: number;
+  user_groups?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface CreateFeatureFlagRequest {
+  name: string;
+  enabled?: boolean;
+  description: string;
+  rollout_percentage?: number;
+  user_groups?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface UpdateFeatureFlagRequest {
+  enabled?: boolean;
+  description?: string;
+  rollout_percentage?: number;
+  user_groups?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+// Phase 8.3: Cache Management
+export interface CacheStats {
+  total_keys: number;
+  memory_used_bytes: number;
+  memory_used_human: string;
+  hit_rate: number;
+  miss_rate: number;
+  uptime_seconds: number;
+  connected_clients: number;
+  keys_by_prefix: Record<string, number>;
+}
+
 export interface AdminApiClient {
   getDetailedHealth(): Promise<DetailedHealthResponse>;
   getAdminSummary(): Promise<AdminSummaryResponse>;
@@ -151,6 +192,22 @@ export interface AdminApiClient {
     level?: string;
     action?: string;
   }): Promise<AuditLogsResponse>;
+  // Phase 8.3: Feature Flags
+  getFeatureFlags(): Promise<FeatureFlag[]>;
+  getFeatureFlag(flagName: string): Promise<FeatureFlag>;
+  createFeatureFlag(flag: CreateFeatureFlagRequest): Promise<FeatureFlag>;
+  updateFeatureFlag(
+    flagName: string,
+    updates: UpdateFeatureFlagRequest,
+  ): Promise<FeatureFlag>;
+  deleteFeatureFlag(flagName: string): Promise<{ message: string }>;
+  toggleFeatureFlag(flagName: string): Promise<FeatureFlag>;
+  // Phase 8.3: Cache Management
+  getCacheStats(): Promise<CacheStats>;
+  clearCache(): Promise<{ status: string; message: string }>;
+  invalidateCachePattern(
+    pattern: string,
+  ): Promise<{ status: string; keys_invalidated: number }>;
 }
 
 export interface OpenAIHealthResponse {
@@ -339,6 +396,68 @@ export function createAdminApi(
       const query = searchParams.toString();
       return fetchWithAuth<AuditLogsResponse>(
         `/api/admin/panel/audit-logs${query ? `?${query}` : ""}`,
+      );
+    },
+
+    // Phase 8.3: Feature Flags
+    async getFeatureFlags(): Promise<FeatureFlag[]> {
+      return fetchWithAuth<FeatureFlag[]>("/api/admin/feature-flags");
+    },
+
+    async getFeatureFlag(flagName: string): Promise<FeatureFlag> {
+      return fetchWithAuth<FeatureFlag>(`/api/admin/feature-flags/${flagName}`);
+    },
+
+    async createFeatureFlag(
+      flag: CreateFeatureFlagRequest,
+    ): Promise<FeatureFlag> {
+      return fetchWithAuthPost<FeatureFlag>("/api/admin/feature-flags", flag);
+    },
+
+    async updateFeatureFlag(
+      flagName: string,
+      updates: UpdateFeatureFlagRequest,
+    ): Promise<FeatureFlag> {
+      return fetchWithAuthPost<FeatureFlag>(
+        `/api/admin/feature-flags/${flagName}`,
+        updates,
+        "PUT",
+      );
+    },
+
+    async deleteFeatureFlag(flagName: string): Promise<{ message: string }> {
+      return fetchWithAuthPost<{ message: string }>(
+        `/api/admin/feature-flags/${flagName}`,
+        null,
+        "DELETE",
+      );
+    },
+
+    async toggleFeatureFlag(flagName: string): Promise<FeatureFlag> {
+      return fetchWithAuthPost<FeatureFlag>(
+        `/api/admin/feature-flags/${flagName}/toggle`,
+        null,
+      );
+    },
+
+    // Phase 8.3: Cache Management
+    async getCacheStats(): Promise<CacheStats> {
+      return fetchWithAuth<CacheStats>("/api/admin/cache/stats");
+    },
+
+    async clearCache(): Promise<{ status: string; message: string }> {
+      return fetchWithAuthPost<{ status: string; message: string }>(
+        "/api/admin/cache/clear",
+        null,
+      );
+    },
+
+    async invalidateCachePattern(
+      pattern: string,
+    ): Promise<{ status: string; keys_invalidated: number }> {
+      return fetchWithAuthPost<{ status: string; keys_invalidated: number }>(
+        `/api/admin/cache/invalidate?pattern=${encodeURIComponent(pattern)}`,
+        null,
       );
     },
   };
