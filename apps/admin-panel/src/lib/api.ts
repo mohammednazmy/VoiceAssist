@@ -1,8 +1,6 @@
+import type { AxiosRequestConfig, Method } from "axios";
+import { getApiClient } from "./apiClient";
 import type { APIEnvelope } from "../types";
-
-// Use same origin (proxied via Apache in production)
-// Build timestamp: 2025-11-24T02:26:00Z
-const API_BASE = import.meta.env.VITE_API_URL || "";
 
 export class APIError extends Error {
   code: string;
@@ -27,19 +25,31 @@ export async function fetchAPI<T>(
   path: string,
   options?: RequestInit,
 ): Promise<T> {
-  // Get auth token from localStorage
-  const token = localStorage.getItem("auth_token");
+  const apiClient = getApiClient();
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options?.headers || {}),
+  } as Record<string, string>;
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options?.headers || {}),
-    },
-    ...options,
-  });
+  const config: AxiosRequestConfig = {
+    url: path,
+    method: (options?.method as Method) || "GET",
+    headers,
+  };
 
-  const env = (await res.json()) as APIEnvelope<T>;
+  if (options?.body !== undefined) {
+    config.data = typeof options.body === "string"
+      ? (() => {
+          try {
+            return JSON.parse(options.body as string);
+          } catch {
+            return options.body;
+          }
+        })()
+      : options.body;
+  }
+
+  const env = await apiClient.request<APIEnvelope<T>>(config);
   if (!env.success) {
     const code = env.error?.code || "INTERNAL_ERROR";
     const message = env.error?.message || "Unknown error";
