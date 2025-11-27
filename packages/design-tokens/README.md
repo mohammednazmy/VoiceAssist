@@ -88,6 +88,20 @@ const modalZ = zIndex.modal; // 1400
 
 These tokens are designed to integrate seamlessly with Tailwind CSS. See the `@voiceassist/config` package for the Tailwind configuration.
 
+## Themed usage
+
+Use the `designSystem` export for a WCAG-conscious bundle of light/dark palettes, elevation, focus, and spacing tokens:
+
+```ts
+import { designSystem } from '@voiceassist/design-tokens';
+
+const cardBackground = designSystem.light.colors.surface.card; // WCAG AA on text.primary
+const focusRing = designSystem.light.focus.strong; // 3px blue outline
+const darkShadow = designSystem.dark.elevation.lg;
+```
+
+All text/background pairs in the palette have been verified for WCAG 2.1 AA contrast, and focus ring tokens are 3px/2px outlines for keyboard visibility.
+
 ## TypeScript Support
 
 All tokens are fully typed with TypeScript for autocomplete and type safety:

@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-gray-800 dark:bg-gray-900/95 dark:supports-[backdrop-filter]:bg-gray-900/60">
@@ -39,19 +41,19 @@ export function Header() {
             href="/"
             className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
           >
-            Docs
+            {t("nav.docs")}
           </Link>
           <Link
             href="/architecture"
             className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
           >
-            Architecture
+            {t("nav.architecture")}
           </Link>
           <Link
             href="/reference/api"
             className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
           >
-            API
+            {t("nav.api")}
           </Link>
           <a
             href="https://github.com/mohammednazmy/VoiceAssist"
@@ -59,7 +61,7 @@ export function Header() {
             rel="noopener noreferrer"
             className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
           >
-            GitHub
+            {t("nav.github")}
           </a>
         </div>
 
@@ -111,21 +113,21 @@ export function Header() {
               className="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Docs
+              {t("nav.docs")}
             </Link>
             <Link
               href="/architecture"
               className="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Architecture
+              {t("nav.architecture")}
             </Link>
             <Link
               href="/reference/api"
               className="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
               onClick={() => setMobileMenuOpen(false)}
             >
-              API
+              {t("nav.api")}
             </Link>
           </div>
         </div>

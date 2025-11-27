@@ -126,6 +126,9 @@ export type {
   FeedbackSeverity,
 } from "./components/FeedbackForm";
 
+export { LocaleSwitcher } from "./components/LocaleSwitcher";
+export type { LocaleSwitcherProps, LocaleOption } from "./components/LocaleSwitcher";
+
 // Providers
 export { ThemeProvider, useTheme } from "./providers";
 export type { Theme, ResolvedTheme, ThemeContextValue } from "./providers";

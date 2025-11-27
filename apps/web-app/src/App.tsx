@@ -18,6 +18,7 @@ import { AnalyticsProvider, ErrorBoundary } from "./lib/analytics";
 import { SkipLinks } from "./lib/accessibility/SkipLinks";
 import { AccessibilityProvider } from "./lib/accessibility/AccessibilitySettings";
 import { AnnouncerProvider } from "./lib/accessibility/Announcer";
+import { LanguageToolbar } from "./components/LanguageToolbar";
 
 // Analytics configuration - set provider and domain in environment
 const analyticsConfig = {
@@ -58,6 +59,7 @@ export function App() {
               <LanguageProvider>
                 <ThemeProvider>
                   <ToastProvider>
+                    <LanguageToolbar />
                     <AppRoutes />
                     <PWAPrompt />
                   </ToastProvider>
