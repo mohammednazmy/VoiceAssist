@@ -84,13 +84,14 @@
 
 ### Backend Services & Shared Packages
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| **[SERVICE_CATALOG.md](SERVICE_CATALOG.md)** | Microservices catalog | All developers, DevOps |
-| **[../services/api-gateway/README.md](../services/api-gateway/README.md)** | Canonical API Gateway guide | Backend devs |
-| **[server/README.md](../server/README.md)** | Legacy server stub reference | Backend devs |
-| **[../web-app/README.md](../web-app/README.md)** | Web app implementation details | Frontend devs |
-| **[../admin-panel/README.md](../admin-panel/README.md)** | Admin panel implementation details | Frontend devs |
+| Document                                                                   | Purpose                            | Audience               |
+| -------------------------------------------------------------------------- | ---------------------------------- | ---------------------- |
+| **[SERVICE_CATALOG.md](SERVICE_CATALOG.md)**                               | Microservices catalog              | All developers, DevOps |
+| **[../services/api-gateway/README.md](../services/api-gateway/README.md)** | Canonical API Gateway guide        | Backend devs           |
+| **[server/README.md](../server/README.md)**                                | Legacy server stub reference       | Backend devs           |
+| **[../apps/web-app/README.md](../apps/web-app/README.md)**                 | Web app implementation details     | Frontend devs          |
+| **[../apps/admin-panel/README.md](../apps/admin-panel/README.md)**         | Admin panel implementation details | Frontend devs          |
+| **[../apps/docs-site/README.md](../apps/docs-site/README.md)**             | Documentation site implementation  | Frontend devs          |
 
 **Shared packages:**
 
