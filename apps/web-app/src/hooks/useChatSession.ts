@@ -84,6 +84,13 @@ export function useChatSession(
   const intentionalDisconnectRef = useRef(false);
   // Track connection state to prevent duplicate connect attempts
   const isConnectingRef = useRef(false);
+  // Track pending file uploads waiting for server message ID
+  const pendingFileUploadsRef = useRef<
+    Map<
+      string,
+      { files: File[]; resolve: () => void; reject: (error: Error) => void }
+    >
+  >(new Map());
 
   const { tokens } = useAuthStore();
   const { apiClient } = useAuth();
@@ -278,6 +285,57 @@ export function useChatSession(
             }
             break;
           }
+
+          case "user_message.created": {
+            // Server confirms user message was persisted - now we can upload attachments
+            const serverMessageId = data.messageId;
+            const clientMessageId = data.clientMessageId;
+
+            if (clientMessageId && serverMessageId) {
+              websocketLog.debug(
+                `Message ID sync: client=${clientMessageId} -> server=${serverMessageId}`,
+              );
+
+              // Update the local message ID to use the server's ID
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === clientMessageId
+                    ? { ...msg, id: serverMessageId }
+                    : msg,
+                ),
+              );
+
+              // Check if there are pending file uploads for this client message ID
+              const pending =
+                pendingFileUploadsRef.current.get(clientMessageId);
+              if (pending) {
+                pendingFileUploadsRef.current.delete(clientMessageId);
+                // Upload files with the server's message ID
+                (async () => {
+                  try {
+                    for (const file of pending.files) {
+                      await attachmentsApi.uploadAttachment(
+                        serverMessageId,
+                        file,
+                      );
+                    }
+                    websocketLog.debug(
+                      `Uploaded ${pending.files.length} attachments for message ${serverMessageId}`,
+                    );
+                    pending.resolve();
+                  } catch (error) {
+                    websocketLog.error("Failed to upload attachments:", error);
+                    pending.reject(
+                      error instanceof Error
+                        ? error
+                        : new Error("Upload failed"),
+                    );
+                  }
+                })();
+              }
+            }
+            break;
+          }
         }
       } catch (error) {
         websocketLog.error("Failed to parse message:", error);
@@ -457,56 +515,56 @@ export function useChatSession(
         return;
       }
 
-      // Generate unique message ID
-      const messageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      // Generate unique client message ID
+      const clientMessageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
       const userMessage: Message = {
-        id: messageId,
+        id: clientMessageId,
         role: "user",
         content,
         attachments: [], // Will be populated after upload
         timestamp: Date.now(),
       };
 
-      // Add user message to messages immediately
+      // Add user message to messages immediately (optimistic update)
       setMessages((prev) => [...prev, userMessage]);
 
-      // Send text message to server via WebSocket
+      // If there are files, register them as pending uploads
+      // They'll be uploaded when we receive user_message.created with the server's message ID
+      if (files && files.length > 0) {
+        const uploadPromise = new Promise<void>((resolve, reject) => {
+          pendingFileUploadsRef.current.set(clientMessageId, {
+            files,
+            resolve,
+            reject,
+          });
+
+          // Timeout after 30 seconds if we don't get the server message ID
+          setTimeout(() => {
+            if (pendingFileUploadsRef.current.has(clientMessageId)) {
+              pendingFileUploadsRef.current.delete(clientMessageId);
+              reject(new Error("Timeout waiting for message ID from server"));
+            }
+          }, 30000);
+        });
+
+        // Don't await - let it complete in background
+        uploadPromise.catch((error) => {
+          websocketLog.error("Failed to upload attachments:", error);
+        });
+      }
+
+      // Send text message to server via WebSocket with client_message_id
       wsRef.current.send(
         JSON.stringify({
           type: "message",
           content: content,
           session_id: conversationId,
+          client_message_id: clientMessageId,
         }),
       );
-
-      // Upload files asynchronously if present
-      if (files && files.length > 0) {
-        try {
-          const uploadedAttachments = [];
-          for (const file of files) {
-            const attachment = await attachmentsApi.uploadAttachment(
-              messageId,
-              file,
-            );
-            uploadedAttachments.push(attachment);
-          }
-
-          // Update message with uploaded attachments
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === messageId
-                ? { ...msg, attachments: uploadedAttachments.map((a) => a.id) }
-                : msg,
-            ),
-          );
-        } catch (error) {
-          websocketLog.error("Failed to upload attachments:", error);
-          // Don't fail the whole message send if attachments fail
-        }
-      }
     },
-    [handleError, conversationId, attachmentsApi],
+    [handleError, conversationId],
   );
 
   const editMessage = useCallback(

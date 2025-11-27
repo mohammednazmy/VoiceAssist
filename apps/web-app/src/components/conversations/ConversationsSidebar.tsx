@@ -8,17 +8,13 @@ import { Link, useParams } from "react-router-dom";
 import { Button, Input } from "@voiceassist/ui";
 import { useConversations } from "../../hooks/useConversations";
 import { useFolders } from "../../hooks/useFolders";
-// FolderDialog imported for future use when folder feature is complete
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { FolderDialog } from "../folders/FolderDialog";
 import { useToastContext } from "../../contexts/ToastContext";
-import { createFoldersApi } from "../../lib/api/foldersApi";
-import { useAuthStore } from "../../stores/authStore";
+import type { Folder } from "@voiceassist/types";
 
 export function ConversationsSidebar() {
   const { conversationId } = useParams<{ conversationId: string }>();
   const toast = useToastContext();
-  const { tokens } = useAuthStore();
 
   const {
     conversations,
@@ -36,25 +32,16 @@ export function ConversationsSidebar() {
     updateConversation,
   } = useConversations();
 
-  // Folder features - temporarily disabled, will be enabled when folder UI is complete
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const {
-    folders,
-    createFolder: _createFolder,
-    updateFolder: _updateFolder,
-    deleteFolder: _deleteFolder,
-  } = useFolders();
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _foldersApi = createFoldersApi(
-    import.meta.env.VITE_API_URL || "http://localhost:8000",
-    () => tokens?.accessToken || null,
-  );
+  const { folders, createFolder, updateFolder, deleteFolder } = useFolders();
 
   const [isCreating, setIsCreating] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_isFolderDialogOpen, _setIsFolderDialogOpen] = useState(false);
+  const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
+  const [folderDialogMode, setFolderDialogMode] = useState<"create" | "edit">(
+    "create",
+  );
+  const [editingFolder, setEditingFolder] = useState<Folder | null>(null);
+  const [folderMenuOpenId, setFolderMenuOpenId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(
     new Set(),
@@ -125,6 +112,54 @@ export function ConversationsSidebar() {
     }
   };
 
+  const handleCreateFolder = () => {
+    setFolderDialogMode("create");
+    setEditingFolder(null);
+    setIsFolderDialogOpen(true);
+  };
+
+  const handleEditFolder = (folder: Folder) => {
+    setFolderDialogMode("edit");
+    setEditingFolder(folder);
+    setFolderMenuOpenId(null);
+    setIsFolderDialogOpen(true);
+  };
+
+  const handleDeleteFolder = async (folderId: string) => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this folder? Conversations in this folder will be moved to the root.",
+      )
+    ) {
+      return;
+    }
+    try {
+      await deleteFolder(folderId);
+      setFolderMenuOpenId(null);
+      if (selectedFolderId === folderId) {
+        setSelectedFolderId(null);
+      }
+      toast?.success("Folder deleted");
+    } catch (err) {
+      console.error("Failed to delete folder:", err);
+      toast?.error("Failed to delete folder");
+    }
+  };
+
+  const handleSaveFolder = async (
+    name: string,
+    color?: string | null,
+    icon?: string | null,
+  ) => {
+    if (folderDialogMode === "create") {
+      await createFolder({ name, color, icon });
+      toast?.success("Folder created");
+    } else if (editingFolder) {
+      await updateFolder(editingFolder.id, { name, color, icon });
+      toast?.success("Folder updated");
+    }
+  };
+
   const toggleFolder = (folderId: string) => {
     setExpandedFolderIds((prev) => {
       const next = new Set(prev);
@@ -145,9 +180,10 @@ export function ConversationsSidebar() {
       const isExpanded = expandedFolderIds.has(folder.id);
       const isSelected = selectedFolderId === folder.id;
       const hasChildren = folder.children && folder.children.length > 0;
+      const isMenuOpen = folderMenuOpenId === folder.id;
 
       return (
-        <div key={folder.id}>
+        <div key={folder.id} className="relative group">
           <button
             onClick={() => setSelectedFolderId(folder.id)}
             className={`w-full flex items-center px-4 py-2 text-sm hover:bg-neutral-100 ${
@@ -161,14 +197,87 @@ export function ConversationsSidebar() {
                   e.stopPropagation();
                   toggleFolder(folder.id);
                 }}
-                className="mr-1 text-neutral-600"
+                className="mr-1 text-neutral-600 cursor-pointer"
               >
                 {isExpanded ? "▼" : "▶"}
               </span>
             )}
-            <span className="mr-2">{folder.icon || "📁"}</span>
+            <span
+              className="mr-2"
+              style={folder.color ? { color: folder.color } : undefined}
+            >
+              {folder.icon || "📁"}
+            </span>
             <span className="flex-1 text-left truncate">{folder.name}</span>
+            {/* Folder menu button */}
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                setFolderMenuOpenId(isMenuOpen ? null : folder.id);
+              }}
+              className="opacity-0 group-hover:opacity-100 p-1 hover:bg-neutral-200 rounded transition-opacity"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-3 h-3 text-neutral-600"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
+                />
+              </svg>
+            </span>
           </button>
+          {/* Folder context menu */}
+          {isMenuOpen && (
+            <div className="absolute left-full top-0 ml-1 w-36 bg-white border border-neutral-200 rounded-md shadow-lg z-20">
+              <button
+                onClick={() => handleEditFolder(folder)}
+                className="w-full px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50 flex items-center space-x-2"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"
+                  />
+                </svg>
+                <span>Edit</span>
+              </button>
+              <button
+                onClick={() => handleDeleteFolder(folder.id)}
+                className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                  />
+                </svg>
+                <span>Delete</span>
+              </button>
+            </div>
+          )}
           {isExpanded &&
             hasChildren &&
             renderFolderTree(folder.children!, level + 1)}
@@ -307,6 +416,28 @@ export function ConversationsSidebar() {
       {/* Folder Tree */}
       {showFolders && (
         <div className="border-b border-neutral-200 max-h-64 overflow-y-auto">
+          {/* New Folder Button */}
+          <button
+            onClick={handleCreateFolder}
+            className="w-full flex items-center px-4 py-2 text-sm text-primary-600 hover:bg-primary-50 border-b border-neutral-100"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-4 h-4 mr-2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 4.5v15m7.5-7.5h-15"
+              />
+            </svg>
+            <span className="font-medium">New Folder</span>
+          </button>
+
           {/* All Conversations (root) */}
           <button
             onClick={() => setSelectedFolderId(null)}
@@ -562,6 +693,18 @@ export function ConversationsSidebar() {
             </div>
           ))}
       </div>
+
+      {/* Folder Dialog */}
+      <FolderDialog
+        isOpen={isFolderDialogOpen}
+        onClose={() => {
+          setIsFolderDialogOpen(false);
+          setEditingFolder(null);
+        }}
+        onSave={handleSaveFolder}
+        folder={editingFolder}
+        mode={folderDialogMode}
+      />
     </div>
   );
 }

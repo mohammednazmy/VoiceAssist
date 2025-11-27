@@ -355,6 +355,9 @@ export type WebSocketEventType =
   | "delta"
   | "chunk"
   | "message.done"
+  | "user_message.created"
+  | "history"
+  | "connected"
   | "error"
   | "ping"
   | "pong";
@@ -363,9 +366,11 @@ export interface WebSocketEvent {
   type: WebSocketEventType;
   eventId?: string;
   messageId?: string;
+  clientMessageId?: string;
   content?: string;
   delta?: string;
   message?: Message;
+  messages?: Message[];
   metadata?: any;
   error?: WebSocketError;
 }
