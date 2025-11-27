@@ -130,5 +130,20 @@ export type {
 export { ThemeProvider, useTheme } from "./providers";
 export type { Theme, ResolvedTheme, ThemeContextValue } from "./providers";
 
+// Medical Components
+export {
+  VitalSignCard,
+  MedicationList,
+  MedicationItem,
+  AlertBanner,
+} from "./components/medical";
+export type {
+  VitalSignCardProps,
+  MedicationListProps,
+  Medication,
+  AlertBannerProps,
+  AlertAction,
+} from "./components/medical";
+
 // Utilities
 export { cn } from "./lib/utils";
