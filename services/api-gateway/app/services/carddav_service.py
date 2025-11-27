@@ -161,6 +161,15 @@ class ContactSearchQuery:
     limit: int = 100
 
 
+@dataclass
+class ContactSyncResult:
+    """Result of a CardDAV sync-token based sync."""
+
+    contacts: List[Contact]
+    deleted: List[str]
+    sync_token: Optional[str]
+
+
 # XML namespaces
 NAMESPACES = {
     "D": "DAV:",
@@ -303,6 +312,68 @@ class CardDAVService:
 
         return self._parse_contacts(response.text)
 
+    async def sync_contacts(
+        self,
+        address_book: str = "contacts",
+        sync_token: Optional[str] = None,
+        limit: int = 500,
+    ) -> ContactSyncResult:
+        """Incrementally sync contacts using CardDAV sync tokens."""
+
+        # If we do not have a sync token yet, perform a full read
+        if not sync_token:
+            contacts = await self.list_contacts(address_book)
+            return ContactSyncResult(contacts=contacts, deleted=[], sync_token=None)
+
+        url = f"{self.carddav_url}/{address_book}"
+        report_body = f"""<?xml version="1.0" encoding="utf-8"?>
+        <C:sync-collection xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav">
+          <D:sync-token>{sync_token}</D:sync-token>
+          <D:prop>
+            <D:getetag/>
+            <C:address-data/>
+          </D:prop>
+          <C:limit><C:nresults>{limit}</C:nresults></C:limit>
+        </C:sync-collection>"""
+
+        async with httpx.AsyncClient(auth=self._get_auth()) as client:
+            response = await client.request(
+                "REPORT",
+                url,
+                headers={
+                    "Depth": "1",
+                    "Content-Type": "application/xml; charset=utf-8",
+                },
+                content=report_body,
+                timeout=30.0,
+            )
+            # Some servers return 409 if token invalid/expired
+            if response.status_code == 409:
+                logger.warning("Sync token invalid; falling back to full contact sync")
+                contacts = await self.list_contacts(address_book)
+                return ContactSyncResult(contacts=contacts, deleted=[], sync_token=None)
+
+            response.raise_for_status()
+
+        contacts = self._parse_contacts(response.text)
+        deleted: List[str] = []
+
+        try:
+            root = ET.fromstring(response.text)  # nosec B314 - trusted CardDAV response
+            for res in root.findall(".//D:response", NAMESPACES):
+                status = res.find(".//D:status", NAMESPACES)
+                href = res.find("D:href", NAMESPACES)
+                if status is not None and "404" in status.text and href is not None:
+                    uid = href.text.rstrip("/").split("/")[-1].replace(".vcf", "")
+                    deleted.append(uid)
+
+            new_sync = self._extract_sync_token(root)
+        except ET.ParseError as e:
+            logger.error(f"Failed to parse sync response: {e}")
+            new_sync = None
+
+        return ContactSyncResult(contacts=contacts, deleted=deleted, sync_token=new_sync)
+
     async def _search_contacts(
         self,
         url: str,
@@ -399,6 +470,18 @@ class CardDAVService:
             logger.error(f"Failed to parse contacts: {e}")
 
         return contacts
+
+    def _extract_sync_token(self, root: ET.Element) -> Optional[str]:
+        """Extract sync-token/ctag from a sync response."""
+        sync_elem = root.find(".//D:sync-token", NAMESPACES)
+        if sync_elem is not None and sync_elem.text:
+            return sync_elem.text.strip()
+
+        ctag_elem = root.find(".//CS:getctag", NAMESPACES)
+        if ctag_elem is not None and ctag_elem.text:
+            return ctag_elem.text.strip()
+
+        return None
 
     def _parse_vcard(self, vcard_text: str) -> Optional[Contact]:
         """Parse vCard text into Contact object."""
