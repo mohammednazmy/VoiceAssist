@@ -2,42 +2,135 @@
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useEffect, useMemo } from "react";
+import { useHeadings, type Heading } from "./HeadingContext";
+
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+function extractHeadings(content: string): Heading[] {
+  const headings: Heading[] = [];
+  const headingRegex = /^(#{1,3})\s+(.+)$/gm;
+  let match;
+
+  while ((match = headingRegex.exec(content)) !== null) {
+    const level = match[1].length;
+    const text = match[2].trim();
+
+    headings.push({
+      id: slugify(text),
+      text,
+      level,
+    });
+  }
+
+  return headings;
+}
+
+function headingText(children: React.ReactNode) {
+  if (typeof children === "string") return children;
+  if (Array.isArray(children)) return children.map(headingText).join("");
+  if (typeof children === "number") return children.toString();
+  if (children && typeof children === "object" && "props" in children) {
+    return headingText((children as React.ReactElement).props.children);
+  }
+  return "";
+}
 
 interface MarkdownRendererProps {
   content: string;
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
+  const { setHeadings } = useHeadings();
+  const headings = useMemo(() => extractHeadings(content), [content]);
+
+  useEffect(() => {
+    setHeadings((existing) => {
+      const remaining = existing.filter(
+        (heading) => !headings.some((current) => current.id === heading.id),
+      );
+      return [...remaining, ...headings];
+    });
+
+    return () =>
+      setHeadings((existing) =>
+        existing.filter((heading) => !headings.some((current) => current.id === heading.id)),
+      );
+  }, [headings, setHeadings]);
+
   return (
     <article className="prose prose-slate dark:prose-invert max-w-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           // Custom heading rendering with anchor links
-          h1: ({ children, ...props }) => (
-            <h1
-              className="text-3xl font-bold text-gray-900 dark:text-white mb-6"
-              {...props}
-            >
-              {children}
-            </h1>
-          ),
-          h2: ({ children, ...props }) => (
-            <h2
-              className="text-2xl font-semibold text-gray-900 dark:text-white mt-8 mb-4"
-              {...props}
-            >
-              {children}
-            </h2>
-          ),
-          h3: ({ children, ...props }) => (
-            <h3
-              className="text-xl font-semibold text-gray-900 dark:text-white mt-6 mb-3"
-              {...props}
-            >
-              {children}
-            </h3>
-          ),
+          h1: ({ children, ...props }) => {
+            const text = headingText(children);
+            const id = slugify(text);
+            return (
+              <h1
+                id={id}
+                className="group relative scroll-mt-24 text-3xl font-bold text-gray-900 dark:text-white mb-6"
+                {...props}
+              >
+                <a
+                  href={`#${id}`}
+                  className="absolute -left-6 opacity-0 transition-opacity group-hover:opacity-100"
+                  aria-hidden
+                >
+                  #
+                </a>
+                {children}
+              </h1>
+            );
+          },
+          h2: ({ children, ...props }) => {
+            const text = headingText(children);
+            const id = slugify(text);
+            return (
+              <h2
+                id={id}
+                className="group relative scroll-mt-24 text-2xl font-semibold text-gray-900 dark:text-white mt-8 mb-4"
+                {...props}
+              >
+                <a
+                  href={`#${id}`}
+                  className="absolute -left-6 opacity-0 transition-opacity group-hover:opacity-100"
+                  aria-hidden
+                >
+                  #
+                </a>
+                {children}
+              </h2>
+            );
+          },
+          h3: ({ children, ...props }) => {
+            const text = headingText(children);
+            const id = slugify(text);
+            return (
+              <h3
+                id={id}
+                className="group relative scroll-mt-24 text-xl font-semibold text-gray-900 dark:text-white mt-6 mb-3"
+                {...props}
+              >
+                <a
+                  href={`#${id}`}
+                  className="absolute -left-6 opacity-0 transition-opacity group-hover:opacity-100"
+                  aria-hidden
+                >
+                  #
+                </a>
+                {children}
+              </h3>
+            );
+          },
           // Custom code block styling
           pre: ({ children, ...props }) => (
             <pre
