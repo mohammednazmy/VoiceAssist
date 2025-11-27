@@ -283,6 +283,26 @@ export class VoiceAssistApiClient {
     return response.data;
   }
 
+  /**
+   * Submit voice session metrics for observability
+   * Note: For page unload scenarios, use sendBeacon directly instead
+   */
+  async submitVoiceMetrics(metrics: {
+    conversation_id?: string | null;
+    connection_time_ms?: number | null;
+    time_to_first_transcript_ms?: number | null;
+    last_stt_latency_ms?: number | null;
+    last_response_latency_ms?: number | null;
+    session_duration_ms?: number | null;
+    user_transcript_count?: number;
+    ai_response_count?: number;
+    reconnect_count?: number;
+    session_started_at?: number | null;
+  }): Promise<{ status: string }> {
+    const response = await this.client.post("/voice/metrics", metrics);
+    return response.data;
+  }
+
   async getOAuthUrl(provider: "google" | "microsoft"): Promise<string> {
     const response = await this.client.get<ApiResponse<{ url: string }>>(
       `/auth/oauth/${provider}/authorize`,
