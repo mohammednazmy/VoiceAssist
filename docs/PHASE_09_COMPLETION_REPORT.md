@@ -822,9 +822,9 @@ All deliverables are production-ready, HIPAA-compliant, and follow industry best
 
 ### 10.3 Operations Documentation
 
-- [Deployment Scripts README](../scripts/deploy/README.md)
-- [Deployment Scripts Quick Reference](../scripts/deploy/QUICK_REFERENCE.md)
-- [Security Scanning Configuration](#)
+- Deployment scripts in `infrastructure/` directory
+- Ansible playbooks for automated provisioning
+- Security Scanning Configuration (see infrastructure/README.md)
 
 ### 10.4 Testing Documentation
 

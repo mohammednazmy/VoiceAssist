@@ -1783,10 +1783,10 @@ Recommend **Option A** (decision support only):
 
 **Backend Phase Reports:**
 
-- [Phase 4 Completion Report](../../PHASE_04_COMPLETION_REPORT.md)
-- [Phase 5 Completion Report](../../PHASE_05_COMPLETION_REPORT.md)
-- [Phase 6 Completion Report](../../PHASE_06_COMPLETION_REPORT.md)
-- [Phase 15 Complete Summary](../phases/PHASE_15_COMPLETE_SUMMARY.md)
+- [Phase 4 Completion Report](../PHASE_04_COMPLETION_REPORT.md)
+- [Phase 5 Completion Report](../PHASE_05_COMPLETION_REPORT.md)
+- [Phase 6 Completion Report](../PHASE_06_COMPLETION_REPORT.md)
+- [Implementation Status](../overview/IMPLEMENTATION_STATUS.md)
 
 ---
 

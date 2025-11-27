@@ -612,13 +612,13 @@ Comprehensive performance observability:
 
 All documentation is in `docs/` and `load-tests/` directories:
 
-- [Performance Benchmarks](docs/PERFORMANCE_BENCHMARKS.md)
-- [Load Testing Guide](docs/LOAD_TESTING_GUIDE.md)
-- [Performance Tuning Guide](docs/PERFORMANCE_TUNING_GUIDE.md)
-- [k6 Load Testing](load-tests/k6/K6_LOAD_TESTING.md)
-- [Locust Load Testing](load-tests/locust/LOCUST_LOAD_TESTING.md)
-- [Kubernetes Autoscaling](k8s/performance/KUBERNETES_AUTOSCALING.md)
-- [Phase 10 Completion Report](docs/PHASE_10_COMPLETION_REPORT.md)
+- Performance Benchmarks (see load-tests/README.md)
+- Load Testing Guide (see load-tests/README.md)
+- Performance Tuning Guide (see operations/SLO_DEFINITIONS.md)
+- k6 Load Testing (see load-tests/k6/ directory)
+- Locust Load Testing (see load-tests/locust/ directory)
+- Kubernetes Autoscaling (see infrastructure/k8s/README.md)
+- Phase 10 Completion Report (see PHASE_10_COMPLETION_REPORT.md)
 
 ### Quick Start
 

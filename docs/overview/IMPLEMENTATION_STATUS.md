@@ -10,6 +10,7 @@ audience: ["human", "agent", "ai-agents", "backend", "frontend", "devops"]
 tags: ["status", "overview", "components", "roadmap", "architecture"]
 relatedServices: ["api-gateway", "web-app", "admin-panel", "docs-site"]
 category: overview
+source_of_truth: true
 version: "1.0.0"
 ---
 
@@ -232,5 +233,5 @@ curl https://assist.asimo.io/api/admin/panel/stats
 - [Backend Architecture](../BACKEND_ARCHITECTURE.md)
 - [Frontend Architecture](../FRONTEND_ARCHITECTURE.md)
 - [AI Agent Onboarding](../ai/AGENT_ONBOARDING.md)
-- [Phase Status](../../PHASE_STATUS.md)
 - [Continuous Improvement Plan](../CONTINUOUS_IMPROVEMENT_PLAN.md)
+- [Debugging Index](../debugging/DEBUGGING_INDEX.md)

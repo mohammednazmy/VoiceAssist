@@ -402,8 +402,9 @@ See [COMPOSE_TO_K8S_MIGRATION.md](COMPOSE_TO_K8S_MIGRATION.md) for detailed migr
 - [ROADMAP.md](ROADMAP.md) - Timeline and milestones
 - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Complete phase descriptions
 - [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture
-- [CURRENT_PHASE.md](../CURRENT_PHASE.md) - Current status
+- [Implementation Status](overview/IMPLEMENTATION_STATUS.md) - Current status
 - [START_HERE.md](START_HERE.md) - Project orientation
+- [Archive: CURRENT_PHASE](archive/CURRENT_PHASE.md) - Historical phase info
 
 ---
 

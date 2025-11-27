@@ -45,7 +45,7 @@ tags: ["current", "phase"]
 
 ## 🔄 Continuous Improvement (Post Phase 15)
 
-With all 15 initial phases complete, we have transitioned to continuous improvement mode. See [CONTINUOUS_IMPROVEMENT_PLAN.md](docs/CONTINUOUS_IMPROVEMENT_PLAN.md) for:
+With all 15 initial phases complete, we have transitioned to continuous improvement mode. See [CONTINUOUS_IMPROVEMENT_PLAN.md](../CONTINUOUS_IMPROVEMENT_PLAN.md) for:
 
 - **Deferred features** from Phases 4-6 (voice pipeline, medical AI, integrations)
 - **Frontend applications** roadmap (20-week plan for web app, admin panel, docs site)

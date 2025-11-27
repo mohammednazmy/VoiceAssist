@@ -751,15 +751,17 @@ Now you can speak your questions!
 
 ## Next Steps
 
-- [Learn about medical textbook queries →](/medical/textbooks)
-- [Set up integrations →](/user-guide/integrations)
-- [Upload your first textbook →](/admin/knowledge-base)
+<!-- NOTE: These are example placeholder routes for the quickstart template -->
+
+- Learn about medical textbook queries (planned: /medical/textbooks)
+- Set up integrations (planned: /user-guide/integrations)
+- Upload your first textbook (planned: /admin/knowledge-base)
 
 ## Need Help?
 
-- [FAQ](/reference/faq)
-- [Troubleshooting](/admin/troubleshooting)
-- Report issues on [GitHub](https://github.com/...)
+- FAQ (planned: /reference/faq)
+- Troubleshooting (planned: /admin/troubleshooting)
+- Report issues on GitHub
 ```
 
 ## Open Source Considerations (Optional)

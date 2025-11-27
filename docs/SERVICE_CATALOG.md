@@ -1,13 +1,17 @@
 ---
-title: "Service Catalog"
-slug: "service-catalog"
-summary: "**Last Updated**: 2025-11-21 (Phase 6: Nextcloud App Integration & Unified Services)"
+title: Service Catalog
+slug: architecture/service-catalog
+summary: Comprehensive catalog of all backend services with implementation details and API contracts.
 status: stable
 stability: production
-owner: docs
+owner: backend
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["service", "catalog"]
+audience: ["human", "agent", "ai-agents", "backend", "devops"]
+tags: ["service", "catalog", "api", "architecture"]
+relatedServices: ["api-gateway"]
+category: architecture
+source_of_truth: true
+version: "1.0.0"
 ---
 
 # VoiceAssist V2 Service Catalog

@@ -591,9 +591,11 @@ npm run voiceassist:verify
 
 Now that you have VoiceAssist installed, you can:
 
-- [Create your first voice command](/docs/guides/first-command)
-- [Explore the API reference](/docs/api-reference)
-- [Check out examples](/docs/examples)
+<!-- NOTE: These are example placeholder routes for the docs template -->
+
+- Create your first voice command (see voice mode guides)
+- Explore the API reference (see /ai/api)
+- Check out examples (see usage documentation)
 
 <Callout type="success">
   Installation complete! You're ready to build amazing voice experiences.
@@ -1693,6 +1695,7 @@ setIsListening(false)
 }
 
 return (
+
 <div style={{ padding: '20px' }}>
 <h1>Voice Recognition Demo</h1>
 <button onClick={isListening ? handleStop : handleStart}>
@@ -1961,13 +1964,8 @@ function MyComponent() {
 const [isListening, setIsListening] = useState(false)
 
 return (
-<VoiceWaveform
-      isActive={isListening}
-      color="rgb(59, 130, 246)"
-      bars={40}
-    />
-)
-}`}
+
+<VoiceWaveform isActive={isListening} color="rgb(59, 130, 246)" bars={40} />) }`}
 
 >
 

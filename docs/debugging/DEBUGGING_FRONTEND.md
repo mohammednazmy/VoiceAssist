@@ -327,4 +327,4 @@ pnpm lint --fix
 
 - [Debugging Overview](./DEBUGGING_OVERVIEW.md)
 - [Frontend Architecture](../FRONTEND_ARCHITECTURE.md)
-- [Design Tokens](../packages/design-tokens/)
+- [Design Tokens](../../packages/design-tokens/)

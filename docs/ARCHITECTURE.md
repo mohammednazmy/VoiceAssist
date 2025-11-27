@@ -17,7 +17,7 @@ tags: ["architecture"]
 > - [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md)
 > - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md)
 > - [START_HERE.md](START_HERE.md)
-> - [CURRENT_PHASE.md](../CURRENT_PHASE.md)
+> - [Implementation Status](overview/IMPLEMENTATION_STATUS.md)
 
 # VoiceAssist Architecture
 

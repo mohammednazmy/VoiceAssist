@@ -1,13 +1,15 @@
 ---
-title: "Claude Execution Guide"
-slug: "claude-execution-guide"
-summary: "This guide provides comprehensive instructions for Claude Code (or other AI assistants) working on the VoiceAssist V2 project. It covers session start..."
+title: Claude Execution Guide
+slug: ai/claude-execution-guide
+summary: Comprehensive instructions for Claude Code working on VoiceAssist - session startup, branching, safety rules, quality checks.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["agent", "human"]
-tags: ["claude", "execution", "guide"]
+audience: ["agent", "ai-agents", "human"]
+tags: ["claude", "execution", "guide", "ai-agent"]
+category: ai
+version: "1.0.0"
 ---
 
 # Claude Code Execution Guide for VoiceAssist V2

@@ -10,6 +10,7 @@ audience: ["agent", "ai-agents", "backend"]
 tags: ["api", "ai-agent", "json", "documentation", "endpoints"]
 relatedServices: ["docs-site"]
 category: ai
+source_of_truth: true
 version: "1.1.0"
 ---
 

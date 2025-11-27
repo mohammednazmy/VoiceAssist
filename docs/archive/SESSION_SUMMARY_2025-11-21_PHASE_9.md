@@ -562,14 +562,14 @@ pytest --cov=server/app --cov-report=html
 
 ### Documentation
 
-All documentation is in `docs/` directory:
+All documentation is in `docs/` and `infrastructure/` directories:
 
-- [Infrastructure as Code Guide](docs/INFRASTRUCTURE_AS_CODE.md)
-- [Terraform Guide](docs/TERRAFORM_GUIDE.md)
-- [Ansible Guide](docs/ANSIBLE_GUIDE.md)
-- [CI/CD Guide](docs/CICD_GUIDE.md)
-- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md)
-- [Phase 9 Completion Report](docs/PHASE_09_COMPLETION_REPORT.md)
+- Infrastructure documentation: see `infrastructure/README.md`
+- Terraform configuration: see `infrastructure/terraform/`
+- Ansible playbooks: see `infrastructure/ansible/`
+- CI/CD workflows: see `.github/workflows/`
+- [Production Deployment Runbook](../PRODUCTION_DEPLOYMENT_RUNBOOK.md)
+- [Phase 9 Completion Report](../PHASE_09_COMPLETION_REPORT.md)
 
 ### Quick Start
 
