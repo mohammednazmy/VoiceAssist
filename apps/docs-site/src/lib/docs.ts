@@ -4,10 +4,10 @@ import matter from "gray-matter";
 
 // Path to the docs directory (relative to monorepo root)
 // In production, DOCS_DIR can be set via environment variable
-const DOCS_DIR =
+export const DOCS_DIR =
   process.env.DOCS_DIR || path.join(process.cwd(), "..", "..", "docs");
-const CLIENT_IMPL_DIR = path.join(DOCS_DIR, "client-implementation");
-const WEB_APP_DIR = path.join(process.cwd(), "..", "web-app");
+export const CLIENT_IMPL_DIR = path.join(DOCS_DIR, "client-implementation");
+export const WEB_APP_DIR = path.join(process.cwd(), "..", "web-app");
 
 // GitHub repository for "Edit this page" links
 const GITHUB_REPO = "mohammednazmy/VoiceAssist";
