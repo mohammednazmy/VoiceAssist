@@ -17,6 +17,7 @@ from app.services.audio_processor import (
     NoiseSuppressor,
     StreamingAudioProcessor,
 )
+from app.services.medical_calculators import CalculatorResult, MedicalCalculators, RiskLevel, Sex, list_calculators
 from app.services.medical_embedding_service import (
     EmbeddingResult,
     GenerationResult,
@@ -45,7 +46,24 @@ from app.services.multi_hop_reasoning_service import (
     hybrid_search_engine,
     multi_hop_reasoner,
 )
+from app.services.pubmed_enhanced_service import (
+    ArticleType,
+    CitationNetwork,
+    ClinicalTrial,
+    EnhancedPubMedService,
+    PubMedArticle,
+)
+from app.services.pubmed_enhanced_service import SearchResult as PubMedSearchResult
 from app.services.realtime_voice_service import RealtimeVoiceService, realtime_voice_service
+from app.services.uptodate_service import (
+    DrugInteraction,
+    DrugInteractionResult,
+    InteractionSeverity,
+    Specialty,
+    UpToDateContent,
+    UpToDateService,
+    UpToDateTopic,
+)
 from app.services.voice_activity_detector import SpeechState, StreamingVAD, VADConfig, VoiceActivityDetector
 from app.services.voice_authentication import (
     VoiceAuthenticationService,
@@ -114,4 +132,23 @@ __all__ = [
     "ReasoningResult",
     "hybrid_search_engine",
     "multi_hop_reasoner",
+    # External Medical Integrations (Phase 3)
+    "UpToDateService",
+    "UpToDateTopic",
+    "UpToDateContent",
+    "DrugInteraction",
+    "DrugInteractionResult",
+    "InteractionSeverity",
+    "Specialty",
+    "EnhancedPubMedService",
+    "PubMedArticle",
+    "PubMedSearchResult",
+    "CitationNetwork",
+    "ClinicalTrial",
+    "ArticleType",
+    "MedicalCalculators",
+    "CalculatorResult",
+    "Sex",
+    "RiskLevel",
+    "list_calculators",
 ]
