@@ -91,3 +91,32 @@ async def list_indexing_jobs(request: Request) -> APIEnvelope:
     ]
     # Return direct array - fetchAPI unwraps APIEnvelope to get data field
     return success_response(jobs, trace_id=getattr(request.state, "trace_id", None))
+
+
+@router.get("/kb/documents/{doc_id}/audit", response_model=APIEnvelope)
+async def get_kb_document_audit(doc_id: str, request: Request) -> APIEnvelope:
+    """Return a stubbed audit trail for a document.
+
+    The admin panel uses this endpoint to populate the audit drawer when
+    reviewing document lineage. Future phases should pull this data from
+    the KB activity log table once implemented.
+    """
+
+    events = [
+        {
+            "id": "audit-1",
+            "action": "uploaded",
+            "actor": "admin@example.com",
+            "timestamp": "2025-01-02T00:00:00Z",
+            "notes": f"Document {doc_id} uploaded",
+        },
+        {
+            "id": "audit-2",
+            "action": "indexed",
+            "actor": "system/kb-indexer",
+            "timestamp": "2025-01-02T00:05:00Z",
+            "notes": "Initial indexing completed",
+        },
+    ]
+
+    return success_response(events, trace_id=getattr(request.state, "trace_id", None))
