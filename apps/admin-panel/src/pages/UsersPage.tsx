@@ -1,32 +1,78 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { fetchAPI } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 
-interface User {
+interface AdminUser {
   id: string;
   email: string;
   full_name?: string;
   is_admin: boolean;
   is_active: boolean;
   created_at: string;
+  last_login?: string;
+}
+
+interface RoleHistoryEntry {
+  id: string;
+  changed_at: string | null;
+  actor: string;
+  from_role: "admin" | "user";
+  to_role: "admin" | "user";
+  reason?: string;
+}
+
+interface LockEvent {
+  id: string;
+  timestamp: string | null;
+  actor: string;
+  status: "locked" | "unlocked";
+  reason?: string;
+}
+
+interface RateLimitInfo {
+  limit?: number;
+  remaining?: number;
+  reset_in?: number | null;
 }
 
 export function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [roleHistory, setRoleHistory] = useState<RoleHistoryEntry[]>([]);
+  const [lockEvents, setLockEvents] = useState<LockEvent[]>([]);
+  const [rateLimitNotice, setRateLimitNotice] = useState<string | null>(null);
   const { isViewer } = useAuth();
+
+  const selectedUser = useMemo(
+    () => users.find((u) => u.id === selectedUserId) || null,
+    [selectedUserId, users],
+  );
 
   useEffect(() => {
     loadUsers();
   }, []);
 
+  useEffect(() => {
+    if (selectedUserId) {
+      loadUserInsights(selectedUserId);
+    }
+  }, [selectedUserId]);
+
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const data = await fetchAPI<User[]>("/api/users");
-      setUsers(data);
+      const data = await fetchAPI<{
+        users: AdminUser[];
+        total: number;
+      }>("/api/admin/panel/users?limit=50");
+      setUsers(data.users);
+      if (!selectedUserId && data.users.length > 0) {
+        setSelectedUserId(data.users[0].id);
+      }
       setError(null);
     } catch (err: any) {
       setError(err.message || "Failed to load users");
@@ -35,15 +81,65 @@ export function UsersPage() {
     }
   };
 
+  const loadUserInsights = async (userId: string) => {
+    setHistoryLoading(true);
+    try {
+      const [historyRes, lockRes] = await Promise.all([
+        fetchAPI<{ history: RoleHistoryEntry[] }>(
+          `/api/admin/panel/users/${userId}/role-history`,
+        ),
+        fetchAPI<{ events: LockEvent[] }>(
+          `/api/admin/panel/users/${userId}/lock-reasons`,
+        ),
+      ]);
+      setRoleHistory(historyRes.history);
+      setLockEvents(lockRes.events);
+    } catch (err: any) {
+      setRateLimitNotice(null);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const formatRateLimit = (info?: RateLimitInfo | null) => {
+    if (!info || info.limit === undefined) return null;
+    return `Limit: ${info.limit} · Remaining: ${
+      info.remaining ?? "—"
+    } · Resets in ${info.reset_in ?? "?"}s`;
+  };
+
+  const handleRateLimit = (info?: RateLimitInfo | null) => {
+    const text = formatRateLimit(info);
+    setRateLimitNotice(text);
+  };
+
+  const promptForReason = (action: string) => {
+    const reason = prompt(`Add a reason for this ${action}?`, "Policy enforcement");
+    if (reason === null) return null;
+    return reason.trim() || "Admin action";
+  };
+
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     if (isViewer) return;
+    const reason = promptForReason(currentStatus ? "deactivation" : "reactivation");
+    if (reason === null) return;
+
     try {
-      await fetchAPI(`/api/users/${userId}`, {
-        method: "PATCH",
-        body: JSON.stringify({ is_active: !currentStatus }),
+      const data = await fetchAPI<{
+        rate_limit?: RateLimitInfo;
+      }>(`/api/admin/panel/users/${userId}`, {
+        method: "PUT",
+        body: JSON.stringify({ is_active: !currentStatus, action_reason: reason }),
       });
+      handleRateLimit(data.rate_limit ?? null);
       await loadUsers();
+      if (userId === selectedUserId) {
+        await loadUserInsights(userId);
+      }
     } catch (err: any) {
+      if (err.details?.rate_limit) {
+        handleRateLimit(err.details.rate_limit as RateLimitInfo);
+      }
       alert(err.message || "Failed to update user");
     }
   };
@@ -58,14 +154,51 @@ export function UsersPage() {
       return;
     }
 
+    const reason = promptForReason("role change");
+    if (reason === null) return;
+
     try {
-      await fetchAPI(`/api/users/${userId}`, {
-        method: "PATCH",
-        body: JSON.stringify({ is_admin: !currentStatus }),
+      const data = await fetchAPI<{
+        rate_limit?: RateLimitInfo;
+      }>(`/api/admin/panel/users/${userId}`, {
+        method: "PUT",
+        body: JSON.stringify({ is_admin: !currentStatus, action_reason: reason }),
       });
+      handleRateLimit(data.rate_limit ?? null);
       await loadUsers();
+      if (userId === selectedUserId) {
+        await loadUserInsights(userId);
+      }
     } catch (err: any) {
+      if (err.details?.rate_limit) {
+        handleRateLimit(err.details.rate_limit as RateLimitInfo);
+      }
       alert(err.message || "Failed to update user role");
+    }
+  };
+
+  const handleExportAudit = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const res = await fetch("/api/admin/panel/audit-logs/export", {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to export audit logs");
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "admin-audit.csv";
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert(err.message || "Unable to export audit CSV");
     }
   };
 
@@ -73,7 +206,7 @@ export function UsersPage() {
     if (loading) {
       return Array.from({ length: 5 }).map((_, idx) => (
         <tr key={idx} className="divide-x divide-slate-900 bg-slate-900/30 animate-pulse">
-          {Array.from({ length: 6 }).map((__, cellIdx) => (
+          {Array.from({ length: 7 }).map((__, cellIdx) => (
             <td key={cellIdx} className="px-4 py-3">
               <div className="h-3 w-full max-w-[140px] bg-slate-800 rounded" />
             </td>
@@ -83,7 +216,10 @@ export function UsersPage() {
     }
 
     return users.map((user) => (
-      <tr key={user.id} className="hover:bg-slate-800/50">
+      <tr
+        key={user.id}
+        className={`hover:bg-slate-800/50 ${selectedUserId === user.id ? "bg-slate-900/60" : ""}`}
+      >
         <td className="px-4 py-3 text-sm text-slate-300">{user.email}</td>
         <td className="px-4 py-3 text-sm text-slate-300">{user.full_name || "-"}</td>
         <td className="px-4 py-3 text-sm">
@@ -111,6 +247,9 @@ export function UsersPage() {
         <td className="px-4 py-3 text-sm text-slate-400">
           {new Date(user.created_at).toLocaleDateString()}
         </td>
+        <td className="px-4 py-3 text-sm text-slate-400">
+          {user.last_login ? new Date(user.last_login).toLocaleDateString() : "-"}
+        </td>
         <td className="px-4 py-3 text-sm text-right space-x-2">
           <button
             onClick={() => toggleAdminRole(user.id, user.is_admin)}
@@ -132,6 +271,13 @@ export function UsersPage() {
           >
             {user.is_active ? "🔒" : "🔓"}
           </button>
+          <button
+            onClick={() => setSelectedUserId(user.id)}
+            className="text-slate-400 hover:text-slate-200 transition-colors"
+            title="View history"
+          >
+            📜
+          </button>
         </td>
       </tr>
     ));
@@ -139,21 +285,35 @@ export function UsersPage() {
 
   return (
     <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-100">User Management</h1>
           <p className="text-sm text-slate-400 mt-1">
-            Manage user accounts, roles, and permissions
+            Manage user accounts, roles, and permissions with auditability
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          disabled={isViewer}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-950 disabled:text-slate-400 text-white rounded-md text-sm font-medium transition-colors"
-        >
-          + Create User
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportAudit}
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-md text-sm border border-slate-700"
+          >
+            Export admin activity CSV
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            disabled={isViewer}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-950 disabled:text-slate-400 text-white rounded-md text-sm font-medium transition-colors"
+          >
+            + Create User
+          </button>
+        </div>
       </div>
+
+      {rateLimitNotice && (
+        <div className="p-3 bg-amber-950/40 border border-amber-900 rounded-md text-amber-300 text-sm">
+          Sensitive action rate limit — {rateLimitNotice}
+        </div>
+      )}
 
       {isViewer && (
         <div className="p-3 bg-amber-950/40 border border-amber-900 rounded-md text-amber-300 text-sm">
@@ -192,6 +352,9 @@ export function UsersPage() {
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 Created
               </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                Last login
+              </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
                 Actions
               </th>
@@ -212,7 +375,76 @@ export function UsersPage() {
         {users.filter((u) => u.is_admin).length}
       </div>
 
-      {/* Create User Modal - Placeholder */}
+      {selectedUser && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-100">Role assignment history</h3>
+              {historyLoading && <span className="text-xs text-slate-400">Loading…</span>}
+            </div>
+            {roleHistory.length === 0 ? (
+              <p className="text-sm text-slate-400">No role changes recorded.</p>
+            ) : (
+              <ul className="space-y-2">
+                {roleHistory.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="p-3 bg-slate-800/60 border border-slate-700 rounded-md text-sm text-slate-200"
+                  >
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span>{entry.actor}</span>
+                      <span>{entry.changed_at ? new Date(entry.changed_at).toLocaleString() : ""}</span>
+                    </div>
+                    <div className="mt-1 text-slate-100">
+                      {entry.from_role} → {entry.to_role}
+                    </div>
+                    {entry.reason && (
+                      <div className="text-xs text-slate-400 mt-1">Reason: {entry.reason}</div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-100">Account lock/unlock reasons</h3>
+              {historyLoading && <span className="text-xs text-slate-400">Loading…</span>}
+            </div>
+            {lockEvents.length === 0 ? (
+              <p className="text-sm text-slate-400">No lock or unlock actions recorded.</p>
+            ) : (
+              <ul className="space-y-2">
+                {lockEvents.map((event) => (
+                  <li
+                    key={event.id}
+                    className="p-3 bg-slate-800/60 border border-slate-700 rounded-md text-sm text-slate-200"
+                  >
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span>{event.actor}</span>
+                      <span>{event.timestamp ? new Date(event.timestamp).toLocaleString() : ""}</span>
+                    </div>
+                    <div className="mt-1 text-slate-100 flex items-center gap-2">
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold uppercase ${
+                          event.status === "locked"
+                            ? "bg-red-500/10 text-red-300 border border-red-500/40"
+                            : "bg-green-500/10 text-green-300 border border-green-500/40"
+                        }`}
+                      >
+                        {event.status}
+                      </span>
+                      <span className="text-slate-200">{event.reason || "Admin status change"}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 w-full max-w-md">
