@@ -44,10 +44,113 @@ export interface AdminSummaryResponse {
   timestamp: string;
 }
 
+// Phase 8.3: WebSocket Status
+export interface WebSocketStatusResponse {
+  active_connections: number;
+  connections_by_type: {
+    chat: number;
+    voice: number;
+    other: number;
+  };
+  recent_connections: Array<{
+    session_id: string;
+    user_id: string;
+    type: string;
+    connected_at: string;
+  }>;
+  pool_stats: {
+    database: {
+      size: number;
+      checked_out: number;
+      checked_in: number;
+    };
+    redis: {
+      max_connections: number;
+      in_use_connections: number;
+    };
+  };
+  timestamp: string;
+}
+
+// Phase 8.3: User Management
+export interface AdminUser {
+  id: string;
+  email: string;
+  full_name: string | null;
+  is_admin: boolean;
+  is_active: boolean;
+  created_at: string | null;
+  last_login: string | null;
+}
+
+export interface UserListResponse {
+  users: AdminUser[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
+export interface UserUpdateRequest {
+  email?: string;
+  full_name?: string;
+  is_admin?: boolean;
+  is_active?: boolean;
+}
+
+// Phase 8.3: System Metrics
+export interface SystemMetricsResponse {
+  daily_registrations: Array<{ date: string; count: number }>;
+  daily_active_users: Array<{ date: string; count: number }>;
+  user_distribution: {
+    total: number;
+    active: number;
+    inactive: number;
+    admins: number;
+    regular: number;
+  };
+  period_days: number;
+  timestamp: string;
+}
+
+// Phase 8.3: Audit Logs
+export interface AuditLogEntry {
+  timestamp: string;
+  level: "info" | "warn" | "error";
+  action: string;
+  user_id: string | null;
+  details: string | null;
+}
+
+export interface AuditLogsResponse {
+  logs: AuditLogEntry[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
 export interface AdminApiClient {
   getDetailedHealth(): Promise<DetailedHealthResponse>;
   getAdminSummary(): Promise<AdminSummaryResponse>;
   getOpenAIHealth(): Promise<OpenAIHealthResponse>;
+  // Phase 8.3 endpoints
+  getWebSocketStatus(): Promise<WebSocketStatusResponse>;
+  getUsers(params?: {
+    offset?: number;
+    limit?: number;
+    search?: string;
+    is_active?: boolean;
+    is_admin?: boolean;
+  }): Promise<UserListResponse>;
+  getUser(userId: string): Promise<AdminUser>;
+  updateUser(userId: string, data: UserUpdateRequest): Promise<AdminUser>;
+  deleteUser(userId: string): Promise<{ message: string; user_id: string }>;
+  getSystemMetrics(days?: number): Promise<SystemMetricsResponse>;
+  getAuditLogs(params?: {
+    offset?: number;
+    limit?: number;
+    level?: string;
+    action?: string;
+  }): Promise<AuditLogsResponse>;
 }
 
 export interface OpenAIHealthResponse {
@@ -101,6 +204,45 @@ export function createAdminApi(
     return data as T;
   }
 
+  async function fetchWithAuthPost<T>(
+    path: string,
+    body: unknown,
+    method: "POST" | "PUT" | "DELETE" = "POST",
+  ): Promise<T> {
+    const token = getAuthToken();
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${baseUrl}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const data = await response.json();
+
+    // Handle envelope response format
+    if (data.success !== undefined) {
+      if (!data.success) {
+        throw new Error(data.error?.message || "API request failed");
+      }
+      return data.data as T;
+    }
+
+    return data as T;
+  }
+
   return {
     async getDetailedHealth(): Promise<DetailedHealthResponse> {
       return fetchWithAuth<DetailedHealthResponse>("/health/detailed");
@@ -112,6 +254,92 @@ export function createAdminApi(
 
     async getOpenAIHealth(): Promise<OpenAIHealthResponse> {
       return fetchWithAuth<OpenAIHealthResponse>("/health/openai");
+    },
+
+    // Phase 8.3: WebSocket Status
+    async getWebSocketStatus(): Promise<WebSocketStatusResponse> {
+      return fetchWithAuth<WebSocketStatusResponse>(
+        "/api/admin/panel/websocket-status",
+      );
+    },
+
+    // Phase 8.3: User Management
+    async getUsers(params?: {
+      offset?: number;
+      limit?: number;
+      search?: string;
+      is_active?: boolean;
+      is_admin?: boolean;
+    }): Promise<UserListResponse> {
+      const searchParams = new URLSearchParams();
+      if (params?.offset !== undefined)
+        searchParams.set("offset", String(params.offset));
+      if (params?.limit !== undefined)
+        searchParams.set("limit", String(params.limit));
+      if (params?.search) searchParams.set("search", params.search);
+      if (params?.is_active !== undefined)
+        searchParams.set("is_active", String(params.is_active));
+      if (params?.is_admin !== undefined)
+        searchParams.set("is_admin", String(params.is_admin));
+
+      const query = searchParams.toString();
+      return fetchWithAuth<UserListResponse>(
+        `/api/admin/panel/users${query ? `?${query}` : ""}`,
+      );
+    },
+
+    async getUser(userId: string): Promise<AdminUser> {
+      return fetchWithAuth<AdminUser>(`/api/admin/panel/users/${userId}`);
+    },
+
+    async updateUser(
+      userId: string,
+      data: UserUpdateRequest,
+    ): Promise<AdminUser> {
+      return fetchWithAuthPost<AdminUser>(
+        `/api/admin/panel/users/${userId}`,
+        data,
+        "PUT",
+      );
+    },
+
+    async deleteUser(
+      userId: string,
+    ): Promise<{ message: string; user_id: string }> {
+      return fetchWithAuthPost<{ message: string; user_id: string }>(
+        `/api/admin/panel/users/${userId}`,
+        null,
+        "DELETE",
+      );
+    },
+
+    // Phase 8.3: System Metrics
+    async getSystemMetrics(days?: number): Promise<SystemMetricsResponse> {
+      const query = days ? `?days=${days}` : "";
+      return fetchWithAuth<SystemMetricsResponse>(
+        `/api/admin/panel/metrics${query}`,
+      );
+    },
+
+    // Phase 8.3: Audit Logs
+    async getAuditLogs(params?: {
+      offset?: number;
+      limit?: number;
+      level?: string;
+      action?: string;
+    }): Promise<AuditLogsResponse> {
+      const searchParams = new URLSearchParams();
+      if (params?.offset !== undefined)
+        searchParams.set("offset", String(params.offset));
+      if (params?.limit !== undefined)
+        searchParams.set("limit", String(params.limit));
+      if (params?.level) searchParams.set("level", params.level);
+      if (params?.action) searchParams.set("action", params.action);
+
+      const query = searchParams.toString();
+      return fetchWithAuth<AuditLogsResponse>(
+        `/api/admin/panel/audit-logs${query ? `?${query}` : ""}`,
+      );
     },
   };
 }

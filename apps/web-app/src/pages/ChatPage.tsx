@@ -421,10 +421,9 @@ export function ChatPage() {
    */
   const handleVoiceMetricsUpdate = useCallback(
     (metrics: VoiceMetrics) => {
-      // Only send metrics in production with feature flag enabled
+      // Send metrics by default; allow opt-out via VITE_ENABLE_VOICE_METRICS="false"
       const shouldSendMetrics =
-        import.meta.env.PROD ||
-        import.meta.env.VITE_ENABLE_VOICE_METRICS === "true";
+        import.meta.env.VITE_ENABLE_VOICE_METRICS !== "false";
 
       if (!shouldSendMetrics) {
         return;

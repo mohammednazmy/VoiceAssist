@@ -269,6 +269,20 @@ export class VoiceAssistApiClient {
     return response.data;
   }
 
+  async relayVoiceTranscript(request: {
+    conversation_id: string;
+    transcript: string;
+    clinical_context_id?: string | null;
+  }): Promise<{
+    user_message_id: string;
+    assistant_message_id: string;
+    answer: string;
+    citations: Record<string, any>[];
+  }> {
+    const response = await this.client.post("/voice/relay", request);
+    return response.data;
+  }
+
   async getOAuthUrl(provider: "google" | "microsoft"): Promise<string> {
     const response = await this.client.get<ApiResponse<{ url: string }>>(
       `/auth/oauth/${provider}/authorize`,

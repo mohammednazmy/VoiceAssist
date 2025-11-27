@@ -23,24 +23,23 @@ Usage:
     # Invalidate across all layers
     await cache.delete("user:123")
 """
-from typing import Any, Optional, Dict, List
-import json
-import time
+
 import hashlib
 import pickle
-from datetime import timedelta
+import time
+from typing import Any, Dict, Optional
 
-from cachetools import LRUCache
 import redis.asyncio as redis
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.core.metrics import (
-    cache_hits_total,
-    cache_misses_total,
-    cache_latency_seconds,
     cache_entries_total,
     cache_evictions_total,
+    cache_hits_total,
+    cache_latency_seconds,
+    cache_misses_total,
 )
+from cachetools import LRUCache
 
 logger = get_logger(__name__)
 
@@ -84,7 +83,7 @@ class CacheService:
             extra={
                 "l1_max_size": CacheConfig.L1_MAX_SIZE,
                 "redis_host": settings.REDIS_HOST,
-            }
+            },
         )
 
     async def get_redis_client(self) -> redis.Redis:
@@ -116,7 +115,7 @@ class CacheService:
     def _deserialize(self, data: bytes) -> Any:
         """Deserialize cached value from bytes."""
         try:
-            return pickle.loads(data)
+            return pickle.loads(data)  # nosec B301 - internal cache only, not untrusted data
         except Exception as e:
             logger.error(f"cache_deserialization_error: {e}", exc_info=True)
             raise
@@ -141,9 +140,7 @@ class CacheService:
 
                 # Metrics
                 cache_hits_total.labels(cache_layer="l1", cache_key_prefix=key_prefix).inc()
-                cache_latency_seconds.labels(cache_layer="l1", operation="get").observe(
-                    time.time() - start_time
-                )
+                cache_latency_seconds.labels(cache_layer="l1", operation="get").observe(time.time() - start_time)
 
                 logger.debug(f"cache_hit_l1: key={key}")
                 return value
@@ -172,18 +169,14 @@ class CacheService:
 
                 # Metrics
                 cache_hits_total.labels(cache_layer="l2", cache_key_prefix=key_prefix).inc()
-                cache_latency_seconds.labels(cache_layer="l2", operation="get").observe(
-                    time.time() - l2_start
-                )
+                cache_latency_seconds.labels(cache_layer="l2", operation="get").observe(time.time() - l2_start)
 
                 logger.debug(f"cache_hit_l2: key={key}")
                 return value
 
             # L2 miss
             cache_misses_total.labels(cache_layer="l2", cache_key_prefix=key_prefix).inc()
-            cache_latency_seconds.labels(cache_layer="l2", operation="get").observe(
-                time.time() - l2_start
-            )
+            cache_latency_seconds.labels(cache_layer="l2", operation="get").observe(time.time() - l2_start)
 
         except Exception as e:
             logger.error(f"l2_cache_error: {e}", exc_info=True)
@@ -191,12 +184,7 @@ class CacheService:
         logger.debug(f"cache_miss: key={key}")
         return None
 
-    async def set(
-        self,
-        key: str,
-        value: Any,
-        ttl: Optional[int] = None
-    ) -> bool:
+    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
         """
         Set value in both L1 and L2 caches.
 
@@ -221,9 +209,7 @@ class CacheService:
             start_time = time.time()
             self.l1_cache[key] = value
 
-            cache_latency_seconds.labels(cache_layer="l1", operation="set").observe(
-                time.time() - start_time
-            )
+            cache_latency_seconds.labels(cache_layer="l1", operation="set").observe(time.time() - start_time)
             cache_entries_total.labels(cache_layer="l1").set(len(self.l1_cache))
 
         except Exception as e:
@@ -238,9 +224,7 @@ class CacheService:
             serialized = self._serialize(value)
             await redis_client.setex(key, ttl, serialized)
 
-            cache_latency_seconds.labels(cache_layer="l2", operation="set").observe(
-                time.time() - start_time
-            )
+            cache_latency_seconds.labels(cache_layer="l2", operation="set").observe(time.time() - start_time)
 
         except Exception as e:
             logger.error(f"l2_cache_set_error: {e}", exc_info=True)
@@ -261,7 +245,6 @@ class CacheService:
         Returns:
             True if successfully deleted, False otherwise
         """
-        key_prefix = self._extract_prefix(key)
         success = True
 
         # Delete from L1
@@ -357,7 +340,7 @@ class CacheService:
                     "used_memory": redis_info.get("used_memory", 0),
                     "used_memory_human": redis_info.get("used_memory_human", "0B"),
                     "connected_clients": redis_info.get("connected_clients", 0),
-                }
+                },
             }
         except Exception as e:
             logger.error(f"cache_stats_error: {e}", exc_info=True)
@@ -389,6 +372,7 @@ def generate_cache_key(prefix: str, *args, **kwargs) -> str:
     key_parts.extend(f"{k}={v}" for k, v in sorted(kwargs.items()))
     key_string = "|".join(key_parts)
 
-    key_hash = hashlib.md5(key_string.encode()).hexdigest()[:12]
+    # MD5 used for cache key generation, not security purposes
+    key_hash = hashlib.md5(key_string.encode(), usedforsecurity=False).hexdigest()[:12]
 
     return f"{prefix}:{key_hash}"

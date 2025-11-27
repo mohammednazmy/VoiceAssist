@@ -158,7 +158,9 @@ describe("useChatSession - Editing", () => {
         }
       });
 
+      // Logger adds [WebSocket] prefix
       expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "[WebSocket]",
         "Failed to edit message:",
         expect.any(Error),
       );
@@ -269,7 +271,9 @@ describe("useChatSession - Editing", () => {
         }
       });
 
+      // Logger adds [WebSocket] prefix
       expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "[WebSocket]",
         "Failed to delete message:",
         expect.any(Error),
       );
@@ -368,7 +372,9 @@ describe("useChatSession - Editing", () => {
         await result.current.regenerateMessage("msg-assistant-1");
       });
 
+      // Logger adds [WebSocket] prefix
       expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "[WebSocket]",
         "Cannot regenerate: invalid message",
       );
 

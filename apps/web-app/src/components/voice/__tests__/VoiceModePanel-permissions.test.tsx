@@ -55,6 +55,7 @@ const createMockHookReturn = (
   status: "disconnected" as const,
   error: null,
   transcript: "",
+  partialTranscript: "",
   isSpeaking: false,
   sessionConfig: null,
   metrics: createMockMetrics(),
@@ -64,6 +65,8 @@ const createMockHookReturn = (
   isConnected: false,
   isConnecting: false,
   canSend: false,
+  isMicPermissionDenied: false,
+  resetFatalError: vi.fn(),
   ...overrides,
 });
 

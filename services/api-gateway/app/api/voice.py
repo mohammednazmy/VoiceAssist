@@ -9,14 +9,21 @@ Providers:
 """
 
 import time
+import uuid
 
 import httpx
 from app.core.config import settings
+from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.logging import get_logger
 from app.core.metrics import (
+    external_api_duration_seconds,
+    external_api_requests_total,
     voice_connection_time_seconds,
+    voice_first_audio_latency_seconds,
+    voice_proxy_ttfb_seconds,
     voice_reconnects_total,
+    voice_relay_latency_seconds,
     voice_response_latency_seconds,
     voice_session_duration_seconds,
     voice_sessions_total,
@@ -24,17 +31,23 @@ from app.core.metrics import (
     voice_stt_latency_seconds,
     voice_transcripts_total,
 )
+from app.core.middleware import rate_limit
+from app.core.security import verify_token
 from app.core.sentry import capture_slo_violation
 from app.core.slo import check_slo_violations, log_slo_violations
+from app.models.message import Message
+from app.models.session import Session as ChatSession
 from app.models.user import User
+from app.services.rag_service import QueryOrchestrator, QueryRequest
 from app.services.realtime_voice_service import realtime_voice_service
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import Response
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/voice", tags=["voice"])
+router = APIRouter(prefix="/api/voice", tags=["voice"])
 
 
 class SynthesizeRequest(BaseModel):
@@ -78,6 +91,27 @@ class RealtimeSessionResponse(BaseModel):
     conversation_id: str | None
     auth: RealtimeAuthInfo  # Ephemeral token auth (secure, no raw API key)
     voice_config: dict
+
+
+class VoiceRelayRequest(BaseModel):
+    """Request model for relaying a final voice transcript into RAG + persistence."""
+
+    conversation_id: str
+    transcript: str
+    clinical_context_id: str | None = None
+
+
+class VoiceRelayResponse(BaseModel):
+    """Response model for relayed assistant answer and persisted message IDs."""
+
+    user_message_id: str
+    assistant_message_id: str
+    answer: str
+    citations: list[dict] = []
+
+
+# Shared orchestrator instance for voice relay
+voice_query_orchestrator = QueryOrchestrator()
 
 
 @router.post(
@@ -253,6 +287,8 @@ async def synthesize_speech(
         voice = request.voiceId or settings.TTS_VOICE or "alloy"
 
         async with httpx.AsyncClient(timeout=settings.OPENAI_TIMEOUT_SEC) as client:
+            external_api_requests_total.labels(service="openai", endpoint="audio/speech", status_code="pending").inc()
+            tts_start = time.monotonic()
             response = await client.post(
                 "https://api.openai.com/v1/audio/speech",
                 headers={
@@ -275,10 +311,19 @@ async def synthesize_speech(
                         "user_id": current_user.id,
                     },
                 )
+                external_api_requests_total.labels(
+                    service="openai", endpoint="audio/speech", status_code=str(response.status_code)
+                ).inc()
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Speech synthesis failed",
                 )
+
+            latency = time.monotonic() - tts_start
+            external_api_requests_total.labels(
+                service="openai", endpoint="audio/speech", status_code=str(response.status_code)
+            ).inc()
+            external_api_duration_seconds.labels(service="openai", endpoint="audio/speech").observe(latency)
 
             audio_content = response.content
 
@@ -508,9 +553,7 @@ async def post_voice_metrics(
         voice_stt_latency_seconds.observe(payload.last_stt_latency_ms / 1000.0)
 
     if payload.last_response_latency_ms is not None:
-        voice_response_latency_seconds.observe(
-            payload.last_response_latency_ms / 1000.0
-        )
+        voice_response_latency_seconds.observe(payload.last_response_latency_ms / 1000.0)
 
     if payload.session_duration_ms is not None:
         voice_session_duration_seconds.observe(payload.session_duration_ms / 1000.0)
@@ -518,9 +561,7 @@ async def post_voice_metrics(
         voice_sessions_total.labels(status="completed").inc()
 
     if payload.user_transcript_count > 0:
-        voice_transcripts_total.labels(direction="user").inc(
-            payload.user_transcript_count
-        )
+        voice_transcripts_total.labels(direction="user").inc(payload.user_transcript_count)
 
     if payload.ai_response_count > 0:
         voice_transcripts_total.labels(direction="ai").inc(payload.ai_response_count)
@@ -530,36 +571,22 @@ async def post_voice_metrics(
 
     # 3. Check SLO thresholds
     violations = check_slo_violations(
-        connection_time_ms=(
-            float(payload.connection_time_ms) if payload.connection_time_ms else None
-        ),
-        stt_latency_ms=(
-            float(payload.last_stt_latency_ms) if payload.last_stt_latency_ms else None
-        ),
-        response_latency_ms=(
-            float(payload.last_response_latency_ms)
-            if payload.last_response_latency_ms
-            else None
-        ),
+        connection_time_ms=(float(payload.connection_time_ms) if payload.connection_time_ms else None),
+        stt_latency_ms=(float(payload.last_stt_latency_ms) if payload.last_stt_latency_ms else None),
+        response_latency_ms=(float(payload.last_response_latency_ms) if payload.last_response_latency_ms else None),
         time_to_first_transcript_ms=(
-            float(payload.time_to_first_transcript_ms)
-            if payload.time_to_first_transcript_ms
-            else None
+            float(payload.time_to_first_transcript_ms) if payload.time_to_first_transcript_ms else None
         ),
     )
 
     # 4. Handle SLO violations
     if violations:
         # Log violations
-        log_slo_violations(
-            violations, user_id=user_id, conversation_id=payload.conversation_id
-        )
+        log_slo_violations(violations, user_id=user_id, conversation_id=payload.conversation_id)
 
         # Record to Prometheus
         for violation in violations:
-            voice_slo_violations_total.labels(
-                metric=violation.metric.value, severity=violation.severity
-            ).inc()
+            voice_slo_violations_total.labels(metric=violation.metric.value, severity=violation.severity).inc()
 
             # Report critical violations to Sentry
             if violation.severity == "critical":
@@ -572,3 +599,236 @@ async def post_voice_metrics(
                 )
 
     return VoiceMetricsResponse(status="ok")
+
+
+@router.post(
+    "/relay",
+    response_model=VoiceRelayResponse,
+    summary="Relay final voice transcript to RAG",
+    description="Persists the user transcript, runs RAG, persists assistant reply, and returns the answer.",
+)
+@rate_limit(calls=30, period=60, key_prefix="voice_relay")  # 30 calls per minute per user
+async def relay_voice_transcript(
+    request: Request,  # Required for rate limiting
+    payload: VoiceRelayRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Take a final voice transcript, run the medical RAG pipeline, and persist both sides of the exchange.
+
+    This is intended to be called after the frontend receives a final transcription event from the Realtime
+    voice session. It provides a low-latency path to get a clinical answer while keeping conversation history
+    consistent between voice and text modes.
+    """
+    start_time = time.monotonic()
+
+    # Persist user message first (idempotency handled at DB level if needed)
+    try:
+        session_uuid = uuid.UUID(payload.conversation_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid conversation_id",
+        )
+
+    from app.api.conversations import get_session_or_404  # lazy import to avoid cycles
+
+    session = get_session_or_404(db, session_uuid, current_user)
+
+    user_message = Message(
+        session_id=session.id,
+        role="user",
+        content=payload.transcript,
+        message_metadata={"source": "voice_relay", "clinical_context_id": payload.clinical_context_id},
+    )
+    db.add(user_message)
+    session.message_count = (session.message_count or 0) + 1
+    db.commit()
+    db.refresh(user_message)
+
+    # Run RAG pipeline with streaming disabled here (latency-focused)
+    query_request = QueryRequest(
+        session_id=str(session.id),
+        query=payload.transcript,
+        clinical_context_id=payload.clinical_context_id,
+    )
+
+    query_response = await voice_query_orchestrator.handle_query(query_request, trace_id=str(user_message.id))
+
+    # Persist assistant message
+    assistant_message = Message(
+        session_id=session.id,
+        role="assistant",
+        content=query_response.answer,
+        tokens=query_response.tokens,
+        model=query_response.model,
+        message_metadata={
+            "source": "voice_relay",
+            "citations": [c.dict() for c in query_response.citations],
+            "finish_reason": query_response.finish_reason,
+            "clinical_context_id": payload.clinical_context_id,
+            "reply_time_ms": int((time.monotonic() - start_time) * 1000),
+        },
+    )
+    db.add(assistant_message)
+    session.message_count = (session.message_count or 0) + 1
+    db.commit()
+    db.refresh(assistant_message)
+
+    duration_ms = int((time.monotonic() - start_time) * 1000)
+    logger.info(
+        "Voice relay completed",
+        extra={
+            "user_id": current_user.id,
+            "conversation_id": payload.conversation_id,
+            "user_message_id": str(user_message.id),
+            "assistant_message_id": str(assistant_message.id),
+            "duration_ms": duration_ms,
+        },
+    )
+
+    return VoiceRelayResponse(
+        user_message_id=str(user_message.id),
+        assistant_message_id=str(assistant_message.id),
+        answer=query_response.answer,
+        citations=[c.dict() for c in query_response.citations],
+    )
+
+
+@router.websocket("/relay-ws")
+async def voice_relay_websocket(websocket: WebSocket, db: Session = Depends(get_db)):
+    """
+    Lightweight voice relay WebSocket.
+
+    Protocol:
+    Client -> Server:
+    {
+        "type": "transcript.final",
+        "conversation_id": "<uuid>",
+        "transcript": "<final user transcript>",
+        "clinical_context_id": "<optional>"
+    }
+
+    Server -> Client:
+    - chunk events:
+      {"type": "chunk", "content": "<partial answer>"}
+    - final:
+      {"type": "done", "answer": "<full answer>", "citations": [...]}
+    - error:
+      {"type": "error", "message": "<reason>"}
+    """
+    await websocket.accept()
+    connection_start = time.monotonic()
+    try:
+        # Basic token auth via query param `token`
+        token = websocket.query_params.get("token")
+        if not token:
+            await websocket.send_json({"type": "error", "message": "Unauthorized: missing token"})
+            await websocket.close(code=1008)
+            return
+
+        payload = verify_token(token)
+        if not payload or payload.get("type") != "access":
+            await websocket.send_json({"type": "error", "message": "Unauthorized: invalid token"})
+            await websocket.close(code=1008)
+            return
+
+        user_id = payload.get("sub")
+
+        while True:
+            data = await websocket.receive_json()
+            msg_type = data.get("type")
+            if msg_type != "transcript.final":
+                await websocket.send_json({"type": "error", "message": "Unknown message type"})
+                continue
+
+            transcript = data.get("transcript") or ""
+            conversation_id = data.get("conversation_id")
+            clinical_context_id = data.get("clinical_context_id")
+
+            ttfb_start = time.monotonic()
+
+            try:
+                session_uuid = uuid.UUID(conversation_id)
+            except Exception:
+                await websocket.send_json({"type": "error", "message": "Invalid conversation_id"})
+                continue
+
+            session: ChatSession | None = db.query(ChatSession).filter(ChatSession.id == session_uuid).first()
+            if not session or str(session.user_id) != str(user_id):
+                await websocket.send_json({"type": "error", "message": "Conversation not found"})
+                continue
+
+            # Persist user message
+            user_message = Message(
+                session_id=session.id,
+                role="user",
+                content=transcript,
+                message_metadata={"source": "voice_ws_relay", "clinical_context_id": clinical_context_id},
+            )
+            db.add(user_message)
+            session.message_count = (session.message_count or 0) + 1
+            db.commit()
+            db.refresh(user_message)
+
+            query_request = QueryRequest(
+                session_id=str(session.id),
+                query=transcript,
+                clinical_context_id=clinical_context_id,
+            )
+
+            full_answer_parts: list[str] = []
+
+            async def emit_chunk(chunk: str):
+                full_answer_parts.append(chunk)
+                await websocket.send_json({"type": "chunk", "content": chunk})
+
+            query_response = await voice_query_orchestrator.stream_query(
+                query_request, trace_id=str(user_message.id), on_chunk=emit_chunk
+            )
+            voice_first_audio_latency_seconds.observe(time.monotonic() - ttfb_start)
+
+            # Persist assistant message
+            assistant_message = Message(
+                session_id=session.id,
+                role="assistant",
+                content=query_response.answer,
+                tokens=query_response.tokens,
+                model=query_response.model,
+                message_metadata={
+                    "source": "voice_ws_relay",
+                    "citations": [c.dict() for c in query_response.citations],
+                    "finish_reason": query_response.finish_reason,
+                    "clinical_context_id": clinical_context_id,
+                },
+            )
+            db.add(assistant_message)
+            session.message_count = (session.message_count or 0) + 1
+            db.commit()
+
+            await websocket.send_json(
+                {
+                    "type": "done",
+                    "answer": query_response.answer,
+                    "citations": [c.dict() for c in query_response.citations],
+                    "user_message_id": str(user_message.id),
+                    "assistant_message_id": str(assistant_message.id),
+                }
+            )
+
+            # Metrics
+            ttfb = time.monotonic() - ttfb_start
+            voice_proxy_ttfb_seconds.observe(ttfb)
+            relay_duration = time.monotonic() - connection_start
+            voice_relay_latency_seconds.labels(path="ws").observe(relay_duration)
+
+    except WebSocketDisconnect:
+        logger.info("Voice relay websocket disconnected")
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Voice relay websocket error: %s", exc, exc_info=True)
+        try:
+            await websocket.send_json({"type": "error", "message": str(exc)})
+        except Exception:
+            pass
+        await websocket.close(code=1011)

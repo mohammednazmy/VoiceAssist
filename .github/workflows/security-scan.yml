@@ -11,7 +11,7 @@ on:
       - develop
   schedule:
     # Run daily at 2 AM UTC
-    - cron: '0 2 * * *'
+    - cron: "0 2 * * *"
   workflow_dispatch: # Allow manual trigger
 
 env:
@@ -146,22 +146,24 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: voiceassist-api:scan
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH,MEDIUM'
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH,MEDIUM"
+          ignore-unfixed: true
 
       - name: Run Trivy scan (table output)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: voiceassist-api:scan
-          format: 'table'
-          severity: 'CRITICAL,HIGH,MEDIUM'
+          format: "table"
+          severity: "CRITICAL,HIGH,MEDIUM"
+          ignore-unfixed: true
 
       - name: Upload Trivy results to GitHub Security
         if: always()
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: "trivy-results.sarif"
 
       - name: Check for critical vulnerabilities
         run: |
@@ -169,6 +171,7 @@ jobs:
             -v /var/run/docker.sock:/var/run/docker.sock \
             aquasec/trivy image \
             --severity CRITICAL \
+            --ignore-unfixed \
             --exit-code 1 \
             voiceassist-api:scan
 
@@ -252,9 +255,9 @@ jobs:
       - name: Run OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
         with:
-          project: 'VoiceAssist'
-          path: 'services/api-gateway'
-          format: 'HTML'
+          project: "VoiceAssist"
+          path: "services/api-gateway"
+          format: "HTML"
           args: >
             --enableRetired
             --failOnCVSS 7

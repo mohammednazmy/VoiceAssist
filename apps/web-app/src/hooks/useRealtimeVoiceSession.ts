@@ -146,12 +146,21 @@ export interface VoiceMetrics {
 
 export interface UseRealtimeVoiceSessionOptions {
   conversation_id?: string;
+  clinical_context_id?: string;
   voiceSettings?: VoiceSettings;
   onTranscript?: (transcript: RealtimeTranscript) => void;
   onAudioChunk?: (chunk: RealtimeAudioChunk) => void;
   onError?: (error: Error) => void;
   onConnectionChange?: (status: ConnectionStatus) => void;
   onMetricsUpdate?: (metrics: VoiceMetrics) => void;
+  onRelayResult?: (payload: {
+    answer: string;
+    citations: Record<string, any>[];
+  }) => void;
+  onRelayPersist?: (ids: {
+    user_message_id: string;
+    assistant_message_id: string;
+  }) => void;
   autoConnect?: boolean;
 }
 
@@ -188,6 +197,7 @@ export function useRealtimeVoiceSession(
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const processorNodeRef = useRef<ScriptProcessorNode | null>(null);
+  const playbackQueueRef = useRef<AudioBufferSourceNode | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -203,6 +213,7 @@ export function useRealtimeVoiceSession(
   const sessionStartTimeRef = useRef<number | null>(null);
   const speechStopTimeRef = useRef<number | null>(null);
   const hasReceivedFirstTranscriptRef = useRef(false);
+  const lastFinalTranscriptRef = useRef<string | null>(null);
 
   // Refs to break circular dependencies between callbacks
   // Used so scheduleReconnect and initializeWebSocket can reference
@@ -349,9 +360,37 @@ export function useRealtimeVoiceSession(
           lastResponseLatencyMs: metricsRef.current.lastResponseLatencyMs,
           sessionDurationMs: metricsRef.current.sessionDurationMs,
         },
+        breadcrumb: "voice_error_handler",
       });
     },
     [options, updateStatus],
+  );
+
+  /**
+   * Relay a final transcript to the backend for RAG + persistence.
+   */
+  const relayTranscript = useCallback(
+    async (transcript: string) => {
+      if (!transcript.trim() || !options.conversation_id) return;
+      try {
+        const payload = await apiClient.relayVoiceTranscript({
+          conversation_id: options.conversation_id,
+          transcript,
+          clinical_context_id: options.clinical_context_id ?? null,
+        });
+        options.onRelayPersist?.({
+          user_message_id: payload.user_message_id,
+          assistant_message_id: payload.assistant_message_id,
+        });
+        options.onRelayResult?.({
+          answer: payload.answer,
+          citations: payload.citations,
+        });
+      } catch (err) {
+        voiceLog.error("[RealtimeVoiceSession] Relay failed", err);
+      }
+    },
+    [apiClient, options],
   );
 
   /**
@@ -393,6 +432,11 @@ export function useRealtimeVoiceSession(
         // WebSocket event handlers
         ws.onopen = () => {
           voiceLog.debug(" WebSocket connected");
+          captureVoiceError(new Error("voice_ws_open"), {
+            status: "connected",
+            conversationId: options.conversation_id,
+            breadcrumb: "Voice WS connected",
+          });
 
           // Send session.update message with configuration
           ws.send(
@@ -417,13 +461,24 @@ export function useRealtimeVoiceSession(
 
         ws.onerror = (event) => {
           voiceLog.error(" WebSocket error:", event);
-          reject(new Error("WebSocket connection failed"));
+          const err = new Error("WebSocket connection failed");
+          captureVoiceError(err, {
+            status: "error",
+            conversationId: options.conversation_id,
+            breadcrumb: "Voice WS error",
+          });
+          reject(err);
         };
 
         ws.onclose = (event) => {
           voiceLog.debug(
             `[RealtimeVoiceSession] WebSocket closed: ${event.code} ${event.reason}`,
           );
+          captureVoiceError(new Error("voice_ws_close"), {
+            status: "disconnected",
+            conversationId: options.conversation_id,
+            breadcrumb: `Voice WS closed code=${event.code}`,
+          });
 
           // Check if session expired
           if (sessionConfig && sessionConfig.expires_at * 1000 < Date.now()) {
@@ -523,6 +578,7 @@ export function useRealtimeVoiceSession(
           setTranscript(userTranscript);
           // Clear partial transcript since we now have the final one
           setPartialTranscript("");
+          lastFinalTranscriptRef.current = userTranscript;
 
           // Track STT latency (time from speech_stopped to transcript)
           const now = Date.now();
@@ -557,60 +613,21 @@ export function useRealtimeVoiceSession(
             is_final: true,
             timestamp: now,
           });
+
+          // Relay transcript for RAG + persistence (fire and forget)
+          void relayTranscript(userTranscript);
           break;
         }
 
         case "response.audio.delta": {
           // AI audio response chunk (base64 PCM16)
-          const audioData = message.delta;
-          if (audioData) {
-            const now = Date.now();
-
-            // Track response latency (first audio delta after speech stopped)
-            if (speechStopTimeRef.current) {
-              const responseLatency = now - speechStopTimeRef.current;
-              updateMetrics({
-                lastResponseLatencyMs: responseLatency,
-                aiResponseCount: metrics.aiResponseCount + 1,
-              });
-              voiceLog.debug(
-                `[RealtimeVoiceSession] Response latency: ${responseLatency}ms`,
-              );
-              // Clear to avoid double-counting for subsequent audio chunks
-              speechStopTimeRef.current = null;
-            }
-
-            const buffer = Uint8Array.from(atob(audioData), (c) =>
-              c.charCodeAt(0),
-            ).buffer;
-            options.onAudioChunk?.({
-              audio: buffer,
-              timestamp: now,
-            });
-          }
+          // We ignore upstream AI audio; we rely on backend relay + TTS to keep content consistent with RAG.
           break;
         }
 
         case "response.audio_transcript.delta":
-          // AI speech transcript (partial)
-          const aiTranscript = message.delta || "";
-          setTranscript((prev) => prev + aiTranscript);
-          options.onTranscript?.({
-            text: aiTranscript,
-            is_final: false,
-            timestamp: Date.now(),
-          });
-          break;
-
         case "response.audio_transcript.done":
-          // AI speech transcript (final)
-          const finalTranscript = message.transcript || "";
-          setTranscript(finalTranscript);
-          options.onTranscript?.({
-            text: finalTranscript,
-            is_final: true,
-            timestamp: Date.now(),
-          });
+          // Ignore OpenAI-generated AI transcripts to avoid divergence from backend RAG response
           break;
 
         case "input_audio_buffer.speech_started":
@@ -683,45 +700,60 @@ export function useRealtimeVoiceSession(
     mediaStreamRef.current = stream;
 
     try {
-      // Create audio context and processor
+      // Create audio context and AudioWorklet with small buffer for lower latency
       const audioContext = new AudioContext({ sampleRate: 24000 });
       audioContextRef.current = audioContext;
 
-      const source = audioContext.createMediaStreamSource(stream);
-      const processor = audioContext.createScriptProcessor(4096, 1, 1);
-      processorNodeRef.current = processor;
-
-      // Process audio data and send to WebSocket
-      processor.onaudioprocess = (event) => {
-        if (ws.readyState !== WebSocket.OPEN) return;
-
-        const inputData = event.inputBuffer.getChannelData(0);
-
-        // Convert Float32Array to Int16Array (PCM16)
-        const pcm16 = new Int16Array(inputData.length);
-        for (let i = 0; i < inputData.length; i++) {
-          const s = Math.max(-1, Math.min(1, inputData[i]));
-          pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+      const workletCode = `
+        class PCMWorkletProcessor extends AudioWorkletProcessor {
+          process(inputs) {
+            const input = inputs[0];
+            if (!input || !input[0]) return true;
+            const inputChannel = input[0];
+            const pcm16 = new Int16Array(inputChannel.length);
+            for (let i = 0; i < inputChannel.length; i++) {
+              const s = Math.max(-1, Math.min(1, inputChannel[i]));
+              pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+            }
+            this.port.postMessage(pcm16.buffer, [pcm16.buffer]);
+            return true;
+          }
         }
+        registerProcessor('pcm-worklet', PCMWorkletProcessor);
+      `;
+      const workletBlob = new Blob([workletCode], {
+        type: "application/javascript",
+      });
+      const workletUrl = URL.createObjectURL(workletBlob);
+      await audioContext.audioWorklet.addModule(workletUrl);
 
-        // Send audio chunk to Realtime API
+      const source = audioContext.createMediaStreamSource(stream);
+      const workletNode = new AudioWorkletNode(audioContext, "pcm-worklet");
+
+      workletNode.port.onmessage = (event) => {
+        if (ws.readyState !== WebSocket.OPEN) return;
+        const pcmBuffer = event.data as ArrayBuffer;
+        const uint8 = new Uint8Array(pcmBuffer);
+        // Backpressure: drop if socket is backed up
+        if (ws.bufferedAmount > 256 * 1024) {
+          voiceLog.warn(
+            "[RealtimeVoiceSession] Dropping audio chunk due to backpressure",
+          );
+          return;
+        }
+        // Base64 encode PCM16
+        const base64 = btoa(String.fromCharCode(...uint8));
         ws.send(
           JSON.stringify({
             type: "input_audio_buffer.append",
-            audio: btoa(
-              String.fromCharCode.apply(
-                null,
-                Array.from(new Uint8Array(pcm16.buffer)),
-              ),
-            ),
+            audio: base64,
           }),
         );
       };
 
-      source.connect(processor);
-      processor.connect(audioContext.destination);
-
-      voiceLog.debug(" Audio streaming initialized");
+      source.connect(workletNode);
+      // WorkletNode does not need to connect to destination for processing
+      voiceLog.debug(" Audio streaming initialized (AudioWorklet)");
     } catch (err) {
       // Clean up the stream if audio context setup fails
       stream.getTracks().forEach((track) => track.stop());
@@ -871,6 +903,11 @@ export function useRealtimeVoiceSession(
     if (processorNodeRef.current) {
       processorNodeRef.current.disconnect();
       processorNodeRef.current = null;
+    }
+    if (playbackQueueRef.current) {
+      playbackQueueRef.current.stop();
+      playbackQueueRef.current.disconnect();
+      playbackQueueRef.current = null;
     }
 
     if (audioContextRef.current) {
