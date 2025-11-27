@@ -1,58 +1,24 @@
-import { useEffect, useState } from 'react';
-import { fetchAPI } from '../lib/api';
 import { ServiceStatus } from '../components/dashboard/ServiceStatus';
-
-interface SystemMetrics {
-  total_users: number;
-  active_users: number;
-  admin_users: number;
-  timestamp: string;
-}
-
-interface ServiceHealth {
-  database: boolean;
-  redis: boolean;
-  qdrant: boolean;
-}
+import { MetricCard } from '../components/dashboard/MetricCard';
+import { useMetrics } from '../hooks/useMetrics';
 
 export function DashboardPage() {
-  const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
-  const [health, setHealth] = useState<ServiceHealth | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 30000); // Refresh every 30s
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadData = async () => {
-    try {
-      const token = localStorage.getItem('auth_token');
-      const headers = { Authorization: `Bearer ${token}` };
-
-      const [metricsData, healthData] = await Promise.all([
-        fetchAPI<SystemMetrics>('/api/admin/panel/summary', { headers }),
-        fetchAPI<ServiceHealth>('/health', { headers }).catch(() => ({
-          database: true,
-          redis: true,
-          qdrant: true,
-        })),
-      ]);
-
-      setMetrics(metricsData);
-      setHealth(healthData);
-      setError(null);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load dashboard data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    metrics,
+    health,
+    loading,
+    error,
+    lastUpdated,
+    connectionStatus,
+    autoRefresh,
+    isPaused,
+    refreshNow,
+    toggleAutoRefresh,
+    togglePause,
+  } = useMetrics();
 
   const renderMetricCards = () => {
-    if (loading) {
+    if (loading && !metrics) {
       return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, idx) => (
@@ -76,6 +42,14 @@ export function DashboardPage() {
           value={metrics?.total_users ?? 0}
           icon="👥"
           color="blue"
+          showControls
+          connectionStatus={connectionStatus}
+          lastUpdated={lastUpdated}
+          autoRefresh={autoRefresh}
+          isPaused={isPaused}
+          onToggleAutoRefresh={toggleAutoRefresh}
+          onTogglePause={togglePause}
+          onRefresh={refreshNow}
         />
         <MetricCard
           title="Active Users"
@@ -139,7 +113,33 @@ export function DashboardPage() {
 
       <div className="space-y-4">
         <div>
-          <h2 className="text-lg font-semibold text-slate-200 mb-3">User Metrics</h2>
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2 className="text-lg font-semibold text-slate-200">User Metrics</h2>
+            <div className="flex items-center gap-2 text-xs text-slate-300">
+              <span
+                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${
+                  connectionStatus === 'open'
+                    ? 'text-emerald-400 border-emerald-500/50 bg-emerald-500/10'
+                    : 'text-slate-400 border-slate-600 bg-slate-800/60'
+                }`}
+              >
+                <span className="h-2 w-2 rounded-full bg-current" aria-hidden />
+                {connectionStatus === 'open' ? 'Live' : 'Offline'}
+              </span>
+              <span className="px-3 py-1 rounded-md bg-slate-800/60 border border-slate-700">
+                {lastUpdated
+                  ? `Last updated ${new Date(lastUpdated).toLocaleTimeString()}`
+                  : 'Awaiting first update'}
+              </span>
+              <button
+                type="button"
+                onClick={refreshNow}
+                className="px-3 py-1 rounded-md border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors"
+              >
+                Manual refresh
+              </button>
+            </div>
+          </div>
           {renderMetricCards()}
         </div>
 
@@ -150,37 +150,12 @@ export function DashboardPage() {
       </div>
 
       <div className="text-xs text-slate-500">
-        {metrics?.timestamp ? (
-          <>Last updated: {new Date(metrics.timestamp).toLocaleString()}</>
+        {lastUpdated ? (
+          <>Last updated: {new Date(lastUpdated).toLocaleString()}</>
         ) : (
           'Waiting for first successful sync…'
         )}
       </div>
-    </div>
-  );
-}
-
-interface MetricCardProps {
-  title: string;
-  value: number;
-  icon: string;
-  color: 'blue' | 'green' | 'purple';
-}
-
-function MetricCard({ title, value, icon, color }: MetricCardProps) {
-  const colors = {
-    blue: 'from-blue-900/50 to-blue-950/30 border-blue-800 text-blue-400',
-    green: 'from-green-900/50 to-green-950/30 border-green-800 text-green-400',
-    purple: 'from-purple-900/50 to-purple-950/30 border-purple-800 text-purple-400',
-  };
-
-  return (
-    <div className={`bg-gradient-to-br ${colors[color]} border rounded-lg p-4`}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-2xl">{icon}</span>
-        <span className="text-3xl font-bold">{value}</span>
-      </div>
-      <div className="text-sm text-slate-300">{title}</div>
     </div>
   );
 }
