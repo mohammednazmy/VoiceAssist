@@ -5,7 +5,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-type Theme = "light" | "dark";
+type Theme = "light" | "dark" | "system";
+type ResolvedTheme = "light" | "dark";
 
 interface ThemeContextType {
   theme: Theme;
@@ -19,20 +20,25 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     // Check localStorage for saved theme
     const savedTheme = localStorage.getItem("voiceassist-theme");
-    if (savedTheme === "light" || savedTheme === "dark") {
+    if (savedTheme === "light" || savedTheme === "dark" || savedTheme === "system") {
       return savedTheme;
     }
-    // Check system preference
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      return "dark";
-    }
-    return "light";
+    return "system";
   });
 
+  // Resolve "system" to actual light/dark based on OS preference
+  const getResolvedTheme = (): ResolvedTheme => {
+    if (theme === "system") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    return theme;
+  };
+
   useEffect(() => {
+    const resolved = getResolvedTheme();
     // Update document class
     document.documentElement.classList.remove("light", "dark");
-    document.documentElement.classList.add(theme);
+    document.documentElement.classList.add(resolved);
     // Save to localStorage
     localStorage.setItem("voiceassist-theme", theme);
   }, [theme]);

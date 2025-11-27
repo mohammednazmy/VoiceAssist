@@ -92,7 +92,7 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
       <div className="flex items-center space-x-3">
         <Button
           type="button"
-          variant={isRecording ? 'destructive' : 'primary'}
+          variant={isRecording ? 'danger' : 'primary'}
           size="lg"
           disabled={disabled || isProcessing}
           onMouseDown={startRecording}

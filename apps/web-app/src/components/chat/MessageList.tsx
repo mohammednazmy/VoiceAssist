@@ -21,7 +21,7 @@ export interface MessageListProps {
   onEditSave?: (messageId: string, newContent: string) => Promise<void>;
   onRegenerate?: (messageId: string) => Promise<void>;
   onDelete?: (messageId: string) => Promise<void>;
-  onBranch?: (messageId: string) => void;
+  onBranch?: (messageId: string) => Promise<void>;
   /** Set of message IDs that have branches created from them */
   branchedMessageIds?: Set<string>;
   /** Pagination: callback to load older messages */

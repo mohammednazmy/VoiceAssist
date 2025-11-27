@@ -38,7 +38,7 @@ function createPaginatedResponse(
     items,
     page,
     pageSize,
-    total,
+    totalCount: total,
     totalPages: Math.ceil(total / pageSize),
   };
 }

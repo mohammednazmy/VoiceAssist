@@ -14,7 +14,7 @@ const mockMessages: Message[] = [
     conversationId: "conv-1",
     role: "user",
     content: "What is the treatment for hypertension?",
-    timestamp: new Date().toISOString(),
+    timestamp: Date.now(),
   },
   {
     id: "msg-2",
@@ -22,14 +22,14 @@ const mockMessages: Message[] = [
     role: "assistant",
     content:
       "Hypertension treatment typically involves lifestyle modifications and medications. First-line medications include ACE inhibitors, ARBs, calcium channel blockers, and thiazide diuretics.",
-    timestamp: new Date().toISOString(),
+    timestamp: Date.now(),
   },
   {
     id: "msg-3",
     conversationId: "conv-1",
     role: "user",
     content: "What about ACE inhibitors specifically?",
-    timestamp: new Date().toISOString(),
+    timestamp: Date.now(),
   },
   {
     id: "msg-4",
@@ -37,7 +37,7 @@ const mockMessages: Message[] = [
     role: "assistant",
     content:
       "ACE inhibitors work by blocking the angiotensin-converting enzyme, which reduces blood pressure.",
-    timestamp: new Date().toISOString(),
+    timestamp: Date.now(),
   },
 ];
 
@@ -100,7 +100,7 @@ describe("BranchPreview", () => {
         role: "assistant",
         content:
           "This is a very long message that should be truncated. ".repeat(10),
-        timestamp: new Date().toISOString(),
+        timestamp: Date.now(),
       };
 
       render(

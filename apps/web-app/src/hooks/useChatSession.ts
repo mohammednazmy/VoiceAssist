@@ -569,6 +569,9 @@ export function useChatSession(
 
   const editMessage = useCallback(
     async (messageId: string, newContent: string) => {
+      if (!conversationId) {
+        throw new Error("Cannot edit message: no conversation ID");
+      }
       try {
         const updatedMessage = await apiClient.editMessage(
           conversationId,
@@ -613,13 +616,17 @@ export function useChatSession(
       setMessages((prev) => prev.filter((m) => m.id !== assistantMessageId));
 
       // Re-send the user message (will trigger new assistant response via WebSocket)
-      sendMessage(userMessage.content, userMessage.attachments);
+      // Note: attachments are not re-uploaded on regenerate
+      sendMessage(userMessage.content);
     },
     [messages, sendMessage],
   );
 
   const deleteMessage = useCallback(
     async (messageId: string) => {
+      if (!conversationId) {
+        throw new Error("Cannot delete message: no conversation ID");
+      }
       if (!confirm("Are you sure you want to delete this message?")) {
         return;
       }

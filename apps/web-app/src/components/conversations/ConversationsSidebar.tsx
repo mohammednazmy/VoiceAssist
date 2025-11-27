@@ -500,7 +500,7 @@ export function ConversationsSidebar() {
                     </h3>
                     <p className="text-xs text-neutral-500 mt-1">
                       {formatDate(
-                        conversation.updatedAt || conversation.createdAt,
+                        new Date(conversation.updatedAt || conversation.createdAt).getTime(),
                       )}
                     </p>
                   </div>

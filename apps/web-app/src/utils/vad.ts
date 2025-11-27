@@ -39,7 +39,7 @@ export interface VADState {
 export class VoiceActivityDetector {
   private audioContext: AudioContext;
   private analyser: AnalyserNode;
-  private dataArray: Uint8Array;
+  private dataArray: Uint8Array<ArrayBuffer>;
   private config: VADConfig;
   private state: VADState;
   private rafId: number | null = null;
@@ -54,7 +54,7 @@ export class VoiceActivityDetector {
     });
     this.analyser = this.audioContext.createAnalyser();
     this.analyser.fftSize = this.config.fftSize;
-    this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+    this.dataArray = new Uint8Array(new ArrayBuffer(this.analyser.frequencyBinCount));
 
     this.state = {
       isSpeaking: false,

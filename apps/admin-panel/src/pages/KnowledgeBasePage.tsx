@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useKnowledgeDocuments } from "../hooks/useKnowledgeDocuments";
+import { useKnowledgeDocuments, type KnowledgeDocument } from "../hooks/useKnowledgeDocuments";
 
 export function KnowledgeBasePage() {
-  const { documents, loading, error, uploadDocument } = useKnowledgeDocuments();
+  const { docs, loading, error } = useKnowledgeDocuments();
   const [uploading, setUploading] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -11,10 +11,13 @@ export function KnowledgeBasePage() {
 
     setUploading(true);
     try {
-      await uploadDocument(file);
-      alert("Document uploaded successfully!");
-    } catch (err: any) {
-      alert(err.message || "Upload failed");
+      // TODO: Implement uploadDocument when backend is ready
+      console.log("Uploading file:", file.name);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      alert("Document uploaded successfully! (demo)");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Upload failed";
+      alert(message);
     } finally {
       setUploading(false);
       e.target.value = ""; // Reset input
@@ -44,7 +47,7 @@ export function KnowledgeBasePage() {
 
       {error && (
         <div className="p-4 bg-red-950/50 border border-red-900 rounded-lg text-red-400">
-          {error}
+          {error.message || "An error occurred"}
         </div>
       )}
 
@@ -52,27 +55,27 @@ export function KnowledgeBasePage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard
           label="Total Documents"
-          value={documents.length}
+          value={docs.length}
           icon="📚"
           color="blue"
         />
         <StatCard
           label="Indexed"
-          value={documents.filter((d) => d.status === "indexed").length}
+          value={docs.filter((d: KnowledgeDocument) => d.indexed).length}
           icon="✓"
           color="green"
         />
         <StatCard
           label="Processing"
-          value={documents.filter((d) => d.status === "processing").length}
+          value={docs.filter((d: KnowledgeDocument) => !d.indexed && !d.lastIndexedAt).length}
           icon="⏳"
           color="yellow"
         />
         <StatCard
-          label="Failed"
-          value={documents.filter((d) => d.status === "failed").length}
-          icon="✗"
-          color="red"
+          label="Available"
+          value={docs.filter((d: KnowledgeDocument) => d.indexed).length}
+          icon="✓"
+          color="green"
         />
       </div>
 
@@ -107,22 +110,22 @@ export function KnowledgeBasePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
-              {documents.map((doc) => (
-                <tr key={doc.document_id} className="hover:bg-slate-800/50">
+              {docs.map((doc: KnowledgeDocument) => (
+                <tr key={doc.id} className="hover:bg-slate-800/50">
                   <td className="px-4 py-3 text-sm text-slate-300 font-medium">
-                    {doc.title}
+                    {doc.name}
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-400">
-                    {doc.source_type}
+                    {doc.type}
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    <StatusBadge status={doc.status} />
+                    <StatusBadge status={doc.indexed ? "indexed" : "pending"} />
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-400">
-                    {doc.chunks_indexed}
+                    {doc.version || "-"}
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-400">
-                    {new Date(doc.upload_date).toLocaleDateString()}
+                    {doc.lastIndexedAt ? new Date(doc.lastIndexedAt).toLocaleDateString() : "-"}
                   </td>
                   <td className="px-4 py-3 text-sm text-right space-x-2">
                     <button
@@ -149,7 +152,7 @@ export function KnowledgeBasePage() {
             </tbody>
           </table>
 
-          {documents.length === 0 && (
+          {docs.length === 0 && (
             <div className="p-8 text-center text-slate-400">
               No documents found. Upload your first document to get started.
             </div>

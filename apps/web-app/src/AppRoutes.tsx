@@ -44,11 +44,7 @@ const ClinicalContextPage = lazy(() =>
     default: m.ClinicalContextPage,
   })),
 );
-const AdminDashboard = lazy(() =>
-  import("./pages/admin/AdminDashboard").then((m) => ({
-    default: m.AdminDashboard,
-  })),
-);
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const OAuthCallbackPage = lazy(() =>
   import("./pages/OAuthCallbackPage").then((m) => ({
     default: m.OAuthCallbackPage,

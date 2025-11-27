@@ -3,7 +3,7 @@
  * Tests for the conversation branching sidebar
  */
 
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { BranchSidebar } from "../BranchSidebar";
 import * as useBranchingModule from "../../../hooks/useBranching";
@@ -118,7 +118,7 @@ describe("BranchSidebar", () => {
     const mockBranches = [
       {
         branchId: "main",
-        conversationId: "conv-1",
+        sessionId: "conv-1",
         parentMessageId: null,
         createdAt: "2025-01-01T00:00:00Z",
         lastActivity: "2025-01-02T00:00:00Z",
@@ -126,7 +126,7 @@ describe("BranchSidebar", () => {
       },
       {
         branchId: "branch-001",
-        conversationId: "conv-1",
+        sessionId: "conv-1",
         parentMessageId: "msg-5",
         createdAt: "2025-01-01T12:00:00Z",
         lastActivity: "2025-01-01T13:00:00Z",

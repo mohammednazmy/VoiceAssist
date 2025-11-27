@@ -247,7 +247,8 @@ export function useConversations(options: UseConversationsOptions = {}) {
         }
 
         // Get all messages for this conversation
-        const messages = await apiClient.getMessages(id);
+        const messagesResponse = await apiClient.getMessages(id);
+        const messages = messagesResponse.items;
 
         // Generate export content based on format
         let content: string;

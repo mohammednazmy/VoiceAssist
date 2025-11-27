@@ -20,7 +20,12 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "types": [
-      "vite/client"
+      "vite/client",
+      "node"
+    ],
+    "typeRoots": [
+      "./node_modules/@types",
+      "../../node_modules/@types"
     ]
   },
   "include": [

@@ -23,8 +23,7 @@ export function ShareDialog({
 }: ShareDialogProps) {
   const { apiClient } = useAuth();
   const [activeLinks, setActiveLinks] = useState<ShareLink[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [isLoading, _setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

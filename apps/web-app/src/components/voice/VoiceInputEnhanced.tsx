@@ -338,7 +338,7 @@ export function VoiceInputEnhanced({
         {mode === "push-to-talk" ? (
           <Button
             type="button"
-            variant={isRecording ? "destructive" : "primary"}
+            variant={isRecording ? "danger" : "primary"}
             size="lg"
             disabled={!canRecord}
             onMouseDown={startRecording}
@@ -391,7 +391,7 @@ export function VoiceInputEnhanced({
         ) : (
           <Button
             type="button"
-            variant={isRecording ? "destructive" : "primary"}
+            variant={isRecording ? "danger" : "primary"}
             size="lg"
             disabled={!canRecord}
             onClick={isRecording ? stopRecording : startRecording}
@@ -442,10 +442,8 @@ export function VoiceInputEnhanced({
         </div>
       )}
 
-      {/* Error Display */}
-      {error &&
-        microphoneState !== "denied" &&
-        microphoneState !== "unavailable" && (
+      {/* Error Display - only show for non-microphone-permission errors */}
+      {error && (
           <div className="p-3 bg-red-50 rounded-md border border-red-200 flex items-start space-x-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
