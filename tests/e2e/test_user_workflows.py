@@ -132,11 +132,13 @@ class TestRAGWorkflow:
             pytest.skip("RAG query endpoint not implemented")
         
         assert query_response.status_code == 200, f"Query failed: {query_response.text}"
-        
+
         result = query_response.json()
         assert "answer" in result
         assert "sources" in result
         assert len(result["answer"]) > 0
+        assert "model" in result
+        assert "retrieval_confidence" in result
 
     async def test_search_medical_documents(self, api_client: AsyncClient, user_token: str):
         """Test vector search in medical knowledge base."""
