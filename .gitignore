@@ -50,6 +50,7 @@ yarn-error.log
 out/
 build/
 dist/
+apps/docs-site/public/search-index.json
 
 # Turbo
 .turbo/

@@ -2,6 +2,45 @@
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import React from "react";
+
+import { slugifyHeading } from "@/lib/search";
+
+function textFromChildren(children: React.ReactNode): string {
+  return React.Children.toArray(children)
+    .map((child) => {
+      if (typeof child === "string" || typeof child === "number") {
+        return child.toString();
+      }
+      if (React.isValidElement(child)) {
+        return textFromChildren(child.props.children);
+      }
+      return "";
+    })
+    .join(" ")
+    .trim();
+}
+
+function createHeading(
+  Tag: keyof JSX.IntrinsicElements,
+  className: string
+): React.FC<React.HTMLAttributes<HTMLHeadingElement>> {
+  const HeadingComponent = ({ children, ...props }) => {
+    const text = textFromChildren(children);
+    const id = slugifyHeading(text || props.id || "heading");
+
+    return (
+      <Tag id={id} className={className} {...props}>
+        <a href={`#${id}`} className="no-underline hover:underline">
+          {children}
+        </a>
+      </Tag>
+    );
+  };
+
+  HeadingComponent.displayName = `Heading-${Tag}`;
+  return HeadingComponent;
+}
 
 interface MarkdownRendererProps {
   content: string;
@@ -14,29 +53,17 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         remarkPlugins={[remarkGfm]}
         components={{
           // Custom heading rendering with anchor links
-          h1: ({ children, ...props }) => (
-            <h1
-              className="text-3xl font-bold text-gray-900 dark:text-white mb-6"
-              {...props}
-            >
-              {children}
-            </h1>
+          h1: createHeading(
+            "h1",
+            "text-3xl font-bold text-gray-900 dark:text-white mb-6"
           ),
-          h2: ({ children, ...props }) => (
-            <h2
-              className="text-2xl font-semibold text-gray-900 dark:text-white mt-8 mb-4"
-              {...props}
-            >
-              {children}
-            </h2>
+          h2: createHeading(
+            "h2",
+            "text-2xl font-semibold text-gray-900 dark:text-white mt-8 mb-4"
           ),
-          h3: ({ children, ...props }) => (
-            <h3
-              className="text-xl font-semibold text-gray-900 dark:text-white mt-6 mb-3"
-              {...props}
-            >
-              {children}
-            </h3>
+          h3: createHeading(
+            "h3",
+            "text-xl font-semibold text-gray-900 dark:text-white mt-6 mb-3"
           ),
           // Custom code block styling
           pre: ({ children, ...props }) => (
