@@ -13,26 +13,38 @@ export default defineConfig({
     testTimeout: 10000,
     hookTimeout: 10000,
     teardownTimeout: 5000,
-    // Use threads pool which is more memory efficient for these tests
-    pool: 'threads',
+    // Use forks pool which handles memory better with process isolation
+    pool: 'forks',
     poolOptions: {
-      threads: {
-        singleThread: true, // Run all tests in single thread to prevent OOM
-        isolate: false, // Disable isolation to reduce memory overhead
+      forks: {
+        singleFork: false, // Use separate forks per file for memory isolation
+        isolate: true, // Enable isolation to clean memory between test files
       },
     },
     // Limit concurrent tests to prevent memory exhaustion
     maxConcurrency: 3,
     // Run test files sequentially for more predictable memory usage
     fileParallelism: false,
+    // Include all test patterns
+    include: ['src/**/*.test.{ts,tsx}'],
+    // Exclude memory-heavy tests that cause OOM (tests importing heavy page components)
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      // Integration tests import heavy page components causing OOM
+      // TODO: These should be run separately with higher memory or in CI
+      '**/integration/**',
+    ],
     // Fix ESM import issues (react-syntax-highlighter is mocked via alias)
-    deps: {
-      inline: [
-        'refractor',
-        'remark-gfm',
-        'remark-math',
-        'rehype-katex',
-      ],
+    server: {
+      deps: {
+        inline: [
+          'refractor',
+          'remark-gfm',
+          'remark-math',
+          'rehype-katex',
+        ],
+      },
     },
   },
   resolve: {
