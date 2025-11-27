@@ -115,8 +115,8 @@ All documentation is in `/Users/mohammednazmy/VoiceAssist/docs/`. Here's the com
 | **[SERVICE_CATALOG.md](SERVICE_CATALOG.md)** ⭐ | Complete catalog of all 10 microservices | All developers, DevOps |
 | **[SEMANTIC_SEARCH_DESIGN.md](SEMANTIC_SEARCH_DESIGN.md)** ⭐ | Knowledge base, vector search, RAG pipeline | Backend devs, ML |
 | **[server/README.md](../server/README.md)** | Backend API documentation | Backend devs |
-| **[web-app/README.md](../web-app/README.md)** | Web app implementation details | Frontend devs |
-| **[admin-panel/README.md](../admin-panel/README.md)** | Admin panel implementation details | Frontend devs |
+| **[apps/web-app/README.md](../apps/web-app/README.md)** | Web app implementation details | Frontend devs |
+| **[apps/admin-panel/README.md](../apps/admin-panel/README.md)** | Admin panel implementation details | Frontend devs |
 
 ### 🔒 Security & Compliance
 
@@ -381,7 +381,7 @@ I want to work on Phase [N]. Please:
 ### Documentation
 - **All specs**: `/Users/mohammednazmy/VoiceAssist/docs/`
 - **Phase docs**: `/Users/mohammednazmy/VoiceAssist/docs/phases/`
-- **Code repos**: `/Users/mohammednazmy/VoiceAssist/{server,web-app,admin-panel}/`
+- **Code repos**: `/Users/mohammednazmy/VoiceAssist/{server,apps/web-app,apps/admin-panel}/`
 
 ### Key Technologies
 - **Backend**: FastAPI, SQLAlchemy, Alembic, LangChain

@@ -292,8 +292,8 @@ VoiceAssist is a comprehensive AI assistant system designed specifically for med
 ### Component READMEs
 - [server/README.md](../server/README.md) - Backend server
 - [macos-client/README.md](../macos-client/README.md) - macOS client
-- [web-app/README.md](../web-app/README.md) - Web application
-- [admin-panel/README.md](../admin-panel/README.md) - Admin panel
+- [apps/web-app/README.md](../apps/web-app/README.md) - Web application
+- [apps/admin-panel/README.md](../apps/admin-panel/README.md) - Admin panel
 - [docs-site/README.md](../docs-site/README.md) - Documentation site
 
 ## Quick Start Commands
@@ -338,14 +338,14 @@ python3 main.py
 
 ### Web App Development
 ```bash
-cd ~/VoiceAssist/web-app
+cd ~/VoiceAssist/apps/web-app
 npm install
 npm run dev
 ```
 
 ### Admin Panel Development
 ```bash
-cd ~/VoiceAssist/admin-panel
+cd ~/VoiceAssist/apps/admin-panel
 npm install
 npm run dev
 ```
