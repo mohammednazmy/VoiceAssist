@@ -20,6 +20,7 @@ services:
       - WORKERS=4
       - MAX_REQUESTS=1000
       - MAX_REQUESTS_JITTER=100
+      - ALLOWED_ORIGINS=https://voiceassist.example.com,https://staging.voiceassist.example.com,https://monitor.asimo.io,https://frontend-gateway
     deploy:
       resources:
         limits:
@@ -391,6 +392,77 @@ services:
     labels:
       - "com.voiceassist.service=nginx"
       - "com.voiceassist.environment=production"
+
+  # Frontend applications served behind gateway
+  web-app:
+    build:
+      context: ../../apps/web-app
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - VITE_API_BASE_URL=https://voiceassist.example.com/api
+      - VITE_APP_ENV=production
+    networks:
+      - default
+
+  admin-panel:
+    build:
+      context: ../../apps/admin-panel
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - VITE_API_BASE_URL=https://voiceassist.example.com/api
+      - VITE_APP_ENV=production
+    networks:
+      - default
+
+  docs-site:
+    build:
+      context: ../../apps/docs-site
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - NODE_ENV=production
+    networks:
+      - default
+
+  frontend-gateway:
+    image: nginx:stable-alpine
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../../infrastructure/docker/frontend-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web-app
+      - admin-panel
+      - docs-site
+      - voiceassist-server
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.voiceassist.service=frontend-gateway"
+      - "com.voiceassist.environment=production"
+    networks:
+      - default
+
+  frontend-metrics:
+    image: nginx/nginx-prometheus-exporter:1.3.0
+    restart: always
+    command:
+      - "-nginx.scrape-uri=http://frontend-gateway:8080/stub_status"
+    ports:
+      - "9113:9113"
+    depends_on:
+      - frontend-gateway
+    labels:
+      - "com.voiceassist.service=frontend-metrics"
+      - "com.voiceassist.environment=production"
+    networks:
+      - default
 
 volumes:
   postgres_data_prod:

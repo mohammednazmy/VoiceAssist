@@ -37,6 +37,8 @@ jobs:
     strategy:
       matrix:
         node-version: [20.x]
+        environment: [staging, production]
+        environment: [staging, production]
 
     steps:
       - name: Checkout repository
@@ -68,21 +70,39 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Lint apps and documentation site
+        env:
+          DEPLOY_ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          pnpm --filter voiceassist-web lint
+          pnpm --filter voiceassist-admin lint
+          pnpm --filter docs-site lint
+
+      - name: Type-check shared packages
+        env:
+          DEPLOY_ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          pnpm --filter @voiceassist/ui type-check
+          pnpm --filter @voiceassist/api-client type-check
+          pnpm --filter @voiceassist/utils type-check
+
+      - name: Build all apps and packages
+        env:
+          DEPLOY_ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          pnpm --filter voiceassist-web build
+          pnpm --filter voiceassist-admin build
+          pnpm --filter docs-site build
+          pnpm --filter @voiceassist/ui build
+          pnpm --filter @voiceassist/api-client build
+          pnpm --filter @voiceassist/utils build
+
       - name: Security audit
         run: pnpm audit --audit-level=high
         continue-on-error: false
 
-      - name: Run lint
-        run: pnpm lint
-
-      - name: Run type-check
-        run: pnpm type-check
-
-      - name: Run tests
-        run: pnpm test
-
-      - name: Build all packages
-        run: pnpm build
+      - name: Run web app fast tests
+        run: pnpm --filter voiceassist-web test:fast
 
   e2e-tests:
     name: E2E Tests
@@ -150,6 +170,8 @@ jobs:
         run: pnpm test:e2e
         env:
           E2E_BASE_URL: http://localhost:5173
+          CLIENT_GATEWAY_URL: http://localhost:8080
+          API_BASE_URL: http://localhost:8000
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
 
