@@ -2,16 +2,16 @@ import { Metadata } from "next";
 import { DocPage } from "@/components/DocPage";
 
 export const metadata: Metadata = {
-  title: "Debugging Overview",
-  description: "Where to look for issues and how to investigate VoiceAssist",
+  title: "Debugging Index",
+  description: "Central hub for all VoiceAssist troubleshooting documentation",
 };
 
-export default function DebuggingOverviewPage() {
+export default function DebuggingIndexPage() {
   return (
     <DocPage
-      title="Debugging Overview"
-      description="High-level guide on how to debug VoiceAssist - logs, metrics, common symptoms, and where to look"
-      docPaths={["debugging/DEBUGGING_OVERVIEW.md"]}
+      title="Debugging Index"
+      description="Central hub for all VoiceAssist troubleshooting documentation - logs, metrics, health endpoints, and debugging guides by subsystem"
+      docPaths={["debugging/DEBUGGING_INDEX.md"]}
     />
   );
 }

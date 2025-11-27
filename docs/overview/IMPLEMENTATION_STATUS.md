@@ -6,9 +6,10 @@ status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "backend", "frontend", "devops"]
-tags: ["status", "overview", "components", "roadmap"]
+audience: ["human", "agent", "ai-agents", "backend", "frontend", "devops"]
+tags: ["status", "overview", "components", "roadmap", "architecture"]
 relatedServices: ["api-gateway", "web-app", "admin-panel", "docs-site"]
+category: overview
 version: "1.0.0"
 ---
 

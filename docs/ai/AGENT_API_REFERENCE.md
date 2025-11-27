@@ -6,9 +6,10 @@ status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["agent", "backend"]
-tags: ["api", "ai-agent", "json", "documentation"]
+audience: ["agent", "ai-agents", "backend"]
+tags: ["api", "ai-agent", "json", "documentation", "endpoints"]
 relatedServices: ["docs-site"]
+category: ai
 version: "1.1.0"
 ---
 

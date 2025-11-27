@@ -6,9 +6,10 @@ status: stable
 stability: production
 owner: backend
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "backend", "sre"]
-tags: ["debugging", "runbook", "backend", "api-gateway", "database"]
+audience: ["human", "agent", "ai-agents", "backend", "sre"]
+tags: ["debugging", "runbook", "backend", "api-gateway", "database", "troubleshooting"]
 relatedServices: ["api-gateway"]
+category: debugging
 version: "1.0.0"
 ---
 

@@ -19,6 +19,7 @@
     "validate-docs": "node ./scripts/validate-docs.mjs",
     "validate:metadata": "node scripts/validate-metadata.mjs",
     "check:links": "node scripts/check-links.mjs",
+    "validate:endpoints": "node scripts/docs-smoke-test.mjs",
     "validate:all": "pnpm run validate:metadata && pnpm run check:links",
     "generate:api-reference": "node ./scripts/generate-api-reference.mjs",
     "generate:api-docs": "cd ../../services/api-gateway && python3 tools/generate_api_docs.py --format all"

@@ -6,17 +6,59 @@ status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["agent"]
-tags: ["onboarding", "ai-agent", "getting-started"]
+audience: ["agent", "ai-agents"]
+tags: ["onboarding", "ai-agent", "getting-started", "workflows"]
 relatedServices: ["api-gateway", "web-app", "admin-panel", "docs-site"]
-version: "1.0.0"
+category: ai
+version: "1.1.0"
 ---
 
 # AI Agent Onboarding Guide
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Last Updated:** 2025-11-27
 **Audience:** AI coding assistants (Claude, GPT, Copilot, etc.)
+
+---
+
+## TL;DR for AI Agents
+
+**Start here.** This section provides the fastest path to context.
+
+### Essential Documents (Read These First)
+
+| Document                                                      | Purpose                       |
+| ------------------------------------------------------------- | ----------------------------- |
+| [Implementation Status](../overview/IMPLEMENTATION_STATUS.md) | What's built vs. planned      |
+| [Service Catalog](../SERVICE_CATALOG.md)                      | All services and their status |
+| [Unified Architecture](../UNIFIED_ARCHITECTURE.md)            | System design overview        |
+| [Debugging Index](../debugging/DEBUGGING_INDEX.md)            | Troubleshooting hub           |
+
+### Machine-Readable Endpoints
+
+| Endpoint                 | Purpose                                          |
+| ------------------------ | ------------------------------------------------ |
+| `GET /agent/index.json`  | Documentation system metadata & discovery        |
+| `GET /agent/docs.json`   | All documents with metadata (filter client-side) |
+| `GET /agent/schema.json` | JSON Schema for API response types               |
+| `GET /search-index.json` | Full-text search index (Fuse.js format)          |
+| `GET /sitemap.xml`       | XML sitemap for crawlers                         |
+
+**Base URL:** `https://assistdocs.asimo.io`
+
+### Safety & Norms
+
+| Document                                                  | Purpose                         |
+| --------------------------------------------------------- | ------------------------------- |
+| [CLAUDE_EXECUTION_GUIDE.md](../CLAUDE_EXECUTION_GUIDE.md) | Claude-specific guidelines      |
+| [CLAUDE_PROMPTS.md](../CLAUDE_PROMPTS.md)                 | Standard prompt templates       |
+| [Security Compliance](../SECURITY_COMPLIANCE.md)          | HIPAA and security requirements |
+
+### Canonical Backend Location
+
+**ALWAYS use:** `services/api-gateway/` (FastAPI, production-ready)
+
+**NEVER use:** `server/` (deprecated stub)
 
 ---
 

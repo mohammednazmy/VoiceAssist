@@ -269,8 +269,14 @@ export const navigation: NavSection[] = [
     title: "Operations",
     items: [
       {
-        title: "Debugging Overview",
+        title: "Debugging Index",
         href: "/operations/debugging",
+        description: "Central hub for all troubleshooting documentation",
+        docPaths: ["debugging/DEBUGGING_INDEX.md"],
+      },
+      {
+        title: "Debugging Overview",
+        href: "/operations/debugging-overview",
         description: "Where to look for issues and how to investigate",
         docPaths: ["debugging/DEBUGGING_OVERVIEW.md"],
       },

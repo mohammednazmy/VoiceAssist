@@ -55,6 +55,19 @@ const VALID_AUDIENCE = [
   "frontend-developers",
   "technical-writers",
 ];
+const VALID_CATEGORY = [
+  "ai",
+  "api",
+  "architecture",
+  "debugging",
+  "deployment",
+  "operations",
+  "overview",
+  "planning",
+  "reference",
+  "security",
+  "testing",
+];
 
 function validateFile(filePath, relativePath) {
   const result = {

@@ -85,6 +85,23 @@
           },
           "description": "Target readers for this document"
         },
+        "category": {
+          "type": "string",
+          "enum": [
+            "ai",
+            "api",
+            "architecture",
+            "debugging",
+            "deployment",
+            "operations",
+            "overview",
+            "planning",
+            "reference",
+            "security",
+            "testing"
+          ],
+          "description": "Document category for filtering"
+        },
         "tags": {
           "type": "array",
           "items": { "type": "string" },

@@ -38,6 +38,31 @@ const VALID_AUDIENCE = [
   "devops",
   "admin",
   "user",
+  "docs",
+  "sre",
+  "developers",
+  "ai-agents",
+  "ai-agent",
+  "security-engineers",
+  "architects",
+  "compliance-officers",
+  "stakeholders",
+  "project-managers",
+  "frontend-developers",
+  "technical-writers",
+];
+const VALID_CATEGORY = [
+  "ai",
+  "api",
+  "architecture",
+  "debugging",
+  "deployment",
+  "operations",
+  "overview",
+  "planning",
+  "reference",
+  "security",
+  "testing",
 ];
 
 /**
@@ -72,6 +97,12 @@ function parseMetadata(rawData, filePath) {
     if (audience.length === 0) audience = undefined;
   }
 
+  // Normalize category
+  let category = undefined;
+  if (rawData.category && VALID_CATEGORY.includes(rawData.category)) {
+    category = rawData.category;
+  }
+
   // Generate slug from filename if not provided
   const defaultSlug = path
     .basename(filePath, ".md")
@@ -88,6 +119,7 @@ function parseMetadata(rawData, filePath) {
     stability,
     owner,
     audience,
+    category,
     tags: Array.isArray(rawData.tags) ? rawData.tags : undefined,
     relatedServices: Array.isArray(rawData.relatedServices)
       ? rawData.relatedServices
@@ -131,6 +163,7 @@ function scanDocsDir(dir, basePath = "") {
           stability: metadata.stability,
           owner: metadata.owner,
           audience: metadata.audience,
+          category: metadata.category,
           tags: metadata.tags,
           relatedServices: metadata.relatedServices,
           lastUpdated: metadata.lastUpdated,
@@ -177,6 +210,8 @@ function generateAgentIndex() {
         stability: "production|beta|experimental|legacy",
         owner: "backend|frontend|infra|sre|docs|product|security|mixed",
         audience: "string[] - Target readers",
+        category:
+          "ai|api|architecture|debugging|deployment|operations|overview|planning|reference|security|testing",
         tags: "string[] - Categorization tags",
         relatedServices: "string[] - Related service names",
         lastUpdated: "string - ISO date",

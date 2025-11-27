@@ -6,9 +6,10 @@ status: stable
 stability: production
 owner: frontend
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "frontend"]
-tags: ["debugging", "runbook", "frontend", "react", "web-app"]
+audience: ["human", "agent", "ai-agents", "frontend"]
+tags: ["debugging", "runbook", "frontend", "react", "web-app", "troubleshooting"]
 relatedServices: ["web-app", "admin-panel"]
+category: debugging
 version: "1.0.0"
 ---
 

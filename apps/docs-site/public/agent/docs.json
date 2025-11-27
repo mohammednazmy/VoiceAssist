@@ -1,6 +1,6 @@
 {
-  "count": 220,
-  "generated_at": "2025-11-27T22:41:01.703Z",
+  "count": 221,
+  "generated_at": "2025-11-27T22:58:57.744Z",
   "docs": [
     {
       "slug": "continuous-improvement-plan",
@@ -8,6 +8,12 @@
       "title": "Continuous Improvement Plan",
       "summary": "Post-launch roadmap for enhancements, deferred features, and new capabilities",
       "status": "draft",
+      "audience": [
+        "developers",
+        "project-managers",
+        "stakeholders",
+        "ai-agents"
+      ],
       "tags": ["roadmap", "planning", "improvements", "future"],
       "lastUpdated": "Wed Nov 26 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
@@ -17,6 +23,13 @@
       "title": "Security & Compliance Guide",
       "summary": "HIPAA compliance, zero-trust architecture, PHI protection, and security requirements",
       "status": "draft",
+      "audience": [
+        "developers",
+        "security-engineers",
+        "architects",
+        "compliance-officers",
+        "ai-agents"
+      ],
       "tags": ["security", "hipaa", "compliance", "phi", "encryption"],
       "lastUpdated": "Wed Nov 26 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
@@ -40,7 +53,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops"],
+      "audience": ["devops", "sre"],
       "tags": ["admin", "panel", "deployment"],
       "lastUpdated": "2025-11-27"
     },
@@ -52,7 +65,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops"],
+      "audience": ["devops", "sre"],
       "tags": ["admin", "panel", "implementation", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -64,7 +77,7 @@
       "status": "experimental",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops"],
+      "audience": ["devops", "sre"],
       "tags": ["admin", "panel", "login", "fix"],
       "lastUpdated": "2025-11-27"
     },
@@ -76,7 +89,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops"],
+      "audience": ["devops", "sre"],
       "tags": ["admin", "panel", "login", "fix"],
       "lastUpdated": "2025-11-27"
     },
@@ -88,7 +101,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops"],
+      "audience": ["devops", "sre"],
       "tags": ["admin", "panel", "specs"],
       "lastUpdated": "2025-11-27"
     },
@@ -306,7 +319,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops"],
+      "audience": ["devops", "sre"],
       "tags": ["deployment", "guide"],
       "lastUpdated": "2025-11-27"
     },
@@ -318,7 +331,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops"],
+      "audience": ["devops", "sre"],
       "tags": ["deployment", "summary", "asimo"],
       "lastUpdated": "2025-11-27"
     },
@@ -366,7 +379,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["backend", "frontend"],
+      "audience": ["sre", "backend", "frontend"],
       "tags": ["disaster", "recovery", "runbook"],
       "lastUpdated": "2025-11-27"
     },
@@ -390,7 +403,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "agent"],
+      "audience": ["human", "agent", "docs"],
       "tags": ["documentation", "metadata", "standards", "frontmatter"],
       "relatedServices": ["docs-site"],
       "lastUpdated": "2025-11-27"
@@ -512,7 +525,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops"],
+      "audience": ["devops", "sre"],
       "tags": ["infrastructure", "code"],
       "lastUpdated": "2025-11-27"
     },
@@ -524,7 +537,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops"],
+      "audience": ["devops", "sre"],
       "tags": ["infrastructure", "setup"],
       "lastUpdated": "2025-11-27"
     },
@@ -921,7 +934,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops"],
+      "audience": ["devops", "sre"],
       "tags": ["production", "deployment", "runbook"],
       "lastUpdated": "2025-11-27"
     },
@@ -1273,8 +1286,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["agent", "backend"],
-      "tags": ["api", "ai-agent", "json", "documentation"],
+      "audience": ["agent", "ai-agents", "backend"],
+      "category": "ai",
+      "tags": ["api", "ai-agent", "json", "documentation", "endpoints"],
       "relatedServices": ["docs-site"],
       "lastUpdated": "2025-11-27"
     },
@@ -1286,8 +1300,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["agent"],
-      "tags": ["onboarding", "ai-agent", "getting-started"],
+      "audience": ["agent", "ai-agents"],
+      "category": "ai",
+      "tags": ["onboarding", "ai-agent", "getting-started", "workflows"],
       "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
       "lastUpdated": "2025-11-27"
     },
@@ -1409,7 +1424,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["devops"],
+      "audience": ["devops", "sre"],
       "tags": ["deployment", "complete"],
       "lastUpdated": "2025-11-27"
     },
@@ -1769,7 +1784,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["devops"],
+      "audience": ["devops", "sre"],
       "tags": ["admin", "panel", "feature", "specs"],
       "lastUpdated": "2025-11-27"
     },
@@ -2081,8 +2096,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "backend"],
-      "tags": ["debugging", "runbook", "backend", "api-gateway", "database"],
+      "audience": ["human", "agent", "ai-agents", "backend", "sre"],
+      "category": "debugging",
+      "tags": [
+        "debugging",
+        "runbook",
+        "backend",
+        "api-gateway",
+        "database",
+        "troubleshooting"
+      ],
       "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
     },
@@ -2094,8 +2117,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "agent", "frontend"],
-      "tags": ["debugging", "runbook", "docs-site", "nextjs", "apache"],
+      "audience": ["human", "agent", "ai-agents", "frontend", "sre"],
+      "category": "debugging",
+      "tags": [
+        "debugging",
+        "runbook",
+        "docs-site",
+        "nextjs",
+        "apache",
+        "troubleshooting"
+      ],
       "relatedServices": ["docs-site"],
       "lastUpdated": "2025-11-27"
     },
@@ -2107,9 +2138,46 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "agent", "frontend"],
-      "tags": ["debugging", "runbook", "frontend", "react", "web-app"],
+      "audience": ["human", "agent", "ai-agents", "frontend"],
+      "category": "debugging",
+      "tags": [
+        "debugging",
+        "runbook",
+        "frontend",
+        "react",
+        "web-app",
+        "troubleshooting"
+      ],
       "relatedServices": ["web-app", "admin-panel"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "debugging/index",
+      "path": "debugging/DEBUGGING_INDEX.md",
+      "title": "Debugging Index",
+      "summary": "Central hub for all VoiceAssist troubleshooting documentation - logs, metrics, health endpoints, and debugging guides by subsystem.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "sre",
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "developers",
+        "sre",
+        "backend",
+        "frontend"
+      ],
+      "category": "debugging",
+      "tags": [
+        "debugging",
+        "runbook",
+        "troubleshooting",
+        "logs",
+        "metrics",
+        "index"
+      ],
+      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2120,8 +2188,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["human", "agent", "backend", "frontend"],
-      "tags": ["debugging", "runbook", "incident", "logs", "metrics"],
+      "audience": ["human", "agent", "ai-agents", "sre", "backend", "frontend"],
+      "category": "debugging",
+      "tags": [
+        "debugging",
+        "runbook",
+        "incident",
+        "logs",
+        "metrics",
+        "troubleshooting"
+      ],
       "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
       "lastUpdated": "2025-11-27"
     },
@@ -2133,7 +2209,8 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "backend", "frontend"],
+      "audience": ["human", "agent", "ai-agents", "backend", "frontend", "sre"],
+      "category": "debugging",
       "tags": [
         "debugging",
         "runbook",
@@ -2141,7 +2218,8 @@
         "realtime",
         "websocket",
         "stt",
-        "tts"
+        "tts",
+        "troubleshooting"
       ],
       "relatedServices": ["api-gateway", "web-app"],
       "lastUpdated": "2025-11-27"
@@ -2154,7 +2232,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "infra",
-      "audience": ["devops"],
+      "audience": ["devops", "sre"],
       "tags": ["deployment", "summary"],
       "lastUpdated": "2025-11-27"
     },
@@ -2348,8 +2426,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "agent", "backend", "frontend", "devops"],
-      "tags": ["status", "overview", "components", "roadmap"],
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "backend",
+        "frontend",
+        "devops"
+      ],
+      "category": "overview",
+      "tags": ["status", "overview", "components", "roadmap", "architecture"],
       "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
       "lastUpdated": "2025-11-27"
     },
@@ -2409,7 +2495,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["devops"],
+      "audience": ["devops", "sre"],
       "tags": ["phase", "infrastructure"],
       "lastUpdated": "2025-11-27"
     },
@@ -2505,7 +2591,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["devops"],
+      "audience": ["devops", "sre"],
       "tags": ["phase", "admin", "panel"],
       "lastUpdated": "2025-11-27"
     },

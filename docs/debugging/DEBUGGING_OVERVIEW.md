@@ -6,9 +6,10 @@ status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "sre", "backend", "frontend"]
-tags: ["debugging", "runbook", "incident", "logs", "metrics"]
+audience: ["human", "agent", "ai-agents", "sre", "backend", "frontend"]
+tags: ["debugging", "runbook", "incident", "logs", "metrics", "troubleshooting"]
 relatedServices: ["api-gateway", "web-app", "admin-panel", "docs-site"]
+category: debugging
 version: "1.0.0"
 ---
 

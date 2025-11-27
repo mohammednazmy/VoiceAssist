@@ -6,9 +6,10 @@ status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "frontend", "sre"]
-tags: ["debugging", "runbook", "docs-site", "nextjs", "apache"]
+audience: ["human", "agent", "ai-agents", "frontend", "sre"]
+tags: ["debugging", "runbook", "docs-site", "nextjs", "apache", "troubleshooting"]
 relatedServices: ["docs-site"]
+category: debugging
 version: "1.0.0"
 ---
 
