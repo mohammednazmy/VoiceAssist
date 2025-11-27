@@ -28,9 +28,11 @@ from app.api import (
     clinical_context,
     conversations,
     export,
+    external_medical,
     folders,
     health,
     integrations,
+    medical_ai,
     metrics,
     realtime,
     sharing,
@@ -148,6 +150,8 @@ app.include_router(clinical_context.router, prefix="/api")  # Phase 8: Clinical 
 app.include_router(folders.router, prefix="/api")  # Phase 8: Conversation folders
 app.include_router(export.router, prefix="/api")  # Phase 8: Conversation export
 app.include_router(sharing.router, prefix="/api")  # Phase 8: Conversation sharing
+app.include_router(external_medical.router, prefix="/api")  # Phase 3: External medical integrations
+app.include_router(medical_ai.router)  # Phase 2 Deferred: Medical AI services
 
 
 @app.on_event("startup")
