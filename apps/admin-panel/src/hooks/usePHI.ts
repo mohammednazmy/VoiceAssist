@@ -5,7 +5,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchAPI } from "../lib/api";
-import { useAuth } from "../contexts/AuthContext";
 
 export type PHIRuleStatus = "enabled" | "disabled";
 
@@ -141,7 +140,6 @@ interface UsePHIResult {
 
 export function usePHI(options: UsePHIOptions = {}): UsePHIResult {
   const { autoRefresh = false, refreshIntervalMs = 30000 } = options;
-  const { token } = useAuth();
 
   const [rules, setRules] = useState<PHIRule[]>([]);
   const [rulesInfo, setRulesInfo] = useState<{
@@ -158,80 +156,69 @@ export function usePHI(options: UsePHIOptions = {}): UsePHIResult {
 
   const fetchRules = useCallback(async () => {
     try {
-      const response = await fetchAPI<{ data: PHIRulesResponse }>(
-        "/admin/phi/rules",
-        { method: "GET" },
-        token,
+      const response = await fetchAPI<PHIRulesResponse>(
+        "/api/admin/phi/rules",
       );
-      const data = response.data;
-      setRules(data.rules);
-      setRulesInfo({ total: data.total, enabled: data.enabled });
-      return data;
+      setRules(response.rules);
+      setRulesInfo({ total: response.total, enabled: response.enabled });
+      return response;
     } catch (err) {
       console.error("Failed to fetch PHI rules:", err);
       throw err;
     }
-  }, [token]);
+  }, []);
 
   const fetchStats = useCallback(async () => {
     try {
-      const response = await fetchAPI<{ data: PHIStats }>(
-        "/admin/phi/stats?days=7",
-        { method: "GET" },
-        token,
+      const response = await fetchAPI<PHIStats>(
+        "/api/admin/phi/stats?days=7",
       );
-      setStats(response.data);
-      return response.data;
+      setStats(response);
+      return response;
     } catch (err) {
       console.error("Failed to fetch PHI stats:", err);
       throw err;
     }
-  }, [token]);
+  }, []);
 
   const fetchRouting = useCallback(async () => {
     try {
-      const response = await fetchAPI<{ data: PHIRoutingConfig }>(
-        "/admin/phi/routing",
-        { method: "GET" },
-        token,
+      const response = await fetchAPI<PHIRoutingConfig>(
+        "/api/admin/phi/routing",
       );
-      setRouting(response.data);
-      return response.data;
+      setRouting(response);
+      return response;
     } catch (err) {
       console.error("Failed to fetch PHI routing:", err);
       throw err;
     }
-  }, [token]);
+  }, []);
 
   const fetchHealth = useCallback(async () => {
     try {
-      const response = await fetchAPI<{ data: PHIHealthStatus }>(
-        "/admin/phi/health",
-        { method: "GET" },
-        token,
+      const response = await fetchAPI<PHIHealthStatus>(
+        "/api/admin/phi/health",
       );
-      setHealth(response.data);
-      return response.data;
+      setHealth(response);
+      return response;
     } catch (err) {
       console.error("Failed to fetch PHI health:", err);
       throw err;
     }
-  }, [token]);
+  }, []);
 
   const fetchEvents = useCallback(async () => {
     try {
-      const response = await fetchAPI<{ data: PHIEventsResponse }>(
-        "/admin/phi/events?limit=20",
-        { method: "GET" },
-        token,
+      const response = await fetchAPI<PHIEventsResponse>(
+        "/api/admin/phi/events?limit=20",
       );
-      setEvents(response.data.events);
-      return response.data;
+      setEvents(response.events);
+      return response;
     } catch (err) {
       console.error("Failed to fetch PHI events:", err);
       throw err;
     }
-  }, [token]);
+  }, []);
 
   const refreshAll = useCallback(async () => {
     setLoading(true);
@@ -255,63 +242,59 @@ export function usePHI(options: UsePHIOptions = {}): UsePHIResult {
   const updateRule = useCallback(
     async (ruleId: string, status: PHIRuleStatus): Promise<void> => {
       await fetchAPI(
-        `/admin/phi/rules/${ruleId}`,
+        `/api/admin/phi/rules/${ruleId}`,
         {
           method: "PUT",
           body: JSON.stringify({ status }),
         },
-        token,
       );
       // Refresh rules after update
       await fetchRules();
     },
-    [token, fetchRules],
+    [fetchRules],
   );
 
   const testPHI = useCallback(
     async (text: string): Promise<PHITestResult> => {
-      const response = await fetchAPI<{ data: PHITestResult }>(
-        "/admin/phi/test",
+      const response = await fetchAPI<PHITestResult>(
+        "/api/admin/phi/test",
         {
           method: "POST",
           body: JSON.stringify({ text, include_redacted: true }),
         },
-        token,
       );
-      return response.data;
+      return response;
     },
-    [token],
+    [],
   );
 
   const redactPHI = useCallback(
     async (text: string): Promise<PHIRedactResult> => {
-      const response = await fetchAPI<{ data: PHIRedactResult }>(
-        "/admin/phi/redact",
+      const response = await fetchAPI<PHIRedactResult>(
+        "/api/admin/phi/redact",
         {
           method: "POST",
           body: JSON.stringify({ text }),
         },
-        token,
       );
-      return response.data;
+      return response;
     },
-    [token],
+    [],
   );
 
   const updateRouting = useCallback(
     async (config: Partial<PHIRoutingConfig>): Promise<void> => {
       await fetchAPI(
-        "/admin/phi/routing",
+        "/api/admin/phi/routing",
         {
           method: "PATCH",
           body: JSON.stringify(config),
         },
-        token,
       );
       // Refresh routing after update
       await fetchRouting();
     },
-    [token, fetchRouting],
+    [fetchRouting],
   );
 
   // Initial load
