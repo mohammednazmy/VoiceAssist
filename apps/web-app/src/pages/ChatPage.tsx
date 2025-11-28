@@ -217,7 +217,8 @@ export function ChatPage() {
             MESSAGE_PAGE_SIZE,
           );
 
-          const total = firstPageResponse.totalCount;
+          // Ensure total defaults to 0 if undefined to prevent NaN pagination calculations
+          const total = firstPageResponse.totalCount ?? 0;
           setTotalMessageCount(total);
 
           if (total === 0) {
@@ -478,9 +479,12 @@ export function ChatPage() {
   );
 
   // Handle branch request from message - shows preview instead of directly creating
-  const handleBranchFromMessage = useCallback(async (messageId: string): Promise<void> => {
-    setBranchPreviewMessageId(messageId);
-  }, []);
+  const handleBranchFromMessage = useCallback(
+    async (messageId: string): Promise<void> => {
+      setBranchPreviewMessageId(messageId);
+    },
+    [],
+  );
 
   // Handle branch creation confirmation
   const handleConfirmBranch = useCallback(async () => {

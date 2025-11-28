@@ -219,6 +219,7 @@ export function useRealtimeVoiceSession(
   // Used so scheduleReconnect and initializeWebSocket can reference
   // functions that are defined later in the hook.
   const connectRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  const disconnectRef = useRef<() => void>(() => {});
   const updateStatusRef = useRef<(status: ConnectionStatus) => void>(() => {});
   const handleRealtimeMessageRef = useRef<(message: any) => void>(() => {});
   // Ref to track current status for error reporting (Sentry)
@@ -307,6 +308,8 @@ export function useRealtimeVoiceSession(
    */
   const updateStatus = useCallback(
     (newStatus: ConnectionStatus) => {
+      // Update ref immediately for synchronous checks
+      statusRef.current = newStatus;
       setStatus(newStatus);
       options.onConnectionChange?.(newStatus);
 
@@ -767,7 +770,11 @@ export function useRealtimeVoiceSession(
    * Connect to Realtime API
    */
   const connect = useCallback(async () => {
-    if (status === "connected" || status === "connecting") {
+    // Use ref for synchronous status check to prevent race conditions
+    if (
+      statusRef.current === "connected" ||
+      statusRef.current === "connecting"
+    ) {
       voiceLog.warn(" Already connected or connecting");
       return;
     }
@@ -882,6 +889,16 @@ export function useRealtimeVoiceSession(
    * Disconnect from Realtime API
    */
   const disconnect = useCallback(() => {
+    // Guard: if already disconnected and no resources to clean up, skip
+    if (
+      statusRef.current === "disconnected" &&
+      !wsRef.current &&
+      !mediaStreamRef.current &&
+      !audioContextRef.current
+    ) {
+      return;
+    }
+
     voiceLog.debug(" Disconnecting...");
 
     // Mark as intentional disconnect to prevent auto-reconnect
@@ -984,16 +1001,26 @@ export function useRealtimeVoiceSession(
     );
   }, []);
 
+  // Track if session refresh is in progress to prevent duplicate refreshes
+  const isRefreshingSessionRef = useRef(false);
+
   /**
    * Monitor session expiry and proactively refresh
+   * Uses refs for callbacks to avoid dependency array issues
    */
   useEffect(() => {
     // Only monitor if we have a session config and are connected
     if (!sessionConfig || status !== "connected") {
+      isRefreshingSessionRef.current = false;
       return;
     }
 
     const checkExpiry = () => {
+      // Guard: don't run check if already refreshing
+      if (isRefreshingSessionRef.current) {
+        return;
+      }
+
       const now = Date.now();
       const expiresAt = sessionConfig.expires_at * 1000;
       const timeUntilExpiry = expiresAt - now;
@@ -1001,8 +1028,8 @@ export function useRealtimeVoiceSession(
       // If already expired
       if (timeUntilExpiry <= 0) {
         voiceLog.debug(" Session expired");
-        updateStatus("expired");
-        disconnect();
+        updateStatusRef.current("expired");
+        disconnectRef.current();
         return;
       }
 
@@ -1011,10 +1038,13 @@ export function useRealtimeVoiceSession(
         voiceLog.debug(
           `[RealtimeVoiceSession] Session expiring soon (${Math.round(timeUntilExpiry / 1000)}s), refreshing...`,
         );
+        // Mark as refreshing to prevent duplicate calls
+        isRefreshingSessionRef.current = true;
         // Disconnect and reconnect to get new session
-        disconnect();
+        disconnectRef.current();
         setTimeout(() => {
-          connect();
+          isRefreshingSessionRef.current = false;
+          connectRef.current();
         }, 100);
         return;
       }
@@ -1035,7 +1065,11 @@ export function useRealtimeVoiceSession(
         sessionExpiryCheckRef.current = null;
       }
     };
-  }, [sessionConfig, status, updateStatus, disconnect, connect]);
+    // Use only stable dependencies - callbacks are accessed via refs
+  }, [sessionConfig, status]);
+
+  // Keep disconnectRef updated with the latest disconnect function
+  disconnectRef.current = disconnect;
 
   /**
    * Auto-connect on mount if enabled
@@ -1045,11 +1079,12 @@ export function useRealtimeVoiceSession(
       connect();
     }
 
-    // Cleanup on unmount
+    // Cleanup on unmount only - use ref to avoid dependency on disconnect
     return () => {
-      disconnect();
+      disconnectRef.current();
     };
-  }, [options.autoConnect, connect, disconnect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options.autoConnect]);
 
   return {
     // State
