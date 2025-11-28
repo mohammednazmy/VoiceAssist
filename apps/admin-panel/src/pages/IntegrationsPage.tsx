@@ -28,6 +28,7 @@ export function IntegrationsPage() {
   const [testResult, setTestResult] = useState<IntegrationTestResult | null>(
     null,
   );
+  const [lastTestedId, setLastTestedId] = useState<string | null>(null);
 
   const handleViewDetails = async (integrationId: string) => {
     setDetailLoading(true);
@@ -46,15 +47,18 @@ export function IntegrationsPage() {
     if (!isAdmin) return;
     setTestingId(integrationId);
     setTestResult(null);
+    setLastTestedId(null);
     try {
       const result = await testIntegration(integrationId);
       setTestResult(result);
+      setLastTestedId(integrationId);
     } catch (err) {
       setTestResult({
         success: false,
         latency_ms: 0,
         message: err instanceof Error ? err.message : "Test failed",
       });
+      setLastTestedId(integrationId);
     } finally {
       setTestingId(null);
     }
@@ -285,7 +289,32 @@ export function IntegrationsPage() {
                         {testingId === integration.id ? "Testing..." : "Test"}
                       </button>
                     )}
+                    {/* Show test result inline */}
+                    {lastTestedId === integration.id && testResult && (
+                      <span
+                        className={`text-xs ${testResult.success ? "text-green-400" : "text-red-400"}`}
+                      >
+                        {testResult.success ? "✓ Passed" : "✗ Failed"}
+                      </span>
+                    )}
                   </div>
+                  {/* Show test message below buttons */}
+                  {lastTestedId === integration.id && testResult && (
+                    <div
+                      className={`mt-2 text-xs p-2 rounded ${
+                        testResult.success
+                          ? "bg-green-900/20 text-green-400 border border-green-800/50"
+                          : "bg-red-900/20 text-red-400 border border-red-800/50"
+                      }`}
+                    >
+                      {testResult.message}
+                      {testResult.latency_ms > 0 && (
+                        <span className="opacity-75 ml-2">
+                          ({testResult.latency_ms.toFixed(0)}ms)
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
