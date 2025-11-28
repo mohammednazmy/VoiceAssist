@@ -14,10 +14,12 @@ Phase 8 Improvements:
 
 from __future__ import annotations
 
+import asyncio
 import csv
 import io
 import json
 import logging
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional
 
@@ -27,11 +29,12 @@ from app.core.dependencies import ensure_admin_privileges, get_current_admin_or_
 from app.models.audit_log import AuditLog
 from app.models.user import User
 from app.services.admin_audit_log_service import admin_audit_log_service
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import Date, cast, desc, func
 from sqlalchemy.orm import Session
+from starlette.websockets import WebSocketState
 
 logger = logging.getLogger(__name__)
 
@@ -644,7 +647,7 @@ async def get_role_history(
     request: Request,
     user_id: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
     limit: int = Query(20, ge=1, le=100),
 ) -> Dict:
     """Return role assignment history for a user based on audit logs."""
@@ -697,7 +700,7 @@ async def get_lock_reasons(
     request: Request,
     user_id: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
     limit: int = Query(20, ge=1, le=100),
 ) -> Dict:
     """Return account lock/unlock reasons for a user."""
@@ -973,3 +976,112 @@ async def export_audit_logs(
         media_type="text/csv",
         headers=headers,
     )
+
+
+# ============================================================================
+# Admin WebSocket for Real-time Updates
+# ============================================================================
+
+# Track connected admin WebSocket sessions
+_admin_ws_connections: Dict[str, WebSocket] = {}
+
+
+@router.websocket("/ws")
+async def admin_websocket(websocket: WebSocket):
+    """WebSocket endpoint for real-time admin panel updates.
+
+    Provides:
+    - Heartbeat/ping-pong to keep connection alive
+    - Real-time metric updates (every 10 seconds)
+    - System event notifications
+    """
+    await websocket.accept()
+
+    connection_id = str(uuid.uuid4())
+    _admin_ws_connections[connection_id] = websocket
+
+    logger.info(f"Admin WebSocket connected: {connection_id}")
+
+    # Send initial connection confirmation
+    await websocket.send_json(
+        {
+            "type": "connected",
+            "payload": {
+                "connection_id": connection_id,
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+            },
+        }
+    )
+
+    try:
+        # Start background task for sending periodic updates
+        update_task = asyncio.create_task(_send_periodic_updates(websocket, connection_id))
+
+        # Main message loop
+        while True:
+            try:
+                data = await asyncio.wait_for(websocket.receive_json(), timeout=60.0)
+
+                # Handle ping/pong
+                if data.get("type") == "ping":
+                    await websocket.send_json(
+                        {"type": "pong", "payload": {"timestamp": datetime.now(timezone.utc).isoformat() + "Z"}}
+                    )
+
+            except asyncio.TimeoutError:
+                # Send heartbeat on timeout
+                if websocket.client_state == WebSocketState.CONNECTED:
+                    await websocket.send_json(
+                        {"type": "heartbeat", "payload": {"timestamp": datetime.now(timezone.utc).isoformat() + "Z"}}
+                    )
+
+    except WebSocketDisconnect:
+        logger.info(f"Admin WebSocket disconnected: {connection_id}")
+    except Exception as e:
+        logger.error(f"Admin WebSocket error for {connection_id}: {e}")
+    finally:
+        update_task.cancel()
+        _admin_ws_connections.pop(connection_id, None)
+        register_websocket_session_cleanup(connection_id)
+
+
+async def _send_periodic_updates(websocket: WebSocket, connection_id: str):
+    """Send periodic metric updates to connected admin clients."""
+    try:
+        while True:
+            await asyncio.sleep(10)  # Update every 10 seconds
+
+            if websocket.client_state != WebSocketState.CONNECTED:
+                break
+
+            try:
+                # Get current stats
+                active_sessions = get_active_websocket_count()
+                db_stats = get_db_pool_stats()
+                redis_stats = get_redis_pool_stats()
+
+                await websocket.send_json(
+                    {
+                        "type": "metrics_update",
+                        "payload": {
+                            "active_websocket_sessions": active_sessions,
+                            "database_pool": db_stats,
+                            "redis_pool": redis_stats,
+                            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+                        },
+                    }
+                )
+            except Exception as e:
+                logger.warning(f"Failed to send metrics update to {connection_id}: {e}")
+                break
+
+    except asyncio.CancelledError:
+        pass
+
+
+def register_websocket_session_cleanup(session_id: str):
+    """Clean up WebSocket session from tracking."""
+    try:
+        unregister_websocket_session(session_id)
+    except Exception as e:
+        logger.warning(f"Failed to cleanup WebSocket session {session_id}: {e}")

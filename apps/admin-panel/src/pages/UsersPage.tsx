@@ -90,8 +90,11 @@ export function UsersPage() {
     }
   };
 
+  const [historyError, setHistoryError] = useState<string | null>(null);
+
   const loadUserInsights = async (userId: string) => {
     setHistoryLoading(true);
+    setHistoryError(null);
     try {
       const [historyRes, lockRes] = await Promise.all([
         fetchAPI<{ history: RoleHistoryEntry[] }>(
@@ -104,7 +107,10 @@ export function UsersPage() {
       setRoleHistory(historyRes.history);
       setLockEvents(lockRes.events);
     } catch (err: any) {
-      setRateLimitNotice(null);
+      console.error("Failed to load user insights:", err);
+      setHistoryError(err.message || "Failed to load user history");
+      setRoleHistory([]);
+      setLockEvents([]);
     } finally {
       setHistoryLoading(false);
     }
@@ -222,6 +228,36 @@ export function UsersPage() {
     }
   };
 
+  const deleteUser = async (userId: string, userEmail: string) => {
+    if (isViewer) return;
+    if (
+      !confirm(
+        `Are you sure you want to DELETE user "${userEmail}"?\n\nThis will permanently deactivate the account. This action is logged and audited.`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await fetchAPI<{ message: string }>(`/api/admin/panel/users/${userId}`, {
+        method: "DELETE",
+      });
+      alert(`User "${userEmail}" has been deleted successfully.`);
+      // If we just deleted the selected user, clear selection
+      if (selectedUserId === userId) {
+        setSelectedUserId(null);
+        setRoleHistory([]);
+        setLockEvents([]);
+      }
+      await loadUsers();
+    } catch (err: any) {
+      if (err.details?.rate_limit) {
+        handleRateLimit(err.details.rate_limit as RateLimitInfo);
+      }
+      alert(err.message || "Failed to delete user");
+    }
+  };
+
   const renderTableRows = () => {
     if (loading) {
       return Array.from({ length: 5 }).map((_, idx) => (
@@ -300,10 +336,22 @@ export function UsersPage() {
           </button>
           <button
             onClick={() => setSelectedUserId(user.id)}
-            className="text-slate-400 hover:text-slate-200 transition-colors"
+            className={`transition-colors ${
+              selectedUserId === user.id
+                ? "text-blue-400"
+                : "text-slate-400 hover:text-slate-200"
+            }`}
             title="View history"
           >
             📜
+          </button>
+          <button
+            onClick={() => deleteUser(user.id, user.email)}
+            disabled={isViewer}
+            className="text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Delete user"
+          >
+            🗑️
           </button>
         </td>
       </tr>
@@ -442,95 +490,121 @@ export function UsersPage() {
       </div>
 
       {selectedUser && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-100">
-                Role assignment history
-              </h3>
-              {historyLoading && (
-                <span className="text-xs text-slate-400">Loading…</span>
-              )}
-            </div>
-            {roleHistory.length === 0 ? (
-              <p className="text-sm text-slate-400">
-                No role changes recorded.
-              </p>
-            ) : (
-              <ul className="space-y-2">
-                {roleHistory.map((entry) => (
-                  <li
-                    key={entry.id}
-                    className="p-3 bg-slate-800/60 border border-slate-700 rounded-md text-sm text-slate-200"
-                  >
-                    <div className="flex items-center justify-between text-xs text-slate-400">
-                      <span>{entry.actor}</span>
-                      <span>
-                        {entry.changed_at
-                          ? new Date(entry.changed_at).toLocaleString()
-                          : ""}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-slate-100">
-                      {entry.from_role} → {entry.to_role}
-                    </div>
-                    {entry.reason && (
-                      <div className="text-xs text-slate-400 mt-1">
-                        Reason: {entry.reason}
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-100">
+              History for:{" "}
+              <span className="text-blue-400">{selectedUser.email}</span>
+            </h2>
+            <button
+              onClick={() => {
+                setSelectedUserId(null);
+                setRoleHistory([]);
+                setLockEvents([]);
+                setHistoryError(null);
+              }}
+              className="text-sm text-slate-400 hover:text-slate-200"
+            >
+              ✕ Close
+            </button>
           </div>
 
-          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-100">
-                Account lock/unlock reasons
-              </h3>
-              {historyLoading && (
-                <span className="text-xs text-slate-400">Loading…</span>
+          {historyError && (
+            <div className="p-3 bg-red-950/50 border border-red-900 rounded-md text-red-400 text-sm">
+              {historyError}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-slate-100">
+                  Role assignment history
+                </h3>
+                {historyLoading && (
+                  <span className="text-xs text-slate-400">Loading…</span>
+                )}
+              </div>
+              {roleHistory.length === 0 && !historyLoading ? (
+                <p className="text-sm text-slate-400">
+                  No role changes recorded.
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {roleHistory.map((entry) => (
+                    <li
+                      key={entry.id}
+                      className="p-3 bg-slate-800/60 border border-slate-700 rounded-md text-sm text-slate-200"
+                    >
+                      <div className="flex items-center justify-between text-xs text-slate-400">
+                        <span>{entry.actor}</span>
+                        <span>
+                          {entry.changed_at
+                            ? new Date(entry.changed_at).toLocaleString()
+                            : ""}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-slate-100">
+                        {entry.from_role} → {entry.to_role}
+                      </div>
+                      {entry.reason && (
+                        <div className="text-xs text-slate-400 mt-1">
+                          Reason: {entry.reason}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
-            {lockEvents.length === 0 ? (
-              <p className="text-sm text-slate-400">
-                No lock or unlock actions recorded.
-              </p>
-            ) : (
-              <ul className="space-y-2">
-                {lockEvents.map((event) => (
-                  <li
-                    key={event.id}
-                    className="p-3 bg-slate-800/60 border border-slate-700 rounded-md text-sm text-slate-200"
-                  >
-                    <div className="flex items-center justify-between text-xs text-slate-400">
-                      <span>{event.actor}</span>
-                      <span>
-                        {event.timestamp
-                          ? new Date(event.timestamp).toLocaleString()
-                          : ""}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-slate-100 flex items-center gap-2">
-                      <span
-                        className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold uppercase ${
-                          event.status === "locked"
-                            ? "bg-red-500/10 text-red-300 border border-red-500/40"
-                            : "bg-green-500/10 text-green-300 border border-green-500/40"
-                        }`}
-                      >
-                        {event.status}
-                      </span>
-                      <span className="text-slate-200">
-                        {event.reason || "Admin status change"}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+
+            <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-slate-100">
+                  Account lock/unlock reasons
+                </h3>
+                {historyLoading && (
+                  <span className="text-xs text-slate-400">Loading…</span>
+                )}
+              </div>
+              {lockEvents.length === 0 && !historyLoading ? (
+                <p className="text-sm text-slate-400">
+                  No lock or unlock actions recorded.
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {lockEvents.map((event) => (
+                    <li
+                      key={event.id}
+                      className="p-3 bg-slate-800/60 border border-slate-700 rounded-md text-sm text-slate-200"
+                    >
+                      <div className="flex items-center justify-between text-xs text-slate-400">
+                        <span>{event.actor}</span>
+                        <span>
+                          {event.timestamp
+                            ? new Date(event.timestamp).toLocaleString()
+                            : ""}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-slate-100 flex items-center gap-2">
+                        <span
+                          className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold uppercase ${
+                            event.status === "locked"
+                              ? "bg-red-500/10 text-red-300 border border-red-500/40"
+                              : "bg-green-500/10 text-green-300 border border-green-500/40"
+                          }`}
+                        >
+                          {event.status}
+                        </span>
+                        <span className="text-slate-200">
+                          {event.reason || "Admin status change"}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </div>
       )}
