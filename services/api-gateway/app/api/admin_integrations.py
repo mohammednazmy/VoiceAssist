@@ -20,7 +20,9 @@ from typing import Optional
 
 import httpx
 import redis
-from app.api.admin_panel import get_current_admin_user, log_audit_event
+from app.api.admin_panel import log_audit_event
+from app.core.dependencies import get_current_admin_user
+from app.models.user import User
 from app.core.api_envelope import success_response
 from app.core.config import settings
 from app.core.database import get_db
@@ -455,7 +457,7 @@ def has_api_key(integration_id: str) -> bool:
 
 @router.get("/")
 async def list_integrations(
-    admin_user: dict = Depends(get_current_admin_user),
+    admin_user: User = Depends(get_current_admin_user),
 ) -> dict:
     """List all integrations with their current status.
 
@@ -483,7 +485,7 @@ async def list_integrations(
 
 @router.get("/health")
 async def get_integrations_health(
-    admin_user: dict = Depends(get_current_admin_user),
+    admin_user: User = Depends(get_current_admin_user),
 ) -> dict:
     """Get overall health summary of all integrations.
 
@@ -527,7 +529,7 @@ async def get_integrations_health(
 
 @router.get("/metrics/summary")
 async def get_integration_metrics(
-    admin_user: dict = Depends(get_current_admin_user),
+    admin_user: User = Depends(get_current_admin_user),
 ) -> dict:
     """Get metrics for all integrations.
 
@@ -570,7 +572,7 @@ async def get_integration_metrics(
 @router.get("/{integration_id}")
 async def get_integration(
     integration_id: str,
-    admin_user: dict = Depends(get_current_admin_user),
+    admin_user: User = Depends(get_current_admin_user),
 ) -> dict:
     """Get detailed information about a specific integration.
 
@@ -604,7 +606,7 @@ async def get_integration(
 async def update_integration_config(
     integration_id: str,
     config_update: IntegrationConfigUpdate,
-    admin_user: dict = Depends(get_current_admin_user),
+    admin_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db),
 ) -> dict:
     """Update configuration for an integration.
@@ -614,7 +616,7 @@ async def update_integration_config(
     Note: This endpoint updates runtime configuration stored in Redis.
     Persistent configuration changes require environment variable updates.
     """
-    if admin_user.get("role") != "admin":
+    if admin_user.admin_role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin role required for configuration updates",
@@ -638,7 +640,7 @@ async def update_integration_config(
     # Log audit event
     log_audit_event(
         db,
-        admin_user.get("user_id"),
+        str(admin_user.id),
         "integration_config_update",
         f"Updated config for {integration_id}",
         {"integration_id": integration_id, "updates": config_update.model_dump(exclude_none=True)},
@@ -650,14 +652,14 @@ async def update_integration_config(
 @router.post("/{integration_id}/test")
 async def test_integration(
     integration_id: str,
-    admin_user: dict = Depends(get_current_admin_user),
+    admin_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db),
 ) -> dict:
     """Test connectivity for an integration.
 
     Admin role required.
     """
-    if admin_user.get("role") != "admin":
+    if admin_user.admin_role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin role required for integration testing",
@@ -831,7 +833,7 @@ async def test_integration(
     # Log audit event
     log_audit_event(
         db,
-        admin_user.get("user_id"),
+        str(admin_user.id),
         "integration_test",
         f"Tested {integration_id}: {'success' if success else 'failed'}",
         {"integration_id": integration_id, "success": success, "latency_ms": latency_ms},
