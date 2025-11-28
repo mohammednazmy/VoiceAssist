@@ -87,14 +87,24 @@ Main user-facing medical AI assistant application.
 
 **Features:**
 
-- Voice and text chat interface
+- **Unified Chat/Voice Interface** (NEW) - Seamless text and voice mode in single view
 - Medical knowledge retrieval with citations
 - Document upload and management
-- Conversation history
+- Conversation history with branching
 - PHI-safe data handling
+
+**Key Components:**
+
+| Component              | Path                           | Purpose                                             |
+| ---------------------- | ------------------------------ | --------------------------------------------------- |
+| UnifiedChatContainer   | `src/components/unified-chat/` | Three-panel layout with sidebar, main, context pane |
+| CollapsibleSidebar     | `src/components/unified-chat/` | Conversation list with pinning and search           |
+| UnifiedInputArea       | `src/components/unified-chat/` | Text/voice mode toggle                              |
+| CollapsibleContextPane | `src/components/unified-chat/` | Citations, clinical context, branches               |
 
 **Entry Point:** `src/main.tsx`
 **Dev Port:** 5173
+**Documentation:** See [UNIFIED_CHAT_VOICE_UI.md](./UNIFIED_CHAT_VOICE_UI.md)
 
 ### 2. Admin Panel (`apps/admin-panel/`)
 

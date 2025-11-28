@@ -1,6 +1,9 @@
 /**
  * Chat Page
  * Main chat interface with WebSocket streaming
+ *
+ * When the unified_chat_voice_ui feature flag is enabled, renders the new
+ * UnifiedChatContainer component which merges text and voice modes.
  */
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
@@ -11,6 +14,8 @@ import { useBranching } from "../hooks/useBranching";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useClinicalContext } from "../hooks/useClinicalContext";
 import { useToastContext } from "../contexts/ToastContext";
+import { useFeatureFlag } from "../hooks/useExperiment";
+import { UI_FLAGS } from "../lib/featureFlags";
 import { MessageList } from "../components/chat/MessageList";
 import { MessageInput } from "../components/chat/MessageInput";
 import { ConnectionStatus } from "../components/chat/ConnectionStatus";
@@ -25,6 +30,7 @@ import { ShareDialog } from "../components/sharing/ShareDialog";
 import { SaveAsTemplateDialog } from "../components/templates/SaveAsTemplateDialog";
 import { useTemplates } from "../hooks/useTemplates";
 import { useAnnouncer } from "../components/accessibility/LiveRegion";
+import { UnifiedChatContainer } from "../components/unified-chat";
 import {
   backendToFrontend,
   frontendToBackend,
@@ -105,6 +111,10 @@ export function ChatPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { apiClient } = useAuth();
+
+  // Check if unified chat/voice UI feature flag is enabled
+  const { isEnabled: useUnifiedUI, isLoading: isFeatureFlagLoading } =
+    useFeatureFlag(UI_FLAGS.UNIFIED_CHAT_VOICE);
 
   // Check if we should auto-open voice mode (from Home page Voice Mode card)
   // Support both query param (?mode=voice) and location state for backwards compatibility
@@ -689,6 +699,21 @@ export function ChatPage() {
         </div>
       </div>
     );
+  }
+
+  // Render unified chat/voice UI when feature flag is enabled
+  if (useUnifiedUI && !isFeatureFlagLoading) {
+    return (
+      <UnifiedChatContainer
+        conversationId={activeConversationId}
+        startInVoiceMode={startVoiceMode}
+      />
+    );
+  }
+
+  // Show loading while checking feature flag
+  if (isFeatureFlagLoading) {
+    return <ChatSkeleton />;
   }
 
   return (

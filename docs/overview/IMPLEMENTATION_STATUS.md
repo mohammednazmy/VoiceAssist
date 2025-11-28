@@ -85,13 +85,32 @@ The canonical backend service for VoiceAssist. All new backend development occur
 
 Main user-facing medical AI assistant application.
 
-| Phase                   | Status      | Description                                    |
-| ----------------------- | ----------- | ---------------------------------------------- |
-| Phase 0: Foundation     | Complete    | Monorepo setup, shared packages                |
-| Phase 1: Auth & Layout  | Complete    | Login, navigation, responsive layout           |
-| Phase 2: Chat Interface | Complete    | Text chat, streaming, history                  |
-| Phase 3: Voice Features | In Progress | Voice input/output, barge-in, audio management |
-| Phase 4-8: Advanced     | Planned     | Files, medical, admin, polish                  |
+| Phase                   | Status   | Description                                    |
+| ----------------------- | -------- | ---------------------------------------------- |
+| Phase 0: Foundation     | Complete | Monorepo setup, shared packages                |
+| Phase 1: Auth & Layout  | Complete | Login, navigation, responsive layout           |
+| Phase 2: Chat Interface | Complete | Text chat, streaming, history                  |
+| Phase 3: Voice Features | Complete | Voice input/output, barge-in, audio management |
+| Phase 3.5: Unified UI   | Complete | Merged chat/voice interface (see below)        |
+| Phase 4-8: Advanced     | Planned  | Files, medical, admin, polish                  |
+
+**Unified Chat/Voice UI (Phase 3.5):**
+
+| Feature                | Status   | Notes                                 |
+| ---------------------- | -------- | ------------------------------------- |
+| Three-panel layout     | Complete | Sidebar, main, context pane           |
+| UnifiedChatContainer   | Complete | Main container with responsive design |
+| CollapsibleSidebar     | Complete | Conversation list, pinning, search    |
+| CollapsibleContextPane | Complete | Citations, clinical, branches tabs    |
+| UnifiedHeader          | Complete | Editable title, actions, connection   |
+| UnifiedInputArea       | Complete | Text/voice mode toggle                |
+| Voice state machine    | Complete | idle→listening→processing→responding  |
+| Push-to-talk mode      | Complete | Spacebar activation                   |
+| Always-on mode         | Complete | Continuous listening with VAD         |
+| Mobile overlays        | Complete | Slide-in panels with backdrop         |
+| Lazy-loaded dialogs    | Complete | Export, Share, Shortcuts              |
+| Unit tests             | Complete | 72 tests across 5 files               |
+| Accessibility (ARIA)   | Complete | Full keyboard nav, screen readers     |
 
 **Voice Mode Features (Phase 3):**
 

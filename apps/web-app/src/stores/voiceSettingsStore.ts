@@ -21,6 +21,11 @@ export type LanguageOption = "en" | "es" | "fr" | "de" | "it" | "pt";
 
 export type PlaybackSpeed = 0.5 | 0.75 | 1 | 1.25 | 1.5 | 2;
 
+/**
+ * Voice mode interaction type for unified interface
+ */
+export type VoiceModeType = "always-on" | "push-to-talk";
+
 export const VOICE_OPTIONS: { value: VoiceOption; label: string }[] = [
   { value: "alloy", label: "Alloy" },
   { value: "echo", label: "Echo" },
@@ -63,6 +68,9 @@ interface VoiceSettingsState {
   playbackSpeed: PlaybackSpeed;
   keyboardShortcutsEnabled: boolean;
   showFrequencySpectrum: boolean;
+  // Unified UI additions
+  voiceModeType: VoiceModeType;
+  autoPlayInVoiceMode: boolean;
 
   // Actions
   setVoice: (voice: VoiceOption) => void;
@@ -75,6 +83,9 @@ interface VoiceSettingsState {
   setPlaybackSpeed: (speed: PlaybackSpeed) => void;
   setKeyboardShortcutsEnabled: (enabled: boolean) => void;
   setShowFrequencySpectrum: (show: boolean) => void;
+  // Unified UI additions
+  setVoiceModeType: (type: VoiceModeType) => void;
+  setAutoPlayInVoiceMode: (enabled: boolean) => void;
   reset: () => void;
 }
 
@@ -89,6 +100,9 @@ const defaultSettings = {
   playbackSpeed: 1 as PlaybackSpeed,
   keyboardShortcutsEnabled: true,
   showFrequencySpectrum: false,
+  // Unified UI additions
+  voiceModeType: "push-to-talk" as VoiceModeType,
+  autoPlayInVoiceMode: true,
 };
 
 /**
@@ -126,6 +140,12 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
       setShowFrequencySpectrum: (showFrequencySpectrum) =>
         set({ showFrequencySpectrum }),
 
+      // Unified UI additions
+      setVoiceModeType: (voiceModeType) => set({ voiceModeType }),
+
+      setAutoPlayInVoiceMode: (autoPlayInVoiceMode) =>
+        set({ autoPlayInVoiceMode }),
+
       reset: () => set({ ...defaultSettings }),
     }),
     {
@@ -141,6 +161,9 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
         playbackSpeed: state.playbackSpeed,
         keyboardShortcutsEnabled: state.keyboardShortcutsEnabled,
         showFrequencySpectrum: state.showFrequencySpectrum,
+        // Unified UI additions
+        voiceModeType: state.voiceModeType,
+        autoPlayInVoiceMode: state.autoPlayInVoiceMode,
       }),
     },
   ),

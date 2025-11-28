@@ -252,6 +252,14 @@ docs:
     related: [orchestration_design, web_app_specs]
 
   # Frontend Implementation Files
+  - id: unified_chat_voice_ui
+    path: docs/UNIFIED_CHAT_VOICE_UI.md
+    title: "Unified Chat/Voice UI"
+    category: frontend
+    audience: [developer, frontend]
+    summary: "Three-panel unified interface merging chat and voice mode. Components: UnifiedChatContainer, CollapsibleSidebar, UnifiedInputArea, CollapsibleContextPane."
+    related: [web_app_specs, frontend_architecture, voice_mode_pipeline]
+
   - id: web_app_types
     path: apps/web-app/src/types.ts
     title: "Web App TypeScript Types"

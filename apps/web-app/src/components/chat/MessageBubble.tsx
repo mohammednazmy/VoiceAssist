@@ -28,6 +28,12 @@ export interface MessageBubbleProps {
   onBranch?: (messageId: string) => Promise<void>;
   /** Whether this message has branches created from it */
   hasBranch?: boolean;
+  /** Source of the message (text input, voice input, or system) */
+  source?: "text" | "voice" | "system";
+  /** Whether audio controls should be shown in compact mode */
+  compactAudio?: boolean;
+  /** Callback when audio playback is requested */
+  onPlayAudio?: (messageId: string) => void;
 }
 
 // Memoize to prevent unnecessary re-renders when other messages update
@@ -39,6 +45,9 @@ export const MessageBubble = memo(function MessageBubble({
   onDelete,
   onBranch,
   hasBranch,
+  source,
+  compactAudio,
+  onPlayAudio,
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
@@ -743,12 +752,38 @@ export const MessageBubble = memo(function MessageBubble({
               </div>
             )}
 
-            {/* Timestamp and Branch Indicator */}
+            {/* Timestamp, Source Indicator, and Branch Indicator */}
             <div
               className={`flex items-center gap-2 text-xs mt-2 ${
                 isUser ? "text-primary-100" : "text-neutral-500"
               }`}
             >
+              {/* Voice Source Indicator */}
+              {source === "voice" && (
+                <span
+                  className={`inline-flex items-center gap-0.5 ${
+                    isUser ? "text-primary-100" : "text-neutral-500"
+                  }`}
+                  aria-label="Voice message"
+                  title="Sent via voice"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-3.5 h-3.5"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"
+                    />
+                  </svg>
+                </span>
+              )}
               <span>
                 {new Date(message.timestamp).toLocaleTimeString("en-US", {
                   hour: "2-digit",
