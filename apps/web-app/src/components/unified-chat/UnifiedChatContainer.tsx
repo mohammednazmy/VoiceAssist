@@ -52,6 +52,7 @@ import type {
   Conversation,
   WebSocketErrorCode,
 } from "@voiceassist/types";
+import { extractErrorMessage } from "@voiceassist/types";
 import { Loader2, AlertCircle } from "lucide-react";
 
 // ============================================================================
@@ -412,16 +413,14 @@ export function UnifiedChatContainer({
 
         onConversationReady?.(id);
         announce("Conversation loaded");
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("[UnifiedChat] Failed to load conversation:", error);
-        if (error?.response?.status === 404) {
+        if ((error as any)?.response?.status === 404) {
           setErrorType("not-found");
         } else {
           setErrorType("failed-load");
         }
-        setErrorMessage(
-          error instanceof Error ? error.message : "Unknown error",
-        );
+        setErrorMessage(extractErrorMessage(error));
       } finally {
         setLoadingState("idle");
       }

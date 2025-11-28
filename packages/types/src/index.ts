@@ -954,3 +954,38 @@ export type Optional<T> = T | undefined;
 export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
+
+// ============================================================================
+// Error Handling Utilities
+// ============================================================================
+
+/**
+ * Type guard to check if an error has a message property
+ */
+export function isErrorWithMessage(err: unknown): err is { message: string } {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "message" in err &&
+    typeof (err as { message: unknown }).message === "string"
+  );
+}
+
+/**
+ * Safely extracts an error message from an unknown error type.
+ * Handles Error instances, objects with message property, and strings.
+ * This replaces the need for `catch (err: any)` patterns.
+ *
+ * @example
+ * try {
+ *   await fetchData();
+ * } catch (err: unknown) {
+ *   setError(extractErrorMessage(err));
+ * }
+ */
+export function extractErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (isErrorWithMessage(err)) return err.message;
+  if (typeof err === "string") return err;
+  return "An unknown error occurred";
+}

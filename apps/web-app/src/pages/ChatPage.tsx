@@ -8,6 +8,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { extractErrorMessage } from "@voiceassist/types";
 import { useAuth } from "../hooks/useAuth";
 import { useChatSession } from "../hooks/useChatSession";
 import { useBranching } from "../hooks/useBranching";
@@ -261,17 +262,19 @@ export function ChatPage() {
           // Set active conversation (will trigger WebSocket connection)
           setActiveConversationId(conversationId);
           setLoadingState("idle");
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error("Failed to load conversation:", err);
 
-          if (err.response?.status === 404) {
+          const errorResponse = (err as { response?: { status?: number } })
+            ?.response;
+          if (errorResponse?.status === 404) {
             setErrorType("not-found");
             setErrorMessage(
               "This conversation could not be found. It may have been deleted.",
             );
           } else {
             setErrorType("failed-load");
-            setErrorMessage("Failed to load conversation. Please try again.");
+            setErrorMessage(extractErrorMessage(err));
           }
           setLoadingState("idle");
         }

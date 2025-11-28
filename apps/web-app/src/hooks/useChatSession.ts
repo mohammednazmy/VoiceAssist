@@ -273,8 +273,16 @@ export function useChatSession(
               websocketLog.debug(
                 `Received ${data.messages.length} history messages`,
               );
+              interface HistoryMessage {
+                id: string;
+                role: "user" | "assistant" | "system";
+                content: string;
+                timestamp?: number;
+                citations?: Message["citations"];
+                metadata?: Message["metadata"];
+              }
               const historyMessages: Message[] = data.messages.map(
-                (msg: any) => ({
+                (msg: HistoryMessage) => ({
                   id: msg.id,
                   role: msg.role,
                   content: msg.content,

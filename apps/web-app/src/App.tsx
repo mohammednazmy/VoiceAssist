@@ -48,14 +48,7 @@ export function App() {
       <AnalyticsOptInLayout config={analyticsConfig}>
         <AccessibilityProvider>
           <AnnouncerProvider>
-            <BrowserRouter
-              future={{
-                // Enable React Router v7 future flags to suppress warnings
-                // and prepare for v7 compatibility
-                v7_startTransition: true,
-                v7_relativeSplatPath: true,
-              }}
-            >
+            <BrowserRouter>
               <SkipLinks links={skipLinks} />
               <LanguageProvider>
                 <ThemeProvider>
