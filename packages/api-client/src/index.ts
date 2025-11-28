@@ -304,9 +304,12 @@ export class VoiceAssistApiClient {
   }
 
   async refreshToken(refreshToken: string): Promise<AuthTokens> {
-    const response = await this.client.post<TokenResponse>("/api/auth/refresh", {
-      refresh_token: refreshToken,
-    });
+    const response = await this.client.post<TokenResponse>(
+      "/api/auth/refresh",
+      {
+        refresh_token: refreshToken,
+      },
+    );
     // Convert backend response to frontend format
     return {
       accessToken: response.data.access_token,
@@ -350,7 +353,7 @@ export class VoiceAssistApiClient {
     formData.append("audio", audio as any, filename);
 
     const response = await this.client.post<{ text: string }>(
-      "/voice/transcribe",
+      "/api/voice/transcribe",
       formData,
       {
         headers: {
@@ -364,7 +367,7 @@ export class VoiceAssistApiClient {
 
   async synthesizeSpeech(text: string, voiceId?: string): Promise<Blob> {
     const response = await this.client.post<Blob>(
-      "/voice/synthesize",
+      "/api/voice/synthesize",
       { text, voiceId },
       {
         responseType: "blob",
@@ -408,7 +411,10 @@ export class VoiceAssistApiClient {
       };
     };
   }> {
-    const response = await this.client.post("/voice/realtime-session", request);
+    const response = await this.client.post(
+      "/api/voice/realtime-session",
+      request,
+    );
     return response.data;
   }
 
@@ -422,7 +428,7 @@ export class VoiceAssistApiClient {
     answer: string;
     citations: Record<string, any>[];
   }> {
-    const response = await this.client.post("/voice/relay", request);
+    const response = await this.client.post("/api/voice/relay", request);
     return response.data;
   }
 
@@ -442,7 +448,7 @@ export class VoiceAssistApiClient {
     reconnect_count?: number;
     session_started_at?: number | null;
   }): Promise<{ status: string }> {
-    const response = await this.client.post("/voice/metrics", metrics);
+    const response = await this.client.post("/api/voice/metrics", metrics);
     return response.data;
   }
 
@@ -478,21 +484,34 @@ export class VoiceAssistApiClient {
     pageSize = 20,
   ): Promise<PaginatedResponse<Conversation>> {
     const response = await this.client.get<
-      ApiResponse<PaginatedResponse<Conversation>>
-    >("/conversations", { params: { page, pageSize } });
-    return response.data.data!;
+      ApiResponse<{
+        items: Conversation[];
+        total: number;
+        page: number;
+        pageSize: number;
+      }>
+    >("/api/conversations", { params: { page, pageSize } });
+    const data = response.data.data!;
+    // Transform backend response (total) to frontend format (totalCount, totalPages)
+    return {
+      items: data.items,
+      page: data.page,
+      pageSize: data.pageSize,
+      totalCount: data.total,
+      totalPages: Math.ceil(data.total / data.pageSize),
+    };
   }
 
   async getConversation(id: string): Promise<Conversation> {
     const response = await this.client.get<ApiResponse<Conversation>>(
-      `/conversations/${id}`,
+      `/api/conversations/${id}`,
     );
     return response.data.data!;
   }
 
   async createConversation(title: string): Promise<Conversation> {
     const response = await this.client.post<ApiResponse<Conversation>>(
-      "/conversations",
+      "/api/conversations",
       { title },
     );
     return response.data.data!;
@@ -503,7 +522,7 @@ export class VoiceAssistApiClient {
     updates: UpdateConversationRequest,
   ): Promise<Conversation> {
     const response = await this.client.patch<ApiResponse<Conversation>>(
-      `/conversations/${id}`,
+      `/api/conversations/${id}`,
       updates,
     );
     return response.data.data!;
@@ -518,7 +537,7 @@ export class VoiceAssistApiClient {
   }
 
   async deleteConversation(id: string): Promise<void> {
-    await this.client.delete(`/conversations/${id}`);
+    await this.client.delete(`/api/conversations/${id}`);
   }
 
   // =========================================================================
@@ -531,11 +550,24 @@ export class VoiceAssistApiClient {
     pageSize = 50,
   ): Promise<PaginatedResponse<Message>> {
     const response = await this.client.get<
-      ApiResponse<PaginatedResponse<Message>>
-    >(`/conversations/${conversationId}/messages`, {
+      ApiResponse<{
+        items: Message[];
+        total: number;
+        page: number;
+        pageSize: number;
+      }>
+    >(`/api/conversations/${conversationId}/messages`, {
       params: { page, pageSize },
     });
-    return response.data.data!;
+    const data = response.data.data!;
+    // Transform backend response (total) to frontend format (totalCount, totalPages)
+    return {
+      items: data.items,
+      page: data.page,
+      pageSize: data.pageSize,
+      totalCount: data.total,
+      totalPages: Math.ceil(data.total / data.pageSize),
+    };
   }
 
   /**
@@ -557,7 +589,7 @@ export class VoiceAssistApiClient {
   ): Promise<Message & { isDuplicate?: boolean }> {
     const response = await this.client.post<
       ApiResponse<Message & { is_duplicate?: boolean }>
-    >(`/conversations/${conversationId}/messages`, {
+    >(`/api/conversations/${conversationId}/messages`, {
       content,
       role: options?.role ?? "user",
       branch_id: options?.branchId,
@@ -603,7 +635,7 @@ export class VoiceAssistApiClient {
     content: string,
   ): Promise<Message> {
     const response = await this.client.patch<ApiResponse<Message>>(
-      `/conversations/${conversationId}/messages/${messageId}`,
+      `/api/conversations/${conversationId}/messages/${messageId}`,
       { content },
     );
     return response.data.data!;
@@ -614,7 +646,7 @@ export class VoiceAssistApiClient {
     messageId: string,
   ): Promise<void> {
     await this.client.delete(
-      `/conversations/${conversationId}/messages/${messageId}`,
+      `/api/conversations/${conversationId}/messages/${messageId}`,
     );
   }
 
@@ -627,7 +659,7 @@ export class VoiceAssistApiClient {
     request: CreateBranchRequest,
   ): Promise<Branch> {
     const response = await this.client.post<ApiResponse<Branch>>(
-      `/conversations/${sessionId}/branches`,
+      `/api/conversations/${sessionId}/branches`,
       request,
     );
     return response.data.data!;
@@ -635,7 +667,7 @@ export class VoiceAssistApiClient {
 
   async listBranches(sessionId: string): Promise<Branch[]> {
     const response = await this.client.get<ApiResponse<Branch[]>>(
-      `/conversations/${sessionId}/branches`,
+      `/api/conversations/${sessionId}/branches`,
     );
     return response.data.data!;
   }
@@ -645,7 +677,7 @@ export class VoiceAssistApiClient {
     branchId: string,
   ): Promise<Message[]> {
     const response = await this.client.get<ApiResponse<Message[]>>(
-      `/conversations/${sessionId}/branches/${branchId}/messages`,
+      `/api/conversations/${sessionId}/branches/${branchId}/messages`,
     );
     return response.data.data!;
   }
@@ -825,22 +857,24 @@ export class VoiceAssistApiClient {
 
   async getFolders(parentId?: string | null): Promise<Folder[]> {
     const params = parentId ? { parent_id: parentId } : undefined;
-    const response = await this.client.get<Folder[]>("/folders", { params });
+    const response = await this.client.get<Folder[]>("/api/folders", {
+      params,
+    });
     return response.data;
   }
 
   async getFolderTree(): Promise<Folder[]> {
-    const response = await this.client.get<Folder[]>("/folders/tree");
+    const response = await this.client.get<Folder[]>("/api/folders/tree");
     return response.data;
   }
 
   async getFolder(id: string): Promise<Folder> {
-    const response = await this.client.get<Folder>(`/folders/${id}`);
+    const response = await this.client.get<Folder>(`/api/folders/${id}`);
     return response.data;
   }
 
   async createFolder(request: CreateFolderRequest): Promise<Folder> {
-    const response = await this.client.post<Folder>("/folders", request);
+    const response = await this.client.post<Folder>("/api/folders", request);
     return response.data;
   }
 
@@ -848,17 +882,20 @@ export class VoiceAssistApiClient {
     id: string,
     request: UpdateFolderRequest,
   ): Promise<Folder> {
-    const response = await this.client.put<Folder>(`/folders/${id}`, request);
+    const response = await this.client.put<Folder>(
+      `/api/folders/${id}`,
+      request,
+    );
     return response.data;
   }
 
   async deleteFolder(id: string): Promise<void> {
-    await this.client.delete(`/folders/${id}`);
+    await this.client.delete(`/api/folders/${id}`);
   }
 
   async moveFolder(folderId: string, targetFolderId: string): Promise<Folder> {
     const response = await this.client.post<Folder>(
-      `/folders/${folderId}/move/${targetFolderId}`,
+      `/api/folders/${folderId}/move/${targetFolderId}`,
     );
     return response.data;
   }
@@ -879,7 +916,7 @@ export class VoiceAssistApiClient {
     request: ShareRequest,
   ): Promise<ShareResponse> {
     const response = await this.client.post<ShareResponse>(
-      `/sessions/${sessionId}/share`,
+      `/api/sessions/${sessionId}/share`,
       request,
     );
     return response.data;
@@ -890,7 +927,7 @@ export class VoiceAssistApiClient {
     password?: string,
   ): Promise<any> {
     const params = password ? { password } : undefined;
-    const response = await this.client.get(`/shared/${shareToken}`, {
+    const response = await this.client.get(`/api/shared/${shareToken}`, {
       params,
     });
     return response.data;
@@ -898,13 +935,13 @@ export class VoiceAssistApiClient {
 
   async listShareLinks(sessionId: string): Promise<ShareLink[]> {
     const response = await this.client.get<ShareLink[]>(
-      `/sessions/${sessionId}/shares`,
+      `/api/sessions/${sessionId}/shares`,
     );
     return response.data;
   }
 
   async revokeShareLink(sessionId: string, shareToken: string): Promise<void> {
-    await this.client.delete(`/sessions/${sessionId}/share/${shareToken}`);
+    await this.client.delete(`/api/sessions/${sessionId}/share/${shareToken}`);
   }
 
   // =========================================================================
@@ -920,7 +957,7 @@ export class VoiceAssistApiClient {
     formData.append("file", file);
 
     const response = await this.client.post<AttachmentUploadResponse>(
-      `/messages/${messageId}/attachments`,
+      `/api/messages/${messageId}/attachments`,
       formData,
       {
         headers: {
@@ -942,18 +979,18 @@ export class VoiceAssistApiClient {
 
   async listAttachments(messageId: string): Promise<Attachment[]> {
     const response = await this.client.get<Attachment[]>(
-      `/messages/${messageId}/attachments`,
+      `/api/messages/${messageId}/attachments`,
     );
     return response.data;
   }
 
   async deleteAttachment(attachmentId: string): Promise<void> {
-    await this.client.delete(`/attachments/${attachmentId}`);
+    await this.client.delete(`/api/attachments/${attachmentId}`);
   }
 
   async downloadAttachment(attachmentId: string): Promise<Blob> {
     const response = await this.client.get(
-      `/attachments/${attachmentId}/download`,
+      `/api/attachments/${attachmentId}/download`,
       {
         responseType: "blob",
       },
@@ -962,7 +999,7 @@ export class VoiceAssistApiClient {
   }
 
   getAttachmentUrl(attachmentId: string): string {
-    return `${this.config.baseURL}/attachments/${attachmentId}/download`;
+    return `${this.config.baseURL}/api/attachments/${attachmentId}/download`;
   }
 
   // =========================================================================
@@ -974,7 +1011,7 @@ export class VoiceAssistApiClient {
   ): Promise<ClinicalContext> {
     return this.withRetryIfEnabled(async () => {
       const response = await this.client.post<ClinicalContext>(
-        "/clinical-contexts",
+        "/api/clinical-contexts",
         context,
       );
       return response.data;
@@ -987,7 +1024,7 @@ export class VoiceAssistApiClient {
     return this.withRetryIfEnabled(async () => {
       const params = sessionId ? { session_id: sessionId } : undefined;
       const response = await this.client.get<ClinicalContext>(
-        "/clinical-contexts/current",
+        "/api/clinical-contexts/current",
         { params },
       );
       return response.data;
@@ -996,7 +1033,7 @@ export class VoiceAssistApiClient {
 
   async getClinicalContext(contextId: string): Promise<ClinicalContext> {
     const response = await this.client.get<ClinicalContext>(
-      `/clinical-contexts/${contextId}`,
+      `/api/clinical-contexts/${contextId}`,
     );
     return response.data;
   }
@@ -1007,7 +1044,7 @@ export class VoiceAssistApiClient {
   ): Promise<ClinicalContext> {
     return this.withRetryIfEnabled(async () => {
       const response = await this.client.put<ClinicalContext>(
-        `/clinical-contexts/${contextId}`,
+        `/api/clinical-contexts/${contextId}`,
         update,
       );
       return response.data;
@@ -1015,7 +1052,7 @@ export class VoiceAssistApiClient {
   }
 
   async deleteClinicalContext(contextId: string): Promise<void> {
-    await this.client.delete(`/clinical-contexts/${contextId}`);
+    await this.client.delete(`/api/clinical-contexts/${contextId}`);
   }
 
   // =========================================================================
@@ -1028,7 +1065,7 @@ export class VoiceAssistApiClient {
    */
   async exportConversationAsMarkdown(conversationId: string): Promise<Blob> {
     const response = await this.client.get(
-      `/export/sessions/${conversationId}/export/markdown`,
+      `/api/export/sessions/${conversationId}/export/markdown`,
       {
         responseType: "blob",
       },
@@ -1042,7 +1079,7 @@ export class VoiceAssistApiClient {
    */
   async exportConversationAsPdf(conversationId: string): Promise<Blob> {
     const response = await this.client.get(
-      `/export/sessions/${conversationId}/export/pdf`,
+      `/api/export/sessions/${conversationId}/export/pdf`,
       {
         responseType: "blob",
       },

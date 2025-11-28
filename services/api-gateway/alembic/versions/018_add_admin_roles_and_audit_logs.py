@@ -9,8 +9,8 @@ from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 # revision identifiers, used by Alembic.
-revision: str = "018_add_admin_roles_and_audit_logs"
-down_revision: Union[str, None] = "017_add_conversation_settings"
+revision: str = "018"
+down_revision: Union[str, None] = "017"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

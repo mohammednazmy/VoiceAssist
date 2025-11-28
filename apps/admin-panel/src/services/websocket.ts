@@ -24,7 +24,7 @@ class WebSocketService {
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private readonly url: string;
 
-  constructor(path = "/ws/admin") {
+  constructor(path = "/api/admin/panel/ws") {
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     this.url = `${protocol}://${window.location.host}${path}`;
   }
@@ -34,9 +34,11 @@ class WebSocketService {
   }
 
   connect() {
-    if (this.socket &&
+    if (
+      this.socket &&
       (this.socket.readyState === WebSocket.CONNECTING ||
-        this.socket.readyState === WebSocket.OPEN)) {
+        this.socket.readyState === WebSocket.OPEN)
+    ) {
       return;
     }
 

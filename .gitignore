@@ -105,3 +105,4 @@ __MACOSX/
 # Jaeger observability data
 infrastructure/observability/jaeger/data/
 infrastructure/observability/jaeger/key/
+apps/web-app/dev-dist/

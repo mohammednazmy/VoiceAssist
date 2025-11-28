@@ -162,6 +162,7 @@ export function MessageInput({
       {showRealtimeVoice && enableRealtimeVoice && (
         <div className="mb-4">
           <VoiceModePanel
+            key="voice-mode-panel"
             conversationId={conversationId}
             onClose={() => setShowRealtimeVoice(false)}
             onUserMessage={handleVoiceUserMessage}

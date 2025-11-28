@@ -161,6 +161,8 @@ export interface UseRealtimeVoiceSessionOptions {
     user_message_id: string;
     assistant_message_id: string;
   }) => void;
+  /** Called when user starts speaking (for barge-in) - stop any playing audio */
+  onSpeechStarted?: () => void;
   autoConnect?: boolean;
 }
 
@@ -214,6 +216,8 @@ export function useRealtimeVoiceSession(
   const speechStopTimeRef = useRef<number | null>(null);
   const hasReceivedFirstTranscriptRef = useRef(false);
   const lastFinalTranscriptRef = useRef<string | null>(null);
+  // Track if there's an active response (for cancellation on barge-in)
+  const activeResponseIdRef = useRef<string | null>(null);
 
   // Refs to break circular dependencies between callbacks
   // Used so scheduleReconnect and initializeWebSocket can reference
@@ -546,6 +550,28 @@ export function useRealtimeVoiceSession(
           voiceLog.debug(" Item created:", message.item);
           break;
 
+        case "response.created":
+          // Track active response for cancellation on barge-in
+          activeResponseIdRef.current = message.response?.id || null;
+          voiceLog.debug(
+            `[RealtimeVoiceSession] Response started: ${activeResponseIdRef.current}`,
+          );
+          break;
+
+        case "response.done":
+          // Response completed - clear active response tracking
+          activeResponseIdRef.current = null;
+          voiceLog.debug("[RealtimeVoiceSession] Response completed");
+          break;
+
+        case "response.cancelled":
+          // Response was cancelled (barge-in)
+          activeResponseIdRef.current = null;
+          voiceLog.debug(
+            "[RealtimeVoiceSession] Response cancelled (barge-in)",
+          );
+          break;
+
         case "conversation.item.input_audio_transcription.delta": {
           // Partial/streaming user speech transcription
           const partialText = message.delta || "";
@@ -637,6 +663,25 @@ export function useRealtimeVoiceSession(
           setIsSpeaking(true);
           // Clear partial transcript for new utterance
           setPartialTranscript("");
+
+          // Barge-in: Cancel any active response when user starts speaking
+          if (
+            activeResponseIdRef.current &&
+            wsRef.current?.readyState === WebSocket.OPEN
+          ) {
+            voiceLog.debug(
+              `[RealtimeVoiceSession] Barge-in: cancelling response ${activeResponseIdRef.current}`,
+            );
+            wsRef.current.send(
+              JSON.stringify({
+                type: "response.cancel",
+              }),
+            );
+            activeResponseIdRef.current = null;
+          }
+
+          // Notify parent to stop audio playback
+          options.onSpeechStarted?.();
           break;
 
         case "input_audio_buffer.speech_stopped":
@@ -645,11 +690,27 @@ export function useRealtimeVoiceSession(
           speechStopTimeRef.current = Date.now();
           break;
 
-        case "error":
-          handleError(
-            new Error(message.error?.message || "Realtime API error"),
-          );
+        case "error": {
+          const errorMessage = message.error?.message || "Realtime API error";
+          const errorCode = message.error?.code;
+
+          // Handle benign errors gracefully (don't treat as fatal)
+          // "Cancellation failed" happens when we try to cancel a response that already completed
+          // This is expected during rapid barge-in scenarios
+          if (
+            errorMessage.includes("Cancellation failed") ||
+            errorMessage.includes("no active response") ||
+            errorCode === "cancellation_failed"
+          ) {
+            voiceLog.debug(
+              `[RealtimeVoiceSession] Ignoring benign error: ${errorMessage}`,
+            );
+            break;
+          }
+
+          handleError(new Error(errorMessage));
           break;
+        }
 
         default:
           voiceLog.debug(
@@ -703,60 +764,138 @@ export function useRealtimeVoiceSession(
     mediaStreamRef.current = stream;
 
     try {
-      // Create audio context and AudioWorklet with small buffer for lower latency
-      const audioContext = new AudioContext({ sampleRate: 24000 });
+      // Create audio context with NATIVE sample rate (don't force 24kHz)
+      const audioContext = new AudioContext();
       audioContextRef.current = audioContext;
 
-      const workletCode = `
-        class PCMWorkletProcessor extends AudioWorkletProcessor {
-          process(inputs) {
-            const input = inputs[0];
-            if (!input || !input[0]) return true;
-            const inputChannel = input[0];
-            const pcm16 = new Int16Array(inputChannel.length);
-            for (let i = 0; i < inputChannel.length; i++) {
-              const s = Math.max(-1, Math.min(1, inputChannel[i]));
-              pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-            }
-            this.port.postMessage(pcm16.buffer, [pcm16.buffer]);
-            return true;
-          }
-        }
-        registerProcessor('pcm-worklet', PCMWorkletProcessor);
-      `;
-      const workletBlob = new Blob([workletCode], {
-        type: "application/javascript",
-      });
-      const workletUrl = URL.createObjectURL(workletBlob);
-      await audioContext.audioWorklet.addModule(workletUrl);
+      // IMPORTANT: Resume AudioContext - browsers suspend it by default until user interaction
+      if (audioContext.state === "suspended") {
+        voiceLog.debug(
+          "[RealtimeVoiceSession] Resuming suspended AudioContext...",
+        );
+        await audioContext.resume();
+      }
+
+      const nativeSampleRate = audioContext.sampleRate;
+      const targetSampleRate = 24000; // OpenAI Realtime API expects 24kHz
+      const resampleRatio = nativeSampleRate / targetSampleRate;
+
+      // Log MediaStream track info for debugging
+      const audioTracks = stream.getAudioTracks();
+      const trackInfo = audioTracks.map((t) => ({
+        label: t.label,
+        enabled: t.enabled,
+        muted: t.muted,
+        readyState: t.readyState,
+        settings: t.getSettings(),
+      }));
+      voiceLog.debug(
+        `[RealtimeVoiceSession] AudioContext state: ${audioContext.state}, nativeSampleRate: ${nativeSampleRate}Hz, resampleRatio: ${resampleRatio.toFixed(2)}`,
+      );
+      voiceLog.debug(`[RealtimeVoiceSession] Audio tracks:`, trackInfo);
 
       const source = audioContext.createMediaStreamSource(stream);
-      const workletNode = new AudioWorkletNode(audioContext, "pcm-worklet");
 
-      workletNode.port.onmessage = (event) => {
+      // Use ScriptProcessorNode (deprecated but more reliable than AudioWorklet for mic input)
+      // Buffer size of 2048 gives ~43ms chunks at 48kHz (lower latency)
+      const bufferSize = 2048;
+      const scriptProcessor = audioContext.createScriptProcessor(
+        bufferSize,
+        1,
+        1,
+      );
+      processorNodeRef.current = scriptProcessor;
+
+      // Resampling buffer for converting from native rate to 24kHz
+      let resampleBuffer: number[] = [];
+      const targetChunkSize = 128; // Output chunks of 128 samples at 24kHz
+      let audioChunkCount = 0;
+
+      scriptProcessor.onaudioprocess = (event) => {
         if (ws.readyState !== WebSocket.OPEN) return;
-        const pcmBuffer = event.data as ArrayBuffer;
-        const uint8 = new Uint8Array(pcmBuffer);
-        // Backpressure: drop if socket is backed up
-        if (ws.bufferedAmount > 256 * 1024) {
-          voiceLog.warn(
-            "[RealtimeVoiceSession] Dropping audio chunk due to backpressure",
-          );
-          return;
+
+        const inputData = event.inputBuffer.getChannelData(0);
+
+        // Add input samples to resample buffer
+        for (let i = 0; i < inputData.length; i++) {
+          resampleBuffer.push(inputData[i]);
         }
-        // Base64 encode PCM16
-        const base64 = btoa(String.fromCharCode(...uint8));
-        ws.send(
-          JSON.stringify({
-            type: "input_audio_buffer.append",
-            audio: base64,
-          }),
-        );
+
+        // Output resampled chunks at 24kHz
+        while (resampleBuffer.length >= resampleRatio * targetChunkSize) {
+          const pcm16 = new Int16Array(targetChunkSize);
+          for (let i = 0; i < targetChunkSize; i++) {
+            const srcIndex = i * resampleRatio;
+            const srcIndexFloor = Math.floor(srcIndex);
+            const srcIndexCeil = Math.min(
+              srcIndexFloor + 1,
+              resampleBuffer.length - 1,
+            );
+            const frac = srcIndex - srcIndexFloor;
+
+            // Linear interpolation
+            const sample =
+              resampleBuffer[srcIndexFloor] * (1 - frac) +
+              resampleBuffer[srcIndexCeil] * frac;
+
+            // Convert float [-1, 1] to PCM16
+            const s = Math.max(-1, Math.min(1, sample));
+            pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+          }
+
+          // Remove used samples from buffer
+          const samplesUsed = Math.floor(targetChunkSize * resampleRatio);
+          resampleBuffer = resampleBuffer.slice(samplesUsed);
+
+          // Calculate audio level (RMS) from PCM16 data
+          let sumSquares = 0;
+          for (let i = 0; i < pcm16.length; i++) {
+            sumSquares += pcm16[i] * pcm16[i];
+          }
+          const rms = Math.sqrt(sumSquares / pcm16.length);
+          const dbLevel = 20 * Math.log10(rms / 32768);
+
+          audioChunkCount++;
+          // Log occasionally to avoid console spam (every 500 chunks = ~2.7 seconds at 24kHz)
+          // Skip logging for silent chunks (-Infinity dB means no audio/all zeros)
+          if (audioChunkCount % 500 === 0 && isFinite(dbLevel)) {
+            voiceLog.debug(
+              `[RealtimeVoiceSession] Audio chunk #${audioChunkCount}, level: ${dbLevel.toFixed(1)} dB`,
+            );
+          }
+
+          // Backpressure: drop if socket is backed up
+          if (ws.bufferedAmount > 256 * 1024) {
+            voiceLog.warn(
+              "[RealtimeVoiceSession] Dropping audio chunk due to backpressure",
+            );
+            continue;
+          }
+
+          // Base64 encode PCM16
+          const uint8 = new Uint8Array(pcm16.buffer);
+          const base64 = btoa(String.fromCharCode(...uint8));
+          ws.send(
+            JSON.stringify({
+              type: "input_audio_buffer.append",
+              audio: base64,
+            }),
+          );
+        }
       };
 
-      source.connect(workletNode);
-      // WorkletNode does not need to connect to destination for processing
-      voiceLog.debug(" Audio streaming initialized (AudioWorklet)");
+      // Connect: source -> scriptProcessor -> silentGain (muted) -> destination
+      // ScriptProcessorNode requires connection to destination to work, but we don't want
+      // to output mic audio to speakers (causes feedback). Use a gain node set to 0.
+      const silentGain = audioContext.createGain();
+      silentGain.gain.value = 0; // Mute output to prevent feedback
+      source.connect(scriptProcessor);
+      scriptProcessor.connect(silentGain);
+      silentGain.connect(audioContext.destination);
+
+      voiceLog.debug(
+        " Audio streaming initialized (ScriptProcessor with resampling, output muted)",
+      );
     } catch (err) {
       // Clean up the stream if audio context setup fails
       stream.getTracks().forEach((track) => track.stop());

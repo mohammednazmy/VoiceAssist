@@ -1,7 +1,42 @@
 {
-  "count": 224,
-  "generated_at": "2025-11-28T04:56:09.929Z",
+  "count": 225,
+  "generated_at": "2025-11-28T10:16:00.931Z",
   "docs": [
+    {
+      "slug": "voice/pipeline",
+      "path": "VOICE_MODE_PIPELINE.md",
+      "title": "Voice Mode Pipeline",
+      "summary": "Unified Voice Mode pipeline architecture, data flow, barge-in, audio playback, metrics, and testing strategy.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "agent", "backend", "frontend"],
+      "category": "reference",
+      "tags": [
+        "voice",
+        "realtime",
+        "websocket",
+        "openai",
+        "api",
+        "barge-in",
+        "audio"
+      ],
+      "relatedServices": ["api-gateway", "web-app"],
+      "lastUpdated": "2025-11-28"
+    },
+    {
+      "slug": "voice-state-2025-11-28",
+      "path": "VOICE_STATE_2025-11-28.md",
+      "title": "Voice State 2025-11-28",
+      "summary": "Voice mode now includes barge-in support, audio overlap prevention, and improved error handling. This document captures the current state.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human", "agent"],
+      "category": "reference",
+      "tags": ["voice", "barge-in", "audio", "state", "2025"],
+      "lastUpdated": "2025-11-28"
+    },
     {
       "slug": "admin/implementation-plan",
       "path": "admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md",
@@ -1342,20 +1377,6 @@
       "audience": ["frontend"],
       "category": "operations",
       "tags": ["user", "guide"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "voice/pipeline",
-      "path": "VOICE_MODE_PIPELINE.md",
-      "title": "Voice Mode Pipeline",
-      "summary": "Unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy.",
-      "status": "stable",
-      "stability": "production",
-      "owner": "backend",
-      "audience": ["human", "agent", "backend", "frontend"],
-      "category": "reference",
-      "tags": ["voice", "realtime", "websocket", "openai", "api"],
-      "relatedServices": ["api-gateway", "web-app"],
       "lastUpdated": "2025-11-27"
     },
     {

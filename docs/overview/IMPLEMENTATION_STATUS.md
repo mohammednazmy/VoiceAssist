@@ -11,7 +11,7 @@ tags: ["status", "overview", "components", "roadmap", "architecture"]
 relatedServices: ["api-gateway", "web-app", "admin-panel", "docs-site"]
 category: overview
 source_of_truth: true
-version: "1.4.0"
+version: "1.6.0"
 ---
 
 # Implementation Status
@@ -85,13 +85,25 @@ The canonical backend service for VoiceAssist. All new backend development occur
 
 Main user-facing medical AI assistant application.
 
-| Phase                   | Status      | Description                          |
-| ----------------------- | ----------- | ------------------------------------ |
-| Phase 0: Foundation     | Complete    | Monorepo setup, shared packages      |
-| Phase 1: Auth & Layout  | Complete    | Login, navigation, responsive layout |
-| Phase 2: Chat Interface | Complete    | Text chat, streaming, history        |
-| Phase 3: Voice Features | In Progress | Voice input/output integration       |
-| Phase 4-8: Advanced     | Planned     | Files, medical, admin, polish        |
+| Phase                   | Status      | Description                                    |
+| ----------------------- | ----------- | ---------------------------------------------- |
+| Phase 0: Foundation     | Complete    | Monorepo setup, shared packages                |
+| Phase 1: Auth & Layout  | Complete    | Login, navigation, responsive layout           |
+| Phase 2: Chat Interface | Complete    | Text chat, streaming, history                  |
+| Phase 3: Voice Features | In Progress | Voice input/output, barge-in, audio management |
+| Phase 4-8: Advanced     | Planned     | Files, medical, admin, polish                  |
+
+**Voice Mode Features (Phase 3):**
+
+| Feature                  | Status   | Notes                                   |
+| ------------------------ | -------- | --------------------------------------- |
+| OpenAI Realtime API      | Complete | WebSocket streaming, ephemeral tokens   |
+| Voice settings           | Complete | Voice selection, VAD sensitivity        |
+| Audio capture            | Complete | Resampling from 48kHz to 24kHz PCM16    |
+| Barge-in support         | Complete | `response.cancel`, audio stop on speech |
+| Audio overlap prevention | Complete | Response ID tracking                    |
+| Chat integration         | Complete | Voice messages in timeline              |
+| Metrics export           | Complete | `/api/voice/metrics` endpoint           |
 
 #### Admin Panel (`apps/admin-panel/`)
 
@@ -99,21 +111,24 @@ Main user-facing medical AI assistant application.
 
 System administration and monitoring dashboard.
 
-| Feature           | Status   | Notes                                                |
-| ----------------- | -------- | ---------------------------------------------------- |
-| Dashboard         | Complete | Real-time metrics, integrations widget               |
-| User Management   | Complete | CRUD, role assignment                                |
-| Knowledge Base    | Complete | Document upload, indexing                            |
-| Feature Flags     | Complete | Toggle management                                    |
-| Cache Management  | Complete | Stats, invalidation                                  |
-| Audit Logs        | Complete | HIPAA-compliant logging                              |
-| Voice Monitor     | Complete | Sessions, metrics, config (Sprint 1)                 |
-| Integrations      | Complete | Health status, test connectivity (Sprint 2)          |
-| Security/PHI      | Complete | PHI config, rules, routing stats (Sprint 3)          |
-| Analytics         | Complete | Model usage, cost tracking, search stats (Sprint 4)  |
-| System            | Complete | Resource monitoring, backups, maintenance (Sprint 4) |
-| Shared Components | Complete | 10 standardized UI components (Sprint 5)             |
-| E2E Tests         | Complete | Playwright test suites for all pages (Sprint 5) ✅   |
+| Feature           | Status   | Notes                                                 |
+| ----------------- | -------- | ----------------------------------------------------- |
+| Dashboard         | Complete | Real-time metrics, integrations widget                |
+| User Management   | Complete | CRUD, role assignment                                 |
+| Knowledge Base    | Complete | Document upload, indexing                             |
+| Feature Flags     | Complete | Enhanced UI with CRUD, toggle switches (Sprint 6)     |
+| Cache Management  | Complete | Stats, invalidation                                   |
+| Audit Logs        | Complete | HIPAA-compliant logging                               |
+| Voice Monitor     | Complete | Sessions, metrics, config (Sprint 1)                  |
+| Integrations      | Complete | Health status, test connectivity (Sprint 2)           |
+| Security/PHI      | Complete | PHI config, rules, routing stats (Sprint 3)           |
+| Analytics         | Complete | Model usage, cost tracking, search stats (Sprint 4)   |
+| System            | Complete | Resource monitoring, backups, maintenance (Sprint 4)  |
+| Shared Components | Complete | 10 standardized UI components (Sprint 5)              |
+| E2E Tests         | Complete | Playwright test suites for all pages (Sprint 5)       |
+| Tools Admin       | Complete | Tool registry, config, logs, analytics (Sprint 6) ✅  |
+| Troubleshooting   | Complete | Logs viewer, error summary, health grid (Sprint 6) ✅ |
+| Backups & DR      | Complete | Dedicated page, DR status, history (Sprint 6) ✅      |
 
 #### Docs Site (`apps/docs-site/`)
 
@@ -228,13 +243,15 @@ curl https://assist.asimo.io/api/admin/panel/stats
 
 ## Version History
 
-| Date       | Version | Changes                                                          |
-| ---------- | ------- | ---------------------------------------------------------------- |
-| 2025-11-28 | 1.4.0   | Sprint 5 complete: Shared components, E2E tests, 128 total tests |
-| 2025-11-28 | 1.3.0   | Sprint 4 complete: Analytics & System pages, 36 frontend tests   |
-| 2025-11-27 | 1.2.0   | Sprint 3 complete: Security/PHI admin page deployed at /security |
-| 2025-11-27 | 1.1.0   | Sprint 1 & 2 complete: Voice Monitor, Integrations admin         |
-| 2025-11-27 | 1.0.0   | Initial implementation status document                           |
+| Date       | Version | Changes                                                                       |
+| ---------- | ------- | ----------------------------------------------------------------------------- |
+| 2025-11-28 | 1.6.0   | Voice Mode: Barge-in support, audio overlap prevention, benign error handling |
+| 2025-11-28 | 1.5.0   | Sprint 6 complete: Tools Admin, Troubleshooting, Backups & DR, Feature Flags  |
+| 2025-11-28 | 1.4.0   | Sprint 5 complete: Shared components, E2E tests, 128 total tests              |
+| 2025-11-28 | 1.3.0   | Sprint 4 complete: Analytics & System pages, 36 frontend tests                |
+| 2025-11-27 | 1.2.0   | Sprint 3 complete: Security/PHI admin page deployed at /security              |
+| 2025-11-27 | 1.1.0   | Sprint 1 & 2 complete: Voice Monitor, Integrations admin                      |
+| 2025-11-27 | 1.0.0   | Initial implementation status document                                        |
 
 ---
 

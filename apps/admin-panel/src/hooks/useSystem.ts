@@ -129,10 +129,10 @@ export function useSystem(options: UseSystemOptions = {}): UseSystemReturn {
   const refreshResources = useCallback(async () => {
     setResourcesLoading(true);
     try {
-      const response = await fetchAPI<{ data: ResourceMetrics }>(
+      const response = await fetchAPI<ResourceMetrics>(
         "/api/admin/system/resources",
       );
-      setResources(response.data);
+      setResources(response);
       setError(null);
     } catch (err) {
       const message =
@@ -146,10 +146,8 @@ export function useSystem(options: UseSystemOptions = {}): UseSystemReturn {
   // Fetch system health
   const fetchHealth = useCallback(async () => {
     try {
-      const response = await fetchAPI<{ data: SystemHealth }>(
-        "/api/admin/system/health",
-      );
-      setHealth(response.data);
+      const response = await fetchAPI<SystemHealth>("/api/admin/system/health");
+      setHealth(response);
     } catch (err) {
       console.error("Failed to fetch health:", err);
     }
@@ -160,13 +158,13 @@ export function useSystem(options: UseSystemOptions = {}): UseSystemReturn {
     setBackupLoading(true);
     try {
       const [statusResponse, historyResponse] = await Promise.all([
-        fetchAPI<{ data: BackupStatus }>("/api/admin/system/backup/status"),
-        fetchAPI<{ data: { history: BackupHistoryEntry[] } }>(
+        fetchAPI<BackupStatus>("/api/admin/system/backup/status"),
+        fetchAPI<{ history: BackupHistoryEntry[] }>(
           "/api/admin/system/backup/history?limit=10",
         ),
       ]);
-      setBackupStatus(statusResponse.data);
-      setBackupHistory(historyResponse.data.history);
+      setBackupStatus(statusResponse);
+      setBackupHistory(historyResponse.history);
     } catch (err) {
       console.error("Failed to fetch backup data:", err);
     } finally {
@@ -177,10 +175,10 @@ export function useSystem(options: UseSystemOptions = {}): UseSystemReturn {
   // Fetch maintenance status
   const fetchMaintenance = useCallback(async () => {
     try {
-      const response = await fetchAPI<{ data: MaintenanceStatus }>(
+      const response = await fetchAPI<MaintenanceStatus>(
         "/api/admin/system/maintenance",
       );
-      setMaintenanceStatus(response.data);
+      setMaintenanceStatus(response);
     } catch (err) {
       console.error("Failed to fetch maintenance status:", err);
     }
@@ -189,10 +187,10 @@ export function useSystem(options: UseSystemOptions = {}): UseSystemReturn {
   // Fetch cache namespaces
   const fetchCacheNamespaces = useCallback(async () => {
     try {
-      const response = await fetchAPI<{
-        data: { namespaces: CacheNamespaceStats[] };
-      }>("/api/admin/cache/stats/namespaces");
-      setCacheNamespaces(response.data.namespaces);
+      const response = await fetchAPI<{ namespaces: CacheNamespaceStats[] }>(
+        "/api/admin/cache/stats/namespaces",
+      );
+      setCacheNamespaces(response.namespaces);
     } catch (err) {
       console.error("Failed to fetch cache namespaces:", err);
     }

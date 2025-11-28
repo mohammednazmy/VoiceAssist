@@ -9,7 +9,7 @@ Provides endpoints for medical-specific AI capabilities:
 
 from typing import Any, Dict, List, Optional
 
-from app.api.deps import get_current_user
+from app.core.dependencies import get_current_user
 from app.core.logging import get_logger
 from app.models.user import User
 from fastapi import APIRouter, Depends, HTTPException

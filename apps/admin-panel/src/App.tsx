@@ -11,6 +11,10 @@ import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { VoiceMonitorPage } from "./pages/VoiceMonitorPage";
 import { IntegrationsPage } from "./pages/IntegrationsPage";
 import { SecurityPage } from "./pages/SecurityPage";
+import { ToolsPage } from "./pages/ToolsPage";
+import { TroubleshootingPage } from "./pages/TroubleshootingPage";
+import { BackupsPage } from "./pages/BackupsPage";
+import { FeatureFlagsPage } from "./pages/FeatureFlagsPage";
 
 export function App() {
   return (
@@ -41,6 +45,16 @@ export function App() {
                       element={<IntegrationsPage />}
                     />
                     <Route path="/security" element={<SecurityPage />} />
+                    <Route path="/tools" element={<ToolsPage />} />
+                    <Route
+                      path="/feature-flags"
+                      element={<FeatureFlagsPage />}
+                    />
+                    <Route
+                      path="/troubleshooting"
+                      element={<TroubleshootingPage />}
+                    />
+                    <Route path="/backups" element={<BackupsPage />} />
                     <Route
                       path="/"
                       element={<Navigate to="/dashboard" replace />}

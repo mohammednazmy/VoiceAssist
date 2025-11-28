@@ -4,13 +4,16 @@ const ACCESS_TOKEN_KEY = "auth_token";
 const REFRESH_TOKEN_KEY = "auth_refresh_token";
 const ROLE_KEY = "auth_role";
 
-// Base URL should NOT include /api prefix - API endpoints already include the path
+// Base URL should NOT include /api prefix - API client paths include it
 const FALLBACK_GATEWAY = "https://admin.asimo.io";
 
 let cachedClient: VoiceAssistApiClient | null = null;
 
 function buildClient() {
-  const baseURL = import.meta.env.VITE_API_URL || FALLBACK_GATEWAY;
+  const baseURL =
+    import.meta.env.VITE_ADMIN_API_URL ||
+    import.meta.env.VITE_API_URL ||
+    FALLBACK_GATEWAY;
   return new VoiceAssistApiClient({
     baseURL,
     getAccessToken: () => localStorage.getItem(ACCESS_TOKEN_KEY),

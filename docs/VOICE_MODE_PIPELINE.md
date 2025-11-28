@@ -1,13 +1,13 @@
 ---
 title: Voice Mode Pipeline
 slug: voice/pipeline
-summary: Unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy.
+summary: Unified Voice Mode pipeline architecture, data flow, barge-in, audio playback, metrics, and testing strategy.
 status: stable
 stability: production
 owner: backend
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-11-28"
 audience: ["human", "agent", "backend", "frontend"]
-tags: ["voice", "realtime", "websocket", "openai", "api"]
+tags: ["voice", "realtime", "websocket", "openai", "api", "barge-in", "audio"]
 category: reference
 relatedServices: ["api-gateway", "web-app"]
 ---
@@ -15,7 +15,7 @@ relatedServices: ["api-gateway", "web-app"]
 # Voice Mode Pipeline
 
 > **Status**: Production-ready
-> **Last Updated**: 2025-11-27
+> **Last Updated**: 2025-11-28
 
 This document describes the unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy. It serves as the canonical reference for developers working on real-time voice features.
 
@@ -30,6 +30,8 @@ This document describes the unified Voice Mode pipeline architecture, data flow,
 | Voice settings store       | **Live**    | `apps/web-app/src/stores/voiceSettingsStore.ts`        |
 | Voice UI panel             | **Live**    | `apps/web-app/src/components/voice/VoiceModePanel.tsx` |
 | Chat timeline integration  | **Live**    | Voice messages appear in chat                          |
+| Barge-in support           | **Live**    | `response.cancel` + `onSpeechStarted` callback         |
+| Audio overlap prevention   | **Live**    | Response ID tracking + `isProcessingResponseRef`       |
 | E2E test suite             | **Passing** | 95 tests across unit/integration/E2E                   |
 
 > **Full status:** See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for all components.
@@ -44,6 +46,8 @@ Voice Mode enables real-time voice conversations with the AI assistant using Ope
 - **User settings propagation** (voice, language, VAD threshold)
 - **Chat timeline integration** (voice messages appear in chat)
 - **Connection state management** with automatic reconnection
+- **Barge-in support** (interrupt AI while speaking)
+- **Audio playback management** (prevent overlapping responses)
 - **Metrics tracking** for observability
 
 ## Architecture Diagram
@@ -330,6 +334,135 @@ interface VoiceMessage {
 }
 ```
 
+## Barge-in & Audio Playback
+
+**Location**: `apps/web-app/src/components/voice/VoiceModePanel.tsx`, `apps/web-app/src/hooks/useRealtimeVoiceSession.ts`
+
+### Barge-in Flow
+
+When the user starts speaking while the AI is responding, the system immediately:
+
+1. **Detects speech start** via OpenAI's `input_audio_buffer.speech_started` event
+2. **Cancels active response** by sending `response.cancel` to OpenAI
+3. **Stops audio playback** via `onSpeechStarted` callback
+4. **Clears pending responses** to prevent stale audio from playing
+
+```
+User speaks → speech_started event → response.cancel → stopCurrentAudio()
+                                                            ↓
+                                                    Audio stops
+                                                    Queue cleared
+                                                    Response ID incremented
+```
+
+### Response Cancellation
+
+**Location**: `useRealtimeVoiceSession.ts` - `handleRealtimeMessage`
+
+```typescript
+case "input_audio_buffer.speech_started":
+  setIsSpeaking(true);
+  setPartialTranscript("");
+
+  // Barge-in: Cancel any active response when user starts speaking
+  if (activeResponseIdRef.current && wsRef.current?.readyState === WebSocket.OPEN) {
+    wsRef.current.send(JSON.stringify({ type: "response.cancel" }));
+    activeResponseIdRef.current = null;
+  }
+
+  // Notify parent to stop audio playback
+  options.onSpeechStarted?.();
+  break;
+```
+
+### Audio Playback Management
+
+**Location**: `VoiceModePanel.tsx`
+
+The panel tracks audio playback state to prevent overlapping responses:
+
+```typescript
+// Track currently playing Audio element
+const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+
+// Prevent overlapping response processing
+const isProcessingResponseRef = useRef(false);
+
+// Response ID to invalidate stale responses after barge-in
+const currentResponseIdRef = useRef<number>(0);
+```
+
+**Stop current audio function:**
+
+```typescript
+const stopCurrentAudio = useCallback(() => {
+  if (currentAudioRef.current) {
+    currentAudioRef.current.pause();
+    currentAudioRef.current.currentTime = 0;
+    if (currentAudioRef.current.src.startsWith("blob:")) {
+      URL.revokeObjectURL(currentAudioRef.current.src);
+    }
+    currentAudioRef.current = null;
+  }
+  audioQueueRef.current = [];
+  isPlayingRef.current = false;
+  currentResponseIdRef.current++; // Invalidate pending responses
+  isProcessingResponseRef.current = false;
+}, []);
+```
+
+### Overlap Prevention
+
+When a relay result arrives, the handler checks:
+
+1. **Already processing?** Skip if `isProcessingResponseRef.current === true`
+2. **Response ID valid?** Skip playback if ID changed (barge-in occurred)
+
+```typescript
+onRelayResult: async ({ answer }) => {
+  if (answer) {
+    // Prevent overlapping responses
+    if (isProcessingResponseRef.current) {
+      console.log("[VoiceModePanel] Skipping response - already processing another");
+      return;
+    }
+
+    const responseId = ++currentResponseIdRef.current;
+    isProcessingResponseRef.current = true;
+
+    // ... synthesis and playback ...
+
+    // Check if response is still valid before playback
+    if (responseId !== currentResponseIdRef.current) {
+      console.log("[VoiceModePanel] Response cancelled - skipping playback");
+      return;
+    }
+  }
+};
+```
+
+### Error Handling
+
+Benign cancellation errors (e.g., "Cancellation failed: no active response found") are handled gracefully:
+
+```typescript
+case "error": {
+  const errorMessage = message.error?.message || "Realtime API error";
+
+  // Ignore benign cancellation errors
+  if (
+    errorMessage.includes("Cancellation failed") ||
+    errorMessage.includes("no active response")
+  ) {
+    voiceLog.debug(`Ignoring benign error: ${errorMessage}`);
+    break;
+  }
+
+  handleError(new Error(errorMessage));
+  break;
+}
+```
+
 ## Metrics
 
 **Location**: `apps/web-app/src/hooks/useRealtimeVoiceSession.ts`
@@ -578,7 +711,10 @@ LIVE_REALTIME_E2E=1 npx playwright test e2e/voice-mode-session-smoke.spec.ts
 ## Future Work
 
 - ~~**Metrics export to backend**: Send metrics to backend for aggregation/alerting~~ ✓ Implemented
+- ~~**Barge-in support**: Allow user to interrupt AI responses~~ ✓ Implemented (2025-11-28)
+- ~~**Audio overlap prevention**: Prevent multiple responses playing simultaneously~~ ✓ Implemented (2025-11-28)
 - **Voice→chat transcript content E2E**: Test actual transcript content in chat timeline
 - **Performance baseline**: Establish latency targets (connection <2s, STT <500ms)
 - **Error tracking integration**: Send errors to Sentry/similar
 - **Session analytics**: Track voice session patterns for UX improvements
+- **Audio level visualization**: Show real-time audio level meter during recording

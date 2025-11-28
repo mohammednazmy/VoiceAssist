@@ -50,6 +50,29 @@ class ArticleStatus(Enum):
     UNAVAILABLE = "unavailable"
 
 
+class ArticleType(Enum):
+    """Article type filter for PubMed search"""
+
+    clinical_trial = "Clinical Trial"
+    meta_analysis = "Meta-Analysis"
+    randomized_controlled_trial = "Randomized Controlled Trial"
+    review = "Review"
+    systematic_review = "Systematic Review"
+    case_reports = "Case Reports"
+    guideline = "Guideline"
+    practice_guideline = "Practice Guideline"
+    observational_study = "Observational Study"
+    comparative_study = "Comparative Study"
+
+
+@dataclass
+class DateRange:
+    """Date range filter for PubMed search"""
+
+    start: Optional[str] = None  # Format: YYYY/MM/DD or YYYY
+    end: Optional[str] = None
+
+
 @dataclass
 class Author:
     """Article author information"""

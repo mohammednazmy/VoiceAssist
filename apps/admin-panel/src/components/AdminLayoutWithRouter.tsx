@@ -67,8 +67,20 @@ export function AdminLayoutWithRouter({ children }: LayoutProps) {
           <NavLink to="/security" className={navLinkClass}>
             🔒 {t("nav.security", "Security & PHI")}
           </NavLink>
+          <NavLink to="/tools" className={navLinkClass}>
+            🔧 {t("nav.tools", "Tools")}
+          </NavLink>
+          <NavLink to="/feature-flags" className={navLinkClass}>
+            🚩 {t("nav.featureFlags", "Feature Flags")}
+          </NavLink>
           <NavLink to="/system" className={navLinkClass}>
             ⚙️ {t("nav.system")}
+          </NavLink>
+          <NavLink to="/backups" className={navLinkClass}>
+            💾 {t("nav.backups", "Backups & DR")}
+          </NavLink>
+          <NavLink to="/troubleshooting" className={navLinkClass}>
+            🔍 {t("nav.troubleshooting", "Troubleshooting")}
           </NavLink>
         </nav>
 

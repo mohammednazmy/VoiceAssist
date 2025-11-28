@@ -10,7 +10,7 @@
  * - Seamless integration with Chat UI
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   useRealtimeVoiceSession,
   type VoiceMetrics,
@@ -64,6 +64,13 @@ export function VoiceModePanel({
   const audioQueueRef = useRef<ArrayBuffer[]>([]);
   const isPlayingRef = useRef(false);
 
+  // Track currently playing Audio element for stopping on barge-in
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  // Track if we're currently processing a response to prevent overlaps
+  const isProcessingResponseRef = useRef(false);
+  // Response ID to track current response and ignore stale ones
+  const currentResponseIdRef = useRef<number>(0);
+
   const [userTranscript, setUserTranscript] = useState("");
   const [aiTranscript, setAiTranscript] = useState("");
   const [showSettings, setShowSettings] = useState(false);
@@ -76,7 +83,30 @@ export function VoiceModePanel({
 
   // Voice settings from store
   const { voice, language, showStatusHints } = useVoiceSettingsStore();
-  const { apiClient } = useAuth();
+  const { apiClient, tokens } = useAuth();
+
+  /**
+   * Stop any currently playing audio (for barge-in)
+   */
+  const stopCurrentAudio = useCallback(() => {
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      // Revoke the object URL to free memory
+      if (currentAudioRef.current.src.startsWith("blob:")) {
+        URL.revokeObjectURL(currentAudioRef.current.src);
+      }
+      currentAudioRef.current = null;
+      console.log("[VoiceModePanel] Stopped current audio playback");
+    }
+    // Clear the audio queue as well
+    audioQueueRef.current = [];
+    isPlayingRef.current = false;
+    // Increment response ID to invalidate any pending responses
+    currentResponseIdRef.current++;
+    isProcessingResponseRef.current = false;
+    setIsSynthesizing(false);
+  }, []);
 
   const {
     state: webRTCState,
@@ -84,8 +114,20 @@ export function VoiceModePanel({
     noiseSuppressionEnabled,
     connect: connectWebRTC,
     disconnect: disconnectWebRTC,
-    bargeIn,
-  } = useWebRTCClient({ sessionId: conversationId || "voice-webrtc" });
+    bargeIn: bargeInWebRTC,
+  } = useWebRTCClient({
+    sessionId: conversationId || "voice-webrtc",
+    token: tokens?.accessToken,
+  });
+
+  /**
+   * Combined barge-in: stop audio + cancel response + reconnect WebRTC
+   */
+  const bargeIn = useCallback(() => {
+    console.log("[VoiceModePanel] Barge-in triggered");
+    stopCurrentAudio();
+    bargeInWebRTC();
+  }, [stopCurrentAudio, bargeInWebRTC]);
 
   // Initialize offline voice capture hook
   const {
@@ -204,6 +246,27 @@ export function VoiceModePanel({
     onRelayResult: async ({ answer }) => {
       // Backend RAG answer: show and synthesize audio
       if (answer) {
+        // Prevent overlapping responses - only process if not already processing
+        if (isProcessingResponseRef.current) {
+          console.log(
+            "[VoiceModePanel] Skipping response - already processing another",
+          );
+          return;
+        }
+
+        // Stop any currently playing audio first (before incrementing response ID)
+        if (currentAudioRef.current) {
+          currentAudioRef.current.pause();
+          if (currentAudioRef.current.src.startsWith("blob:")) {
+            URL.revokeObjectURL(currentAudioRef.current.src);
+          }
+          currentAudioRef.current = null;
+        }
+
+        // Capture current response ID to check for staleness later
+        const responseId = ++currentResponseIdRef.current;
+        isProcessingResponseRef.current = true;
+
         setAiTranscript(answer);
         pendingAiMessageRef.current = answer;
         onAssistantMessage?.(answer);
@@ -211,11 +274,44 @@ export function VoiceModePanel({
         try {
           setIsSynthesizing(true);
           const audioBlob = await apiClient.synthesizeSpeech(answer, voice);
+
+          // Check if this response is still current (not cancelled by barge-in)
+          if (responseId !== currentResponseIdRef.current) {
+            console.log(
+              "[VoiceModePanel] Response cancelled - skipping playback",
+            );
+            URL.revokeObjectURL(URL.createObjectURL(audioBlob));
+            return;
+          }
+
           const url = URL.createObjectURL(audioBlob);
           const audio = new Audio(url);
-          audio.play().catch(() => {});
+          currentAudioRef.current = audio;
+
+          // Clean up when audio ends
+          audio.onended = () => {
+            if (currentAudioRef.current === audio) {
+              currentAudioRef.current = null;
+              isProcessingResponseRef.current = false;
+            }
+            URL.revokeObjectURL(url);
+          };
+
+          audio.onerror = () => {
+            if (currentAudioRef.current === audio) {
+              currentAudioRef.current = null;
+              isProcessingResponseRef.current = false;
+            }
+            URL.revokeObjectURL(url);
+          };
+
+          await audio.play().catch((err) => {
+            console.error("[VoiceModePanel] Audio play failed:", err);
+            isProcessingResponseRef.current = false;
+          });
         } catch (err) {
           console.error("[VoiceModePanel] Failed to synthesize speech", err);
+          isProcessingResponseRef.current = false;
         } finally {
           setIsSynthesizing(false);
         }
@@ -228,16 +324,27 @@ export function VoiceModePanel({
         assistant_message_id,
       );
     },
+    onSpeechStarted: () => {
+      // User started speaking - stop any playing audio (barge-in)
+      console.log("[VoiceModePanel] Speech started - stopping audio");
+      stopCurrentAudio();
+    },
     autoConnect: false, // Manual connect
   });
 
+  // Use refs to avoid dependency array issues causing repeated connect/disconnect
+  const connectWebRTCRef = useRef(connectWebRTC);
+  const disconnectWebRTCRef = useRef(disconnectWebRTC);
+  connectWebRTCRef.current = connectWebRTC;
+  disconnectWebRTCRef.current = disconnectWebRTC;
+
   useEffect(() => {
     if (isConnected) {
-      void connectWebRTC();
+      void connectWebRTCRef.current();
     } else {
-      disconnectWebRTC();
+      disconnectWebRTCRef.current();
     }
-  }, [isConnected, connectWebRTC, disconnectWebRTC]);
+  }, [isConnected]);
 
   /**
    * Play queued audio chunks
@@ -315,19 +422,24 @@ export function VoiceModePanel({
     };
   }, []);
 
+  // Ref to hold the latest disconnect function for cleanup
+  const disconnectFnRef = useRef(disconnect);
+  disconnectFnRef.current = disconnect;
+
   /**
-   * Cleanup on unmount
+   * Cleanup on unmount only
    */
   useEffect(() => {
     return () => {
-      disconnect();
+      disconnectFnRef.current();
       if (audioContextRef.current) {
         audioContextRef.current.close();
         audioContextRef.current = null;
       }
       audioQueueRef.current = [];
     };
-  }, [disconnect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Update user transcript from the hook and add to chat
@@ -420,7 +532,7 @@ export function VoiceModePanel({
               {LANGUAGE_OPTIONS.find((l) => l.value === language)?.label}
             </p>
           </div>
-          </div>
+        </div>
 
         <div className="flex items-center space-x-2">
           {/* Pending recordings indicator */}
@@ -536,7 +648,10 @@ export function VoiceModePanel({
         >
           VAD: {vadState === "speaking" ? "Speaking" : "Silence"}
         </span>
-        <span className="text-xs text-neutral-600" data-testid="noise-suppression">
+        <span
+          className="text-xs text-neutral-600"
+          data-testid="noise-suppression"
+        >
           Noise suppression {noiseSuppressionEnabled ? "enabled" : "disabled"}
         </span>
         <span className="text-xs text-neutral-600" data-testid="webrtc-state">

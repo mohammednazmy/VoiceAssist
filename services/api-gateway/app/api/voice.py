@@ -33,6 +33,7 @@ from app.core.metrics import (
 )
 from app.core.middleware import rate_limit
 from app.core.security import verify_token
+from app.core.security import verify_token as verify_token_func
 from app.core.sentry import capture_slo_violation
 from app.core.slo import check_slo_violations, log_slo_violations
 from app.models.message import Message
@@ -506,13 +507,18 @@ class VoiceMetricsResponse(BaseModel):
 )
 async def post_voice_metrics(
     payload: VoiceMetricsPayload,
-    current_user: User = Depends(get_current_user),
+    request: Request,
+    db: Session = Depends(get_db),
 ) -> VoiceMetricsResponse:
     """
     Submit voice session metrics for observability.
 
     This endpoint receives timing and count metrics from frontend voice sessions.
     No transcript content or PHI is sent - only timing and counts.
+
+    Authentication is optional to support sendBeacon (which cannot send headers).
+    If authenticated, user_id is included in metrics. Otherwise, metrics are
+    recorded anonymously.
 
     Metrics flow:
     1. Logged with structured logging
@@ -522,12 +528,27 @@ async def post_voice_metrics(
 
     Args:
         payload: VoiceMetricsPayload with timing and count metrics
-        current_user: Authenticated user
+        request: HTTP request (for optional auth header extraction)
+        db: Database session
 
     Returns:
         VoiceMetricsResponse with status "ok"
     """
-    user_id = str(current_user.id)
+    # Optional authentication - supports sendBeacon which cannot send headers
+    user_id: str | None = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+        try:
+            payload_data = verify_token_func(token, token_type="access")
+            if payload_data:
+                user_id = payload_data.get("sub")
+        except Exception:
+            pass  # Auth is optional, continue without user_id
+
+    # Use anonymous if no auth
+    if not user_id:
+        user_id = "anonymous"
 
     # 1. Log metrics
     logger.info(
