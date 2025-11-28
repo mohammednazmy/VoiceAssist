@@ -5,7 +5,7 @@ const REFRESH_TOKEN_KEY = "auth_refresh_token";
 const ROLE_KEY = "auth_role";
 
 // Base URL should NOT include /api prefix - API endpoints already include the path
-const FALLBACK_GATEWAY = "https://api.voiceassist.example.com";
+const FALLBACK_GATEWAY = "https://admin.asimo.io";
 
 let cachedClient: VoiceAssistApiClient | null = null;
 
