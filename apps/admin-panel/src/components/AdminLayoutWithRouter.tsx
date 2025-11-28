@@ -64,6 +64,9 @@ export function AdminLayoutWithRouter({ children }: LayoutProps) {
           <NavLink to="/integrations" className={navLinkClass}>
             🔗 {t("nav.integrations", "Integrations")}
           </NavLink>
+          <NavLink to="/security" className={navLinkClass}>
+            🔒 {t("nav.security", "Security & PHI")}
+          </NavLink>
           <NavLink to="/system" className={navLinkClass}>
             ⚙️ {t("nav.system")}
           </NavLink>

@@ -622,6 +622,330 @@ export interface IntegrationsHealthSummary {
 }
 
 // ============================================================================
+// Admin PHI & Security Types (Sprint 3)
+// ============================================================================
+
+export type PHIRuleStatus = "enabled" | "disabled";
+
+export type PHIRuleType =
+  | "ssn"
+  | "phone"
+  | "email"
+  | "mrn"
+  | "account"
+  | "ip_address"
+  | "url"
+  | "dob"
+  | "name"
+  | "address"
+  | "credit_card";
+
+export type PHIRoutingMode = "local_only" | "cloud_allowed" | "hybrid";
+
+export interface PHIRule {
+  id: string;
+  name: string;
+  description: string;
+  phiType: PHIRuleType;
+  status: PHIRuleStatus;
+  pattern?: string;
+  isBuiltin: boolean;
+  detectionCount: number;
+  lastDetection?: string;
+}
+
+export interface PHIRuleUpdate {
+  status: PHIRuleStatus;
+}
+
+export interface PHITestRequest {
+  text: string;
+  includeRedacted?: boolean;
+}
+
+export interface PHITestResult {
+  containsPhi: boolean;
+  phiTypes: string[];
+  confidence: number;
+  details: Record<string, unknown>;
+  redactedText?: string;
+}
+
+export interface PHIRedactResult {
+  originalLength: number;
+  redactedLength: number;
+  redactionCount: number;
+  redactedText: string;
+}
+
+export interface PHIRoutingConfig {
+  mode: PHIRoutingMode;
+  confidenceThreshold: number;
+  localLlmEnabled: boolean;
+  localLlmUrl?: string;
+  redactBeforeCloud: boolean;
+  auditAllPhi: boolean;
+}
+
+export interface PHIRoutingUpdate {
+  mode?: PHIRoutingMode;
+  confidenceThreshold?: number;
+  redactBeforeCloud?: boolean;
+  auditAllPhi?: boolean;
+}
+
+export interface PHIStats {
+  totalDetections: number;
+  detectionsToday: number;
+  detectionsThisWeek: number;
+  byType: Record<string, number>;
+  byDay: Array<{
+    date: string;
+    count: number;
+    byType: Record<string, number>;
+  }>;
+  routingStats: {
+    routedLocal: number;
+    redactedCloud: number;
+    blocked: number;
+  };
+}
+
+export interface PHIEvent {
+  id: string;
+  timestamp: string;
+  phiTypes: string[];
+  confidence: number;
+  actionTaken: string;
+  userId?: string;
+  sessionId?: string;
+}
+
+export interface PHIHealthStatus {
+  overall: "healthy" | "degraded" | "unhealthy";
+  components: {
+    detector: string;
+    redisConfig: string;
+    localLlm: string;
+    auditLogging: string;
+  };
+  routingMode: PHIRoutingMode;
+  timestamp: string;
+}
+
+export interface PHIRulesResponse {
+  rules: PHIRule[];
+  total: number;
+  enabled: number;
+}
+
+export interface PHIEventsResponse {
+  events: PHIEvent[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+// ============================================================================
+// Admin Medical AI Types (Sprint 4)
+// ============================================================================
+
+export type ModelProvider = "openai" | "anthropic" | "local";
+export type ModelType = "chat" | "embedding" | "tts" | "stt";
+
+export interface ModelInfo {
+  id: string;
+  name: string;
+  provider: ModelProvider;
+  type: ModelType;
+  enabled: boolean;
+  isPrimary: boolean;
+  supportsPhi: boolean;
+  contextWindow: number;
+  costPer1kInput: number;
+  costPer1kOutput: number;
+}
+
+export interface ModelUsageMetrics {
+  totalRequests24h: number;
+  totalTokensInput24h: number;
+  totalTokensOutput24h: number;
+  estimatedCost24h: number;
+  avgLatencyMs: number;
+  p95LatencyMs: number;
+  errorRate: number;
+  cloudRequests: number;
+  localRequests: number;
+  cloudPercentage: number;
+  modelBreakdown: ModelBreakdown[];
+  periodDays: number;
+  timestamp: string;
+}
+
+export interface ModelBreakdown {
+  modelId: string;
+  modelName: string;
+  provider: ModelProvider;
+  requests: number;
+  tokensInput: number;
+  tokensOutput: number;
+  estimatedCost: number;
+  avgLatencyMs: number;
+}
+
+export interface SearchStats {
+  totalSearches24h: number;
+  avgLatencyMs: number;
+  p95LatencyMs: number;
+  cacheHitRate: number;
+  topQueries: Array<{ query: string; count: number }>;
+  searchTypes: {
+    semantic: number;
+    keyword: number;
+    hybrid: number;
+  };
+  noResultsRate: number;
+  periodDays: number;
+  timestamp: string;
+}
+
+export interface EmbeddingStats {
+  totalDocuments: number;
+  totalChunks: number;
+  totalEmbeddings: number;
+  embeddingDimensions: number;
+  indexSizeMb: number;
+  lastIndexedAt?: string;
+  timestamp: string;
+}
+
+export interface ModelRoutingConfig {
+  phiDetectionEnabled: boolean;
+  phiRouteToLocal: boolean;
+  defaultChatModel: string;
+  defaultEmbeddingModel: string;
+  fallbackEnabled: boolean;
+  fallbackModel?: string;
+  timestamp: string;
+}
+
+export interface ModelRoutingUpdate {
+  phiDetectionEnabled?: boolean;
+  phiRouteToLocal?: boolean;
+  defaultChatModel?: string;
+  defaultEmbeddingModel?: string;
+  fallbackEnabled?: boolean;
+  fallbackModel?: string;
+}
+
+// ============================================================================
+// Admin System Types (Sprint 4)
+// ============================================================================
+
+export interface ResourceMetrics {
+  diskTotalGb: number;
+  diskUsedGb: number;
+  diskFreeGb: number;
+  diskUsagePercent: number;
+  memoryTotalGb: number;
+  memoryUsedGb: number;
+  memoryFreeGb: number;
+  memoryUsagePercent: number;
+  cpuCount: number;
+  cpuUsagePercent: number;
+  loadAverage1m: number;
+  loadAverage5m: number;
+  loadAverage15m: number;
+  timestamp: string;
+}
+
+export type BackupResult = "success" | "failed" | "in_progress" | "unknown";
+export type BackupType = "full" | "incremental";
+
+export interface BackupStatus {
+  lastBackupAt?: string;
+  lastBackupResult: BackupResult;
+  backupDestination: string;
+  schedule: string;
+  retentionDays: number;
+  nextScheduledAt?: string;
+  backupSizeMb?: number;
+  timestamp: string;
+}
+
+export interface BackupHistoryEntry {
+  id: string;
+  startedAt: string;
+  completedAt?: string;
+  status: BackupResult;
+  sizeBytes?: number;
+  backupType: BackupType;
+  errorMessage?: string;
+}
+
+export interface BackupTriggerResult {
+  message: string;
+  backupId: string;
+  backupType: BackupType;
+  status: BackupResult;
+  timestamp: string;
+}
+
+export interface MaintenanceStatus {
+  enabled: boolean;
+  startedAt?: string;
+  startedBy?: string;
+  message?: string;
+  estimatedEnd?: string;
+  timestamp: string;
+}
+
+export interface MaintenanceRequest {
+  message?: string;
+  estimatedDurationMinutes?: number;
+}
+
+export type SystemHealthStatus = "healthy" | "degraded" | "unhealthy";
+
+export interface SystemHealth {
+  status: SystemHealthStatus;
+  uptimeSeconds: number;
+  services: Record<string, string>;
+  lastCheckedAt: string;
+}
+
+// ============================================================================
+// Admin Cache Types (Sprint 4 Enhanced)
+// ============================================================================
+
+export interface CacheStats {
+  l1Size: number;
+  l1MaxSize: number;
+  l1Utilization: number;
+  l2UsedMemory: number;
+  l2UsedMemoryHuman: string;
+  l2ConnectedClients: number;
+}
+
+export interface CacheNamespaceStats {
+  namespace: string;
+  keyCount: number;
+  estimatedSizeBytes: number;
+}
+
+export interface CacheNamespacesResponse {
+  namespaces: CacheNamespaceStats[];
+  totalNamespaces: number;
+}
+
+export interface CacheInvalidateResult {
+  pattern?: string;
+  namespace?: string;
+  deletedCount: number;
+  message: string;
+}
+
+// ============================================================================
 // Utility Types
 // ============================================================================
 

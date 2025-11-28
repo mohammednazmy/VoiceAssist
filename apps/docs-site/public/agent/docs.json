@@ -1,7 +1,48 @@
 {
   "count": 224,
-  "generated_at": "2025-11-28T02:06:30.111Z",
+  "generated_at": "2025-11-28T04:56:09.929Z",
   "docs": [
+    {
+      "slug": "admin/implementation-plan",
+      "path": "admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md",
+      "title": "Admin Panel Implementation Plan",
+      "summary": "Comprehensive implementation plan for making admin.asimo.io the canonical operational mission control for VoiceAssist.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "frontend",
+        "backend",
+        "devops"
+      ],
+      "tags": ["admin", "implementation", "plan", "roadmap"],
+      "relatedServices": ["api-gateway", "admin-panel"],
+      "lastUpdated": "2025-11-28"
+    },
+    {
+      "slug": "overview/implementation-status",
+      "path": "overview/IMPLEMENTATION_STATUS.md",
+      "title": "Implementation Status",
+      "summary": "Single source of truth for component status, stability, and deployment state across VoiceAssist.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "backend",
+        "frontend",
+        "devops"
+      ],
+      "category": "overview",
+      "tags": ["status", "overview", "components", "roadmap", "architecture"],
+      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "lastUpdated": "2025-11-28"
+    },
     {
       "slug": "accessibility-audit",
       "path": "ACCESSIBILITY_AUDIT.md",
@@ -1384,26 +1425,6 @@
       "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "admin/implementation-plan",
-      "path": "admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md",
-      "title": "Admin Panel Implementation Plan",
-      "summary": "Comprehensive implementation plan for making admin.asimo.io the canonical operational mission control for VoiceAssist.",
-      "status": "stable",
-      "stability": "production",
-      "owner": "frontend",
-      "audience": [
-        "human",
-        "agent",
-        "ai-agents",
-        "frontend",
-        "backend",
-        "devops"
-      ],
-      "tags": ["admin", "implementation", "plan", "roadmap"],
-      "relatedServices": ["api-gateway", "admin-panel"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
       "slug": "admin/feature-parity",
       "path": "admin/feature-parity.md",
       "title": "Feature Parity",
@@ -2667,27 +2688,6 @@
       "audience": ["human"],
       "category": "overview",
       "tags": ["architecture"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "overview/implementation-status",
-      "path": "overview/IMPLEMENTATION_STATUS.md",
-      "title": "Implementation Status",
-      "summary": "Single source of truth for component status, stability, and deployment state across VoiceAssist.",
-      "status": "stable",
-      "stability": "production",
-      "owner": "mixed",
-      "audience": [
-        "human",
-        "agent",
-        "ai-agents",
-        "backend",
-        "frontend",
-        "devops"
-      ],
-      "category": "overview",
-      "tags": ["status", "overview", "components", "roadmap", "architecture"],
-      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
       "lastUpdated": "2025-11-27"
     },
     {

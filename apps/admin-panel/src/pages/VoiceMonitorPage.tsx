@@ -1,6 +1,19 @@
 import { useState } from "react";
 import { useVoiceMonitor, VoiceSession } from "../hooks/useVoiceMonitor";
 import { useAuth } from "../contexts/AuthContext";
+import {
+  PageContainer,
+  PageHeader,
+  StatusBadge,
+  StatCard,
+  DataPanel,
+  LoadingGrid,
+  ErrorState,
+  EmptyState,
+  RefreshButton,
+  ConfirmDialog,
+  StatusType,
+} from "../components/shared";
 
 export function VoiceMonitorPage() {
   const { isAdmin } = useAuth();
@@ -18,36 +31,15 @@ export function VoiceMonitorPage() {
   } = useVoiceMonitor({ autoRefresh: true, refreshIntervalMs: 10000 });
 
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [confirmDisconnect, setConfirmDisconnect] =
+    useState<VoiceSession | null>(null);
 
-  const handleDisconnect = async (sessionId: string) => {
-    if (!isAdmin) return;
-    setDisconnecting(sessionId);
-    await disconnectSession(sessionId);
+  const handleDisconnect = async () => {
+    if (!confirmDisconnect || !isAdmin) return;
+    setDisconnecting(confirmDisconnect.session_id);
+    await disconnectSession(confirmDisconnect.session_id);
     setDisconnecting(null);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "healthy":
-        return "bg-green-900/50 text-green-400 border-green-800";
-      case "degraded":
-        return "bg-yellow-900/50 text-yellow-400 border-yellow-800";
-      case "unhealthy":
-        return "bg-red-900/50 text-red-400 border-red-800";
-      default:
-        return "bg-slate-900/50 text-slate-400 border-slate-800";
-    }
-  };
-
-  const getSessionTypeColor = (type: string) => {
-    switch (type) {
-      case "voice":
-        return "bg-purple-900/50 text-purple-400 border-purple-800";
-      case "realtime":
-        return "bg-blue-900/50 text-blue-400 border-blue-800";
-      default:
-        return "bg-slate-900/50 text-slate-400 border-slate-800";
-    }
+    setConfirmDisconnect(null);
   };
 
   const formatDuration = (seconds: number) => {
@@ -56,85 +48,64 @@ export function VoiceMonitorPage() {
     return `${mins}m ${secs}s`;
   };
 
+  const getHealthStatus = (): { type: StatusType; label: string } => {
+    if (!health) return { type: "unknown", label: "Unknown" };
+    const status = health.status as StatusType;
+    return {
+      type: status,
+      label: status.charAt(0).toUpperCase() + status.slice(1),
+    };
+  };
+
+  const getErrorRateColor = (rate: number): "green" | "yellow" | "red" => {
+    if (rate > 0.05) return "red";
+    if (rate > 0.01) return "yellow";
+    return "green";
+  };
+
+  // Loading state
   if (loading && !metrics) {
     return (
-      <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-100">Voice Monitor</h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Monitor voice sessions and realtime connections
-            </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, idx) => (
-            <div
-              key={idx}
-              className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 animate-pulse"
-            >
-              <div className="h-3 w-20 bg-slate-800 rounded" />
-              <div className="h-8 w-16 bg-slate-800 rounded mt-3" />
-            </div>
-          ))}
-        </div>
-      </div>
+      <PageContainer>
+        <PageHeader
+          title="Voice Monitor"
+          description="Monitor voice sessions and realtime connections"
+        />
+        <LoadingGrid count={4} cols={4} />
+        <LoadingGrid count={4} cols={4} />
+      </PageContainer>
     );
   }
 
   return (
-    <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+    <PageContainer>
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-100">Voice Monitor</h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Monitor voice sessions and realtime connections
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {health && (
-            <span
-              className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium border ${getStatusColor(health.status)}`}
-            >
-              {health.status === "healthy" && "● "}
-              {health.status === "degraded" && "◐ "}
-              {health.status === "unhealthy" && "○ "}
-              {health.status.charAt(0).toUpperCase() + health.status.slice(1)}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={refreshAll}
-            className="px-3 py-1.5 rounded-md border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors text-sm"
-          >
-            Refresh
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Voice Monitor"
+        description="Monitor voice sessions and realtime connections"
+        status={getHealthStatus()}
+        lastUpdated={lastUpdated}
+        actions={<RefreshButton onClick={refreshAll} isLoading={loading} />}
+      />
 
       {/* Error Banner */}
-      {error && (
-        <div className="p-4 bg-red-950/50 border border-red-900 rounded-lg text-red-400">
-          {error}
-        </div>
-      )}
+      {error && <ErrorState message={error} onRetry={refreshAll} />}
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <MetricCard
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard
           title="Active Sessions"
           value={metrics?.active_sessions ?? 0}
           icon="🎙️"
           color="blue"
         />
-        <MetricCard
+        <StatCard
           title="Sessions (24h)"
           value={metrics?.total_sessions_24h ?? 0}
           icon="📊"
           color="purple"
         />
-        <MetricCard
+        <StatCard
           title="Avg Duration"
           value={
             metrics?.avg_session_duration_sec
@@ -143,27 +114,18 @@ export function VoiceMonitorPage() {
           }
           icon="⏱️"
           color="green"
-          isText
         />
-        <MetricCard
+        <StatCard
           title="Error Rate"
           value={`${((metrics?.error_rate_24h ?? 0) * 100).toFixed(1)}%`}
           icon="⚠️"
-          color={
-            (metrics?.error_rate_24h ?? 0) > 0.05
-              ? "red"
-              : (metrics?.error_rate_24h ?? 0) > 0.01
-                ? "yellow"
-                : "green"
-          }
-          isText
+          color={getErrorRateColor(metrics?.error_rate_24h ?? 0)}
         />
       </div>
 
       {/* Service Health */}
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold text-slate-200">Service Health</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <DataPanel title="Service Health">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <HealthCard
             name="Realtime API"
             enabled={health?.realtime_api_enabled ?? false}
@@ -179,52 +141,41 @@ export function VoiceMonitorPage() {
             label={config?.realtime_enabled ? "Enabled" : "Disabled"}
           />
         </div>
-      </div>
+      </DataPanel>
 
       {/* Connections by Type */}
       {metrics?.connections_by_type && (
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-slate-200">
-            Connections by Type
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <DataPanel title="Connections by Type">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {Object.entries(metrics.connections_by_type).map(
               ([type, count]) => (
                 <div
                   key={type}
-                  className="bg-slate-900/50 border border-slate-800 rounded-lg p-4"
+                  className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-300 capitalize">
-                      {type}
-                    </span>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getSessionTypeColor(type)}`}
-                    >
-                      {count}
-                    </span>
-                  </div>
+                  <span className="text-sm font-medium text-slate-300 capitalize">
+                    {type}
+                  </span>
+                  <StatusBadge
+                    status={type as StatusType}
+                    label={String(count)}
+                    showDot={false}
+                  />
                 </div>
               ),
             )}
           </div>
-        </div>
+        </DataPanel>
       )}
 
       {/* Active Sessions Table */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-200">
-            Active Sessions ({sessions.length})
-          </h2>
-        </div>
-
+      <DataPanel title={`Active Sessions (${sessions.length})`} noPadding>
         {sessions.length === 0 ? (
-          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-8 text-center">
-            <p className="text-slate-400">No active voice sessions</p>
+          <div className="p-4">
+            <EmptyState message="No active voice sessions" icon="🎙️" />
           </div>
         ) : (
-          <div className="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-800/50">
                 <tr>
@@ -234,13 +185,13 @@ export function VoiceMonitorPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Type
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider hidden sm:table-cell">
                     Connected
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider hidden md:table-cell">
                     Messages
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider hidden lg:table-cell">
                     Last Activity
                   </th>
                   {isAdmin && (
@@ -257,95 +208,70 @@ export function VoiceMonitorPage() {
                     session={session}
                     isAdmin={isAdmin}
                     isDisconnecting={disconnecting === session.session_id}
-                    onDisconnect={() => handleDisconnect(session.session_id)}
-                    getSessionTypeColor={getSessionTypeColor}
+                    onDisconnect={() => setConfirmDisconnect(session)}
                   />
                 ))}
               </tbody>
             </table>
           </div>
         )}
-      </div>
+      </DataPanel>
 
-      {/* Configuration Panel (Read-only for viewers) */}
+      {/* Configuration Panel */}
       {config && (
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-slate-200">
-            Voice Configuration
-          </h2>
-          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <ConfigItem label="Default Voice" value={config.default_voice} />
-              <ConfigItem
-                label="Default Language"
-                value={config.default_language}
-              />
-              <ConfigItem label="STT Provider" value={config.stt_provider} />
-              <ConfigItem label="TTS Provider" value={config.tts_provider} />
-              <ConfigItem
-                label="VAD Enabled"
-                value={config.vad_enabled ? "Yes" : "No"}
-              />
-              <ConfigItem
-                label="VAD Threshold"
-                value={config.vad_threshold.toString()}
-              />
-              <ConfigItem
-                label="Max Session"
-                value={`${Math.floor(config.max_session_duration_sec / 60)} min`}
-              />
-              <ConfigItem
-                label="Realtime"
-                value={config.realtime_enabled ? "Enabled" : "Disabled"}
-              />
-            </div>
+        <DataPanel title="Voice Configuration">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+            <ConfigItem label="Default Voice" value={config.default_voice} />
+            <ConfigItem
+              label="Default Language"
+              value={config.default_language}
+            />
+            <ConfigItem label="STT Provider" value={config.stt_provider} />
+            <ConfigItem label="TTS Provider" value={config.tts_provider} />
+            <ConfigItem
+              label="VAD Enabled"
+              value={config.vad_enabled ? "Yes" : "No"}
+            />
+            <ConfigItem
+              label="VAD Threshold"
+              value={config.vad_threshold.toString()}
+            />
+            <ConfigItem
+              label="Max Session"
+              value={`${Math.floor(config.max_session_duration_sec / 60)} min`}
+            />
+            <ConfigItem
+              label="Realtime"
+              value={config.realtime_enabled ? "Enabled" : "Disabled"}
+            />
           </div>
-        </div>
+        </DataPanel>
       )}
 
-      {/* Footer */}
-      <div className="text-xs text-slate-500">
-        {lastUpdated ? (
-          <>Last updated: {new Date(lastUpdated).toLocaleString()}</>
-        ) : (
-          "Waiting for first successful sync..."
-        )}
-      </div>
-    </div>
+      {/* Disconnect Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!confirmDisconnect}
+        onClose={() => setConfirmDisconnect(null)}
+        onConfirm={handleDisconnect}
+        title="Disconnect Session"
+        message={
+          <>
+            Are you sure you want to disconnect the session for{" "}
+            <strong className="text-slate-200">
+              {confirmDisconnect?.user_email || confirmDisconnect?.user_id}
+            </strong>
+            ? This will immediately end their voice session.
+          </>
+        }
+        confirmLabel="Disconnect"
+        variant="danger"
+        isLoading={!!disconnecting}
+      />
+    </PageContainer>
   );
 }
 
 // Sub-components
-
-interface MetricCardProps {
-  title: string;
-  value: number | string;
-  icon: string;
-  color: "blue" | "green" | "purple" | "yellow" | "red";
-  isText?: boolean;
-}
-
-function MetricCard({ title, value, icon, color, isText }: MetricCardProps) {
-  const colorClasses = {
-    blue: "text-blue-400",
-    green: "text-green-400",
-    purple: "text-purple-400",
-    yellow: "text-yellow-400",
-    red: "text-red-400",
-  };
-
-  return (
-    <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-slate-400">{title}</span>
-        <span className="text-lg">{icon}</span>
-      </div>
-      <div className={`text-2xl font-bold ${colorClasses[color]}`}>
-        {isText ? value : value.toLocaleString()}
-      </div>
-    </div>
-  );
-}
 
 interface HealthCardProps {
   name: string;
@@ -355,19 +281,13 @@ interface HealthCardProps {
 
 function HealthCard({ name, enabled, label }: HealthCardProps) {
   return (
-    <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-slate-300">{name}</span>
-        <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            enabled
-              ? "bg-green-900/50 text-green-400 border border-green-800"
-              : "bg-red-900/50 text-red-400 border border-red-800"
-          }`}
-        >
-          {label || (enabled ? "● Online" : "● Offline")}
-        </span>
-      </div>
+    <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+      <span className="text-sm font-medium text-slate-300">{name}</span>
+      <StatusBadge
+        status={enabled ? "online" : "offline"}
+        label={label || (enabled ? "Online" : "Offline")}
+        size="sm"
+      />
     </div>
   );
 }
@@ -377,7 +297,6 @@ interface SessionRowProps {
   isAdmin: boolean;
   isDisconnecting: boolean;
   onDisconnect: () => void;
-  getSessionTypeColor: (type: string) => string;
 }
 
 function SessionRow({
@@ -385,17 +304,27 @@ function SessionRow({
   isAdmin,
   isDisconnecting,
   onDisconnect,
-  getSessionTypeColor,
 }: SessionRowProps) {
   const connectedAt = new Date(session.connected_at);
   const lastActivity = session.last_activity
     ? new Date(session.last_activity)
     : null;
 
+  const getSessionTypeStatus = (type: string): StatusType => {
+    switch (type) {
+      case "voice":
+        return "active";
+      case "realtime":
+        return "connected";
+      default:
+        return "unknown";
+    }
+  };
+
   return (
     <tr className="hover:bg-slate-800/30 transition-colors">
       <td className="px-4 py-3">
-        <div className="text-sm text-slate-200">
+        <div className="text-sm text-slate-200 truncate max-w-[150px] sm:max-w-none">
           {session.user_email || session.user_id}
         </div>
         <div className="text-xs text-slate-500 font-mono">
@@ -403,19 +332,19 @@ function SessionRow({
         </div>
       </td>
       <td className="px-4 py-3">
-        <span
-          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getSessionTypeColor(session.session_type)}`}
-        >
-          {session.session_type}
-        </span>
+        <StatusBadge
+          status={getSessionTypeStatus(session.session_type)}
+          label={session.session_type}
+          size="sm"
+        />
       </td>
-      <td className="px-4 py-3 text-sm text-slate-400">
+      <td className="px-4 py-3 text-sm text-slate-400 hidden sm:table-cell">
         {connectedAt.toLocaleTimeString()}
       </td>
-      <td className="px-4 py-3 text-sm text-slate-400">
+      <td className="px-4 py-3 text-sm text-slate-400 hidden md:table-cell">
         {session.messages_count}
       </td>
-      <td className="px-4 py-3 text-sm text-slate-400">
+      <td className="px-4 py-3 text-sm text-slate-400 hidden lg:table-cell">
         {lastActivity ? lastActivity.toLocaleTimeString() : "-"}
       </td>
       {isAdmin && (
@@ -441,9 +370,11 @@ interface ConfigItemProps {
 
 function ConfigItem({ label, value }: ConfigItemProps) {
   return (
-    <div>
-      <span className="text-slate-500">{label}:</span>{" "}
-      <span className="text-slate-300 font-medium">{value}</span>
+    <div className="p-2 sm:p-0">
+      <span className="text-slate-500 text-xs sm:text-sm">{label}:</span>{" "}
+      <span className="text-slate-300 font-medium text-xs sm:text-sm">
+        {value}
+      </span>
     </div>
   );
 }

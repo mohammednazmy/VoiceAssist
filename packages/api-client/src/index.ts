@@ -37,6 +37,35 @@ import type {
   IntegrationTestResult,
   IntegrationMetrics,
   IntegrationsHealthSummary,
+  PHIRule,
+  PHIRuleUpdate,
+  PHIRulesResponse,
+  PHITestRequest,
+  PHITestResult,
+  PHIRedactResult,
+  PHIRoutingConfig,
+  PHIRoutingUpdate,
+  PHIStats,
+  PHIEventsResponse,
+  PHIHealthStatus,
+  // Sprint 4: Medical AI & System types
+  ModelInfo,
+  ModelUsageMetrics,
+  SearchStats,
+  EmbeddingStats,
+  ModelRoutingConfig,
+  ModelRoutingUpdate,
+  ResourceMetrics,
+  BackupStatus,
+  BackupHistoryEntry,
+  BackupTriggerResult,
+  BackupType,
+  MaintenanceStatus,
+  MaintenanceRequest,
+  SystemHealth,
+  // Note: CacheStats uses local definition (line 181) with different structure
+  CacheNamespacesResponse,
+  CacheInvalidateResult,
 } from "@voiceassist/types";
 import { withRetry, type RetryConfig } from "./retry";
 
@@ -1170,6 +1199,315 @@ export class VoiceAssistApiClient {
       "/admin/integrations/health",
     );
     return response.data;
+  }
+
+  // =========================================================================
+  // Admin PHI & Security (Sprint 3)
+  // =========================================================================
+
+  /**
+   * List all PHI detection rules with their current status
+   */
+  async getPHIRules(): Promise<PHIRulesResponse> {
+    const response =
+      await this.client.get<ApiResponse<PHIRulesResponse>>("/admin/phi/rules");
+    return response.data.data!;
+  }
+
+  /**
+   * Get details of a specific PHI detection rule
+   */
+  async getPHIRule(ruleId: string): Promise<PHIRule> {
+    const response = await this.client.get<ApiResponse<PHIRule>>(
+      `/admin/phi/rules/${ruleId}`,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Update a PHI detection rule (enable/disable)
+   */
+  async updatePHIRule(ruleId: string, update: PHIRuleUpdate): Promise<PHIRule> {
+    const response = await this.client.put<ApiResponse<PHIRule>>(
+      `/admin/phi/rules/${ruleId}`,
+      update,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Test PHI detection on provided text
+   */
+  async testPHIDetection(request: PHITestRequest): Promise<PHITestResult> {
+    const response = await this.client.post<ApiResponse<PHITestResult>>(
+      "/admin/phi/test",
+      request,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Redact PHI from provided text
+   */
+  async redactPHI(request: PHITestRequest): Promise<PHIRedactResult> {
+    const response = await this.client.post<ApiResponse<PHIRedactResult>>(
+      "/admin/phi/redact",
+      request,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Get current PHI routing configuration
+   */
+  async getPHIRouting(): Promise<PHIRoutingConfig> {
+    const response =
+      await this.client.get<ApiResponse<PHIRoutingConfig>>(
+        "/admin/phi/routing",
+      );
+    return response.data.data!;
+  }
+
+  /**
+   * Update PHI routing configuration
+   */
+  async updatePHIRouting(update: PHIRoutingUpdate): Promise<PHIRoutingConfig> {
+    const response = await this.client.patch<ApiResponse<PHIRoutingConfig>>(
+      "/admin/phi/routing",
+      update,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Get PHI detection statistics
+   */
+  async getPHIStats(days: number = 7): Promise<PHIStats> {
+    const response = await this.client.get<ApiResponse<PHIStats>>(
+      `/admin/phi/stats?days=${days}`,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Get recent PHI detection events
+   */
+  async getPHIEvents(
+    limit: number = 50,
+    offset: number = 0,
+  ): Promise<PHIEventsResponse> {
+    const response = await this.client.get<ApiResponse<PHIEventsResponse>>(
+      `/admin/phi/events?limit=${limit}&offset=${offset}`,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Get PHI detection system health status
+   */
+  async getPHIHealth(): Promise<PHIHealthStatus> {
+    const response =
+      await this.client.get<ApiResponse<PHIHealthStatus>>("/admin/phi/health");
+    return response.data.data!;
+  }
+
+  // =========================================================================
+  // Admin Medical AI (Sprint 4)
+  // =========================================================================
+
+  /**
+   * List all available AI models with their configuration
+   */
+  async getModels(): Promise<ModelInfo[]> {
+    const response = await this.client.get<
+      ApiResponse<{ models: ModelInfo[] }>
+    >("/admin/medical/models");
+    return response.data.data!.models;
+  }
+
+  /**
+   * Get detailed information about a specific model
+   */
+  async getModel(modelId: string): Promise<ModelInfo & { usage_24h?: any }> {
+    const response = await this.client.get<
+      ApiResponse<ModelInfo & { usage_24h?: any }>
+    >(`/admin/medical/models/${modelId}`);
+    return response.data.data!;
+  }
+
+  /**
+   * Get AI model usage metrics and cost tracking
+   */
+  async getModelMetrics(days: number = 1): Promise<ModelUsageMetrics> {
+    const response = await this.client.get<ApiResponse<ModelUsageMetrics>>(
+      `/admin/medical/metrics?days=${days}`,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Get search analytics and statistics
+   */
+  async getSearchStats(days: number = 1): Promise<SearchStats> {
+    const response = await this.client.get<ApiResponse<SearchStats>>(
+      `/admin/medical/search/stats?days=${days}`,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Get embedding database statistics
+   */
+  async getEmbeddingStats(): Promise<EmbeddingStats> {
+    const response = await this.client.get<ApiResponse<EmbeddingStats>>(
+      "/admin/medical/embeddings/stats",
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Get current model routing configuration
+   */
+  async getModelRouting(): Promise<ModelRoutingConfig> {
+    const response = await this.client.get<ApiResponse<ModelRoutingConfig>>(
+      "/admin/medical/routing",
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Update model routing configuration
+   */
+  async updateModelRouting(
+    update: ModelRoutingUpdate,
+  ): Promise<{ message: string; updates: ModelRoutingUpdate }> {
+    const response = await this.client.patch<
+      ApiResponse<{ message: string; updates: ModelRoutingUpdate }>
+    >("/admin/medical/routing", update);
+    return response.data.data!;
+  }
+
+  // =========================================================================
+  // Admin System (Sprint 4)
+  // =========================================================================
+
+  /**
+   * Get system resource metrics (disk, memory, CPU)
+   */
+  async getSystemResources(): Promise<ResourceMetrics> {
+    const response = await this.client.get<ApiResponse<ResourceMetrics>>(
+      "/admin/system/resources",
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Get overall system health status
+   */
+  async getSystemHealth(): Promise<SystemHealth> {
+    const response = await this.client.get<ApiResponse<SystemHealth>>(
+      "/admin/system/health",
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Get current backup status and configuration
+   */
+  async getBackupStatus(): Promise<BackupStatus> {
+    const response = await this.client.get<ApiResponse<BackupStatus>>(
+      "/admin/system/backup/status",
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Get backup history
+   */
+  async getBackupHistory(
+    limit: number = 10,
+  ): Promise<{ history: BackupHistoryEntry[]; total: number }> {
+    const response = await this.client.get<
+      ApiResponse<{ history: BackupHistoryEntry[]; total: number }>
+    >(`/admin/system/backup/history?limit=${limit}`);
+    return response.data.data!;
+  }
+
+  /**
+   * Trigger a manual backup (admin only)
+   */
+  async triggerBackup(
+    backupType: BackupType = "full",
+  ): Promise<BackupTriggerResult> {
+    const response = await this.client.post<ApiResponse<BackupTriggerResult>>(
+      `/admin/system/backup/trigger?backup_type=${backupType}`,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Get current maintenance mode status
+   */
+  async getMaintenanceStatus(): Promise<MaintenanceStatus> {
+    const response = await this.client.get<ApiResponse<MaintenanceStatus>>(
+      "/admin/system/maintenance",
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Enable maintenance mode (admin only)
+   */
+  async enableMaintenance(
+    request: MaintenanceRequest,
+  ): Promise<MaintenanceStatus> {
+    const response = await this.client.post<ApiResponse<MaintenanceStatus>>(
+      "/admin/system/maintenance/enable",
+      request,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Disable maintenance mode (admin only)
+   */
+  async disableMaintenance(): Promise<{
+    enabled: boolean;
+    action: string;
+    disabled_by: string;
+  }> {
+    const response = await this.client.post<
+      ApiResponse<{ enabled: boolean; action: string; disabled_by: string }>
+    >("/admin/system/maintenance/disable");
+    return response.data.data!;
+  }
+
+  // =========================================================================
+  // Admin Cache Management Enhanced (Sprint 4)
+  // =========================================================================
+
+  /**
+   * Get cache statistics by namespace
+   */
+  async getCacheNamespaces(): Promise<CacheNamespacesResponse> {
+    const response = await this.client.get<
+      ApiResponse<CacheNamespacesResponse>
+    >("/admin/cache/stats/namespaces");
+    return response.data.data!;
+  }
+
+  /**
+   * Invalidate all cache entries in a specific namespace
+   */
+  async invalidateCacheNamespace(
+    namespace: string,
+  ): Promise<CacheInvalidateResult> {
+    const response = await this.client.post<ApiResponse<CacheInvalidateResult>>(
+      "/admin/cache/invalidate/namespace",
+      null,
+      { params: { namespace } },
+    );
+    return response.data.data!;
   }
 }
 

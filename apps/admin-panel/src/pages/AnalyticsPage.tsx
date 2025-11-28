@@ -1,13 +1,15 @@
 /**
- * Analytics Page
- * Query analytics, response times, usage trends, and export reports
+ * Analytics Page (Sprint 4 Enhanced)
+ * Query analytics, AI model usage, cost tracking, and search statistics
  */
 
 import { useCallback, useEffect, useState } from "react";
 import { fetchAPI } from "../lib/api";
 import { getApiClient } from "../lib/apiClient";
+import { useModelAnalytics } from "../hooks/useModelAnalytics";
 
 type AnalyticsRange = "24h" | "7d" | "30d";
+type AnalyticsTab = "overview" | "models" | "search" | "costs";
 
 interface QueryAnalytics {
   total_queries: number;
@@ -39,13 +41,29 @@ export function AnalyticsPage() {
     null,
   );
   const [usageTrends, setUsageTrends] = useState<UsageTrends | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [legacyLoading, setLegacyLoading] = useState(true);
+  const [legacyError, setLegacyError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<AnalyticsRange>("7d");
+  const [activeTab, setActiveTab] = useState<AnalyticsTab>("overview");
   const apiClient = getApiClient();
 
-  const loadAnalytics = useCallback(async () => {
-    setLoading(true);
+  // Sprint 4: Model analytics hook
+  const {
+    models,
+    metrics,
+    searchStats,
+    embeddingStats,
+    loading: modelLoading,
+    metricsLoading,
+    error: modelError,
+    refresh: refreshModels,
+    refreshMetrics,
+  } = useModelAnalytics({
+    days: timeRange === "24h" ? 1 : timeRange === "7d" ? 7 : 30,
+  });
+
+  const loadLegacyAnalytics = useCallback(async () => {
+    setLegacyLoading(true);
     try {
       const [queryData, responseData, trendsData] = await Promise.all([
         fetchAPI<QueryAnalytics>(
@@ -60,19 +78,22 @@ export function AnalyticsPage() {
       setQueryAnalytics(queryData);
       setResponseTimes(responseData);
       setUsageTrends(trendsData);
-      setError(null);
+      setLegacyError(null);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load analytics";
-      setError(message);
+      // Silently fail for legacy endpoints - they may not exist yet
+      console.warn("Legacy analytics endpoints not available");
     } finally {
-      setLoading(false);
+      setLegacyLoading(false);
     }
   }, [timeRange]);
 
   useEffect(() => {
-    loadAnalytics();
-  }, [loadAnalytics]);
+    loadLegacyAnalytics();
+  }, [loadLegacyAnalytics]);
+
+  useEffect(() => {
+    refreshMetrics();
+  }, [timeRange, refreshMetrics]);
 
   const exportReport = async () => {
     try {
@@ -96,20 +117,26 @@ export function AnalyticsPage() {
     }
   };
 
-  if (loading) {
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4,
+    }).format(amount);
+  };
+
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat("en-US").format(num);
+  };
+
+  const loading = modelLoading || legacyLoading;
+  const error = modelError || legacyError;
+
+  if (loading && !metrics) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-slate-400">Loading analytics...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="p-4 bg-red-950/50 border border-red-900 rounded-lg text-red-400">
-          {error}
-        </div>
       </div>
     );
   }
@@ -121,7 +148,7 @@ export function AnalyticsPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-100">Analytics</h1>
           <p className="text-sm text-slate-400 mt-1">
-            Query analytics, response times, and usage trends
+            AI model usage, costs, and performance metrics
           </p>
         </div>
 
@@ -137,6 +164,18 @@ export function AnalyticsPage() {
             <option value="30d">Last 30 Days</option>
           </select>
 
+          {/* Refresh Button */}
+          <button
+            onClick={() => {
+              refreshModels();
+              loadLegacyAnalytics();
+            }}
+            disabled={metricsLoading}
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white rounded-md text-sm font-medium transition-colors"
+          >
+            {metricsLoading ? "⟳" : "↻"} Refresh
+          </button>
+
           {/* Export Button */}
           <button
             onClick={exportReport}
@@ -147,207 +186,570 @@ export function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Query Analytics */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-slate-200 mb-4">
-          Query Analytics
-        </h2>
+      {/* Tab Navigation */}
+      <div className="border-b border-slate-700">
+        <nav className="flex space-x-8">
+          {[
+            { id: "overview", label: "Overview" },
+            { id: "models", label: "AI Models" },
+            { id: "search", label: "Search Analytics" },
+            { id: "costs", label: "Cost Tracking" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as AnalyticsTab)}
+              className={`py-3 px-1 border-b-2 text-sm font-medium transition-colors ${
+                activeTab === tab.id
+                  ? "border-blue-500 text-blue-400"
+                  : "border-transparent text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Summary Stats */}
-          <div className="space-y-4">
-            <div className="bg-slate-800/50 rounded-lg p-4">
-              <div className="text-sm text-slate-400">Total Queries</div>
-              <div className="text-3xl font-bold text-blue-400 mt-1">
-                {queryAnalytics?.total_queries.toLocaleString() || 0}
+      {error && (
+        <div className="p-4 bg-red-950/50 border border-red-900 rounded-lg text-red-400">
+          {error}
+        </div>
+      )}
+
+      {/* Overview Tab */}
+      {activeTab === "overview" && (
+        <div className="space-y-6">
+          {/* Key Metrics Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <MetricCard
+              title="Total Requests"
+              value={formatNumber(metrics?.total_requests_24h || 0)}
+              subtitle={`Last ${timeRange === "24h" ? "24 hours" : timeRange}`}
+              color="blue"
+            />
+            <MetricCard
+              title="Estimated Cost"
+              value={formatCurrency(metrics?.estimated_cost_24h || 0)}
+              subtitle={`Last ${timeRange === "24h" ? "24 hours" : timeRange}`}
+              color="green"
+            />
+            <MetricCard
+              title="Avg Latency"
+              value={`${metrics?.avg_latency_ms?.toFixed(0) || 0}ms`}
+              subtitle={`P95: ${metrics?.p95_latency_ms?.toFixed(0) || 0}ms`}
+              color="purple"
+            />
+            <MetricCard
+              title="Error Rate"
+              value={`${metrics?.error_rate?.toFixed(2) || 0}%`}
+              subtitle="Request failures"
+              color={
+                metrics?.error_rate && metrics.error_rate > 5 ? "red" : "green"
+              }
+            />
+          </div>
+
+          {/* Cloud vs Local Routing */}
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-slate-200 mb-4">
+              Model Routing Distribution
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-400">Cloud Requests</span>
+                  <span className="text-sm font-medium text-blue-400">
+                    {formatNumber(metrics?.cloud_requests || 0)} (
+                    {metrics?.cloud_percentage?.toFixed(1) || 0}%)
+                  </span>
+                </div>
+                <div className="h-3 bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                    style={{ width: `${metrics?.cloud_percentage || 0}%` }}
+                  />
+                </div>
               </div>
-            </div>
-            <div className="bg-slate-800/50 rounded-lg p-4">
-              <div className="text-sm text-slate-400">Avg Queries per User</div>
-              <div className="text-3xl font-bold text-green-400 mt-1">
-                {queryAnalytics?.avg_queries_per_user.toFixed(1) || 0}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-400">
+                    Local Requests (PHI-safe)
+                  </span>
+                  <span className="text-sm font-medium text-green-400">
+                    {formatNumber(metrics?.local_requests || 0)} (
+                    {(100 - (metrics?.cloud_percentage || 0)).toFixed(1)}%)
+                  </span>
+                </div>
+                <div className="h-3 bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-green-500 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${100 - (metrics?.cloud_percentage || 0)}%`,
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Top Query Types */}
-          <div>
-            <h3 className="text-sm font-medium text-slate-300 mb-3">
-              Top Query Types
-            </h3>
-            <div className="space-y-2">
-              {queryAnalytics?.top_query_types.map((item, idx) => (
+          {/* Token Usage */}
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-slate-200 mb-4">
+              Token Usage
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-slate-800/50 rounded-lg p-4">
+                <div className="text-sm text-slate-400">Input Tokens</div>
+                <div className="text-3xl font-bold text-blue-400 mt-1">
+                  {formatNumber(metrics?.total_tokens_input_24h || 0)}
+                </div>
+              </div>
+              <div className="bg-slate-800/50 rounded-lg p-4">
+                <div className="text-sm text-slate-400">Output Tokens</div>
+                <div className="text-3xl font-bold text-purple-400 mt-1">
+                  {formatNumber(metrics?.total_tokens_output_24h || 0)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Models Tab */}
+      {activeTab === "models" && (
+        <div className="space-y-6">
+          {/* Model Breakdown Table */}
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-slate-200 mb-4">
+              Model Usage Breakdown
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-700">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                      Model
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                      Provider
+                    </th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">
+                      Requests
+                    </th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">
+                      Input Tokens
+                    </th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">
+                      Output Tokens
+                    </th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">
+                      Avg Latency
+                    </th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">
+                      Cost
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {metrics?.model_breakdown?.length ? (
+                    metrics.model_breakdown.map((model, idx) => (
+                      <tr
+                        key={idx}
+                        className="border-b border-slate-800 hover:bg-slate-800/30"
+                      >
+                        <td className="py-3 px-4 text-sm text-slate-200">
+                          {model.model_name}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                              model.provider === "openai"
+                                ? "bg-green-900/30 text-green-400"
+                                : model.provider === "anthropic"
+                                  ? "bg-purple-900/30 text-purple-400"
+                                  : "bg-blue-900/30 text-blue-400"
+                            }`}
+                          >
+                            {model.provider}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-slate-300 text-right">
+                          {formatNumber(model.requests)}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-slate-300 text-right">
+                          {formatNumber(model.tokens_input)}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-slate-300 text-right">
+                          {formatNumber(model.tokens_output)}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-slate-300 text-right">
+                          {model.avg_latency_ms.toFixed(0)}ms
+                        </td>
+                        <td className="py-3 px-4 text-sm text-green-400 text-right font-medium">
+                          {formatCurrency(model.estimated_cost)}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="py-8 text-center text-slate-500"
+                      >
+                        No model usage data available for this period
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Available Models */}
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-slate-200 mb-4">
+              Available Models
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {models.map((model) => (
                 <div
-                  key={idx}
-                  className="flex items-center justify-between bg-slate-800/30 rounded p-2"
+                  key={model.id}
+                  className={`p-4 rounded-lg border ${
+                    model.enabled
+                      ? "border-slate-700 bg-slate-800/50"
+                      : "border-slate-800 bg-slate-900/50 opacity-50"
+                  }`}
                 >
-                  <span className="text-sm text-slate-300">{item.type}</span>
-                  <span className="text-sm font-medium text-blue-400">
-                    {item.count}
-                  </span>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-slate-200">
+                      {model.name}
+                    </span>
+                    {model.is_primary && (
+                      <span className="px-2 py-0.5 bg-blue-900/50 text-blue-400 rounded text-xs">
+                        Primary
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2 text-xs text-slate-400">
+                    <span
+                      className={`px-2 py-0.5 rounded ${
+                        model.provider === "openai"
+                          ? "bg-green-900/30 text-green-400"
+                          : model.provider === "anthropic"
+                            ? "bg-purple-900/30 text-purple-400"
+                            : "bg-blue-900/30 text-blue-400"
+                      }`}
+                    >
+                      {model.provider}
+                    </span>
+                    <span>{model.type}</span>
+                    {model.supports_phi && (
+                      <span className="px-2 py-0.5 bg-green-900/30 text-green-400 rounded">
+                        PHI-safe
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2 text-xs text-slate-500">
+                    Context: {formatNumber(model.context_window)} tokens
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
+      )}
 
-        {/* Popular Topics */}
-        <div className="mt-6">
-          <h3 className="text-sm font-medium text-slate-300 mb-3">
-            Popular Topics
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {queryAnalytics?.popular_topics.map((topic, idx) => (
-              <span
-                key={idx}
-                className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-900/30 text-purple-400 border border-purple-800"
-              >
-                {topic.topic}
-                <span className="ml-2 text-xs opacity-75">({topic.count})</span>
-              </span>
-            ))}
+      {/* Search Analytics Tab */}
+      {activeTab === "search" && (
+        <div className="space-y-6">
+          {/* Search Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <MetricCard
+              title="Total Searches"
+              value={formatNumber(searchStats?.total_searches_24h || 0)}
+              subtitle={`Last ${timeRange === "24h" ? "24 hours" : timeRange}`}
+              color="blue"
+            />
+            <MetricCard
+              title="Cache Hit Rate"
+              value={`${searchStats?.cache_hit_rate?.toFixed(1) || 0}%`}
+              subtitle="Query cache efficiency"
+              color={
+                searchStats?.cache_hit_rate && searchStats.cache_hit_rate > 50
+                  ? "green"
+                  : "yellow"
+              }
+            />
+            <MetricCard
+              title="Avg Latency"
+              value={`${searchStats?.avg_latency_ms?.toFixed(0) || 0}ms`}
+              subtitle={`P95: ${searchStats?.p95_latency_ms?.toFixed(0) || 0}ms`}
+              color="purple"
+            />
+            <MetricCard
+              title="No Results Rate"
+              value={`${searchStats?.no_results_rate?.toFixed(1) || 0}%`}
+              subtitle="Failed to find results"
+              color={
+                searchStats?.no_results_rate && searchStats.no_results_rate > 10
+                  ? "red"
+                  : "green"
+              }
+            />
           </div>
-        </div>
-      </div>
 
-      {/* Response Time Histogram */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-slate-200 mb-4">
-          Response Time Distribution
-        </h2>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-slate-800/50 rounded-lg p-3">
-            <div className="text-xs text-slate-400">P50 (Median)</div>
-            <div className="text-2xl font-bold text-green-400">
-              {responseTimes?.p50}ms
+          {/* Search Type Distribution */}
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-slate-200 mb-4">
+              Search Type Distribution
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {searchStats?.search_types &&
+                Object.entries(searchStats.search_types).map(
+                  ([type, count]) => {
+                    const total = Object.values(
+                      searchStats.search_types,
+                    ).reduce((a, b) => a + b, 0);
+                    const percentage = total > 0 ? (count / total) * 100 : 0;
+                    return (
+                      <div
+                        key={type}
+                        className="bg-slate-800/50 rounded-lg p-4"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-slate-400 capitalize">
+                            {type}
+                          </span>
+                          <span className="text-sm font-medium text-slate-200">
+                            {percentage.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="text-2xl font-bold text-blue-400">
+                          {formatNumber(count)}
+                        </div>
+                        <div className="h-2 bg-slate-700 rounded-full mt-2 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              type === "semantic"
+                                ? "bg-purple-500"
+                                : type === "hybrid"
+                                  ? "bg-blue-500"
+                                  : "bg-green-500"
+                            }`}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  },
+                )}
             </div>
           </div>
-          <div className="bg-slate-800/50 rounded-lg p-3">
-            <div className="text-xs text-slate-400">P95</div>
-            <div className="text-2xl font-bold text-yellow-400">
-              {responseTimes?.p95}ms
-            </div>
-          </div>
-          <div className="bg-slate-800/50 rounded-lg p-3">
-            <div className="text-xs text-slate-400">P99</div>
-            <div className="text-2xl font-bold text-orange-400">
-              {responseTimes?.p99}ms
-            </div>
-          </div>
-          <div className="bg-slate-800/50 rounded-lg p-3">
-            <div className="text-xs text-slate-400">Average</div>
-            <div className="text-2xl font-bold text-blue-400">
-              {responseTimes?.avg}ms
-            </div>
-          </div>
-        </div>
 
-        {/* Histogram */}
-        <div className="space-y-2">
-          {responseTimes?.histogram.map((bucket, idx) => {
-            const maxCount = Math.max(
-              ...(responseTimes.histogram.map((b) => b.count) || [1]),
-            );
-            const percentage = (bucket.count / maxCount) * 100;
-
-            return (
-              <div key={idx} className="flex items-center space-x-3">
-                <div className="w-24 text-xs text-slate-400 text-right">
-                  {bucket.bucket}
+          {/* Embedding Stats */}
+          {embeddingStats && (
+            <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-slate-200 mb-4">
+                Embedding Database
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-slate-800/50 rounded-lg p-3">
+                  <div className="text-xs text-slate-400">Documents</div>
+                  <div className="text-xl font-bold text-blue-400">
+                    {formatNumber(embeddingStats.total_documents)}
+                  </div>
                 </div>
-                <div className="flex-1 bg-slate-800 rounded-full h-6 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center px-2"
-                    style={{ width: `${percentage}%` }}
-                  >
-                    <span className="text-xs text-white font-medium">
-                      {bucket.count}
-                    </span>
+                <div className="bg-slate-800/50 rounded-lg p-3">
+                  <div className="text-xs text-slate-400">Chunks</div>
+                  <div className="text-xl font-bold text-purple-400">
+                    {formatNumber(embeddingStats.total_chunks)}
+                  </div>
+                </div>
+                <div className="bg-slate-800/50 rounded-lg p-3">
+                  <div className="text-xs text-slate-400">Index Size</div>
+                  <div className="text-xl font-bold text-green-400">
+                    {embeddingStats.index_size_mb.toFixed(1)} MB
+                  </div>
+                </div>
+                <div className="bg-slate-800/50 rounded-lg p-3">
+                  <div className="text-xs text-slate-400">Dimensions</div>
+                  <div className="text-xl font-bold text-yellow-400">
+                    {formatNumber(embeddingStats.embedding_dimensions)}
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Usage Trends */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-slate-200 mb-4">
-          Usage Trends
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-green-900/30 to-green-950/20 border border-green-800 rounded-lg p-4">
-            <div className="text-sm text-slate-400">Weekly Growth</div>
-            <div className="text-3xl font-bold text-green-400 mt-1">
-              +{((usageTrends?.weekly_growth || 0) * 100).toFixed(1)}%
             </div>
-          </div>
-          <div className="bg-gradient-to-br from-purple-900/30 to-purple-950/20 border border-purple-800 rounded-lg p-4">
-            <div className="text-sm text-slate-400">Monthly Growth</div>
-            <div className="text-3xl font-bold text-purple-400 mt-1">
-              +{((usageTrends?.monthly_growth || 0) * 100).toFixed(1)}%
-            </div>
-          </div>
-        </div>
+          )}
 
-        {/* Simplified Trend Chart (ASCII-style) */}
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-sm font-medium text-slate-300 mb-2">
-              Daily Active Users
-            </h3>
-            <div className="bg-slate-800/30 rounded-lg p-3 font-mono text-xs text-slate-400">
-              {usageTrends?.daily_users.slice(-7).map((day, idx) => {
-                const maxUsers = Math.max(
-                  ...(usageTrends.daily_users.map((d) => d.count) || [1]),
-                );
-                const bars = Math.round((day.count / maxUsers) * 40);
-                return (
-                  <div key={idx} className="flex items-center space-x-2">
-                    <span className="w-16">
-                      {new Date(day.date).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
+          {/* Top Queries */}
+          {searchStats?.top_queries && searchStats.top_queries.length > 0 && (
+            <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-slate-200 mb-4">
+                Top Search Queries
+              </h2>
+              <div className="space-y-2">
+                {searchStats.top_queries.slice(0, 10).map((query, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg"
+                  >
+                    <span className="text-sm text-slate-300">
+                      {query.query}
                     </span>
-                    <span className="text-blue-400">{"█".repeat(bars)}</span>
-                    <span>{day.count}</span>
+                    <span className="text-sm font-medium text-blue-400">
+                      {query.count}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Cost Tracking Tab */}
+      {activeTab === "costs" && (
+        <div className="space-y-6">
+          {/* Cost Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gradient-to-br from-green-900/30 to-green-950/20 border border-green-800 rounded-lg p-6">
+              <div className="text-sm text-slate-400">
+                Estimated Cost ({timeRange})
+              </div>
+              <div className="text-4xl font-bold text-green-400 mt-2">
+                {formatCurrency(metrics?.estimated_cost_24h || 0)}
+              </div>
+            </div>
+            <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+              <div className="text-sm text-slate-400">Cost per 1K Requests</div>
+              <div className="text-4xl font-bold text-blue-400 mt-2">
+                {metrics?.total_requests_24h
+                  ? formatCurrency(
+                      (metrics.estimated_cost_24h /
+                        metrics.total_requests_24h) *
+                        1000,
+                    )
+                  : "$0.00"}
+              </div>
+            </div>
+            <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+              <div className="text-sm text-slate-400">Savings from Local</div>
+              <div className="text-4xl font-bold text-purple-400 mt-2">
+                {/* Estimate savings from local routing - assume $0.02 per cloud request saved */}
+                {formatCurrency((metrics?.local_requests || 0) * 0.02)}
+              </div>
+            </div>
+          </div>
+
+          {/* Cost by Model */}
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-slate-200 mb-4">
+              Cost Breakdown by Model
+            </h2>
+            <div className="space-y-4">
+              {metrics?.model_breakdown?.map((model, idx) => {
+                const totalCost = metrics.estimated_cost_24h || 1;
+                const percentage = (model.estimated_cost / totalCost) * 100;
+                return (
+                  <div key={idx} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-sm font-medium text-slate-200">
+                          {model.model_name}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded text-xs ${
+                            model.provider === "openai"
+                              ? "bg-green-900/30 text-green-400"
+                              : model.provider === "anthropic"
+                                ? "bg-purple-900/30 text-purple-400"
+                                : "bg-blue-900/30 text-blue-400"
+                          }`}
+                        >
+                          {model.provider}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-medium text-green-400">
+                          {formatCurrency(model.estimated_cost)}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {percentage.toFixed(1)}%
+                        </div>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-green-600 to-green-400 rounded-full"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
                   </div>
                 );
               })}
+              {(!metrics?.model_breakdown ||
+                metrics.model_breakdown.length === 0) && (
+                <div className="py-8 text-center text-slate-500">
+                  No cost data available for this period
+                </div>
+              )}
             </div>
           </div>
 
-          <div>
-            <h3 className="text-sm font-medium text-slate-300 mb-2">
-              Daily Queries
+          {/* Cost Tips */}
+          <div className="bg-blue-950/30 border border-blue-900/50 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-blue-400 mb-2">
+              💡 Cost Optimization Tips
             </h3>
-            <div className="bg-slate-800/30 rounded-lg p-3 font-mono text-xs text-slate-400">
-              {usageTrends?.daily_queries.slice(-7).map((day, idx) => {
-                const maxQueries = Math.max(
-                  ...(usageTrends.daily_queries.map((d) => d.count) || [1]),
-                );
-                const bars = Math.round((day.count / maxQueries) * 40);
-                return (
-                  <div key={idx} className="flex items-center space-x-2">
-                    <span className="w-16">
-                      {new Date(day.date).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                    <span className="text-purple-400">{"█".repeat(bars)}</span>
-                    <span>{day.count}</span>
-                  </div>
-                );
-              })}
-            </div>
+            <ul className="text-xs text-slate-400 space-y-1">
+              <li>
+                • Enable PHI detection to route sensitive queries to local
+                models (zero API cost)
+              </li>
+              <li>
+                • Use caching for frequently repeated queries - current cache
+                hit rate: {searchStats?.cache_hit_rate?.toFixed(1) || 0}%
+              </li>
+              <li>
+                • Consider using GPT-3.5-Turbo for simpler queries (10x cheaper
+                than GPT-4)
+              </li>
+              <li>• Monitor P95 latency to balance cost vs. response time</li>
+            </ul>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+// Metric Card Component
+function MetricCard({
+  title,
+  value,
+  subtitle,
+  color,
+}: {
+  title: string;
+  value: string;
+  subtitle: string;
+  color: "blue" | "green" | "purple" | "red" | "yellow";
+}) {
+  const colorClasses = {
+    blue: "text-blue-400",
+    green: "text-green-400",
+    purple: "text-purple-400",
+    red: "text-red-400",
+    yellow: "text-yellow-400",
+  };
+
+  return (
+    <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
+      <div className="text-sm text-slate-400">{title}</div>
+      <div className={`text-3xl font-bold ${colorClasses[color]} mt-1`}>
+        {value}
       </div>
+      <div className="text-xs text-slate-500 mt-1">{subtitle}</div>
     </div>
   );
 }

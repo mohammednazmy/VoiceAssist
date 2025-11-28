@@ -10,6 +10,7 @@ import { SystemPage } from "./pages/SystemPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { VoiceMonitorPage } from "./pages/VoiceMonitorPage";
 import { IntegrationsPage } from "./pages/IntegrationsPage";
+import { SecurityPage } from "./pages/SecurityPage";
 
 export function App() {
   return (
@@ -39,6 +40,7 @@ export function App() {
                       path="/integrations"
                       element={<IntegrationsPage />}
                     />
+                    <Route path="/security" element={<SecurityPage />} />
                     <Route
                       path="/"
                       element={<Navigate to="/dashboard" replace />}
