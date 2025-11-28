@@ -21,6 +21,7 @@ from typing import Optional
 import httpx
 import redis
 from app.api.admin_panel import get_current_admin_user, log_audit_event
+from app.core.api_envelope import success_response
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.logging import get_logger
@@ -452,10 +453,10 @@ def has_api_key(integration_id: str) -> bool:
 # Endpoints
 
 
-@router.get("/", response_model=list[IntegrationSummary])
+@router.get("/")
 async def list_integrations(
     admin_user: dict = Depends(get_current_admin_user),
-) -> list[IntegrationSummary]:
+) -> dict:
     """List all integrations with their current status.
 
     Available to both admin and viewer roles.
@@ -464,23 +465,23 @@ async def list_integrations(
     result = []
 
     for int_id, info in INTEGRATIONS.items():
-        status, error = get_integration_status(int_id)
+        int_status, error = get_integration_status(int_id)
         result.append(
             IntegrationSummary(
                 id=int_id,
                 name=info["name"],
                 type=info["type"],
-                status=status,
+                status=int_status,
                 provider=info["provider"],
                 last_checked=now,
                 error_message=error,
-            )
+            ).model_dump()
         )
 
-    return result
+    return success_response(result)
 
 
-@router.get("/health", response_model=dict)
+@router.get("/health")
 async def get_integrations_health(
     admin_user: dict = Depends(get_current_admin_user),
 ) -> dict:
@@ -495,14 +496,14 @@ async def get_integrations_health(
     not_configured = 0
 
     for int_id in INTEGRATIONS:
-        status, _ = get_integration_status(int_id)
-        if status == IntegrationStatus.CONNECTED:
+        int_status, _ = get_integration_status(int_id)
+        if int_status == IntegrationStatus.CONNECTED:
             connected += 1
-        elif status == IntegrationStatus.DEGRADED:
+        elif int_status == IntegrationStatus.DEGRADED:
             degraded += 1
-        elif status == IntegrationStatus.ERROR:
+        elif int_status == IntegrationStatus.ERROR:
             errors += 1
-        elif status == IntegrationStatus.NOT_CONFIGURED:
+        elif int_status == IntegrationStatus.NOT_CONFIGURED:
             not_configured += 1
 
     overall = "healthy"
@@ -513,7 +514,7 @@ async def get_integrations_health(
     elif connected == 0:
         overall = "critical"
 
-    return {
+    return success_response({
         "overall_status": overall,
         "total_integrations": total,
         "connected": connected,
@@ -521,13 +522,13 @@ async def get_integrations_health(
         "errors": errors,
         "not_configured": not_configured,
         "checked_at": datetime.now(timezone.utc).isoformat(),
-    }
+    })
 
 
-@router.get("/metrics/summary", response_model=list[IntegrationMetrics])
+@router.get("/metrics/summary")
 async def get_integration_metrics(
     admin_user: dict = Depends(get_current_admin_user),
-) -> list[IntegrationMetrics]:
+) -> dict:
     """Get metrics for all integrations.
 
     Available to both admin and viewer roles.
@@ -560,17 +561,17 @@ async def get_integration_metrics(
                 p99_latency_ms=metrics_data.get("p99_latency_ms", 0.0),
                 last_error=metrics_data.get("last_error"),
                 last_error_time=metrics_data.get("last_error_time"),
-            )
+            ).model_dump()
         )
 
-    return result
+    return success_response(result)
 
 
-@router.get("/{integration_id}", response_model=IntegrationDetail)
+@router.get("/{integration_id}")
 async def get_integration(
     integration_id: str,
     admin_user: dict = Depends(get_current_admin_user),
-) -> IntegrationDetail:
+) -> dict:
     """Get detailed information about a specific integration.
 
     Available to both admin and viewer roles.
@@ -585,7 +586,7 @@ async def get_integration(
     int_status, error = get_integration_status(integration_id)
     config = get_integration_config(integration_id)
 
-    return IntegrationDetail(
+    return success_response(IntegrationDetail(
         id=integration_id,
         name=info["name"],
         type=info["type"],
@@ -596,16 +597,16 @@ async def get_integration(
         has_api_key=has_api_key(integration_id),
         last_checked=datetime.now(timezone.utc).isoformat(),
         error_message=error,
-    )
+    ).model_dump())
 
 
-@router.patch("/{integration_id}/config", response_model=IntegrationDetail)
+@router.patch("/{integration_id}/config")
 async def update_integration_config(
     integration_id: str,
     config_update: IntegrationConfigUpdate,
     admin_user: dict = Depends(get_current_admin_user),
     db: Session = Depends(get_db),
-) -> IntegrationDetail:
+) -> dict:
     """Update configuration for an integration.
 
     Admin role required.
@@ -646,12 +647,12 @@ async def update_integration_config(
     return await get_integration(integration_id, admin_user)
 
 
-@router.post("/{integration_id}/test", response_model=TestResult)
+@router.post("/{integration_id}/test")
 async def test_integration(
     integration_id: str,
     admin_user: dict = Depends(get_current_admin_user),
     db: Session = Depends(get_db),
-) -> TestResult:
+) -> dict:
     """Test connectivity for an integration.
 
     Admin role required.
@@ -836,9 +837,9 @@ async def test_integration(
         {"integration_id": integration_id, "success": success, "latency_ms": latency_ms},
     )
 
-    return TestResult(
+    return success_response(TestResult(
         success=success,
         latency_ms=round(latency_ms, 2),
         message=message,
         details=details if details else None,
-    )
+    ).model_dump())
