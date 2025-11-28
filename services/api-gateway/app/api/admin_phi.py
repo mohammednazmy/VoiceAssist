@@ -277,18 +277,24 @@ def log_phi_detection_audit(
 ) -> None:
     """Log PHI detection to audit log."""
     try:
+        # Note: AuditLog model uses 'additional_data' not 'details'
         audit_entry = AuditLog(
             action="phi_detection",
             resource_type="phi",
             resource_id=None,
             user_id=user_id,
-            details={
+            additional_data={
                 "phi_types": phi_types,
                 "action_taken": action,
                 **(details or {}),
             },
             ip_address=None,
+            success=True,
+            service_name="api-gateway",
+            hash="",  # Will be calculated
         )
+        # Calculate integrity hash
+        audit_entry.hash = audit_entry.calculate_hash()
         db.add(audit_entry)
         db.commit()
     except Exception as e:
@@ -548,18 +554,19 @@ async def get_phi_stats(
         logger.error(f"Failed to get PHI stats from Redis: {e}")
 
     # Get routing stats from audit logs
+    # Note: AuditLog model uses 'timestamp' not 'created_at', and 'additional_data' not 'details'
     try:
         one_week_ago = datetime.now(timezone.utc) - timedelta(days=7)
         routing_counts = (
             db.query(
-                func.json_extract(AuditLog.details, "$.action_taken").label("action"),
+                func.json_extract(AuditLog.additional_data, "$.action_taken").label("action"),
                 func.count().label("count"),
             )
             .filter(
                 AuditLog.action == "phi_detection",
-                AuditLog.created_at >= one_week_ago,
+                AuditLog.timestamp >= one_week_ago,
             )
-            .group_by(func.json_extract(AuditLog.details, "$.action_taken"))
+            .group_by(func.json_extract(AuditLog.additional_data, "$.action_taken"))
             .all()
         )
         for action, count in routing_counts:
@@ -584,22 +591,23 @@ async def get_phi_events(
     """
     try:
         # Query audit logs for PHI detections
-        query = db.query(AuditLog).filter(AuditLog.action == "phi_detection").order_by(desc(AuditLog.created_at))
+        # Note: AuditLog model uses 'timestamp' not 'created_at', and 'additional_data' not 'details'
+        query = db.query(AuditLog).filter(AuditLog.action == "phi_detection").order_by(desc(AuditLog.timestamp))
 
         total = query.count()
         events = query.offset(offset).limit(limit).all()
 
         event_list = []
         for event in events:
-            details = event.details or {}
+            details = event.additional_data or {}
             event_list.append(
                 PHIEvent(
                     id=str(event.id),
-                    timestamp=event.created_at.isoformat() if event.created_at else "",
+                    timestamp=event.timestamp.isoformat() if event.timestamp else "",
                     phi_types=details.get("phi_types", []),
                     confidence=details.get("confidence", 0.0),
                     action_taken=details.get("action_taken", "unknown"),
-                    user_id=event.user_id,
+                    user_id=str(event.user_id) if event.user_id else None,
                     session_id=details.get("session_id"),
                 ).model_dump()
             )
