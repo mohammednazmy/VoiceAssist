@@ -176,13 +176,43 @@ pnpm dev
 
 **Key Documents:**
 
-- [Admin Panel Specs](../ADMIN_PANEL_SPECS.md)
-- [Implementation Status](../overview/IMPLEMENTATION_STATUS.md)
+- [Admin Panel Implementation Plan](../admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md) - **Canonical implementation roadmap**
+- [Admin Panel Specs](../ADMIN_PANEL_SPECS.md) - Full specifications
+- [Implementation Status](../overview/IMPLEMENTATION_STATUS.md) - Current status
 
 **Key Paths:**
 
-- `apps/admin-panel/src/`
-- `apps/admin-panel/README.md`
+- Backend: `services/api-gateway/app/api/admin_*.py`
+- Frontend: `apps/admin-panel/src/`
+- Shared types: `packages/types/src/admin/`
+
+**Implementation Plan Phases:**
+
+1. **Phase 1**: Backend-to-Admin Service Matrix
+2. **Phase 2**: Admin API Enhancement Plan
+3. **Phase 3**: Admin Panel UI Implementation
+4. **Phase 4**: API Client Integration
+5. **Phase 5**: Security & Compliance
+6. **Phase 6**: Testing Strategy
+7. **Phase 7**: Deployment & Rollout
+
+**Admin Feature Categories:**
+
+| Category        | API Prefix                  | UI Route                |
+| --------------- | --------------------------- | ----------------------- |
+| Voice/Realtime  | `/api/admin/voice/*`        | `/voice`                |
+| Integrations    | `/api/admin/integrations/*` | `/integrations`         |
+| Tools           | `/api/admin/tools/*`        | `/tools`, `/tools/logs` |
+| Security/PHI    | `/api/admin/phi/*`          | `/security`             |
+| Backups/DR      | `/api/admin/backups/*`      | `/backups`              |
+| Troubleshooting | `/api/admin/logs/*`         | `/troubleshooting`      |
+
+**Critical Requirements:**
+
+- All endpoints must enforce RBAC (admin or viewer role)
+- All mutations must emit audit logs
+- PHI must be masked in all responses
+- See Implementation Plan §5.6 for forbidden actions
 
 ---
 

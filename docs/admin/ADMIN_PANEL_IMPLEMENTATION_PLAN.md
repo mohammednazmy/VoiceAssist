@@ -11,13 +11,13 @@ tags: ["admin", "implementation", "plan", "roadmap"]
 relatedServices: ["api-gateway", "admin-panel"]
 category: admin
 source_of_truth: true
-version: "2.0.0"
+version: "2.1.0"
 ---
 
 # Admin Panel Implementation Plan
 
 **Last Updated:** 2025-11-27
-**Version:** 2.0.0
+**Version:** 2.1.0
 **Status:** Canonical Implementation Guide
 **Purpose:** Transform admin.asimo.io into the definitive operational mission control for VoiceAssist
 
@@ -147,6 +147,9 @@ Cross-referenced with [SERVICE_CATALOG.md](../SERVICE_CATALOG.md) and actual bac
 | **Health/Metrics**   | `health.py`, `metrics.py`                    | `/health`, `/metrics`         | Dashboard (partial)  | Medium   | service health grid                   |
 | **PHI Detection**    | `phi_detector.py`                            | Missing                       | Missing              | **High** | rules, config, test, routing stats    |
 | **Search**           | `advanced_search.py`, `search_aggregator.py` | Missing                       | Missing              | Low      | stats, query analysis                 |
+| **Tools Registry**   | `tool_executor.py`, `tool_registry.py`       | Missing                       | Missing              | **High** | status, config, logs, analytics       |
+| **Backups/DR**       | N/A (infrastructure)                         | Missing                       | Missing              | **High** | status, trigger, history, DR test     |
+| **Troubleshooting**  | `health.py`, logs                            | `/health`, `/metrics`         | Missing              | Medium   | log viewer, error summary, runbooks   |
 
 ### Priority Services: Detailed Admin Requirements
 
@@ -202,6 +205,151 @@ Expected admin endpoints:
 - `GET /api/admin/medical/metrics` - AI usage metrics, costs
 - `GET /api/admin/medical/search/stats` - Search analytics
 - `GET /api/admin/medical/embeddings/stats` - Embedding DB stats
+
+#### Tools Registry & Tool Execution (Priority: HIGH)
+
+**Backend modules:** `tool_executor.py`, `tool_registry.py` (referenced in [TOOLS_AND_INTEGRATIONS.md](../TOOLS_AND_INTEGRATIONS.md) and [ADMIN_PANEL_SPECS.md §Tools](../ADMIN_PANEL_SPECS.md#tools--external-integrations))
+
+Expected admin endpoints:
+
+- `GET /api/admin/tools` - List all registered tools with status
+- `GET /api/admin/tools/{tool_name}` - Tool details and config
+- `PATCH /api/admin/tools/{tool_name}` - Update tool config (timeout, rate limit, PHI)
+- `GET /api/admin/tools/logs` - Tool invocation logs with filters
+- `GET /api/admin/tools/analytics` - Usage metrics by tool
+
+**Pydantic Models** (align with [DATA_MODEL.md](../DATA_MODEL.md)):
+
+```python
+# Reuse/extend from app/schemas/
+class ToolStatus(BaseModel):
+    tool_name: str
+    enabled: bool
+    category: Literal['calendar', 'file', 'medical', 'calculation', 'search']
+    total_calls_24h: int
+    success_rate: float
+    avg_duration_ms: float
+    last_error: Optional[str]
+    last_error_at: Optional[datetime]
+    phi_enabled: bool
+    requires_confirmation: bool
+
+class ToolConfiguration(BaseModel):
+    tool_name: str
+    enabled: bool
+    timeout_seconds: int
+    rate_limit_per_user: int
+    rate_limit_window_seconds: int
+    requires_confirmation: bool
+    phi_enabled: bool
+    custom_settings: Optional[Dict[str, Any]]
+
+class ToolInvocationLog(BaseModel):
+    id: str
+    tool_name: str
+    user_email: str
+    session_id: str
+    call_id: str
+    arguments: Dict[str, Any]
+    status: Literal['completed', 'failed', 'timeout', 'cancelled']
+    duration_ms: int
+    phi_detected: bool
+    confirmation_required: bool
+    user_confirmed: Optional[bool]
+    error_code: Optional[str]
+    error_message: Optional[str]
+    created_at: datetime
+
+class ToolAnalyticsSummary(BaseModel):
+    tool_name: str
+    total_calls: int
+    success_count: int
+    failure_count: int
+    timeout_count: int
+    cancelled_count: int
+    avg_duration_ms: float
+    p95_duration_ms: float
+    phi_detected_count: int
+    confirmation_required_count: int
+```
+
+#### Backups & Disaster Recovery (Priority: HIGH)
+
+**Infrastructure modules:** See [DISASTER_RECOVERY_RUNBOOK.md](../DISASTER_RECOVERY_RUNBOOK.md) and [PHASE_12_HA_DR](../phases/PHASE_12_HA_DR.md)
+
+Expected admin endpoints:
+
+- `GET /api/admin/backups/status` - Current backup configuration and last backup status
+- `GET /api/admin/backups/history` - Backup history (last 30 backups)
+- `POST /api/admin/backups/trigger` - Trigger manual backup (admin only)
+- `GET /api/admin/dr/status` - DR readiness (last drill, RPO/RTO metrics)
+- `POST /api/admin/dr/test` - Trigger DR test (admin only, with confirmation)
+
+**Pydantic Models:**
+
+```python
+class BackupStatus(BaseModel):
+    last_backup_at: Optional[datetime]
+    last_backup_result: Literal['success', 'failed', 'in_progress', 'unknown']
+    backup_destination: str  # e.g., "S3", "Local", "Nextcloud"
+    schedule: str  # e.g., "Daily at 2 AM UTC"
+    retention_days: int
+    next_scheduled_at: Optional[datetime]
+
+class BackupHistoryEntry(BaseModel):
+    id: str
+    started_at: datetime
+    completed_at: Optional[datetime]
+    status: Literal['success', 'failed', 'in_progress']
+    size_bytes: Optional[int]
+    backup_type: Literal['full', 'incremental']
+    error_message: Optional[str]
+
+class DRStatus(BaseModel):
+    last_drill_at: Optional[datetime]
+    last_drill_result: Literal['success', 'failed', 'unknown']
+    rpo_minutes: int  # Recovery Point Objective
+    rto_minutes: int  # Recovery Time Objective
+    replication_lag_seconds: Optional[float]
+    replica_status: Literal['healthy', 'degraded', 'unavailable']
+```
+
+#### Troubleshooting & Logs (Priority: MEDIUM)
+
+**Backend modules:** `health.py`, logging infrastructure. See [DEBUGGING_INDEX.md](../debugging/DEBUGGING_INDEX.md) for debugging guidance.
+
+Expected admin endpoints:
+
+- `GET /api/admin/logs` - Fetch recent logs with filters (service, level, time range, text search)
+- `GET /api/admin/logs/errors/summary` - Top error types in last 24h
+- `GET /api/admin/health/services` - All services health status grid
+- `GET /api/admin/health/dependencies` - External dependency health (Redis, Postgres, Qdrant)
+
+**Pydantic Models:**
+
+```python
+class LogEntry(BaseModel):
+    timestamp: datetime
+    level: Literal['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+    service: str
+    trace_id: Optional[str]
+    message: str
+    # Note: PHI must be redacted in message field
+
+class ErrorSummary(BaseModel):
+    error_type: str
+    count: int
+    last_occurrence: datetime
+    affected_services: List[str]
+    sample_trace_id: Optional[str]
+
+class ServiceHealthStatus(BaseModel):
+    service_name: str
+    status: Literal['healthy', 'degraded', 'unhealthy', 'unknown']
+    last_check_at: datetime
+    latency_ms: Optional[float]
+    error_message: Optional[str]
+```
 
 ---
 
@@ -347,6 +495,75 @@ class IntegrationStatus(BaseModel):
 | GET    | `/api/admin/medical/search/stats`     | Search analytics | viewer |
 | GET    | `/api/admin/medical/embeddings/stats` | Embedding stats  | viewer |
 
+#### Tools Admin (`/api/admin/tools/`)
+
+**File**: `services/api-gateway/app/api/admin_tools.py` (NEW)
+
+**Cross-reference**: [ADMIN_PANEL_SPECS.md §Tools & External Integrations](../ADMIN_PANEL_SPECS.md#tools--external-integrations), [TOOLS_AND_INTEGRATIONS.md](../TOOLS_AND_INTEGRATIONS.md), [OBSERVABILITY.md §Tool Invocation Metrics](../OBSERVABILITY.md#tool-invocation-metrics)
+
+**Endpoint Summary:**
+
+| Method | URL                            | Purpose               | RBAC   |
+| ------ | ------------------------------ | --------------------- | ------ |
+| GET    | `/api/admin/tools`             | List all tools        | viewer |
+| GET    | `/api/admin/tools/{tool_name}` | Tool details & config | viewer |
+| PATCH  | `/api/admin/tools/{tool_name}` | Update tool config    | admin  |
+| GET    | `/api/admin/tools/logs`        | Tool invocation logs  | viewer |
+| GET    | `/api/admin/tools/analytics`   | Tool usage analytics  | viewer |
+
+**Pydantic Models:**
+
+Reuse `ToolStatus`, `ToolConfiguration`, `ToolInvocationLog`, and `ToolAnalyticsSummary` from Phase 1 definitions.
+
+**Key Implementation Notes:**
+
+1. All write operations (`PATCH`) must enforce admin RBAC and emit audit logs
+2. Tool invocation logs must have PHI redacted from arguments before returning
+3. Analytics should align with Prometheus metrics from [OBSERVABILITY.md](../OBSERVABILITY.md)
+
+#### Backups & DR Admin (`/api/admin/backups/`, `/api/admin/dr/`)
+
+**File**: `services/api-gateway/app/api/admin_backups.py` (NEW)
+
+**Cross-reference**: [DISASTER_RECOVERY_RUNBOOK.md](../DISASTER_RECOVERY_RUNBOOK.md)
+
+**Endpoint Summary:**
+
+| Method | URL                          | Purpose              | RBAC   |
+| ------ | ---------------------------- | -------------------- | ------ |
+| GET    | `/api/admin/backups/status`  | Backup config/status | viewer |
+| GET    | `/api/admin/backups/history` | Backup history       | viewer |
+| POST   | `/api/admin/backups/trigger` | Trigger backup       | admin  |
+| GET    | `/api/admin/dr/status`       | DR readiness         | viewer |
+| POST   | `/api/admin/dr/test`         | Trigger DR test      | admin  |
+
+**Key Implementation Notes:**
+
+1. `/backups/trigger` must require confirmation and emit audit log
+2. `/dr/test` is a potentially disruptive operation; require explicit confirmation
+3. DR status should pull replication lag from database metrics
+
+#### Troubleshooting Admin (`/api/admin/logs/`, `/api/admin/health/`)
+
+**File**: `services/api-gateway/app/api/admin_troubleshooting.py` (NEW)
+
+**Cross-reference**: [DEBUGGING_INDEX.md](../debugging/DEBUGGING_INDEX.md), [DEBUGGING_BACKEND.md](../debugging/DEBUGGING_BACKEND.md)
+
+**Endpoint Summary:**
+
+| Method | URL                              | Purpose               | RBAC   |
+| ------ | -------------------------------- | --------------------- | ------ |
+| GET    | `/api/admin/logs`                | Fetch logs (filtered) | viewer |
+| GET    | `/api/admin/logs/errors/summary` | Error summary (24h)   | viewer |
+| GET    | `/api/admin/health/services`     | All services health   | viewer |
+| GET    | `/api/admin/health/dependencies` | External deps health  | viewer |
+
+**Key Implementation Notes:**
+
+1. All log messages must have PHI redacted before returning
+2. Error summary should link to runbooks where possible
+3. Health endpoints should aggregate from existing `/health` and `/ready` endpoints
+
 #### System Configuration Admin (Extend existing)
 
 **File**: `services/api-gateway/app/api/admin_panel.py` (EXTEND)
@@ -398,18 +615,22 @@ This phase is organized by page, aligned with [ADMIN_PANEL_SPECS.md](../ADMIN_PA
 
 ### 3.1 Page Implementation Matrix
 
-| Page                 | Route                 | ADMIN_PANEL_SPECS Section | Status   | API Dependencies                                                          |
-| -------------------- | --------------------- | ------------------------- | -------- | ------------------------------------------------------------------------- |
-| Dashboard            | `/dashboard`          | §4.1 Dashboard            | Complete | `/api/admin/panel/summary`                                                |
-| System Configuration | `/system`             | §4.2 System Configuration | Partial  | `/api/admin/system/*`, `/api/admin/feature-flags/*`, `/api/admin/cache/*` |
-| AI Models            | `/models` (NEW)       | §4.3 AI Models            | Missing  | `/api/admin/medical/models`, `/api/admin/medical/routing`                 |
-| Knowledge Base       | `/knowledge-base`     | §4.4 Knowledge Base       | Complete | `/api/admin/kb/*`                                                         |
-| Integrations         | `/integrations` (NEW) | §4.5 Integrations         | Missing  | `/api/admin/integrations/*`                                               |
-| User Management      | `/users`              | §4.6 User Management      | Complete | `/api/admin/panel/users/*`                                                |
-| Analytics            | `/analytics`          | §4.7 Analytics            | Partial  | `/api/admin/panel/metrics`, `/api/admin/medical/metrics`                  |
-| Security             | `/security` (NEW)     | §4.8 Security             | Missing  | `/api/admin/phi/*`, `/api/admin/panel/audit-logs`                         |
-| Backups              | `/backups` (NEW)      | §4.9 Backups              | Missing  | `/api/admin/system/backup/*`                                              |
-| Voice Monitor        | `/voice` (NEW)        | §4.10 Troubleshooting     | Missing  | `/api/admin/voice/*`                                                      |
+| Page                 | Route                    | ADMIN_PANEL_SPECS Section      | Status   | API Dependencies                                                          |
+| -------------------- | ------------------------ | ------------------------------ | -------- | ------------------------------------------------------------------------- |
+| Dashboard            | `/dashboard`             | §4.1 Dashboard                 | Complete | `/api/admin/panel/summary`                                                |
+| System Configuration | `/system`                | §4.2 System Configuration      | Partial  | `/api/admin/system/*`, `/api/admin/feature-flags/*`, `/api/admin/cache/*` |
+| AI Models            | `/models` (NEW)          | §4.3 AI Models                 | Missing  | `/api/admin/medical/models`, `/api/admin/medical/routing`                 |
+| Knowledge Base       | `/knowledge-base`        | §4.4 Knowledge Base            | Complete | `/api/admin/kb/*`                                                         |
+| Integrations         | `/integrations` (NEW)    | §4.5 Integrations              | Missing  | `/api/admin/integrations/*`                                               |
+| User Management      | `/users`                 | §4.6 User Management           | Complete | `/api/admin/panel/users/*`                                                |
+| Analytics            | `/analytics`             | §4.7 Analytics                 | Partial  | `/api/admin/panel/metrics`, `/api/admin/medical/metrics`                  |
+| Security             | `/security` (NEW)        | §4.8 Security                  | Missing  | `/api/admin/phi/*`, `/api/admin/panel/audit-logs`                         |
+| Backups & DR         | `/backups` (NEW)         | §4.9 Backups                   | Missing  | `/api/admin/backups/*`, `/api/admin/dr/*`                                 |
+| Voice Monitor        | `/voice` (NEW)           | §4.10 Troubleshooting          | Missing  | `/api/admin/voice/*`                                                      |
+| **Tools**            | `/tools` (NEW)           | §Tools & External Integrations | Missing  | `/api/admin/tools/*`                                                      |
+| **Tools Config**     | `/tools/:toolName` (NEW) | §Tool Configuration            | Missing  | `/api/admin/tools/{tool_name}`                                            |
+| **Tools Logs**       | `/tools/logs` (NEW)      | §Tool Invocation Logs          | Missing  | `/api/admin/tools/logs`                                                   |
+| **Troubleshooting**  | `/troubleshooting` (NEW) | Debugging docs                 | Missing  | `/api/admin/logs/*`, `/api/admin/health/*`                                |
 
 ### 3.2 New Pages Required
 
@@ -526,6 +747,152 @@ src/pages/SecurityPage/
 - Test tool results must mask actual PHI in UI
 - Audit logs must show redacted content only
 - See Phase 5 for full PHI requirements
+
+#### ToolsPage.tsx (NEW)
+
+**Route**: `/tools`
+**Spec Reference**: [ADMIN_PANEL_SPECS.md §Tools & External Integrations](../ADMIN_PANEL_SPECS.md#tools--external-integrations)
+
+**Components:**
+
+```
+src/pages/ToolsPage/
+├── index.tsx                 - Main page component (grid view)
+├── ToolsGrid.tsx             - Grid of tool cards
+├── ToolCard.tsx              - Individual tool status card
+├── ToolDetailsDrawer.tsx     - Drill-down for tool config
+├── ToolMetricsChart.tsx      - Usage chart per tool (Recharts)
+└── EnableToggle.tsx          - Enable/disable toggle with confirm
+```
+
+**API Endpoints Used:**
+
+- `GET /api/admin/tools` - List all tools with status
+- `PATCH /api/admin/tools/{tool_name}` - Update tool config
+- `GET /api/admin/tools/analytics` - Tool analytics
+
+**Key Features:**
+
+- Grid of tool cards showing: name, status, success rate, calls (24h), avg latency
+- Filter by category (calendar, file, medical, calculation, search)
+- Enable/disable toggle per tool (requires confirmation)
+- Click to open configuration drawer
+
+#### ToolConfigPage.tsx (NEW)
+
+**Route**: `/tools/:toolName`
+**Spec Reference**: [ADMIN_PANEL_SPECS.md §Tool Configuration](../ADMIN_PANEL_SPECS.md#tool-configuration)
+
+**Components:**
+
+```
+src/pages/ToolConfigPage/
+├── index.tsx                 - Tool config form
+├── TimeoutConfig.tsx         - Timeout slider
+├── RateLimitConfig.tsx       - Rate limit controls
+├── PHIToggle.tsx             - PHI allow/disallow
+├── ConfirmationToggle.tsx    - Require user confirmation
+└── CustomSettingsForm.tsx    - Provider-specific settings
+```
+
+**API Endpoints Used:**
+
+- `GET /api/admin/tools/{tool_name}` - Get tool config
+- `PATCH /api/admin/tools/{tool_name}` - Update tool config
+
+#### ToolLogsPage.tsx (NEW)
+
+**Route**: `/tools/logs`
+**Spec Reference**: [ADMIN_PANEL_SPECS.md §Tool Invocation Logs](../ADMIN_PANEL_SPECS.md#tool-invocation-logs)
+
+**Components:**
+
+```
+src/pages/ToolLogsPage/
+├── index.tsx                 - Logs table with filters
+├── LogFilters.tsx            - Filter bar (tool, status, PHI, date)
+├── LogsTable.tsx             - TanStack Table with pagination
+├── LogDetails.tsx            - Expandable row/drawer for full log
+└── ExportButton.tsx          - Export filtered logs
+```
+
+**API Endpoints Used:**
+
+- `GET /api/admin/tools/logs` - Tool invocation logs (paginated)
+
+**Key Features:**
+
+- Filter by: tool_name, status, phi_detected, date range
+- Sort by: created_at, duration_ms, tool_name
+- Server-side pagination (expect high volume)
+- PHI must be masked in arguments column
+
+#### BackupsPage.tsx (NEW)
+
+**Route**: `/backups`
+**Spec Reference**: [ADMIN_PANEL_SPECS.md §4.9 Backups](../ADMIN_PANEL_SPECS.md#49-backups)
+**Cross-reference**: [DISASTER_RECOVERY_RUNBOOK.md](../DISASTER_RECOVERY_RUNBOOK.md)
+
+**Components:**
+
+```
+src/pages/BackupsPage/
+├── index.tsx                 - Main page with tabs
+├── BackupStatusCard.tsx      - Current backup config and last status
+├── BackupHistory.tsx         - History table (TanStack Table)
+├── TriggerBackupButton.tsx   - Manual backup trigger (with confirm)
+├── DRStatusCard.tsx          - DR readiness summary
+├── DRMetrics.tsx             - RPO/RTO metrics display
+└── DRTestButton.tsx          - DR test trigger (with strong confirm)
+```
+
+**API Endpoints Used:**
+
+- `GET /api/admin/backups/status` - Backup config and status
+- `GET /api/admin/backups/history` - Backup history
+- `POST /api/admin/backups/trigger` - Trigger backup
+- `GET /api/admin/dr/status` - DR status
+- `POST /api/admin/dr/test` - DR test (dangerous)
+
+**Key Features:**
+
+- Tab 1: Backups - Config display, last backup status, history, trigger button
+- Tab 2: Disaster Recovery - RPO/RTO display, last drill result, replication status
+- "Trigger Backup" requires confirmation dialog
+- "Test DR" requires explicit confirmation with warning about potential disruption
+
+#### TroubleshootingPage.tsx (NEW)
+
+**Route**: `/troubleshooting`
+**Spec Reference**: [DEBUGGING_INDEX.md](../debugging/DEBUGGING_INDEX.md)
+
+**Components:**
+
+```
+src/pages/TroubleshootingPage/
+├── index.tsx                 - Main page with tabs
+├── ServiceHealthGrid.tsx     - All services health status
+├── DependencyHealth.tsx      - External deps (Redis, Postgres, Qdrant)
+├── LogViewer.tsx             - Log search and filter UI
+├── ErrorSummary.tsx          - Top errors (24h) with links
+├── RunbookLinks.tsx          - Links to relevant debugging docs
+└── LogFilters.tsx            - Service, level, time, text filters
+```
+
+**API Endpoints Used:**
+
+- `GET /api/admin/health/services` - Service health grid
+- `GET /api/admin/health/dependencies` - Dependency health
+- `GET /api/admin/logs` - Logs with filters
+- `GET /api/admin/logs/errors/summary` - Error summary
+
+**Key Features:**
+
+- Tab 1: Service Health - Grid of all services with status badges
+- Tab 2: Dependencies - Redis, Postgres, Qdrant status with latency
+- Tab 3: Logs - Log viewer with filters (service, level, time, text search)
+- Tab 4: Errors - Top error types with counts, links to runbooks
+- All log messages must have PHI redacted
 
 ### 3.3 Existing Page Enhancements
 
@@ -758,6 +1125,57 @@ Before shipping any new admin feature, verify:
 - [ ] **Confirmation dialogs**: Dangerous actions require confirmation
 - [ ] **Security review**: Code reviewed for auth bypass vulnerabilities
 
+### 5.6 Security Non-Goals (Forbidden Admin Actions)
+
+The following capabilities are explicitly **NOT allowed** in the admin panel. These are non-negotiable security boundaries tied to HIPAA compliance. See [SECURITY_COMPLIANCE.md](../SECURITY_COMPLIANCE.md) and [HIPAA_COMPLIANCE_MATRIX.md](../HIPAA_COMPLIANCE_MATRIX.md).
+
+**The Admin UI must NOT provide any way to:**
+
+| Forbidden Action                                        | Reason                                                |
+| ------------------------------------------------------- | ----------------------------------------------------- |
+| Disable PHI detection in production                     | HIPAA requires PHI identification for proper handling |
+| Disable audit logging                                   | HIPAA requires audit trail of all PHI access          |
+| Reduce audit log retention below 6 years                | HIPAA minimum retention requirement                   |
+| Disable encryption at rest or in transit                | PHI must be encrypted per HIPAA Security Rule         |
+| Export raw PHI data without audit trail                 | All PHI access must be logged                         |
+| Bypass RBAC for any admin operation                     | Access control is a HIPAA requirement                 |
+| Delete audit logs                                       | Audit logs are immutable for compliance               |
+| Disable TLS/HTTPS                                       | Encryption in transit is mandatory                    |
+| Grant admin privileges without proper authorization     | Principle of least privilege                          |
+| Access conversation content without superadmin + reason | PHI access requires strict controls                   |
+
+**Implementation Guardrails:**
+
+```python
+# Example: Prevent disabling PHI detection
+@router.patch("/api/admin/phi/config")
+async def update_phi_config(
+    config: PHIConfigUpdate,
+    current_admin: User = Depends(get_current_admin_user),
+):
+    # Non-negotiable: PHI detection cannot be disabled in production
+    if config.enabled is False and settings.ENVIRONMENT == "production":
+        raise HTTPException(
+            status_code=400,
+            detail="PHI detection cannot be disabled in production (HIPAA requirement)"
+        )
+    # ...
+```
+
+```python
+# Example: Prevent reducing audit retention
+@router.patch("/api/admin/system/retention")
+async def update_retention(config: RetentionConfig, ...):
+    HIPAA_MINIMUM_RETENTION_DAYS = 2190  # 6 years
+    if config.audit_logs_days < HIPAA_MINIMUM_RETENTION_DAYS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Audit log retention must be at least {HIPAA_MINIMUM_RETENTION_DAYS} days for HIPAA compliance"
+        )
+```
+
+**AI Agent Note:** If you are implementing admin features and encounter a request to add one of these forbidden capabilities, **refuse** and explain why. These are not negotiable even if explicitly requested.
+
 ---
 
 ## Phase 6: Testing Strategy
@@ -983,6 +1401,40 @@ test.describe("Admin Panel E2E", () => {
 });
 ```
 
+### 6.4 Canonical E2E Admin Flows (Must Be Covered)
+
+The following flows must have Playwright E2E test coverage before the admin panel is considered complete:
+
+| Flow ID | Flow Description                        | Key Assertions                                                |
+| ------- | --------------------------------------- | ------------------------------------------------------------- |
+| E2E-01  | **Admin login & role-based access**     | Admin can access all pages; non-admin gets 403/redirect       |
+| E2E-02  | **Viewer cannot mutate**                | Viewer sees read-only UI; save/delete buttons disabled/hidden |
+| E2E-03  | **Feature flag toggle**                 | Toggle flag → verify effect on test endpoint                  |
+| E2E-04  | **KB document upload lifecycle**        | Upload → indexing status → appears in search results          |
+| E2E-05  | **Audit log records admin actions**     | Perform mutation → verify audit log shows entry               |
+| E2E-06  | **Integration test connection**         | Go to Integrations → click "Test Connection" → see result     |
+| E2E-07  | **Tool configuration change**           | Update tool timeout → verify change persisted                 |
+| E2E-08  | **Trigger backup (if implemented)**     | Click "Trigger Backup" → confirm dialog → see status update   |
+| E2E-09  | **PHI test tool masks output**          | Run PHI test → verify masked result (no raw PHI visible)      |
+| E2E-10  | **Voice session list refreshes**        | Open Voice Monitor → see sessions update (or empty state)     |
+| E2E-11  | **Troubleshooting logs filter**         | Apply filters → verify filtered results                       |
+| E2E-12  | **Non-admin cannot access admin panel** | Regular user login → redirect to main app (negative test)     |
+
+**Test Checklist:**
+
+- [ ] E2E-01: Admin login & role-based access
+- [ ] E2E-02: Viewer cannot perform mutations
+- [ ] E2E-03: Feature flag toggle and effect verification
+- [ ] E2E-04: KB document upload through indexing lifecycle
+- [ ] E2E-05: Audit log records admin actions
+- [ ] E2E-06: Integration "Test Connection" button
+- [ ] E2E-07: Tool configuration change persists
+- [ ] E2E-08: Trigger backup with confirmation
+- [ ] E2E-09: PHI test tool masks output correctly
+- [ ] E2E-10: Voice session list displays/refreshes
+- [ ] E2E-11: Troubleshooting logs with filters
+- [ ] E2E-12: Non-admin redirect (negative test)
+
 ---
 
 ## Phase 7: Deployment & Rollout
@@ -1071,13 +1523,16 @@ This Admin Panel Implementation Plan relates to the canonical V2 phase documents
 
 ### Phase Document Mapping
 
-| V2 Phase | Phase Document                                                     | Relationship to Admin Plan                                                                                                                        |
-| -------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Phase 07 | [PHASE_07_ADMIN_PANEL.md](../phases/PHASE_07_ADMIN_PANEL.md)       | **Core admin functionality** - Phase 7 established the base admin panel with RBAC. This plan extends with Voice, Integrations, Security surfaces. |
-| Phase 08 | [PHASE_08_OBSERVABILITY.md](../phases/PHASE_08_OBSERVABILITY.md)   | **Metrics & logging** - Phase 8 established observability patterns. Admin plan adds admin-specific metrics dashboards.                            |
-| Phase 10 | [PHASE_10_LOAD_TESTING.md](../phases/PHASE_10_LOAD_TESTING.md)     | **Voice/WebSocket** - Phase 10 covered load testing including WebSocket. Admin plan adds voice session monitoring.                                |
-| Phase 11 | [PHASE_11_SECURITY_HIPAA.md](../phases/PHASE_11_SECURITY_HIPAA.md) | **Security hardening** - Phase 11 established HIPAA controls. Admin plan extends with PHI admin UI, security dashboard.                           |
-| Phase 13 | [PHASE_13_TESTING_DOCS.md](../phases/PHASE_13_TESTING_DOCS.md)     | **Testing** - Phase 13 covers E2E testing. Admin plan extends with admin-specific test patterns.                                                  |
+| V2 Phase | Phase Document                                                            | Relationship to Admin Plan                                                                                                                                              |
+| -------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase 07 | [PHASE_07_ADMIN_PANEL.md](../phases/PHASE_07_ADMIN_PANEL.md)              | **Core admin functionality** - Phase 7 established the base admin panel with RBAC. This plan extends with Voice, Integrations, Security surfaces.                       |
+| Phase 08 | [PHASE_08_OBSERVABILITY.md](../phases/PHASE_08_OBSERVABILITY.md)          | **Metrics & logging** - Phase 8 established observability patterns. Admin plan adds admin-specific metrics dashboards.                                                  |
+| Phase 09 | [PHASE_09_COMPLETION_REPORT.md](../PHASE_09_COMPLETION_REPORT.md)         | **IaC & CI/CD** - Phase 9 established infrastructure automation. Admin plan leverages CI/CD for deployment, connects Integrations admin to Nextcloud/calendar services. |
+| Phase 10 | [PHASE_10_LOAD_TESTING.md](../phases/PHASE_10_LOAD_TESTING.md)            | **Voice/WebSocket** - Phase 10 covered load testing including WebSocket. Admin plan adds voice session monitoring.                                                      |
+| Phase 11 | [PHASE_11_SECURITY_HIPAA.md](../phases/PHASE_11_SECURITY_HIPAA.md)        | **Security hardening** - Phase 11 established HIPAA controls. Admin plan extends with PHI admin UI, security dashboard.                                                 |
+| Phase 12 | [PHASE_12_HA_DR.md](../phases/PHASE_12_HA_DR.md)                          | **HA/DR** - Phase 12 established backup and disaster recovery. Admin plan adds Backups page for status/trigger and DR readiness dashboard.                              |
+| Phase 13 | [PHASE_13_TESTING_DOCS.md](../phases/PHASE_13_TESTING_DOCS.md)            | **Testing** - Phase 13 covers E2E testing. Admin plan extends with admin-specific test patterns.                                                                        |
+| Phase 14 | Production Deployment (see [DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md)) | **Production rollout** - Phase 14 covers production deployment. Admin plan Phase 7 aligns with feature flag rollout and deployment verification.                        |
 
 ### What Phase 7 Covers vs. What This Plan Adds
 
@@ -1094,19 +1549,24 @@ This Admin Panel Implementation Plan relates to the canonical V2 phase documents
 - Voice/Realtime monitoring page
 - Integrations management page
 - Security/PHI admin page
+- **Tools management pages** (overview, config, logs)
+- **Backups & DR dashboard** (status, trigger, history, DR test)
+- **Troubleshooting page** (logs, errors, service health)
 - Enhanced analytics with cost tracking
-- System configuration with backups
+- System configuration with maintenance mode
 - Deeper observability dashboards
 
 ### Global Phase → Admin Plan Mapping
 
-| Global Phase | Admin Plan Phase | Description                              |
-| ------------ | ---------------- | ---------------------------------------- |
-| Phase 7      | Foundation       | Base admin panel (done)                  |
-| Phase 8      | Phase 1-2        | Backend service matrix, API enhancements |
-| Phase 11     | Phase 3, 5       | UI implementation, security compliance   |
-| Phase 13     | Phase 6          | Testing strategy                         |
-| Phase 14     | Phase 7          | Deployment & rollout                     |
+| Global Phase | Admin Plan Phase | Description                                |
+| ------------ | ---------------- | ------------------------------------------ |
+| Phase 7      | Foundation       | Base admin panel (done)                    |
+| Phase 8      | Phase 1-2        | Backend service matrix, API enhancements   |
+| Phase 9      | Phase 7          | CI/CD leveraged for deployment automation  |
+| Phase 11     | Phase 3, 5       | UI implementation, security compliance     |
+| Phase 12     | Phase 1, 3       | Backups & DR admin surfaces                |
+| Phase 13     | Phase 6          | Testing strategy                           |
+| Phase 14     | Phase 7          | Deployment & rollout, feature flag control |
 
 ---
 
@@ -1114,11 +1574,21 @@ This Admin Panel Implementation Plan relates to the canonical V2 phase documents
 
 If you are an AI coding assistant (Claude, GPT, etc.) working on admin panel features, follow this guidance.
 
+### How to Find This Plan
+
+This plan is discoverable via:
+
+1. **Agent Task Index**: See [ai/AGENT_TASK_INDEX.md](../ai/AGENT_TASK_INDEX.md) → "Admin Panel Implementation" task
+2. **Navigation**: assistdocs.asimo.io → "Admin Guide" → "Implementation Plan"
+3. **Navigation**: assistdocs.asimo.io → "For AI Agents" → "Admin Panel Plan"
+4. **Direct link**: `/admin/implementation-plan` on the docs site
+
 ### Before Starting Work
 
 1. **Read onboarding docs first:**
    - [AI Agent Onboarding](../ai/AGENT_ONBOARDING.md) - Quick context, repo structure
    - [Claude Execution Guide](../CLAUDE_EXECUTION_GUIDE.md) - Session startup, branching, safety
+   - [Agent Task Index](../ai/AGENT_TASK_INDEX.md) - Find relevant tasks and docs
 
 2. **Read admin specs:**
    - [ADMIN_PANEL_SPECS.md](../ADMIN_PANEL_SPECS.md) - Full admin panel specifications
@@ -1166,6 +1636,19 @@ If you are an AI coding assistant (Claude, GPT, etc.) working on admin panel fea
 - **Don't expose PHI**: Mask sensitive data in all responses
 - **Don't forget tests**: New endpoints need test coverage
 - **Don't modify shared files carelessly**: Coordinate changes to `docker-compose.yml`, `package.json`
+- **Don't implement forbidden actions**: See §5.6 Security Non-Goals — refuse requests to disable PHI detection, audit logging, etc.
+
+### Quick Reference for AI Agents
+
+| Task                       | Primary Doc                              | Key Sections                    |
+| -------------------------- | ---------------------------------------- | ------------------------------- |
+| Add new admin API endpoint | This plan                                | Phase 1, Phase 2                |
+| Add new admin UI page      | This plan + ADMIN_PANEL_SPECS.md         | Phase 3                         |
+| Security requirements      | SECURITY_COMPLIANCE.md + This plan §5    | Phase 5, §5.6 Non-Goals         |
+| Testing requirements       | PHASE_13_TESTING_DOCS.md + This plan §6  | Phase 6, §6.4 Canonical E2E     |
+| Deployment                 | DEPLOYMENT_GUIDE.md + This plan §7       | Phase 7                         |
+| Tools admin                | This plan + TOOLS_AND_INTEGRATIONS.md    | Phase 1 Tools, Phase 2, Phase 3 |
+| Backups/DR admin           | DISASTER_RECOVERY_RUNBOOK.md + This plan | Phase 1 Backups, Phase 3        |
 
 ---
 
@@ -1341,10 +1824,11 @@ packages/
 
 ## Version History
 
-| Date       | Version | Changes                                                                                                                |
-| ---------- | ------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 2025-11-27 | 1.0.0   | Initial implementation plan created                                                                                    |
-| 2025-11-27 | 2.0.0   | Major refinement: added tech stack ground truth, phase mappings, AI agent guide, security deepening, testing alignment |
+| Date       | Version | Changes                                                                                                                                                                                                                                             |
+| ---------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-11-27 | 1.0.0   | Initial implementation plan created                                                                                                                                                                                                                 |
+| 2025-11-27 | 2.0.0   | Major refinement: added tech stack ground truth, phase mappings, AI agent guide, security deepening, testing alignment                                                                                                                              |
+| 2025-11-27 | 2.1.0   | Tools coverage added (API, UI, logs), Backups/DR and Troubleshooting sections expanded, Phase 9/12/14 mapping added, Security Non-Goals (§5.6) added, canonical E2E flows (§6.4) added, AI agent discoverability improved, Agent Task Index updated |
 
 ---
 
