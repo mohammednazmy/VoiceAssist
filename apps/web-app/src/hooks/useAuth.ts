@@ -59,7 +59,7 @@ function getOAuthErrorMessage(provider: string, err: unknown): string {
 // Initialize API client
 const apiClient = new VoiceAssistApiClient({
   baseURL:
-    import.meta.env.VITE_API_URL || "https://api.voiceassist.example.com/api",
+    import.meta.env.VITE_API_URL || "https://api.voiceassist.example.com",
   getAccessToken: () => {
     const state = useAuthStore.getState();
     return state.tokens?.accessToken || null;
