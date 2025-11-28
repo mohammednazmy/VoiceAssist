@@ -73,7 +73,7 @@ The canonical backend service for VoiceAssist. All new backend development occur
 | Voice Processing     | Complete | STT/TTS ready                     |
 | Health/Metrics       | Complete | Prometheus metrics                |
 
-**Test Coverage:** 95% | **API Modules:** 21
+**Test Coverage:** 95% | **API Modules:** 20+
 
 ---
 
@@ -119,8 +119,8 @@ Technical documentation website at https://assistdocs.asimo.io.
 | Markdown Rendering   | Complete | GFM support, syntax highlighting                |
 | Navigation           | Complete | Configurable sidebar with Operations section    |
 | Multi-source Loading | Complete | @root/ prefix support                           |
-| Search Index         | Complete | /search-index.json with 11K+ entries (Fuse.js)  |
-| Agent JSON API       | Complete | /agent/index.json, /agent/docs.json (220 docs)  |
+| Search Index         | Complete | /search-index.json (Fuse.js full-text)          |
+| Agent JSON API       | Complete | /agent/index.json, /agent/docs.json (all docs)  |
 | Sitemap/SEO          | Complete | /sitemap.xml, robots.txt with AI bot allowlists |
 | Link Rewriting       | Complete | .md links → /docs/\* routes, GitHub fallbacks   |
 | Debugging Docs       | Complete | Operations section with debugging guides        |

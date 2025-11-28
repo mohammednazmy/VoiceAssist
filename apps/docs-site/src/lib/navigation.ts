@@ -345,6 +345,12 @@ export const navigation: NavSection[] = [
         description: "Ready-to-use prompt templates for Claude sessions",
         docPaths: ["CLAUDE_PROMPTS.md"],
       },
+      {
+        title: "Agent Task Index",
+        href: "/ai/task-index",
+        description: "Common AI agent tasks and relevant documentation",
+        docPaths: ["ai/AGENT_TASK_INDEX.md"],
+      },
     ],
   },
   {

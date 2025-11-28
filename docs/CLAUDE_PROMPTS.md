@@ -35,7 +35,7 @@ Use this prompt when you want Claude to implement a complete development phase f
 
 ### When to Use
 
-- Implementing Phase 0-14 from DEVELOPMENT_PHASES_V2.md
+- Implementing project phases 0-15 or web app phases 0-8
 - Starting a new major component or feature
 - Following the documented phase plan
 
@@ -45,9 +45,9 @@ Use this prompt when you want Claude to implement a complete development phase f
 I want you to implement Phase [N]: [Phase Name] for the VoiceAssist V2 project.
 
 **Before starting:**
-1. Read ~/VoiceAssist/CURRENT_PHASE.md
+1. Read ~/VoiceAssist/docs/overview/IMPLEMENTATION_STATUS.md (source of truth)
 2. Read ~/VoiceAssist/docs/phases/PHASE_[N]_[NAME].md
-3. Read ~/VoiceAssist/docs/ARCHITECTURE_V2.md
+3. Read ~/VoiceAssist/docs/UNIFIED_ARCHITECTURE.md
 4. Read relevant spec documents for this phase
 
 **Your task:**
@@ -58,7 +58,7 @@ I want you to implement Phase [N]: [Phase Name] for the VoiceAssist V2 project.
 5. Verify all exit criteria are met
 6. Run full test suite (backend + frontend)
 7. Commit with message: `feat(phase-[N]): implement [phase name]`
-8. Update CURRENT_PHASE.md to mark phase complete
+8. Update IMPLEMENTATION_STATUS.md if component status changed
 
 **Quality standards:**
 - All tests must pass
@@ -130,9 +130,9 @@ I need you to fix a bug / refactor code in the VoiceAssist V2 project.
 [Specify: voice-proxy, medical-kb, web-app, admin-panel, auth-service, etc.]
 
 **Before starting:**
-1. Read ~/VoiceAssist/docs/ARCHITECTURE_V2.md
-2. Read ~/VoiceAssist/docs/SERVICE_CATALOG.md
-3. Read the relevant service README (e.g., server/README.md)
+1. Read ~/VoiceAssist/docs/overview/IMPLEMENTATION_STATUS.md (source of truth)
+2. Read ~/VoiceAssist/docs/UNIFIED_ARCHITECTURE.md
+3. Read the relevant service README (e.g., services/api-gateway/README.md)
 4. Review existing code in the affected area
 
 **Your task:**
@@ -176,10 +176,10 @@ Actual: Search times out after 30 seconds
 medical-kb service (app/services/medical/rag.py)
 
 **Before starting:**
-1. Read ~/VoiceAssist/docs/ARCHITECTURE_V2.md
-2. Read ~/VoiceAssist/docs/SERVICE_CATALOG.md
-3. Read server/README.md
-4. Review existing code in app/services/medical/rag.py
+1. Read ~/VoiceAssist/docs/overview/IMPLEMENTATION_STATUS.md (source of truth)
+2. Read ~/VoiceAssist/docs/UNIFIED_ARCHITECTURE.md
+3. Read services/api-gateway/README.md
+4. Review existing code in services/api-gateway/app/services/
 
 **Your task:**
 1. Create a branch: `fix/kb-search-timeout`
@@ -321,8 +321,8 @@ I need you to work on infrastructure or deployment for VoiceAssist V2.
 - Optimize Docker image sizes]
 
 **Before starting:**
-1. Read ~/VoiceAssist/docs/ARCHITECTURE_V2.md
-2. Read ~/VoiceAssist/docs/LOCAL_DEVELOPMENT.md
+1. Read ~/VoiceAssist/docs/overview/IMPLEMENTATION_STATUS.md (source of truth)
+2. Read ~/VoiceAssist/docs/UNIFIED_ARCHITECTURE.md
 3. Read ~/VoiceAssist/docs/INFRASTRUCTURE_SETUP.md
 4. If K8s-related: Read ~/VoiceAssist/docs/COMPOSE_TO_K8S_MIGRATION.md
 
@@ -405,11 +405,11 @@ Please confirm understanding and proceed.
 
 Replace all `[bracketed text]` with specific information:
 
-- `[N]` → Phase number (0-14)
-- `[Phase Name]` → Phase name from DEVELOPMENT_PHASES_V2.md
+- `[N]` → Phase number (0-15 for project phases, 0-8 for web app phases)
+- `[Phase Name]` → Phase name from docs/phases/
 - `[issue-description]` → Brief description of the issue
 - `[description]` → Brief description of the work
-- `[service/component]` → Specific microservice or component name
+- `[service/component]` → Specific service or component name
 
 ### Step 3: Paste into Claude Code
 
@@ -558,13 +558,15 @@ I need you to create a GitHub Actions workflow for automated testing and deploym
 ## Related Documentation
 
 - [CLAUDE_EXECUTION_GUIDE.md](CLAUDE_EXECUTION_GUIDE.md) - Detailed execution guidelines
-- [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Phase-by-phase plan
+- [Implementation Status](overview/IMPLEMENTATION_STATUS.md) - **Source of truth** for component status
 - [START_HERE.md](START_HERE.md) - Project orientation
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - System architecture
+- [Agent Onboarding](ai/AGENT_ONBOARDING.md) - AI assistant quick start
+- [Agent API Reference](ai/AGENT_API_REFERENCE.md) - Machine-readable endpoints
 
 ---
 
-**Last Updated**: 2025-11-20
-**Version**: V2.0
+**Last Updated**: 2025-11-27
+**Version**: V2.1
 
 **Note**: These prompts are designed for Claude Code but can be adapted for other AI assistants or human developers by adjusting the phrasing and removing AI-specific instructions.

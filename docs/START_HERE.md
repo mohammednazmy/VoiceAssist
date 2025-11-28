@@ -17,7 +17,7 @@ category: overview
 
 This document is your entry point to the project. Choose your path below based on your role and experience level.
 
-**Status update:** All 15 phase specifications are complete. Backend and infrastructure are production-ready. Frontend web app is in active development (Phase 3). See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for detailed component status.
+**Status update:** All 16 project phases (0-15) are complete. Backend, infrastructure, and admin panel are production-ready. The web app frontend is in active development. See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for the authoritative component status.
 
 ---
 
@@ -167,10 +167,18 @@ All documentation is in the `docs/` directory. Here's the complete index:
 
 ### 🤖 For AI Assistants / Automation
 
+> **Quick Links for AI Agents:**
+>
+> - [Agent Onboarding](ai/AGENT_ONBOARDING.md) - Start here
+> - [Implementation Status](overview/IMPLEMENTATION_STATUS.md) - Component status (source of truth)
+> - [Agent API Reference](ai/AGENT_API_REFERENCE.md) - Machine-readable endpoints
+> - [Agent Task Index](ai/AGENT_TASK_INDEX.md) - Common tasks and relevant docs
+
 | Document                                                   | Purpose                                                  | Audience                   |
 | ---------------------------------------------------------- | -------------------------------------------------------- | -------------------------- |
 | **[Agent Onboarding](ai/AGENT_ONBOARDING.md)** ⭐          | Quick start guide for AI coding assistants               | Claude Code, AI assistants |
 | **[Agent API Reference](ai/AGENT_API_REFERENCE.md)** ⭐    | Machine-readable JSON endpoints for agents               | Claude Code, AI assistants |
+| **[Agent Task Index](ai/AGENT_TASK_INDEX.md)**             | Common AI agent tasks and relevant documentation         | Claude Code, AI assistants |
 | **[CLAUDE_EXECUTION_GUIDE.md](CLAUDE_EXECUTION_GUIDE.md)** | Session startup, branching, safety rules, quality checks | Claude Code, AI assistants |
 | **[CLAUDE_PROMPTS.md](CLAUDE_PROMPTS.md)**                 | Ready-to-use prompts for common development tasks        | Claude Code, AI assistants |
 
@@ -182,60 +190,56 @@ All documentation is in the `docs/` directory. Here's the complete index:
 
 ### 📋 Phase Documents (Development Plan)
 
-All phases are in `docs/phases/`. Follow them sequentially:
+All phases are in `docs/phases/`. The project has 16 phases (0-15):
 
-| Phase        | Name                  | Duration | Focus                                     | File                                                               |
+| Phase        | Name                  | Status   | Focus                                     | File                                                               |
 | ------------ | --------------------- | -------- | ----------------------------------------- | ------------------------------------------------------------------ |
-| **Phase 0**  | Initialization        | 2h       | Read all specs, understand architecture   | [PHASE_00_INITIALIZATION.md](phases/PHASE_00_INITIALIZATION.md) ⭐ |
-| **Phase 1**  | Local Environment     | 3h       | Docker Compose, PostgreSQL, Redis, Qdrant | PHASE*01*\*.md                                                     |
-| **Phase 2**  | Database Schema       | 2h       | SQLAlchemy models, Alembic migrations     | PHASE*02*\*.md                                                     |
-| **Phase 3**  | Authentication        | 4h       | JWT, user management, RBAC                | PHASE*03*\*.md                                                     |
-| **Phase 4**  | Document Ingestion    | 4h       | PDF/DOCX parsing, vector embeddings       | PHASE*04*\*.md                                                     |
-| **Phase 5**  | Semantic Search       | 5h       | Qdrant integration, RAG pipeline          | PHASE*05*\*.md                                                     |
-| **Phase 6**  | PHI Detection         | 3h       | Presidio integration, routing logic       | PHASE*06*\*.md                                                     |
-| **Phase 7**  | AI Router             | 4h       | Llama local, OpenAI cloud, cost tracking  | PHASE*07*\*.md                                                     |
-| **Phase 8**  | External Search       | 3h       | PubMed, UpToDate APIs                     | PHASE*08*\*.md                                                     |
-| **Phase 9**  | Nextcloud Integration | 3h       | WebDAV, PHI document storage              | PHASE*09*\*.md                                                     |
-| **Phase 10** | WebSocket & Voice     | 4h       | Real-time chat, voice transcription       | PHASE*10*\*.md                                                     |
-| **Phase 11** | Web App UI            | 8h       | Next.js, clinical workflows, voice UI     | PHASE*11*\*.md                                                     |
-| **Phase 12** | Admin Panel UI        | 6h       | Next.js, KB management, user admin        | PHASE*12*\*.md                                                     |
-| **Phase 13** | Testing & Monitoring  | 4h       | Pytest, Prometheus, Grafana               | PHASE*13*\*.md                                                     |
-| **Phase 14** | Production Deployment | 5h       | Ubuntu server, systemd, backups           | PHASE*14*\*.md                                                     |
+| **Phase 0**  | Initialization        | Complete | Read all specs, understand architecture   | [PHASE_00_INITIALIZATION.md](phases/PHASE_00_INITIALIZATION.md) ⭐ |
+| **Phase 1**  | Local Environment     | Complete | Docker Compose, PostgreSQL, Redis, Qdrant | PHASE*01*\*.md                                                     |
+| **Phase 2**  | Database Schema       | Complete | SQLAlchemy models, Alembic migrations     | PHASE*02*\*.md                                                     |
+| **Phase 3**  | Authentication        | Complete | JWT, user management, RBAC                | PHASE*03*\*.md                                                     |
+| **Phase 4**  | Document Ingestion    | Complete | PDF/DOCX parsing, vector embeddings       | PHASE*04*\*.md                                                     |
+| **Phase 5**  | Semantic Search       | Complete | Qdrant integration, RAG pipeline          | PHASE*05*\*.md                                                     |
+| **Phase 6**  | PHI Detection         | Complete | Presidio integration, routing logic       | PHASE*06*\*.md                                                     |
+| **Phase 7**  | AI Router             | Complete | Llama local, OpenAI cloud, cost tracking  | PHASE*07*\*.md                                                     |
+| **Phase 8**  | External Search       | Complete | PubMed, UpToDate APIs                     | PHASE*08*\*.md                                                     |
+| **Phase 9**  | Nextcloud Integration | Complete | WebDAV, PHI document storage              | PHASE*09*\*.md                                                     |
+| **Phase 10** | WebSocket & Voice     | Complete | Real-time chat, voice transcription       | PHASE*10*\*.md                                                     |
+| **Phase 11** | Security & HIPAA      | Complete | Security hardening, compliance            | PHASE*11*\*.md                                                     |
+| **Phase 12** | HA/DR                 | Complete | High availability, disaster recovery      | PHASE*12*\*.md                                                     |
+| **Phase 13** | Testing & Docs        | Complete | Pytest, Prometheus, documentation         | PHASE*13*\*.md                                                     |
+| **Phase 14** | Production Deployment | Complete | Ubuntu server, systemd, backups           | PHASE*14*\*.md                                                     |
+| **Phase 15** | Final Review          | Complete | Final review, handoff, validation         | PHASE*15*\*.md                                                     |
 
-**Total Estimated Time**: ~60 hours of focused development
+**Note**: Web App frontend development follows a separate milestone plan (Phases 0-8) tracked in [Implementation Status](overview/IMPLEMENTATION_STATUS.md).
 
 ---
 
 ## 🗺️ Development Roadmap
 
-### Docker Compose Development (Phases 0-10)
+### Project Phases (0-15) - Complete ✅
 
-**Goal**: Build fully functional system using Docker Compose on local machine
+All 16 project phases have been completed:
 
-- ✅ **Phase 0**: Understand architecture and specifications
-- 🏗️ **Phases 1-3**: Foundation (environment, database, auth)
-- 🏗️ **Phases 4-8**: Core functionality (ingestion, search, AI)
-- 🏗️ **Phases 9-10**: Integration (Nextcloud, voice)
+- ✅ **Phases 0-3**: Foundation (environment, database, auth)
+- ✅ **Phases 4-8**: Core functionality (ingestion, search, AI)
+- ✅ **Phases 9-10**: Integration (Nextcloud, voice backend)
+- ✅ **Phases 11-12**: Security, HA/DR
+- ✅ **Phases 13-15**: Testing, deployment, final review
 
-**Deliverable**: Working backend with Docker Compose
+**Deliverable**: Production-ready backend and infrastructure
 
-### Frontend Development (Phases 11-12)
+### Web App Frontend Milestones - In Progress 🏗️
 
-**Goal**: Build Next.js frontends that connect to backend
+The web app follows its own milestone plan:
 
-- 🏗️ **Phase 11**: Web App (doctor-facing interface)
-- 🏗️ **Phase 12**: Admin Panel (system management)
+- ✅ **Phase 0**: Foundation (monorepo, shared packages)
+- ✅ **Phase 1**: Auth & Layout
+- ✅ **Phase 2**: Chat Interface
+- 🏗️ **Phase 3**: Voice Features (in progress)
+- 📋 **Phases 4-8**: Files, medical features, admin, polish (planned)
 
-**Deliverable**: Complete web and admin interfaces
-
-### Production Deployment (Phases 13-14)
-
-**Goal**: Deploy to Ubuntu server with production configs
-
-- 🏗️ **Phase 13**: Testing, monitoring, observability
-- 🏗️ **Phase 14**: Production deployment, backups, systemd
-
-**Deliverable**: Production-ready system on Ubuntu server
+See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for current progress.
 
 ### Future: Kubernetes Migration (Optional)
 
@@ -295,7 +299,7 @@ All phases are in `docs/phases/`. Follow them sequentially:
 
 ### 5. Phase-Based Development
 
-**Decision**: Break project into 14 sequential phases
+**Decision**: Break project into 16 sequential phases (0-15)
 
 **Rationale**:
 
@@ -433,13 +437,13 @@ I want to work on Phase [N]. Please:
 
 ## 📊 Project Status
 
-**Current Status**: Documentation Complete, Ready to Begin Development
+**Current Status**: Backend and Infrastructure Production-Ready. Frontend in Active Development.
 
-**Next Step**: Phase 0 - Initialization (Read all specs and understand architecture)
+**Phase Completion**: All 16 project phases (0-15) complete. Web app frontend milestone work ongoing.
 
-**Estimated Time to MVP**: 60 hours across 14 phases
+**Implementation Reference**: See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for detailed component status.
 
-**Target Deployment**: Single Ubuntu server with Docker Compose
+**Target Deployment**: Ubuntu server with Docker Compose (production-ready)
 
 ---
 

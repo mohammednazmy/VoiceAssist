@@ -38,7 +38,7 @@ Every Claude Code session working on VoiceAssist V2 should begin with these step
 ### 1.1 Sync and Setup
 
 ```bash
-cd /Users/mohammednazmy/VoiceAssist
+cd ~/VoiceAssist
 git pull origin main
 git status  # Check for any uncommitted changes
 ```
@@ -56,14 +56,14 @@ git status
 Backend:
 
 ```bash
-cd server
+cd services/api-gateway
 pip install -r requirements.txt
 ```
 
 Frontend:
 
 ```bash
-cd web-app  # or admin-panel
+cd apps/web-app  # or apps/admin-panel
 pnpm install
 ```
 
@@ -73,12 +73,15 @@ Before starting ANY work, read these documents IN ORDER:
 
 **Required Reading (Always):**
 
-1. `.ai/index.json` - Machine-readable project index, find task-to-docs mapping (NEW!)
-2. `.ai/README.md` - AI agent navigation guide, how to use index.json (NEW!)
-3. `docs/START_HERE.md` - Project orientation and documentation map
-4. `docs/ARCHITECTURE_V2.md` - System architecture and microservices design
-5. `docs/DEVELOPMENT_PHASES_V2.md` - Phase overview and Compose-first approach
-6. `CURRENT_PHASE.md` - Current project status and progress
+1. `docs/overview/IMPLEMENTATION_STATUS.md` - **Source of truth** for component status
+2. `docs/START_HERE.md` - Project orientation and documentation map
+3. `docs/UNIFIED_ARCHITECTURE.md` - System architecture and design
+
+**Machine-Readable Endpoints (for AI agents):**
+
+- `https://assistdocs.asimo.io/agent/index.json` - Documentation metadata
+- `https://assistdocs.asimo.io/agent/docs.json` - Full document list with filtering
+- `https://assistdocs.asimo.io/search-index.json` - Full-text search index
 
 **Phase-Specific Reading:**
 If implementing a phase, read:
@@ -87,10 +90,11 @@ If implementing a phase, read:
 - Any referenced specification documents (WEB_APP_SPECS.md, etc.)
 
 **Service-Specific Reading:**
-If working on a specific microservice:
+If working on a specific service:
 
-- `docs/SERVICE_CATALOG.md` - Service details (ports, dependencies, endpoints)
-- Relevant service README (e.g., `server/README.md`)
+- `services/api-gateway/README.md` - Canonical backend service guide
+- `apps/web-app/README.md` - Web app implementation
+- `apps/admin-panel/README.md` - Admin panel implementation
 
 **Security/Compliance Work:**
 
@@ -103,7 +107,7 @@ Determine and document:
 
 **What am I working on?**
 
-- Which phase (0-14)?
+- Which phase (0-15 project phases, or 0-8 web app phases)?
 - Which service or component?
 - Which files will I modify?
 
@@ -420,11 +424,11 @@ Run ALL applicable checks before committing code. These checks prevent regressio
 
 ### Backend (Python/FastAPI)
 
-**Run from `server/` directory:**
+**Run from `services/api-gateway/` directory:**
 
 ```bash
 # Activate virtual environment
-source venv/bin/activate
+source .venv/bin/activate
 
 # 1. Run all tests
 pytest tests/ -v
@@ -463,7 +467,7 @@ pytest tests/ && black app/ tests/ --check && flake8 app/ && mypy app/
 
 ### Frontend (Next.js/React)
 
-**Run from `web-app/` or `admin-panel/` directory:**
+**Run from `apps/web-app/` or `apps/admin-panel/` directory:**
 
 ```bash
 # 1. Run all tests
@@ -588,13 +592,13 @@ aspell check docs/YOUR_FILE.md
 
 ```bash
 # 1. All tests pass
-cd server && pytest tests/
-cd ../web-app && pnpm test
+cd services/api-gateway && pytest tests/
+cd ../../apps/web-app && pnpm test
 cd ../admin-panel && pnpm test
 
 # 2. Code quality
-cd ../server && black . --check && flake8 . && mypy app/
-cd ../web-app && pnpm lint && pnpm type-check
+cd ../../services/api-gateway && black . --check && flake8 . && mypy app/
+cd ../../apps/web-app && pnpm lint && pnpm type-check
 cd ../admin-panel && pnpm lint && pnpm type-check
 
 # 3. Docker Compose
@@ -761,11 +765,15 @@ markdown-link-check docs/**/*.md
 ## Related Documentation
 
 - [CLAUDE_PROMPTS.md](CLAUDE_PROMPTS.md) - Ready-to-use prompts for common tasks
-- [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Phase-by-phase implementation plan
+- [Implementation Status](overview/IMPLEMENTATION_STATUS.md) - **Source of truth** for component status
 - [START_HERE.md](START_HERE.md) - Project orientation
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - System architecture
+- [Agent Onboarding](ai/AGENT_ONBOARDING.md) - AI assistant quick start
+- [Agent API Reference](ai/AGENT_API_REFERENCE.md) - Machine-readable endpoints
+
+**Note**: Always reconcile any conflicting statements in other docs against `docs/overview/IMPLEMENTATION_STATUS.md` and the actual code.
 
 ---
 
-**Last Updated**: 2025-11-20
-**Version**: V2.0
+**Last Updated**: 2025-11-27
+**Version**: V2.1

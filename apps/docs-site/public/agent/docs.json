@@ -1,6 +1,6 @@
 {
-  "count": 221,
-  "generated_at": "2025-11-27T23:51:42.844Z",
+  "count": 224,
+  "generated_at": "2025-11-28T00:22:10.856Z",
   "docs": [
     {
       "slug": "accessibility-audit",
@@ -1384,6 +1384,26 @@
       "lastUpdated": "2025-11-27"
     },
     {
+      "slug": "admin/implementation-plan",
+      "path": "admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md",
+      "title": "Admin Panel Implementation Plan",
+      "summary": "Comprehensive implementation plan for making admin.asimo.io the canonical operational mission control for VoiceAssist.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "frontend",
+        "backend",
+        "devops"
+      ],
+      "tags": ["admin", "implementation", "plan", "roadmap"],
+      "relatedServices": ["api-gateway", "admin-panel"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
       "slug": "admin/feature-parity",
       "path": "admin/feature-parity.md",
       "title": "Feature Parity",
@@ -1422,6 +1442,19 @@
       "category": "ai",
       "tags": ["onboarding", "ai-agent", "getting-started", "workflows"],
       "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "ai/agent-task-index",
+      "path": "ai/AGENT_TASK_INDEX.md",
+      "title": "Agent Task Index",
+      "summary": "Common AI agent tasks with relevant documentation and machine-readable endpoints.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["agent", "ai-agents"],
+      "category": "ai",
+      "tags": ["ai-agent", "tasks", "index", "reference"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2544,6 +2577,27 @@
       "category": "debugging",
       "tags": ["runbook", "deployment", "operations", "production"],
       "relatedServices": ["api-gateway", "web-app", "admin-panel"],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "operations/runbooks/docs-site-deployment-tls",
+      "path": "operations/runbooks/DOCS_SITE_DEPLOYMENT_AND_TLS.md",
+      "title": "Docs Site Deployment and TLS Runbook",
+      "summary": "Step-by-step guide for building, deploying, and managing TLS for assistdocs.asimo.io.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "sre",
+      "audience": ["human", "agent", "sre", "devops"],
+      "category": "operations",
+      "tags": [
+        "deployment",
+        "runbook",
+        "docs-site",
+        "tls",
+        "apache",
+        "certbot"
+      ],
+      "relatedServices": ["docs-site"],
       "lastUpdated": "2025-11-27"
     },
     {
