@@ -1,5 +1,6 @@
 import { ServiceStatus } from "../components/dashboard/ServiceStatus";
 import { MetricCard } from "../components/dashboard/MetricCard";
+import { IntegrationsWidget } from "../components/dashboard/IntegrationsWidget";
 import { useMetrics } from "../hooks/useMetrics";
 
 export function DashboardPage() {
@@ -150,6 +151,13 @@ export function DashboardPage() {
             Service Health
           </h2>
           {renderServiceCards()}
+        </div>
+
+        <div>
+          <h2 className="text-lg font-semibold text-slate-200 mb-3">
+            External Integrations
+          </h2>
+          <IntegrationsWidget />
         </div>
       </div>
 
