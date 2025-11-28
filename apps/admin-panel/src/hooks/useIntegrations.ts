@@ -5,7 +5,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchAPI } from "../lib/api";
-import { useAuth } from "../contexts/AuthContext";
 
 export type IntegrationStatus =
   | "connected"
@@ -97,7 +96,6 @@ export function useIntegrations(
   options: UseIntegrationsOptions = {},
 ): UseIntegrationsResult {
   const { autoRefresh = false, refreshIntervalMs = 30000 } = options;
-  const { token } = useAuth();
 
   const [integrations, setIntegrations] = useState<IntegrationSummary[]>([]);
   const [health, setHealth] = useState<IntegrationsHealth | null>(null);
@@ -109,8 +107,6 @@ export function useIntegrations(
     try {
       const response = await fetchAPI<IntegrationSummary[]>(
         "/api/admin/integrations/",
-        { method: "GET" },
-        token,
       );
       setIntegrations(response);
       return response;
@@ -118,14 +114,12 @@ export function useIntegrations(
       console.error("Failed to fetch integrations:", err);
       throw err;
     }
-  }, [token]);
+  }, []);
 
   const fetchHealth = useCallback(async () => {
     try {
       const response = await fetchAPI<IntegrationsHealth>(
         "/api/admin/integrations/health",
-        { method: "GET" },
-        token,
       );
       setHealth(response);
       return response;
@@ -133,7 +127,7 @@ export function useIntegrations(
       console.error("Failed to fetch integrations health:", err);
       throw err;
     }
-  }, [token]);
+  }, []);
 
   const refreshAll = useCallback(async () => {
     setLoading(true);
@@ -152,12 +146,10 @@ export function useIntegrations(
     async (id: string): Promise<IntegrationDetail> => {
       const response = await fetchAPI<IntegrationDetail>(
         `/api/admin/integrations/${id}`,
-        { method: "GET" },
-        token,
       );
       return response;
     },
-    [token],
+    [],
   );
 
   const testIntegration = useCallback(
@@ -165,13 +157,12 @@ export function useIntegrations(
       const response = await fetchAPI<IntegrationTestResult>(
         `/api/admin/integrations/${id}/test`,
         { method: "POST" },
-        token,
       );
       // Refresh the list after testing to update status
       await refreshAll();
       return response;
     },
-    [token, refreshAll],
+    [refreshAll],
   );
 
   // Initial load

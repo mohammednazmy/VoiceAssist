@@ -480,6 +480,92 @@ async def list_integrations(
     return result
 
 
+@router.get("/health", response_model=dict)
+async def get_integrations_health(
+    admin_user: dict = Depends(get_current_admin_user),
+) -> dict:
+    """Get overall health summary of all integrations.
+
+    Available to both admin and viewer roles.
+    """
+    total = len(INTEGRATIONS)
+    connected = 0
+    degraded = 0
+    errors = 0
+    not_configured = 0
+
+    for int_id in INTEGRATIONS:
+        status, _ = get_integration_status(int_id)
+        if status == IntegrationStatus.CONNECTED:
+            connected += 1
+        elif status == IntegrationStatus.DEGRADED:
+            degraded += 1
+        elif status == IntegrationStatus.ERROR:
+            errors += 1
+        elif status == IntegrationStatus.NOT_CONFIGURED:
+            not_configured += 1
+
+    overall = "healthy"
+    if errors > 0:
+        overall = "unhealthy"
+    elif degraded > 0:
+        overall = "degraded"
+    elif connected == 0:
+        overall = "critical"
+
+    return {
+        "overall_status": overall,
+        "total_integrations": total,
+        "connected": connected,
+        "degraded": degraded,
+        "errors": errors,
+        "not_configured": not_configured,
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@router.get("/metrics/summary", response_model=list[IntegrationMetrics])
+async def get_integration_metrics(
+    admin_user: dict = Depends(get_current_admin_user),
+) -> list[IntegrationMetrics]:
+    """Get metrics for all integrations.
+
+    Available to both admin and viewer roles.
+
+    Note: This returns mock data in the current implementation.
+    Real metrics would come from Prometheus/metrics collection.
+    """
+    # In a real implementation, this would query Prometheus or
+    # read from Redis counters. For now, return placeholder metrics.
+    result = []
+    for int_id in INTEGRATIONS:
+        metrics_key = f"admin:integration:{int_id}:metrics"
+        metrics_data = {}
+
+        if redis_client:
+            try:
+                data = redis_client.get(metrics_key)
+                if data:
+                    metrics_data = json.loads(data)
+            except Exception:
+                pass
+
+        result.append(
+            IntegrationMetrics(
+                integration_id=int_id,
+                total_requests=metrics_data.get("total_requests", 0),
+                successful_requests=metrics_data.get("successful_requests", 0),
+                failed_requests=metrics_data.get("failed_requests", 0),
+                avg_latency_ms=metrics_data.get("avg_latency_ms", 0.0),
+                p99_latency_ms=metrics_data.get("p99_latency_ms", 0.0),
+                last_error=metrics_data.get("last_error"),
+                last_error_time=metrics_data.get("last_error_time"),
+            )
+        )
+
+    return result
+
+
 @router.get("/{integration_id}", response_model=IntegrationDetail)
 async def get_integration(
     integration_id: str,
@@ -756,89 +842,3 @@ async def test_integration(
         message=message,
         details=details if details else None,
     )
-
-
-@router.get("/metrics/summary", response_model=list[IntegrationMetrics])
-async def get_integration_metrics(
-    admin_user: dict = Depends(get_current_admin_user),
-) -> list[IntegrationMetrics]:
-    """Get metrics for all integrations.
-
-    Available to both admin and viewer roles.
-
-    Note: This returns mock data in the current implementation.
-    Real metrics would come from Prometheus/metrics collection.
-    """
-    # In a real implementation, this would query Prometheus or
-    # read from Redis counters. For now, return placeholder metrics.
-    result = []
-    for int_id in INTEGRATIONS:
-        metrics_key = f"admin:integration:{int_id}:metrics"
-        metrics_data = {}
-
-        if redis_client:
-            try:
-                data = redis_client.get(metrics_key)
-                if data:
-                    metrics_data = json.loads(data)
-            except Exception:
-                pass
-
-        result.append(
-            IntegrationMetrics(
-                integration_id=int_id,
-                total_requests=metrics_data.get("total_requests", 0),
-                successful_requests=metrics_data.get("successful_requests", 0),
-                failed_requests=metrics_data.get("failed_requests", 0),
-                avg_latency_ms=metrics_data.get("avg_latency_ms", 0.0),
-                p99_latency_ms=metrics_data.get("p99_latency_ms", 0.0),
-                last_error=metrics_data.get("last_error"),
-                last_error_time=metrics_data.get("last_error_time"),
-            )
-        )
-
-    return result
-
-
-@router.get("/health", response_model=dict)
-async def get_integrations_health(
-    admin_user: dict = Depends(get_current_admin_user),
-) -> dict:
-    """Get overall health summary of all integrations.
-
-    Available to both admin and viewer roles.
-    """
-    total = len(INTEGRATIONS)
-    connected = 0
-    degraded = 0
-    errors = 0
-    not_configured = 0
-
-    for int_id in INTEGRATIONS:
-        status, _ = get_integration_status(int_id)
-        if status == IntegrationStatus.CONNECTED:
-            connected += 1
-        elif status == IntegrationStatus.DEGRADED:
-            degraded += 1
-        elif status == IntegrationStatus.ERROR:
-            errors += 1
-        elif status == IntegrationStatus.NOT_CONFIGURED:
-            not_configured += 1
-
-    overall = "healthy"
-    if errors > 0:
-        overall = "unhealthy"
-    elif degraded > 0:
-        overall = "degraded"
-    elif connected == 0:
-        overall = "critical"
-
-    return {
-        "overall_status": overall,
-        "total_integrations": total,
-        "connected": connected,
-        "degraded": degraded,
-        "errors": errors,
-        "not_configured": not_configured,
-        "checked_at": datetime.now(timezone.utc).isoformat(),
-    }
