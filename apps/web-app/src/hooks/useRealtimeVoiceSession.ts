@@ -198,7 +198,9 @@ export function useRealtimeVoiceSession(
   const wsRef = useRef<WebSocket | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const processorNodeRef = useRef<ScriptProcessorNode | null>(null);
+  const processorNodeRef = useRef<
+    ScriptProcessorNode | AudioWorkletNode | null
+  >(null);
   const playbackQueueRef = useRef<AudioBufferSourceNode | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -225,7 +227,9 @@ export function useRealtimeVoiceSession(
   const connectRef = useRef<() => Promise<void>>(() => Promise.resolve());
   const disconnectRef = useRef<() => void>(() => {});
   const updateStatusRef = useRef<(status: ConnectionStatus) => void>(() => {});
-  const handleRealtimeMessageRef = useRef<(message: any) => void>(() => {});
+  const handleRealtimeMessageRef = useRef<
+    (message: Record<string, unknown>) => void
+  >(() => {});
   // Ref to track current status for error reporting (Sentry)
   const statusRef = useRef<ConnectionStatus>(status);
 
@@ -533,7 +537,7 @@ export function useRealtimeVoiceSession(
    * Handle incoming Realtime API messages
    */
   const handleRealtimeMessage = useCallback(
-    (message: any) => {
+    (message: Record<string, any>) => {
       switch (message.type) {
         case "session.created":
           voiceLog.debug(
@@ -795,107 +799,155 @@ export function useRealtimeVoiceSession(
       voiceLog.debug(`[RealtimeVoiceSession] Audio tracks:`, trackInfo);
 
       const source = audioContext.createMediaStreamSource(stream);
-
-      // Use ScriptProcessorNode (deprecated but more reliable than AudioWorklet for mic input)
-      // Buffer size of 2048 gives ~43ms chunks at 48kHz (lower latency)
-      const bufferSize = 2048;
-      const scriptProcessor = audioContext.createScriptProcessor(
-        bufferSize,
-        1,
-        1,
-      );
-      processorNodeRef.current = scriptProcessor;
-
-      // Resampling buffer for converting from native rate to 24kHz
-      let resampleBuffer: number[] = [];
       const targetChunkSize = 128; // Output chunks of 128 samples at 24kHz
       let audioChunkCount = 0;
 
-      scriptProcessor.onaudioprocess = (event) => {
+      // Helper to send audio chunk via WebSocket
+      const sendAudioChunk = (pcm16Buffer: ArrayBuffer, dbLevel: number) => {
         if (ws.readyState !== WebSocket.OPEN) return;
 
-        const inputData = event.inputBuffer.getChannelData(0);
-
-        // Add input samples to resample buffer
-        for (let i = 0; i < inputData.length; i++) {
-          resampleBuffer.push(inputData[i]);
-        }
-
-        // Output resampled chunks at 24kHz
-        while (resampleBuffer.length >= resampleRatio * targetChunkSize) {
-          const pcm16 = new Int16Array(targetChunkSize);
-          for (let i = 0; i < targetChunkSize; i++) {
-            const srcIndex = i * resampleRatio;
-            const srcIndexFloor = Math.floor(srcIndex);
-            const srcIndexCeil = Math.min(
-              srcIndexFloor + 1,
-              resampleBuffer.length - 1,
-            );
-            const frac = srcIndex - srcIndexFloor;
-
-            // Linear interpolation
-            const sample =
-              resampleBuffer[srcIndexFloor] * (1 - frac) +
-              resampleBuffer[srcIndexCeil] * frac;
-
-            // Convert float [-1, 1] to PCM16
-            const s = Math.max(-1, Math.min(1, sample));
-            pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-          }
-
-          // Remove used samples from buffer
-          const samplesUsed = Math.floor(targetChunkSize * resampleRatio);
-          resampleBuffer = resampleBuffer.slice(samplesUsed);
-
-          // Calculate audio level (RMS) from PCM16 data
-          let sumSquares = 0;
-          for (let i = 0; i < pcm16.length; i++) {
-            sumSquares += pcm16[i] * pcm16[i];
-          }
-          const rms = Math.sqrt(sumSquares / pcm16.length);
-          const dbLevel = 20 * Math.log10(rms / 32768);
-
-          audioChunkCount++;
-          // Log occasionally to avoid console spam (every 500 chunks = ~2.7 seconds at 24kHz)
-          // Skip logging for silent chunks (-Infinity dB means no audio/all zeros)
-          if (audioChunkCount % 500 === 0 && isFinite(dbLevel)) {
-            voiceLog.debug(
-              `[RealtimeVoiceSession] Audio chunk #${audioChunkCount}, level: ${dbLevel.toFixed(1)} dB`,
-            );
-          }
-
-          // Backpressure: drop if socket is backed up
-          if (ws.bufferedAmount > 256 * 1024) {
-            voiceLog.warn(
-              "[RealtimeVoiceSession] Dropping audio chunk due to backpressure",
-            );
-            continue;
-          }
-
-          // Base64 encode PCM16
-          const uint8 = new Uint8Array(pcm16.buffer);
-          const base64 = btoa(String.fromCharCode(...uint8));
-          ws.send(
-            JSON.stringify({
-              type: "input_audio_buffer.append",
-              audio: base64,
-            }),
+        audioChunkCount++;
+        // Log occasionally to avoid console spam (every 500 chunks = ~2.7 seconds at 24kHz)
+        if (audioChunkCount % 500 === 0 && isFinite(dbLevel)) {
+          voiceLog.debug(
+            `[RealtimeVoiceSession] Audio chunk #${audioChunkCount}, level: ${dbLevel.toFixed(1)} dB`,
           );
         }
+
+        // Backpressure: drop if socket is backed up
+        if (ws.bufferedAmount > 256 * 1024) {
+          voiceLog.warn(
+            "[RealtimeVoiceSession] Dropping audio chunk due to backpressure",
+          );
+          return;
+        }
+
+        // Base64 encode PCM16
+        const uint8 = new Uint8Array(pcm16Buffer);
+        const base64 = btoa(String.fromCharCode(...uint8));
+        ws.send(
+          JSON.stringify({
+            type: "input_audio_buffer.append",
+            audio: base64,
+          }),
+        );
       };
 
-      // Connect: source -> scriptProcessor -> silentGain (muted) -> destination
-      // ScriptProcessorNode requires connection to destination to work, but we don't want
-      // to output mic audio to speakers (causes feedback). Use a gain node set to 0.
-      const silentGain = audioContext.createGain();
-      silentGain.gain.value = 0; // Mute output to prevent feedback
-      source.connect(scriptProcessor);
-      scriptProcessor.connect(silentGain);
-      silentGain.connect(audioContext.destination);
+      // Try AudioWorklet first (modern approach), fallback to ScriptProcessorNode
+      let useAudioWorklet = false;
+      if (audioContext.audioWorklet) {
+        try {
+          await audioContext.audioWorklet.addModule(
+            "/audio-capture-processor.js",
+          );
 
-      voiceLog.debug(
-        " Audio streaming initialized (ScriptProcessor with resampling, output muted)",
-      );
+          const workletNode = new AudioWorkletNode(
+            audioContext,
+            "audio-capture-processor",
+            {
+              processorOptions: {
+                resampleRatio,
+                targetChunkSize,
+              },
+            },
+          );
+
+          // Handle audio chunks from worklet
+          workletNode.port.onmessage = (event) => {
+            if (event.data.type === "audio") {
+              sendAudioChunk(event.data.pcm16, event.data.dbLevel);
+            }
+          };
+
+          // Connect: source -> workletNode -> (no output needed, worklet sends via port)
+          source.connect(workletNode);
+          processorNodeRef.current = workletNode;
+          useAudioWorklet = true;
+
+          voiceLog.debug(
+            " Audio streaming initialized (AudioWorklet with resampling)",
+          );
+        } catch (workletError) {
+          voiceLog.warn(
+            `[RealtimeVoiceSession] AudioWorklet failed, falling back to ScriptProcessorNode: ${workletError instanceof Error ? workletError.message : "Unknown error"}`,
+          );
+        }
+      }
+
+      // Fallback: Use ScriptProcessorNode (deprecated but widely supported)
+      if (!useAudioWorklet) {
+        const bufferSize = 2048;
+        const scriptProcessor = audioContext.createScriptProcessor(
+          bufferSize,
+          1,
+          1,
+        );
+        processorNodeRef.current = scriptProcessor;
+
+        // Resampling buffer for converting from native rate to 24kHz
+        let resampleBuffer: number[] = [];
+
+        scriptProcessor.onaudioprocess = (event) => {
+          if (ws.readyState !== WebSocket.OPEN) return;
+
+          const inputData = event.inputBuffer.getChannelData(0);
+
+          // Add input samples to resample buffer
+          for (let i = 0; i < inputData.length; i++) {
+            resampleBuffer.push(inputData[i]);
+          }
+
+          // Output resampled chunks at 24kHz
+          while (resampleBuffer.length >= resampleRatio * targetChunkSize) {
+            const pcm16 = new Int16Array(targetChunkSize);
+            for (let i = 0; i < targetChunkSize; i++) {
+              const srcIndex = i * resampleRatio;
+              const srcIndexFloor = Math.floor(srcIndex);
+              const srcIndexCeil = Math.min(
+                srcIndexFloor + 1,
+                resampleBuffer.length - 1,
+              );
+              const frac = srcIndex - srcIndexFloor;
+
+              // Linear interpolation
+              const sample =
+                resampleBuffer[srcIndexFloor] * (1 - frac) +
+                resampleBuffer[srcIndexCeil] * frac;
+
+              // Convert float [-1, 1] to PCM16
+              const s = Math.max(-1, Math.min(1, sample));
+              pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+            }
+
+            // Remove used samples from buffer
+            const samplesUsed = Math.floor(targetChunkSize * resampleRatio);
+            resampleBuffer = resampleBuffer.slice(samplesUsed);
+
+            // Calculate audio level (RMS) from PCM16 data
+            let sumSquares = 0;
+            for (let i = 0; i < pcm16.length; i++) {
+              sumSquares += pcm16[i] * pcm16[i];
+            }
+            const rms = Math.sqrt(sumSquares / pcm16.length);
+            const dbLevel = 20 * Math.log10(rms / 32768);
+
+            sendAudioChunk(pcm16.buffer, dbLevel);
+          }
+        };
+
+        // Connect: source -> scriptProcessor -> silentGain (muted) -> destination
+        // ScriptProcessorNode requires connection to destination to work, but we don't want
+        // to output mic audio to speakers (causes feedback). Use a gain node set to 0.
+        const silentGain = audioContext.createGain();
+        silentGain.gain.value = 0; // Mute output to prevent feedback
+        source.connect(scriptProcessor);
+        scriptProcessor.connect(silentGain);
+        silentGain.connect(audioContext.destination);
+
+        voiceLog.debug(
+          " Audio streaming initialized (ScriptProcessor fallback with resampling, output muted)",
+        );
+      }
     } catch (err) {
       // Clean up the stream if audio context setup fails
       stream.getTracks().forEach((track) => track.stop());
@@ -1055,8 +1107,12 @@ export function useRealtimeVoiceSession(
       mediaStreamRef.current = null;
     }
 
-    // Cleanup audio context
+    // Cleanup audio processor
     if (processorNodeRef.current) {
+      // For AudioWorkletNode, send stop message to cleanly terminate the processor
+      if (processorNodeRef.current instanceof AudioWorkletNode) {
+        processorNodeRef.current.port.postMessage({ type: "stop" });
+      }
       processorNodeRef.current.disconnect();
       processorNodeRef.current = null;
     }

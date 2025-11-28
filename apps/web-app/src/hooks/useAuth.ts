@@ -14,6 +14,7 @@ import { VoiceAssistApiClient } from "@voiceassist/api-client";
 import type { LoginRequest } from "@voiceassist/types";
 import { useAuthStore } from "../stores/authStore";
 import type { AxiosError } from "axios";
+import { authLog } from "../lib/logger";
 
 /** OAuth provider availability status */
 export type OAuthProviderStatus = "unknown" | "available" | "unavailable";
@@ -145,7 +146,7 @@ export function useAuth() {
     try {
       await apiClient.logout();
     } catch (err) {
-      console.error("Logout error:", err);
+      authLog.error("Logout error:", err);
     } finally {
       logoutStore();
       navigate("/login");

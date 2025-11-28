@@ -9,6 +9,7 @@
  */
 
 import { useState } from "react";
+import { extractErrorMessage } from "@voiceassist/types";
 import { VoiceInputEnhanced } from "../components/voice/VoiceInputEnhanced";
 import { AudioPlayerEnhanced } from "../components/voice/AudioPlayerEnhanced";
 import {
@@ -50,9 +51,9 @@ export default function VoiceTestPage() {
         settings.voiceId,
       );
       setAudioBlob(blob);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Speech synthesis failed:", err);
-      setError(err.message || "Failed to synthesize speech");
+      setError(extractErrorMessage(err));
     } finally {
       setIsLoading(false);
     }

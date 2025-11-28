@@ -106,9 +106,11 @@ export function UsersPage() {
       ]);
       setRoleHistory(historyRes.history);
       setLockEvents(lockRes.events);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to load user insights:", err);
-      setHistoryError(err.message || "Failed to load user history");
+      setHistoryError(
+        err instanceof Error ? err.message : "Failed to load user history",
+      );
       setRoleHistory([]);
       setLockEvents([]);
     } finally {
@@ -159,11 +161,15 @@ export function UsersPage() {
       if (userId === selectedUserId) {
         await loadUserInsights(userId);
       }
-    } catch (err: any) {
-      if (err.details?.rate_limit) {
-        handleRateLimit(err.details.rate_limit as RateLimitInfo);
+    } catch (err: unknown) {
+      const error = err as {
+        details?: { rate_limit?: RateLimitInfo };
+        message?: string;
+      };
+      if (error.details?.rate_limit) {
+        handleRateLimit(error.details.rate_limit);
       }
-      alert(err.message || "Failed to update user");
+      alert(error.message || "Failed to update user");
     }
   };
 
@@ -195,11 +201,15 @@ export function UsersPage() {
       if (userId === selectedUserId) {
         await loadUserInsights(userId);
       }
-    } catch (err: any) {
-      if (err.details?.rate_limit) {
-        handleRateLimit(err.details.rate_limit as RateLimitInfo);
+    } catch (err: unknown) {
+      const error = err as {
+        details?: { rate_limit?: RateLimitInfo };
+        message?: string;
+      };
+      if (error.details?.rate_limit) {
+        handleRateLimit(error.details.rate_limit);
       }
-      alert(err.message || "Failed to update user role");
+      alert(error.message || "Failed to update user role");
     }
   };
 
@@ -223,8 +233,8 @@ export function UsersPage() {
       link.download = "admin-audit.csv";
       link.click();
       window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      alert(err.message || "Unable to export audit CSV");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Unable to export audit CSV");
     }
   };
 
@@ -250,11 +260,15 @@ export function UsersPage() {
         setLockEvents([]);
       }
       await loadUsers();
-    } catch (err: any) {
-      if (err.details?.rate_limit) {
-        handleRateLimit(err.details.rate_limit as RateLimitInfo);
+    } catch (err: unknown) {
+      const error = err as {
+        details?: { rate_limit?: RateLimitInfo };
+        message?: string;
+      };
+      if (error.details?.rate_limit) {
+        handleRateLimit(error.details.rate_limit);
       }
-      alert(err.message || "Failed to delete user");
+      alert(error.message || "Failed to delete user");
     }
   };
 

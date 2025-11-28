@@ -21,6 +21,7 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
+import { extractErrorMessage } from "@voiceassist/types";
 import { useChatSession } from "../hooks/useChatSession";
 import {
   useRealtimeVoiceSession,
@@ -311,11 +312,13 @@ export function ConversationSessionProvider({
 
         // Load branches
         await branching.loadBranches();
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const errorResponse = (err as { response?: { status?: number } })
+          ?.response;
         const errorMessage =
-          err.response?.status === 404
+          errorResponse?.status === 404
             ? "Conversation not found"
-            : err.message || "Failed to load conversation";
+            : extractErrorMessage(err);
         setError(errorMessage);
         setConversationMeta(null);
         setInitialMessages([]);

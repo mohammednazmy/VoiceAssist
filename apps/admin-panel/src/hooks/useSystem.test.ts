@@ -13,79 +13,68 @@ vi.mock("../lib/api", () => ({
 
 import { fetchAPI } from "../lib/api";
 
+// Mock data - returned directly by fetchAPI (no data wrapper)
 const mockResources = {
-  data: {
-    disk_total_gb: 500,
-    disk_used_gb: 200,
-    disk_free_gb: 300,
-    disk_usage_percent: 40,
-    memory_total_gb: 32,
-    memory_used_gb: 16,
-    memory_free_gb: 16,
-    memory_usage_percent: 50,
-    cpu_count: 8,
-    cpu_usage_percent: 25,
-    load_average_1m: 1.5,
-    load_average_5m: 1.2,
-    load_average_15m: 1.0,
-    timestamp: "2024-01-15T12:00:00Z",
-  },
+  disk_total_gb: 500,
+  disk_used_gb: 200,
+  disk_free_gb: 300,
+  disk_usage_percent: 40,
+  memory_total_gb: 32,
+  memory_used_gb: 16,
+  memory_free_gb: 16,
+  memory_usage_percent: 50,
+  cpu_count: 8,
+  cpu_usage_percent: 25,
+  load_average_1m: 1.5,
+  load_average_5m: 1.2,
+  load_average_15m: 1.0,
+  timestamp: "2024-01-15T12:00:00Z",
 };
 
 const mockHealth = {
-  data: {
-    status: "healthy",
-    uptime_seconds: 86400,
-    services: {
-      api: "healthy",
-      database: "healthy",
-      redis: "healthy",
-    },
-    last_checked_at: "2024-01-15T12:00:00Z",
+  status: "healthy",
+  uptime_seconds: 86400,
+  services: {
+    api: "healthy",
+    database: "healthy",
+    redis: "healthy",
   },
+  last_checked_at: "2024-01-15T12:00:00Z",
 };
 
 const mockBackupStatus = {
-  data: {
-    last_backup_at: "2024-01-15T00:00:00Z",
-    last_backup_result: "success",
-    backup_destination: "/backups/daily",
-    schedule: "0 0 * * *",
-    retention_days: 30,
-    backup_size_mb: 150.5,
-    timestamp: "2024-01-15T12:00:00Z",
-  },
+  last_backup_at: "2024-01-15T00:00:00Z",
+  last_backup_result: "success",
+  backup_destination: "/backups/daily",
+  schedule: "0 0 * * *",
+  retention_days: 30,
+  backup_size_mb: 150.5,
+  timestamp: "2024-01-15T12:00:00Z",
 };
 
 const mockBackupHistory = {
-  data: {
-    history: [
-      {
-        id: "backup-1",
-        started_at: "2024-01-15T00:00:00Z",
-        completed_at: "2024-01-15T00:15:00Z",
-        status: "success",
-        size_bytes: 157286400,
-        backup_type: "full",
-      },
-    ],
-  },
+  history: [
+    {
+      id: "backup-1",
+      started_at: "2024-01-15T00:00:00Z",
+      completed_at: "2024-01-15T00:15:00Z",
+      status: "success",
+      size_bytes: 157286400,
+      backup_type: "full",
+    },
+  ],
 };
 
 const mockMaintenance = {
-  data: {
-    enabled: false,
-    timestamp: "2024-01-15T12:00:00Z",
-  },
+  enabled: false,
+  timestamp: "2024-01-15T12:00:00Z",
 };
 
 const mockCacheNamespaces = {
-  data: {
-    namespaces: [
-      { namespace: "kb", key_count: 500, estimated_size_bytes: 1048576 },
-      { namespace: "session", key_count: 100, estimated_size_bytes: 524288 },
-    ],
-  },
+  namespaces: [
+    { namespace: "kb", key_count: 500, estimated_size_bytes: 1048576 },
+    { namespace: "session", key_count: 100, estimated_size_bytes: 524288 },
+  ],
 };
 
 describe("useSystem", () => {

@@ -6,11 +6,16 @@
 import { useState, useEffect } from "react";
 import { Button, Input } from "@voiceassist/ui";
 import type { Folder } from "@voiceassist/types";
+import { extractErrorMessage } from "@voiceassist/types";
 
 interface FolderDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (name: string, color?: string | null, icon?: string | null) => Promise<void>;
+  onSave: (
+    name: string,
+    color?: string | null,
+    icon?: string | null,
+  ) => Promise<void>;
   folder?: Folder | null;
   mode: "create" | "edit";
 }
@@ -25,11 +30,15 @@ const FOLDER_COLORS = [
   { name: "Gray", value: "#6B7280" },
 ];
 
-const FOLDER_ICONS = [
-  "📁", "📂", "🗂️", "📋", "📊", "💼", "🏥", "⚕️",
-];
+const FOLDER_ICONS = ["📁", "📂", "🗂️", "📋", "📊", "💼", "🏥", "⚕️"];
 
-export function FolderDialog({ isOpen, onClose, onSave, folder, mode }: FolderDialogProps) {
+export function FolderDialog({
+  isOpen,
+  onClose,
+  onSave,
+  folder,
+  mode,
+}: FolderDialogProps) {
   const [name, setName] = useState("");
   const [color, setColor] = useState<string | null>(null);
   const [icon, setIcon] = useState<string | null>(null);
@@ -63,8 +72,8 @@ export function FolderDialog({ isOpen, onClose, onSave, folder, mode }: FolderDi
     try {
       await onSave(name.trim(), color, icon);
       onClose();
-    } catch (err: any) {
-      setError(err.message || "Failed to save folder");
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err));
     } finally {
       setIsSaving(false);
     }
@@ -90,7 +99,10 @@ export function FolderDialog({ isOpen, onClose, onSave, folder, mode }: FolderDi
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-neutral-200">
-          <h2 id="folder-dialog-title" className="text-lg font-semibold text-neutral-900">
+          <h2
+            id="folder-dialog-title"
+            className="text-lg font-semibold text-neutral-900"
+          >
             {mode === "create" ? "New Folder" : "Edit Folder"}
           </h2>
           <button
@@ -106,7 +118,11 @@ export function FolderDialog({ isOpen, onClose, onSave, folder, mode }: FolderDi
               stroke="currentColor"
               className="w-5 h-5 text-neutral-500"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -115,7 +131,10 @@ export function FolderDialog({ isOpen, onClose, onSave, folder, mode }: FolderDi
         <div className="p-6 space-y-4">
           {/* Folder Name */}
           <div>
-            <label htmlFor="folder-name" className="block text-sm font-medium text-neutral-700 mb-1">
+            <label
+              htmlFor="folder-name"
+              className="block text-sm font-medium text-neutral-700 mb-1"
+            >
               Folder Name
             </label>
             <Input
@@ -141,7 +160,9 @@ export function FolderDialog({ isOpen, onClose, onSave, folder, mode }: FolderDi
                   key={c.value}
                   onClick={() => setColor(color === c.value ? null : c.value)}
                   className={`w-8 h-8 rounded-full border-2 transition-all ${
-                    color === c.value ? "border-neutral-900 scale-110" : "border-transparent hover:scale-105"
+                    color === c.value
+                      ? "border-neutral-900 scale-110"
+                      : "border-transparent hover:scale-105"
                   }`}
                   style={{ backgroundColor: c.value }}
                   title={c.name}

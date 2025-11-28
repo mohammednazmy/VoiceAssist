@@ -6,6 +6,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Input, Button } from "@voiceassist/ui";
+import { extractErrorMessage } from "@voiceassist/types";
 
 interface SharedMessage {
   id: string;
@@ -94,8 +95,8 @@ export function SharedConversationPage() {
       const conversationData = await response.json();
       setData(conversationData);
       setLoadingState("loaded");
-    } catch (err: any) {
-      setError(err.message || "Failed to load shared conversation");
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err));
       setLoadingState("error");
     }
   };

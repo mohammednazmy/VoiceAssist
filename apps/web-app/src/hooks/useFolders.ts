@@ -5,7 +5,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "./useAuth";
-import type { Folder, CreateFolderRequest, UpdateFolderRequest } from "@voiceassist/types";
+import type {
+  Folder,
+  CreateFolderRequest,
+  UpdateFolderRequest,
+} from "@voiceassist/types";
+import { extractErrorMessage } from "@voiceassist/types";
 
 export function useFolders() {
   const { apiClient } = useAuth();
@@ -20,8 +25,8 @@ export function useFolders() {
     try {
       const tree = await apiClient.getFolderTree();
       setFolders(tree);
-    } catch (err: any) {
-      setError(err.message || "Failed to load folders");
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err));
       console.error("Failed to load folders:", err);
     } finally {
       setIsLoading(false);
@@ -38,8 +43,8 @@ export function useFolders() {
         const newFolder = await apiClient.createFolder(request);
         await loadFolders(); // Reload to get updated tree
         return newFolder;
-      } catch (err: any) {
-        setError(err.message || "Failed to create folder");
+      } catch (err: unknown) {
+        setError(extractErrorMessage(err));
         throw err;
       }
     },
@@ -52,8 +57,8 @@ export function useFolders() {
         const updated = await apiClient.updateFolder(id, request);
         await loadFolders(); // Reload to get updated tree
         return updated;
-      } catch (err: any) {
-        setError(err.message || "Failed to update folder");
+      } catch (err: unknown) {
+        setError(extractErrorMessage(err));
         throw err;
       }
     },
@@ -65,8 +70,8 @@ export function useFolders() {
       try {
         await apiClient.deleteFolder(id);
         await loadFolders(); // Reload to get updated tree
-      } catch (err: any) {
-        setError(err.message || "Failed to delete folder");
+      } catch (err: unknown) {
+        setError(extractErrorMessage(err));
         throw err;
       }
     },
@@ -78,8 +83,8 @@ export function useFolders() {
       try {
         await apiClient.moveFolder(folderId, targetFolderId);
         await loadFolders(); // Reload to get updated tree
-      } catch (err: any) {
-        setError(err.message || "Failed to move folder");
+      } catch (err: unknown) {
+        setError(extractErrorMessage(err));
         throw err;
       }
     },
