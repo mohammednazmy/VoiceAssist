@@ -640,10 +640,13 @@ async def update_integration_config(
     # Log audit event
     log_audit_event(
         db,
-        str(admin_user.id),
-        "integration_config_update",
-        f"Updated config for {integration_id}",
-        {"integration_id": integration_id, "updates": config_update.model_dump(exclude_none=True)},
+        action="integration_config_update",
+        user_id=str(admin_user.id),
+        user_email=admin_user.email,
+        resource_type="integration",
+        resource_id=integration_id,
+        success=True,
+        details=json.dumps({"updates": config_update.model_dump(exclude_none=True)}),
     )
 
     return await get_integration(integration_id, admin_user)
@@ -833,10 +836,13 @@ async def test_integration(
     # Log audit event
     log_audit_event(
         db,
-        str(admin_user.id),
-        "integration_test",
-        f"Tested {integration_id}: {'success' if success else 'failed'}",
-        {"integration_id": integration_id, "success": success, "latency_ms": latency_ms},
+        action="integration_test",
+        user_id=str(admin_user.id),
+        user_email=admin_user.email,
+        resource_type="integration",
+        resource_id=integration_id,
+        success=success,
+        details=json.dumps({"latency_ms": latency_ms, "message": message}),
     )
 
     return success_response(TestResult(
