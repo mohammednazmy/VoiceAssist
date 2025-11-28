@@ -279,7 +279,7 @@ export class VoiceAssistApiClient {
 
   async login(credentials: LoginRequest): Promise<AuthTokens> {
     const response = await this.client.post<TokenResponse>(
-      "/auth/login",
+      "/api/auth/login",
       credentials,
     );
     // Convert backend response to frontend format
@@ -295,16 +295,16 @@ export class VoiceAssistApiClient {
     password: string;
     full_name: string;
   }): Promise<User> {
-    const response = await this.client.post<User>("/auth/register", data);
+    const response = await this.client.post<User>("/api/auth/register", data);
     return response.data;
   }
 
   async logout(): Promise<void> {
-    await this.client.post("/auth/logout");
+    await this.client.post("/api/auth/logout");
   }
 
   async refreshToken(refreshToken: string): Promise<AuthTokens> {
-    const response = await this.client.post<TokenResponse>("/auth/refresh", {
+    const response = await this.client.post<TokenResponse>("/api/auth/refresh", {
       refresh_token: refreshToken,
     });
     // Convert backend response to frontend format
@@ -316,7 +316,7 @@ export class VoiceAssistApiClient {
   }
 
   async getCurrentUser(): Promise<User> {
-    const response = await this.client.get<User>("/users/me");
+    const response = await this.client.get<User>("/api/users/me");
     return response.data;
   }
 
@@ -325,7 +325,7 @@ export class VoiceAssistApiClient {
     email?: string;
   }): Promise<User> {
     const response = await this.client.put<ApiResponse<User>>(
-      "/users/me",
+      "/api/users/me",
       updates,
     );
     return response.data.data!;
@@ -335,7 +335,7 @@ export class VoiceAssistApiClient {
     currentPassword: string,
     newPassword: string,
   ): Promise<void> {
-    await this.client.put("/users/me/password", {
+    await this.client.put("/api/users/me/password", {
       currentPassword,
       newPassword,
     });
