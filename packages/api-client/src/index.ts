@@ -1138,7 +1138,7 @@ export class VoiceAssistApiClient {
    */
   async getIntegrations(): Promise<IntegrationSummary[]> {
     const response = await this.client.get<IntegrationSummary[]>(
-      "/admin/integrations/",
+      "/api/admin/integrations/",
     );
     return response.data;
   }
@@ -1149,7 +1149,7 @@ export class VoiceAssistApiClient {
    */
   async getIntegration(integrationId: string): Promise<IntegrationDetail> {
     const response = await this.client.get<IntegrationDetail>(
-      `/admin/integrations/${integrationId}`,
+      `/api/admin/integrations/${integrationId}`,
     );
     return response.data;
   }
@@ -1164,7 +1164,7 @@ export class VoiceAssistApiClient {
     config: IntegrationConfigUpdate,
   ): Promise<IntegrationDetail> {
     const response = await this.client.patch<IntegrationDetail>(
-      `/admin/integrations/${integrationId}/config`,
+      `/api/admin/integrations/${integrationId}/config`,
       config,
     );
     return response.data;
@@ -1176,7 +1176,7 @@ export class VoiceAssistApiClient {
    */
   async testIntegration(integrationId: string): Promise<IntegrationTestResult> {
     const response = await this.client.post<IntegrationTestResult>(
-      `/admin/integrations/${integrationId}/test`,
+      `/api/admin/integrations/${integrationId}/test`,
     );
     return response.data;
   }
@@ -1186,7 +1186,7 @@ export class VoiceAssistApiClient {
    */
   async getIntegrationMetrics(): Promise<IntegrationMetrics[]> {
     const response = await this.client.get<IntegrationMetrics[]>(
-      "/admin/integrations/metrics/summary",
+      "/api/admin/integrations/metrics/summary",
     );
     return response.data;
   }
@@ -1196,7 +1196,7 @@ export class VoiceAssistApiClient {
    */
   async getIntegrationsHealth(): Promise<IntegrationsHealthSummary> {
     const response = await this.client.get<IntegrationsHealthSummary>(
-      "/admin/integrations/health",
+      "/api/admin/integrations/health",
     );
     return response.data;
   }

@@ -31,7 +31,7 @@ from sqlalchemy.orm import Session
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/admin/integrations", tags=["admin-integrations"])
+router = APIRouter(prefix="/api/admin/integrations", tags=["admin-integrations"])
 
 # Redis client for caching integration status
 try:

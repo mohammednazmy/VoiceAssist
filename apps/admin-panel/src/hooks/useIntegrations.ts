@@ -108,7 +108,7 @@ export function useIntegrations(
   const fetchIntegrations = useCallback(async () => {
     try {
       const response = await fetchAPI<IntegrationSummary[]>(
-        "/admin/integrations/",
+        "/api/admin/integrations/",
         { method: "GET" },
         token,
       );
@@ -123,7 +123,7 @@ export function useIntegrations(
   const fetchHealth = useCallback(async () => {
     try {
       const response = await fetchAPI<IntegrationsHealth>(
-        "/admin/integrations/health",
+        "/api/admin/integrations/health",
         { method: "GET" },
         token,
       );
@@ -151,7 +151,7 @@ export function useIntegrations(
   const getIntegrationDetail = useCallback(
     async (id: string): Promise<IntegrationDetail> => {
       const response = await fetchAPI<IntegrationDetail>(
-        `/admin/integrations/${id}`,
+        `/api/admin/integrations/${id}`,
         { method: "GET" },
         token,
       );
@@ -163,7 +163,7 @@ export function useIntegrations(
   const testIntegration = useCallback(
     async (id: string): Promise<IntegrationTestResult> => {
       const response = await fetchAPI<IntegrationTestResult>(
-        `/admin/integrations/${id}/test`,
+        `/api/admin/integrations/${id}/test`,
         { method: "POST" },
         token,
       );
