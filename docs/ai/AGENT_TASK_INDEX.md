@@ -33,8 +33,8 @@ This document lists common AI agent tasks with the relevant documentation and en
 
 **Key Documents:**
 
-- [Implementation Status](../overview/IMPLEMENTATION_STATUS.md) - **Source of truth**
-- [START_HERE.md](../START_HERE.md) - Project orientation
+- [Implementation Status](/overview/implementation-status) - **Source of truth**
+- [START_HERE.md](/start-here) - Project orientation
 
 **API Endpoint:**
 
@@ -50,10 +50,10 @@ curl https://assistdocs.asimo.io/agent/docs.json | jq '.[] | select(.category ==
 
 **Key Documents:**
 
-- [Implementation Status](../overview/IMPLEMENTATION_STATUS.md) - Check prerequisites
+- [Implementation Status](/overview/implementation-status) - Check prerequisites
 - `docs/phases/PHASE_XX_*.md` - Phase instructions
-- [Claude Execution Guide](../CLAUDE_EXECUTION_GUIDE.md) - Process guidelines
-- [Claude Prompts](../CLAUDE_PROMPTS.md) - Ready-to-use prompts
+- [Claude Execution Guide](/ai/claude-execution-guide) - Process guidelines
+- [Claude Prompts](/ai/claude-prompts) - Ready-to-use prompts
 
 **Workflow:**
 
@@ -70,9 +70,9 @@ curl https://assistdocs.asimo.io/agent/docs.json | jq '.[] | select(.category ==
 
 **Key Documents:**
 
-- [Backend Debugging](../debugging/DEBUGGING_BACKEND.md)
-- [Debugging Overview](../debugging/DEBUGGING_OVERVIEW.md)
-- [Backend Architecture](../BACKEND_ARCHITECTURE.md)
+- [Backend Debugging](/debugging/backend)
+- [Debugging Overview](/debugging/overview)
+- [Backend Architecture](/architecture/backend)
 
 **Quick Commands:**
 
@@ -95,9 +95,9 @@ psql -c "SELECT count(*) FROM pg_stat_activity WHERE datname = 'voiceassist'"
 
 **Key Documents:**
 
-- [Frontend Debugging](../debugging/DEBUGGING_FRONTEND.md)
-- [Debugging Overview](../debugging/DEBUGGING_OVERVIEW.md)
-- [Frontend Architecture](../FRONTEND_ARCHITECTURE.md)
+- [Frontend Debugging](/debugging/frontend)
+- [Debugging Overview](/debugging/overview)
+- [Frontend Architecture](/architecture/frontend)
 
 **Quick Commands:**
 
@@ -120,9 +120,9 @@ pnpm dev
 
 **Key Documents:**
 
-- [Voice & Realtime Debugging](../debugging/DEBUGGING_VOICE_REALTIME.md)
-- [Realtime Architecture](../REALTIME_ARCHITECTURE.md)
-- [Voice Mode Pipeline](../VOICE_MODE_PIPELINE.md)
+- [Voice & Realtime Debugging](/debugging/voice-realtime)
+- [Realtime Architecture](/architecture/realtime)
+- [Voice Mode Pipeline](/voice/pipeline)
 
 **Key Files:**
 
@@ -138,8 +138,8 @@ pnpm dev
 
 **Key Documents:**
 
-- [Internal Docs System](../INTERNAL_DOCS_SYSTEM.md)
-- [Agent API Reference](../ai/AGENT_API_REFERENCE.md)
+- [Internal Docs System](/internal-docs-system)
+- [Agent API Reference](/ai/agent-api-reference)
 
 **Workflow:**
 
@@ -157,8 +157,8 @@ pnpm dev
 
 **Key Documents:**
 
-- [API Reference](../API_REFERENCE.md)
-- [Backend Architecture](../BACKEND_ARCHITECTURE.md)
+- [API Reference](/api-reference/overview)
+- [Backend Architecture](/architecture/backend)
 - `services/api-gateway/README.md`
 
 **Key Paths:**
@@ -176,9 +176,9 @@ pnpm dev
 
 **Key Documents:**
 
-- [Admin Panel Implementation Plan](../admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md) - **Canonical implementation roadmap**
-- [Admin Panel Specs](../ADMIN_PANEL_SPECS.md) - Full specifications
-- [Implementation Status](../overview/IMPLEMENTATION_STATUS.md) - Current status
+- [Admin Panel Implementation Plan](/admin/implementation-plan) - **Canonical implementation roadmap**
+- [Admin Panel Specs](/admin-panel-specs) - Full specifications
+- [Implementation Status](/overview/implementation-status) - Current status
 
 **Key Paths:**
 
@@ -222,9 +222,9 @@ pnpm dev
 
 **Key Documents:**
 
-- [Security Compliance](../SECURITY_COMPLIANCE.md)
-- [HIPAA Compliance Matrix](../HIPAA_COMPLIANCE_MATRIX.md)
-- [Semantic Search Design](../SEMANTIC_SEARCH_DESIGN.md) - PHI detection
+- [Security Compliance](/security/compliance)
+- [HIPAA Compliance Matrix](/hipaa-compliance-matrix)
+- [Semantic Search Design](/semantic-search-design) - PHI detection
 
 ---
 
@@ -234,9 +234,9 @@ pnpm dev
 
 **Key Documents:**
 
-- [Infrastructure Setup](../INFRASTRUCTURE_SETUP.md)
-- [Production Deployment Runbook](../PRODUCTION_DEPLOYMENT_RUNBOOK.md)
-- [Compose to K8s Migration](../COMPOSE_TO_K8S_MIGRATION.md)
+- [Infrastructure Setup](/infrastructure-setup)
+- [Production Deployment Runbook](/production-deployment-runbook)
+- [Compose to K8s Migration](/compose-to-k8s-migration)
 
 ---
 
@@ -263,7 +263,7 @@ const backendDocs = docs.filter((d) => d.tags && d.tags.includes("backend"));
 
 ## Related Documentation
 
-- [Agent Onboarding](AGENT_ONBOARDING.md) - Getting started
-- [Agent API Reference](AGENT_API_REFERENCE.md) - Endpoint details
-- [Implementation Status](../overview/IMPLEMENTATION_STATUS.md) - Component status
-- [Claude Execution Guide](../CLAUDE_EXECUTION_GUIDE.md) - Workflow guidelines
+- [Agent Onboarding](/ai/agent-onboarding) - Getting started
+- [Agent API Reference](/ai/agent-api-reference) - Endpoint details
+- [Implementation Status](/overview/implementation-status) - Component status
+- [Claude Execution Guide](/ai/claude-execution-guide) - Workflow guidelines
