@@ -228,6 +228,12 @@ export const navigation: NavSection[] = [
           "PRODUCTION_DEPLOYMENT_RUNBOOK.md",
         ],
       },
+      {
+        title: "Implementation Plan",
+        href: "/admin/implementation-plan",
+        description: "Comprehensive admin panel implementation roadmap",
+        docPaths: ["admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md"],
+      },
     ],
   },
   {
@@ -350,6 +356,12 @@ export const navigation: NavSection[] = [
         href: "/ai/task-index",
         description: "Common AI agent tasks and relevant documentation",
         docPaths: ["ai/AGENT_TASK_INDEX.md"],
+      },
+      {
+        title: "Admin Panel Plan",
+        href: "/admin/implementation-plan",
+        description: "Implementation roadmap for admin panel enhancements",
+        docPaths: ["admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md"],
       },
     ],
   },

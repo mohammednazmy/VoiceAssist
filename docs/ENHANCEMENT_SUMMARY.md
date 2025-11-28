@@ -63,11 +63,11 @@ The enhancement effort focused on five key areas:
 
 ### Implementation Guides
 
-| File                      | Status     | Description                              |
-| ------------------------- | ---------- | ---------------------------------------- |
-| **web-app/README.md**     | ✅ Created | Next.js web app implementation guide     |
-| **admin-panel/README.md** | ✅ Created | Next.js admin panel implementation guide |
-| **server/README.md**      | ✅ Created | FastAPI backend implementation guide     |
+| File                      | Status     | Description                                   |
+| ------------------------- | ---------- | --------------------------------------------- |
+| **web-app/README.md**     | ✅ Created | Vite + React web app implementation guide     |
+| **admin-panel/README.md** | ✅ Created | Vite + React admin panel implementation guide |
+| **server/README.md**      | ✅ Created | FastAPI backend implementation guide          |
 
 ### Phase Documents
 
@@ -258,7 +258,7 @@ The enhancement effort focused on five key areas:
 ┌─────────────────────────────────────────────────────────────────┐
 │                    VoiceAssist V2 Stack                          │
 ├─────────────────────────────────────────────────────────────────┤
-│  Web App (Next.js)          Admin Panel (Next.js)               │
+│  Web App (Vite+React)       Admin Panel (Vite+React)            │
 │       ↓                            ↓                             │
 │  ┌─────────────────────────────────────────────────┐            │
 │  │         FastAPI Backend (Python)                │            │
@@ -280,8 +280,9 @@ The enhancement effort focused on five key areas:
 
 **Frontend:**
 
-- Web App (Next.js): Clinical interface with voice support
-- Admin Panel (Next.js): System management and KB control
+- Web App (Vite + React): Clinical interface with voice support
+- Admin Panel (Vite + React): System management and KB control
+- Docs Site (Next.js 14): Technical documentation
 
 **Backend:**
 

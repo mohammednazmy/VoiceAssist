@@ -443,6 +443,6 @@ sudo systemctl reload apache2
 
 ## Related Documentation
 
-- [Debugging Docs Site](../debugging/DEBUGGING_DOCS_SITE.md)
-- [Implementation Status](../overview/IMPLEMENTATION_STATUS.md)
-- [Internal Docs System](../INTERNAL_DOCS_SYSTEM.md)
+- [Debugging Docs Site](../../debugging/DEBUGGING_DOCS_SITE.md)
+- [Implementation Status](../../overview/IMPLEMENTATION_STATUS.md)
+- [Internal Docs System](../../INTERNAL_DOCS_SYSTEM.md)

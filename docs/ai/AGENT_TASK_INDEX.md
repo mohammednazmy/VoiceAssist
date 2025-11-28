@@ -20,6 +20,7 @@ This document lists common AI agent tasks with the relevant documentation and en
 
 - `https://assistdocs.asimo.io/agent/index.json` - Documentation metadata
 - `https://assistdocs.asimo.io/agent/docs.json` - Full document list with filtering
+- `https://assistdocs.asimo.io/agent/tasks.json` - Common agent tasks with commands
 - `https://assistdocs.asimo.io/search-index.json` - Full-text search index
 
 ---
@@ -80,7 +81,7 @@ curl https://assistdocs.asimo.io/agent/docs.json | jq '.[] | select(.category ==
 docker logs voiceassist-server --tail 100
 
 # Check health
-curl http://localhost:8200/health
+curl http://localhost:8000/health
 
 # Check database
 psql -c "SELECT count(*) FROM pg_stat_activity WHERE datname = 'voiceassist'"

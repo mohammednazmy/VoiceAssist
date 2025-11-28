@@ -27,18 +27,35 @@ function extractLinks(content) {
   const inlineLinkRegex = /\[([^\]]*)\]\(([^)]+)\)/g;
   const refLinkRegex = /^\[([^\]]+)\]:\s*(.+)$/;
 
+  let inCodeBlock = false;
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const lineNum = i + 1;
 
+    // Track fenced code blocks (``` or ~~~)
+    if (/^```|^~~~/.test(line.trim())) {
+      inCodeBlock = !inCodeBlock;
+      continue;
+    }
+
+    // Skip lines inside code blocks
+    if (inCodeBlock) {
+      continue;
+    }
+
+    // Remove inline code spans before checking for links
+    // This prevents false positives like `[text](./example.md)` in examples
+    const lineWithoutInlineCode = line.replace(/`[^`]+`/g, "");
+
     // Inline links
     let match;
-    while ((match = inlineLinkRegex.exec(line)) !== null) {
+    while ((match = inlineLinkRegex.exec(lineWithoutInlineCode)) !== null) {
       links.push({ link: match[2], line: lineNum });
     }
 
     // Reference-style links
-    const refMatch = refLinkRegex.exec(line);
+    const refMatch = refLinkRegex.exec(lineWithoutInlineCode);
     if (refMatch) {
       links.push({ link: refMatch[2].trim(), line: lineNum });
     }

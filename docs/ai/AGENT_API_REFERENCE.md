@@ -11,7 +11,7 @@ tags: ["api", "ai-agent", "json", "documentation", "endpoints"]
 relatedServices: ["docs-site"]
 category: ai
 source_of_truth: true
-version: "1.1.0"
+version: "1.2.0"
 ---
 
 # Agent API Reference
@@ -28,6 +28,7 @@ The VoiceAssist documentation site exposes machine-readable JSON endpoints desig
 | -------------------- | ------ | ------------------------------------------- |
 | `/agent/index.json`  | GET    | Documentation system metadata and discovery |
 | `/agent/docs.json`   | GET    | Full document list with metadata            |
+| `/agent/tasks.json`  | GET    | Common agent tasks with commands and docs   |
 | `/agent/schema.json` | GET    | JSON Schema for API response types          |
 | `/search-index.json` | GET    | Full-text search index (Fuse.js format)     |
 | `/sitemap.xml`       | GET    | XML sitemap for crawlers                    |
@@ -112,9 +113,11 @@ Host: assistdocs.asimo.io
 
 ### Response
 
+**Note:** The `count` field reflects the number of documents at build time. The actual value will vary.
+
 ```json
 {
-  "count": 276,
+  "count": 224,
   "generated_at": "2025-11-27T21:21:55.185Z",
   "docs": [
     {
@@ -166,6 +169,107 @@ const apiDocs = data.docs.filter((doc) => doc.tags && doc.tags.includes("api"));
 
 // Filter by owner
 const backendDocs = data.docs.filter((doc) => doc.owner === "backend");
+```
+
+### Caching
+
+- `Cache-Control: max-age=3600, public`
+- Cached for 1 hour
+
+---
+
+## GET /agent/tasks.json
+
+Returns a catalog of common tasks AI agents can perform, with relevant documentation links and shell commands.
+
+### Request
+
+```http
+GET /agent/tasks.json HTTP/1.1
+Host: assistdocs.asimo.io
+```
+
+### Response
+
+```json
+{
+  "version": "1.0",
+  "generated_at": "2025-11-27T23:30:00.000Z",
+  "description": "Common tasks AI agents can perform on VoiceAssist documentation and systems",
+  "tasks": [
+    {
+      "id": "debug-api-error",
+      "name": "Debug API Error",
+      "description": "Investigate and resolve API errors (500, 401, 404, etc.)",
+      "category": "debugging",
+      "docs": ["/debugging/backend", "/debugging/index"],
+      "commands": ["docker logs voiceassist-server --tail 100 | grep -i error", "curl https://assist.asimo.io/health"],
+      "prerequisites": ["Docker access", "curl"]
+    }
+  ],
+  "categories": {
+    "debugging": "Investigate and resolve issues",
+    "operations": "Monitor and maintain systems",
+    "deployment": "Deploy and update services",
+    "reference": "Look up documentation and information"
+  }
+}
+```
+
+### TaskEntry Schema
+
+| Field           | Type       | Description                                          |
+| --------------- | ---------- | ---------------------------------------------------- |
+| `id`            | `string`   | Unique task identifier (kebab-case)                  |
+| `name`          | `string`   | Human-readable task name                             |
+| `description`   | `string`   | What the task accomplishes                           |
+| `category`      | `string`   | One of: debugging, operations, deployment, reference |
+| `docs`          | `string[]` | Related documentation slugs                          |
+| `commands`      | `string[]` | Shell commands to execute                            |
+| `prerequisites` | `string[]` | Required tools or access                             |
+
+### Filtering and Usage Examples
+
+```javascript
+// Fetch all tasks
+const response = await fetch("https://assistdocs.asimo.io/agent/tasks.json");
+const data = await response.json();
+
+// Filter tasks by category
+const debugTasks = data.tasks.filter((t) => t.category === "debugging");
+
+// Find a task by ID
+const task = data.tasks.find((t) => t.id === "debug-api-error");
+
+// Get all unique prerequisites
+const allPrereqs = [...new Set(data.tasks.flatMap((t) => t.prerequisites))];
+```
+
+### AI Agent Workflow Example
+
+An AI agent can use this endpoint to:
+
+1. **Match user intent to a task** - When a user says "the API is returning 500 errors", match to `debug-api-error`
+2. **Retrieve relevant documentation** - Follow the `docs` array to read debugging guides
+3. **Execute suggested commands** - Run the `commands` to gather diagnostic information
+4. **Check prerequisites** - Verify required tools are available before executing
+
+```javascript
+// Example: Agent handling "API is broken" request
+const { tasks } = await fetch("/agent/tasks.json").then((r) => r.json());
+const task = tasks.find((t) => t.id === "debug-api-error");
+
+// Read related docs
+for (const docSlug of task.docs) {
+  const docUrl = `https://assistdocs.asimo.io${docSlug}`;
+  // Fetch and process documentation...
+}
+
+// Execute diagnostic commands
+for (const cmd of task.commands) {
+  console.log(`Executing: ${cmd}`);
+  // Run command and analyze output...
+}
 ```
 
 ### Caching
@@ -356,6 +460,7 @@ Test the endpoints directly:
 
 - **Index:** https://assistdocs.asimo.io/agent/index.json
 - **Docs:** https://assistdocs.asimo.io/agent/docs.json
+- **Tasks:** https://assistdocs.asimo.io/agent/tasks.json
 - **Schema:** https://assistdocs.asimo.io/agent/schema.json
 - **Search Index:** https://assistdocs.asimo.io/search-index.json
 - **Sitemap:** https://assistdocs.asimo.io/sitemap.xml
@@ -372,7 +477,8 @@ Test the endpoints directly:
 
 ## Version History
 
-| Version | Date       | Changes                                  |
-| ------- | ---------- | ---------------------------------------- |
-| 1.1.0   | 2025-11-27 | Updated to reflect static JSON endpoints |
-| 1.0.0   | 2025-11-27 | Initial release                          |
+| Version | Date       | Changes                                        |
+| ------- | ---------- | ---------------------------------------------- |
+| 1.2.0   | 2025-11-27 | Added /agent/tasks.json endpoint documentation |
+| 1.1.0   | 2025-11-27 | Updated to reflect static JSON endpoints       |
+| 1.0.0   | 2025-11-27 | Initial release                                |

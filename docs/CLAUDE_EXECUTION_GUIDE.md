@@ -465,7 +465,7 @@ bandit -r app/
 pytest tests/ && black app/ tests/ --check && flake8 app/ && mypy app/
 ```
 
-### Frontend (Next.js/React)
+### Frontend (Vite/React)
 
 **Run from `apps/web-app/` or `apps/admin-panel/` directory:**
 

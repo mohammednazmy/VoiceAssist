@@ -48,8 +48,8 @@ docker logs voiceassist-server --since "10m" 2>&1 | grep -A 20 "Traceback"
 3. Check health endpoints:
 
 ```bash
-curl http://localhost:8200/health
-curl http://localhost:8200/ready
+curl http://localhost:8000/health
+curl http://localhost:8000/ready
 ```
 
 4. Verify environment variables:

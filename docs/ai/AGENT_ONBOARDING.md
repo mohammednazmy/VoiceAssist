@@ -10,12 +10,12 @@ audience: ["agent", "ai-agents"]
 tags: ["onboarding", "ai-agent", "getting-started", "workflows"]
 relatedServices: ["api-gateway", "web-app", "admin-panel", "docs-site"]
 category: ai
-version: "1.1.0"
+version: "1.2.0"
 ---
 
 # AI Agent Onboarding Guide
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 **Last Updated:** 2025-11-27
 **Audience:** AI coding assistants (Claude, GPT, Copilot, etc.)
 
@@ -40,6 +40,7 @@ version: "1.1.0"
 | ------------------------ | ------------------------------------------------ |
 | `GET /agent/index.json`  | Documentation system metadata & discovery        |
 | `GET /agent/docs.json`   | All documents with metadata (filter client-side) |
+| `GET /agent/tasks.json`  | Common agent tasks with commands and docs        |
 | `GET /agent/schema.json` | JSON Schema for API response types               |
 | `GET /search-index.json` | Full-text search index (Fuse.js format)          |
 | `GET /sitemap.xml`       | XML sitemap for crawlers                         |
@@ -445,18 +446,53 @@ The docs site exposes JSON endpoints for programmatic access:
 | Endpoint                 | Purpose                                 |
 | ------------------------ | --------------------------------------- |
 | `GET /agent/index.json`  | Documentation system metadata           |
-| `GET /agent/docs.json`   | Full document list with filtering       |
+| `GET /agent/docs.json`   | Full document list with metadata        |
+| `GET /agent/tasks.json`  | Common tasks with commands and docs     |
 | `GET /search-index.json` | Full-text search index (Fuse.js format) |
 
-**Example: Get all stable docs for agents:**
+### Interpreting Document Metadata
 
+When filtering `/agent/docs.json`, use these fields to find relevant documents:
+
+| Field       | Values                                             | AI Agent Guidance                             |
+| ----------- | -------------------------------------------------- | --------------------------------------------- |
+| `status`    | `stable`, `experimental`, `draft`, `deprecated`    | Prefer `stable` for authoritative information |
+| `stability` | `production`, `beta`, `experimental`, `legacy`     | Prefer `production` for reliable features     |
+| `audience`  | `["agent"]`, `["human"]`, `["backend"]`, etc.      | Filter for `agent` to find AI-optimized docs  |
+| `owner`     | `backend`, `frontend`, `infra`, `docs`, `security` | Use to find domain experts                    |
+| `tags`      | Varies (e.g., `["api", "debugging"]`)              | Use for topic-based filtering                 |
+
+### Example Workflows
+
+**Find docs for debugging:**
+
+```javascript
+const data = await fetch("/agent/docs.json").then((r) => r.json());
+const debugDocs = data.docs.filter((d) => d.tags?.includes("debugging") && d.status === "stable");
 ```
-GET https://assistdocs.asimo.io/agent/docs.json
+
+**Find task-specific guidance:**
+
+```javascript
+const tasks = await fetch("/agent/tasks.json").then((r) => r.json());
+const task = tasks.tasks.find((t) => t.id === "debug-api-error");
+// task.docs contains relevant documentation paths
+// task.commands contains diagnostic shell commands
 ```
 
-**Note:** Filter client-side by status, audience, tags. The search-index.json is designed for client-side full-text search using Fuse.js.
+**Full-text search:**
 
-See [Agent API Reference](./AGENT_API_REFERENCE.md) for full details.
+```javascript
+import Fuse from "fuse.js";
+const index = await fetch("/search-index.json").then((r) => r.json());
+const fuse = new Fuse(index.docs, {
+  keys: ["title", "summary", "content"],
+  threshold: 0.3,
+});
+const results = fuse.search("authentication error");
+```
+
+See [Agent API Reference](./AGENT_API_REFERENCE.md) for full endpoint documentation.
 
 ---
 
@@ -582,9 +618,11 @@ GET /metrics               # Prometheus metrics
 
 ## Version History
 
-| Version | Date       | Changes         |
-| ------- | ---------- | --------------- |
-| 1.0.0   | 2025-11-27 | Initial release |
+| Version | Date       | Changes                                               |
+| ------- | ---------- | ----------------------------------------------------- |
+| 1.2.0   | 2025-11-27 | Added tasks.json endpoint, improved metadata guidance |
+| 1.1.0   | 2025-11-27 | Added common tasks and debugging workflows            |
+| 1.0.0   | 2025-11-27 | Initial release                                       |
 
 ---
 

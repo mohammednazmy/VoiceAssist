@@ -30,7 +30,7 @@ This document defines ALL data entities used in VoiceAssist V2. Each entity has:
 5. **Three Representations**:
    - **JSON Schema** (language-agnostic, for API contracts)
    - **Pydantic** (Python/FastAPI backend)
-   - **TypeScript** (Next.js frontend)
+   - **TypeScript** (React frontend)
 
 ---
 
@@ -1629,7 +1629,7 @@ class UserDB(User):
         from_attributes = True
 ```
 
-### For Frontend Developers (TypeScript/Next.js)
+### For Frontend Developers (TypeScript/React)
 
 1. **Import types**: Copy TypeScript interfaces to your project
 2. **API Client**: Use types for request/response typing
