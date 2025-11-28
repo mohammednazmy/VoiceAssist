@@ -22,6 +22,7 @@ from app.api import (
     admin_feature_flags,
     admin_kb,
     admin_panel,
+    admin_voice,
     attachments,
     auth,
     auth_oauth,
@@ -151,6 +152,7 @@ app.include_router(admin_panel.router)  # Phase 7: Admin Panel API
 app.include_router(admin_panel.logs_router)  # Admin log streaming endpoints
 app.include_router(admin_cache.router)  # Phase 7: Cache Management API (P2.1)
 app.include_router(admin_feature_flags.router)  # Phase 7: Feature Flags API (P3.1)
+app.include_router(admin_voice.router)  # Sprint 1: Voice Admin API
 app.include_router(attachments.router, prefix="/api")  # Phase 8: File attachments in chat
 app.include_router(clinical_context.router, prefix="/api")  # Phase 8: Clinical context
 app.include_router(folders.router, prefix="/api")  # Phase 8: Conversation folders

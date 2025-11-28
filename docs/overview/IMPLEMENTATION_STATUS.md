@@ -99,14 +99,15 @@ Main user-facing medical AI assistant application.
 
 System administration and monitoring dashboard.
 
-| Feature          | Status   | Notes                     |
-| ---------------- | -------- | ------------------------- |
-| Dashboard        | Complete | Real-time metrics         |
-| User Management  | Complete | CRUD, role assignment     |
-| Knowledge Base   | Complete | Document upload, indexing |
-| Feature Flags    | Complete | Toggle management         |
-| Cache Management | Complete | Stats, invalidation       |
-| Audit Logs       | Complete | HIPAA-compliant logging   |
+| Feature          | Status      | Notes                                |
+| ---------------- | ----------- | ------------------------------------ |
+| Dashboard        | Complete    | Real-time metrics                    |
+| User Management  | Complete    | CRUD, role assignment                |
+| Knowledge Base   | Complete    | Document upload, indexing            |
+| Feature Flags    | Complete    | Toggle management                    |
+| Cache Management | Complete    | Stats, invalidation                  |
+| Audit Logs       | Complete    | HIPAA-compliant logging              |
+| Voice Monitor    | In Progress | Sessions, metrics, config (Sprint 1) |
 
 #### Docs Site (`apps/docs-site/`)
 

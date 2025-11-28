@@ -2,6 +2,7 @@
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeSlug from "rehype-slug";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
@@ -92,6 +93,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     <article className="prose prose-slate dark:prose-invert max-w-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeSlug]}
         components={{
           code({ node, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || "");
