@@ -9,6 +9,7 @@ import { KnowledgeBasePage } from "./pages/KnowledgeBasePage";
 import { SystemPage } from "./pages/SystemPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { VoiceMonitorPage } from "./pages/VoiceMonitorPage";
+import { IntegrationsPage } from "./pages/IntegrationsPage";
 
 export function App() {
   return (
@@ -34,6 +35,10 @@ export function App() {
                     <Route path="/analytics" element={<AnalyticsPage />} />
                     <Route path="/system" element={<SystemPage />} />
                     <Route path="/voice" element={<VoiceMonitorPage />} />
+                    <Route
+                      path="/integrations"
+                      element={<IntegrationsPage />}
+                    />
                     <Route
                       path="/"
                       element={<Navigate to="/dashboard" replace />}
