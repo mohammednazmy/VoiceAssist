@@ -3,11 +3,7 @@
  * HTTP client for communicating with VoiceAssist backend services
  */
 
-import axios, {
-  type AxiosInstance,
-  type AxiosRequestConfig,
-  type AxiosResponse,
-} from "axios";
+import axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
 import type {
   ApiResponse,
   LoginRequest,
@@ -35,6 +31,12 @@ import type {
   ClinicalContext,
   ClinicalContextCreate,
   ClinicalContextUpdate,
+  IntegrationSummary,
+  IntegrationDetail,
+  IntegrationConfigUpdate,
+  IntegrationTestResult,
+  IntegrationMetrics,
+  IntegrationsHealthSummary,
 } from "@voiceassist/types";
 import { withRetry, type RetryConfig } from "./retry";
 
@@ -1099,11 +1101,75 @@ export class VoiceAssistApiClient {
   }
 
   // =========================================================================
-  // Generic Request Method
+  // Admin Integrations (Sprint 2)
   // =========================================================================
 
-  async request<T>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    return this.client.request<T>(config);
+  /**
+   * List all integrations with their current status
+   */
+  async getIntegrations(): Promise<IntegrationSummary[]> {
+    const response = await this.client.get<IntegrationSummary[]>(
+      "/admin/integrations/",
+    );
+    return response.data;
+  }
+
+  /**
+   * Get detailed information about a specific integration
+   * @param integrationId - Integration identifier (e.g., "postgres", "redis", "openai")
+   */
+  async getIntegration(integrationId: string): Promise<IntegrationDetail> {
+    const response = await this.client.get<IntegrationDetail>(
+      `/admin/integrations/${integrationId}`,
+    );
+    return response.data;
+  }
+
+  /**
+   * Update configuration for an integration (admin only)
+   * @param integrationId - Integration identifier
+   * @param config - Configuration updates
+   */
+  async updateIntegrationConfig(
+    integrationId: string,
+    config: IntegrationConfigUpdate,
+  ): Promise<IntegrationDetail> {
+    const response = await this.client.patch<IntegrationDetail>(
+      `/admin/integrations/${integrationId}/config`,
+      config,
+    );
+    return response.data;
+  }
+
+  /**
+   * Test connectivity for an integration (admin only)
+   * @param integrationId - Integration identifier
+   */
+  async testIntegration(integrationId: string): Promise<IntegrationTestResult> {
+    const response = await this.client.post<IntegrationTestResult>(
+      `/admin/integrations/${integrationId}/test`,
+    );
+    return response.data;
+  }
+
+  /**
+   * Get metrics for all integrations
+   */
+  async getIntegrationMetrics(): Promise<IntegrationMetrics[]> {
+    const response = await this.client.get<IntegrationMetrics[]>(
+      "/admin/integrations/metrics/summary",
+    );
+    return response.data;
+  }
+
+  /**
+   * Get overall health summary of all integrations
+   */
+  async getIntegrationsHealth(): Promise<IntegrationsHealthSummary> {
+    const response = await this.client.get<IntegrationsHealthSummary>(
+      "/admin/integrations/health",
+    );
+    return response.data;
   }
 }
 

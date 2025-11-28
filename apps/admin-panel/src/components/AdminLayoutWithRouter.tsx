@@ -61,6 +61,9 @@ export function AdminLayoutWithRouter({ children }: LayoutProps) {
           <NavLink to="/voice" className={navLinkClass}>
             🎙️ {t("nav.voice", "Voice Monitor")}
           </NavLink>
+          <NavLink to="/integrations" className={navLinkClass}>
+            🔗 {t("nav.integrations", "Integrations")}
+          </NavLink>
           <NavLink to="/system" className={navLinkClass}>
             ⚙️ {t("nav.system")}
           </NavLink>

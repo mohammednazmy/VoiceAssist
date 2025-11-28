@@ -528,6 +528,100 @@ export interface AuditLogEntry {
 }
 
 // ============================================================================
+// Admin Integrations Types (Sprint 2)
+// ============================================================================
+
+export type IntegrationStatus =
+  | "connected"
+  | "disconnected"
+  | "error"
+  | "degraded"
+  | "not_configured";
+
+export type IntegrationType =
+  | "database"
+  | "cache"
+  | "vector_db"
+  | "storage"
+  | "llm"
+  | "tts"
+  | "stt"
+  | "realtime"
+  | "oauth"
+  | "monitoring"
+  | "external_api";
+
+export interface IntegrationSummary {
+  id: string;
+  name: string;
+  type: IntegrationType;
+  status: IntegrationStatus;
+  provider: string;
+  lastChecked?: string;
+  errorMessage?: string;
+}
+
+export interface IntegrationConfig {
+  host?: string;
+  port?: number;
+  enabled?: boolean;
+  timeoutSec?: number;
+  model?: string;
+  endpoint?: string;
+  extra?: Record<string, unknown>;
+}
+
+export interface IntegrationDetail {
+  id: string;
+  name: string;
+  type: IntegrationType;
+  status: IntegrationStatus;
+  provider: string;
+  description: string;
+  config: IntegrationConfig;
+  hasApiKey: boolean;
+  lastChecked?: string;
+  errorMessage?: string;
+  metrics?: IntegrationMetrics;
+}
+
+export interface IntegrationConfigUpdate {
+  enabled?: boolean;
+  timeoutSec?: number;
+  model?: string;
+  endpoint?: string;
+  extra?: Record<string, unknown>;
+}
+
+export interface IntegrationTestResult {
+  success: boolean;
+  latencyMs: number;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
+export interface IntegrationMetrics {
+  integrationId: string;
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  avgLatencyMs: number;
+  p99LatencyMs: number;
+  lastError?: string;
+  lastErrorTime?: string;
+}
+
+export interface IntegrationsHealthSummary {
+  overallStatus: "healthy" | "degraded" | "unhealthy" | "critical";
+  totalIntegrations: number;
+  connected: number;
+  degraded: number;
+  errors: number;
+  notConfigured: number;
+  checkedAt: string;
+}
+
+// ============================================================================
 // Utility Types
 // ============================================================================
 
