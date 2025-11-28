@@ -33,8 +33,8 @@ This document lists common AI agent tasks with the relevant documentation and en
 
 **Key Documents:**
 
-- [Implementation Status](/overview/implementation-status) - **Source of truth**
-- [START_HERE.md](/start-here) - Project orientation
+- [Implementation Status](/ai/status) - **Source of truth**
+- [START_HERE.md](/) - Project orientation
 
 **API Endpoint:**
 
@@ -50,9 +50,9 @@ curl https://assistdocs.asimo.io/agent/docs.json | jq '.[] | select(.category ==
 
 **Key Documents:**
 
-- [Implementation Status](/overview/implementation-status) - Check prerequisites
+- [Implementation Status](/ai/status) - Check prerequisites
 - `docs/phases/PHASE_XX_*.md` - Phase instructions
-- [Claude Execution Guide](/ai/claude-execution-guide) - Process guidelines
+- [Claude Execution Guide](/ai/claude-guide) - Process guidelines
 - [Claude Prompts](/ai/claude-prompts) - Ready-to-use prompts
 
 **Workflow:**
@@ -70,9 +70,9 @@ curl https://assistdocs.asimo.io/agent/docs.json | jq '.[] | select(.category ==
 
 **Key Documents:**
 
-- [Backend Debugging](/debugging/backend)
-- [Debugging Overview](/debugging/overview)
-- [Backend Architecture](/architecture/backend)
+- [Backend Debugging](/operations/debugging-backend)
+- [Debugging Overview](/operations/debugging-overview)
+- [Backend Architecture](/dev/architecture)
 
 **Quick Commands:**
 
@@ -95,9 +95,9 @@ psql -c "SELECT count(*) FROM pg_stat_activity WHERE datname = 'voiceassist'"
 
 **Key Documents:**
 
-- [Frontend Debugging](/debugging/frontend)
-- [Debugging Overview](/debugging/overview)
-- [Frontend Architecture](/architecture/frontend)
+- [Frontend Debugging](/operations/debugging-frontend)
+- [Debugging Overview](/operations/debugging-overview)
+- [Frontend Architecture](/dev/architecture)
 
 **Quick Commands:**
 
@@ -120,9 +120,9 @@ pnpm dev
 
 **Key Documents:**
 
-- [Voice & Realtime Debugging](/debugging/voice-realtime)
-- [Realtime Architecture](/architecture/realtime)
-- [Voice Mode Pipeline](/voice/pipeline)
+- [Voice & Realtime Debugging](/operations/debugging-voice)
+- [Realtime Architecture](/dev/architecture)
+- [Voice Mode Pipeline](/user-guide/voice)
 
 **Key Files:**
 
@@ -138,8 +138,8 @@ pnpm dev
 
 **Key Documents:**
 
-- [Internal Docs System](/internal-docs-system)
-- [Agent API Reference](/ai/agent-api-reference)
+- [Internal Docs System](/dev/docs-system)
+- [Agent API Reference](/ai/api)
 
 **Workflow:**
 
@@ -157,8 +157,8 @@ pnpm dev
 
 **Key Documents:**
 
-- [API Reference](/api-reference/overview)
-- [Backend Architecture](/architecture/backend)
+- [API Reference](/reference/api)
+- [Backend Architecture](/dev/architecture)
 - `services/api-gateway/README.md`
 
 **Key Paths:**
@@ -177,8 +177,8 @@ pnpm dev
 **Key Documents:**
 
 - [Admin Panel Implementation Plan](/admin/implementation-plan) - **Canonical implementation roadmap**
-- [Admin Panel Specs](/admin-panel-specs) - Full specifications
-- [Implementation Status](/overview/implementation-status) - Current status
+- [Admin Panel Specs](/admin/overview) - Full specifications
+- [Implementation Status](/ai/status) - Current status
 
 **Key Paths:**
 
@@ -222,9 +222,9 @@ pnpm dev
 
 **Key Documents:**
 
-- [Security Compliance](/security/compliance)
-- [HIPAA Compliance Matrix](/hipaa-compliance-matrix)
-- [Semantic Search Design](/semantic-search-design) - PHI detection
+- [Security Compliance](/admin/security)
+- [HIPAA Compliance Matrix](/medical/privacy)
+- [Semantic Search Design](/docs/SEMANTIC_SEARCH_DESIGN) - PHI detection
 
 ---
 
@@ -234,9 +234,9 @@ pnpm dev
 
 **Key Documents:**
 
-- [Infrastructure Setup](/infrastructure-setup)
-- [Production Deployment Runbook](/production-deployment-runbook)
-- [Compose to K8s Migration](/compose-to-k8s-migration)
+- [Infrastructure Setup](/getting-started/installation)
+- [Production Deployment Runbook](/docs/PRODUCTION_DEPLOYMENT_RUNBOOK)
+- [Compose to K8s Migration](/docs/COMPOSE_TO_K8S_MIGRATION)
 
 ---
 
@@ -263,7 +263,7 @@ const backendDocs = docs.filter((d) => d.tags && d.tags.includes("backend"));
 
 ## Related Documentation
 
-- [Agent Onboarding](/ai/agent-onboarding) - Getting started
-- [Agent API Reference](/ai/agent-api-reference) - Endpoint details
-- [Implementation Status](/overview/implementation-status) - Component status
-- [Claude Execution Guide](/ai/claude-execution-guide) - Workflow guidelines
+- [Agent Onboarding](/ai/onboarding) - Getting started
+- [Agent API Reference](/ai/api) - Endpoint details
+- [Implementation Status](/ai/status) - Component status
+- [Claude Execution Guide](/ai/claude-guide) - Workflow guidelines

@@ -130,7 +130,7 @@ From `package.json`:
 
 ### Backend Services Requiring Admin Surfaces
 
-Cross-referenced with [SERVICE_CATALOG.md](../SERVICE_CATALOG.md) and actual backend code at `services/api-gateway/app/api/`:
+Cross-referenced with [SERVICE_CATALOG.md](/docs/SERVICE_CATALOG) and actual backend code at `services/api-gateway/app/api/`:
 
 | Service Category     | Backend Module(s)                            | Current Admin Endpoints       | Admin UI Status      | Priority | Expected Admin Capabilities           |
 | -------------------- | -------------------------------------------- | ----------------------------- | -------------------- | -------- | ------------------------------------- |
@@ -208,7 +208,7 @@ Expected admin endpoints:
 
 #### Tools Registry & Tool Execution (Priority: HIGH)
 
-**Backend modules:** `tool_executor.py`, `tool_registry.py` (referenced in [TOOLS_AND_INTEGRATIONS.md](../TOOLS_AND_INTEGRATIONS.md) and [ADMIN_PANEL_SPECS.md §Tools](../ADMIN_PANEL_SPECS.md#tools--external-integrations))
+**Backend modules:** `tool_executor.py`, `tool_registry.py` (referenced in [TOOLS_AND_INTEGRATIONS.md](/docs/TOOLS_AND_INTEGRATIONS) and [ADMIN_PANEL_SPECS.md §Tools](/docs/ADMIN_PANEL_SPECS#tools--external-integrations))
 
 Expected admin endpoints:
 
@@ -218,7 +218,7 @@ Expected admin endpoints:
 - `GET /api/admin/tools/logs` - Tool invocation logs with filters
 - `GET /api/admin/tools/analytics` - Usage metrics by tool
 
-**Pydantic Models** (align with [DATA_MODEL.md](../DATA_MODEL.md)):
+**Pydantic Models** (align with [DATA_MODEL.md](/backend/data-model)):
 
 ```python
 # Reuse/extend from app/schemas/
@@ -275,7 +275,7 @@ class ToolAnalyticsSummary(BaseModel):
 
 #### Backups & Disaster Recovery (Priority: HIGH)
 
-**Infrastructure modules:** See [DISASTER_RECOVERY_RUNBOOK.md](../DISASTER_RECOVERY_RUNBOOK.md) and [PHASE_12_HA_DR](../phases/PHASE_12_HA_DR.md)
+**Infrastructure modules:** See [DISASTER_RECOVERY_RUNBOOK.md](/admin/backups) and [PHASE_12_HA_DR](/docs/phases/PHASE_12_HA_DR)
 
 Expected admin endpoints:
 
@@ -316,7 +316,7 @@ class DRStatus(BaseModel):
 
 #### Troubleshooting & Logs (Priority: MEDIUM)
 
-**Backend modules:** `health.py`, logging infrastructure. See [DEBUGGING_INDEX.md](../debugging/DEBUGGING_INDEX.md) for debugging guidance.
+**Backend modules:** `health.py`, logging infrastructure. See [DEBUGGING_INDEX.md](/operations/debugging) for debugging guidance.
 
 Expected admin endpoints:
 
@@ -359,8 +359,8 @@ class ServiceHealthStatus(BaseModel):
 
 All admin endpoints must follow conventions established in:
 
-- [API_REFERENCE.md](../API_REFERENCE.md) - Standard response envelope, error codes
-- [services/api-gateway/README.md](../../services/api-gateway/README.md) - Backend patterns
+- [API_REFERENCE.md](/reference/api) - Standard response envelope, error codes
+- `services/api-gateway/README.md` - Backend patterns
 
 **Key Conventions:**
 
@@ -499,7 +499,7 @@ class IntegrationStatus(BaseModel):
 
 **File**: `services/api-gateway/app/api/admin_tools.py` (NEW)
 
-**Cross-reference**: [ADMIN_PANEL_SPECS.md §Tools & External Integrations](../ADMIN_PANEL_SPECS.md#tools--external-integrations), [TOOLS_AND_INTEGRATIONS.md](../TOOLS_AND_INTEGRATIONS.md), [OBSERVABILITY.md §Tool Invocation Metrics](../OBSERVABILITY.md#tool-invocation-metrics)
+**Cross-reference**: [ADMIN_PANEL_SPECS.md §Tools & External Integrations](/docs/ADMIN_PANEL_SPECS#tools--external-integrations), [TOOLS_AND_INTEGRATIONS.md](/docs/TOOLS_AND_INTEGRATIONS), [OBSERVABILITY.md §Tool Invocation Metrics](/docs/OBSERVABILITY#tool-invocation-metrics)
 
 **Endpoint Summary:**
 
@@ -519,13 +519,13 @@ Reuse `ToolStatus`, `ToolConfiguration`, `ToolInvocationLog`, and `ToolAnalytics
 
 1. All write operations (`PATCH`) must enforce admin RBAC and emit audit logs
 2. Tool invocation logs must have PHI redacted from arguments before returning
-3. Analytics should align with Prometheus metrics from [OBSERVABILITY.md](../OBSERVABILITY.md)
+3. Analytics should align with Prometheus metrics from [OBSERVABILITY.md](/docs/OBSERVABILITY)
 
 #### Backups & DR Admin (`/api/admin/backups/`, `/api/admin/dr/`)
 
 **File**: `services/api-gateway/app/api/admin_backups.py` (NEW)
 
-**Cross-reference**: [DISASTER_RECOVERY_RUNBOOK.md](../DISASTER_RECOVERY_RUNBOOK.md)
+**Cross-reference**: [DISASTER_RECOVERY_RUNBOOK.md](/admin/backups)
 
 **Endpoint Summary:**
 
@@ -547,7 +547,7 @@ Reuse `ToolStatus`, `ToolConfiguration`, `ToolInvocationLog`, and `ToolAnalytics
 
 **File**: `services/api-gateway/app/api/admin_troubleshooting.py` (NEW)
 
-**Cross-reference**: [DEBUGGING_INDEX.md](../debugging/DEBUGGING_INDEX.md), [DEBUGGING_BACKEND.md](../debugging/DEBUGGING_BACKEND.md)
+**Cross-reference**: [DEBUGGING_INDEX.md](/operations/debugging), [DEBUGGING_BACKEND.md](/operations/debugging-backend)
 
 **Endpoint Summary:**
 
@@ -611,7 +611,7 @@ Add additional metrics to dashboard summary:
 
 ## Phase 3: Admin Panel UI Implementation
 
-This phase is organized by page, aligned with [ADMIN_PANEL_SPECS.md](../ADMIN_PANEL_SPECS.md).
+This phase is organized by page, aligned with [ADMIN_PANEL_SPECS.md](/admin/overview).
 
 ### 3.1 Page Implementation Matrix
 
@@ -637,7 +637,7 @@ This phase is organized by page, aligned with [ADMIN_PANEL_SPECS.md](../ADMIN_PA
 #### IntegrationsPage.tsx (NEW)
 
 **Route**: `/integrations`
-**Spec Reference**: [ADMIN_PANEL_SPECS.md §4.5](../ADMIN_PANEL_SPECS.md#45-integrations)
+**Spec Reference**: [ADMIN_PANEL_SPECS.md §4.5](/docs/ADMIN_PANEL_SPECS#45-integrations)
 
 **Components:**
 
@@ -676,7 +676,7 @@ src/pages/IntegrationsPage/
 #### VoiceMonitorPage.tsx (NEW)
 
 **Route**: `/voice`
-**Spec Reference**: [ADMIN_PANEL_SPECS.md §4.10](../ADMIN_PANEL_SPECS.md#410-troubleshooting)
+**Spec Reference**: [ADMIN_PANEL_SPECS.md §4.10](/docs/ADMIN_PANEL_SPECS#410-troubleshooting)
 
 **Components:**
 
@@ -715,7 +715,7 @@ src/pages/VoiceMonitorPage/
 #### SecurityPage.tsx (NEW)
 
 **Route**: `/security`
-**Spec Reference**: [ADMIN_PANEL_SPECS.md §4.8](../ADMIN_PANEL_SPECS.md#48-security)
+**Spec Reference**: [ADMIN_PANEL_SPECS.md §4.8](/docs/ADMIN_PANEL_SPECS#48-security)
 
 **Components:**
 
@@ -751,7 +751,7 @@ src/pages/SecurityPage/
 #### ToolsPage.tsx (NEW)
 
 **Route**: `/tools`
-**Spec Reference**: [ADMIN_PANEL_SPECS.md §Tools & External Integrations](../ADMIN_PANEL_SPECS.md#tools--external-integrations)
+**Spec Reference**: [ADMIN_PANEL_SPECS.md §Tools & External Integrations](/docs/ADMIN_PANEL_SPECS#tools--external-integrations)
 
 **Components:**
 
@@ -781,7 +781,7 @@ src/pages/ToolsPage/
 #### ToolConfigPage.tsx (NEW)
 
 **Route**: `/tools/:toolName`
-**Spec Reference**: [ADMIN_PANEL_SPECS.md §Tool Configuration](../ADMIN_PANEL_SPECS.md#tool-configuration)
+**Spec Reference**: [ADMIN_PANEL_SPECS.md §Tool Configuration](/docs/ADMIN_PANEL_SPECS#tool-configuration)
 
 **Components:**
 
@@ -803,7 +803,7 @@ src/pages/ToolConfigPage/
 #### ToolLogsPage.tsx (NEW)
 
 **Route**: `/tools/logs`
-**Spec Reference**: [ADMIN_PANEL_SPECS.md §Tool Invocation Logs](../ADMIN_PANEL_SPECS.md#tool-invocation-logs)
+**Spec Reference**: [ADMIN_PANEL_SPECS.md §Tool Invocation Logs](/docs/ADMIN_PANEL_SPECS#tool-invocation-logs)
 
 **Components:**
 
@@ -830,8 +830,8 @@ src/pages/ToolLogsPage/
 #### BackupsPage.tsx (NEW)
 
 **Route**: `/backups`
-**Spec Reference**: [ADMIN_PANEL_SPECS.md §4.9 Backups](../ADMIN_PANEL_SPECS.md#49-backups)
-**Cross-reference**: [DISASTER_RECOVERY_RUNBOOK.md](../DISASTER_RECOVERY_RUNBOOK.md)
+**Spec Reference**: [ADMIN_PANEL_SPECS.md §4.9 Backups](/docs/ADMIN_PANEL_SPECS#49-backups)
+**Cross-reference**: [DISASTER_RECOVERY_RUNBOOK.md](/admin/backups)
 
 **Components:**
 
@@ -864,7 +864,7 @@ src/pages/BackupsPage/
 #### TroubleshootingPage.tsx (NEW)
 
 **Route**: `/troubleshooting`
-**Spec Reference**: [DEBUGGING_INDEX.md](../debugging/DEBUGGING_INDEX.md)
+**Spec Reference**: [DEBUGGING_INDEX.md](/operations/debugging)
 
 **Components:**
 
@@ -999,10 +999,10 @@ Type definitions will be added to `packages/types/src/admin/` during implementat
 
 Before implementing any security-sensitive admin features, read:
 
-- [SECURITY_COMPLIANCE.md](../SECURITY_COMPLIANCE.md) - HIPAA requirements, zero-trust architecture
-- [HIPAA_COMPLIANCE_MATRIX.md](../HIPAA_COMPLIANCE_MATRIX.md) - 42 requirement mappings
-- [OBSERVABILITY.md](../OBSERVABILITY.md) - Audit logging patterns
-- [NEXTCLOUD_INTEGRATION.md](../NEXTCLOUD_INTEGRATION.md) - PHI storage rules
+- [SECURITY_COMPLIANCE.md](/admin/security) - HIPAA requirements, zero-trust architecture
+- [HIPAA_COMPLIANCE_MATRIX.md](/medical/privacy) - 42 requirement mappings
+- [OBSERVABILITY.md](/docs/OBSERVABILITY) - Audit logging patterns
+- [NEXTCLOUD_INTEGRATION.md](/admin/integrations) - PHI storage rules
 
 ### 5.1 Admin RBAC Enforcement
 
@@ -1035,7 +1035,7 @@ async def update_config(
 
 ### 5.2 Audit Logging Requirements
 
-All admin mutations must be logged per [SECURITY_COMPLIANCE.md §6](../SECURITY_COMPLIANCE.md#audit-logging):
+All admin mutations must be logged per [SECURITY_COMPLIANCE.md §6](/docs/SECURITY_COMPLIANCE#audit-logging):
 
 ```python
 from app.services.audit_service import audit_log
@@ -1127,7 +1127,7 @@ Before shipping any new admin feature, verify:
 
 ### 5.6 Security Non-Goals (Forbidden Admin Actions)
 
-The following capabilities are explicitly **NOT allowed** in the admin panel. These are non-negotiable security boundaries tied to HIPAA compliance. See [SECURITY_COMPLIANCE.md](../SECURITY_COMPLIANCE.md) and [HIPAA_COMPLIANCE_MATRIX.md](../HIPAA_COMPLIANCE_MATRIX.md).
+The following capabilities are explicitly **NOT allowed** in the admin panel. These are non-negotiable security boundaries tied to HIPAA compliance. See [SECURITY_COMPLIANCE.md](/admin/security) and [HIPAA_COMPLIANCE_MATRIX.md](/medical/privacy).
 
 **The Admin UI must NOT provide any way to:**
 
@@ -1182,7 +1182,7 @@ async def update_retention(config: RetentionConfig, ...):
 
 ### Relationship to Phase 13
 
-This testing strategy extends [PHASE_13_TESTING_DOCS.md](../phases/PHASE_13_TESTING_DOCS.md) for admin-specific flows. Phase 13 covers general E2E and documentation testing; this section focuses specifically on admin panel testing.
+This testing strategy extends [PHASE_13_TESTING_DOCS.md](/docs/phases/PHASE_13_TESTING_DOCS) for admin-specific flows. Phase 13 covers general E2E and documentation testing; this section focuses specifically on admin panel testing.
 
 ### 6.1 Backend Tests
 
@@ -1441,9 +1441,9 @@ The following flows must have Playwright E2E test coverage before the admin pane
 
 ### Related Infrastructure Documentation
 
-- [INFRASTRUCTURE_SETUP.md](../INFRASTRUCTURE_SETUP.md) - Server setup, Docker Compose
-- [COMPOSE_TO_K8S_MIGRATION.md](../COMPOSE_TO_K8S_MIGRATION.md) - Kubernetes migration
-- [DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md) - Deployment procedures
+- [INFRASTRUCTURE_SETUP.md](/getting-started/installation) - Server setup, Docker Compose
+- [COMPOSE_TO_K8S_MIGRATION.md](/docs/COMPOSE_TO_K8S_MIGRATION) - Kubernetes migration
+- [DEPLOYMENT_GUIDE.md](/docs/DEPLOYMENT_GUIDE) - Deployment procedures
 
 ### 7.1 Feature Flags for Admin Features
 
@@ -1525,14 +1525,14 @@ This Admin Panel Implementation Plan relates to the canonical V2 phase documents
 
 | V2 Phase | Phase Document                                                            | Relationship to Admin Plan                                                                                                                                              |
 | -------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Phase 07 | [PHASE_07_ADMIN_PANEL.md](../phases/PHASE_07_ADMIN_PANEL.md)              | **Core admin functionality** - Phase 7 established the base admin panel with RBAC. This plan extends with Voice, Integrations, Security surfaces.                       |
-| Phase 08 | [PHASE_08_OBSERVABILITY.md](../phases/PHASE_08_OBSERVABILITY.md)          | **Metrics & logging** - Phase 8 established observability patterns. Admin plan adds admin-specific metrics dashboards.                                                  |
-| Phase 09 | [PHASE_09_COMPLETION_REPORT.md](../PHASE_09_COMPLETION_REPORT.md)         | **IaC & CI/CD** - Phase 9 established infrastructure automation. Admin plan leverages CI/CD for deployment, connects Integrations admin to Nextcloud/calendar services. |
-| Phase 10 | [PHASE_10_LOAD_TESTING.md](../phases/PHASE_10_LOAD_TESTING.md)            | **Voice/WebSocket** - Phase 10 covered load testing including WebSocket. Admin plan adds voice session monitoring.                                                      |
-| Phase 11 | [PHASE_11_SECURITY_HIPAA.md](../phases/PHASE_11_SECURITY_HIPAA.md)        | **Security hardening** - Phase 11 established HIPAA controls. Admin plan extends with PHI admin UI, security dashboard.                                                 |
-| Phase 12 | [PHASE_12_HA_DR.md](../phases/PHASE_12_HA_DR.md)                          | **HA/DR** - Phase 12 established backup and disaster recovery. Admin plan adds Backups page for status/trigger and DR readiness dashboard.                              |
-| Phase 13 | [PHASE_13_TESTING_DOCS.md](../phases/PHASE_13_TESTING_DOCS.md)            | **Testing** - Phase 13 covers E2E testing. Admin plan extends with admin-specific test patterns.                                                                        |
-| Phase 14 | Production Deployment (see [DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md)) | **Production rollout** - Phase 14 covers production deployment. Admin plan Phase 7 aligns with feature flag rollout and deployment verification.                        |
+| Phase 07 | [PHASE_07_ADMIN_PANEL.md](/docs/phases/PHASE_07_ADMIN_PANEL)              | **Core admin functionality** - Phase 7 established the base admin panel with RBAC. This plan extends with Voice, Integrations, Security surfaces.                       |
+| Phase 08 | [PHASE_08_OBSERVABILITY.md](/docs/phases/PHASE_08_OBSERVABILITY)          | **Metrics & logging** - Phase 8 established observability patterns. Admin plan adds admin-specific metrics dashboards.                                                  |
+| Phase 09 | [PHASE_09_COMPLETION_REPORT.md](/docs/PHASE_09_COMPLETION_REPORT)         | **IaC & CI/CD** - Phase 9 established infrastructure automation. Admin plan leverages CI/CD for deployment, connects Integrations admin to Nextcloud/calendar services. |
+| Phase 10 | [PHASE_10_LOAD_TESTING.md](/docs/phases/PHASE_10_LOAD_TESTING)            | **Voice/WebSocket** - Phase 10 covered load testing including WebSocket. Admin plan adds voice session monitoring.                                                      |
+| Phase 11 | [PHASE_11_SECURITY_HIPAA.md](/docs/phases/PHASE_11_SECURITY_HIPAA)        | **Security hardening** - Phase 11 established HIPAA controls. Admin plan extends with PHI admin UI, security dashboard.                                                 |
+| Phase 12 | [PHASE_12_HA_DR.md](/docs/phases/PHASE_12_HA_DR)                          | **HA/DR** - Phase 12 established backup and disaster recovery. Admin plan adds Backups page for status/trigger and DR readiness dashboard.                              |
+| Phase 13 | [PHASE_13_TESTING_DOCS.md](/docs/phases/PHASE_13_TESTING_DOCS)            | **Testing** - Phase 13 covers E2E testing. Admin plan extends with admin-specific test patterns.                                                                        |
+| Phase 14 | Production Deployment (see [DEPLOYMENT_GUIDE.md](/docs/DEPLOYMENT_GUIDE)) | **Production rollout** - Phase 14 covers production deployment. Admin plan Phase 7 aligns with feature flag rollout and deployment verification.                        |
 
 ### What Phase 7 Covers vs. What This Plan Adds
 
@@ -1578,7 +1578,7 @@ If you are an AI coding assistant (Claude, GPT, etc.) working on admin panel fea
 
 This plan is discoverable via:
 
-1. **Agent Task Index**: See [ai/AGENT_TASK_INDEX.md](../ai/AGENT_TASK_INDEX.md) → "Admin Panel Implementation" task
+1. **Agent Task Index**: See [ai/AGENT_TASK_INDEX.md](/ai/task-index) → "Admin Panel Implementation" task
 2. **Navigation**: assistdocs.asimo.io → "Admin Guide" → "Implementation Plan"
 3. **Navigation**: assistdocs.asimo.io → "For AI Agents" → "Admin Panel Plan"
 4. **Direct link**: `/admin/implementation-plan` on the docs site
@@ -1586,16 +1586,16 @@ This plan is discoverable via:
 ### Before Starting Work
 
 1. **Read onboarding docs first:**
-   - [AI Agent Onboarding](../ai/AGENT_ONBOARDING.md) - Quick context, repo structure
-   - [Claude Execution Guide](../CLAUDE_EXECUTION_GUIDE.md) - Session startup, branching, safety
-   - [Agent Task Index](../ai/AGENT_TASK_INDEX.md) - Find relevant tasks and docs
+   - [AI Agent Onboarding](/ai/onboarding) - Quick context, repo structure
+   - [Claude Execution Guide](/ai/claude-guide) - Session startup, branching, safety
+   - [Agent Task Index](/ai/task-index) - Find relevant tasks and docs
 
 2. **Read admin specs:**
-   - [ADMIN_PANEL_SPECS.md](../ADMIN_PANEL_SPECS.md) - Full admin panel specifications
+   - [ADMIN_PANEL_SPECS.md](/admin/overview) - Full admin panel specifications
    - This document (ADMIN_PANEL_IMPLEMENTATION_PLAN.md) - Implementation roadmap
 
 3. **Check current status:**
-   - [IMPLEMENTATION_STATUS.md](../overview/IMPLEMENTATION_STATUS.md) - What's built vs. planned
+   - [IMPLEMENTATION_STATUS.md](/ai/status) - What's built vs. planned
    - Run `git status` and `git log --oneline -10` to see recent changes
 
 ### Workflow for Admin Features
@@ -1640,15 +1640,15 @@ This plan is discoverable via:
 
 ### Quick Reference for AI Agents
 
-| Task                       | Primary Doc                              | Key Sections                    |
-| -------------------------- | ---------------------------------------- | ------------------------------- |
-| Add new admin API endpoint | This plan                                | Phase 1, Phase 2                |
-| Add new admin UI page      | This plan + ADMIN_PANEL_SPECS.md         | Phase 3                         |
-| Security requirements      | SECURITY_COMPLIANCE.md + This plan §5    | Phase 5, §5.6 Non-Goals         |
-| Testing requirements       | PHASE_13_TESTING_DOCS.md + This plan §6  | Phase 6, §6.4 Canonical E2E     |
-| Deployment                 | DEPLOYMENT_GUIDE.md + This plan §7       | Phase 7                         |
-| Tools admin                | This plan + TOOLS_AND_INTEGRATIONS.md    | Phase 1 Tools, Phase 2, Phase 3 |
-| Backups/DR admin           | DISASTER_RECOVERY_RUNBOOK.md + This plan | Phase 1 Backups, Phase 3        |
+| Task                       | Primary Doc                                                                   | Key Sections                    |
+| -------------------------- | ----------------------------------------------------------------------------- | ------------------------------- |
+| Add new admin API endpoint | This plan                                                                     | Phase 1, Phase 2                |
+| Add new admin UI page      | This plan + [ADMIN_PANEL_SPECS.md](/admin/overview)                           | Phase 3                         |
+| Security requirements      | [SECURITY_COMPLIANCE.md](/admin/security) + This plan §5                      | Phase 5, §5.6 Non-Goals         |
+| Testing requirements       | [PHASE_13_TESTING_DOCS.md](/docs/phases/PHASE_13_TESTING_DOCS) + This plan §6 | Phase 6, §6.4 Canonical E2E     |
+| Deployment                 | [DEPLOYMENT_GUIDE.md](/docs/DEPLOYMENT_GUIDE) + This plan §7                  | Phase 7                         |
+| Tools admin                | This plan + [TOOLS_AND_INTEGRATIONS.md](/docs/TOOLS_AND_INTEGRATIONS)         | Phase 1 Tools, Phase 2, Phase 3 |
+| Backups/DR admin           | [DISASTER_RECOVERY_RUNBOOK.md](/admin/backups) + This plan                    | Phase 1 Backups, Phase 3        |
 
 ---
 
@@ -1712,33 +1712,33 @@ Tasks:
 
 ### Core Specs
 
-- [ADMIN_PANEL_SPECS.md](../ADMIN_PANEL_SPECS.md) - Full admin panel specifications
-- [SERVICE_CATALOG.md](../SERVICE_CATALOG.md) - Backend service catalog
-- [DATA_MODEL.md](../DATA_MODEL.md) - Canonical data entities
-- [API_REFERENCE.md](../API_REFERENCE.md) - API conventions
+- [ADMIN_PANEL_SPECS.md](/admin/overview) - Full admin panel specifications
+- [SERVICE_CATALOG.md](/docs/SERVICE_CATALOG) - Backend service catalog
+- [DATA_MODEL.md](/backend/data-model) - Canonical data entities
+- [API_REFERENCE.md](/reference/api) - API conventions
 
 ### Security & Compliance
 
-- [SECURITY_COMPLIANCE.md](../SECURITY_COMPLIANCE.md) - HIPAA requirements
-- [HIPAA_COMPLIANCE_MATRIX.md](../HIPAA_COMPLIANCE_MATRIX.md) - Compliance checklist
-- [OBSERVABILITY.md](../OBSERVABILITY.md) - Audit logging patterns
+- [SECURITY_COMPLIANCE.md](/admin/security) - HIPAA requirements
+- [HIPAA_COMPLIANCE_MATRIX.md](/medical/privacy) - Compliance checklist
+- [OBSERVABILITY.md](/docs/OBSERVABILITY) - Audit logging patterns
 
 ### Infrastructure
 
-- [INFRASTRUCTURE_SETUP.md](../INFRASTRUCTURE_SETUP.md) - Server setup
-- [COMPOSE_TO_K8S_MIGRATION.md](../COMPOSE_TO_K8S_MIGRATION.md) - K8s migration
+- [INFRASTRUCTURE_SETUP.md](/getting-started/installation) - Server setup
+- [COMPOSE_TO_K8S_MIGRATION.md](/docs/COMPOSE_TO_K8S_MIGRATION) - K8s migration
 
 ### AI Agent Guidance
 
-- [ai/AGENT_ONBOARDING.md](../ai/AGENT_ONBOARDING.md) - AI agent quick start
-- [CLAUDE_EXECUTION_GUIDE.md](../CLAUDE_EXECUTION_GUIDE.md) - Claude-specific guidelines
-- [overview/IMPLEMENTATION_STATUS.md](../overview/IMPLEMENTATION_STATUS.md) - Component status
+- [ai/AGENT_ONBOARDING.md](/ai/onboarding) - AI agent quick start
+- [CLAUDE_EXECUTION_GUIDE.md](/ai/claude-guide) - Claude-specific guidelines
+- [overview/IMPLEMENTATION_STATUS.md](/overview/implementation-status) - Component status
 
 ### Phase Documents
 
-- [phases/PHASE_07_ADMIN_PANEL.md](../phases/PHASE_07_ADMIN_PANEL.md) - Phase 7 admin panel
-- [phases/PHASE_11_SECURITY_HIPAA.md](../phases/PHASE_11_SECURITY_HIPAA.md) - Phase 11 security
-- [phases/PHASE_13_TESTING_DOCS.md](../phases/PHASE_13_TESTING_DOCS.md) - Phase 13 testing
+- [phases/PHASE_07_ADMIN_PANEL.md](/docs/phases/PHASE_07_ADMIN_PANEL) - Phase 7 admin panel
+- [phases/PHASE_11_SECURITY_HIPAA.md](/docs/phases/PHASE_11_SECURITY_HIPAA) - Phase 11 security
+- [phases/PHASE_13_TESTING_DOCS.md](/docs/phases/PHASE_13_TESTING_DOCS) - Phase 13 testing
 
 ---
 
