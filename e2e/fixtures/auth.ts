@@ -54,16 +54,29 @@ export async function setupAuthenticatedState(page: Page): Promise<void> {
 }
 
 /**
+ * Check if we're running in live backend mode
+ * In live mode, we use real API calls instead of mocks
+ */
+export const isLiveBackend = (): boolean => {
+  return (
+    process.env.LIVE_REALTIME_E2E === "1" ||
+    process.env.LIVE_BACKEND === "1"
+  );
+};
+
+/**
  * Set up authenticated state and ensure it's hydrated
  * This is the recommended approach for tests that need to access protected routes
  *
  * The storageState is pre-configured in playwright.config.ts to load auth from
- * e2e/.auth/user.json. We also mock API calls to prevent 401 responses from
- * triggering the app's logout logic.
+ * e2e/.auth/user.json. For mock mode, we also mock API calls to prevent 401 responses.
+ * For live mode, we use real API calls with tokens from global-setup.
  */
 export async function setupAndHydrateAuth(page: Page): Promise<void> {
-  // Mock API responses to prevent 401 errors from triggering logout
-  await mockApiResponses(page);
+  // Only mock API responses in non-live mode
+  if (!isLiveBackend()) {
+    await mockApiResponses(page);
+  }
 
   // Navigate to root - storageState should already have auth in localStorage
   await page.goto("/");

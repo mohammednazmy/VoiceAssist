@@ -9,6 +9,9 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
 
+  /* Global setup for authentication */
+  globalSetup: require.resolve('./e2e/global-setup'),
+
   /* Run tests in files in parallel */
   fullyParallel: true,
 
@@ -86,6 +89,59 @@ export default defineConfig({
       use: {
         baseURL: process.env.CLIENT_GATEWAY_URL || 'http://localhost:8080',
       },
+    },
+
+    /* Voice E2E tests - Live backend (requires LIVE_REALTIME_E2E=1) */
+    {
+      name: 'voice-live',
+      testDir: './e2e/voice',
+      testMatch: /voice-.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        permissions: ['microphone'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+          ],
+        },
+        storageState: 'e2e/.auth/user.json',
+      },
+      timeout: 90 * 1000, // 90 seconds for live API calls
+    },
+
+    /* Voice E2E tests - Mobile viewports */
+    {
+      name: 'voice-mobile-iphone',
+      testDir: './e2e/voice',
+      testMatch: /voice-mobile\.spec\.ts/,
+      use: {
+        ...devices['iPhone 13'],
+        permissions: ['microphone'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+          ],
+        },
+      },
+      timeout: 60 * 1000,
+    },
+    {
+      name: 'voice-mobile-pixel',
+      testDir: './e2e/voice',
+      testMatch: /voice-mobile\.spec\.ts/,
+      use: {
+        ...devices['Pixel 5'],
+        permissions: ['microphone'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+          ],
+        },
+      },
+      timeout: 60 * 1000,
     },
   ],
 
