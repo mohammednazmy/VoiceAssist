@@ -23,8 +23,10 @@ from typing import Awaitable, Callable, Dict, Literal, Optional
 
 import httpx
 from app.core.business_metrics import openai_api_cost_dollars, openai_tokens_used_total
+from app.core.resilience import openai_breaker
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
+from pybreaker import CircuitBreakerError
 
 logger = logging.getLogger(__name__)
 
@@ -295,7 +297,7 @@ class LLMClient:
         """Call a cloud model using OpenAI API.
 
         Uses the official OpenAI client library with proper error handling,
-        retry logic, and cost tracking.
+        retry logic, circuit breaker protection, and cost tracking.
 
         Tracks metrics: tokens (prompt + completion), latency, finish_reason
         See ORCHESTRATION_DESIGN.md - "Step 6: LLM Synthesis"
@@ -307,6 +309,16 @@ class LLMClient:
                 req.trace_id,
             )
             raise RuntimeError("OpenAI API key not configured. Cannot call cloud model.")
+
+        # Check circuit breaker before attempting call
+        try:
+            openai_breaker.call(lambda: None)  # Lightweight check
+        except CircuitBreakerError:
+            logger.error(
+                "OpenAI circuit breaker is OPEN - failing fast. trace_id=%s",
+                req.trace_id,
+            )
+            raise RuntimeError("OpenAI API is temporarily unavailable (circuit breaker open)")
 
         model_name = req.model_override or self.cloud_model
 
@@ -408,6 +420,9 @@ class LLMClient:
                     req.trace_id,
                 )
 
+                # Record success with circuit breaker
+                openai_breaker.success()
+
                 return LLMResponse(
                     text=text,
                     model_name=model_name,
@@ -423,6 +438,8 @@ class LLMClient:
 
             except asyncio.TimeoutError as exc:
                 last_error = exc
+                # Record failure with circuit breaker
+                openai_breaker.fail()
                 logger.error(
                     "Cloud model call timed out (attempt %d) model=%s trace_id=%s",
                     attempt,
@@ -431,6 +448,8 @@ class LLMClient:
                 )
             except Exception as e:
                 last_error = e
+                # Record failure with circuit breaker
+                openai_breaker.fail()
                 latency_ms = (time.time() - start_time) * 1000
                 logger.error(
                     "Cloud model call failed (attempt %d): model=%s error=%s latency=%.2fms trace_id=%s",

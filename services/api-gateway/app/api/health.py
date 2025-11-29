@@ -14,6 +14,7 @@ from app.core.database import (
     redis_client,
 )
 from app.core.logging import get_logger
+from app.core.resilience import get_circuit_breaker_status
 from app.services.nextcloud import check_nextcloud_connection
 from fastapi import APIRouter, Request, status
 from fastapi.responses import JSONResponse
@@ -79,9 +80,7 @@ async def readiness_check(request: Request):
     }
 
     all_ready = all(checks.values())
-    response_status = (
-        status.HTTP_200_OK if all_ready else status.HTTP_503_SERVICE_UNAVAILABLE
-    )
+    response_status = status.HTTP_200_OK if all_ready else status.HTTP_503_SERVICE_UNAVAILABLE
 
     if not all_ready:
         logger.warning("readiness_check_failed", checks=checks)
@@ -179,10 +178,7 @@ async def openai_health_check(request: Request):
         error_msg = str(e)
 
         # Sanitize error message to avoid leaking sensitive info
-        if (
-            "invalid_api_key" in error_msg.lower()
-            or "incorrect api key" in error_msg.lower()
-        ):
+        if "invalid_api_key" in error_msg.lower() or "incorrect api key" in error_msg.lower():
             result["error"] = "API key invalid or expired"
         elif "rate_limit" in error_msg.lower():
             result["error"] = "Rate limited by OpenAI"
@@ -234,9 +230,7 @@ async def detailed_health_check(request: Request):
         redis_memory_mb = 0
 
     # Measure Qdrant latency (skip if disabled)
-    qdrant_enabled = (
-        settings.QDRANT_ENABLED if hasattr(settings, "QDRANT_ENABLED") else True
-    )
+    qdrant_enabled = settings.QDRANT_ENABLED if hasattr(settings, "QDRANT_ENABLED") else True
     if qdrant_enabled:
         start = time.time()
         qdrant_healthy = await check_qdrant_connection()
@@ -272,11 +266,7 @@ async def detailed_health_check(request: Request):
                 "memory_used_mb": round(redis_memory_mb, 2),
             },
             "qdrant": {
-                "status": (
-                    "disabled"
-                    if not qdrant_enabled
-                    else ("up" if qdrant_healthy else "down")
-                ),
+                "status": ("disabled" if not qdrant_enabled else ("up" if qdrant_healthy else "down")),
                 "latency_ms": round(qdrant_latency, 2),
                 "enabled": qdrant_enabled,
             },
@@ -296,7 +286,52 @@ async def detailed_health_check(request: Request):
         },
     )
 
-    response_status = (
-        status.HTTP_200_OK if all_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
-    )
+    response_status = status.HTTP_200_OK if all_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
     return JSONResponse(status_code=response_status, content=response)
+
+
+@router.get("/health/circuit-breakers", response_class=JSONResponse)
+@limiter.limit("100/minute")
+async def circuit_breaker_status(request: Request):
+    """
+    Circuit breaker status endpoint.
+
+    Returns the current state of all circuit breakers for monitoring
+    and alerting purposes.
+
+    Rate limit: 100 requests per minute
+
+    Response body:
+        - status: "ok" if all breakers are closed, "degraded" if any are open
+        - breakers: Dict of breaker name -> status info
+        - timestamp: Unix timestamp
+
+    Circuit Breaker States:
+        - closed: Normal operation, requests pass through
+        - open: Service is failing, requests fail immediately
+        - half-open: Testing if service recovered
+    """
+    logger.debug("circuit_breaker_status_requested")
+
+    breakers = get_circuit_breaker_status()
+
+    # Check if any breakers are open
+    any_open = any(b["state"] == "open" for b in breakers.values())
+    overall_status = "degraded" if any_open else "ok"
+
+    response = {
+        "status": overall_status,
+        "breakers": breakers,
+        "timestamp": time.time(),
+    }
+
+    if any_open:
+        logger.warning(
+            "circuit_breakers_degraded",
+            open_breakers=[name for name, b in breakers.items() if b["state"] == "open"],
+        )
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=response,
+    )

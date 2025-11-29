@@ -9,6 +9,7 @@ Phase 11: VoiceAssist Voice Pipeline Sprint
 - Streaming audio support for low latency
 - Voice catalog with caching
 - Cost tracking per request
+- Circuit breaker protection for resilience
 """
 
 import time
@@ -18,6 +19,8 @@ from typing import AsyncIterator, Dict, List, Optional
 import httpx
 from app.core.config import settings
 from app.core.logging import get_logger
+from app.core.resilience import elevenlabs_breaker
+from pybreaker import CircuitBreakerError
 
 logger = get_logger(__name__)
 
@@ -177,6 +180,13 @@ class ElevenLabsService:
         if len(text) > 5000:
             raise ValueError("Text exceeds maximum length of 5000 characters")
 
+        # Check circuit breaker before attempting call
+        try:
+            elevenlabs_breaker.call(lambda: None)  # Lightweight check
+        except CircuitBreakerError:
+            logger.error("ElevenLabs circuit breaker is OPEN - failing fast")
+            raise ValueError("ElevenLabs TTS is temporarily unavailable (circuit breaker open)")
+
         voice_id = voice_id or self.default_voice_id
         model_id = model_id or self.default_model
 
@@ -240,6 +250,9 @@ class ElevenLabsService:
                 },
             )
 
+            # Record success with circuit breaker
+            elevenlabs_breaker.success()
+
             return TTSSynthesisResult(
                 audio_data=audio_data,
                 content_type=content_type,
@@ -249,9 +262,13 @@ class ElevenLabsService:
             )
 
         except httpx.TimeoutException as e:
+            # Record failure with circuit breaker
+            elevenlabs_breaker.fail()
             logger.error(f"ElevenLabs TTS timeout: {str(e)}")
             raise ValueError("TTS request timed out")
         except httpx.HTTPError as e:
+            # Record failure with circuit breaker
+            elevenlabs_breaker.fail()
             logger.error(f"ElevenLabs TTS HTTP error: {str(e)}")
             raise ValueError(f"TTS request failed: {str(e)}")
 
@@ -295,6 +312,13 @@ class ElevenLabsService:
         if len(text) > 5000:
             raise ValueError("Text exceeds maximum length of 5000 characters")
 
+        # Check circuit breaker before attempting call
+        try:
+            elevenlabs_breaker.call(lambda: None)  # Lightweight check
+        except CircuitBreakerError:
+            logger.error("ElevenLabs circuit breaker is OPEN - failing fast")
+            raise ValueError("ElevenLabs TTS is temporarily unavailable (circuit breaker open)")
+
         voice_id = voice_id or self.default_voice_id
         model_id = model_id or self.default_model
 
@@ -334,10 +358,17 @@ class ElevenLabsService:
                 extra={"voice_id": voice_id, "text_length": len(text)},
             )
 
+            # Record success with circuit breaker
+            elevenlabs_breaker.success()
+
         except httpx.TimeoutException as e:
+            # Record failure with circuit breaker
+            elevenlabs_breaker.fail()
             logger.error(f"ElevenLabs streaming TTS timeout: {str(e)}")
             raise ValueError("Streaming TTS request timed out")
         except httpx.HTTPError as e:
+            # Record failure with circuit breaker
+            elevenlabs_breaker.fail()
             logger.error(f"ElevenLabs streaming TTS error: {str(e)}")
             raise ValueError(f"Streaming TTS request failed: {str(e)}")
 
