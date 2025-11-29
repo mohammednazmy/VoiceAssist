@@ -13,6 +13,9 @@ import {
   PHIRoutingMode,
 } from "../hooks/usePHI";
 import { useAuth } from "../contexts/AuthContext";
+import { TwoFactorSettings } from "../components/security/TwoFactorSettings";
+import { AuditLogViewer } from "../components/security/AuditLogViewer";
+import { UserAPIKeyManager } from "../components/security/UserAPIKeyManager";
 
 export function SecurityPage() {
   const { isAdmin } = useAuth();
@@ -217,6 +220,12 @@ export function SecurityPage() {
           {error}
         </div>
       )}
+
+      {/* Two-Factor Authentication Section */}
+      <TwoFactorSettings />
+
+      {/* User API Keys Section */}
+      <UserAPIKeyManager />
 
       {/* Stats Summary Cards */}
       {stats && (
@@ -581,6 +590,9 @@ export function SecurityPage() {
           </div>
         </div>
       )}
+
+      {/* Security Audit Log */}
+      <AuditLogViewer />
 
       {/* Last Updated */}
       {lastUpdated && (
