@@ -11,6 +11,9 @@ export type { InputProps } from "./components/Input";
 
 export { Label } from "./components/Label";
 
+export { Slider } from "./components/Slider";
+export type { SliderProps } from "./components/Slider";
+
 export {
   Card,
   CardHeader,

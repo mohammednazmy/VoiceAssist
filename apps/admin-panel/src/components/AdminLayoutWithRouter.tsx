@@ -144,6 +144,9 @@ export function AdminLayoutWithRouter({ children }: LayoutProps) {
           <NavLink to="/feature-flags" className={navLinkClass}>
             🚩 {t("nav.featureFlags", "Feature Flags")}
           </NavLink>
+          <NavLink to="/prompts" className={navLinkClass}>
+            📝 {t("nav.prompts", "Prompts")}
+          </NavLink>
           <NavLink to="/system" className={navLinkClass}>
             ⚙️ {t("nav.system")}
           </NavLink>

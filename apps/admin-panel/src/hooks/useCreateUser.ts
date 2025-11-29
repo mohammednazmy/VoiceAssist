@@ -5,8 +5,14 @@ export interface CreateUserPayload {
   email: string;
   full_name: string;
   password: string;
-  is_admin: boolean;
+  admin_role: "user" | "admin" | "viewer";
   is_active: boolean;
+}
+
+export interface InviteUserPayload {
+  email: string;
+  full_name?: string;
+  admin_role: "user" | "admin" | "viewer";
 }
 
 export interface CreatedUser {
@@ -14,12 +20,23 @@ export interface CreatedUser {
   email: string;
   full_name: string | null;
   is_admin: boolean;
+  admin_role: "user" | "admin" | "viewer";
   is_active: boolean;
   created_at: string;
 }
 
+export interface InvitedUser {
+  id: string;
+  email: string;
+  full_name: string | null;
+  admin_role: "user" | "admin" | "viewer";
+  invitation_sent: boolean;
+  invitation_expires_at: string | null;
+}
+
 interface UseCreateUserReturn {
   createUser: (payload: CreateUserPayload) => Promise<CreatedUser>;
+  inviteUser: (payload: InviteUserPayload) => Promise<InvitedUser>;
   isLoading: boolean;
   error: string | null;
   checkEmailExists: (email: string) => Promise<boolean>;
@@ -57,11 +74,11 @@ export function useCreateUser(): UseCreateUserReturn {
   );
 
   /**
-   * Create a new user account.
+   * Create a new user account with password.
    *
    * Flow:
    * 1. Register user via /api/auth/register (creates as non-admin)
-   * 2. If is_admin=true, update role via PUT /api/admin/panel/users/{id}
+   * 2. If admin_role != "user", update role via PUT /api/admin/panel/users/{id}
    * 3. If is_active=false, deactivate via PUT /api/admin/panel/users/{id}
    */
   const createUser = useCallback(
@@ -76,6 +93,7 @@ export function useCreateUser(): UseCreateUserReturn {
           email: string;
           full_name: string | null;
           is_admin: boolean;
+          admin_role: "user" | "admin" | "viewer";
           is_active: boolean;
           created_at: string;
         }>("/api/auth/register", {
@@ -92,38 +110,45 @@ export function useCreateUser(): UseCreateUserReturn {
           email: registeredUser.email,
           full_name: registeredUser.full_name,
           is_admin: registeredUser.is_admin,
+          admin_role: registeredUser.admin_role || "user",
           is_active: registeredUser.is_active,
           created_at: registeredUser.created_at,
         };
 
-        // Step 2: Update admin role if needed
-        if (payload.is_admin) {
+        // Step 2: Update role if not default "user"
+        if (payload.admin_role !== "user") {
           const updatedUser = await fetchAPI<{
-            id: string;
-            email: string;
-            full_name: string | null;
-            is_admin: boolean;
-            is_active: boolean;
-            created_at: string;
+            user: {
+              id: string;
+              email: string;
+              full_name: string | null;
+              is_admin: boolean;
+              admin_role: "user" | "admin" | "viewer";
+              is_active: boolean;
+              created_at: string;
+            };
           }>(`/api/admin/panel/users/${registeredUser.id}`, {
             method: "PUT",
             body: JSON.stringify({
-              is_admin: true,
-              action_reason: "Admin role assigned during user creation",
+              admin_role: payload.admin_role,
+              action_reason: `${payload.admin_role} role assigned during user creation`,
             }),
           });
-          finalUser = { ...finalUser, ...updatedUser };
+          finalUser = { ...finalUser, ...updatedUser.user };
         }
 
         // Step 3: Deactivate if needed
         if (!payload.is_active) {
           const updatedUser = await fetchAPI<{
-            id: string;
-            email: string;
-            full_name: string | null;
-            is_admin: boolean;
-            is_active: boolean;
-            created_at: string;
+            user: {
+              id: string;
+              email: string;
+              full_name: string | null;
+              is_admin: boolean;
+              admin_role: "user" | "admin" | "viewer";
+              is_active: boolean;
+              created_at: string;
+            };
           }>(`/api/admin/panel/users/${registeredUser.id}`, {
             method: "PUT",
             body: JSON.stringify({
@@ -131,7 +156,7 @@ export function useCreateUser(): UseCreateUserReturn {
               action_reason: "Account created as inactive",
             }),
           });
-          finalUser = { ...finalUser, ...updatedUser };
+          finalUser = { ...finalUser, ...updatedUser.user };
         }
 
         return finalUser;
@@ -157,8 +182,59 @@ export function useCreateUser(): UseCreateUserReturn {
     [],
   );
 
+  /**
+   * Invite a new user via email.
+   * Creates a pending user account and sends an invitation email.
+   */
+  const inviteUser = useCallback(
+    async (payload: InviteUserPayload): Promise<InvitedUser> => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetchAPI<{
+          user: InvitedUser;
+          invitation_sent: boolean;
+          message: string;
+        }>("/api/admin/panel/users/invite", {
+          method: "POST",
+          body: JSON.stringify({
+            email: payload.email,
+            full_name: payload.full_name || undefined,
+            admin_role: payload.admin_role,
+            send_email: true,
+          }),
+        });
+
+        return {
+          ...response.user,
+          invitation_sent: response.invitation_sent,
+        };
+      } catch (err) {
+        let message = "Failed to send invitation";
+        if (err instanceof APIError) {
+          message = err.message;
+          if (
+            err.code === "EMAIL_EXISTS" ||
+            err.message.includes("already registered")
+          ) {
+            message = "This email is already registered";
+          }
+        } else if (err instanceof Error) {
+          message = err.message;
+        }
+        setError(message);
+        throw new Error(message);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
   return {
     createUser,
+    inviteUser,
     isLoading,
     error,
     checkEmailExists,

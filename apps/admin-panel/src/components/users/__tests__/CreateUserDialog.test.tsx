@@ -60,8 +60,9 @@ describe("CreateUserDialog", () => {
 
     it("renders role selection", () => {
       render(<CreateUserDialog {...defaultProps} />);
-      expect(screen.getByText("Standard User")).toBeInTheDocument();
-      expect(screen.getByText("Administrator")).toBeInTheDocument();
+      // RoleSelector uses User, Viewer, Admin
+      expect(screen.getByText("User")).toBeInTheDocument();
+      expect(screen.getByText("Admin")).toBeInTheDocument();
     });
 
     it("renders active status toggle", () => {
@@ -212,10 +213,12 @@ describe("CreateUserDialog", () => {
 
     it("selects admin role", async () => {
       render(<CreateUserDialog {...defaultProps} />);
-      const adminRadio = screen
-        .getByText("Administrator")
-        .closest("label")
-        ?.querySelector("input");
+      // RoleSelector has User(0), Viewer(1), Admin(2)
+      const radios = screen.getAllByRole("radio");
+      // Find the Admin radio (third one in RoleSelector)
+      const adminRadio = radios.find((r) =>
+        r.closest("label")?.textContent?.includes("Admin"),
+      );
 
       if (adminRadio) {
         await userEvent.click(adminRadio);
@@ -311,7 +314,7 @@ describe("CreateUserDialog", () => {
           email: "test@example.com",
           full_name: "Test User",
           password: "StrongPass123!",
-          is_admin: false,
+          admin_role: "user",
           is_active: true,
         });
       });
@@ -415,19 +418,20 @@ describe("CreateUserDialog", () => {
   });
 
   describe("invitation email option", () => {
-    it("shows coming soon badge for invitation option", () => {
+    it("renders invitation email option", () => {
       render(<CreateUserDialog {...defaultProps} />);
-      expect(screen.getByText("(Coming soon)")).toBeInTheDocument();
+      expect(screen.getByText("Send invitation email")).toBeInTheDocument();
     });
 
-    it("disables invitation email radio button", () => {
+    it("allows selecting invitation email method", () => {
       render(<CreateUserDialog {...defaultProps} />);
       const invitationRadio = screen
         .getByText("Send invitation email")
         .closest("label")
         ?.querySelector("input");
 
-      expect(invitationRadio).toBeDisabled();
+      // Invitation radio should be enabled (not disabled by default)
+      expect(invitationRadio).not.toBeDisabled();
     });
   });
 });

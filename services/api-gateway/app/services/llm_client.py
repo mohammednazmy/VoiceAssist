@@ -152,35 +152,72 @@ class LLMClient:
             )
         self.has_local_model = self.local_client is not None
 
+    # Default system prompts for fallback when dynamic lookup fails
+    _DEFAULT_SYSTEM_PROMPTS = {
+        "diagnosis": (
+            "You are a medical AI assistant specializing in clinical diagnosis. "
+            "Provide evidence-based diagnostic insights with appropriate citations."
+        ),
+        "treatment": (
+            "You are a medical AI assistant specializing in treatment planning. "
+            "Provide evidence-based treatment recommendations with appropriate citations."
+        ),
+        "drug": (
+            "You are a medical AI assistant specializing in pharmacology. "
+            "Provide evidence-based drug information with appropriate citations."
+        ),
+        "guideline": (
+            "You are a medical AI assistant specializing in clinical guidelines. "
+            "Provide evidence-based guideline information with appropriate citations."
+        ),
+        "summary": (
+            "You are a medical AI assistant specializing in medical summarization. "
+            "Provide clear, concise summaries with appropriate citations."
+        ),
+        "other": (
+            "You are a helpful medical AI assistant. "
+            "Provide accurate, evidence-based information with appropriate citations when available."
+        ),
+    }
+
     @staticmethod
-    def _system_prompt_for_intent(intent: IntentType) -> str:
-        system_prompts = {
-            "diagnosis": (
-                "You are a medical AI assistant specializing in clinical diagnosis. "
-                "Provide evidence-based diagnostic insights with appropriate citations."
-            ),
-            "treatment": (
-                "You are a medical AI assistant specializing in treatment planning. "
-                "Provide evidence-based treatment recommendations with appropriate citations."
-            ),
-            "drug": (
-                "You are a medical AI assistant specializing in pharmacology. "
-                "Provide evidence-based drug information with appropriate citations."
-            ),
-            "guideline": (
-                "You are a medical AI assistant specializing in clinical guidelines. "
-                "Provide evidence-based guideline information with appropriate citations."
-            ),
-            "summary": (
-                "You are a medical AI assistant specializing in medical summarization. "
-                "Provide clear, concise summaries with appropriate citations."
-            ),
-            "other": (
-                "You are a helpful medical AI assistant. "
-                "Provide accurate, evidence-based information with appropriate citations when available."
-            ),
-        }
-        return system_prompts.get(intent, system_prompts["other"])
+    def _get_default_system_prompt(intent: IntentType) -> str:
+        """Get default system prompt for intent (fallback)."""
+        return LLMClient._DEFAULT_SYSTEM_PROMPTS.get(intent, LLMClient._DEFAULT_SYSTEM_PROMPTS["other"])
+
+    async def _get_system_prompt_for_intent(self, intent: IntentType) -> str:
+        """Get system prompt for intent with dynamic lookup and fallback.
+
+        Uses the PromptService for dynamic prompt management with fallback
+        to hardcoded defaults if the dynamic lookup fails.
+
+        Args:
+            intent: The intent type (diagnosis, treatment, drug, etc.)
+
+        Returns:
+            The system prompt text
+        """
+        try:
+            # Import here to avoid circular imports
+            from app.services.prompt_service import prompt_service
+
+            # Try dynamic prompt lookup
+            prompt_text = await prompt_service.get_system_prompt_for_intent(intent, "chat")
+            if prompt_text:
+                return prompt_text
+        except Exception as e:
+            logger.warning(f"Failed to get dynamic prompt for intent '{intent}': {e}")
+
+        # Fallback to hardcoded default
+        return self._get_default_system_prompt(intent)
+
+    def _system_prompt_for_intent(self, intent: IntentType) -> str:
+        """Synchronous fallback for system prompt lookup.
+
+        Note: Prefer using _get_system_prompt_for_intent() for async contexts.
+        This method exists for backward compatibility.
+        """
+        return self._get_default_system_prompt(intent)
 
     async def generate(self, req: LLMRequest) -> LLMResponse:
         """Select model family and generate a single response.
@@ -263,7 +300,8 @@ class LLMClient:
             start_time = time.time()
 
             try:
-                system_message = self._system_prompt_for_intent(req.intent)
+                # Get system prompt with dynamic lookup (falls back to defaults)
+                system_message = await self._get_system_prompt_for_intent(req.intent)
 
                 # Call OpenAI Chat Completions API with timeout
                 response: ChatCompletion = await asyncio.wait_for(
@@ -403,10 +441,13 @@ class LLMClient:
         usage = None
 
         try:
+            # Get system prompt with dynamic lookup (falls back to defaults)
+            system_message = await self._get_system_prompt_for_intent(req.intent)
+
             stream = await self.openai_client.chat.completions.create(
                 model=model_name,
                 messages=[
-                    {"role": "system", "content": self._system_prompt_for_intent(req.intent)},
+                    {"role": "system", "content": system_message},
                     {"role": "user", "content": req.prompt},
                 ],
                 temperature=req.temperature,

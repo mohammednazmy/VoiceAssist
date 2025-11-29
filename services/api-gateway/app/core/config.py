@@ -126,6 +126,17 @@ class Settings(BaseSettings):
     # Frontend URL (used for generating share links and other frontend-facing URLs)
     FRONTEND_URL: str = "http://localhost:5173"
 
+    # Admin Panel URL (used for invitation and password reset links)
+    ADMIN_PANEL_URL: str = "https://admin.asimo.io"
+
+    # SMTP Email Configuration (for invitations, password resets)
+    SMTP_HOST: str = "smtp.hostinger.com"
+    SMTP_PORT: int = 465
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_FROM: Optional[str] = None
+    SMTP_USE_SSL: bool = True  # Use SSL (not STARTTLS) on port 465
+
     # Sentry Error Tracking
     SENTRY_DSN: Optional[str] = None  # Sentry DSN for error tracking
     SENTRY_TRACES_SAMPLE_RATE: float = 0.1  # 10% of requests traced

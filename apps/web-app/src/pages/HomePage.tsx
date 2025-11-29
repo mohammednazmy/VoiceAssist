@@ -42,73 +42,7 @@ export function HomePage() {
 
         {/* Quick Actions Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {/* Chat Card */}
-          <Card
-            variant="elevated"
-            hoverable
-            className="cursor-pointer transition-all hover:scale-[1.02]"
-            onClick={() => navigate("/chat")}
-          >
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="h-12 w-12 rounded-lg bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center mb-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="currentColor"
-                    className="w-6 h-6 text-primary-600 dark:text-primary-400"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
-                    />
-                  </svg>
-                </div>
-                <Badge variant="primary" size="sm">
-                  Popular
-                </Badge>
-              </div>
-              <CardTitle>Chat</CardTitle>
-              <CardDescription>
-                Have a conversation with your AI assistant
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-text-tertiary">
-                Ask questions, get medical information, and receive intelligent
-                assistance through natural conversation.
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Button
-                variant="ghost"
-                size="sm"
-                fullWidth
-                className="justify-start"
-              >
-                Start new chat
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                  className="w-4 h-4 ml-auto"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-                  />
-                </svg>
-              </Button>
-            </CardFooter>
-          </Card>
-
-          {/* Voice Mode Card */}
+          {/* Chat with Voice Card - Combined Chat and Voice Mode */}
           <Card
             variant="elevated"
             hoverable
@@ -122,38 +56,50 @@ export function HomePage() {
             }}
             tabIndex={0}
             role="button"
-            aria-label="Start Voice Mode"
-            data-testid="voice-mode-card"
+            aria-label="Start Chat with Voice"
+            data-testid="chat-with-voice-card"
           >
             <CardHeader>
               <div className="flex items-start justify-between">
-                <div className="h-12 w-12 rounded-lg bg-secondary-100 dark:bg-secondary-900/20 flex items-center justify-center mb-3">
+                <div className="h-12 w-12 rounded-lg bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center mb-3">
+                  {/* Combined chat + microphone icon */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                     stroke="currentColor"
-                    className="w-6 h-6 text-secondary-600 dark:text-secondary-400"
+                    className="w-6 h-6 text-primary-600 dark:text-primary-400"
                   >
+                    {/* Chat bubble */}
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"
+                      d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
+                    />
+                    {/* Small mic indicator */}
+                    <circle
+                      cx="18"
+                      cy="6"
+                      r="2.5"
+                      fill="currentColor"
+                      stroke="none"
                     />
                   </svg>
                 </div>
-                <Badge variant="success" size="sm">
-                  New
+                <Badge variant="primary" size="sm">
+                  Voice Enabled
                 </Badge>
               </div>
-              <CardTitle>Voice Mode</CardTitle>
-              <CardDescription>Interact using your voice</CardDescription>
+              <CardTitle>Chat with Voice</CardTitle>
+              <CardDescription>
+                Speak or type with your AI assistant
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-text-tertiary">
-                Use push-to-talk to ask questions and receive spoken responses
-                for hands-free interaction.
+                Have natural conversations using voice or text. Ask questions,
+                get medical information, and receive intelligent assistance.
               </p>
             </CardContent>
             <CardFooter>
@@ -163,7 +109,7 @@ export function HomePage() {
                 fullWidth
                 className="justify-start"
               >
-                Start voice session
+                Start conversation
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"

@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const delay = Math.max(decoded.exp * 1000 - Date.now() - 30_000, 5_000);
       refreshTimeout.current = window.setTimeout(async () => {
         try {
-          const refreshToken = localStorage.getItem("refresh_token");
+          const refreshToken = localStorage.getItem("auth_refresh_token");
           if (refreshToken) {
             const tokens = await apiClient.refreshToken(refreshToken);
             persistTokens(tokens.accessToken, tokens.refreshToken);
@@ -133,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Try to refresh if token expired
-      const refreshToken = localStorage.getItem("refresh_token");
+      const refreshToken = localStorage.getItem("auth_refresh_token");
       if (refreshToken) {
         const tokens = await apiClient.refreshToken(refreshToken);
         persistTokens(tokens.accessToken, tokens.refreshToken);

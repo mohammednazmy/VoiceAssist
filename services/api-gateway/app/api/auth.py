@@ -19,6 +19,8 @@ from app.core.security import (
 )
 from app.models.user import User
 from app.schemas.auth import (
+    AcceptInvitationRequest,
+    AcceptInvitationResponse,
     SessionInfoResponse,
     TokenRefresh,
     TokenResponse,
@@ -350,3 +352,125 @@ async def get_session_info(
     )
 
     return SessionInfoResponse(**session_info)
+
+
+@router.post("/accept-invitation", response_model=AcceptInvitationResponse)
+@limiter.limit("10/hour")
+async def accept_invitation(
+    request: Request,
+    invitation_data: AcceptInvitationRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Accept an invitation and set up the user account.
+
+    - **token**: The invitation token from the email link
+    - **password**: The new password to set (min 8 characters)
+    - **full_name**: Optional - update full name if provided
+
+    Returns tokens for immediate login on success.
+
+    Rate limit: 10 attempts per hour per IP
+    """
+    # Find user by invitation token
+    user = db.query(User).filter(User.invitation_token == invitation_data.token).first()
+
+    if not user:
+        admin_audit_log_service.log_action(
+            db=db,
+            actor=None,
+            action="auth.invitation_accept_failed",
+            target_type="invitation",
+            target_id=invitation_data.token[:8] + "...",
+            success=False,
+            metadata={"reason": "invalid_token"},
+            request=request,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or already used invitation token",
+        )
+
+    # Check if token has expired
+    if user.invitation_token_expires_at:
+        now = datetime.now(timezone.utc)
+        expires_at = user.invitation_token_expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if now > expires_at:
+            admin_audit_log_service.log_action(
+                db=db,
+                actor=None,
+                action="auth.invitation_accept_failed",
+                target_type="user",
+                target_id=str(user.id),
+                success=False,
+                metadata={"reason": "token_expired"},
+                request=request,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invitation has expired. Please contact an administrator to resend.",
+            )
+
+    # Set the user's password
+    user.hashed_password = get_password_hash(invitation_data.password)
+    user.password_changed_at = datetime.now(timezone.utc)
+
+    # Update full name if provided
+    if invitation_data.full_name:
+        user.full_name = invitation_data.full_name
+
+    # Activate the user and clear invitation tokens
+    user.is_active = True
+    user.invitation_token = None
+    user.invitation_token_expires_at = None
+
+    # Update last login timestamp
+    user.last_login = datetime.now(timezone.utc)
+
+    db.commit()
+    db.refresh(user)
+
+    # Log successful invitation acceptance
+    admin_audit_log_service.log_action(
+        db=db,
+        actor=user,
+        action="auth.invitation_accepted",
+        target_type="user",
+        target_id=str(user.id),
+        success=True,
+        metadata={"email": user.email},
+        request=request,
+    )
+
+    # Track registration metric
+    user_registrations_total.inc()
+
+    # Create tokens for immediate login
+    token_role = user.admin_role or ("admin" if user.is_admin else "user")
+    password_epoch = int(
+        user.password_changed_at.replace(tzinfo=timezone.utc).timestamp()
+        if user.password_changed_at.tzinfo is None
+        else user.password_changed_at.timestamp()
+    )
+
+    base_claims = {
+        "sub": str(user.id),
+        "email": user.email,
+        "role": token_role,
+        "pwd": password_epoch,
+    }
+    access_token = create_access_token(data=base_claims)
+    refresh_token = create_refresh_token(data=base_claims)
+
+    return AcceptInvitationResponse(
+        success=True,
+        message="Invitation accepted successfully. You are now logged in.",
+        user=UserResponse.model_validate(user),
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        refresh_expires_in=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
+    )

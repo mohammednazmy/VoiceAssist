@@ -4,11 +4,45 @@ import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React - shared across all pages
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          // Voice processing - only needed in voice mode
+          "vendor-voice": ["idb"],
+          // i18n - loaded with main app
+          "vendor-i18n": [
+            "i18next",
+            "react-i18next",
+            "i18next-browser-languagedetector",
+          ],
+          // Zustand state management
+          "vendor-state": ["zustand"],
+          // Markdown rendering - only needed in chat
+          "vendor-markdown": [
+            "react-markdown",
+            "remark-gfm",
+            "remark-math",
+            "rehype-katex",
+            "katex",
+          ],
+          // Data fetching
+          "vendor-query": ["@tanstack/react-query", "axios"],
+          // Icons
+          "vendor-icons": ["lucide-react"],
+        },
+      },
+    },
+    // Increase warning limit to 600KB
+    chunkSizeWarningLimit: 600,
+  },
   plugins: [
     react(),
     VitePWA({
       registerType: "prompt",
-      includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg"],
+      includeAssets: ["favicon.ico", "apple-touch-icon.png", "favicon.svg"],
       manifest: {
         name: "VoiceAssist",
         short_name: "VoiceAssist",
@@ -20,15 +54,48 @@ export default defineConfig({
         scope: "/",
         start_url: "/",
         icons: [
+          // PNG icons for broad compatibility (including iOS)
           {
-            src: "/icons/icon-192x192.svg",
+            src: "/icons/icon-192x192.png",
             sizes: "192x192",
-            type: "image/svg+xml",
+            type: "image/png",
             purpose: "any",
           },
           {
-            src: "/icons/icon-512x512.svg",
+            src: "/icons/icon-256x256.png",
+            sizes: "256x256",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "/icons/icon-384x384.png",
+            sizes: "384x384",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "/icons/icon-512x512.png",
             sizes: "512x512",
+            type: "image/png",
+            purpose: "any",
+          },
+          // Maskable icons for Android adaptive icons
+          {
+            src: "/icons/icon-maskable-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "maskable",
+          },
+          {
+            src: "/icons/icon-maskable-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+          // SVG icon for modern browsers
+          {
+            src: "/icons/icon-512x512.svg",
+            sizes: "any",
             type: "image/svg+xml",
             purpose: "any",
           },

@@ -19,9 +19,10 @@ import csv
 import io
 import json
 import logging
+import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 
 from app.core.api_envelope import error_response, success_response
 from app.core.database import get_db, get_db_pool_stats, get_redis_pool_stats, redis_client
@@ -226,6 +227,22 @@ class UserUpdate(BaseModel):
     admin_role: Optional[str] = None
     is_active: Optional[bool] = None
     action_reason: Optional[str] = None
+
+
+class PasswordResetRequest(BaseModel):
+    """Request model for password reset."""
+
+    method: Literal["temporary", "email"]
+    notify_user: bool = True
+
+
+class UserInviteRequest(BaseModel):
+    """Request model for inviting a new user."""
+
+    email: EmailStr
+    full_name: Optional[str] = None
+    admin_role: Literal["user", "admin", "viewer"] = "user"
+    send_email: bool = True
 
 
 class UserResponse(BaseModel):
@@ -621,6 +638,668 @@ async def delete_user(
     }
     trace_id = getattr(request.state, "trace_id", None)
     return success_response(data, trace_id=trace_id)
+
+
+class PermanentDeleteRequest(BaseModel):
+    """Request model for permanent user deletion."""
+
+    confirm_email: str  # Must match user's email for confirmation
+    reason: Optional[str] = None
+
+
+@router.delete("/users/{user_id}/permanent")
+async def permanent_delete_user(
+    request: Request,
+    user_id: str,
+    delete_request: PermanentDeleteRequest,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Permanently delete a user and all associated data.
+
+    This action is IRREVERSIBLE. All user data will be permanently removed:
+    - User account
+    - Sessions and messages
+    - Audit logs (user reference will be anonymized)
+    - Any other associated data
+
+    Requires email confirmation to prevent accidental deletion.
+    """
+    from app.models.message import Message
+    from app.models.session import Session as DBSession
+
+    ensure_admin_privileges(current_admin_user)
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Prevent admin from deleting themselves
+    if str(user.id) == str(current_admin_user.id):
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+
+    # Require email confirmation
+    if delete_request.confirm_email.lower() != user.email.lower():
+        raise HTTPException(
+            status_code=400,
+            detail="Email confirmation does not match. Please enter the user's email to confirm deletion.",
+        )
+
+    # Rate limit permanent delete actions (stricter limit)
+    try:
+        rate_limit_info = enforce_admin_action_rate_limit(request, action="permanent-delete", calls=3, period=300)
+    except HTTPException as exc:
+        if exc.status_code == 429:
+            detail = exc.detail if isinstance(exc.detail, dict) else {}
+            trace_id = getattr(request.state, "trace_id", None)
+            return JSONResponse(
+                status_code=429,
+                content=error_response(
+                    code=detail.get("code", "RATE_LIMITED"),
+                    message=detail.get("message", "Rate limit exceeded"),
+                    details={"rate_limit": detail.get("rate_limit")},
+                    request_id=trace_id,
+                ),
+            )
+        raise
+
+    trace_id = getattr(request.state, "trace_id", None)
+
+    # Capture user info for audit before deletion
+    deleted_user_info = {
+        "email": user.email,
+        "full_name": user.full_name,
+        "admin_role": user.admin_role,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+    }
+
+    # Count associated data for reporting
+    session_count = 0
+    message_count = 0
+    try:
+        session_count = db.query(func.count(DBSession.id)).filter(DBSession.user_id == user_id).scalar() or 0
+        message_count = db.query(func.count(Message.id)).filter(Message.user_id == user_id).scalar() or 0
+    except Exception as e:
+        logger.warning(f"Could not count user data: {e}")
+
+    # Anonymize audit logs (preserve the audit trail but remove user reference)
+    try:
+        db.query(AuditLog).filter(AuditLog.user_id == user_id).update(
+            {
+                "user_id": None,
+                "user_email": f"[DELETED:{user_id[:8]}]",
+            },
+            synchronize_session=False,
+        )
+    except Exception as e:
+        logger.warning(f"Could not anonymize audit logs: {e}")
+
+    # Delete associated sessions and messages (cascade delete)
+    try:
+        # Delete messages first (they reference sessions)
+        db.query(Message).filter(Message.user_id == user_id).delete(synchronize_session=False)
+        # Delete sessions
+        db.query(DBSession).filter(DBSession.user_id == user_id).delete(synchronize_session=False)
+    except Exception as e:
+        logger.warning(f"Error deleting user data: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to delete user data. Please try again.",
+        )
+
+    # Delete the user
+    try:
+        db.delete(user)
+        db.commit()
+    except Exception as e:
+        logger.error(f"Failed to delete user: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to delete user. Please try again.",
+        )
+
+    # Log audit event (with anonymized user info)
+    log_audit_event(
+        db=db,
+        action="user.permanent_delete",
+        user_id=str(current_admin_user.id),
+        user_email=current_admin_user.email,
+        resource_type="user",
+        resource_id=user_id,
+        success=True,
+        details=json.dumps(
+            {
+                "deleted_user": deleted_user_info,
+                "sessions_deleted": session_count,
+                "messages_deleted": message_count,
+                "reason": delete_request.reason,
+            }
+        ),
+        request=request,
+    )
+
+    return success_response(
+        {
+            "message": "User permanently deleted",
+            "user_id": user_id,
+            "deleted_data": {
+                "sessions": session_count,
+                "messages": message_count,
+            },
+            "rate_limit": rate_limit_info,
+        },
+        trace_id=trace_id,
+    )
+
+
+def generate_temporary_password(length: int = 16) -> str:
+    """Generate a secure temporary password with mixed characters."""
+    alphabet = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%^&*"
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+def generate_secure_token(length: int = 32) -> str:
+    """Generate a cryptographically secure token."""
+    return secrets.token_urlsafe(length)
+
+
+@router.post("/users/{user_id}/reset-password")
+async def reset_user_password(
+    request: Request,
+    user_id: str,
+    reset_request: PasswordResetRequest,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Reset a user's password (admin action).
+
+    Two methods available:
+    - "temporary": Generate a temporary password that user must change on next login
+    - "email": Send a password reset email with a secure link
+    """
+    from app.core.config import settings
+    from app.services.email_service import send_password_reset_email, send_temporary_password_email
+    from passlib.context import CryptContext
+
+    ensure_admin_privileges(current_admin_user)
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Prevent resetting own password through admin panel
+    if str(user.id) == str(current_admin_user.id):
+        raise HTTPException(
+            status_code=400,
+            detail="Use the account settings page to change your own password",
+        )
+
+    # Rate limit password reset actions
+    try:
+        rate_limit_info = enforce_admin_action_rate_limit(request, action="password-reset", calls=10, period=300)
+    except HTTPException as exc:
+        if exc.status_code == 429:
+            detail = exc.detail if isinstance(exc.detail, dict) else {}
+            trace_id = getattr(request.state, "trace_id", None)
+            return JSONResponse(
+                status_code=429,
+                content=error_response(
+                    code=detail.get("code", "RATE_LIMITED"),
+                    message=detail.get("message", "Rate limit exceeded"),
+                    details={"rate_limit": detail.get("rate_limit")},
+                    request_id=trace_id,
+                ),
+            )
+        raise
+
+    trace_id = getattr(request.state, "trace_id", None)
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+    if reset_request.method == "temporary":
+        # Generate temporary password
+        temp_password = generate_temporary_password()
+        user.hashed_password = pwd_context.hash(temp_password)
+        user.must_change_password = True
+        user.password_reset_token = None
+        user.password_reset_token_expires_at = None
+        db.commit()
+
+        # Log audit event
+        log_audit_event(
+            db=db,
+            action="user.password_reset",
+            user_id=str(current_admin_user.id),
+            user_email=current_admin_user.email,
+            resource_type="user",
+            resource_id=user_id,
+            success=True,
+            details=json.dumps({"method": "temporary", "notify_user": reset_request.notify_user}),
+            request=request,
+        )
+
+        # Optionally send email with temporary password
+        email_sent = False
+        if reset_request.notify_user:
+            email_sent = await send_temporary_password_email(user.email, temp_password)
+
+        return success_response(
+            {
+                "success": True,
+                "method": "temporary",
+                "temporary_password": temp_password,
+                "email_sent": email_sent,
+                "message": "User must change password on next login",
+            },
+            trace_id=trace_id,
+        )
+
+    else:  # email method
+        # Generate reset token with 24-hour expiry
+        reset_token = generate_secure_token()
+        user.password_reset_token = reset_token
+        user.password_reset_token_expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+        db.commit()
+
+        # Build reset link
+        reset_link = f"{settings.ADMIN_PANEL_URL}/reset-password?token={reset_token}"
+
+        # Log audit event
+        log_audit_event(
+            db=db,
+            action="user.password_reset",
+            user_id=str(current_admin_user.id),
+            user_email=current_admin_user.email,
+            resource_type="user",
+            resource_id=user_id,
+            success=True,
+            details=json.dumps({"method": "email"}),
+            request=request,
+        )
+
+        # Send reset email
+        email_sent = await send_password_reset_email(user.email, reset_link)
+
+        return success_response(
+            {
+                "success": True,
+                "method": "email",
+                "email_sent": email_sent,
+                "message": "Password reset email sent" if email_sent else "Failed to send email",
+            },
+            trace_id=trace_id,
+        )
+
+
+@router.post("/users/invite")
+async def invite_user(
+    request: Request,
+    invite_request: UserInviteRequest,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Invite a new user via email.
+
+    Creates a user account with a pending invitation. The user will receive
+    an email with a link to set their password and activate their account.
+    """
+    from app.core.config import settings
+    from app.services.email_service import send_invitation_email
+
+    ensure_admin_privileges(current_admin_user)
+
+    # Check if email already exists
+    existing_user = db.query(User).filter(User.email == invite_request.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User with this email already exists")
+
+    # Rate limit invitation actions
+    try:
+        rate_limit_info = enforce_admin_action_rate_limit(request, action="user-invite", calls=20, period=300)
+    except HTTPException as exc:
+        if exc.status_code == 429:
+            detail = exc.detail if isinstance(exc.detail, dict) else {}
+            trace_id = getattr(request.state, "trace_id", None)
+            return JSONResponse(
+                status_code=429,
+                content=error_response(
+                    code=detail.get("code", "RATE_LIMITED"),
+                    message=detail.get("message", "Rate limit exceeded"),
+                    details={"rate_limit": detail.get("rate_limit")},
+                    request_id=trace_id,
+                ),
+            )
+        raise
+
+    trace_id = getattr(request.state, "trace_id", None)
+
+    # Generate invitation token with 7-day expiry
+    invitation_token = generate_secure_token()
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+
+    # Create user with pending invitation
+    new_user = User(
+        email=invite_request.email,
+        full_name=invite_request.full_name or "",
+        hashed_password=None,  # No password until invitation is accepted
+        is_active=False,  # Inactive until invitation is accepted
+        is_admin=invite_request.admin_role == "admin",
+        admin_role=invite_request.admin_role,
+        invitation_token=invitation_token,
+        invitation_token_expires_at=expires_at,
+        invitation_sent_at=datetime.now(timezone.utc),
+        invited_by_id=current_admin_user.id,
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    # Log audit event
+    log_audit_event(
+        db=db,
+        action="user.invite",
+        user_id=str(current_admin_user.id),
+        user_email=current_admin_user.email,
+        resource_type="user",
+        resource_id=str(new_user.id),
+        success=True,
+        details=json.dumps(
+            {
+                "invited_email": invite_request.email,
+                "role": invite_request.admin_role,
+                "send_email": invite_request.send_email,
+            }
+        ),
+        request=request,
+    )
+
+    # Build invitation link
+    invitation_link = f"{settings.ADMIN_PANEL_URL}/accept-invitation?token={invitation_token}"
+
+    # Send invitation email
+    email_sent = False
+    if invite_request.send_email:
+        inviter_name = current_admin_user.full_name or current_admin_user.email
+        email_sent = await send_invitation_email(
+            to=invite_request.email,
+            inviter_name=inviter_name,
+            invitation_link=invitation_link,
+            expires_in_days=7,
+        )
+
+    return success_response(
+        {
+            "success": True,
+            "user_id": str(new_user.id),
+            "email": new_user.email,
+            "invitation_link": invitation_link,
+            "email_sent": email_sent,
+            "expires_at": expires_at.isoformat(),
+        },
+        trace_id=trace_id,
+    )
+
+
+@router.post("/users/{user_id}/resend-invitation")
+async def resend_invitation(
+    request: Request,
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Resend an invitation email to a pending user."""
+    from app.core.config import settings
+    from app.services.email_service import send_invitation_email
+
+    ensure_admin_privileges(current_admin_user)
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.is_active:
+        raise HTTPException(status_code=400, detail="User has already accepted invitation")
+
+    if not user.invitation_token:
+        raise HTTPException(status_code=400, detail="User was not invited via email")
+
+    trace_id = getattr(request.state, "trace_id", None)
+
+    # Generate new invitation token with fresh 7-day expiry
+    new_token = generate_secure_token()
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+
+    user.invitation_token = new_token
+    user.invitation_token_expires_at = expires_at
+    user.invitation_sent_at = datetime.now(timezone.utc)
+    db.commit()
+
+    # Build invitation link
+    invitation_link = f"{settings.ADMIN_PANEL_URL}/accept-invitation?token={new_token}"
+
+    # Send invitation email
+    inviter_name = current_admin_user.full_name or current_admin_user.email
+    email_sent = await send_invitation_email(
+        to=user.email,
+        inviter_name=inviter_name,
+        invitation_link=invitation_link,
+        expires_in_days=7,
+    )
+
+    # Log audit event
+    log_audit_event(
+        db=db,
+        action="user.resend_invitation",
+        user_id=str(current_admin_user.id),
+        user_email=current_admin_user.email,
+        resource_type="user",
+        resource_id=user_id,
+        success=True,
+        details=json.dumps({"email_sent": email_sent}),
+        request=request,
+    )
+
+    return success_response(
+        {
+            "success": True,
+            "email_sent": email_sent,
+            "expires_at": expires_at.isoformat(),
+            "message": "Invitation resent" if email_sent else "Failed to send email",
+        },
+        trace_id=trace_id,
+    )
+
+
+# ============================================================================
+# Bulk Operations
+# ============================================================================
+
+
+class BulkOperationRequest(BaseModel):
+    """Request model for bulk user operations."""
+
+    user_ids: list[str]
+    action: Literal["activate", "deactivate", "set_role"]
+    role: Optional[Literal["user", "admin", "viewer"]] = None  # Required for set_role action
+    reason: Optional[str] = None
+
+
+@router.post("/users/bulk")
+async def bulk_user_operation(
+    request: Request,
+    bulk_request: BulkOperationRequest,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Perform bulk operations on multiple users.
+
+    Supported actions:
+    - "activate": Activate multiple user accounts
+    - "deactivate": Deactivate multiple user accounts (soft delete)
+    - "set_role": Set the role for multiple users (requires 'role' field)
+
+    Returns a summary of successful and failed operations.
+    """
+    ensure_admin_privileges(current_admin_user)
+
+    # Validate request
+    if not bulk_request.user_ids:
+        raise HTTPException(status_code=400, detail="No user IDs provided")
+
+    if len(bulk_request.user_ids) > 50:
+        raise HTTPException(status_code=400, detail="Maximum 50 users per bulk operation")
+
+    if bulk_request.action == "set_role" and not bulk_request.role:
+        raise HTTPException(status_code=400, detail="Role is required for set_role action")
+
+    # Rate limit bulk operations
+    try:
+        rate_limit_info = enforce_admin_action_rate_limit(request, action="bulk-operation", calls=10, period=300)
+    except HTTPException as exc:
+        if exc.status_code == 429:
+            detail = exc.detail if isinstance(exc.detail, dict) else {}
+            trace_id = getattr(request.state, "trace_id", None)
+            return JSONResponse(
+                status_code=429,
+                content=error_response(
+                    code=detail.get("code", "RATE_LIMITED"),
+                    message=detail.get("message", "Rate limit exceeded"),
+                    details={"rate_limit": detail.get("rate_limit")},
+                    request_id=trace_id,
+                ),
+            )
+        raise
+
+    trace_id = getattr(request.state, "trace_id", None)
+    admin_user_id = str(current_admin_user.id)
+
+    # Track results
+    results = {
+        "successful": [],
+        "failed": [],
+        "skipped": [],
+    }
+
+    for user_id in bulk_request.user_ids:
+        try:
+            # Prevent self-modification
+            if user_id == admin_user_id:
+                results["skipped"].append(
+                    {
+                        "user_id": user_id,
+                        "reason": "Cannot modify your own account",
+                    }
+                )
+                continue
+
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user:
+                results["failed"].append(
+                    {
+                        "user_id": user_id,
+                        "reason": "User not found",
+                    }
+                )
+                continue
+
+            # Capture original values for audit
+            original_values = {
+                "is_active": user.is_active,
+                "is_admin": user.is_admin,
+                "admin_role": user.admin_role,
+            }
+
+            # Perform the action
+            if bulk_request.action == "activate":
+                if user.is_active:
+                    results["skipped"].append(
+                        {
+                            "user_id": user_id,
+                            "email": user.email,
+                            "reason": "Already active",
+                        }
+                    )
+                    continue
+                user.is_active = True
+
+            elif bulk_request.action == "deactivate":
+                if not user.is_active:
+                    results["skipped"].append(
+                        {
+                            "user_id": user_id,
+                            "email": user.email,
+                            "reason": "Already inactive",
+                        }
+                    )
+                    continue
+                user.is_active = False
+
+            elif bulk_request.action == "set_role":
+                if user.admin_role == bulk_request.role:
+                    results["skipped"].append(
+                        {
+                            "user_id": user_id,
+                            "email": user.email,
+                            "reason": f"Already has role '{bulk_request.role}'",
+                        }
+                    )
+                    continue
+                user.admin_role = bulk_request.role
+                user.is_admin = bulk_request.role == "admin"
+
+            db.commit()
+
+            # Log audit event
+            log_audit_event(
+                db=db,
+                action=f"user.bulk_{bulk_request.action}",
+                user_id=admin_user_id,
+                user_email=current_admin_user.email,
+                resource_type="user",
+                resource_id=user_id,
+                success=True,
+                details=json.dumps(
+                    {
+                        "original": original_values,
+                        "action": bulk_request.action,
+                        "new_role": bulk_request.role if bulk_request.action == "set_role" else None,
+                        "reason": bulk_request.reason,
+                    }
+                ),
+                request=request,
+            )
+
+            results["successful"].append(
+                {
+                    "user_id": user_id,
+                    "email": user.email,
+                }
+            )
+
+        except Exception as e:
+            logger.warning(f"Bulk operation failed for user {user_id}: {e}")
+            db.rollback()
+            results["failed"].append(
+                {
+                    "user_id": user_id,
+                    "reason": str(e),
+                }
+            )
+
+    return success_response(
+        {
+            "action": bulk_request.action,
+            "total_requested": len(bulk_request.user_ids),
+            "successful": len(results["successful"]),
+            "failed": len(results["failed"]),
+            "skipped": len(results["skipped"]),
+            "results": results,
+            "rate_limit": rate_limit_info,
+        },
+        trace_id=trace_id,
+    )
 
 
 def _parse_audit_details(log: AuditLog) -> Dict:

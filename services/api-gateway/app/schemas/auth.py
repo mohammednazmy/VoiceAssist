@@ -56,6 +56,27 @@ class PasswordChange(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=100)
 
 
+class AcceptInvitationRequest(BaseModel):
+    """Accept invitation and set password request"""
+
+    token: str
+    password: str = Field(..., min_length=8, max_length=100)
+    full_name: Optional[str] = Field(None, max_length=255)
+
+
+class AcceptInvitationResponse(BaseModel):
+    """Response after successfully accepting invitation"""
+
+    success: bool
+    message: str
+    user: Optional["UserResponse"] = None
+    access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
+    token_type: str = "bearer"
+    expires_in: Optional[int] = None
+    refresh_expires_in: Optional[int] = None
+
+
 class SessionInfoResponse(BaseModel):
     """Session timeout information for frontend"""
 

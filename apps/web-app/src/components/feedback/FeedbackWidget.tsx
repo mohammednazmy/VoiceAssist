@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import { feedbackService } from "../../services/feedback";
 import type { FeedbackRating } from "../../services/feedback";
@@ -8,6 +9,7 @@ const FALLBACK_MESSAGE_ID = "ui-feedback";
 const FALLBACK_CONVERSATION_ID = "global";
 
 export function FeedbackWidget() {
+  const location = useLocation();
   const { user } = useAuth();
   const [rating, setRating] = useState<FeedbackRating | null>(null);
   const [comment, setComment] = useState("");
@@ -19,6 +21,12 @@ export function FeedbackWidget() {
   useEffect(() => {
     feedbackService.setUserId(user?.id ?? null);
   }, [user?.id]);
+
+  // Only show on the main dashboard page to avoid overlapping other UI
+  const isHomePage = location.pathname === "/" || location.pathname === "/home";
+  if (!isHomePage) {
+    return null;
+  }
 
   const handleSubmit = async () => {
     if (!rating) return;

@@ -1,6 +1,6 @@
 {
-  "count": 225,
-  "generated_at": "2025-11-28T10:16:00.931Z",
+  "count": 226,
+  "generated_at": "2025-11-29T07:06:44.295Z",
   "docs": [
     {
       "slug": "voice/pipeline",
@@ -3061,6 +3061,13 @@
       "category": "testing",
       "tags": ["e2e", "testing", "guide"],
       "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "unified-chat-voice-ui",
+      "path": "UNIFIED_CHAT_VOICE_UI.md",
+      "title": "UNIFIED CHAT VOICE UI",
+      "status": "draft",
+      "lastUpdated": ""
     }
   ]
 }

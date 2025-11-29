@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback, FormEvent } from "react";
-import { useCreateUser, CreateUserPayload } from "../../hooks/useCreateUser";
+import {
+  useCreateUser,
+  CreateUserPayload,
+  InviteUserPayload,
+} from "../../hooks/useCreateUser";
+import { RoleSelector } from "./RoleSelector";
 
 interface CreateUserDialogProps {
   isOpen: boolean;
@@ -56,6 +61,7 @@ export function CreateUserDialog({
 }: CreateUserDialogProps) {
   const {
     createUser,
+    inviteUser,
     isLoading,
     error: hookError,
     checkEmailExists,
@@ -66,7 +72,9 @@ export function CreateUserDialog({
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminRole, setAdminRole] = useState<"user" | "admin" | "viewer">(
+    "user",
+  );
   const [isActive, setIsActive] = useState(true);
   const [passwordMethod, setPasswordMethod] = useState<"manual" | "invitation">(
     "manual",
@@ -88,7 +96,7 @@ export function CreateUserDialog({
       setFullName("");
       setPassword("");
       setShowPassword(false);
-      setIsAdmin(false);
+      setAdminRole("user");
       setIsActive(true);
       setPasswordMethod("manual");
       setEmailError(null);
@@ -135,6 +143,7 @@ export function CreateUserDialog({
     if (passwordMethod === "manual") {
       if (!password || passwordStrength.score < 3) return false;
     }
+    // Invitation method just needs valid email
     return true;
   }, [
     email,
@@ -155,24 +164,36 @@ export function CreateUserDialog({
       return;
     }
 
-    if (passwordMethod === "invitation") {
-      setFormError(
-        "Email invitations require backend setup. Please use manual password for now.",
-      );
-      return;
-    }
-
     try {
-      const payload: CreateUserPayload = {
-        email,
-        full_name: fullName,
-        password,
-        is_admin: isAdmin,
-        is_active: isActive,
-      };
+      if (passwordMethod === "invitation") {
+        // Use invitation flow
+        const payload: InviteUserPayload = {
+          email,
+          full_name: fullName || undefined,
+          admin_role: adminRole,
+        };
 
-      await createUser(payload);
-      setSuccessMessage(`User ${email} created successfully!`);
+        const result = await inviteUser(payload);
+        if (result.invitation_sent) {
+          setSuccessMessage(`Invitation sent to ${email}!`);
+        } else {
+          setSuccessMessage(
+            `User ${email} created. Invitation email could not be sent.`,
+          );
+        }
+      } else {
+        // Use manual password flow
+        const payload: CreateUserPayload = {
+          email,
+          full_name: fullName,
+          password,
+          admin_role: adminRole,
+          is_active: isActive,
+        };
+
+        await createUser(payload);
+        setSuccessMessage(`User ${email} created successfully!`);
+      }
 
       // Close after brief delay to show success
       setTimeout(() => {
@@ -306,74 +327,43 @@ export function CreateUserDialog({
             <label className="block text-sm font-medium text-slate-300 mb-2">
               Role
             </label>
-            <div className="space-y-2">
-              <label className="flex items-start gap-3 p-3 bg-slate-800/50 border border-slate-700 rounded-md cursor-pointer hover:bg-slate-800 transition-colors">
-                <input
-                  type="radio"
-                  name="role"
-                  checked={!isAdmin}
-                  onChange={() => setIsAdmin(false)}
-                  className="mt-0.5"
-                  disabled={isLoading}
-                />
-                <div>
-                  <div className="text-sm font-medium text-slate-200">
-                    Standard User
-                  </div>
-                  <div className="text-xs text-slate-400">
-                    Can use the assistant and access their own data
-                  </div>
-                </div>
-              </label>
-              <label className="flex items-start gap-3 p-3 bg-slate-800/50 border border-slate-700 rounded-md cursor-pointer hover:bg-slate-800 transition-colors">
-                <input
-                  type="radio"
-                  name="role"
-                  checked={isAdmin}
-                  onChange={() => setIsAdmin(true)}
-                  className="mt-0.5"
-                  disabled={isLoading}
-                />
-                <div>
-                  <div className="text-sm font-medium text-slate-200">
-                    Administrator
-                  </div>
-                  <div className="text-xs text-slate-400">
-                    Full system access including user management
-                  </div>
-                </div>
-              </label>
-            </div>
+            <RoleSelector
+              value={adminRole}
+              onChange={setAdminRole}
+              disabled={isLoading}
+            />
           </div>
 
-          {/* Active Status */}
-          <div>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <div className="relative">
-                <input
-                  type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                  className="sr-only"
-                  disabled={isLoading}
-                />
-                <div
-                  className={`w-10 h-6 rounded-full transition-colors ${
-                    isActive ? "bg-blue-600" : "bg-slate-700"
-                  }`}
-                >
-                  <div
-                    className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${
-                      isActive ? "translate-x-5" : "translate-x-1"
-                    }`}
+          {/* Active Status - only show for manual password method */}
+          {passwordMethod === "manual" && (
+            <div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={isActive}
+                    onChange={(e) => setIsActive(e.target.checked)}
+                    className="sr-only"
+                    disabled={isLoading}
                   />
+                  <div
+                    className={`w-10 h-6 rounded-full transition-colors ${
+                      isActive ? "bg-blue-600" : "bg-slate-700"
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${
+                        isActive ? "translate-x-5" : "translate-x-1"
+                      }`}
+                    />
+                  </div>
                 </div>
-              </div>
-              <span className="text-sm font-medium text-slate-300">
-                Account Active
-              </span>
-            </label>
-          </div>
+                <span className="text-sm font-medium text-slate-300">
+                  Account Active
+                </span>
+              </label>
+            </div>
+          )}
 
           {/* Password Method */}
           <div>
@@ -381,28 +371,37 @@ export function CreateUserDialog({
               Password Setup
             </label>
             <div className="space-y-2">
-              <label className="flex items-start gap-3 p-3 bg-slate-800/50 border border-slate-700 rounded-md cursor-pointer hover:bg-slate-800 transition-colors opacity-50">
+              <label
+                className={`flex items-start gap-3 p-3 bg-slate-800/50 border rounded-md cursor-pointer hover:bg-slate-800 transition-colors ${
+                  passwordMethod === "invitation"
+                    ? "border-blue-500 bg-blue-950/30"
+                    : "border-slate-700"
+                }`}
+              >
                 <input
                   type="radio"
                   name="passwordMethod"
                   checked={passwordMethod === "invitation"}
                   onChange={() => setPasswordMethod("invitation")}
                   className="mt-0.5"
-                  disabled={true} // Disabled until backend supports it
+                  disabled={isLoading}
                 />
                 <div>
                   <div className="text-sm font-medium text-slate-200">
                     Send invitation email
-                    <span className="ml-2 text-xs text-amber-400">
-                      (Coming soon)
-                    </span>
                   </div>
                   <div className="text-xs text-slate-400">
-                    User will create their own password
+                    User will receive an email to set their own password
                   </div>
                 </div>
               </label>
-              <label className="flex items-start gap-3 p-3 bg-slate-800/50 border border-slate-700 rounded-md cursor-pointer hover:bg-slate-800 transition-colors">
+              <label
+                className={`flex items-start gap-3 p-3 bg-slate-800/50 border rounded-md cursor-pointer hover:bg-slate-800 transition-colors ${
+                  passwordMethod === "manual"
+                    ? "border-blue-500 bg-blue-950/30"
+                    : "border-slate-700"
+                }`}
+              >
                 <input
                   type="radio"
                   name="passwordMethod"
@@ -585,7 +584,9 @@ export function CreateUserDialog({
               {isLoading && (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               )}
-              Create User
+              {passwordMethod === "invitation"
+                ? "Send Invitation"
+                : "Create User"}
             </button>
           </div>
         </form>

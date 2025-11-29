@@ -30,10 +30,15 @@ from app.services.llm_client import LLMClient, LLMRequest, LLMResponse
 from app.services.model_adapters import ModelAdapter, ModelAdapterRegistry
 from app.services.openai_realtime_client import OpenAIRealtimeClient
 from app.services.phi_detector import PHIDetector
+from app.services.prompt_service import prompt_service
 from app.services.query_expansion import QueryExpansionConfig, QueryExpansionService
 from app.services.realtime_voice_service import realtime_voice_service
 from app.services.search_aggregator import SearchAggregator
 from pydantic import BaseModel, Field
+
+# Default values when prompt service is unavailable
+DEFAULT_TEMPERATURE = 0.7
+DEFAULT_MAX_TOKENS = 1024
 
 
 class Citation(BaseModel):
@@ -186,10 +191,15 @@ class QueryOrchestrator:
         """Prepare prompt, RAG context, and LLM request for streaming or non-streaming paths."""
         search_results, context, reasoning_path, retrieval_confidence = await self._run_retrieval(request.query)
 
+        # Get dynamic RAG instructions from prompt service
+        try:
+            rag_instructions = await prompt_service.get_rag_instructions()
+        except Exception as e:
+            logging.warning(f"Failed to get RAG instructions, using default: {e}")
+            rag_instructions = prompt_service._get_default_rag_instructions()
+
         # Step 3: Build prompt with context and clinical context
-        prompt_parts = [
-            "You are a clinical decision support assistant.",
-        ]
+        prompt_parts = [rag_instructions]
 
         # Add clinical context if provided
         if clinical_context:
@@ -219,19 +229,8 @@ class QueryOrchestrator:
             prompt_parts.append("\nUse the following context from medical literature to answer the query:")
             prompt_parts.append(f"\nContext:\n{context}")
 
-        # Add query and instructions
+        # Add query
         prompt_parts.append(f"\nQuery: {request.query}")
-        prompt_parts.append(
-            """
-Instructions:
-- Consider the patient context when providing your answer
-- Base your answer on the provided medical literature context
-- If the context doesn't contain relevant information, say so
-- Be concise and clinical in your response
-- Reference specific sources when possible
-- Consider contraindications based on patient allergies and current medications
-"""
-        )
 
         prompt = "\n".join(prompt_parts)
 
@@ -271,14 +270,32 @@ Instructions:
             )
             adapter = self.model_registry.get("default") or None
 
+        # Get per-prompt temperature and max_tokens from prompt service
+        temperature = DEFAULT_TEMPERATURE
+        max_tokens = DEFAULT_MAX_TOKENS
+        model_override = adapter.model_id if adapter else None
+
+        try:
+            prompt_name = f"intent:{intent}"
+            prompt_settings = await prompt_service.get_prompt_with_settings(prompt_name)
+            if prompt_settings:
+                if prompt_settings.get("temperature") is not None:
+                    temperature = prompt_settings["temperature"]
+                if prompt_settings.get("max_tokens") is not None:
+                    max_tokens = prompt_settings["max_tokens"]
+                if prompt_settings.get("model_name") and not model_override:
+                    model_override = prompt_settings["model_name"]
+        except Exception as e:
+            logging.warning(f"Failed to get prompt settings for {intent}, using defaults: {e}")
+
         llm_request = LLMRequest(
             prompt=sanitized_prompt,
             intent=intent,
-            temperature=0.1,
-            max_tokens=512,
+            temperature=temperature,
+            max_tokens=max_tokens,
             phi_present=llm_phi_flag,
             trace_id=trace_id,
-            model_override=adapter.model_id if adapter else None,
+            model_override=model_override,
             model_provider=adapter.provider if adapter else None,
         )
 

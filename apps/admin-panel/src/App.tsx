@@ -15,6 +15,7 @@ import { ToolsPage } from "./pages/ToolsPage";
 import { TroubleshootingPage } from "./pages/TroubleshootingPage";
 import { BackupsPage } from "./pages/BackupsPage";
 import { FeatureFlagsPage } from "./pages/FeatureFlagsPage";
+import { PromptsPage } from "./pages/prompts";
 
 export function App() {
   return (
@@ -50,6 +51,7 @@ export function App() {
                       path="/feature-flags"
                       element={<FeatureFlagsPage />}
                     />
+                    <Route path="/prompts" element={<PromptsPage />} />
                     <Route
                       path="/troubleshooting"
                       element={<TroubleshootingPage />}

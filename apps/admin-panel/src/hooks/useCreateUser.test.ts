@@ -1,5 +1,6 @@
 /**
  * Tests for useCreateUser hook
+ * Updated to support admin_role and invitation flow
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -24,6 +25,7 @@ const mockCreatedUser = {
   email: "newuser@example.com",
   full_name: "New User",
   is_admin: false,
+  admin_role: "user",
   is_active: true,
   created_at: "2024-01-15T12:00:00Z",
 };
@@ -31,6 +33,21 @@ const mockCreatedUser = {
 const mockAdminUser = {
   ...mockCreatedUser,
   is_admin: true,
+  admin_role: "admin",
+};
+
+const mockViewerUser = {
+  ...mockCreatedUser,
+  admin_role: "viewer",
+};
+
+const mockInvitedUser = {
+  id: "user-456",
+  email: "invited@example.com",
+  full_name: "Invited User",
+  admin_role: "user",
+  invitation_sent: true,
+  invitation_expires_at: "2024-01-22T12:00:00Z",
 };
 
 describe("useCreateUser", () => {
@@ -50,7 +67,7 @@ describe("useCreateUser", () => {
           email: "newuser@example.com",
           full_name: "New User",
           password: "SecurePass123!",
-          is_admin: false,
+          admin_role: "user",
           is_active: true,
         });
       });
@@ -72,7 +89,7 @@ describe("useCreateUser", () => {
     it("should create an admin user with role update", async () => {
       vi.mocked(fetchAPI)
         .mockResolvedValueOnce(mockCreatedUser) // Register call
-        .mockResolvedValueOnce(mockAdminUser); // Role update call
+        .mockResolvedValueOnce({ user: mockAdminUser }); // Role update call
 
       const { result } = renderHook(() => useCreateUser());
 
@@ -82,7 +99,7 @@ describe("useCreateUser", () => {
           email: "newuser@example.com",
           full_name: "New User",
           password: "SecurePass123!",
-          is_admin: true,
+          admin_role: "admin",
           is_active: true,
         });
       });
@@ -104,20 +121,54 @@ describe("useCreateUser", () => {
         {
           method: "PUT",
           body: JSON.stringify({
-            is_admin: true,
-            action_reason: "Admin role assigned during user creation",
+            admin_role: "admin",
+            action_reason: "admin role assigned during user creation",
           }),
         },
       );
 
-      expect(createdUser?.is_admin).toBe(true);
+      expect(createdUser?.admin_role).toBe("admin");
+    });
+
+    it("should create a viewer user with role update", async () => {
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce(mockCreatedUser) // Register call
+        .mockResolvedValueOnce({ user: mockViewerUser }); // Role update call
+
+      const { result } = renderHook(() => useCreateUser());
+
+      let createdUser;
+      await act(async () => {
+        createdUser = await result.current.createUser({
+          email: "newuser@example.com",
+          full_name: "New User",
+          password: "SecurePass123!",
+          admin_role: "viewer",
+          is_active: true,
+        });
+      });
+
+      // Then update role
+      expect(fetchAPI).toHaveBeenNthCalledWith(
+        2,
+        "/api/admin/panel/users/user-123",
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            admin_role: "viewer",
+            action_reason: "viewer role assigned during user creation",
+          }),
+        },
+      );
+
+      expect(createdUser?.admin_role).toBe("viewer");
     });
 
     it("should deactivate user if is_active is false", async () => {
       const inactiveUser = { ...mockCreatedUser, is_active: false };
       vi.mocked(fetchAPI)
         .mockResolvedValueOnce(mockCreatedUser)
-        .mockResolvedValueOnce(inactiveUser);
+        .mockResolvedValueOnce({ user: inactiveUser });
 
       const { result } = renderHook(() => useCreateUser());
 
@@ -126,7 +177,7 @@ describe("useCreateUser", () => {
           email: "newuser@example.com",
           full_name: "New User",
           password: "SecurePass123!",
-          is_admin: false,
+          admin_role: "user",
           is_active: false,
         });
       });
@@ -157,7 +208,7 @@ describe("useCreateUser", () => {
             email: "existing@example.com",
             full_name: "User",
             password: "SecurePass123!",
-            is_admin: false,
+            admin_role: "user",
             is_active: true,
           });
         } catch {
@@ -179,7 +230,7 @@ describe("useCreateUser", () => {
             email: "newuser@example.com",
             full_name: "User",
             password: "SecurePass123!",
-            is_admin: false,
+            admin_role: "user",
             is_active: true,
           });
         } catch {
@@ -208,7 +259,7 @@ describe("useCreateUser", () => {
           email: "newuser@example.com",
           full_name: "User",
           password: "SecurePass123!",
-          is_admin: false,
+          admin_role: "user",
           is_active: true,
         });
       });
@@ -219,6 +270,171 @@ describe("useCreateUser", () => {
       // Resolve the promise
       await act(async () => {
         resolvePromise!(mockCreatedUser);
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+    });
+  });
+
+  describe("inviteUser", () => {
+    it("should invite a user successfully", async () => {
+      vi.mocked(fetchAPI).mockResolvedValueOnce({
+        user: mockInvitedUser,
+        invitation_sent: true,
+        message: "Invitation sent",
+      });
+
+      const { result } = renderHook(() => useCreateUser());
+
+      let invitedUser;
+      await act(async () => {
+        invitedUser = await result.current.inviteUser({
+          email: "invited@example.com",
+          full_name: "Invited User",
+          admin_role: "user",
+        });
+      });
+
+      expect(fetchAPI).toHaveBeenCalledWith("/api/admin/panel/users/invite", {
+        method: "POST",
+        body: JSON.stringify({
+          email: "invited@example.com",
+          full_name: "Invited User",
+          admin_role: "user",
+          send_email: true,
+        }),
+      });
+
+      expect(invitedUser?.email).toBe("invited@example.com");
+      expect(invitedUser?.invitation_sent).toBe(true);
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.error).toBeNull();
+    });
+
+    it("should invite an admin user", async () => {
+      const adminInvite = { ...mockInvitedUser, admin_role: "admin" };
+      vi.mocked(fetchAPI).mockResolvedValueOnce({
+        user: adminInvite,
+        invitation_sent: true,
+        message: "Invitation sent",
+      });
+
+      const { result } = renderHook(() => useCreateUser());
+
+      await act(async () => {
+        await result.current.inviteUser({
+          email: "admin@example.com",
+          admin_role: "admin",
+        });
+      });
+
+      expect(fetchAPI).toHaveBeenCalledWith("/api/admin/panel/users/invite", {
+        method: "POST",
+        body: JSON.stringify({
+          email: "admin@example.com",
+          full_name: undefined,
+          admin_role: "admin",
+          send_email: true,
+        }),
+      });
+    });
+
+    it("should invite a viewer user", async () => {
+      const viewerInvite = { ...mockInvitedUser, admin_role: "viewer" };
+      vi.mocked(fetchAPI).mockResolvedValueOnce({
+        user: viewerInvite,
+        invitation_sent: true,
+        message: "Invitation sent",
+      });
+
+      const { result } = renderHook(() => useCreateUser());
+
+      await act(async () => {
+        await result.current.inviteUser({
+          email: "viewer@example.com",
+          admin_role: "viewer",
+        });
+      });
+
+      expect(fetchAPI).toHaveBeenCalledWith("/api/admin/panel/users/invite", {
+        method: "POST",
+        body: JSON.stringify({
+          email: "viewer@example.com",
+          full_name: undefined,
+          admin_role: "viewer",
+          send_email: true,
+        }),
+      });
+    });
+
+    it("should handle email already registered error for invite", async () => {
+      const apiError = new APIError("Email already registered", "EMAIL_EXISTS");
+      vi.mocked(fetchAPI).mockRejectedValueOnce(apiError);
+
+      const { result } = renderHook(() => useCreateUser());
+
+      await act(async () => {
+        try {
+          await result.current.inviteUser({
+            email: "existing@example.com",
+            admin_role: "user",
+          });
+        } catch {
+          // Expected to throw
+        }
+      });
+
+      expect(result.current.error).toBe("This email is already registered");
+    });
+
+    it("should handle generic error for invite", async () => {
+      vi.mocked(fetchAPI).mockRejectedValueOnce(new Error("SMTP error"));
+
+      const { result } = renderHook(() => useCreateUser());
+
+      await act(async () => {
+        try {
+          await result.current.inviteUser({
+            email: "new@example.com",
+            admin_role: "user",
+          });
+        } catch {
+          // Expected to throw
+        }
+      });
+
+      expect(result.current.error).toBe("SMTP error");
+    });
+
+    it("should set isLoading during invite request", async () => {
+      let resolvePromise: (value: unknown) => void;
+      const pendingPromise = new Promise((resolve) => {
+        resolvePromise = resolve;
+      });
+
+      vi.mocked(fetchAPI).mockReturnValueOnce(
+        pendingPromise as Promise<unknown>,
+      );
+
+      const { result } = renderHook(() => useCreateUser());
+
+      act(() => {
+        result.current.inviteUser({
+          email: "new@example.com",
+          admin_role: "user",
+        });
+      });
+
+      expect(result.current.isLoading).toBe(true);
+
+      await act(async () => {
+        resolvePromise!({
+          user: mockInvitedUser,
+          invitation_sent: true,
+          message: "Sent",
+        });
       });
 
       await waitFor(() => {

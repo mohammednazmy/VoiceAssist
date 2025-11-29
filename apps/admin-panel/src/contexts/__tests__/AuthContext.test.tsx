@@ -179,7 +179,7 @@ describe("AuthContext", () => {
     it("should refresh token when auth token is expired", async () => {
       // Set an expired token but valid refresh token
       mockLocalStorage["auth_token"] = createMockToken(-3600); // Expired
-      mockLocalStorage["refresh_token"] = "valid-refresh-token";
+      mockLocalStorage["auth_refresh_token"] = "valid-refresh-token";
 
       mockRefreshToken.mockResolvedValueOnce({
         accessToken: createMockToken(3600),
@@ -210,7 +210,7 @@ describe("AuthContext", () => {
 
     it("should clear session when refresh fails", async () => {
       mockLocalStorage["auth_token"] = createMockToken(-3600);
-      mockLocalStorage["refresh_token"] = "invalid-refresh-token";
+      mockLocalStorage["auth_refresh_token"] = "invalid-refresh-token";
 
       mockRefreshToken.mockRejectedValueOnce(new Error("Refresh failed"));
 

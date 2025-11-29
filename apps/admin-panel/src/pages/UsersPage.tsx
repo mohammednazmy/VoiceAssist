@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchAPI } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import { CreateUserDialog } from "../components/users/CreateUserDialog";
+import { EditUserDialog } from "../components/users/EditUserDialog";
+import { PasswordResetDialog } from "../components/users/PasswordResetDialog";
+import { PermanentDeleteDialog } from "../components/users/PermanentDeleteDialog";
+import { BulkActionBar } from "../components/users/BulkActionBar";
+import { RoleBadge } from "../components/users/RoleBadge";
+import { useBulkOperations } from "../hooks/useBulkOperations";
 
 interface AdminUser {
   id: string;
@@ -9,6 +15,7 @@ interface AdminUser {
   full_name?: string;
   is_admin: boolean;
   is_active: boolean;
+  admin_role: "user" | "admin" | "viewer";
   created_at: string;
   last_login?: string;
 }
@@ -41,6 +48,16 @@ export function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
+  const [showPermanentDeleteModal, setShowPermanentDeleteModal] =
+    useState(false);
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [passwordResetUser, setPasswordResetUser] = useState<AdminUser | null>(
+    null,
+  );
+  const [permanentDeleteUser, setPermanentDeleteUser] =
+    useState<AdminUser | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [roleHistory, setRoleHistory] = useState<RoleHistoryEntry[]>([]);
@@ -50,6 +67,19 @@ export function UsersPage() {
   const [pageSize] = useState(20);
   const [total, setTotal] = useState(0);
   const { isViewer } = useAuth();
+
+  // Bulk operations
+  const {
+    selectedIds,
+    selectedCount,
+    toggleSelection,
+    selectAll,
+    clearSelection,
+    isSelected,
+    executeBulkOperation,
+    isLoading: bulkLoading,
+    lastResult: bulkResult,
+  } = useBulkOperations(users.length);
 
   const selectedUser = useMemo(
     () => users.find((u) => u.id === selectedUserId) || null,
@@ -280,6 +310,10 @@ export function UsersPage() {
           key={idx}
           className="divide-x divide-slate-900 bg-slate-900/30 animate-pulse"
         >
+          {/* Checkbox column */}
+          <td className="px-4 py-3">
+            <div className="h-4 w-4 bg-slate-800 rounded" />
+          </td>
           {Array.from({ length: 7 }).map((__, cellIdx) => (
             <td key={cellIdx} className="px-4 py-3">
               <div className="h-3 w-full max-w-[140px] bg-slate-800 rounded" />
@@ -292,22 +326,25 @@ export function UsersPage() {
     return users.map((user) => (
       <tr
         key={user.id}
-        className={`hover:bg-slate-800/50 ${selectedUserId === user.id ? "bg-slate-900/60" : ""}`}
+        className={`hover:bg-slate-800/50 ${selectedUserId === user.id ? "bg-slate-900/60" : ""} ${isSelected(user.id) ? "bg-blue-950/30" : ""}`}
       >
+        <td className="px-4 py-3">
+          <input
+            type="checkbox"
+            checked={isSelected(user.id)}
+            onChange={() => toggleSelection(user.id)}
+            disabled={isViewer}
+            className="h-4 w-4 text-blue-600 border-slate-600 bg-slate-800 rounded focus:ring-blue-500 focus:ring-offset-0 disabled:opacity-50"
+          />
+        </td>
         <td className="px-4 py-3 text-sm text-slate-300">{user.email}</td>
         <td className="px-4 py-3 text-sm text-slate-300">
           {user.full_name || "-"}
         </td>
         <td className="px-4 py-3 text-sm">
-          <span
-            className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
-              user.is_admin
-                ? "bg-purple-900/50 text-purple-400 border border-purple-800"
-                : "bg-slate-800 text-slate-400 border border-slate-700"
-            }`}
-          >
-            {user.is_admin ? "Admin" : "User"}
-          </span>
+          <RoleBadge
+            role={user.admin_role || (user.is_admin ? "admin" : "user")}
+          />
         </td>
         <td className="px-4 py-3 text-sm">
           <span
@@ -329,6 +366,28 @@ export function UsersPage() {
             : "-"}
         </td>
         <td className="px-4 py-3 text-sm text-right space-x-2">
+          <button
+            onClick={() => {
+              setEditingUser(user);
+              setShowEditModal(true);
+            }}
+            disabled={isViewer}
+            className="text-indigo-400 hover:text-indigo-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Edit user"
+          >
+            ✏️
+          </button>
+          <button
+            onClick={() => {
+              setPasswordResetUser(user);
+              setShowPasswordResetModal(true);
+            }}
+            disabled={isViewer}
+            className="text-amber-400 hover:text-amber-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Reset password"
+          >
+            🔑
+          </button>
           <button
             onClick={() => toggleAdminRole(user.id, user.is_admin)}
             disabled={isViewer}
@@ -363,10 +422,21 @@ export function UsersPage() {
           <button
             onClick={() => deleteUser(user.id, user.email)}
             disabled={isViewer}
-            className="text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Delete user"
+            className="text-yellow-400 hover:text-yellow-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Deactivate user"
           >
             🗑️
+          </button>
+          <button
+            onClick={() => {
+              setPermanentDeleteUser(user);
+              setShowPermanentDeleteModal(true);
+            }}
+            disabled={isViewer}
+            className="text-red-500 hover:text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Permanently delete user"
+          >
+            💀
           </button>
         </td>
       </tr>
@@ -408,31 +478,38 @@ export function UsersPage() {
         className={`bg-slate-900/50 border rounded-lg p-4 space-y-3 ${
           selectedUserId === user.id
             ? "border-blue-700 bg-slate-900/80"
-            : "border-slate-800"
+            : isSelected(user.id)
+              ? "border-blue-600 bg-blue-950/30"
+              : "border-slate-800"
         }`}
       >
-        {/* Header with email and status badges */}
+        {/* Header with checkbox, email and status badges */}
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium text-slate-200 truncate">
-              {user.email}
-            </div>
-            {user.full_name && (
-              <div className="text-xs text-slate-400 truncate">
-                {user.full_name}
-              </div>
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            {!isViewer && (
+              <input
+                type="checkbox"
+                checked={isSelected(user.id)}
+                onChange={() => toggleSelection(user.id)}
+                className="mt-0.5 h-4 w-4 text-blue-600 border-slate-600 bg-slate-800 rounded focus:ring-blue-500 focus:ring-offset-0"
+              />
             )}
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium text-slate-200 truncate">
+                {user.email}
+              </div>
+              {user.full_name && (
+                <div className="text-xs text-slate-400 truncate">
+                  {user.full_name}
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span
-              className={`inline-flex px-2 py-0.5 text-[10px] font-medium rounded ${
-                user.is_admin
-                  ? "bg-purple-900/50 text-purple-400 border border-purple-800"
-                  : "bg-slate-800 text-slate-400 border border-slate-700"
-              }`}
-            >
-              {user.is_admin ? "Admin" : "User"}
-            </span>
+            <RoleBadge
+              role={user.admin_role || (user.is_admin ? "admin" : "user")}
+              size="sm"
+            />
             <span
               className={`inline-flex px-2 py-0.5 text-[10px] font-medium rounded ${
                 user.is_active
@@ -460,6 +537,26 @@ export function UsersPage() {
         <div className="flex items-center justify-between pt-2 border-t border-slate-800">
           <div className="flex items-center gap-3">
             <button
+              onClick={() => {
+                setEditingUser(user);
+                setShowEditModal(true);
+              }}
+              disabled={isViewer}
+              className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ✏️ <span className="hidden sm:inline">Edit</span>
+            </button>
+            <button
+              onClick={() => {
+                setPasswordResetUser(user);
+                setShowPasswordResetModal(true);
+              }}
+              disabled={isViewer}
+              className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              🔑 <span className="hidden sm:inline">Reset</span>
+            </button>
+            <button
               onClick={() => toggleAdminRole(user.id, user.is_admin)}
               disabled={isViewer}
               className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -469,6 +566,8 @@ export function UsersPage() {
                 {user.is_admin ? "Remove admin" : "Make admin"}
               </span>
             </button>
+          </div>
+          <div className="flex items-center gap-3">
             <button
               onClick={() => toggleUserStatus(user.id, user.is_active)}
               disabled={isViewer}
@@ -479,12 +578,7 @@ export function UsersPage() {
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {user.is_active ? "🔒" : "🔓"}
-              <span className="hidden sm:inline">
-                {user.is_active ? "Deactivate" : "Activate"}
-              </span>
             </button>
-          </div>
-          <div className="flex items-center gap-3">
             <button
               onClick={() => setSelectedUserId(user.id)}
               className={`flex items-center gap-1 text-xs ${
@@ -493,14 +587,26 @@ export function UsersPage() {
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              📜 <span className="hidden sm:inline">History</span>
+              📜
             </button>
             <button
               onClick={() => deleteUser(user.id, user.email)}
               disabled={isViewer}
-              className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 text-xs text-yellow-400 hover:text-yellow-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Deactivate"
             >
-              🗑️ <span className="hidden sm:inline">Delete</span>
+              🗑️
+            </button>
+            <button
+              onClick={() => {
+                setPermanentDeleteUser(user);
+                setShowPermanentDeleteModal(true);
+              }}
+              disabled={isViewer}
+              className="flex items-center gap-1 text-xs text-red-500 hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Permanently delete"
+            >
+              💀
             </button>
           </div>
         </div>
@@ -594,6 +700,23 @@ export function UsersPage() {
         <table className="w-full">
           <thead className="bg-slate-900 border-b border-slate-800">
             <tr>
+              <th className="px-4 py-3 w-10">
+                <input
+                  type="checkbox"
+                  checked={
+                    users.length > 0 && selectedIds.size === users.length
+                  }
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      selectAll(users.map((u) => u.id));
+                    } else {
+                      clearSelection();
+                    }
+                  }}
+                  disabled={isViewer || users.length === 0}
+                  className="h-4 w-4 text-blue-600 border-slate-600 bg-slate-800 rounded focus:ring-blue-500 focus:ring-offset-0 disabled:opacity-50"
+                />
+              </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 Email
               </th>
@@ -797,6 +920,67 @@ export function UsersPage() {
           loadUsers();
         }}
       />
+
+      <EditUserDialog
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingUser(null);
+        }}
+        onSuccess={() => {
+          loadUsers();
+          if (editingUser && selectedUserId === editingUser.id) {
+            loadUserInsights(editingUser.id);
+          }
+        }}
+        user={editingUser}
+      />
+
+      <PasswordResetDialog
+        isOpen={showPasswordResetModal}
+        onClose={() => {
+          setShowPasswordResetModal(false);
+          setPasswordResetUser(null);
+        }}
+        user={passwordResetUser}
+      />
+
+      <PermanentDeleteDialog
+        isOpen={showPermanentDeleteModal}
+        onClose={() => {
+          setShowPermanentDeleteModal(false);
+          setPermanentDeleteUser(null);
+        }}
+        onSuccess={() => {
+          // Clear selection if we deleted the selected user
+          if (
+            permanentDeleteUser &&
+            selectedUserId === permanentDeleteUser.id
+          ) {
+            setSelectedUserId(null);
+            setRoleHistory([]);
+            setLockEvents([]);
+          }
+          loadUsers();
+        }}
+        user={permanentDeleteUser}
+      />
+
+      {/* Bulk action bar (appears when users are selected) */}
+      {!isViewer && (
+        <BulkActionBar
+          selectedCount={selectedCount}
+          isLoading={bulkLoading}
+          onAction={async (action, role, reason) => {
+            const result = await executeBulkOperation(action, role, reason);
+            // Reload users after bulk operation
+            await loadUsers();
+            return result;
+          }}
+          onClearSelection={clearSelection}
+          lastResult={bulkResult}
+        />
+      )}
     </div>
   );
 }

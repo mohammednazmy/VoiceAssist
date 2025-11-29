@@ -53,9 +53,7 @@ class STTProviderConfig:
     enabled: bool  # Whether this provider is configured and available
     api_key_present: bool  # Whether API key is configured (but not the key itself)
     supports_streaming: bool = True  # Whether provider supports streaming audio
-    supports_interim_results: bool = (
-        True  # Whether provider supports partial transcripts
-    )
+    supports_interim_results: bool = True  # Whether provider supports partial transcripts
     supported_languages: Optional[list[str]] = None  # Supported language codes
     max_audio_duration_sec: Optional[int] = None  # Max audio duration in seconds
 
@@ -80,9 +78,7 @@ class RealtimeVoiceService:
         """Check if Realtime API is enabled and configured"""
         return self.enabled and bool(self.api_key)
 
-    async def create_openai_ephemeral_session(
-        self, model: str, voice: str = "alloy"
-    ) -> Dict[str, Any]:
+    async def create_openai_ephemeral_session(self, model: str, voice: str = "alloy") -> Dict[str, Any]:
         """
         Create an ephemeral session with OpenAI's Realtime API.
 
@@ -124,9 +120,7 @@ class RealtimeVoiceService:
                             "response": error_detail,
                         },
                     )
-                    raise ValueError(
-                        f"Failed to create OpenAI session: {response.status_code}"
-                    )
+                    raise ValueError(f"Failed to create OpenAI session: {response.status_code}")
 
                 data = response.json()
 
@@ -161,9 +155,7 @@ class RealtimeVoiceService:
             logger.error(f"OpenAI session creation error: {str(e)}")
             raise ValueError(f"Failed to create OpenAI session: {str(e)}")
 
-    def generate_ephemeral_token(
-        self, user_id: str, session_id: str, expires_at: int
-    ) -> str:
+    def generate_ephemeral_token(self, user_id: str, session_id: str, expires_at: int) -> str:
         """
         Generate an HMAC-signed ephemeral token for voice session.
 
@@ -241,9 +233,7 @@ class RealtimeVoiceService:
                 payload_b64.encode(),
                 hashlib.sha256,
             ).digest()
-            expected_signature_b64 = base64.urlsafe_b64encode(
-                expected_signature
-            ).decode()
+            expected_signature_b64 = base64.urlsafe_b64encode(expected_signature).decode()
 
             if not hmac.compare_digest(signature_b64, expected_signature_b64):
                 raise ValueError("Invalid token signature")
@@ -300,9 +290,7 @@ class RealtimeVoiceService:
             ValueError: If Realtime API is not enabled or configured
         """
         if not self.is_enabled():
-            raise ValueError(
-                "Realtime API is not enabled or OpenAI API key not configured"
-            )
+            raise ValueError("Realtime API is not enabled or OpenAI API key not configured")
 
         # Validate and select voice
         valid_voices = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
@@ -430,17 +418,8 @@ class RealtimeVoiceService:
 
         return True
 
-    def get_session_instructions(self, conversation_id: str | None = None) -> str:
-        """
-        Get system instructions for the Realtime session.
-
-        Args:
-            conversation_id: Optional conversation ID for context
-
-        Returns:
-            System instructions string
-        """
-        instructions = """You are a helpful medical AI assistant in voice mode.
+    # Default voice instructions for fallback
+    _DEFAULT_VOICE_INSTRUCTIONS = """You are a helpful medical AI assistant in voice mode.
 
 Guidelines:
 - Keep responses concise and conversational
@@ -456,6 +435,54 @@ When speaking:
 - Confirm understanding before proceeding
 - Offer to provide more details if needed
 """
+
+    async def get_session_instructions_async(
+        self, conversation_id: str | None = None, persona: str | None = None
+    ) -> str:
+        """
+        Get system instructions for the Realtime session with dynamic lookup.
+
+        Uses the PromptService for dynamic prompt management with fallback
+        to default instructions if the dynamic lookup fails.
+
+        Args:
+            conversation_id: Optional conversation ID for context
+            persona: Optional persona name to use
+
+        Returns:
+            System instructions string
+        """
+        try:
+            # Import here to avoid circular imports
+            from app.services.prompt_service import prompt_service
+
+            # Try dynamic prompt lookup
+            instructions = await prompt_service.get_voice_instructions(persona=persona, conversation_id=conversation_id)
+            if instructions:
+                return instructions
+        except Exception as e:
+            logger.warning(f"Failed to get dynamic voice instructions: {e}")
+
+        # Fallback to default
+        instructions = self._DEFAULT_VOICE_INSTRUCTIONS
+        if conversation_id:
+            instructions += f"\nResuming conversation: {conversation_id}"
+        return instructions
+
+    def get_session_instructions(self, conversation_id: str | None = None) -> str:
+        """
+        Get system instructions for the Realtime session (synchronous fallback).
+
+        Note: Prefer using get_session_instructions_async() for async contexts.
+        This method exists for backward compatibility.
+
+        Args:
+            conversation_id: Optional conversation ID for context
+
+        Returns:
+            System instructions string
+        """
+        instructions = self._DEFAULT_VOICE_INSTRUCTIONS
 
         if conversation_id:
             instructions += f"\nResuming conversation: {conversation_id}"

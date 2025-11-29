@@ -20,6 +20,7 @@ import { AccessibilityProvider } from "./lib/accessibility/AccessibilitySettings
 import { AnnouncerProvider } from "./lib/accessibility/Announcer";
 import { LanguageToolbar } from "./components/LanguageToolbar";
 import { AnalyticsOptInLayout } from "./components/layout/AnalyticsOptInLayout";
+import { AnalyticsConsentUI } from "./components/layout/AnalyticsConsentUI";
 
 // Analytics configuration - set provider and domain in environment
 const analyticsConfig = {
@@ -54,6 +55,7 @@ export function App() {
                 <ThemeProvider>
                   <ToastProvider>
                     <LanguageToolbar />
+                    <AnalyticsConsentUI />
                     <AppRoutes />
                     <PWAPrompt />
                   </ToastProvider>

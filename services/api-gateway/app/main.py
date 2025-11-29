@@ -25,6 +25,7 @@ from app.api import (
     admin_medical,
     admin_panel,
     admin_phi,
+    admin_prompts,
     admin_system,
     admin_tools,
     admin_troubleshooting,
@@ -165,6 +166,7 @@ app.include_router(admin_feature_flags.router)  # Phase 7: Feature Flags API (P3
 app.include_router(admin_voice.router)  # Sprint 1: Voice Admin API
 app.include_router(admin_integrations.router)  # Sprint 2: Integrations Admin API
 app.include_router(admin_phi.router)  # Sprint 3: PHI & Security Admin API
+app.include_router(admin_prompts.router)  # Prompt Management Admin API
 app.include_router(admin_medical.router)  # Sprint 4: Medical AI Admin API
 app.include_router(admin_system.router)  # Sprint 4: System Admin API
 app.include_router(admin_tools.router)  # Sprint 6: Tools Admin API
@@ -202,6 +204,15 @@ async def startup_event():
         inactivity_timeout_minutes=settings.SESSION_INACTIVITY_TIMEOUT_MINUTES,
         absolute_timeout_hours=settings.SESSION_ABSOLUTE_TIMEOUT_HOURS,
     )
+
+    # Warm prompt cache for fast AI prompt lookups
+    try:
+        from app.services.prompt_service import prompt_service
+
+        prompts_cached = await prompt_service.warm_cache()
+        logger.info("prompt_cache_warmed", prompts_cached=prompts_cached)
+    except Exception as e:
+        logger.warning("prompt_cache_warm_failed", error=str(e))
 
     # FastAPI Cache disabled due to redis-py compatibility issues
     # TODO: Re-enable when fastapi-cache2 supports redis-py 5.x

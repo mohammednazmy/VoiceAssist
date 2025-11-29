@@ -6,6 +6,7 @@ from app.models.document import Document
 from app.models.feature_flag import FeatureFlag
 from app.models.feature_flag_analytics import FeatureFlagAnalytics
 from app.models.message import Message
+from app.models.prompt import Prompt, PromptStatus, PromptType, PromptVersion
 from app.models.session import Session
 from app.models.session_event import SessionEvent
 from app.models.system_api_key import SystemAPIKey
@@ -26,4 +27,8 @@ __all__ = [
     "SessionEvent",
     "SystemAPIKey",
     "UserAPIKey",
+    "Prompt",
+    "PromptVersion",
+    "PromptType",
+    "PromptStatus",
 ]
