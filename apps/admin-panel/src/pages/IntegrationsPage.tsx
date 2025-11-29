@@ -6,6 +6,7 @@ import {
   IntegrationTestResult,
 } from "../hooks/useIntegrations";
 import { useAuth } from "../contexts/AuthContext";
+import { SystemKeyManager } from "../components/integrations/SystemKeyManager";
 
 export function IntegrationsPage() {
   const { isAdmin } = useAuth();
@@ -235,6 +236,9 @@ export function IntegrationsPage() {
           </div>
         </div>
       )}
+
+      {/* System API Keys Manager (Admin Only) */}
+      {isAdmin && <SystemKeyManager />}
 
       {/* Integration Groups */}
       <div className="space-y-6">
