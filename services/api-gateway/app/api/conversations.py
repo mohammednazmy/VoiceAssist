@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from app.core.api_envelope import ErrorCodes, error_response, success_response
-from app.core.database import get_db
+from app.core.database import get_db, transaction
 from app.core.dependencies import get_current_user
 from app.core.logging import get_logger
 from app.models.message import Message
@@ -274,7 +274,7 @@ async def create_conversation(
                 ),
             )
 
-    # Create new session
+    # Create new session with transaction management
     new_session = ChatSession(
         user_id=current_user.id,
         title=request.title,
@@ -282,10 +282,11 @@ async def create_conversation(
         archived=0,  # 0 = not archived, 1 = archived (Integer column)
     )
 
-    db.add(new_session)
-    db.commit()
-    db.refresh(new_session)
+    with transaction(db):
+        db.add(new_session)
+        # Transaction context manager handles commit/rollback
 
+    db.refresh(new_session)
     logger.info(f"Created conversation {new_session.id} for user {current_user.id}")
 
     return success_response(
@@ -422,7 +423,9 @@ async def update_conversation(
         else:
             session.folder_id = None
 
-    db.commit()
+    with transaction(db):
+        pass  # Changes tracked by session, committed by transaction
+
     db.refresh(session)
 
     # Get message count
@@ -475,12 +478,10 @@ async def delete_conversation(
 
     session = get_session_or_404(db, conv_uuid, current_user)
 
-    # Delete all messages first (cascade should handle this, but being explicit)
-    db.query(Message).filter(Message.session_id == session.id).delete()
-
-    # Delete the session
-    db.delete(session)
-    db.commit()
+    # Delete all messages and session atomically
+    with transaction(db):
+        db.query(Message).filter(Message.session_id == session.id).delete()
+        db.delete(session)
 
     logger.info(f"Deleted conversation {conversation_id}")
 

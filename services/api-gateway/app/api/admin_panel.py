@@ -10,6 +10,11 @@ Phase 8 Improvements:
 - Optimized database queries (aggregated)
 - Redis caching for metrics
 - Audit logging for all admin actions
+
+NOTE: This file is being refactored into the app/api/admin/ module.
+Schemas and utilities have been moved to:
+- app/api/admin/schemas.py
+- app/api/admin/utils.py
 """
 
 from __future__ import annotations
@@ -24,6 +29,17 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Literal, Optional
 
+from app.api.admin.schemas import PasswordResetRequest, UserInviteRequest, UserUpdate
+from app.api.admin.utils import (
+    METRICS_CACHE_TTL,
+    REDIS_METRICS_CACHE_KEY,
+    enforce_admin_action_rate_limit,
+    get_active_websocket_count,
+    get_all_websocket_sessions,
+    log_audit_event,
+    resolve_admin_role,
+    unregister_websocket_session,
+)
 from app.core.api_envelope import error_response, success_response
 from app.core.database import get_db, get_db_pool_stats, get_redis_pool_stats, redis_client
 from app.core.dependencies import ensure_admin_privileges, get_current_admin_or_viewer, get_current_admin_user
@@ -32,7 +48,7 @@ from app.models.user import User
 from app.services.admin_audit_log_service import admin_audit_log_service
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from sqlalchemy import Date, cast, desc, func
 from sqlalchemy.orm import Session
 from starlette.websockets import WebSocketState
@@ -40,261 +56,6 @@ from starlette.websockets import WebSocketState
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/admin/panel", tags=["admin", "panel"])
-
-
-def enforce_admin_action_rate_limit(
-    request: Request,
-    action: str,
-    calls: int = 5,
-    period: int = 60,
-) -> Dict[str, Optional[int]]:
-    """Enforce a Redis-backed rate limit for sensitive admin actions.
-
-    Returns a rate limit payload that can be surfaced to clients. On failure,
-    raises an HTTPException with details that can be converted into an
-    APIEnvelope error response.
-    """
-
-    identifier = getattr(request.state, "user_id", None) or (request.client.host if request.client else "unknown")
-    redis_key = f"admin:{action}:{identifier}"
-
-    try:
-        current = redis_client.get(redis_key)
-        current_count = int(current) if current else 0
-
-        if current_count >= calls:
-            ttl = redis_client.ttl(redis_key)
-            retry_after = ttl if ttl and ttl > 0 else period
-            raise HTTPException(
-                status_code=429,
-                detail={
-                    "code": "RATE_LIMITED",
-                    "message": f"{action} limit reached",
-                    "rate_limit": {
-                        "limit": calls,
-                        "remaining": 0,
-                        "reset_in": retry_after,
-                    },
-                },
-                headers={"Retry-After": str(retry_after)},
-            )
-
-        pipe = redis_client.pipeline()
-        pipe.incr(redis_key)
-        if current_count == 0:
-            pipe.expire(redis_key, period)
-        pipe.execute()
-
-        reset_in = redis_client.ttl(redis_key)
-        return {
-            "limit": calls,
-            "remaining": max(calls - (current_count + 1), 0),
-            "reset_in": reset_in if reset_in and reset_in > 0 else period,
-        }
-    except HTTPException:
-        raise
-    except Exception as exc:  # pragma: no cover - defensive path
-        logger.warning(f"Rate limiting failed: {exc}")
-        return {"limit": calls, "remaining": None, "reset_in": None}
-
-
-# Redis keys for WebSocket session tracking and caching
-REDIS_WS_SESSIONS_KEY = "voiceassist:ws:sessions"
-REDIS_METRICS_CACHE_KEY = "voiceassist:admin:metrics"
-METRICS_CACHE_TTL = 60  # Cache metrics for 60 seconds
-
-
-# ============================================================================
-# Audit Log Helper Functions (Database-backed)
-# ============================================================================
-
-
-def log_audit_event(
-    db: Session,
-    action: str,
-    user_id: Optional[str] = None,
-    user_email: Optional[str] = None,
-    resource_type: Optional[str] = None,
-    resource_id: Optional[str] = None,
-    success: bool = True,
-    details: Optional[str] = None,
-    request: Optional[Request] = None,
-) -> AuditLog:
-    """Log an audit event to the database.
-
-    Args:
-        db: Database session
-        action: Action performed (e.g., 'user.update', 'user.delete')
-        user_id: ID of user performing the action
-        user_email: Email of user performing the action
-        resource_type: Type of resource affected (e.g., 'user', 'session')
-        resource_id: ID of the affected resource
-        success: Whether the action was successful
-        details: Additional details (JSON string)
-        request: FastAPI request object for context
-    """
-    entry = AuditLog(
-        user_id=user_id,
-        user_email=user_email,
-        action=action,
-        resource_type=resource_type,
-        resource_id=resource_id,
-        success=success,
-        additional_data={"details": details} if details else None,
-        request_id=getattr(request.state, "trace_id", None) if request else None,
-        ip_address=request.client.host if request and request.client else None,
-        user_agent=request.headers.get("user-agent", "")[:500] if request else None,
-        endpoint=str(request.url.path) if request else None,
-    )
-    # Calculate integrity hash
-    entry.hash = entry.calculate_hash()
-
-    db.add(entry)
-    db.commit()
-    db.refresh(entry)
-    return entry
-
-
-# ============================================================================
-# WebSocket Session Tracking (Redis-backed for distributed deployments)
-# ============================================================================
-
-
-def register_websocket_session(session_id: str, user_id: str, session_type: str):
-    """Register a new WebSocket session in Redis."""
-    try:
-        session_data = json.dumps(
-            {
-                "user_id": user_id,
-                "type": session_type,
-                "connected_at": datetime.now(timezone.utc).isoformat(),
-            }
-        )
-        redis_client.hset(REDIS_WS_SESSIONS_KEY, session_id, session_data)
-        # Set expiry on the hash (auto-cleanup stale sessions after 24h)
-        redis_client.expire(REDIS_WS_SESSIONS_KEY, 86400)
-    except Exception as e:
-        logger.warning(f"Failed to register WebSocket session in Redis: {e}")
-
-
-def unregister_websocket_session(session_id: str):
-    """Unregister a WebSocket session from Redis."""
-    try:
-        redis_client.hdel(REDIS_WS_SESSIONS_KEY, session_id)
-    except Exception as e:
-        logger.warning(f"Failed to unregister WebSocket session from Redis: {e}")
-
-
-def get_all_websocket_sessions() -> Dict[str, dict]:
-    """Get all active WebSocket sessions from Redis."""
-    try:
-        sessions = redis_client.hgetall(REDIS_WS_SESSIONS_KEY)
-        return {sid: json.loads(data) if isinstance(data, str) else data for sid, data in sessions.items()}
-    except Exception as e:
-        logger.warning(f"Failed to get WebSocket sessions from Redis: {e}")
-        return {}
-
-
-def get_active_websocket_count() -> int:
-    """Get count of active WebSocket sessions."""
-    try:
-        return redis_client.hlen(REDIS_WS_SESSIONS_KEY)
-    except Exception:
-        return 0
-
-
-# ============================================================================
-# Pydantic Models
-# ============================================================================
-
-
-class UserCreate(BaseModel):
-    """Request model for creating a user."""
-
-    email: EmailStr
-    full_name: str
-    is_admin: bool = False
-    admin_role: str = "user"
-    is_active: bool = True
-
-
-class UserUpdate(BaseModel):
-    """Request model for updating a user."""
-
-    email: Optional[EmailStr] = None
-    full_name: Optional[str] = None
-    is_admin: Optional[bool] = None
-    admin_role: Optional[str] = None
-    is_active: Optional[bool] = None
-    action_reason: Optional[str] = None
-
-
-class PasswordResetRequest(BaseModel):
-    """Request model for password reset."""
-
-    method: Literal["temporary", "email"]
-    notify_user: bool = True
-
-
-class UserInviteRequest(BaseModel):
-    """Request model for inviting a new user."""
-
-    email: EmailStr
-    full_name: Optional[str] = None
-    admin_role: Literal["user", "admin", "viewer"] = "user"
-    send_email: bool = True
-
-
-class UserResponse(BaseModel):
-    """Response model for user data."""
-
-    id: str
-    email: str
-    full_name: Optional[str]
-    is_admin: bool
-    admin_role: str
-    is_active: bool
-    created_at: str
-    last_login: Optional[str]
-
-    class Config:
-        from_attributes = True
-
-
-class AuditLogEntryResponse(BaseModel):
-    """Response model for audit log entry."""
-
-    timestamp: str
-    level: str
-    action: str
-    user_id: Optional[str]
-    user_email: Optional[str]
-    resource_type: Optional[str]
-    resource_id: Optional[str]
-    success: bool
-    details: Optional[str]
-
-
-ALLOWED_ADMIN_ROLES = {"admin", "viewer", "user"}
-
-
-def resolve_admin_role(current_role: str, incoming_admin_flag: Optional[bool], incoming_role: Optional[str]) -> str:
-    """Determine the resulting admin role based on incoming values."""
-
-    if incoming_role:
-        if incoming_role not in ALLOWED_ADMIN_ROLES:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid admin role specified",
-            )
-        role = incoming_role
-    else:
-        role = current_role
-
-    if incoming_admin_flag is not None:
-        role = "admin" if incoming_admin_flag else ("viewer" if role == "viewer" else "user")
-
-    return role
 
 
 # ============================================================================
@@ -838,7 +599,7 @@ async def reset_user_password(
 
     # Rate limit password reset actions
     try:
-        rate_limit_info = enforce_admin_action_rate_limit(request, action="password-reset", calls=10, period=300)
+        enforce_admin_action_rate_limit(request, action="password-reset", calls=10, period=300)
     except HTTPException as exc:
         if exc.status_code == 429:
             detail = exc.detail if isinstance(exc.detail, dict) else {}
@@ -956,7 +717,7 @@ async def invite_user(
 
     # Rate limit invitation actions
     try:
-        rate_limit_info = enforce_admin_action_rate_limit(request, action="user-invite", calls=20, period=300)
+        enforce_admin_action_rate_limit(request, action="user-invite", calls=20, period=300)
     except HTTPException as exc:
         if exc.status_code == 429:
             detail = exc.detail if isinstance(exc.detail, dict) else {}

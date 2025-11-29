@@ -13,8 +13,10 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "VoiceAssist API Gateway"
     APP_VERSION: str = "0.1.0"
-    DEBUG: bool = True
-    ENVIRONMENT: str = "development"
+    # SECURITY: Debug mode defaults to False to prevent stack trace exposure in production
+    # Set DEBUG=true in .env for local development only
+    DEBUG: bool = False
+    ENVIRONMENT: str = "production"
 
     # Database
     POSTGRES_USER: str

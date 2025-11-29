@@ -1,10 +1,18 @@
 """
 Database connection and session management
+
+Provides:
+- Sync and async database sessions with proper pooling
+- Transaction context managers for ACID compliance
+- Redis and Qdrant client connections
+- Connection pool monitoring utilities
 """
 
-from typing import AsyncGenerator, Generator
+from contextlib import asynccontextmanager, contextmanager
+from typing import AsyncGenerator, Callable, Generator, TypeVar
 
 import redis
+import structlog
 from app.core.config import settings
 from app.core.resilience import db_breaker, redis_breaker, retry_database_operation, retry_redis_operation
 from qdrant_client import AsyncQdrantClient
@@ -13,6 +21,9 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
+
+logger = structlog.get_logger(__name__)
+T = TypeVar("T")
 
 # PostgreSQL - Optimized connection pooling with configurable settings
 engine = create_engine(
@@ -66,6 +77,141 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
             yield session
         finally:
             await session.close()
+
+
+# =============================================================================
+# Transaction Context Managers
+# =============================================================================
+
+
+@contextmanager
+def transaction(db: Session) -> Generator[Session, None, None]:
+    """
+    Synchronous transaction context manager with automatic commit/rollback.
+
+    Usage:
+        with transaction(db) as session:
+            session.add(new_object)
+            # Commits automatically on success, rolls back on exception
+
+    Args:
+        db: SQLAlchemy Session instance
+
+    Yields:
+        The same session for use within the transaction
+
+    Raises:
+        Any exception raised within the context (after rollback)
+    """
+    try:
+        yield db
+        db.commit()
+        logger.debug("Transaction committed successfully")
+    except Exception as e:
+        db.rollback()
+        logger.error("Transaction rolled back due to error", error=str(e), error_type=type(e).__name__)
+        raise
+
+
+@asynccontextmanager
+async def async_transaction(db: AsyncSession) -> AsyncGenerator[AsyncSession, None]:
+    """
+    Asynchronous transaction context manager with automatic commit/rollback.
+
+    Usage:
+        async with async_transaction(db) as session:
+            session.add(new_object)
+            # Commits automatically on success, rolls back on exception
+
+    Args:
+        db: SQLAlchemy AsyncSession instance
+
+    Yields:
+        The same session for use within the transaction
+
+    Raises:
+        Any exception raised within the context (after rollback)
+    """
+    try:
+        yield db
+        await db.commit()
+        logger.debug("Async transaction committed successfully")
+    except Exception as e:
+        await db.rollback()
+        logger.error("Async transaction rolled back due to error", error=str(e), error_type=type(e).__name__)
+        raise
+
+
+def transactional(func: Callable[..., T]) -> Callable[..., T]:
+    """
+    Decorator for wrapping a function in a transaction.
+
+    The decorated function must accept a 'db' keyword argument of type Session.
+    The transaction will commit on success or rollback on exception.
+
+    Usage:
+        @transactional
+        def create_user(db: Session, name: str) -> User:
+            user = User(name=name)
+            db.add(user)
+            return user
+
+    Note: For async functions, use @async_transactional instead.
+    """
+    from functools import wraps
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        db = kwargs.get("db")
+        if db is None:
+            # Try to find db in positional args (common pattern: def func(db, ...))
+            for arg in args:
+                if isinstance(arg, Session):
+                    db = arg
+                    break
+
+        if db is None:
+            raise ValueError("transactional decorator requires a 'db' Session argument")
+
+        with transaction(db):
+            return func(*args, **kwargs)
+
+    return wrapper
+
+
+def async_transactional(func: Callable[..., T]) -> Callable[..., T]:
+    """
+    Decorator for wrapping an async function in a transaction.
+
+    The decorated function must accept a 'db' keyword argument of type AsyncSession.
+    The transaction will commit on success or rollback on exception.
+
+    Usage:
+        @async_transactional
+        async def create_user(db: AsyncSession, name: str) -> User:
+            user = User(name=name)
+            db.add(user)
+            return user
+    """
+    from functools import wraps
+
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        db = kwargs.get("db")
+        if db is None:
+            # Try to find db in positional args
+            for arg in args:
+                if isinstance(arg, AsyncSession):
+                    db = arg
+                    break
+
+        if db is None:
+            raise ValueError("async_transactional decorator requires a 'db' AsyncSession argument")
+
+        async with async_transaction(db):
+            return await func(*args, **kwargs)
+
+    return wrapper
 
 
 @retry_database_operation()
