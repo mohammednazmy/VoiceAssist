@@ -487,6 +487,89 @@ export interface ClinicalContextUpdate {
 }
 
 // ============================================================================
+// Clinical Context Preset Types
+// ============================================================================
+
+export type ClinicalPresetCategory = "builtin" | "custom";
+
+export interface PresetVitals {
+  /** Temperature in Celsius */
+  temperature?: number;
+  /** Heart rate in BPM */
+  heartRate?: number;
+  /** Blood pressure as structured object with systolic/diastolic */
+  bloodPressure?: { systolic: number; diastolic: number };
+  /** Respiratory rate in breaths per minute */
+  respiratoryRate?: number;
+  /** Oxygen saturation percentage */
+  oxygenSaturation?: number;
+  /** Blood glucose in mg/dL */
+  bloodGlucose?: number;
+  /** Weight in kg */
+  weight?: number;
+  /** Pain scale 0-10 */
+  painScale?: number;
+}
+
+export interface PresetContext {
+  /** Session ID to link preset to */
+  sessionId?: string;
+  /** Patient age */
+  age?: number;
+  /** Patient gender */
+  gender?: string;
+  /** Weight in kg */
+  weightKg?: number;
+  /** Height in cm */
+  heightCm?: number;
+  /** Chief complaint */
+  chiefComplaint?: string;
+  /** List of problems/diagnoses */
+  problems?: string[];
+  /** List of medications */
+  medications?: string[];
+  /** List of allergies */
+  allergies?: string[];
+  /** Vitals with structured blood pressure */
+  vitals?: PresetVitals;
+}
+
+export interface ClinicalContextPreset {
+  /** Unique identifier */
+  id: string;
+  /** Display name */
+  name: string;
+  /** Short description */
+  description: string;
+  /** Whether this is a built-in or custom preset */
+  category: ClinicalPresetCategory;
+  /** Icon identifier for UI */
+  icon?: string;
+  /** The clinical context data for this preset */
+  context: PresetContext;
+  /** User who created this preset (for custom presets) */
+  userId?: string;
+  /** ISO timestamp when created */
+  createdAt?: string;
+  /** ISO timestamp when last updated */
+  updatedAt?: string;
+}
+
+export interface ClinicalPresetCreate {
+  name: string;
+  description: string;
+  icon?: string;
+  context: PresetContext;
+}
+
+export interface ClinicalPresetUpdate {
+  name?: string;
+  description?: string;
+  icon?: string;
+  context?: PresetContext;
+}
+
+// ============================================================================
 // Settings Types
 // ============================================================================
 

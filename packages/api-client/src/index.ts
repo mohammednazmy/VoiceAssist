@@ -31,6 +31,9 @@ import type {
   ClinicalContext,
   ClinicalContextCreate,
   ClinicalContextUpdate,
+  ClinicalContextPreset,
+  ClinicalPresetCreate,
+  ClinicalPresetUpdate,
   IntegrationSummary,
   IntegrationDetail,
   IntegrationConfigUpdate,
@@ -73,6 +76,24 @@ type CryptoLike = {
   randomUUID?: () => string;
   getRandomValues?: (array: Uint8Array) => Uint8Array;
 };
+
+/**
+ * Response when 2FA is required during login
+ */
+export interface TwoFactorRequiredResponse {
+  requires_2fa: true;
+  user_id: string;
+  message: string;
+}
+
+/**
+ * Type guard to check if login response requires 2FA
+ */
+export function isTwoFactorRequired(
+  response: AuthTokens | TwoFactorRequiredResponse,
+): response is TwoFactorRequiredResponse {
+  return "requires_2fa" in response && response.requires_2fa === true;
+}
 
 const cryptoApi: CryptoLike | undefined =
   typeof crypto !== "undefined" ? (crypto as CryptoLike) : undefined;
@@ -277,12 +298,43 @@ export class VoiceAssistApiClient {
   // Authentication
   // =========================================================================
 
-  async login(credentials: LoginRequest): Promise<AuthTokens> {
-    const response = await this.client.post<TokenResponse>(
-      "/api/auth/login",
-      credentials,
-    );
+  async login(
+    credentials: LoginRequest,
+  ): Promise<AuthTokens | TwoFactorRequiredResponse> {
+    const response = await this.client.post<
+      TokenResponse | TwoFactorRequiredResponse
+    >("/api/auth/login", credentials);
+
+    // Check if 2FA is required
+    if ("requires_2fa" in response.data && response.data.requires_2fa) {
+      return response.data as TwoFactorRequiredResponse;
+    }
+
     // Convert backend response to frontend format
+    const tokenResponse = response.data as TokenResponse;
+    return {
+      accessToken: tokenResponse.access_token,
+      refreshToken: tokenResponse.refresh_token,
+      expiresIn: tokenResponse.expires_in,
+    };
+  }
+
+  /**
+   * Verify 2FA code during login and get tokens
+   */
+  async verify2FALogin(
+    userId: string,
+    code: string,
+    isBackupCode: boolean = false,
+  ): Promise<AuthTokens> {
+    const response = await this.client.post<TokenResponse>(
+      "/api/auth/2fa/verify-login",
+      {
+        user_id: userId,
+        code,
+        is_backup_code: isBackupCode,
+      },
+    );
     return {
       accessToken: response.data.access_token,
       refreshToken: response.data.refresh_token,
@@ -320,6 +372,22 @@ export class VoiceAssistApiClient {
 
   async getCurrentUser(): Promise<User> {
     const response = await this.client.get<User>("/api/users/me");
+    return response.data;
+  }
+
+  /**
+   * Get session timeout information for the current session.
+   * Used by frontend to display session expiration warnings.
+   */
+  async getSessionInfo(): Promise<{
+    absolute_timeout_hours: number;
+    inactivity_timeout_minutes: number;
+    absolute_remaining_seconds: number;
+    inactivity_remaining_seconds: number;
+    session_started_at: string;
+    last_activity_at: string | null;
+  }> {
+    const response = await this.client.get("/api/auth/session");
     return response.data;
   }
 
@@ -449,6 +517,28 @@ export class VoiceAssistApiClient {
     session_started_at?: number | null;
   }): Promise<{ status: string }> {
     const response = await this.client.post("/api/voice/metrics", metrics);
+    return response.data;
+  }
+
+  /**
+   * Log a voice event (e.g., barge-in) for analytics and observability
+   */
+  async logVoiceEvent(event: {
+    conversation_id?: string | null;
+    event_type:
+      | "barge_in"
+      | "connection_error"
+      | "transcription_error"
+      | "synthesis_error";
+    timestamp: number;
+    metadata?: {
+      interrupted_content?: string;
+      completion_percentage?: number;
+      error_message?: string;
+      [key: string]: unknown;
+    };
+  }): Promise<{ status: string; event_id: string }> {
+    const response = await this.client.post("/api/voice/events", event);
     return response.data;
   }
 
@@ -648,6 +738,46 @@ export class VoiceAssistApiClient {
     await this.client.delete(
       `/api/conversations/${conversationId}/messages/${messageId}`,
     );
+  }
+
+  /**
+   * Regenerate a message with custom options
+   * Creates a branch to preserve the original message
+   */
+  async regenerateWithOptions(
+    conversationId: string,
+    messageId: string,
+    options: {
+      temperature?: number;
+      lengthPreference?: "short" | "medium" | "detailed";
+      useClinicalContext?: boolean;
+      createBranch?: boolean;
+      clinicalContextId?: string;
+    },
+  ): Promise<{
+    message: Message;
+    branchId?: string;
+    originalMessageId: string;
+  }> {
+    const response = await this.client.post<
+      ApiResponse<{
+        message: Message;
+        branch_id?: string;
+        original_message_id: string;
+      }>
+    >(`/api/conversations/${conversationId}/messages/${messageId}/regenerate`, {
+      temperature: options.temperature ?? 0.7,
+      length_preference: options.lengthPreference ?? "medium",
+      use_clinical_context: options.useClinicalContext ?? false,
+      create_branch: options.createBranch ?? true,
+      clinical_context_id: options.clinicalContextId,
+    });
+    const data = response.data.data!;
+    return {
+      message: data.message,
+      branchId: data.branch_id,
+      originalMessageId: data.original_message_id,
+    };
   }
 
   // =========================================================================
@@ -1053,6 +1183,90 @@ export class VoiceAssistApiClient {
 
   async deleteClinicalContext(contextId: string): Promise<void> {
     await this.client.delete(`/api/clinical-contexts/${contextId}`);
+  }
+
+  // =========================================================================
+  // Clinical Context Presets
+  // =========================================================================
+
+  /**
+   * Get all clinical context presets for the current user
+   * Includes both built-in presets and user-created custom presets
+   */
+  async listClinicalPresets(): Promise<ClinicalContextPreset[]> {
+    return this.withRetryIfEnabled(async () => {
+      const response = await this.client.get<ClinicalContextPreset[]>(
+        "/api/clinical-presets",
+      );
+      return response.data;
+    });
+  }
+
+  /**
+   * Get a specific clinical context preset by ID
+   */
+  async getClinicalPreset(presetId: string): Promise<ClinicalContextPreset> {
+    const response = await this.client.get<ClinicalContextPreset>(
+      `/api/clinical-presets/${presetId}`,
+    );
+    return response.data;
+  }
+
+  /**
+   * Create a new custom clinical context preset
+   */
+  async createClinicalPreset(
+    preset: ClinicalPresetCreate,
+  ): Promise<ClinicalContextPreset> {
+    return this.withRetryIfEnabled(async () => {
+      const response = await this.client.post<ClinicalContextPreset>(
+        "/api/clinical-presets",
+        preset,
+      );
+      return response.data;
+    });
+  }
+
+  /**
+   * Update an existing custom clinical context preset
+   * Note: Built-in presets cannot be modified
+   */
+  async updateClinicalPreset(
+    presetId: string,
+    update: ClinicalPresetUpdate,
+  ): Promise<ClinicalContextPreset> {
+    return this.withRetryIfEnabled(async () => {
+      const response = await this.client.put<ClinicalContextPreset>(
+        `/api/clinical-presets/${presetId}`,
+        update,
+      );
+      return response.data;
+    });
+  }
+
+  /**
+   * Delete a custom clinical context preset
+   * Note: Built-in presets cannot be deleted
+   */
+  async deleteClinicalPreset(presetId: string): Promise<void> {
+    await this.client.delete(`/api/clinical-presets/${presetId}`);
+  }
+
+  /**
+   * Apply a preset to create or update the current clinical context
+   * Returns the new clinical context
+   */
+  async applyClinicalPreset(
+    presetId: string,
+    sessionId?: string,
+  ): Promise<ClinicalContext> {
+    return this.withRetryIfEnabled(async () => {
+      const response = await this.client.post<ClinicalContext>(
+        `/api/clinical-presets/${presetId}/apply`,
+        { session_id: sessionId },
+      );
+      return response.data;
+    });
   }
 
   // =========================================================================
