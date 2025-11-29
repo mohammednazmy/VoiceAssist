@@ -12,6 +12,11 @@ import { Highlight, themes } from "prism-react-renderer";
 import type { Message, Attachment } from "@voiceassist/types";
 import { CitationDisplay } from "./CitationDisplay";
 import { MessageActionMenu } from "./MessageActionMenu";
+import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
+import {
+  RegenerationOptionsDialog,
+  type RegenerationOptions,
+} from "./RegenerationOptionsDialog";
 import { AudioPlayer } from "../voice/AudioPlayer";
 import { useAuth } from "../../hooks/useAuth";
 import { useToastContext } from "../../contexts/ToastContext";
@@ -23,7 +28,10 @@ export interface MessageBubbleProps {
   message: Message;
   isStreaming?: boolean;
   onEditSave?: (messageId: string, newContent: string) => Promise<void>;
-  onRegenerate?: (messageId: string) => Promise<void>;
+  onRegenerate?: (
+    messageId: string,
+    options?: RegenerationOptions,
+  ) => Promise<void>;
   onDelete?: (messageId: string) => Promise<void>;
   onBranch?: (messageId: string) => Promise<void>;
   /** Whether this message has branches created from it */
@@ -73,6 +81,17 @@ export const MessageBubble = memo(function MessageBubble({
     Set<string>
   >(new Set());
 
+  // Delete confirmation state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Regeneration dialog state
+  const [showRegenerationDialog, setShowRegenerationDialog] = useState(false);
+
+  // Action loading states
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isBranching, setIsBranching] = useState(false);
+
   // Save handler
   const handleSave = async () => {
     if (editedContent === message.content) {
@@ -115,6 +134,90 @@ export const MessageBubble = memo(function MessageBubble({
       toast.error("Copy failed", "Unable to copy to clipboard.");
     }
   }, [message.content, toast]);
+
+  // Delete handler - opens confirmation dialog
+  const handleDeleteClick = useCallback(() => {
+    setShowDeleteConfirm(true);
+  }, []);
+
+  // Confirm delete handler
+  const handleDeleteConfirm = useCallback(async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete?.(message.id);
+      setShowDeleteConfirm(false);
+      toast.success("Message deleted", "The message has been removed.");
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+      toast.error(
+        "Delete failed",
+        error instanceof Error ? error.message : "Unable to delete message.",
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [message.id, onDelete, toast]);
+
+  // Cancel delete handler
+  const handleDeleteCancel = useCallback(() => {
+    if (!isDeleting) {
+      setShowDeleteConfirm(false);
+    }
+  }, [isDeleting]);
+
+  // Regenerate click handler - opens the options dialog
+  const handleRegenerateClick = useCallback(() => {
+    setShowRegenerationDialog(true);
+  }, []);
+
+  // Regenerate confirm handler - called when user confirms options
+  const handleRegenerateConfirm = useCallback(
+    async (options: RegenerationOptions) => {
+      setShowRegenerationDialog(false);
+      setIsRegenerating(true);
+      try {
+        await onRegenerate?.(message.id, options);
+      } catch (error) {
+        console.error("Failed to regenerate message:", error);
+        toast.error(
+          "Regeneration failed",
+          error instanceof Error
+            ? error.message
+            : "Unable to regenerate message.",
+        );
+      } finally {
+        setIsRegenerating(false);
+      }
+    },
+    [message.id, onRegenerate, toast],
+  );
+
+  // Regenerate cancel handler
+  const handleRegenerateCancel = useCallback(() => {
+    if (!isRegenerating) {
+      setShowRegenerationDialog(false);
+    }
+  }, [isRegenerating]);
+
+  // Branch handler
+  const handleBranch = useCallback(async () => {
+    setIsBranching(true);
+    try {
+      await onBranch?.(message.id);
+      toast.success(
+        "Branch created",
+        "A new conversation branch has been created.",
+      );
+    } catch (error) {
+      console.error("Failed to branch conversation:", error);
+      toast.error(
+        "Branch failed",
+        error instanceof Error ? error.message : "Unable to create branch.",
+      );
+    } finally {
+      setIsBranching(false);
+    }
+  }, [message.id, onBranch, toast]);
 
   // Audio synthesis handler
   const handlePlayAudio = async () => {
@@ -302,15 +405,36 @@ export const MessageBubble = memo(function MessageBubble({
             role={message.role as "user" | "assistant" | "system"}
             onEdit={isUser ? () => setIsEditing(true) : undefined}
             onRegenerate={
-              !isUser && !isSystem
-                ? () => onRegenerate?.(message.id)
-                : undefined
+              !isUser && !isSystem ? handleRegenerateClick : undefined
             }
-            onDelete={() => onDelete?.(message.id)}
+            onDelete={onDelete ? handleDeleteClick : undefined}
             onCopy={handleCopy}
-            onBranch={!isSystem ? () => onBranch?.(message.id) : undefined}
+            onBranch={!isSystem && onBranch ? handleBranch : undefined}
+            isDeleting={isDeleting}
+            isRegenerating={isRegenerating}
+            isBranching={isBranching}
           />
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmationDialog
+          isOpen={showDeleteConfirm}
+          messageContent={message.content}
+          messageRole={message.role as "user" | "assistant"}
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+          isDeleting={isDeleting}
+        />
+
+        {/* Regeneration Options Dialog */}
+        <RegenerationOptionsDialog
+          isOpen={showRegenerationDialog}
+          onClose={handleRegenerateCancel}
+          onRegenerate={handleRegenerateConfirm}
+          originalContent={message.content}
+          isRegenerating={isRegenerating}
+          hasClinicalContext={false}
+        />
 
         {/* Message Content - Editing Mode or Display Mode */}
         {isEditing ? (
