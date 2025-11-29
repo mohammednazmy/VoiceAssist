@@ -3,7 +3,11 @@
  * Adapts between backend ClinicalContext types and frontend component interface
  */
 
-import type { ClinicalContext as BackendClinicalContext, ClinicalContextCreate, ClinicalContextUpdate } from "@voiceassist/types";
+import type {
+  ClinicalContext as BackendClinicalContext,
+  ClinicalContextCreate,
+  ClinicalContextUpdate,
+} from "@voiceassist/types";
 import type { ClinicalContext as FrontendClinicalContext } from "./ClinicalContextPanel";
 
 /**
@@ -70,7 +74,9 @@ export function hasContextData(context: FrontendClinicalContext): boolean {
     const value = context[key as keyof FrontendClinicalContext];
     if (Array.isArray(value)) return value.length > 0;
     if (typeof value === "object" && value !== null) {
-      return Object.values(value).some((v) => v !== undefined && v !== null && v !== "");
+      return Object.values(value).some(
+        (v) => v !== undefined && v !== null && v !== "",
+      );
     }
     return Boolean(value);
   });

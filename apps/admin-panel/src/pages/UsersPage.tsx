@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchAPI } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
+import { CreateUserDialog } from "../components/users/CreateUserDialog";
 
 interface AdminUser {
   id: string;
@@ -372,6 +373,141 @@ export function UsersPage() {
     ));
   };
 
+  // Mobile card view for users
+  const renderMobileCards = () => {
+    if (loading) {
+      return Array.from({ length: 3 }).map((_, idx) => (
+        <div
+          key={idx}
+          className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 animate-pulse space-y-3"
+        >
+          <div className="h-4 w-3/4 bg-slate-800 rounded" />
+          <div className="h-3 w-1/2 bg-slate-800 rounded" />
+          <div className="flex gap-2">
+            <div className="h-6 w-16 bg-slate-800 rounded" />
+            <div className="h-6 w-16 bg-slate-800 rounded" />
+          </div>
+        </div>
+      ));
+    }
+
+    if (users.length === 0 && !error) {
+      return (
+        <div className="p-8 text-center text-slate-400 bg-slate-900/50 border border-slate-800 rounded-lg">
+          No users found.{" "}
+          {isViewer
+            ? "Contact an admin to add users."
+            : 'Click "Create User" to add one.'}
+        </div>
+      );
+    }
+
+    return users.map((user) => (
+      <div
+        key={user.id}
+        className={`bg-slate-900/50 border rounded-lg p-4 space-y-3 ${
+          selectedUserId === user.id
+            ? "border-blue-700 bg-slate-900/80"
+            : "border-slate-800"
+        }`}
+      >
+        {/* Header with email and status badges */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-medium text-slate-200 truncate">
+              {user.email}
+            </div>
+            {user.full_name && (
+              <div className="text-xs text-slate-400 truncate">
+                {user.full_name}
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span
+              className={`inline-flex px-2 py-0.5 text-[10px] font-medium rounded ${
+                user.is_admin
+                  ? "bg-purple-900/50 text-purple-400 border border-purple-800"
+                  : "bg-slate-800 text-slate-400 border border-slate-700"
+              }`}
+            >
+              {user.is_admin ? "Admin" : "User"}
+            </span>
+            <span
+              className={`inline-flex px-2 py-0.5 text-[10px] font-medium rounded ${
+                user.is_active
+                  ? "bg-green-900/50 text-green-400 border border-green-800"
+                  : "bg-red-900/50 text-red-400 border border-red-800"
+              }`}
+            >
+              {user.is_active ? "Active" : "Inactive"}
+            </span>
+          </div>
+        </div>
+
+        {/* Dates */}
+        <div className="flex items-center gap-4 text-xs text-slate-500">
+          <span>Created: {new Date(user.created_at).toLocaleDateString()}</span>
+          <span>
+            Last login:{" "}
+            {user.last_login
+              ? new Date(user.last_login).toLocaleDateString()
+              : "Never"}
+          </span>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => toggleAdminRole(user.id, user.is_admin)}
+              disabled={isViewer}
+              className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {user.is_admin ? "⚙️→👤" : "👤→⚙️"}
+              <span className="hidden sm:inline">
+                {user.is_admin ? "Remove admin" : "Make admin"}
+              </span>
+            </button>
+            <button
+              onClick={() => toggleUserStatus(user.id, user.is_active)}
+              disabled={isViewer}
+              className={`flex items-center gap-1 text-xs ${
+                user.is_active
+                  ? "text-yellow-400 hover:text-yellow-300"
+                  : "text-green-400 hover:text-green-300"
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {user.is_active ? "🔒" : "🔓"}
+              <span className="hidden sm:inline">
+                {user.is_active ? "Deactivate" : "Activate"}
+              </span>
+            </button>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSelectedUserId(user.id)}
+              className={`flex items-center gap-1 text-xs ${
+                selectedUserId === user.id
+                  ? "text-blue-400"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              📜 <span className="hidden sm:inline">History</span>
+            </button>
+            <button
+              onClick={() => deleteUser(user.id, user.email)}
+              disabled={isViewer}
+              className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              🗑️ <span className="hidden sm:inline">Delete</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    ));
+  };
+
   return (
     <div className="flex-1 p-6 space-y-6 overflow-y-auto">
       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -423,7 +559,38 @@ export function UsersPage() {
         </div>
       )}
 
-      <div className="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden">
+      {/* Mobile card view */}
+      <div className="md:hidden space-y-3">
+        {renderMobileCards()}
+
+        {/* Mobile pagination */}
+        {total > pageSize && (
+          <div className="flex items-center justify-between p-3 bg-slate-900/50 border border-slate-800 rounded-lg">
+            <button
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="px-3 py-1.5 text-sm bg-slate-800 hover:bg-slate-700 disabled:bg-slate-900 disabled:text-slate-600 text-slate-200 rounded border border-slate-700"
+            >
+              ← Prev
+            </button>
+            <span className="text-xs text-slate-400">
+              {page + 1} / {Math.ceil(total / pageSize)}
+            </span>
+            <button
+              onClick={() =>
+                setPage((p) => Math.min(Math.ceil(total / pageSize) - 1, p + 1))
+              }
+              disabled={(page + 1) * pageSize >= total}
+              className="px-3 py-1.5 text-sm bg-slate-800 hover:bg-slate-700 disabled:bg-slate-900 disabled:text-slate-600 text-slate-200 rounded border border-slate-700"
+            >
+              Next →
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop table view */}
+      <div className="hidden md:block bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden">
         <table className="w-full">
           <thead className="bg-slate-900 border-b border-slate-800">
             <tr>
@@ -464,7 +631,7 @@ export function UsersPage() {
           </div>
         )}
 
-        {/* Pagination controls */}
+        {/* Desktop pagination controls */}
         {total > pageSize && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-slate-800">
             <div className="text-sm text-slate-400">
@@ -623,25 +790,13 @@ export function UsersPage() {
         </div>
       )}
 
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-lg font-bold text-slate-100 mb-4">
-              Create New User
-            </h2>
-            <p className="text-sm text-slate-400 mb-4">
-              User creation UI coming soon. Use the backend API directly for
-              now.
-            </p>
-            <button
-              onClick={() => setShowCreateModal(false)}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md text-sm transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      <CreateUserDialog
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={() => {
+          loadUsers();
+        }}
+      />
     </div>
   );
 }
