@@ -8,7 +8,9 @@ from app.models.feature_flag_analytics import FeatureFlagAnalytics
 from app.models.message import Message
 from app.models.session import Session
 from app.models.session_event import SessionEvent
+from app.models.system_api_key import SystemAPIKey
 from app.models.user import User
+from app.models.user_api_key import UserAPIKey
 from app.models.user_feature_flag import UserFeatureFlag
 
 __all__ = [
@@ -22,4 +24,6 @@ __all__ = [
     "UserFeatureFlag",
     "FeatureFlagAnalytics",
     "SessionEvent",
+    "SystemAPIKey",
+    "UserAPIKey",
 ]

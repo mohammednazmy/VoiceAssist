@@ -21,12 +21,12 @@ from typing import Optional
 import httpx
 import redis
 from app.api.admin_panel import log_audit_event
-from app.core.dependencies import get_current_admin_user
-from app.models.user import User
 from app.core.api_envelope import success_response
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.dependencies import get_current_admin_user
 from app.core.logging import get_logger
+from app.models.user import User
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import text
@@ -516,15 +516,17 @@ async def get_integrations_health(
     elif connected == 0:
         overall = "critical"
 
-    return success_response({
-        "overall_status": overall,
-        "total_integrations": total,
-        "connected": connected,
-        "degraded": degraded,
-        "errors": errors,
-        "not_configured": not_configured,
-        "checked_at": datetime.now(timezone.utc).isoformat(),
-    })
+    return success_response(
+        {
+            "overall_status": overall,
+            "total_integrations": total,
+            "connected": connected,
+            "degraded": degraded,
+            "errors": errors,
+            "not_configured": not_configured,
+            "checked_at": datetime.now(timezone.utc).isoformat(),
+        }
+    )
 
 
 @router.get("/metrics/summary")
@@ -588,18 +590,20 @@ async def get_integration(
     int_status, error = get_integration_status(integration_id)
     config = get_integration_config(integration_id)
 
-    return success_response(IntegrationDetail(
-        id=integration_id,
-        name=info["name"],
-        type=info["type"],
-        status=int_status,
-        provider=info["provider"],
-        description=info["description"],
-        config=config,
-        has_api_key=has_api_key(integration_id),
-        last_checked=datetime.now(timezone.utc).isoformat(),
-        error_message=error,
-    ).model_dump())
+    return success_response(
+        IntegrationDetail(
+            id=integration_id,
+            name=info["name"],
+            type=info["type"],
+            status=int_status,
+            provider=info["provider"],
+            description=info["description"],
+            config=config,
+            has_api_key=has_api_key(integration_id),
+            last_checked=datetime.now(timezone.utc).isoformat(),
+            error_message=error,
+        ).model_dump()
+    )
 
 
 @router.patch("/{integration_id}/config")
@@ -845,9 +849,299 @@ async def test_integration(
         details=json.dumps({"latency_ms": latency_ms, "message": message}),
     )
 
-    return success_response(TestResult(
-        success=success,
-        latency_ms=round(latency_ms, 2),
-        message=message,
-        details=details if details else None,
-    ).model_dump())
+    return success_response(
+        TestResult(
+            success=success,
+            latency_ms=round(latency_ms, 2),
+            message=message,
+            details=details if details else None,
+        ).model_dump()
+    )
+
+
+# =============================================================================
+# System API Key Management Endpoints
+# =============================================================================
+
+
+class SystemKeyInfo(BaseModel):
+    """Information about a system API key."""
+
+    integration_id: str
+    key_name: str
+    is_configured: bool
+    source: str  # "database", "environment", "not_configured"
+    masked_value: Optional[str] = None
+    is_override: bool = False
+    validation_status: Optional[str] = None
+    last_validated_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class SystemKeyUpdate(BaseModel):
+    """Request to update a system API key."""
+
+    value: str = Field(..., min_length=1, description="The API key value")
+
+
+class SystemKeySummary(BaseModel):
+    """Summary of all system API keys."""
+
+    total: int
+    configured: int
+    overridden: int
+    keys: list[SystemKeyInfo]
+
+
+@router.get("/api-keys/summary", response_model=dict)
+async def get_system_keys_summary(
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Get summary of all system API keys.
+
+    Returns configuration status for all known integrations.
+    Requires admin role.
+    """
+    from app.services.system_key_service import system_key_service
+
+    keys = system_key_service.list_all_keys(db)
+
+    configured = sum(1 for k in keys if k["is_configured"])
+    overridden = sum(1 for k in keys if k["is_override"])
+
+    return success_response(
+        SystemKeySummary(
+            total=len(keys),
+            configured=configured,
+            overridden=overridden,
+            keys=[SystemKeyInfo(**k) for k in keys],
+        ).model_dump()
+    )
+
+
+@router.get("/{integration_id}/api-key", response_model=dict)
+async def get_system_key_info(
+    integration_id: str,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Get information about a system API key.
+
+    Returns configuration status without exposing the actual value.
+    Requires admin role.
+    """
+    from app.services.system_key_service import system_key_service
+
+    info = system_key_service.get_key_info(db, integration_id)
+    return success_response(SystemKeyInfo(**info).model_dump())
+
+
+@router.put("/{integration_id}/api-key", response_model=dict)
+async def set_system_key(
+    integration_id: str,
+    update: SystemKeyUpdate,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Set or update a system API key.
+
+    Creates a database override for the environment variable.
+    The key is encrypted before storage.
+    Requires admin role.
+    """
+    from app.services.system_key_service import system_key_service
+
+    # Only allow actual admin role (not viewer)
+    if admin_user.admin_role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can modify API keys",
+        )
+
+    try:
+        system_key_service.set_key(
+            db=db,
+            integration_id=integration_id,
+            value=update.value,
+            user_id=admin_user.id,
+        )
+
+        # Log audit event
+        log_audit_event(
+            db,
+            action="system_key_updated",
+            user_id=str(admin_user.id),
+            user_email=admin_user.email,
+            resource_type="system_api_key",
+            resource_id=integration_id,
+            success=True,
+            details=json.dumps({"source": "database"}),
+        )
+
+        info = system_key_service.get_key_info(db, integration_id)
+        return success_response(
+            {
+                "message": f"API key for {integration_id} updated successfully",
+                "key": SystemKeyInfo(**info).model_dump(),
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to set system key for {integration_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update API key",
+        )
+
+
+@router.delete("/{integration_id}/api-key", response_model=dict)
+async def clear_system_key_override(
+    integration_id: str,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Clear the database override for a system API key.
+
+    Reverts to using the environment variable value.
+    Requires admin role.
+    """
+    from app.services.system_key_service import system_key_service
+
+    # Only allow actual admin role (not viewer)
+    if admin_user.admin_role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can modify API keys",
+        )
+
+    cleared = system_key_service.clear_override(db, integration_id)
+
+    if cleared:
+        # Log audit event
+        log_audit_event(
+            db,
+            action="system_key_override_cleared",
+            user_id=str(admin_user.id),
+            user_email=admin_user.email,
+            resource_type="system_api_key",
+            resource_id=integration_id,
+            success=True,
+            details=json.dumps({"reverted_to": "environment"}),
+        )
+
+    info = system_key_service.get_key_info(db, integration_id)
+    return success_response(
+        {
+            "message": f"Override cleared for {integration_id}, now using environment value",
+            "key": SystemKeyInfo(**info).model_dump(),
+        }
+    )
+
+
+@router.post("/{integration_id}/api-key/validate", response_model=dict)
+async def validate_system_key(
+    integration_id: str,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Validate a system API key by testing the connection.
+
+    Updates the validation status in the database.
+    Requires admin role.
+    """
+    from app.services.system_key_service import system_key_service
+
+    # Get the current key value
+    key_value = system_key_service.get_key(db, integration_id)
+
+    if not key_value:
+        system_key_service.update_validation_status(db, integration_id, "not_configured")
+        return success_response(
+            {
+                "valid": False,
+                "status": "not_configured",
+                "message": f"No API key configured for {integration_id}",
+            }
+        )
+
+    # Validate based on integration type
+    valid = False
+    message = "Validation not implemented"
+
+    try:
+        if integration_id == "openai":
+            # Test OpenAI API
+            resp = httpx.get(
+                "https://api.openai.com/v1/models",
+                headers={"Authorization": f"Bearer {key_value}"},
+                timeout=10.0,
+            )
+            valid = resp.status_code == 200
+            message = "OpenAI API key is valid" if valid else f"OpenAI returned HTTP {resp.status_code}"
+
+        elif integration_id == "elevenlabs":
+            # Test ElevenLabs API
+            resp = httpx.get(
+                "https://api.elevenlabs.io/v1/user",
+                headers={"xi-api-key": key_value},
+                timeout=10.0,
+            )
+            valid = resp.status_code == 200
+            message = "ElevenLabs API key is valid" if valid else f"ElevenLabs returned HTTP {resp.status_code}"
+
+        elif integration_id == "deepgram":
+            # Test Deepgram API
+            resp = httpx.get(
+                "https://api.deepgram.com/v1/projects",
+                headers={"Authorization": f"Token {key_value}"},
+                timeout=10.0,
+            )
+            valid = resp.status_code == 200
+            message = "Deepgram API key is valid" if valid else f"Deepgram returned HTTP {resp.status_code}"
+
+        elif integration_id == "pubmed":
+            # PubMed key validation (enhanced rate limits with key)
+            resp = httpx.get(
+                f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/einfo.fcgi?retmode=json&api_key={key_value}",
+                timeout=10.0,
+            )
+            valid = resp.status_code == 200
+            message = "PubMed API key is valid" if valid else f"PubMed returned HTTP {resp.status_code}"
+
+        else:
+            # For other integrations, just mark as "assumed valid" since we can't test
+            valid = True
+            message = f"Key for {integration_id} assumed valid (no validation endpoint)"
+
+    except Exception as e:
+        message = f"Validation failed: {str(e)}"
+
+    # Update status
+    status_value = "valid" if valid else "invalid"
+    system_key_service.update_validation_status(db, integration_id, status_value)
+
+    # Log audit event
+    log_audit_event(
+        db,
+        action="system_key_validated",
+        user_id=str(admin_user.id),
+        user_email=admin_user.email,
+        resource_type="system_api_key",
+        resource_id=integration_id,
+        success=valid,
+        details=json.dumps({"status": status_value, "message": message}),
+    )
+
+    return success_response(
+        {
+            "valid": valid,
+            "status": status_value,
+            "message": message,
+        }
+    )

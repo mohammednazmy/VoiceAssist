@@ -3,6 +3,7 @@ Authentication endpoints for user registration, login, and token management
 """
 
 from datetime import datetime, timezone
+from typing import Union
 
 from app.core.business_metrics import user_logins_total, user_registrations_total
 from app.core.config import settings
@@ -17,7 +18,17 @@ from app.core.security import (
     verify_token,
 )
 from app.models.user import User
-from app.schemas.auth import TokenRefresh, TokenResponse, UserLogin, UserRegister, UserResponse
+from app.schemas.auth import (
+    SessionInfoResponse,
+    TokenRefresh,
+    TokenResponse,
+    TwoFactorRequiredResponse,
+    UserLogin,
+    UserRegister,
+    UserResponse,
+)
+from app.services.admin_audit_log_service import admin_audit_log_service
+from app.services.session_activity import session_activity_service
 from app.services.token_revocation import token_revocation_service
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from slowapi import Limiter
@@ -66,7 +77,7 @@ async def register(request: Request, user_data: UserRegister, db: Session = Depe
     return new_user
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=Union[TokenResponse, TwoFactorRequiredResponse])
 @limiter.limit("10/minute")  # Rate limit login attempts
 async def login(request: Request, login_data: UserLogin, db: Session = Depends(get_db)):
     """
@@ -76,6 +87,7 @@ async def login(request: Request, login_data: UserLogin, db: Session = Depends(g
     - **password**: User's password
 
     Returns short-lived access and refresh tokens (5 min / 60 min by default)
+    If 2FA is enabled, returns a 2FA-required response instead.
 
     Rate limit: 10 login attempts per minute per IP
     """
@@ -83,6 +95,17 @@ async def login(request: Request, login_data: UserLogin, db: Session = Depends(g
     user = db.query(User).filter(User.email == login_data.email).limit(1).first()
 
     if not user or not verify_password(login_data.password, user.hashed_password):
+        # Log failed login attempt
+        admin_audit_log_service.log_action(
+            db=db,
+            actor=None,
+            action="auth.login_failed",
+            target_type="user",
+            target_id=login_data.email,
+            success=False,
+            metadata={"reason": "invalid_credentials"},
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -90,7 +113,27 @@ async def login(request: Request, login_data: UserLogin, db: Session = Depends(g
         )
 
     if not user.is_active:
+        # Log inactive user login attempt
+        admin_audit_log_service.log_action(
+            db=db,
+            actor=user,
+            action="auth.login_failed",
+            target_type="user",
+            target_id=str(user.id),
+            success=False,
+            metadata={"reason": "inactive_account"},
+            request=request,
+        )
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")
+
+    # Check if 2FA is enabled
+    if user.totp_enabled:
+        # Return 2FA required response - tokens will be issued after 2FA verification
+        return TwoFactorRequiredResponse(
+            requires_2fa=True,
+            user_id=str(user.id),
+            message="Two-factor authentication required",
+        )
 
     # Update last login timestamp
     user.last_login = datetime.now(timezone.utc)
@@ -98,6 +141,18 @@ async def login(request: Request, login_data: UserLogin, db: Session = Depends(g
 
     # Track login metric (P3.3 - Business Metrics)
     user_logins_total.inc()
+
+    # Log successful login
+    admin_audit_log_service.log_action(
+        db=db,
+        actor=user,
+        action="auth.login_success",
+        target_type="user",
+        target_id=str(user.id),
+        success=True,
+        metadata={"method": "password"},
+        request=request,
+    )
 
     token_role = user.admin_role or ("admin" if user.is_admin else "user")
     password_epoch = int(
@@ -220,7 +275,11 @@ async def refresh_token(
 
 
 @router.post("/logout")
-async def logout(current_user: User = Depends(get_current_user)):
+async def logout(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """
     Logout current user
 
@@ -228,6 +287,17 @@ async def logout(current_user: User = Depends(get_current_user)):
     by discarding the tokens. This endpoint exists for consistency and
     could be extended to maintain a token blacklist in Redis if needed.
     """
+    # Log logout event
+    admin_audit_log_service.log_action(
+        db=db,
+        actor=current_user,
+        action="auth.logout",
+        target_type="user",
+        target_id=str(current_user.id),
+        success=True,
+        request=request,
+    )
+
     return {"message": "Successfully logged out", "detail": "Please discard your access and refresh tokens"}
 
 
@@ -239,3 +309,44 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
     Requires valid access token in Authorization header
     """
     return current_user
+
+
+@router.get("/session", response_model=SessionInfoResponse)
+async def get_session_info(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get session timeout information for the current session.
+
+    Returns timing info that the frontend can use to display
+    session expiration warnings and countdown timers.
+
+    - **absolute_timeout_hours**: Maximum session duration
+    - **inactivity_timeout_minutes**: Timeout after no activity
+    - **absolute_remaining_seconds**: Time until absolute timeout
+    - **inactivity_remaining_seconds**: Time until inactivity timeout
+    - **session_started_at**: When the session was created (ISO format)
+    - **last_activity_at**: Last recorded activity (ISO format)
+    """
+    # Extract token_iat from the authorization header
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+        payload = verify_token(token, token_type="access")
+        token_iat = payload.get("iat") if payload else None
+    else:
+        token_iat = None
+
+    if not token_iat:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not extract session info from token",
+        )
+
+    session_info = await session_activity_service.get_session_info(
+        user_id=str(current_user.id),
+        token_iat=token_iat,
+    )
+
+    return SessionInfoResponse(**session_info)

@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from app.core.database import Base
 from sqlalchemy import Boolean, Column, DateTime, String
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 
 
 class User(Base):
@@ -35,10 +36,19 @@ class User(Base):
     oauth_provider = Column(String(50), nullable=True, index=True)  # "google" or "microsoft"
     oauth_provider_id = Column(String(255), nullable=True, index=True)  # Provider's user ID
 
+    # Two-Factor Authentication (2FA)
+    totp_secret = Column(String(255), nullable=True)  # Encrypted TOTP secret
+    totp_enabled = Column(Boolean, default=False, nullable=False)
+    totp_backup_codes = Column(String(1024), nullable=True)  # Encrypted comma-separated backup codes
+    totp_verified_at = Column(DateTime(timezone=True), nullable=True)
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     last_login = Column(DateTime, nullable=True)
+
+    # Relationships
+    api_keys = relationship("UserAPIKey", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email})>"

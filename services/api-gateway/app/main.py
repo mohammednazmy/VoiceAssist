@@ -31,6 +31,7 @@ from app.api import (
     admin_voice,
     attachments,
     auth,
+    auth_2fa,
     auth_oauth,
     clinical_context,
     conversations,
@@ -43,6 +44,7 @@ from app.api import (
     metrics,
     realtime,
     sharing,
+    user_api_keys,
     users,
     voice,
 )
@@ -55,6 +57,8 @@ from app.core.middleware import MetricsMiddleware, RequestTracingMiddleware, Sec
 from app.core.sentry import init_sentry
 from app.middleware.voice_auth import VoiceAuthMiddleware
 from app.services.external_connectors import ExternalSyncScheduler, OpenEvidenceConnector, PubMedConnector
+from app.services.session_activity import session_activity_service
+from app.services.token_revocation import token_revocation_service
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -147,6 +151,7 @@ app.add_middleware(VoiceAuthMiddleware)
 app.include_router(health.router, tags=["health"])
 app.include_router(metrics.router)  # Prometheus metrics endpoint (Phase 7 - P2.1)
 app.include_router(auth.router)
+app.include_router(auth_2fa.router)  # Two-factor authentication
 app.include_router(auth_oauth.router)  # OAuth providers (Google, Microsoft)
 app.include_router(users.router)
 app.include_router(realtime.router)
@@ -171,6 +176,7 @@ app.include_router(export.router, prefix="/api")  # Phase 8: Conversation export
 app.include_router(sharing.router, prefix="/api")  # Phase 8: Conversation sharing
 app.include_router(external_medical.router, prefix="/api")  # Phase 3: External medical integrations
 app.include_router(medical_ai.router)  # Phase 2 Deferred: Medical AI services
+app.include_router(user_api_keys.router)  # User API key management
 
 
 @app.on_event("startup")
@@ -186,6 +192,15 @@ async def startup_event():
         environment=settings.ENVIRONMENT,
         debug=settings.DEBUG,
         sentry_enabled=sentry_enabled,
+    )
+
+    # Connect to Redis for token revocation and session tracking
+    await token_revocation_service.connect()
+    await session_activity_service.connect()
+    logger.info(
+        "session_services_initialized",
+        inactivity_timeout_minutes=settings.SESSION_INACTIVITY_TIMEOUT_MINUTES,
+        absolute_timeout_hours=settings.SESSION_ABSOLUTE_TIMEOUT_HOURS,
     )
 
     # FastAPI Cache disabled due to redis-py compatibility issues
@@ -236,6 +251,10 @@ async def shutdown_event():
         app_name=settings.APP_NAME,
         version=settings.APP_VERSION,
     )
+
+    # Disconnect session services
+    await token_revocation_service.disconnect()
+    await session_activity_service.disconnect()
 
     scheduler = getattr(app.state, "external_sync_scheduler", None)
     if scheduler:

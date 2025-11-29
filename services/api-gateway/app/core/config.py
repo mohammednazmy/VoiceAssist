@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 5
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60
 
+    # Session timeout settings
+    SESSION_INACTIVITY_TIMEOUT_MINUTES: int = 60  # Logout after 60 min of inactivity
+    SESSION_ABSOLUTE_TIMEOUT_HOURS: int = 24  # Force re-login after 24 hours
+
     # Nextcloud
     NEXTCLOUD_URL: str = "http://nextcloud"
     NEXTCLOUD_ADMIN_USER: str = "admin"

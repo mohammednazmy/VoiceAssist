@@ -41,11 +41,30 @@ class TokenRefresh(BaseModel):
     refresh_token: str
 
 
+class TwoFactorRequiredResponse(BaseModel):
+    """Response when 2FA verification is needed to complete login"""
+
+    requires_2fa: bool = True
+    user_id: str
+    message: str = "Two-factor authentication required"
+
+
 class PasswordChange(BaseModel):
     """Password change request"""
 
     old_password: str
     new_password: str = Field(..., min_length=8, max_length=100)
+
+
+class SessionInfoResponse(BaseModel):
+    """Session timeout information for frontend"""
+
+    absolute_timeout_hours: int
+    inactivity_timeout_minutes: int
+    absolute_remaining_seconds: int
+    inactivity_remaining_seconds: int
+    session_started_at: str
+    last_activity_at: Optional[str] = None
 
 
 class UserResponse(BaseModel):
