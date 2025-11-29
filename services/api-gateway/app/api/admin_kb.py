@@ -22,6 +22,7 @@ from app.core.business_metrics import (
     kb_documents_total,
     kb_indexing_duration,
 )
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import ensure_admin_privileges, get_current_admin_or_viewer
 from app.core.logging import get_logger
@@ -70,7 +71,7 @@ class DocumentListResponse(BaseModel):
 
 # Global KB Indexer instance
 # In production, this would be injected via dependency injection
-kb_indexer = KBIndexer()
+kb_indexer = KBIndexer(qdrant_url=settings.QDRANT_URL)
 
 
 @router.post("/documents", response_model=dict)

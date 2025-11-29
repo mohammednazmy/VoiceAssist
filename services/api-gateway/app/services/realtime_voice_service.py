@@ -8,13 +8,14 @@ This service provides:
 3. Safe provider config (never exposes raw API keys)
 """
 
+import asyncio
 import base64
 import hashlib
 import hmac
 import json
 import secrets
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
 import httpx
@@ -22,6 +23,160 @@ from app.core.config import settings
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+# ==============================================================================
+# Adaptive VAD System
+# ==============================================================================
+
+
+@dataclass
+class UserVADProfile:
+    """Tracks user's speech patterns for adaptive VAD tuning."""
+
+    user_id: str
+    # Speech pattern metrics (rolling averages)
+    avg_pause_duration_ms: float = 500.0  # Average pause between utterances
+    avg_utterance_duration_ms: float = 3000.0  # Average utterance length
+    speech_rate_wpm: float = 150.0  # Words per minute estimate
+    # Adaptive parameters
+    optimal_silence_duration_ms: int = 500  # Calculated optimal silence threshold
+    # Statistics
+    total_sessions: int = 0
+    total_utterances: int = 0
+    last_updated: float = field(default_factory=time.time)
+
+    def update_from_session(
+        self,
+        pause_durations: list[float],
+        utterance_durations: list[float],
+    ) -> None:
+        """Update profile from session metrics using exponential moving average."""
+        if pause_durations:
+            # Use EMA with alpha=0.3 for smooth adaptation
+            alpha = 0.3
+            avg_pause = sum(pause_durations) / len(pause_durations)
+            self.avg_pause_duration_ms = alpha * avg_pause + (1 - alpha) * self.avg_pause_duration_ms
+
+        if utterance_durations:
+            alpha = 0.3
+            avg_utt = sum(utterance_durations) / len(utterance_durations)
+            self.avg_utterance_duration_ms = alpha * avg_utt + (1 - alpha) * self.avg_utterance_duration_ms
+
+        # Calculate optimal silence duration based on user patterns
+        # Users with shorter pauses get more aggressive detection
+        # Clamp between 200ms (very fast speakers) and 800ms (thoughtful speakers)
+        self.optimal_silence_duration_ms = int(max(200, min(800, self.avg_pause_duration_ms * 0.6)))
+
+        self.total_sessions += 1
+        self.total_utterances += len(utterance_durations)
+        self.last_updated = time.time()
+
+
+class AdaptiveVADManager:
+    """
+    Manages user VAD profiles for adaptive turn detection.
+
+    Starts with conservative settings (500ms silence) and learns user patterns
+    over time to optimize for faster turn detection without cutting users off.
+    """
+
+    def __init__(self):
+        self._profiles: Dict[str, UserVADProfile] = {}
+        self._lock = asyncio.Lock()
+        self._default_silence_ms = 500  # Conservative default
+        self._min_silence_ms = 200  # Minimum for fast speakers
+        self._max_silence_ms = 800  # Maximum for thoughtful speakers
+
+    async def get_optimal_silence_duration(
+        self,
+        user_id: str,
+        requested_silence_ms: Optional[int] = None,
+        adaptive_enabled: bool = True,
+    ) -> int:
+        """
+        Get optimal silence duration for a user.
+
+        Args:
+            user_id: User identifier
+            requested_silence_ms: Explicit user preference (overrides adaptive)
+            adaptive_enabled: Whether to use adaptive learning
+
+        Returns:
+            Optimal silence duration in milliseconds
+        """
+        # If user explicitly requested a value, respect it
+        if requested_silence_ms is not None:
+            return max(self._min_silence_ms, min(self._max_silence_ms, requested_silence_ms))
+
+        # If adaptive is disabled, use default
+        if not adaptive_enabled:
+            return self._default_silence_ms
+
+        # Get or create user profile
+        async with self._lock:
+            profile = self._profiles.get(user_id)
+
+            if profile is None:
+                # New user - start conservative
+                profile = UserVADProfile(user_id=user_id)
+                self._profiles[user_id] = profile
+                logger.debug(f"Created new VAD profile for user {user_id}")
+                return self._default_silence_ms
+
+            # Return learned optimal value
+            return profile.optimal_silence_duration_ms
+
+    async def update_user_profile(
+        self,
+        user_id: str,
+        pause_durations_ms: list[float],
+        utterance_durations_ms: list[float],
+    ) -> None:
+        """
+        Update user's VAD profile from session metrics.
+
+        Called at end of voice session with collected timing data.
+        """
+        async with self._lock:
+            if user_id not in self._profiles:
+                self._profiles[user_id] = UserVADProfile(user_id=user_id)
+
+            profile = self._profiles[user_id]
+            profile.update_from_session(pause_durations_ms, utterance_durations_ms)
+
+            logger.info(
+                f"Updated VAD profile for user {user_id}",
+                extra={
+                    "user_id": user_id,
+                    "optimal_silence_ms": profile.optimal_silence_duration_ms,
+                    "avg_pause_ms": profile.avg_pause_duration_ms,
+                    "total_sessions": profile.total_sessions,
+                },
+            )
+
+    async def get_user_profile(self, user_id: str) -> Optional[UserVADProfile]:
+        """Get user's VAD profile if it exists."""
+        async with self._lock:
+            return self._profiles.get(user_id)
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Get manager statistics."""
+        return {
+            "total_profiles": len(self._profiles),
+            "profiles": {
+                uid: {
+                    "optimal_silence_ms": p.optimal_silence_duration_ms,
+                    "total_sessions": p.total_sessions,
+                    "avg_pause_ms": p.avg_pause_duration_ms,
+                }
+                for uid, p in self._profiles.items()
+            },
+        }
+
+
+# Global adaptive VAD manager
+adaptive_vad_manager = AdaptiveVADManager()
 
 
 @dataclass
@@ -58,6 +213,16 @@ class STTProviderConfig:
     max_audio_duration_sec: Optional[int] = None  # Max audio duration in seconds
 
 
+@dataclass
+class CachedSession:
+    """Cached OpenAI ephemeral session for reuse."""
+
+    client_secret: str
+    expires_at: int
+    voice: str
+    created_at: float = field(default_factory=time.time)
+
+
 class RealtimeVoiceService:
     """
     Service for managing OpenAI Realtime API voice sessions.
@@ -65,6 +230,11 @@ class RealtimeVoiceService:
     The Realtime API uses WebSocket connections for bidirectional streaming
     of audio and text. This service generates ephemeral session configuration
     that the frontend uses to establish WebSocket connections.
+
+    Phase 11 Optimizations:
+    - Session caching: Reuse ephemeral tokens if not expiring within 60s
+    - Connection pooling: Persistent HTTP client with keep-alive
+    - HTTP/2: Multiplexed connections for faster token generation
     """
 
     def __init__(self):
@@ -74,9 +244,91 @@ class RealtimeVoiceService:
         self.api_key = settings.OPENAI_API_KEY
         self.token_expiry = settings.REALTIME_TOKEN_EXPIRY_SEC
 
+        # Phase 11: Session caching for latency reduction
+        self._session_cache: Dict[str, CachedSession] = {}
+        self._cache_lock = asyncio.Lock()
+        self._cache_expiry_buffer_sec = 60  # Don't reuse if expiring within 60s
+
+        # Phase 11: Persistent HTTP client with connection pooling
+        # HTTP/2 enabled for multiplexed connections to OpenAI
+        self._http_client: Optional[httpx.AsyncClient] = None
+
     def is_enabled(self) -> bool:
         """Check if Realtime API is enabled and configured"""
         return self.enabled and bool(self.api_key)
+
+    async def _get_http_client(self) -> httpx.AsyncClient:
+        """
+        Get or create persistent HTTP client with connection pooling.
+
+        Phase 11: Uses HTTP/2 for multiplexed connections, reducing
+        connection establishment overhead for repeated requests.
+
+        Returns:
+            Persistent AsyncClient instance
+        """
+        if self._http_client is None or self._http_client.is_closed:
+            # Create client with HTTP/2 support and connection pooling
+            self._http_client = httpx.AsyncClient(
+                timeout=30.0,
+                http2=True,  # Enable HTTP/2 for multiplexing
+                limits=httpx.Limits(
+                    max_keepalive_connections=10,
+                    max_connections=20,
+                    keepalive_expiry=30.0,  # Keep connections alive for 30s
+                ),
+            )
+            logger.debug("Created persistent HTTP client with HTTP/2 and connection pooling")
+        return self._http_client
+
+    def _get_cache_key(self, voice: str) -> str:
+        """Generate cache key for session lookup."""
+        return f"{self.model}:{voice}"
+
+    async def _get_cached_session(self, voice: str) -> Optional[CachedSession]:
+        """
+        Get a cached session if available and not expiring soon.
+
+        Phase 11: Reuses ephemeral tokens if they have more than 60s remaining.
+        This avoids redundant OpenAI API calls for rapid pre-warm scenarios.
+
+        Returns:
+            Cached session if valid, None otherwise
+        """
+        cache_key = self._get_cache_key(voice)
+        current_time = int(time.time())
+
+        async with self._cache_lock:
+            cached = self._session_cache.get(cache_key)
+            if cached is None:
+                return None
+
+            # Check if session is expiring within buffer period
+            time_remaining = cached.expires_at - current_time
+            if time_remaining < self._cache_expiry_buffer_sec:
+                # Session expiring soon, remove from cache
+                del self._session_cache[cache_key]
+                logger.debug(
+                    f"Cache miss: session expiring in {time_remaining}s",
+                    extra={"voice": voice, "time_remaining": time_remaining},
+                )
+                return None
+
+            logger.info(
+                f"Cache hit: reusing session (expires in {time_remaining}s)",
+                extra={"voice": voice, "time_remaining": time_remaining},
+            )
+            return cached
+
+    async def _cache_session(self, voice: str, session: CachedSession) -> None:
+        """Store a session in the cache."""
+        cache_key = self._get_cache_key(voice)
+        async with self._cache_lock:
+            self._session_cache[cache_key] = session
+            logger.debug(
+                f"Cached session for voice {voice}",
+                extra={"voice": voice, "expires_at": session.expires_at},
+            )
 
     async def create_openai_ephemeral_session(self, model: str, voice: str = "alloy") -> Dict[str, Any]:
         """
@@ -84,6 +336,11 @@ class RealtimeVoiceService:
 
         This calls OpenAI's session creation endpoint to get a real ephemeral
         client secret that can be used to connect to the Realtime WebSocket.
+
+        Phase 11 Optimizations:
+        - Checks cache for valid session before making API call
+        - Uses persistent HTTP client with connection pooling
+        - HTTP/2 for multiplexed connections
 
         Args:
             model: The Realtime model to use (e.g., "gpt-4o-realtime-preview-2024-12-17")
@@ -93,57 +350,80 @@ class RealtimeVoiceService:
             Dict containing:
             - client_secret: Ephemeral token for client use
             - expires_at: Unix timestamp when token expires
+            - cached: Whether this was served from cache (Phase 11)
 
         Raises:
             ValueError: If session creation fails
         """
+        # Phase 11: Check cache first
+        cached_session = await self._get_cached_session(voice)
+        if cached_session:
+            return {
+                "client_secret": cached_session.client_secret,
+                "expires_at": cached_session.expires_at,
+                "cached": True,
+            }
+
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(
-                    "https://api.openai.com/v1/realtime/sessions",
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": model,
-                        "voice": voice,
-                    },
-                )
+            # Phase 11: Use persistent HTTP client instead of creating new one
+            client = await self._get_http_client()
+            response = await client.post(
+                "https://api.openai.com/v1/realtime/sessions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "voice": voice,
+                },
+            )
 
-                if response.status_code != 200:
-                    error_detail = response.text
-                    logger.error(
-                        f"OpenAI session creation failed: {error_detail}",
-                        extra={
-                            "status_code": response.status_code,
-                            "response": error_detail,
-                        },
-                    )
-                    raise ValueError(f"Failed to create OpenAI session: {response.status_code}")
-
-                data = response.json()
-
-                # OpenAI returns: { "client_secret": { "value": "ek_...", "expires_at": timestamp } }
-                client_secret_data = data.get("client_secret", {})
-                client_secret = client_secret_data.get("value")
-                expires_at = client_secret_data.get("expires_at")
-
-                if not client_secret:
-                    raise ValueError("OpenAI did not return a client_secret")
-
-                logger.info(
-                    "Created OpenAI ephemeral session",
+            if response.status_code != 200:
+                error_detail = response.text
+                logger.error(
+                    f"OpenAI session creation failed: {error_detail}",
                     extra={
-                        "model": model,
-                        "expires_at": expires_at,
+                        "status_code": response.status_code,
+                        "response": error_detail,
                     },
                 )
+                raise ValueError(f"Failed to create OpenAI session: {response.status_code}")
 
-                return {
-                    "client_secret": client_secret,
+            data = response.json()
+
+            # OpenAI returns: { "client_secret": { "value": "ek_...", "expires_at": timestamp } }
+            client_secret_data = data.get("client_secret", {})
+            client_secret = client_secret_data.get("value")
+            expires_at = client_secret_data.get("expires_at")
+
+            if not client_secret:
+                raise ValueError("OpenAI did not return a client_secret")
+
+            # Phase 11: Cache the session for future requests
+            await self._cache_session(
+                voice,
+                CachedSession(
+                    client_secret=client_secret,
+                    expires_at=expires_at,
+                    voice=voice,
+                ),
+            )
+
+            logger.info(
+                "Created OpenAI ephemeral session",
+                extra={
+                    "model": model,
                     "expires_at": expires_at,
-                }
+                    "cached": False,
+                },
+            )
+
+            return {
+                "client_secret": client_secret,
+                "expires_at": expires_at,
+                "cached": False,
+            }
 
         except httpx.TimeoutException as e:
             logger.error(f"OpenAI session creation timeout: {str(e)}")
@@ -263,6 +543,8 @@ class RealtimeVoiceService:
         language: str | None = None,
         vad_sensitivity: int | None = None,
         enable_noise_suppression: bool | None = None,
+        silence_duration_ms: int | None = None,
+        adaptive_vad: bool = True,
     ) -> Dict[str, Any]:
         """
         Generate session configuration for OpenAI Realtime API.
@@ -276,6 +558,8 @@ class RealtimeVoiceService:
             voice: Optional voice selection (alloy, echo, fable, onyx, nova, shimmer)
             language: Optional language code (en, es, fr, de, it, pt)
             vad_sensitivity: Optional VAD sensitivity 0-100 (maps to threshold)
+            silence_duration_ms: Optional explicit silence duration (200-800ms)
+            adaptive_vad: Whether to use adaptive VAD based on user patterns
 
         Returns:
             Dictionary with session configuration including:
@@ -304,6 +588,17 @@ class RealtimeVoiceService:
             vad_threshold = 0.9 - (vad_sensitivity / 100.0 * 0.8)
         else:
             vad_threshold = 0.5  # Default threshold
+
+        # Get optimal silence duration from adaptive VAD manager
+        optimal_silence_ms = await adaptive_vad_manager.get_optimal_silence_duration(
+            user_id=user_id,
+            requested_silence_ms=silence_duration_ms,
+            adaptive_enabled=adaptive_vad,
+        )
+
+        # Adaptive prefix padding (faster speakers get less padding)
+        # Range: 200ms (fast) to 400ms (slow)
+        prefix_padding_ms = 200 if optimal_silence_ms < 400 else 300
 
         # Determine noise suppression preference (defaults to settings or True)
         if enable_noise_suppression is None:
@@ -345,13 +640,19 @@ class RealtimeVoiceService:
                 "turn_detection": {
                     "type": "server_vad",  # Server-side VAD
                     "threshold": round(vad_threshold, 2),
-                    "prefix_padding_ms": 300,
-                    "silence_duration_ms": 500,
+                    "prefix_padding_ms": prefix_padding_ms,
+                    "silence_duration_ms": optimal_silence_ms,
                 },
             },
             "audio_enhancements": {
                 "noise_suppression": enable_noise_suppression,
                 "vad_threshold": round(vad_threshold, 2),
+            },
+            "adaptive_vad": {
+                "enabled": adaptive_vad,
+                "silence_duration_ms": optimal_silence_ms,
+                "prefix_padding_ms": prefix_padding_ms,
+                "is_learned": silence_duration_ms is None and adaptive_vad,
             },
         }
 
@@ -365,6 +666,8 @@ class RealtimeVoiceService:
                 "voice": selected_voice,
                 "language": language,
                 "vad_threshold": round(vad_threshold, 2),
+                "silence_duration_ms": optimal_silence_ms,
+                "adaptive_vad": adaptive_vad,
             },
         )
 

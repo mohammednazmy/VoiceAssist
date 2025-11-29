@@ -39,8 +39,9 @@ from app.core.slo import check_slo_violations, log_slo_violations
 from app.models.message import Message
 from app.models.session import Session as ChatSession
 from app.models.user import User
+from app.services.elevenlabs_service import elevenlabs_service
 from app.services.rag_service import QueryOrchestrator, QueryRequest
-from app.services.realtime_voice_service import realtime_voice_service
+from app.services.realtime_voice_service import adaptive_vad_manager, realtime_voice_service
 from app.services.voice_authentication import voice_auth_service
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import Response
@@ -57,6 +58,13 @@ class SynthesizeRequest(BaseModel):
 
     text: str
     voiceId: str | None = None
+    # Phase 11: Provider selection (defaults to admin-configured default)
+    provider: str | None = None  # "openai" | "elevenlabs" | None (use default)
+    # ElevenLabs-specific options
+    model_id: str | None = None  # "eleven_multilingual_v2" | "eleven_turbo_v2"
+    stability: float | None = None  # 0-1, lower = more expressive
+    similarity_boost: float | None = None  # 0-1
+    style: float | None = None  # 0-1, emotion/style exaggeration
 
 
 class TranscribeResponse(BaseModel):
@@ -73,6 +81,9 @@ class RealtimeSessionRequest(BaseModel):
     voice: str | None = None  # "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"
     language: str | None = None  # "en" | "es" | "fr" | "de" | "it" | "pt"
     vad_sensitivity: int | None = None  # 0-100 (maps to VAD threshold)
+    # Adaptive VAD settings
+    silence_duration_ms: int | None = None  # 200-800ms (default 500, adaptive mode auto-adjusts)
+    adaptive_vad: bool = True  # Enable adaptive VAD based on user speech patterns
 
 
 class RealtimeAuthInfo(BaseModel):
@@ -228,7 +239,7 @@ async def transcribe_audio(
 @router.post(
     "/synthesize",
     summary="Synthesize speech from text",
-    description="Convert text to speech using OpenAI TTS API",
+    description="Convert text to speech using OpenAI or ElevenLabs TTS API",
     response_class=Response,  # Return raw audio
 )
 async def synthesize_speech(
@@ -236,14 +247,19 @@ async def synthesize_speech(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Synthesize speech from text using OpenAI TTS.
+    Synthesize speech from text using OpenAI or ElevenLabs TTS.
+
+    Phase 11: Added provider selection with automatic fallback.
+    - provider: "openai" | "elevenlabs" | None (uses admin-configured default)
+    - Automatic fallback to OpenAI if ElevenLabs fails
+    - X-TTS-Provider response header indicates which provider was used
 
     Args:
-        request: SynthesizeRequest with text and optional voiceId
+        request: SynthesizeRequest with text, voiceId, and optional provider settings
         current_user: Authenticated user
 
     Returns:
-        Audio file (mp3 format)
+        Audio file (mp3 format) with X-TTS-Provider header
     """
     logger.info(
         f"Synthesizing speech for user {current_user.id}",
@@ -251,14 +267,16 @@ async def synthesize_speech(
             "user_id": current_user.id,
             "text_length": len(request.text),
             "voice_id": request.voiceId,
+            "provider": request.provider,
         },
     )
 
     # Validate text length
-    if len(request.text) > 4096:
+    max_length = 5000 if request.provider == "elevenlabs" else 4096
+    if len(request.text) > max_length:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Text too long (max 4096 characters)",
+            detail=f"Text too long (max {max_length} characters)",
         )
 
     if not request.text.strip():
@@ -267,26 +285,17 @@ async def synthesize_speech(
             detail="Text cannot be empty",
         )
 
-    try:
-        # For now only OpenAI provider is wired;
-        # config placeholders allow future providers
-        provider = settings.TTS_PROVIDER or "openai"
+    # Determine provider: request > settings > default
+    provider = request.provider or settings.TTS_PROVIDER or "openai"
+    used_provider = provider  # Track actual provider used (may change on fallback)
+    fallback_used = False
 
-        if provider != "openai":
-            raise HTTPException(
-                status_code=status.HTTP_501_NOT_IMPLEMENTED,
-                detail=f"TTS provider '{provider}' not implemented",
-            )
-
+    async def synthesize_with_openai() -> tuple[bytes, str]:
+        """Synthesize with OpenAI TTS."""
         openai_api_key = settings.OPENAI_API_KEY
         if not openai_api_key:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="OpenAI API key not configured",
-            )
+            raise ValueError("OpenAI API key not configured")
 
-        # Use OpenAI TTS API
-        # Available voices: alloy, echo, fable, onyx, nova, shimmer
         voice = request.voiceId or settings.TTS_VOICE or "alloy"
 
         async with httpx.AsyncClient(timeout=settings.OPENAI_TIMEOUT_SEC) as client:
@@ -299,28 +308,12 @@ async def synthesize_speech(
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": "tts-1",  # or tts-1-hd for higher quality
+                    "model": "tts-1",
                     "input": request.text,
                     "voice": voice,
                     "response_format": "mp3",
                 },
             )
-
-            if response.status_code != 200:
-                logger.error(
-                    f"OpenAI TTS failed: {response.text}",
-                    extra={
-                        "status_code": response.status_code,
-                        "user_id": current_user.id,
-                    },
-                )
-                external_api_requests_total.labels(
-                    service="openai", endpoint="audio/speech", status_code=str(response.status_code)
-                ).inc()
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Speech synthesis failed",
-                )
 
             latency = time.monotonic() - tts_start
             external_api_requests_total.labels(
@@ -328,44 +321,243 @@ async def synthesize_speech(
             ).inc()
             external_api_duration_seconds.labels(service="openai", endpoint="audio/speech").observe(latency)
 
-            audio_content = response.content
+            if response.status_code != 200:
+                logger.error(f"OpenAI TTS failed: {response.text}")
+                raise ValueError(f"OpenAI TTS failed: {response.status_code}")
 
-            logger.info(
-                f"Speech synthesis successful for user {current_user.id}",
-                extra={
-                    "user_id": current_user.id,
-                    "audio_size": len(audio_content),
-                    "voice": voice,
-                },
-            )
+            return response.content, "audio/mpeg"
 
-            # Return raw audio with proper content type
-            return Response(
-                content=audio_content,
-                media_type="audio/mpeg",
-                headers={
-                    "Content-Disposition": "attachment; filename=speech.mp3",
-                },
-            )
+    async def synthesize_with_elevenlabs() -> tuple[bytes, str]:
+        """Synthesize with ElevenLabs TTS."""
+        if not elevenlabs_service.is_enabled():
+            raise ValueError("ElevenLabs TTS is not enabled")
+
+        external_api_requests_total.labels(service="elevenlabs", endpoint="text-to-speech", status_code="pending").inc()
+        tts_start = time.monotonic()
+
+        result = await elevenlabs_service.synthesize(
+            text=request.text,
+            voice_id=request.voiceId,
+            model_id=request.model_id,
+            stability=request.stability if request.stability is not None else 0.5,
+            similarity_boost=request.similarity_boost if request.similarity_boost is not None else 0.75,
+            style=request.style if request.style is not None else 0.0,
+        )
+
+        latency = time.monotonic() - tts_start
+        external_api_requests_total.labels(service="elevenlabs", endpoint="text-to-speech", status_code="200").inc()
+        external_api_duration_seconds.labels(service="elevenlabs", endpoint="text-to-speech").observe(latency)
+
+        return result.audio_data, result.content_type
+
+    try:
+        audio_content: bytes
+        content_type: str
+
+        if provider == "elevenlabs":
+            try:
+                audio_content, content_type = await synthesize_with_elevenlabs()
+                used_provider = "elevenlabs"
+            except Exception as e:
+                # Fallback to OpenAI on ElevenLabs failure
+                logger.warning(
+                    f"ElevenLabs TTS failed, falling back to OpenAI: {str(e)}",
+                    extra={"user_id": current_user.id, "error": str(e)},
+                )
+                audio_content, content_type = await synthesize_with_openai()
+                used_provider = "openai"
+                fallback_used = True
+        else:
+            # Default: OpenAI
+            audio_content, content_type = await synthesize_with_openai()
+            used_provider = "openai"
+
+        logger.info(
+            f"Speech synthesis successful for user {current_user.id}",
+            extra={
+                "user_id": current_user.id,
+                "audio_size": len(audio_content),
+                "voice": request.voiceId,
+                "provider": used_provider,
+                "fallback_used": fallback_used,
+            },
+        )
+
+        # Return raw audio with provider header
+        return Response(
+            content=audio_content,
+            media_type=content_type,
+            headers={
+                "Content-Disposition": "attachment; filename=speech.mp3",
+                "X-TTS-Provider": used_provider,
+                "X-TTS-Fallback": "true" if fallback_used else "false",
+            },
+        )
 
     except httpx.TimeoutException:
         logger.error(
             "Speech synthesis timeout",
-            extra={"user_id": current_user.id},
+            extra={"user_id": current_user.id, "provider": provider},
         )
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail="Speech synthesis request timed out",
         )
-    except Exception as e:
+    except ValueError as e:
         logger.error(
             f"Speech synthesis error: {str(e)}",
-            extra={"user_id": current_user.id, "error": str(e)},
+            extra={"user_id": current_user.id, "provider": provider, "error": str(e)},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Speech synthesis failed: {str(e)}",
         )
+    except Exception as e:
+        logger.error(
+            f"Speech synthesis error: {str(e)}",
+            extra={"user_id": current_user.id, "provider": provider, "error": str(e)},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Speech synthesis failed: {str(e)}",
+        )
+
+
+# ==============================================================================
+# Phase 11: Voice Listing Endpoint
+# ==============================================================================
+
+
+class VoiceInfo(BaseModel):
+    """Voice information for frontend display."""
+
+    voice_id: str
+    name: str
+    provider: str  # "openai" | "elevenlabs"
+    category: str | None = None
+    preview_url: str | None = None
+    description: str | None = None
+    labels: dict | None = None
+
+
+class VoiceListResponse(BaseModel):
+    """Response model for voice listing."""
+
+    voices: list[VoiceInfo]
+    default_voice_id: str | None = None
+    default_provider: str
+
+
+@router.get(
+    "/voices",
+    response_model=VoiceListResponse,
+    summary="Get available TTS voices",
+    description="List all available TTS voices from configured providers",
+)
+async def get_available_voices(
+    provider: str | None = None,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get available TTS voices from all configured providers.
+
+    Phase 11: Combined voice listing for OpenAI and ElevenLabs.
+
+    Args:
+        provider: Optional filter by provider ("openai" | "elevenlabs")
+        current_user: Authenticated user
+
+    Returns:
+        VoiceListResponse with available voices and defaults
+    """
+    voices: list[VoiceInfo] = []
+
+    # OpenAI voices (always available if API key configured)
+    if provider is None or provider == "openai":
+        openai_voices = [
+            VoiceInfo(
+                voice_id="alloy",
+                name="Alloy",
+                provider="openai",
+                category="neural",
+                description="Neutral and balanced voice",
+            ),
+            VoiceInfo(
+                voice_id="echo",
+                name="Echo",
+                provider="openai",
+                category="neural",
+                description="Warm and smooth voice",
+            ),
+            VoiceInfo(
+                voice_id="fable",
+                name="Fable",
+                provider="openai",
+                category="neural",
+                description="Expressive and dynamic voice",
+            ),
+            VoiceInfo(
+                voice_id="onyx",
+                name="Onyx",
+                provider="openai",
+                category="neural",
+                description="Deep and authoritative voice",
+            ),
+            VoiceInfo(
+                voice_id="nova",
+                name="Nova",
+                provider="openai",
+                category="neural",
+                description="Bright and energetic voice",
+            ),
+            VoiceInfo(
+                voice_id="shimmer",
+                name="Shimmer",
+                provider="openai",
+                category="neural",
+                description="Soft and gentle voice",
+            ),
+        ]
+        voices.extend(openai_voices)
+
+    # ElevenLabs voices (if enabled)
+    if (provider is None or provider == "elevenlabs") and elevenlabs_service.is_enabled():
+        try:
+            elevenlabs_voices = await elevenlabs_service.get_voices()
+            for ev in elevenlabs_voices:
+                voices.append(
+                    VoiceInfo(
+                        voice_id=ev.voice_id,
+                        name=ev.name,
+                        provider="elevenlabs",
+                        category=ev.category,
+                        preview_url=ev.preview_url,
+                        description=ev.description,
+                        labels=ev.labels,
+                    )
+                )
+        except Exception as e:
+            logger.warning(f"Failed to fetch ElevenLabs voices: {str(e)}")
+            # Continue without ElevenLabs voices
+
+    # Determine defaults
+    default_provider = settings.TTS_PROVIDER or "openai"
+    default_voice_id = settings.TTS_VOICE or "alloy"
+
+    logger.info(
+        f"Listed {len(voices)} TTS voices for user {current_user.id}",
+        extra={
+            "user_id": current_user.id,
+            "voice_count": len(voices),
+            "providers": list(set(v.provider for v in voices)),
+        },
+    )
+
+    return VoiceListResponse(
+        voices=voices,
+        default_voice_id=default_voice_id,
+        default_provider=default_provider,
+    )
 
 
 @router.post(
@@ -432,6 +624,8 @@ async def create_realtime_session(
             voice=request.voice,
             language=request.language,
             vad_sensitivity=request.vad_sensitivity,
+            silence_duration_ms=request.silence_duration_ms,
+            adaptive_vad=request.adaptive_vad,
         )
 
         duration_ms = int((time.monotonic() - start_time) * 1000)
@@ -622,6 +816,98 @@ async def post_voice_metrics(
                 )
 
     return VoiceMetricsResponse(status="ok")
+
+
+class VADSessionMetrics(BaseModel):
+    """Metrics from a voice session for adaptive VAD learning."""
+
+    pause_durations_ms: list[float] = []  # Duration of pauses between utterances
+    utterance_durations_ms: list[float] = []  # Duration of each utterance
+
+
+class VADProfileResponse(BaseModel):
+    """Response with updated VAD profile info."""
+
+    status: str
+    optimal_silence_ms: int
+    is_adaptive: bool
+
+
+@router.post(
+    "/vad-profile/update",
+    response_model=VADProfileResponse,
+    summary="Update adaptive VAD profile",
+    description="Submit session timing metrics to update user's adaptive VAD profile",
+)
+async def update_vad_profile(
+    payload: VADSessionMetrics,
+    current_user: User = Depends(get_current_user),
+) -> VADProfileResponse:
+    """
+    Update the user's adaptive VAD profile with session metrics.
+
+    Called at end of voice session to learn user's speech patterns
+    and optimize future turn detection timing.
+    """
+    user_id = str(current_user.id)
+
+    # Update the adaptive VAD profile
+    await adaptive_vad_manager.update_user_profile(
+        user_id=user_id,
+        pause_durations_ms=payload.pause_durations_ms,
+        utterance_durations_ms=payload.utterance_durations_ms,
+    )
+
+    # Get updated profile
+    profile = await adaptive_vad_manager.get_user_profile(user_id)
+    optimal_silence = profile.optimal_silence_duration_ms if profile else 500
+
+    logger.info(
+        f"Updated VAD profile for user {user_id}",
+        extra={
+            "user_id": user_id,
+            "optimal_silence_ms": optimal_silence,
+            "pause_count": len(payload.pause_durations_ms),
+            "utterance_count": len(payload.utterance_durations_ms),
+        },
+    )
+
+    return VADProfileResponse(
+        status="ok",
+        optimal_silence_ms=optimal_silence,
+        is_adaptive=True,
+    )
+
+
+@router.get(
+    "/vad-profile",
+    response_model=VADProfileResponse,
+    summary="Get adaptive VAD profile",
+    description="Get user's current adaptive VAD settings",
+)
+async def get_vad_profile(
+    current_user: User = Depends(get_current_user),
+) -> VADProfileResponse:
+    """
+    Get the user's current adaptive VAD profile.
+
+    Returns the optimal silence duration learned from previous sessions.
+    """
+    user_id = str(current_user.id)
+    profile = await adaptive_vad_manager.get_user_profile(user_id)
+
+    if profile:
+        return VADProfileResponse(
+            status="ok",
+            optimal_silence_ms=profile.optimal_silence_duration_ms,
+            is_adaptive=True,
+        )
+    else:
+        return VADProfileResponse(
+            status="ok",
+            optimal_silence_ms=500,  # Default
+            is_adaptive=False,
+        )
 
 
 @router.post(

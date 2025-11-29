@@ -501,6 +501,55 @@ export class VoiceAssistApiClient {
   }
 
   /**
+   * Phase 11: Get available TTS voices from all configured providers
+   * @param provider Optional filter by provider ("openai" | "elevenlabs")
+   */
+  async getAvailableVoices(provider?: string): Promise<{
+    voices: Array<{
+      voice_id: string;
+      name: string;
+      provider: string; // "openai" | "elevenlabs"
+      category?: string | null;
+      preview_url?: string | null;
+      description?: string | null;
+      labels?: Record<string, string> | null;
+    }>;
+    default_voice_id?: string | null;
+    default_provider: string;
+  }> {
+    const params = provider ? { provider } : {};
+    const response = await this.client.get("/api/voice/voices", { params });
+    return response.data;
+  }
+
+  /**
+   * Phase 11: Synthesize speech with provider selection
+   */
+  async synthesizeSpeech(request: {
+    text: string;
+    voiceId?: string | null;
+    provider?: string | null; // "openai" | "elevenlabs"
+    model_id?: string | null; // ElevenLabs model
+    stability?: number | null;
+    similarity_boost?: number | null;
+    style?: number | null;
+  }): Promise<{
+    audio: Blob;
+    provider: string; // From X-TTS-Provider header
+    fallbackUsed: boolean; // From X-TTS-Fallback header
+  }> {
+    const response = await this.client.post("/api/voice/synthesize", request, {
+      responseType: "blob",
+    });
+
+    return {
+      audio: response.data,
+      provider: response.headers["x-tts-provider"] || "unknown",
+      fallbackUsed: response.headers["x-tts-fallback"] === "true",
+    };
+  }
+
+  /**
    * Submit voice session metrics for observability
    * Note: For page unload scenarios, use sendBeacon directly instead
    */
