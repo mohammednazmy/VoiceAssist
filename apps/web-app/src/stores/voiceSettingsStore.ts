@@ -15,7 +15,10 @@ export type VoiceOption =
   | "fable"
   | "onyx"
   | "nova"
-  | "shimmer";
+  | "shimmer"
+  | string; // Allow ElevenLabs voice IDs
+
+export type TTSProvider = "openai" | "elevenlabs";
 
 export type LanguageOption = "en" | "es" | "fr" | "de" | "it" | "pt";
 
@@ -71,6 +74,13 @@ interface VoiceSettingsState {
   // Unified UI additions
   voiceModeType: VoiceModeType;
   autoPlayInVoiceMode: boolean;
+  // Adaptive VAD settings (Phase 11)
+  silenceDurationMs: number | null; // 200-800ms, null = adaptive
+  adaptiveVad: boolean; // Enable adaptive VAD based on speech patterns
+  lastLearnedSilenceMs: number | null; // Last value learned from backend
+  // Phase 11: TTS Provider selection
+  ttsProvider: TTSProvider; // "openai" | "elevenlabs"
+  elevenlabsVoiceId: string | null; // Selected ElevenLabs voice ID
 
   // Actions
   setVoice: (voice: VoiceOption) => void;
@@ -86,6 +96,13 @@ interface VoiceSettingsState {
   // Unified UI additions
   setVoiceModeType: (type: VoiceModeType) => void;
   setAutoPlayInVoiceMode: (enabled: boolean) => void;
+  // Adaptive VAD actions
+  setSilenceDurationMs: (ms: number | null) => void;
+  setAdaptiveVad: (enabled: boolean) => void;
+  setLastLearnedSilenceMs: (ms: number | null) => void;
+  // Phase 11: TTS Provider actions
+  setTtsProvider: (provider: TTSProvider) => void;
+  setElevenlabsVoiceId: (voiceId: string | null) => void;
   reset: () => void;
 }
 
@@ -103,6 +120,13 @@ const defaultSettings = {
   // Unified UI additions
   voiceModeType: "push-to-talk" as VoiceModeType,
   autoPlayInVoiceMode: true,
+  // Adaptive VAD settings (Phase 11)
+  silenceDurationMs: null as number | null, // null = use adaptive
+  adaptiveVad: true, // Enable adaptive VAD by default
+  lastLearnedSilenceMs: null as number | null,
+  // Phase 11: TTS Provider settings
+  ttsProvider: "openai" as TTSProvider, // Default to OpenAI
+  elevenlabsVoiceId: null as string | null,
 };
 
 /**
@@ -146,6 +170,25 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
       setAutoPlayInVoiceMode: (autoPlayInVoiceMode) =>
         set({ autoPlayInVoiceMode }),
 
+      // Adaptive VAD actions (Phase 11)
+      setSilenceDurationMs: (silenceDurationMs) =>
+        set({
+          silenceDurationMs:
+            silenceDurationMs !== null
+              ? clamp(silenceDurationMs, 200, 800)
+              : null,
+        }),
+
+      setAdaptiveVad: (adaptiveVad) => set({ adaptiveVad }),
+
+      setLastLearnedSilenceMs: (lastLearnedSilenceMs) =>
+        set({ lastLearnedSilenceMs }),
+
+      // Phase 11: TTS Provider actions
+      setTtsProvider: (ttsProvider) => set({ ttsProvider }),
+
+      setElevenlabsVoiceId: (elevenlabsVoiceId) => set({ elevenlabsVoiceId }),
+
       reset: () => set({ ...defaultSettings }),
     }),
     {
@@ -164,6 +207,13 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
         // Unified UI additions
         voiceModeType: state.voiceModeType,
         autoPlayInVoiceMode: state.autoPlayInVoiceMode,
+        // Adaptive VAD settings (Phase 11)
+        silenceDurationMs: state.silenceDurationMs,
+        adaptiveVad: state.adaptiveVad,
+        lastLearnedSilenceMs: state.lastLearnedSilenceMs,
+        // Phase 11: TTS Provider settings
+        ttsProvider: state.ttsProvider,
+        elevenlabsVoiceId: state.elevenlabsVoiceId,
       }),
     },
   ),

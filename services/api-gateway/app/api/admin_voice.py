@@ -1,15 +1,30 @@
-"""Admin Voice API endpoints (Sprint 1 - Voice Monitor).
+"""Admin Voice API endpoints (Sprint 1 - Voice Monitor + Phase 11.1).
 
 Provides voice/realtime session monitoring and management for the Admin Panel.
 
 Endpoints:
+Session Management:
 - GET /api/admin/voice/sessions - List active WebSocket voice sessions
 - GET /api/admin/voice/sessions/{id} - Get session details
 - POST /api/admin/voice/sessions/{id}/disconnect - Force disconnect session
+
+Metrics & Analytics:
 - GET /api/admin/voice/metrics - Voice metrics summary
 - GET /api/admin/voice/health - Voice service health
+- GET /api/admin/voice/analytics - Usage analytics by period
+- GET /api/admin/voice/analytics/latency - Latency histograms
+- GET /api/admin/voice/analytics/costs - Cost breakdown by provider
+
+Configuration:
 - GET /api/admin/voice/config - Get voice configuration
 - PATCH /api/admin/voice/config - Update voice configuration (admin only)
+- GET /api/admin/voice/providers - List available TTS/STT providers
+- GET /api/admin/voice/voices - List voices for selected provider
+- POST /api/admin/voice/test-provider - Test provider connectivity
+
+Feature Flags:
+- GET /api/admin/voice/feature-flags - List voice feature flags
+- PATCH /api/admin/voice/feature-flags/{name} - Update feature flag
 """
 
 from __future__ import annotations
@@ -17,7 +32,8 @@ from __future__ import annotations
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Dict, List, Literal, Optional
+from decimal import Decimal
+from typing import Any, Dict, List, Literal, Optional
 
 # Import audit logging helper from admin_panel
 from app.api.admin_panel import log_audit_event
@@ -25,11 +41,18 @@ from app.core.api_envelope import success_response
 from app.core.config import settings
 from app.core.database import get_db, redis_client
 from app.core.dependencies import ensure_admin_privileges, get_current_admin_or_viewer, get_current_admin_user
+from app.models.feature_flag import FeatureFlag
 from app.models.user import User
 from app.services.realtime_voice_service import realtime_voice_service
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
+
+# Import ElevenLabs service for provider testing
+try:
+    from app.services.elevenlabs_service import elevenlabs_service
+except ImportError:
+    elevenlabs_service = None
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +62,19 @@ router = APIRouter(prefix="/api/admin/voice", tags=["admin", "voice"])
 REDIS_VOICE_SESSIONS_KEY = "voiceassist:voice:sessions"
 REDIS_VOICE_CONFIG_KEY = "voiceassist:voice:admin_config"
 REDIS_VOICE_METRICS_KEY = "voiceassist:voice:metrics_24h"
+REDIS_VOICE_ANALYTICS_KEY = "voiceassist:voice:analytics"
+REDIS_VOICE_LATENCY_KEY = "voiceassist:voice:latency_histogram"
+REDIS_VOICE_COSTS_KEY = "voiceassist:voice:costs"
+
+# Voice feature flag names (prefixed for organization)
+VOICE_FEATURE_FLAGS = [
+    "voice.echo_detection_enabled",
+    "voice.adaptive_vad_enabled",
+    "voice.elevenlabs_enabled",
+    "voice.streaming_tts_enabled",
+    "voice.barge_in_enabled",
+    "voice.realtime_api_enabled",
+]
 
 
 # ============================================================================
@@ -121,6 +157,112 @@ class DisconnectResponse(BaseModel):
     success: bool
     session_id: str
     message: str
+
+
+# Phase 11.1: Additional models for analytics, providers, and feature flags
+
+
+class VoiceAnalytics(BaseModel):
+    """Voice usage analytics."""
+
+    period: str  # "24h", "7d", "30d"
+    total_sessions: int = 0
+    unique_users: int = 0
+    total_duration_seconds: float = 0.0
+    avg_session_duration_seconds: float = 0.0
+    messages_processed: int = 0
+    errors: int = 0
+    error_rate: float = 0.0
+    by_provider: Dict[str, int] = Field(default_factory=dict)
+    by_voice: Dict[str, int] = Field(default_factory=dict)
+    peak_concurrent: int = 0
+
+
+class LatencyHistogram(BaseModel):
+    """Latency distribution data."""
+
+    metric: str  # "stt" or "tts"
+    period: str
+    buckets: List[Dict[str, Any]] = Field(default_factory=list)
+    p50_ms: float = 0.0
+    p95_ms: float = 0.0
+    p99_ms: float = 0.0
+    avg_ms: float = 0.0
+    min_ms: float = 0.0
+    max_ms: float = 0.0
+    sample_count: int = 0
+
+
+class CostBreakdown(BaseModel):
+    """Cost breakdown by provider."""
+
+    period: str
+    total_cost_usd: Decimal = Decimal("0.00")
+    by_provider: Dict[str, Decimal] = Field(default_factory=dict)
+    by_voice: Dict[str, Decimal] = Field(default_factory=dict)
+    tts_characters: int = 0
+    stt_minutes: float = 0.0
+    realtime_minutes: float = 0.0
+
+
+class ProviderInfo(BaseModel):
+    """TTS/STT provider information."""
+
+    id: str
+    name: str
+    type: Literal["tts", "stt", "both"]
+    enabled: bool
+    configured: bool
+    features: List[str] = Field(default_factory=list)
+    models: List[Dict[str, str]] = Field(default_factory=list)
+
+
+class VoiceInfo(BaseModel):
+    """Voice information."""
+
+    voice_id: str
+    name: str
+    provider: str
+    category: Optional[str] = None
+    preview_url: Optional[str] = None
+    description: Optional[str] = None
+    labels: Dict[str, str] = Field(default_factory=dict)
+    supported_languages: List[str] = Field(default_factory=list)
+
+
+class ProviderTestRequest(BaseModel):
+    """Request to test a provider."""
+
+    provider: Literal["openai", "elevenlabs"]
+    voice_id: Optional[str] = None
+    test_text: str = "Hello, this is a test of the voice synthesis system."
+
+
+class ProviderTestResult(BaseModel):
+    """Result of provider connectivity test."""
+
+    provider: str
+    success: bool
+    latency_ms: Optional[float] = None
+    error: Optional[str] = None
+    audio_size_bytes: Optional[int] = None
+
+
+class VoiceFeatureFlag(BaseModel):
+    """Voice-specific feature flag."""
+
+    name: str
+    description: str
+    enabled: bool
+    rollout_percentage: int = 100
+    updated_at: Optional[str] = None
+
+
+class VoiceFeatureFlagUpdate(BaseModel):
+    """Request to update a voice feature flag."""
+
+    enabled: Optional[bool] = None
+    rollout_percentage: Optional[int] = Field(None, ge=0, le=100)
 
 
 # ============================================================================
@@ -222,15 +364,15 @@ def get_voice_config() -> VoiceConfig:
     except Exception as e:
         logger.warning(f"Failed to get voice config from Redis: {e}")
 
-    # Return default config with settings values
+    # Return default config with settings values (handle None values)
     return VoiceConfig(
-        default_voice=getattr(settings, "TTS_VOICE", "alloy"),
+        default_voice=getattr(settings, "TTS_VOICE", None) or "alloy",
         default_language="en",
         vad_enabled=True,
         vad_threshold=0.5,
         max_session_duration_sec=3600,
-        stt_provider=getattr(settings, "STT_PROVIDER", "openai"),
-        tts_provider=getattr(settings, "TTS_PROVIDER", "openai"),
+        stt_provider=getattr(settings, "STT_PROVIDER", None) or "openai",
+        tts_provider=getattr(settings, "TTS_PROVIDER", None) or "openai",
         realtime_enabled=getattr(settings, "REALTIME_ENABLED", False),
     )
 
@@ -585,6 +727,525 @@ async def update_voice_config_endpoint(
 
     data = current_config.model_dump()
     data["timestamp"] = datetime.now(timezone.utc).isoformat() + "Z"
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response(data, trace_id=trace_id)
+
+
+# ============================================================================
+# Phase 11.1: Analytics Endpoints
+# ============================================================================
+
+
+@router.get("/analytics")
+async def get_voice_analytics(
+    request: Request,
+    period: str = Query("24h", description="Time period: 24h, 7d, or 30d"),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Get voice usage analytics for the specified period.
+
+    Available to admin and viewer roles.
+    """
+    valid_periods = ["24h", "7d", "30d"]
+    if period not in valid_periods:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid period. Must be one of: {', '.join(valid_periods)}",
+        )
+
+    # Get analytics from Redis cache
+    analytics_key = f"{REDIS_VOICE_ANALYTICS_KEY}:{period}"
+    try:
+        cached_data = redis_client.get(analytics_key)
+        if cached_data:
+            if isinstance(cached_data, bytes):
+                cached_data = cached_data.decode("utf-8")
+            data = json.loads(cached_data)
+            data["period"] = period
+            data["timestamp"] = datetime.now(timezone.utc).isoformat() + "Z"
+            trace_id = getattr(request.state, "trace_id", None)
+            return success_response(data, trace_id=trace_id)
+    except Exception as e:
+        logger.warning(f"Failed to get analytics from cache: {e}")
+
+    # Return default/empty analytics if no cache
+    data = VoiceAnalytics(period=period).model_dump()
+    data["timestamp"] = datetime.now(timezone.utc).isoformat() + "Z"
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response(data, trace_id=trace_id)
+
+
+@router.get("/analytics/latency")
+async def get_voice_latency_histogram(
+    request: Request,
+    metric: str = Query("stt", description="Metric type: stt or tts"),
+    period: str = Query("24h", description="Time period: 24h, 7d, or 30d"),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Get latency histogram for STT or TTS.
+
+    Available to admin and viewer roles.
+    """
+    valid_metrics = ["stt", "tts"]
+    if metric not in valid_metrics:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid metric. Must be one of: {', '.join(valid_metrics)}",
+        )
+
+    # Get latency data from Redis
+    latency_key = f"{REDIS_VOICE_LATENCY_KEY}:{metric}:{period}"
+    try:
+        cached_data = redis_client.get(latency_key)
+        if cached_data:
+            if isinstance(cached_data, bytes):
+                cached_data = cached_data.decode("utf-8")
+            data = json.loads(cached_data)
+            data["metric"] = metric
+            data["period"] = period
+            data["timestamp"] = datetime.now(timezone.utc).isoformat() + "Z"
+            trace_id = getattr(request.state, "trace_id", None)
+            return success_response(data, trace_id=trace_id)
+    except Exception as e:
+        logger.warning(f"Failed to get latency data from cache: {e}")
+
+    # Return default histogram
+    data = LatencyHistogram(metric=metric, period=period).model_dump()
+    data["timestamp"] = datetime.now(timezone.utc).isoformat() + "Z"
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response(data, trace_id=trace_id)
+
+
+@router.get("/analytics/costs")
+async def get_voice_cost_breakdown(
+    request: Request,
+    period: str = Query("30d", description="Time period: 24h, 7d, or 30d"),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Get cost breakdown by provider.
+
+    Available to admin and viewer roles.
+    """
+    # Get cost data from Redis
+    costs_key = f"{REDIS_VOICE_COSTS_KEY}:{period}"
+    try:
+        cached_data = redis_client.get(costs_key)
+        if cached_data:
+            if isinstance(cached_data, bytes):
+                cached_data = cached_data.decode("utf-8")
+            data = json.loads(cached_data)
+            data["period"] = period
+            data["timestamp"] = datetime.now(timezone.utc).isoformat() + "Z"
+            trace_id = getattr(request.state, "trace_id", None)
+            return success_response(data, trace_id=trace_id)
+    except Exception as e:
+        logger.warning(f"Failed to get cost data from cache: {e}")
+
+    # Return default cost breakdown
+    data = {
+        "period": period,
+        "total_cost_usd": "0.00",
+        "by_provider": {"openai": "0.00", "elevenlabs": "0.00"},
+        "by_voice": {},
+        "tts_characters": 0,
+        "stt_minutes": 0.0,
+        "realtime_minutes": 0.0,
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+    }
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response(data, trace_id=trace_id)
+
+
+# ============================================================================
+# Phase 11.1: Provider & Voice Endpoints
+# ============================================================================
+
+
+@router.get("/providers")
+async def get_voice_providers(
+    request: Request,
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Get list of available TTS/STT providers.
+
+    Available to admin and viewer roles.
+    """
+    providers = []
+
+    # OpenAI provider
+    openai_configured = bool(getattr(settings, "OPENAI_API_KEY", None))
+    providers.append(
+        {
+            "id": "openai",
+            "name": "OpenAI",
+            "type": "both",
+            "enabled": True,
+            "configured": openai_configured,
+            "features": ["tts", "stt", "realtime", "streaming"],
+            "models": [
+                {"id": "tts-1", "name": "TTS-1 (Fast)"},
+                {"id": "tts-1-hd", "name": "TTS-1 HD (Quality)"},
+                {"id": "gpt-4o-realtime-preview", "name": "GPT-4o Realtime"},
+            ],
+        }
+    )
+
+    # ElevenLabs provider
+    elevenlabs_configured = bool(getattr(settings, "ELEVENLABS_API_KEY", None))
+    elevenlabs_enabled = elevenlabs_service is not None and elevenlabs_service.is_enabled()
+    providers.append(
+        {
+            "id": "elevenlabs",
+            "name": "ElevenLabs",
+            "type": "tts",
+            "enabled": elevenlabs_enabled,
+            "configured": elevenlabs_configured,
+            "features": ["tts", "streaming", "emotion_control", "multilingual"],
+            "models": [
+                {"id": "eleven_multilingual_v2", "name": "Multilingual v2 (Best Quality)"},
+                {"id": "eleven_turbo_v2", "name": "Turbo v2 (Fast, English)"},
+                {"id": "eleven_monolingual_v1", "name": "Monolingual v1 (Legacy)"},
+            ],
+        }
+    )
+
+    data = {
+        "providers": providers,
+        "default_tts_provider": getattr(settings, "TTS_PROVIDER", "openai"),
+        "default_stt_provider": getattr(settings, "STT_PROVIDER", "openai"),
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+    }
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response(data, trace_id=trace_id)
+
+
+@router.get("/voices")
+async def get_available_voices(
+    request: Request,
+    provider: Optional[str] = Query(None, description="Filter by provider: openai or elevenlabs"),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Get list of available voices for the specified provider.
+
+    Available to admin and viewer roles.
+    """
+    voices = []
+
+    # OpenAI voices
+    if provider is None or provider == "openai":
+        openai_voices = [
+            {"voice_id": "alloy", "name": "Alloy", "provider": "openai", "category": "neural"},
+            {"voice_id": "echo", "name": "Echo", "provider": "openai", "category": "neural"},
+            {"voice_id": "fable", "name": "Fable", "provider": "openai", "category": "neural"},
+            {"voice_id": "onyx", "name": "Onyx", "provider": "openai", "category": "neural"},
+            {"voice_id": "nova", "name": "Nova", "provider": "openai", "category": "neural"},
+            {"voice_id": "shimmer", "name": "Shimmer", "provider": "openai", "category": "neural"},
+        ]
+        voices.extend(openai_voices)
+
+    # ElevenLabs voices
+    if (provider is None or provider == "elevenlabs") and elevenlabs_service:
+        try:
+            elevenlabs_voices = await elevenlabs_service.get_voices()
+            for v in elevenlabs_voices:
+                voices.append(
+                    {
+                        "voice_id": v.voice_id,
+                        "name": v.name,
+                        "provider": "elevenlabs",
+                        "category": v.category,
+                        "preview_url": v.preview_url,
+                        "description": v.description,
+                        "labels": v.labels,
+                    }
+                )
+        except Exception as e:
+            logger.warning(f"Failed to fetch ElevenLabs voices: {e}")
+
+    # Get default voice
+    config = get_voice_config()
+    default_voice_id = config.default_voice
+
+    data = {
+        "voices": voices,
+        "total": len(voices),
+        "default_voice_id": default_voice_id,
+        "default_provider": config.tts_provider,
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+    }
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response(data, trace_id=trace_id)
+
+
+@router.post("/test-provider")
+async def test_voice_provider(
+    request: Request,
+    test_request: ProviderTestRequest,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_user),
+) -> Dict:
+    """Test connectivity to a TTS provider.
+
+    Admin only. Generates test audio to verify provider is working.
+    """
+    ensure_admin_privileges(current_admin_user)
+
+    import time
+
+    start_time = time.time()
+    result = {
+        "provider": test_request.provider,
+        "success": False,
+        "latency_ms": None,
+        "error": None,
+        "audio_size_bytes": None,
+    }
+
+    try:
+        if test_request.provider == "openai":
+            # Test OpenAI TTS
+            import httpx
+
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    "https://api.openai.com/v1/audio/speech",
+                    headers={
+                        "Authorization": f"Bearer {settings.OPENAI_API_KEY}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": "tts-1",
+                        "input": test_request.test_text,
+                        "voice": test_request.voice_id or "alloy",
+                    },
+                    timeout=30.0,
+                )
+                if response.status_code == 200:
+                    result["success"] = True
+                    result["audio_size_bytes"] = len(response.content)
+                else:
+                    result["error"] = f"HTTP {response.status_code}: {response.text}"
+
+        elif test_request.provider == "elevenlabs":
+            if not elevenlabs_service or not elevenlabs_service.is_enabled():
+                result["error"] = "ElevenLabs is not configured"
+            else:
+                synthesis_result = await elevenlabs_service.synthesize(
+                    text=test_request.test_text,
+                    voice_id=test_request.voice_id,
+                )
+                result["success"] = True
+                result["audio_size_bytes"] = len(synthesis_result.audio_data)
+
+    except Exception as e:
+        result["error"] = str(e)
+
+    result["latency_ms"] = round((time.time() - start_time) * 1000, 2)
+
+    # Log audit event
+    log_audit_event(
+        db=db,
+        action="voice.provider.test",
+        user_id=str(current_admin_user.id),
+        user_email=current_admin_user.email,
+        resource_type="voice_provider",
+        resource_id=test_request.provider,
+        success=result["success"],
+        details=json.dumps(
+            {
+                "provider": test_request.provider,
+                "voice_id": test_request.voice_id,
+                "latency_ms": result["latency_ms"],
+                "error": result["error"],
+            }
+        ),
+        request=request,
+    )
+
+    data = result
+    data["timestamp"] = datetime.now(timezone.utc).isoformat() + "Z"
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response(data, trace_id=trace_id)
+
+
+# ============================================================================
+# Phase 11.1: Feature Flags Endpoints
+# ============================================================================
+
+
+# Default voice feature flag definitions
+VOICE_FEATURE_FLAG_DEFINITIONS = {
+    "voice.echo_detection_enabled": {
+        "description": "Enable local echo detection in AudioWorklet to suppress speaker feedback",
+        "default": True,
+    },
+    "voice.adaptive_vad_enabled": {
+        "description": "Automatically adjust silence detection based on user speech patterns",
+        "default": True,
+    },
+    "voice.elevenlabs_enabled": {
+        "description": "Enable ElevenLabs as an alternative TTS provider",
+        "default": True,
+    },
+    "voice.streaming_tts_enabled": {
+        "description": "Stream audio chunks for lower latency playback",
+        "default": True,
+    },
+    "voice.barge_in_enabled": {
+        "description": "Allow users to interrupt AI responses by speaking",
+        "default": True,
+    },
+    "voice.realtime_api_enabled": {
+        "description": "Enable OpenAI Realtime API for voice conversations",
+        "default": True,
+    },
+}
+
+
+@router.get("/feature-flags")
+async def get_voice_feature_flags(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Get voice-specific feature flags.
+
+    Available to admin and viewer roles.
+    """
+    flags = []
+
+    for flag_name in VOICE_FEATURE_FLAGS:
+        # Try to get from database
+        flag = db.query(FeatureFlag).filter(FeatureFlag.name == flag_name).first()
+
+        if flag:
+            flags.append(
+                {
+                    "name": flag.name,
+                    "description": flag.description,
+                    "enabled": flag.enabled,
+                    "rollout_percentage": flag.rollout_percentage or 100,
+                    "updated_at": flag.updated_at.isoformat() if flag.updated_at else None,
+                }
+            )
+        else:
+            # Return default if not in database
+            definition = VOICE_FEATURE_FLAG_DEFINITIONS.get(flag_name, {})
+            flags.append(
+                {
+                    "name": flag_name,
+                    "description": definition.get("description", "No description"),
+                    "enabled": definition.get("default", False),
+                    "rollout_percentage": 100,
+                    "updated_at": None,
+                }
+            )
+
+    data = {
+        "flags": flags,
+        "total": len(flags),
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+    }
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response(data, trace_id=trace_id)
+
+
+@router.patch("/feature-flags/{flag_name:path}")
+async def update_voice_feature_flag(
+    request: Request,
+    flag_name: str = Path(..., description="Feature flag name"),
+    update: VoiceFeatureFlagUpdate = ...,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_user),
+) -> Dict:
+    """Update a voice feature flag.
+
+    Admin only.
+    """
+    ensure_admin_privileges(current_admin_user)
+
+    # Validate flag name
+    if flag_name not in VOICE_FEATURE_FLAGS:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Unknown voice feature flag: {flag_name}",
+        )
+
+    # Get or create flag
+    flag = db.query(FeatureFlag).filter(FeatureFlag.name == flag_name).first()
+    definition = VOICE_FEATURE_FLAG_DEFINITIONS.get(flag_name, {})
+
+    if not flag:
+        # Create new flag
+        flag = FeatureFlag(
+            name=flag_name,
+            description=definition.get("description", "No description"),
+            flag_type="boolean",
+            enabled=definition.get("default", False),
+            rollout_percentage=100,
+        )
+        db.add(flag)
+
+    # Store original values for audit
+    original_values = {
+        "enabled": flag.enabled,
+        "rollout_percentage": flag.rollout_percentage,
+    }
+
+    # Apply updates
+    if update.enabled is not None:
+        flag.enabled = update.enabled
+    if update.rollout_percentage is not None:
+        flag.rollout_percentage = update.rollout_percentage
+
+    flag.updated_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(flag)
+
+    # Log audit event
+    log_audit_event(
+        db=db,
+        action="voice.feature_flag.update",
+        user_id=str(current_admin_user.id),
+        user_email=current_admin_user.email,
+        resource_type="voice_feature_flag",
+        resource_id=flag_name,
+        success=True,
+        details=json.dumps(
+            {
+                "original": original_values,
+                "updated": update.model_dump(exclude_unset=True),
+            }
+        ),
+        request=request,
+    )
+
+    logger.info(
+        f"Admin {current_admin_user.email} updated voice feature flag {flag_name}",
+        extra={
+            "admin_id": current_admin_user.id,
+            "flag_name": flag_name,
+            "changes": update.model_dump(exclude_unset=True),
+        },
+    )
+
+    data = {
+        "name": flag.name,
+        "description": flag.description,
+        "enabled": flag.enabled,
+        "rollout_percentage": flag.rollout_percentage,
+        "updated_at": flag.updated_at.isoformat() if flag.updated_at else None,
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+    }
 
     trace_id = getattr(request.state, "trace_id", None)
     return success_response(data, trace_id=trace_id)

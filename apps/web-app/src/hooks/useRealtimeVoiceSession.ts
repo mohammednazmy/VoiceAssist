@@ -8,6 +8,12 @@
  * - Manages connection lifecycle (connect, disconnect, reconnect)
  * - Surfaces real-time events (transcripts, audio, errors)
  * - Automatic cleanup on unmount
+ *
+ * Phase 11: Pre-warming optimizations
+ * - prewarmSession(): Pre-fetch session config before user clicks "Start Voice"
+ * - prewarmMicPermission(): Request mic permission early on page load
+ * - prewarmWebSocket(): Pre-establish WebSocket on voice button hover
+ * - Expected latency improvement: 200-400ms
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -211,6 +217,12 @@ export function useRealtimeVoiceSession(
   const intentionalDisconnectRef = useRef(false);
   // Track fatal errors (mic permission denied) to prevent reconnection loops
   const fatalErrorRef = useRef(false);
+
+  // Phase 11: Pre-warming refs for latency optimization
+  const prewarmedConfigRef = useRef<RealtimeSessionConfig | null>(null);
+  const prewarmedWsRef = useRef<WebSocket | null>(null);
+  const prewarmingInProgressRef = useRef(false);
+  const micPermissionGrantedRef = useRef(false);
 
   // Timing refs for metrics tracking
   const connectStartTimeRef = useRef<number | null>(null);
@@ -425,6 +437,183 @@ export function useRealtimeVoiceSession(
         );
       }
     }, [apiClient, options.conversation_id, options.voiceSettings]);
+
+  /**
+   * Phase 11: Pre-warm session configuration
+   * Call this on page load or voice button hover to pre-fetch session config.
+   * Reduces connection latency by ~100-200ms.
+   */
+  const prewarmSession = useCallback(async () => {
+    // Don't prewarm if already have a valid config or currently prewarming
+    if (prewarmingInProgressRef.current) {
+      voiceLog.debug("[RealtimeVoiceSession] Prewarm already in progress");
+      return;
+    }
+
+    // Check if existing prewarmed config is still valid (not expired)
+    if (prewarmedConfigRef.current) {
+      const expiresAt = prewarmedConfigRef.current.expires_at * 1000;
+      const timeUntilExpiry = expiresAt - Date.now();
+      if (timeUntilExpiry > 60000) {
+        // More than 60s left
+        voiceLog.debug("[RealtimeVoiceSession] Using cached prewarmed config");
+        return;
+      }
+    }
+
+    prewarmingInProgressRef.current = true;
+    voiceLog.debug("[RealtimeVoiceSession] Pre-warming session config...");
+
+    try {
+      const { voiceSettings } = options;
+      const config = await apiClient.createRealtimeSession({
+        conversation_id: options.conversation_id || null,
+        voice: voiceSettings?.voice || null,
+        language: voiceSettings?.language || null,
+        vad_sensitivity: voiceSettings?.vadSensitivity ?? null,
+      });
+
+      prewarmedConfigRef.current = config;
+      voiceLog.debug(
+        `[RealtimeVoiceSession] Session pre-warmed, expires in ${Math.round((config.expires_at * 1000 - Date.now()) / 1000)}s`,
+      );
+    } catch (err) {
+      voiceLog.warn(
+        `[RealtimeVoiceSession] Prewarm failed (non-fatal): ${err instanceof Error ? err.message : "Unknown"}`,
+      );
+      // Don't throw - prewarm failures are non-fatal
+    } finally {
+      prewarmingInProgressRef.current = false;
+    }
+  }, [apiClient, options.conversation_id, options.voiceSettings]);
+
+  /**
+   * Phase 11: Pre-warm microphone permission
+   * Call this early (e.g., on chat page load) to prompt user for mic access.
+   * Subsequent getUserMedia calls will be instant if permission was granted.
+   * Returns true if permission was granted, false otherwise.
+   */
+  const prewarmMicPermission = useCallback(async (): Promise<boolean> => {
+    // Already granted in this session
+    if (micPermissionGrantedRef.current) {
+      return true;
+    }
+
+    voiceLog.debug("[RealtimeVoiceSession] Pre-requesting mic permission...");
+
+    try {
+      // Request minimal mic access just to trigger permission prompt
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+
+      // Immediately stop the stream - we just wanted the permission
+      stream.getTracks().forEach((track) => track.stop());
+
+      micPermissionGrantedRef.current = true;
+      voiceLog.debug("[RealtimeVoiceSession] Mic permission pre-granted");
+      return true;
+    } catch (err) {
+      voiceLog.debug(
+        `[RealtimeVoiceSession] Mic permission denied/failed: ${err instanceof Error ? err.message : "Unknown"}`,
+      );
+      return false;
+    }
+  }, []);
+
+  /**
+   * Phase 11: Pre-warm WebSocket connection
+   * Call this on voice button hover to establish WebSocket before user clicks.
+   * The prewarmed connection will be reused by connect() if still open.
+   * Expected latency improvement: 100-200ms
+   */
+  const prewarmWebSocket = useCallback(async () => {
+    // Need session config first
+    if (!prewarmedConfigRef.current) {
+      voiceLog.debug(
+        "[RealtimeVoiceSession] No prewarmed config, prewarming session first...",
+      );
+      await prewarmSession();
+    }
+
+    const config = prewarmedConfigRef.current;
+    if (!config) {
+      voiceLog.debug(
+        "[RealtimeVoiceSession] Cannot prewarm WebSocket without config",
+      );
+      return;
+    }
+
+    // Check if config is expired or about to expire
+    const timeUntilExpiry = config.expires_at * 1000 - Date.now();
+    if (timeUntilExpiry < 30000) {
+      voiceLog.debug(
+        "[RealtimeVoiceSession] Prewarmed config expiring soon, refreshing...",
+      );
+      prewarmedConfigRef.current = null;
+      await prewarmSession();
+      return;
+    }
+
+    // Check if we already have an open prewarmed WebSocket
+    if (
+      prewarmedWsRef.current &&
+      prewarmedWsRef.current.readyState === WebSocket.OPEN
+    ) {
+      voiceLog.debug("[RealtimeVoiceSession] Prewarmed WebSocket already open");
+      return;
+    }
+
+    voiceLog.debug("[RealtimeVoiceSession] Pre-warming WebSocket...");
+
+    try {
+      const wsUrl = `${config.url}?model=${config.model}`;
+      const ws = new WebSocket(wsUrl, [
+        "realtime",
+        `openai-beta.realtime-v1`,
+        `openai-insecure-api-key.${config.auth.token}`,
+      ]);
+
+      // Set up minimal event handlers for prewarmed connection
+      ws.onopen = () => {
+        voiceLog.debug("[RealtimeVoiceSession] Prewarmed WebSocket connected");
+        // Send session.update to configure the session
+        ws.send(
+          JSON.stringify({
+            type: "session.update",
+            session: {
+              modalities: config.voice_config.modalities,
+              instructions: "You are a helpful medical AI assistant.",
+              voice: config.voice_config.voice,
+              input_audio_format: config.voice_config.input_audio_format,
+              output_audio_format: config.voice_config.output_audio_format,
+              input_audio_transcription:
+                config.voice_config.input_audio_transcription,
+              turn_detection: config.voice_config.turn_detection,
+            },
+          }),
+        );
+      };
+
+      ws.onerror = () => {
+        voiceLog.debug(
+          "[RealtimeVoiceSession] Prewarmed WebSocket error (will retry on connect)",
+        );
+        prewarmedWsRef.current = null;
+      };
+
+      ws.onclose = () => {
+        voiceLog.debug("[RealtimeVoiceSession] Prewarmed WebSocket closed");
+        prewarmedWsRef.current = null;
+      };
+
+      prewarmedWsRef.current = ws;
+    } catch (err) {
+      voiceLog.debug(
+        `[RealtimeVoiceSession] Prewarm WebSocket failed: ${err instanceof Error ? err.message : "Unknown"}`,
+      );
+    }
+  }, [prewarmSession]);
 
   /**
    * Initialize WebSocket connection
@@ -852,10 +1041,32 @@ export function useRealtimeVoiceSession(
             },
           );
 
-          // Handle audio chunks from worklet
+          // Handle messages from worklet
           workletNode.port.onmessage = (event) => {
-            if (event.data.type === "audio") {
-              sendAudioChunk(event.data.pcm16, event.data.dbLevel);
+            switch (event.data.type) {
+              case "audio":
+                sendAudioChunk(event.data.pcm16, event.data.dbLevel);
+                break;
+
+              case "audio_suppressed":
+                // Phase 11.1: Audio was suppressed due to echo detection
+                voiceLog.debug(
+                  `[RealtimeVoiceSession] Audio suppressed (${event.data.reason}), correlation: ${event.data.correlation?.toFixed(2)}`,
+                );
+                break;
+
+              case "echo_detected":
+                // Phase 11.1: Echo detection report (periodic)
+                voiceLog.debug(
+                  `[RealtimeVoiceSession] Echo detected: correlation=${event.data.correlation?.toFixed(2)}, count=${event.data.count}`,
+                );
+                break;
+
+              case "ready":
+                voiceLog.debug(
+                  "[RealtimeVoiceSession] AudioWorklet processor ready",
+                );
+                break;
             }
           };
 
@@ -1002,16 +1213,81 @@ export function useRealtimeVoiceSession(
       // Clear intentional disconnect flag when starting new connection
       intentionalDisconnectRef.current = false;
 
-      // Step 1: Fetch session config from backend
-      const config = await fetchSessionConfig();
+      // Step 1: Use prewarmed session config if available, otherwise fetch new
+      let config: RealtimeSessionConfig;
+      if (
+        prewarmedConfigRef.current &&
+        prewarmedConfigRef.current.expires_at * 1000 - Date.now() > 30000
+      ) {
+        // Use prewarmed config (saves ~100-200ms)
+        config = prewarmedConfigRef.current;
+        setSessionConfig(config);
+        prewarmedConfigRef.current = null; // Clear after use
+        voiceLog.debug(
+          "[RealtimeVoiceSession] Using prewarmed session config (latency saved)",
+        );
+      } else {
+        // Fetch fresh config
+        config = await fetchSessionConfig();
+      }
 
       // Check if session is expired
       if (config.expires_at * 1000 < Date.now()) {
         throw new Error("Session configuration expired");
       }
 
-      // Step 2: Initialize WebSocket
-      const ws = await initializeWebSocket(config);
+      // Step 2: Use prewarmed WebSocket if available, otherwise initialize new
+      let ws: WebSocket;
+      if (
+        prewarmedWsRef.current &&
+        prewarmedWsRef.current.readyState === WebSocket.OPEN
+      ) {
+        // Use prewarmed WebSocket (saves ~100-200ms)
+        ws = prewarmedWsRef.current;
+        prewarmedWsRef.current = null; // Clear after use
+
+        // Set up message handler on the prewarmed WebSocket
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            handleRealtimeMessageRef.current(message);
+          } catch (err) {
+            voiceLog.error(
+              "[RealtimeVoiceSession] Failed to parse message:",
+              err,
+            );
+          }
+        };
+
+        // Set up close handler for reconnection
+        ws.onclose = (event) => {
+          voiceLog.debug(
+            `[RealtimeVoiceSession] WebSocket closed: ${event.code} ${event.reason}`,
+          );
+
+          // Check if session expired
+          if (sessionConfig && sessionConfig.expires_at * 1000 < Date.now()) {
+            voiceLog.debug(" Session expired");
+            updateStatusRef.current("expired");
+            return;
+          }
+
+          // If not an intentional disconnect, schedule reconnection
+          if (!intentionalDisconnectRef.current) {
+            scheduleReconnect();
+          } else {
+            updateStatusRef.current("disconnected");
+          }
+        };
+
+        updateStatus("connected");
+        voiceLog.debug(
+          "[RealtimeVoiceSession] Using prewarmed WebSocket (latency saved)",
+        );
+      } else {
+        // Initialize fresh WebSocket
+        ws = await initializeWebSocket(config);
+      }
       wsRef.current = ws;
 
       // Step 3: Initialize audio streaming
@@ -1091,6 +1367,13 @@ export function useRealtimeVoiceSession(
     }
 
     voiceLog.debug(" Disconnecting...");
+
+    // Clean up prewarmed resources (Phase 11)
+    if (prewarmedWsRef.current) {
+      prewarmedWsRef.current.close();
+      prewarmedWsRef.current = null;
+    }
+    prewarmedConfigRef.current = null;
 
     // Mark as intentional disconnect to prevent auto-reconnect
     intentionalDisconnectRef.current = true;
@@ -1196,6 +1479,24 @@ export function useRealtimeVoiceSession(
     );
   }, []);
 
+  /**
+   * Phase 11.1: Notify AudioWorklet of playback state for echo detection
+   * Call this when TTS audio starts/stops playing to enable echo suppression.
+   * @param isPlaying - true when TTS audio is playing, false when stopped
+   */
+  const setEchoReferencePlaybackState = useCallback((isPlaying: boolean) => {
+    const processor = processorNodeRef.current;
+    if (processor && processor instanceof AudioWorkletNode) {
+      processor.port.postMessage({
+        type: "playbackState",
+        isPlaying,
+      });
+      voiceLog.debug(
+        `[RealtimeVoiceSession] Echo reference playback state: ${isPlaying ? "playing" : "stopped"}`,
+      );
+    }
+  }, []);
+
   // Track if session refresh is in progress to prevent duplicate refreshes
   const isRefreshingSessionRef = useRef(false);
 
@@ -1296,6 +1597,19 @@ export function useRealtimeVoiceSession(
     disconnect,
     sendMessage,
     resetFatalError,
+
+    // Phase 11: Pre-warming actions for latency optimization
+    // Call prewarmSession on page load to pre-fetch session config (~100-200ms saved)
+    // Call prewarmMicPermission early to prompt user for mic access
+    // Call prewarmWebSocket on voice button hover to establish WebSocket (~100-200ms saved)
+    prewarmSession,
+    prewarmMicPermission,
+    prewarmWebSocket,
+
+    // Phase 11.1: Echo cancellation support
+    // Call setEchoReferencePlaybackState(true) when TTS starts, (false) when it stops
+    // This enables correlation-based echo detection in the AudioWorklet
+    setEchoReferencePlaybackState,
 
     // Derived state
     isConnected: status === "connected",

@@ -48,11 +48,6 @@ const categoryConfig: Record<
     color: "text-cyan-700 dark:text-cyan-300",
     bg: "bg-cyan-100 dark:bg-cyan-900/30",
   },
-  Infrastructure: {
-    path: "/operations",
-    color: "text-rose-700 dark:text-rose-300",
-    bg: "bg-rose-100 dark:bg-rose-900/30",
-  },
   Voice: {
     path: "/backend",
     color: "text-indigo-700 dark:text-indigo-300",

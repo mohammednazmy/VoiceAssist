@@ -161,7 +161,28 @@ class VoiceWebSocketHandler:
         self._on_error = on_error
 
         # Audio processing
-        self._audio_processor = StreamingAudioProcessor() if config.noise_suppression else None
+        # Phase 11: Enable audio processor for both echo cancellation and noise suppression
+        if config.echo_cancellation or config.noise_suppression:
+            from app.services.audio_processor import AudioProcessorConfig
+
+            processor_config = AudioProcessorConfig(
+                sample_rate=24000,  # Match OpenAI Realtime API sample rate
+                echo_enabled=config.echo_cancellation,
+                noise_enabled=config.noise_suppression,
+                agc_enabled=True,  # Always enable AGC for consistent levels
+                highpass_enabled=True,  # Remove DC offset
+            )
+            self._audio_processor = StreamingAudioProcessor(processor_config)
+            logger.debug(
+                "Audio processor initialized",
+                extra={
+                    "echo_cancellation": config.echo_cancellation,
+                    "noise_suppression": config.noise_suppression,
+                },
+            )
+        else:
+            self._audio_processor = None
+
         self._vad = StreamingVAD(
             VADConfig(
                 threshold=config.vad_threshold,

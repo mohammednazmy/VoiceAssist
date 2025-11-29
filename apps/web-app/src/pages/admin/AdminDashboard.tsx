@@ -79,6 +79,13 @@ const VoiceMetricsDashboard = lazy(() =>
   })),
 );
 
+// Phase 11.1: Voice Admin Panel (config, analytics, features)
+const VoiceAdminPanel = lazy(() =>
+  import("../../components/admin/VoiceAdminPanel").then((m) => ({
+    default: m.VoiceAdminPanel,
+  })),
+);
+
 export default function AdminDashboard() {
   const location = useLocation();
 
@@ -271,7 +278,40 @@ export default function AdminDashboard() {
               </Link>
             </li>
 
-            {/* Phase 11: Voice Metrics */}
+            {/* Phase 11: Voice Management Section */}
+            <li className="pt-4 mt-4 border-t border-neutral-200">
+              <span className="px-3 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+                Voice Mode
+              </span>
+            </li>
+
+            <li>
+              <Link
+                to="/admin/voice"
+                className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  location.pathname === "/admin/voice"
+                    ? "bg-primary-50 text-primary-700"
+                    : "text-neutral-700 hover:bg-neutral-100"
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"
+                  />
+                </svg>
+                <span>Voice Config</span>
+              </Link>
+            </li>
+
             <li>
               <Link
                 to="/admin/voice-metrics"
@@ -457,6 +497,15 @@ export default function AdminDashboard() {
               element={
                 <Suspense fallback={<AuditLogSkeleton />}>
                   <AuditLogViewer />
+                </Suspense>
+              }
+            />
+            {/* Phase 11: Voice Admin Panel */}
+            <Route
+              path="voice"
+              element={
+                <Suspense fallback={<AdminPageSkeleton />}>
+                  <VoiceAdminPanel />
                 </Suspense>
               }
             />
