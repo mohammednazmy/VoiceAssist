@@ -3,15 +3,15 @@
  * Export conversations to PDF and Markdown formats
  */
 
-import type { Message } from '@voiceassist/types';
-import type { Citation } from '../types';
+import type { Message } from "@voiceassist/types";
+import type { Citation } from "../types";
 
 // Export conversation to Markdown
 export function exportToMarkdown(
   conversationTitle: string,
   messages: Message[],
   includeTimestamps = true,
-  includeCitations = true
+  includeCitations = true,
 ): string {
   let markdown = `# ${conversationTitle}\n\n`;
 
@@ -21,11 +21,11 @@ export function exportToMarkdown(
     markdown += `**Started:** ${new Date(firstMessage.timestamp).toLocaleString()}\n`;
     markdown += `**Last Updated:** ${new Date(lastMessage.timestamp).toLocaleString()}\n`;
     markdown += `**Messages:** ${messages.length}\n\n`;
-    markdown += '---\n\n';
+    markdown += "---\n\n";
   }
 
   messages.forEach((message, index) => {
-    const role = message.role === 'user' ? '👤 You' : '🤖 VoiceAssist';
+    const role = message.role === "user" ? "👤 You" : "🤖 VoiceAssist";
 
     markdown += `## ${role}\n\n`;
 
@@ -40,19 +40,19 @@ export function exportToMarkdown(
     if (includeCitations) {
       const citations = message.metadata?.citations || message.citations || [];
       if (citations.length > 0) {
-        markdown += '### Sources\n\n';
+        markdown += "### Sources\n\n";
         citations.forEach((citation: Citation, citIndex: number) => {
           markdown += `${citIndex + 1}. `;
           if (citation.title) {
             markdown += `**${citation.title}**`;
           }
           if (citation.authors && citation.authors.length > 0) {
-            markdown += ` - ${citation.authors.join(', ')}`;
+            markdown += ` - ${citation.authors.join(", ")}`;
           }
           if (citation.publicationYear) {
             markdown += ` (${citation.publicationYear})`;
           }
-          markdown += '\n';
+          markdown += "\n";
 
           if (citation.doi) {
             markdown += `   - DOI: [${citation.doi}](https://doi.org/${citation.doi})\n`;
@@ -66,14 +66,14 @@ export function exportToMarkdown(
           if (citation.snippet) {
             markdown += `   - Excerpt: "${citation.snippet}"\n`;
           }
-          markdown += '\n';
+          markdown += "\n";
         });
       }
     }
 
     // Add separator between messages
     if (index < messages.length - 1) {
-      markdown += '---\n\n';
+      markdown += "---\n\n";
     }
   });
 
@@ -81,10 +81,14 @@ export function exportToMarkdown(
 }
 
 // Download file helper
-export function downloadFile(content: string, filename: string, mimeType: string) {
+export function downloadFile(
+  content: string,
+  filename: string,
+  mimeType: string,
+) {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = url;
   link.download = filename;
   document.body.appendChild(link);
@@ -98,12 +102,17 @@ export function exportConversationToMarkdown(
   conversationTitle: string,
   messages: Message[],
   includeTimestamps = true,
-  includeCitations = true
+  includeCitations = true,
 ) {
-  const markdown = exportToMarkdown(conversationTitle, messages, includeTimestamps, includeCitations);
-  const timestamp = new Date().toISOString().split('T')[0];
-  const filename = `${conversationTitle.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${timestamp}.md`;
-  downloadFile(markdown, filename, 'text/markdown');
+  const markdown = exportToMarkdown(
+    conversationTitle,
+    messages,
+    includeTimestamps,
+    includeCitations,
+  );
+  const timestamp = new Date().toISOString().split("T")[0];
+  const filename = `${conversationTitle.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-${timestamp}.md`;
+  downloadFile(markdown, filename, "text/markdown");
 }
 
 // Export to PDF using browser print
@@ -111,15 +120,22 @@ export function exportConversationToPDF(
   conversationTitle: string,
   messages: Message[],
   includeTimestamps = true,
-  includeCitations = true
+  includeCitations = true,
 ) {
   // Create a temporary container for print
-  const printWindow = window.open('', '_blank');
+  const printWindow = window.open("", "_blank");
   if (!printWindow) {
-    throw new Error('Failed to open print window. Please allow popups for this site.');
+    throw new Error(
+      "Failed to open print window. Please allow popups for this site.",
+    );
   }
 
-  const markdown = exportToMarkdown(conversationTitle, messages, includeTimestamps, includeCitations);
+  const markdown = exportToMarkdown(
+    conversationTitle,
+    messages,
+    includeTimestamps,
+    includeCitations,
+  );
 
   // Convert markdown to simple HTML for printing
   const htmlContent = markdownToSimpleHTML(markdown);
@@ -209,29 +225,35 @@ export function exportConversationToPDF(
 
 // Simple markdown to HTML converter (basic support)
 function markdownToSimpleHTML(markdown: string): string {
-  return markdown
-    // Headers
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    // Bold
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    // Italic
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    // Links
-    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>')
-    // Horizontal rules
-    .replace(/^---$/gm, '<hr>')
-    // Line breaks
-    .replace(/\n\n/g, '</p><p>')
-    // Wrap in paragraphs
-    .split('\n')
-    .map(line => {
-      if (line.startsWith('<h') || line.startsWith('<hr') || line.trim() === '') {
+  return (
+    markdown
+      // Headers
+      .replace(/^### (.+)$/gm, "<h3>$1</h3>")
+      .replace(/^## (.+)$/gm, "<h2>$1</h2>")
+      .replace(/^# (.+)$/gm, "<h1>$1</h1>")
+      // Bold
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      // Italic
+      .replace(/\*(.+?)\*/g, "<em>$1</em>")
+      // Links
+      .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>')
+      // Horizontal rules
+      .replace(/^---$/gm, "<hr>")
+      // Line breaks
+      .replace(/\n\n/g, "</p><p>")
+      // Wrap in paragraphs
+      .split("\n")
+      .map((line) => {
+        if (
+          line.startsWith("<h") ||
+          line.startsWith("<hr") ||
+          line.trim() === ""
+        ) {
+          return line;
+        }
         return line;
-      }
-      return line;
-    })
-    .join('\n')
-    .replace(/^(?!<h|<hr|<p)(.+)$/gm, '<p>$1</p>');
+      })
+      .join("\n")
+      .replace(/^(?!<h|<hr|<p)(.+)$/gm, "<p>$1</p>")
+  );
 }

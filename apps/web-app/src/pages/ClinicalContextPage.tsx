@@ -3,12 +3,21 @@
  * Manage clinical context that will be used in AI conversations
  */
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button, Card, CardHeader, CardTitle, CardContent } from '@voiceassist/ui';
-import { ClinicalContextPanel, type ClinicalContext } from '../components/clinical/ClinicalContextPanel';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@voiceassist/ui";
+import {
+  ClinicalContextPanel,
+  type ClinicalContext,
+} from "../components/clinical/ClinicalContextPanel";
 
-const CONTEXT_STORAGE_KEY = 'voiceassist:clinical-context';
+const CONTEXT_STORAGE_KEY = "voiceassist:clinical-context";
 
 export function ClinicalContextPage() {
   const navigate = useNavigate();
@@ -24,7 +33,7 @@ export function ClinicalContextPage() {
   }, [context]);
 
   const handleClear = () => {
-    if (confirm('Are you sure you want to clear all clinical context?')) {
+    if (confirm("Are you sure you want to clear all clinical context?")) {
       setContext({});
       localStorage.removeItem(CONTEXT_STORAGE_KEY);
     }
@@ -32,14 +41,16 @@ export function ClinicalContextPage() {
 
   const handleStartConsultation = () => {
     // Navigate to chat with context
-    navigate('/chat');
+    navigate("/chat");
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900">Clinical Context</h1>
+          <h1 className="text-3xl font-bold text-neutral-900">
+            Clinical Context
+          </h1>
           <p className="mt-2 text-neutral-600">
             Provide patient information for more relevant AI assistance
           </p>
@@ -68,11 +79,15 @@ export function ClinicalContextPage() {
               />
             </svg>
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-yellow-900">Important Disclaimer</h3>
+              <h3 className="text-sm font-semibold text-yellow-900">
+                Important Disclaimer
+              </h3>
               <p className="text-sm text-yellow-800 mt-1">
-                This information is used to provide clinical decision support and is NOT a substitute for professional medical judgment.
-                Always verify AI recommendations with authoritative sources and clinical guidelines.
-                Do not enter Protected Health Information (PHI) or personally identifiable information.
+                This information is used to provide clinical decision support
+                and is NOT a substitute for professional medical judgment.
+                Always verify AI recommendations with authoritative sources and
+                clinical guidelines. Do not enter Protected Health Information
+                (PHI) or personally identifiable information.
               </p>
             </div>
           </div>
@@ -98,21 +113,30 @@ export function ClinicalContextPage() {
           </CardHeader>
           <CardContent>
             <div className="prose prose-sm max-w-none">
-              {context.demographics && Object.keys(context.demographics).length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-neutral-900">Demographics:</h4>
-                  <p className="text-neutral-700">
-                    {context.demographics.age && `Age: ${context.demographics.age} years old`}
-                    {context.demographics.gender && `, ${context.demographics.gender}`}
-                    {context.demographics.weight && `, Weight: ${context.demographics.weight} kg`}
-                    {context.demographics.height && `, Height: ${context.demographics.height} cm`}
-                  </p>
-                </div>
-              )}
+              {context.demographics &&
+                Object.keys(context.demographics).length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-neutral-900">
+                      Demographics:
+                    </h4>
+                    <p className="text-neutral-700">
+                      {context.demographics.age &&
+                        `Age: ${context.demographics.age} years old`}
+                      {context.demographics.gender &&
+                        `, ${context.demographics.gender}`}
+                      {context.demographics.weight &&
+                        `, Weight: ${context.demographics.weight} kg`}
+                      {context.demographics.height &&
+                        `, Height: ${context.demographics.height} cm`}
+                    </p>
+                  </div>
+                )}
 
               {context.chiefComplaint && (
                 <div>
-                  <h4 className="font-semibold text-neutral-900">Chief Complaint:</h4>
+                  <h4 className="font-semibold text-neutral-900">
+                    Chief Complaint:
+                  </h4>
                   <p className="text-neutral-700">{context.chiefComplaint}</p>
                 </div>
               )}
@@ -130,7 +154,9 @@ export function ClinicalContextPage() {
 
               {context.medications && context.medications.length > 0 && (
                 <div>
-                  <h4 className="font-semibold text-neutral-900">Medications:</h4>
+                  <h4 className="font-semibold text-neutral-900">
+                    Medications:
+                  </h4>
                   <ul className="list-disc list-inside text-neutral-700">
                     {context.medications.map((med, i) => (
                       <li key={i}>{med}</li>
@@ -141,13 +167,20 @@ export function ClinicalContextPage() {
 
               {context.vitals && Object.keys(context.vitals).length > 0 && (
                 <div>
-                  <h4 className="font-semibold text-neutral-900">Vital Signs:</h4>
+                  <h4 className="font-semibold text-neutral-900">
+                    Vital Signs:
+                  </h4>
                   <p className="text-neutral-700">
-                    {context.vitals.temperature && `Temp: ${context.vitals.temperature}°C`}
-                    {context.vitals.heartRate && `, HR: ${context.vitals.heartRate} bpm`}
-                    {context.vitals.bloodPressure && `, BP: ${context.vitals.bloodPressure}`}
-                    {context.vitals.respiratoryRate && `, RR: ${context.vitals.respiratoryRate} breaths/min`}
-                    {context.vitals.oxygenSaturation && `, SpO₂: ${context.vitals.oxygenSaturation}%`}
+                    {context.vitals.temperature &&
+                      `Temp: ${context.vitals.temperature}°C`}
+                    {context.vitals.heartRate &&
+                      `, HR: ${context.vitals.heartRate} bpm`}
+                    {context.vitals.bloodPressure &&
+                      `, BP: ${context.vitals.bloodPressure}`}
+                    {context.vitals.respiratoryRate &&
+                      `, RR: ${context.vitals.respiratoryRate} breaths/min`}
+                    {context.vitals.oxygenSaturation &&
+                      `, SpO₂: ${context.vitals.oxygenSaturation}%`}
                   </p>
                 </div>
               )}

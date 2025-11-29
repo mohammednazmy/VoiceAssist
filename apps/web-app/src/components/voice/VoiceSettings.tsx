@@ -3,8 +3,14 @@
  * Configure voice input/output preferences
  */
 
-import { useState } from 'react';
-import { Label, Card, CardHeader, CardTitle, CardContent } from '@voiceassist/ui';
+import { useState } from "react";
+import {
+  Label,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@voiceassist/ui";
 
 interface VoiceSettingsProps {
   onSettingsChange?: (settings: VoiceSettings) => void;
@@ -24,12 +30,14 @@ const DEFAULT_SETTINGS: VoiceSettings = {
   autoPlay: true,
 };
 
-export function VoiceSettingsComponent({ onSettingsChange }: VoiceSettingsProps) {
+export function VoiceSettingsComponent({
+  onSettingsChange,
+}: VoiceSettingsProps) {
   const [settings, setSettings] = useState<VoiceSettings>(DEFAULT_SETTINGS);
 
   const updateSetting = <K extends keyof VoiceSettings>(
     key: K,
-    value: VoiceSettings[K]
+    value: VoiceSettings[K],
   ) => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
@@ -54,7 +62,7 @@ export function VoiceSettingsComponent({ onSettingsChange }: VoiceSettingsProps)
             max="2.0"
             step="0.1"
             value={settings.speed}
-            onChange={(e) => updateSetting('speed', parseFloat(e.target.value))}
+            onChange={(e) => updateSetting("speed", parseFloat(e.target.value))}
             className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
             aria-label="Speech speed"
           />
@@ -76,7 +84,9 @@ export function VoiceSettingsComponent({ onSettingsChange }: VoiceSettingsProps)
             max="1"
             step="0.1"
             value={settings.volume}
-            onChange={(e) => updateSetting('volume', parseFloat(e.target.value))}
+            onChange={(e) =>
+              updateSetting("volume", parseFloat(e.target.value))
+            }
             className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
             aria-label="Volume"
           />
@@ -101,7 +111,7 @@ export function VoiceSettingsComponent({ onSettingsChange }: VoiceSettingsProps)
               id="auto-play"
               type="checkbox"
               checked={settings.autoPlay}
-              onChange={(e) => updateSetting('autoPlay', e.target.checked)}
+              onChange={(e) => updateSetting("autoPlay", e.target.checked)}
               className="sr-only peer"
             />
             <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>

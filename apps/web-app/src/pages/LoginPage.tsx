@@ -77,9 +77,7 @@ export function LoginPage() {
     loginWithOAuth(provider);
   };
 
-  const handleShortcutSubmit = (
-    event: KeyboardEvent<HTMLFormElement>
-  ) => {
+  const handleShortcutSubmit = (event: KeyboardEvent<HTMLFormElement>) => {
     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
       event.preventDefault();
       void handleSubmit(onSubmit)();

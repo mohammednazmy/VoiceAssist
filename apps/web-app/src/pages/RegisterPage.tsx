@@ -3,10 +3,10 @@
  * New user registration with email/password and password strength indicator
  */
 
-import { useState, useMemo, type KeyboardEvent } from 'react';
-import { Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState, useMemo, type KeyboardEvent } from "react";
+import { Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
   Input,
@@ -18,9 +18,9 @@ import {
   CardContent,
   CardFooter,
   OAuthButton,
-} from '@voiceassist/ui';
-import { useAuth } from '../hooks/useAuth';
-import { registerSchema, type RegisterFormData } from '../lib/validations';
+} from "@voiceassist/ui";
+import { useAuth } from "../hooks/useAuth";
+import { registerSchema, type RegisterFormData } from "../lib/validations";
 
 interface PasswordStrength {
   score: number;
@@ -32,7 +32,7 @@ function calculatePasswordStrength(password: string): PasswordStrength {
   let score = 0;
 
   if (!password) {
-    return { score: 0, label: '', color: 'bg-neutral-200' };
+    return { score: 0, label: "", color: "bg-neutral-200" };
   }
 
   // Length
@@ -46,20 +46,25 @@ function calculatePasswordStrength(password: string): PasswordStrength {
   if (/[^a-zA-Z\d]/.test(password)) score++;
 
   const strengthMap: Record<number, PasswordStrength> = {
-    0: { score: 0, label: '', color: 'bg-neutral-200' },
-    1: { score: 1, label: 'Weak', color: 'bg-error-500' },
-    2: { score: 2, label: 'Weak', color: 'bg-error-500' },
-    3: { score: 3, label: 'Fair', color: 'bg-warning-500' },
-    4: { score: 4, label: 'Good', color: 'bg-success-400' },
-    5: { score: 5, label: 'Strong', color: 'bg-success-500' },
-    6: { score: 6, label: 'Very Strong', color: 'bg-success-600' },
+    0: { score: 0, label: "", color: "bg-neutral-200" },
+    1: { score: 1, label: "Weak", color: "bg-error-500" },
+    2: { score: 2, label: "Weak", color: "bg-error-500" },
+    3: { score: 3, label: "Fair", color: "bg-warning-500" },
+    4: { score: 4, label: "Good", color: "bg-success-400" },
+    5: { score: 5, label: "Strong", color: "bg-success-500" },
+    6: { score: 6, label: "Very Strong", color: "bg-success-600" },
   };
 
   return strengthMap[Math.min(score, 6)];
 }
 
 export function RegisterPage() {
-  const { register: registerUser, loginWithOAuth, isLoading, error: authError } = useAuth();
+  const {
+    register: registerUser,
+    loginWithOAuth,
+    isLoading,
+    error: authError,
+  } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -72,10 +77,10 @@ export function RegisterPage() {
     resolver: zodResolver(registerSchema),
   });
 
-  const password = watch('password');
+  const password = watch("password");
   const passwordStrength = useMemo(
-    () => calculatePasswordStrength(password || ''),
-    [password]
+    () => calculatePasswordStrength(password || ""),
+    [password],
   );
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -86,14 +91,12 @@ export function RegisterPage() {
         password: data.password,
       });
     } catch (err) {
-      console.error('Registration failed:', err);
+      console.error("Registration failed:", err);
     }
   };
 
-  const handleShortcutSubmit = (
-    event: KeyboardEvent<HTMLFormElement>
-  ) => {
-    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+  const handleShortcutSubmit = (event: KeyboardEvent<HTMLFormElement>) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
       event.preventDefault();
       void handleSubmit(onSubmit)();
     }
@@ -126,7 +129,9 @@ export function RegisterPage() {
                 </svg>
               </div>
             </div>
-            <CardTitle className="text-center text-2xl">Create an account</CardTitle>
+            <CardTitle className="text-center text-2xl">
+              Create an account
+            </CardTitle>
             <CardDescription className="text-center">
               Get started with VoiceAssist today
             </CardDescription>
@@ -158,12 +163,16 @@ export function RegisterPage() {
                   autoComplete="name"
                   error={!!errors.name}
                   fullWidth
-                  {...register('name')}
-                  aria-invalid={errors.name ? 'true' : 'false'}
-                  aria-describedby={errors.name ? 'name-error' : undefined}
+                  {...register("name")}
+                  aria-invalid={errors.name ? "true" : "false"}
+                  aria-describedby={errors.name ? "name-error" : undefined}
                 />
                 {errors.name && (
-                  <p id="name-error" className="text-sm text-text-error" role="alert">
+                  <p
+                    id="name-error"
+                    className="text-sm text-text-error"
+                    role="alert"
+                  >
                     {errors.name.message}
                   </p>
                 )}
@@ -180,12 +189,16 @@ export function RegisterPage() {
                   autoComplete="email"
                   error={!!errors.email}
                   fullWidth
-                  {...register('email')}
-                  aria-invalid={errors.email ? 'true' : 'false'}
-                  aria-describedby={errors.email ? 'email-error' : undefined}
+                  {...register("email")}
+                  aria-invalid={errors.email ? "true" : "false"}
+                  aria-describedby={errors.email ? "email-error" : undefined}
                 />
                 {errors.email && (
-                  <p id="email-error" className="text-sm text-text-error" role="alert">
+                  <p
+                    id="email-error"
+                    className="text-sm text-text-error"
+                    role="alert"
+                  >
                     {errors.email.message}
                   </p>
                 )}
@@ -198,22 +211,24 @@ export function RegisterPage() {
                 <div className="relative">
                   <Input
                     id="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     autoComplete="new-password"
                     error={!!errors.password}
                     fullWidth
-                    {...register('password')}
-                    aria-invalid={errors.password ? 'true' : 'false'}
+                    {...register("password")}
+                    aria-invalid={errors.password ? "true" : "false"}
                     aria-describedby={
-                      errors.password ? 'password-error' : 'password-strength'
+                      errors.password ? "password-error" : "password-strength"
                     }
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-700"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showPassword ? (
                       <svg
@@ -263,7 +278,7 @@ export function RegisterPage() {
                           className={`h-1 flex-1 rounded-full transition-colors ${
                             passwordStrength.score >= level
                               ? passwordStrength.color
-                              : 'bg-neutral-200'
+                              : "bg-neutral-200"
                           }`}
                           aria-hidden="true"
                         />
@@ -271,14 +286,21 @@ export function RegisterPage() {
                     </div>
                     {passwordStrength.label && (
                       <p className="text-xs text-neutral-600">
-                        Password strength: <span className="font-medium">{passwordStrength.label}</span>
+                        Password strength:{" "}
+                        <span className="font-medium">
+                          {passwordStrength.label}
+                        </span>
                       </p>
                     )}
                   </div>
                 )}
 
                 {errors.password && (
-                  <p id="password-error" className="text-sm text-text-error" role="alert">
+                  <p
+                    id="password-error"
+                    className="text-sm text-text-error"
+                    role="alert"
+                  >
                     {errors.password.message}
                   </p>
                 )}
@@ -295,15 +317,17 @@ export function RegisterPage() {
                 <div className="relative">
                   <Input
                     id="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? "text" : "password"}
                     placeholder="••••••••"
                     autoComplete="new-password"
                     error={!!errors.confirmPassword}
                     fullWidth
-                    {...register('confirmPassword')}
-                    aria-invalid={errors.confirmPassword ? 'true' : 'false'}
+                    {...register("confirmPassword")}
+                    aria-invalid={errors.confirmPassword ? "true" : "false"}
                     aria-describedby={
-                      errors.confirmPassword ? 'confirm-password-error' : undefined
+                      errors.confirmPassword
+                        ? "confirm-password-error"
+                        : undefined
                     }
                   />
                   <button
@@ -311,7 +335,7 @@ export function RegisterPage() {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-700"
                     aria-label={
-                      showConfirmPassword ? 'Hide password' : 'Show password'
+                      showConfirmPassword ? "Hide password" : "Show password"
                     }
                   >
                     {showConfirmPassword ? (
@@ -361,18 +385,18 @@ export function RegisterPage() {
                     {errors.confirmPassword.message}
                   </p>
                 )}
-            </div>
+              </div>
 
-            <Button
-              type="submit"
-              fullWidth
-              disabled={isLoading}
-              className="mt-6"
-              aria-label="Create your VoiceAssist account"
-              aria-keyshortcuts="Enter Control+Enter Meta+Enter"
-            >
-              {isLoading ? 'Creating account...' : 'Create account'}
-            </Button>
+              <Button
+                type="submit"
+                fullWidth
+                disabled={isLoading}
+                className="mt-6"
+                aria-label="Create your VoiceAssist account"
+                aria-keyshortcuts="Enter Control+Enter Meta+Enter"
+              >
+                {isLoading ? "Creating account..." : "Create account"}
+              </Button>
             </form>
 
             <div className="relative my-6">
@@ -380,7 +404,9 @@ export function RegisterPage() {
                 <div className="w-full border-t border-neutral-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-neutral-500">Or continue with</span>
+                <span className="bg-white px-2 text-neutral-500">
+                  Or continue with
+                </span>
               </div>
             </div>
 
@@ -389,19 +415,19 @@ export function RegisterPage() {
                 provider="google"
                 fullWidth
                 disabled={isLoading}
-                onClick={() => loginWithOAuth('google')}
+                onClick={() => loginWithOAuth("google")}
               />
               <OAuthButton
                 provider="microsoft"
                 fullWidth
                 disabled={isLoading}
-                onClick={() => loginWithOAuth('microsoft')}
+                onClick={() => loginWithOAuth("microsoft")}
               />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-sm text-center text-neutral-600">
-              Already have an account?{' '}
+              Already have an account?{" "}
               <Link
                 to="/login"
                 className="font-medium text-primary-600 hover:text-primary-500"
@@ -413,11 +439,11 @@ export function RegisterPage() {
         </Card>
 
         <p className="mt-8 text-center text-xs text-neutral-500">
-          By creating an account, you agree to our{' '}
+          By creating an account, you agree to our{" "}
           <a href="#" className="text-primary-600 hover:text-primary-500">
             Terms of Service
-          </a>{' '}
-          and{' '}
+          </a>{" "}
+          and{" "}
           <a href="#" className="text-primary-600 hover:text-primary-500">
             Privacy Policy
           </a>

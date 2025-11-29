@@ -3,7 +3,7 @@
  * Error boundary for chat streaming failures
  */
 
-import { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -32,7 +32,7 @@ export class ChatErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('[ChatErrorBoundary] Caught error:', error, errorInfo);
+    console.error("[ChatErrorBoundary] Caught error:", error, errorInfo);
     this.props.onError?.(error, errorInfo);
   }
 
@@ -71,7 +71,8 @@ export class ChatErrorBoundary extends Component<Props, State> {
             </div>
 
             <p className="text-sm text-neutral-700 mb-4">
-              Something went wrong with the chat. Please try refreshing the page or contact support if the problem persists.
+              Something went wrong with the chat. Please try refreshing the page
+              or contact support if the problem persists.
             </p>
 
             {this.state.error && (

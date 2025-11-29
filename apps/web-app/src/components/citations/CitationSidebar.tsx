@@ -9,7 +9,13 @@ import type { Citation } from "../../types";
 import type { Message } from "@voiceassist/types";
 
 /** Type filter options */
-type TypeFilter = "all" | "kb" | "pubmed" | "guideline" | "openevidence" | "external";
+type TypeFilter =
+  | "all"
+  | "kb"
+  | "pubmed"
+  | "guideline"
+  | "openevidence"
+  | "external";
 
 /** Citation with message reference for jump-to functionality */
 interface CitationWithMessage {
@@ -100,7 +106,10 @@ export function CitationSidebar({
     ) {
       return "guideline";
     }
-    if (citation.sourceType === "openevidence" || citation.source === "openevidence") {
+    if (
+      citation.sourceType === "openevidence" ||
+      citation.source === "openevidence"
+    ) {
       return "openevidence";
     }
     // Check for PubMed (source or pubmedId, not just DOI)
@@ -269,7 +278,11 @@ export function CitationSidebar({
             </div>
 
             {/* Type Filter Pills */}
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by type">
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label="Filter by type"
+            >
               {(
                 [
                   { value: "all", label: "All" },
@@ -283,7 +296,9 @@ export function CitationSidebar({
                 .filter(
                   (option) =>
                     option.value === "all" ||
-                    allCitations.some((citation) => getCitationType(citation) === option.value),
+                    allCitations.some(
+                      (citation) => getCitationType(citation) === option.value,
+                    ),
                 )
                 .map((option) => (
                   <button
