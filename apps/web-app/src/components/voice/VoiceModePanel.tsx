@@ -22,6 +22,10 @@ import { VoiceMetricsDisplay } from "./VoiceMetricsDisplay";
 import { VoiceTranscriptPreview } from "./VoiceTranscriptPreview";
 import { PendingRecordingsPanel } from "./PendingRecordingsPanel";
 import {
+  VoiceBargeInIndicator,
+  type BargeInEvent,
+} from "./VoiceBargeInIndicator";
+import {
   useVoiceSettingsStore,
   VOICE_OPTIONS,
   LANGUAGE_OPTIONS,
@@ -77,6 +81,8 @@ export function VoiceModePanel({
   const [showPendingRecordings, setShowPendingRecordings] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
+  const [currentBargeInEvent, setCurrentBargeInEvent] =
+    useState<BargeInEvent | null>(null);
 
   // Track pending final transcripts to add to chat
   const pendingAiMessageRef = useRef<string | null>(null);
@@ -121,13 +127,53 @@ export function VoiceModePanel({
   });
 
   /**
-   * Combined barge-in: stop audio + cancel response + reconnect WebRTC
+   * Combined barge-in: stop audio + cancel response + reconnect WebRTC + log event
    */
   const bargeIn = useCallback(() => {
     console.log("[VoiceModePanel] Barge-in triggered");
+
+    // Capture interrupted content before stopping
+    const interruptedContent = aiTranscript || pendingAiMessageRef.current;
+
     stopCurrentAudio();
     bargeInWebRTC();
-  }, [stopCurrentAudio, bargeInWebRTC]);
+
+    // Create and show barge-in event
+    const bargeInEvent: BargeInEvent = {
+      id: `barge-${Date.now()}`,
+      timestamp: Date.now(),
+      interruptedContent: interruptedContent || undefined,
+      // Estimate completion based on whether we had partial content
+      completionPercentage: interruptedContent
+        ? Math.min(90, interruptedContent.length / 5)
+        : undefined,
+    };
+
+    setCurrentBargeInEvent(bargeInEvent);
+
+    // Log event to backend for analytics (fire-and-forget)
+    if (apiClient) {
+      apiClient
+        .logVoiceEvent({
+          conversation_id: conversationId || null,
+          event_type: "barge_in",
+          timestamp: bargeInEvent.timestamp,
+          metadata: {
+            interrupted_content: bargeInEvent.interruptedContent,
+            completion_percentage: bargeInEvent.completionPercentage,
+          },
+        })
+        .catch((err) => {
+          console.warn("[VoiceModePanel] Failed to log barge-in event:", err);
+        });
+    }
+  }, [
+    stopCurrentAudio,
+    bargeInWebRTC,
+    aiTranscript,
+    apiClient,
+    conversationId,
+  ]);
 
   // Initialize offline voice capture hook
   const {
@@ -1223,6 +1269,13 @@ export function VoiceModePanel({
           />
         </div>
       )}
+
+      {/* Voice Barge-in Indicator */}
+      <VoiceBargeInIndicator
+        event={currentBargeInEvent}
+        onDismiss={() => setCurrentBargeInEvent(null)}
+        autoDismissMs={4000}
+      />
     </div>
   );
 }
