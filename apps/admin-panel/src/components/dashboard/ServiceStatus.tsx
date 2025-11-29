@@ -40,7 +40,8 @@ export function ServiceStatus() {
       </div>
       {status !== "open" && (
         <span className="text-slate-400">
-          Admin event stream {status === "reconnecting" ? "retrying" : "offline"}
+          Admin event stream{" "}
+          {status === "reconnecting" ? "retrying" : "offline"}
         </span>
       )}
       {canReconnect && (

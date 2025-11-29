@@ -1,9 +1,10 @@
-import { ReactNode } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { ReactNode, useState, useEffect } from "react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LocaleSwitcher } from "@voiceassist/ui";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
+import { SessionTimeoutWarning } from "./session/SessionTimeoutWarning";
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,8 +13,15 @@ interface LayoutProps {
 export function AdminLayoutWithRouter({ children }: LayoutProps) {
   const { user, logout, role, isViewer } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const { supportedLanguages } = useLanguage();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -29,7 +37,70 @@ export function AdminLayoutWithRouter({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen flex bg-slate-950 text-slate-50">
-      <aside className="w-64 border-r border-slate-800 bg-slate-950/90 flex flex-col">
+      {/* Mobile backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Mobile header with hamburger */}
+      <header className="fixed top-0 left-0 right-0 h-14 bg-slate-950 border-b border-slate-800 flex items-center px-4 z-30 md:hidden">
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="p-2 -ml-2 text-slate-400 hover:text-slate-200 transition-colors"
+          aria-label="Toggle navigation menu"
+          aria-expanded={mobileMenuOpen}
+        >
+          {mobileMenuOpen ? (
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          ) : (
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          )}
+        </button>
+        <div className="ml-3 font-semibold text-sm">{t("meta.app")}</div>
+        {isViewer && (
+          <span className="ml-2 text-[10px] text-amber-400 bg-amber-950/50 px-1.5 py-0.5 rounded">
+            Viewer
+          </span>
+        )}
+      </header>
+
+      {/* Sidebar - hidden on mobile by default, slide-in when open */}
+      <aside
+        className={`
+          fixed md:static inset-y-0 left-0 z-50
+          w-64 border-r border-slate-800 bg-slate-950 flex flex-col
+          transform transition-transform duration-200 ease-in-out
+          ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        `}
+      >
         <div className="px-4 py-4 border-b border-slate-800">
           <div className="font-semibold text-sm tracking-tight">
             {t("meta.app")}
@@ -45,7 +116,7 @@ export function AdminLayoutWithRouter({ children }: LayoutProps) {
           </div>
         </div>
 
-        <nav className="flex-1 text-sm">
+        <nav className="flex-1 text-sm overflow-y-auto">
           <NavLink to="/dashboard" className={navLinkClass}>
             📊 {t("nav.dashboard")}
           </NavLink>
@@ -111,7 +182,13 @@ export function AdminLayoutWithRouter({ children }: LayoutProps) {
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col overflow-hidden">{children}</main>
+      {/* Main content - add top padding on mobile for fixed header */}
+      <main className="flex-1 flex flex-col overflow-hidden pt-14 md:pt-0">
+        {children}
+      </main>
+
+      {/* Session timeout warning modal */}
+      <SessionTimeoutWarning />
     </div>
   );
 }

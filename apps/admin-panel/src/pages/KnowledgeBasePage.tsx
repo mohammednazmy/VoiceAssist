@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useKnowledgeDocuments } from "../hooks/useKnowledgeDocuments";
+import { useKBUpload } from "../hooks/useKBUpload";
 import { useAuth } from "../contexts/AuthContext";
 import {
   DocumentTable,
@@ -8,14 +9,19 @@ import {
 import { UploadDialog } from "../components/knowledge/UploadDialog";
 import { AuditDrawer } from "../components/knowledge/AuditDrawer";
 
-const MAX_UPLOAD_MB = 25;
+const MAX_UPLOAD_MB = 50; // VoiceAssist backend supports up to 50 MB for PDFs
 
 export function KnowledgeBasePage() {
-  const { docs, loading, error } = useKnowledgeDocuments();
+  const { docs, loading, error, refetch } = useKnowledgeDocuments();
+  const {
+    uploadDocument,
+    isUploading,
+    error: uploadHookError,
+    clearError,
+  } = useKBUpload();
   const { isViewer } = useAuth();
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
   const [showUpload, setShowUpload] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [auditDoc, setAuditDoc] = useState<DocumentRow | null>(null);
 
@@ -29,54 +35,55 @@ export function KnowledgeBasePage() {
     );
   }, [docs]);
 
-  const simulateUpload = async (
-    file: File,
-    onProgress: (value: number) => void,
-  ) => {
-    return new Promise<void>((resolve) => {
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress = Math.min(100, progress + 10 + Math.random() * 20);
-        onProgress(progress);
-        if (progress >= 100) {
-          clearInterval(interval);
-          setTimeout(resolve, 150);
-        }
-      }, 180);
-    });
-  };
+  // Sync upload hook error with local state
+  useEffect(() => {
+    if (uploadHookError) {
+      setUploadError(uploadHookError);
+    }
+  }, [uploadHookError]);
 
-  const handleUpload = async (
-    file: File,
-    onProgress: (value: number) => void,
-  ) => {
-    if (isViewer) {
-      throw new Error("Uploads are disabled for viewer role");
-    }
-    setUploading(true);
-    setUploadError(null);
-    try {
-      await simulateUpload(file, onProgress);
-      const now = new Date().toISOString();
-      const newDoc: DocumentRow = {
-        id: `local-${Date.now()}`,
-        name: file.name,
-        type: file.type?.includes("pdf") ? "pdf" : "note",
-        indexed: false,
-        status: "pending",
-        version: "v1",
-        lastIndexedAt: now,
-        sizeMb: file.size / (1024 * 1024),
-      };
-      setDocuments((prev) => [newDoc, ...prev]);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Upload failed";
-      setUploadError(message);
-      throw err;
-    } finally {
-      setUploading(false);
-    }
-  };
+  const handleUpload = useCallback(
+    async (file: File, onProgress: (value: number) => void) => {
+      if (isViewer) {
+        throw new Error("Uploads are disabled for viewer role");
+      }
+
+      setUploadError(null);
+      clearError();
+
+      try {
+        // Upload to backend with progress callback
+        const result = await uploadDocument(
+          file,
+          file.name.replace(/\.[^/.]+$/, ""), // title from filename
+          "", // author empty for now
+          (progress) => onProgress(progress.percent),
+        );
+
+        // Create new document entry from response
+        const now = new Date().toISOString();
+        const newDoc: DocumentRow = {
+          id: result.source,
+          name: result.title,
+          type: file.type?.includes("pdf") ? "pdf" : "note",
+          indexed: result.chunks > 0,
+          status: result.chunks > 0 ? "indexed" : "pending",
+          version: "v1",
+          lastIndexedAt: now,
+          sizeMb: file.size / (1024 * 1024),
+        };
+        setDocuments((prev) => [newDoc, ...prev]);
+
+        // Optionally refetch the full list
+        refetch?.();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Upload failed";
+        setUploadError(message);
+        throw err;
+      }
+    },
+    [isViewer, uploadDocument, clearError, refetch],
+  );
 
   const updateDocumentsStatus = (
     ids: string[],
@@ -141,9 +148,9 @@ export function KnowledgeBasePage() {
               : "bg-blue-600 hover:bg-blue-700 text-white"
           }`}
           onClick={() => setShowUpload(true)}
-          disabled={isViewer || uploading}
+          disabled={isViewer || isUploading}
         >
-          {uploading ? "Uploading…" : "+ Upload"}
+          {isUploading ? "Uploading…" : "+ Upload"}
         </button>
       </div>
 
@@ -206,7 +213,7 @@ export function KnowledgeBasePage() {
         onClose={() => setShowUpload(false)}
         onUpload={handleUpload}
         maxSizeMb={MAX_UPLOAD_MB}
-        acceptedTypes={["application/pdf", "text/plain"]}
+        acceptedTypes={["application/pdf", "text/plain", "text/markdown"]}
       />
 
       <AuditDrawer

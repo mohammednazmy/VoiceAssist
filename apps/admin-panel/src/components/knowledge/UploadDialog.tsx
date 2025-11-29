@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from "react";
 
 interface UploadDialogProps {
   open: boolean;
@@ -14,7 +14,7 @@ interface PendingFile {
   progress: number;
 }
 
-const DEFAULT_ACCEPTED = ['application/pdf', 'text/plain'];
+const DEFAULT_ACCEPTED = ["application/pdf", "text/plain", "text/markdown"];
 
 export function UploadDialog({
   open,
@@ -36,7 +36,10 @@ export function UploadDialog({
   }, [open]);
 
   const typeLabels = useMemo(
-    () => acceptedTypes.map((t) => t.replace('application/', '').replace('text/', '')).join(', '),
+    () =>
+      acceptedTypes
+        .map((t) => t.replace("application/", "").replace("text/", ""))
+        .join(", "),
     [acceptedTypes],
   );
 
@@ -55,7 +58,7 @@ export function UploadDialog({
         return {
           file,
           progress: 0,
-          error: `Unsupported type (${file.type || 'unknown'})`,
+          error: `Unsupported type (${file.type || "unknown"})`,
         } satisfies PendingFile;
       }
       return { file, progress: 0 } satisfies PendingFile;
@@ -89,16 +92,14 @@ export function UploadDialog({
         await onUpload(pending.file, (value) => {
           setPendingFiles((prev) =>
             prev.map((p) =>
-              p.file.name === pending.file.name
-                ? { ...p, progress: value }
-                : p,
+              p.file.name === pending.file.name ? { ...p, progress: value } : p,
             ),
           );
         });
       }
       onClose();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Upload failed';
+      const message = err instanceof Error ? err.message : "Upload failed";
       setSubmitError(message);
     } finally {
       setSubmitting(false);
@@ -112,8 +113,12 @@ export function UploadDialog({
       <div className="bg-slate-900 border border-slate-800 rounded-lg shadow-xl w-full max-w-lg p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-100">Upload documents</h3>
-            <p className="text-sm text-slate-400">PDF and TXT files up to {maxSizeMb}MB.</p>
+            <h3 className="text-lg font-semibold text-slate-100">
+              Upload documents
+            </h3>
+            <p className="text-sm text-slate-400">
+              PDF, TXT, and Markdown files up to {maxSizeMb}MB.
+            </p>
           </div>
           <button
             className="text-slate-400 hover:text-slate-200"
@@ -128,20 +133,24 @@ export function UploadDialog({
         <label
           className={`border-2 border-dashed rounded-md p-4 text-center cursor-pointer transition-colors ${
             hasBlockingErrors
-              ? 'border-amber-700/80 bg-amber-950/40 text-amber-200'
-              : 'border-slate-700 hover:border-slate-500 text-slate-300'
+              ? "border-amber-700/80 bg-amber-950/40 text-amber-200"
+              : "border-slate-700 hover:border-slate-500 text-slate-300"
           }`}
         >
           <input
             type="file"
             className="hidden"
             multiple
-            accept={acceptedTypes.join(',')}
+            accept={acceptedTypes.join(",")}
             onChange={handleFileChange}
             disabled={submitting}
           />
-          <div className="text-sm font-medium">Drop files or click to select</div>
-          <div className="text-xs text-slate-500 mt-1">Accepted: {typeLabels}</div>
+          <div className="text-sm font-medium">
+            Drop files or click to select
+          </div>
+          <div className="text-xs text-slate-500 mt-1">
+            Accepted: {typeLabels}
+          </div>
         </label>
 
         {pendingFiles.length > 0 && (
@@ -153,13 +162,19 @@ export function UploadDialog({
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm font-medium text-slate-100">{pf.file.name}</div>
-                    <div className="text-xs text-slate-500">{formatSize(pf.file.size)}</div>
+                    <div className="text-sm font-medium text-slate-100">
+                      {pf.file.name}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {formatSize(pf.file.size)}
+                    </div>
                   </div>
                   {pf.error ? (
                     <span className="text-xs text-amber-400">{pf.error}</span>
                   ) : (
-                    <span className="text-xs text-slate-400">{Math.round(pf.progress)}%</span>
+                    <span className="text-xs text-slate-400">
+                      {Math.round(pf.progress)}%
+                    </span>
                   )}
                 </div>
                 {!pf.error && (
@@ -192,13 +207,15 @@ export function UploadDialog({
           <button
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               hasBlockingErrors || pendingFiles.length === 0
-                ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
-            } ${submitting ? 'opacity-80' : ''}`}
+                ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+            } ${submitting ? "opacity-80" : ""}`}
             onClick={submitFiles}
-            disabled={hasBlockingErrors || pendingFiles.length === 0 || submitting}
+            disabled={
+              hasBlockingErrors || pendingFiles.length === 0 || submitting
+            }
           >
-            {submitting ? 'Uploading…' : 'Start upload'}
+            {submitting ? "Uploading…" : "Start upload"}
           </button>
         </div>
       </div>

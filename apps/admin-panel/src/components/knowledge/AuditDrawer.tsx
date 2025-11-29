@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { fetchAPI } from '../../lib/api';
-import type { KnowledgeDocument } from '../../hooks/useKnowledgeDocuments';
+import { useEffect, useState } from "react";
+import { fetchAPI } from "../../lib/api";
+import type { KnowledgeDocument } from "../../hooks/useKnowledgeDocuments";
 
 interface AuditEvent {
   id: string;
@@ -27,28 +27,32 @@ export function AuditDrawer({ open, document, onClose }: AuditDrawerProps) {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchAPI<AuditEvent[]>(`/api/admin/kb/documents/${document.id}/audit`);
+        const data = await fetchAPI<AuditEvent[]>(
+          `/api/admin/kb/documents/${document.id}/audit`,
+        );
         setEvents(data);
       } catch (err: unknown) {
-        console.warn('Using fallback audit events because API failed', err);
+        console.warn("Using fallback audit events because API failed", err);
         const now = new Date();
         setEvents([
           {
-            id: 'evt-1',
-            action: 'indexed',
-            actor: 'system/kb-indexer',
+            id: "evt-1",
+            action: "indexed",
+            actor: "system/kb-indexer",
             timestamp: now.toISOString(),
-            notes: 'Initial ingestion completed.',
+            notes: "Initial ingestion completed.",
           },
           {
-            id: 'evt-2',
-            action: 'uploaded',
-            actor: 'admin@example.com',
+            id: "evt-2",
+            action: "uploaded",
+            actor: "admin@example.com",
             timestamp: new Date(now.getTime() - 1000 * 60 * 10).toISOString(),
             notes: `Uploaded ${document.name}`,
           },
         ]);
-        setError('Audit trail service unavailable; showing fallback demo events.');
+        setError(
+          "Audit trail service unavailable; showing fallback demo events.",
+        );
       } finally {
         setLoading(false);
       }
@@ -64,8 +68,12 @@ export function AuditDrawer({ open, document, onClose }: AuditDrawerProps) {
       <div className="bg-slate-900 border-l border-slate-800 w-full max-w-md h-full shadow-2xl p-6 flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <div className="text-sm uppercase tracking-wide text-slate-500">Audit Trail</div>
-            <div className="text-lg font-semibold text-slate-100">{document.name}</div>
+            <div className="text-sm uppercase tracking-wide text-slate-500">
+              Audit Trail
+            </div>
+            <div className="text-lg font-semibold text-slate-100">
+              {document.name}
+            </div>
           </div>
           <button
             className="text-slate-400 hover:text-slate-100"
@@ -76,7 +84,9 @@ export function AuditDrawer({ open, document, onClose }: AuditDrawerProps) {
           </button>
         </div>
 
-        {loading && <div className="text-slate-400 text-sm">Loading audit events…</div>}
+        {loading && (
+          <div className="text-slate-400 text-sm">Loading audit events…</div>
+        )}
         {error && (
           <div className="mb-3 text-xs text-amber-300 bg-amber-950/40 border border-amber-900 rounded p-2">
             {error}
@@ -93,13 +103,19 @@ export function AuditDrawer({ open, document, onClose }: AuditDrawerProps) {
                 <span className="uppercase tracking-wide">{evt.action}</span>
                 <span>{new Date(evt.timestamp).toLocaleString()}</span>
               </div>
-              <div className="text-sm text-slate-100 mt-1">{evt.notes || 'No additional details'}</div>
-              <div className="text-xs text-slate-500 mt-1">Actor: {evt.actor}</div>
+              <div className="text-sm text-slate-100 mt-1">
+                {evt.notes || "No additional details"}
+              </div>
+              <div className="text-xs text-slate-500 mt-1">
+                Actor: {evt.actor}
+              </div>
             </div>
           ))}
 
           {!loading && events.length === 0 && (
-            <div className="text-sm text-slate-500">No audit events recorded yet.</div>
+            <div className="text-sm text-slate-500">
+              No audit events recorded yet.
+            </div>
           )}
         </div>
       </div>

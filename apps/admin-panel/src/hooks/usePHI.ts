@@ -156,9 +156,7 @@ export function usePHI(options: UsePHIOptions = {}): UsePHIResult {
 
   const fetchRules = useCallback(async () => {
     try {
-      const response = await fetchAPI<PHIRulesResponse>(
-        "/api/admin/phi/rules",
-      );
+      const response = await fetchAPI<PHIRulesResponse>("/api/admin/phi/rules");
       setRules(response.rules);
       setRulesInfo({ total: response.total, enabled: response.enabled });
       return response;
@@ -170,9 +168,7 @@ export function usePHI(options: UsePHIOptions = {}): UsePHIResult {
 
   const fetchStats = useCallback(async () => {
     try {
-      const response = await fetchAPI<PHIStats>(
-        "/api/admin/phi/stats?days=7",
-      );
+      const response = await fetchAPI<PHIStats>("/api/admin/phi/stats?days=7");
       setStats(response);
       return response;
     } catch (err) {
@@ -196,9 +192,7 @@ export function usePHI(options: UsePHIOptions = {}): UsePHIResult {
 
   const fetchHealth = useCallback(async () => {
     try {
-      const response = await fetchAPI<PHIHealthStatus>(
-        "/api/admin/phi/health",
-      );
+      const response = await fetchAPI<PHIHealthStatus>("/api/admin/phi/health");
       setHealth(response);
       return response;
     } catch (err) {
@@ -241,32 +235,23 @@ export function usePHI(options: UsePHIOptions = {}): UsePHIResult {
 
   const updateRule = useCallback(
     async (ruleId: string, status: PHIRuleStatus): Promise<void> => {
-      await fetchAPI(
-        `/api/admin/phi/rules/${ruleId}`,
-        {
-          method: "PUT",
-          body: JSON.stringify({ status }),
-        },
-      );
+      await fetchAPI(`/api/admin/phi/rules/${ruleId}`, {
+        method: "PUT",
+        body: JSON.stringify({ status }),
+      });
       // Refresh rules after update
       await fetchRules();
     },
     [fetchRules],
   );
 
-  const testPHI = useCallback(
-    async (text: string): Promise<PHITestResult> => {
-      const response = await fetchAPI<PHITestResult>(
-        "/api/admin/phi/test",
-        {
-          method: "POST",
-          body: JSON.stringify({ text, include_redacted: true }),
-        },
-      );
-      return response;
-    },
-    [],
-  );
+  const testPHI = useCallback(async (text: string): Promise<PHITestResult> => {
+    const response = await fetchAPI<PHITestResult>("/api/admin/phi/test", {
+      method: "POST",
+      body: JSON.stringify({ text, include_redacted: true }),
+    });
+    return response;
+  }, []);
 
   const redactPHI = useCallback(
     async (text: string): Promise<PHIRedactResult> => {
@@ -284,13 +269,10 @@ export function usePHI(options: UsePHIOptions = {}): UsePHIResult {
 
   const updateRouting = useCallback(
     async (config: Partial<PHIRoutingConfig>): Promise<void> => {
-      await fetchAPI(
-        "/api/admin/phi/routing",
-        {
-          method: "PATCH",
-          body: JSON.stringify(config),
-        },
-      );
+      await fetchAPI("/api/admin/phi/routing", {
+        method: "PATCH",
+        body: JSON.stringify(config),
+      });
       // Refresh routing after update
       await fetchRouting();
     },

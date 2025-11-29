@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { APIErrorShape } from "../types";
 import { fetchAPI } from "../lib/api";
 
@@ -19,6 +19,11 @@ export function useKnowledgeDocuments() {
   const [docs, setDocs] = useState<KnowledgeDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<APIErrorShape | null>(null);
+  const [fetchTrigger, setFetchTrigger] = useState(0);
+
+  const refetch = useCallback(() => {
+    setFetchTrigger((prev) => prev + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,7 +73,7 @@ export function useKnowledgeDocuments() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [fetchTrigger]);
 
-  return { docs, loading, error };
+  return { docs, loading, error, refetch };
 }
