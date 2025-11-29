@@ -63,6 +63,56 @@ const categoryConfig: Record<
     color: "text-teal-700 dark:text-teal-300",
     bg: "bg-teal-100 dark:bg-teal-900/30",
   },
+  Frontend: {
+    path: "/frontend",
+    color: "text-green-700 dark:text-green-300",
+    bg: "bg-green-100 dark:bg-green-900/30",
+  },
+  Planning: {
+    path: "/overview",
+    color: "text-purple-700 dark:text-purple-300",
+    bg: "bg-purple-100 dark:bg-purple-900/30",
+  },
+  "AI & Agents": {
+    path: "/ai",
+    color: "text-indigo-700 dark:text-indigo-300",
+    bg: "bg-indigo-100 dark:bg-indigo-900/30",
+  },
+  Admin: {
+    path: "/admin",
+    color: "text-rose-700 dark:text-rose-300",
+    bg: "bg-rose-100 dark:bg-rose-900/30",
+  },
+  Phases: {
+    path: "/overview",
+    color: "text-amber-700 dark:text-amber-300",
+    bg: "bg-amber-100 dark:bg-amber-900/30",
+  },
+  Archive: {
+    path: "/reference/archive",
+    color: "text-gray-700 dark:text-gray-300",
+    bg: "bg-gray-100 dark:bg-gray-800/60",
+  },
+  Deployment: {
+    path: "/operations/deployment",
+    color: "text-emerald-700 dark:text-emerald-300",
+    bg: "bg-emerald-100 dark:bg-emerald-900/30",
+  },
+  "Design System": {
+    path: "/frontend",
+    color: "text-fuchsia-700 dark:text-fuchsia-300",
+    bg: "bg-fuchsia-100 dark:bg-fuchsia-900/30",
+  },
+  Infrastructure: {
+    path: "/operations",
+    color: "text-orange-700 dark:text-orange-300",
+    bg: "bg-orange-100 dark:bg-orange-900/30",
+  },
+  Reference: {
+    path: "/reference",
+    color: "text-slate-700 dark:text-slate-300",
+    bg: "bg-slate-100 dark:bg-slate-800/40",
+  },
 };
 
 export function DocsSearch({ docs }: DocsSearchProps) {
@@ -228,17 +278,17 @@ export function DocsSearch({ docs }: DocsSearchProps) {
                   {categoryDocs.map((doc) => (
                     <Link
                       key={doc.path}
-                      href={`${config.path}/${doc.name.toLowerCase().replace(/ /g, "-")}`}
+                      href={`/docs/${doc.path}`}
                       className={`block p-3 rounded-lg ${config.bg} hover:opacity-80 transition-opacity`}
                     >
                       <span
                         className={`text-sm font-medium ${config.color}`}
-                        title={doc.path}
+                        title={`${doc.path}.md`}
                       >
                         {doc.name}
                       </span>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-mono truncate">
-                        {doc.path}
+                        {doc.path}.md
                       </p>
                     </Link>
                   ))}

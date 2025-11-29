@@ -55,6 +55,11 @@ const SharedConversationPage = lazy(() =>
     default: m.SharedConversationPage,
   })),
 );
+const IntegrationsPage = lazy(() =>
+  import("./pages/IntegrationsPage").then((m) => ({
+    default: m.IntegrationsPage,
+  })),
+);
 
 export function AppRoutes() {
   return (
@@ -83,6 +88,7 @@ export function AppRoutes() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/clinical-context" element={<ClinicalContextPage />} />
+          <Route path="/integrations" element={<IntegrationsPage />} />
 
           {/* Admin routes */}
           <Route path="/admin/*" element={<AdminDashboard />} />

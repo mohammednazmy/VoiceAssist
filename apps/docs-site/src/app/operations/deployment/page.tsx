@@ -13,7 +13,9 @@ export const metadata: Metadata = {
 export default async function DeploymentPage() {
   const deploymentGuide = await loadMdxContent("operations/deployment.mdx");
   const adminDeployment = loadDoc("ADMIN_PANEL_DEPLOYMENT.md");
-  const infraDoc = loadDoc("infra/INFRASTRUCTURE.md");
+  const infraDoc = loadDoc("INFRASTRUCTURE_SETUP.md");
+  const productionRunbook = loadDoc("PRODUCTION_DEPLOYMENT_RUNBOOK.md");
+  const deploymentSummary = loadDoc("DEPLOYMENT_SUMMARY_ASIMO.md");
 
   return (
     <div>
@@ -107,6 +109,24 @@ export default async function DeploymentPage() {
               Admin Panel Deployment
             </h2>
             <MarkdownRenderer content={adminDeployment.content} />
+          </div>
+        )}
+
+        {productionRunbook && (
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
+              Production Deployment Runbook
+            </h2>
+            <MarkdownRenderer content={productionRunbook.content} />
+          </div>
+        )}
+
+        {deploymentSummary && (
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
+              asimo.io Deployment Summary
+            </h2>
+            <MarkdownRenderer content={deploymentSummary.content} />
           </div>
         )}
 

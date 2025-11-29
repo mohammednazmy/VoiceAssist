@@ -785,3 +785,210 @@ async def update_tool_config(
 
     trace_id = getattr(request.state, "trace_id", None)
     return success_response(data, trace_id=trace_id)
+
+
+# ============================================================================
+# Database-backed Analytics Endpoints (using tool_invocation_logs table)
+# ============================================================================
+
+
+@router.get("/analytics/db")
+async def get_db_analytics(
+    request: Request,
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+    days: int = Query(30, ge=1, le=365, description="Number of days to analyze"),
+) -> Dict:
+    """Get comprehensive tool analytics from database logs.
+
+    This endpoint queries the tool_invocation_logs table for
+    historical analytics data with customizable time range.
+
+    Available to admin and viewer roles.
+    """
+    from datetime import timedelta
+
+    from app.core.database import get_async_db
+    from app.services.tools import tool_analytics_service
+
+    # Get async db session
+    async for db_session in get_async_db():
+        try:
+            start_date = datetime.utcnow() - timedelta(days=days)
+            end_date = datetime.utcnow()
+
+            # Get summary statistics
+            summary = await tool_analytics_service.get_tool_usage_summary(
+                db_session=db_session,
+                start_date=start_date,
+                end_date=end_date,
+            )
+
+            # Get tool breakdown
+            tool_breakdown = await tool_analytics_service.get_tool_breakdown(
+                db_session=db_session,
+                start_date=start_date,
+                end_date=end_date,
+            )
+
+            # Get mode comparison
+            mode_comparison = await tool_analytics_service.get_mode_comparison(
+                db_session=db_session,
+                start_date=start_date,
+                end_date=end_date,
+            )
+
+            data = {
+                "summary": summary,
+                "by_tool": tool_breakdown,
+                "by_mode": mode_comparison,
+                "days_analyzed": days,
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+            }
+
+            trace_id = getattr(request.state, "trace_id", None)
+            return success_response(data, trace_id=trace_id)
+        finally:
+            await db_session.close()
+
+
+@router.get("/analytics/db/trend")
+async def get_db_analytics_trend(
+    request: Request,
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+    days: int = Query(30, ge=1, le=365, description="Number of days"),
+    tool_name: Optional[str] = Query(None, description="Filter by tool name"),
+) -> Dict:
+    """Get daily trend data for tool usage.
+
+    Available to admin and viewer roles.
+    """
+    from app.core.database import get_async_db
+    from app.services.tools import tool_analytics_service
+
+    async for db_session in get_async_db():
+        try:
+            trend = await tool_analytics_service.get_daily_trend(
+                db_session=db_session,
+                days=days,
+                tool_name=tool_name,
+            )
+
+            data = {
+                "trend": trend,
+                "days": days,
+                "tool_name": tool_name,
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+            }
+
+            trace_id = getattr(request.state, "trace_id", None)
+            return success_response(data, trace_id=trace_id)
+        finally:
+            await db_session.close()
+
+
+@router.get("/analytics/db/errors")
+async def get_db_error_analysis(
+    request: Request,
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+    days: int = Query(7, ge=1, le=30, description="Number of days"),
+    limit: int = Query(20, ge=1, le=100, description="Max errors to return"),
+) -> Dict:
+    """Get error analysis from tool invocation logs.
+
+    Available to admin and viewer roles.
+    """
+    from datetime import timedelta
+
+    from app.core.database import get_async_db
+    from app.services.tools import tool_analytics_service
+
+    async for db_session in get_async_db():
+        try:
+            start_date = datetime.utcnow() - timedelta(days=days)
+
+            errors = await tool_analytics_service.get_error_analysis(
+                db_session=db_session,
+                start_date=start_date,
+                limit=limit,
+            )
+
+            data = {
+                "errors": errors,
+                "days": days,
+                "limit": limit,
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+            }
+
+            trace_id = getattr(request.state, "trace_id", None)
+            return success_response(data, trace_id=trace_id)
+        finally:
+            await db_session.close()
+
+
+@router.get("/analytics/db/invocations")
+async def get_db_recent_invocations(
+    request: Request,
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+    limit: int = Query(50, ge=1, le=200, description="Max invocations to return"),
+    tool_name: Optional[str] = Query(None, description="Filter by tool name"),
+    status: Optional[str] = Query(None, description="Filter by status"),
+) -> Dict:
+    """Get recent tool invocations for monitoring.
+
+    Available to admin and viewer roles.
+    """
+    from app.core.database import get_async_db
+    from app.services.tools import tool_analytics_service
+
+    async for db_session in get_async_db():
+        try:
+            invocations = await tool_analytics_service.get_recent_invocations(
+                db_session=db_session,
+                limit=limit,
+                tool_name=tool_name,
+                status=status,
+            )
+
+            data = {
+                "invocations": invocations,
+                "limit": limit,
+                "filters": {"tool_name": tool_name, "status": status},
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+            }
+
+            trace_id = getattr(request.state, "trace_id", None)
+            return success_response(data, trace_id=trace_id)
+        finally:
+            await db_session.close()
+
+
+@router.get("/analytics/db/user/{user_id}")
+async def get_db_user_tool_activity(
+    request: Request,
+    user_id: str,
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+    days: int = Query(30, ge=1, le=365, description="Number of days"),
+) -> Dict:
+    """Get tool usage activity for a specific user.
+
+    Available to admin and viewer roles.
+    """
+    from datetime import timedelta
+
+    from app.core.database import get_async_db
+    from app.services.tools import tool_analytics_service
+
+    async for db_session in get_async_db():
+        try:
+            start_date = datetime.utcnow() - timedelta(days=days)
+
+            activity = await tool_analytics_service.get_user_activity(
+                db_session=db_session,
+                user_id=user_id,
+                start_date=start_date,
+            )
+
+            trace_id = getattr(request.state, "trace_id", None)
+            return success_response(activity, trace_id=trace_id)
+        finally:
+            await db_session.close()

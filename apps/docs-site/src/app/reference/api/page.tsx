@@ -84,8 +84,8 @@ function buildOperationsByTag(spec: GeneratedApiSpec): {
 
 export default function ApiReferencePage() {
   const apiDoc = loadDoc("API_REFERENCE.md") || loadDoc("API.md");
-  const endpointsDoc = loadDoc("ENDPOINTS.md");
-  const kbFunctions = loadDoc("KB_FUNCTIONS_REFERENCE.md");
+  const endpointsDoc = loadDoc("api-reference/rest-api.md");
+  const kbFunctions = loadDoc("SEMANTIC_SEARCH_DESIGN.md");
   const implementationDoc = loadClientImplDoc("CLIENT_IMPLEMENTATION.md");
 
   const spec = generatedApiSpec;

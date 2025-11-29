@@ -24,8 +24,20 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from app.core.config import settings
 from app.services.cache_service import cache_service, generate_cache_key
+from openai import AsyncOpenAI
 
 logger = logging.getLogger(__name__)
+
+# Shared async OpenAI client
+_async_openai_client: AsyncOpenAI | None = None
+
+
+def get_async_openai_client() -> AsyncOpenAI:
+    """Get or create async OpenAI client."""
+    global _async_openai_client
+    if _async_openai_client is None:
+        _async_openai_client = AsyncOpenAI()
+    return _async_openai_client
 
 
 class RerankerType(str, Enum):
@@ -247,8 +259,7 @@ class LLMReranker:
         Returns:
             List of (original_index, score) tuples
         """
-        import openai
-
+        client = get_async_openai_client()
         scores = []
 
         for i, doc in enumerate(documents[:20]):  # Limit to first 20 for cost
@@ -262,7 +273,7 @@ Document: {doc[:2000]}
 
 Relevance score (0-10):"""
 
-                response = await openai.chat.completions.create(
+                response = await client.chat.completions.create(
                     model=self.model,
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=5,

@@ -5,6 +5,12 @@ export interface SearchDocument {
   heading: string;
   url: string;
   snippet: string;
+  summary?: string;
+  status?: string;
+  lastUpdated?: string;
+  tags?: string[];
+  audience?: string[];
+  category?: string;
 }
 
 export interface SearchIndex {

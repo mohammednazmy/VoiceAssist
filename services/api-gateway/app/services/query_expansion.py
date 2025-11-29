@@ -26,8 +26,20 @@ from enum import Enum
 from typing import Dict, List, Optional, Set
 
 from app.services.cache_service import cache_service, generate_cache_key
+from openai import AsyncOpenAI
 
 logger = logging.getLogger(__name__)
+
+# Shared async OpenAI client
+_async_openai_client: AsyncOpenAI | None = None
+
+
+def get_async_openai_client() -> AsyncOpenAI:
+    """Get or create async OpenAI client."""
+    global _async_openai_client
+    if _async_openai_client is None:
+        _async_openai_client = AsyncOpenAI()
+    return _async_openai_client
 
 
 class ExpansionMethod(str, Enum):
@@ -355,8 +367,6 @@ class QueryExpansionService:
 
     async def _llm_reformulation(self, query: str) -> List[str]:
         """Use LLM to suggest query reformulations."""
-        import openai
-
         try:
             prompt = (
                 "Given the medical search query below, suggest 3 alternative "
@@ -366,7 +376,8 @@ class QueryExpansionService:
                 "without numbering or explanations:"
             )
 
-            response = await openai.chat.completions.create(
+            client = get_async_openai_client()
+            response = await client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=100,
@@ -421,8 +432,6 @@ class QueryExpansionService:
 
     async def _llm_decomposition(self, query: str) -> List[str]:
         """Use LLM to decompose complex query."""
-        import openai
-
         try:
             prompt = (
                 "Break down this complex medical question into simpler sub-questions "
@@ -432,7 +441,8 @@ class QueryExpansionService:
                 "If the question is already simple, just return it as-is:"
             )
 
-            response = await openai.chat.completions.create(
+            client = get_async_openai_client()
+            response = await client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=200,

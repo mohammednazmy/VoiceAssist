@@ -153,6 +153,10 @@ function scanDocsDir(dir, basePath = "") {
         const content = fs.readFileSync(fullPath, "utf-8");
         const { data } = matter(content);
         const metadata = parseMetadata(data, relativePath);
+        const stat = fs.statSync(fullPath);
+        if (!metadata.lastUpdated) {
+          metadata.lastUpdated = stat.mtime.toISOString().split("T")[0];
+        }
 
         entries.push({
           slug: metadata.slug,

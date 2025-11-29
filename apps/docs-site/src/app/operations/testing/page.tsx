@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function TestingPage() {
   const testingGuide = loadDoc("TESTING_GUIDE.md");
   const e2eTests = loadClientImplDoc("E2E_TESTING.md");
-  const phase4Tests = loadDoc("PHASE4_E2E_TESTS.md");
+  const testingResults = loadDoc("TESTING_RESULTS_2025-11-22.md");
 
   return (
     <div>
@@ -126,12 +126,12 @@ export default function TestingPage() {
           </div>
         )}
 
-        {phase4Tests && (
+        {testingResults && (
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              Phase 4 Test Implementation
+              Latest Test Results
             </h2>
-            <MarkdownRenderer content={phase4Tests.content} />
+            <MarkdownRenderer content={testingResults.content} />
           </div>
         )}
 

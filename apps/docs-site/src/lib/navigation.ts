@@ -68,7 +68,7 @@ export const navigation: NavSection[] = [
         docPaths: [
           "VOICE_MODE_PIPELINE.md",
           "VOICE_MODE_SETTINGS_GUIDE.md",
-          "VOICE_READY_STATE_2025-11-25.md",
+          "VOICE_STATE_2025-11-28.md",
         ],
       },
       {
@@ -314,7 +314,16 @@ export const navigation: NavSection[] = [
         title: "Runbooks",
         href: "/operations/runbooks",
         description: "Step-by-step incident response procedures",
-        docPaths: ["operations/OPERATIONS_OVERVIEW.md"],
+        docPaths: [
+          "operations/OPERATIONS_OVERVIEW.md",
+          "operations/runbooks/DEPLOYMENT.md",
+          "operations/runbooks/INCIDENT_RESPONSE.md",
+          "operations/runbooks/BACKUP_RESTORE.md",
+          "operations/runbooks/SCALING.md",
+          "operations/runbooks/MONITORING.md",
+          "operations/runbooks/TROUBLESHOOTING.md",
+          "operations/runbooks/DOCS_SITE_DEPLOYMENT_AND_TLS.md",
+        ],
       },
     ],
   },
@@ -416,7 +425,7 @@ export const navigation: NavSection[] = [
       },
       {
         title: "Packages",
-        href: "/reference/all-docs",
+        href: "/reference/packages",
         description: "Monorepo package READMEs and shared utilities",
         docPaths: [
           "@root/packages/api-client/README.md",
@@ -430,7 +439,7 @@ export const navigation: NavSection[] = [
       },
       {
         title: "Documentation Archive",
-        href: "/reference/all-docs",
+        href: "/reference/archive",
         description: "Historical documents preserved for context",
         docPaths: ["archive/README.md"],
       },

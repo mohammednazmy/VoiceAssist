@@ -16,6 +16,8 @@ import { TroubleshootingPage } from "./pages/TroubleshootingPage";
 import { BackupsPage } from "./pages/BackupsPage";
 import { FeatureFlagsPage } from "./pages/FeatureFlagsPage";
 import { PromptsPage } from "./pages/prompts";
+import { CalendarConnectionsPage } from "./pages/CalendarConnectionsPage";
+import { FunctionCallAnalyticsPage } from "./pages/FunctionCallAnalyticsPage";
 
 export function App() {
   return (
@@ -47,6 +49,14 @@ export function App() {
                     />
                     <Route path="/security" element={<SecurityPage />} />
                     <Route path="/tools" element={<ToolsPage />} />
+                    <Route
+                      path="/calendar-connections"
+                      element={<CalendarConnectionsPage />}
+                    />
+                    <Route
+                      path="/function-analytics"
+                      element={<FunctionCallAnalyticsPage />}
+                    />
                     <Route
                       path="/feature-flags"
                       element={<FeatureFlagsPage />}

@@ -20,13 +20,14 @@ Future enhancements:
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from datetime import datetime, timezone
 from typing import Awaitable, Callable, List, Optional
 
 from app.core.config import settings
 from app.services.intent_classifier import IntentClassifier
-from app.services.llm_client import LLMClient, LLMRequest, LLMResponse
+from app.services.llm_client import LLMClient, LLMRequest, LLMResponse, ToolCall
 from app.services.model_adapters import ModelAdapter, ModelAdapterRegistry
 from app.services.openai_realtime_client import OpenAIRealtimeClient
 from app.services.phi_detector import PHIDetector
@@ -35,6 +36,16 @@ from app.services.query_expansion import QueryExpansionConfig, QueryExpansionSer
 from app.services.realtime_voice_service import realtime_voice_service
 from app.services.search_aggregator import SearchAggregator
 from pydantic import BaseModel, Field
+
+# Import tool service for function calling support
+try:
+    from app.services.tools import tool_service
+    from app.services.tools.tool_service import ToolExecutionContext
+
+    TOOLS_AVAILABLE = True
+except ImportError:
+    TOOLS_AVAILABLE = False
+    logging.warning("Tool service not available for chat mode")
 
 # Default values when prompt service is unavailable
 DEFAULT_TEMPERATURE = 0.7
@@ -112,6 +123,8 @@ class QueryOrchestrator:
         search_aggregator: SearchAggregator | None = None,
         query_expansion_service: QueryExpansionService | None = None,
         model_registry: ModelAdapterRegistry | None = None,
+        enable_tools: bool = True,
+        max_tool_iterations: int = 5,
     ):
         """
         Initialize QueryOrchestrator with RAG support.
@@ -120,6 +133,8 @@ class QueryOrchestrator:
             enable_rag: Whether to use RAG (can be disabled for testing)
             rag_top_k: Number of top results to retrieve
             rag_score_threshold: Minimum similarity score for results
+            enable_tools: Whether to enable function calling/tools
+            max_tool_iterations: Maximum number of tool execution loops
         """
         self.llm_client = LLMClient(
             cloud_model="gpt-4o",
@@ -143,6 +158,66 @@ class QueryOrchestrator:
         self.enable_multi_hop = settings.ENABLE_MULTI_HOP_RETRIEVAL if enable_multi_hop is None else enable_multi_hop
         self.query_expander = query_expansion_service or QueryExpansionService(QueryExpansionConfig(enable_llm=False))
         self.model_registry = model_registry or ModelAdapterRegistry()
+        self.enable_tools = enable_tools and TOOLS_AVAILABLE
+        self.max_tool_iterations = max_tool_iterations
+
+    async def _execute_tool_call(
+        self,
+        tool_call: ToolCall,
+        user_id: str,
+        session_id: Optional[str],
+        trace_id: Optional[str],
+    ) -> dict:
+        """
+        Execute a single tool call and return the result.
+
+        Args:
+            tool_call: The tool call to execute
+            user_id: User identifier
+            session_id: Session identifier
+            trace_id: Trace ID for logging
+
+        Returns:
+            Dict with tool result to send back to LLM
+        """
+        if not TOOLS_AVAILABLE:
+            return {"error": "Tools not available"}
+
+        try:
+            # Parse arguments
+            arguments = json.loads(tool_call.arguments)
+
+            # Create execution context
+            context = ToolExecutionContext(
+                user_id=user_id,
+                session_id=session_id,
+                mode="chat",
+                trace_id=trace_id,
+            )
+
+            # Execute the tool
+            result = await tool_service.execute(tool_call.name, arguments, context)
+
+            # Format result for LLM
+            if result.success:
+                output = result.data
+                if result.message and isinstance(output, dict):
+                    output["_message"] = result.message
+                return output
+            else:
+                return {
+                    "error": result.error,
+                    "needs_clarification": result.needs_clarification,
+                    "needs_connection": result.needs_connection,
+                    "_message": result.message,
+                }
+
+        except json.JSONDecodeError as e:
+            logging.error(f"Failed to parse tool arguments: {e}")
+            return {"error": f"Invalid arguments: {e}"}
+        except Exception as e:
+            logging.exception(f"Error executing tool {tool_call.name}: {e}")
+            return {"error": str(e)}
 
     async def _run_retrieval(self, query: str) -> tuple[list, str, List[dict], float]:
         """Run single or multi-hop retrieval with optional synthesis."""
@@ -288,6 +363,14 @@ class QueryOrchestrator:
         except Exception as e:
             logging.warning(f"Failed to get prompt settings for {intent}, using defaults: {e}")
 
+        # Get tools if enabled
+        tools = None
+        if self.enable_tools and TOOLS_AVAILABLE:
+            try:
+                tools = tool_service.get_openai_tools()
+            except Exception as e:
+                logging.warning(f"Failed to get tools: {e}")
+
         llm_request = LLMRequest(
             prompt=sanitized_prompt,
             intent=intent,
@@ -297,6 +380,8 @@ class QueryOrchestrator:
             trace_id=trace_id,
             model_override=model_override,
             model_provider=adapter.provider if adapter else None,
+            tools=tools,
+            tool_choice="auto" if tools else None,
         )
 
         return (
@@ -329,20 +414,23 @@ class QueryOrchestrator:
         request: QueryRequest,
         clinical_context: Optional[dict] = None,
         trace_id: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> QueryResponse:
-        """Handle a clinician query with full RAG pipeline.
+        """Handle a clinician query with full RAG pipeline and tool support.
 
         Pipeline:
         1. Load clinical context (if provided)
         2. Semantic search over KB (if RAG enabled)
         3. Assemble context from search results
         4. Generate LLM response with context + clinical context
-        5. Extract citations
+        5. Execute tool calls if any (loop until done or max iterations)
+        6. Extract citations
 
         Args:
             request: Query request with query text and optional context
             clinical_context: Optional clinical context dict with patient info
             trace_id: Trace ID for logging
+            user_id: User identifier for tool execution context
 
         Returns:
             QueryResponse with answer and citations
@@ -361,13 +449,104 @@ class QueryOrchestrator:
             retrieval_confidence,
         ) = await self._prepare_llm_request(request=request, clinical_context=clinical_context, trace_id=trace_id)
 
-        import logging
-
         logging.info(f"Query classified as intent='{intent}', trace_id={trace_id}")
 
+        # Initial LLM call
         llm_response: LLMResponse = await self.llm_client.generate(llm_request)
 
-        # Step 5: Extract citations from search results
+        # Tool execution loop - handle tool calls until LLM returns final response
+        iteration = 0
+        total_tokens = llm_response.used_tokens or 0
+        conversation_messages = [
+            {"role": "user", "content": llm_request.prompt},
+            {"role": "assistant", "content": llm_response.text or "", "tool_calls": None},
+        ]
+
+        # Update the assistant message with tool_calls if present
+        if llm_response.tool_calls:
+            conversation_messages[-1]["tool_calls"] = [
+                {
+                    "id": tc.id,
+                    "type": "function",
+                    "function": {"name": tc.name, "arguments": tc.arguments},
+                }
+                for tc in llm_response.tool_calls
+            ]
+
+        while llm_response.tool_calls and self.enable_tools and iteration < self.max_tool_iterations:
+            iteration += 1
+            logging.info(
+                f"Tool execution iteration {iteration}/{self.max_tool_iterations}, "
+                f"{len(llm_response.tool_calls)} tool calls, trace_id={trace_id}"
+            )
+
+            # Execute each tool call
+            for tool_call in llm_response.tool_calls:
+                logging.info(f"Executing tool: {tool_call.name}, trace_id={trace_id}")
+
+                tool_result = await self._execute_tool_call(
+                    tool_call=tool_call,
+                    user_id=user_id or "anonymous",
+                    session_id=request.session_id,
+                    trace_id=trace_id,
+                )
+
+                # Add tool result to conversation
+                conversation_messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": json.dumps(tool_result),
+                    }
+                )
+
+                # Add to reasoning path for transparency
+                reasoning_path.append(
+                    {
+                        "type": "tool_call",
+                        "iteration": iteration,
+                        "tool": tool_call.name,
+                        "result_keys": list(tool_result.keys()) if isinstance(tool_result, dict) else None,
+                    }
+                )
+
+            # Continue conversation with tool results
+            followup_request = LLMRequest(
+                prompt=None,  # Use messages instead
+                messages=conversation_messages,
+                intent=intent,
+                temperature=llm_request.temperature,
+                max_tokens=llm_request.max_tokens,
+                phi_present=llm_request.phi_present,
+                trace_id=trace_id,
+                model_override=llm_request.model_override,
+                model_provider=llm_request.model_provider,
+                tools=llm_request.tools,
+                tool_choice="auto",
+            )
+
+            llm_response = await self.llm_client.generate(followup_request)
+            total_tokens += llm_response.used_tokens or 0
+
+            # Update conversation with new assistant response
+            assistant_msg = {"role": "assistant", "content": llm_response.text or ""}
+            if llm_response.tool_calls:
+                assistant_msg["tool_calls"] = [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {"name": tc.name, "arguments": tc.arguments},
+                    }
+                    for tc in llm_response.tool_calls
+                ]
+            conversation_messages.append(assistant_msg)
+
+        if iteration >= self.max_tool_iterations and llm_response.tool_calls:
+            logging.warning(
+                f"Tool execution reached max iterations ({self.max_tool_iterations}), " f"trace_id={trace_id}"
+            )
+
+        # Extract citations from search results
         citations = []
         if search_results:
             citation_dicts = self.search_aggregator.extract_citations(search_results)
@@ -399,7 +578,7 @@ class QueryOrchestrator:
             answer=llm_response.text,
             created_at=now,
             citations=citations,
-            tokens=llm_response.used_tokens,
+            tokens=total_tokens,
             model=llm_response.model_name,
             model_provider=self._resolve_model_provider(adapter, llm_request, llm_response),
             model_confidence=(adapter.confidence if adapter else None),

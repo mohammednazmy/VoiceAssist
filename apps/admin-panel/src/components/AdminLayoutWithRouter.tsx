@@ -141,6 +141,12 @@ export function AdminLayoutWithRouter({ children }: LayoutProps) {
           <NavLink to="/tools" className={navLinkClass}>
             🔧 {t("nav.tools", "Tools")}
           </NavLink>
+          <NavLink to="/calendar-connections" className={navLinkClass}>
+            📅 {t("nav.calendarConnections", "Calendars")}
+          </NavLink>
+          <NavLink to="/function-analytics" className={navLinkClass}>
+            📊 {t("nav.functionAnalytics", "Function Analytics")}
+          </NavLink>
           <NavLink to="/feature-flags" className={navLinkClass}>
             🚩 {t("nav.featureFlags", "Feature Flags")}
           </NavLink>

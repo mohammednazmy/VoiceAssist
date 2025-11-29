@@ -83,7 +83,8 @@ def calculate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
 
 @dataclass
 class LLMRequest:
-    prompt: str
+    prompt: Optional[str] = None  # Single prompt (for simple queries)
+    messages: Optional[list] = None  # Full message history (for multi-turn with tools)
     intent: IntentType = "other"
     temperature: float = 0.1
     max_tokens: int = 512
@@ -91,6 +92,18 @@ class LLMRequest:
     trace_id: Optional[str] = None
     model_override: Optional[str] = None
     model_provider: Optional[str] = None
+    # Tool/Function calling support
+    tools: Optional[list] = None  # List of tool definitions in OpenAI format
+    tool_choice: Optional[str] = "auto"  # "auto", "required", "none", or specific tool
+
+
+@dataclass
+class ToolCall:
+    """Represents a tool call from the LLM."""
+
+    id: str
+    name: str
+    arguments: str  # JSON string of arguments
 
 
 @dataclass
@@ -104,6 +117,8 @@ class LLMResponse:
     cost_usd: float = 0.0  # Estimated cost in USD
     input_tokens: int = 0
     output_tokens: int = 0
+    # Tool/Function calling support
+    tool_calls: Optional[list] = None  # List of ToolCall objects
 
 
 class LLMClient:
@@ -229,17 +244,21 @@ class LLMClient:
         - Later phases can add per-intent routing, cost-awareness, etc.
 
         Safety checks:
-        - Validates prompt is non-empty
+        - Validates prompt or messages is non-empty
         - Normalizes whitespace
         - Enforces reasonable max_tokens limits
         """
-        # Safety: validate prompt is not empty
-        if not req.prompt or not req.prompt.strip():
-            logger.warning("LLMClient.generate called with empty prompt, trace_id=%s", req.trace_id)
-            raise ValueError("Prompt cannot be empty")
+        # Safety: validate prompt or messages is not empty
+        has_prompt = req.prompt and req.prompt.strip()
+        has_messages = req.messages and len(req.messages) > 0
+
+        if not has_prompt and not has_messages:
+            logger.warning("LLMClient.generate called with empty prompt and no messages, trace_id=%s", req.trace_id)
+            raise ValueError("Prompt or messages cannot be empty")
 
         # Safety: normalize whitespace in prompt
-        req.prompt = " ".join(req.prompt.split())
+        if has_prompt:
+            req.prompt = " ".join(req.prompt.split())
 
         # Determine routing family
         adapter_requests_local = req.model_provider not in (None, "openai", "cloud")
@@ -300,20 +319,39 @@ class LLMClient:
             start_time = time.time()
 
             try:
-                # Get system prompt with dynamic lookup (falls back to defaults)
-                system_message = await self._get_system_prompt_for_intent(req.intent)
+                # Build messages for the API call
+                if req.messages:
+                    # Use provided messages (multi-turn conversation with tool results)
+                    # Ensure system prompt is at the start
+                    messages = req.messages.copy()
+                    if not messages or messages[0].get("role") != "system":
+                        system_message = await self._get_system_prompt_for_intent(req.intent)
+                        messages.insert(0, {"role": "system", "content": system_message})
+                else:
+                    # Build messages from prompt (simple single-turn query)
+                    system_message = await self._get_system_prompt_for_intent(req.intent)
+                    messages = [
+                        {"role": "system", "content": system_message},
+                        {"role": "user", "content": req.prompt},
+                    ]
+
+                # Build API call parameters
+                api_params = {
+                    "model": model_name,
+                    "messages": messages,
+                    "temperature": req.temperature,
+                    "max_tokens": req.max_tokens,
+                }
+
+                # Add tools if provided
+                if req.tools:
+                    api_params["tools"] = req.tools
+                    if req.tool_choice:
+                        api_params["tool_choice"] = req.tool_choice
 
                 # Call OpenAI Chat Completions API with timeout
                 response: ChatCompletion = await asyncio.wait_for(
-                    self.openai_client.chat.completions.create(
-                        model=model_name,
-                        messages=[
-                            {"role": "system", "content": system_message},
-                            {"role": "user", "content": req.prompt},
-                        ],
-                        temperature=req.temperature,
-                        max_tokens=req.max_tokens,
-                    ),
+                    self.openai_client.chat.completions.create(**api_params),
                     timeout=30,
                 )
 
@@ -324,6 +362,18 @@ class LLMClient:
                 choice = response.choices[0]
                 text = choice.message.content or ""
                 finish_reason = choice.finish_reason or "stop"
+
+                # Extract tool calls if present
+                tool_calls_list = None
+                if choice.message.tool_calls:
+                    tool_calls_list = [
+                        ToolCall(
+                            id=tc.id,
+                            name=tc.function.name,
+                            arguments=tc.function.arguments,
+                        )
+                        for tc in choice.message.tool_calls
+                    ]
 
                 # Calculate token usage
                 usage = response.usage
@@ -368,6 +418,7 @@ class LLMClient:
                     cost_usd=cost_usd,
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
+                    tool_calls=tool_calls_list,
                 )
 
             except asyncio.TimeoutError as exc:

@@ -75,6 +75,50 @@ function buildRoutePath(relativePath) {
     .join("/")}`;
 }
 
+function inferCategory(relativePath) {
+  const parts = relativePath.split(path.sep);
+  if (parts.length === 1) {
+    if (parts[0].startsWith("VOICE_")) return "Voice";
+    if (parts[0].startsWith("ADMIN_")) return "Admin";
+    return "General";
+  }
+
+  switch (parts[0]) {
+    case "client-implementation":
+      return "Frontend";
+    case "architecture":
+      return "Architecture";
+    case "operations":
+      return "Operations";
+    case "debugging":
+      return "Debugging";
+    case "testing":
+      return "Testing";
+    case "ai":
+      return "AI & Agents";
+    case "overview":
+      return "Overview";
+    case "phases":
+      return "Phases";
+    case "admin":
+      return "Admin";
+    case "archive":
+      return "Archive";
+    case "plans":
+      return "Planning";
+    case "deployment":
+      return "Deployment";
+    case "design-system":
+      return "Design System";
+    case "infra":
+      return "Infrastructure";
+    case "api-reference":
+      return "Reference";
+    default:
+      return "General";
+  }
+}
+
 function buildIndex() {
   const docFiles = walkMarkdownFiles(DOCS_DIR);
   const documents = [];
@@ -83,6 +127,7 @@ function buildIndex() {
     const relativePath = path.relative(DOCS_DIR, filePath);
     const raw = fs.readFileSync(filePath, "utf8");
     const { data, content } = matter(raw);
+    const stat = fs.statSync(filePath);
     const docTitle =
       data.title ||
       relativePath
@@ -91,6 +136,16 @@ function buildIndex() {
         .pop()
         .replace(/_/g, " ") ||
       "Untitled";
+    const lastUpdated = (
+      data.lastUpdated ||
+      data.last_updated ||
+      stat.mtime.toISOString()
+    ).split("T")[0];
+    const summary = data.summary || data.description || "";
+    const status = data.status || "draft";
+    const tags = Array.isArray(data.tags) ? data.tags : [];
+    const audience = Array.isArray(data.audience) ? data.audience : [];
+    const category = data.category || inferCategory(relativePath);
 
     const sections = extractSections(content, docTitle);
     const baseUrl = buildRoutePath(relativePath);
@@ -103,6 +158,12 @@ function buildIndex() {
         heading: docTitle,
         url: baseUrl,
         snippet: content.replace(/\s+/g, " ").slice(0, 320),
+        summary,
+        status,
+        lastUpdated,
+        tags,
+        audience,
+        category,
       });
       continue;
     }
@@ -115,6 +176,12 @@ function buildIndex() {
         heading: section.heading,
         url: `${baseUrl}#${section.anchor}`,
         snippet: section.snippet || content.replace(/\s+/g, " ").slice(0, 320),
+        summary,
+        status,
+        lastUpdated,
+        tags,
+        audience,
+        category,
       });
     });
   }

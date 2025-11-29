@@ -14,7 +14,7 @@ export default function ProjectSummaryPage() {
   const implementationSummary = loadDoc(
     "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
   );
-  const changelog = loadDoc("CHANGELOG.md");
+  const changelog = loadDoc("FINAL_DOCUMENTATION_SUMMARY.md");
 
   return (
     <div>

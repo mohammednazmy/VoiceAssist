@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default function ConfigurationPage() {
-  const configDoc = loadDoc("CONFIGURATION.md") || loadDoc("CONFIG.md");
-  const envDoc = loadDoc("ENV_VARIABLES.md");
+  const configDoc = loadDoc("CONFIGURATION_REFERENCE.md");
+  const envDoc = loadDoc("DEVELOPMENT_SETUP.md");
   const settingsGuide = loadDoc("VOICE_MODE_SETTINGS_GUIDE.md");
 
   return (

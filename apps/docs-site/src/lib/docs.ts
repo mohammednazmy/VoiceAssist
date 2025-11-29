@@ -567,62 +567,88 @@ export function getAllDocs(): {
   const docs: { name: string; path: string; category: string }[] = [];
 
   try {
-    // Root level docs
-    const rootDocs = listDocsInDirectory("");
-    rootDocs.forEach((doc) => {
-      if (doc !== "README.md" && doc !== "index.html") {
-        docs.push({
-          name: doc.replace(".md", "").replace(/_/g, " "),
-          path: doc,
-          category: "General",
-        });
+    const paths = listAllDocPaths();
+
+    paths.forEach((docPath) => {
+      const parts = docPath.split("/");
+      const topLevel = parts.length > 1 ? parts[0] : null;
+      const filename = parts[parts.length - 1];
+
+      let category = "General";
+      if (topLevel) {
+        switch (topLevel) {
+          case "client-implementation":
+            category = "Frontend";
+            break;
+          case "architecture":
+            category = "Architecture";
+            break;
+          case "operations":
+            category = "Operations";
+            break;
+          case "debugging":
+            category = "Debugging";
+            break;
+          case "testing":
+            category = "Testing";
+            break;
+          case "ai":
+            category = "AI & Agents";
+            break;
+          case "overview":
+            category = "Overview";
+            break;
+          case "phases":
+            category = "Phases";
+            break;
+          case "admin":
+            category = "Admin";
+            break;
+          case "archive":
+            category = "Archive";
+            break;
+          case "plans":
+            category = "Planning";
+            break;
+          case "deployment":
+            category = "Deployment";
+            break;
+          case "design-system":
+            category = "Design System";
+            break;
+          case "infra":
+            category = "Infrastructure";
+            break;
+          case "api-reference":
+            category = "Reference";
+            break;
+          default:
+            category = topLevel
+              .replace(/-/g, " ")
+              .replace(/\b\w/g, (c) => c.toUpperCase());
+        }
+      } else if (filename.startsWith("VOICE_")) {
+        category = "Voice";
+      } else if (filename.startsWith("ADMIN_")) {
+        category = "Admin";
       }
-    });
 
-    // Client implementation docs
-    const clientDocs = listDocsInDirectory("client-implementation");
-    clientDocs.forEach((doc) => {
       docs.push({
-        name: doc.replace(".md", "").replace(/_/g, " "),
-        path: `client-implementation/${doc}`,
-        category: "Client Implementation",
-      });
-    });
-
-    // Architecture docs
-    const archDocs = listDocsInDirectory("architecture");
-    archDocs.forEach((doc) => {
-      docs.push({
-        name: doc.replace(".md", "").replace(/_/g, " "),
-        path: `architecture/${doc}`,
-        category: "Architecture",
-      });
-    });
-
-    // Operations docs
-    const opsDocs = listDocsInDirectory("operations");
-    opsDocs.forEach((doc) => {
-      docs.push({
-        name: doc.replace(".md", "").replace(/_/g, " "),
-        path: `operations/${doc}`,
-        category: "Operations",
-      });
-    });
-
-    // Testing docs
-    const testDocs = listDocsInDirectory("testing");
-    testDocs.forEach((doc) => {
-      docs.push({
-        name: doc.replace(".md", "").replace(/_/g, " "),
-        path: `testing/${doc}`,
-        category: "Testing",
+        name: filename.replace(/_/g, " "),
+        path: docPath,
+        category,
       });
     });
   } catch (error) {
     console.error("Error getting all docs:", error);
   }
 
-  return docs.sort((a, b) => a.name.localeCompare(b.name));
+  return docs.sort((a, b) => {
+    if (a.category === b.category) {
+      return a.name.localeCompare(b.name);
+    }
+    return a.category.localeCompare(b.category);
+  });
 }
 
 /**

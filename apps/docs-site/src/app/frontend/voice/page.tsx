@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function VoiceModePage() {
   const voicePipeline = loadDoc("VOICE_MODE_PIPELINE.md");
   const voiceSettings = loadDoc("VOICE_MODE_SETTINGS_GUIDE.md");
-  const voiceReady = loadDoc("VOICE_READY_STATE_2025-11-25.md");
+  const voiceReady = loadDoc("VOICE_STATE_2025-11-28.md");
 
   return (
     <div>

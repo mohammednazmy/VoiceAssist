@@ -2,7 +2,7 @@
 Database connection and session management
 """
 
-from typing import Generator
+from typing import AsyncGenerator, Generator
 
 import redis
 from app.core.config import settings
@@ -10,6 +10,7 @@ from app.core.resilience import db_breaker, redis_breaker, retry_database_operat
 from qdrant_client import AsyncQdrantClient
 from redis.connection import ConnectionPool
 from sqlalchemy import create_engine, text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -19,13 +20,9 @@ engine = create_engine(
     pool_pre_ping=True,
     pool_size=getattr(settings, "DB_POOL_SIZE", 20),  # Configurable, default 20
     max_overflow=getattr(settings, "DB_MAX_OVERFLOW", 40),  # Configurable, default 40
-    pool_recycle=getattr(
-        settings, "DB_POOL_RECYCLE", 3600
-    ),  # Configurable, default 1 hour
+    pool_recycle=getattr(settings, "DB_POOL_RECYCLE", 3600),  # Configurable, default 1 hour
     pool_timeout=getattr(settings, "DB_POOL_TIMEOUT", 30),  # Configurable, default 30s
-    echo_pool=(
-        settings.DEBUG if hasattr(settings, "DEBUG") else False
-    ),  # Log pool events in debug mode
+    echo_pool=(settings.DEBUG if hasattr(settings, "DEBUG") else False),  # Log pool events in debug mode
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -39,6 +36,36 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+# Async PostgreSQL Engine for async operations
+# Convert postgresql:// to postgresql+asyncpg:// for async driver
+_async_db_url = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+async_engine = create_async_engine(
+    _async_db_url,
+    pool_pre_ping=True,
+    pool_size=getattr(settings, "DB_POOL_SIZE", 20),
+    max_overflow=getattr(settings, "DB_MAX_OVERFLOW", 40),
+    pool_recycle=getattr(settings, "DB_POOL_RECYCLE", 3600),
+    pool_timeout=getattr(settings, "DB_POOL_TIMEOUT", 30),
+)
+
+AsyncSessionLocal = async_sessionmaker(
+    async_engine,
+    class_=AsyncSession,
+    autocommit=False,
+    autoflush=False,
+    expire_on_commit=False,
+)
+
+
+async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
+    """Get async database session for async operations."""
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
 
 
 @retry_database_operation()
@@ -56,16 +83,10 @@ def check_postgres_connection() -> bool:
 # Redis - Optimized connection pooling with configurable settings
 redis_pool = ConnectionPool.from_url(
     settings.REDIS_URL,
-    max_connections=getattr(
-        settings, "REDIS_MAX_CONNECTIONS", 50
-    ),  # Configurable, default 50
-    socket_connect_timeout=getattr(
-        settings, "REDIS_CONNECT_TIMEOUT", 5
-    ),  # Configurable, default 5s
+    max_connections=getattr(settings, "REDIS_MAX_CONNECTIONS", 50),  # Configurable, default 50
+    socket_connect_timeout=getattr(settings, "REDIS_CONNECT_TIMEOUT", 5),  # Configurable, default 5s
     socket_keepalive=True,
-    health_check_interval=getattr(
-        settings, "REDIS_HEALTH_CHECK_INTERVAL", 30
-    ),  # Configurable, default 30s
+    health_check_interval=getattr(settings, "REDIS_HEALTH_CHECK_INTERVAL", 30),  # Configurable, default 30s
     decode_responses=True,
 )
 
@@ -121,11 +142,7 @@ def get_db_pool_stats() -> dict:
         "total_connections": pool.size() + pool.overflow(),
         "utilization_percent": (
             round(
-                (
-                    (pool.checkedout() + pool.overflow())
-                    / (pool.size() + pool._max_overflow)
-                )
-                * 100,
+                ((pool.checkedout() + pool.overflow()) / (pool.size() + pool._max_overflow)) * 100,
                 2,
             )
             if (pool.size() + pool._max_overflow) > 0
@@ -138,16 +155,9 @@ def get_redis_pool_stats() -> dict:
     """Get Redis connection pool statistics"""
     return {
         "max_connections": redis_pool.max_connections,
-        "available_connections": redis_pool.max_connections
-        - len(redis_pool._available_connections),
+        "available_connections": redis_pool.max_connections - len(redis_pool._available_connections),
         "in_use_connections": (
-            len(redis_pool._in_use_connections)
-            if hasattr(redis_pool, "_in_use_connections")
-            else 0
+            len(redis_pool._in_use_connections) if hasattr(redis_pool, "_in_use_connections") else 0
         ),
-        "created_connections": (
-            redis_pool._created_connections
-            if hasattr(redis_pool, "_created_connections")
-            else 0
-        ),
+        "created_connections": (redis_pool._created_connections if hasattr(redis_pool, "_created_connections") else 0),
     }

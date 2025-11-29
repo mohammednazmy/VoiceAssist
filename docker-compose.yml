@@ -125,6 +125,8 @@ services:
       # TTS and STT
       - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
       - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
+      # Calendar Integration
+      - CALENDAR_ENCRYPTION_KEY=${CALENDAR_ENCRYPTION_KEY}
     ports:
       - "8000:8000"
     networks:

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function DataModelPage() {
   const dataModel = loadDoc("DATA_MODEL.md");
-  const schemaDoc = loadDoc("SCHEMA.md");
+  const schemaDoc = loadDoc("phases/PHASE_02_DATABASE_SCHEMA.md");
 
   return (
     <div>

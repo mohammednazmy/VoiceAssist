@@ -190,6 +190,17 @@ The site loads documentation from:
 
 ---
 
+## Deployment & Smoke Tests
+
+- **Env vars:** `NEXT_PUBLIC_DOCS_HOST=docs.asimo.io`, `NEXT_PUBLIC_SECONDARY_DOCS_HOST=assistdocs.asimo.io`
+- **Build artifacts:** `pnpm run generate-search-index && pnpm run generate-agent-json && pnpm build`
+- **Publish:** `rsync -av out/ /var/www/assistdocs.asimo.io/` (or the existing deployment script)
+- **Smoke checklist:** load `/`, `/search-index.json`, `/agent/index.json`, `/agent/docs.json`, and `/docs/VOICE_STATE_2025-11-28`
+- **Robots/sitemap:** verify `/robots.txt` allows `/agent/*` and `/sitemap.xml` includes `/agent/index.json`
+- **Host redirect:** enforce at the web server (`assistdocs.asimo.io` → `docs.asimo.io`)
+
+---
+
 ## AI Agent Endpoints
 
 The docs site exposes machine-readable JSON endpoints for AI agents:

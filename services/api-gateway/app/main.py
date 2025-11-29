@@ -19,6 +19,7 @@ except ImportError:
 import uvicorn
 from app.api import (
     admin_cache,
+    admin_calendar_connections,
     admin_feature_flags,
     admin_integrations,
     admin_kb,
@@ -34,6 +35,7 @@ from app.api import (
     auth,
     auth_2fa,
     auth_oauth,
+    calendar_connections,
     clinical_context,
     conversations,
     export,
@@ -154,6 +156,7 @@ app.include_router(metrics.router)  # Prometheus metrics endpoint (Phase 7 - P2.
 app.include_router(auth.router)
 app.include_router(auth_2fa.router)  # Two-factor authentication
 app.include_router(auth_oauth.router)  # OAuth providers (Google, Microsoft)
+app.include_router(calendar_connections.router)  # Calendar connections API (user-facing)
 app.include_router(users.router)
 app.include_router(realtime.router)
 app.include_router(conversations.router, prefix="/api")  # Phase 2 Week 10: Conversations & branching
@@ -170,6 +173,7 @@ app.include_router(admin_prompts.router)  # Prompt Management Admin API
 app.include_router(admin_medical.router)  # Sprint 4: Medical AI Admin API
 app.include_router(admin_system.router)  # Sprint 4: System Admin API
 app.include_router(admin_tools.router)  # Sprint 6: Tools Admin API
+app.include_router(admin_calendar_connections.router)  # Calendar connections admin API
 app.include_router(admin_troubleshooting.router)  # Sprint 6: Troubleshooting Admin API
 app.include_router(attachments.router, prefix="/api")  # Phase 8: File attachments in chat
 app.include_router(clinical_context.router, prefix="/api")  # Phase 8: Clinical context
