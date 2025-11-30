@@ -311,7 +311,7 @@ class TestProviderConfigStatus:
         mock_admin = MagicMock()
         mock_admin.id = "admin-123"
 
-        with patch("app.api.admin_calendar_connections.settings") as mock_settings:
+        with patch("app.core.config.settings") as mock_settings:
             mock_settings.GOOGLE_CLIENT_ID = "test-google-id"
             mock_settings.GOOGLE_CLIENT_SECRET = "test-google-secret"
             mock_settings.MICROSOFT_CLIENT_ID = "test-ms-id"

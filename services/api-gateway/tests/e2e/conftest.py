@@ -6,28 +6,27 @@ Provides realistic test fixtures that interact with actual services:
 - Real Qdrant connections (test collection)
 - Mock external APIs (OpenAI, Nextcloud)
 """
-import pytest
+
 import asyncio
 import os
 from typing import AsyncGenerator, Generator
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import StaticPool
-import redis.asyncio as redis
-from qdrant_client import QdrantClient
 
-from app.main import app
-from app.core.database import Base, get_db
+import pytest
+import redis.asyncio as redis
 from app.core.config import settings
+from app.core.database import Base, get_db
+from app.main import app
 from app.models.user import User
 from app.services.cache_service import cache_service
-
+from fastapi.testclient import TestClient
+from qdrant_client import QdrantClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 # Test database configuration
 TEST_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL",
-    "postgresql://voiceassist:changeme_secure_password@localhost:5432/voiceassist_test"
+    "TEST_DATABASE_URL", "postgresql://voiceassist:changeme_secure_password@localhost:5432/voiceassist_test"
 )
 
 
@@ -127,6 +126,7 @@ def test_qdrant() -> Generator[QdrantClient, None, None]:
 
     # Create fresh test collection
     from qdrant_client.models import Distance, VectorParams
+
     client.create_collection(
         collection_name=test_collection,
         vectors_config=VectorParams(size=1536, distance=Distance.COSINE),
@@ -144,11 +144,12 @@ def test_qdrant() -> Generator[QdrantClient, None, None]:
 @pytest.fixture(scope="function")
 def test_user(test_db_session: Session) -> User:
     """Create a test user."""
-    from app.core.security import hash_password
+    from app.core.security import get_password_hash
 
     user = User(
         email="testuser@example.com",
-        hashed_password=hash_password("Test123!@#"),
+        full_name="Test User",
+        hashed_password=get_password_hash("Test123!@#"),
         is_active=True,
         is_admin=False,
     )
@@ -162,11 +163,12 @@ def test_user(test_db_session: Session) -> User:
 @pytest.fixture(scope="function")
 def test_admin_user(test_db_session: Session) -> User:
     """Create a test admin user."""
-    from app.core.security import hash_password
+    from app.core.security import get_password_hash
 
     admin = User(
         email="admin@example.com",
-        hashed_password=hash_password("Admin123!@#"),
+        full_name="Admin User",
+        hashed_password=get_password_hash("Admin123!@#"),
         is_active=True,
         is_admin=True,
     )
@@ -180,16 +182,11 @@ def test_admin_user(test_db_session: Session) -> User:
 @pytest.fixture(scope="function")
 def auth_headers(client: TestClient, test_user: User) -> dict:
     """Get authentication headers for test user."""
-    response = client.post(
-        "/api/auth/login",
-        json={
-            "email": "testuser@example.com",
-            "password": "Test123!@#"
-        }
-    )
+    response = client.post("/api/auth/login", json={"email": "testuser@example.com", "password": "Test123!@#"})
     assert response.status_code == 200
     data = response.json()
-    access_token = data["data"]["access_token"]
+    # Response is TokenResponse directly, not wrapped in data envelope
+    access_token = data["access_token"]
 
     return {"Authorization": f"Bearer {access_token}"}
 
@@ -197,16 +194,11 @@ def auth_headers(client: TestClient, test_user: User) -> dict:
 @pytest.fixture(scope="function")
 def admin_auth_headers(client: TestClient, test_admin_user: User) -> dict:
     """Get authentication headers for admin user."""
-    response = client.post(
-        "/api/auth/login",
-        json={
-            "email": "admin@example.com",
-            "password": "Admin123!@#"
-        }
-    )
+    response = client.post("/api/auth/login", json={"email": "admin@example.com", "password": "Admin123!@#"})
     assert response.status_code == 200
     data = response.json()
-    access_token = data["data"]["access_token"]
+    # Response is TokenResponse directly, not wrapped in data envelope
+    access_token = data["access_token"]
 
     return {"Authorization": f"Bearer {access_token}"}
 

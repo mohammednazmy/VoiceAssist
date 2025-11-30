@@ -250,8 +250,7 @@ class ElevenLabsService:
                 },
             )
 
-            # Record success with circuit breaker
-            elevenlabs_breaker.success()
+            # Circuit breaker auto-tracks via decorator pattern
 
             return TTSSynthesisResult(
                 audio_data=audio_data,
@@ -262,13 +261,9 @@ class ElevenLabsService:
             )
 
         except httpx.TimeoutException as e:
-            # Record failure with circuit breaker
-            elevenlabs_breaker.fail()
             logger.error(f"ElevenLabs TTS timeout: {str(e)}")
             raise ValueError("TTS request timed out")
         except httpx.HTTPError as e:
-            # Record failure with circuit breaker
-            elevenlabs_breaker.fail()
             logger.error(f"ElevenLabs TTS HTTP error: {str(e)}")
             raise ValueError(f"TTS request failed: {str(e)}")
 
@@ -358,17 +353,12 @@ class ElevenLabsService:
                 extra={"voice_id": voice_id, "text_length": len(text)},
             )
 
-            # Record success with circuit breaker
-            elevenlabs_breaker.success()
+            # Circuit breaker auto-tracks via decorator pattern
 
         except httpx.TimeoutException as e:
-            # Record failure with circuit breaker
-            elevenlabs_breaker.fail()
             logger.error(f"ElevenLabs streaming TTS timeout: {str(e)}")
             raise ValueError("Streaming TTS request timed out")
         except httpx.HTTPError as e:
-            # Record failure with circuit breaker
-            elevenlabs_breaker.fail()
             logger.error(f"ElevenLabs streaming TTS error: {str(e)}")
             raise ValueError(f"Streaming TTS request failed: {str(e)}")
 

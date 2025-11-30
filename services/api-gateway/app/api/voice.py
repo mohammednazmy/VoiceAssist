@@ -14,7 +14,7 @@ import time
 import uuid
 
 import httpx
-from app.api.voice.schemas import (
+from app.api.voice_schemas.schemas import (
     RealtimeSessionRequest,
     RealtimeSessionResponse,
     SynthesizeRequest,

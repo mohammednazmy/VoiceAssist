@@ -26,22 +26,15 @@ import {
 } from "./VoiceBargeInIndicator";
 import { ConnectionStatusIndicator } from "./ConnectionStatusIndicator";
 import { VoiceActivityIndicator } from "./VoiceActivityIndicator";
+import { VoiceMicControl, type VoiceStatus } from "./VoiceMicControl";
 import {
   useVoiceSettingsStore,
   VOICE_OPTIONS,
-  LANGUAGE_OPTIONS,
 } from "../../stores/voiceSettingsStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useWebRTCClient } from "../../hooks/useWebRTCClient";
 
-/**
- * Format duration in seconds to MM:SS display
- */
-function formatDuration(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
+// Note: LANGUAGE_OPTIONS is defined in voiceSettingsStore but not currently used in this component
 
 export interface VoiceModePanelProps {
   conversationId?: string;
@@ -616,191 +609,29 @@ export function VoiceModePanel({
       </div>
 
       {/* Central Microphone Control */}
-      <div className="flex flex-col items-center py-4">
-        {/* Main Mic Button with Ring Animation */}
-        <div className="relative">
-          {/* Outer ring animation when speaking */}
-          {isConnected && isSpeaking && (
-            <div className="absolute inset-0 -m-3">
-              <div className="absolute inset-0 rounded-full border-4 border-green-400 animate-ping opacity-50" />
-              <div className="absolute inset-0 rounded-full border-2 border-green-300 animate-pulse" />
-            </div>
-          )}
-
-          {/* Connected ring */}
-          {isConnected && !isSpeaking && (
-            <div className="absolute inset-0 -m-2 rounded-full border-2 border-green-400 opacity-60" />
-          )}
-
-          {/* Main button */}
-          <button
-            type="button"
-            onClick={() => {
-              if (
-                isConnected ||
-                status === "connecting" ||
-                status === "reconnecting"
-              ) {
-                handleDisconnect();
-              } else if (isOfflineMode) {
-                if (isOfflineRecording) {
-                  stopOfflineRecording().then((recording) => {
-                    if (recording)
-                      console.log(
-                        `[VoiceModePanel] Stopped recording: ${recording.id}`,
-                      );
-                  });
-                } else {
-                  startOfflineRecording();
-                }
-              } else if (!isMicPermissionDenied) {
-                handleConnect();
-              }
-            }}
-            disabled={isMicPermissionDenied}
-            className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg ${
-              isConnected
-                ? "bg-green-500 hover:bg-green-600 text-white"
-                : isOfflineRecording
-                  ? "bg-red-500 hover:bg-red-600 text-white animate-pulse"
-                  : status === "connecting" || status === "reconnecting"
-                    ? "bg-yellow-500 text-white cursor-wait"
-                    : isMicPermissionDenied
-                      ? "bg-red-100 text-red-400 cursor-not-allowed"
-                      : isOfflineMode
-                        ? "bg-orange-500 hover:bg-orange-600 text-white"
-                        : "bg-primary-500 hover:bg-primary-600 text-white"
-            }`}
-            aria-label={
-              isConnected
-                ? "End voice session"
-                : isOfflineRecording
-                  ? "Stop recording"
-                  : status === "connecting"
-                    ? "Connecting..."
-                    : isOfflineMode
-                      ? "Start offline recording"
-                      : "Start voice session"
-            }
-            data-testid="main-mic-button"
-          >
-            {/* Mic icon */}
-            <svg
-              className={`w-8 h-8 sm:w-10 sm:h-10 ${status === "connecting" || status === "reconnecting" ? "animate-pulse" : ""}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"
-              />
-            </svg>
-          </button>
-        </div>
-
-        {/* Status text below button */}
-        <p
-          className="mt-3 text-sm font-medium text-neutral-600"
-          data-testid="mic-status-text"
-        >
-          {isConnected
-            ? isSpeaking
-              ? "Listening..."
-              : "Speak now"
-            : isOfflineRecording
-              ? `Recording ${formatDuration(recordingDuration)}`
-              : status === "connecting"
-                ? "Connecting..."
-                : status === "reconnecting"
-                  ? "Reconnecting..."
-                  : isOfflineMode
-                    ? "Tap to record offline"
-                    : "Tap to start"}
-        </p>
-
-        {/* Action buttons row */}
-        <div className="flex items-center gap-3 mt-3">
-          {/* Barge-in button (only when connected and synthesizing) */}
-          {isConnected && isSynthesizing && (
-            <button
-              type="button"
-              onClick={bargeIn}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-full transition-colors"
-              aria-label="Interrupt AI response"
-            >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-                />
-              </svg>
-              Interrupt
-            </button>
-          )}
-
-          {/* End session button (only when connected) */}
-          {isConnected && (
-            <button
-              type="button"
-              onClick={handleDisconnect}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-full transition-colors"
-              aria-label="End voice session"
-              data-testid="end-session-small"
-            >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5.636 5.636a9 9 0 1012.728 12.728M5.636 5.636L18.364 18.364M5.636 5.636L18.364 18.364"
-                />
-              </svg>
-              End
-            </button>
-          )}
-
-          {/* Cancel offline recording */}
-          {isOfflineRecording && (
-            <button
-              type="button"
-              onClick={cancelOfflineRecording}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-full transition-colors"
-              aria-label="Cancel recording"
-              data-testid="cancel-offline-recording"
-            >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-              Cancel
-            </button>
-          )}
-        </div>
-      </div>
+      <VoiceMicControl
+        status={status as VoiceStatus}
+        isConnected={isConnected}
+        isSpeaking={isSpeaking}
+        isMicPermissionDenied={isMicPermissionDenied}
+        isOfflineMode={isOfflineMode}
+        isOfflineRecording={isOfflineRecording}
+        recordingDuration={recordingDuration}
+        isSynthesizing={isSynthesizing}
+        onConnect={handleConnect}
+        onDisconnect={handleDisconnect}
+        onBargeIn={bargeIn}
+        onStartOfflineRecording={startOfflineRecording}
+        onStopOfflineRecording={() => {
+          stopOfflineRecording().then((recording) => {
+            if (recording)
+              console.log(
+                `[VoiceModePanel] Stopped recording: ${recording.id}`,
+              );
+          });
+        }}
+        onCancelOfflineRecording={cancelOfflineRecording}
+      />
 
       {/* Microphone Permission Denied - Focused Error Card */}
       {isMicPermissionDenied && (

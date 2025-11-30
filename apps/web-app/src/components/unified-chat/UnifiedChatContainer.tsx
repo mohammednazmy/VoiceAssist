@@ -53,19 +53,15 @@ import type {
   WebSocketErrorCode,
 } from "@voiceassist/types";
 import { extractErrorMessage } from "@voiceassist/types";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { ChatSkeleton } from "./UnifiedChatSkeleton";
+import { ErrorDisplay, type ChatErrorType } from "./UnifiedChatError";
 
 // ============================================================================
 // Types
 // ============================================================================
 
 type LoadingState = "idle" | "creating" | "validating" | "loading-history";
-type ErrorType =
-  | "not-found"
-  | "failed-create"
-  | "failed-load"
-  | "websocket"
-  | null;
 
 interface UnifiedChatContainerProps {
   /** Pre-loaded conversation ID from ChatPage */
@@ -74,135 +70,6 @@ interface UnifiedChatContainerProps {
   startInVoiceMode?: boolean;
   /** Callback when conversation is created/loaded */
   onConversationReady?: (conversationId: string) => void;
-}
-
-// ============================================================================
-// Skeleton Components
-// ============================================================================
-
-function MessageSkeleton({ isUser = false }: { isUser?: boolean }) {
-  return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
-      <div
-        className={`max-w-[70%] rounded-lg p-4 animate-pulse ${
-          isUser ? "bg-primary-100" : "bg-white border border-neutral-200"
-        }`}
-      >
-        <div className={`space-y-2 ${isUser ? "items-end" : "items-start"}`}>
-          <div
-            className={`h-4 rounded ${isUser ? "bg-primary-200" : "bg-neutral-200"} w-48`}
-          />
-          <div
-            className={`h-4 rounded ${isUser ? "bg-primary-200" : "bg-neutral-200"} w-64`}
-          />
-          <div
-            className={`h-4 rounded ${isUser ? "bg-primary-200" : "bg-neutral-200"} w-32`}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ChatSkeleton() {
-  return (
-    <div className="flex flex-col h-full">
-      {/* Header skeleton */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 bg-white">
-        <div className="h-6 w-32 bg-neutral-200 rounded animate-pulse" />
-        <div className="flex items-center space-x-2">
-          <div className="h-8 w-20 bg-neutral-100 rounded animate-pulse" />
-          <div className="h-8 w-20 bg-neutral-100 rounded animate-pulse" />
-        </div>
-      </div>
-      {/* Messages skeleton */}
-      <div className="flex-1 overflow-hidden bg-neutral-50 px-4 py-4">
-        <MessageSkeleton isUser={true} />
-        <MessageSkeleton isUser={false} />
-        <MessageSkeleton isUser={true} />
-        <MessageSkeleton isUser={false} />
-      </div>
-      {/* Input skeleton */}
-      <div className="border-t border-neutral-200 bg-white px-4 py-3">
-        <div className="h-12 bg-neutral-100 rounded-lg animate-pulse" />
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// Error Components
-// ============================================================================
-
-interface ErrorDisplayProps {
-  type: ErrorType;
-  message: string | null;
-  onRetry?: () => void;
-  onGoHome?: () => void;
-}
-
-function ErrorDisplay({ type, message, onRetry, onGoHome }: ErrorDisplayProps) {
-  const errorConfig = {
-    "not-found": {
-      title: "Conversation not found",
-      description:
-        "The conversation you're looking for doesn't exist or has been deleted.",
-      showRetry: false,
-    },
-    "failed-create": {
-      title: "Failed to create conversation",
-      description:
-        message || "Unable to start a new conversation. Please try again.",
-      showRetry: true,
-    },
-    "failed-load": {
-      title: "Failed to load conversation",
-      description:
-        message || "Unable to load the conversation. Please try again.",
-      showRetry: true,
-    },
-    websocket: {
-      title: "Connection error",
-      description:
-        message || "Lost connection to the server. Attempting to reconnect...",
-      showRetry: true,
-    },
-  };
-
-  const config = type ? errorConfig[type] : null;
-  if (!config) return null;
-
-  return (
-    <div className="flex items-center justify-center h-full">
-      <div className="text-center max-w-md px-4">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-error-100 flex items-center justify-center">
-          <AlertCircle className="w-8 h-8 text-error-600" />
-        </div>
-        <h3 className="text-lg font-semibold text-neutral-900 mb-2">
-          {config.title}
-        </h3>
-        <p className="text-neutral-600 mb-4">{config.description}</p>
-        <div className="flex items-center justify-center gap-3">
-          {config.showRetry && onRetry && (
-            <button
-              onClick={onRetry}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-            >
-              Try Again
-            </button>
-          )}
-          {onGoHome && (
-            <button
-              onClick={onGoHome}
-              className="px-4 py-2 bg-neutral-100 text-neutral-700 rounded-lg hover:bg-neutral-200 transition-colors"
-            >
-              Go Home
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 // ============================================================================
@@ -258,7 +125,7 @@ export function UnifiedChatContainer({
 
   // Local state
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
-  const [errorType, setErrorType] = useState<ErrorType>(null);
+  const [errorType, setErrorType] = useState<ChatErrorType>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [conversation, setLocalConversation] = useState<Conversation | null>(
     null,

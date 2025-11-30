@@ -441,8 +441,8 @@ class TestAdvancedSearchAggregator:
 
         assert "Harrison's Cardiology" in context
         assert "Heart failure" in context
-        assert "[1]" in context
-        assert "[2]" in context
+        assert "[1" in context  # Format is [1 | SOURCE]
+        assert "[2" in context  # Format is [2 | SOURCE]
 
     def test_format_empty_results(self):
         """Test formatting empty results."""

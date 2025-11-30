@@ -9,8 +9,6 @@ Tests cover:
 """
 
 
-
-
 class TestResolveAdminRole:
     """Tests for the resolve_admin_role helper function."""
 
@@ -151,7 +149,7 @@ class TestWebSocketSessions:
 
     def test_session_functions_exist(self):
         """Verify WebSocket session management functions exist."""
-        from app.api.admin_panel import (
+        from app.api.admin.utils import (
             get_active_websocket_count,
             get_all_websocket_sessions,
             register_websocket_session,

@@ -7,7 +7,7 @@ For backward compatibility, the main router is still in conversations.py (parent
 This module structure prepares for gradual migration.
 """
 
-from app.api.conversations.schemas import (
+from app.api.conversation_schemas.schemas import (
     BranchInfo,
     BranchResponse,
     ConversationResponse,

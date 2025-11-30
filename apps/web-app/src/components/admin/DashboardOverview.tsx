@@ -175,10 +175,14 @@ export function DashboardOverview() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6" role="main" aria-label="Admin Dashboard">
       {/* Error Banner */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
+        <div
+          className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3"
+          role="alert"
+          aria-live="assertive"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -186,6 +190,7 @@ export function DashboardOverview() {
             strokeWidth={2}
             stroke="currentColor"
             className="w-5 h-5 text-red-600"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -210,6 +215,7 @@ export function DashboardOverview() {
         <button
           onClick={loadMetrics}
           className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-primary-700 bg-primary-50 rounded-md hover:bg-primary-100 transition-colors"
+          aria-label="Refresh dashboard metrics"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -218,6 +224,7 @@ export function DashboardOverview() {
             strokeWidth={2}
             stroke="currentColor"
             className="w-4 h-4"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -230,19 +237,33 @@ export function DashboardOverview() {
       </div>
 
       {/* System Status */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-neutral-900 mb-4">
+      <section
+        className="bg-white rounded-lg shadow p-6"
+        aria-labelledby="system-status-heading"
+        aria-live="polite"
+      >
+        <h2
+          id="system-status-heading"
+          className="text-lg font-semibold text-neutral-900 mb-4"
+        >
           System Status
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+          role="list"
+          aria-label="Service status list"
+        >
           {Object.entries(systemStatus).map(([service, status]) => (
             <div
               key={service}
               className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg"
+              role="listitem"
+              aria-label={`${service.replace(/([A-Z])/g, " $1").trim()}: ${status}`}
             >
               <div className="flex items-center space-x-3">
                 <span
                   className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold ${getStatusColor(status)}`}
+                  aria-hidden="true"
                 >
                   {getStatusIcon(status)}
                 </span>
@@ -258,124 +279,143 @@ export function DashboardOverview() {
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Active Sessions */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-neutral-600">
-              Active Sessions
+      <section aria-label="Key metrics" aria-live="polite">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Active Sessions */}
+          <article
+            className="bg-white rounded-lg shadow p-6"
+            aria-label={`Active Sessions: ${metrics.activeSessions}`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-neutral-600">
+                Active Sessions
+              </p>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-6 h-6 text-primary-500"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                />
+              </svg>
+            </div>
+            <p className="text-3xl font-bold text-neutral-900">
+              {metrics.activeSessions}
             </p>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6 text-primary-500"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-              />
-            </svg>
-          </div>
-          <p className="text-3xl font-bold text-neutral-900">
-            {metrics.activeSessions}
-          </p>
-          <p className="text-xs text-green-600 mt-1">
-            ↑ {metrics.activeUsers} active users
-          </p>
-        </div>
-
-        {/* Total Conversations */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-neutral-600">
-              Total Conversations
+            <p className="text-xs text-green-600 mt-1">
+              <span aria-hidden="true">↑</span> {metrics.activeUsers} active
+              users
             </p>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6 text-blue-500"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
-              />
-            </svg>
-          </div>
-          <p className="text-3xl font-bold text-neutral-900">
-            {metrics.totalConversations.toLocaleString()}
-          </p>
-          <p className="text-xs text-neutral-600 mt-1">
-            {metrics.messagesLast24h} messages (24h)
-          </p>
-        </div>
+          </article>
 
-        {/* API Calls */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-neutral-600">
-              API Calls (Today)
+          {/* Total Conversations */}
+          <article
+            className="bg-white rounded-lg shadow p-6"
+            aria-label={`Total Conversations: ${metrics.totalConversations.toLocaleString()}`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-neutral-600">
+                Total Conversations
+              </p>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-6 h-6 text-blue-500"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
+                />
+              </svg>
+            </div>
+            <p className="text-3xl font-bold text-neutral-900">
+              {metrics.totalConversations.toLocaleString()}
             </p>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6 text-green-500"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
-              />
-            </svg>
-          </div>
-          <p className="text-3xl font-bold text-neutral-900">
-            {metrics.apiCallsToday.toLocaleString()}
-          </p>
-          <p className="text-xs text-green-600 mt-1">
-            {metrics.avgResponseTime.toFixed(0)}ms avg response
-          </p>
-        </div>
+            <p className="text-xs text-neutral-600 mt-1">
+              {metrics.messagesLast24h} messages (24h)
+            </p>
+          </article>
 
-        {/* Error Rate */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-neutral-600">Error Rate</p>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6 text-yellow-500"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-              />
-            </svg>
-          </div>
-          <p className="text-3xl font-bold text-neutral-900">
-            {metrics.errorRate.toFixed(2)}%
-          </p>
-          <p className="text-xs text-neutral-600 mt-1">
-            {metrics.storageUsed}% storage used
-          </p>
+          {/* API Calls */}
+          <article
+            className="bg-white rounded-lg shadow p-6"
+            aria-label={`API Calls Today: ${metrics.apiCallsToday.toLocaleString()}`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-neutral-600">
+                API Calls (Today)
+              </p>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-6 h-6 text-green-500"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+                />
+              </svg>
+            </div>
+            <p className="text-3xl font-bold text-neutral-900">
+              {metrics.apiCallsToday.toLocaleString()}
+            </p>
+            <p className="text-xs text-green-600 mt-1">
+              {metrics.avgResponseTime.toFixed(0)}ms avg response
+            </p>
+          </article>
+
+          {/* Error Rate */}
+          <article
+            className="bg-white rounded-lg shadow p-6"
+            aria-label={`Error Rate: ${metrics.errorRate.toFixed(2)} percent`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-neutral-600">Error Rate</p>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-6 h-6 text-yellow-500"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                />
+              </svg>
+            </div>
+            <p className="text-3xl font-bold text-neutral-900">
+              {metrics.errorRate.toFixed(2)}%
+            </p>
+            <p className="text-xs text-neutral-600 mt-1">
+              {metrics.storageUsed}% storage used
+            </p>
+          </article>
         </div>
-      </div>
+      </section>
 
       {/* Recent Activity (placeholder) */}
       <div className="bg-white rounded-lg shadow p-6">

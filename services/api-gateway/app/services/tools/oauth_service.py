@@ -101,11 +101,19 @@ class OAuthService:
             return data  # No encryption if key not set
         return self._cipher.encrypt(data.encode()).decode()
 
-    def _decrypt(self, encrypted_data: str) -> str:
-        """Decrypt a string using Fernet."""
+    def _decrypt(self, encrypted_data: str) -> Optional[str]:
+        """Decrypt a string using Fernet.
+
+        Returns:
+            Decrypted string, or None if decryption fails.
+        """
         if not self._cipher:
             return encrypted_data
-        return self._cipher.decrypt(encrypted_data.encode()).decode()
+        try:
+            return self._cipher.decrypt(encrypted_data.encode()).decode()
+        except Exception:
+            # Invalid token format or decryption error
+            return None
 
     async def get_authorization_url(
         self,

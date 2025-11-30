@@ -5,7 +5,7 @@ Tests the tool registry, execution, and OpenAI tool definition generation.
 """
 
 import pytest
-from app.services.tools.tool_service import ToolCategory, ToolDefinition, ToolResult, ToolService
+from app.services.tools.tool_service import ToolCategory, ToolDefinition, ToolExecutionContext, ToolResult, ToolService
 
 
 class TestToolService:
@@ -32,7 +32,8 @@ class TestToolService:
 
         self.service.register(definition)
 
-        assert "test_tool" in self.service.list_tools()
+        tool_names = [t.name for t in self.service.list_tools()]
+        assert "test_tool" in tool_names
         retrieved = self.service.get_tool("test_tool")
         assert retrieved is not None
         assert retrieved.name == "test_tool"
@@ -54,7 +55,8 @@ class TestToolService:
         self.service.register_handler("handler_test", test_handler)
 
         # Handler should be registered
-        assert "handler_test" in self.service.list_tools()
+        tool_names = [t.name for t in self.service.list_tools()]
+        assert "handler_test" in tool_names
 
     def test_list_tools(self):
         """Test listing all registered tools."""
@@ -156,11 +158,8 @@ class TestToolService:
         self.service.register(definition)
         self.service.register_handler("exec_test", success_handler)
 
-        result = await self.service.execute(
-            tool_name="exec_test",
-            arguments={"name": "Test"},
-            context={"user_id": "123"},
-        )
+        context = ToolExecutionContext(user_id="123")
+        result = await self.service.execute("exec_test", {"name": "Test"}, context)
 
         assert result.success is True
         assert result.data["message"] == "Hello, Test!"
@@ -168,20 +167,17 @@ class TestToolService:
     @pytest.mark.asyncio
     async def test_execute_tool_not_found(self):
         """Test executing a non-existent tool."""
-        result = await self.service.execute(
-            tool_name="nonexistent",
-            arguments={},
-            context={},
-        )
+        context = ToolExecutionContext(user_id="123")
+        result = await self.service.execute("nonexistent", {}, context)
 
         assert result.success is False
-        assert "not found" in result.error.lower()
+        assert "unknown" in result.error.lower()
 
     @pytest.mark.asyncio
     async def test_execute_tool_handler_error(self):
         """Test tool execution when handler raises an error."""
 
-        async def error_handler(args: dict, context: dict) -> ToolResult:
+        async def error_handler(args: dict, context: ToolExecutionContext) -> ToolResult:
             raise ValueError("Something went wrong")
 
         definition = ToolDefinition(
@@ -194,11 +190,8 @@ class TestToolService:
         self.service.register(definition)
         self.service.register_handler("error_test", error_handler)
 
-        result = await self.service.execute(
-            tool_name="error_test",
-            arguments={},
-            context={},
-        )
+        context = ToolExecutionContext(user_id="123")
+        result = await self.service.execute("error_test", {}, context)
 
         assert result.success is False
         assert result.error is not None
@@ -233,7 +226,7 @@ class TestToolService:
         assert success.error is None
 
         # Error result
-        error = ToolResult(success=False, error="Something failed")
+        error = ToolResult(success=False, data=None, error="Something failed")
         assert error.success is False
         assert error.error == "Something failed"
         assert error.data is None

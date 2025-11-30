@@ -12,7 +12,7 @@ For backward compatibility, the main router is still in voice.py (parent directo
 This module structure prepares for gradual migration.
 """
 
-from app.api.voice.schemas import (
+from app.api.voice_schemas.schemas import (
     RealtimeAuthInfo,
     RealtimeSessionRequest,
     RealtimeSessionResponse,

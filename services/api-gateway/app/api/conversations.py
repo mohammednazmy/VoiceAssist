@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from app.api.conversations.schemas import (
+from app.api.conversation_schemas.schemas import (
     BranchInfo,
     BranchResponse,
     ConversationResponse,
