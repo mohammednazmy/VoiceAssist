@@ -175,8 +175,32 @@ class ExperimentService {
 
   /**
    * Check if a feature flag is enabled
+   *
+   * Checks in order:
+   * 1. Local storage override (ff_{flagKey} = "true")
+   * 2. Environment variable override (for unified_chat_voice_ui: VITE_UNIFIED_UI)
+   * 3. Backend feature flag API
    */
   async isFeatureEnabled(flagKey: string): Promise<boolean> {
+    // 1. Check local storage override first (allows testing without backend)
+    if (typeof localStorage !== "undefined") {
+      const localOverride = localStorage.getItem(`ff_${flagKey}`);
+      if (localOverride === "true") return true;
+      if (localOverride === "false") return false;
+    }
+
+    // 2. Check environment variable overrides
+    if (typeof import.meta !== "undefined" && import.meta.env) {
+      // Map flag keys to env vars
+      const envVarMap: Record<string, string | undefined> = {
+        unified_chat_voice_ui: import.meta.env.VITE_UNIFIED_UI,
+      };
+      const envValue = envVarMap[flagKey];
+      if (envValue === "true") return true;
+      if (envValue === "false") return false;
+    }
+
+    // 3. Check backend feature flag
     try {
       const flag = await this.getFeatureFlag(flagKey);
       if (!flag) return false;

@@ -59,6 +59,47 @@ export const PLAYBACK_SPEED_OPTIONS: {
   { value: 2, label: "2x (Fast)" },
 ];
 
+/**
+ * ElevenLabs voice options for T/T voice mode
+ */
+export interface ElevenLabsVoiceOption {
+  id: string;
+  name: string;
+  gender: "male" | "female";
+  premium: boolean;
+}
+
+export const ELEVENLABS_VOICE_OPTIONS: ElevenLabsVoiceOption[] = [
+  // Premium Voices (Recommended)
+  { id: "pNInz6obpgDQGcFmaJgB", name: "Adam", gender: "male", premium: true },
+  { id: "TxGEqnHWrfWFTfGW9XjX", name: "Josh", gender: "male", premium: true },
+  {
+    id: "EXAVITQu4vr4xnSDxMaL",
+    name: "Bella",
+    gender: "female",
+    premium: true,
+  },
+  {
+    id: "21m00Tcm4TlvDq8ikWAM",
+    name: "Rachel",
+    gender: "female",
+    premium: true,
+  },
+  // Standard Voices
+  {
+    id: "ErXwobaYiN019PkySvjV",
+    name: "Antoni",
+    gender: "male",
+    premium: false,
+  },
+  {
+    id: "AZnzlk1XvdvUeBnXmlld",
+    name: "Domi",
+    gender: "female",
+    premium: false,
+  },
+];
+
 interface VoiceSettingsState {
   // Settings
   voice: VoiceOption;
@@ -81,6 +122,15 @@ interface VoiceSettingsState {
   // Phase 11: TTS Provider selection
   ttsProvider: TTSProvider; // "openai" | "elevenlabs"
   elevenlabsVoiceId: string | null; // Selected ElevenLabs voice ID
+  // Voice Mode Overhaul: Advanced TTS settings
+  stability: number; // 0-1: ElevenLabs voice stability
+  similarityBoost: number; // 0-1: ElevenLabs voice similarity
+  style: number; // 0-1: ElevenLabs style/emotion
+  speakerBoost: boolean; // ElevenLabs clarity enhancement
+  contextAwareStyle: boolean; // Auto-adjust TTS based on content
+  // Backend sync state
+  backendPrefsId: string | null; // ID from backend for updates
+  lastSyncedAt: number | null; // Timestamp of last backend sync
 
   // Actions
   setVoice: (voice: VoiceOption) => void;
@@ -103,7 +153,34 @@ interface VoiceSettingsState {
   // Phase 11: TTS Provider actions
   setTtsProvider: (provider: TTSProvider) => void;
   setElevenlabsVoiceId: (voiceId: string | null) => void;
+  // Voice Mode Overhaul: Advanced TTS actions
+  setStability: (stability: number) => void;
+  setSimilarityBoost: (similarity: number) => void;
+  setStyle: (style: number) => void;
+  setSpeakerBoost: (enabled: boolean) => void;
+  setContextAwareStyle: (enabled: boolean) => void;
+  setBackendPrefsId: (id: string | null) => void;
+  setLastSyncedAt: (timestamp: number | null) => void;
+  // Bulk update from backend
+  syncFromBackend: (prefs: BackendVoicePreferences) => void;
   reset: () => void;
+}
+
+// Backend voice preferences response shape
+export interface BackendVoicePreferences {
+  id: string;
+  user_id: string;
+  tts_provider: TTSProvider;
+  openai_voice_id: string;
+  elevenlabs_voice_id: string | null;
+  speech_rate: number;
+  stability: number;
+  similarity_boost: number;
+  style: number;
+  speaker_boost: boolean;
+  auto_play: boolean;
+  context_aware_style: boolean;
+  preferred_language: string;
 }
 
 const defaultSettings = {
@@ -125,8 +202,17 @@ const defaultSettings = {
   adaptiveVad: true, // Enable adaptive VAD by default
   lastLearnedSilenceMs: null as number | null,
   // Phase 11: TTS Provider settings
-  ttsProvider: "openai" as TTSProvider, // Default to OpenAI
-  elevenlabsVoiceId: null as string | null,
+  ttsProvider: "elevenlabs" as TTSProvider, // Default to ElevenLabs for natural voice
+  elevenlabsVoiceId: "TxGEqnHWrfWFTfGW9XjX" as string | null, // Josh (premium male voice)
+  // Voice Mode Overhaul: Advanced TTS settings (tuned for naturalness)
+  stability: 0.65, // Balanced stability for natural variation
+  similarityBoost: 0.8, // High clarity and voice identity
+  style: 0.15, // Subtle expressiveness without being theatrical
+  speakerBoost: true, // ElevenLabs clarity
+  contextAwareStyle: true, // Auto-adjust based on content
+  // Backend sync state
+  backendPrefsId: null as string | null,
+  lastSyncedAt: null as number | null,
 };
 
 /**
@@ -189,6 +275,40 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
 
       setElevenlabsVoiceId: (elevenlabsVoiceId) => set({ elevenlabsVoiceId }),
 
+      // Voice Mode Overhaul: Advanced TTS actions
+      setStability: (stability) => set({ stability: clamp(stability, 0, 1) }),
+
+      setSimilarityBoost: (similarityBoost) =>
+        set({ similarityBoost: clamp(similarityBoost, 0, 1) }),
+
+      setStyle: (style) => set({ style: clamp(style, 0, 1) }),
+
+      setSpeakerBoost: (speakerBoost) => set({ speakerBoost }),
+
+      setContextAwareStyle: (contextAwareStyle) => set({ contextAwareStyle }),
+
+      setBackendPrefsId: (backendPrefsId) => set({ backendPrefsId }),
+
+      setLastSyncedAt: (lastSyncedAt) => set({ lastSyncedAt }),
+
+      // Bulk update from backend preferences
+      syncFromBackend: (prefs) =>
+        set({
+          ttsProvider: prefs.tts_provider,
+          voice: prefs.openai_voice_id as VoiceOption,
+          elevenlabsVoiceId: prefs.elevenlabs_voice_id,
+          playbackSpeed: prefs.speech_rate as PlaybackSpeed,
+          stability: prefs.stability,
+          similarityBoost: prefs.similarity_boost,
+          style: prefs.style,
+          speakerBoost: prefs.speaker_boost,
+          autoPlayInVoiceMode: prefs.auto_play,
+          contextAwareStyle: prefs.context_aware_style,
+          language: prefs.preferred_language as LanguageOption,
+          backendPrefsId: prefs.id,
+          lastSyncedAt: Date.now(),
+        }),
+
       reset: () => set({ ...defaultSettings }),
     }),
     {
@@ -214,6 +334,14 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
         // Phase 11: TTS Provider settings
         ttsProvider: state.ttsProvider,
         elevenlabsVoiceId: state.elevenlabsVoiceId,
+        // Voice Mode Overhaul: Advanced TTS settings
+        stability: state.stability,
+        similarityBoost: state.similarityBoost,
+        style: state.style,
+        speakerBoost: state.speakerBoost,
+        contextAwareStyle: state.contextAwareStyle,
+        backendPrefsId: state.backendPrefsId,
+        lastSyncedAt: state.lastSyncedAt,
       }),
     },
   ),

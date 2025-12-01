@@ -104,12 +104,42 @@ class Settings(BaseSettings):
     REALTIME_BASE_URL: str = "wss://api.openai.com/v1/realtime"  # WebSocket endpoint
     REALTIME_TOKEN_EXPIRY_SEC: int = 300  # 5 minutes for ephemeral tokens
 
+    # Thinker/Talker Voice Pipeline settings
+    VOICE_PIPELINE_MODE: str = "thinker_talker"  # "thinker_talker" or "realtime_fallback"
+    VOICE_PIPELINE_STT_PRIMARY: str = "deepgram"  # Primary STT provider
+    VOICE_PIPELINE_STT_FALLBACK: str = "whisper"  # Fallback STT provider
+    VOICE_PIPELINE_TTS_PROVIDER: str = "elevenlabs"  # TTS provider
+    VOICE_PIPELINE_LLM_MODEL: str = "gpt-4o"  # LLM model for Thinker
+    VOICE_PIPELINE_STREAMING: bool = True  # Enable streaming at all stages
+    VOICE_PIPELINE_MAX_TOKENS: int = 1024  # Max tokens for voice responses
+
+    # Thinker/Talker latency settings
+    TARGET_STT_LATENCY_MS: int = 200  # Target STT latency
+    TARGET_LLM_FIRST_TOKEN_MS: int = 400  # Target time to first LLM token
+    TARGET_TTS_TTFB_MS: int = 200  # Target TTS time-to-first-byte
+    TARGET_TOTAL_LATENCY_MS: int = 1000  # Target end-to-end latency
+
+    # Barge-in settings
+    BARGE_IN_ENABLED: bool = True  # Allow user to interrupt AI
+    BARGE_IN_ENERGY_THRESHOLD: float = 0.05  # Audio energy threshold (0-1)
+    BARGE_IN_SUSTAINED_FRAMES: int = 5  # Frames required for barge-in
+
+    # Deepgram STT settings
+    DEEPGRAM_MODEL: str = "nova-2"  # Deepgram model
+    DEEPGRAM_ENDPOINTING_MS: int = 200  # Silence detection for speech end
+
+    # ElevenLabs TTS settings
+    ELEVENLABS_MODEL: str = "eleven_turbo_v2"  # Low-latency model
+    ELEVENLABS_VOICE_ID: str = "21m00Tcm4TlvDq8ikWAM"  # Default voice (Rachel)
+    ELEVENLABS_OUTPUT_FORMAT: str = "mp3_22050_32"  # Low bandwidth for streaming
+
     # Provider API Keys (for future STT/TTS integration)
     # IMPORTANT: These are sensitive credentials and should never be logged or exposed
     ELEVENLABS_API_KEY: Optional[str] = None  # ElevenLabs TTS provider
     DEEPGRAM_API_KEY: Optional[str] = None  # Deepgram STT provider
     GOOGLE_STUDIO_API_KEY: Optional[str] = None  # Google AI Studio provider
     DEEPSEEK_API_KEY: Optional[str] = None  # DeepSeek LLM provider
+    SERPAPI_API_KEY: Optional[str] = None  # SerpAPI web search
 
     # OAuth Providers (optional - leave empty to disable)
     GOOGLE_CLIENT_ID: Optional[str] = None

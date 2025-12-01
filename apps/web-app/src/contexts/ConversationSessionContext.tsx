@@ -24,11 +24,11 @@ import {
 import { extractErrorMessage } from "@voiceassist/types";
 import { useChatSession } from "../hooks/useChatSession";
 import {
-  useRealtimeVoiceSession,
+  useVoiceSession,
   type ConnectionStatus as VoiceConnectionStatus,
   type VoiceMetrics,
   type VoiceSettings,
-} from "../hooks/useRealtimeVoiceSession";
+} from "../hooks/useVoiceSession";
 import { useBranching } from "../hooks/useBranching";
 import { useConversations } from "../hooks/useConversations";
 import { useAuth } from "../hooks/useAuth";
@@ -59,7 +59,8 @@ export type VoiceStatus =
   | "mic_permission_denied"
   | "error"
   | "expired"
-  | "failed";
+  | "failed"
+  | "ready"; // T/T pipeline ready state
 
 export interface ConversationSessionState {
   // Identity
@@ -234,7 +235,8 @@ export function ConversationSessionProvider({
   const branching = useBranching(conversationId);
 
   // Voice Session Hook (lazy initialization - only connect when explicitly requested)
-  const voiceSession = useRealtimeVoiceSession({
+  // Uses Thinker/Talker pipeline for voice processing
+  const voiceSession = useVoiceSession({
     conversation_id: conversationId || undefined,
     voiceSettings,
     autoConnect: false, // Don't auto-connect, let user initiate
@@ -287,6 +289,8 @@ export function ConversationSessionProvider({
         return "failed";
       case "expired":
         return "expired";
+      case "mic_permission_denied":
+        return "mic_permission_denied";
       case "disconnected":
       default:
         return "idle";

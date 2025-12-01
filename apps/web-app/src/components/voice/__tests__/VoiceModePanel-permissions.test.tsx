@@ -112,10 +112,7 @@ const createMockHookReturn = (
   ...overrides,
 });
 
-// TODO: Fix mocking for VoiceModePanel tests - requires comprehensive mocking of
-// useRealtimeVoiceSession, useOfflineVoiceCapture, useWebRTCClient, and voiceSettingsStore
-// Tests are skipped due to complex component dependencies causing timeouts
-describe.skip("VoiceModePanel - Permission Handling", () => {
+describe("VoiceModePanel - Permission Handling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseRealtimeVoiceSession.mockReturnValue(createMockHookReturn());

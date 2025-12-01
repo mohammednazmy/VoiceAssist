@@ -15,12 +15,14 @@ logger = logging.getLogger(__name__)
 
 async def handle_web_search(arguments: Dict[str, Any], context: ToolExecutionContext) -> ToolResult:
     """
-    Search the web using DuckDuckGo.
+    Search the web using SerpAPI (Google search) or DuckDuckGo fallback.
 
     Args:
         arguments: Contains 'query' and optional 'max_results'
         context: Execution context
     """
+    from app.core.config import settings
+
     query = arguments.get("query")
     max_results = arguments.get("max_results", 5)
 
@@ -33,11 +35,42 @@ async def handle_web_search(arguments: Dict[str, Any], context: ToolExecutionCon
         )
 
     try:
-        # Use DuckDuckGo Instant Answer API for quick answers
-        instant_answer = await _get_duckduckgo_instant_answer(query)
+        # Use SerpAPI if API key is available (preferred - no rate limiting)
+        if settings.SERPAPI_API_KEY:
+            search_results = await _search_serpapi(query, max_results)
+            if search_results:
+                return ToolResult(
+                    success=True,
+                    data={
+                        "query": query,
+                        "results": search_results,
+                        "count": len(search_results),
+                        "source": "google",
+                    },
+                    message=f"Found {len(search_results)} results for '{query}'.",
+                )
 
-        # Use DuckDuckGo HTML search for actual results
+        # Fallback to DuckDuckGo if SerpAPI unavailable or failed
+        instant_answer = await _get_duckduckgo_instant_answer(query)
         search_results = await _search_duckduckgo(query, max_results)
+
+        # Check if we got results
+        if not search_results and not instant_answer.get("abstract"):
+            return ToolResult(
+                success=True,
+                data={
+                    "query": query,
+                    "instant_answer": "",
+                    "results": [],
+                    "count": 0,
+                    "rate_limited": True,
+                },
+                message=(
+                    f"Web search for '{query}' returned no results. "
+                    "The search service may be temporarily unavailable due to rate limiting. "
+                    "Try using PubMed search for medical topics, or try again in a few minutes."
+                ),
+            )
 
         return ToolResult(
             success=True,
@@ -60,6 +93,52 @@ async def handle_web_search(arguments: Dict[str, Any], context: ToolExecutionCon
             error=str(e),
             error_type=type(e).__name__,
         )
+
+
+async def _search_serpapi(query: str, max_results: int) -> List[Dict[str, Any]]:
+    """
+    Search using SerpAPI (Google search results).
+
+    Args:
+        query: Search query
+        max_results: Maximum number of results
+
+    Returns:
+        List of search results with title, url, snippet
+    """
+    from app.core.config import settings
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                "https://serpapi.com/search.json",
+                params={
+                    "q": query,
+                    "api_key": settings.SERPAPI_API_KEY,
+                    "num": max_results,
+                    "engine": "google",
+                },
+                timeout=15.0,
+            )
+            response.raise_for_status()
+            data = response.json()
+
+        results = []
+        for item in data.get("organic_results", [])[:max_results]:
+            results.append(
+                {
+                    "title": item.get("title", ""),
+                    "url": item.get("link", ""),
+                    "snippet": item.get("snippet", ""),
+                }
+            )
+
+        logger.info(f"SerpAPI search returned {len(results)} results for '{query}'")
+        return results
+
+    except Exception as e:
+        logger.warning(f"SerpAPI search error: {e}")
+        return []
 
 
 async def _get_duckduckgo_instant_answer(query: str) -> Dict[str, Any]:
@@ -97,20 +176,51 @@ async def _search_duckduckgo(query: str, max_results: int) -> List[Dict[str, Any
 
     Falls back to API-based search if library not available.
     """
+    import asyncio
+
     try:
-        # Try using duckduckgo-search library
+        # Try using duckduckgo-search library with retry logic
         from duckduckgo_search import DDGS
+        from duckduckgo_search.exceptions import RatelimitException
 
         results = []
-        with DDGS() as ddgs:
-            for r in ddgs.text(query, max_results=max_results):
-                results.append(
-                    {
-                        "title": r.get("title", ""),
-                        "url": r.get("href", ""),
-                        "snippet": r.get("body", ""),
-                    }
-                )
+        max_retries = 3
+
+        for attempt in range(max_retries):
+            try:
+                with DDGS() as ddgs:
+                    for r in ddgs.text(query, max_results=max_results):
+                        results.append(
+                            {
+                                "title": r.get("title", ""),
+                                "url": r.get("href", ""),
+                                "snippet": r.get("body", ""),
+                            }
+                        )
+                return results
+            except RatelimitException:
+                if attempt < max_retries - 1:
+                    wait_time = (attempt + 1) * 2  # 2, 4, 6 seconds
+                    logger.warning(
+                        f"DuckDuckGo rate limited, waiting {wait_time}s (attempt {attempt + 1}/{max_retries})"
+                    )
+                    await asyncio.sleep(wait_time)
+                else:
+                    logger.warning("DuckDuckGo rate limit exceeded after retries")
+                    raise
+            except Exception as e:
+                if "Ratelimit" in str(e):
+                    if attempt < max_retries - 1:
+                        wait_time = (attempt + 1) * 2
+                        logger.warning(
+                            f"DuckDuckGo rate limited, waiting {wait_time}s (attempt {attempt + 1}/{max_retries})"
+                        )
+                        await asyncio.sleep(wait_time)
+                    else:
+                        raise
+                else:
+                    raise
+
         return results
 
     except ImportError:
@@ -118,7 +228,8 @@ async def _search_duckduckgo(query: str, max_results: int) -> List[Dict[str, Any
         return await _search_duckduckgo_api_fallback(query, max_results)
     except Exception as e:
         logger.warning(f"DuckDuckGo search error: {e}")
-        return await _search_duckduckgo_api_fallback(query, max_results)
+        # Return empty results with a note about rate limiting
+        return []
 
 
 async def _search_duckduckgo_api_fallback(query: str, max_results: int) -> List[Dict[str, Any]]:
@@ -213,13 +324,18 @@ async def handle_pubmed_search(arguments: Dict[str, Any], context: ToolExecution
 
         articles = []
         for article in results.articles:
+            # Get journal name - handle both string and object types
+            journal_name = article.journal
+            if hasattr(article.journal, "name"):
+                journal_name = article.journal.name
+
             articles.append(
                 {
                     "pmid": article.pmid,
                     "title": article.title,
                     "authors": article.authors[:3] + (["et al."] if len(article.authors) > 3 else []),
-                    "journal": article.journal,
-                    "year": article.year,
+                    "journal": journal_name,
+                    "pub_date": article.pub_date,
                     "abstract": (
                         (article.abstract[:500] + "...")
                         if article.abstract and len(article.abstract) > 500

@@ -79,10 +79,10 @@ class VoiceSessionConfig:
     echo_cancellation: bool = True
     noise_suppression: bool = True
 
-    # VAD settings
+    # VAD settings (aggressive defaults for low latency)
     vad_threshold: float = 0.5
-    vad_prefix_padding_ms: int = 300
-    vad_silence_duration_ms: int = 500
+    vad_prefix_padding_ms: int = 150  # Reduced from 300ms
+    vad_silence_duration_ms: int = 200  # Reduced from 500ms
 
     # Barge-in settings
     barge_in_enabled: bool = True

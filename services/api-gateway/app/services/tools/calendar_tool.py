@@ -53,10 +53,29 @@ async def get_user_calendar_connections(
     ]
 
 
-def parse_datetime(time_str: str) -> Optional[datetime]:
-    """Parse a natural language time string into a datetime."""
+def parse_datetime(time_str: str, reference_time: Optional[datetime] = None) -> Optional[datetime]:
+    """
+    Parse a natural language time string into a datetime.
+
+    Handles:
+    - "one hour from now" → current time + 1 hour
+    - "tomorrow at 2pm" → next day at 14:00
+    - "in 30 minutes" → current time + 30 minutes
+    - "next Monday" → next Monday's date
+    - ISO format "2025-12-01T14:00:00" → passthrough
+
+    Args:
+        time_str: Natural language time string or ISO format
+        reference_time: Optional reference time for relative calculations (default: now)
+    """
     if not time_str:
         return None
+
+    # Try ISO format first (passthrough for already-formatted dates)
+    try:
+        return datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+    except ValueError:
+        pass
 
     # Use dateparser for natural language parsing
     settings = {
@@ -64,6 +83,10 @@ def parse_datetime(time_str: str) -> Optional[datetime]:
         "PREFER_DAY_OF_MONTH": "first",
         "RETURN_AS_TIMEZONE_AWARE": True,
     }
+
+    # Use reference time for relative calculations (e.g., "in one hour")
+    if reference_time:
+        settings["RELATIVE_BASE"] = reference_time
 
     parsed = dateparser.parse(time_str, settings=settings)
     return parsed
@@ -254,10 +277,27 @@ async def _create_google_event(
 
     service = build("calendar", "v3", credentials=creds)
 
+    # Get user's calendar timezone from their Google Calendar settings
+    try:
+        calendar_settings = service.settings().get(setting="timezone").execute()
+        user_timezone = calendar_settings.get("value", "America/New_York")
+    except Exception:
+        user_timezone = "America/New_York"  # Default fallback
+
+    # Format datetime for Google Calendar API
+    # Keep as local time (what the user intended) and specify their timezone
+    start_iso = start.strftime("%Y-%m-%dT%H:%M:%S")
+    end_iso = end.strftime("%Y-%m-%dT%H:%M:%S")
+
+    logger.info(
+        f"[Google Calendar] Creating event: title='{title}', "
+        f"start={start_iso}, end={end_iso} (timezone={user_timezone})"
+    )
+
     event_body = {
         "summary": title,
-        "start": {"dateTime": start.isoformat(), "timeZone": "UTC"},
-        "end": {"dateTime": end.isoformat(), "timeZone": "UTC"},
+        "start": {"dateTime": start_iso, "timeZone": user_timezone},
+        "end": {"dateTime": end_iso, "timeZone": user_timezone},
     }
 
     if description:
@@ -265,7 +305,11 @@ async def _create_google_event(
     if location:
         event_body["location"] = location
 
+    logger.info(f"[Google Calendar] Event body: {event_body}")
+
     event = service.events().insert(calendarId="primary", body=event_body).execute()
+
+    logger.info(f"[Google Calendar] Event created: id={event['id']}, link={event.get('htmlLink')}")
 
     return {"event_id": event["id"], "html_link": event.get("htmlLink")}
 
@@ -475,6 +519,7 @@ async def _list_google_events(
 
     tokens = await oauth_service.get_decrypted_tokens(connection["id"], db_session)
     if not tokens:
+        logger.warning("[Google Calendar] No tokens found for listing events")
         return []
 
     creds = Credentials(
@@ -487,18 +532,41 @@ async def _list_google_events(
 
     service = build("calendar", "v3", credentials=creds)
 
+    # Format time range for Google Calendar API
+    # Need RFC3339 format with Z suffix for UTC
+    # If datetime is timezone-aware, convert to UTC first
+    if start.tzinfo is not None:
+        import pytz
+
+        start_utc = start.astimezone(pytz.UTC)
+        time_min = start_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    else:
+        time_min = start.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    if end.tzinfo is not None:
+        import pytz
+
+        end_utc = end.astimezone(pytz.UTC)
+        time_max = end_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    else:
+        time_max = end.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    logger.info(f"[Google Calendar] Listing events: timeMin={time_min}, timeMax={time_max}, max={max_results}")
+
     events_result = (
         service.events()
         .list(
             calendarId="primary",
-            timeMin=start.isoformat() + "Z",
-            timeMax=end.isoformat() + "Z",
+            timeMin=time_min,
+            timeMax=time_max,
             maxResults=max_results,
             singleEvents=True,
             orderBy="startTime",
         )
         .execute()
     )
+
+    logger.info(f"[Google Calendar] Raw API response: {len(events_result.get('items', []))} events found")
 
     events = []
     for item in events_result.get("items", []):
@@ -513,6 +581,7 @@ async def _list_google_events(
             }
         )
 
+    logger.info(f"[Google Calendar] Returning {len(events)} events")
     return events
 
 
@@ -604,3 +673,258 @@ async def _list_caldav_events(
         )
 
     return events
+
+
+# ==============================================================================
+# Update Event Handler
+# ==============================================================================
+
+
+async def handle_update_event(arguments: Dict[str, Any], context: ToolExecutionContext) -> ToolResult:
+    """
+    Update an existing calendar event.
+    """
+    event_id = arguments.get("event_id")
+    title = arguments.get("title")
+    start_time_str = arguments.get("start_time")
+    end_time_str = arguments.get("end_time")
+    description = arguments.get("description")
+    location = arguments.get("location")
+    calendar_provider = arguments.get("calendar_provider", "google")
+
+    if not event_id:
+        return ToolResult(
+            success=False,
+            data=None,
+            error="event_id is required",
+            error_type="ValidationError",
+        )
+
+    # Parse times if provided
+    start_dt = parse_datetime(start_time_str) if start_time_str else None
+    end_dt = parse_datetime(end_time_str) if end_time_str else None
+
+    # Get user's calendar connections
+    connections = await get_user_calendar_connections(context.user_id, context.db_session)
+    connected = [c for c in connections if c["status"] == "connected"]
+
+    if not connected:
+        return ToolResult(
+            success=False,
+            data={"needs_connection": True},
+            needs_connection=True,
+            message="You don't have any calendars connected.",
+        )
+
+    # Find the connection for the specified provider
+    target_connection = next((c for c in connected if c["provider"] == calendar_provider), None)
+    if not target_connection:
+        return ToolResult(
+            success=False,
+            data=None,
+            error=f"No connected {calendar_provider} calendar found",
+        )
+
+    try:
+        if calendar_provider == "google":
+            result = await _update_google_event(
+                context.user_id,
+                target_connection,
+                event_id,
+                title,
+                start_dt,
+                end_dt,
+                description,
+                location,
+                context.db_session,
+            )
+        else:
+            return ToolResult(
+                success=False,
+                data=None,
+                error=f"Update not yet supported for {calendar_provider}",
+                error_type="UnsupportedProvider",
+            )
+
+        return ToolResult(
+            success=True,
+            data=result,
+            message="Updated event successfully.",
+        )
+
+    except Exception as e:
+        logger.exception(f"Error updating calendar event: {e}")
+        return ToolResult(
+            success=False,
+            data=None,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+
+
+async def _update_google_event(
+    user_id: str,
+    connection: Dict[str, Any],
+    event_id: str,
+    title: Optional[str],
+    start: Optional[datetime],
+    end: Optional[datetime],
+    description: Optional[str],
+    location: Optional[str],
+    db_session: Optional[AsyncSession],
+) -> Dict[str, Any]:
+    """Update event via Google Calendar API."""
+    from app.services.tools.oauth_service import oauth_service
+    from google.oauth2.credentials import Credentials
+    from googleapiclient.discovery import build
+
+    tokens = await oauth_service.get_decrypted_tokens(connection["id"], db_session)
+    if not tokens:
+        raise ValueError("No valid tokens found for Google Calendar")
+
+    creds = Credentials(
+        token=tokens["access_token"],
+        refresh_token=tokens.get("refresh_token"),
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=oauth_service.get_client_id("google"),
+        client_secret=oauth_service.get_client_secret("google"),
+    )
+
+    service = build("calendar", "v3", credentials=creds)
+
+    # Get user's timezone
+    try:
+        calendar_settings = service.settings().get(setting="timezone").execute()
+        user_timezone = calendar_settings.get("value", "America/New_York")
+    except Exception:
+        user_timezone = "America/New_York"
+
+    # Get the existing event first
+    existing_event = service.events().get(calendarId="primary", eventId=event_id).execute()
+
+    # Update only the fields that were provided
+    if title:
+        existing_event["summary"] = title
+    if description is not None:
+        existing_event["description"] = description
+    if location is not None:
+        existing_event["location"] = location
+    if start:
+        start_iso = start.strftime("%Y-%m-%dT%H:%M:%S")
+        existing_event["start"] = {"dateTime": start_iso, "timeZone": user_timezone}
+    if end:
+        end_iso = end.strftime("%Y-%m-%dT%H:%M:%S")
+        existing_event["end"] = {"dateTime": end_iso, "timeZone": user_timezone}
+
+    logger.info(f"[Google Calendar] Updating event {event_id}")
+
+    updated_event = service.events().update(calendarId="primary", eventId=event_id, body=existing_event).execute()
+
+    logger.info(f"[Google Calendar] Event updated: id={updated_event['id']}")
+
+    return {"event_id": updated_event["id"], "html_link": updated_event.get("htmlLink")}
+
+
+# ==============================================================================
+# Delete Event Handler
+# ==============================================================================
+
+
+async def handle_delete_event(arguments: Dict[str, Any], context: ToolExecutionContext) -> ToolResult:
+    """
+    Delete a calendar event.
+    """
+    event_id = arguments.get("event_id")
+    calendar_provider = arguments.get("calendar_provider", "google")
+
+    if not event_id:
+        return ToolResult(
+            success=False,
+            data=None,
+            error="event_id is required",
+            error_type="ValidationError",
+        )
+
+    # Get user's calendar connections
+    connections = await get_user_calendar_connections(context.user_id, context.db_session)
+    connected = [c for c in connections if c["status"] == "connected"]
+
+    if not connected:
+        return ToolResult(
+            success=False,
+            data={"needs_connection": True},
+            needs_connection=True,
+            message="You don't have any calendars connected.",
+        )
+
+    # Find the connection for the specified provider
+    target_connection = next((c for c in connected if c["provider"] == calendar_provider), None)
+    if not target_connection:
+        return ToolResult(
+            success=False,
+            data=None,
+            error=f"No connected {calendar_provider} calendar found",
+        )
+
+    try:
+        if calendar_provider == "google":
+            await _delete_google_event(
+                context.user_id,
+                target_connection,
+                event_id,
+                context.db_session,
+            )
+        else:
+            return ToolResult(
+                success=False,
+                data=None,
+                error=f"Delete not yet supported for {calendar_provider}",
+                error_type="UnsupportedProvider",
+            )
+
+        return ToolResult(
+            success=True,
+            data={"deleted_event_id": event_id},
+            message="Event deleted successfully.",
+        )
+
+    except Exception as e:
+        logger.exception(f"Error deleting calendar event: {e}")
+        return ToolResult(
+            success=False,
+            data=None,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+
+
+async def _delete_google_event(
+    user_id: str,
+    connection: Dict[str, Any],
+    event_id: str,
+    db_session: Optional[AsyncSession],
+) -> None:
+    """Delete event via Google Calendar API."""
+    from app.services.tools.oauth_service import oauth_service
+    from google.oauth2.credentials import Credentials
+    from googleapiclient.discovery import build
+
+    tokens = await oauth_service.get_decrypted_tokens(connection["id"], db_session)
+    if not tokens:
+        raise ValueError("No valid tokens found for Google Calendar")
+
+    creds = Credentials(
+        token=tokens["access_token"],
+        refresh_token=tokens.get("refresh_token"),
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=oauth_service.get_client_id("google"),
+        client_secret=oauth_service.get_client_secret("google"),
+    )
+
+    service = build("calendar", "v3", credentials=creds)
+
+    logger.info(f"[Google Calendar] Deleting event {event_id}")
+
+    service.events().delete(calendarId="primary", eventId=event_id).execute()
+
+    logger.info(f"[Google Calendar] Event deleted: {event_id}")

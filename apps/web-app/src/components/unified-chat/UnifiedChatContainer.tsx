@@ -33,7 +33,9 @@ import { UnifiedInputArea } from "./UnifiedInputArea";
 import { CollapsibleSidebar } from "./CollapsibleSidebar";
 import { CollapsibleContextPane } from "./CollapsibleContextPane";
 import { UnifiedHeader } from "./UnifiedHeader";
+import { ThinkerTalkerVoicePanel } from "../voice/ThinkerTalkerVoicePanel";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
+import type { TTVoiceMetrics } from "../../hooks/useThinkerTalkerSession";
 
 // Lazy-loaded dialogs for better initial load performance
 const KeyboardShortcutsDialog = lazy(() =>
@@ -93,6 +95,15 @@ export function UnifiedChatContainer({
   // Use props conversationId if provided, otherwise fall back to URL params
   const conversationId = propsConversationId || paramsConversationId;
 
+  // Debug logging
+  console.log("[UnifiedChatContainer] Render:", {
+    propsConversationId,
+    paramsConversationId,
+    conversationId,
+    startInVoiceMode,
+    pathname: location.pathname,
+  });
+
   // Check if we should start in voice mode (props take precedence)
   const searchParams = new URLSearchParams(location.search);
   const startVoiceMode =
@@ -138,6 +149,7 @@ export function UnifiedChatContainer({
   const [isShortcutsDialogOpen, setIsShortcutsDialogOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(startVoiceMode);
 
   // Pagination state
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
@@ -195,14 +207,9 @@ export function UnifiedChatContainer({
     onToggleCitations: () => setIsContextPaneOpen((prev) => !prev),
     onToggleClinicalContext: () => setIsContextPaneOpen((prev) => !prev),
     onShowShortcuts: () => setIsShortcutsDialogOpen(true),
-    onToggleVoicePanel: () => {
-      // Toggle voice mode
-      if (voiceModeActive) {
-        useUnifiedConversationStore.getState().deactivateVoiceMode();
-      } else {
-        useUnifiedConversationStore.getState().activateVoiceMode();
-      }
-    },
+    onToggleVoicePanel: () => setIsVoicePanelOpen((prev) => !prev),
+    onCloseVoicePanel: () => setIsVoicePanelOpen(false),
+    isVoicePanelOpen,
   });
 
   // -------------------------------------------------------------------------
@@ -507,6 +514,71 @@ export function UnifiedChatContainer({
   ]);
 
   // -------------------------------------------------------------------------
+  // Voice Mode Handlers
+  // -------------------------------------------------------------------------
+
+  // Handle voice user message - add transcribed speech to chat timeline
+  const handleVoiceUserMessage = useCallback(
+    (content: string) => {
+      if (!content.trim()) return;
+
+      // Auto-title conversation if this is the first message
+      autoTitleConversation(content);
+
+      // Add to unified store with voice source
+      addMessage({
+        role: "user",
+        content,
+        source: "voice" as MessageSource,
+      });
+
+      // Send via WebSocket for conversation history
+      sendChatMessage(content);
+    },
+    [addMessage, sendChatMessage, autoTitleConversation],
+  );
+
+  // Handle voice assistant message - add AI response to chat timeline
+  const handleVoiceAssistantMessage = useCallback(
+    (content: string) => {
+      if (!content.trim()) return;
+
+      addMessage({
+        role: "assistant",
+        content,
+        source: "voice" as MessageSource,
+      });
+    },
+    [addMessage],
+  );
+
+  // Handle voice metrics update - export to backend for observability
+  const handleVoiceMetricsUpdate = useCallback(
+    (metrics: TTVoiceMetrics) => {
+      // Send metrics to backend (non-blocking)
+      if (
+        activeConversationId &&
+        typeof navigator !== "undefined" &&
+        "sendBeacon" in navigator
+      ) {
+        const payload = JSON.stringify({
+          conversation_id: activeConversationId,
+          ...metrics,
+          timestamp: new Date().toISOString(),
+        });
+        const blob = new Blob([payload], { type: "application/json" });
+        navigator.sendBeacon("/api/voice/metrics", blob);
+      }
+    },
+    [activeConversationId],
+  );
+
+  // Handle voice panel close
+  const handleVoicePanelClose = useCallback(() => {
+    setIsVoicePanelOpen(false);
+  }, []);
+
+  // -------------------------------------------------------------------------
   // Render Helpers
   // -------------------------------------------------------------------------
 
@@ -605,11 +677,24 @@ export function UnifiedChatContainer({
             />
           </div>
 
+          {/* Voice Mode Panel - appears above input when active */}
+          {isVoicePanelOpen && (
+            <ThinkerTalkerVoicePanel
+              conversationId={activeConversationId || undefined}
+              onClose={handleVoicePanelClose}
+              onUserMessage={handleVoiceUserMessage}
+              onAssistantMessage={handleVoiceAssistantMessage}
+              onMetricsUpdate={handleVoiceMetricsUpdate}
+            />
+          )}
+
           {/* Unified Input Area */}
           <UnifiedInputArea
             conversationId={activeConversationId}
             onSendMessage={handleSendMessage}
             disabled={connectionStatus !== "connected"}
+            onToggleVoicePanel={() => setIsVoicePanelOpen((prev) => !prev)}
+            isVoicePanelOpen={isVoicePanelOpen}
           />
         </main>
 

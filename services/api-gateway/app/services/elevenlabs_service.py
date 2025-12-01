@@ -277,7 +277,9 @@ class ElevenLabsService:
         similarity_boost: float = 0.75,
         style: float = 0.0,
         use_speaker_boost: bool = True,
-        chunk_size: int = 1024,
+        chunk_size: int = 384,  # Low-latency default (was 1024)
+        previous_text: Optional[str] = None,  # Context for voice continuity
+        next_text: Optional[str] = None,  # Upcoming text hint
     ) -> AsyncIterator[bytes]:
         """
         Synthesize text to speech with streaming output.
@@ -294,6 +296,8 @@ class ElevenLabsService:
             style: Style exaggeration 0-1
             use_speaker_boost: Enable speaker clarity boost
             chunk_size: Size of audio chunks to yield
+            previous_text: Text spoken before this (provides voice continuity context)
+            next_text: Text that will be spoken after (helps with prosody)
 
         Yields:
             Audio data chunks as bytes
@@ -331,6 +335,15 @@ class ElevenLabsService:
                     "use_speaker_boost": use_speaker_boost,
                 },
             }
+
+            # Add context for voice continuity (ElevenLabs uses this to maintain
+            # consistent prosody and voice characteristics across chunks)
+            if previous_text:
+                # Limit previous text to last ~200 chars for efficiency
+                payload["previous_text"] = previous_text[-200:] if len(previous_text) > 200 else previous_text
+            if next_text:
+                # Limit next text to first ~100 chars
+                payload["next_text"] = next_text[:100] if len(next_text) > 100 else next_text
 
             params = {"output_format": output_format}
 

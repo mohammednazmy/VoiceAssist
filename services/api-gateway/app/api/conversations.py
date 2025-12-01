@@ -382,6 +382,51 @@ async def update_conversation(
     )
 
 
+@router.delete("/all")
+async def delete_all_conversations(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Delete ALL conversations for the current user.
+
+    This is a destructive operation that removes all conversations and their messages.
+    Used for bulk cleanup / account reset scenarios.
+
+    Args:
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        Success response with count of deleted conversations
+    """
+    # Get all user's conversations
+    user_sessions = db.query(ChatSession).filter(ChatSession.user_id == current_user.id).all()
+
+    session_ids = [s.id for s in user_sessions]
+
+    if not session_ids:
+        return success_response(data={"deleted_count": 0, "message": "No conversations to delete"})
+
+    # Delete all messages and sessions atomically
+    with transaction(db):
+        # Delete messages first (foreign key constraint)
+        deleted_messages = (
+            db.query(Message).filter(Message.session_id.in_(session_ids)).delete(synchronize_session=False)
+        )
+
+        # Delete all sessions
+        deleted_count = (
+            db.query(ChatSession).filter(ChatSession.user_id == current_user.id).delete(synchronize_session=False)
+        )
+
+    logger.info(f"Deleted {deleted_count} conversations and {deleted_messages} messages for user {current_user.id}")
+
+    return success_response(
+        data={"deleted_count": deleted_count, "message": f"Successfully deleted {deleted_count} conversation(s)"}
+    )
+
+
 @router.delete("/{conversation_id}")
 async def delete_conversation(
     conversation_id: str,

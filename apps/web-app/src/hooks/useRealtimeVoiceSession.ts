@@ -1,4 +1,10 @@
 /**
+ * @deprecated This hook uses OpenAI Realtime API which has been replaced
+ * by the Thinker/Talker pipeline for better latency and tool support.
+ *
+ * Use useThinkerTalkerSession instead.
+ *
+ * Original description:
  * useRealtimeVoiceSession Hook
  * Manages WebSocket connection to OpenAI Realtime API for voice mode
  *
@@ -245,9 +251,9 @@ export function useRealtimeVoiceSession(
   // Ref to track current status for error reporting (Sentry)
   const statusRef = useRef<ConnectionStatus>(status);
 
-  // Constants for reconnection
+  // Constants for reconnection (aggressive latency optimization)
   const MAX_RECONNECT_ATTEMPTS = 5;
-  const BASE_RECONNECT_DELAY = 1000; // 1 second
+  const BASE_RECONNECT_DELAY = 300; // 300ms (reduced from 1s for faster reconnection)
   const MAX_RECONNECT_DELAY = 30000; // 30 seconds
 
   /**

@@ -5,9 +5,9 @@ summary: "This guide explains how to use and configure Voice Mode settings in Vo
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-11-29"
 audience: ["frontend"]
-tags: ["voice", "mode", "settings", "guide"]
+tags: ["voice", "mode", "settings", "guide", "preferences", "tts"]
 category: operations
 ---
 
@@ -17,7 +17,9 @@ This guide explains how to use and configure Voice Mode settings in VoiceAssist.
 
 ## Overview
 
-Voice Mode provides real-time voice conversations with the AI assistant. Users can customize their voice experience through the settings panel, including voice selection, language preferences, and behavior options.
+Voice Mode provides real-time voice conversations with the AI assistant. Users can customize their voice experience through the settings panel, including voice selection, language preferences, TTS quality parameters, and behavior options.
+
+**Voice Mode Overhaul (2025-11-29)**: Added backend persistence for voice preferences, context-aware voice style detection, and advanced TTS quality controls.
 
 ## Accessing Settings
 
@@ -65,9 +67,37 @@ When enabled, Voice Mode will automatically open when you start a new chat or na
 
 When enabled, displays helpful tips and instructions in the Voice Mode panel. Disable if you're familiar with the interface and want a cleaner view.
 
+### Context-Aware Voice Style (New)
+
+When enabled, the AI automatically adjusts its voice tone based on the content being spoken:
+
+- **Calm**: Default for medical explanations (stable, measured pace)
+- **Urgent**: For medical warnings/emergencies (dynamic, faster)
+- **Empathetic**: For sensitive health topics (warm, slower)
+- **Instructional**: For step-by-step guidance (clear, deliberate)
+- **Conversational**: For general chat (natural, varied)
+
+The system detects keywords and patterns to select the appropriate style, then blends it with your base preferences (60% your settings, 40% style preset).
+
+### Advanced Voice Quality (New)
+
+Expand this section to fine-tune TTS output parameters:
+
+- **Voice Stability (0-100%)**: Lower = more expressive/varied, Higher = more consistent
+- **Voice Clarity (0-100%)**: Higher values produce clearer, more consistent voice
+- **Expressiveness (0-100%)**: Higher values add more emotion and style variation
+
+These settings primarily affect ElevenLabs TTS but also influence context-aware style blending for OpenAI TTS.
+
 ## Persistence
 
-All voice settings are automatically saved to your browser's local storage under the key `voiceassist-voice-settings`. Settings persist across sessions and page reloads.
+Voice preferences are now stored in two locations for maximum reliability:
+
+1. **Backend API** (Primary): Settings are synced to `/api/voice/preferences` and stored in the database. This enables cross-device settings sync when logged in.
+
+2. **Local Storage** (Fallback): Settings are also cached locally under `voiceassist-voice-settings` for offline access and faster loading.
+
+Changes are debounced (1 second) before being sent to the backend to reduce API calls while editing.
 
 ## Resetting to Defaults
 
@@ -78,29 +108,67 @@ Click "Reset to defaults" in the settings modal to restore all settings to their
 - VAD Sensitivity: 50%
 - Auto-start: Disabled
 - Show hints: Enabled
+- Context-aware style: Enabled
+- Stability: 50%
+- Clarity: 75%
+- Expressiveness: 0%
+
+Reset also syncs to the backend via `POST /api/voice/preferences/reset`.
+
+## Voice Preferences API (New)
+
+The following API endpoints manage voice preferences:
+
+| Endpoint                       | Method | Description                         |
+| ------------------------------ | ------ | ----------------------------------- |
+| `/api/voice/preferences`       | GET    | Get user's voice preferences        |
+| `/api/voice/preferences`       | PUT    | Update preferences (partial update) |
+| `/api/voice/preferences/reset` | POST   | Reset to defaults                   |
+| `/api/voice/style-presets`     | GET    | Get available style presets         |
+
+### Response Headers
+
+TTS synthesis requests now include additional headers:
+
+- `X-TTS-Provider`: Which provider was used (`openai` or `elevenlabs`)
+- `X-TTS-Fallback`: Whether fallback was used (`true`/`false`)
+- `X-TTS-Style`: Detected style if context-aware is enabled
 
 ## Technical Details
 
 ### Store Location
 
-Settings are managed by a Zustand store:
+Settings are managed by a Zustand store with persistence:
 
 ```
 apps/web-app/src/stores/voiceSettingsStore.ts
 ```
 
-### Component Location
+### Component Locations
 
-The settings UI component:
+- Settings UI: `apps/web-app/src/components/voice/VoiceModeSettings.tsx`
+- Enhanced Settings: `apps/web-app/src/components/voice/VoiceSettingsEnhanced.tsx`
+
+### Backend Files (New)
+
+- Model: `services/api-gateway/app/models/user_voice_preferences.py`
+- Style Detector: `services/api-gateway/app/services/voice_style_detector.py`
+- API Endpoints: `services/api-gateway/app/api/voice.py` (preferences section)
+- Schemas: `services/api-gateway/app/api/voice_schemas/schemas.py`
+
+### Frontend Sync Hook (New)
 
 ```
-apps/web-app/src/components/voice/VoiceModeSettings.tsx
+apps/web-app/src/hooks/useVoicePreferencesSync.ts
 ```
+
+Handles loading/saving preferences to backend with debouncing.
 
 ### Integration Points
 
 - `VoiceModePanel.tsx` - Displays settings button and uses store values
 - `MessageInput.tsx` - Reads `autoStartOnOpen` for auto-open behavior
+- `useVoicePreferencesSync.ts` - Backend sync on auth and setting changes
 
 ### Advanced: Voice Mode Pipeline
 

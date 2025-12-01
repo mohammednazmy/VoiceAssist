@@ -36,6 +36,10 @@ interface UnifiedInputAreaProps {
   conversationId: string | null;
   onSendMessage: (content: string, source: MessageSource) => void;
   disabled?: boolean;
+  /** Callback to toggle voice panel visibility */
+  onToggleVoicePanel?: () => void;
+  /** Whether the voice panel is currently open */
+  isVoicePanelOpen?: boolean;
 }
 
 type InputMode = "text" | "voice";
@@ -48,6 +52,8 @@ export function UnifiedInputArea({
   conversationId,
   onSendMessage,
   disabled = false,
+  onToggleVoicePanel,
+  isVoicePanelOpen = false,
 }: UnifiedInputAreaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [textContent, setTextContent] = useState("");
@@ -77,7 +83,7 @@ export function UnifiedInputArea({
   // Voice mode state machine
   const {
     voiceState: machineVoiceState,
-    isActive: isVoiceActive,
+    isActive: _machineIsActive, // eslint-disable-line @typescript-eslint/no-unused-vars
     isListening: machineIsListening,
     isProcessing,
     isResponding,
@@ -179,6 +185,13 @@ export function UnifiedInputArea({
   // -------------------------------------------------------------------------
 
   const handleModeToggle = useCallback(async () => {
+    // If external voice panel control is provided, use it
+    if (onToggleVoicePanel) {
+      onToggleVoicePanel();
+      return;
+    }
+
+    // Otherwise use internal voice mode
     if (voiceModeActive) {
       deactivateVoice();
       deactivateVoiceMode();
@@ -196,6 +209,7 @@ export function UnifiedInputArea({
     activateVoiceMode,
     deactivateVoiceMode,
     setInputMode,
+    onToggleVoicePanel,
   ]);
 
   const handleVoiceModeTypeToggle = useCallback(() => {
@@ -224,8 +238,16 @@ export function UnifiedInputArea({
   // Render Helpers
   // -------------------------------------------------------------------------
 
+  // Check if voice is active (either external panel or internal mode)
+  const isVoiceActive = isVoicePanelOpen || voiceModeActive;
+
   const getModeToggleIcon = () => {
-    if (voiceModeActive) {
+    if (isVoiceActive) {
+      // When using external voice panel, just show mic icon
+      if (isVoicePanelOpen) {
+        return <Mic className="w-5 h-5" />;
+      }
+      // Internal voice mode - show state-based icon
       switch (voiceState) {
         case "listening":
           return <Mic className="w-5 h-5 animate-pulse" />;
@@ -239,11 +261,16 @@ export function UnifiedInputArea({
           return <Mic className="w-5 h-5" />;
       }
     }
-    return <Keyboard className="w-5 h-5" />;
+    return <Mic className="w-5 h-5" />;
   };
 
   const getModeToggleLabel = () => {
-    if (voiceModeActive) {
+    if (isVoiceActive) {
+      // When using external voice panel, just show "Voice"
+      if (isVoicePanelOpen) {
+        return "Voice";
+      }
+      // Internal voice mode - show state-based label
       switch (voiceState) {
         case "connecting":
           return "Connecting...";
@@ -259,13 +286,19 @@ export function UnifiedInputArea({
           return "Voice";
       }
     }
-    return "Text";
+    return "Voice";
   };
 
   const getModeToggleColor = () => {
-    if (!voiceModeActive)
+    if (!isVoiceActive)
       return "bg-neutral-100 text-neutral-600 hover:bg-neutral-200";
 
+    // When using external voice panel, show active color
+    if (isVoicePanelOpen) {
+      return "bg-primary-100 text-primary-700 hover:bg-primary-200";
+    }
+
+    // Internal voice mode - show state-based color
     switch (voiceState) {
       case "listening":
         return "bg-primary-500 text-white";
@@ -293,13 +326,11 @@ export function UnifiedInputArea({
           onClick={handleModeToggle}
           disabled={disabled}
           className={`flex items-center gap-2 px-3 py-2.5 rounded-lg font-medium transition-colors ${getModeToggleColor()}`}
-          aria-label={
-            voiceModeActive ? "Switch to text mode" : "Switch to voice mode"
-          }
+          aria-label={isVoiceActive ? "Close voice mode" : "Open voice mode"}
           title={
-            voiceModeActive
-              ? "Click to switch to text mode"
-              : "Click to switch to voice mode"
+            isVoiceActive
+              ? "Click to close voice mode"
+              : "Click to open voice mode"
           }
         >
           {getModeToggleIcon()}
@@ -310,7 +341,8 @@ export function UnifiedInputArea({
 
         {/* Dynamic Input Area */}
         <div className="flex-1 min-w-0">
-          {voiceModeActive ? (
+          {/* When using external voice panel, show text input. Otherwise show internal voice UI */}
+          {voiceModeActive && !isVoicePanelOpen ? (
             <VoiceInputArea
               voiceState={machineVoiceState || voiceState}
               voiceModeType={settingsVoiceModeType}

@@ -214,3 +214,60 @@ class VoiceAuthStatusResponse(BaseModel):
     status: str
     sample_count: int | None = None
     created_at: float | None = None
+
+
+# =============================================================================
+# Voice Preferences Schemas
+# =============================================================================
+
+
+class VoicePreferencesRequest(BaseModel):
+    """Request model for updating voice preferences."""
+
+    tts_provider: str | None = None  # "openai" | "elevenlabs"
+    openai_voice_id: str | None = None  # "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"
+    elevenlabs_voice_id: str | None = None  # Custom ElevenLabs voice ID
+    speech_rate: float | None = None  # 0.5-2.0
+    stability: float | None = None  # 0-1 (ElevenLabs)
+    similarity_boost: float | None = None  # 0-1 (ElevenLabs)
+    style: float | None = None  # 0-1 (ElevenLabs)
+    speaker_boost: bool | None = None  # ElevenLabs clarity enhancement
+    auto_play: bool | None = None  # Auto-play TTS responses
+    context_aware_style: bool | None = None  # Auto-adjust based on content
+    preferred_language: str | None = None  # "en", "ar", etc.
+
+
+class VoicePreferencesResponse(BaseModel):
+    """Response model for voice preferences."""
+
+    id: str
+    user_id: str
+    tts_provider: str
+    openai_voice_id: str
+    elevenlabs_voice_id: str | None
+    speech_rate: float
+    stability: float
+    similarity_boost: float
+    style: float
+    speaker_boost: bool
+    auto_play: bool
+    context_aware_style: bool
+    preferred_language: str
+    created_at: str | None
+    updated_at: str | None
+
+
+class VoiceStylePresetResponse(BaseModel):
+    """Response model for a voice style preset."""
+
+    context: str  # "calm" | "urgent" | "empathetic" | "instructional" | "conversational"
+    stability: float
+    similarity_boost: float
+    style: float
+    speech_rate: float
+
+
+class VoiceStylePresetsListResponse(BaseModel):
+    """Response model for listing all voice style presets."""
+
+    presets: dict[str, VoiceStylePresetResponse]

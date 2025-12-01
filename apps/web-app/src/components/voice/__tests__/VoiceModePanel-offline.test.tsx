@@ -83,9 +83,7 @@ vi.mock("../../utils/waveform", () => ({
 
 import { VoiceModePanel } from "../VoiceModePanel";
 
-// TODO: Fix mocking for VoiceModePanel tests - requires comprehensive mocking of
-// all dependent hooks. Tests are skipped due to complex dependencies causing timeouts
-describe.skip("VoiceModePanel - Offline Mode (Online State)", () => {
+describe("VoiceModePanel - Offline Mode (Online State)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -101,7 +99,6 @@ describe.skip("VoiceModePanel - Offline Mode (Online State)", () => {
       render(<VoiceModePanel conversationId="test-123" />);
 
       expect(screen.getByText("Voice Mode")).toBeInTheDocument();
-      expect(screen.getByText("(Beta)")).toBeInTheDocument();
     });
 
     it("should not show offline mode indicator when online", () => {
@@ -168,7 +165,7 @@ describe.skip("VoiceModePanel - Offline Mode (Online State)", () => {
 });
 
 // Separate test file for offline state using a different mock setup
-describe.skip("VoiceModePanel - formatDuration helper", () => {
+describe("VoiceModePanel - formatDuration helper", () => {
   it("should format duration correctly (integration test)", () => {
     // The formatDuration function formats seconds as MM:SS
     // This is tested implicitly through the component's rendering

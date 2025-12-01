@@ -420,9 +420,6 @@ class LLMClient:
                     req.trace_id,
                 )
 
-                # Record success with circuit breaker
-                openai_breaker.success()
-
                 return LLMResponse(
                     text=text,
                     model_name=model_name,
@@ -438,8 +435,6 @@ class LLMClient:
 
             except asyncio.TimeoutError as exc:
                 last_error = exc
-                # Record failure with circuit breaker
-                openai_breaker.fail()
                 logger.error(
                     "Cloud model call timed out (attempt %d) model=%s trace_id=%s",
                     attempt,
@@ -448,8 +443,6 @@ class LLMClient:
                 )
             except Exception as e:
                 last_error = e
-                # Record failure with circuit breaker
-                openai_breaker.fail()
                 latency_ms = (time.time() - start_time) * 1000
                 logger.error(
                     "Cloud model call failed (attempt %d): model=%s error=%s latency=%.2fms trace_id=%s",
@@ -474,7 +467,7 @@ class LLMClient:
         Stream a response from the cloud model and invoke a callback per text delta.
 
         Args:
-            req: LLMRequest with prompt and config
+            req: LLMRequest with prompt or messages and config
             on_chunk: Optional callback to receive partial text chunks
 
         Returns:
@@ -493,10 +486,16 @@ class LLMClient:
             )
             raise RuntimeError("OpenAI API key not configured. Cannot call cloud model.")
 
-        if not req.prompt or not req.prompt.strip():
-            raise ValueError("Prompt cannot be empty")
+        # Validate that we have either prompt or messages
+        has_prompt = req.prompt and req.prompt.strip()
+        has_messages = req.messages and len(req.messages) > 0
 
-        req.prompt = " ".join(req.prompt.split())
+        if not has_prompt and not has_messages:
+            raise ValueError("Prompt or messages cannot be empty")
+
+        if has_prompt:
+            req.prompt = " ".join(req.prompt.split())
+
         max_allowed_tokens = 2048 if family == "local" else 4096
         if req.max_tokens > max_allowed_tokens:
             req.max_tokens = max_allowed_tokens
@@ -509,21 +508,43 @@ class LLMClient:
         start_time = time.time()
         finish_reason: str = "stop"
         usage = None
+        tool_calls_list = None
 
         try:
-            # Get system prompt with dynamic lookup (falls back to defaults)
-            system_message = await self._get_system_prompt_for_intent(req.intent)
-
-            stream = await self.openai_client.chat.completions.create(
-                model=model_name,
-                messages=[
+            # Build messages for the API call (same logic as _call_cloud)
+            if has_messages:
+                # Use provided messages (multi-turn conversation with tools)
+                messages = req.messages.copy()
+                if not messages or messages[0].get("role") != "system":
+                    system_message = await self._get_system_prompt_for_intent(req.intent)
+                    messages.insert(0, {"role": "system", "content": system_message})
+            else:
+                # Build messages from prompt (simple single-turn query)
+                system_message = await self._get_system_prompt_for_intent(req.intent)
+                messages = [
                     {"role": "system", "content": system_message},
                     {"role": "user", "content": req.prompt},
-                ],
-                temperature=req.temperature,
-                max_tokens=req.max_tokens,
-                stream=True,
-            )
+                ]
+
+            # Build API call parameters
+            api_params = {
+                "model": model_name,
+                "messages": messages,
+                "temperature": req.temperature,
+                "max_tokens": req.max_tokens,
+                "stream": True,
+            }
+
+            # Add tools if provided
+            if req.tools:
+                api_params["tools"] = req.tools
+                if req.tool_choice:
+                    api_params["tool_choice"] = req.tool_choice
+
+            stream = await self.openai_client.chat.completions.create(**api_params)
+
+            # Track tool calls accumulation (they come in chunks)
+            tool_calls_data: Dict[int, Dict] = {}  # index -> {id, name, arguments}
 
             async for chunk in stream:
                 if isinstance(chunk, ChatCompletionChunk):
@@ -536,6 +557,20 @@ class LLMClient:
                             if inspect.isawaitable(result):
                                 await result
 
+                    # Handle tool calls in streaming (they come incrementally)
+                    if hasattr(delta, "tool_calls") and delta.tool_calls:
+                        for tc in delta.tool_calls:
+                            idx = tc.index
+                            if idx not in tool_calls_data:
+                                tool_calls_data[idx] = {"id": "", "name": "", "arguments": ""}
+                            if tc.id:
+                                tool_calls_data[idx]["id"] = tc.id
+                            if tc.function:
+                                if tc.function.name:
+                                    tool_calls_data[idx]["name"] = tc.function.name
+                                if tc.function.arguments:
+                                    tool_calls_data[idx]["arguments"] += tc.function.arguments
+
                     if chunk.choices[0].finish_reason:
                         finish_reason = chunk.choices[0].finish_reason
 
@@ -545,6 +580,17 @@ class LLMClient:
 
             latency_ms = (time.time() - start_time) * 1000
             aggregated_text = "".join(full_text)
+
+            # Build tool_calls list if any were made
+            if tool_calls_data:
+                tool_calls_list = [
+                    ToolCall(
+                        id=tc_data["id"],
+                        name=tc_data["name"],
+                        arguments=tc_data["arguments"],
+                    )
+                    for tc_data in tool_calls_data.values()
+                ]
 
             input_tokens = usage.prompt_tokens if usage else 0
             output_tokens = usage.completion_tokens if usage else 0
@@ -566,6 +612,7 @@ class LLMClient:
                 cost_usd=cost_usd,
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
+                tool_calls=tool_calls_list,
             )
 
         except Exception as exc:  # noqa: BLE001

@@ -1,4 +1,10 @@
 /**
+ * @deprecated This component uses OpenAI Realtime API which has been replaced
+ * by the Thinker/Talker pipeline for better latency and tool support.
+ *
+ * Use ThinkerTalkerVoicePanel instead.
+ *
+ * Original description:
  * Voice Mode Panel
  * Integrates OpenAI Realtime API for full-duplex voice conversations
  *
@@ -33,6 +39,7 @@ import {
 } from "../../stores/voiceSettingsStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useWebRTCClient } from "../../hooks/useWebRTCClient";
+import { useStreamingAudio } from "../../hooks/useStreamingAudio";
 
 // Note: LANGUAGE_OPTIONS is defined in voiceSettingsStore but not currently used in this component
 
@@ -80,13 +87,42 @@ export function VoiceModePanel({
   const pendingAiMessageRef = useRef<string | null>(null);
 
   // Voice settings from store
-  const { voice, language, showStatusHints } = useVoiceSettingsStore();
+  const {
+    voice,
+    language,
+    showStatusHints,
+    ttsProvider,
+    elevenlabsVoiceId,
+    stability,
+    similarityBoost,
+    style,
+  } = useVoiceSettingsStore();
   const { apiClient, tokens } = useAuth();
+
+  // Initialize streaming audio hook for low-latency TTS
+  const {
+    playStream,
+    stop: stopStreamingAudio,
+    state: streamingState,
+  } = useStreamingAudio({
+    onFirstAudio: (ttfaMs) => {
+      console.log(`[VoiceModePanel] Streaming TTFA: ${ttfaMs}ms`);
+    },
+    onEnd: () => {
+      console.log("[VoiceModePanel] Streaming playback ended");
+      isProcessingResponseRef.current = false;
+    },
+    onError: (error) => {
+      console.error("[VoiceModePanel] Streaming playback error:", error);
+      isProcessingResponseRef.current = false;
+    },
+  });
 
   /**
    * Stop any currently playing audio (for barge-in)
    */
   const stopCurrentAudio = useCallback(() => {
+    // Stop standard Audio element playback
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
       currentAudioRef.current.currentTime = 0;
@@ -97,6 +133,8 @@ export function VoiceModePanel({
       currentAudioRef.current = null;
       console.log("[VoiceModePanel] Stopped current audio playback");
     }
+    // Stop streaming audio playback
+    stopStreamingAudio();
     // Clear the audio queue as well
     audioQueueRef.current = [];
     isPlayingRef.current = false;
@@ -104,7 +142,7 @@ export function VoiceModePanel({
     currentResponseIdRef.current++;
     isProcessingResponseRef.current = false;
     setIsSynthesizing(false);
-  }, []);
+  }, [stopStreamingAudio]);
 
   const {
     state: webRTCState,
@@ -293,13 +331,7 @@ export function VoiceModePanel({
         }
 
         // Stop any currently playing audio first (before incrementing response ID)
-        if (currentAudioRef.current) {
-          currentAudioRef.current.pause();
-          if (currentAudioRef.current.src.startsWith("blob:")) {
-            URL.revokeObjectURL(currentAudioRef.current.src);
-          }
-          currentAudioRef.current = null;
-        }
+        stopCurrentAudio();
 
         // Capture current response ID to check for staleness later
         const responseId = ++currentResponseIdRef.current;
@@ -311,42 +343,79 @@ export function VoiceModePanel({
 
         try {
           setIsSynthesizing(true);
-          const audioBlob = await apiClient.synthesizeSpeech(answer, voice);
 
-          // Check if this response is still current (not cancelled by barge-in)
-          if (responseId !== currentResponseIdRef.current) {
-            console.log(
-              "[VoiceModePanel] Response cancelled - skipping playback",
+          // Use streaming for ElevenLabs (lower latency), blob for OpenAI
+          const useStreaming = ttsProvider === "elevenlabs";
+          const effectiveVoice =
+            ttsProvider === "elevenlabs"
+              ? elevenlabsVoiceId || "Rachel"
+              : voice;
+
+          if (useStreaming) {
+            // Streaming playback for ElevenLabs - lower TTFA
+            console.log("[VoiceModePanel] Using streaming TTS (ElevenLabs)");
+            const response = await apiClient.synthesizeSpeechStream(answer, {
+              voiceId: effectiveVoice,
+              provider: ttsProvider,
+              stability,
+              similarityBoost,
+              style,
+              language,
+            });
+
+            // Check if this response is still current (not cancelled by barge-in)
+            if (responseId !== currentResponseIdRef.current) {
+              console.log(
+                "[VoiceModePanel] Response cancelled - skipping streaming playback",
+              );
+              return;
+            }
+
+            // Play using streaming audio hook (isProcessingResponseRef is managed by onEnd/onError callbacks)
+            await playStream(response);
+          } else {
+            // Standard blob playback for OpenAI
+            console.log("[VoiceModePanel] Using standard TTS (OpenAI HD)");
+            const audioBlob = await apiClient.synthesizeSpeech(
+              answer,
+              effectiveVoice,
             );
-            URL.revokeObjectURL(URL.createObjectURL(audioBlob));
-            return;
+
+            // Check if this response is still current (not cancelled by barge-in)
+            if (responseId !== currentResponseIdRef.current) {
+              console.log(
+                "[VoiceModePanel] Response cancelled - skipping playback",
+              );
+              URL.revokeObjectURL(URL.createObjectURL(audioBlob));
+              return;
+            }
+
+            const url = URL.createObjectURL(audioBlob);
+            const audio = new Audio(url);
+            currentAudioRef.current = audio;
+
+            // Clean up when audio ends
+            audio.onended = () => {
+              if (currentAudioRef.current === audio) {
+                currentAudioRef.current = null;
+                isProcessingResponseRef.current = false;
+              }
+              URL.revokeObjectURL(url);
+            };
+
+            audio.onerror = () => {
+              if (currentAudioRef.current === audio) {
+                currentAudioRef.current = null;
+                isProcessingResponseRef.current = false;
+              }
+              URL.revokeObjectURL(url);
+            };
+
+            await audio.play().catch((err) => {
+              console.error("[VoiceModePanel] Audio play failed:", err);
+              isProcessingResponseRef.current = false;
+            });
           }
-
-          const url = URL.createObjectURL(audioBlob);
-          const audio = new Audio(url);
-          currentAudioRef.current = audio;
-
-          // Clean up when audio ends
-          audio.onended = () => {
-            if (currentAudioRef.current === audio) {
-              currentAudioRef.current = null;
-              isProcessingResponseRef.current = false;
-            }
-            URL.revokeObjectURL(url);
-          };
-
-          audio.onerror = () => {
-            if (currentAudioRef.current === audio) {
-              currentAudioRef.current = null;
-              isProcessingResponseRef.current = false;
-            }
-            URL.revokeObjectURL(url);
-          };
-
-          await audio.play().catch((err) => {
-            console.error("[VoiceModePanel] Audio play failed:", err);
-            isProcessingResponseRef.current = false;
-          });
         } catch (err) {
           console.error("[VoiceModePanel] Failed to synthesize speech", err);
           isProcessingResponseRef.current = false;

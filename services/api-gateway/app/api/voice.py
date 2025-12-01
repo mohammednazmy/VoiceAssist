@@ -5,11 +5,13 @@ Handles audio transcription, speech synthesis, and Realtime API sessions
 Providers:
 - OpenAI Whisper/TTS (default)
 - OpenAI Realtime API (WebSocket-based voice mode)
-- Stubs for future providers (Azure/GCP/ElevenLabs) using config
+- Thinker/Talker Pipeline (Deepgram + GPT-4o + ElevenLabs)
+- Stubs for future providers (Azure/GCP) using config
 
 Note: Pydantic schemas are now defined in app/api/voice/schemas.py
 """
 
+import asyncio
 import time
 import uuid
 
@@ -30,8 +32,11 @@ from app.api.voice_schemas.schemas import (
     VoiceListResponse,
     VoiceMetricsPayload,
     VoiceMetricsResponse,
+    VoicePreferencesRequest,
+    VoicePreferencesResponse,
     VoiceRelayRequest,
     VoiceRelayResponse,
+    VoiceStylePresetsListResponse,
 )
 from app.core.config import settings
 from app.core.database import get_db
@@ -60,12 +65,16 @@ from app.core.slo import check_slo_violations, log_slo_violations
 from app.models.message import Message
 from app.models.session import Session as ChatSession
 from app.models.user import User
+from app.models.user_voice_preferences import UserVoicePreferences
 from app.services.elevenlabs_service import elevenlabs_service
 from app.services.rag_service import QueryOrchestrator, QueryRequest
 from app.services.realtime_voice_service import adaptive_vad_manager, realtime_voice_service
+from app.services.thinker_talker_websocket_handler import TTSessionConfig, thinker_talker_session_manager
 from app.services.voice_authentication import voice_auth_service
+from app.services.voice_pipeline_service import voice_pipeline_service
+from app.services.voice_style_detector import voice_style_detector
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect, status
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from sqlalchemy.orm import Session
 
 logger = get_logger(__name__)
@@ -193,34 +202,89 @@ async def transcribe_audio(
 async def synthesize_speech(
     request: SynthesizeRequest,
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     Synthesize speech from text using OpenAI or ElevenLabs TTS.
 
     Phase 11: Added provider selection with automatic fallback.
-    - provider: "openai" | "elevenlabs" | None (uses admin-configured default)
+    Voice Mode Overhaul: Added user preferences and context-aware style detection.
+    - provider: "openai" | "elevenlabs" | None (uses user preference or admin default)
     - Automatic fallback to OpenAI if ElevenLabs fails
+    - Context-aware style detection adjusts TTS parameters based on content
     - X-TTS-Provider response header indicates which provider was used
+    - X-TTS-Style response header indicates detected style (if context-aware enabled)
 
     Args:
         request: SynthesizeRequest with text, voiceId, and optional provider settings
         current_user: Authenticated user
+        db: Database session
 
     Returns:
-        Audio file (mp3 format) with X-TTS-Provider header
+        Audio file (mp3 format) with X-TTS-Provider and X-TTS-Style headers
     """
+    # Load user's voice preferences
+    user_prefs = db.query(UserVoicePreferences).filter(UserVoicePreferences.user_id == current_user.id).first()
+
+    # Use defaults if no preferences exist
+    if not user_prefs:
+        user_prefs = UserVoicePreferences.get_default_preferences(current_user.id)
+
+    # Determine effective settings: request > user_prefs > system defaults
+    effective_provider = request.provider or user_prefs.tts_provider or settings.TTS_PROVIDER or "openai"
+    effective_voice = (
+        request.voiceId
+        or (user_prefs.elevenlabs_voice_id if effective_provider == "elevenlabs" else user_prefs.openai_voice_id)
+        or settings.TTS_VOICE
+        or "alloy"
+    )
+    effective_stability = request.stability if request.stability is not None else user_prefs.stability
+    effective_similarity = (
+        request.similarity_boost if request.similarity_boost is not None else user_prefs.similarity_boost
+    )
+    effective_style = request.style if request.style is not None else user_prefs.style
+    effective_speech_rate = user_prefs.speech_rate
+
+    # Apply context-aware style detection if enabled
+    detected_style = None
+    if user_prefs.context_aware_style:
+        style_params = voice_style_detector.apply_style_to_synthesis(
+            text=request.text,
+            base_stability=effective_stability,
+            base_similarity_boost=effective_similarity,
+            base_style=effective_style,
+            base_speech_rate=effective_speech_rate,
+            auto_detect=True,
+        )
+        effective_stability = style_params["stability"]
+        effective_similarity = style_params["similarity_boost"]
+        effective_style = style_params["style"]
+        effective_speech_rate = style_params["speech_rate"]
+        detected_style = style_params["detected_style"]
+
+        logger.debug(
+            f"Applied context-aware style: {detected_style}",
+            extra={
+                "user_id": current_user.id,
+                "detected_style": detected_style,
+                "stability": effective_stability,
+                "speech_rate": effective_speech_rate,
+            },
+        )
+
     logger.info(
         f"Synthesizing speech for user {current_user.id}",
         extra={
             "user_id": current_user.id,
             "text_length": len(request.text),
-            "voice_id": request.voiceId,
-            "provider": request.provider,
+            "voice_id": effective_voice,
+            "provider": effective_provider,
+            "detected_style": detected_style,
         },
     )
 
     # Validate text length
-    max_length = 5000 if request.provider == "elevenlabs" else 4096
+    max_length = 5000 if effective_provider == "elevenlabs" else 4096
     if len(request.text) > max_length:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -233,9 +297,7 @@ async def synthesize_speech(
             detail="Text cannot be empty",
         )
 
-    # Determine provider: request > settings > default
-    provider = request.provider or settings.TTS_PROVIDER or "openai"
-    used_provider = provider  # Track actual provider used (may change on fallback)
+    used_provider = effective_provider
     fallback_used = False
 
     async def synthesize_with_openai() -> tuple[bytes, str]:
@@ -243,8 +305,6 @@ async def synthesize_speech(
         openai_api_key = settings.OPENAI_API_KEY
         if not openai_api_key:
             raise ValueError("OpenAI API key not configured")
-
-        voice = request.voiceId or settings.TTS_VOICE or "alloy"
 
         async with httpx.AsyncClient(timeout=settings.OPENAI_TIMEOUT_SEC) as client:
             external_api_requests_total.labels(service="openai", endpoint="audio/speech", status_code="pending").inc()
@@ -256,10 +316,11 @@ async def synthesize_speech(
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": "tts-1",
+                    "model": "tts-1-hd",  # HD model for higher quality voice
                     "input": request.text,
-                    "voice": voice,
+                    "voice": effective_voice,
                     "response_format": "mp3",
+                    "speed": effective_speech_rate,
                 },
             )
 
@@ -285,11 +346,11 @@ async def synthesize_speech(
 
         result = await elevenlabs_service.synthesize(
             text=request.text,
-            voice_id=request.voiceId,
+            voice_id=effective_voice,
             model_id=request.model_id,
-            stability=request.stability if request.stability is not None else 0.5,
-            similarity_boost=request.similarity_boost if request.similarity_boost is not None else 0.75,
-            style=request.style if request.style is not None else 0.0,
+            stability=effective_stability,
+            similarity_boost=effective_similarity,
+            style=effective_style,
         )
 
         latency = time.monotonic() - tts_start
@@ -302,7 +363,7 @@ async def synthesize_speech(
         audio_content: bytes
         content_type: str
 
-        if provider == "elevenlabs":
+        if effective_provider == "elevenlabs":
             try:
                 audio_content, content_type = await synthesize_with_elevenlabs()
                 used_provider = "elevenlabs"
@@ -325,27 +386,32 @@ async def synthesize_speech(
             extra={
                 "user_id": current_user.id,
                 "audio_size": len(audio_content),
-                "voice": request.voiceId,
+                "voice": effective_voice,
                 "provider": used_provider,
                 "fallback_used": fallback_used,
+                "detected_style": detected_style,
             },
         )
 
-        # Return raw audio with provider header
+        # Build response headers
+        headers = {
+            "Content-Disposition": "attachment; filename=speech.mp3",
+            "X-TTS-Provider": used_provider,
+            "X-TTS-Fallback": "true" if fallback_used else "false",
+        }
+        if detected_style:
+            headers["X-TTS-Style"] = detected_style
+
         return Response(
             content=audio_content,
             media_type=content_type,
-            headers={
-                "Content-Disposition": "attachment; filename=speech.mp3",
-                "X-TTS-Provider": used_provider,
-                "X-TTS-Fallback": "true" if fallback_used else "false",
-            },
+            headers=headers,
         )
 
     except httpx.TimeoutException:
         logger.error(
             "Speech synthesis timeout",
-            extra={"user_id": current_user.id, "provider": provider},
+            extra={"user_id": current_user.id, "provider": effective_provider},
         )
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
@@ -354,7 +420,7 @@ async def synthesize_speech(
     except ValueError as e:
         logger.error(
             f"Speech synthesis error: {str(e)}",
-            extra={"user_id": current_user.id, "provider": provider, "error": str(e)},
+            extra={"user_id": current_user.id, "provider": effective_provider, "error": str(e)},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -363,12 +429,135 @@ async def synthesize_speech(
     except Exception as e:
         logger.error(
             f"Speech synthesis error: {str(e)}",
-            extra={"user_id": current_user.id, "provider": provider, "error": str(e)},
+            extra={"user_id": current_user.id, "provider": effective_provider, "error": str(e)},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Speech synthesis failed: {str(e)}",
         )
+
+
+# ==============================================================================
+# Streaming TTS Endpoint (Low-Latency Audio)
+# ==============================================================================
+
+
+@router.post(
+    "/synthesize/stream",
+    summary="Stream TTS audio (low latency)",
+    description=(
+        "Stream TTS audio chunks as they're generated for immediate playback. " "Uses ElevenLabs for true streaming."
+    ),
+)
+async def synthesize_speech_stream(
+    request: SynthesizeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Stream TTS audio for low-latency playback.
+
+    Audio chunks are streamed as they become available, allowing playback
+    to start before the full synthesis completes. This can reduce time-to-first-audio
+    from ~500ms to ~100-200ms.
+
+    Note: True streaming is only available with ElevenLabs. OpenAI requests
+    will fall back to buffered response.
+    """
+    import time
+
+    start_time = time.monotonic()
+
+    # Load user preferences
+    user_prefs = db.query(UserVoicePreferences).filter(UserVoicePreferences.user_id == current_user.id).first()
+
+    # Determine effective settings
+    effective_provider = request.provider or (user_prefs.tts_provider if user_prefs else "openai")
+    effective_voice = request.voice_id or (user_prefs.elevenlabs_voice_id if user_prefs else None)
+    effective_stability = (
+        request.stability if request.stability is not None else (user_prefs.stability if user_prefs else 0.7)
+    )
+    effective_similarity = (
+        request.similarity_boost
+        if request.similarity_boost is not None
+        else (user_prefs.similarity_boost if user_prefs else 0.8)
+    )
+    effective_style = request.style if request.style is not None else (user_prefs.style if user_prefs else 0.15)
+
+    # Apply context-aware style if enabled
+    detected_style = None
+    if user_prefs and user_prefs.context_aware_style:
+        style_params = voice_style_detector.apply_style_to_synthesis(
+            text=request.text,
+            base_stability=effective_stability,
+            base_similarity_boost=effective_similarity,
+            base_style=effective_style,
+            base_speech_rate=1.0,
+            auto_detect=True,
+        )
+        effective_stability = style_params["stability"]
+        effective_similarity = style_params["similarity_boost"]
+        effective_style = style_params["style"]
+        detected_style = style_params.get("detected_style")
+
+    # Only ElevenLabs supports true streaming
+    if effective_provider == "elevenlabs" and elevenlabs_service.is_enabled():
+        try:
+
+            async def audio_generator():
+                """Generate audio chunks from ElevenLabs streaming API."""
+                ttfb_logged = False
+                async for chunk in elevenlabs_service.synthesize_stream(
+                    text=request.text,
+                    voice_id=effective_voice,
+                    model_id="eleven_turbo_v2",  # Use turbo model for lowest latency
+                    stability=effective_stability,
+                    similarity_boost=effective_similarity,
+                    style=effective_style,
+                    use_speaker_boost=True,
+                    chunk_size=1024,  # 1KB chunks for smooth streaming
+                ):
+                    if not ttfb_logged:
+                        ttfb_ms = (time.monotonic() - start_time) * 1000
+                        logger.info(
+                            f"Streaming TTS TTFB: {ttfb_ms:.0f}ms",
+                            extra={
+                                "user_id": str(current_user.id),
+                                "ttfb_ms": ttfb_ms,
+                                "provider": "elevenlabs",
+                                "streaming": True,
+                            },
+                        )
+                        ttfb_logged = True
+                    yield chunk
+
+            headers = {
+                "X-TTS-Provider": "elevenlabs",
+                "X-TTS-Streaming": "true",
+                "X-TTS-Model": "eleven_turbo_v2",
+                "Cache-Control": "no-cache",
+            }
+            if detected_style:
+                headers["X-TTS-Style"] = detected_style
+
+            return StreamingResponse(
+                audio_generator(),
+                media_type="audio/mpeg",
+                headers=headers,
+            )
+
+        except Exception as e:
+            logger.error(f"Streaming TTS error: {str(e)}", extra={"user_id": str(current_user.id)})
+            # Fall through to non-streaming fallback
+
+    # Fallback: Use non-streaming synthesize (OpenAI or ElevenLabs fallback)
+    logger.info(
+        "Streaming not available, using buffered synthesis",
+        extra={"user_id": str(current_user.id), "provider": effective_provider},
+    )
+
+    # Call the regular synthesize endpoint
+    return await synthesize_speech(request, current_user, db)
 
 
 # ==============================================================================
@@ -1270,3 +1459,424 @@ async def delete_voice_print(
     )
 
     return {"status": "deleted", "message": "Voice print deleted successfully"}
+
+
+# ==============================================================================
+# Voice Preferences Endpoints
+# ==============================================================================
+
+
+@router.get(
+    "/preferences",
+    response_model=VoicePreferencesResponse,
+    summary="Get user voice preferences",
+    description="Get the authenticated user's voice/TTS preferences",
+)
+async def get_voice_preferences(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Get the user's voice preferences.
+
+    Returns current TTS provider, voice selection, and audio parameters.
+    Creates default preferences if none exist.
+    """
+    user_id = current_user.id
+
+    # Get or create preferences
+    prefs = db.query(UserVoicePreferences).filter(UserVoicePreferences.user_id == user_id).first()
+
+    if not prefs:
+        # Create default preferences
+        prefs = UserVoicePreferences.get_default_preferences(user_id)
+        db.add(prefs)
+        db.commit()
+        db.refresh(prefs)
+
+        logger.info(
+            f"Created default voice preferences for user {user_id}",
+            extra={"user_id": str(user_id)},
+        )
+
+    return VoicePreferencesResponse(
+        id=str(prefs.id),
+        user_id=str(prefs.user_id),
+        tts_provider=prefs.tts_provider,
+        openai_voice_id=prefs.openai_voice_id,
+        elevenlabs_voice_id=prefs.elevenlabs_voice_id,
+        speech_rate=prefs.speech_rate,
+        stability=prefs.stability,
+        similarity_boost=prefs.similarity_boost,
+        style=prefs.style,
+        speaker_boost=prefs.speaker_boost,
+        auto_play=prefs.auto_play,
+        context_aware_style=prefs.context_aware_style,
+        preferred_language=prefs.preferred_language,
+        created_at=prefs.created_at.isoformat() if prefs.created_at else None,
+        updated_at=prefs.updated_at.isoformat() if prefs.updated_at else None,
+    )
+
+
+@router.put(
+    "/preferences",
+    response_model=VoicePreferencesResponse,
+    summary="Update user voice preferences",
+    description="Update the authenticated user's voice/TTS preferences",
+)
+async def update_voice_preferences(
+    request: VoicePreferencesRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Update the user's voice preferences.
+
+    Only provided fields are updated; others retain current values.
+    Creates preferences if none exist.
+    """
+    user_id = current_user.id
+
+    # Get or create preferences
+    prefs = db.query(UserVoicePreferences).filter(UserVoicePreferences.user_id == user_id).first()
+
+    if not prefs:
+        prefs = UserVoicePreferences.get_default_preferences(user_id)
+        db.add(prefs)
+        db.flush()
+
+    # Update only provided fields
+    update_fields = request.model_dump(exclude_unset=True, exclude_none=True)
+
+    # Validate speech_rate range
+    if "speech_rate" in update_fields:
+        update_fields["speech_rate"] = max(0.5, min(2.0, update_fields["speech_rate"]))
+
+    # Validate 0-1 ranges
+    for field in ["stability", "similarity_boost", "style"]:
+        if field in update_fields:
+            update_fields[field] = max(0.0, min(1.0, update_fields[field]))
+
+    # Validate tts_provider
+    if "tts_provider" in update_fields:
+        if update_fields["tts_provider"] not in ["openai", "elevenlabs"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="tts_provider must be 'openai' or 'elevenlabs'",
+            )
+
+    # Validate openai_voice_id
+    valid_openai_voices = {"alloy", "echo", "fable", "onyx", "nova", "shimmer"}
+    if "openai_voice_id" in update_fields:
+        if update_fields["openai_voice_id"] not in valid_openai_voices:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"openai_voice_id must be one of: {', '.join(valid_openai_voices)}",
+            )
+
+    # Apply updates
+    for field, value in update_fields.items():
+        setattr(prefs, field, value)
+
+    db.commit()
+    db.refresh(prefs)
+
+    logger.info(
+        f"Updated voice preferences for user {user_id}",
+        extra={
+            "user_id": str(user_id),
+            "updated_fields": list(update_fields.keys()),
+        },
+    )
+
+    return VoicePreferencesResponse(
+        id=str(prefs.id),
+        user_id=str(prefs.user_id),
+        tts_provider=prefs.tts_provider,
+        openai_voice_id=prefs.openai_voice_id,
+        elevenlabs_voice_id=prefs.elevenlabs_voice_id,
+        speech_rate=prefs.speech_rate,
+        stability=prefs.stability,
+        similarity_boost=prefs.similarity_boost,
+        style=prefs.style,
+        speaker_boost=prefs.speaker_boost,
+        auto_play=prefs.auto_play,
+        context_aware_style=prefs.context_aware_style,
+        preferred_language=prefs.preferred_language,
+        created_at=prefs.created_at.isoformat() if prefs.created_at else None,
+        updated_at=prefs.updated_at.isoformat() if prefs.updated_at else None,
+    )
+
+
+@router.post(
+    "/preferences/reset",
+    response_model=VoicePreferencesResponse,
+    summary="Reset voice preferences to defaults",
+    description="Reset the authenticated user's voice preferences to default values",
+)
+async def reset_voice_preferences(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Reset the user's voice preferences to default values.
+
+    This deletes existing preferences and creates new ones with defaults.
+    """
+    user_id = current_user.id
+
+    # Delete existing preferences
+    db.query(UserVoicePreferences).filter(UserVoicePreferences.user_id == user_id).delete()
+
+    # Create new default preferences
+    prefs = UserVoicePreferences.get_default_preferences(user_id)
+    db.add(prefs)
+    db.commit()
+    db.refresh(prefs)
+
+    logger.info(
+        f"Reset voice preferences for user {user_id}",
+        extra={"user_id": str(user_id)},
+    )
+
+    return VoicePreferencesResponse(
+        id=str(prefs.id),
+        user_id=str(prefs.user_id),
+        tts_provider=prefs.tts_provider,
+        openai_voice_id=prefs.openai_voice_id,
+        elevenlabs_voice_id=prefs.elevenlabs_voice_id,
+        speech_rate=prefs.speech_rate,
+        stability=prefs.stability,
+        similarity_boost=prefs.similarity_boost,
+        style=prefs.style,
+        speaker_boost=prefs.speaker_boost,
+        auto_play=prefs.auto_play,
+        context_aware_style=prefs.context_aware_style,
+        preferred_language=prefs.preferred_language,
+        created_at=prefs.created_at.isoformat() if prefs.created_at else None,
+        updated_at=prefs.updated_at.isoformat() if prefs.updated_at else None,
+    )
+
+
+@router.get(
+    "/style-presets",
+    response_model=VoiceStylePresetsListResponse,
+    summary="Get voice style presets",
+    description="Get all available voice style presets for context-aware TTS",
+)
+async def get_voice_style_presets(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get all available voice style presets.
+
+    These presets define TTS parameters for different content contexts:
+    - CALM: Default medical explanations
+    - URGENT: Medical warnings/emergencies
+    - EMPATHETIC: Sensitive health topics
+    - INSTRUCTIONAL: Step-by-step guidance
+    - CONVERSATIONAL: General chat
+    """
+    presets = voice_style_detector.get_all_presets()
+
+    logger.debug(
+        f"Retrieved voice style presets for user {current_user.id}",
+        extra={"user_id": str(current_user.id), "preset_count": len(presets)},
+    )
+
+    return VoiceStylePresetsListResponse(presets=presets)
+
+
+# ==============================================================================
+# Thinker/Talker Voice Pipeline WebSocket
+# ==============================================================================
+
+
+@router.websocket("/pipeline-ws")
+async def voice_pipeline_websocket(
+    websocket: WebSocket,
+    db: Session = Depends(get_db),
+):
+    """
+    Thinker/Talker voice pipeline WebSocket.
+
+    This endpoint provides a unified voice experience using:
+    - Deepgram for streaming STT
+    - GPT-4o for reasoning (with full tool/RAG support)
+    - ElevenLabs for streaming TTS
+
+    Benefits over /relay-ws:
+    - Unified conversation context with chat mode
+    - Full tool calling support in voice
+    - Better TTS quality with ElevenLabs
+    - Lower latency through streaming at all stages
+
+    Protocol (Client -> Server):
+    - audio.input: {"type": "audio.input", "audio": "<base64 PCM16>"}
+    - audio.input.complete: {"type": "audio.input.complete"}
+    - message: {"type": "message", "content": "<text>"}
+    - barge_in: {"type": "barge_in"}
+    - voice.mode: {"type": "voice.mode", "mode": "activate|deactivate"}
+
+    Protocol (Server -> Client):
+    - session.ready: Pipeline is ready
+    - transcript.delta: Partial/final transcript
+    - transcript.complete: Complete user transcript
+    - response.delta: LLM response token
+    - response.complete: Complete AI response
+    - audio.output: TTS audio chunk
+    - tool.call: Tool being called
+    - tool.result: Tool result
+    - voice.state: Pipeline state
+    - error: Error message
+
+    Query Parameters:
+    - token: JWT auth token
+    - conversation_id: Optional conversation ID
+    - voice_id: Optional ElevenLabs voice ID
+    - language: Optional language code (default: en)
+    """
+    # Get query parameters
+    token = websocket.query_params.get("token")
+    conversation_id = websocket.query_params.get("conversation_id")
+    voice_id = websocket.query_params.get("voice_id", settings.ELEVENLABS_VOICE_ID)
+    language = websocket.query_params.get("language", "en")
+
+    # Validate token
+    if not token:
+        await websocket.accept()
+        await websocket.send_json({"type": "error", "code": "auth_required", "message": "Missing token"})
+        await websocket.close(code=1008)
+        return
+
+    try:
+        payload = verify_token_func(token, token_type="access")
+        if not payload:
+            raise ValueError("Invalid or expired token")
+        user_id = payload.get("sub")
+        if not user_id:
+            raise ValueError("Invalid token: missing user ID")
+    except Exception as e:
+        await websocket.accept()
+        await websocket.send_json({"type": "error", "code": "auth_failed", "message": str(e)})
+        await websocket.close(code=1008)
+        return
+
+    # Check if pipeline is available
+    if not voice_pipeline_service.is_available():
+        await websocket.accept()
+        await websocket.send_json(
+            {
+                "type": "error",
+                "code": "pipeline_unavailable",
+                "message": "Voice pipeline not available. Check DEEPGRAM_API_KEY and ELEVENLABS_API_KEY.",
+            }
+        )
+        await websocket.close(code=1011)
+        return
+
+    # Create session config
+    session_id = str(uuid.uuid4())
+    config = TTSessionConfig(
+        user_id=user_id,
+        session_id=session_id,
+        conversation_id=conversation_id,
+        voice_id=voice_id,
+        language=language,
+        barge_in_enabled=settings.BARGE_IN_ENABLED,
+    )
+
+    # Create handler
+    try:
+        handler = await thinker_talker_session_manager.create_session(
+            websocket=websocket,
+            config=config,
+        )
+    except ValueError as e:
+        await websocket.accept()
+        await websocket.send_json({"type": "error", "code": "session_limit", "message": str(e)})
+        await websocket.close(code=1013)
+        return
+
+    # Track metrics
+    voice_sessions_total.labels(status="started").inc()
+
+    connection_start = time.monotonic()
+
+    try:
+        # Start handler
+        if not await handler.start():
+            logger.error(f"Failed to start T/T handler: {session_id}")
+            return
+
+        # Wait for handler to complete (runs until disconnect or error)
+        while handler._running:
+            await asyncio.sleep(1)
+
+    except WebSocketDisconnect:
+        logger.info(f"T/T WebSocket disconnected: {session_id}")
+    except Exception as e:
+        logger.error(f"T/T WebSocket error: {e}")
+    finally:
+        # Cleanup
+        metrics = await handler.stop()
+        await thinker_talker_session_manager.remove_session(session_id)
+
+        # Record session duration
+        duration = time.monotonic() - connection_start
+        voice_session_duration_seconds.observe(duration)
+
+        logger.info(
+            f"T/T session ended: {session_id}",
+            extra={
+                "duration_sec": duration,
+                "utterances": metrics.user_utterance_count,
+                "responses": metrics.ai_response_count,
+            },
+        )
+
+
+@router.get(
+    "/pipeline/status",
+    summary="Get voice pipeline status",
+    description="Check if the Thinker/Talker voice pipeline is available",
+)
+async def get_pipeline_status(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get the status of the Thinker/Talker voice pipeline.
+
+    Returns availability of each component:
+    - STT (Deepgram)
+    - LLM (OpenAI)
+    - TTS (ElevenLabs)
+    """
+    from app.services.streaming_stt_service import streaming_stt_service
+    from app.services.talker_service import talker_service
+
+    return {
+        "pipeline_available": voice_pipeline_service.is_available(),
+        "mode": settings.VOICE_PIPELINE_MODE,
+        "components": {
+            "stt": {
+                "streaming_available": streaming_stt_service.is_streaming_available(),
+                "fallback_available": streaming_stt_service.is_fallback_available(),
+                "primary_provider": settings.VOICE_PIPELINE_STT_PRIMARY,
+                "fallback_provider": settings.VOICE_PIPELINE_STT_FALLBACK,
+            },
+            "tts": {
+                "available": talker_service.is_enabled(),
+                "provider": settings.VOICE_PIPELINE_TTS_PROVIDER,
+                "default_voice": settings.ELEVENLABS_VOICE_ID,
+            },
+            "llm": {
+                "model": settings.VOICE_PIPELINE_LLM_MODEL,
+            },
+        },
+        "settings": {
+            "barge_in_enabled": settings.BARGE_IN_ENABLED,
+            "target_latency_ms": settings.TARGET_TOTAL_LATENCY_MS,
+        },
+        "active_sessions": thinker_talker_session_manager.get_active_session_count(),
+    }

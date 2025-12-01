@@ -5,7 +5,7 @@
  * pinned conversations, and search.
  */
 
-import { useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   PanelLeftClose,
@@ -24,6 +24,7 @@ import {
 import { useConversations } from "../../hooks/useConversations";
 import { useToastContext } from "../../contexts/ToastContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import { DeleteAllConfirmDialog } from "../sidebar/DeleteAllConfirmDialog";
 import type { Conversation } from "@voiceassist/types";
 
 // ============================================================================
@@ -58,6 +59,7 @@ export function CollapsibleSidebar({
   // Use conversations hook
   const {
     conversations,
+    allConversations,
     isLoading,
     isLoadingMore,
     error,
@@ -66,10 +68,15 @@ export function CollapsibleSidebar({
     hasMore,
     loadMore,
     deleteConversation,
+    deleteAllConversations,
     archiveConversation,
   } = useConversations({
     onError: (message, description) => toast.error(message, description),
   });
+
+  // Delete All state
+  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
   // Load pinned conversations from localStorage
   const getPinnedIds = useCallback((): Set<string> => {
@@ -160,6 +167,26 @@ export function CollapsibleSidebar({
       toast.success("Conversation archived");
     } catch {
       // Error handled by hook
+    }
+  };
+
+  // Handle delete all conversations
+  const handleDeleteAll = async () => {
+    setIsDeletingAll(true);
+    try {
+      const result = await deleteAllConversations();
+      setIsDeleteAllDialogOpen(false);
+      toast.success(
+        `Deleted ${result.deleted_count} conversation${result.deleted_count !== 1 ? "s" : ""}`,
+      );
+      // Navigate to new chat if we were viewing a conversation
+      if (conversationId) {
+        navigate("/chat");
+      }
+    } catch {
+      // Error handled by hook
+    } finally {
+      setIsDeletingAll(false);
     }
   };
 
@@ -338,27 +365,62 @@ export function CollapsibleSidebar({
           </div>
         )}
       </div>
+
+      {/* Delete All Button - Footer */}
+      {allConversations.length > 0 && (
+        <div className="px-3 py-3 border-t border-neutral-200">
+          <button
+            onClick={() => setIsDeleteAllDialogOpen(true)}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm
+                       text-red-600 hover:text-red-700 hover:bg-red-50
+                       rounded-lg transition-colors"
+            data-testid="delete-all-button"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete All Conversations
+          </button>
+        </div>
+      )}
     </nav>
+  );
+
+  // Delete All Confirmation Dialog (rendered in both mobile and desktop)
+  const deleteAllDialog = (
+    <DeleteAllConfirmDialog
+      isOpen={isDeleteAllDialogOpen}
+      conversationCount={allConversations.length}
+      onConfirm={handleDeleteAll}
+      onCancel={() => setIsDeleteAllDialogOpen(false)}
+      isDeleting={isDeletingAll}
+    />
   );
 
   // On mobile, wrap with overlay backdrop
   if (isMobile) {
     return (
-      <div className="fixed inset-0 z-40 flex">
-        {/* Backdrop */}
-        <div
-          className="absolute inset-0 bg-black/50 transition-opacity duration-200"
-          onClick={onToggle}
-          aria-hidden="true"
-        />
-        {/* Sidebar - slide in from left */}
-        <div className="relative z-50 h-full shadow-xl">{sidebarContent}</div>
-      </div>
+      <>
+        <div className="fixed inset-0 z-40 flex">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 transition-opacity duration-200"
+            onClick={onToggle}
+            aria-hidden="true"
+          />
+          {/* Sidebar - slide in from left */}
+          <div className="relative z-50 h-full shadow-xl">{sidebarContent}</div>
+        </div>
+        {deleteAllDialog}
+      </>
     );
   }
 
   // Desktop: render inline
-  return sidebarContent;
+  return (
+    <>
+      {sidebarContent}
+      {deleteAllDialog}
+    </>
+  );
 }
 
 // ============================================================================

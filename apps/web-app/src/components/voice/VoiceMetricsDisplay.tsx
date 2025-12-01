@@ -11,7 +11,22 @@
  */
 
 import { useState } from "react";
-import type { VoiceMetrics } from "../../hooks/useRealtimeVoiceSession";
+
+/**
+ * Voice session metrics interface
+ * Used by both OpenAI Realtime and Thinker/Talker pipelines
+ */
+export interface VoiceMetrics {
+  connectionTimeMs: number | null;
+  timeToFirstTranscriptMs?: number | null;
+  lastSttLatencyMs: number | null;
+  lastResponseLatencyMs: number | null;
+  sessionDurationMs?: number | null;
+  userTranscriptCount?: number;
+  aiResponseCount?: number;
+  reconnectCount?: number;
+  sessionStartedAt?: number | null;
+}
 
 export interface VoiceMetricsDisplayProps {
   metrics: VoiceMetrics;

@@ -445,6 +445,61 @@ export class VoiceAssistApiClient {
     return response.data;
   }
 
+  /**
+   * Synthesize speech with streaming audio response (low latency).
+   * Uses ElevenLabs streaming when available, falls back to standard TTS.
+   *
+   * @param text - Text to synthesize
+   * @param options - TTS options including voice settings
+   * @returns Response object with streaming body
+   */
+  async synthesizeSpeechStream(
+    text: string,
+    options?: {
+      voiceId?: string;
+      provider?: "openai" | "elevenlabs";
+      stability?: number;
+      similarityBoost?: number;
+      style?: number;
+      language?: string;
+    },
+  ): Promise<Response> {
+    // Use native fetch for streaming support (axios buffers responses)
+    const token = this.config.getAccessToken?.();
+    const url = `${this.config.baseURL}/api/voice/synthesize/stream`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        "X-Correlation-ID": this.correlationId,
+        traceparent: buildTraceparent(),
+      },
+      body: JSON.stringify({
+        text,
+        voice_id: options?.voiceId,
+        provider: options?.provider,
+        stability: options?.stability,
+        similarity_boost: options?.similarityBoost,
+        style: options?.style,
+        language: options?.language,
+      }),
+    });
+
+    if (!response.ok) {
+      // Handle 401 - trigger unauthorized handler
+      if (response.status === 401) {
+        this.config.onUnauthorized?.();
+      }
+      throw new Error(
+        `TTS streaming failed: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return response;
+  }
+
   async createRealtimeSession(request: {
     conversation_id?: string | null;
     // Optional Voice Mode settings from frontend
@@ -523,33 +578,6 @@ export class VoiceAssistApiClient {
   }
 
   /**
-   * Phase 11: Synthesize speech with provider selection
-   */
-  async synthesizeSpeech(request: {
-    text: string;
-    voiceId?: string | null;
-    provider?: string | null; // "openai" | "elevenlabs"
-    model_id?: string | null; // ElevenLabs model
-    stability?: number | null;
-    similarity_boost?: number | null;
-    style?: number | null;
-  }): Promise<{
-    audio: Blob;
-    provider: string; // From X-TTS-Provider header
-    fallbackUsed: boolean; // From X-TTS-Fallback header
-  }> {
-    const response = await this.client.post("/api/voice/synthesize", request, {
-      responseType: "blob",
-    });
-
-    return {
-      audio: response.data,
-      provider: response.headers["x-tts-provider"] || "unknown",
-      fallbackUsed: response.headers["x-tts-fallback"] === "true",
-    };
-  }
-
-  /**
    * Submit voice session metrics for observability
    * Note: For page unload scenarios, use sendBeacon directly instead
    */
@@ -591,9 +619,82 @@ export class VoiceAssistApiClient {
     return response.data;
   }
 
+  // =========================================================================
+  // Thinker/Talker Voice Pipeline (Phase: T/T Migration)
+  // =========================================================================
+
+  /**
+   * Get Thinker/Talker pipeline status and availability
+   * Returns information about STT, TTS, and LLM services
+   */
+  async getTTPipelineStatus(): Promise<{
+    available: boolean;
+    mode: string; // "thinker_talker" or "realtime_fallback"
+    services: {
+      stt: {
+        primary: string;
+        fallback: string;
+        status: "healthy" | "degraded" | "unavailable";
+      };
+      tts: {
+        provider: string;
+        status: "healthy" | "degraded" | "unavailable";
+      };
+      llm: {
+        model: string;
+        status: "healthy" | "degraded" | "unavailable";
+      };
+    };
+    latency_targets: {
+      stt_ms: number;
+      llm_first_token_ms: number;
+      tts_ttfb_ms: number;
+      total_ms: number;
+    };
+  }> {
+    const response = await this.client.get("/api/voice/pipeline/status");
+    return response.data;
+  }
+
+  /**
+   * Get WebSocket URL for Thinker/Talker voice pipeline
+   * This is the endpoint for the T/T voice WebSocket connection
+   */
+  getTTPipelineWebSocketUrl(): string {
+    const wsProtocol = this.config.baseURL.startsWith("https") ? "wss" : "ws";
+    const wsHost = this.config.baseURL.replace(/^https?:\/\//, "");
+    return `${wsProtocol}://${wsHost}/api/voice/pipeline-ws`;
+  }
+
+  /**
+   * Submit T/T pipeline metrics for observability
+   */
+  async submitTTPipelineMetrics(metrics: {
+    conversation_id?: string | null;
+    session_id?: string | null;
+    connection_time_ms?: number | null;
+    stt_latency_ms?: number | null;
+    llm_first_token_ms?: number | null;
+    tts_first_audio_ms?: number | null;
+    total_latency_ms?: number | null;
+    session_duration_ms?: number | null;
+    user_utterance_count?: number;
+    ai_response_count?: number;
+    tool_call_count?: number;
+    barge_in_count?: number;
+    reconnect_count?: number;
+    pipeline_mode?: string;
+  }): Promise<{ status: string }> {
+    const response = await this.client.post(
+      "/api/voice/pipeline/metrics",
+      metrics,
+    );
+    return response.data;
+  }
+
   async getOAuthUrl(provider: "google" | "microsoft"): Promise<string> {
     const response = await this.client.get<ApiResponse<{ url: string }>>(
-      `/auth/oauth/${provider}/authorize`,
+      `/api/auth/oauth/${provider}/authorize`,
     );
     return response.data.data!.url;
   }
@@ -603,7 +704,7 @@ export class VoiceAssistApiClient {
     code: string,
   ): Promise<AuthTokens> {
     const response = await this.client.post<TokenResponse>(
-      `/auth/oauth/${provider}/callback`,
+      `/api/auth/oauth/${provider}/callback`,
       { code },
     );
     // Convert backend response to frontend format
@@ -677,6 +778,21 @@ export class VoiceAssistApiClient {
 
   async deleteConversation(id: string): Promise<void> {
     await this.client.delete(`/api/conversations/${id}`);
+  }
+
+  /**
+   * Delete ALL conversations for the current user.
+   * This is a destructive operation - use with caution.
+   * @returns Object with deleted_count and confirmation message
+   */
+  async deleteAllConversations(): Promise<{
+    deleted_count: number;
+    message: string;
+  }> {
+    const response = await this.client.delete<
+      ApiResponse<{ deleted_count: number; message: string }>
+    >("/api/conversations/all");
+    return response.data.data!;
   }
 
   // =========================================================================

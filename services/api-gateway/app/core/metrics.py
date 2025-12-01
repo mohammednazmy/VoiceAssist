@@ -232,3 +232,34 @@ voice_slo_violations_total = _safe_counter(
         "severity",
     ],  # metric: connection/stt/response, severity: warning/critical
 )
+
+# Voice Preferences & Style Metrics
+voice_preferences_updates_total = _safe_counter(
+    "voiceassist_voice_preferences_updates_total",
+    "Total voice preferences updates",
+    ["field"],  # Which field was updated
+)
+voice_style_detection_total = _safe_counter(
+    "voiceassist_voice_style_detection_total",
+    "Total voice style detections by style type",
+    ["style"],  # calm, urgent, empathetic, instructional, conversational
+)
+voice_context_aware_adjustments_total = _safe_counter(
+    "voiceassist_voice_context_aware_adjustments_total",
+    "Total context-aware TTS parameter adjustments",
+    ["style", "provider"],  # Style applied and TTS provider used
+)
+voice_tts_provider_usage_total = _safe_counter(
+    "voiceassist_voice_tts_provider_usage_total",
+    "TTS provider usage count",
+    ["provider", "fallback"],  # Provider used and whether fallback occurred
+)
+voice_echo_suppression_total = _safe_counter(
+    "voiceassist_voice_echo_suppression_total",
+    "Total audio chunks suppressed due to echo detection",
+)
+voice_vad_trigger_latency_seconds = _safe_histogram(
+    "voiceassist_voice_vad_trigger_latency_seconds",
+    "Time from speech end to VAD trigger",
+    buckets=[0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 1.0],  # Target: 200ms
+)

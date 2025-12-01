@@ -127,6 +127,8 @@ services:
       - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
       # Calendar Integration
       - CALENDAR_ENCRYPTION_KEY=${CALENDAR_ENCRYPTION_KEY}
+      # Web Search
+      - SERPAPI_API_KEY=${SERPAPI_API_KEY}
     ports:
       - "8000:8000"
     networks:
@@ -237,8 +239,8 @@ services:
   # =============================
   web-app:
     build:
-      context: ./apps/web-app
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/web-app/Dockerfile
     container_name: voiceassist-web-app
     environment:
       - VITE_API_BASE_URL=http://frontend-gateway:8080/api
@@ -248,8 +250,8 @@ services:
 
   admin-panel:
     build:
-      context: ./apps/admin-panel
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/admin-panel/Dockerfile
     container_name: voiceassist-admin-panel
     environment:
       - VITE_API_BASE_URL=http://frontend-gateway:8080/api
@@ -259,8 +261,8 @@ services:
 
   docs-site:
     build:
-      context: ./apps/docs-site
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/docs-site/Dockerfile
     container_name: voiceassist-docs-site
     environment:
       - NODE_ENV=production

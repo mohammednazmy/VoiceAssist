@@ -53,13 +53,13 @@ class UserVADProfile:
     ) -> None:
         """Update profile from session metrics using exponential moving average."""
         if pause_durations:
-            # Use EMA with alpha=0.3 for smooth adaptation
-            alpha = 0.3
+            # Use EMA with alpha=0.5 for faster adaptation (aggressive latency optimization)
+            alpha = 0.5
             avg_pause = sum(pause_durations) / len(pause_durations)
             self.avg_pause_duration_ms = alpha * avg_pause + (1 - alpha) * self.avg_pause_duration_ms
 
         if utterance_durations:
-            alpha = 0.3
+            alpha = 0.5
             avg_utt = sum(utterance_durations) / len(utterance_durations)
             self.avg_utterance_duration_ms = alpha * avg_utt + (1 - alpha) * self.avg_utterance_duration_ms
 
@@ -77,15 +77,15 @@ class AdaptiveVADManager:
     """
     Manages user VAD profiles for adaptive turn detection.
 
-    Starts with conservative settings (500ms silence) and learns user patterns
-    over time to optimize for faster turn detection without cutting users off.
+    Starts with aggressive settings (200ms silence) for low latency and learns user
+    patterns over time. Uses EMA with alpha=0.5 for faster adaptation.
     """
 
     def __init__(self):
         self._profiles: Dict[str, UserVADProfile] = {}
         self._lock = asyncio.Lock()
-        self._default_silence_ms = 500  # Conservative default
-        self._min_silence_ms = 200  # Minimum for fast speakers
+        self._default_silence_ms = 200  # Aggressive default for low latency
+        self._min_silence_ms = 150  # Minimum for fast speakers
         self._max_silence_ms = 800  # Maximum for thoughtful speakers
 
     async def get_optimal_silence_duration(
@@ -596,9 +596,9 @@ class RealtimeVoiceService:
             adaptive_enabled=adaptive_vad,
         )
 
-        # Adaptive prefix padding (faster speakers get less padding)
-        # Range: 200ms (fast) to 400ms (slow)
-        prefix_padding_ms = 200 if optimal_silence_ms < 400 else 300
+        # Aggressive prefix padding for low latency
+        # Fixed at 150ms for all users (was 200-300ms adaptive)
+        prefix_padding_ms = 150
 
         # Determine noise suppression preference (defaults to settings or True)
         if enable_noise_suppression is None:

@@ -242,6 +242,37 @@ export function useConversations(options: UseConversationsOptions = {}) {
     [apiClient, conversations, onError],
   );
 
+  const deleteAllConversations = useCallback(async () => {
+    // Save original state for rollback
+    const originalConversations = conversations;
+    const originalTotal = totalCountRef.current;
+    const count = conversations.length;
+
+    // Optimistically clear all
+    setConversations([]);
+    totalCountRef.current = 0;
+    setHasMore(false);
+    setCurrentPage(1);
+
+    try {
+      const result = await apiClient.deleteAllConversations();
+      log.info(`Deleted ${result.deleted_count} conversations`);
+      return result;
+    } catch (err: unknown) {
+      // Rollback on error
+      setConversations(originalConversations);
+      totalCountRef.current = originalTotal;
+      setHasMore(originalConversations.length >= pageSize);
+      const errorMessage = extractErrorMessage(err);
+      setError(errorMessage);
+      onError?.(
+        "Failed to delete all conversations",
+        `Could not delete ${count} conversation(s). ${errorMessage}`,
+      );
+      throw err;
+    }
+  }, [apiClient, conversations, pageSize, onError]);
+
   const exportConversation = useCallback(
     async (id: string, format: "markdown" | "text" = "markdown") => {
       try {
@@ -314,6 +345,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
     archiveConversation,
     unarchiveConversation,
     deleteConversation,
+    deleteAllConversations,
     exportConversation,
     loadMore,
     reload: loadConversations,

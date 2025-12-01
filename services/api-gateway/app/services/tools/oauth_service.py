@@ -367,6 +367,7 @@ class OAuthService:
     ) -> Optional[Dict[str, str]]:
         """
         Get decrypted OAuth tokens for a connection.
+        Automatically refreshes expired tokens if a refresh token is available.
 
         Args:
             connection_id: Calendar connection ID
@@ -381,7 +382,7 @@ class OAuthService:
         result = await db_session.execute(
             text(
                 """
-                SELECT access_token_encrypted, refresh_token_encrypted, token_expires_at
+                SELECT access_token_encrypted, refresh_token_encrypted, token_expires_at, provider
                 FROM user_calendar_connections
                 WHERE id = :id
             """
@@ -393,14 +394,137 @@ class OAuthService:
         if not row or not row.access_token_encrypted:
             return None
 
-        # Check if token needs refresh
-        if row.token_expires_at and row.token_expires_at < datetime.now(timezone.utc):
-            # TODO: Implement token refresh
-            logger.warning(f"Token expired for connection {connection_id}")
+        access_token = self._decrypt(row.access_token_encrypted)
+        refresh_token = self._decrypt(row.refresh_token_encrypted) if row.refresh_token_encrypted else None
+
+        # Check if token needs refresh (with 5 minute buffer)
+        buffer_time = timedelta(minutes=5)
+        if row.token_expires_at and row.token_expires_at < datetime.now(timezone.utc) + buffer_time:
+            if refresh_token:
+                logger.info(f"Token expired for connection {connection_id}, attempting refresh...")
+                try:
+                    new_tokens = await self._refresh_oauth_token(
+                        provider=row.provider,
+                        refresh_token=refresh_token,
+                        connection_id=connection_id,
+                        db_session=db_session,
+                    )
+                    if new_tokens:
+                        access_token = new_tokens["access_token"]
+                        if new_tokens.get("refresh_token"):
+                            refresh_token = new_tokens["refresh_token"]
+                        logger.info(f"Successfully refreshed token for connection {connection_id}")
+                except Exception as e:
+                    logger.error(f"Failed to refresh token for connection {connection_id}: {e}")
+                    # Return the old token anyway - it might still work for a few seconds
+            else:
+                logger.warning(f"Token expired for connection {connection_id} but no refresh token available")
 
         return {
-            "access_token": self._decrypt(row.access_token_encrypted),
-            "refresh_token": self._decrypt(row.refresh_token_encrypted) if row.refresh_token_encrypted else None,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+        }
+
+    async def _refresh_oauth_token(
+        self,
+        provider: str,
+        refresh_token: str,
+        connection_id: str,
+        db_session: AsyncSession,
+    ) -> Optional[Dict[str, str]]:
+        """
+        Refresh an expired OAuth token.
+
+        Args:
+            provider: Calendar provider (google or microsoft)
+            refresh_token: The refresh token
+            connection_id: Connection ID to update
+            db_session: Database session
+
+        Returns:
+            Dict with new access_token (and optionally new refresh_token), or None
+        """
+        try:
+            provider_enum = CalendarProvider(provider)
+        except ValueError:
+            logger.error(f"Unknown provider for token refresh: {provider}")
+            return None
+
+        if provider_enum not in self.OAUTH_CONFIGS:
+            logger.error(f"OAuth not supported for provider: {provider}")
+            return None
+
+        config = self.OAUTH_CONFIGS[provider_enum]
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                config["token_url"],
+                data={
+                    "client_id": self.get_client_id(provider),
+                    "client_secret": self.get_client_secret(provider),
+                    "refresh_token": refresh_token,
+                    "grant_type": "refresh_token",
+                },
+            )
+            response.raise_for_status()
+            tokens = response.json()
+
+        # Encrypt new tokens
+        access_token_encrypted = self._encrypt(tokens["access_token"])
+        # Some providers return a new refresh token, some don't
+        new_refresh_token = tokens.get("refresh_token")
+        refresh_token_encrypted = self._encrypt(new_refresh_token) if new_refresh_token else None
+
+        # Calculate new token expiry
+        expires_in = tokens.get("expires_in", 3600)
+        token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+
+        # Update the connection with new tokens
+        if refresh_token_encrypted:
+            await db_session.execute(
+                text(
+                    """
+                    UPDATE user_calendar_connections
+                    SET access_token_encrypted = :access_token,
+                        refresh_token_encrypted = :refresh_token,
+                        token_expires_at = :expires_at,
+                        status = 'connected',
+                        error_message = NULL,
+                        updated_at = now()
+                    WHERE id = :id
+                """
+                ),
+                {
+                    "access_token": access_token_encrypted,
+                    "refresh_token": refresh_token_encrypted,
+                    "expires_at": token_expires_at,
+                    "id": connection_id,
+                },
+            )
+        else:
+            await db_session.execute(
+                text(
+                    """
+                    UPDATE user_calendar_connections
+                    SET access_token_encrypted = :access_token,
+                        token_expires_at = :expires_at,
+                        status = 'connected',
+                        error_message = NULL,
+                        updated_at = now()
+                    WHERE id = :id
+                """
+                ),
+                {
+                    "access_token": access_token_encrypted,
+                    "expires_at": token_expires_at,
+                    "id": connection_id,
+                },
+            )
+        await db_session.commit()
+
+        return {
+            "access_token": tokens["access_token"],
+            "refresh_token": new_refresh_token or refresh_token,
         }
 
     async def get_caldav_credentials(

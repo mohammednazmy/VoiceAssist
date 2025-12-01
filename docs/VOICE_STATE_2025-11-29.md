@@ -1,11 +1,11 @@
 ---
-title: "Voice State 2025-11-28"
-slug: "voice-state-2025-11-28"
-summary: "Voice mode now includes barge-in support, audio overlap prevention, and improved error handling. This document captures the current state."
+title: "Voice State 2025-11-29"
+slug: "voice-state-2025-11-29"
+summary: "Voice mode now includes barge-in support, audio overlap prevention, user preferences persistence, context-aware styles, and aggressive latency optimizations."
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-28"
+lastUpdated: "2025-11-29"
 audience: ["human", "agent"]
 tags: ["voice", "barge-in", "audio", "state", "2025"]
 category: reference
@@ -17,6 +17,8 @@ category: reference
 
 Voice mode has been significantly improved with barge-in support, audio overlap prevention, and graceful error handling. The system now properly handles user interruptions during AI responses.
 
+**Voice Mode Overhaul (2025-11-29)**: Added per-user voice preferences persistence, context-aware voice style detection, advanced TTS controls, and aggressive latency optimizations (200ms VAD, 256-sample chunks, 300ms reconnect).
+
 ## Changes Since Last Update (2025-11-25)
 
 ### New Features
@@ -27,6 +29,17 @@ Voice mode has been significantly improved with barge-in support, audio overlap 
 | Audio overlap prevention | **Live** | Prevents multiple responses playing simultaneously |
 | Benign error handling    | **Live** | Gracefully handles cancellation failures           |
 | Audio playback tracking  | **Live** | Tracks current audio element for cleanup           |
+
+### Voice Mode Overhaul (2025-11-29)
+
+| Feature                          | Status   | Description                                             |
+| -------------------------------- | -------- | ------------------------------------------------------- |
+| User voice preferences (backend) | **Live** | Per-user TTS settings stored in database                |
+| Context-aware voice styles       | **Live** | Auto-detects CALM/URGENT/EMPATHETIC/INSTRUCTIONAL tones |
+| Advanced TTS controls            | **Live** | Stability, clarity, expressiveness sliders in UI        |
+| Aggressive VAD tuning            | **Live** | 200ms silence, 150ms prefix, 256-sample chunks          |
+| Faster reconnection              | **Live** | 300ms base delay (was 1000ms)                           |
+| Backend preferences sync         | **Live** | Cross-device settings via `/api/voice/preferences`      |
 
 ### Technical Implementation
 
@@ -168,7 +181,7 @@ pnpm build
 ### Voice UX Features
 
 - [ ] Audio level visualization during recording
-- [ ] Per-user voice preferences persistence (backend)
+- [x] Per-user voice preferences persistence (backend) ✅ Implemented 2025-11-29
 - [ ] Voice activity visualization improvements
 - [ ] Multi-language auto-detection
 - [ ] Session resumption on reconnect

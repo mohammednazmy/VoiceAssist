@@ -2,7 +2,7 @@
  * Voice Mode State Machine Hook
  *
  * Provides a clean state machine interface for the unified voice UI.
- * Wraps useRealtimeVoiceSession with unified-interface-specific state transitions.
+ * Wraps useThinkerTalkerSession with unified-interface-specific state transitions.
  *
  * States:
  * - idle: Voice mode not active
@@ -11,15 +11,17 @@
  * - processing: Speech detected, processing transcript
  * - responding: AI is generating/speaking response
  * - error: Error occurred, can retry
+ *
+ * Updated: Now uses Thinker/Talker pipeline instead of OpenAI Realtime API
  */
 
 import { useCallback, useEffect, useRef } from "react";
 import {
-  useRealtimeVoiceSession,
-  type ConnectionStatus,
-  type VoiceSettings,
-  type RealtimeTranscript,
-} from "./useRealtimeVoiceSession";
+  useThinkerTalkerSession,
+  type TTConnectionStatus,
+  type TTVoiceSettings,
+  type TTTranscript,
+} from "./useThinkerTalkerSession";
 import {
   useUnifiedConversationStore,
   type VoiceState,
@@ -68,10 +70,10 @@ export interface VoiceModeStateMachineReturn {
 // ============================================================================
 
 /**
- * Map connection status + speaking state to unified VoiceState
+ * Map T/T connection status + speaking state to unified VoiceState
  */
 function mapToVoiceState(
-  connectionStatus: ConnectionStatus,
+  connectionStatus: TTConnectionStatus,
   isSpeaking: boolean,
   isResponding: boolean,
 ): VoiceState {
@@ -80,12 +82,12 @@ function mapToVoiceState(
     case "reconnecting":
       return "connecting";
     case "connected":
+    case "ready":
       if (isResponding) return "responding";
       if (isSpeaking) return "processing";
       return "listening";
     case "error":
     case "failed":
-    case "expired":
     case "mic_permission_denied":
       return "error";
     case "disconnected":
@@ -109,8 +111,10 @@ export function useVoiceModeStateMachine(
     voiceModeActive,
     voiceState,
     setVoiceState,
-    setIsListening,
-    setIsSpeaking,
+    startListening,
+    stopListening,
+    startSpeaking,
+    stopSpeaking,
     setPartialTranscript,
     activateVoiceMode,
     deactivateVoiceMode,
@@ -123,16 +127,16 @@ export function useVoiceModeStateMachine(
   const isRespondingRef = useRef(false);
   const finalTranscriptRef = useRef("");
 
-  // Build voice settings from store
-  const voiceSettings: VoiceSettings = {
-    voice: voice || undefined,
+  // Build voice settings from store (T/T format)
+  const voiceSettings: TTVoiceSettings = {
+    voice_id: voice || undefined,
     language: language || undefined,
-    vadSensitivity: vadSensitivity ?? undefined,
+    barge_in_enabled: true,
   };
 
   // Handle transcript events
   const handleTranscript = useCallback(
-    (transcript: RealtimeTranscript) => {
+    (transcript: TTTranscript) => {
       if (transcript.is_final) {
         finalTranscriptRef.current = transcript.text;
         setPartialTranscript("");
@@ -146,16 +150,20 @@ export function useVoiceModeStateMachine(
 
   // Handle connection changes
   const handleConnectionChange = useCallback(
-    (status: ConnectionStatus) => {
+    (status: TTConnectionStatus) => {
       voiceLog.debug(`[VoiceStateMachine] Connection status: ${status}`);
 
       const newState = mapToVoiceState(status, false, isRespondingRef.current);
       setVoiceState(newState);
 
       // Update listening state
-      setIsListening(status === "connected");
+      if (status === "connected" || status === "ready") {
+        startListening();
+      } else {
+        stopListening();
+      }
     },
-    [setVoiceState, setIsListening],
+    [setVoiceState, startListening, stopListening],
   );
 
   // Handle errors
@@ -172,10 +180,10 @@ export function useVoiceModeStateMachine(
   const handleSpeechStarted = useCallback(() => {
     // User started speaking - stop any AI audio playback
     isRespondingRef.current = false;
-    setIsSpeaking(true);
-  }, [setIsSpeaking]);
+    startSpeaking();
+  }, [startSpeaking]);
 
-  // Use the realtime voice session hook
+  // Use the Thinker/Talker voice session hook
   const {
     status,
     error,
@@ -188,9 +196,8 @@ export function useVoiceModeStateMachine(
     resetFatalError,
     isConnected,
     isMicPermissionDenied,
-  } = useRealtimeVoiceSession({
+  } = useThinkerTalkerSession({
     conversation_id: conversationId || undefined,
-    clinical_context_id: clinicalContextId,
     voiceSettings,
     onTranscript: handleTranscript,
     onConnectionChange: handleConnectionChange,
@@ -199,14 +206,18 @@ export function useVoiceModeStateMachine(
     autoConnect: false, // We control connection manually
   });
 
-  // Sync speaking state from realtime hook to store
+  // Sync speaking state from T/T hook to store
   useEffect(() => {
-    setIsSpeaking(isSpeaking);
+    if (isSpeaking) {
+      startSpeaking();
+    } else {
+      stopSpeaking();
+    }
     // Update voice state based on speaking
     if (isConnected) {
       setVoiceState(isSpeaking ? "processing" : "listening");
     }
-  }, [isSpeaking, isConnected, setIsSpeaking, setVoiceState]);
+  }, [isSpeaking, isConnected, startSpeaking, stopSpeaking, setVoiceState]);
 
   // Activate voice mode
   const activate = useCallback(async () => {
@@ -271,11 +282,11 @@ export function useVoiceModeStateMachine(
     deactivate,
     retryConnection,
 
-    // Metrics
+    // Metrics (mapped from T/T format)
     metrics: {
       connectionTimeMs: metrics.connectionTimeMs,
-      sttLatencyMs: metrics.lastSttLatencyMs,
-      responseLatencyMs: metrics.lastResponseLatencyMs,
+      sttLatencyMs: metrics.sttLatencyMs,
+      responseLatencyMs: metrics.totalLatencyMs,
     },
   };
 }

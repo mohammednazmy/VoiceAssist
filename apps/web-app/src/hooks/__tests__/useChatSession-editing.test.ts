@@ -46,14 +46,13 @@ vi.mock("../../lib/api/attachmentsApi", () => ({
   })),
 }));
 
-// TODO: Fix WebSocket mocking with fake timers - tests have timing issues
-// causing failures with message editing, deletion, and regeneration
-describe.skip("useChatSession - Editing", () => {
+describe("useChatSession - Editing", () => {
   let getMockWs: () => MockWebSocket | null;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
+    // Note: Using real timers instead of fake timers because waitFor doesn't work
+    // well with fake timers and these tests don't actually need timer manipulation
 
     // Use centralized WebSocket mock utilities
     const mockSetup = setupWebSocketMock();
@@ -65,8 +64,6 @@ describe.skip("useChatSession - Editing", () => {
 
   afterEach(() => {
     cleanupWebSocketMock();
-    vi.clearAllTimers();
-    vi.useRealTimers();
   });
 
   describe("editMessage", () => {

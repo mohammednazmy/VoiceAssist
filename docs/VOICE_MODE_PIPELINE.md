@@ -5,7 +5,7 @@ summary: Unified Voice Mode pipeline architecture, data flow, barge-in, audio pl
 status: stable
 stability: production
 owner: backend
-lastUpdated: "2025-11-28"
+lastUpdated: "2025-11-29"
 audience: ["human", "agent", "backend", "frontend"]
 tags: ["voice", "realtime", "websocket", "openai", "api", "barge-in", "audio"]
 category: reference
@@ -15,7 +15,7 @@ relatedServices: ["api-gateway", "web-app"]
 # Voice Mode Pipeline
 
 > **Status**: Production-ready
-> **Last Updated**: 2025-11-28
+> **Last Updated**: 2025-11-29
 
 This document describes the unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy. It serves as the canonical reference for developers working on real-time voice features.
 
@@ -713,6 +713,9 @@ LIVE_REALTIME_E2E=1 npx playwright test e2e/voice-mode-session-smoke.spec.ts
 - ~~**Metrics export to backend**: Send metrics to backend for aggregation/alerting~~ ✓ Implemented
 - ~~**Barge-in support**: Allow user to interrupt AI responses~~ ✓ Implemented (2025-11-28)
 - ~~**Audio overlap prevention**: Prevent multiple responses playing simultaneously~~ ✓ Implemented (2025-11-28)
+- ~~**Per-user voice preferences**: Backend persistence for TTS settings~~ ✓ Implemented (2025-11-29)
+- ~~**Context-aware voice styles**: Auto-detect tone from content~~ ✓ Implemented (2025-11-29)
+- ~~**Aggressive latency optimization**: 200ms VAD, 256-sample chunks, 300ms reconnect~~ ✓ Implemented (2025-11-29)
 - **Voice→chat transcript content E2E**: Test actual transcript content in chat timeline
 - **Performance baseline**: Establish latency targets (connection <2s, STT <500ms)
 - **Error tracking integration**: Send errors to Sentry/similar

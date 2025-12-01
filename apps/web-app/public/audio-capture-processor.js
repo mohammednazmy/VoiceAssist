@@ -20,6 +20,11 @@
  * - Correlation-based echo detection
  * - Immediate suppression when echo detected (skip sending)
  * - Posts echo_detected events for metrics
+ *
+ * Voice Mode Overhaul: Aggressive Latency Optimization
+ * - Reduced default chunk size from 512 to 256 samples (21.3ms -> 10.7ms at 24kHz)
+ * - Trades slightly higher CPU/network overhead for lower latency
+ * - Expected latency improvement: 10-20ms
  */
 
 class AudioCaptureProcessor extends AudioWorkletProcessor {
@@ -27,11 +32,11 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
     super();
 
     // Get configuration from options
-    // Phase 11: Increased default chunk size from 128 to 512 for reduced message overhead
-    // 512 samples at 24kHz = 21.3ms chunks (good balance of latency vs overhead)
+    // Voice Mode Overhaul: Reduced chunk size from 512 to 256 for lower latency
+    // 256 samples at 24kHz = 10.7ms chunks (aggressive latency optimization)
     const {
       resampleRatio = 2,
-      targetChunkSize = 512,
+      targetChunkSize = 256,
       echoDetectionEnabled = true,
       echoBufferMs = 300, // 300ms of reference audio
       echoCorrelationThreshold = 0.55, // Correlation threshold for echo detection

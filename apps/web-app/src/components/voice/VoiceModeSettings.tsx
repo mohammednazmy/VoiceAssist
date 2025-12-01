@@ -9,10 +9,9 @@
 import { useCallback } from "react";
 import {
   useVoiceSettingsStore,
-  VOICE_OPTIONS,
   LANGUAGE_OPTIONS,
   PLAYBACK_SPEED_OPTIONS,
-  type VoiceOption,
+  ELEVENLABS_VOICE_OPTIONS,
   type LanguageOption,
 } from "../../stores/voiceSettingsStore";
 import { AudioDeviceSelector } from "./AudioDeviceSelector";
@@ -25,7 +24,6 @@ export interface VoiceModeSettingsProps {
 
 export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
   const {
-    voice,
     language,
     vadSensitivity,
     autoStartOnOpen,
@@ -35,7 +33,8 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
     playbackSpeed,
     keyboardShortcutsEnabled,
     showFrequencySpectrum,
-    setVoice,
+    // ElevenLabs voice
+    elevenlabsVoiceId,
     setLanguage,
     setVadSensitivity,
     setAutoStartOnOpen,
@@ -45,6 +44,7 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
     setPlaybackSpeed,
     setKeyboardShortcutsEnabled,
     setShowFrequencySpectrum,
+    setElevenlabsVoiceId,
     reset,
   } = useVoiceSettingsStore();
 
@@ -53,13 +53,6 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
       reset();
     }
   }, [reset]);
-
-  const handleVoiceChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setVoice(e.target.value as VoiceOption);
-    },
-    [setVoice],
-  );
 
   const handleLanguageChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -73,6 +66,13 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
       setVadSensitivity(parseInt(e.target.value, 10));
     },
     [setVadSensitivity],
+  );
+
+  const handleElevenlabsVoiceChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setElevenlabsVoiceId(e.target.value);
+    },
+    [setElevenlabsVoiceId],
   );
 
   if (!isOpen) {
@@ -126,27 +126,43 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
 
         {/* Settings Form */}
         <div className="space-y-5">
-          {/* Voice Selection */}
+          {/* Voice Selection (ElevenLabs) */}
           <div>
             <label
-              htmlFor="voice-select"
+              htmlFor="elevenlabs-voice-select"
               className="block text-sm font-medium text-neutral-700 mb-1"
             >
               Voice
             </label>
             <select
-              id="voice-select"
-              value={voice}
-              onChange={handleVoiceChange}
+              id="elevenlabs-voice-select"
+              value={elevenlabsVoiceId || "TxGEqnHWrfWFTfGW9XjX"}
+              onChange={handleElevenlabsVoiceChange}
               className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               data-testid="voice-select"
             >
-              {VOICE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
+              <optgroup label="Premium Voices">
+                {ELEVENLABS_VOICE_OPTIONS.filter((v) => v.premium).map(
+                  (voice) => (
+                    <option key={voice.id} value={voice.id}>
+                      {voice.name} ({voice.gender})
+                    </option>
+                  ),
+                )}
+              </optgroup>
+              <optgroup label="Standard Voices">
+                {ELEVENLABS_VOICE_OPTIONS.filter((v) => !v.premium).map(
+                  (voice) => (
+                    <option key={voice.id} value={voice.id}>
+                      {voice.name} ({voice.gender})
+                    </option>
+                  ),
+                )}
+              </optgroup>
             </select>
+            <p className="text-xs text-neutral-500 mt-1">
+              Select the voice for AI spoken responses
+            </p>
           </div>
 
           {/* Language Selection */}
@@ -321,8 +337,9 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
         <div className="mt-6 p-3 bg-neutral-50 rounded-lg">
           <p className="text-xs text-neutral-600">
             <strong>Current:</strong>{" "}
-            {VOICE_OPTIONS.find((v) => v.value === voice)?.label} voice,{" "}
-            {LANGUAGE_OPTIONS.find((l) => l.value === language)?.label},{" "}
+            {ELEVENLABS_VOICE_OPTIONS.find((v) => v.id === elevenlabsVoiceId)
+              ?.name || "Josh"}{" "}
+            voice, {LANGUAGE_OPTIONS.find((l) => l.value === language)?.label},{" "}
             {vadSensitivity}% sensitivity,{" "}
             {PLAYBACK_SPEED_OPTIONS.find((s) => s.value === playbackSpeed)
               ?.label || "1x"}{" "}

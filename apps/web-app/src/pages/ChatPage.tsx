@@ -42,7 +42,7 @@ import type {
   WebSocketErrorCode,
   Conversation,
 } from "@voiceassist/types";
-import type { VoiceMetrics } from "../hooks/useRealtimeVoiceSession";
+import type { VoiceMetrics } from "../components/voice/VoiceMetricsDisplay";
 
 type LoadingState = "idle" | "creating" | "validating" | "loading-history";
 type ErrorType =
@@ -116,6 +116,14 @@ export function ChatPage() {
   // Check if unified chat/voice UI feature flag is enabled
   const { isEnabled: useUnifiedUI, isLoading: isFeatureFlagLoading } =
     useFeatureFlag(UI_FLAGS.UNIFIED_CHAT_VOICE);
+
+  // Debug logging
+  console.log("[ChatPage] Render:", {
+    conversationId,
+    useUnifiedUI,
+    isFeatureFlagLoading,
+    pathname: location.pathname,
+  });
 
   // Check if we should auto-open voice mode (from Home page Voice Mode card)
   // Support both query param (?mode=voice) and location state for backwards compatibility
@@ -693,6 +701,27 @@ export function ChatPage() {
     );
   }
 
+  // Show loading while checking feature flag
+  if (isFeatureFlagLoading) {
+    return <ChatSkeleton />;
+  }
+
+  // Render unified chat/voice UI when feature flag is enabled
+  // UnifiedChatContainer handles its own conversation creation/loading
+  if (useUnifiedUI) {
+    console.log("[ChatPage] Rendering UnifiedChatContainer with:", {
+      activeConversationId,
+      startVoiceMode,
+    });
+    return (
+      <UnifiedChatContainer
+        conversationId={activeConversationId || undefined}
+        startInVoiceMode={startVoiceMode}
+      />
+    );
+  }
+
+  // For legacy UI: show loading while creating/loading conversation
   if (!activeConversationId) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -702,21 +731,6 @@ export function ChatPage() {
         </div>
       </div>
     );
-  }
-
-  // Render unified chat/voice UI when feature flag is enabled
-  if (useUnifiedUI && !isFeatureFlagLoading) {
-    return (
-      <UnifiedChatContainer
-        conversationId={activeConversationId}
-        startInVoiceMode={startVoiceMode}
-      />
-    );
-  }
-
-  // Show loading while checking feature flag
-  if (isFeatureFlagLoading) {
-    return <ChatSkeleton />;
   }
 
   return (

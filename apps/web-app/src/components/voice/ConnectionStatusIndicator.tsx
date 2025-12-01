@@ -8,7 +8,19 @@
  * - Compact enough for header placement
  */
 
-import type { ConnectionStatus } from "../../hooks/useRealtimeVoiceSession";
+/**
+ * Connection status type for voice mode
+ * Used by both OpenAI Realtime and Thinker/Talker pipelines
+ */
+export type ConnectionStatus =
+  | "disconnected"
+  | "connecting"
+  | "connected"
+  | "reconnecting"
+  | "error"
+  | "failed"
+  | "expired"
+  | "mic_permission_denied";
 
 interface ConnectionStatusIndicatorProps {
   status: ConnectionStatus;

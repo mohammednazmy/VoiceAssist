@@ -166,6 +166,81 @@ class ToolService:
             ),
         )
 
+        self.register(
+            ToolDefinition(
+                name="calendar_update_event",
+                description=(
+                    "Update an existing calendar event. Use when the user wants to modify, "
+                    "reschedule, or change details of an event. First list events to get the event ID."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "event_id": {
+                            "type": "string",
+                            "description": "The ID of the event to update (get from calendar_list_events)",
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "New title for the event (optional)",
+                        },
+                        "start_time": {
+                            "type": "string",
+                            "description": "New start time in natural language (optional)",
+                        },
+                        "end_time": {
+                            "type": "string",
+                            "description": "New end time (optional)",
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "New description (optional)",
+                        },
+                        "location": {
+                            "type": "string",
+                            "description": "New location (optional)",
+                        },
+                        "calendar_provider": {
+                            "type": "string",
+                            "enum": ["google", "microsoft", "apple", "nextcloud"],
+                            "description": "Which calendar the event is on",
+                        },
+                    },
+                    "required": ["event_id"],
+                },
+                category=ToolCategory.CALENDAR,
+                requires_auth=True,
+            ),
+        )
+
+        self.register(
+            ToolDefinition(
+                name="calendar_delete_event",
+                description=(
+                    "Delete a calendar event. Use when the user wants to remove or cancel an event. "
+                    "First list events to get the event ID, then confirm with the user before deleting."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "event_id": {
+                            "type": "string",
+                            "description": "The ID of the event to delete (get from calendar_list_events)",
+                        },
+                        "calendar_provider": {
+                            "type": "string",
+                            "enum": ["google", "microsoft", "apple", "nextcloud"],
+                            "description": "Which calendar the event is on",
+                        },
+                    },
+                    "required": ["event_id"],
+                },
+                category=ToolCategory.CALENDAR,
+                requires_auth=True,
+                requires_confirmation=True,
+            ),
+        )
+
         # Web search tool
         self.register(
             ToolDefinition(
@@ -451,6 +526,8 @@ class ToolService:
             # Calendar tools
             "calendar_create_event": calendar_tool.handle_create_event,
             "calendar_list_events": calendar_tool.handle_list_events,
+            "calendar_update_event": calendar_tool.handle_update_event,
+            "calendar_delete_event": calendar_tool.handle_delete_event,
             # Search tools
             "web_search": search_tools.handle_web_search,
             "pubmed_search": search_tools.handle_pubmed_search,

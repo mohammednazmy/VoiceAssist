@@ -38,6 +38,7 @@ from app.api import (
     calendar_connections,
     clinical_context,
     conversations,
+    experiments,
     export,
     external_medical,
     folders,
@@ -166,6 +167,7 @@ app.include_router(integrations.router)  # Phase 6: Nextcloud integrations
 app.include_router(admin_panel.router)  # Phase 7: Admin Panel API
 app.include_router(admin_cache.router)  # Phase 7: Cache Management API (P2.1)
 app.include_router(admin_feature_flags.router)  # Phase 7: Feature Flags API (P3.1)
+app.include_router(experiments.router)  # Public experiments/feature flags API
 app.include_router(admin_voice.router)  # Sprint 1: Voice Admin API
 app.include_router(admin_integrations.router)  # Sprint 2: Integrations Admin API
 app.include_router(admin_phi.router)  # Sprint 3: PHI & Security Admin API
