@@ -4,9 +4,9 @@ slug: start/developers
 summary: Get started developing with VoiceAssist - setup, architecture, and contribution guide.
 status: stable
 stability: production
-owner: engineering
-lastUpdated: "2025-12-01"
-audience: ["developer", "agent"]
+owner: mixed
+lastUpdated: "2025-12-02"
+audience: ["developers", "agent"]
 tags: ["quickstart", "development", "setup", "contributing"]
 category: getting-started
 ---

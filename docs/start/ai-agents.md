@@ -4,8 +4,8 @@ slug: start/ai-agents
 summary: Quick start guide for AI coding assistants working on VoiceAssist.
 status: stable
 stability: production
-owner: engineering
-lastUpdated: "2025-12-01"
+owner: mixed
+lastUpdated: "2025-12-02"
 audience: ["agent"]
 tags: ["quickstart", "ai", "agent", "automation"]
 category: getting-started

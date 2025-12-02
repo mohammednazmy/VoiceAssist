@@ -4,9 +4,9 @@ slug: start/admins
 summary: Get started administering VoiceAssist - deployment, configuration, and monitoring.
 status: stable
 stability: production
-owner: ops
-lastUpdated: "2025-12-01"
-audience: ["admin", "ops", "agent"]
+owner: sre
+lastUpdated: "2025-12-02"
+audience: ["admin", "devops", "agent"]
 tags: ["quickstart", "admin", "deployment", "configuration"]
 category: getting-started
 ---
