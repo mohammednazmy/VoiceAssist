@@ -1,3 +1,16 @@
+---
+title: Thinker-Talker Voice Pipeline
+slug: thinker-talker-pipeline
+summary: VoiceAssist's voice processing architecture using local orchestration with Deepgram STT, GPT-4o, and ElevenLabs TTS.
+status: stable
+stability: production
+owner: backend
+lastUpdated: "2025-12-02"
+audience: ["developers", "backend", "agent"]
+tags: ["voice", "pipeline", "thinker-talker", "stt", "tts"]
+category: architecture
+---
+
 # Thinker-Talker Voice Pipeline
 
 > **Status:** Production Ready

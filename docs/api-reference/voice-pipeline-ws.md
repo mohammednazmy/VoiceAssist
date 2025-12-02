@@ -1,3 +1,16 @@
+---
+title: Voice Pipeline WebSocket API
+slug: api-reference/voice-pipeline-ws
+summary: WebSocket API reference for the Thinker-Talker voice pipeline with audio streaming and TTS playback.
+status: stable
+stability: production
+owner: backend
+lastUpdated: "2025-12-02"
+audience: ["developers", "backend", "frontend", "agent"]
+tags: ["api", "websocket", "voice", "streaming"]
+category: reference
+---
+
 # Voice Pipeline WebSocket API
 
 > **Endpoint:** `wss://{host}/ws/voice/thinker-talker`

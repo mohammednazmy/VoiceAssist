@@ -1,3 +1,16 @@
+---
+title: Thinker Service
+slug: services/thinker-service
+summary: Reasoning engine managing conversation context, LLM orchestration, and tool calling in the voice pipeline.
+status: stable
+stability: production
+owner: backend
+lastUpdated: "2025-12-02"
+audience: ["developers", "backend", "agent"]
+tags: ["service", "llm", "reasoning", "voice", "backend"]
+category: reference
+---
+
 # Thinker Service
 
 > **Location:** `services/api-gateway/app/services/thinker_service.py`
