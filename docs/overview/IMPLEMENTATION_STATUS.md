@@ -5,18 +5,18 @@ summary: Single source of truth for component status, stability, and deployment 
 status: stable
 stability: production
 owner: mixed
-lastUpdated: "2025-12-01"
+lastUpdated: "2025-12-02"
 audience: ["human", "agent", "ai-agents", "backend", "frontend", "devops"]
 tags: ["status", "overview", "components", "roadmap", "architecture"]
 relatedServices: ["api-gateway", "web-app", "admin-panel", "docs-site"]
 category: overview
 source_of_truth: true
-version: "1.7.0"
+version: "1.8.0"
 ---
 
 # Implementation Status
 
-**Last Updated:** 2025-12-01
+**Last Updated:** 2025-12-02
 **Source of Truth:** This document is the authoritative reference for component status.
 
 ---
@@ -123,6 +123,12 @@ Main user-facing medical AI assistant application.
 | Audio overlap prevention | Complete | Response ID tracking                    |
 | Chat integration         | Complete | Voice messages in timeline              |
 | Metrics export           | Complete | `/api/voice/metrics` endpoint           |
+| Error taxonomy           | Complete | 8 categories, 40+ error codes           |
+| Pipeline metrics         | Complete | Per-stage latency, TTFA tracking        |
+| SLO alerting             | Complete | Prometheus rules, P95 targets           |
+| Client telemetry         | Complete | Network quality, jitter, batched        |
+| Voice health endpoint    | Complete | `/health/voice` with provider checks    |
+| Debug logging            | Complete | `VOICE_LOG_LEVEL` configuration         |
 
 #### Admin Panel (`apps/admin-panel/`)
 
@@ -264,6 +270,7 @@ curl https://assist.asimo.io/api/admin/panel/stats
 
 | Date       | Version | Changes                                                                       |
 | ---------- | ------- | ----------------------------------------------------------------------------- |
+| 2025-12-02 | 1.8.0   | Voice observability: error taxonomy, SLO alerts, telemetry, health endpoint   |
 | 2025-12-01 | 1.7.0   | Web App status updated to stable/production (Phase 3.5 complete)              |
 | 2025-11-28 | 1.6.0   | Voice Mode: Barge-in support, audio overlap prevention, benign error handling |
 | 2025-11-28 | 1.5.0   | Sprint 6 complete: Tools Admin, Troubleshooting, Backups & DR, Feature Flags  |

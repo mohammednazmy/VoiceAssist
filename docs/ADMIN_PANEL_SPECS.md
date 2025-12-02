@@ -5,7 +5,7 @@ summary: "The VoiceAssist Admin Panel provides a centralized web interface for s
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-02"
 audience: ["devops", "sre"]
 tags: ["admin", "panel", "specs"]
 category: operations
@@ -2310,6 +2310,100 @@ GET    /api/admin/users              - List users
 POST   /api/admin/backup             - Trigger backup
 GET    /api/admin/health             - System health check
 ```
+
+## Contextual Help & AI Assistant
+
+The admin panel includes integrated help features that connect to the documentation site and provide AI-powered assistance.
+
+### HelpButton Component
+
+Available from `packages/ui`, links to relevant documentation from any admin page:
+
+```tsx
+// Usage in admin pages
+import { HelpButton } from "@voiceassist/ui";
+
+<HelpButton
+  docPath="admin/security"           // Path to docs page
+  section="permissions"              // Optional section anchor
+  variant="icon" | "text" | "both"   // Display mode
+  size="sm" | "md" | "lg"            // Button size
+/>
+
+// Opens: https://assistdocs.asimo.io/admin/security#permissions
+```
+
+**Implementation:**
+
+- Location: `packages/ui/src/components/HelpButton.tsx`
+- Uses `NEXT_PUBLIC_DOCS_URL` environment variable
+- Opens docs in new tab with appropriate section hash
+- Keyboard accessible (Tab + Enter)
+
+### AskAIButton Component
+
+Embedded in admin panel pages to provide contextual AI assistance:
+
+```tsx
+// Location: apps/admin-panel/src/components/shared/AskAIButton.tsx
+
+<AskAIButton
+  context={{
+    page: "security", // Current page context
+    feature: "audit-logs", // Specific feature
+    userId: currentUser.id, // Optional user context
+  }}
+  position="bottom-right" // Fab position
+/>
+```
+
+**User Flow:**
+
+1. User clicks "Ask AI" floating action button
+2. Dialog opens with text input field
+3. Page context is pre-filled (user can modify)
+4. Submit sends request to `/api/ai/docs/ask`
+5. AI response includes relevant doc citations
+6. User can click citations to open full documentation
+
+**API Endpoint:**
+
+```typescript
+// POST /api/ai/docs/ask
+interface DocsAskRequest {
+  question: string;
+  context?: {
+    page?: string;
+    feature?: string;
+    userId?: string;
+  };
+}
+
+interface DocsAskResponse {
+  answer: string;
+  citations: Array<{
+    doc_path: string;
+    title: string;
+    section?: string;
+    relevance: number;
+  }>;
+  confidence: number;
+}
+```
+
+**Backend Integration:**
+
+- Uses `docs_search_tool` for semantic search across documentation
+- Leverages Qdrant `platform_docs` collection (1536-dim embeddings)
+- Returns top-k relevant passages with citations
+- Confidence score indicates answer quality
+
+**See Also:**
+
+- [DOCUMENTATION_SITE_SPECS.md](DOCUMENTATION_SITE_SPECS.md) - Full docs site specifications
+- [Agent API Reference](ai/AGENT_API_REFERENCE.md) - AI agent endpoints
+
+---
 
 ## Security Considerations
 
