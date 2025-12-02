@@ -65,7 +65,7 @@ aioimaplib==2.0.1  # Async IMAP for email service
 aiosmtplib==3.0.2  # Async SMTP for email sending
 webdavclient3==3.14.6
 dateparser==1.2.0  # Natural language date parsing for calendar tools
-google-auth==2.29.0  # Google OAuth2 authentication
+google-auth==2.43.0  # Google OAuth2 authentication
 google-auth-oauthlib==1.2.0  # OAuth2 flow for Google APIs
 google-api-python-client==2.127.0  # Google Calendar API client
 
