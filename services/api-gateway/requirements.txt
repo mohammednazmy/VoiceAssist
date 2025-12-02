@@ -37,7 +37,7 @@ structlog==24.1.0
 
 # Resilience Patterns
 pybreaker==1.0.1
-tenacity==8.2.3
+tenacity==9.1.2
 
 # Caching
 fastapi-cache2[redis]==0.2.2
