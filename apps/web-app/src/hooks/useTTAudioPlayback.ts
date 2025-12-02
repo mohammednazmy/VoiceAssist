@@ -502,30 +502,72 @@ export function useTTAudioPlayback(
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      // Stop all active sources
+      const cleanedResources: string[] = [];
+
+      // 1. Stop all active audio sources
+      const activeCount = activeSourcesRef.current.size;
       for (const source of activeSourcesRef.current) {
         try {
           source.stop();
           source.disconnect();
         } catch {
-          // Ignore
+          // Already stopped
         }
       }
       activeSourcesRef.current.clear();
+      if (activeCount > 0) {
+        cleanedResources.push(`activeSources(${activeCount})`);
+      }
 
+      // 2. Stop legacy current source
       if (currentSourceRef.current) {
         try {
           currentSourceRef.current.stop();
           currentSourceRef.current.disconnect();
         } catch {
-          // Ignore
+          // Already stopped
         }
+        currentSourceRef.current = null;
+        cleanedResources.push("currentSource");
       }
 
+      // 3. Disconnect gain node
+      if (gainNodeRef.current) {
+        try {
+          gainNodeRef.current.disconnect();
+        } catch {
+          // Already disconnected
+        }
+        gainNodeRef.current = null;
+        cleanedResources.push("gainNode");
+      }
+
+      // 4. Close AudioContext
       if (audioContextRef.current) {
         audioContextRef.current.close().catch(() => {
-          // Ignore
+          // Ignore close errors
         });
+        audioContextRef.current = null;
+        cleanedResources.push("audioContext");
+      }
+
+      // 5. Clear queue
+      if (audioQueueRef.current.length > 0) {
+        const queueLength = audioQueueRef.current.length;
+        audioQueueRef.current = [];
+        cleanedResources.push(`audioQueue(${queueLength})`);
+      }
+
+      // 6. Reset refs
+      isPlayingRef.current = false;
+      isProcessingRef.current = false;
+      streamEndedRef.current = false;
+      nextScheduledTimeRef.current = 0;
+
+      if (cleanedResources.length > 0) {
+        voiceLog.debug(
+          `[TTAudioPlayback] Cleanup complete: ${cleanedResources.join(", ")}`,
+        );
       }
     };
   }, []);
