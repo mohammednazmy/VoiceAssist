@@ -17,7 +17,7 @@ redis==4.6.0
 arq==0.26.3  # async task queue for document processing
 
 # Qdrant
-qdrant-client==1.7.3
+qdrant-client==1.16.1
 
 # Security
 python-jose[cryptography]==3.5.0
