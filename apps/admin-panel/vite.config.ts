@@ -13,6 +13,14 @@ export default defineConfig({
         entryFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
         chunkFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
         assetFileNames: `assets/[name]-[hash].[ext]`,
+        manualChunks: {
+          // Core React dependencies
+          vendor: ["react", "react-dom", "react-router-dom"],
+          // Charting libraries (recharts is heavy)
+          charts: ["recharts"],
+          // UI utilities and i18n
+          ui: ["@heroicons/react", "i18next", "react-i18next"],
+        },
       },
     },
   },

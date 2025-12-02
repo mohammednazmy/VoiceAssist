@@ -255,7 +255,7 @@ The backend uses a **monorepo-first, microservices-ready** architecture:
 - **API Gateway** - Entry point, routing, rate limiting (Phase 11-14 only)
 - **Voice Proxy** - WebRTC/WebSocket handling, OpenAI Realtime API integration
 - **Medical KB / RAG Service** - RAG engine, orchestrator, semantic search, embeddings
-- **Admin API** - System management, config, analytics
+- **Admin API** - System management, config, analytics, real-time events via Redis pub/sub
 - **Auth Service** - Authentication, JWT, MFA, RBAC
 - **File Indexer / Ingestion** - Document processing, PDF/DOCX parsing, chunking
 - **Calendar/Email Service** - CalDAV, IMAP/SMTP integration
@@ -388,7 +388,117 @@ NEXTCLOUD_ADMIN_USER=admin
 NEXTCLOUD_ADMIN_PASSWORD=secure_password
 ````
 
-### 5. Zero-Trust Security Model
+### 5. Admin Panel Integration
+
+**Purpose:** Centralized management, monitoring, and observability for platform administrators.
+
+**URLs:**
+
+- **Admin Panel**: `https://admin.asimo.io` (React + Vite)
+- **Web App**: `https://dev.asimo.io` (Next.js)
+- **Docs Site**: `https://docs.asimo.io` (Next.js static export)
+
+**Architecture:**
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Admin Panel   │     │    Web App      │     │   Docs Site     │
+│ admin.asimo.io  │────▶│  dev.asimo.io   │────▶│  docs.asimo.io  │
+└────────┬────────┘     └────────┬────────┘     └─────────────────┘
+         │                       │
+         └───────────┬───────────┘
+                     ▼
+         ┌─────────────────────┐
+         │    API Gateway      │
+         │  /api/admin/panel/* │
+         └──────────┬──────────┘
+                    │
+         ┌──────────┴──────────┐
+         │                     │
+    ┌────▼────┐          ┌─────▼────┐
+    │ Database │          │  Redis   │
+    │PostgreSQL│          │ Pub/Sub  │
+    └──────────┘          └──────────┘
+```
+
+**Key Features:**
+
+- **Cross-App Navigation**: Unified navigation between admin, web app, and docs
+- **Conversations Management**: View all user conversations with message history
+- **Clinical Contexts**: HIPAA-compliant PHI access with audit logging
+- **Voice Monitor**: Real-time visibility into voice sessions and TT pipeline
+- **Real-Time Events**: WebSocket with Redis pub/sub for live updates
+
+**Admin Panel Endpoints:**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/admin/panel/conversations` | List all conversations |
+| GET | `/api/admin/panel/clinical-contexts` | List clinical contexts |
+| POST | `/api/admin/panel/clinical-contexts/{id}/reveal` | Reveal PHI (audited) |
+| GET | `/api/admin/panel/voice/sessions` | List voice sessions |
+| GET | `/api/admin/panel/voice/tt-sessions` | TT pipeline state |
+| GET | `/api/admin/panel/voice/tt-analytics` | TT performance metrics |
+| WS | `/api/admin/panel/ws` | Real-time event stream |
+
+**Real-Time Event Types:**
+
+- `session.connected` / `session.disconnected` - User sessions
+- `conversation.created` / `conversation.updated` - Conversations
+- `voice.session_started` / `voice.session_ended` - Voice mode
+- `tt.state_changed` / `tt.tool_called` - TT pipeline
+- `phi.accessed` - PHI audit events (immediate)
+- `system.alert` - System notifications (immediate)
+
+**Event Publishing:**
+
+```python
+from app.services.admin_event_publisher import (
+    publish_voice_session_started,
+    publish_tt_state_changed,
+    publish_phi_accessed,
+)
+
+# Events are buffered and batched via Redis
+await publish_voice_session_started(user_id, session_id, "realtime", "alloy")
+
+# High-priority events bypass buffer
+await publish_phi_accessed(admin_id, admin_email, context_id, target_user_id)
+```
+
+**Frontend Integration:**
+
+```typescript
+import { useRealtimeEvents } from "@/hooks/useRealtimeEvents";
+
+const { status, events, metrics } = useRealtimeEvents({
+  autoConnect: true,
+  eventFilter: ["voice.session_started", "tt.state_changed"],
+  onEvent: (event) => console.log(event),
+});
+```
+
+**Environment Variables:**
+
+```bash
+# Admin Panel
+ADMIN_PANEL_ENABLED=true
+ADMIN_PANEL_CORS_ORIGINS=https://admin.asimo.io
+
+# Redis for real-time events
+REDIS_URL=redis://localhost:6379
+ADMIN_EVENTS_CHANNEL=admin:events
+
+# Cross-app URLs
+VITE_WEB_APP_URL=https://dev.asimo.io
+VITE_DOCS_URL=https://docs.asimo.io
+```
+
+**Documentation:**
+
+- [Admin Panel Integration Guide](admin/ADMIN_PANEL_INTEGRATION_GUIDE.md)
+- [Real-Time Events Guide](admin/REALTIME_EVENTS_GUIDE.md)
+
+### 6. Zero-Trust Security Model
 
 **Principles:**
 
@@ -692,21 +802,21 @@ spec:
 
 ## Technology Stack Summary
 
-| Layer             | Technology                           | Purpose                                 |
-| ----------------- | ------------------------------------ | --------------------------------------- |
-| **Orchestration** | Kubernetes (K3s locally)             | Container orchestration                 |
-| **Service Mesh**  | Linkerd                              | mTLS, observability, traffic management |
-| **Identity**      | Nextcloud + Keycloak                 | SSO, user management                    |
-| **API Gateway**   | Kong or Nginx                        | Routing, rate limiting, auth            |
-| **Backend**       | Python FastAPI                       | Microservices                           |
-| **Frontend**      | React + TypeScript                   | Web apps                                |
-| **Databases**     | PostgreSQL (pgvector), Redis, Qdrant | Data persistence, caching, vectors      |
-| **AI/ML**         | OpenAI, BioGPT, PubMedBERT           | LLM, medical models                     |
-| **Voice**         | OpenAI Realtime API, WebRTC          | Voice interaction                       |
-| **Observability** | Prometheus, Grafana, Jaeger, Loki    | Monitoring, metrics, tracing, logging   |
-| **IaC**           | Terraform, Ansible                   | Infrastructure automation               |
-| **CI/CD**         | GitHub Actions                       | Automated testing and deployment        |
-| **Security**      | Let's Encrypt, OPA, mTLS             | SSL, authorization, encryption          |
+| Layer             | Technology                                                       | Purpose                                 |
+| ----------------- | ---------------------------------------------------------------- | --------------------------------------- |
+| **Orchestration** | Kubernetes (K3s locally)                                         | Container orchestration                 |
+| **Service Mesh**  | Linkerd                                                          | mTLS, observability, traffic management |
+| **Identity**      | Nextcloud + Keycloak                                             | SSO, user management                    |
+| **API Gateway**   | Kong or Nginx                                                    | Routing, rate limiting, auth            |
+| **Backend**       | Python FastAPI                                                   | Microservices                           |
+| **Frontend**      | React + TypeScript                                               | Web apps                                |
+| **Databases**     | PostgreSQL (pgvector), Redis, Qdrant                             | Data persistence, caching, vectors      |
+| **AI/ML**         | OpenAI, BioGPT, PubMedBERT                                       | LLM, medical models                     |
+| **Voice**         | Thinker-Talker (Deepgram + ElevenLabs), OpenAI Realtime (legacy) | Voice interaction                       |
+| **Observability** | Prometheus, Grafana, Jaeger, Loki                                | Monitoring, metrics, tracing, logging   |
+| **IaC**           | Terraform, Ansible                                               | Infrastructure automation               |
+| **CI/CD**         | GitHub Actions                                                   | Automated testing and deployment        |
+| **Security**      | Let's Encrypt, OPA, mTLS                                         | SSL, authorization, encryption          |
 
 ## Deployment Architecture
 

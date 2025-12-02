@@ -1925,6 +1925,354 @@ export class VoiceAssistApiClient {
     );
     return response.data.data!;
   }
+
+  // =========================================================================
+  // Admin Conversations
+  // =========================================================================
+
+  /**
+   * List all conversations across all users (admin only)
+   */
+  async getAdminConversations(
+    params: {
+      limit?: number;
+      offset?: number;
+      user_id?: string;
+      search?: string;
+    } = {},
+  ): Promise<{
+    conversations: any[];
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const response = await this.client.get("/api/admin/conversations", {
+      params,
+    });
+    return response.data;
+  }
+
+  /**
+   * Get a specific conversation with details (admin only)
+   */
+  async getAdminConversation(conversationId: string): Promise<{
+    conversation: any;
+  }> {
+    const response = await this.client.get(
+      `/api/admin/conversations/${conversationId}`,
+    );
+    return response.data;
+  }
+
+  /**
+   * Get messages for a conversation (admin only)
+   */
+  async getAdminConversationMessages(
+    conversationId: string,
+    params: { limit?: number; offset?: number } = {},
+  ): Promise<{
+    messages: any[];
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const response = await this.client.get(
+      `/api/admin/conversations/${conversationId}/messages`,
+      { params },
+    );
+    return response.data;
+  }
+
+  /**
+   * Export a conversation (admin only)
+   */
+  async exportAdminConversation(
+    conversationId: string,
+    format: "json" | "markdown",
+  ): Promise<{ export: { content: string; format: string } }> {
+    const response = await this.client.post(
+      `/api/admin/conversations/${conversationId}/export`,
+      { format },
+    );
+    return response.data;
+  }
+
+  // =========================================================================
+  // Admin Clinical Contexts (HIPAA)
+  // =========================================================================
+
+  /**
+   * List all clinical contexts across all users (admin only)
+   * PHI is masked by default - set includePhi=true to access full data (logged for audit)
+   */
+  async getAdminClinicalContexts(
+    params: {
+      limit?: number;
+      offset?: number;
+      user_id?: string;
+      include_phi?: boolean;
+    } = {},
+  ): Promise<{
+    contexts: any[];
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const response = await this.client.get("/api/admin/clinical/contexts", {
+      params,
+    });
+    return response.data;
+  }
+
+  /**
+   * Get a specific clinical context (admin only)
+   * PHI is masked by default - set includePhi=true to access full data (logged for audit)
+   */
+  async getAdminClinicalContext(
+    contextId: string,
+    includePhi: boolean = false,
+  ): Promise<{ context: any }> {
+    const response = await this.client.get(
+      `/api/admin/clinical/contexts/${contextId}`,
+      { params: { include_phi: includePhi } },
+    );
+    return response.data;
+  }
+
+  /**
+   * Get clinical context statistics (admin only)
+   */
+  async getAdminClinicalStats(): Promise<any> {
+    const response = await this.client.get("/api/admin/clinical/stats");
+    return response.data;
+  }
+
+  /**
+   * Get PHI access audit log (admin only)
+   */
+  async getAdminPHIAuditLog(
+    params: {
+      limit?: number;
+      offset?: number;
+      admin_user_id?: string;
+      context_id?: string;
+    } = {},
+  ): Promise<{
+    logs: any[];
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const response = await this.client.get("/api/admin/clinical/audit", {
+      params,
+    });
+    return response.data;
+  }
+
+  // =========================================================================
+  // Admin Voice & TT Pipeline
+  // =========================================================================
+
+  /**
+   * List all active voice sessions (admin only)
+   */
+  async getAdminVoiceSessions(): Promise<{
+    sessions: any[];
+    total: number;
+  }> {
+    const response = await this.client.get("/api/admin/voice/sessions");
+    return response.data;
+  }
+
+  /**
+   * Get voice metrics (admin only)
+   */
+  async getAdminVoiceMetrics(): Promise<any> {
+    const response = await this.client.get("/api/admin/voice/metrics");
+    return response.data;
+  }
+
+  /**
+   * Get voice health status (admin only)
+   */
+  async getAdminVoiceHealth(): Promise<any> {
+    const response = await this.client.get("/api/admin/voice/health");
+    return response.data;
+  }
+
+  /**
+   * Get voice configuration (admin only)
+   */
+  async getAdminVoiceConfig(): Promise<any> {
+    const response = await this.client.get("/api/admin/voice/config");
+    return response.data;
+  }
+
+  /**
+   * Disconnect a voice session (admin only)
+   */
+  async disconnectAdminVoiceSession(sessionId: string): Promise<void> {
+    await this.client.post(`/api/admin/voice/sessions/${sessionId}/disconnect`);
+  }
+
+  /**
+   * List TT pipeline sessions (admin only)
+   */
+  async getAdminTTSessions(): Promise<{
+    sessions: any[];
+    total: number;
+  }> {
+    const response = await this.client.get("/api/admin/voice/tt-sessions");
+    return response.data;
+  }
+
+  /**
+   * List TT conversation contexts (admin only)
+   */
+  async getAdminTTContexts(): Promise<{
+    contexts: any[];
+    total: number;
+  }> {
+    const response = await this.client.get("/api/admin/voice/contexts");
+    return response.data;
+  }
+
+  /**
+   * Cleanup expired TT contexts (admin only)
+   */
+  async cleanupAdminTTContexts(): Promise<{ cleaned_count: number }> {
+    const response = await this.client.post(
+      "/api/admin/voice/contexts/cleanup",
+    );
+    return response.data;
+  }
+
+  /**
+   * Get TT quality presets (admin only)
+   */
+  async getAdminQualityPresets(): Promise<{ presets: any[] }> {
+    const response = await this.client.get("/api/admin/voice/quality-presets");
+    return response.data;
+  }
+
+  /**
+   * Get TT tool analytics (admin only)
+   */
+  async getAdminTTAnalytics(): Promise<any> {
+    const response = await this.client.get("/api/admin/voice/analytics/tools");
+    return response.data;
+  }
+
+  // =========================================================================
+  // Admin Attachments
+  // =========================================================================
+
+  /**
+   * List all attachments across all users (admin only)
+   */
+  async getAdminAttachments(
+    params: {
+      limit?: number;
+      offset?: number;
+      user_id?: string;
+      file_type?: string;
+    } = {},
+  ): Promise<{
+    attachments: any[];
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const response = await this.client.get("/api/admin/attachments", {
+      params,
+    });
+    return response.data;
+  }
+
+  /**
+   * Get attachment storage statistics (admin only)
+   */
+  async getAdminAttachmentStats(days: number = 30): Promise<any> {
+    const response = await this.client.get("/api/admin/attachments/stats", {
+      params: { days },
+    });
+    return response.data;
+  }
+
+  /**
+   * Delete an attachment (admin only)
+   */
+  async deleteAdminAttachment(attachmentId: string): Promise<void> {
+    await this.client.delete(`/api/admin/attachments/${attachmentId}`);
+  }
+
+  /**
+   * Bulk delete attachments (admin only)
+   */
+  async bulkDeleteAdminAttachments(
+    attachmentIds: string[],
+  ): Promise<{ deleted_count: number }> {
+    const response = await this.client.post(
+      "/api/admin/attachments/bulk-delete",
+      { attachment_ids: attachmentIds },
+    );
+    return response.data;
+  }
+
+  /**
+   * Cleanup orphaned attachments (admin only)
+   */
+  async cleanupOrphanedAttachments(): Promise<{ cleaned_count: number }> {
+    const response = await this.client.post(
+      "/api/admin/attachments/cleanup-orphaned",
+    );
+    return response.data;
+  }
+
+  // =========================================================================
+  // Admin Folders
+  // =========================================================================
+
+  /**
+   * List all folders across all users (admin only)
+   */
+  async getAdminFolders(
+    params: {
+      limit?: number;
+      offset?: number;
+      user_id?: string;
+    } = {},
+  ): Promise<{
+    folders: any[];
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const response = await this.client.get("/api/admin/folders", { params });
+    return response.data;
+  }
+
+  /**
+   * Get folder statistics (admin only)
+   */
+  async getAdminFolderStats(): Promise<any> {
+    const response = await this.client.get("/api/admin/folders/stats");
+    return response.data;
+  }
+
+  /**
+   * Delete a folder (admin only)
+   */
+  async deleteAdminFolder(
+    folderId: string,
+    recursive: boolean = false,
+  ): Promise<{ deleted_folders: number; orphaned_conversations: number }> {
+    const response = await this.client.delete(
+      `/api/admin/folders/${folderId}`,
+      { params: { recursive } },
+    );
+    return response.data;
+  }
 }
 
 // Default export

@@ -42,29 +42,30 @@ Authorization: Bearer <access_token>
 
 ### Core Endpoint Groups
 
-| Group           | Prefix                     | Description                       | Module                   |
-| --------------- | -------------------------- | --------------------------------- | ------------------------ |
-| Authentication  | `/api/auth`                | Login, register, token management | `auth.py`                |
-| OAuth           | `/api/auth/oauth`          | OAuth2 provider integration       | `auth_oauth.py`          |
-| Users           | `/api/users`               | User profile and admin operations | `users.py`               |
-| Conversations   | `/conversations`           | Chat sessions and branching       | `conversations.py`       |
-| Folders         | `/api/folders`             | Conversation organization         | `folders.py`             |
-| Attachments     | `/api/attachments`         | File attachments                  | `attachments.py`         |
-| Export          | `/api/export`              | Conversation/data export          | `export.py`              |
-| Sharing         | `/api/sharing`             | Share conversations               | `sharing.py`             |
-| Voice           | `/api/voice`               | Voice session management          | `voice.py`               |
-| Real-time       | `/api/realtime`            | WebSocket connections             | `realtime.py`            |
-| Medical AI      | `/api/medical`             | Medical queries and RAG           | `medical_ai.py`          |
-| External Med    | `/api/external-medical`    | External medical APIs             | `external_medical.py`    |
-| Clinical        | `/api/clinical`            | Clinical context                  | `clinical_context.py`    |
-| Advanced Search | `/api/search`              | Advanced search features          | `advanced_search.py`     |
-| Integrations    | `/api/integrations`        | Third-party integrations          | `integrations.py`        |
-| Admin Panel     | `/api/admin/panel`         | Dashboard, metrics, audit logs    | `admin_panel.py`         |
-| Knowledge Base  | `/api/admin/kb`            | Document management               | `admin_kb.py`            |
-| Cache           | `/api/admin/cache`         | Cache statistics and control      | `admin_cache.py`         |
-| Feature Flags   | `/api/admin/feature-flags` | Feature toggle management         | `admin_feature_flags.py` |
-| Health          | `/health`, `/ready`        | Service health checks             | `health.py`              |
-| Metrics         | `/metrics`                 | Prometheus metrics                | `metrics.py`             |
+| Group           | Prefix                     | Description                       | Module                         |
+| --------------- | -------------------------- | --------------------------------- | ------------------------------ |
+| Authentication  | `/api/auth`                | Login, register, token management | `auth.py`                      |
+| OAuth           | `/api/auth/oauth`          | OAuth2 provider integration       | `auth_oauth.py`                |
+| Users           | `/api/users`               | User profile and admin operations | `users.py`                     |
+| Conversations   | `/conversations`           | Chat sessions and branching       | `conversations.py`             |
+| Folders         | `/api/folders`             | Conversation organization         | `folders.py`                   |
+| Attachments     | `/api/attachments`         | File attachments                  | `attachments.py`               |
+| Export          | `/api/export`              | Conversation/data export          | `export.py`                    |
+| Sharing         | `/api/sharing`             | Share conversations               | `sharing.py`                   |
+| Voice           | `/api/voice`               | Voice session management          | `voice.py`                     |
+| Voice Pipeline  | `/ws/voice/thinker-talker` | Thinker-Talker WebSocket          | `thinker_talker_ws_handler.py` |
+| Real-time       | `/api/realtime`            | WebSocket connections             | `realtime.py`                  |
+| Medical AI      | `/api/medical`             | Medical queries and RAG           | `medical_ai.py`                |
+| External Med    | `/api/external-medical`    | External medical APIs             | `external_medical.py`          |
+| Clinical        | `/api/clinical`            | Clinical context                  | `clinical_context.py`          |
+| Advanced Search | `/api/search`              | Advanced search features          | `advanced_search.py`           |
+| Integrations    | `/api/integrations`        | Third-party integrations          | `integrations.py`              |
+| Admin Panel     | `/api/admin/panel`         | Dashboard, metrics, audit logs    | `admin_panel.py`               |
+| Knowledge Base  | `/api/admin/kb`            | Document management               | `admin_kb.py`                  |
+| Cache           | `/api/admin/cache`         | Cache statistics and control      | `admin_cache.py`               |
+| Feature Flags   | `/api/admin/feature-flags` | Feature toggle management         | `admin_feature_flags.py`       |
+| Health          | `/health`, `/ready`        | Service health checks             | `health.py`                    |
+| Metrics         | `/metrics`                 | Prometheus metrics                | `metrics.py`                   |
 
 ### OpenAPI Specification
 

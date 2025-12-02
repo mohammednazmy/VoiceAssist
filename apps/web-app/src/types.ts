@@ -3,7 +3,7 @@
 // publicationYear, snippet, relevanceScore
 export interface Citation {
   id: string;
-  source?: "kb" | "url" | "pubmed" | "doi"; // Added for backward compatibility with CitationDisplay
+  source?: "kb" | "url" | "pubmed" | "doi" | "openevidence"; // Added for backward compatibility with CitationDisplay
   sourceType?:
     | "textbook"
     | "journal"

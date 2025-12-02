@@ -114,6 +114,26 @@ export function AdminLayoutWithRouter({ children }: LayoutProps) {
           <div className="mt-3">
             <LocaleSwitcher languages={supportedLanguages} />
           </div>
+          {/* Back to VoiceAssist link */}
+          <a
+            href={import.meta.env.VITE_APP_URL || "https://dev.asimo.io"}
+            className="mt-3 flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+              />
+            </svg>
+            Back to VoiceAssist
+          </a>
         </div>
 
         <nav className="flex-1 text-sm overflow-y-auto">
@@ -122,6 +142,12 @@ export function AdminLayoutWithRouter({ children }: LayoutProps) {
           </NavLink>
           <NavLink to="/users" className={navLinkClass}>
             👥 {t("nav.users")}
+          </NavLink>
+          <NavLink to="/conversations" className={navLinkClass}>
+            💬 {t("nav.conversations", "Conversations")}
+          </NavLink>
+          <NavLink to="/clinical-contexts" className={navLinkClass}>
+            🏥 {t("nav.clinicalContexts", "Clinical Contexts")}
           </NavLink>
           <NavLink to="/knowledge-base" className={navLinkClass}>
             📚 {t("nav.knowledge")}
@@ -165,6 +191,41 @@ export function AdminLayoutWithRouter({ children }: LayoutProps) {
         </nav>
 
         <div className="border-t border-slate-800 p-4 space-y-2">
+          {/* Documentation link */}
+          <a
+            href={import.meta.env.VITE_DOCS_URL || "https://docs.asimo.io"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
+              />
+            </svg>
+            Documentation
+            <svg
+              className="w-3 h-3 opacity-50"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+              />
+            </svg>
+          </a>
           <div className="text-xs text-slate-400">
             Logged in as:
             <div className="mt-1 font-medium text-slate-300 truncate">

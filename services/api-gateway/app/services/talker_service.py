@@ -19,7 +19,9 @@ from typing import AsyncIterator, Awaitable, Callable, Dict, List, Optional
 
 from app.core.logging import get_logger
 from app.services.elevenlabs_service import ElevenLabsService, elevenlabs_service
-from app.services.sentence_chunker import ChunkerConfig, SentenceChunker
+from app.services.sentence_chunker import AdaptiveChunkerConfig, ChunkerConfig, SentenceChunker
+from app.services.ssml_processor import SSMLProcessor, VoiceStyle
+from app.services.tts.quality_presets import QualityPreset, get_preset_config
 
 logger = get_logger(__name__)
 
@@ -172,6 +174,35 @@ class VoiceConfig:
     style: float = 0.08  # Lower for more natural, less dramatic speech
     use_speaker_boost: bool = True
     output_format: str = "pcm_24000"  # Raw PCM for low-latency streaming playback
+
+    # SSML processing for natural pauses
+    enable_ssml: bool = True  # Enable SSML break tags for natural rhythm
+    voice_style: VoiceStyle = VoiceStyle.CONVERSATIONAL  # Affects pause durations
+
+    # Quality preset (overrides individual settings when set)
+    quality_preset: Optional[QualityPreset] = None
+
+    def apply_preset(self, preset: QualityPreset) -> "VoiceConfig":
+        """
+        Apply a quality preset to this config.
+
+        Returns a new VoiceConfig with preset values applied.
+        """
+        preset_config = get_preset_config(preset)
+
+        return VoiceConfig(
+            provider=self.provider,
+            voice_id=self.voice_id,
+            model_id=self.model_id,
+            stability=preset_config.stability,
+            similarity_boost=preset_config.similarity_boost,
+            style=preset_config.style_exaggeration,
+            use_speaker_boost=self.use_speaker_boost,
+            output_format=self.output_format,
+            enable_ssml=preset_config.enable_ssml,
+            voice_style=preset_config.voice_style,
+            quality_preset=preset,
+        )
 
 
 @dataclass
@@ -423,20 +454,44 @@ class TalkerSession:
         self._config = config
         self._on_audio_chunk = on_audio_chunk
 
-        # Sentence-level chunking (optimized for natural speech)
-        # Larger chunks = fewer TTS calls = more consistent voice
-        # Trade-off: slightly higher latency to first audio, but much more natural
-        self._chunker = SentenceChunker(
-            ChunkerConfig(
-                min_chunk_chars=40,  # Ensure meaningful phrases (was 15)
-                optimal_chunk_chars=120,  # Full sentences for natural prosody (was 50)
-                max_chunk_chars=200,  # Allow complete thoughts (was 80)
+        # Get adaptive chunking config from quality preset (if set) or use defaults
+        if config.quality_preset:
+            preset_config = get_preset_config(config.quality_preset)
+            adaptive_config = preset_config.adaptive_chunking
+            self._audio_chunk_size = preset_config.audio_chunk_size
+        else:
+            # Default adaptive config (BALANCED preset behavior)
+            adaptive_config = AdaptiveChunkerConfig(
+                first_chunk_min=20,
+                first_chunk_optimal=30,
+                first_chunk_max=50,
+                subsequent_min=40,
+                subsequent_optimal=120,
+                subsequent_max=200,
+                chunks_before_natural=1,
+                enabled=True,
             )
+            self._audio_chunk_size = 8192  # Default chunk size
+
+        # Adaptive chunking for optimal TTFA AND naturalness
+        # Strategy: Small first chunk for fast time-to-first-audio (~150ms),
+        # then larger natural chunks for better prosody after first audio plays.
+        self._chunker = SentenceChunker(
+            config=ChunkerConfig(
+                min_chunk_chars=40,  # Fallback when adaptive is disabled
+                optimal_chunk_chars=120,
+                max_chunk_chars=200,
+            ),
+            adaptive_config=adaptive_config,
         )
 
         # Markdown-aware buffer for TTS
         # Accumulates tokens to detect and strip markdown before chunking
         self._markdown_buffer = ""
+
+        # SSML processor for natural speech pauses
+        self._ssml_processor = SSMLProcessor() if config.enable_ssml else None
+        self._voice_style = config.voice_style
 
         # Voice continuity tracking
         # Store previous sentence text to pass as context for consistent voice
@@ -608,6 +663,10 @@ class TalkerSession:
             logger.debug(f"Skipping empty TTS text (original: {sentence[:50]}...)")
             return
 
+        # Apply SSML processing for natural pauses (if enabled)
+        if self._ssml_processor:
+            tts_text = self._ssml_processor.process(tts_text, style=self._voice_style)
+
         sentence_idx = self._sentence_index
         self._sentence_index += 1
         self._metrics.sentences_processed += 1
@@ -631,7 +690,7 @@ class TalkerSession:
                     similarity_boost=self._config.similarity_boost,
                     style=self._config.style,
                     use_speaker_boost=self._config.use_speaker_boost,
-                    chunk_size=8192,  # Large chunks (~170ms) for smooth gapless playback
+                    chunk_size=self._audio_chunk_size,  # Configurable via quality preset
                     previous_text=self._previous_text,  # Context for voice continuity
                 ):
                     if self._state == TalkerState.CANCELLED:

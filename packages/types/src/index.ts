@@ -1029,6 +1029,338 @@ export interface CacheInvalidateResult {
 }
 
 // ============================================================================
+// Admin Conversations Types
+// ============================================================================
+
+export interface AdminConversation {
+  id: string;
+  userId: string;
+  userEmail?: string;
+  title: string;
+  messageCount: number;
+  branchCount: number;
+  model?: string;
+  folderName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminConversationsResponse {
+  conversations: AdminConversation[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminMessage {
+  id: string;
+  sessionId: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  createdAt: string;
+  tokensUsed?: number;
+  model?: string;
+  branchId?: string;
+  parentMessageId?: string;
+  attachments?: AdminAttachment[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface AdminMessagesResponse {
+  messages: AdminMessage[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminConversationExport {
+  content: string;
+  format: "json" | "markdown";
+}
+
+// ============================================================================
+// Admin Clinical Contexts Types
+// ============================================================================
+
+export interface AdminClinicalContext {
+  id: string;
+  userId: string;
+  userEmail?: string;
+  sessionId?: string;
+  createdAt: string;
+  lastUpdated: string;
+  /** Demographics summary (age, gender) - always visible */
+  demographicsSummary?: string;
+  /** Medication count - always visible */
+  medicationsCount: number;
+  /** Allergies count - always visible */
+  allergiesCount: number;
+  /** Problems count - always visible */
+  problemsCount: number;
+  /** Full context data - only when includePhi is true */
+  fullContext?: ClinicalContext;
+}
+
+export interface AdminClinicalContextsResponse {
+  contexts: AdminClinicalContext[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminClinicalContextStats {
+  totalContexts: number;
+  activeContexts24h: number;
+  avgMedicationsPerContext: number;
+  avgAllergiesPerContext: number;
+  avgProblemsPerContext: number;
+  contextsByDay: Array<{
+    date: string;
+    count: number;
+  }>;
+}
+
+export interface AdminPHIAccessLog {
+  id: string;
+  adminUserId: string;
+  adminEmail: string;
+  contextId: string;
+  accessedAt: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+export interface AdminPHIAuditResponse {
+  logs: AdminPHIAccessLog[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+// ============================================================================
+// Admin Attachments Types
+// ============================================================================
+
+export interface AdminAttachment {
+  id: string;
+  messageId: string;
+  userId: string;
+  userEmail?: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  mimeType?: string;
+  uploadedAt: string;
+}
+
+export interface AdminAttachmentsResponse {
+  attachments: AdminAttachment[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminAttachmentStats {
+  totalAttachments: number;
+  totalSizeBytes: number;
+  byFileType: Record<string, { count: number; sizeBytes: number }>;
+  uploadsByDay: Array<{
+    date: string;
+    count: number;
+    sizeBytes: number;
+  }>;
+}
+
+// ============================================================================
+// Admin Folders Types
+// ============================================================================
+
+export interface AdminFolder {
+  id: string;
+  userId: string;
+  userEmail?: string;
+  name: string;
+  color?: string;
+  icon?: string;
+  parentFolderId?: string;
+  conversationCount: number;
+  depth: number;
+  createdAt: string;
+}
+
+export interface AdminFoldersResponse {
+  folders: AdminFolder[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminFolderStats {
+  totalFolders: number;
+  avgConversationsPerFolder: number;
+  maxDepth: number;
+  foldersWithSubfolders: number;
+}
+
+// ============================================================================
+// Admin Voice & TT Pipeline Types
+// ============================================================================
+
+export interface AdminVoiceSession {
+  sessionId: string;
+  userId: string;
+  userEmail?: string;
+  connectedAt: string;
+  sessionType: "text" | "voice" | "realtime";
+  clientInfo: Record<string, unknown>;
+  messagesCount: number;
+  lastActivity?: string;
+}
+
+export interface AdminVoiceSessionDetail extends AdminVoiceSession {
+  conversationId?: string;
+  voice?: string;
+  language?: string;
+  durationSeconds?: number;
+  audioFormat?: string;
+}
+
+export interface AdminVoiceSessionsResponse {
+  sessions: AdminVoiceSession[];
+  total: number;
+}
+
+export interface AdminVoiceMetrics {
+  activeSessions: number;
+  totalSessions24h: number;
+  avgSessionDurationSec: number;
+  sttLatencyP95Ms: number;
+  ttsLatencyP95Ms: number;
+  errorRate24h: number;
+  connectionsByType: Record<string, number>;
+  timestamp: string;
+}
+
+export interface AdminVoiceHealth {
+  status: "healthy" | "degraded" | "unhealthy";
+  realtimeApiEnabled: boolean;
+  openaiApiConfigured: boolean;
+  redisConnected: boolean;
+  activeConnections: number;
+  details: Record<string, unknown>;
+  timestamp: string;
+}
+
+export interface AdminVoiceConfig {
+  defaultVoice: string;
+  defaultLanguage: string;
+  vadEnabled: boolean;
+  vadThreshold: number;
+  maxSessionDurationSec: number;
+  sttProvider: string;
+  ttsProvider: string;
+  realtimeEnabled: boolean;
+  timestamp: string;
+}
+
+// TT Pipeline Types
+export type TTSessionState = "idle" | "listening" | "thinking" | "speaking";
+
+export interface AdminTTSession {
+  sessionId: string;
+  userId: string;
+  userEmail?: string;
+  state: TTSessionState;
+  connectedAt: string;
+  lastActivity: string;
+  thinkerModel?: string;
+  talkerVoice?: string;
+  messagesProcessed: number;
+  avgResponseTimeMs?: number;
+}
+
+export interface AdminTTSessionsResponse {
+  sessions: AdminTTSession[];
+  total: number;
+}
+
+export interface AdminTTContext {
+  contextId: string;
+  sessionId: string;
+  userId: string;
+  createdAt: string;
+  lastAccessed: string;
+  messageCount: number;
+  tokenCount: number;
+  expiresAt: string;
+}
+
+export interface AdminTTContextsResponse {
+  contexts: AdminTTContext[];
+  total: number;
+}
+
+export interface AdminQualityPreset {
+  name: string;
+  description: string;
+  ttsModel: string;
+  voiceId: string;
+  speed: number;
+  isDefault: boolean;
+}
+
+export interface AdminQualityPresetsResponse {
+  presets: AdminQualityPreset[];
+}
+
+export interface AdminTTAnalytics {
+  totalToolCalls24h: number;
+  avgToolLatencyMs: number;
+  toolSuccessRate: number;
+  toolsByFrequency: Record<string, number>;
+  kbCalls24h: number;
+  kbAvgLatencyMs: number;
+}
+
+export interface AdminContextCleanupResult {
+  cleanedCount: number;
+}
+
+// ============================================================================
+// Admin Real-time Event Types
+// ============================================================================
+
+export type AdminEventType =
+  | "session.connected"
+  | "session.disconnected"
+  | "conversation.created"
+  | "conversation.updated"
+  | "message.created"
+  | "clinical_context.updated"
+  | "attachment.uploaded"
+  | "phi.accessed"
+  | "voice.session_started"
+  | "voice.session_ended"
+  | "tt.state_changed"
+  | "system.alert";
+
+export interface AdminRealtimeEvent {
+  type: AdminEventType;
+  timestamp: string;
+  userId?: string;
+  userEmail?: string;
+  sessionId?: string;
+  resourceId?: string;
+  data?: Record<string, unknown>;
+}
+
+export interface AdminEventSubscription {
+  eventTypes: AdminEventType[];
+  userFilter?: string[];
+  callback: (event: AdminRealtimeEvent) => void;
+}
+
+// ============================================================================
 // Utility Types
 // ============================================================================
 

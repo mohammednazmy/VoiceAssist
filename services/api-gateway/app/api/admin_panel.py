@@ -1433,7 +1433,8 @@ async def admin_websocket(websocket: WebSocket):
     Provides:
     - Heartbeat/ping-pong to keep connection alive
     - Real-time metric updates (every 10 seconds)
-    - System event notifications
+    - System event notifications via Redis pub/sub
+    - Live events (sessions, conversations, voice, etc.)
     """
     await websocket.accept()
 
@@ -1454,8 +1455,9 @@ async def admin_websocket(websocket: WebSocket):
     )
 
     try:
-        # Start background task for sending periodic updates
+        # Start background tasks
         update_task = asyncio.create_task(_send_periodic_updates(websocket, connection_id))
+        redis_task = asyncio.create_task(_subscribe_to_admin_events(websocket, connection_id))
 
         # Main message loop
         while True:
@@ -1466,6 +1468,19 @@ async def admin_websocket(websocket: WebSocket):
                 if data.get("type") == "ping":
                     await websocket.send_json(
                         {"type": "pong", "payload": {"timestamp": datetime.now(timezone.utc).isoformat() + "Z"}}
+                    )
+
+                # Handle event subscription
+                elif data.get("type") == "subscribe":
+                    event_types = data.get("payload", {}).get("event_types", [])
+                    await websocket.send_json(
+                        {
+                            "type": "subscribed",
+                            "payload": {
+                                "event_types": event_types,
+                                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+                            },
+                        }
                     )
 
             except asyncio.TimeoutError:
@@ -1481,6 +1496,7 @@ async def admin_websocket(websocket: WebSocket):
         logger.error(f"Admin WebSocket error for {connection_id}: {e}")
     finally:
         update_task.cancel()
+        redis_task.cancel()
         _admin_ws_connections.pop(connection_id, None)
         register_websocket_session_cleanup(connection_id)
 
@@ -1517,6 +1533,56 @@ async def _send_periodic_updates(websocket: WebSocket, connection_id: str):
 
     except asyncio.CancelledError:
         pass
+
+
+async def _subscribe_to_admin_events(websocket: WebSocket, connection_id: str):
+    """Subscribe to Redis pub/sub for real-time admin events."""
+    from app.services.admin_event_publisher import ADMIN_EVENTS_CHANNEL
+
+    try:
+        redis = redis_client
+        if not redis:
+            logger.warning(f"Redis not available for admin events subscription: {connection_id}")
+            return
+
+        # Create a pubsub connection
+        pubsub = redis.pubsub()
+        await pubsub.subscribe(ADMIN_EVENTS_CHANNEL)
+
+        logger.debug(f"Admin WebSocket {connection_id} subscribed to events channel")
+
+        # Listen for messages
+        async for message in pubsub.listen():
+            if websocket.client_state != WebSocketState.CONNECTED:
+                break
+
+            if message["type"] == "message":
+                try:
+                    # Parse the event data
+                    event_data = json.loads(message["data"])
+
+                    # Forward to WebSocket client
+                    await websocket.send_json(
+                        {
+                            "type": "admin_event",
+                            "payload": event_data,
+                        }
+                    )
+                except json.JSONDecodeError:
+                    logger.warning(f"Invalid JSON in admin event: {message['data']}")
+                except Exception as e:
+                    logger.warning(f"Failed to forward admin event to {connection_id}: {e}")
+
+    except asyncio.CancelledError:
+        pass
+    except Exception as e:
+        logger.error(f"Error in admin events subscription for {connection_id}: {e}")
+    finally:
+        try:
+            await pubsub.unsubscribe(ADMIN_EVENTS_CHANNEL)
+            await pubsub.close()
+        except Exception:
+            pass
 
 
 def register_websocket_session_cleanup(session_id: str):

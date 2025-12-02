@@ -15,7 +15,7 @@ import { useAuth } from "../../hooks/useAuth";
 interface VoiceInfo {
   voice_id: string;
   name: string;
-  provider: "openai" | "elevenlabs";
+  provider: string; // "openai" | "elevenlabs" or other providers
   category?: string;
   preview_url?: string;
   description?: string;

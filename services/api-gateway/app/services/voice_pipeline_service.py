@@ -391,15 +391,10 @@ class VoicePipelineSession:
         else:
             self._final_transcript = text
 
-        await self._on_message(
-            PipelineMessage(
-                type="transcript.delta",
-                data={
-                    "text": text,
-                    "is_final": True,
-                },
-            )
-        )
+        # NOTE: Don't emit transcript.delta with is_final=True here.
+        # The transcript.complete message in _process_transcript() is the
+        # authoritative final transcript. Emitting both causes duplicate
+        # messages in the chat UI.
 
     async def _handle_speech_end(self) -> None:
         """Handle speech endpoint detection from STT."""

@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, Dict, List, Literal, Optional
 
@@ -1151,6 +1151,317 @@ async def get_voice_feature_flags(
     data = {
         "flags": flags,
         "total": len(flags),
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+    }
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response(data, trace_id=trace_id)
+
+
+# ============================================================================
+# Thinker-Talker Pipeline Endpoints
+# ============================================================================
+
+
+class TTSessionInfo(BaseModel):
+    """Thinker-Talker session information."""
+
+    session_id: str
+    user_id: str
+    user_email: Optional[str] = None
+    state: str
+    conversation_id: Optional[str] = None
+    message_count: int = 0
+    tool_calls_count: int = 0
+    created_at: str
+    last_activity: Optional[str] = None
+
+
+class TTContextInfo(BaseModel):
+    """Cached conversation context information."""
+
+    conversation_id: str
+    user_id: str
+    message_count: int
+    last_activity: str
+    expires_at: Optional[str] = None
+
+
+class QualityPresetInfo(BaseModel):
+    """TTS quality preset configuration."""
+
+    name: str
+    model: str
+    bitrate: Optional[str] = None
+    sample_rate: Optional[int] = None
+    description: Optional[str] = None
+    enabled: bool = True
+
+
+class TTAnalytics(BaseModel):
+    """Thinker-Talker analytics data."""
+
+    period: str
+    total_sessions: int = 0
+    unique_users: int = 0
+    tool_calls_by_name: Dict[str, int] = Field(default_factory=dict)
+    avg_response_latency_ms: float = 0.0
+    avg_tool_latency_ms: float = 0.0
+    success_rate: float = 100.0
+
+
+# Redis keys for TT tracking
+REDIS_TT_SESSIONS_KEY = "voiceassist:tt:sessions"
+REDIS_TT_CONTEXTS_KEY = "voiceassist:tt:contexts"
+REDIS_TT_ANALYTICS_KEY = "voiceassist:tt:analytics"
+
+
+@router.get("/tt-sessions")
+async def get_tt_sessions(
+    request: Request,
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+    limit: int = Query(50, ge=1, le=200),
+) -> Dict:
+    """Get active Thinker-Talker pipeline sessions.
+
+    Shows sessions using the new TT voice pipeline (not legacy Realtime API).
+    """
+    sessions = []
+
+    try:
+        # Get TT sessions from Redis
+        tt_sessions = redis_client.hgetall(REDIS_TT_SESSIONS_KEY)
+        for sid, data in tt_sessions.items():
+            if isinstance(sid, bytes):
+                sid = sid.decode("utf-8")
+            if isinstance(data, bytes):
+                data = data.decode("utf-8")
+            session_data = json.loads(data) if isinstance(data, str) else data
+            sessions.append(
+                {
+                    "session_id": sid,
+                    "user_id": session_data.get("user_id", ""),
+                    "user_email": session_data.get("user_email"),
+                    "state": session_data.get("state", "unknown"),
+                    "conversation_id": session_data.get("conversation_id"),
+                    "message_count": session_data.get("message_count", 0),
+                    "tool_calls_count": session_data.get("tool_calls_count", 0),
+                    "created_at": session_data.get("created_at", ""),
+                    "last_activity": session_data.get("last_activity"),
+                }
+            )
+    except Exception as e:
+        logger.warning(f"Failed to get TT sessions from Redis: {e}")
+
+    # Sort by created_at descending and limit
+    sessions.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+    sessions = sessions[:limit]
+
+    data = {
+        "sessions": sessions,
+        "total": len(sessions),
+        "pipeline": "thinker-talker",
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+    }
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response(data, trace_id=trace_id)
+
+
+@router.get("/contexts")
+async def get_tt_contexts(
+    request: Request,
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+    limit: int = Query(50, ge=1, le=200),
+) -> Dict:
+    """Get cached conversation contexts from ThinkerService.
+
+    Shows active conversation contexts that are cached for voice mode.
+    """
+    contexts = []
+
+    try:
+        # Get context info from Redis
+        ctx_data = redis_client.hgetall(REDIS_TT_CONTEXTS_KEY)
+        for conv_id, data in ctx_data.items():
+            if isinstance(conv_id, bytes):
+                conv_id = conv_id.decode("utf-8")
+            if isinstance(data, bytes):
+                data = data.decode("utf-8")
+            context_data = json.loads(data) if isinstance(data, str) else data
+            contexts.append(
+                {
+                    "conversation_id": conv_id,
+                    "user_id": context_data.get("user_id", ""),
+                    "message_count": context_data.get("message_count", 0),
+                    "last_activity": context_data.get("last_activity", ""),
+                    "expires_at": context_data.get("expires_at"),
+                }
+            )
+    except Exception as e:
+        logger.warning(f"Failed to get TT contexts from Redis: {e}")
+
+    # Sort by last_activity descending
+    contexts.sort(key=lambda x: x.get("last_activity", ""), reverse=True)
+    contexts = contexts[:limit]
+
+    data = {
+        "contexts": contexts,
+        "total": len(contexts),
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+    }
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response(data, trace_id=trace_id)
+
+
+@router.post("/contexts/cleanup")
+async def cleanup_tt_contexts(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_user),
+    max_age_minutes: int = Query(60, ge=5, le=1440),
+) -> Dict:
+    """Cleanup expired conversation contexts.
+
+    Admin only. Removes contexts that haven't been accessed recently.
+    """
+    ensure_admin_privileges(current_admin_user)
+
+    cleaned = 0
+    cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=max_age_minutes)
+
+    try:
+        ctx_data = redis_client.hgetall(REDIS_TT_CONTEXTS_KEY)
+        for conv_id, data in ctx_data.items():
+            if isinstance(conv_id, bytes):
+                conv_id = conv_id.decode("utf-8")
+            if isinstance(data, bytes):
+                data = data.decode("utf-8")
+            context_data = json.loads(data) if isinstance(data, str) else data
+
+            last_activity = context_data.get("last_activity")
+            if last_activity:
+                try:
+                    last_dt = datetime.fromisoformat(last_activity.replace("Z", "+00:00"))
+                    if last_dt < cutoff_time:
+                        redis_client.hdel(REDIS_TT_CONTEXTS_KEY, conv_id)
+                        cleaned += 1
+                except Exception:
+                    pass
+    except Exception as e:
+        logger.warning(f"Failed to cleanup TT contexts: {e}")
+
+    # Log audit event
+    log_audit_event(
+        db=db,
+        action="voice.tt.cleanup",
+        user_id=str(current_admin_user.id),
+        user_email=current_admin_user.email,
+        resource_type="tt_contexts",
+        resource_id="all",
+        success=True,
+        details=json.dumps({"max_age_minutes": max_age_minutes, "cleaned_count": cleaned}),
+        request=request,
+    )
+
+    data = {
+        "cleaned": cleaned,
+        "max_age_minutes": max_age_minutes,
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+    }
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response(data, trace_id=trace_id)
+
+
+@router.get("/quality-presets")
+async def get_quality_presets(
+    request: Request,
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Get TTS quality presets configuration.
+
+    Shows available quality presets for the Talker service.
+    """
+    # Default quality presets (would be loaded from config in production)
+    presets = [
+        {
+            "name": "standard",
+            "model": "tts-1",
+            "bitrate": "128k",
+            "sample_rate": 24000,
+            "description": "Fast synthesis, good quality",
+            "enabled": True,
+        },
+        {
+            "name": "high_quality",
+            "model": "tts-1-hd",
+            "bitrate": "192k",
+            "sample_rate": 48000,
+            "description": "Higher quality, slower synthesis",
+            "enabled": True,
+        },
+        {
+            "name": "realtime",
+            "model": "gpt-4o-realtime-preview",
+            "bitrate": None,
+            "sample_rate": 24000,
+            "description": "Real-time streaming, lowest latency",
+            "enabled": realtime_voice_service.is_enabled(),
+        },
+    ]
+
+    data = {
+        "presets": presets,
+        "default_preset": "standard",
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+    }
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response(data, trace_id=trace_id)
+
+
+@router.get("/analytics/tools")
+async def get_tt_tool_analytics(
+    request: Request,
+    period: str = Query("24h", description="Time period: 24h, 7d, or 30d"),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Get tool call analytics for the Thinker-Talker pipeline.
+
+    Shows which tools are being called most frequently in voice mode.
+    """
+    valid_periods = ["24h", "7d", "30d"]
+    if period not in valid_periods:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid period. Must be one of: {', '.join(valid_periods)}",
+        )
+
+    # Get analytics from Redis cache
+    analytics_key = f"{REDIS_TT_ANALYTICS_KEY}:tools:{period}"
+    try:
+        cached_data = redis_client.get(analytics_key)
+        if cached_data:
+            if isinstance(cached_data, bytes):
+                cached_data = cached_data.decode("utf-8")
+            data = json.loads(cached_data)
+            data["period"] = period
+            data["timestamp"] = datetime.now(timezone.utc).isoformat() + "Z"
+            trace_id = getattr(request.state, "trace_id", None)
+            return success_response(data, trace_id=trace_id)
+    except Exception as e:
+        logger.warning(f"Failed to get TT tool analytics from cache: {e}")
+
+    # Return default analytics
+    data = {
+        "period": period,
+        "total_tool_calls": 0,
+        "tool_calls_by_name": {},
+        "avg_tool_latency_ms": 0.0,
+        "success_rate": 100.0,
+        "top_tools": [],
         "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
     }
 

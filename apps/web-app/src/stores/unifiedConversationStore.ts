@@ -175,6 +175,8 @@ interface UnifiedConversationState {
   removeMessage: (id: string) => void;
   /** Clear all messages */
   clearMessages: () => void;
+  /** Set all messages at once (for batch loading, prevents multiple re-renders) */
+  setMessages: (messages: UnifiedMessage[]) => void;
   /** Set typing state */
   setTyping: (isTyping: boolean) => void;
   /** Update message with streaming content */
@@ -312,6 +314,14 @@ export const useUnifiedConversationStore = create<UnifiedConversationState>()(
       const id =
         message.id ??
         `msg-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+      // Prevent duplicate messages with the same ID
+      const existingMessages = get().messages;
+      if (existingMessages.some((m) => m.id === id)) {
+        // Message already exists, return the existing one
+        return existingMessages.find((m) => m.id === id) as UnifiedMessage;
+      }
+
       const newMessage: UnifiedMessage = {
         ...message,
         id,
@@ -343,6 +353,10 @@ export const useUnifiedConversationStore = create<UnifiedConversationState>()(
 
     clearMessages: () => {
       set({ messages: [] });
+    },
+
+    setMessages: (messages) => {
+      set({ messages });
     },
 
     setTyping: (isTyping) => {

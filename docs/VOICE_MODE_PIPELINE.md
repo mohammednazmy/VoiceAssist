@@ -19,7 +19,56 @@ relatedServices: ["api-gateway", "web-app"]
 
 This document describes the unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy. It serves as the canonical reference for developers working on real-time voice features.
 
+## Voice Pipeline Modes
+
+VoiceAssist supports **two voice pipeline modes**:
+
+| Mode                             | Description                    | Best For                                       |
+| -------------------------------- | ------------------------------ | ---------------------------------------------- |
+| **Thinker-Talker** (Recommended) | Local STT → LLM → TTS pipeline | Full tool support, unified context, custom TTS |
+| **OpenAI Realtime** (Legacy)     | Direct OpenAI Realtime API     | Quick setup, minimal backend changes           |
+
+### Thinker-Talker Pipeline (Primary)
+
+The Thinker-Talker pipeline is the recommended approach, providing:
+
+- **Unified conversation context** between voice and chat modes
+- **Full tool/RAG support** in voice interactions
+- **Custom TTS** via ElevenLabs with premium voices
+- **Lower cost** per interaction
+
+**Documentation:** [THINKER_TALKER_PIPELINE.md](THINKER_TALKER_PIPELINE.md)
+
+```
+[Audio] → [Deepgram STT] → [GPT-4o Thinker] → [ElevenLabs TTS] → [Audio Out]
+              │                    │                    │
+         Transcripts          Tool Calls           Audio Chunks
+              │                    │                    │
+              └───────── WebSocket Handler ──────────────┘
+```
+
+### OpenAI Realtime API (Legacy)
+
+The original implementation using OpenAI's Realtime API directly. Still supported for backward compatibility.
+
+---
+
 ## Implementation Status
+
+### Thinker-Talker Components
+
+| Component             | Status   | Location                                                        |
+| --------------------- | -------- | --------------------------------------------------------------- |
+| ThinkerService        | **Live** | `app/services/thinker_service.py`                               |
+| TalkerService         | **Live** | `app/services/talker_service.py`                                |
+| VoicePipelineService  | **Live** | `app/services/voice_pipeline_service.py`                        |
+| T/T WebSocket Handler | **Live** | `app/services/thinker_talker_websocket_handler.py`              |
+| SentenceChunker       | **Live** | `app/services/sentence_chunker.py`                              |
+| Frontend T/T hook     | **Live** | `apps/web-app/src/hooks/useThinkerTalkerSession.ts`             |
+| T/T Audio Playback    | **Live** | `apps/web-app/src/hooks/useTTAudioPlayback.ts`                  |
+| T/T Voice Panel       | **Live** | `apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx` |
+
+### OpenAI Realtime Components (Legacy)
 
 | Component                  | Status      | Location                                               |
 | -------------------------- | ----------- | ------------------------------------------------------ |

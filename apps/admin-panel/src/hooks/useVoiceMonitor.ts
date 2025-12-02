@@ -54,6 +54,49 @@ export interface VoiceConfig {
   timestamp: string;
 }
 
+// TT Pipeline Types
+export interface TTSession {
+  session_id: string;
+  user_id: string;
+  user_email?: string;
+  state: "idle" | "listening" | "thinking" | "speaking";
+  connected_at: string;
+  last_activity: string;
+  thinker_model?: string;
+  talker_voice?: string;
+  messages_processed: number;
+  avg_response_time_ms?: number;
+}
+
+export interface TTContext {
+  context_id: string;
+  session_id: string;
+  user_id: string;
+  created_at: string;
+  last_accessed: string;
+  message_count: number;
+  token_count: number;
+  expires_at: string;
+}
+
+export interface QualityPreset {
+  name: string;
+  description: string;
+  tts_model: string;
+  voice_id: string;
+  speed: number;
+  is_default: boolean;
+}
+
+export interface TTAnalytics {
+  total_tool_calls_24h: number;
+  avg_tool_latency_ms: number;
+  tool_success_rate: number;
+  tools_by_frequency: Record<string, number>;
+  kb_calls_24h: number;
+  kb_avg_latency_ms: number;
+}
+
 interface UseVoiceMonitorOptions {
   refreshIntervalMs?: number;
   autoRefresh?: boolean;
@@ -64,14 +107,21 @@ interface UseVoiceMonitorState {
   metrics: VoiceMetrics | null;
   health: VoiceHealth | null;
   config: VoiceConfig | null;
+  // TT Pipeline data
+  ttSessions: TTSession[];
+  ttContexts: TTContext[];
+  qualityPresets: QualityPreset[];
+  ttAnalytics: TTAnalytics | null;
   loading: boolean;
   error: string | null;
   lastUpdated: string | null;
   refreshSessions: () => Promise<void>;
   refreshMetrics: () => Promise<void>;
   refreshHealth: () => Promise<void>;
+  refreshTTPipeline: () => Promise<void>;
   refreshAll: () => Promise<void>;
   disconnectSession: (sessionId: string) => Promise<boolean>;
+  cleanupContexts: () => Promise<number>;
 }
 
 const DEFAULT_REFRESH_MS = 10000;
@@ -86,6 +136,11 @@ export function useVoiceMonitor(
   const [metrics, setMetrics] = useState<VoiceMetrics | null>(null);
   const [health, setHealth] = useState<VoiceHealth | null>(null);
   const [config, setConfig] = useState<VoiceConfig | null>(null);
+  // TT Pipeline state
+  const [ttSessions, setTTSessions] = useState<TTSession[]>([]);
+  const [ttContexts, setTTContexts] = useState<TTContext[]>([]);
+  const [qualityPresets, setQualityPresets] = useState<QualityPreset[]>([]);
+  const [ttAnalytics, setTTAnalytics] = useState<TTAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
@@ -131,6 +186,51 @@ export function useVoiceMonitor(
     }
   }, []);
 
+  const refreshTTPipeline = useCallback(async () => {
+    try {
+      const [ttSessionsData, ttContextsData, presetsData, analyticsData] =
+        await Promise.all([
+          fetchAPI<{ sessions: TTSession[]; total: number }>(
+            "/api/admin/voice/tt-sessions",
+          ).catch(() => ({ sessions: [], total: 0 })),
+          fetchAPI<{ contexts: TTContext[]; total: number }>(
+            "/api/admin/voice/contexts",
+          ).catch(() => ({ contexts: [], total: 0 })),
+          fetchAPI<{ presets: QualityPreset[] }>(
+            "/api/admin/voice/quality-presets",
+          ).catch(() => ({ presets: [] })),
+          fetchAPI<TTAnalytics>("/api/admin/voice/analytics/tools").catch(
+            () => null,
+          ),
+        ]);
+
+      setTTSessions(ttSessionsData.sessions);
+      setTTContexts(ttContextsData.contexts);
+      setQualityPresets(presetsData.presets);
+      setTTAnalytics(analyticsData);
+      setLastUpdated(new Date().toISOString());
+    } catch (err) {
+      // TT pipeline errors are non-fatal, just log them
+      console.warn("Failed to load TT pipeline data:", err);
+    }
+  }, []);
+
+  const cleanupContexts = useCallback(async (): Promise<number> => {
+    try {
+      const data = await fetchAPI<{ cleaned_count: number }>(
+        "/api/admin/voice/contexts/cleanup",
+        { method: "POST" },
+      );
+      await refreshTTPipeline();
+      return data.cleaned_count;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to cleanup contexts";
+      setError(message);
+      return 0;
+    }
+  }, [refreshTTPipeline]);
+
   const refreshAll = useCallback(async () => {
     setLoading(true);
     try {
@@ -150,6 +250,9 @@ export function useVoiceMonitor(
       setConfig(configData);
       setLastUpdated(new Date().toISOString());
       setError(null);
+
+      // Also refresh TT pipeline data (non-blocking)
+      refreshTTPipeline().catch(() => {});
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to load voice data";
@@ -157,7 +260,7 @@ export function useVoiceMonitor(
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refreshTTPipeline]);
 
   const disconnectSession = useCallback(
     async (sessionId: string): Promise<boolean> => {
@@ -205,28 +308,40 @@ export function useVoiceMonitor(
       metrics,
       health,
       config,
+      ttSessions,
+      ttContexts,
+      qualityPresets,
+      ttAnalytics,
       loading,
       error,
       lastUpdated,
       refreshSessions,
       refreshMetrics,
       refreshHealth,
+      refreshTTPipeline,
       refreshAll,
       disconnectSession,
+      cleanupContexts,
     }),
     [
       sessions,
       metrics,
       health,
       config,
+      ttSessions,
+      ttContexts,
+      qualityPresets,
+      ttAnalytics,
       loading,
       error,
       lastUpdated,
       refreshSessions,
       refreshMetrics,
       refreshHealth,
+      refreshTTPipeline,
       refreshAll,
       disconnectSession,
+      cleanupContexts,
     ],
   );
 

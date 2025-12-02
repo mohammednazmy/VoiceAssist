@@ -148,7 +148,10 @@ export function UnifiedHeader({
   };
 
   return (
-    <header className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 bg-white">
+    <header
+      className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 bg-white"
+      data-testid="unified-header"
+    >
       {/* Left Section */}
       <div className="flex items-center gap-3">
         {/* Sidebar Toggle - always visible on mobile, only when collapsed on desktop */}

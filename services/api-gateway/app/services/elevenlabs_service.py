@@ -97,6 +97,8 @@ class ElevenLabsService:
     # Model options
     MODEL_MULTILINGUAL_V2 = "eleven_multilingual_v2"
     MODEL_TURBO_V2 = "eleven_turbo_v2"
+    MODEL_TURBO_V2_5 = "eleven_turbo_v2_5"  # Faster turbo model
+    MODEL_FLASH_V2_5 = "eleven_flash_v2_5"  # Fastest model for low latency
     MODEL_MONOLINGUAL_V1 = "eleven_monolingual_v1"
 
     # Output formats
@@ -109,8 +111,10 @@ class ElevenLabsService:
     def __init__(self):
         self.api_key = settings.ELEVENLABS_API_KEY
         self.enabled = bool(self.api_key)
-        self.default_model = self.MODEL_MULTILINGUAL_V2
+        # Use flash model for lowest latency (Phase: Talker Enhancement)
+        self.default_model = self.MODEL_FLASH_V2_5
         self.default_voice_id = "21m00Tcm4TlvDq8ikWAM"  # "Rachel" voice
+        self._connection_warmed = False
 
         # Voice cache (refreshed periodically)
         self._voice_cache: List[ElevenLabsVoice] = []
@@ -123,6 +127,51 @@ class ElevenLabsService:
     def is_enabled(self) -> bool:
         """Check if ElevenLabs is enabled and configured."""
         return self.enabled
+
+    async def warm_connection(self) -> bool:
+        """
+        Pre-warm the HTTP connection to ElevenLabs API.
+
+        Establishes the TCP + TLS connection ahead of time to eliminate
+        cold-start latency on the first TTS request.
+
+        Call this during service startup or when a voice session begins.
+
+        Returns:
+            True if connection was warmed successfully
+        """
+        if not self.enabled:
+            return False
+
+        if self._connection_warmed:
+            return True
+
+        try:
+            client = await self._get_http_client()
+
+            # Make a lightweight request to establish connection
+            # Using the voices endpoint as it's fast and doesn't cost credits
+            response = await client.get(
+                f"{self.BASE_URL}{self.USER_ENDPOINT}",
+                headers={"xi-api-key": self.api_key or ""},
+                timeout=5.0,
+            )
+
+            if response.status_code == 200:
+                self._connection_warmed = True
+                logger.info("ElevenLabs connection warmed successfully")
+                return True
+            else:
+                logger.warning(f"ElevenLabs warm connection returned {response.status_code}")
+                return False
+
+        except Exception as e:
+            logger.warning(f"Failed to warm ElevenLabs connection: {e}")
+            return False
+
+    def is_connection_warmed(self) -> bool:
+        """Check if connection has been pre-warmed."""
+        return self._connection_warmed
 
     async def _get_http_client(self) -> httpx.AsyncClient:
         """Get or create persistent HTTP client."""
@@ -471,6 +520,16 @@ class ElevenLabsService:
         """Get list of available TTS models."""
         return [
             {
+                "id": self.MODEL_FLASH_V2_5,
+                "name": "Flash v2.5",
+                "description": "Fastest model, lowest latency (recommended)",
+            },
+            {
+                "id": self.MODEL_TURBO_V2_5,
+                "name": "Turbo v2.5",
+                "description": "Fast with good quality",
+            },
+            {
                 "id": self.MODEL_MULTILINGUAL_V2,
                 "name": "Multilingual v2",
                 "description": "Best quality, 28 languages, style control",
@@ -478,7 +537,7 @@ class ElevenLabsService:
             {
                 "id": self.MODEL_TURBO_V2,
                 "name": "Turbo v2",
-                "description": "Fast, English-optimized",
+                "description": "Fast, English-optimized (legacy)",
             },
             {
                 "id": self.MODEL_MONOLINGUAL_V1,

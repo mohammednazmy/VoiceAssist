@@ -42,6 +42,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
 
   const loadConversations = useCallback(
     async (page = 1, append = false) => {
+      log.debug(`loadConversations called (page: ${page}, append: ${append})`);
       // Guard against concurrent requests (prevents request storm)
       if (isLoadingRef.current && !append) {
         log.debug(`Skipping load - already loading (page: ${page})`);
@@ -61,6 +62,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
         const response: PaginatedResponse<Conversation> =
           await apiClient.getConversations(page, pageSize);
 
+        log.debug(`Loaded ${response.items.length} conversations from API`);
         totalCountRef.current = response.totalCount;
         setHasMore(page < response.totalPages);
         setCurrentPage(page);
@@ -218,17 +220,27 @@ export function useConversations(options: UseConversationsOptions = {}) {
 
   const deleteConversation = useCallback(
     async (id: string) => {
+      log.debug(`Deleting conversation: ${id}`);
       // Save original state for rollback
       const originalConversations = conversations;
       const deletedConversation = conversations.find((conv) => conv.id === id);
 
       // Optimistically remove
-      setConversations((prev) => prev.filter((conv) => conv.id !== id));
+      log.debug(
+        `Optimistically removing conversation, count before: ${conversations.length}`,
+      );
+      setConversations((prev) => {
+        const newList = prev.filter((conv) => conv.id !== id);
+        log.debug(`After filter, count: ${newList.length}`);
+        return newList;
+      });
 
       try {
         await apiClient.deleteConversation(id);
+        log.debug(`API delete successful for: ${id}`);
       } catch (err: unknown) {
         // Rollback on error
+        log.debug(`API delete failed, rolling back`);
         setConversations(originalConversations);
         const errorMessage = extractErrorMessage(err);
         setError(errorMessage);
@@ -256,7 +268,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
 
     try {
       const result = await apiClient.deleteAllConversations();
-      log.info(`Deleted ${result.deleted_count} conversations`);
+      log.debug(`Deleted ${result.deleted_count} conversations`);
       return result;
     } catch (err: unknown) {
       // Rollback on error

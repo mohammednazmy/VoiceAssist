@@ -70,6 +70,7 @@ export function CollapsibleSidebar({
     deleteConversation,
     deleteAllConversations,
     archiveConversation,
+    reload,
   } = useConversations({
     onError: (message, description) => toast.error(message, description),
   });
@@ -149,9 +150,23 @@ export function CollapsibleSidebar({
       try {
         await deleteConversation(id);
         toast.success("Conversation deleted");
+
         // Navigate away if current conversation was deleted
         if (id === conversationId) {
-          navigate("/chat");
+          // Find another conversation to navigate to (avoid auto-creating new one)
+          const remainingConversations = conversations.filter(
+            (c) => c.id !== id,
+          );
+          if (remainingConversations.length > 0) {
+            // Navigate to the most recent remaining conversation
+            navigate(`/chat/${remainingConversations[0].id}`);
+          } else {
+            // No conversations left, go to empty chat
+            navigate("/chat");
+          }
+        } else {
+          // Only reload if staying on current page (no remount will happen)
+          await reload();
         }
       } catch {
         // Error handled by hook
@@ -179,6 +194,8 @@ export function CollapsibleSidebar({
       toast.success(
         `Deleted ${result.deleted_count} conversation${result.deleted_count !== 1 ? "s" : ""}`,
       );
+      // Force reload to ensure fresh data from backend
+      await reload();
       // Navigate to new chat if we were viewing a conversation
       if (conversationId) {
         navigate("/chat");
@@ -233,6 +250,7 @@ export function CollapsibleSidebar({
     <nav
       className={`${isMobile ? "w-80 max-w-[85vw]" : "w-64"} h-full border-r border-neutral-200 bg-white flex flex-col`}
       aria-label="Conversation history"
+      data-testid="collapsible-sidebar"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100">
@@ -241,6 +259,7 @@ export function CollapsibleSidebar({
           onClick={onToggle}
           className="p-1.5 hover:bg-neutral-100 rounded-lg transition-colors"
           aria-label="Close sidebar"
+          data-testid="sidebar-toggle"
         >
           {isMobile ? (
             <X className="w-5 h-5 text-neutral-500" />
@@ -255,6 +274,7 @@ export function CollapsibleSidebar({
         <button
           onClick={handleNewConversation}
           className="w-full flex items-center gap-2 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          data-testid="new-chat-button"
         >
           <Plus className="w-4 h-4" />
           <span>New Conversation</span>
@@ -271,12 +291,17 @@ export function CollapsibleSidebar({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            data-testid="conversation-search"
           />
         </div>
       </div>
 
       {/* Conversation List */}
-      <div ref={listRef} className="flex-1 overflow-y-auto">
+      <div
+        ref={listRef}
+        className="flex-1 overflow-y-auto"
+        data-testid="conversation-list"
+      >
         {/* Loading State */}
         {isLoading && conversations.length === 0 && (
           <div className="flex items-center justify-center py-8">
@@ -451,17 +476,21 @@ function ConversationItem({
   const hasVoiceMessages =
     (conversation as any).metadata?.hasVoiceMessages === true;
 
+  const handleClick = () => {
+    onClick();
+  };
+
   return (
     <li className="group relative">
       {/* Main clickable area */}
       <div
         role="button"
         tabIndex={0}
-        onClick={onClick}
+        onClick={handleClick}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            onClick();
+            handleClick();
           }
         }}
         className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors cursor-pointer ${
@@ -495,7 +524,8 @@ function ConversationItem({
       </div>
 
       {/* Actions - positioned absolutely, visible on hover */}
-      <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* pointer-events-none when hidden to prevent blocking clicks on the main area */}
+      <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity">
         <div className="flex items-center gap-1 bg-white rounded shadow-sm border border-neutral-200 p-0.5">
           <button
             onClick={(e) => {

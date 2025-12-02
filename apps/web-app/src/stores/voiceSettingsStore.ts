@@ -25,6 +25,14 @@ export type LanguageOption = "en" | "es" | "fr" | "de" | "it" | "pt";
 export type PlaybackSpeed = 0.5 | 0.75 | 1 | 1.25 | 1.5 | 2;
 
 /**
+ * Voice quality presets for latency vs naturalness trade-off
+ * - speed: Fastest response (~100-150ms TTFA), may sound slightly choppy
+ * - balanced: Good balance (~200-250ms TTFA), natural after first chunk (default)
+ * - natural: Most natural sounding (~300-400ms TTFA), full sentences always
+ */
+export type QualityPreset = "speed" | "balanced" | "natural";
+
+/**
  * Voice mode interaction type for unified interface
  */
 export type VoiceModeType = "always-on" | "push-to-talk";
@@ -57,6 +65,31 @@ export const PLAYBACK_SPEED_OPTIONS: {
   { value: 1.25, label: "1.25x" },
   { value: 1.5, label: "1.5x" },
   { value: 2, label: "2x (Fast)" },
+];
+
+/**
+ * Quality preset options for voice mode
+ */
+export const QUALITY_PRESET_OPTIONS: {
+  value: QualityPreset;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "speed",
+    label: "Speed",
+    description: "Fastest response time, best for quick interactions",
+  },
+  {
+    value: "balanced",
+    label: "Balanced",
+    description: "Good balance of speed and natural speech (recommended)",
+  },
+  {
+    value: "natural",
+    label: "Natural",
+    description: "Most natural sounding speech, slightly slower response",
+  },
 ];
 
 /**
@@ -131,6 +164,8 @@ interface VoiceSettingsState {
   // Backend sync state
   backendPrefsId: string | null; // ID from backend for updates
   lastSyncedAt: number | null; // Timestamp of last backend sync
+  // Voice quality preset (Phase: Talker Enhancement)
+  qualityPreset: QualityPreset; // Controls latency vs naturalness trade-off
 
   // Actions
   setVoice: (voice: VoiceOption) => void;
@@ -161,6 +196,8 @@ interface VoiceSettingsState {
   setContextAwareStyle: (enabled: boolean) => void;
   setBackendPrefsId: (id: string | null) => void;
   setLastSyncedAt: (timestamp: number | null) => void;
+  // Voice quality preset action (Phase: Talker Enhancement)
+  setQualityPreset: (preset: QualityPreset) => void;
   // Bulk update from backend
   syncFromBackend: (prefs: BackendVoicePreferences) => void;
   reset: () => void;
@@ -213,6 +250,8 @@ const defaultSettings = {
   // Backend sync state
   backendPrefsId: null as string | null,
   lastSyncedAt: null as number | null,
+  // Voice quality preset (Phase: Talker Enhancement)
+  qualityPreset: "balanced" as QualityPreset, // Default: balanced for speed + naturalness
 };
 
 /**
@@ -291,6 +330,9 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
 
       setLastSyncedAt: (lastSyncedAt) => set({ lastSyncedAt }),
 
+      // Voice quality preset action (Phase: Talker Enhancement)
+      setQualityPreset: (qualityPreset) => set({ qualityPreset }),
+
       // Bulk update from backend preferences
       syncFromBackend: (prefs) =>
         set({
@@ -342,6 +384,8 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
         contextAwareStyle: state.contextAwareStyle,
         backendPrefsId: state.backendPrefsId,
         lastSyncedAt: state.lastSyncedAt,
+        // Voice quality preset (Phase: Talker Enhancement)
+        qualityPreset: state.qualityPreset,
       }),
     },
   ),

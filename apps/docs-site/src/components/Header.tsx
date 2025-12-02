@@ -78,6 +78,20 @@ export function Header() {
           >
             {t("nav.github")}
           </a>
+          {/* Cross-app navigation links */}
+          <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
+          <a
+            href={process.env.NEXT_PUBLIC_APP_URL || "https://dev.asimo.io"}
+            className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+          >
+            App
+          </a>
+          <a
+            href={process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin.asimo.io"}
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+          >
+            Admin
+          </a>
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
@@ -178,6 +192,24 @@ export function Header() {
             >
               Search
             </button>
+            {/* Cross-app navigation links */}
+            <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
+            <a
+              href={process.env.NEXT_PUBLIC_APP_URL || "https://dev.asimo.io"}
+              className="block rounded-md px-3 py-2 text-base font-medium text-primary-600 hover:bg-gray-50 hover:text-primary-700 dark:text-primary-400 dark:hover:bg-gray-800"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Open App
+            </a>
+            <a
+              href={
+                process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin.asimo.io"
+              }
+              className="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Admin Panel
+            </a>
           </div>
         </div>
       )}

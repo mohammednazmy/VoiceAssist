@@ -117,14 +117,6 @@ export function ChatPage() {
   const { isEnabled: useUnifiedUI, isLoading: isFeatureFlagLoading } =
     useFeatureFlag(UI_FLAGS.UNIFIED_CHAT_VOICE);
 
-  // Debug logging
-  console.log("[ChatPage] Render:", {
-    conversationId,
-    useUnifiedUI,
-    isFeatureFlagLoading,
-    pathname: location.pathname,
-  });
-
   // Check if we should auto-open voice mode (from Home page Voice Mode card)
   // Support both query param (?mode=voice) and location state for backwards compatibility
   const searchParams = new URLSearchParams(location.search);
@@ -189,13 +181,21 @@ export function ChatPage() {
   // Accessibility: Screen reader announcements
   const { announce, LiveRegion: AnnouncementRegion } = useAnnouncer("polite");
 
+  // Track if we're currently initializing to prevent duplicate calls
+  const isInitializingRef = useRef(false);
+
   // Handle conversation initialization and validation
   useEffect(() => {
+    // Skip if unified UI is enabled - UnifiedChatContainer handles its own initialization
+    if (useUnifiedUI) return;
+
     const initializeConversation = async () => {
+      // Prevent duplicate initialization
+      if (isInitializingRef.current) return;
+
       // If no conversationId in URL, auto-create and redirect
       if (!conversationId) {
-        if (loadingState === "creating") return; // Already creating
-
+        isInitializingRef.current = true;
         setLoadingState("creating");
         setErrorType(null);
         try {
@@ -207,12 +207,15 @@ export function ChatPage() {
           setErrorType("failed-create");
           setErrorMessage("Failed to create conversation. Please try again.");
           setLoadingState("idle");
+        } finally {
+          isInitializingRef.current = false;
         }
         return;
       }
 
       // If conversationId changed, validate and load
       if (conversationId !== activeConversationId) {
+        isInitializingRef.current = true;
         setLoadingState("validating");
         setErrorType(null);
         setActiveConversationId(null);
@@ -285,12 +288,16 @@ export function ChatPage() {
             setErrorMessage(extractErrorMessage(err));
           }
           setLoadingState("idle");
+        } finally {
+          isInitializingRef.current = false;
         }
       }
     };
 
     initializeConversation();
-  }, [conversationId, activeConversationId, apiClient, navigate, loadingState]);
+    // Note: loadingState intentionally excluded to prevent infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId, activeConversationId, apiClient, navigate, useUnifiedUI]);
 
   // Load older messages (pagination)
   const loadOlderMessages = useCallback(async () => {
@@ -398,6 +405,10 @@ export function ChatPage() {
     [toast, navigate],
   );
 
+  // NOTE: When useUnifiedUI is true, UnifiedChatContainer manages its own
+  // useChatSession. We pass undefined for conversationId here to prevent
+  // ChatPage from creating a duplicate WebSocket connection that would
+  // cause duplicate messages in the chat.
   const {
     messages,
     connectionStatus,
@@ -409,31 +420,27 @@ export function ChatPage() {
     reconnect,
     addMessage,
   } = useChatSession({
-    conversationId: activeConversationId ?? undefined,
+    conversationId: useUnifiedUI
+      ? undefined
+      : (activeConversationId ?? undefined),
     onError: handleError,
-    initialMessages,
+    initialMessages: useUnifiedUI ? [] : initialMessages,
   });
 
-  // Voice mode message handlers - add transcribed speech to chat timeline
-  const handleVoiceUserMessage = useCallback(
-    (content: string) => {
-      addMessage({
-        role: "user",
-        content,
-      });
-    },
-    [addMessage],
-  );
+  // Voice mode message handlers - informational callbacks only
+  // NOTE: The useThinkerTalkerVoiceMode hook already handles adding messages
+  // to the conversation store. These callbacks are for any additional
+  // processing (e.g., analytics, logging) but should NOT add messages
+  // to avoid duplicates.
+  const handleVoiceUserMessage = useCallback((_content: string) => {
+    // Message already added by useThinkerTalkerVoiceMode hook
+    // This callback is available for additional processing if needed
+  }, []);
 
-  const handleVoiceAssistantMessage = useCallback(
-    (content: string) => {
-      addMessage({
-        role: "assistant",
-        content,
-      });
-    },
-    [addMessage],
-  );
+  const handleVoiceAssistantMessage = useCallback((_content: string) => {
+    // Message already added by useThinkerTalkerVoiceMode hook
+    // This callback is available for additional processing if needed
+  }, []);
 
   /**
    * Handle voice metrics update - export to backend for observability
@@ -603,12 +610,23 @@ export function ChatPage() {
       }
     }
   }, [messages, announce]);
+
+  // Debug: Log early in render to catch what's happening
+  console.log("[ChatPage] Early render check:", {
+    loadingState,
+    isFeatureFlagLoading,
+    useUnifiedUI,
+  });
+
   // Loading states - use skeleton loaders for better UX
+  // BUT: Skip this check if unified UI is enabled - UnifiedChatContainer handles its own loading
   if (
-    loadingState === "creating" ||
-    loadingState === "validating" ||
-    loadingState === "loading-history"
+    !useUnifiedUI &&
+    (loadingState === "creating" ||
+      loadingState === "validating" ||
+      loadingState === "loading-history")
   ) {
+    console.log("[ChatPage] Showing skeleton - loadingState:", loadingState);
     return <ChatSkeleton />;
   }
 
@@ -701,21 +719,36 @@ export function ChatPage() {
     );
   }
 
+  // Debug logging for render path
+  console.log("[ChatPage] Render state:", {
+    isFeatureFlagLoading,
+    useUnifiedUI,
+    conversationId,
+    activeConversationId,
+    loadingState,
+  });
+
   // Show loading while checking feature flag
   if (isFeatureFlagLoading) {
+    console.log("[ChatPage] Showing skeleton - feature flag loading");
     return <ChatSkeleton />;
   }
 
   // Render unified chat/voice UI when feature flag is enabled
   // UnifiedChatContainer handles its own conversation creation/loading
+  // NOTE: We pass conversationId from URL params directly (not activeConversationId state)
+  // to ensure immediate updates when user clicks a different conversation in sidebar.
+  // UnifiedChatContainer will read from URL params and handle loading internally.
   if (useUnifiedUI) {
-    console.log("[ChatPage] Rendering UnifiedChatContainer with:", {
-      activeConversationId,
-      startVoiceMode,
+    console.log("[ChatPage] Rendering UnifiedChatContainer", {
+      conversationId,
     });
     return (
       <UnifiedChatContainer
-        conversationId={activeConversationId || undefined}
+        // Use key to force complete remount when conversation changes
+        // This ensures all state (WebSocket, messages, etc.) is reset cleanly
+        key={conversationId || "new"}
+        conversationId={conversationId || undefined}
         startInVoiceMode={startVoiceMode}
       />
     );
@@ -723,6 +756,9 @@ export function ChatPage() {
 
   // For legacy UI: show loading while creating/loading conversation
   if (!activeConversationId) {
+    console.log(
+      "[ChatPage] Showing legacy loading spinner - no activeConversationId",
+    );
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">

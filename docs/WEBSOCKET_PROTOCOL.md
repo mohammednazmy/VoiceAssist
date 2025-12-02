@@ -22,9 +22,25 @@ relatedServices: ["api-gateway", "web-app"]
 
 - [Realtime Architecture](REALTIME_ARCHITECTURE.md) - System architecture
 - [Voice Mode Pipeline](VOICE_MODE_PIPELINE.md) - Voice implementation
+- [Thinker-Talker Pipeline](THINKER_TALKER_PIPELINE.md) - T/T voice architecture
+- [Voice Pipeline WebSocket API](api-reference/voice-pipeline-ws.md) - T/T WebSocket protocol
 - [Implementation Status](overview/IMPLEMENTATION_STATUS.md) - Component status
 
 ---
+
+## WebSocket Endpoints
+
+VoiceAssist provides multiple WebSocket endpoints:
+
+| Endpoint                      | Purpose                  | Protocol Doc                                               |
+| ----------------------------- | ------------------------ | ---------------------------------------------------------- |
+| `/api/realtime/ws`            | Chat streaming           | This document                                              |
+| `/ws/voice/thinker-talker`    | Thinker-Talker voice     | [voice-pipeline-ws.md](api-reference/voice-pipeline-ws.md) |
+| `/api/voice/realtime-session` | OpenAI Realtime (Legacy) | [VOICE_MODE_PIPELINE.md](VOICE_MODE_PIPELINE.md)           |
+
+---
+
+## Chat Streaming Protocol
 
 ## Overview
 

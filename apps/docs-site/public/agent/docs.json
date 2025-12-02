@@ -1,7 +1,107 @@
 {
-  "count": 226,
-  "generated_at": "2025-12-01T10:02:36.374Z",
+  "count": 237,
+  "generated_at": "2025-12-02T02:45:35.010Z",
   "docs": [
+    {
+      "slug": "thinker-talker-pipeline",
+      "path": "THINKER_TALKER_PIPELINE.md",
+      "title": "THINKER TALKER PIPELINE",
+      "status": "draft",
+      "lastUpdated": "2025-12-01"
+    },
+    {
+      "slug": "admin-panel-integration-guide",
+      "path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
+      "title": "Admin Panel Integration Guide",
+      "summary": "Comprehensive guide for the VoiceAssist admin panel with cross-app navigation, real-time events, and voice monitoring",
+      "status": "draft",
+      "audience": ["developers", "ai-agents"],
+      "tags": ["admin", "integration", "voice-monitoring", "real-time"],
+      "lastUpdated": "2025-12-01"
+    },
+    {
+      "slug": "realtime-events-guide",
+      "path": "admin/REALTIME_EVENTS_GUIDE.md",
+      "title": "Real-Time Events Guide",
+      "summary": "Guide to the admin panel real-time event system using WebSocket and Redis pub/sub",
+      "status": "draft",
+      "audience": ["developers", "ai-agents"],
+      "tags": ["admin", "real-time", "websocket", "redis", "events"],
+      "lastUpdated": "2025-12-01"
+    },
+    {
+      "slug": "voice-pipeline-ws",
+      "path": "api-reference/voice-pipeline-ws.md",
+      "title": "voice-pipeline-ws",
+      "status": "draft",
+      "lastUpdated": "2025-12-01"
+    },
+    {
+      "slug": "thinker-talker-hooks",
+      "path": "frontend/thinker-talker-hooks.md",
+      "title": "thinker-talker-hooks",
+      "status": "draft",
+      "lastUpdated": "2025-12-01"
+    },
+    {
+      "slug": "talker-service",
+      "path": "services/talker-service.md",
+      "title": "talker-service",
+      "status": "draft",
+      "lastUpdated": "2025-12-01"
+    },
+    {
+      "slug": "thinker-service",
+      "path": "services/thinker-service.md",
+      "title": "thinker-service",
+      "status": "draft",
+      "lastUpdated": "2025-12-01"
+    },
+    {
+      "slug": "start/admins",
+      "path": "start/admins.md",
+      "title": "Administrator Quick Start",
+      "summary": "Get started administering VoiceAssist - deployment, configuration, and monitoring.",
+      "status": "stable",
+      "stability": "production",
+      "audience": ["admin", "agent"],
+      "tags": ["quickstart", "admin", "deployment", "configuration"],
+      "lastUpdated": "2025-12-01"
+    },
+    {
+      "slug": "start/ai-agents",
+      "path": "start/ai-agents.md",
+      "title": "AI Agent Quick Start",
+      "summary": "Quick start guide for AI coding assistants working on VoiceAssist.",
+      "status": "stable",
+      "stability": "production",
+      "audience": ["agent"],
+      "tags": ["quickstart", "ai", "agent", "automation"],
+      "lastUpdated": "2025-12-01"
+    },
+    {
+      "slug": "start/developers",
+      "path": "start/developers.md",
+      "title": "Developer Quick Start",
+      "summary": "Get started developing with VoiceAssist - setup, architecture, and contribution guide.",
+      "status": "stable",
+      "stability": "production",
+      "audience": ["agent"],
+      "tags": ["quickstart", "development", "setup", "contributing"],
+      "lastUpdated": "2025-12-01"
+    },
+    {
+      "slug": "start/users",
+      "path": "start/users.md",
+      "title": "User Guide - Getting Started",
+      "summary": "Get started using VoiceAssist - voice mode, text chat, and key features.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "product",
+      "audience": ["user", "human"],
+      "tags": ["quickstart", "user-guide", "voice", "chat"],
+      "lastUpdated": "2025-12-01"
+    },
     {
       "slug": "voice/pipeline",
       "path": "VOICE_MODE_PIPELINE.md",

@@ -20,7 +20,9 @@
     "validate:metadata": "node scripts/validate-metadata.mjs",
     "check:links": "node scripts/check-links.mjs",
     "validate:endpoints": "node scripts/docs-smoke-test.mjs",
-    "validate:all": "pnpm run validate:metadata && pnpm run check:links",
+    "check:freshness": "node scripts/check-freshness.mjs",
+    "validate:api-sync": "node scripts/validate-api-sync.mjs",
+    "validate:all": "pnpm run validate:metadata && pnpm run check:links && pnpm run check:freshness && pnpm run validate:api-sync",
     "generate:api-reference": "node ./scripts/generate-api-reference.mjs",
     "generate:api-docs": "cd ../../services/api-gateway && python3 tools/generate_api_docs.py --format all"
   },

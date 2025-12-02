@@ -18,6 +18,9 @@ import { FeatureFlagsPage } from "./pages/FeatureFlagsPage";
 import { PromptsPage } from "./pages/prompts";
 import { CalendarConnectionsPage } from "./pages/CalendarConnectionsPage";
 import { FunctionCallAnalyticsPage } from "./pages/FunctionCallAnalyticsPage";
+import { ConversationsPage } from "./pages/ConversationsPage";
+import { ConversationDetailPage } from "./pages/ConversationDetailPage";
+import { ClinicalContextsPage } from "./pages/ClinicalContextsPage";
 
 export function App() {
   return (
@@ -36,6 +39,18 @@ export function App() {
                   <Routes>
                     <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/users" element={<UsersPage />} />
+                    <Route
+                      path="/conversations"
+                      element={<ConversationsPage />}
+                    />
+                    <Route
+                      path="/conversations/:conversationId"
+                      element={<ConversationDetailPage />}
+                    />
+                    <Route
+                      path="/clinical-contexts"
+                      element={<ClinicalContextsPage />}
+                    />
                     <Route
                       path="/knowledge-base"
                       element={<KnowledgeBasePage />}

@@ -30,7 +30,7 @@ export interface NavSection {
 
 export const navigation: NavSection[] = [
   {
-    title: "Getting Started",
+    title: "Start Here",
     items: [
       {
         title: "Welcome",
@@ -38,6 +38,35 @@ export const navigation: NavSection[] = [
         description: "Overview of VoiceAssist and quick navigation",
         docPaths: ["START_HERE.md"],
       },
+      {
+        title: "For Developers",
+        href: "/start/developers",
+        description: "Developer setup, architecture, and contribution guide",
+        docPaths: ["start/developers.md"],
+      },
+      {
+        title: "For Users",
+        href: "/start/users",
+        description: "Voice mode, text chat, and key features",
+        docPaths: ["start/users.md"],
+      },
+      {
+        title: "For Admins",
+        href: "/start/admins",
+        description: "Deployment, configuration, and monitoring",
+        docPaths: ["start/admins.md"],
+      },
+      {
+        title: "For AI Agents",
+        href: "/start/ai-agents",
+        description: "Quick reference for AI coding assistants",
+        docPaths: ["start/ai-agents.md"],
+      },
+    ],
+  },
+  {
+    title: "Getting Started",
+    items: [
       {
         title: "Quick Start",
         href: "/getting-started/quick-start",
@@ -66,9 +95,13 @@ export const navigation: NavSection[] = [
         href: "/user-guide/voice",
         description: "Voice pipeline, settings, and readiness",
         docPaths: [
+          "THINKER_TALKER_PIPELINE.md",
           "VOICE_MODE_PIPELINE.md",
           "VOICE_MODE_SETTINGS_GUIDE.md",
-          "VOICE_STATE_2025-11-28.md",
+          "services/thinker-service.md",
+          "services/talker-service.md",
+          "api-reference/voice-pipeline-ws.md",
+          "frontend/thinker-talker-hooks.md",
         ],
       },
       {
@@ -170,6 +203,19 @@ export const navigation: NavSection[] = [
         href: "/admin/overview",
         description: "Console layout and major metrics",
         docPaths: ["ADMIN_PANEL_SPECS.md"],
+      },
+      {
+        title: "Integration Guide",
+        href: "/admin/integration",
+        description:
+          "Cross-app navigation, real-time events, and voice monitoring",
+        docPaths: ["admin/ADMIN_PANEL_INTEGRATION_GUIDE.md"],
+      },
+      {
+        title: "Real-Time Events",
+        href: "/admin/realtime-events",
+        description: "WebSocket events and Redis pub/sub",
+        docPaths: ["admin/REALTIME_EVENTS_GUIDE.md"],
       },
       {
         title: "System Configuration",

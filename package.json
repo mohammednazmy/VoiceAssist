@@ -26,6 +26,7 @@
     "storybook": "cd packages/ui && pnpm storybook"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
     "@playwright/test": "^1.56.1",
     "@types/node": "^20.11.5",
     "auto-playwright": "^1.16.1",

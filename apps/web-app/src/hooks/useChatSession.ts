@@ -111,11 +111,19 @@ export function useChatSession(
     () => tokens?.accessToken || null,
   );
 
-  // Update messages when initialMessages changes (e.g., when conversation changes)
+  // Track previous initialMessages to avoid infinite loops from array reference changes
+  const prevInitialMessagesRef = useRef<string>("");
+
+  // Update messages when initialMessages content changes (e.g., when conversation changes)
   useEffect(() => {
-    setMessages(initialMessages);
-    streamingMessageRef.current = null;
-    setIsTyping(false);
+    // Compare by stringified content to avoid infinite loops from array reference changes
+    const currentKey = JSON.stringify(initialMessages.map((m) => m.id));
+    if (currentKey !== prevInitialMessagesRef.current) {
+      prevInitialMessagesRef.current = currentKey;
+      setMessages(initialMessages);
+      streamingMessageRef.current = null;
+      setIsTyping(false);
+    }
   }, [initialMessages]);
 
   const updateConnectionStatus = useCallback(

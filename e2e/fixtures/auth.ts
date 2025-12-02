@@ -150,10 +150,12 @@ async function mockApiResponses(page: Page): Promise<void> {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          data: [],
-          total: 0,
-          page: 1,
-          limit: 50,
+          data: {
+            items: [],
+            total: 0,
+            page: 1,
+            pageSize: 20,
+          },
         }),
       });
       return;
@@ -163,13 +165,15 @@ async function mockApiResponses(page: Page): Promise<void> {
     const conversationMatch = pathname.match(/^\/api\/conversations\/([^/]+)$/);
     if (conversationMatch && method === "GET") {
       const convId = conversationMatch[1];
+      // Return "New Conversation" for the created conversation, otherwise "Test Conversation"
+      const title = convId === createdConversationId ? "New Conversation" : "Test Conversation";
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
           data: {
             id: convId,
-            title: "Test Conversation",
+            title: title,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             user_id: "e2e-test-user",
@@ -186,10 +190,12 @@ async function mockApiResponses(page: Page): Promise<void> {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          data: [],
-          total: 0,
-          page: 1,
-          limit: 50,
+          data: {
+            items: [],
+            total: 0,
+            page: 1,
+            pageSize: 50,
+          },
         }),
       });
       return;

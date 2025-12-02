@@ -169,8 +169,10 @@ export function VoiceInputEnhanced({
           stopRecording();
         });
 
-        vadRef.current.on("energyChange", (newEnergy: number) => {
-          setEnergy(newEnergy);
+        vadRef.current.on("energyChange", (newEnergy?: number) => {
+          if (newEnergy !== undefined) {
+            setEnergy(newEnergy);
+          }
         });
       }
     } catch (err: unknown) {

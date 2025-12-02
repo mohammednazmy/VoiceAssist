@@ -36,6 +36,8 @@ interface UnifiedInputAreaProps {
   conversationId: string | null;
   onSendMessage: (content: string, source: MessageSource) => void;
   disabled?: boolean;
+  /** Disable only the send button (e.g., when disconnected but still allow typing) */
+  sendDisabled?: boolean;
   /** Callback to toggle voice panel visibility */
   onToggleVoicePanel?: () => void;
   /** Whether the voice panel is currently open */
@@ -52,6 +54,7 @@ export function UnifiedInputArea({
   conversationId,
   onSendMessage,
   disabled = false,
+  sendDisabled = false,
   onToggleVoicePanel,
   isVoicePanelOpen = false,
 }: UnifiedInputAreaProps) {
@@ -123,7 +126,7 @@ export function UnifiedInputArea({
   );
 
   const handleTextSubmit = useCallback(() => {
-    if (!textContent.trim() || disabled) return;
+    if (!textContent.trim() || disabled || sendDisabled) return;
 
     onSendMessage(textContent.trim(), "text");
     setTextContent("");
@@ -132,7 +135,7 @@ export function UnifiedInputArea({
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
-  }, [textContent, disabled, onSendMessage]);
+  }, [textContent, disabled, sendDisabled, onSendMessage]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -318,7 +321,10 @@ export function UnifiedInputArea({
   // -------------------------------------------------------------------------
 
   return (
-    <div className="border-t border-neutral-200 bg-white">
+    <div
+      className="border-t border-neutral-200 bg-white"
+      data-testid="unified-input-area"
+    >
       {/* Main Input Row */}
       <div className="flex items-end gap-2 px-4 py-3">
         {/* Mode Toggle Button */}
@@ -332,6 +338,7 @@ export function UnifiedInputArea({
               ? "Click to close voice mode"
               : "Click to open voice mode"
           }
+          data-testid="voice-mode-toggle"
         >
           {getModeToggleIcon()}
           <span className="text-sm hidden sm:inline">
@@ -367,6 +374,7 @@ export function UnifiedInputArea({
               className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-neutral-50 disabled:text-neutral-400"
               rows={1}
               style={{ maxHeight: "200px" }}
+              data-testid="message-input"
             />
           )}
         </div>
@@ -384,10 +392,11 @@ export function UnifiedInputArea({
         ) : (
           <button
             onClick={handleTextSubmit}
-            disabled={disabled || !textContent.trim()}
+            disabled={disabled || sendDisabled || !textContent.trim()}
             className="p-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-neutral-200 disabled:text-neutral-400 transition-colors"
             aria-label="Send message"
             title="Send message"
+            data-testid="send-button"
           >
             <Send className="w-5 h-5" />
           </button>

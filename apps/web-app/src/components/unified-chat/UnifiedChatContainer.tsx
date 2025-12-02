@@ -12,10 +12,12 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   lazy,
   Suspense,
 } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useShallow } from "zustand/react/shallow";
 import { useAuth } from "../../hooks/useAuth";
 import { useToastContext } from "../../contexts/ToastContext";
 import {
@@ -95,15 +97,6 @@ export function UnifiedChatContainer({
   // Use props conversationId if provided, otherwise fall back to URL params
   const conversationId = propsConversationId || paramsConversationId;
 
-  // Debug logging
-  console.log("[UnifiedChatContainer] Render:", {
-    propsConversationId,
-    paramsConversationId,
-    conversationId,
-    startInVoiceMode,
-    pathname: location.pathname,
-  });
-
   // Check if we should start in voice mode (props take precedence)
   const searchParams = new URLSearchParams(location.search);
   const startVoiceMode =
@@ -112,26 +105,48 @@ export function UnifiedChatContainer({
     (location.state as { startVoiceMode?: boolean } | null)?.startVoiceMode ===
       true;
 
-  // Unified store state
+  // Unified store state - use shallow comparison to prevent unnecessary re-renders
+  // Only subscribe to the specific fields we need
   const {
     conversationId: activeConversationId,
     messages,
     isTyping,
     inputMode,
     voiceModeActive,
-    setConversation,
-    addMessage,
-    updateMessage,
-    setTyping,
-    activateVoiceMode,
-  } = useUnifiedConversationStore();
+  } = useUnifiedConversationStore(
+    useShallow((state) => ({
+      conversationId: state.conversationId,
+      messages: state.messages,
+      isTyping: state.isTyping,
+      inputMode: state.inputMode,
+      voiceModeActive: state.voiceModeActive,
+    })),
+  );
+
+  // Get action methods separately (these don't cause re-renders)
+  const setConversation = useUnifiedConversationStore(
+    (state) => state.setConversation,
+  );
+  const addMessage = useUnifiedConversationStore((state) => state.addMessage);
+  const setMessages = useUnifiedConversationStore((state) => state.setMessages);
+  const setTyping = useUnifiedConversationStore((state) => state.setTyping);
+  const activateVoiceMode = useUnifiedConversationStore(
+    (state) => state.activateVoiceMode,
+  );
 
   // Voice settings
   const voiceModeType = useVoiceSettingsStore((state) => state.voiceModeType);
 
+  // Memoize error handler to prevent unnecessary hook re-initialization
+  const handleConversationsError = useCallback(
+    (message: string, description?: string) =>
+      toast.error(message, description),
+    [toast],
+  );
+
   // Conversations hook for title editing
   const { updateConversation } = useConversations({
-    onError: (message, description) => toast.error(message, description),
+    onError: handleConversationsError,
   });
 
   // Local state
@@ -175,27 +190,90 @@ export function UnifiedChatContainer({
     initialMessages,
     onError: (code: WebSocketErrorCode, message: string) => {
       console.error(`[UnifiedChat] WebSocket error ${code}: ${message}`);
-      setErrorType("websocket");
-      setErrorMessage(message);
+      // Don't set errorType for connection errors - just show toast
+      // This allows the UI to remain usable while disconnected
+      // The ConnectionStatus component will indicate the disconnected state
       toast.error("Connection Error", message);
     },
   });
 
   // Sync chat messages to unified store
+  // We use refs to track synced messages and handle client→server ID transitions
+  const syncedMessageIds = useRef(new Set<string>());
+  // Track client message IDs that have been synced, mapped to their content hash
+  // This helps detect when a message's ID changes from client to server ID
+  const syncedContentHashes = useRef(new Map<string, string>()); // contentHash → messageId
+
+  // Helper to create a content hash for deduplication
+  const getContentHash = useCallback(
+    (msg: { role: string; content: string }) =>
+      `${msg.role}:${msg.content.slice(0, 100)}`,
+    [],
+  );
+
+  // Track the last synced content for each message to detect streaming updates
+  const syncedMessageContent = useRef(new Map<string, string>());
+
+  // NOTE: We intentionally exclude 'messages' from dependencies to prevent render loops.
+  // The effect only needs to run when chatMessages changes (new messages from WebSocket).
+  // We access the store's current messages inside the effect using the closure.
   useEffect(() => {
     if (chatMessages.length > 0) {
+      // Get current store messages at effect execution time
+      const storeMessages = useUnifiedConversationStore.getState().messages;
+      const updateMessage =
+        useUnifiedConversationStore.getState().updateMessage;
+
       chatMessages.forEach((msg) => {
-        // Check if message already exists to avoid duplicates
-        const exists = messages.some((m) => m.id === msg.id);
-        if (!exists) {
-          addMessage({
-            ...msg,
-            source: "text" as MessageSource,
-          });
+        // Check both the store and our local tracking to avoid duplicates
+        const alreadySynced = syncedMessageIds.current.has(msg.id);
+        const existsInStore = storeMessages.some((m) => m.id === msg.id);
+
+        if (!alreadySynced && !existsInStore) {
+          // Check if this is actually an ID update (same content, different ID)
+          // This happens when the server confirms the message and assigns a server ID
+          const contentHash = getContentHash(msg);
+          const existingIdForContent =
+            syncedContentHashes.current.get(contentHash);
+
+          if (existingIdForContent && existingIdForContent !== msg.id) {
+            // This is an ID update - update the existing message's ID in the store
+            // instead of adding a duplicate
+            updateMessage(existingIdForContent, { id: msg.id } as any);
+            // Update our tracking
+            syncedMessageIds.current.delete(existingIdForContent);
+            syncedMessageIds.current.add(msg.id);
+            syncedContentHashes.current.set(contentHash, msg.id);
+            syncedMessageContent.current.set(msg.id, msg.content);
+          } else {
+            // New message - add to store
+            syncedMessageIds.current.add(msg.id);
+            syncedContentHashes.current.set(contentHash, msg.id);
+            syncedMessageContent.current.set(msg.id, msg.content);
+            addMessage({
+              ...msg,
+              source: "text" as MessageSource,
+            });
+          }
+        } else if (alreadySynced || existsInStore) {
+          // Message already synced - check if content has been updated (streaming)
+          const lastSyncedContent = syncedMessageContent.current.get(msg.id);
+          if (lastSyncedContent !== msg.content) {
+            // Content changed (streaming update) - update the message in the store
+            syncedMessageContent.current.set(msg.id, msg.content);
+            // Update content hash tracking as well
+            syncedContentHashes.current.set(getContentHash(msg), msg.id);
+            updateMessage(msg.id, {
+              content: msg.content,
+              citations: msg.citations,
+              metadata: msg.metadata,
+            });
+          }
         }
       });
     }
-  }, [chatMessages]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatMessages, addMessage, getContentHash]);
 
   // Sync typing state
   useEffect(() => {
@@ -216,17 +294,40 @@ export function UnifiedChatContainer({
   // Conversation Management
   // -------------------------------------------------------------------------
 
+  // Ref to prevent duplicate conversation creation (React Strict Mode runs effects twice)
+  const isCreatingConversationRef = useRef(false);
+
   const createNewConversation = useCallback(async () => {
-    if (!apiClient) return;
+    console.log("[UnifiedChat] createNewConversation called", {
+      hasApiClient: !!apiClient,
+      isCreating: isCreatingConversationRef.current,
+    });
+
+    // Prevent duplicate calls (React Strict Mode protection)
+    if (!apiClient) {
+      console.log(
+        "[UnifiedChat] createNewConversation - no apiClient, returning",
+      );
+      return;
+    }
+    if (isCreatingConversationRef.current) {
+      console.log(
+        "[UnifiedChat] createNewConversation - already creating, returning",
+      );
+      return;
+    }
+    isCreatingConversationRef.current = true;
 
     setLoadingState("creating");
     setErrorType(null);
 
     try {
+      console.log("[UnifiedChat] Creating new conversation...");
       const newConversation =
         await apiClient.createConversation("New Conversation");
 
       if (newConversation?.id) {
+        console.log("[UnifiedChat] Conversation created:", newConversation.id);
         setConversation(newConversation.id);
         setLocalConversation(newConversation);
         navigate(`/chat/${newConversation.id}`, { replace: true });
@@ -241,6 +342,7 @@ export function UnifiedChatContainer({
       setErrorMessage(error instanceof Error ? error.message : "Unknown error");
     } finally {
       setLoadingState("idle");
+      isCreatingConversationRef.current = false;
     }
   }, [apiClient, navigate, setConversation, onConversationReady, announce]);
 
@@ -273,13 +375,26 @@ export function UnifiedChatContainer({
           // Set initial messages for chat session
           setInitialMessages(loadedMessages);
 
-          // Add messages to store
-          loadedMessages.forEach((msg: Message) => {
-            addMessage({
+          // Add messages to store using batch set (prevents N re-renders)
+          const unifiedMessages = loadedMessages.map((msg: Message) => {
+            // Handle potentially invalid timestamps with fallback
+            let createdAt: string;
+            try {
+              const date = msg.timestamp ? new Date(msg.timestamp) : new Date();
+              createdAt = isNaN(date.getTime())
+                ? new Date().toISOString()
+                : date.toISOString();
+            } catch {
+              createdAt = new Date().toISOString();
+            }
+            return {
               ...msg,
               source: "text" as MessageSource,
-            });
+              sessionId: id,
+              createdAt,
+            };
           });
+          setMessages(unifiedMessages);
 
           setTotalMessageCount(total);
           setHasMoreMessages(totalPages > 1);
@@ -299,17 +414,57 @@ export function UnifiedChatContainer({
         setLoadingState("idle");
       }
     },
-    [apiClient, setConversation, addMessage, onConversationReady, announce],
+    [apiClient, setConversation, setMessages, onConversationReady, announce],
   );
 
   // Initialize conversation
+  // Track the last conversation ID we tried to load to prevent duplicate loads
+  const lastLoadedConversationIdRef = useRef<string | null>(null);
+  // Track if we've started creating a new conversation
+  const hasStartedCreateRef = useRef(false);
+
   useEffect(() => {
-    if (conversationId) {
-      loadConversation(conversationId);
-    } else {
-      createNewConversation();
+    console.log("[UnifiedChat] Init effect running", {
+      conversationId,
+      hasApiClient: !!apiClient,
+      lastLoadedId: lastLoadedConversationIdRef.current,
+      hasStartedCreate: hasStartedCreateRef.current,
+    });
+
+    // Don't try to initialize if apiClient isn't available yet
+    if (!apiClient) {
+      console.log("[UnifiedChat] Init effect - no apiClient, waiting...");
+      return;
     }
-  }, [conversationId]);
+
+    // Clear synced message tracking when switching conversations
+    syncedMessageIds.current.clear();
+    syncedContentHashes.current.clear();
+    syncedMessageContent.current.clear();
+
+    if (conversationId) {
+      // Load existing conversation (only if we haven't loaded this one yet)
+      if (lastLoadedConversationIdRef.current !== conversationId) {
+        console.log(
+          "[UnifiedChat] Init effect - loading conversation:",
+          conversationId,
+        );
+        lastLoadedConversationIdRef.current = conversationId;
+        hasStartedCreateRef.current = false; // Reset create flag
+        loadConversation(conversationId);
+      }
+    } else {
+      // Create new conversation (only once)
+      if (!hasStartedCreateRef.current) {
+        console.log("[UnifiedChat] Init effect - creating new conversation");
+        hasStartedCreateRef.current = true;
+        createNewConversation();
+      }
+    }
+    // Note: We intentionally omit loadConversation and createNewConversation from deps
+    // to prevent infinite loops. We use refs to track what we've already done.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId, apiClient]);
 
   // Start voice mode if requested
   useEffect(() => {
@@ -449,17 +604,13 @@ export function UnifiedChatContainer({
       // Auto-title conversation if this is the first message
       autoTitleConversation(content);
 
-      // Add to unified store immediately for optimistic update
-      addMessage({
-        role: "user",
-        content,
-        source,
-      });
-
-      // Send via WebSocket
+      // Send via WebSocket - the message will be added to chatMessages by useChatSession,
+      // then synced to the unified store by the sync useEffect.
+      // NOTE: We don't call addMessage here to avoid duplicate messages.
+      // The sync effect at line ~190 handles syncing chatMessages → unified store.
       sendChatMessage(content);
     },
-    [addMessage, sendChatMessage, autoTitleConversation],
+    [sendChatMessage, autoTitleConversation],
   );
 
   const handleLoadMoreMessages = useCallback(async () => {
@@ -584,15 +735,25 @@ export function UnifiedChatContainer({
 
   // Map UnifiedMessage to Message format for MessageList
   const mappedMessages: Message[] = useMemo(() => {
-    return messages.map((msg) => ({
-      id: msg.id,
-      conversationId: activeConversationId || undefined,
-      role: msg.role,
-      content: msg.content,
-      citations: msg.citations || msg.metadata?.citations,
-      timestamp: new Date(msg.createdAt).getTime(),
-      metadata: msg.metadata,
-    }));
+    return messages.map((msg) => {
+      // Handle potentially invalid timestamps with fallback
+      let timestamp: number;
+      try {
+        const date = msg.createdAt ? new Date(msg.createdAt) : new Date();
+        timestamp = isNaN(date.getTime()) ? Date.now() : date.getTime();
+      } catch {
+        timestamp = Date.now();
+      }
+      return {
+        id: msg.id,
+        conversationId: activeConversationId || undefined,
+        role: msg.role,
+        content: msg.content,
+        citations: msg.citations || msg.metadata?.citations,
+        timestamp,
+        metadata: msg.metadata,
+      };
+    });
   }, [messages, activeConversationId]);
 
   // -------------------------------------------------------------------------
@@ -628,6 +789,7 @@ export function UnifiedChatContainer({
         className="flex h-full bg-neutral-50"
         role="application"
         aria-label="Chat interface"
+        data-testid="unified-chat-container"
       >
         {/* Collapsible Sidebar */}
         <CollapsibleSidebar
@@ -692,7 +854,8 @@ export function UnifiedChatContainer({
           <UnifiedInputArea
             conversationId={activeConversationId}
             onSendMessage={handleSendMessage}
-            disabled={connectionStatus !== "connected"}
+            disabled={false}
+            sendDisabled={connectionStatus !== "connected"}
             onToggleVoicePanel={() => setIsVoicePanelOpen((prev) => !prev)}
             isVoicePanelOpen={isVoicePanelOpen}
           />

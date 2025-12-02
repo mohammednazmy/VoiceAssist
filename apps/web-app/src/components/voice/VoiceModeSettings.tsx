@@ -12,7 +12,9 @@ import {
   LANGUAGE_OPTIONS,
   PLAYBACK_SPEED_OPTIONS,
   ELEVENLABS_VOICE_OPTIONS,
+  QUALITY_PRESET_OPTIONS,
   type LanguageOption,
+  type QualityPreset,
 } from "../../stores/voiceSettingsStore";
 import { AudioDeviceSelector } from "./AudioDeviceSelector";
 import { PlaybackSpeedControl } from "./PlaybackSpeedControl";
@@ -35,6 +37,8 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
     showFrequencySpectrum,
     // ElevenLabs voice
     elevenlabsVoiceId,
+    // Quality preset (Phase: Talker Enhancement)
+    qualityPreset,
     setLanguage,
     setVadSensitivity,
     setAutoStartOnOpen,
@@ -45,6 +49,8 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
     setKeyboardShortcutsEnabled,
     setShowFrequencySpectrum,
     setElevenlabsVoiceId,
+    // Quality preset action
+    setQualityPreset,
     reset,
   } = useVoiceSettingsStore();
 
@@ -73,6 +79,13 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
       setElevenlabsVoiceId(e.target.value);
     },
     [setElevenlabsVoiceId],
+  );
+
+  const handleQualityPresetChange = useCallback(
+    (preset: QualityPreset) => {
+      setQualityPreset(preset);
+    },
+    [setQualityPreset],
   );
 
   if (!isOpen) {
@@ -162,6 +175,35 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
             </select>
             <p className="text-xs text-neutral-500 mt-1">
               Select the voice for AI spoken responses
+            </p>
+          </div>
+
+          {/* Voice Quality Preset */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              Voice Quality
+            </label>
+            <div className="flex gap-2">
+              {QUALITY_PRESET_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handleQualityPresetChange(option.value)}
+                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-md border transition-colors ${
+                    qualityPreset === option.value
+                      ? "bg-primary-50 border-primary-500 text-primary-700"
+                      : "bg-white border-neutral-300 text-neutral-700 hover:bg-neutral-50"
+                  }`}
+                  data-testid={`quality-preset-${option.value}`}
+                  title={option.description}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-neutral-500 mt-1">
+              {QUALITY_PRESET_OPTIONS.find((o) => o.value === qualityPreset)
+                ?.description || "Adjust speed vs naturalness trade-off"}
             </p>
           </div>
 
@@ -339,8 +381,11 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
             <strong>Current:</strong>{" "}
             {ELEVENLABS_VOICE_OPTIONS.find((v) => v.id === elevenlabsVoiceId)
               ?.name || "Josh"}{" "}
-            voice, {LANGUAGE_OPTIONS.find((l) => l.value === language)?.label},{" "}
-            {vadSensitivity}% sensitivity,{" "}
+            voice,{" "}
+            {QUALITY_PRESET_OPTIONS.find((q) => q.value === qualityPreset)
+              ?.label || "Balanced"}{" "}
+            quality, {LANGUAGE_OPTIONS.find((l) => l.value === language)?.label}
+            ,{" "}
             {PLAYBACK_SPEED_OPTIONS.find((s) => s.value === playbackSpeed)
               ?.label || "1x"}{" "}
             playback
