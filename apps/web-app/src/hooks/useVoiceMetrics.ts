@@ -6,10 +6,20 @@
  * - Voice session duration
  * - Reconnection frequency
  * - Audio quality metrics
+ * - Browser performance metrics (Phase 3 enhancements)
+ * - Network quality assessment
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useAnalytics } from "../lib/analytics/AnalyticsProvider";
+import {
+  getNetworkQuality,
+  getBrowserPerformance,
+  getAudioContextMetrics,
+  type NetworkQualityMetrics,
+  type BrowserPerformanceMetrics,
+  type AudioContextMetrics,
+} from "../lib/voiceTelemetry";
 
 // Voice session metrics
 export interface VoiceSessionMetrics {
@@ -19,12 +29,17 @@ export interface VoiceSessionMetrics {
   duration?: number;
   sttLatencies: number[];
   ttsLatencies: number[];
+  ttfaLatencies: number[]; // Time to first audio
   reconnectionCount: number;
   errorCount: number;
   messageCount: number;
   averageSttLatency?: number;
   averageTtsLatency?: number;
+  averageTtfaLatency?: number;
   audioQuality?: AudioQualityMetrics;
+  browserPerformance?: BrowserPerformanceMetrics;
+  networkQuality?: NetworkQualityMetrics;
+  audioContext?: AudioContextMetrics;
 }
 
 // Audio quality metrics
@@ -34,12 +49,14 @@ export interface AudioQualityMetrics {
   channelCount: number;
   noiseLevel?: number;
   clippingEvents: number;
+  packetLoss?: number;
+  jitterMs?: number;
 }
 
 // Latency measurement
 export interface LatencyMeasurement {
   id: string;
-  type: "stt" | "tts" | "roundtrip";
+  type: "stt" | "tts" | "ttfa" | "roundtrip" | "connection";
   startTime: number;
   endTime?: number;
   duration?: number;
@@ -56,8 +73,15 @@ export interface UseVoiceMetricsReturn {
   endSession: () => VoiceSessionMetrics | null;
 
   // Latency tracking
-  startLatencyMeasurement: (type: "stt" | "tts" | "roundtrip") => string;
+  startLatencyMeasurement: (
+    type: "stt" | "tts" | "ttfa" | "roundtrip" | "connection",
+  ) => string;
   endLatencyMeasurement: (id: string) => number | null;
+
+  // Browser metrics
+  recordBrowserPerformance: () => void;
+  recordNetworkQuality: () => void;
+  setAudioContext: (ctx: AudioContext) => void;
 
   // Event tracking
   recordReconnection: () => void;
@@ -83,8 +107,12 @@ export interface SessionStats {
   totalReconnections: number;
   averageSttLatency: number;
   averageTtsLatency: number;
+  averageTtfaLatency: number;
   p95SttLatency: number;
   p95TtsLatency: number;
+  p95TtfaLatency: number;
+  networkQuality: NetworkQualityMetrics | null;
+  browserPerformance: BrowserPerformanceMetrics | null;
 }
 
 // Generate unique ID
@@ -114,6 +142,9 @@ export function useVoiceMetrics(): UseVoiceMetricsReturn {
   // Active latency measurements
   const measurementsRef = useRef<Map<string, LatencyMeasurement>>(new Map());
 
+  // Audio context reference for metrics
+  const audioContextRef = useRef<AudioContext | null>(null);
+
   // Keep ref in sync with state
   useEffect(() => {
     currentSessionRef.current = currentSession;
@@ -122,20 +153,34 @@ export function useVoiceMetrics(): UseVoiceMetricsReturn {
   // Start a new voice session
   const startSession = useCallback((): string => {
     const sessionId = generateId();
+    const networkQuality = getNetworkQuality();
+    const browserPerformance = getBrowserPerformance();
+
     const session: VoiceSessionMetrics = {
       sessionId,
       startTime: Date.now(),
       sttLatencies: [],
       ttsLatencies: [],
+      ttfaLatencies: [],
       reconnectionCount: 0,
       errorCount: 0,
       messageCount: 0,
+      networkQuality,
+      browserPerformance,
     };
 
     setCurrentSession(session);
     currentSessionRef.current = session;
 
-    trackEvent({ name: "Voice Session Started", props: { sessionId } });
+    trackEvent({
+      name: "Voice Session Started",
+      props: {
+        sessionId,
+        networkQuality: networkQuality.quality,
+        effectiveType: networkQuality.effectiveType,
+        memoryUsagePercent: browserPerformance.memoryUsagePercent,
+      },
+    });
 
     return sessionId;
   }, [trackEvent]);
@@ -161,12 +206,27 @@ export function useVoiceMetrics(): UseVoiceMetricsReturn {
           session.ttsLatencies.length
         : undefined;
 
+    const avgTtfa =
+      session.ttfaLatencies.length > 0
+        ? session.ttfaLatencies.reduce((a, b) => a + b, 0) /
+          session.ttfaLatencies.length
+        : undefined;
+
+    // Get final metrics
+    const finalNetworkQuality = getNetworkQuality();
+    const finalBrowserPerformance = getBrowserPerformance();
+    const audioContextMetrics = getAudioContextMetrics(audioContextRef.current);
+
     const completedSession: VoiceSessionMetrics = {
       ...session,
       endTime,
       duration,
       averageSttLatency: avgStt,
       averageTtsLatency: avgTts,
+      averageTtfaLatency: avgTtfa,
+      networkQuality: finalNetworkQuality,
+      browserPerformance: finalBrowserPerformance,
+      audioContext: audioContextMetrics,
     };
 
     // Add to history
@@ -185,17 +245,23 @@ export function useVoiceMetrics(): UseVoiceMetricsReturn {
         reconnectionCount: session.reconnectionCount,
         avgSttLatency: Math.round(avgStt || 0),
         avgTtsLatency: Math.round(avgTts || 0),
+        avgTtfaLatency: Math.round(avgTtfa || 0),
+        networkQuality: finalNetworkQuality.quality,
+        memoryUsagePercent: finalBrowserPerformance.memoryUsagePercent,
       },
     });
 
     trackTiming("voice", "session_duration", duration);
+    if (avgTtfa) {
+      trackTiming("voice", "ttfa_latency", avgTtfa);
+    }
 
     return completedSession;
   }, [trackEvent, trackTiming]);
 
   // Start latency measurement
   const startLatencyMeasurement = useCallback(
-    (type: "stt" | "tts" | "roundtrip"): string => {
+    (type: "stt" | "tts" | "ttfa" | "roundtrip" | "connection"): string => {
       const id = generateId();
       const measurement: LatencyMeasurement = {
         id,
@@ -237,6 +303,15 @@ export function useVoiceMetrics(): UseVoiceMetricsReturn {
               ? {
                   ...prev,
                   ttsLatencies: [...prev.ttsLatencies, duration],
+                }
+              : null,
+          );
+        } else if (measurement.type === "ttfa") {
+          setCurrentSession((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  ttfaLatencies: [...prev.ttfaLatencies, duration],
                 }
               : null,
           );
@@ -375,19 +450,27 @@ export function useVoiceMetrics(): UseVoiceMetricsReturn {
         totalReconnections: 0,
         averageSttLatency: 0,
         averageTtsLatency: 0,
+        averageTtfaLatency: 0,
         p95SttLatency: 0,
         p95TtsLatency: 0,
+        p95TtfaLatency: 0,
+        networkQuality: null,
+        browserPerformance: null,
       };
     }
 
     const allSttLatencies = sessionsToAnalyze.flatMap((s) => s.sttLatencies);
     const allTtsLatencies = sessionsToAnalyze.flatMap((s) => s.ttsLatencies);
+    const allTtfaLatencies = sessionsToAnalyze.flatMap((s) => s.ttfaLatencies);
 
     const totalDuration = sessionsToAnalyze.reduce((sum, s) => {
       if (s.duration) return sum + s.duration;
       if (s.startTime) return sum + (Date.now() - s.startTime);
       return sum;
     }, 0);
+
+    // Get latest network and browser metrics
+    const latestSession = sessionsToAnalyze[sessionsToAnalyze.length - 1];
 
     return {
       totalSessions: sessionsToAnalyze.length,
@@ -410,8 +493,16 @@ export function useVoiceMetrics(): UseVoiceMetricsReturn {
         allTtsLatencies.length > 0
           ? allTtsLatencies.reduce((a, b) => a + b, 0) / allTtsLatencies.length
           : 0,
+      averageTtfaLatency:
+        allTtfaLatencies.length > 0
+          ? allTtfaLatencies.reduce((a, b) => a + b, 0) /
+            allTtfaLatencies.length
+          : 0,
       p95SttLatency: percentile(allSttLatencies, 95),
       p95TtsLatency: percentile(allTtsLatencies, 95),
+      p95TtfaLatency: percentile(allTtfaLatencies, 95),
+      networkQuality: latestSession.networkQuality || null,
+      browserPerformance: latestSession.browserPerformance || null,
     };
   }, [allSessions]);
 
@@ -421,6 +512,55 @@ export function useVoiceMetrics(): UseVoiceMetricsReturn {
     currentSessionRef.current = null;
     setAllSessions([]);
     measurementsRef.current.clear();
+    audioContextRef.current = null;
+  }, []);
+
+  // Record browser performance snapshot
+  const recordBrowserPerformance = useCallback(() => {
+    if (!currentSessionRef.current) return;
+
+    const performance = getBrowserPerformance();
+    setCurrentSession((prev) =>
+      prev
+        ? {
+            ...prev,
+            browserPerformance: performance,
+          }
+        : null,
+    );
+  }, []);
+
+  // Record network quality snapshot
+  const recordNetworkQuality = useCallback(() => {
+    if (!currentSessionRef.current) return;
+
+    const quality = getNetworkQuality();
+    setCurrentSession((prev) =>
+      prev
+        ? {
+            ...prev,
+            networkQuality: quality,
+          }
+        : null,
+    );
+  }, []);
+
+  // Set audio context for metrics collection
+  const setAudioContext = useCallback((ctx: AudioContext) => {
+    audioContextRef.current = ctx;
+
+    // Record audio context metrics
+    if (currentSessionRef.current) {
+      const metrics = getAudioContextMetrics(ctx);
+      setCurrentSession((prev) =>
+        prev
+          ? {
+              ...prev,
+              audioContext: metrics,
+            }
+          : null,
+      );
+    }
   }, []);
 
   return {
@@ -430,6 +570,9 @@ export function useVoiceMetrics(): UseVoiceMetricsReturn {
     endSession,
     startLatencyMeasurement,
     endLatencyMeasurement,
+    recordBrowserPerformance,
+    recordNetworkQuality,
+    setAudioContext,
     recordReconnection,
     recordError,
     recordMessage,

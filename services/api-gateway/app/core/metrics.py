@@ -263,3 +263,61 @@ voice_vad_trigger_latency_seconds = _safe_histogram(
     "Time from speech end to VAD trigger",
     buckets=[0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 1.0],  # Target: 200ms
 )
+
+# Voice Error Tracking Metrics (Phase 3 - Observability)
+voice_errors_total = _safe_counter(
+    "voiceassist_voice_errors_total",
+    "Total voice errors by category and code",
+    ["category", "code", "provider", "recoverable"],
+)
+voice_error_recovery_total = _safe_counter(
+    "voiceassist_voice_error_recovery_total",
+    "Successful error recovery attempts",
+    ["category", "recovery_method"],  # recovery_method: retry, failover, reconnect, reset
+)
+voice_provider_failures_total = _safe_counter(
+    "voiceassist_voice_provider_failures_total",
+    "External voice provider failures",
+    ["provider", "operation", "status_code"],
+)
+
+# Voice Pipeline Stage Latency Metrics (for detailed tracing)
+voice_pipeline_stage_latency_seconds = _safe_histogram(
+    "voiceassist_voice_pipeline_stage_latency_seconds",
+    "Per-stage latency in voice pipeline",
+    ["stage"],  # Stages: audio_receive, vad_process, stt_transcribe, llm_process, tts_synthesize, audio_send
+    buckets=[0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75, 1.0, 2.0],
+)
+
+# TTFA - Time To First Audio (end-to-end from user speech to first audio byte)
+voice_ttfa_seconds = _safe_histogram(
+    "voiceassist_voice_ttfa_seconds",
+    "Time to first audio byte (speech end to first audio chunk)",
+    buckets=[0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 1.0, 1.5, 2.0],  # SLO: 200ms
+)
+
+# Active voice session gauge
+voice_active_sessions = _safe_gauge(
+    "voiceassist_voice_active_sessions",
+    "Current number of active voice sessions",
+)
+
+# Barge-in metrics
+voice_barge_in_total = _safe_counter(
+    "voiceassist_voice_barge_in_total",
+    "Total barge-in interruptions",
+    ["outcome"],  # outcome: successful, ignored, error
+)
+
+# Audio chunk metrics
+voice_audio_chunks_total = _safe_counter(
+    "voiceassist_voice_audio_chunks_total",
+    "Total audio chunks processed",
+    ["direction", "status"],  # direction: input/output, status: success/dropped/error
+)
+voice_audio_chunk_size_bytes = _safe_histogram(
+    "voiceassist_voice_audio_chunk_size_bytes",
+    "Size of audio chunks in bytes",
+    ["direction"],
+    buckets=[100, 500, 1000, 2000, 4000, 8000, 16000, 32000],
+)

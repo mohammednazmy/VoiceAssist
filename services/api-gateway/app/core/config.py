@@ -104,6 +104,13 @@ class Settings(BaseSettings):
     REALTIME_BASE_URL: str = "wss://api.openai.com/v1/realtime"  # WebSocket endpoint
     REALTIME_TOKEN_EXPIRY_SEC: int = 300  # 5 minutes for ephemeral tokens
 
+    # Voice logging configuration (Phase 3 - Observability)
+    # MINIMAL: Errors only
+    # STANDARD: + Session lifecycle (start/end/state changes)
+    # VERBOSE: + All latency measurements
+    # DEBUG: + Audio frame details, chunk timing
+    VOICE_LOG_LEVEL: str = "STANDARD"
+
     # Thinker/Talker Voice Pipeline settings
     VOICE_PIPELINE_MODE: str = "thinker_talker"  # "thinker_talker" or "realtime_fallback"
     VOICE_PIPELINE_STT_PRIMARY: str = "deepgram"  # Primary STT provider
