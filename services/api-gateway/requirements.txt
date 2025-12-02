@@ -24,7 +24,7 @@ python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.1  # Pinned to 4.0.x for passlib 1.7.4 compatibility (4.1+/5.x have version detection issues)
 pyotp==2.9.0  # TOTP (Time-based One-Time Password) for 2FA
-qrcode[pil]==7.4.2  # QR code generation for 2FA setup
+qrcode[pil]==8.2  # QR code generation for 2FA setup
 
 # OpenAI (for future use)
 openai==2.8.1
