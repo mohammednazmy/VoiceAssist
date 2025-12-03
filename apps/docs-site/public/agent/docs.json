@@ -1,6 +1,6 @@
 {
   "count": 238,
-  "generated_at": "2025-12-03T06:24:37.682Z",
+  "generated_at": "2025-12-03T20:14:27.070Z",
   "docs": [
     {
       "slug": "architecture/frontend",
@@ -14,6 +14,53 @@
       "category": "architecture",
       "tags": ["architecture", "frontend", "react", "typescript", "monorepo"],
       "relatedServices": ["web-app", "admin-panel", "docs-site"],
+      "lastUpdated": "2025-12-03"
+    },
+    {
+      "slug": "voice/pipeline",
+      "path": "VOICE_MODE_PIPELINE.md",
+      "title": "Voice Mode Pipeline",
+      "summary": "Unified Voice Mode pipeline architecture, data flow, barge-in, audio playback, metrics, offline fallback, and testing strategy.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "agent", "backend", "frontend"],
+      "category": "reference",
+      "tags": [
+        "voice",
+        "realtime",
+        "websocket",
+        "openai",
+        "api",
+        "barge-in",
+        "audio",
+        "offline",
+        "multilingual"
+      ],
+      "relatedServices": ["api-gateway", "web-app"],
+      "lastUpdated": "2025-12-03"
+    },
+    {
+      "slug": "voice-mode-settings-guide",
+      "path": "VOICE_MODE_SETTINGS_GUIDE.md",
+      "title": "Voice Mode Settings Guide",
+      "summary": "This guide explains how to use and configure Voice Mode settings in VoiceAssist.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["frontend"],
+      "category": "operations",
+      "tags": [
+        "voice",
+        "mode",
+        "settings",
+        "guide",
+        "preferences",
+        "tts",
+        "multilingual",
+        "offline",
+        "calibration"
+      ],
       "lastUpdated": "2025-12-03"
     },
     {
@@ -169,28 +216,6 @@
       "owner": "frontend",
       "audience": ["developers", "frontend", "agent"],
       "tags": ["voice", "ui", "chat", "frontend", "unified"],
-      "lastUpdated": "2025-12-02"
-    },
-    {
-      "slug": "voice/pipeline",
-      "path": "VOICE_MODE_PIPELINE.md",
-      "title": "Voice Mode Pipeline",
-      "summary": "Unified Voice Mode pipeline architecture, data flow, barge-in, audio playback, metrics, and testing strategy.",
-      "status": "stable",
-      "stability": "production",
-      "owner": "backend",
-      "audience": ["human", "agent", "backend", "frontend"],
-      "category": "reference",
-      "tags": [
-        "voice",
-        "realtime",
-        "websocket",
-        "openai",
-        "api",
-        "barge-in",
-        "audio"
-      ],
-      "relatedServices": ["api-gateway", "web-app"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -446,19 +471,6 @@
       "audience": ["user", "human"],
       "tags": ["quickstart", "user-guide", "voice", "chat"],
       "lastUpdated": "2025-12-01"
-    },
-    {
-      "slug": "voice-mode-settings-guide",
-      "path": "VOICE_MODE_SETTINGS_GUIDE.md",
-      "title": "Voice Mode Settings Guide",
-      "summary": "This guide explains how to use and configure Voice Mode settings in VoiceAssist.",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["frontend"],
-      "category": "operations",
-      "tags": ["voice", "mode", "settings", "guide", "preferences", "tts"],
-      "lastUpdated": "2025-11-29"
     },
     {
       "slug": "voice-state-2025-11-29",
