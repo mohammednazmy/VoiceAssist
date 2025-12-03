@@ -85,16 +85,22 @@ jobs:
           pnpm --filter @voiceassist/api-client type-check
           pnpm --filter @voiceassist/utils type-check
 
-      - name: Build all apps and packages
+      - name: Build shared packages first
+        env:
+          DEPLOY_ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          pnpm --filter @voiceassist/ui build
+          pnpm --filter @voiceassist/api-client build
+          pnpm --filter @voiceassist/utils build
+          pnpm --filter @voiceassist/telemetry build
+
+      - name: Build apps
         env:
           DEPLOY_ENVIRONMENT: ${{ matrix.environment }}
         run: |
           pnpm --filter voiceassist-web build
           pnpm --filter voiceassist-admin build
           pnpm --filter docs-site build
-          pnpm --filter @voiceassist/ui build
-          pnpm --filter @voiceassist/api-client build
-          pnpm --filter @voiceassist/utils build
 
       - name: Security audit
         run: pnpm audit --audit-level=high
