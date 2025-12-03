@@ -16,7 +16,6 @@ import type {
   VADFrameResult,
   VADConfig,
 } from "../lib/offline/types";
-import { DEFAULT_VAD_CONFIG } from "../lib/offline/types";
 
 // ============================================================================
 // Hook Implementation
@@ -216,7 +215,6 @@ export function useOfflineVADWithFallback(
 ): UseOfflineVADWithFallbackReturn {
   const {
     networkVADAvailable: externalNetworkVADAvailable = true,
-    useNetworkMonitor = false,
     minNetworkQuality = "moderate",
     networkRecoveryDelayMs = 2000,
     onFallbackToOffline,
@@ -224,6 +222,8 @@ export function useOfflineVADWithFallback(
     onNetworkQualityChange,
     ...vadOptions
   } = options;
+
+  const useNetworkMonitor = options.useNetworkMonitor ?? false;
 
   // State
   const [isUsingOfflineVAD, setIsUsingOfflineVAD] = useState(false);
@@ -442,7 +442,7 @@ export interface UseTTSCacheReturn {
  * Hook for TTS caching with automatic cache-or-fetch logic
  */
 export function useTTSCache(options: UseTTSCacheOptions): UseTTSCacheReturn {
-  const { voice, ttsFunction, maxSizeMB = 50 } = options;
+  const { voice, ttsFunction } = options;
 
   const [stats, setStats] = useState({
     entryCount: 0,

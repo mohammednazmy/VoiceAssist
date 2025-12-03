@@ -27,10 +27,7 @@ import { voiceLog } from "../lib/logger";
 // Phase 7-10: Advanced voice barge-in hooks
 import { useMultilingual } from "./useMultilingual";
 import { usePersonalization } from "./usePersonalization";
-import {
-  useOfflineVADWithFallback,
-  type UseOfflineVADWithFallbackReturn,
-} from "./useOfflineVAD";
+import { useOfflineVADWithFallback } from "./useOfflineVAD";
 import { useConversationManager } from "./useConversationManager";
 import type { BargeInType as ConversationBargeInType } from "../lib/conversationManager/types";
 
