@@ -36,7 +36,7 @@ slowapi==0.1.9
 structlog==25.5.0
 
 # Resilience Patterns
-pybreaker==1.0.1
+pybreaker==1.4.1
 tenacity==8.2.3
 
 # Caching
