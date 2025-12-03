@@ -133,7 +133,7 @@ export class EncryptedStorage {
     });
 
     // Get or create salt
-    let saltRecord = await this.db.get("key-storage", "encryption-salt");
+    const saltRecord = await this.db.get("key-storage", "encryption-salt");
     let salt: Uint8Array<ArrayBuffer>;
 
     if (saltRecord) {

@@ -32,7 +32,7 @@ import { UI_FLAG_DEFAULTS } from "../lib/featureFlags";
 /**
  * Storage for overridden feature flag values
  */
-let flagOverrides: Map<string, boolean> = new Map();
+const flagOverrides: Map<string, boolean> = new Map();
 
 /**
  * Whether we're in test mode with overrides active
@@ -42,8 +42,9 @@ let overridesActive = false;
 /**
  * Original experimentService.isFeatureEnabled reference
  */
-let originalIsFeatureEnabled: ((flagKey: string) => Promise<boolean>) | null =
-  null;
+const _originalIsFeatureEnabled:
+  | ((flagKey: string) => Promise<boolean>)
+  | null = null;
 
 /**
  * Set feature flag overrides for testing

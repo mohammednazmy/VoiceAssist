@@ -156,7 +156,7 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
 
     for (let lag = 0; lag < maxLag; lag += lagStep) {
       // Get reference window starting at (writeIndex - lag - windowSize)
-      let refStart =
+      const refStart =
         (this.referenceWriteIndex -
           lag -
           windowSize +

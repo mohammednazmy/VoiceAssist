@@ -86,7 +86,7 @@ export function UnifiedInputArea({
   // Voice mode state machine
   const {
     voiceState: machineVoiceState,
-    isActive: _machineIsActive, // eslint-disable-line @typescript-eslint/no-unused-vars
+    isActive: _machineIsActive,
     isListening: machineIsListening,
     isProcessing,
     isResponding,

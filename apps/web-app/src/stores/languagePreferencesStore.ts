@@ -12,7 +12,6 @@ import { persist } from "zustand/middleware";
 import type {
   SupportedLanguage,
   LanguagePreferences,
-  AccentProfile,
 } from "../lib/multilingual/types";
 import { LANGUAGE_REGISTRY } from "../lib/multilingual/types";
 
@@ -183,7 +182,7 @@ const defaultState = {
 
 export const useLanguagePreferencesStore = create<LanguagePreferencesState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       ...defaultState,
 
       // ========================================
@@ -337,7 +336,7 @@ export const useLanguagePreferencesStore = create<LanguagePreferencesState>()(
       // ========================================
 
       setPreferences: (prefs) => {
-        set((state) => {
+        set((_state) => {
           const updates: Partial<LanguagePreferencesState> = {};
 
           if (prefs.primaryLanguage !== undefined) {

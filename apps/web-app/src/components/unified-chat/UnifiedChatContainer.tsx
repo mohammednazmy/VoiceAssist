@@ -272,7 +272,6 @@ export function UnifiedChatContainer({
         }
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatMessages, addMessage, getContentHash]);
 
   // Sync typing state

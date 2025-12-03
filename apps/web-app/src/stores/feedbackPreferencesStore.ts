@@ -140,7 +140,7 @@ const PRESETS: Record<FeedbackPreset, Partial<FeedbackPreferences>> = {
 
 export const useFeedbackPreferencesStore = create<FeedbackPreferencesState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       preferences: { ...DEFAULT_FEEDBACK_PREFERENCES },
       isHydrated: false,
 
