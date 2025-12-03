@@ -159,10 +159,10 @@ class TestPipelineConfig:
         config = PipelineConfig()
         assert config.stt_language == "en"
         assert config.stt_sample_rate == 16000
-        assert config.stt_endpointing_ms == 200
+        assert config.stt_endpointing_ms == 800  # Updated for better transcription
         assert config.max_response_tokens == 1024
         assert config.temperature == 0.7
-        assert config.voice_id == "21m00Tcm4TlvDq8ikWAM"
+        assert config.voice_id == "TxGEqnHWrfWFTfGW9XjX"  # Josh (premium male voice)
         assert config.tts_model == "eleven_turbo_v2"
         assert config.barge_in_enabled is True
 
@@ -260,12 +260,12 @@ class TestTTSessionConfig:
         )
         assert config.user_id == "user-123"
         assert config.session_id == "session-456"
-        assert config.voice_id == "21m00Tcm4TlvDq8ikWAM"
+        assert config.voice_id == "TxGEqnHWrfWFTfGW9XjX"  # Josh (premium male voice)
         assert config.tts_model == "eleven_turbo_v2"
         assert config.language == "en"
         assert config.barge_in_enabled is True
         assert config.stt_sample_rate == 16000
-        assert config.stt_endpointing_ms == 200
+        assert config.stt_endpointing_ms == 800  # Updated for better transcription
 
     def test_session_config_custom(self):
         """Test TTSessionConfig with custom values."""
@@ -410,9 +410,9 @@ class TestChunkTypes:
         from app.services.sentence_chunker import ChunkerConfig
 
         config = ChunkerConfig()
-        assert config.min_chunk_chars == 20
-        assert config.optimal_chunk_chars == 100
-        assert config.max_chunk_chars == 200
+        assert config.min_chunk_chars == 15  # Updated for low latency
+        assert config.optimal_chunk_chars == 50  # Updated for low latency
+        assert config.max_chunk_chars == 80  # Updated for low latency
         assert len(config.abbreviations) > 0
 
     def test_chunker_config_custom(self):
@@ -445,7 +445,7 @@ class TestTalkerServiceTypes:
         from app.services.talker_service import VoiceConfig
 
         config = VoiceConfig()
-        assert config.voice_id == "21m00Tcm4TlvDq8ikWAM"
+        assert config.voice_id == "TxGEqnHWrfWFTfGW9XjX"  # Josh (premium male voice)
         assert config.model_id == "eleven_turbo_v2"
         assert config.stability == 0.5
         assert config.similarity_boost == 0.75
@@ -602,7 +602,7 @@ class TestSTTServiceTypes:
         assert config.sample_rate == 16000
         assert config.encoding == "linear16"
         assert config.channels == 1
-        assert config.endpointing_ms == 200
+        assert config.endpointing_ms == 800  # Updated for better transcription
         assert config.interim_results is True
         assert config.punctuate is True
         assert config.vad_events is True

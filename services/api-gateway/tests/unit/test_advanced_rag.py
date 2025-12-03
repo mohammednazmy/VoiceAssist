@@ -276,17 +276,21 @@ class TestOpenAIEmbeddings:
     @pytest.mark.asyncio
     async def test_embed_with_mock(self):
         """Test embedding with mocked OpenAI."""
-        embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+        # Mock the entire openai module's embeddings.create method
+        mock_data = MagicMock()
+        mock_data.embedding = [0.1, 0.2, 0.3]
+        mock_response = MagicMock()
+        mock_response.data = [mock_data]
 
-        with patch("openai.embeddings.create", new_callable=AsyncMock) as mock_create:
-            mock_response = MagicMock()
-            mock_response.data = [MagicMock(embedding=[0.1, 0.2, 0.3])]
-            mock_create.return_value = mock_response
+        with patch("app.services.medical_embeddings.openai") as mock_openai:
+            mock_openai.embeddings.create = AsyncMock(return_value=mock_response)
 
+            embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
             result = await embeddings.embed("test text")
 
             assert len(result) == 1
             assert len(result[0]) == 3
+            mock_openai.embeddings.create.assert_called_once()
 
 
 class TestHybridEmbeddingService:

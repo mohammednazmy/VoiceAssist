@@ -790,11 +790,17 @@ class TestAPIEndpoints:
 
     @pytest.fixture
     def client(self):
-        """Create test client."""
-        from app.main import app
-        from fastapi.testclient import TestClient
+        """Create test client with mocked external dependencies."""
+        from unittest.mock import MagicMock
 
-        return TestClient(app)
+        # Mock Qdrant client to prevent connection attempts
+        with patch("app.services.kb_indexer.QdrantClient") as mock_qdrant:
+            mock_qdrant.return_value = MagicMock()
+            with patch("app.services.kb_indexer.qdrant_client", MagicMock()):
+                from app.main import app
+                from fastapi.testclient import TestClient
+
+                return TestClient(app)
 
     def test_calculator_list_endpoint(self, client):
         """Test calculator list endpoint."""
