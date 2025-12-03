@@ -41,9 +41,7 @@ class TestSuccessResponse:
     def test_success_response_with_pagination(self):
         """Test success response with pagination metadata."""
         data = {"items": [1, 2, 3]}
-        pagination = PaginationMetadata(
-            page=1, page_size=10, total_items=50, total_pages=5
-        )
+        pagination = PaginationMetadata(page=1, page_size=10, total_items=50, total_pages=5)
 
         response = success_response(data, pagination=pagination)
 
@@ -224,9 +222,7 @@ class TestErrorCodes:
 
     def test_error_codes_in_error_response(self):
         """Test using error codes in error response."""
-        response = error_response(
-            ErrorCodes.INVALID_CREDENTIALS, "Invalid username or password"
-        )
+        response = error_response(ErrorCodes.INVALID_CREDENTIALS, "Invalid username or password")
 
         assert response["error"]["code"] == ErrorCodes.INVALID_CREDENTIALS
 
@@ -236,9 +232,7 @@ class TestPaginationMetadata:
 
     def test_create_pagination_metadata(self):
         """Test creating pagination metadata."""
-        pagination = PaginationMetadata(
-            page=2, page_size=20, total_items=100, total_pages=5
-        )
+        pagination = PaginationMetadata(page=2, page_size=20, total_items=100, total_pages=5)
 
         assert pagination.page == 2
         assert pagination.page_size == 20
@@ -247,9 +241,7 @@ class TestPaginationMetadata:
 
     def test_pagination_dict_conversion(self):
         """Test converting pagination to dict."""
-        pagination = PaginationMetadata(
-            page=1, page_size=10, total_items=50, total_pages=5
-        )
+        pagination = PaginationMetadata(page=1, page_size=10, total_items=50, total_pages=5)
 
         data = pagination.model_dump()
 
@@ -260,9 +252,7 @@ class TestPaginationMetadata:
 
     def test_pagination_metadata_types(self):
         """Test that pagination metadata has correct types."""
-        pagination = PaginationMetadata(
-            page=1, page_size=10, total_items=50, total_pages=5
-        )
+        pagination = PaginationMetadata(page=1, page_size=10, total_items=50, total_pages=5)
 
         assert isinstance(pagination.page, int)
         assert isinstance(pagination.page_size, int)
@@ -338,9 +328,7 @@ class TestAPIEnvelopeIntegration:
             "suggestions": ["Use a valid email", "Choose a longer password"],
         }
 
-        response = error_response(
-            ErrorCodes.VALIDATION_ERROR, "Validation failed", details=details
-        )
+        response = error_response(ErrorCodes.VALIDATION_ERROR, "Validation failed", details=details)
 
         assert response["error"]["details"] == details
         assert len(response["error"]["details"]["validation_errors"]["email"]) == 2

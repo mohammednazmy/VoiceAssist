@@ -1,8 +1,9 @@
 #!/bin/bash
+# shellcheck disable=SC2029,SC2087
 
 ################################################################################
 # VoiceAssist Production Deployment Script
-# 
+#
 # This script automates the complete production deployment of VoiceAssist
 # to an Ubuntu server including:
 # - Infrastructure provisioning (Terraform)
@@ -70,9 +71,9 @@ log_error() {
 
 check_prerequisites() {
     log_info "Checking prerequisites..."
-    
+
     local missing_tools=()
-    
+
     # Check for required tools
     command -v docker >/dev/null 2>&1 || missing_tools+=("docker")
     command -v docker-compose >/dev/null 2>&1 || missing_tools+=("docker-compose")
@@ -80,13 +81,13 @@ check_prerequisites() {
     command -v ansible >/dev/null 2>&1 || missing_tools+=("ansible")
     command -v ssh >/dev/null 2>&1 || missing_tools+=("ssh")
     command -v git >/dev/null 2>&1 || missing_tools+=("git")
-    
+
     if [ ${#missing_tools[@]} -ne 0 ]; then
         log_error "Missing required tools: ${missing_tools[*]}"
         log_info "Please install missing tools and try again"
         exit 1
     fi
-    
+
     log_success "All prerequisites satisfied"
 }
 
@@ -147,7 +148,7 @@ EOF
                 ;;
         esac
     done
-    
+
     # Validate required arguments
     if [[ -z "$SERVER_IP" ]] || [[ -z "$DOMAIN" ]] || [[ -z "$ADMIN_EMAIL" ]]; then
         log_error "Missing required arguments"
@@ -158,12 +159,12 @@ EOF
 
 test_server_connectivity() {
     log_info "Testing connectivity to production server ($SERVER_IP)..."
-    
+
     if $DRY_RUN; then
         log_info "[DRY RUN] Would test SSH connection to $SERVER_IP"
         return 0
     fi
-    
+
     if ssh -o ConnectTimeout=10 -o BatchMode=yes "root@$SERVER_IP" exit 2>/dev/null; then
         log_success "Server is reachable via SSH"
     else
@@ -175,15 +176,15 @@ test_server_connectivity() {
 
 copy_project_to_server() {
     log_info "Copying project files to production server..."
-    
+
     if $DRY_RUN; then
         log_info "[DRY RUN] Would copy project to $SERVER_IP:/opt/voiceassist"
         return 0
     fi
-    
+
     # Create remote directory
     ssh "root@$SERVER_IP" "mkdir -p /opt/voiceassist"
-    
+
     # Copy project files (excluding dev files)
     rsync -avz --progress \
         --exclude '.git' \
@@ -195,7 +196,7 @@ copy_project_to_server() {
         --exclude '.pytest_cache' \
         --exclude 'htmlcov' \
         "$PROJECT_ROOT/" "root@$SERVER_IP:/opt/voiceassist/"
-    
+
     log_success "Project files copied successfully"
 }
 
@@ -204,19 +205,19 @@ provision_infrastructure() {
         log_warning "Skipping Terraform provisioning (--skip-terraform)"
         return 0
     fi
-    
+
     log_info "Provisioning infrastructure with Terraform..."
-    
+
     if $DRY_RUN; then
         log_info "[DRY RUN] Would run: terraform init && terraform apply"
         return 0
     fi
-    
+
     cd "$PROJECT_ROOT/infrastructure/terraform"
-    
+
     # Initialize Terraform
     terraform init
-    
+
     # Create terraform.tfvars with production values
     cat > terraform.tfvars << EOF
 environment = "production"
@@ -248,11 +249,11 @@ tags = {
   ManagedBy = "terraform"
 }
 EOF
-    
+
     # Plan and apply
     terraform plan -out=tfplan
     terraform apply tfplan
-    
+
     log_success "Infrastructure provisioned successfully"
     cd "$PROJECT_ROOT"
 }
@@ -262,16 +263,16 @@ configure_server() {
         log_warning "Skipping Ansible configuration (--skip-ansible)"
         return 0
     fi
-    
+
     log_info "Configuring server with Ansible..."
-    
+
     if $DRY_RUN; then
         log_info "[DRY RUN] Would run Ansible playbook"
         return 0
     fi
-    
+
     cd "$PROJECT_ROOT/infrastructure/ansible"
-    
+
     # Create inventory
     cat > inventory/production.yml << EOF
 all:
@@ -285,10 +286,10 @@ all:
     domain_name: $DOMAIN
     admin_email: $ADMIN_EMAIL
 EOF
-    
+
     # Run playbook
     ansible-playbook -i inventory/production.yml playbooks/site.yml
-    
+
     log_success "Server configured successfully"
     cd "$PROJECT_ROOT"
 }
@@ -298,31 +299,31 @@ setup_ssl() {
         log_warning "Skipping SSL setup (--skip-ssl)"
         return 0
     fi
-    
+
     log_info "Setting up SSL certificates with Let's Encrypt..."
-    
+
     if $DRY_RUN; then
         log_info "[DRY RUN] Would setup Let's Encrypt SSL for $DOMAIN"
         return 0
     fi
-    
+
     # Copy SSL setup script to server
     scp "$DEPLOYMENT_DIR/scripts/setup-ssl.sh" "root@$SERVER_IP:/opt/voiceassist/"
-    
+
     # Run SSL setup on server
     ssh "root@$SERVER_IP" "cd /opt/voiceassist && bash setup-ssl.sh --domain $DOMAIN --email $ADMIN_EMAIL"
-    
+
     log_success "SSL certificates configured successfully"
 }
 
 deploy_services() {
     log_info "Deploying VoiceAssist services..."
-    
+
     if $DRY_RUN; then
         log_info "[DRY RUN] Would deploy services with docker-compose"
         return 0
     fi
-    
+
     # Create production .env file on server
     ssh "root@$SERVER_IP" "cd /opt/voiceassist && cat > .env" << EOF
 # Production Environment Configuration
@@ -365,7 +366,7 @@ NEXTCLOUD_URL=https://nextcloud.$DOMAIN
 NEXTCLOUD_USERNAME=admin
 NEXTCLOUD_PASSWORD=CHANGE_ME
 EOF
-    
+
     # Deploy with docker-compose
     ssh "root@$SERVER_IP" << 'EOFSSH'
         cd /opt/voiceassist
@@ -373,27 +374,27 @@ EOF
         docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
         docker-compose ps
 EOFSSH
-    
+
     log_success "Services deployed successfully"
 }
 
 setup_monitoring() {
     log_info "Setting up production monitoring..."
-    
+
     if $DRY_RUN; then
         log_info "[DRY RUN] Would setup monitoring stack"
         return 0
     fi
-    
+
     # Deploy monitoring stack
     ssh "root@$SERVER_IP" << 'EOFSSH'
         cd /opt/voiceassist
         docker-compose -f infrastructure/observability/docker-compose.monitoring.yml up -d
-        
+
         # Wait for Grafana to be ready
         echo "Waiting for Grafana to be ready..."
         timeout 60 bash -c 'until curl -s http://localhost:3001/api/health > /dev/null; do sleep 2; done'
-        
+
         # Import dashboards
         echo "Importing Grafana dashboards..."
         for dashboard in infrastructure/observability/grafana/dashboards/*.json; do
@@ -402,21 +403,21 @@ setup_monitoring() {
                 -d @"$dashboard"
         done
 EOFSSH
-    
+
     log_success "Monitoring configured successfully"
 }
 
 run_smoke_tests() {
     log_info "Running production smoke tests..."
-    
+
     if $DRY_RUN; then
         log_info "[DRY RUN] Would run smoke tests"
         return 0
     fi
-    
+
     # Copy smoke test script to server
     scp "$DEPLOYMENT_DIR/smoke-tests/smoke-test.sh" "root@$SERVER_IP:/opt/voiceassist/"
-    
+
     # Run smoke tests
     if ssh "root@$SERVER_IP" "cd /opt/voiceassist && bash smoke-test.sh --domain $DOMAIN"; then
         log_success "All smoke tests passed"
@@ -462,11 +463,11 @@ main() {
     log_info "VoiceAssist Production Deployment"
     log_info "=========================================="
     log_info ""
-    
+
     parse_arguments "$@"
     check_prerequisites
     test_server_connectivity
-    
+
     # Execute deployment steps
     copy_project_to_server
     provision_infrastructure
@@ -475,7 +476,7 @@ main() {
     deploy_services
     setup_monitoring
     run_smoke_tests
-    
+
     display_summary
 }
 
