@@ -175,7 +175,7 @@ const mockGetUserMedia = vi.fn(() =>
 );
 
 // Store original mediaDevices if it exists
-const originalMediaDevices = navigator.mediaDevices;
+const _originalMediaDevices = navigator.mediaDevices;
 
 // Try to redefine mediaDevices - JSDOM may have it as non-configurable
 try {

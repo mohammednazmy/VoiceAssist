@@ -6,7 +6,7 @@
 
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { useTTAudioPlayback, TTPlaybackState } from "../useTTAudioPlayback";
+import { useTTAudioPlayback } from "../useTTAudioPlayback";
 
 // ============================================================================
 // Mock Setup
@@ -109,7 +109,7 @@ beforeEach(() => {
   ).AudioContext = MockAudioContext as unknown as typeof AudioContext;
 
   // Mock atob for base64 decoding
-  globalThis.atob = vi.fn().mockImplementation((str: string) => {
+  globalThis.atob = vi.fn().mockImplementation((_str: string) => {
     // Return mock binary data
     return String.fromCharCode(
       ...new Array(1000).fill(0).map((_, i) => i % 256),

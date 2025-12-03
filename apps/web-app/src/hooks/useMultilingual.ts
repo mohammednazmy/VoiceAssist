@@ -117,8 +117,8 @@ export function useMultilingual(
 ): UseMultilingualReturn {
   const {
     autoDetect = true,
-    autoSwitch = false,
-    switchConfidence = 0.75,
+    autoSwitch: _autoSwitch = false,
+    switchConfidence: _switchConfidence = 0.75,
     enableAccentDetection = true,
     onLanguageDetected,
     onLanguageChanged,

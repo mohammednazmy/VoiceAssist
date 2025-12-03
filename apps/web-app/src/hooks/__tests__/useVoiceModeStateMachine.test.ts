@@ -5,7 +5,7 @@
  * with unified-interface-specific state transitions.
  */
 
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { useVoiceModeStateMachine } from "../useVoiceModeStateMachine";
 import type { TTConnectionStatus } from "../useThinkerTalkerSession";
