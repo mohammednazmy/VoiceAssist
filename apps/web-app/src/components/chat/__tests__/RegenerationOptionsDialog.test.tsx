@@ -6,10 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  RegenerationOptionsDialog,
-  type RegenerationOptions,
-} from "../RegenerationOptionsDialog";
+import { RegenerationOptionsDialog } from "../RegenerationOptionsDialog";
 
 // Mock the Dialog components from @voiceassist/ui
 vi.mock("@voiceassist/ui", async () => {
@@ -152,7 +149,6 @@ describe("RegenerationOptionsDialog", () => {
       ) as HTMLInputElement;
 
       // Simulate changing the slider value using fireEvent for range inputs
-      const event = { target: { value: "1.5" } };
       slider.value = "1.5";
       slider.dispatchEvent(new Event("change", { bubbles: true }));
 

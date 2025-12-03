@@ -352,8 +352,9 @@ async function openVoicePanel(page: Page): Promise<boolean> {
     await page.waitForSelector("[data-testid='voice-mode-panel']", {
       timeout: 5000,
     });
-  } catch (_e) {
+  } catch {
     // Panel may not have appeared - let the test handle this
+    // eslint-disable-next-line no-console
     console.log("[openVoicePanel] Panel did not appear after clicking button");
   }
   return true;

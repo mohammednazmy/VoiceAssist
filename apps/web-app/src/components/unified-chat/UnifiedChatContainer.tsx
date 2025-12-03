@@ -57,7 +57,7 @@ import type {
   WebSocketErrorCode,
 } from "@voiceassist/types";
 import { extractErrorMessage } from "@voiceassist/types";
-import { Loader2 } from "lucide-react";
+// Loader2 removed - using ChatSkeleton instead
 import { ChatSkeleton } from "./UnifiedChatSkeleton";
 import { ErrorDisplay, type ChatErrorType } from "./UnifiedChatError";
 

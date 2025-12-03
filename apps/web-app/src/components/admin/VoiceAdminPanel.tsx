@@ -314,7 +314,7 @@ export function VoiceAdminPanel() {
           provider: voice.provider,
         }),
       );
-    } catch (_err) {
+    } catch {
       setError("Failed to set default voice");
     }
   };
