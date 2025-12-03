@@ -187,6 +187,23 @@ jobs:
           timeout 30 bash -c 'until curl -sf http://localhost:6333/collections; do sleep 2; done'
           echo "All services ready!"
 
+      - name: Run database migrations
+        working-directory: services/api-gateway
+        run: |
+          alembic upgrade head
+        env:
+          ENVIRONMENT: test
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: voiceassist
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: voiceassist_test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          REDIS_PASSWORD: ""
+          SECRET_KEY: test-secret-key-for-ci
+          JWT_SECRET: test-jwt-secret-for-ci
+
       - name: Run integration tests
         working-directory: services/api-gateway
         run: |
