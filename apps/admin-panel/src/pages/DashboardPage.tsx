@@ -1,6 +1,7 @@
 import { ServiceStatus } from "../components/dashboard/ServiceStatus";
 import { MetricCard } from "../components/dashboard/MetricCard";
 import { IntegrationsWidget } from "../components/dashboard/IntegrationsWidget";
+import { ActivityFeed } from "../components/dashboard/ActivityFeed";
 import { useMetrics } from "../hooks/useMetrics";
 
 export function DashboardPage() {
@@ -153,11 +154,19 @@ export function DashboardPage() {
           {renderServiceCards()}
         </div>
 
-        <div>
-          <h2 className="text-lg font-semibold text-slate-200 mb-3">
-            External Integrations
-          </h2>
-          <IntegrationsWidget />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-200 mb-3">
+              External Integrations
+            </h2>
+            <IntegrationsWidget />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-200 mb-3">
+              Activity Feed
+            </h2>
+            <ActivityFeed />
+          </div>
         </div>
       </div>
 

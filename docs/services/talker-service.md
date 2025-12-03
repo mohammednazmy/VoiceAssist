@@ -1,3 +1,16 @@
+---
+title: Talker Service
+slug: services/talker-service
+summary: Text-to-speech synthesis service using ElevenLabs with sentence chunking for gapless audio playback.
+status: stable
+stability: production
+owner: backend
+lastUpdated: "2025-12-02"
+audience: ["developers", "backend", "agent"]
+tags: ["service", "tts", "elevenlabs", "voice", "backend"]
+category: reference
+---
+
 # Talker Service
 
 > **Location:** `services/api-gateway/app/services/talker_service.py`

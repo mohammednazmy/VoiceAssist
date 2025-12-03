@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchAPI } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
+import { ConfirmDialog } from "../components/shared/ConfirmDialog";
 
 interface ClinicalContextSummary {
   id: string;
@@ -70,6 +71,9 @@ export function ClinicalContextsPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [includePhi, setIncludePhi] = useState(false);
   const [userIdFilter, setUserIdFilter] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [phiAccessNotice, setPhiAccessNotice] = useState(false);
   const { isViewer } = useAuth();
 
   useEffect(() => {
@@ -125,11 +129,37 @@ export function ClinicalContextsPage() {
         `/api/admin/clinical/contexts/${contextId}?include_phi=${includePhi}`,
       );
       setSelectedDetail(data.context);
+      // Show PHI access notice when PHI is revealed
+      if (includePhi && !data.context.phi_masked) {
+        setPhiAccessNotice(true);
+        setTimeout(() => setPhiAccessNotice(false), 5000);
+      }
     } catch (err: unknown) {
       console.error("Failed to load context detail:", err);
       setSelectedDetail(null);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const handleDeleteContext = async () => {
+    if (!selectedId) return;
+    setDeleteLoading(true);
+    try {
+      await fetchAPI(`/api/admin/clinical/contexts/${selectedId}`, {
+        method: "DELETE",
+      });
+      // Clear selection and refresh list
+      setSelectedId(null);
+      setSelectedDetail(null);
+      setDeleteDialogOpen(false);
+      loadContexts();
+      loadStats();
+    } catch (err: unknown) {
+      console.error("Failed to delete context:", err);
+      // Keep dialog open to show error
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -402,6 +432,14 @@ export function ClinicalContextsPage() {
                 />
                 Show PHI (Logged)
               </label>
+              {!isViewer && (
+                <button
+                  onClick={() => setDeleteDialogOpen(true)}
+                  className="px-3 py-1 text-sm bg-red-900/50 border border-red-800 rounded-md text-red-100 hover:bg-red-900"
+                >
+                  Delete
+                </button>
+              )}
               <button
                 onClick={() => {
                   setSelectedId(null);
@@ -562,6 +600,46 @@ export function ClinicalContextsPage() {
           )}
         </div>
       )}
+
+      {/* PHI Access Notice Toast */}
+      {phiAccessNotice && (
+        <div className="fixed bottom-4 right-4 z-50 p-4 bg-blue-900/90 border border-blue-700 rounded-lg shadow-lg text-blue-100 text-sm flex items-center gap-3 animate-in slide-in-from-right">
+          <span className="text-lg">🔓</span>
+          <div>
+            <div className="font-medium">PHI Access Logged</div>
+            <div className="text-xs text-blue-300">
+              Your access to unmasked PHI has been recorded for HIPAA
+              compliance.
+            </div>
+          </div>
+          <button
+            onClick={() => setPhiAccessNotice(false)}
+            className="ml-2 text-blue-300 hover:text-blue-100"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={handleDeleteContext}
+        title="Delete Clinical Context"
+        message={
+          <div>
+            <p>Are you sure you want to delete this clinical context?</p>
+            <p className="mt-2 text-xs text-slate-500">
+              This action cannot be undone. The deletion will be logged for
+              audit purposes.
+            </p>
+          </div>
+        }
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={deleteLoading}
+      />
     </div>
   );
 }

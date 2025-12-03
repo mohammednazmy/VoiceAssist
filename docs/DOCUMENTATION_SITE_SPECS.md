@@ -1,786 +1,282 @@
 ---
 title: "Documentation Site Specs"
 slug: "documentation-site-specs"
-summary: "The VoiceAssist documentation site provides comprehensive guides, tutorials, and API documentation for users and administrators. Accessible at `docs-v..."
+summary: "VoiceAssist documentation site implementation details, automation pipelines, and AI integration."
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["documentation", "site", "specs"]
+lastUpdated: "2025-12-02"
+audience: ["human", "agent"]
+tags: ["documentation", "site", "specs", "automation", "ai"]
 category: reference
 ---
 
 # Documentation Site Specifications
 
-## Overview
+## Current Implementation (Canonical)
 
-The VoiceAssist documentation site provides comprehensive guides, tutorials, and API documentation for users and administrators. Accessible at `docs-voice.asimo.io`.
+### Deployment
 
-## Technology Stack
+| Property      | Value                        |
+| ------------- | ---------------------------- |
+| **Domain**    | https://assistdocs.asimo.io  |
+| **Framework** | Next.js 14 with App Router   |
+| **Export**    | Static site generation (SSG) |
+| **Hosting**   | Apache (static files)        |
+| **Source**    | `apps/docs-site/`            |
 
-### Framework Options
+### Technology Stack
 
-**Option 1: Next.js with MDX (Recommended)**
+- **Framework:** Next.js 14 (app router) with static export
+- **Styling:** Tailwind CSS + shadcn/ui components
+- **Content:** MDX for markdown with React components
+- **Search:** Fuse.js client-side with `/search-index.json`
+- **Code Highlighting:** Shiki
+- **Diagrams:** Mermaid
+- **Theme:** next-themes for dark mode
 
-- Next.js 14+ with App Router
-- MDX for markdown with React components
-- Tailwind CSS for styling
-- next-themes for dark mode
-- Contentlayer or next-mdx-remote for content processing
+### Search Implementation
 
-**Option 2: Docusaurus**
-
-- Facebook's documentation framework
-- Built on React
-- Out-of-the-box features (search, versioning)
-- Large plugin ecosystem
-
-**Recommendation**: Next.js for more customization and consistency with other web apps.
-
-### Additional Tools
-
-- **Search**: Algolia DocSearch (free for open source) or local search
-- **Code Highlighting**: Prism.js or Shiki
-- **Diagrams**: Mermaid for flowcharts and diagrams
-- **Analytics**: Plausible or simple self-hosted
-- **Feedback**: thumbs up/down on each page
-
-## Site Structure
-
-### Navigation Layout
+Search is fully implemented using Fuse.js for client-side fuzzy search:
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  Header                                              │
-│  [Logo] VoiceAssist Docs    [Search] [Dark] [GitHub]│
-├──────────────┬──────────────────────────────────────┤
-│              │                                       │
-│  Sidebar     │  Content Area                        │
-│  Nav         │                                       │
-│              │  # Page Title                        │
-│ Getting      │                                       │
-│ Started      │  Content with headings,              │
-│ • Welcome    │  code blocks, images, etc.           │
-│ • Quick Start│                                       │
-│              │                                       │
-│ User Guide   │                                       │
-│ • Voice Mode │                                       │
-│ • Text Mode  │  ┌──────────────────┐               │
-│ • Files      │  │ On This Page     │               │
-│              │  │ • Section 1      │               │
-│ Medical      │  │ • Section 2      │               │
-│ Features     │  │ • Section 3      │               │
-│ • Textbooks  │  └──────────────────┘               │
-│ • Journals   │                                       │
-│              │                                       │
-│ Admin        │  [← Previous] [Next →]               │
-└──────────────┴──────────────────────────────────────┘
+apps/docs-site/
+├── public/
+│   └── search-index.json     # Pre-built search index (~248K lines)
+├── scripts/
+│   └── generate-search-index.js   # Builds index at build time
+└── src/components/
+    └── SearchDialog.tsx      # Cmd+K search interface
 ```
+
+**Features:**
+
+- Full-text search across all documentation
+- Keyboard shortcut (Cmd+K / Ctrl+K)
+- Fuzzy matching with relevance scoring
+- Section and category filtering
+
+---
+
+## Agent JSON API
+
+The docs site exposes structured JSON endpoints for AI agents:
+
+| Endpoint             | Description                      |
+| -------------------- | -------------------------------- |
+| `/agent/index.json`  | Metadata & endpoint discovery    |
+| `/agent/docs.json`   | Full documentation index (110K+) |
+| `/agent/tasks.json`  | Common debugging tasks           |
+| `/agent/schema.json` | JSON Schema definitions          |
+
+### Usage Example
+
+```bash
+# Fetch documentation index
+curl https://assistdocs.asimo.io/agent/docs.json | jq '.docs | length'
+
+# Get specific debugging task
+curl https://assistdocs.asimo.io/agent/tasks.json | jq '.tasks[] | select(.id == "check-backend-health")'
+```
+
+---
+
+## AI Integration
+
+### Qdrant Vector Search
+
+Documentation is embedded for semantic search:
+
+| Property            | Value                  |
+| ------------------- | ---------------------- |
+| **Collection**      | `platform_docs`        |
+| **Embedding Model** | text-embedding-3-small |
+| **Dimensions**      | 1536                   |
+| **Distance Metric** | Cosine                 |
+
+### AI Tools
+
+```python
+# docs_search - Semantic search across documentation
+docs_search(query: str, category: str = None, max_results: int = 5)
+
+# docs_get_section - Retrieve full section content
+docs_get_section(doc_path: str, section: str = None)
+```
+
+### Embedding Pipeline
+
+```bash
+# Re-embed all documentation
+python scripts/embed-docs.py --force
+
+# Embed only changed files
+python scripts/embed-docs.py --incremental
+```
+
+---
+
+## Automation Scripts
+
+### API & Type Sync Pipeline
+
+| Script                       | Purpose                             | Command                   |
+| ---------------------------- | ----------------------------------- | ------------------------- |
+| `sync-openapi.mjs`           | Fetch OpenAPI spec from api-gateway | `pnpm sync:openapi`       |
+| `generate-api-types.mjs`     | Generate TypeScript types           | `pnpm generate:api-types` |
+| `validate-api-sync.mjs`      | Check for undocumented endpoints    | `pnpm validate:api-sync`  |
+| `extract-component-docs.mjs` | Extract TSDoc from packages/ui      | (manual)                  |
+
+### Validation Pipeline
+
+| Script                  | Purpose              | Command                   |
+| ----------------------- | -------------------- | ------------------------- |
+| `validate-metadata.mjs` | Validate frontmatter | `pnpm validate:metadata`  |
+| `check-links.mjs`       | Find broken links    | `pnpm check:links`        |
+| `check-freshness.mjs`   | Detect stale docs    | `pnpm check:freshness`    |
+| `docs-smoke-test.mjs`   | Test doc endpoints   | `pnpm validate:endpoints` |
+
+### Build Pipeline
+
+```bash
+# Full validation
+pnpm validate:all
+
+# Generate search index + agent JSON
+pnpm generate-search-index
+pnpm generate-agent-json
+
+# Build static site
+pnpm build
+
+# Package for deployment
+pnpm deploy  # Creates artifacts/docs-site.tar.gz
+```
+
+---
+
+## CI Integration
+
+### Workflow: `.github/workflows/docs-validation.yml`
+
+Triggers on PRs touching:
+
+- `docs/**`
+- `services/api-gateway/**`
+- `packages/ui/**`
+- `apps/docs-site/**`
+
+**Steps:**
+
+1. `validate:metadata` - Frontmatter validation
+2. `validate:api-sync --strict` - API coverage check (fails on undocumented)
+3. `check:links` - Broken link detection
+4. `check:freshness` - Stale doc detection (warns if >30 days)
+5. `build` - Full site build
+
+---
+
+## Contextual Help Components
+
+### HelpButton
+
+Links to relevant documentation from any page:
+
+```tsx
+// Location: packages/ui/src/components/HelpButton.tsx
+<HelpButton docPath="admin/security" section="permissions" />
+```
+
+### AskAIButton
+
+Opens dialog to ask questions with page context:
+
+```tsx
+// Location: apps/admin-panel/src/components/shared/AskAIButton.tsx
+<AskAIButton context={{ page: "security", feature: "audit-logs" }} />
+```
+
+**Flow:**
+
+1. User clicks "Ask AI" button
+2. Dialog opens with text input
+3. Page context pre-filled
+4. Calls `/api/ai/docs/ask` endpoint
+5. Returns response with doc citations
+
+---
 
 ## Content Organization
 
-### Section 1: Getting Started
-
-#### 1.1 Welcome (`/`)
-
-- What is VoiceAssist?
-- Key features overview
-- Who is it for?
-- Quick demo video/GIF
-- System requirements
-
-#### 1.2 Quick Start (`/getting-started/quick-start`)
-
-- 5-minute setup guide
-- Access web app (easiest)
-- First conversation example
-- Basic voice commands
-
-#### 1.3 Installation (`/getting-started/installation`)
-
-**Server Setup**
-
-- Ubuntu server requirements
-- Docker installation
-- Clone repository
-- Environment configuration
-- First run
-
-**macOS Client**
-
-- Download installer
-- Grant permissions (microphone, accessibility)
-- Configuration wizard
-- Connect to server
-
-**Web Access**
-
-- Navigate to voiceassist.asimo.io
-- Login/register
-- Browser compatibility
-
-#### 1.4 Configuration (`/getting-started/configuration`)
-
-- Initial setup wizard
-- API keys (OpenAI)
-- Integration setup
-- First textbook upload
-
-### Section 2: User Guide
-
-#### 2.1 Voice Mode (`/user-guide/voice`)
-
-- Activating voice mode
-- Wake word (macOS client)
-- Push-to-talk (web)
-- Voice commands
-- Interrupting the assistant
-- Voice settings
-
-#### 2.2 Text Mode (`/user-guide/text`)
-
-- Chat interface
-- Message formatting
-- Using markdown
-- Code blocks
-- File attachments
-
-#### 2.3 File Access (`/user-guide/files`)
-
-- Asking about files
-- Supported file types
-- Privacy considerations
-- File indexing
-- Search capabilities
-
-#### 2.4 Calendar & Email (`/user-guide/integrations`)
-
-- Calendar commands
-  - "What's on my calendar today?"
-  - "Schedule a meeting tomorrow at 2pm"
-- Email commands
-  - "Check my recent emails"
-  - "Send an email to..."
-- Reminders
-- Notes
-
-#### 2.5 Web Search (`/user-guide/web-search`)
-
-- Asking for web information
-- How web search works
-- Citation handling
-
-#### 2.6 Conversations (`/user-guide/conversations`)
-
-- Starting new conversations
-- Viewing history
-- Searching past conversations
-- Exporting conversations
-- Deleting conversations
-
-#### 2.7 Tips & Tricks (`/user-guide/tips`)
-
-- Best practices for questions
-- How to get better responses
-- Voice command shortcuts
-- Keyboard shortcuts
-- Common issues and solutions
-
-### Section 3: Medical Features
-
-#### 3.1 Overview (`/medical/overview`)
-
-- Medical capabilities introduction
-- Privacy and PHI handling
-- Disclaimer
-
-#### 3.2 Medical Textbooks (`/medical/textbooks`)
-
-- How textbook search works
-- Example queries
-- Citation format
-- Reading sections aloud
-- Bookmarking
-
-#### 3.3 Medical Journals (`/medical/journals`)
-
-- Searching PubMed
-- Downloading PDFs
-- Analyzing papers
-- Evidence synthesis
-- Managing your library
-
-#### 3.4 Clinical Guidelines (`/medical/guidelines`)
-
-- Available guideline sources
-- Searching guidelines
-- Recommendation formats
-- Guideline updates
-
-#### 3.5 OpenEvidence (`/medical/openevidence`)
-
-- What is OpenEvidence
-- Setting up integration
-- Example queries
-- Comparing multiple evidence sources
-
-#### 3.6 Medical Calculators (`/medical/calculators`)
-
-- Available calculators
-- Using calculators via voice/text
-- Understanding results
-
-#### 3.7 Use Cases (`/medical/use-cases`)
-
-- Pre-clinic preparation
-- Literature review
-- Clinical questions during rounds
-- Research assistance
-- CME and learning
-
-#### 3.8 Privacy & HIPAA (`/medical/privacy`)
-
-- Data handling policies
-- What stays local vs cloud
-- PHI detection
-- Compliance considerations
-- Best practices
-
-### Section 4: Admin Guide
-
-#### 4.1 Admin Panel Overview (`/admin/overview`)
-
-- Accessing admin panel
-- Dashboard tour
-- Key metrics
-
-#### 4.2 System Configuration (`/admin/system`)
-
-- System settings
-- Environment variables
-- Service management
-
-#### 4.3 AI Models (`/admin/models`)
-
-- Selecting models
-- Local vs cloud configuration
-- Routing logic
-- Performance tuning
-
-#### 4.4 Knowledge Base (`/admin/knowledge-base`)
-
-- Uploading textbooks
-- Bulk upload
-- Indexing process
-- Troubleshooting indexing
-- Managing documents
-
-#### 4.5 Integrations (`/admin/integrations`)
-
-- Nextcloud setup
-- Calendar setup
-- Email configuration
-- PubMed API
-- OpenEvidence API
-- Web search setup
-
-#### 4.6 User Management (`/admin/users`)
-
-- Creating users (future)
-- Roles and permissions
-- Managing sessions
-
-#### 4.7 Analytics (`/admin/analytics`)
-
-- Understanding metrics
-- Cost tracking
-- Usage patterns
-
-#### 4.8 Security (`/admin/security`)
-
-- Best practices
-- Access control
-- Audit logs
-- Encryption
-
-#### 4.9 Backups (`/admin/backups`)
-
-- Backup configuration
-- Manual backups
-- Restoring from backup
-- Disaster recovery
-
-#### 4.10 Troubleshooting (`/admin/troubleshooting`)
-
-- Common issues
-- Log analysis
-- Performance optimization
-- Getting help
-
-### Section 5: API Documentation (Future)
-
-#### 5.1 REST API (`/api/rest`)
-
-- Authentication
-- Endpoints reference
-- Request/response examples
-- Rate limiting
-
-#### 5.2 WebSocket API (`/api/websocket`)
-
-- Connection setup
-- Event types
-- Message format
-- Error handling
-
-#### 5.3 SDKs (`/api/sdks`)
-
-- Python SDK
-- JavaScript SDK
-- Examples
-
-### Section 6: Development
-
-#### 6.1 Architecture (`/dev/architecture`)
-
-- System overview
-- Component diagram
-- Data flow
-- Technology stack
-
-#### 6.2 Contributing (`/dev/contributing`)
-
-- Setting up dev environment
-- Code style
-- Pull request process
-- Issue tracking
-
-#### 6.3 Extending VoiceAssist (`/dev/extending`)
-
-- Adding custom tools
-- New integrations
-- Custom medical sources
-- Plugin system (future)
-
-### Section 7: Reference
-
-#### 7.1 Voice Commands (`/reference/voice-commands`)
-
-- Complete list of voice commands
-- Categorized by function
-- Examples
-
-#### 7.2 Keyboard Shortcuts (`/reference/keyboard-shortcuts`)
-
-- Web app shortcuts
-- macOS client shortcuts
-
-#### 7.3 Medical Sources (`/reference/sources`)
-
-- List of textbooks supported
-- Journal databases
-- Guideline sources
-- Update frequency
-
-#### 7.4 FAQ (`/reference/faq`)
-
-- Common questions
-- Troubleshooting
-- Feature requests
-
-#### 7.5 Glossary (`/reference/glossary`)
-
-- Technical terms
-- Medical AI terminology
-- Acronyms
-
-#### 7.6 Changelog (`/reference/changelog`)
-
-- Version history
-- Release notes
-- Breaking changes
-
-## Design & Styling
-
-### Theme
-
-- Consistent with main web app and admin panel
-- Professional medical aesthetic
-- Dark mode support
-- Accessible color contrast
-
-### Typography
-
-- Clear hierarchy
-- Code font for technical content
-- Medical terminology handling
-
-### Components
-
-#### Code Blocks
-
-```python
-# Support syntax highlighting
-from voiceassist import VoiceAssist
-
-assistant = VoiceAssist(api_key="...")
-response = assistant.query("What is diabetes?")
-```
-
-#### Callouts/Admonitions
+### Directory Structure
 
 ```
-💡 Tip: Use specific medical terms for better results
-
-⚠️ Warning: Never include PHI in queries sent to cloud APIs
-
-❌ Error: This feature requires admin access
-
-ℹ️ Info: Indexing large textbooks may take 10-15 minutes
+docs/
+├── overview/           # Architecture, status, getting started
+├── phases/             # Implementation phases (1-14)
+├── operations/         # DevOps, deployment, monitoring
+├── debugging/          # Troubleshooting guides
+├── client-impl/        # Client implementations
+├── archive/            # Deprecated/historical docs
+└── *.md                # Top-level specs and guides
 ```
 
-#### Tabbed Content
+### Frontmatter Requirements
 
-For showing different options (macOS vs Linux, Python vs JavaScript, etc.)
+Every doc must include:
 
-#### Embedded Videos/GIFs
-
-For tutorials and demonstrations
-
-#### Interactive Examples
-
-- Live code editor (for API examples)
-- Voice command tester
-
-#### Diagrams
-
-```mermaid
-graph LR
-    A[User] --> B[VoiceAssist]
-    B --> C[Local Model]
-    B --> D[Cloud API]
-    B --> E[Medical KB]
+```yaml
+---
+title: "Page Title"
+slug: "url-slug"
+summary: "Brief description for search and previews"
+status: stable|draft|deprecated
+stability: production|beta|alpha
+owner: backend|frontend|docs|mixed
+lastUpdated: "YYYY-MM-DD"
+audience: ["human", "agent"]
+tags: ["tag1", "tag2"]
+category: overview|reference|guide|debugging
+---
 ```
 
-### Navigation
+---
 
-#### Sidebar
-
-- Collapsible sections
-- Active page highlighted
-- Progress indicator (for tutorials)
-
-#### Table of Contents
-
-- Right sidebar for page sections
-- Sticky on scroll
-- Clickable links
-
-#### Breadcrumbs
-
-`Home > Medical Features > Medical Textbooks`
-
-#### Footer
-
-- Links to main app, admin panel
-- Social links (if applicable)
-- Version number
-- Last updated date
-
-### Search
-
-#### Features
-
-- Full-text search across all docs
-- Keyboard shortcut (Cmd+K / Ctrl+K)
-- Search suggestions
-- Recent searches
-- Filters (section, topic)
-
-#### Implementation
-
-- Algolia DocSearch (if eligible)
-- Or Lunr.js for local search
-- Flexsearch for fast client-side search
-
-## Features
-
-### Dark Mode
-
-- Toggle in header
-- Persists preference
-- Automatic based on system preference
-
-### Feedback System
-
-- Thumbs up/down on each page
-- "Was this helpful?" prompt
-- Optional comment
-- Submit to admin dashboard
-
-### Copy to Clipboard
-
-- One-click code copy
-- Copy API endpoints
-- Copy command examples
-
-### Page Navigation
-
-- Previous/Next buttons at bottom
-- Jump to top button
-- Smooth scroll anchors
-
-### Versioning (Future)
-
-- Version selector
-- Archive old versions
-- Highlight changes
-
-### Print Stylesheet
-
-- Clean print layout
-- Remove navigation
-- Page breaks
-
-### Offline Access (PWA)
-
-- Service worker for caching
-- Offline reading
-- Update notification
-
-## Content Guidelines
-
-### Writing Style
-
-- Clear and concise
-- Step-by-step instructions
-- Lots of examples
-- Screenshots where helpful
-- Avoid jargon (or explain it)
-
-### Code Examples
-
-- Complete, runnable examples
-- Comments explaining key parts
-- Multiple languages where applicable
-- Link to full example repos
-
-### Medical Content
-
-- Accurate terminology
-- Cite sources
-- Disclaimer on every medical page
-- Clear about limitations
-
-### Updates
-
-- Keep synchronized with app updates
-- Version compatibility notes
-- Deprecation warnings
-
-## SEO & Metadata
-
-### Meta Tags
-
-- Descriptive titles
-- Page descriptions
-- Open Graph tags
-- Twitter cards
-
-### Sitemap
-
-- Auto-generated XML sitemap
-- Submit to search engines
-
-### Structured Data
-
-- Schema.org markup
-- Documentation breadcrumbs
-
-## Analytics
-
-### Track
-
-- Page views
-- Popular pages
-- Search queries (anonymized)
-- Feedback responses
-- Navigation patterns
-
-### Privacy
-
-- No personal data
-- Respect Do Not Track
-- Cookie-less if possible
-- GDPR compliant
-
-## Deployment
-
-### Build Process
+## Environment Variables
 
 ```bash
-npm run build
-# Generates static site
-```
-
-### Hosting
-
-- Nginx on Ubuntu server
-- Serve static files
-- Reverse proxy if needed
-- CDN for assets (optional)
-
-### CI/CD
-
-- Auto-build on content updates
-- Deploy to staging first
-- Smoke tests
-- Auto-deploy to production
-
-### Environment Variables
-
-```
-NEXT_PUBLIC_SITE_URL=https://docs-voice.asimo.io
-NEXT_PUBLIC_APP_URL=https://voiceassist.asimo.io
+# apps/docs-site/.env
+NEXT_PUBLIC_SITE_URL=https://assistdocs.asimo.io
+NEXT_PUBLIC_APP_URL=https://dev.asimo.io
 NEXT_PUBLIC_ADMIN_URL=https://admin.asimo.io
+NEXT_PUBLIC_API_URL=https://assist.asimo.io
 ```
 
-## Maintenance
-
-### Content Updates
-
-- Regular review and updates
-- Fix broken links
-- Update screenshots
-- Add new features
-
-### Monitoring
-
-- Track broken links
-- Monitor search queries for gaps
-- Review feedback
-- Update based on support tickets
-
-### Community
-
-- Accept contributions (PRs)
-- Issue tracking for doc bugs
-- Discussion forum (GitHub Discussions?)
-
-## Accessibility
-
-### WCAG 2.1 AA Compliance
-
-- Semantic HTML
-- ARIA labels
-- Keyboard navigation
-- Screen reader friendly
-- Color contrast
-- Focus indicators
-
-### Testing
-
-- Automated accessibility testing
-- Manual screen reader testing
-- Keyboard-only navigation test
-
-## Multilingual Support (Future)
-
-### Languages
-
-- English (primary)
-- Spanish
-- Arabic (given Islamic app background)
-- Others based on demand
-
-### Implementation
-
-- next-intl or similar
-- Language selector
-- Translated content in separate files
-- Machine translation + manual review
-
-## Example Pages
-
-### Example: Quick Start Page Structure
-
-```markdown
----
-title: Quick Start
-description: Get started with VoiceAssist in 5 minutes
 ---
 
-# Quick Start
+## Historical Considerations (Archived)
 
-Get up and running with VoiceAssist in just 5 minutes.
+The following were evaluated during planning but not implemented:
 
-## Prerequisites
+### Framework Alternatives
 
-Before you begin, ensure you have:
+- **Docusaurus** - Considered for out-of-box features, rejected for less customization flexibility
+- **GitBook** - Considered for hosted solution, rejected for self-hosting requirement
 
-- [ ] An OpenAI API key
-- [ ] Access to voiceassist.asimo.io (or local installation)
+### Search Alternatives
 
-## Step 1: Access the Web App
+- **Algolia DocSearch** - Considered for hosted search, rejected for simplicity (Fuse.js sufficient for current scale)
+- **Lunr.js** - Considered as Fuse.js alternative, Fuse.js chosen for better fuzzy matching
 
-Navigate to [voiceassist.asimo.io](https://voiceassist.asimo.io) in your browser.
+### Domain History
 
-<Screenshot src="/images/quickstart-login.png" alt="Login page" />
+- Original proposal: `docs-voice.asimo.io`
+- Current production: `assistdocs.asimo.io`
 
-## Step 2: Log In
+---
 
-Enter your credentials or register a new account.
+## Related Documentation
 
-## Step 3: Your First Query
-
-Try asking a simple question:
-
-<InteractiveExample>
-"What is the mechanism of action of metformin?"
-</InteractiveExample>
-
-You should see a response with citations.
-
-## Step 4: Enable Voice Mode
-
-Click the microphone icon and grant permission.
-
-<Video src="/videos/enable-voice.mp4" />
-
-Now you can speak your questions!
-
-## Next Steps
-
-<!-- NOTE: These are example placeholder routes for the quickstart template -->
-
-- Learn about medical textbook queries (planned: /medical/textbooks)
-- Set up integrations (planned: /user-guide/integrations)
-- Upload your first textbook (planned: /admin/knowledge-base)
-
-## Need Help?
-
-- FAQ (planned: /reference/faq)
-- Troubleshooting (planned: /admin/troubleshooting)
-- Report issues on GitHub
-```
-
-## Open Source Considerations (Optional)
-
-If making documentation public:
-
-- License (MIT, Apache, CC BY)
-- Contribution guidelines
-- Code of conduct
-- Issue templates
-- PR templates
-
-## Future Enhancements
-
-- Interactive tutorials
-- Video library
-- Webinars/workshops
-- Certification program (for medical users)
-- API playground
-- Community examples gallery
-- Plugin marketplace docs
+- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture
+- [IMPLEMENTATION_STATUS.md](overview/IMPLEMENTATION_STATUS.md) - Component status
+- [Debugging Index](debugging/DEBUGGING_INDEX.md) - Troubleshooting guides

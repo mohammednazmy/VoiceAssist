@@ -5,7 +5,7 @@ summary: "**Welcome to VoiceAssist V2** - A HIPAA-compliant voice-enabled clinic
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-02"
 audience: ["human"]
 tags: ["start", "here"]
 category: overview
@@ -17,7 +17,7 @@ category: overview
 
 This document is your entry point to the project. Choose your path below based on your role and experience level.
 
-**Status update:** All 16 project phases (0-15) are complete. Backend, infrastructure, and admin panel are production-ready. The web app frontend is in active development. See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for the authoritative component status.
+**Status update:** All 16 project phases (0-15) are complete. Backend, infrastructure, admin panel, and web app (through Phase 3.5) are production-ready. See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for the authoritative component status.
 
 ---
 
@@ -83,7 +83,7 @@ VoiceAssist V2 is a **HIPAA-compliant voice-enabled clinical decision support sy
 ┌─────────────────────────────────────────────────────────────────┐
 │                    VoiceAssist V2 Stack                          │
 ├─────────────────────────────────────────────────────────────────┤
-│  Web App (Next.js)          Admin Panel (Next.js)               │
+│  Web App (Vite/React)       Admin Panel (Vite/React)            │
 │       ↓                            ↓                             │
 │  ┌─────────────────────────────────────────────────┐            │
 │  │         FastAPI Backend (Python)                │            │
@@ -137,17 +137,17 @@ All documentation is in the `docs/` directory. Here's the complete index:
 
 ### 🔧 Backend & Services
 
-| Document                                                                   | Purpose                                     | Audience                   |
-| -------------------------------------------------------------------------- | ------------------------------------------- | -------------------------- |
-| **[SERVICE_CATALOG.md](SERVICE_CATALOG.md)** ⭐                            | Complete catalog of all 10 microservices    | All developers, DevOps     |
-| **[SEMANTIC_SEARCH_DESIGN.md](SEMANTIC_SEARCH_DESIGN.md)** ⭐              | Knowledge base, vector search, RAG pipeline | Backend devs, ML           |
-| **[api-reference/rest-api.md](api-reference/rest-api.md)**                 | Endpoint-by-endpoint REST reference         | Backend devs               |
-| **[API_REFERENCE.md](API_REFERENCE.md)**                                   | High-level API overview and endpoint groups | Backend devs, stakeholders |
-| **[../services/api-gateway/README.md](../services/api-gateway/README.md)** | Canonical API Gateway service guide         | Backend devs               |
-| **[server/README.md](../server/README.md)**                                | Backend API documentation                   | Backend devs               |
-| **[apps/web-app/README.md](../apps/web-app/README.md)**                    | Web app implementation details              | Frontend devs              |
-| **[apps/admin-panel/README.md](../apps/admin-panel/README.md)**            | Admin panel implementation details          | Frontend devs              |
-| **[apps/docs-site/README.md](../apps/docs-site/README.md)**                | Documentation site implementation           | Frontend devs              |
+| Document                                                                   | Purpose                                              | Audience                   |
+| -------------------------------------------------------------------------- | ---------------------------------------------------- | -------------------------- |
+| **[SERVICE_CATALOG.md](SERVICE_CATALOG.md)** ⭐                            | Complete catalog of all 10 microservices             | All developers, DevOps     |
+| **[SEMANTIC_SEARCH_DESIGN.md](SEMANTIC_SEARCH_DESIGN.md)** ⭐              | Knowledge base, vector search, RAG pipeline          | Backend devs, ML           |
+| **[api-reference/rest-api.md](api-reference/rest-api.md)**                 | Endpoint-by-endpoint REST reference                  | Backend devs               |
+| **[API_REFERENCE.md](API_REFERENCE.md)**                                   | High-level API overview and endpoint groups          | Backend devs, stakeholders |
+| **[../services/api-gateway/README.md](../services/api-gateway/README.md)** | Canonical API Gateway service guide                  | Backend devs               |
+| **[server/README.md](../server/README.md)**                                | ⚠️ **DEPRECATED** - Legacy backend (use api-gateway) | Reference only             |
+| **[apps/web-app/README.md](../apps/web-app/README.md)**                    | Web app implementation details                       | Frontend devs              |
+| **[apps/admin-panel/README.md](../apps/admin-panel/README.md)**            | Admin panel implementation details                   | Frontend devs              |
+| **[apps/docs-site/README.md](../apps/docs-site/README.md)**                | Documentation site implementation                    | Frontend devs              |
 
 **Shared packages:** [../packages/api-client/README.md](../packages/api-client/README.md), [../packages/config/README.md](../packages/config/README.md), [../packages/design-tokens/README.md](../packages/design-tokens/README.md), [../packages/telemetry/README.md](../packages/telemetry/README.md), [../packages/types/README.md](../packages/types/README.md), [../packages/ui/README.md](../packages/ui/README.md), [../packages/utils/README.md](../packages/utils/README.md)
 
@@ -229,14 +229,15 @@ All 16 project phases have been completed:
 
 **Deliverable**: Production-ready backend and infrastructure
 
-### Web App Frontend Milestones - In Progress 🏗️
+### Web App Frontend Milestones - Phase 3.5 Complete ✅
 
 The web app follows its own milestone plan:
 
 - ✅ **Phase 0**: Foundation (monorepo, shared packages)
 - ✅ **Phase 1**: Auth & Layout
 - ✅ **Phase 2**: Chat Interface
-- 🏗️ **Phase 3**: Voice Features (in progress)
+- ✅ **Phase 3**: Voice Features
+- ✅ **Phase 3.5**: Unified Chat/Voice UI
 - 📋 **Phases 4-8**: Files, medical features, admin, polish (planned)
 
 See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for current progress.
@@ -437,9 +438,9 @@ I want to work on Phase [N]. Please:
 
 ## 📊 Project Status
 
-**Current Status**: Backend and Infrastructure Production-Ready. Frontend in Active Development.
+**Current Status**: Backend, Infrastructure, Admin Panel, and Web App (Phase 3.5) Production-Ready.
 
-**Phase Completion**: All 16 project phases (0-15) complete. Web app frontend milestone work ongoing.
+**Phase Completion**: All 16 project phases (0-15) complete. Web app Phase 3.5 (Unified Chat/Voice UI) complete.
 
 **Implementation Reference**: See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for detailed component status.
 
@@ -460,8 +461,8 @@ I want to work on Phase [N]. Please:
 ### Key Technologies
 
 - **Backend**: FastAPI, SQLAlchemy, Alembic, LangChain
-- **Frontend**: Next.js, React, TailwindCSS, shadcn/ui
-- **AI/ML**: Llama 3.1 8B, OpenAI GPT-4, Qdrant
+- **Frontend**: Vite + React (web-app, admin-panel), Next.js 14 (docs-site), TailwindCSS, shadcn/ui
+- **AI/ML**: OpenAI GPT-4o, Qdrant, ElevenLabs TTS, Deepgram STT
 - **Infrastructure**: Docker Compose, PostgreSQL, Redis, Nextcloud
 
 ### Getting Help

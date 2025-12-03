@@ -70,6 +70,13 @@ elevenlabs_breaker = CircuitBreaker(
     name="elevenlabs_circuit_breaker",
 )
 
+# OpenAI TTS API Circuit Breaker (fallback provider)
+openai_tts_breaker = CircuitBreaker(
+    fail_max=5,
+    reset_timeout=90,  # Same as ElevenLabs - TTS failover needs quick recovery
+    name="openai_tts_circuit_breaker",
+)
+
 # Generic External API Circuit Breaker (for other HTTP services)
 external_api_breaker = CircuitBreaker(
     fail_max=5,
@@ -198,6 +205,39 @@ def retry_elevenlabs_operation(max_attempts: int = 3):
     )
 
 
+def retry_openai_tts_operation(max_attempts: int = 2):
+    """
+    Retry decorator for OpenAI TTS API operations.
+
+    Lower retry count than ElevenLabs since this is the fallback provider.
+    We want to fail faster to avoid cascading delays in voice pipeline.
+
+    Args:
+        max_attempts: Maximum number of retry attempts (default: 2)
+
+    Usage:
+        @retry_openai_tts_operation()
+        @openai_tts_breaker
+        async def call_openai_tts():
+            ...
+    """
+    return retry(
+        retry=retry_if_exception_type(
+            (
+                httpx.ConnectError,
+                httpx.ConnectTimeout,
+                httpx.ReadTimeout,
+                httpx.HTTPStatusError,  # Retry on 5xx errors
+            )
+        ),
+        stop=stop_after_attempt(max_attempts),
+        wait=wait_exponential(multiplier=1, min=0.5, max=5),  # Faster backoff for fallback
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        after=after_log(logger, logging.DEBUG),
+        reraise=True,
+    )
+
+
 def retry_external_api_operation(max_attempts: int = 3):
     """
     Generic retry decorator for external HTTP API operations.
@@ -247,6 +287,7 @@ def get_circuit_breaker_status() -> dict:
         "qdrant": qdrant_breaker,
         "openai": openai_breaker,
         "elevenlabs": elevenlabs_breaker,
+        "openai_tts": openai_tts_breaker,
         "external_api": external_api_breaker,
     }
 

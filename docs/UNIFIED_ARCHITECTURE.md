@@ -5,7 +5,7 @@ summary: Comprehensive system architecture covering all components, data flows, 
 status: stable
 stability: production
 owner: mixed
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-02"
 audience: ["human", "agent", "ai-agents", "backend", "frontend", "devops"]
 tags: ["architecture", "system-design", "overview"]
 relatedServices: ["api-gateway", "web-app", "admin-panel", "docs-site"]
@@ -16,7 +16,7 @@ version: "2.0.0"
 
 # VoiceAssist V2 - Unified Architecture Documentation
 
-**Last Updated**: 2025-11-27 (All 16 Phases Complete)
+**Last Updated**: 2025-12-02 (All 16 Phases Complete)
 **Status**: Canonical Reference
 **Purpose**: Comprehensive system architecture covering all components, data flows, and integration points
 
@@ -378,18 +378,23 @@ VoiceAssist/
 
 Even in monorepo, services maintain strict boundaries:
 
-| Service                 | Module Location                                              | Responsibility                             | Dependencies                         |
-| ----------------------- | ------------------------------------------------------------ | ------------------------------------------ | ------------------------------------ |
-| **Auth Service**        | `app/api/auth.py` + `app/core/security.py`                   | User registration, login, JWT tokens, RBAC | PostgreSQL, Redis (token revocation) |
-| **Realtime Service**    | `app/api/realtime.py`                                        | WebSocket endpoint, streaming responses    | QueryOrchestrator, LLMClient         |
-| **RAG Service**         | `app/services/rag_service.py`                                | Query orchestration, RAG pipeline          | SearchAggregator, LLMClient, Qdrant  |
-| **KB Indexer**          | `app/services/kb_indexer.py`                                 | Document ingestion, chunking, embedding    | OpenAI API, Qdrant, PostgreSQL       |
-| **Search Aggregator**   | `app/services/search_aggregator.py`                          | Semantic search, citation extraction       | Qdrant, CacheService                 |
-| **Cache Service**       | `app/services/cache_service.py`                              | Multi-level caching (L1 + L2)              | Redis                                |
-| **Admin Service**       | `app/api/admin_kb.py` + `app/api/admin_panel.py`             | System management, dashboard               | All services (monitoring)            |
-| **Integration Service** | `app/api/integrations.py` + `app/services/caldav_service.py` | Nextcloud integrations                     | Nextcloud APIs (CalDAV, WebDAV)      |
-| **Audit Service**       | `app/services/audit_service.py`                              | Compliance logging, integrity verification | PostgreSQL                           |
-| **Worker Service**      | `app/worker/`                                                | Async background jobs                      | Redis (ARQ), KBIndexer               |
+| Service                    | Module Location                                              | Responsibility                             | Dependencies                         |
+| -------------------------- | ------------------------------------------------------------ | ------------------------------------------ | ------------------------------------ |
+| **Auth Service**           | `app/api/auth.py` + `app/core/security.py`                   | User registration, login, JWT tokens, RBAC | PostgreSQL, Redis (token revocation) |
+| **Realtime Service**       | `app/api/realtime.py`                                        | WebSocket endpoint, streaming responses    | QueryOrchestrator, LLMClient         |
+| **Voice Pipeline Service** | `app/services/voice_pipeline_service.py`                     | Thinker-Talker voice orchestration         | ThinkerService, TalkerService        |
+| **Thinker Service**        | `app/services/thinker_service.py`                            | LLM processing with tool/RAG support       | LLMClient, RAGService                |
+| **Talker Service**         | `app/services/talker_service.py`                             | TTS audio generation (ElevenLabs)          | ElevenLabsService                    |
+| **RAG Service**            | `app/services/rag_service.py`                                | Query orchestration, RAG pipeline          | SearchAggregator, LLMClient, Qdrant  |
+| **KB Indexer**             | `app/services/kb_indexer.py`                                 | Document ingestion, chunking, embedding    | OpenAI API, Qdrant, PostgreSQL       |
+| **Search Aggregator**      | `app/services/search_aggregator.py`                          | Semantic search, citation extraction       | Qdrant, CacheService                 |
+| **Cache Service**          | `app/services/cache_service.py`                              | Multi-level caching (L1 + L2)              | Redis                                |
+| **Admin Service**          | `app/api/admin_kb.py` + `app/api/admin_panel.py`             | System management, dashboard               | All services (monitoring)            |
+| **Integration Service**    | `app/api/integrations.py` + `app/services/caldav_service.py` | Nextcloud integrations                     | Nextcloud APIs (CalDAV, WebDAV)      |
+| **Audit Service**          | `app/services/audit_service.py`                              | Compliance logging, integrity verification | PostgreSQL                           |
+| **Worker Service**         | `app/worker/`                                                | Async background jobs                      | Redis (ARQ), KBIndexer               |
+
+> **Voice Architecture:** The Thinker-Talker pipeline is the primary voice implementation. See [Voice Mode Pipeline](VOICE_MODE_PIPELINE.md) for details.
 
 ### Service Communication Patterns
 
@@ -1132,7 +1137,7 @@ logger.info("user_login_success", extra={
 - OIDC authentication
 - Complete email integration
 - Frontend apps (Web Client, Admin Panel UI)
-- Voice processing (VAD, Realtime API)
+- Voice processing (Thinker-Talker pipeline; legacy Realtime API fallback)
 - Specialized medical models
 - Microservices extraction (if needed)
 - Kubernetes deployment

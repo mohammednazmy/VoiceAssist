@@ -5,7 +5,7 @@ summary: Unified Voice Mode pipeline architecture, data flow, barge-in, audio pl
 status: stable
 stability: production
 owner: backend
-lastUpdated: "2025-11-29"
+lastUpdated: "2025-12-02"
 audience: ["human", "agent", "backend", "frontend"]
 tags: ["voice", "realtime", "websocket", "openai", "api", "barge-in", "audio"]
 category: reference
@@ -15,7 +15,7 @@ relatedServices: ["api-gateway", "web-app"]
 # Voice Mode Pipeline
 
 > **Status**: Production-ready
-> **Last Updated**: 2025-11-29
+> **Last Updated**: 2025-12-02
 
 This document describes the unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy. It serves as the canonical reference for developers working on real-time voice features.
 
@@ -757,6 +757,167 @@ LIVE_REALTIME_E2E=1 npx playwright test e2e/voice-mode-session-smoke.spec.ts
 - [TESTING_GUIDE.md](./TESTING_GUIDE.md) - E2E testing strategy
 - [.ai/VOICE_MODE_END_TO_END_CHECKLIST.md](../.ai/VOICE_MODE_END_TO_END_CHECKLIST.md) - Quick validation checklist
 
+## Observability & Monitoring (Phase 3)
+
+**Implemented:** 2025-12-02
+
+The voice pipeline includes comprehensive observability features for production monitoring.
+
+### Error Taxonomy (`voice_errors.py`)
+
+Location: `services/api-gateway/app/core/voice_errors.py`
+
+Structured error classification with 8 categories and 40+ error codes:
+
+| Category   | Codes          | Description                    |
+| ---------- | -------------- | ------------------------------ |
+| CONNECTION | CONN_001-7     | WebSocket, network failures    |
+| STT        | STT_001-7      | Speech-to-text errors          |
+| TTS        | TTS_001-7      | Text-to-speech errors          |
+| LLM        | LLM_001-6      | LLM processing errors          |
+| AUDIO      | AUDIO_001-6    | Audio encoding/decoding errors |
+| TIMEOUT    | TIMEOUT_001-7  | Various timeout conditions     |
+| PROVIDER   | PROVIDER_001-6 | External provider errors       |
+| INTERNAL   | INTERNAL_001-5 | Internal server errors         |
+
+Each error code includes:
+
+- Recoverability flag (can auto-retry)
+- Retry configuration (delay, max attempts)
+- User-friendly description
+
+### Voice Metrics (`metrics.py`)
+
+Location: `services/api-gateway/app/core/metrics.py`
+
+Prometheus metrics for voice pipeline monitoring:
+
+| Metric                                 | Type      | Labels                                | Description            |
+| -------------------------------------- | --------- | ------------------------------------- | ---------------------- |
+| `voice_errors_total`                   | Counter   | category, code, provider, recoverable | Total voice errors     |
+| `voice_pipeline_stage_latency_seconds` | Histogram | stage                                 | Per-stage latency      |
+| `voice_ttfa_seconds`                   | Histogram | -                                     | Time to first audio    |
+| `voice_active_sessions`                | Gauge     | -                                     | Active voice sessions  |
+| `voice_barge_in_total`                 | Counter   | -                                     | Barge-in events        |
+| `voice_audio_chunks_total`             | Counter   | status                                | Audio chunks processed |
+
+### Per-Stage Latency Tracking (`voice_timing.py`)
+
+Location: `services/api-gateway/app/core/voice_timing.py`
+
+Pipeline stages tracked:
+
+- `audio_receive` - Time to receive audio from client
+- `vad_process` - Voice activity detection time
+- `stt_transcribe` - Speech-to-text latency
+- `llm_process` - LLM inference time
+- `tts_synthesize` - Text-to-speech synthesis
+- `audio_send` - Time to send audio to client
+- `ttfa` - Time to first audio (end-to-end)
+
+Usage:
+
+```python
+from app.core.voice_timing import create_pipeline_timings, PipelineStage
+
+timings = create_pipeline_timings(session_id="abc123")
+
+with timings.time_stage(PipelineStage.STT_TRANSCRIBE):
+    transcript = await stt_client.transcribe(audio)
+
+timings.record_ttfa()  # When first audio byte ready
+timings.finalize()     # When response complete
+```
+
+### SLO Alerts (`voice_slo_alerts.yml`)
+
+Location: `infrastructure/observability/prometheus/rules/voice_slo_alerts.yml`
+
+SLO targets with Prometheus alerting rules:
+
+| SLO                  | Target  | Alert                           |
+| -------------------- | ------- | ------------------------------- |
+| TTFA P95             | < 200ms | VoiceTTFASLOViolation           |
+| STT Latency P95      | < 300ms | VoiceSTTLatencySLOViolation     |
+| TTS First Chunk P95  | < 200ms | VoiceTTSFirstChunkSLOViolation  |
+| Connection Time P95  | < 500ms | VoiceConnectionTimeSLOViolation |
+| Error Rate           | < 1%    | VoiceErrorRateHigh              |
+| Session Success Rate | > 95%   | VoiceSessionSuccessRateLow      |
+
+### Client Telemetry (`voiceTelemetry.ts`)
+
+Location: `apps/web-app/src/lib/voiceTelemetry.ts`
+
+Frontend telemetry with:
+
+- **Network quality assessment** via Network Information API
+- **Browser performance metrics** via Performance.memory API
+- **Jitter estimation** for network quality
+- **Batched reporting** (10s intervals)
+- **Beacon API** for reliable delivery on page unload
+
+```typescript
+import { getVoiceTelemetry } from "@/lib/voiceTelemetry";
+
+const telemetry = getVoiceTelemetry();
+telemetry.startSession(sessionId);
+telemetry.recordLatency("stt", 150);
+telemetry.recordLatency("ttfa", 180);
+telemetry.endSession();
+```
+
+### Voice Health Endpoint (`/health/voice`)
+
+Location: `services/api-gateway/app/api/health.py`
+
+Comprehensive voice subsystem health check:
+
+```bash
+curl https://assist.asimo.io/health/voice
+```
+
+Response:
+
+```json
+{
+  "status": "healthy",
+  "providers": {
+    "openai": { "status": "up", "latency_ms": 120.5 },
+    "elevenlabs": { "status": "up", "latency_ms": 85.2 },
+    "deepgram": { "status": "up", "latency_ms": 95.8 }
+  },
+  "session_store": { "status": "up", "active_sessions": 5 },
+  "metrics": { "active_sessions": 5 },
+  "slo": { "ttfa_target_ms": 200, "error_rate_target": 0.01 }
+}
+```
+
+### Debug Logging Configuration
+
+Location: `services/api-gateway/app/core/logging.py`
+
+Configurable voice log verbosity via `VOICE_LOG_LEVEL` environment variable:
+
+| Level    | Content                                       |
+| -------- | --------------------------------------------- |
+| MINIMAL  | Errors only                                   |
+| STANDARD | + Session lifecycle (start/end/state changes) |
+| VERBOSE  | + All latency measurements                    |
+| DEBUG    | + Audio frame details, chunk timing           |
+
+Usage:
+
+```python
+from app.core.logging import get_voice_logger
+
+voice_log = get_voice_logger(__name__)
+voice_log.session_start(session_id="abc123", provider="thinker_talker")
+voice_log.latency("stt_transcribe", 150.5, session_id="abc123")
+voice_log.error("voice_connection_failed", error_code="CONN_001")
+```
+
+---
+
 ## Future Work
 
 - ~~**Metrics export to backend**: Send metrics to backend for aggregation/alerting~~ ✓ Implemented
@@ -765,8 +926,8 @@ LIVE_REALTIME_E2E=1 npx playwright test e2e/voice-mode-session-smoke.spec.ts
 - ~~**Per-user voice preferences**: Backend persistence for TTS settings~~ ✓ Implemented (2025-11-29)
 - ~~**Context-aware voice styles**: Auto-detect tone from content~~ ✓ Implemented (2025-11-29)
 - ~~**Aggressive latency optimization**: 200ms VAD, 256-sample chunks, 300ms reconnect~~ ✓ Implemented (2025-11-29)
+- ~~**Observability & Monitoring (Phase 3)**: Error taxonomy, metrics, SLO alerts, telemetry~~ ✓ Implemented (2025-12-02)
 - **Voice→chat transcript content E2E**: Test actual transcript content in chat timeline
-- **Performance baseline**: Establish latency targets (connection <2s, STT <500ms)
 - **Error tracking integration**: Send errors to Sentry/similar
 - **Session analytics**: Track voice session patterns for UX improvements
 - **Audio level visualization**: Show real-time audio level meter during recording

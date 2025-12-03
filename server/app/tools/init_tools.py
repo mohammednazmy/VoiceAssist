@@ -31,6 +31,7 @@ def initialize_tools():
     from app.tools.calculator_tool import register_calculator_tools
     from app.tools.diagnosis_tool import register_diagnosis_tools
     from app.tools.web_search_tool import register_web_search_tools
+    from app.tools.docs_search_tool import register_docs_search_tools
 
     # Register all tools
     register_calendar_tools()
@@ -39,6 +40,7 @@ def initialize_tools():
     register_calculator_tools()
     register_diagnosis_tools()
     register_web_search_tools()
+    register_docs_search_tools()
 
     # Log summary
     from app.tools.registry import TOOL_REGISTRY

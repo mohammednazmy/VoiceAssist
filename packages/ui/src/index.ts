@@ -47,6 +47,9 @@ export type { AvatarProps, AvatarGroupProps } from "./components/Avatar";
 export { IconButton } from "./components/IconButton";
 export type { IconButtonProps } from "./components/IconButton";
 
+export { HelpButton } from "./components/HelpButton";
+export type { HelpButtonProps } from "./components/HelpButton";
+
 export {
   Table,
   TableHeader,

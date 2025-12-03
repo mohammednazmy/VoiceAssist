@@ -5,7 +5,7 @@ version: 1.0.0
 status: active
 last_updated: "2025-12-01"
 audience:
-  - administrators
+  - admin
   - developers
   - ai-agents
 tags:

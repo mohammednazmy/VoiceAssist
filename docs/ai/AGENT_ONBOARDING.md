@@ -5,7 +5,7 @@ summary: Quick context, repository structure, critical rules, and common tasks f
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-02"
 audience: ["agent", "ai-agents"]
 tags: ["onboarding", "ai-agent", "getting-started", "workflows"]
 relatedServices: ["api-gateway", "web-app", "admin-panel", "docs-site"]
@@ -15,8 +15,8 @@ version: "1.2.0"
 
 # AI Agent Onboarding Guide
 
-**Version:** 1.2.0
-**Last Updated:** 2025-11-27
+**Version:** 1.3.0
+**Last Updated:** 2025-12-02
 **Audience:** AI coding assistants (Claude, GPT, Copilot, etc.)
 
 ---
@@ -77,7 +77,7 @@ VoiceAssist is an enterprise-grade, HIPAA-compliant medical AI assistant platfor
 | Infrastructure        | Production Ready | `infrastructure/`, `ha-dr/` |
 | Admin Panel           | Production Ready | `apps/admin-panel/`         |
 | Docs Site             | Production Ready | `apps/docs-site/`           |
-| Web App               | In Development   | `apps/web-app/`             |
+| Web App               | Production Ready | `apps/web-app/`             |
 | Legacy Server         | Deprecated       | `server/` (DO NOT USE)      |
 
 ### Key Facts
@@ -317,8 +317,10 @@ curl http://localhost:6333/collections
 
 **Key files:**
 
-- `apps/web-app/src/hooks/useRealtimeSession.ts` - WebSocket client
-- `app/api/realtime.py` - WebSocket server endpoint
+- `apps/web-app/src/hooks/useThinkerTalkerSession.ts` - Primary voice WebSocket client
+- `apps/web-app/src/hooks/useRealtimeVoiceSession.ts` - Legacy Realtime API client
+- `app/api/thinker_talker_websocket_handler.py` - T/T WebSocket server
+- `app/api/realtime.py` - Legacy WebSocket endpoint
 
 **Diagnostic commands:**
 
@@ -496,6 +498,52 @@ See [Agent API Reference](./AGENT_API_REFERENCE.md) for full endpoint documentat
 
 ---
 
+## AI-Docs Integration (Semantic Search)
+
+Documentation is embedded into Qdrant for semantic search, enabling AI assistants to find relevant docs using natural language queries.
+
+### Architecture
+
+| Component   | Location                               | Purpose                          |
+| ----------- | -------------------------------------- | -------------------------------- |
+| Embedder    | `scripts/embed-docs.py`                | Embeds docs into Qdrant          |
+| Search Tool | `server/app/tools/docs_search_tool.py` | LLM tool for semantic doc search |
+| Collection  | `platform_docs` (Qdrant)               | Vector storage for embeddings    |
+
+### Embedding Configuration
+
+| Property            | Value                  |
+| ------------------- | ---------------------- |
+| **Collection**      | `platform_docs`        |
+| **Embedding Model** | text-embedding-3-small |
+| **Dimensions**      | 1536                   |
+| **Distance Metric** | Cosine                 |
+
+### Tool Functions
+
+```python
+# Semantic search across platform documentation
+docs_search(query: str, category: str = None, max_results: int = 5)
+
+# Retrieve full section content by path
+docs_get_section(doc_path: str, section: str = None)
+```
+
+### Re-indexing Documentation
+
+```bash
+# Incremental update (skip unchanged)
+python scripts/embed-docs.py
+
+# Force re-index all
+python scripts/embed-docs.py --force
+
+# Preview without indexing
+python scripts/embed-docs.py --dry-run
+```
+
+---
+
 ## Environment Setup
 
 ### Required Environment Variables
@@ -620,6 +668,7 @@ GET /metrics               # Prometheus metrics
 
 | Version | Date       | Changes                                               |
 | ------- | ---------- | ----------------------------------------------------- |
+| 1.3.0   | 2025-12-02 | Added AI-Docs integration section, fixed voice hooks  |
 | 1.2.0   | 2025-11-27 | Added tasks.json endpoint, improved metadata guidance |
 | 1.1.0   | 2025-11-27 | Added common tasks and debugging workflows            |
 | 1.0.0   | 2025-11-27 | Initial release                                       |

@@ -335,3 +335,202 @@ async def circuit_breaker_status(request: Request):
         status_code=status.HTTP_200_OK,
         content=response,
     )
+
+
+@router.get("/health/voice", response_class=JSONResponse)
+@limiter.limit("50/minute")
+async def voice_health_check(request: Request):
+    """
+    Voice subsystem health check endpoint.
+
+    Returns comprehensive health status of the voice pipeline including:
+    - Overall status (healthy/degraded/unhealthy)
+    - Provider connectivity (OpenAI, ElevenLabs, Deepgram)
+    - Redis session store health
+    - Recent error rate
+    - TTFA SLO compliance
+    - Active session count
+
+    Rate limit: 50 requests per minute
+    """
+    logger.debug("voice_health_check_requested")
+
+    result = {
+        "status": "healthy",
+        "timestamp": time.time(),
+        "providers": {},
+        "session_store": {"status": "unknown"},
+        "metrics": {
+            "active_sessions": 0,
+            "error_rate_5m": None,
+            "ttfa_p95_ms": None,
+            "ttfa_slo_compliant": None,
+        },
+        "slo": {
+            "ttfa_target_ms": 200,
+            "error_rate_target": 0.01,  # 1%
+        },
+    }
+
+    issues = []
+
+    # Check Redis session store health
+    try:
+        redis_start = time.time()
+        redis_healthy = check_redis_connection()
+        redis_latency = (time.time() - redis_start) * 1000
+
+        # Check active voice sessions in Redis
+        active_sessions = 0
+        try:
+            keys = redis_client.keys("voice:session:*")
+            active_sessions = len(keys) if keys else 0
+        except Exception:
+            pass
+
+        result["session_store"] = {
+            "status": "up" if redis_healthy else "down",
+            "latency_ms": round(redis_latency, 2),
+            "active_sessions": active_sessions,
+        }
+        result["metrics"]["active_sessions"] = active_sessions
+
+        if not redis_healthy:
+            issues.append("Redis session store unavailable")
+    except Exception as e:
+        result["session_store"] = {"status": "error", "error": str(e)}
+        issues.append(f"Redis error: {str(e)[:50]}")
+
+    # Check OpenAI provider
+    try:
+        from openai import AsyncOpenAI
+
+        api_key = settings.OPENAI_API_KEY
+        if api_key:
+            client = AsyncOpenAI(api_key=api_key, timeout=5.0)
+            start = time.time()
+            await client.models.list()
+            latency = (time.time() - start) * 1000
+
+            result["providers"]["openai"] = {
+                "status": "up",
+                "latency_ms": round(latency, 2),
+            }
+        else:
+            result["providers"]["openai"] = {"status": "not_configured"}
+            issues.append("OpenAI not configured")
+    except Exception as e:
+        result["providers"]["openai"] = {
+            "status": "down",
+            "error": str(e)[:100],
+        }
+        issues.append("OpenAI unavailable")
+
+    # Check ElevenLabs provider
+    try:
+        elevenlabs_key = getattr(settings, "ELEVENLABS_API_KEY", None)
+        if elevenlabs_key:
+            import httpx
+
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                start = time.time()
+                resp = await client.get(
+                    "https://api.elevenlabs.io/v1/voices",
+                    headers={"xi-api-key": elevenlabs_key},
+                )
+                latency = (time.time() - start) * 1000
+
+                if resp.status_code == 200:
+                    result["providers"]["elevenlabs"] = {
+                        "status": "up",
+                        "latency_ms": round(latency, 2),
+                    }
+                else:
+                    result["providers"]["elevenlabs"] = {
+                        "status": "degraded",
+                        "status_code": resp.status_code,
+                    }
+                    issues.append(f"ElevenLabs returned {resp.status_code}")
+        else:
+            result["providers"]["elevenlabs"] = {"status": "not_configured"}
+    except Exception as e:
+        result["providers"]["elevenlabs"] = {
+            "status": "down",
+            "error": str(e)[:100],
+        }
+        issues.append("ElevenLabs unavailable")
+
+    # Check Deepgram STT provider
+    try:
+        deepgram_key = getattr(settings, "DEEPGRAM_API_KEY", None)
+        if deepgram_key:
+            import httpx
+
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                start = time.time()
+                resp = await client.get(
+                    "https://api.deepgram.com/v1/projects",
+                    headers={"Authorization": f"Token {deepgram_key}"},
+                )
+                latency = (time.time() - start) * 1000
+
+                if resp.status_code == 200:
+                    result["providers"]["deepgram"] = {
+                        "status": "up",
+                        "latency_ms": round(latency, 2),
+                    }
+                else:
+                    result["providers"]["deepgram"] = {
+                        "status": "degraded",
+                        "status_code": resp.status_code,
+                    }
+                    issues.append(f"Deepgram returned {resp.status_code}")
+        else:
+            result["providers"]["deepgram"] = {"status": "not_configured"}
+    except Exception as e:
+        result["providers"]["deepgram"] = {
+            "status": "down",
+            "error": str(e)[:100],
+        }
+        issues.append("Deepgram unavailable")
+
+    # Get circuit breaker status for voice-related breakers
+    breakers = get_circuit_breaker_status()
+    voice_breakers = {
+        k: v for k, v in breakers.items() if "voice" in k.lower() or "tts" in k.lower() or "stt" in k.lower()
+    }
+    if voice_breakers:
+        result["circuit_breakers"] = voice_breakers
+        for name, breaker in voice_breakers.items():
+            if breaker.get("state") == "open":
+                issues.append(f"Circuit breaker open: {name}")
+
+    # Determine overall status
+    critical_issues = [i for i in issues if "unavailable" in i.lower() or "down" in i.lower()]
+    if critical_issues:
+        result["status"] = "unhealthy"
+    elif issues:
+        result["status"] = "degraded"
+    else:
+        result["status"] = "healthy"
+
+    result["issues"] = issues if issues else None
+
+    # Log result
+    logger.info(
+        "voice_health_check_completed",
+        status=result["status"],
+        providers={k: v.get("status") for k, v in result["providers"].items()},
+        active_sessions=result["metrics"]["active_sessions"],
+        issue_count=len(issues),
+    )
+
+    response_status = (
+        status.HTTP_200_OK
+        if result["status"] == "healthy"
+        else (
+            status.HTTP_503_SERVICE_UNAVAILABLE if result["status"] == "unhealthy" else status.HTTP_200_OK
+        )  # Return 200 for degraded (still functional)
+    )
+
+    return JSONResponse(status_code=response_status, content=result)

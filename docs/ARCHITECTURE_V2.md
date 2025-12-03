@@ -5,7 +5,7 @@ summary: "VoiceAssist V2 is an **enterprise-grade, HIPAA-compliant, multi-user m
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-01"
 audience: ["human"]
 tags: ["architecture"]
 category: architecture
@@ -160,7 +160,7 @@ MacBook Pro
 │ │ - Context │ - PubMed │ - RBAC │ │
 │ └─────────────────┴─────────────────┴─────────────────────┘ │
 │ │
-│ Phases 0-10: Logical services (modules/routers in server/) │
+│ Phases 0-10: Logical services (modules/routers in services/api-gateway/) │
 │ Phases 11-14: Physical services (separate containers) │
 │ │
 │ ┌─────────────────┬─────────────────┬─────────────────────┐ │
@@ -222,12 +222,13 @@ MacBook Pro
 The backend uses a **monorepo-first, microservices-ready** architecture:
 
 ### Phases 0-10: Monorepo (Docker Compose Development)
-- All services live in `server/` directory
+- All services live in `services/api-gateway/` directory (canonical backend)
 - Single FastAPI application with multiple routers
 - Services are **logical boundaries** enforced through module structure
 - Runs in single container for rapid development
 - Suitable for < 50 concurrent users
 - See [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md) for complete structure
+- Note: `server/` directory is **DEPRECATED** - kept for reference only
 
 **Why Start with Monorepo?**
 - Faster development iteration (single codebase)
@@ -394,16 +395,16 @@ NEXTCLOUD_ADMIN_PASSWORD=secure_password
 
 **URLs:**
 
-- **Admin Panel**: `https://admin.asimo.io` (React + Vite)
-- **Web App**: `https://dev.asimo.io` (Next.js)
-- **Docs Site**: `https://docs.asimo.io` (Next.js static export)
+- **Admin Panel**: `https://admin.asimo.io` (React 18 + Vite)
+- **Web App**: `https://dev.asimo.io` (React 18 + Vite)
+- **Docs Site**: `https://assistdocs.asimo.io` (Next.js 14 static export)
 
 **Architecture:**
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │   Admin Panel   │     │    Web App      │     │   Docs Site     │
-│ admin.asimo.io  │────▶│  dev.asimo.io   │────▶│  docs.asimo.io  │
+│ admin.asimo.io  │────▶│  dev.asimo.io   │────▶│assistdocs.asimo.io│
 └────────┬────────┘     └────────┬────────┘     └─────────────────┘
          │                       │
          └───────────┬───────────┘
@@ -490,7 +491,7 @@ ADMIN_EVENTS_CHANNEL=admin:events
 
 # Cross-app URLs
 VITE_WEB_APP_URL=https://dev.asimo.io
-VITE_DOCS_URL=https://docs.asimo.io
+VITE_DOCS_URL=https://assistdocs.asimo.io
 ```
 
 **Documentation:**
@@ -809,7 +810,7 @@ spec:
 | **Identity**      | Nextcloud + Keycloak                                             | SSO, user management                    |
 | **API Gateway**   | Kong or Nginx                                                    | Routing, rate limiting, auth            |
 | **Backend**       | Python FastAPI                                                   | Microservices                           |
-| **Frontend**      | React + TypeScript                                               | Web apps                                |
+| **Frontend**      | React 18 + Vite (web-app, admin-panel), Next.js 14 (docs-site)   | Web apps                                |
 | **Databases**     | PostgreSQL (pgvector), Redis, Qdrant                             | Data persistence, caching, vectors      |
 | **AI/ML**         | OpenAI, BioGPT, PubMedBERT                                       | LLM, medical models                     |
 | **Voice**         | Thinker-Talker (Deepgram + ElevenLabs), OpenAI Realtime (legacy) | Voice interaction                       |

@@ -211,7 +211,7 @@ export function BackupsPage() {
           </>
         }
         confirmLabel="Start Backup"
-        variant="primary"
+        variant="info"
         isLoading={triggeringBackup}
       />
     </PageContainer>

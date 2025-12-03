@@ -7,6 +7,10 @@ import "@testing-library/jest-dom";
 import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 
+// Import comprehensive voice mocks (must be imported before they're used)
+import { MockWebSocket } from "./mocks/MockWebSocket";
+import { MockAudioContext } from "./mocks/MockAudioContext";
+
 // Some CI terminals report a column width of 0, which breaks Vitest's dot
 // reporter when it tries to render progress rows. Ensure a sane default so the
 // reporter can't compute Infinity rows and throw during test runs.
@@ -216,21 +220,14 @@ Object.defineProperty(global.navigator, "mediaDevices", {
   },
 });
 
-// Mock WebSocket for useChatSession tests
-(global as any).WebSocket = class MockWebSocket {
-  onopen?: () => void;
-  onmessage?: (event: any) => void;
-  onerror?: (err: any) => void;
-  onclose?: () => void;
-  send = vi.fn();
-  close = vi.fn(function (this: any) {
-    if (this.onclose) this.onclose();
-  });
+// Install comprehensive voice mocks globally
+MockWebSocket.install();
+MockAudioContext.install();
 
-  constructor(public url: string) {
-    // Simulate connection open asynchronously
-    setTimeout(() => {
-      if (this.onopen) this.onopen();
-    }, 0);
-  }
-};
+// Reset MockWebSocket instances after each test
+afterEach(() => {
+  MockWebSocket.clearInstances();
+});
+
+// Note: MockMediaDevices is already set up via navigator.mediaDevices mock above
+// For advanced tests, import MockMediaDevices directly from "./mocks/MockMediaDevices"

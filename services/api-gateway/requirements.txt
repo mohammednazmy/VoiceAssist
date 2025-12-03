@@ -1,8 +1,8 @@
 # FastAPI and web framework
-fastapi==0.122.0
+fastapi==0.123.4
 uvicorn[standard]==0.38.0
 python-multipart==0.0.20
-pydantic==2.12.4
+pydantic==2.12.5
 pydantic-settings==2.12.0
 email-validator==2.3.0
 
@@ -17,14 +17,14 @@ redis==4.6.0
 arq==0.26.3  # async task queue for document processing
 
 # Qdrant
-qdrant-client==1.7.3
+qdrant-client==1.16.1
 
 # Security
 python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.1  # Pinned to 4.0.x for passlib 1.7.4 compatibility (4.1+/5.x have version detection issues)
 pyotp==2.9.0  # TOTP (Time-based One-Time Password) for 2FA
-qrcode[pil]==7.4.2  # QR code generation for 2FA setup
+qrcode[pil]==8.2  # QR code generation for 2FA setup
 
 # OpenAI (for future use)
 openai==2.8.1
@@ -33,10 +33,10 @@ openai==2.8.1
 slowapi==0.1.9
 
 # Structured Logging
-structlog==24.1.0
+structlog==25.5.0
 
 # Resilience Patterns
-pybreaker==1.0.1
+pybreaker==1.4.1
 tenacity==9.1.2
 
 # Caching
@@ -45,7 +45,7 @@ cachetools==5.5.0  # LRU cache for in-memory caching (5.x for google-auth compat
 
 # Observability
 prometheus-client==0.23.1  # Prometheus metrics
-sentry-sdk[fastapi]==2.19.0  # Error tracking and performance monitoring
+sentry-sdk[fastapi]==2.46.0  # Error tracking and performance monitoring
 
 # Utilities
 python-dotenv==1.0.0
@@ -62,12 +62,12 @@ caldav==2.1.2
 vobject==0.9.9
 imapclient==3.0.1
 aioimaplib==2.0.1  # Async IMAP for email service
-aiosmtplib==3.0.2  # Async SMTP for email sending
+aiosmtplib==5.0.0  # Async SMTP for email sending
 webdavclient3==3.14.6
 dateparser==1.2.0  # Natural language date parsing for calendar tools
-google-auth==2.29.0  # Google OAuth2 authentication
+google-auth==2.43.0  # Google OAuth2 authentication
 google-auth-oauthlib==1.2.0  # OAuth2 flow for Google APIs
-google-api-python-client==2.127.0  # Google Calendar API client
+google-api-python-client==2.187.0  # Google Calendar API client
 
 # Testing
 pytest==9.0.1

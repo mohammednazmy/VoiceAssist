@@ -1,6 +1,19 @@
+---
+title: Unified Chat/Voice UI Implementation
+slug: unified-chat-voice-ui
+summary: Implementation guide for the merged Chat and Voice Mode interface with seamless mode switching.
+status: stable
+stability: production
+owner: frontend
+lastUpdated: "2025-12-02"
+audience: ["developers", "frontend", "agent"]
+tags: ["voice", "ui", "chat", "frontend", "unified"]
+category: guide
+---
+
 # Unified Chat/Voice UI Implementation
 
-**Last Updated**: 2025-11-28
+**Last Updated**: 2025-12-02
 **Status**: Complete (Phases 1-4)
 **Feature Flag**: `unified_chat_voice_ui`
 

@@ -21,8 +21,11 @@ export function VersionHistoryDrawer({
 
   const [versions, setVersions] = useState<PromptVersion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalVersions, setTotalVersions] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   // Diff state
   const [selectedVersions, setSelectedVersions] = useState<
@@ -37,11 +40,12 @@ export function VersionHistoryDrawer({
     null,
   );
 
-  // Load versions
+  // Load versions (initial load)
   const loadVersions = useCallback(async () => {
     setLoading(true);
+    setCurrentPage(1);
     try {
-      const data = await getVersions(prompt.id);
+      const data = await getVersions(prompt.id, 1, pageSize);
       if (data) {
         setVersions(data.versions);
         setTotalVersions(data.total);
@@ -52,7 +56,34 @@ export function VersionHistoryDrawer({
     } finally {
       setLoading(false);
     }
-  }, [prompt.id, getVersions]);
+  }, [prompt.id, getVersions, pageSize]);
+
+  // Load more versions (pagination)
+  const loadMoreVersions = useCallback(async () => {
+    if (loadingMore || versions.length >= totalVersions) return;
+
+    setLoadingMore(true);
+    const nextPage = currentPage + 1;
+    try {
+      const data = await getVersions(prompt.id, nextPage, pageSize);
+      if (data) {
+        setVersions((prev) => [...prev, ...data.versions]);
+        setCurrentPage(nextPage);
+      }
+    } catch (err) {
+      console.error("Failed to load more versions:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [
+    prompt.id,
+    getVersions,
+    currentPage,
+    pageSize,
+    loadingMore,
+    versions.length,
+    totalVersions,
+  ]);
 
   useEffect(() => {
     loadVersions();
@@ -316,12 +347,18 @@ export function VersionHistoryDrawer({
                 <div className="p-4 text-center">
                   <button
                     type="button"
-                    onClick={() => {
-                      // TODO: Load more versions
-                    }}
-                    className="text-sm text-blue-400 hover:text-blue-300"
+                    onClick={loadMoreVersions}
+                    disabled={loadingMore}
+                    className="text-sm text-blue-400 hover:text-blue-300 disabled:text-slate-500 disabled:cursor-not-allowed"
                   >
-                    Load more versions ({versions.length} of {totalVersions})
+                    {loadingMore ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="w-3 h-3 border border-slate-500 border-t-blue-400 rounded-full animate-spin" />
+                        Loading...
+                      </span>
+                    ) : (
+                      `Load more versions (${versions.length} of ${totalVersions})`
+                    )}
                   </button>
                 </div>
               )}

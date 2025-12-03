@@ -266,6 +266,17 @@ export function useThinkerTalkerSession(
   const BASE_RECONNECT_DELAY = 300;
   const MAX_RECONNECT_DELAY = 30000;
 
+  // Constants for heartbeat
+  const HEARTBEAT_INTERVAL_MS = 15000; // 15 seconds between pings
+  const HEARTBEAT_TIMEOUT_MS = 5000; // 5 seconds to receive pong
+
+  // Heartbeat refs
+  const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
+  const lastPongTimeRef = useRef<number>(Date.now());
+  const pendingPingTimeRef = useRef<number | null>(null);
+
   /**
    * Calculate reconnection delay with exponential backoff
    */
@@ -306,6 +317,59 @@ export function useThinkerTalkerSession(
       connectRef.current();
     }, delay);
   }, [reconnectAttempts, calculateReconnectDelay]);
+
+  /**
+   * Start heartbeat ping/pong to detect zombie connections
+   */
+  const startHeartbeat = useCallback(() => {
+    if (heartbeatIntervalRef.current) {
+      return; // Already running
+    }
+
+    voiceLog.debug("[ThinkerTalker] Starting heartbeat");
+    lastPongTimeRef.current = Date.now();
+
+    heartbeatIntervalRef.current = setInterval(() => {
+      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      // Check if we received pong from previous ping
+      const timeSinceLastPong = Date.now() - lastPongTimeRef.current;
+
+      if (timeSinceLastPong > HEARTBEAT_INTERVAL_MS + HEARTBEAT_TIMEOUT_MS) {
+        voiceLog.warn(
+          `[ThinkerTalker] Heartbeat timeout - no pong for ${timeSinceLastPong}ms, closing zombie connection`,
+        );
+        // Close with custom code to indicate heartbeat failure
+        wsRef.current.close(4000, "Heartbeat timeout");
+        return;
+      }
+
+      // Send ping
+      const pingTime = Date.now();
+      pendingPingTimeRef.current = pingTime;
+      wsRef.current.send(
+        JSON.stringify({
+          type: "ping",
+          ts: pingTime,
+        }),
+      );
+      voiceLog.debug("[ThinkerTalker] Heartbeat ping sent");
+    }, HEARTBEAT_INTERVAL_MS);
+  }, []);
+
+  /**
+   * Stop heartbeat
+   */
+  const stopHeartbeat = useCallback(() => {
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+      heartbeatIntervalRef.current = null;
+      pendingPingTimeRef.current = null;
+      voiceLog.debug("[ThinkerTalker] Heartbeat stopped");
+    }
+  }, []);
 
   /**
    * Update metrics and notify callback
@@ -383,6 +447,8 @@ export function useThinkerTalkerSession(
         case "session.ready":
           voiceLog.debug("[ThinkerTalker] Session ready");
           updateStatus("ready");
+          // Start heartbeat monitoring for zombie connection detection
+          startHeartbeat();
           break;
 
         case "transcript.delta": {
@@ -569,9 +635,25 @@ export function useThinkerTalkerSession(
           break;
 
         case "heartbeat":
-        case "pong":
-          // Heartbeat acknowledgment - no action needed
+        case "pong": {
+          // Track pong response for heartbeat monitoring
+          lastPongTimeRef.current = Date.now();
+
+          // Calculate RTT if we have a pending ping
+          if (pendingPingTimeRef.current) {
+            const rtt = Date.now() - pendingPingTimeRef.current;
+            pendingPingTimeRef.current = null;
+            voiceLog.debug(`[ThinkerTalker] Pong received, RTT: ${rtt}ms`);
+
+            // Warn on high RTT (>500ms)
+            if (rtt > 500) {
+              voiceLog.warn(
+                `[ThinkerTalker] High connection latency detected: ${rtt}ms`,
+              );
+            }
+          }
           break;
+        }
 
         case "error": {
           const errorCode = message.code as string;
@@ -599,6 +681,7 @@ export function useThinkerTalkerSession(
       handleError,
       metrics,
       currentToolCalls,
+      startHeartbeat,
     ],
   );
 
@@ -884,34 +967,65 @@ export function useThinkerTalkerSession(
     voiceLog.debug("[ThinkerTalker] Disconnecting...");
     intentionalDisconnectRef.current = true;
 
-    // Close WebSocket
+    // Track cleaned resources for debugging
+    const cleanedResources: string[] = [];
+
+    // 1. Stop heartbeat first
+    stopHeartbeat();
+    cleanedResources.push("heartbeat");
+
+    // 2. Close WebSocket - remove handlers first to prevent callbacks
     if (wsRef.current) {
-      wsRef.current.close();
+      wsRef.current.onclose = null;
+      wsRef.current.onerror = null;
+      wsRef.current.onmessage = null;
+      wsRef.current.onopen = null;
+      if (wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close(1000, "Intentional disconnect");
+      }
       wsRef.current = null;
+      cleanedResources.push("websocket");
     }
 
-    // Stop microphone
+    // 3. Stop microphone tracks
     if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current.getTracks().forEach((track) => {
+        track.stop();
+      });
       mediaStreamRef.current = null;
+      cleanedResources.push("mediaStream");
     }
 
-    // Cleanup audio processor
+    // 4. Cleanup audio processor
     if (processorNodeRef.current) {
-      processorNodeRef.current.disconnect();
+      try {
+        processorNodeRef.current.disconnect();
+      } catch {
+        // Already disconnected
+      }
       processorNodeRef.current = null;
+      cleanedResources.push("audioProcessor");
     }
 
+    // 5. Close AudioContext
     if (audioContextRef.current) {
-      audioContextRef.current.close();
+      audioContextRef.current.close().catch(() => {
+        // Ignore errors on close
+      });
       audioContextRef.current = null;
+      cleanedResources.push("audioContext");
     }
 
-    // Clear reconnect timeout
+    // 6. Clear reconnect timeout
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
+      cleanedResources.push("reconnectTimeout");
     }
+
+    voiceLog.debug(
+      `[ThinkerTalker] Cleanup complete: ${cleanedResources.join(", ")}`,
+    );
 
     // Calculate session duration
     if (sessionStartTimeRef.current) {
@@ -933,7 +1047,7 @@ export function useThinkerTalkerSession(
     setIsSpeaking(false);
     setPipelineState("idle");
     setCurrentToolCalls([]);
-  }, [updateStatus, updateMetrics]);
+  }, [updateStatus, updateMetrics, stopHeartbeat]);
 
   // Keep ref updated
   disconnectRef.current = disconnect;
@@ -1002,6 +1116,50 @@ export function useThinkerTalkerSession(
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options.autoConnect]);
+
+  // Handle tab visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Tab is now hidden
+        voiceLog.debug("[ThinkerTalker] Tab hidden, pausing heartbeat");
+        stopHeartbeat();
+      } else {
+        // Tab is now visible
+        voiceLog.debug("[ThinkerTalker] Tab visible, checking connection");
+
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          // Connection still open - send immediate ping to verify
+          voiceLog.debug("[ThinkerTalker] Sending verification ping");
+          wsRef.current.send(
+            JSON.stringify({
+              type: "ping",
+              ts: Date.now(),
+            }),
+          );
+          // Resume heartbeat
+          startHeartbeat();
+        } else if (
+          statusRef.current === "connected" ||
+          statusRef.current === "ready"
+        ) {
+          // Was connected but WebSocket is no longer open - connection died while hidden
+          voiceLog.warn(
+            "[ThinkerTalker] Connection lost while tab was hidden, triggering reconnect",
+          );
+          // Don't set intentional disconnect - allow reconnection
+          intentionalDisconnectRef.current = false;
+          scheduleReconnect();
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [startHeartbeat, stopHeartbeat, scheduleReconnect]);
 
   return {
     // State

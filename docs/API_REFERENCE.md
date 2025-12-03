@@ -5,7 +5,7 @@ summary: High-level API overview, endpoint groups, and quick reference for the V
 status: stable
 stability: production
 owner: backend
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-02"
 audience: ["human", "agent", "backend", "frontend"]
 tags: ["api", "rest", "reference", "endpoints"]
 category: api
@@ -15,7 +15,7 @@ version: "2.0.0"
 
 # API Reference
 
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-12-02
 
 The VoiceAssist API provides comprehensive REST endpoints for building medical AI assistant applications.
 

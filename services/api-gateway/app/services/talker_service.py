@@ -18,10 +18,13 @@ from enum import Enum
 from typing import AsyncIterator, Awaitable, Callable, Dict, List, Optional
 
 from app.core.logging import get_logger
+from app.core.resilience import elevenlabs_breaker
 from app.services.elevenlabs_service import ElevenLabsService, elevenlabs_service
+from app.services.openai_tts_service import OpenAITTSService, map_elevenlabs_voice_to_openai, openai_tts_service
 from app.services.sentence_chunker import AdaptiveChunkerConfig, ChunkerConfig, SentenceChunker
 from app.services.ssml_processor import SSMLProcessor, VoiceStyle
 from app.services.tts.quality_presets import QualityPreset, get_preset_config
+from pybreaker import CircuitBreakerError
 
 logger = get_logger(__name__)
 
@@ -330,6 +333,7 @@ class TalkerService:
     - Parallel TTS synthesis for each sentence
     - Audio queue management for gapless output
     - Cancellation (barge-in support)
+    - TTS provider failover (ElevenLabs → OpenAI)
 
     Usage:
         talker = TalkerService()
@@ -352,17 +356,22 @@ class TalkerService:
 
     def __init__(self):
         self._elevenlabs = elevenlabs_service
+        self._openai_tts = openai_tts_service
         self._default_config = VoiceConfig()
 
     def is_enabled(self) -> bool:
-        """Check if TTS is available."""
-        return self._elevenlabs.is_enabled()
+        """Check if TTS is available (either provider)."""
+        return self._elevenlabs.is_enabled() or self._openai_tts.is_enabled()
 
     def get_provider(self) -> TTSProvider:
-        """Get the active TTS provider."""
+        """Get the primary TTS provider."""
         if self._elevenlabs.is_enabled():
             return TTSProvider.ELEVENLABS
         return TTSProvider.OPENAI
+
+    def get_fallback_available(self) -> bool:
+        """Check if fallback TTS provider is available."""
+        return self._openai_tts.is_enabled()
 
     async def start_session(
         self,
@@ -383,6 +392,7 @@ class TalkerService:
 
         return TalkerSession(
             elevenlabs=self._elevenlabs,
+            openai_tts=self._openai_tts,
             config=config,
             on_audio_chunk=on_audio_chunk,
         )
@@ -440,19 +450,30 @@ class TalkerSession:
     Manages the flow:
     1. Receive LLM tokens
     2. Chunk into sentences
-    3. Synthesize each sentence
+    3. Synthesize each sentence (with failover)
     4. Stream audio chunks to callback
+
+    Failover Strategy:
+    - Primary: ElevenLabs (premium quality)
+    - Fallback: OpenAI TTS (reliable, good quality)
+    - Triggers: Circuit breaker open, connection errors, API errors
     """
 
     def __init__(
         self,
         elevenlabs: ElevenLabsService,
+        openai_tts: OpenAITTSService,
         config: VoiceConfig,
         on_audio_chunk: Callable[[AudioChunk], Awaitable[None]],
     ):
         self._elevenlabs = elevenlabs
+        self._openai_tts = openai_tts
         self._config = config
         self._on_audio_chunk = on_audio_chunk
+
+        # Track failover state for this session
+        self._using_fallback = False
+        self._fallback_triggered_at: Optional[float] = None
 
         # Get adaptive chunking config from quality preset (if set) or use defaults
         if config.quality_preset:
@@ -647,6 +668,12 @@ class TalkerSession:
         """
         Synthesize a single sentence and stream audio chunks.
 
+        Implements failover strategy:
+        1. Check if ElevenLabs circuit breaker is open → use OpenAI immediately
+        2. Try ElevenLabs synthesis
+        3. On failure, fall back to OpenAI TTS
+        4. Continue with fallback for rest of session
+
         Args:
             sentence: Text to synthesize
         """
@@ -680,42 +707,49 @@ class TalkerSession:
                 if self._state == TalkerState.CANCELLED:
                     return
 
+                # Determine which provider to use
+                use_fallback = self._using_fallback
+
+                # Check if ElevenLabs circuit breaker is open
+                if not use_fallback:
+                    try:
+                        elevenlabs_breaker.call(lambda: None)
+                    except CircuitBreakerError:
+                        logger.warning(
+                            "ElevenLabs circuit breaker OPEN, using OpenAI TTS fallback",
+                            extra={"sentence_idx": sentence_idx},
+                        )
+                        use_fallback = True
+                        self._using_fallback = True
+                        self._fallback_triggered_at = time.time()
+
                 chunk_count = 0
-                async for audio_data in self._elevenlabs.synthesize_stream(
-                    text=tts_text,
-                    voice_id=self._config.voice_id,
-                    model_id=self._config.model_id,
-                    output_format=self._config.output_format,
-                    stability=self._config.stability,
-                    similarity_boost=self._config.similarity_boost,
-                    style=self._config.style,
-                    use_speaker_boost=self._config.use_speaker_boost,
-                    chunk_size=self._audio_chunk_size,  # Configurable via quality preset
-                    previous_text=self._previous_text,  # Context for voice continuity
-                ):
-                    if self._state == TalkerState.CANCELLED:
-                        return
+                provider_used = "openai" if use_fallback else "elevenlabs"
 
-                    chunk_count += 1
-                    latency_ms = int((time.time() - start_time) * 1000)
-
-                    # Track first audio latency
-                    if self._first_audio_time is None:
-                        self._first_audio_time = time.time()
-                        self._metrics.first_audio_latency_ms = int((self._first_audio_time - self._start_time) * 1000)
-                        logger.info(f"First audio latency: {self._metrics.first_audio_latency_ms}ms")
-
-                    self._metrics.total_audio_bytes += len(audio_data)
-
-                    # Send audio chunk to callback
-                    chunk = AudioChunk(
-                        data=audio_data,
-                        format="pcm16",  # Raw PCM16 at 24kHz
-                        is_final=False,
-                        sentence_index=sentence_idx,
-                        latency_ms=latency_ms,
-                    )
-                    await self._on_audio_chunk(chunk)
+                if use_fallback and self._openai_tts.is_enabled():
+                    # Use OpenAI TTS fallback
+                    chunk_count = await self._synthesize_with_openai(tts_text, sentence_idx, start_time)
+                else:
+                    # Try ElevenLabs (primary)
+                    try:
+                        chunk_count = await self._synthesize_with_elevenlabs(tts_text, sentence_idx, start_time)
+                    except (CircuitBreakerError, Exception) as e:
+                        # ElevenLabs failed, try OpenAI fallback
+                        if self._openai_tts.is_enabled():
+                            logger.warning(
+                                f"ElevenLabs TTS failed ({type(e).__name__}), " "falling back to OpenAI TTS",
+                                extra={
+                                    "error": str(e)[:100],
+                                    "sentence_idx": sentence_idx,
+                                },
+                            )
+                            self._using_fallback = True
+                            self._fallback_triggered_at = time.time()
+                            provider_used = "openai"
+                            chunk_count = await self._synthesize_with_openai(tts_text, sentence_idx, start_time)
+                        else:
+                            # No fallback available, re-raise
+                            raise
 
                 # Update previous text for next synthesis (maintains voice continuity)
                 self._previous_text = tts_text
@@ -733,13 +767,96 @@ class TalkerSession:
                         "markdown_stripped": stripped,
                         "chunks": chunk_count,
                         "latency_ms": latency_ms,
+                        "provider": provider_used,
                         "has_previous_context": bool(self._previous_text),
                     },
                 )
 
         except Exception as e:
-            logger.error(f"TTS synthesis error: {e}")
+            logger.error(f"TTS synthesis error (all providers failed): {e}")
             # Don't fail the entire session, just log the error
+
+    async def _synthesize_with_elevenlabs(self, tts_text: str, sentence_idx: int, start_time: float) -> int:
+        """Synthesize using ElevenLabs (primary provider)."""
+        chunk_count = 0
+        async for audio_data in self._elevenlabs.synthesize_stream(
+            text=tts_text,
+            voice_id=self._config.voice_id,
+            model_id=self._config.model_id,
+            output_format=self._config.output_format,
+            stability=self._config.stability,
+            similarity_boost=self._config.similarity_boost,
+            style=self._config.style,
+            use_speaker_boost=self._config.use_speaker_boost,
+            chunk_size=self._audio_chunk_size,
+            previous_text=self._previous_text,
+        ):
+            if self._state == TalkerState.CANCELLED:
+                return chunk_count
+
+            chunk_count += 1
+            latency_ms = int((time.time() - start_time) * 1000)
+
+            # Track first audio latency
+            if self._first_audio_time is None:
+                self._first_audio_time = time.time()
+                self._metrics.first_audio_latency_ms = int((self._first_audio_time - self._start_time) * 1000)
+                logger.info(f"First audio latency: {self._metrics.first_audio_latency_ms}ms")
+
+            self._metrics.total_audio_bytes += len(audio_data)
+
+            # Send audio chunk to callback
+            chunk = AudioChunk(
+                data=audio_data,
+                format="pcm16",  # Raw PCM16 at 24kHz
+                is_final=False,
+                sentence_index=sentence_idx,
+                latency_ms=latency_ms,
+            )
+            await self._on_audio_chunk(chunk)
+
+        return chunk_count
+
+    async def _synthesize_with_openai(self, tts_text: str, sentence_idx: int, start_time: float) -> int:
+        """Synthesize using OpenAI TTS (fallback provider)."""
+        # Map ElevenLabs voice to OpenAI voice
+        openai_voice = map_elevenlabs_voice_to_openai(self._config.voice_id)
+
+        chunk_count = 0
+        async for audio_data in self._openai_tts.synthesize_stream(
+            text=tts_text,
+            voice=openai_voice,
+            model="tts-1",  # Use fast model for low latency
+            speed=1.0,
+            response_format="pcm",  # Raw PCM for streaming
+            chunk_size=self._audio_chunk_size,
+        ):
+            if self._state == TalkerState.CANCELLED:
+                return chunk_count
+
+            chunk_count += 1
+            latency_ms = int((time.time() - start_time) * 1000)
+
+            # Track first audio latency
+            if self._first_audio_time is None:
+                self._first_audio_time = time.time()
+                self._metrics.first_audio_latency_ms = int((self._first_audio_time - self._start_time) * 1000)
+                logger.info(f"First audio latency (OpenAI fallback): " f"{self._metrics.first_audio_latency_ms}ms")
+
+            self._metrics.total_audio_bytes += len(audio_data)
+
+            # Send audio chunk to callback
+            # Note: OpenAI PCM is 24kHz 16-bit mono, same as ElevenLabs pcm_24000
+            chunk = AudioChunk(
+                data=audio_data,
+                format="pcm16",
+                is_final=False,
+                sentence_index=sentence_idx,
+                latency_ms=latency_ms,
+            )
+            await self._on_audio_chunk(chunk)
+
+        return chunk_count
 
     async def finish(self) -> TalkerMetrics:
         """
