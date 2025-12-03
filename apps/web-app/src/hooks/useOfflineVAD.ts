@@ -160,78 +160,245 @@ export function useOfflineVAD(
 // ============================================================================
 
 export interface UseOfflineVADWithFallbackOptions extends UseOfflineVADOptions {
-  /** Whether network VAD is available */
+  /** Whether network VAD is available (from external source like WebSocket) */
   networkVADAvailable?: boolean;
+
+  /** Use network monitor for automatic detection (overrides networkVADAvailable) */
+  useNetworkMonitor?: boolean;
+
+  /** Minimum quality level required for network VAD ("moderate" | "good" | "excellent") */
+  minNetworkQuality?: "moderate" | "good" | "excellent";
+
+  /** Delay before returning to network after it recovers (ms) */
+  networkRecoveryDelayMs?: number;
 
   /** Callback when falling back to offline */
   onFallbackToOffline?: () => void;
 
   /** Callback when returning to network VAD */
   onReturnToNetwork?: () => void;
+
+  /** Callback when network quality changes */
+  onNetworkQualityChange?: (quality: string, isHealthy: boolean) => void;
 }
 
 export interface UseOfflineVADWithFallbackReturn extends UseOfflineVADReturn {
   /** Whether currently using offline VAD */
   isUsingOfflineVAD: boolean;
 
+  /** Whether network is available (from monitor or external) */
+  networkAvailable: boolean;
+
+  /** Current network quality if using monitor */
+  networkQuality: string | null;
+
   /** Force switch to offline mode */
   forceOffline: () => void;
 
   /** Force switch to network mode (if available) */
   forceNetwork: () => void;
+
+  /** Get reason for current mode */
+  modeReason:
+    | "forced_offline"
+    | "network_unavailable"
+    | "poor_quality"
+    | "user_preference"
+    | "network_vad";
 }
 
 /**
  * Hook that automatically falls back to offline VAD when network is unavailable
+ * Enhanced with network monitoring integration
  */
 export function useOfflineVADWithFallback(
   options: UseOfflineVADWithFallbackOptions = {},
 ): UseOfflineVADWithFallbackReturn {
   const {
-    networkVADAvailable = true,
+    networkVADAvailable: externalNetworkVADAvailable = true,
+    useNetworkMonitor = false,
+    minNetworkQuality = "moderate",
+    networkRecoveryDelayMs = 2000,
     onFallbackToOffline,
     onReturnToNetwork,
+    onNetworkQualityChange,
     ...vadOptions
   } = options;
 
-  const [isUsingOfflineVAD, setIsUsingOfflineVAD] =
-    useState(!networkVADAvailable);
+  // State
+  const [isUsingOfflineVAD, setIsUsingOfflineVAD] = useState(false);
+  const [forcedMode, setForcedMode] = useState<"offline" | "network" | null>(
+    null,
+  );
+  const [networkQuality, setNetworkQuality] = useState<string | null>(null);
+  const [modeReason, setModeReason] =
+    useState<UseOfflineVADWithFallbackReturn["modeReason"]>("network_vad");
 
-  // Core offline VAD hook
+  // Recovery timer ref
+  const recoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Network status (lazy import to avoid issues in SSR)
+  const [networkStatus, setNetworkStatus] = useState({
+    isOnline: true,
+    isHealthy: true,
+    quality: "moderate" as string,
+  });
+
+  // Use network monitor if enabled
+  useEffect(() => {
+    if (!useNetworkMonitor) return;
+
+    // Dynamically import to avoid SSR issues
+    import("./useNetworkStatus").then(({ useNetworkStatus }) => {
+      // This is a hack - we can't call hooks dynamically
+      // Instead, we'll subscribe directly to the monitor
+      import("../lib/offline/networkMonitor").then(({ getNetworkMonitor }) => {
+        const monitor = getNetworkMonitor();
+        const unsubscribe = monitor.subscribe((status) => {
+          setNetworkStatus({
+            isOnline: status.isOnline,
+            isHealthy: status.isHealthy,
+            quality: status.quality,
+          });
+          setNetworkQuality(status.quality);
+          onNetworkQualityChange?.(status.quality, status.isHealthy);
+        });
+        return unsubscribe;
+      });
+    });
+  }, [useNetworkMonitor, onNetworkQualityChange]);
+
+  // Determine if network is available
+  const networkAvailable = useNetworkMonitor
+    ? networkStatus.isOnline && networkStatus.isHealthy
+    : externalNetworkVADAvailable;
+
+  // Determine if quality is sufficient
+  const qualityScores: Record<string, number> = {
+    offline: 0,
+    poor: 1,
+    moderate: 2,
+    good: 3,
+    excellent: 4,
+  };
+  const minQualityScore = qualityScores[minNetworkQuality] || 2;
+  const currentQualityScore = qualityScores[networkStatus.quality] || 2;
+  const qualitySufficient = currentQualityScore >= minQualityScore;
+
+  // Core offline VAD hook - always enabled when using offline mode
   const offlineVAD = useOfflineVAD({
     ...vadOptions,
     enabled: isUsingOfflineVAD,
   });
 
-  // Handle network availability changes
+  // Callback refs
+  const onFallbackToOfflineRef = useRef(onFallbackToOffline);
+  const onReturnToNetworkRef = useRef(onReturnToNetwork);
+
   useEffect(() => {
-    if (!networkVADAvailable && !isUsingOfflineVAD) {
-      setIsUsingOfflineVAD(true);
-      onFallbackToOffline?.();
+    onFallbackToOfflineRef.current = onFallbackToOffline;
+    onReturnToNetworkRef.current = onReturnToNetwork;
+  }, [onFallbackToOffline, onReturnToNetwork]);
+
+  // Handle mode changes based on network and preferences
+  useEffect(() => {
+    // If forced, respect that
+    if (forcedMode === "offline") {
+      if (!isUsingOfflineVAD) {
+        setIsUsingOfflineVAD(true);
+        setModeReason("forced_offline");
+      }
+      return;
     }
-  }, [networkVADAvailable, isUsingOfflineVAD, onFallbackToOffline]);
+
+    if (forcedMode === "network" && networkAvailable) {
+      if (isUsingOfflineVAD) {
+        setIsUsingOfflineVAD(false);
+        setModeReason("network_vad");
+      }
+      return;
+    }
+
+    // Clear any pending recovery timer
+    if (recoveryTimerRef.current) {
+      clearTimeout(recoveryTimerRef.current);
+      recoveryTimerRef.current = null;
+    }
+
+    // Network not available - immediately fall back
+    if (!networkAvailable) {
+      if (!isUsingOfflineVAD) {
+        setIsUsingOfflineVAD(true);
+        setModeReason("network_unavailable");
+        onFallbackToOfflineRef.current?.();
+      }
+      return;
+    }
+
+    // Network available but quality insufficient
+    if (useNetworkMonitor && !qualitySufficient) {
+      if (!isUsingOfflineVAD) {
+        setIsUsingOfflineVAD(true);
+        setModeReason("poor_quality");
+        onFallbackToOfflineRef.current?.();
+      }
+      return;
+    }
+
+    // Network available and quality sufficient - return to network with delay
+    if (isUsingOfflineVAD && networkAvailable && qualitySufficient) {
+      recoveryTimerRef.current = setTimeout(() => {
+        setIsUsingOfflineVAD(false);
+        setModeReason("network_vad");
+        onReturnToNetworkRef.current?.();
+      }, networkRecoveryDelayMs);
+    }
+  }, [
+    networkAvailable,
+    qualitySufficient,
+    useNetworkMonitor,
+    forcedMode,
+    isUsingOfflineVAD,
+    networkRecoveryDelayMs,
+  ]);
+
+  // Cleanup recovery timer
+  useEffect(() => {
+    return () => {
+      if (recoveryTimerRef.current) {
+        clearTimeout(recoveryTimerRef.current);
+      }
+    };
+  }, []);
 
   // Force offline mode
   const forceOffline = useCallback(() => {
+    setForcedMode("offline");
     if (!isUsingOfflineVAD) {
       setIsUsingOfflineVAD(true);
-      onFallbackToOffline?.();
+      setModeReason("forced_offline");
+      onFallbackToOfflineRef.current?.();
     }
-  }, [isUsingOfflineVAD, onFallbackToOffline]);
+  }, [isUsingOfflineVAD]);
 
   // Force network mode
   const forceNetwork = useCallback(() => {
-    if (isUsingOfflineVAD && networkVADAvailable) {
+    setForcedMode("network");
+    if (isUsingOfflineVAD && networkAvailable) {
       setIsUsingOfflineVAD(false);
-      onReturnToNetwork?.();
+      setModeReason("network_vad");
+      onReturnToNetworkRef.current?.();
     }
-  }, [isUsingOfflineVAD, networkVADAvailable, onReturnToNetwork]);
+  }, [isUsingOfflineVAD, networkAvailable]);
 
   return {
     ...offlineVAD,
     isUsingOfflineVAD,
+    networkAvailable,
+    networkQuality: useNetworkMonitor ? networkQuality : null,
     forceOffline,
     forceNetwork,
+    modeReason,
   };
 }
 
