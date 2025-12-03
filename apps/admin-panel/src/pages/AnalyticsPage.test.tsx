@@ -21,6 +21,16 @@ vi.mock("../lib/apiClient", () => ({
   }),
 }));
 
+// Mock @voiceassist/ui
+vi.mock("@voiceassist/ui", () => ({
+  HelpButton: () => <button data-testid="help-button">Help</button>,
+}));
+
+// Mock shared components
+vi.mock("../components/shared", () => ({
+  AskAIButton: () => <button data-testid="ask-ai-button">Ask AI</button>,
+}));
+
 import { useModelAnalytics } from "../hooks/useModelAnalytics";
 
 const mockMetrics = {

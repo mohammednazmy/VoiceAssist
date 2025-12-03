@@ -4,6 +4,8 @@
  */
 
 import { useState } from "react";
+import { HelpButton } from "@voiceassist/ui";
+import { AskAIButton } from "../components/shared";
 import {
   usePHI,
   PHIRule,
@@ -191,7 +193,20 @@ export function SecurityPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Security & PHI</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-slate-100">
+              Security & PHI
+            </h1>
+            <HelpButton
+              docPath="admin/security"
+              tooltipText="View security documentation"
+              docsBaseUrl={import.meta.env.VITE_DOCS_URL}
+            />
+            <AskAIButton
+              pageContext="Security & PHI management"
+              docPath="admin/security"
+            />
+          </div>
           <p className="text-sm text-slate-400 mt-1">
             PHI detection, routing, and compliance monitoring
           </p>

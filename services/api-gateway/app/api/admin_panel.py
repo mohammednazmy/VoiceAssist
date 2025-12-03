@@ -359,7 +359,8 @@ async def delete_user(
     target_email = user.email
 
     try:
-        rate_limit_info = enforce_admin_action_rate_limit(request, action="account-deactivate")
+        # Increased rate limit: 20 deletes per 5 minutes (was 5/60s default)
+        rate_limit_info = enforce_admin_action_rate_limit(request, action="account-deactivate", calls=20, period=300)
     except HTTPException as exc:
         if exc.status_code == 429:
             detail = exc.detail if isinstance(exc.detail, dict) else {}

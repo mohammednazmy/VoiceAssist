@@ -4,6 +4,8 @@
  */
 
 import { useState } from "react";
+import { HelpButton } from "@voiceassist/ui";
+import { AskAIButton } from "../components/shared";
 import { featureFlags } from "../config/env";
 import { useSystem } from "../hooks/useSystem";
 
@@ -59,9 +61,20 @@ export function SystemPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">
-            System Management
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-slate-100">
+              System Management
+            </h1>
+            <HelpButton
+              docPath="admin/system"
+              tooltipText="View system documentation"
+              docsBaseUrl={import.meta.env.VITE_DOCS_URL}
+            />
+            <AskAIButton
+              pageContext="System Management"
+              docPath="admin/system"
+            />
+          </div>
           <p className="text-sm text-slate-400 mt-1">
             Monitor resources, manage backups, and control system settings
           </p>

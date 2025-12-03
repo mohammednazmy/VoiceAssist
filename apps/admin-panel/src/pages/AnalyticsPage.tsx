@@ -4,6 +4,8 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { HelpButton } from "@voiceassist/ui";
+import { AskAIButton } from "../components/shared";
 import { fetchAPI } from "../lib/api";
 import { getApiClient } from "../lib/apiClient";
 import { useModelAnalytics } from "../hooks/useModelAnalytics";
@@ -146,7 +148,18 @@ export function AnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Analytics</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-slate-100">Analytics</h1>
+            <HelpButton
+              docPath="admin/analytics"
+              tooltipText="View analytics documentation"
+              docsBaseUrl={import.meta.env.VITE_DOCS_URL}
+            />
+            <AskAIButton
+              pageContext="Analytics dashboard"
+              docPath="admin/analytics"
+            />
+          </div>
           <p className="text-sm text-slate-400 mt-1">
             AI model usage, costs, and performance metrics
           </p>

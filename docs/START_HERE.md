@@ -17,7 +17,7 @@ category: overview
 
 This document is your entry point to the project. Choose your path below based on your role and experience level.
 
-**Status update:** All 16 project phases (0-15) are complete. Backend, infrastructure, and admin panel are production-ready. The web app frontend is in active development. See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for the authoritative component status.
+**Status update:** All 16 project phases (0-15) are complete. Backend, infrastructure, admin panel, and web app (through Phase 3.5) are production-ready. See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for the authoritative component status.
 
 ---
 
@@ -229,14 +229,15 @@ All 16 project phases have been completed:
 
 **Deliverable**: Production-ready backend and infrastructure
 
-### Web App Frontend Milestones - In Progress 🏗️
+### Web App Frontend Milestones - Phase 3.5 Complete ✅
 
 The web app follows its own milestone plan:
 
 - ✅ **Phase 0**: Foundation (monorepo, shared packages)
 - ✅ **Phase 1**: Auth & Layout
 - ✅ **Phase 2**: Chat Interface
-- 🏗️ **Phase 3**: Voice Features (in progress)
+- ✅ **Phase 3**: Voice Features
+- ✅ **Phase 3.5**: Unified Chat/Voice UI
 - 📋 **Phases 4-8**: Files, medical features, admin, polish (planned)
 
 See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for current progress.
@@ -437,9 +438,9 @@ I want to work on Phase [N]. Please:
 
 ## 📊 Project Status
 
-**Current Status**: Backend and Infrastructure Production-Ready. Frontend in Active Development.
+**Current Status**: Backend, Infrastructure, Admin Panel, and Web App (Phase 3.5) Production-Ready.
 
-**Phase Completion**: All 16 project phases (0-15) complete. Web app frontend milestone work ongoing.
+**Phase Completion**: All 16 project phases (0-15) complete. Web app Phase 3.5 (Unified Chat/Voice UI) complete.
 
 **Implementation Reference**: See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for detailed component status.
 

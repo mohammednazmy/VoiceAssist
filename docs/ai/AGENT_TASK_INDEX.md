@@ -5,7 +5,7 @@ summary: Common AI agent tasks with relevant documentation and machine-readable 
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-02"
 audience: ["agent", "ai-agents"]
 tags: ["ai-agent", "tasks", "index", "reference"]
 category: ai
@@ -33,8 +33,8 @@ This document lists common AI agent tasks with the relevant documentation and en
 
 **Key Documents:**
 
-- [Implementation Status](/ai/status) - **Source of truth**
-- [START_HERE.md](/) - Project orientation
+- [Implementation Status](../overview/IMPLEMENTATION_STATUS.md) - **Source of truth**
+- [START_HERE.md](../START_HERE.md) - Project orientation
 
 **API Endpoint:**
 
@@ -50,10 +50,10 @@ curl https://assistdocs.asimo.io/agent/docs.json | jq '.[] | select(.category ==
 
 **Key Documents:**
 
-- [Implementation Status](/ai/status) - Check prerequisites
+- [Implementation Status](../overview/IMPLEMENTATION_STATUS.md) - Check prerequisites
 - `docs/phases/PHASE_XX_*.md` - Phase instructions
-- [Claude Execution Guide](/ai/claude-guide) - Process guidelines
-- [Claude Prompts](/ai/claude-prompts) - Ready-to-use prompts
+- [Claude Execution Guide](../CLAUDE_EXECUTION_GUIDE.md) - Process guidelines
+- [Claude Prompts](../CLAUDE_PROMPTS.md) - Ready-to-use prompts
 
 **Workflow:**
 
@@ -70,9 +70,9 @@ curl https://assistdocs.asimo.io/agent/docs.json | jq '.[] | select(.category ==
 
 **Key Documents:**
 
-- [Backend Debugging](/operations/debugging-backend)
-- [Debugging Overview](/operations/debugging-overview)
-- [Backend Architecture](/dev/architecture)
+- [Backend Debugging](../debugging/DEBUGGING_BACKEND.md)
+- [Debugging Overview](../debugging/DEBUGGING_OVERVIEW.md)
+- [Backend Architecture](../BACKEND_ARCHITECTURE.md)
 
 **Quick Commands:**
 
@@ -95,9 +95,9 @@ psql -c "SELECT count(*) FROM pg_stat_activity WHERE datname = 'voiceassist'"
 
 **Key Documents:**
 
-- [Frontend Debugging](/operations/debugging-frontend)
-- [Debugging Overview](/operations/debugging-overview)
-- [Frontend Architecture](/dev/architecture)
+- [Frontend Debugging](../debugging/DEBUGGING_FRONTEND.md)
+- [Debugging Overview](../debugging/DEBUGGING_OVERVIEW.md)
+- [Frontend Architecture](../FRONTEND_ARCHITECTURE.md)
 
 **Quick Commands:**
 
@@ -120,9 +120,9 @@ pnpm dev
 
 **Key Documents:**
 
-- [Voice & Realtime Debugging](/operations/debugging-voice)
-- [Realtime Architecture](/dev/architecture)
-- [Voice Mode Pipeline](/user-guide/voice)
+- [Voice & Realtime Debugging](../debugging/DEBUGGING_VOICE_REALTIME.md)
+- [Realtime Architecture](../REALTIME_ARCHITECTURE.md)
+- [Voice Mode Pipeline](../VOICE_MODE_PIPELINE.md)
 
 **Key Files:**
 
@@ -138,8 +138,8 @@ pnpm dev
 
 **Key Documents:**
 
-- [Internal Docs System](/dev/docs-system)
-- [Agent API Reference](/ai/api)
+- [Internal Docs System](../INTERNAL_DOCS_SYSTEM.md)
+- [Agent API Reference](./AGENT_API_REFERENCE.md)
 
 **Workflow:**
 
@@ -157,8 +157,8 @@ pnpm dev
 
 **Key Documents:**
 
-- [API Reference](/reference/api)
-- [Backend Architecture](/dev/architecture)
+- [API Reference](../API_REFERENCE.md)
+- [Backend Architecture](../BACKEND_ARCHITECTURE.md)
 - `services/api-gateway/README.md`
 
 **Key Paths:**
@@ -176,9 +176,9 @@ pnpm dev
 
 **Key Documents:**
 
-- [Admin Panel Implementation Plan](/admin/implementation-plan) - **Canonical implementation roadmap**
-- [Admin Panel Specs](/admin/overview) - Full specifications
-- [Implementation Status](/ai/status) - Current status
+- [Admin Panel Implementation Plan](../admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md) - **Canonical implementation roadmap**
+- [Admin Panel Specs](../ADMIN_PANEL_SPECS.md) - Full specifications
+- [Implementation Status](../overview/IMPLEMENTATION_STATUS.md) - Current status
 
 **Key Paths:**
 
@@ -222,9 +222,8 @@ pnpm dev
 
 **Key Documents:**
 
-- [Security Compliance](/admin/security)
-- [HIPAA Compliance Matrix](/medical/privacy)
-- [Semantic Search Design](/docs/SEMANTIC_SEARCH_DESIGN) - PHI detection
+- [Security Compliance](../SECURITY_COMPLIANCE.md)
+- [Semantic Search Design](../SEMANTIC_SEARCH_DESIGN.md) - PHI detection
 
 ---
 
@@ -234,9 +233,8 @@ pnpm dev
 
 **Key Documents:**
 
-- [Infrastructure Setup](/getting-started/installation)
-- [Production Deployment Runbook](/docs/PRODUCTION_DEPLOYMENT_RUNBOOK)
-- [Compose to K8s Migration](/docs/COMPOSE_TO_K8S_MIGRATION)
+- [Infrastructure Setup](../INFRASTRUCTURE_SETUP.md)
+- [Compose to K8s Migration](../COMPOSE_TO_K8S_MIGRATION.md)
 
 ---
 
@@ -263,7 +261,7 @@ const backendDocs = docs.filter((d) => d.tags && d.tags.includes("backend"));
 
 ## Related Documentation
 
-- [Agent Onboarding](/ai/onboarding) - Getting started
-- [Agent API Reference](/ai/api) - Endpoint details
-- [Implementation Status](/ai/status) - Component status
-- [Claude Execution Guide](/ai/claude-guide) - Workflow guidelines
+- [Agent Onboarding](./AGENT_ONBOARDING.md) - Getting started
+- [Agent API Reference](./AGENT_API_REFERENCE.md) - Endpoint details
+- [Implementation Status](../overview/IMPLEMENTATION_STATUS.md) - Component status
+- [Claude Execution Guide](../CLAUDE_EXECUTION_GUIDE.md) - Workflow guidelines

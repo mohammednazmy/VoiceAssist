@@ -8,9 +8,15 @@
  * - Endpoint mismatches
  *
  * Usage:
- *   node scripts/validate-api-sync.mjs
+ *   node scripts/validate-api-sync.mjs           # Warning mode (default)
+ *   node scripts/validate-api-sync.mjs --strict  # Strict mode (fails on undocumented)
  *   pnpm validate:api-sync
+ *   pnpm validate:api-sync:strict
+ *
+ * In CI environments (CI=true), strict mode is enabled by default.
  */
+
+const strictMode = process.argv.includes('--strict') || process.env.CI === 'true';
 
 import fs from "fs";
 import path from "path";
@@ -198,7 +204,11 @@ function compareEndpoints(backend, docs) {
 }
 
 function main() {
-  console.log("Validating API documentation sync...\n");
+  console.log("Validating API documentation sync...");
+  if (strictMode) {
+    console.log("🔒 Running in STRICT mode (will fail on undocumented endpoints)");
+  }
+  console.log("");
 
   // Extract endpoints
   console.log("Scanning backend routes...");
@@ -244,7 +254,12 @@ function main() {
   if (issues.undocumented.length > 0) {
     console.log("\n⚠️  Some endpoints are not documented.");
     console.log("Consider adding documentation for new endpoints.");
-    // Don't fail on undocumented - it's a warning
+
+    if (strictMode) {
+      console.log("\n🔴 CI FAILURE: Strict mode enabled - undocumented endpoints are not allowed.");
+      console.log("Add documentation for the above endpoints before merging.");
+      process.exit(1);
+    }
   }
 
   if (issues.stale.length > 0) {
@@ -254,6 +269,10 @@ function main() {
 
   if (issues.undocumented.length === 0 && issues.stale.length === 0) {
     console.log("\n✅ API documentation is in sync with backend code!");
+  }
+
+  if (strictMode) {
+    console.log(`\n[Strict mode: ${strictMode ? 'enabled' : 'disabled'}]`);
   }
 
   process.exit(0);

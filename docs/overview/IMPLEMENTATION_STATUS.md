@@ -11,7 +11,7 @@ tags: ["status", "overview", "components", "roadmap", "architecture"]
 relatedServices: ["api-gateway", "web-app", "admin-panel", "docs-site"]
 category: overview
 source_of_truth: true
-version: "1.8.0"
+version: "1.9.0"
 ---
 
 # Implementation Status
@@ -60,18 +60,19 @@ VoiceAssist is an enterprise-grade, HIPAA-compliant medical AI assistant platfor
 
 The canonical backend service for VoiceAssist. All new backend development occurs here.
 
-| Feature              | Status   | Notes                             |
-| -------------------- | -------- | --------------------------------- |
-| Authentication (JWT) | Complete | Access/refresh tokens, revocation |
-| User Management      | Complete | RBAC with 4 roles                 |
-| Conversations        | Complete | Branching, history, context       |
-| Medical AI (RAG)     | Complete | Hybrid search, citations          |
-| Admin Dashboard      | Complete | Metrics, audit logs               |
-| Knowledge Base       | Complete | Document ingestion, indexing      |
-| Feature Flags        | Complete | A/B testing support               |
-| WebSocket Realtime   | Complete | Streaming responses               |
-| Voice Processing     | Complete | STT/TTS ready                     |
-| Health/Metrics       | Complete | Prometheus metrics                |
+| Feature                  | Status   | Notes                                           |
+| ------------------------ | -------- | ----------------------------------------------- |
+| Authentication (JWT)     | Complete | Access/refresh tokens, revocation               |
+| User Management          | Complete | RBAC with 4 roles                               |
+| Conversations            | Complete | Branching, history, context                     |
+| Medical AI (RAG)         | Complete | Hybrid search, citations                        |
+| Admin Dashboard          | Complete | Metrics, audit logs                             |
+| Knowledge Base           | Complete | Document ingestion, indexing                    |
+| Feature Flags            | Complete | A/B testing support                             |
+| WebSocket Realtime       | Complete | Streaming responses                             |
+| **Thinker-Talker Voice** | Complete | STT→LLM→TTS pipeline (`/api/voice/pipeline-ws`) |
+| OpenAI Realtime (Legacy) | Complete | Direct Realtime API (fallback mode)             |
+| Health/Metrics           | Complete | Prometheus metrics, `/health/voice`             |
 
 **Test Coverage:** 95% | **API Modules:** 20+
 
@@ -112,23 +113,32 @@ Main user-facing medical AI assistant application.
 | Unit tests             | Complete | 72 tests across 5 files               |
 | Accessibility (ARIA)   | Complete | Full keyboard nav, screen readers     |
 
-**Voice Mode Features (Phase 3):**
+**Voice Pipeline Architecture (Phase 3):**
 
-| Feature                  | Status   | Notes                                   |
-| ------------------------ | -------- | --------------------------------------- |
-| OpenAI Realtime API      | Complete | WebSocket streaming, ephemeral tokens   |
-| Voice settings           | Complete | Voice selection, VAD sensitivity        |
-| Audio capture            | Complete | Resampling from 48kHz to 24kHz PCM16    |
-| Barge-in support         | Complete | `response.cancel`, audio stop on speech |
-| Audio overlap prevention | Complete | Response ID tracking                    |
-| Chat integration         | Complete | Voice messages in timeline              |
-| Metrics export           | Complete | `/api/voice/metrics` endpoint           |
-| Error taxonomy           | Complete | 8 categories, 40+ error codes           |
-| Pipeline metrics         | Complete | Per-stage latency, TTFA tracking        |
-| SLO alerting             | Complete | Prometheus rules, P95 targets           |
-| Client telemetry         | Complete | Network quality, jitter, batched        |
-| Voice health endpoint    | Complete | `/health/voice` with provider checks    |
-| Debug logging            | Complete | `VOICE_LOG_LEVEL` configuration         |
+> **Primary Pipeline:** Thinker-Talker (STT → LLM → TTS)
+> **Legacy Pipeline:** OpenAI Realtime API (for backward compatibility)
+
+| Feature                     | Status   | Pipeline        | Notes                                   |
+| --------------------------- | -------- | --------------- | --------------------------------------- |
+| **Thinker-Talker Pipeline** | Complete | Primary         | Deepgram STT → GPT-4o → ElevenLabs TTS  |
+| ThinkerService (LLM)        | Complete | Primary         | Tool/RAG support, unified context       |
+| TalkerService (TTS)         | Complete | Primary         | ElevenLabs streaming, custom voices     |
+| `/api/voice/pipeline-ws`    | Complete | Primary         | WebSocket endpoint for T/T pipeline     |
+| **OpenAI Realtime API**     | Complete | Legacy/Fallback | WebSocket streaming, ephemeral tokens   |
+| Voice settings              | Complete | Both            | Voice selection, VAD sensitivity        |
+| Audio capture               | Complete | Both            | Resampling from 48kHz to 24kHz PCM16    |
+| Barge-in support            | Complete | Both            | `response.cancel`, audio stop on speech |
+| Audio overlap prevention    | Complete | Both            | Response ID tracking                    |
+| Chat integration            | Complete | Both            | Voice messages in timeline              |
+| Metrics export              | Complete | Both            | `/api/voice/metrics` endpoint           |
+| Error taxonomy              | Complete | Both            | 8 categories, 40+ error codes           |
+| Pipeline metrics            | Complete | Both            | Per-stage latency, TTFA tracking        |
+| SLO alerting                | Complete | Both            | Prometheus rules, P95 targets           |
+| Client telemetry            | Complete | Both            | Network quality, jitter, batched        |
+| Voice health endpoint       | Complete | Both            | `/health/voice` with provider checks    |
+| Debug logging               | Complete | Both            | `VOICE_LOG_LEVEL` configuration         |
+
+> **See:** [Voice Mode Pipeline](../VOICE_MODE_PIPELINE.md) for detailed architecture.
 
 #### Admin Panel (`apps/admin-panel/`)
 
@@ -161,16 +171,19 @@ System administration and monitoring dashboard.
 
 Technical documentation website at https://assistdocs.asimo.io.
 
-| Feature              | Status   | Notes                                           |
-| -------------------- | -------- | ----------------------------------------------- |
-| Markdown Rendering   | Complete | GFM support, syntax highlighting                |
-| Navigation           | Complete | Configurable sidebar with Operations section    |
-| Multi-source Loading | Complete | @root/ prefix support                           |
-| Search Index         | Complete | /search-index.json (Fuse.js full-text)          |
-| Agent JSON API       | Complete | /agent/index.json, /agent/docs.json (all docs)  |
-| Sitemap/SEO          | Complete | /sitemap.xml, robots.txt with AI bot allowlists |
-| Link Rewriting       | Complete | .md links → /docs/\* routes, GitHub fallbacks   |
-| Debugging Docs       | Complete | Operations section with debugging guides        |
+| Feature                 | Status   | Notes                                           |
+| ----------------------- | -------- | ----------------------------------------------- |
+| Markdown Rendering      | Complete | GFM support, syntax highlighting                |
+| Navigation              | Complete | Configurable sidebar with Operations section    |
+| Multi-source Loading    | Complete | @root/ prefix support                           |
+| Search Index            | Complete | /search-index.json (Fuse.js full-text)          |
+| Agent JSON API          | Complete | /agent/index.json, /agent/docs.json (all docs)  |
+| Sitemap/SEO             | Complete | /sitemap.xml, robots.txt with AI bot allowlists |
+| Link Rewriting          | Complete | .md links → /docs/\* routes, GitHub fallbacks   |
+| Debugging Docs          | Complete | Operations section with debugging guides        |
+| **Docs Automation**     | Complete | validate-api-sync, check-freshness, CI workflow |
+| **AI-Docs Integration** | Beta     | Qdrant embeddings, `docs_search_tool`           |
+| **HelpButton**          | Complete | Contextual help links from admin panel          |
 
 ---
 
@@ -270,6 +283,7 @@ curl https://assist.asimo.io/api/admin/panel/stats
 
 | Date       | Version | Changes                                                                       |
 | ---------- | ------- | ----------------------------------------------------------------------------- |
+| 2025-12-02 | 1.9.0   | Clarify Thinker-Talker as primary voice pipeline; docs automation & AI-Docs   |
 | 2025-12-02 | 1.8.0   | Voice observability: error taxonomy, SLO alerts, telemetry, health endpoint   |
 | 2025-12-01 | 1.7.0   | Web App status updated to stable/production (Phase 3.5 complete)              |
 | 2025-11-28 | 1.6.0   | Voice Mode: Barge-in support, audio overlap prevention, benign error handling |

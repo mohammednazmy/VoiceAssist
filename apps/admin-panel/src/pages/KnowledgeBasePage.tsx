@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { HelpButton } from "@voiceassist/ui";
+import { AskAIButton } from "../components/shared";
 import { useKnowledgeDocuments } from "../hooks/useKnowledgeDocuments";
 import { useKBUpload } from "../hooks/useKBUpload";
 import { useAuth } from "../contexts/AuthContext";
@@ -136,7 +138,20 @@ export function KnowledgeBasePage() {
     <div className="flex-1 p-6 space-y-6 overflow-y-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Knowledge Base</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-slate-100">
+              Knowledge Base
+            </h1>
+            <HelpButton
+              docPath="admin/knowledge-base"
+              tooltipText="View KB documentation"
+              docsBaseUrl={import.meta.env.VITE_DOCS_URL}
+            />
+            <AskAIButton
+              pageContext="Knowledge Base management"
+              docPath="admin/knowledge-base"
+            />
+          </div>
           <p className="text-sm text-slate-400 mt-1">
             Manage medical documents, textbooks, and reference materials
           </p>

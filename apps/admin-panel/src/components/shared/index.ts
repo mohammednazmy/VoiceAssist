@@ -31,3 +31,6 @@ export { DataPanel } from "./DataPanel";
 export { TabGroup, type Tab } from "./TabGroup";
 export { ConfirmDialog } from "./ConfirmDialog";
 export { RefreshButton } from "./RefreshButton";
+export { ErrorBoundary } from "./ErrorBoundary";
+export { AskAIButton } from "./AskAIButton";
+export type { AskAIButtonProps } from "./AskAIButton";

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import type { APIErrorShape } from "../types";
 import { fetchAPI } from "../lib/api";
 
@@ -15,17 +15,27 @@ export interface KnowledgeDocument {
   lastIndexedAt?: string;
 }
 
+interface DeleteResult {
+  success: boolean;
+  documentId: string;
+}
+
 export function useKnowledgeDocuments() {
   const [docs, setDocs] = useState<KnowledgeDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<APIErrorShape | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<Set<string>>(new Set());
   const [fetchTrigger, setFetchTrigger] = useState(0);
+
+  const isMountedRef = useRef(true);
 
   const refetch = useCallback(() => {
     setFetchTrigger((prev) => prev + 1);
   }, []);
 
   useEffect(() => {
+    isMountedRef.current = true;
     let cancelled = false;
     const load = async () => {
       setLoading(true);
@@ -72,8 +82,95 @@ export function useKnowledgeDocuments() {
     load();
     return () => {
       cancelled = true;
+      isMountedRef.current = false;
     };
   }, [fetchTrigger]);
 
-  return { docs, loading, error, refetch };
+  // Optimistic delete with rollback on failure
+  const deleteDocument = useCallback(
+    async (documentId: string): Promise<DeleteResult> => {
+      // Store the document for potential rollback
+      const documentToDelete = docs.find((d) => d.id === documentId);
+      if (!documentToDelete) {
+        return { success: false, documentId };
+      }
+
+      // Mark as deleting
+      setDeleting((prev) => new Set(prev).add(documentId));
+      setDeleteError(null);
+
+      // Optimistic update: remove from list immediately
+      setDocs((prev) => prev.filter((d) => d.id !== documentId));
+
+      try {
+        await fetchAPI(`/api/admin/kb/documents/${documentId}`, {
+          method: "DELETE",
+        });
+
+        if (isMountedRef.current) {
+          setDeleting((prev) => {
+            const next = new Set(prev);
+            next.delete(documentId);
+            return next;
+          });
+        }
+
+        return { success: true, documentId };
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to delete document";
+
+        if (isMountedRef.current) {
+          // Rollback: restore the document
+          setDocs((prev) => [...prev, documentToDelete]);
+          setDeleteError(message);
+          setDeleting((prev) => {
+            const next = new Set(prev);
+            next.delete(documentId);
+            return next;
+          });
+        }
+
+        return { success: false, documentId };
+      }
+    },
+    [docs],
+  );
+
+  // Bulk delete with optimistic updates
+  const deleteDocuments = useCallback(
+    async (
+      documentIds: string[],
+    ): Promise<{ succeeded: string[]; failed: string[] }> => {
+      const results = await Promise.all(
+        documentIds.map((id) => deleteDocument(id)),
+      );
+
+      return {
+        succeeded: results.filter((r) => r.success).map((r) => r.documentId),
+        failed: results.filter((r) => !r.success).map((r) => r.documentId),
+      };
+    },
+    [deleteDocument],
+  );
+
+  const clearDeleteError = useCallback(() => {
+    setDeleteError(null);
+  }, []);
+
+  const isDeleting = (documentId: string) => deleting.has(documentId);
+
+  return {
+    docs,
+    loading,
+    error,
+    refetch,
+    // Delete operations
+    deleteDocument,
+    deleteDocuments,
+    deleteError,
+    clearDeleteError,
+    isDeleting,
+    deletingCount: deleting.size,
+  };
 }

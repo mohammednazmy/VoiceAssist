@@ -5,7 +5,7 @@ summary: Developer guide for documentation tooling, validation scripts, and qual
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-02"
 audience: ["human", "backend", "frontend", "devops"]
 tags: ["documentation", "tooling", "ci-cd", "quality"]
 category: reference
@@ -30,11 +30,11 @@ The VoiceAssist documentation system consists of:
 
 ## Validation Scripts
 
-### validate-metadata.ts
+### validate-metadata.mjs
 
 **Purpose:** Validates YAML frontmatter against the metadata schema.
 
-**Script:** `apps/docs-site/scripts/validate-metadata.ts`
+**Script:** `apps/docs-site/scripts/validate-metadata.mjs`
 
 **Command:**
 
@@ -76,11 +76,11 @@ Validation passed with warnings.
 
 ---
 
-### check-links.ts
+### check-links.mjs
 
 **Purpose:** Detects broken internal links in markdown files.
 
-**Script:** `apps/docs-site/scripts/check-links.ts`
+**Script:** `apps/docs-site/scripts/check-links.mjs`
 
 **Command:**
 
@@ -116,14 +116,75 @@ pnpm validate:all
 
 **Runs:**
 
-1. `pnpm validate:metadata`
-2. `pnpm check:links`
+1. `pnpm validate:metadata` - Frontmatter validation
+2. `pnpm check:links` - Broken link detection
+3. `pnpm check:freshness` - Stale doc detection (warns if >30 days)
+4. `pnpm validate:api-sync` - API coverage check
 
 **When to run:**
 
 - Before releasing documentation updates
 - In CI/CD pipelines as a blocking gate
 - During documentation audits
+
+---
+
+### check-freshness.mjs
+
+**Purpose:** Detects stale documentation files based on lastUpdated date.
+
+**Script:** `apps/docs-site/scripts/check-freshness.mjs`
+
+**Command:**
+
+```bash
+cd apps/docs-site
+pnpm check:freshness
+```
+
+**What it checks:**
+
+- Documents with lastUpdated older than 30 days (warning)
+- Documents with lastUpdated older than 90 days (error)
+- Missing lastUpdated fields
+
+---
+
+### validate-api-sync.mjs
+
+**Purpose:** Verifies API documentation coverage against OpenAPI spec.
+
+**Script:** `apps/docs-site/scripts/validate-api-sync.mjs`
+
+**Command:**
+
+```bash
+cd apps/docs-site
+pnpm validate:api-sync           # Warn on undocumented endpoints
+pnpm validate:api-sync --strict  # Fail on undocumented endpoints
+```
+
+**What it checks:**
+
+- Endpoints in OpenAPI spec but missing from documentation
+- Endpoints documented but not in OpenAPI spec
+- Parameter mismatches
+
+---
+
+### sync-openapi.mjs
+
+**Purpose:** Fetches and caches OpenAPI spec from API gateway.
+
+**Script:** `apps/docs-site/scripts/sync-openapi.mjs`
+
+**Command:**
+
+```bash
+cd apps/docs-site
+pnpm sync:openapi           # Check for changes (dry run)
+pnpm sync:openapi --update  # Update local cache
+```
 
 ---
 
@@ -164,7 +225,7 @@ pnpm generate:api-docs
 
 ### validate-docs.mjs
 
-**Purpose:** Legacy documentation validator (deprecated in favor of validate-metadata.ts).
+**Purpose:** Legacy documentation validator (deprecated in favor of validate-metadata.mjs).
 
 **Command:**
 
@@ -196,6 +257,54 @@ pnpm generate:api-reference
 
 ---
 
+## AI Integration (AI-Docs)
+
+The documentation system integrates with the AI assistant for semantic search.
+
+### embed-docs.py
+
+**Purpose:** Embeds documentation into Qdrant for semantic search.
+
+**Script:** `scripts/embed-docs.py`
+
+**Command:**
+
+```bash
+python scripts/embed-docs.py                    # Incremental update
+python scripts/embed-docs.py --force            # Force re-index all
+python scripts/embed-docs.py --dry-run          # Preview without indexing
+python scripts/embed-docs.py --collection NAME  # Custom collection
+```
+
+**Configuration:**
+
+| Property            | Value                  |
+| ------------------- | ---------------------- |
+| **Collection**      | `platform_docs`        |
+| **Embedding Model** | text-embedding-3-small |
+| **Dimensions**      | 1536                   |
+| **Distance Metric** | Cosine                 |
+
+### docs_search_tool.py
+
+**Purpose:** LLM tool for semantic documentation search.
+
+**Script:** `server/app/tools/docs_search_tool.py`
+
+**Functions:**
+
+```python
+# docs_search - Semantic search across documentation
+docs_search(query: str, category: str = None, max_results: int = 5)
+
+# docs_get_section - Retrieve full section content
+docs_get_section(doc_path: str, section: str = None)
+```
+
+**Usage:** The AI assistant automatically uses these tools when answering questions about the platform.
+
+---
+
 ## Metadata Schema
 
 All documentation files should include YAML frontmatter. See [DOCUMENTATION_METADATA_STANDARD.md](./DOCUMENTATION_METADATA_STANDARD.md) for the full schema.
@@ -210,7 +319,7 @@ summary: One-line description # Recommended
 status: stable # Required: draft|experimental|stable|deprecated
 stability: production # Optional: production|beta|experimental|legacy
 owner: backend # Optional: backend|frontend|infra|sre|docs|product|security|mixed
-lastUpdated: "2025-11-27" # Required: ISO date
+lastUpdated: "2025-12-02" # Required: ISO date
 audience: ["human", "agent"] # Optional: who should read this
 tags: ["api", "architecture"] # Optional: searchable tags
 relatedServices: ["api-gateway"] # Optional: related services
@@ -290,6 +399,7 @@ pnpm validate:metadata
 
 ## Version History
 
-| Version | Date       | Changes         |
-| ------- | ---------- | --------------- |
-| 1.0.0   | 2025-11-27 | Initial release |
+| Version | Date       | Changes                                                                 |
+| ------- | ---------- | ----------------------------------------------------------------------- |
+| 1.1.0   | 2025-12-02 | Added new scripts (check-freshness, validate-api-sync), AI-Docs section |
+| 1.0.0   | 2025-11-27 | Initial release                                                         |

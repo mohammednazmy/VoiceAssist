@@ -201,6 +201,48 @@ export function FunctionCallAnalyticsPage() {
     return mapping[status] || { type: "unknown", label: status };
   };
 
+  const exportToCSV = () => {
+    if (invocations.length === 0) return;
+
+    const headers = [
+      "ID",
+      "Tool",
+      "Status",
+      "Mode",
+      "Duration (ms)",
+      "User ID",
+      "Session ID",
+      "Error Type",
+      "Error Message",
+      "Created At",
+    ];
+
+    const rows = invocations.map((inv) => [
+      inv.id,
+      inv.tool_name,
+      inv.status,
+      inv.mode,
+      inv.duration_ms.toString(),
+      inv.user_id,
+      inv.session_id,
+      inv.error_type || "",
+      inv.error_message?.replace(/,/g, ";") || "",
+      inv.created_at || "",
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `function-analytics-${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
   // Loading state
   if (loading && !summary) {
     return (
@@ -322,6 +364,7 @@ export function FunctionCallAnalyticsPage() {
           onToolFilterChange={setToolFilter}
           onStatusFilterChange={setStatusFilter}
           onRefresh={fetchInvocations}
+          onExport={exportToCSV}
           getStatusBadge={getStatusBadge}
         />
       )}
@@ -665,6 +708,7 @@ interface InvocationsTabProps {
   onToolFilterChange: (value: string) => void;
   onStatusFilterChange: (value: string) => void;
   onRefresh: () => void;
+  onExport: () => void;
   getStatusBadge: (status: string) => { type: StatusType; label: string };
 }
 
@@ -676,39 +720,50 @@ function InvocationsTab({
   onToolFilterChange,
   onStatusFilterChange,
   onRefresh,
+  onExport,
   getStatusBadge,
 }: InvocationsTabProps) {
   return (
     <DataPanel title="Recent Invocations" noPadding>
       {/* Filters */}
-      <div className="p-4 border-b border-slate-700 flex flex-wrap gap-3">
-        <select
-          value={toolFilter}
-          onChange={(e) => onToolFilterChange(e.target.value)}
-          className="px-3 py-1.5 text-sm bg-slate-800 border border-slate-600 rounded text-slate-200"
-        >
-          <option value="">All Tools</option>
-          {tools.map((tool) => (
-            <option key={tool} value={tool}>
-              {tool.replace(/_/g, " ")}
-            </option>
-          ))}
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => onStatusFilterChange(e.target.value)}
-          className="px-3 py-1.5 text-sm bg-slate-800 border border-slate-600 rounded text-slate-200"
-        >
-          <option value="">All Statuses</option>
-          <option value="success">Success</option>
-          <option value="error">Error</option>
-        </select>
+      <div className="p-4 border-b border-slate-700 flex flex-wrap gap-3 items-center justify-between">
+        <div className="flex flex-wrap gap-3">
+          <select
+            value={toolFilter}
+            onChange={(e) => onToolFilterChange(e.target.value)}
+            className="px-3 py-1.5 text-sm bg-slate-800 border border-slate-600 rounded text-slate-200"
+          >
+            <option value="">All Tools</option>
+            {tools.map((tool) => (
+              <option key={tool} value={tool}>
+                {tool.replace(/_/g, " ")}
+              </option>
+            ))}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => onStatusFilterChange(e.target.value)}
+            className="px-3 py-1.5 text-sm bg-slate-800 border border-slate-600 rounded text-slate-200"
+          >
+            <option value="">All Statuses</option>
+            <option value="success">Success</option>
+            <option value="error">Error</option>
+          </select>
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="px-4 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+          >
+            Apply Filters
+          </button>
+        </div>
         <button
           type="button"
-          onClick={onRefresh}
-          className="px-4 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+          onClick={onExport}
+          disabled={invocations.length === 0}
+          className="px-4 py-1.5 text-sm font-medium bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-500 text-slate-200 rounded transition-colors flex items-center gap-2"
         >
-          Apply Filters
+          <span>Export CSV</span>
         </button>
       </div>
 
