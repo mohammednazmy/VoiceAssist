@@ -17,8 +17,8 @@ export function LoginPage() {
   const [isBackupCode, setIsBackupCode] = useState(false);
   const [verifying2FA, setVerifying2FA] = useState(false);
 
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const { login: _login } = useAuth();
+  const _navigate = useNavigate();
   const apiClient = getApiClient();
 
   const handleSubmit = async (e: FormEvent) => {

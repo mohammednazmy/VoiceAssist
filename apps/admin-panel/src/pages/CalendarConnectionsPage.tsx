@@ -124,7 +124,7 @@ export function CalendarConnectionsPage() {
     try {
       await Promise.all([fetchConnections(), fetchStats(), fetchProviders()]);
       setLastUpdated(new Date());
-    } catch (err) {
+    } catch {
       setError("Failed to load calendar data");
     } finally {
       setLoading(false);

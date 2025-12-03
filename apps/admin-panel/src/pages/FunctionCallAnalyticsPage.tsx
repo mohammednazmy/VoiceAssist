@@ -86,7 +86,7 @@ interface RecentInvocation {
 type TabId = "overview" | "trend" | "errors" | "invocations";
 
 export function FunctionCallAnalyticsPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin: _isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -173,7 +173,7 @@ export function FunctionCallAnalyticsPage() {
         fetchInvocations(),
       ]);
       setLastUpdated(new Date());
-    } catch (err) {
+    } catch {
       setError("Failed to load analytics data");
     } finally {
       setLoading(false);

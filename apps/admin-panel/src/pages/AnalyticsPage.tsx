@@ -36,13 +36,13 @@ interface UsageTrends {
 }
 
 export function AnalyticsPage() {
-  const [queryAnalytics, setQueryAnalytics] = useState<QueryAnalytics | null>(
+  const [_queryAnalytics, setQueryAnalytics] = useState<QueryAnalytics | null>(
     null,
   );
-  const [responseTimes, setResponseTimes] = useState<ResponseTimeData | null>(
+  const [_responseTimes, setResponseTimes] = useState<ResponseTimeData | null>(
     null,
   );
-  const [usageTrends, setUsageTrends] = useState<UsageTrends | null>(null);
+  const [_usageTrends, setUsageTrends] = useState<UsageTrends | null>(null);
   const [legacyLoading, setLegacyLoading] = useState(true);
   const [legacyError, setLegacyError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<AnalyticsRange>("7d");
@@ -81,7 +81,7 @@ export function AnalyticsPage() {
       setResponseTimes(responseData);
       setUsageTrends(trendsData);
       setLegacyError(null);
-    } catch (err: unknown) {
+    } catch {
       // Silently fail for legacy endpoints - they may not exist yet
       console.warn("Legacy analytics endpoints not available");
     } finally {
