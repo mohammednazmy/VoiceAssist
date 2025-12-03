@@ -33,7 +33,7 @@ openai==2.8.1
 slowapi==0.1.9
 
 # Structured Logging
-structlog==24.1.0
+structlog==25.5.0
 
 # Resilience Patterns
 pybreaker==1.0.1
