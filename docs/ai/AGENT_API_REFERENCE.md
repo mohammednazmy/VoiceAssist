@@ -5,13 +5,13 @@ summary: Machine-readable JSON API endpoints for AI agents to discover and searc
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-03"
 audience: ["agent", "ai-agents", "backend"]
 tags: ["api", "ai-agent", "json", "documentation", "endpoints"]
 relatedServices: ["docs-site"]
 category: ai
 source_of_truth: true
-version: "1.2.0"
+version: "1.3.0"
 ---
 
 # Agent API Reference
@@ -33,7 +33,7 @@ The VoiceAssist documentation site exposes machine-readable JSON endpoints desig
 | `/search-index.json` | GET    | Full-text search index (Fuse.js format)     |
 | `/sitemap.xml`       | GET    | XML sitemap for crawlers                    |
 
-**Note:** All endpoints are static JSON files generated at build time. There is no dynamic search endpoint - use the search-index.json with client-side Fuse.js for full-text search.
+**Note:** All endpoints listed above are static JSON files generated at build time. For lexical search, use `/search-index.json` with client-side Fuse.js. For semantic search, see the [AI-Docs section](#ai-docs-semantic-search) below.
 
 ---
 
@@ -384,6 +384,67 @@ const results = fuse.search("authentication");
 
 ---
 
+## AI-Docs Semantic Search
+
+In addition to the static JSON endpoints, VoiceAssist provides semantic documentation search powered by Qdrant vector embeddings. This enables AI agents to find relevant documentation using natural language queries.
+
+### Overview
+
+| Component       | Description                              |
+| --------------- | ---------------------------------------- |
+| **Embedding**   | `scripts/embed-docs.py`                  |
+| **Collection**  | `platform_docs` in Qdrant                |
+| **Model**       | text-embedding-3-small (1536 dimensions) |
+| **Search Tool** | `server/app/tools/docs_search_tool.py`   |
+
+### Search Tool Functions
+
+The `docs_search_tool` provides two functions for AI assistants:
+
+```python
+# Semantic search across documentation
+docs_search(query: str, category: str = None, max_results: int = 5)
+# Returns: List of {path, title, content, score}
+
+# Retrieve full section content by path
+docs_get_section(doc_path: str, section: str = None)
+# Returns: Full markdown content of the specified doc/section
+```
+
+### When to Use Which
+
+| Method                         | Best For                                      |
+| ------------------------------ | --------------------------------------------- |
+| `/search-index.json` (Fuse.js) | UI search, keyword matching, offline use      |
+| `docs_search` tool             | Natural language queries, semantic similarity |
+| `/agent/docs.json`             | Browsing, metadata filtering, doc discovery   |
+
+### Recommended Workflow for AI Agents
+
+1. **Semantic search first**: Use `docs_search` tool for natural language questions
+2. **Verify paths**: Cross-reference results with `/agent/docs.json` metadata
+3. **Fallback to lexical**: Use `/search-index.json` if semantic search unavailable
+4. **Read full content**: Use `docs_get_section` or fetch raw markdown as needed
+
+### Re-indexing Documentation
+
+When documentation changes significantly, the embeddings should be updated:
+
+```bash
+# Incremental update (skip unchanged docs)
+python scripts/embed-docs.py
+
+# Force re-index all documents
+python scripts/embed-docs.py --force
+
+# Preview without indexing
+python scripts/embed-docs.py --dry-run
+```
+
+For more details, see [Internal Docs System](../INTERNAL_DOCS_SYSTEM.md#ai-integration-ai-docs).
+
+---
+
 ## Recommended Usage Pattern
 
 For AI agents discovering the VoiceAssist documentation:
@@ -477,8 +538,9 @@ Test the endpoints directly:
 
 ## Version History
 
-| Version | Date       | Changes                                        |
-| ------- | ---------- | ---------------------------------------------- |
-| 1.2.0   | 2025-11-27 | Added /agent/tasks.json endpoint documentation |
-| 1.1.0   | 2025-11-27 | Updated to reflect static JSON endpoints       |
-| 1.0.0   | 2025-11-27 | Initial release                                |
+| Version | Date       | Changes                                           |
+| ------- | ---------- | ------------------------------------------------- |
+| 1.3.0   | 2025-12-03 | Added AI-Docs semantic search section             |
+| 1.2.0   | 2025-11-27 | Added /agent/tasks.json endpoint documentation    |
+| 1.1.0   | 2025-11-27 | Updated to reflect static JSON endpoints          |
+| 1.0.0   | 2025-11-27 | Initial release                                   |
