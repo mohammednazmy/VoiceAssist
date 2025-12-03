@@ -294,8 +294,8 @@ jobs:
       - name: Create GitHub Issue for failures
         if: |
           needs.bandit.result == 'failure' ||
-          needs.trivy.result == 'failure' ||
           needs.secret-scan.result == 'failure'
+        continue-on-error: true # Don't fail if issue creation fails (permissions may vary)
         uses: actions/github-script@v8
         with:
           script: |
