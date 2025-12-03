@@ -267,6 +267,235 @@ export interface TranscriptionResult {
 }
 
 // ============================================================================
+// Voice Barge-In Settings Types (Phase 7-10)
+// ============================================================================
+
+/**
+ * Phase 7: Multilingual settings for voice sessions
+ */
+export interface MultilingualSettings {
+  /** Selected accent profile ID */
+  accentProfileId: string | null;
+  /** Enable automatic language detection from speech */
+  autoLanguageDetection: boolean;
+  /** Confidence threshold (0-1) for automatic language switching */
+  languageSwitchConfidence: number;
+}
+
+/**
+ * Phase 8: Personalization/Calibration settings
+ */
+export interface CalibrationSettings {
+  /** Whether user has completed voice calibration */
+  vadCalibrated: boolean;
+  /** Timestamp of last calibration */
+  lastCalibrationDate: number | null;
+  /** Personalized VAD threshold from calibration (0-1) */
+  personalizedVadThreshold: number | null;
+  /** Enable adaptive learning from speech patterns */
+  enableBehaviorLearning: boolean;
+  /** VAD sensitivity (0-1 scale, higher = more sensitive) */
+  vadSensitivity: number;
+}
+
+/**
+ * Phase 9: Offline mode settings
+ */
+export interface OfflineModeSettings {
+  /** Enable offline VAD fallback when network is unavailable */
+  enableOfflineFallback: boolean;
+  /** Prefer local VAD processing even when online */
+  preferOfflineVAD: boolean;
+  /** Cache common TTS phrases for offline playback */
+  ttsCacheEnabled: boolean;
+}
+
+/**
+ * Phase 10: Conversation management settings
+ */
+export interface ConversationIntelligenceSettings {
+  /** Track user sentiment during conversation */
+  enableSentimentTracking: boolean;
+  /** Enable discourse/topic tracking */
+  enableDiscourseAnalysis: boolean;
+  /** Get AI response behavior recommendations */
+  enableResponseRecommendations: boolean;
+  /** Display suggested follow-up questions */
+  showSuggestedFollowUps: boolean;
+}
+
+/**
+ * Voice privacy settings
+ */
+export interface VoicePrivacySettings {
+  /** Store transcript history locally */
+  storeTranscriptHistory: boolean;
+  /** Share anonymous usage data for improvement */
+  shareAnonymousAnalytics: boolean;
+}
+
+/**
+ * Combined Phase 7-10 advanced voice settings
+ */
+export interface AdvancedVoiceSettings {
+  multilingual: MultilingualSettings;
+  calibration: CalibrationSettings;
+  offline: OfflineModeSettings;
+  conversationIntelligence: ConversationIntelligenceSettings;
+  privacy: VoicePrivacySettings;
+}
+
+/**
+ * Voice session configuration for Thinker/Talker pipeline
+ * Matches backend TTSessionConfig
+ */
+export interface TTSessionConfig {
+  userId: string;
+  sessionId: string;
+  conversationId?: string;
+
+  // Voice settings
+  voiceId: string;
+  ttsModel: string;
+  language: string;
+
+  // STT settings
+  sttSampleRate: number;
+  sttEndpointingMs: number;
+  sttUtteranceEndMs: number;
+
+  // Barge-in
+  bargeInEnabled: boolean;
+
+  // Timeouts
+  connectionTimeoutSec: number;
+  idleTimeoutSec: number;
+
+  // Phase 7-10: Advanced settings (all optional)
+  advancedSettings?: AdvancedVoiceSettings;
+}
+
+/**
+ * Voice session metrics for Thinker/Talker pipeline
+ */
+export interface TTVoiceMetrics {
+  /** Time from connect() call to ready status (ms) */
+  connectionTimeMs: number | null;
+  /** Time from speech end to first transcript (ms) */
+  sttLatencyMs: number | null;
+  /** Time from transcript to first LLM token (ms) */
+  llmFirstTokenMs: number | null;
+  /** Time from first LLM token to first TTS audio (ms) */
+  ttsFirstAudioMs: number | null;
+  /** Total time from speech end to first audio (ms) */
+  totalLatencyMs: number | null;
+  /** Session duration (ms) */
+  sessionDurationMs: number | null;
+  /** Count of user utterances */
+  userUtteranceCount: number;
+  /** Count of AI responses */
+  aiResponseCount: number;
+  /** Count of tool calls */
+  toolCallCount: number;
+  /** Count of barge-ins */
+  bargeInCount: number;
+  /** Reconnection count */
+  reconnectCount: number;
+  /** Session start timestamp */
+  sessionStartedAt: number | null;
+}
+
+/**
+ * Sentiment analysis result
+ */
+export type SentimentType =
+  | "positive"
+  | "negative"
+  | "neutral"
+  | "frustrated"
+  | "confused"
+  | "engaged";
+
+export interface SentimentResult {
+  sentiment: SentimentType;
+  confidence: number;
+  valence: number; // -1 to 1
+  arousal: number; // 0 to 1
+}
+
+/**
+ * Discourse/conversation phase
+ */
+export type DiscoursePhase =
+  | "opening"
+  | "information_gathering"
+  | "deep_discussion"
+  | "clarification"
+  | "action_oriented"
+  | "closing";
+
+/**
+ * Discourse state for conversation tracking
+ */
+export interface DiscourseState {
+  topic: string | null;
+  phase: DiscoursePhase;
+  coherence: number; // 0 to 1
+  topicShiftCount: number;
+}
+
+/**
+ * Response recommendations for AI behavior adjustment
+ */
+export interface ResponseRecommendations {
+  speakSlower: boolean;
+  useSimpleLanguage: boolean;
+  offerClarification: boolean;
+  pauseForQuestions: boolean;
+  suggestedTone: "neutral" | "empathetic" | "professional" | "encouraging";
+  urgency: "low" | "normal" | "high";
+}
+
+/**
+ * Calibration progress during voice calibration
+ */
+export interface CalibrationProgress {
+  state:
+    | "idle"
+    | "preparing"
+    | "measuring_noise"
+    | "waiting_speech"
+    | "measuring_voice"
+    | "analyzing"
+    | "complete"
+    | "error";
+  progress: number; // 0-100
+  message: string;
+  instruction?: string;
+}
+
+/**
+ * Calibration result after voice calibration completes
+ */
+export interface CalibrationResult {
+  id: string;
+  timestamp: number;
+  backgroundNoiseLevel: number;
+  voiceEnergyLevel: number;
+  recommendedVadThreshold: number;
+  recommendedSilenceThreshold: number;
+  pitchRange: {
+    min: number;
+    max: number;
+    mean: number;
+  };
+  speakingRate: number;
+  qualityScore: number;
+  duration: number;
+  environment: "quiet" | "moderate" | "noisy" | "outdoor";
+}
+
+// ============================================================================
 // Knowledge Base Types
 // ============================================================================
 
