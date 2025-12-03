@@ -183,7 +183,8 @@ export interface AlertAction {
 }
 
 export interface AlertBannerProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends
+    React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof alertBannerVariants> {
   /**
    * Alert title (bold heading)

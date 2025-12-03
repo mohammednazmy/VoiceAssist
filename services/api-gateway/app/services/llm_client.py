@@ -255,7 +255,10 @@ class LLMClient:
         has_messages = req.messages and len(req.messages) > 0
 
         if not has_prompt and not has_messages:
-            logger.warning("LLMClient.generate called with empty prompt and no messages, trace_id=%s", req.trace_id)
+            logger.warning(
+                "LLMClient.generate called with empty prompt and no messages, trace_id=%s",
+                req.trace_id,
+            )
             raise ValueError("Prompt or messages cannot be empty")
 
         # Safety: normalize whitespace in prompt
@@ -562,7 +565,11 @@ class LLMClient:
                         for tc in delta.tool_calls:
                             idx = tc.index
                             if idx not in tool_calls_data:
-                                tool_calls_data[idx] = {"id": "", "name": "", "arguments": ""}
+                                tool_calls_data[idx] = {
+                                    "id": "",
+                                    "name": "",
+                                    "arguments": "",
+                                }
                             if tc.id:
                                 tool_calls_data[idx]["id"] = tc.id
                             if tc.function:

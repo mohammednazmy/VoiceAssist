@@ -63,6 +63,7 @@ images:
   - name: voiceassist-worker
     newTag: latest
 
+
 # Patches for environment-specific modifications
 # These are applied via overlays (see below)
 

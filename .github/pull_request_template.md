@@ -16,18 +16,20 @@
 ## Related Issues
 
 <!-- Link to related issues using #issue_number -->
+
 Closes #
 
 ## Changes Made
 
-<!-- List the main changes made in this PR -->
--
+## <!-- List the main changes made in this PR -->
+
 -
 -
 
 ## Testing
 
 ### Test Coverage
+
 - [ ] Unit tests added/updated
 - [ ] Integration tests added/updated
 - [ ] Contract tests added/updated
@@ -35,7 +37,9 @@ Closes #
 - [ ] Manual testing performed
 
 ### Test Results
+
 <!-- Paste relevant test results or link to CI pipeline -->
+
 ```
 # Test output here
 ```
@@ -43,6 +47,7 @@ Closes #
 ## Infrastructure Changes
 
 <!-- If this PR includes infrastructure changes -->
+
 - [ ] Terraform changes included
 - [ ] Terraform plan reviewed
 - [ ] Cost estimate reviewed
@@ -60,6 +65,7 @@ Closes #
 ## Performance Impact
 
 <!-- Describe any performance implications -->
+
 - [ ] No significant performance impact
 - [ ] Performance improvement
 - [ ] Performance regression (explain why acceptable)
@@ -67,6 +73,7 @@ Closes #
 ## Deployment Notes
 
 <!-- Special instructions for deployment -->
+
 - [ ] Database migrations required
 - [ ] Configuration changes required
 - [ ] Environment variables added/changed
@@ -74,7 +81,9 @@ Closes #
 - [ ] Feature flags involved
 
 ### Migration Steps
+
 <!-- If database migrations are needed -->
+
 ```bash
 # Migration commands here
 ```
@@ -111,6 +120,7 @@ Closes #
 ## Reviewer Notes
 
 ### For Reviewers
+
 - [ ] Code quality and style
 - [ ] Test coverage adequate
 - [ ] Security implications reviewed
@@ -119,6 +129,7 @@ Closes #
 - [ ] Infrastructure changes safe
 
 ### Deployment Checklist
+
 - [ ] Staging deployment successful
 - [ ] Smoke tests passed
 - [ ] Monitoring and alerting configured

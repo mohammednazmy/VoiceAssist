@@ -3,13 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  render,
-  screen,
-  waitFor,
-  act,
-  fireEvent,
-} from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PermanentDeleteDialog } from "../PermanentDeleteDialog";
 
@@ -352,9 +346,7 @@ describe("PermanentDeleteDialog", () => {
     });
 
     it("dialog state resets between renders", () => {
-      const { rerender, container } = render(
-        <PermanentDeleteDialog {...defaultProps} />,
-      );
+      const { rerender } = render(<PermanentDeleteDialog {...defaultProps} />);
 
       // Verify dialog is visible
       expect(screen.getByText("Permanently Delete User")).toBeInTheDocument();

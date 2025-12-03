@@ -37,12 +37,8 @@ def generate_markdown(session: Session, messages: List[Message], user: User) -> 
     md_lines.append(f"# {session.title or 'Untitled Conversation'}")
     md_lines.append("")
     md_lines.append(f"**User:** {user.email}")
-    md_lines.append(
-        f"**Created:** {session.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}"
-    )
-    md_lines.append(
-        f"**Last Updated:** {session.updated_at.strftime('%Y-%m-%d %H:%M:%S UTC')}"
-    )
+    md_lines.append(f"**Created:** {session.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+    md_lines.append(f"**Last Updated:** {session.updated_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
     md_lines.append(f"**Messages:** {len(messages)}")
     md_lines.append("")
     md_lines.append("---")
@@ -83,9 +79,7 @@ def generate_markdown(session: Session, messages: List[Message], user: User) -> 
 
     # Footer
     md_lines.append("")
-    md_lines.append(
-        f"*Exported from VoiceAssist on {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}*"
-    )
+    md_lines.append(f"*Exported from VoiceAssist on {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}*")
 
     return "\n".join(md_lines)
 
@@ -205,23 +199,12 @@ async def export_markdown(
         Markdown file
     """
     # Get session
-    session = (
-        db.query(Session)
-        .filter(Session.id == session_id, Session.user_id == current_user.id)
-        .first()
-    )
+    session = db.query(Session).filter(Session.id == session_id, Session.user_id == current_user.id).first()
     if not session:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
 
     # Get messages
-    messages = (
-        db.query(Message)
-        .filter(Message.session_id == session_id)
-        .order_by(Message.created_at)
-        .all()
-    )
+    messages = db.query(Message).filter(Message.session_id == session_id).order_by(Message.created_at).all()
 
     # Generate Markdown
     markdown_content = generate_markdown(session, messages, current_user)
@@ -253,23 +236,12 @@ async def export_pdf(
         PDF file
     """
     # Get session
-    session = (
-        db.query(Session)
-        .filter(Session.id == session_id, Session.user_id == current_user.id)
-        .first()
-    )
+    session = db.query(Session).filter(Session.id == session_id, Session.user_id == current_user.id).first()
     if not session:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
 
     # Get messages
-    messages = (
-        db.query(Message)
-        .filter(Message.session_id == session_id)
-        .order_by(Message.created_at)
-        .all()
-    )
+    messages = db.query(Message).filter(Message.session_id == session_id).order_by(Message.created_at).all()
 
     # Generate PDF
     pdf_bytes = generate_pdf(session, messages, current_user)

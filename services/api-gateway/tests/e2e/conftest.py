@@ -26,7 +26,8 @@ from sqlalchemy.pool import StaticPool
 
 # Test database configuration
 TEST_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL", "postgresql://voiceassist:changeme_secure_password@localhost:5432/voiceassist_test"
+    "TEST_DATABASE_URL",
+    "postgresql://voiceassist:changeme_secure_password@localhost:5432/voiceassist_test",
 )
 
 
@@ -182,7 +183,10 @@ def test_admin_user(test_db_session: Session) -> User:
 @pytest.fixture(scope="function")
 def auth_headers(client: TestClient, test_user: User) -> dict:
     """Get authentication headers for test user."""
-    response = client.post("/api/auth/login", json={"email": "testuser@example.com", "password": "Test123!@#"})
+    response = client.post(
+        "/api/auth/login",
+        json={"email": "testuser@example.com", "password": "Test123!@#"},
+    )
     assert response.status_code == 200
     data = response.json()
     # Response is TokenResponse directly, not wrapped in data envelope
@@ -194,7 +198,10 @@ def auth_headers(client: TestClient, test_user: User) -> dict:
 @pytest.fixture(scope="function")
 def admin_auth_headers(client: TestClient, test_admin_user: User) -> dict:
     """Get authentication headers for admin user."""
-    response = client.post("/api/auth/login", json={"email": "admin@example.com", "password": "Admin123!@#"})
+    response = client.post(
+        "/api/auth/login",
+        json={"email": "admin@example.com", "password": "Admin123!@#"},
+    )
     assert response.status_code == 200
     data = response.json()
     # Response is TokenResponse directly, not wrapped in data envelope

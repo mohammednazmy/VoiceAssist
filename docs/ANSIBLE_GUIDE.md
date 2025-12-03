@@ -761,9 +761,9 @@ ansible-vault decrypt inventories/production/group_vars/secrets.yml
 vault_db_password: "super_secret_password"
 vault_api_key: "secret_api_key"
 vault_ssl_private_key: |
-  -----BEGIN PRIVATE KEY-----
-  ...
-  -----END PRIVATE KEY-----
+  -----BEGIN EXAMPLE KEY (NOT REAL)-----
+  <your-base64-encoded-key-content-here>
+  -----END EXAMPLE KEY (NOT REAL)-----
 ```
 
 **Using vault variables:**

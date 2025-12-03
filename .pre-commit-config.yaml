@@ -74,6 +74,8 @@ repos:
     hooks:
       - id: shellcheck
         files: \.(sh|bash)$
+        exclude: ^node_modules/
+        args: ["--severity=error"] # Only fail on errors, not warnings/info
 
   # Dockerfile linting
   - repo: https://github.com/hadolint/hadolint

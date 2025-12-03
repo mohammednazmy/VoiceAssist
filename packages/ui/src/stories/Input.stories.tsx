@@ -2,43 +2,43 @@
  * Input Component Stories
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
-import { Input } from '../components/Input';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Input } from "../components/Input";
 
 const meta = {
-  title: 'Components/Input',
+  title: "Components/Input",
   component: Input,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     docs: {
       description: {
         component:
-          'Text input field with support for labels, helper text, error states, and icons.',
+          "Text input field with support for labels, helper text, error states, and icons.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     inputSize: {
-      control: 'select',
-      options: ['sm', 'md', 'lg'],
-      description: 'The size of the input',
+      control: "select",
+      options: ["sm", "md", "lg"],
+      description: "The size of the input",
     },
     error: {
-      control: 'boolean',
-      description: 'Show error state',
+      control: "boolean",
+      description: "Show error state",
     },
     disabled: {
-      control: 'boolean',
-      description: 'Disable the input',
+      control: "boolean",
+      description: "Disable the input",
     },
     required: {
-      control: 'boolean',
-      description: 'Mark as required',
+      control: "boolean",
+      description: "Mark as required",
     },
     fullWidth: {
-      control: 'boolean',
-      description: 'Make input full width',
+      control: "boolean",
+      description: "Make input full width",
     },
   },
 } satisfies Meta<typeof Input>;
@@ -48,63 +48,55 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    placeholder: 'Enter text...',
+    placeholder: "Enter text...",
   },
 };
 
 export const WithLabel: Story = {
   args: {
-    label: 'Email Address',
-    placeholder: 'you@example.com',
-    type: 'email',
+    label: "Email Address",
+    placeholder: "you@example.com",
+    type: "email",
   },
 };
 
 export const WithHelperText: Story = {
   args: {
-    label: 'Username',
-    placeholder: 'johndoe',
-    helperText: 'Choose a unique username between 3-20 characters',
+    label: "Username",
+    placeholder: "johndoe",
+    helperText: "Choose a unique username between 3-20 characters",
   },
 };
 
 export const WithError: Story = {
   args: {
-    label: 'Password',
-    placeholder: 'Enter password',
-    type: 'password',
+    label: "Password",
+    placeholder: "Enter password",
+    type: "password",
     error: true,
-    errorMessage: 'Password must be at least 8 characters',
+    errorMessage: "Password must be at least 8 characters",
   },
 };
 
 export const Required: Story = {
   args: {
-    label: 'Full Name',
-    placeholder: 'John Doe',
+    label: "Full Name",
+    placeholder: "John Doe",
     required: true,
-    helperText: 'This field is required',
+    helperText: "This field is required",
   },
 };
 
 export const AllSizes: Story = {
   render: () => (
     <div className="flex flex-col gap-4 w-96">
-      <Input
-        inputSize="sm"
-        label="Small Input"
-        placeholder="Small size"
-      />
+      <Input inputSize="sm" label="Small Input" placeholder="Small size" />
       <Input
         inputSize="md"
         label="Medium Input"
         placeholder="Medium size (default)"
       />
-      <Input
-        inputSize="lg"
-        label="Large Input"
-        placeholder="Large size"
-      />
+      <Input inputSize="lg" label="Large Input" placeholder="Large size" />
     </div>
   ),
 };
@@ -165,7 +157,7 @@ export const WithIcons: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Inputs with left and/or right icons for enhanced UX.',
+        story: "Inputs with left and/or right icons for enhanced UX.",
       },
     },
   },
@@ -173,50 +165,28 @@ export const WithIcons: Story = {
 
 export const Disabled: Story = {
   args: {
-    label: 'Disabled Input',
-    placeholder: 'Cannot edit',
+    label: "Disabled Input",
+    placeholder: "Cannot edit",
     disabled: true,
-    value: 'Disabled value',
+    value: "Disabled value",
   },
 };
 
 export const Types: Story = {
   render: () => (
     <div className="flex flex-col gap-4 w-96">
-      <Input
-        label="Text"
-        type="text"
-        placeholder="Enter text"
-      />
-      <Input
-        label="Email"
-        type="email"
-        placeholder="you@example.com"
-      />
-      <Input
-        label="Password"
-        type="password"
-        placeholder="••••••••"
-      />
-      <Input
-        label="Number"
-        type="number"
-        placeholder="0"
-      />
-      <Input
-        label="Date"
-        type="date"
-      />
-      <Input
-        label="Time"
-        type="time"
-      />
+      <Input label="Text" type="text" placeholder="Enter text" />
+      <Input label="Email" type="email" placeholder="you@example.com" />
+      <Input label="Password" type="password" placeholder="••••••••" />
+      <Input label="Number" type="number" placeholder="0" />
+      <Input label="Date" type="date" />
+      <Input label="Time" type="time" />
     </div>
   ),
   parameters: {
     docs: {
       description: {
-        story: 'Different HTML5 input types supported.',
+        story: "Different HTML5 input types supported.",
       },
     },
   },
@@ -225,19 +195,13 @@ export const Types: Story = {
 export const FormExample: Story = {
   render: () => (
     <div className="w-96 space-y-4">
-      <h3 className="text-lg font-semibold text-text-primary mb-4">Patient Registration</h3>
+      <h3 className="text-lg font-semibold text-text-primary mb-4">
+        Patient Registration
+      </h3>
 
-      <Input
-        label="Patient Name"
-        placeholder="John Doe"
-        required
-      />
+      <Input label="Patient Name" placeholder="John Doe" required />
 
-      <Input
-        label="Date of Birth"
-        type="date"
-        required
-      />
+      <Input label="Date of Birth" type="date" required />
 
       <Input
         label="Medical Record Number"
@@ -292,7 +256,7 @@ export const FormExample: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Example healthcare form using multiple input components.',
+        story: "Example healthcare form using multiple input components.",
       },
     },
   },

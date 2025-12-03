@@ -46,9 +46,7 @@ def upgrade():
         sa.Column("height_cm", sa.Numeric(5, 2), nullable=True),
         # Clinical data
         sa.Column("chief_complaint", sa.Text, nullable=True),
-        sa.Column(
-            "problems", JSONB, nullable=True, comment="Array of problems/diagnoses"
-        ),
+        sa.Column("problems", JSONB, nullable=True, comment="Array of problems/diagnoses"),
         sa.Column("medications", JSONB, nullable=True, comment="Array of medications"),
         sa.Column("allergies", JSONB, nullable=True, comment="Array of allergies"),
         # Vitals
@@ -75,9 +73,7 @@ def upgrade():
 
     # Create indexes
     op.create_index("idx_clinical_contexts_user_id", "clinical_contexts", ["user_id"])
-    op.create_index(
-        "idx_clinical_contexts_session_id", "clinical_contexts", ["session_id"]
-    )
+    op.create_index("idx_clinical_contexts_session_id", "clinical_contexts", ["session_id"])
 
     # Create unique constraint for user_id + session_id
     op.create_unique_constraint(
@@ -89,9 +85,7 @@ def upgrade():
 
 def downgrade():
     """Drop clinical_contexts table"""
-    op.drop_constraint(
-        "uq_clinical_contexts_user_session", "clinical_contexts", type_="unique"
-    )
+    op.drop_constraint("uq_clinical_contexts_user_session", "clinical_contexts", type_="unique")
     op.drop_index("idx_clinical_contexts_session_id", table_name="clinical_contexts")
     op.drop_index("idx_clinical_contexts_user_id", table_name="clinical_contexts")
     op.drop_table("clinical_contexts")

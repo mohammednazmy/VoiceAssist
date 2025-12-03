@@ -82,7 +82,11 @@ def strip_markdown_for_tts(text: str) -> str:
     result = re.sub(r"\$[^$\d][^$]*\$", "", result)
 
     # Remove standalone LaTeX commands that might remain
-    result = re.sub(r"\\(?:text|frac|sqrt|sum|int|times|div|approx|neq|leq|geq|pm)\{[^}]*\}", "", result)
+    result = re.sub(
+        r"\\(?:text|frac|sqrt|sum|int|times|div|approx|neq|leq|geq|pm)\{[^}]*\}",
+        "",
+        result,
+    )
     result = re.sub(r"\\(?:text|frac|sqrt|sum|int|times|div|approx|neq|leq|geq|pm)", "", result)
 
     # Remove superscripts/subscripts: ^{...} and _{...}
@@ -430,16 +434,70 @@ class TalkerService:
         """Get list of available ElevenLabs voices."""
         return [
             # Premium Voices (Recommended)
-            {"id": "pNInz6obpgDQGcFmaJgB", "name": "Adam", "gender": "male", "accent": "American", "premium": True},
-            {"id": "TxGEqnHWrfWFTfGW9XjX", "name": "Josh", "gender": "male", "accent": "American", "premium": True},
-            {"id": "EXAVITQu4vr4xnSDxMaL", "name": "Bella", "gender": "female", "accent": "American", "premium": True},
-            {"id": "21m00Tcm4TlvDq8ikWAM", "name": "Rachel", "gender": "female", "accent": "American", "premium": True},
+            {
+                "id": "pNInz6obpgDQGcFmaJgB",
+                "name": "Adam",
+                "gender": "male",
+                "accent": "American",
+                "premium": True,
+            },
+            {
+                "id": "TxGEqnHWrfWFTfGW9XjX",
+                "name": "Josh",
+                "gender": "male",
+                "accent": "American",
+                "premium": True,
+            },
+            {
+                "id": "EXAVITQu4vr4xnSDxMaL",
+                "name": "Bella",
+                "gender": "female",
+                "accent": "American",
+                "premium": True,
+            },
+            {
+                "id": "21m00Tcm4TlvDq8ikWAM",
+                "name": "Rachel",
+                "gender": "female",
+                "accent": "American",
+                "premium": True,
+            },
             # Standard Voices
-            {"id": "AZnzlk1XvdvUeBnXmlld", "name": "Domi", "gender": "female", "accent": "American", "premium": False},
-            {"id": "ErXwobaYiN019PkySvjV", "name": "Antoni", "gender": "male", "accent": "American", "premium": False},
-            {"id": "MF3mGyEYCl7XYWbV9V6O", "name": "Elli", "gender": "female", "accent": "American", "premium": False},
-            {"id": "VR6AewLTigWG4xSOukaG", "name": "Arnold", "gender": "male", "accent": "American", "premium": False},
-            {"id": "yoZ06aMxZJJ28mfd3POQ", "name": "Sam", "gender": "male", "accent": "American", "premium": False},
+            {
+                "id": "AZnzlk1XvdvUeBnXmlld",
+                "name": "Domi",
+                "gender": "female",
+                "accent": "American",
+                "premium": False,
+            },
+            {
+                "id": "ErXwobaYiN019PkySvjV",
+                "name": "Antoni",
+                "gender": "male",
+                "accent": "American",
+                "premium": False,
+            },
+            {
+                "id": "MF3mGyEYCl7XYWbV9V6O",
+                "name": "Elli",
+                "gender": "female",
+                "accent": "American",
+                "premium": False,
+            },
+            {
+                "id": "VR6AewLTigWG4xSOukaG",
+                "name": "Arnold",
+                "gender": "male",
+                "accent": "American",
+                "premium": False,
+            },
+            {
+                "id": "yoZ06aMxZJJ28mfd3POQ",
+                "name": "Sam",
+                "gender": "male",
+                "accent": "American",
+                "premium": False,
+            },
         ]
 
 

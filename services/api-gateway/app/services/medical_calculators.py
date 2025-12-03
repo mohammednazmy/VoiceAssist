@@ -139,7 +139,18 @@ class MedicalCalculators:
             components["diabetes"] = 1
 
         # Risk stratification
-        annual_stroke_risk = {0: 0.2, 1: 0.6, 2: 2.2, 3: 3.2, 4: 4.8, 5: 7.2, 6: 9.7, 7: 11.2, 8: 10.8, 9: 12.2}
+        annual_stroke_risk = {
+            0: 0.2,
+            1: 0.6,
+            2: 2.2,
+            3: 3.2,
+            4: 4.8,
+            5: 7.2,
+            6: 9.7,
+            7: 11.2,
+            8: 10.8,
+            9: 12.2,
+        }
 
         risk = annual_stroke_risk.get(min(score, 9), 12.2)
 
@@ -186,7 +197,10 @@ class MedicalCalculators:
             interpretation=interpretation,
             recommendations=recommendations,
             components=components,
-            references=["Lip GYH, et al. Chest 2010;137:263-272", "2020 ESC Guidelines for AF Management"],
+            references=[
+                "Lip GYH, et al. Chest 2010;137:263-272",
+                "2020 ESC Guidelines for AF Management",
+            ],
         )
 
     @staticmethod
@@ -504,7 +518,12 @@ class MedicalCalculators:
             risk_level=risk_level,
             interpretation=interpretation,
             recommendations=recommendations,
-            components={"creatinine_mg_dL": creatinine, "age": age, "sex": sex.value, "ckd_stage": stage},
+            components={
+                "creatinine_mg_dL": creatinine,
+                "age": age,
+                "sex": sex.value,
+                "ckd_stage": stage,
+            },
             references=[
                 "Inker LA, et al. N Engl J Med 2021;385:1737-1749",
                 "KDIGO 2024 Clinical Practice Guideline for CKD",
@@ -573,7 +592,12 @@ class MedicalCalculators:
             risk_level=risk_level,
             interpretation=interpretation,
             recommendations=recommendations,
-            components={"creatinine_mg_dL": creatinine, "age": age, "weight_kg": weight, "sex": sex.value},
+            components={
+                "creatinine_mg_dL": creatinine,
+                "age": age,
+                "weight_kg": weight,
+                "sex": sex.value,
+            },
             references=["Cockcroft DW, Gault MH. Nephron 1976;16:31-41"],
             warnings=[
                 "Not adjusted for BSA",
@@ -588,7 +612,11 @@ class MedicalCalculators:
 
     @staticmethod
     def meld_na(
-        bilirubin: float, inr: float, creatinine: float, sodium: float, dialysis_twice_past_week: bool = False
+        bilirubin: float,
+        inr: float,
+        creatinine: float,
+        sodium: float,
+        dialysis_twice_past_week: bool = False,
     ) -> CalculatorResult:
         """
         MELD-Na Score (Model for End-Stage Liver Disease with Sodium).
@@ -673,7 +701,10 @@ class MedicalCalculators:
                 "dialysis": dialysis_twice_past_week,
                 "mortality_90day": mortality,
             },
-            references=["Kim WR, et al. Hepatology 2008;47:584-590", "OPTN/UNOS Policy for Liver Allocation"],
+            references=[
+                "Kim WR, et al. Hepatology 2008;47:584-590",
+                "OPTN/UNOS Policy for Liver Allocation",
+            ],
         )
 
     @staticmethod
@@ -795,7 +826,10 @@ class MedicalCalculators:
             interpretation=interpretation,
             recommendations=recommendations,
             components=components,
-            references=["Child CG, Turcotte JG. Surgery 1964;55:24", "Pugh RN, et al. Br J Surg 1973;60:646-649"],
+            references=[
+                "Child CG, Turcotte JG. Surgery 1964;55:24",
+                "Pugh RN, et al. Br J Surg 1973;60:646-649",
+            ],
         )
 
     @staticmethod
@@ -852,9 +886,17 @@ class MedicalCalculators:
             risk_level=risk_level,
             interpretation=interpretation,
             recommendations=recommendations,
-            components={"age": age, "ast_U_L": ast, "alt_U_L": alt, "platelets_10e9_L": platelets},
+            components={
+                "age": age,
+                "ast_U_L": ast,
+                "alt_U_L": alt,
+                "platelets_10e9_L": platelets,
+            },
             references=["Sterling RK, et al. Hepatology 2006;43:1317-1325"],
-            warnings=["May be less accurate in patients <35 or >65 years", "Not validated in acute hepatitis"],
+            warnings=[
+                "May be less accurate in patients <35 or >65 years",
+                "Not validated in acute hepatitis",
+            ],
         )
 
     # =========================================================================
@@ -1022,7 +1064,11 @@ class MedicalCalculators:
         )
 
     @staticmethod
-    def qsofa(respiratory_rate_gte_22: bool, altered_mentation: bool, systolic_bp_lte_100: bool) -> CalculatorResult:
+    def qsofa(
+        respiratory_rate_gte_22: bool,
+        altered_mentation: bool,
+        systolic_bp_lte_100: bool,
+    ) -> CalculatorResult:
         """
         Quick SOFA (qSOFA) Score for Sepsis Screening.
 
@@ -1100,7 +1146,15 @@ class MedicalCalculators:
         Returns:
             CalculatorResult with CURB-65 score 0-5 and disposition recommendation
         """
-        score = sum([confusion, bun_gt_19, respiratory_rate_gte_30, systolic_bp_lt_90_or_diastolic_lte_60, age_gte_65])
+        score = sum(
+            [
+                confusion,
+                bun_gt_19,
+                respiratory_rate_gte_30,
+                systolic_bp_lt_90_or_diastolic_lte_60,
+                age_gte_65,
+            ]
+        )
 
         components = {
             "confusion": int(confusion),
@@ -1110,7 +1164,14 @@ class MedicalCalculators:
             "age_65_plus": int(age_gte_65),
         }
 
-        mortality_map = {0: "0.6%", 1: "2.7%", 2: "6.8%", 3: "14%", 4: "27.8%", 5: "27.8%"}
+        mortality_map = {
+            0: "0.6%",
+            1: "2.7%",
+            2: "6.8%",
+            3: "14%",
+            4: "27.8%",
+            5: "27.8%",
+        }
         mortality = mortality_map.get(score, ">25%")
 
         if score <= 1:
@@ -1153,7 +1214,10 @@ class MedicalCalculators:
             interpretation=interpretation,
             recommendations=recommendations,
             components=components,
-            references=["Lim WS, et al. Thorax 2003;58:377-382", "BTS Guidelines for CAP 2009"],
+            references=[
+                "Lim WS, et al. Thorax 2003;58:377-382",
+                "BTS Guidelines for CAP 2009",
+            ],
         )
 
     @staticmethod
@@ -1332,7 +1396,10 @@ class MedicalCalculators:
             interpretation=interpretation,
             recommendations=recommendations,
             components=components,
-            references=["Royal College of Physicians. NEWS2. 2017", "NHS England NEWS2 Implementation Guidance"],
+            references=[
+                "Royal College of Physicians. NEWS2. 2017",
+                "NHS England NEWS2 Implementation Guidance",
+            ],
         )
 
     # =========================================================================
@@ -1452,7 +1519,10 @@ class MedicalCalculators:
 
     @staticmethod
     def anion_gap(
-        sodium: float, chloride: float, bicarbonate: float, albumin: Optional[float] = None
+        sodium: float,
+        chloride: float,
+        bicarbonate: float,
+        albumin: Optional[float] = None,
     ) -> CalculatorResult:
         """
         Serum Anion Gap (with optional albumin correction).
@@ -1469,7 +1539,12 @@ class MedicalCalculators:
         ag = sodium - (chloride + bicarbonate)
         ag = round(ag, 1)
 
-        components = {"sodium": sodium, "chloride": chloride, "bicarbonate": bicarbonate, "anion_gap_uncorrected": ag}
+        components = {
+            "sodium": sodium,
+            "chloride": chloride,
+            "bicarbonate": bicarbonate,
+            "anion_gap_uncorrected": ag,
+        }
 
         # Albumin correction (AG increases ~2.5 for each 1 g/dL decrease in albumin)
         corrected_ag = None
@@ -1488,7 +1563,10 @@ class MedicalCalculators:
             interpretation = f"Anion Gap {ag}: Normal range (3-12 mEq/L)."
             if corrected_ag:
                 interpretation += f" Albumin-corrected AG: {corrected_ag}."
-            recommendations = ["Normal anion gap", "If acidosis present, consider non-gap acidosis (hyperchloremic)"]
+            recommendations = [
+                "Normal anion gap",
+                "If acidosis present, consider non-gap acidosis (hyperchloremic)",
+            ]
         else:
             risk_level = RiskLevel.HIGH
             interpretation = f"Anion Gap {ag}: Elevated (>12 mEq/L)."
@@ -1561,14 +1639,25 @@ class MedicalCalculators:
             risk_level=risk_level,
             interpretation=interpretation,
             recommendations=recommendations,
-            components={"measured_calcium": calcium, "albumin": albumin, "status": status},
+            components={
+                "measured_calcium": calcium,
+                "albumin": albumin,
+                "status": status,
+            },
             references=["Payne RB, et al. Br Med J 1973;4:643-646"],
-            warnings=["Ionized calcium is more accurate if available", "Correction less reliable in critical illness"],
+            warnings=[
+                "Ionized calcium is more accurate if available",
+                "Correction less reliable in critical illness",
+            ],
         )
 
     @staticmethod
     def aa_gradient(
-        pao2: float, paco2: float, fio2: float, age: int, atmospheric_pressure: float = 760
+        pao2: float,
+        paco2: float,
+        fio2: float,
+        age: int,
+        atmospheric_pressure: float = 760,
     ) -> CalculatorResult:
         """
         Alveolar-Arterial (A-a) Oxygen Gradient.
@@ -1616,7 +1705,10 @@ class MedicalCalculators:
         if aa_grad <= expected + 5:
             risk_level = RiskLevel.LOW
             interpretation = f"A-a gradient {aa_grad} mmHg: Normal for age " f"(expected ≤{expected + 5})."
-            recommendations = ["Normal gas exchange", "If hypoxemic, consider hypoventilation or low FiO2"]
+            recommendations = [
+                "Normal gas exchange",
+                "If hypoxemic, consider hypoventilation or low FiO2",
+            ]
         else:
             risk_level = RiskLevel.HIGH
             interpretation = f"A-a gradient {aa_grad} mmHg: Elevated " f"(expected ≤{expected + 5})."
@@ -1677,7 +1769,10 @@ class MedicalCalculators:
             ],
             components={"height_cm": height, "sex": sex.value},
             references=["Devine BJ. Drug Intell Clin Pharm 1974;8:650-655"],
-            warnings=["Not validated for heights <5 feet (152 cm)", "May give negative values for very short stature"],
+            warnings=[
+                "Not validated for heights <5 feet (152 cm)",
+                "May give negative values for very short stature",
+            ],
         )
 
     @staticmethod

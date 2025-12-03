@@ -136,8 +136,7 @@ export interface ConversationSessionActions {
 }
 
 export interface ConversationSessionContextValue
-  extends ConversationSessionState,
-    ConversationSessionActions {
+  extends ConversationSessionState, ConversationSessionActions {
   // Voice metrics (for observability)
   voiceMetrics: VoiceMetrics | null;
   voiceTranscript: string;

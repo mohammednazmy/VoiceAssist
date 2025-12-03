@@ -8,7 +8,7 @@
  */
 
 import { create } from "zustand";
-import type { ChatMessage, Citation } from "../types";
+import type { ChatMessage } from "../types";
 
 // ============================================================================
 // Types

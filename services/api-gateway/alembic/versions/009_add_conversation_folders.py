@@ -52,9 +52,7 @@ def upgrade():
     )
 
     # Create indexes
-    op.create_index(
-        "idx_conversation_folders_user_id", "conversation_folders", ["user_id"]
-    )
+    op.create_index("idx_conversation_folders_user_id", "conversation_folders", ["user_id"])
     op.create_index(
         "idx_conversation_folders_parent_folder_id",
         "conversation_folders",
@@ -90,8 +88,6 @@ def downgrade():
         "conversation_folders",
         type_="unique",
     )
-    op.drop_index(
-        "idx_conversation_folders_parent_folder_id", table_name="conversation_folders"
-    )
+    op.drop_index("idx_conversation_folders_parent_folder_id", table_name="conversation_folders")
     op.drop_index("idx_conversation_folders_user_id", table_name="conversation_folders")
     op.drop_table("conversation_folders")

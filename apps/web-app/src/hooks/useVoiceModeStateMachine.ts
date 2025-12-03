@@ -103,8 +103,7 @@ function mapToVoiceState(
 export function useVoiceModeStateMachine(
   options: VoiceModeStateMachineOptions,
 ): VoiceModeStateMachineReturn {
-  const { conversationId, clinicalContextId, onTranscriptComplete, onError } =
-    options;
+  const { conversationId, onTranscriptComplete, onError } = options;
 
   // Store state
   const {
@@ -121,7 +120,7 @@ export function useVoiceModeStateMachine(
   } = useUnifiedConversationStore();
 
   // Voice settings
-  const { voice, language, vadSensitivity } = useVoiceSettingsStore();
+  const { voice, language } = useVoiceSettingsStore();
 
   // Track responding state locally (when AI is speaking back)
   const isRespondingRef = useRef(false);
@@ -185,9 +184,8 @@ export function useVoiceModeStateMachine(
 
   // Use the Thinker/Talker voice session hook
   const {
-    status,
     error,
-    transcript,
+    transcript: _transcript,
     partialTranscript,
     isSpeaking,
     metrics,

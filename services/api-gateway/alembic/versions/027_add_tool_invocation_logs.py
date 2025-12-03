@@ -24,7 +24,12 @@ def upgrade():
     # Create tool_invocation_logs table
     op.create_table(
         "tool_invocation_logs",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text("gen_random_uuid()"),
+        ),
         sa.Column("user_id", sa.String(255), nullable=False),
         sa.Column("session_id", sa.String(255), nullable=True),
         # Tool info
@@ -46,9 +51,19 @@ def upgrade():
         # Request context
         sa.Column("trace_id", sa.String(100), nullable=True),  # For distributed tracing
         # Timestamps
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
         # Partitioning helper (generated column for date-based queries)
-        sa.Column("created_date", sa.Date, nullable=False, server_default=sa.text("CURRENT_DATE")),
+        sa.Column(
+            "created_date",
+            sa.Date,
+            nullable=False,
+            server_default=sa.text("CURRENT_DATE"),
+        ),
     )
 
     # Create indexes for common queries
@@ -62,7 +77,11 @@ def upgrade():
     op.create_index("ix_tool_logs_trace_id", "tool_invocation_logs", ["trace_id"])
 
     # Composite index for analytics queries
-    op.create_index("ix_tool_logs_analytics", "tool_invocation_logs", ["created_date", "tool_name", "status"])
+    op.create_index(
+        "ix_tool_logs_analytics",
+        "tool_invocation_logs",
+        ["created_date", "tool_name", "status"],
+    )
 
 
 def downgrade():

@@ -9,7 +9,6 @@ import React, {
   useState,
   useCallback,
   useRef,
-  useEffect,
   createContext,
   useContext,
 } from "react";

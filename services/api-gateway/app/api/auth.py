@@ -219,7 +219,10 @@ async def refresh_token(
     # Verify user still exists and is active (optimized with limit)
     user = db.query(User).filter(User.id == user_id).limit(1).first()
     if not user or not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or inactive",
+        )
 
     if token_role and token_role != user.admin_role:
         raise HTTPException(
@@ -300,7 +303,10 @@ async def logout(
         request=request,
     )
 
-    return {"message": "Successfully logged out", "detail": "Please discard your access and refresh tokens"}
+    return {
+        "message": "Successfully logged out",
+        "detail": "Please discard your access and refresh tokens",
+    }
 
 
 @router.get("/me", response_model=UserResponse)

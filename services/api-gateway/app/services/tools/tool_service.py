@@ -151,7 +151,13 @@ class ToolService:
                         },
                         "calendar_provider": {
                             "type": "string",
-                            "enum": ["google", "microsoft", "apple", "nextcloud", "all"],
+                            "enum": [
+                                "google",
+                                "microsoft",
+                                "apple",
+                                "nextcloud",
+                                "all",
+                            ],
                             "description": "Which calendar to query (or 'all' for all connected calendars)",
                         },
                         "max_results": {
@@ -294,7 +300,13 @@ class ToolService:
                             "type": "array",
                             "items": {
                                 "type": "string",
-                                "enum": ["review", "clinical trial", "meta-analysis", "case report", "guideline"],
+                                "enum": [
+                                    "review",
+                                    "clinical trial",
+                                    "meta-analysis",
+                                    "case report",
+                                    "guideline",
+                                ],
                             },
                             "description": "Filter by article type",
                         },

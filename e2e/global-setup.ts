@@ -111,7 +111,54 @@ async function globalSetup() {
     process.env.LIVE_BACKEND === "1";
 
   if (!isLiveTest) {
-    console.log("[E2E Setup] Mock mode - skipping token refresh");
+    console.log("[E2E Setup] Mock mode - creating placeholder auth state");
+
+    // Create a mock auth state for non-live tests
+    const mockAuthState = {
+      state: {
+        user: {
+          id: "mock-user-id",
+          email: E2E_USER.email,
+          name: E2E_USER.fullName,
+          role: "user",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        tokens: {
+          accessToken: "mock-access-token",
+          refreshToken: "mock-refresh-token",
+          expiresIn: 3600,
+        },
+        isAuthenticated: true,
+        _hasHydrated: true,
+      },
+      version: 0,
+    };
+
+    const mockStorageState = {
+      cookies: [],
+      origins: [
+        {
+          origin: "http://localhost:5173",
+          localStorage: [
+            {
+              name: "voiceassist-auth",
+              value: JSON.stringify(mockAuthState),
+            },
+          ],
+        },
+      ],
+    };
+
+    // Ensure .auth directory exists
+    const authDir = path.dirname(AUTH_FILE);
+    if (!fs.existsSync(authDir)) {
+      fs.mkdirSync(authDir, { recursive: true });
+    }
+
+    // Write the mock storage state file
+    fs.writeFileSync(AUTH_FILE, JSON.stringify(mockStorageState, null, 2));
+    console.log(`[E2E Setup] Wrote mock auth state to ${AUTH_FILE}`);
     return;
   }
 

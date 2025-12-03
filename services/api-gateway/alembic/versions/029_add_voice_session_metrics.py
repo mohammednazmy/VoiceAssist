@@ -24,7 +24,12 @@ def upgrade():
     # Create voice_session_metrics table
     op.create_table(
         "voice_session_metrics",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id",
+            UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text("gen_random_uuid()"),
+        ),
         sa.Column("session_id", sa.String(255), nullable=False, index=True),
         sa.Column("user_id", UUID(as_uuid=True), nullable=False, index=True),
         sa.Column("started_at", sa.DateTime(timezone=True), nullable=False),
@@ -60,17 +65,35 @@ def upgrade():
         sa.Column("client_info", sa.JSON, nullable=True),  # User agent, platform, etc.
         sa.Column("session_metadata", sa.JSON, nullable=True),  # Additional session data (avoiding reserved 'metadata')
         # Timestamps
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
     )
 
     # Indexes for common queries
-    op.create_index("ix_voice_session_metrics_user_started", "voice_session_metrics", ["user_id", "started_at"])
+    op.create_index(
+        "ix_voice_session_metrics_user_started",
+        "voice_session_metrics",
+        ["user_id", "started_at"],
+    )
     op.create_index("ix_voice_session_metrics_started_at", "voice_session_metrics", ["started_at"])
-    op.create_index("ix_voice_session_metrics_tts_provider", "voice_session_metrics", ["tts_provider", "started_at"])
+    op.create_index(
+        "ix_voice_session_metrics_tts_provider",
+        "voice_session_metrics",
+        ["tts_provider", "started_at"],
+    )
 
     # Add foreign key constraint to users table
     op.create_foreign_key(
-        "fk_voice_session_metrics_user_id", "voice_session_metrics", "users", ["user_id"], ["id"], ondelete="CASCADE"
+        "fk_voice_session_metrics_user_id",
+        "voice_session_metrics",
+        "users",
+        ["user_id"],
+        ["id"],
+        ondelete="CASCADE",
     )
 
 

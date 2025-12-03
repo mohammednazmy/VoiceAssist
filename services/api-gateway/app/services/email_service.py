@@ -978,7 +978,6 @@ _email_service: Optional[EmailService] = None
 
 def get_email_service() -> Optional[EmailService]:
     """Get email service singleton."""
-    global _email_service
     return _email_service
 
 
@@ -1064,7 +1063,7 @@ async def send_invitation_email(
     expires_in_days: int = 7,
 ) -> bool:
     """Send an invitation email to a new user."""
-    subject = f"You've been invited to join Asimo Admin Panel"
+    subject = "You've been invited to join Asimo Admin Panel"
 
     body_html = f"""
 <!DOCTYPE html>

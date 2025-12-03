@@ -11,10 +11,7 @@
  */
 
 import { useMemo, useCallback } from "react";
-import {
-  useThinkerTalkerVoiceMode,
-  type TTVoiceModeOptions,
-} from "./useThinkerTalkerVoiceMode";
+import { useThinkerTalkerVoiceMode } from "./useThinkerTalkerVoiceMode";
 import type {
   TTConnectionStatus,
   TTVoiceMetrics,

@@ -10,7 +10,6 @@ import { useAuth } from "./useAuth";
 import {
   useVoiceSettingsStore,
   type BackendVoicePreferences,
-  type TTSProvider,
 } from "../stores/voiceSettingsStore";
 
 // Debounce delay for saving preferences (ms)

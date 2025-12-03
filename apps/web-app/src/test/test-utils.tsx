@@ -23,8 +23,10 @@ interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   route?: string;
 }
 
-interface CustomRenderHookOptions<Props>
-  extends Omit<RenderHookOptions<Props>, "wrapper"> {
+interface CustomRenderHookOptions<Props> extends Omit<
+  RenderHookOptions<Props>,
+  "wrapper"
+> {
   initialEntries?: string[];
   withToast?: boolean;
 }

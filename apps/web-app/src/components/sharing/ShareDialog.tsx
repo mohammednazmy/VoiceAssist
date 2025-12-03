@@ -24,7 +24,7 @@ export function ShareDialog({
 }: ShareDialogProps) {
   const { apiClient } = useAuth();
   const [activeLinks, setActiveLinks] = useState<ShareLink[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [_isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

@@ -3,11 +3,13 @@ Token revocation service using Redis for blacklisting JWT tokens.
 
 Allows immediate invalidation of tokens (e.g., on logout or security breach).
 """
-from typing import Optional
+
+import logging
 from datetime import timedelta
+from typing import Optional
+
 import redis.asyncio as redis
 from app.core.config import settings
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +28,7 @@ class TokenRevocationService:
     async def connect(self):
         """Connect to Redis (call during app startup)."""
         try:
-            self.redis_client = await redis.from_url(
-                settings.REDIS_URL,
-                encoding="utf-8",
-                decode_responses=True
-            )
+            self.redis_client = await redis.from_url(settings.REDIS_URL, encoding="utf-8", decode_responses=True)
             # Test connection
             await self.redis_client.ping()
             logger.info("Token revocation service connected to Redis")
@@ -63,11 +61,7 @@ class TokenRevocationService:
         try:
             # Store token in Redis with TTL
             key = f"revoked_token:{token}"
-            await self.redis_client.setex(
-                name=key,
-                time=timedelta(seconds=ttl_seconds),
-                value="1"
-            )
+            await self.redis_client.setex(name=key, time=timedelta(seconds=ttl_seconds), value="1")
             logger.info(f"Token revoked (TTL: {ttl_seconds}s)")
             return True
 
@@ -127,11 +121,7 @@ class TokenRevocationService:
         try:
             # Store user-level revocation timestamp
             key = f"revoked_user:{user_id}"
-            await self.redis_client.setex(
-                name=key,
-                time=timedelta(seconds=ttl_seconds),
-                value="1"
-            )
+            await self.redis_client.setex(name=key, time=timedelta(seconds=ttl_seconds), value="1")
             logger.info(f"All tokens revoked for user {user_id}")
             return True
 
@@ -176,11 +166,7 @@ class TokenRevocationService:
             cursor = 0
             count = 0
             while True:
-                cursor, keys = await self.redis_client.scan(
-                    cursor=cursor,
-                    match="revoked_token:*",
-                    count=100
-                )
+                cursor, keys = await self.redis_client.scan(cursor=cursor, match="revoked_token:*", count=100)
                 count += len(keys)
                 if cursor == 0:
                     break

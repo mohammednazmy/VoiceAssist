@@ -410,9 +410,30 @@ class TestMultiHopReasoner:
 
         # Multi-step chain
         chain2 = [
-            ReasoningStep(step_number=1, question="Q1", retrieved_docs=[], answer="A1", confidence=0.7, sources=[]),
-            ReasoningStep(step_number=2, question="Q2", retrieved_docs=[], answer="A2", confidence=0.8, sources=[]),
-            ReasoningStep(step_number=3, question="Q3", retrieved_docs=[], answer="A3", confidence=0.9, sources=[]),
+            ReasoningStep(
+                step_number=1,
+                question="Q1",
+                retrieved_docs=[],
+                answer="A1",
+                confidence=0.7,
+                sources=[],
+            ),
+            ReasoningStep(
+                step_number=2,
+                question="Q2",
+                retrieved_docs=[],
+                answer="A2",
+                confidence=0.8,
+                sources=[],
+            ),
+            ReasoningStep(
+                step_number=3,
+                question="Q3",
+                retrieved_docs=[],
+                answer="A3",
+                confidence=0.9,
+                sources=[],
+            ),
         ]
         conf2 = reasoner._calculate_confidence(chain2)
         assert conf2 > conf  # Should be higher with more steps

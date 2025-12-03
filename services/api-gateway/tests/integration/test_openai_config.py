@@ -31,7 +31,11 @@ pytestmark = [pytest.mark.integration]
 
 # Check if live tests should run
 LIVE_OPENAI_TESTS = os.getenv("LIVE_OPENAI_TESTS", "").lower() in ("1", "true", "yes")
-LIVE_REALTIME_TESTS = os.getenv("LIVE_REALTIME_TESTS", "").lower() in ("1", "true", "yes")
+LIVE_REALTIME_TESTS = os.getenv("LIVE_REALTIME_TESTS", "").lower() in (
+    "1",
+    "true",
+    "yes",
+)
 
 
 class TestOpenAIConfiguration:
@@ -166,9 +170,10 @@ class TestRealtimeVoiceServiceConfiguration:
     @pytest.mark.asyncio
     async def test_realtime_service_generates_session_config_mocked(self):
         """Test session config generation with mocked OpenAI call (CI-safe)."""
+        from unittest.mock import AsyncMock, patch
+
         from app.core.config import settings
         from app.services.realtime_voice_service import RealtimeVoiceService
-        from unittest.mock import AsyncMock, patch
 
         service = RealtimeVoiceService()
 
@@ -182,11 +187,11 @@ class TestRealtimeVoiceServiceConfiguration:
         }
 
         with patch.object(
-            service, "create_openai_ephemeral_session", new=AsyncMock(return_value=mock_openai_session)
+            service,
+            "create_openai_ephemeral_session",
+            new=AsyncMock(return_value=mock_openai_session),
         ):
-            config = await service.generate_session_config(
-                user_id="test-user-123", conversation_id="conv-456"
-            )
+            config = await service.generate_session_config(user_id="test-user-123", conversation_id="conv-456")
 
         assert config["url"] == settings.REALTIME_BASE_URL
         assert config["model"] == settings.REALTIME_MODEL
@@ -250,8 +255,9 @@ class TestRealtimeVoiceServiceConfiguration:
 
         NOTE: Tests legacy HMAC functionality kept for future proxy use.
         """
-        from app.services.realtime_voice_service import RealtimeVoiceService
         import time
+
+        from app.services.realtime_voice_service import RealtimeVoiceService
 
         service = RealtimeVoiceService()
 
@@ -259,9 +265,7 @@ class TestRealtimeVoiceServiceConfiguration:
             pytest.skip("Realtime service not enabled or key not set")
 
         # Generate valid token
-        token = service.generate_ephemeral_token(
-            "user-123", "session-456", int(time.time()) + 300
-        )
+        token = service.generate_ephemeral_token("user-123", "session-456", int(time.time()) + 300)
 
         # Tamper with token by modifying payload
         parts = token.split(".")
@@ -277,8 +281,9 @@ class TestRealtimeVoiceServiceConfiguration:
 
         NOTE: Tests legacy HMAC functionality kept for future proxy use.
         """
-        from app.services.realtime_voice_service import RealtimeVoiceService
         import time
+
+        from app.services.realtime_voice_service import RealtimeVoiceService
 
         service = RealtimeVoiceService()
 
@@ -287,9 +292,7 @@ class TestRealtimeVoiceServiceConfiguration:
 
         # Generate token that's already expired
         expires_at = int(time.time()) - 10  # 10 seconds ago
-        token = service.generate_ephemeral_token(
-            "user-123", "session-456", expires_at
-        )
+        token = service.generate_ephemeral_token("user-123", "session-456", expires_at)
 
         # Validation should fail due to expiry
         with pytest.raises(ValueError, match="expired"):
@@ -417,9 +420,7 @@ class TestOpenAILiveIntegration:
         assert service.is_enabled() is True
 
         # Should generate valid session config with real OpenAI ephemeral token
-        config = await service.generate_session_config(
-            user_id="live-test-user", conversation_id=None
-        )
+        config = await service.generate_session_config(user_id="live-test-user", conversation_id=None)
 
         assert config["url"].startswith("wss://")
         assert config["model"].startswith("gpt-")

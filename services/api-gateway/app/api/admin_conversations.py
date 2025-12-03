@@ -211,9 +211,9 @@ async def list_admin_conversations(
                     message_count=message_count,
                     branch_count=branch_count,
                     has_attachments=session.id in sessions_with_attachments,
-                    created_at=session.created_at.isoformat() + "Z" if session.created_at else "",
-                    updated_at=session.updated_at.isoformat() + "Z" if session.updated_at else "",
-                    last_message_at=last_message_at.isoformat() + "Z" if last_message_at else None,
+                    created_at=(session.created_at.isoformat() + "Z" if session.created_at else ""),
+                    updated_at=(session.updated_at.isoformat() + "Z" if session.updated_at else ""),
+                    last_message_at=(last_message_at.isoformat() + "Z" if last_message_at else None),
                 ).model_dump()
             )
 
@@ -321,7 +321,7 @@ async def get_admin_conversation(
                 role=msg.role,
                 content=msg.content,
                 branch_id=msg.branch_id,
-                parent_message_id=str(msg.parent_message_id) if msg.parent_message_id else None,
+                parent_message_id=(str(msg.parent_message_id) if msg.parent_message_id else None),
                 tool_calls=msg.tool_calls,
                 tool_results=msg.tool_results,
                 contains_phi=msg.contains_phi,
@@ -437,7 +437,7 @@ async def get_admin_conversation_messages(
                 role=msg.role,
                 content=msg.content,
                 branch_id=msg.branch_id,
-                parent_message_id=str(msg.parent_message_id) if msg.parent_message_id else None,
+                parent_message_id=(str(msg.parent_message_id) if msg.parent_message_id else None),
                 tool_calls=msg.tool_calls,
                 tool_results=msg.tool_results,
                 contains_phi=msg.contains_phi,
@@ -550,8 +550,8 @@ def _export_json(session, messages, user_email, user_name, include_metadata):
             "title": session.title or "Untitled Conversation",
             "user_email": user_email,
             "user_name": user_name,
-            "created_at": session.created_at.isoformat() + "Z" if session.created_at else None,
-            "updated_at": session.updated_at.isoformat() + "Z" if session.updated_at else None,
+            "created_at": (session.created_at.isoformat() + "Z" if session.created_at else None),
+            "updated_at": (session.updated_at.isoformat() + "Z" if session.updated_at else None),
         },
         "messages": [],
         "exported_at": datetime.now(timezone.utc).isoformat() + "Z",
@@ -592,9 +592,12 @@ def _export_markdown(session, messages, user_email, user_name, include_metadata)
     ]
 
     for msg in messages:
-        role_label = {"user": "User", "assistant": "Assistant", "system": "System", "tool": "Tool"}.get(
-            msg.role, msg.role.title()
-        )
+        role_label = {
+            "user": "User",
+            "assistant": "Assistant",
+            "system": "System",
+            "tool": "Tool",
+        }.get(msg.role, msg.role.title())
         lines.append(f"### {role_label}")
         if include_metadata:
             lines.append(f"*{msg.created_at.strftime('%Y-%m-%d %H:%M:%S UTC') if msg.created_at else 'N/A'}*")
@@ -710,7 +713,7 @@ async def export_user_conversations(
         conv_data = {
             "id": str(session.id),
             "title": session.title or "Untitled Conversation",
-            "created_at": session.created_at.isoformat() + "Z" if session.created_at else None,
+            "created_at": (session.created_at.isoformat() + "Z" if session.created_at else None),
             "messages": [],
         }
 
@@ -719,7 +722,7 @@ async def export_user_conversations(
                 {
                     "role": msg.role,
                     "content": msg.content,
-                    "created_at": msg.created_at.isoformat() + "Z" if msg.created_at else None,
+                    "created_at": (msg.created_at.isoformat() + "Z" if msg.created_at else None),
                 }
             )
 

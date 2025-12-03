@@ -27,7 +27,8 @@ from app.services.nextcloud_file_indexer import NextcloudFile, NextcloudFileInde
 # Check if E2E tests should run (requires real Nextcloud)
 E2E_ENABLED = os.getenv("PHASE6_E2E_TESTS", "false").lower() == "true"
 skip_e2e = pytest.mark.skipif(
-    not E2E_ENABLED, reason="E2E tests require PHASE6_E2E_TESTS=true and real Nextcloud instance"
+    not E2E_ENABLED,
+    reason="E2E tests require PHASE6_E2E_TESTS=true and real Nextcloud instance",
 )
 
 
@@ -58,7 +59,9 @@ class TestCalDAVService:
     def caldav_service(self, mock_caldav_client):
         """Create CalDAV service instance with mocked client."""
         service = CalDAVService(
-            caldav_url="https://nextcloud.local/remote.php/dav", username="testuser", password="testpass"
+            caldav_url="https://nextcloud.local/remote.php/dav",
+            username="testuser",
+            password="testpass",
         )
         return service
 
@@ -263,7 +266,11 @@ class TestNextcloudFileIndexer:
                             "modified": "Wed, 20 Jan 2025 10:30:00 GMT",
                         },
                     ]
-                return ["/Documents/", "/Documents/guideline.pdf", "/Documents/notes.txt"]
+                return [
+                    "/Documents/",
+                    "/Documents/guideline.pdf",
+                    "/Documents/notes.txt",
+                ]
 
             client_instance.list = mock_list
 
@@ -272,7 +279,7 @@ class TestNextcloudFileIndexer:
                 return {
                     "size": "125000" if path.endswith(".pdf") else "5000",
                     "modified": "Wed, 20 Jan 2025 10:30:00 GMT",
-                    "content_type": "application/pdf" if path.endswith(".pdf") else "text/plain",
+                    "content_type": ("application/pdf" if path.endswith(".pdf") else "text/plain"),
                 }
 
             client_instance.info.side_effect = mock_info
@@ -295,10 +302,16 @@ class TestNextcloudFileIndexer:
             from app.services.kb_indexer import IndexingResult
 
             indexer_instance.index_pdf_document.return_value = IndexingResult(
-                success=True, document_id="test-doc-1", chunks_indexed=5, error_message=None  # Success case - no error
+                success=True,
+                document_id="test-doc-1",
+                chunks_indexed=5,
+                error_message=None,  # Success case - no error
             )
             indexer_instance.index_document.return_value = IndexingResult(
-                success=True, document_id="test-doc-2", chunks_indexed=2, error_message=None  # Success case - no error
+                success=True,
+                document_id="test-doc-2",
+                chunks_indexed=2,
+                error_message=None,  # Success case - no error
             )
 
             yield indexer_instance
@@ -335,7 +348,11 @@ class TestNextcloudFileIndexer:
                 content_type="application/pdf",
             ),
             NextcloudFile(
-                path="/docs/file.txt", name="file.txt", size=500, modified=datetime.utcnow(), content_type="text/plain"
+                path="/docs/file.txt",
+                name="file.txt",
+                size=500,
+                modified=datetime.utcnow(),
+                content_type="text/plain",
             ),
             NextcloudFile(
                 path="/docs/image.jpg",
@@ -540,7 +557,10 @@ class TestEmailService:
     def test_send_email(self, email_service, mock_smtp_client):
         """Test sending an email."""
         result = email_service.send_email(
-            to_addresses=["recipient@example.com"], subject="Test Email", body="This is a test email", is_html=False
+            to_addresses=["recipient@example.com"],
+            subject="Test Email",
+            body="This is a test email",
+            is_html=False,
         )
 
         assert result is True

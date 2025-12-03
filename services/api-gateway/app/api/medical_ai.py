@@ -351,7 +351,11 @@ async def extract_medical_entities(
         if request.include_ontology_mappings and result.entities:
             result.entities = await service.normalize_entities(
                 result.entities,
-                ontologies=[OntologyType.ICD10, OntologyType.RXNORM, OntologyType.SNOMED],
+                ontologies=[
+                    OntologyType.ICD10,
+                    OntologyType.RXNORM,
+                    OntologyType.SNOMED,
+                ],
             )
 
         # Convert to response format
@@ -620,6 +624,6 @@ async def check_health():
         health["reasoning_service"] = "unavailable"
 
     return {
-        "status": "healthy" if all(v == "available" for v in health.values()) else "degraded",
+        "status": ("healthy" if all(v == "available" for v in health.values()) else "degraded"),
         "services": health,
     }

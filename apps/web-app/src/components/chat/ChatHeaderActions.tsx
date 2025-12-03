@@ -55,7 +55,7 @@ function DownloadIcon({ className }: { className?: string }) {
 // ============================================================================
 
 export function ChatHeaderActions({
-  conversationId,
+  conversationId: _conversationId,
   onExport,
   onOpenExportDialog,
 }: ChatHeaderActionsProps) {

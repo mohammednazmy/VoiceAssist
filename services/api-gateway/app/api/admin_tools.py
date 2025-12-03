@@ -34,7 +34,15 @@ REDIS_TOOLS_LOGS_KEY = "voiceassist:tools:logs"
 REDIS_TOOLS_ANALYTICS_KEY = "voiceassist:tools:analytics"
 
 # Tool categories
-TOOL_CATEGORIES = ["calendar", "file", "medical", "calculation", "search", "email", "integration"]
+TOOL_CATEGORIES = [
+    "calendar",
+    "file",
+    "medical",
+    "calculation",
+    "search",
+    "email",
+    "integration",
+]
 
 
 # ============================================================================
@@ -447,7 +455,17 @@ def get_tool_logs(
 
 def _redact_phi_from_args(args: Dict[str, Any]) -> Dict[str, Any]:
     """Redact potential PHI from tool arguments."""
-    phi_keys = ["patient", "name", "email", "phone", "ssn", "dob", "address", "medical_record", "mrn"]
+    phi_keys = [
+        "patient",
+        "name",
+        "email",
+        "phone",
+        "ssn",
+        "dob",
+        "address",
+        "medical_record",
+        "mrn",
+    ]
     redacted = {}
     for key, value in args.items():
         if any(phi_key in key.lower() for phi_key in phi_keys):
@@ -501,7 +519,14 @@ def log_tool_invocation(
         redis_client.ltrim(REDIS_TOOLS_LOGS_KEY, 0, 9999)
 
         # Update analytics counters
-        _update_tool_analytics(tool_name, status, duration_ms, phi_detected, confirmation_required, error_message)
+        _update_tool_analytics(
+            tool_name,
+            status,
+            duration_ms,
+            phi_detected,
+            confirmation_required,
+            error_message,
+        )
 
     except Exception as e:
         logger.warning(f"Failed to log tool invocation: {e}")
@@ -680,7 +705,7 @@ async def get_tools_analytics(
             "total_success": total_success,
             "total_failures": total_failures,
             "total_phi_detected": total_phi,
-            "overall_success_rate": total_success / total_calls if total_calls > 0 else 0.0,
+            "overall_success_rate": (total_success / total_calls if total_calls > 0 else 0.0),
         },
         "by_category": category_stats,
         "timestamp": datetime.now(timezone.utc).isoformat() + "Z",

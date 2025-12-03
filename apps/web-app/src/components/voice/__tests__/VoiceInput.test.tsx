@@ -29,7 +29,7 @@ class MockMediaRecorder {
   ondataavailable: ((event: { data: Blob }) => void) | null = null;
   onstop: (() => void) | null = null;
 
-  constructor(stream: MediaStream) {
+  constructor(_stream: MediaStream) {
     // Store stream reference if needed
   }
 

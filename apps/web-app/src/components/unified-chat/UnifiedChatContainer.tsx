@@ -57,7 +57,7 @@ import type {
   WebSocketErrorCode,
 } from "@voiceassist/types";
 import { extractErrorMessage } from "@voiceassist/types";
-import { Loader2 } from "lucide-react";
+// Loader2 removed - using ChatSkeleton instead
 import { ChatSkeleton } from "./UnifiedChatSkeleton";
 import { ErrorDisplay, type ChatErrorType } from "./UnifiedChatError";
 
@@ -135,7 +135,7 @@ export function UnifiedChatContainer({
   );
 
   // Voice settings
-  const voiceModeType = useVoiceSettingsStore((state) => state.voiceModeType);
+  const _voiceModeType = useVoiceSettingsStore((state) => state.voiceModeType);
 
   // Memoize error handler to prevent unnecessary hook re-initialization
   const handleConversationsError = useCallback(
@@ -180,11 +180,11 @@ export function UnifiedChatContainer({
     connectionStatus,
     isTyping: chatIsTyping,
     sendMessage: sendChatMessage,
-    editMessage,
-    regenerateMessage,
-    deleteMessage,
+    editMessage: _editMessage,
+    regenerateMessage: _regenerateMessage,
+    deleteMessage: _deleteMessage,
     reconnect: reconnectChat,
-    addMessage: addChatMessage,
+    addMessage: _addChatMessage,
   } = useChatSession({
     conversationId: activeConversationId || undefined,
     initialMessages,
@@ -272,7 +272,6 @@ export function UnifiedChatContainer({
         }
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatMessages, addMessage, getContentHash]);
 
   // Sync typing state
@@ -512,7 +511,7 @@ export function UnifiedChatContainer({
       if (!activeConversationId) return;
 
       try {
-        const updated = await updateConversation(activeConversationId, {
+        await updateConversation(activeConversationId, {
           title: newTitle,
         });
         setLocalConversation((prev) =>
@@ -598,7 +597,7 @@ export function UnifiedChatContainer({
 
   // Handle send message
   const handleSendMessage = useCallback(
-    (content: string, source: MessageSource) => {
+    (content: string, _source: MessageSource) => {
       if (!content.trim()) return;
 
       // Auto-title conversation if this is the first message

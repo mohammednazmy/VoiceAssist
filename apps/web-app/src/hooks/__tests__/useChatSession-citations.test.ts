@@ -347,9 +347,7 @@ describe("useChatSession - Phase 8 Citation Streaming", () => {
   describe("Phase 8: onMessage callback with citations", () => {
     it("should call onMessage callback with complete citation data", async () => {
       const onMessage = vi.fn();
-      const { result } = renderHook(() =>
-        useChatSession({ conversationId: "conv-1", onMessage }),
-      );
+      renderHook(() => useChatSession({ conversationId: "conv-1", onMessage }));
 
       await act(async () => {
         await flushMicrotasks();

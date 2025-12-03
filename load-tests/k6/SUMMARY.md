@@ -9,6 +9,7 @@ A comprehensive k6 load testing suite for VoiceAssist Phase 10, designed to vali
 ### Core Files (11 total)
 
 #### Configuration & Utilities (2 files)
+
 1. **config.js** (5.9 KB)
    - Shared configuration for all tests
    - Base URLs, endpoints, test data
@@ -120,42 +121,49 @@ A comprehensive k6 load testing suite for VoiceAssist Phase 10, designed to vali
 ## Test Types Explained
 
 ### 1. Smoke Test (Quick Validation)
+
 - **When**: After every deployment
 - **Goal**: Verify all endpoints work
 - **Pass Criteria**: All responses < 500ms, no errors
 - **Action on Fail**: Don't proceed to other tests
 
 ### 2. Load Test (Normal Operations)
+
 - **When**: Daily or weekly
 - **Goal**: Measure performance under expected load
 - **Pass Criteria**: P95 < 800ms, errors < 5%
 - **Action on Fail**: Investigate performance issues
 
 ### 3. Stress Test (Breaking Point)
+
 - **When**: Weekly or before releases
 - **Goal**: Find maximum capacity
 - **Pass Criteria**: System handles 500 VUs without breaking
 - **Action on Fail**: Scale resources or optimize
 
 ### 4. Spike Test (Auto-Scaling)
+
 - **When**: Before traffic events
 - **Goal**: Validate rapid scaling
 - **Pass Criteria**: System recovers from spikes
 - **Action on Fail**: Tune auto-scaling policies
 
 ### 5. Endurance Test (Stability)
+
 - **When**: Weekly or monthly
 - **Goal**: Detect memory leaks
 - **Pass Criteria**: No performance degradation over 30 minutes
 - **Action on Fail**: Investigate memory/resource leaks
 
 ### 6. API Scenarios (User Journeys)
+
 - **When**: After feature changes
 - **Goal**: Validate complete workflows
 - **Pass Criteria**: All scenarios complete successfully
 - **Action on Fail**: Fix broken workflows
 
 ### 7. WebSocket Test (Real-Time)
+
 - **When**: After voice feature changes
 - **Goal**: Validate real-time performance
 - **Pass Criteria**: Low latency, stable connections
@@ -164,12 +172,14 @@ A comprehensive k6 load testing suite for VoiceAssist Phase 10, designed to vali
 ## Key Features
 
 ### Comprehensive Coverage
+
 - All major endpoints (health, chat, admin)
 - All load patterns (smoke, load, stress, spike, endurance)
 - All user types (new, returning, power, admin)
 - Real-time features (WebSocket)
 
 ### Realistic Testing
+
 - Authentic user behaviors
 - Clinical context simulation
 - Session management
@@ -177,6 +187,7 @@ A comprehensive k6 load testing suite for VoiceAssist Phase 10, designed to vali
 - Multiple query types
 
 ### Advanced Analysis
+
 - Custom metrics (sessions, queries, errors)
 - Performance grading (A-D scale)
 - Breaking point detection
@@ -184,6 +195,7 @@ A comprehensive k6 load testing suite for VoiceAssist Phase 10, designed to vali
 - Automated recommendations
 
 ### Production-Ready
+
 - Environment configuration
 - CI/CD integration examples
 - Docker support
@@ -192,6 +204,7 @@ A comprehensive k6 load testing suite for VoiceAssist Phase 10, designed to vali
 - Detailed logging
 
 ### Developer-Friendly
+
 - Clear documentation
 - Usage examples
 - Troubleshooting guides
@@ -201,16 +214,16 @@ A comprehensive k6 load testing suite for VoiceAssist Phase 10, designed to vali
 
 ## Performance Targets
 
-| Metric | Target | Threshold |
-|--------|--------|-----------|
-| Health check | < 100ms | < 200ms |
-| Simple query | < 500ms | < 1000ms |
-| Complex query | < 2000ms | < 5000ms |
-| Admin operations | < 300ms | < 600ms |
-| WebSocket connection | < 500ms | < 1000ms |
-| Message latency | < 50ms | < 200ms |
-| Error rate | < 0.1% | < 1% |
-| Concurrent users | 100 | 500 |
+| Metric               | Target   | Threshold |
+| -------------------- | -------- | --------- |
+| Health check         | < 100ms  | < 200ms   |
+| Simple query         | < 500ms  | < 1000ms  |
+| Complex query        | < 2000ms | < 5000ms  |
+| Admin operations     | < 300ms  | < 600ms   |
+| WebSocket connection | < 500ms  | < 1000ms  |
+| Message latency      | < 50ms   | < 200ms   |
+| Error rate           | < 0.1%   | < 1%      |
+| Concurrent users     | 100      | 500       |
 
 ## Usage Quick Reference
 
@@ -241,6 +254,7 @@ cat ../results/stress-test-summary.json | jq '.recommendations'
 ## Test Results Location
 
 All test results are saved to `../results/` directory:
+
 - `smoke-test-summary.json`
 - `load-test-summary.json` & `load-test-full.json`
 - `stress-test-summary.json` & `stress-test-full.json`
@@ -252,19 +266,24 @@ All test results are saved to `../results/` directory:
 ## Integration Points
 
 ### Monitoring (Grafana)
+
 Tests can export to InfluxDB for real-time monitoring:
+
 ```bash
 k6 run --out influxdb=http://localhost:8086/k6 02-load-test.js
 ```
 
 ### CI/CD
+
 Examples provided for:
+
 - GitHub Actions
 - GitLab CI
 - Jenkins
 - Docker Compose
 
 ### Alerting
+
 Results include grades and recommendations for automated alerting.
 
 ## Best Practices Implemented
@@ -280,19 +299,20 @@ Results include grades and recommendations for automated alerting.
 
 ## Test Schedule Recommendation
 
-| Test Type | Frequency | Duration | When |
-|-----------|-----------|----------|------|
-| Smoke | After every deploy | 1 min | Always |
-| Load | Daily | 9 min | Morning |
-| Stress | Weekly | 22 min | Off-peak |
-| Spike | Before events | 8 min | As needed |
-| Endurance | Weekly | 30 min | Weekend |
-| Scenarios | After features | 10 min | As needed |
-| WebSocket | After voice changes | 5 min | As needed |
+| Test Type | Frequency           | Duration | When      |
+| --------- | ------------------- | -------- | --------- |
+| Smoke     | After every deploy  | 1 min    | Always    |
+| Load      | Daily               | 9 min    | Morning   |
+| Stress    | Weekly              | 22 min   | Off-peak  |
+| Spike     | Before events       | 8 min    | As needed |
+| Endurance | Weekly              | 30 min   | Weekend   |
+| Scenarios | After features      | 10 min   | As needed |
+| WebSocket | After voice changes | 5 min    | As needed |
 
 ## Success Metrics
 
 The test suite is successful if:
+
 - All smoke tests pass (100%)
 - Load tests pass with P95 < 800ms
 - Stress tests identify breaking point

@@ -5,14 +5,12 @@
  * Supports automatic input detection, push-to-talk, and always-on voice modes.
  */
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
-  Keyboard,
   Mic,
   MicOff,
   Send,
   Paperclip,
-  Settings,
   Loader2,
   Volume2,
   Square,
@@ -44,7 +42,7 @@ interface UnifiedInputAreaProps {
   isVoicePanelOpen?: boolean;
 }
 
-type InputMode = "text" | "voice";
+type _InputMode = "text" | "voice";
 
 // ============================================================================
 // Component
@@ -63,9 +61,9 @@ export function UnifiedInputArea({
 
   // Unified store state
   const {
-    inputMode,
+    inputMode: _inputMode,
     voiceModeActive,
-    voiceModeType,
+    voiceModeType: _voiceModeType,
     voiceState,
     isListening,
     isSpeaking,
@@ -86,14 +84,14 @@ export function UnifiedInputArea({
   // Voice mode state machine
   const {
     voiceState: machineVoiceState,
-    isActive: _machineIsActive, // eslint-disable-line @typescript-eslint/no-unused-vars
+    isActive: _machineIsActive,
     isListening: machineIsListening,
-    isProcessing,
-    isResponding,
+    isProcessing: _isProcessing,
+    isResponding: _isResponding,
     hasError: voiceHasError,
     error: voiceError,
     partialTranscript: machinePartialTranscript,
-    finalTranscript,
+    finalTranscript: _finalTranscript,
     activate: activateVoice,
     deactivate: deactivateVoice,
     retryConnection,
@@ -168,7 +166,7 @@ export function UnifiedInputArea({
     ],
   );
 
-  const handleKeyUp = useCallback(
+  const _handleKeyUp = useCallback(
     (e: React.KeyboardEvent) => {
       // Release space in push-to-talk mode
       if (

@@ -160,7 +160,11 @@ export function CollapsibleContextPane({
 // Tab Components
 // ============================================================================
 
-function CitationsTab({ conversationId }: { conversationId: string | null }) {
+function CitationsTab({
+  conversationId: _conversationId,
+}: {
+  conversationId: string | null;
+}) {
   const messages = useUnifiedConversationStore((state) => state.messages);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -341,7 +345,7 @@ function ClinicalTab({ conversationId }: { conversationId: string | null }) {
           : undefined,
       });
       setIsEditing(false);
-    } catch (err) {
+    } catch {
       // Error handled by hook
     }
   };
@@ -352,7 +356,7 @@ function ClinicalTab({ conversationId }: { conversationId: string | null }) {
     ) {
       try {
         await deleteContext();
-      } catch (err) {
+      } catch {
         // Error handled by hook
       }
     }

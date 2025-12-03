@@ -54,8 +54,8 @@ export const MessageBubble = memo(function MessageBubble({
   onBranch,
   hasBranch,
   source,
-  compactAudio,
-  onPlayAudio,
+  compactAudio: _compactAudio,
+  onPlayAudio: _onPlayAudio,
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isSystem = message.role === "system";

@@ -52,7 +52,10 @@ class TestKBIndexer:
     async def test_text_chunking(self, mock_qdrant_client):
         """Test that text is properly chunked with overlap."""
         indexer = KBIndexer(
-            qdrant_url="http://localhost:6333", collection_name="test_kb", chunk_size=100, chunk_overlap=20
+            qdrant_url="http://localhost:6333",
+            collection_name="test_kb",
+            chunk_size=100,
+            chunk_overlap=20,
         )
 
         text = "A" * 250  # 250 characters should produce 3 chunks
@@ -88,7 +91,10 @@ class TestKBIndexer:
     async def test_document_indexing_flow(self, mock_qdrant_client, mock_openai_embeddings):
         """Test complete document indexing workflow."""
         indexer = KBIndexer(
-            qdrant_url="http://localhost:6333", collection_name="test_kb", chunk_size=500, chunk_overlap=50
+            qdrant_url="http://localhost:6333",
+            collection_name="test_kb",
+            chunk_size=500,
+            chunk_overlap=50,
         )
 
         document_text = """
@@ -172,7 +178,9 @@ class TestSearchAggregator:
         aggregator = SearchAggregator(qdrant_url="http://localhost:6333", collection_name="test_kb")
 
         results = await aggregator.search(
-            query="What are first-line treatments for high blood pressure?", top_k=5, score_threshold=0.7
+            query="What are first-line treatments for high blood pressure?",
+            top_k=5,
+            score_threshold=0.7,
         )
 
         assert len(results) > 0
@@ -235,7 +243,10 @@ class TestRAGOrchestrator:
                 document_id="guideline-htn-001",
                 content="ACE inhibitors are first-line therapy for hypertension.",
                 score=0.88,
-                metadata={"title": "Hypertension Guidelines", "source_type": "guideline"},
+                metadata={
+                    "title": "Hypertension Guidelines",
+                    "source_type": "guideline",
+                },
             )
             aggregator_instance.search.return_value = [mock_result]
 
@@ -246,7 +257,11 @@ class TestRAGOrchestrator:
 
             # Mock citation extraction
             aggregator_instance.extract_citations.return_value = [
-                {"document_id": "guideline-htn-001", "title": "Hypertension Guidelines", "source_type": "guideline"}
+                {
+                    "document_id": "guideline-htn-001",
+                    "title": "Hypertension Guidelines",
+                    "source_type": "guideline",
+                }
             ]
 
             yield aggregator_instance
@@ -280,7 +295,8 @@ class TestRAGOrchestrator:
         orchestrator.llm_client = mock_llm_client
 
         request = QueryRequest(
-            session_id="test-session-001", query="What are the first-line treatments for hypertension?"
+            session_id="test-session-001",
+            query="What are the first-line treatments for hypertension?",
         )
 
         response = await orchestrator.handle_query(request=request, trace_id="test-trace-001")

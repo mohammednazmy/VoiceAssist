@@ -23,13 +23,9 @@ class VoiceAuthMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
 
-    async def dispatch(
-        self, request: Request, call_next: Callable[[Request], Response]
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Response]) -> Response:
         # Only guard voice-specific APIs
-        if request.url.path.startswith("/api/voice") or request.url.path.startswith(
-            "/api/realtime/webrtc"
-        ):
+        if request.url.path.startswith("/api/voice") or request.url.path.startswith("/api/realtime/webrtc"):
             token = request.headers.get("X-Voice-Session-Token")
             if token:
                 try:
@@ -42,4 +38,3 @@ class VoiceAuthMiddleware(BaseHTTPMiddleware):
                 logger.debug("voice_auth_token_missing", extra={"path": request.url.path})
 
         return await call_next(request)
-

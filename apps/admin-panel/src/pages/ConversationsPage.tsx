@@ -34,7 +34,7 @@ export function ConversationsPage() {
   const [userIdFilter, setUserIdFilter] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { isViewer } = useAuth();
+  const { isViewer: _isViewer } = useAuth();
 
   useEffect(() => {
     loadConversations();

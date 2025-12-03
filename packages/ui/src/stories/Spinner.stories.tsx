@@ -2,36 +2,36 @@
  * Spinner Component Stories
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
-import { Spinner, SpinnerOverlay } from '../components/Spinner';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Spinner, SpinnerOverlay } from "../components/Spinner";
 
 const meta = {
-  title: 'Components/Spinner',
+  title: "Components/Spinner",
   component: Spinner,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     docs: {
       description: {
         component:
-          'Loading indicator with multiple sizes and color variants. Use for indicating loading states.',
+          "Loading indicator with multiple sizes and color variants. Use for indicating loading states.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     size: {
-      control: 'select',
-      options: ['sm', 'md', 'lg'],
-      description: 'The size of the spinner',
+      control: "select",
+      options: ["sm", "md", "lg"],
+      description: "The size of the spinner",
     },
     color: {
-      control: 'select',
-      options: ['primary', 'secondary', 'neutral', 'white', 'current'],
-      description: 'The color variant',
+      control: "select",
+      options: ["primary", "secondary", "neutral", "white", "current"],
+      description: "The color variant",
     },
     label: {
-      control: 'text',
-      description: 'Accessible label for screen readers',
+      control: "text",
+      description: "Accessible label for screen readers",
     },
   },
 } satisfies Meta<typeof Spinner>;
@@ -41,8 +41,8 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    size: 'md',
-    color: 'primary',
+    size: "md",
+    color: "primary",
   },
 };
 
@@ -103,7 +103,7 @@ export const Overlay: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Full-page or container overlay with spinner and optional text.',
+        story: "Full-page or container overlay with spinner and optional text.",
       },
     },
   },
@@ -119,7 +119,7 @@ export const WithText: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Spinner combined with loading text for better UX.',
+        story: "Spinner combined with loading text for better UX.",
       },
     },
   },

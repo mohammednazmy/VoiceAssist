@@ -8,17 +8,15 @@ Architecture:
 - Background worker processes tasks from Redis queue
 - Job status tracking for monitoring upload progress
 """
-import asyncio
-from typing import Optional, Dict, Any
-from datetime import datetime, timedelta
-import logging
 
-from arq import create_pool, ArqRedis
-from arq.connections import RedisSettings
+from datetime import timedelta
+from typing import Any, Dict, Optional
 
 from app.core.config import settings
-from app.services.kb_indexer import KBIndexer, IndexingResult
 from app.core.logging import get_logger
+from app.services.kb_indexer import IndexingResult, KBIndexer
+from arq import ArqRedis, create_pool
+from arq.connections import RedisSettings
 
 logger = get_logger(__name__)
 

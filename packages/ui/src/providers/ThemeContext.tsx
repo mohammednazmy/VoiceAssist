@@ -2,10 +2,10 @@
  * Theme Context
  * Provides theme state and controls to the entire application
  */
-import { createContext } from 'react';
+import { createContext } from "react";
 
-export type Theme = 'light' | 'dark' | 'system';
-export type ResolvedTheme = 'light' | 'dark';
+export type Theme = "light" | "dark" | "system";
+export type ResolvedTheme = "light" | "dark";
 
 export interface ThemeContextValue {
   /**
@@ -35,5 +35,5 @@ export interface ThemeContextValue {
 }
 
 export const ThemeContext = createContext<ThemeContextValue | undefined>(
-  undefined
+  undefined,
 );

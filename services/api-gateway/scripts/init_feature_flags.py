@@ -6,17 +6,18 @@ Run this after database migrations to populate initial feature flags.
 Usage:
     python scripts/init_feature_flags.py
 """
-import sys
+
 import asyncio
+import sys
 from pathlib import Path
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.services.feature_flags import feature_flag_service
-from app.models.feature_flag import FeatureFlagType
-from app.core.feature_flags import FeatureFlags
-from app.core.logging import get_logger
+from app.core.feature_flags import FeatureFlags  # noqa: E402
+from app.core.logging import get_logger  # noqa: E402
+from app.models.feature_flag import FeatureFlagType  # noqa: E402
+from app.services.feature_flags import feature_flag_service  # noqa: E402
 
 logger = get_logger(__name__)
 
@@ -30,7 +31,7 @@ DEFAULT_FLAGS = [
         "flag_type": FeatureFlagType.BOOLEAN,
         "enabled": True,
         "default_value": True,
-        "metadata": {"category": "security", "criticality": "high"}
+        "metadata": {"category": "security", "criticality": "high"},
     },
     {
         "name": FeatureFlags.RBAC_STRICT_MODE,
@@ -38,9 +39,8 @@ DEFAULT_FLAGS = [
         "flag_type": FeatureFlagType.BOOLEAN,
         "enabled": False,
         "default_value": False,
-        "metadata": {"category": "security", "criticality": "medium"}
+        "metadata": {"category": "security", "criticality": "medium"},
     },
-
     # Observability Features
     {
         "name": FeatureFlags.METRICS_ENABLED,
@@ -48,7 +48,7 @@ DEFAULT_FLAGS = [
         "flag_type": FeatureFlagType.BOOLEAN,
         "enabled": True,
         "default_value": True,
-        "metadata": {"category": "observability", "criticality": "medium"}
+        "metadata": {"category": "observability", "criticality": "medium"},
     },
     {
         "name": FeatureFlags.TRACING_ENABLED,
@@ -56,7 +56,7 @@ DEFAULT_FLAGS = [
         "flag_type": FeatureFlagType.BOOLEAN,
         "enabled": True,
         "default_value": True,
-        "metadata": {"category": "observability", "criticality": "medium"}
+        "metadata": {"category": "observability", "criticality": "medium"},
     },
     {
         "name": FeatureFlags.LOGGING_VERBOSE,
@@ -64,9 +64,8 @@ DEFAULT_FLAGS = [
         "flag_type": FeatureFlagType.BOOLEAN,
         "enabled": False,
         "default_value": False,
-        "metadata": {"category": "observability", "criticality": "low"}
+        "metadata": {"category": "observability", "criticality": "low"},
     },
-
     # External Integrations
     {
         "name": FeatureFlags.NEXTCLOUD_INTEGRATION,
@@ -74,7 +73,7 @@ DEFAULT_FLAGS = [
         "flag_type": FeatureFlagType.BOOLEAN,
         "enabled": True,
         "default_value": True,
-        "metadata": {"category": "integrations", "criticality": "high"}
+        "metadata": {"category": "integrations", "criticality": "high"},
     },
     {
         "name": FeatureFlags.OPENAI_ENABLED,
@@ -82,7 +81,7 @@ DEFAULT_FLAGS = [
         "flag_type": FeatureFlagType.BOOLEAN,
         "enabled": True,
         "default_value": True,
-        "metadata": {"category": "integrations", "criticality": "high"}
+        "metadata": {"category": "integrations", "criticality": "high"},
     },
     {
         "name": FeatureFlags.NEXTCLOUD_AUTO_INDEX,
@@ -90,9 +89,8 @@ DEFAULT_FLAGS = [
         "flag_type": FeatureFlagType.BOOLEAN,
         "enabled": True,
         "default_value": True,
-        "metadata": {"category": "integrations", "criticality": "medium"}
+        "metadata": {"category": "integrations", "criticality": "medium"},
     },
-
     # RAG Features
     {
         "name": FeatureFlags.RAG_STRATEGY,
@@ -101,7 +99,11 @@ DEFAULT_FLAGS = [
         "enabled": True,
         "value": "simple",
         "default_value": "simple",
-        "metadata": {"category": "rag", "criticality": "high", "allowed_values": ["simple", "multi_hop", "hybrid"]}
+        "metadata": {
+            "category": "rag",
+            "criticality": "high",
+            "allowed_values": ["simple", "multi_hop", "hybrid"],
+        },
     },
     {
         "name": FeatureFlags.RAG_MAX_RESULTS,
@@ -110,7 +112,7 @@ DEFAULT_FLAGS = [
         "enabled": True,
         "value": 5,
         "default_value": 5,
-        "metadata": {"category": "rag", "criticality": "medium", "min": 1, "max": 20}
+        "metadata": {"category": "rag", "criticality": "medium", "min": 1, "max": 20},
     },
     {
         "name": FeatureFlags.RAG_SCORE_THRESHOLD,
@@ -119,9 +121,13 @@ DEFAULT_FLAGS = [
         "enabled": True,
         "value": 0.2,
         "default_value": 0.2,
-        "metadata": {"category": "rag", "criticality": "medium", "min": 0.0, "max": 1.0}
+        "metadata": {
+            "category": "rag",
+            "criticality": "medium",
+            "min": 0.0,
+            "max": 1.0,
+        },
     },
-
     # Performance Features
     {
         "name": FeatureFlags.CACHE_ENABLED,
@@ -129,7 +135,7 @@ DEFAULT_FLAGS = [
         "flag_type": FeatureFlagType.BOOLEAN,
         "enabled": True,
         "default_value": True,
-        "metadata": {"category": "performance", "criticality": "medium"}
+        "metadata": {"category": "performance", "criticality": "medium"},
     },
     {
         "name": FeatureFlags.ASYNC_INDEXING,
@@ -137,9 +143,8 @@ DEFAULT_FLAGS = [
         "flag_type": FeatureFlagType.BOOLEAN,
         "enabled": True,
         "default_value": True,
-        "metadata": {"category": "performance", "criticality": "medium"}
+        "metadata": {"category": "performance", "criticality": "medium"},
     },
-
     # Experimental Features
     {
         "name": FeatureFlags.BETA_FEATURES,
@@ -147,7 +152,7 @@ DEFAULT_FLAGS = [
         "flag_type": FeatureFlagType.BOOLEAN,
         "enabled": False,
         "default_value": False,
-        "metadata": {"category": "experimental", "criticality": "low"}
+        "metadata": {"category": "experimental", "criticality": "low"},
     },
     {
         "name": FeatureFlags.EXPERIMENTAL_API,
@@ -155,7 +160,7 @@ DEFAULT_FLAGS = [
         "flag_type": FeatureFlagType.BOOLEAN,
         "enabled": False,
         "default_value": False,
-        "metadata": {"category": "experimental", "criticality": "low"}
+        "metadata": {"category": "experimental", "criticality": "low"},
     },
 ]
 
@@ -189,7 +194,10 @@ async def init_feature_flags():
                 error_count += 1
 
         except Exception as e:
-            logger.error(f"Error creating feature flag '{flag_config['name']}': {e}", exc_info=True)
+            logger.error(
+                f"Error creating feature flag '{flag_config['name']}': {e}",
+                exc_info=True,
+            )
             error_count += 1
 
     logger.info(
@@ -208,7 +216,7 @@ if __name__ == "__main__":
     if errors > 0:
         sys.exit(1)
     else:
-        print(f"\n✅ Feature flag initialization successful!")
+        print("\n✅ Feature flag initialization successful!")
         print(f"   - Created: {created}")
         print(f"   - Skipped: {skipped}")
         print(f"   - Errors: {errors}")

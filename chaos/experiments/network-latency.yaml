@@ -44,8 +44,8 @@ method:
         name: "latency_toxic"
         type: "latency"
         attributes:
-          latency: 500  # 500ms delay
-          jitter: 50    # ±50ms variance
+          latency: 500 # 500ms delay
+          jitter: 50 # ±50ms variance
     pauses:
       after: 2
 
@@ -54,7 +54,7 @@ method:
     provider:
       type: http
       url: "${api_url}/health"
-      timeout: 10  # Longer timeout for latency
+      timeout: 10 # Longer timeout for latency
       expect:
         - status: 200
 
@@ -71,9 +71,9 @@ method:
         body:
           email: "test@example.com"
           password: "test"
-        timeout: 15  # Should complete even with latency
+        timeout: 15 # Should complete even with latency
         expect:
-          - status: [200, 401, 422]  # Any non-timeout response
+          - status: [200, 401, 422] # Any non-timeout response
 
 rollbacks:
   - name: "remove-latency-toxic"

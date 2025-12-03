@@ -12,43 +12,43 @@
  * - ARIA attributes
  */
 
-import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../lib/utils';
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "../lib/utils";
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-all duration-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-border-focus focus-visible:ring-offset-background-primary disabled:pointer-events-none disabled:opacity-50',
+  "inline-flex items-center justify-center gap-2 rounded-md font-medium transition-all duration-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-border-focus focus-visible:ring-offset-background-primary disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
         primary:
-          'bg-surface-button-primary text-text-inverse hover:bg-surface-button-primary-hover active:bg-primary-700 dark:active:bg-primary-600 shadow-sm',
+          "bg-surface-button-primary text-text-inverse hover:bg-surface-button-primary-hover active:bg-primary-700 dark:active:bg-primary-600 shadow-sm",
         secondary:
-          'bg-surface-button-secondary text-text-inverse hover:bg-surface-button-secondary-hover active:bg-secondary-700 shadow-sm',
+          "bg-surface-button-secondary text-text-inverse hover:bg-surface-button-secondary-hover active:bg-secondary-700 shadow-sm",
         outline:
-          'border-2 border-border-default bg-surface-button-outline text-text-primary hover:bg-surface-button-outline-hover hover:border-border-strong active:bg-surface-button-outline-hover',
+          "border-2 border-border-default bg-surface-button-outline text-text-primary hover:bg-surface-button-outline-hover hover:border-border-strong active:bg-surface-button-outline-hover",
         ghost:
-          'bg-surface-button-ghost text-text-primary hover:bg-surface-button-ghost-hover active:bg-neutral-200 dark:active:bg-neutral-700',
+          "bg-surface-button-ghost text-text-primary hover:bg-surface-button-ghost-hover active:bg-neutral-200 dark:active:bg-neutral-700",
         danger:
-          'bg-surface-button-danger text-text-inverse hover:bg-surface-button-danger-hover active:bg-error-700 shadow-sm',
+          "bg-surface-button-danger text-text-inverse hover:bg-surface-button-danger-hover active:bg-error-700 shadow-sm",
         success:
-          'bg-success-600 text-text-inverse hover:bg-success-700 active:bg-success-800 shadow-sm',
-        link: 'text-text-link underline-offset-4 hover:text-text-link-hover focus-visible:ring-border-focus dark:text-primary-400',
+          "bg-success-600 text-text-inverse hover:bg-success-700 active:bg-success-800 shadow-sm",
+        link: "text-text-link underline-offset-4 hover:text-text-link-hover focus-visible:ring-border-focus dark:text-primary-400",
       },
       size: {
-        sm: 'h-8 px-3 text-sm',
-        md: 'h-10 px-4 py-2 text-base',
-        lg: 'h-12 px-6 text-lg',
+        sm: "h-8 px-3 text-sm",
+        md: "h-10 px-4 py-2 text-base",
+        lg: "h-12 px-6 text-lg",
       },
       fullWidth: {
-        true: 'w-full',
+        true: "w-full",
       },
     },
     defaultVariants: {
-      variant: 'primary',
-      size: 'md',
+      variant: "primary",
+      size: "md",
     },
-  }
+  },
 );
 
 /**
@@ -56,7 +56,7 @@ const buttonVariants = cva(
  */
 const Spinner = ({ className }: { className?: string }) => (
   <svg
-    className={cn('animate-spin h-4 w-4', className)}
+    className={cn("animate-spin h-4 w-4", className)}
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
     viewBox="0 0 24 24"
@@ -80,7 +80,8 @@ const Spinner = ({ className }: { className?: string }) => (
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   /**
    * Render as a child component (e.g., Next.js Link)
@@ -120,11 +121,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       iconLeft,
       iconRight,
       loadingText,
-      type = 'button',
+      type = "button",
       children,
       ...props
     },
-    ref
+    ref,
   ) => {
     const isDisabled = disabled || loading;
 
@@ -135,7 +136,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         type={type}
         disabled={isDisabled}
         aria-busy={loading}
-        aria-live={loading ? 'polite' : undefined}
+        aria-live={loading ? "polite" : undefined}
         {...props}
       >
         {loading ? (
@@ -152,9 +153,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         )}
       </button>
     );
-  }
+  },
 );
 
-Button.displayName = 'Button';
+Button.displayName = "Button";
 
 export { Button, buttonVariants };

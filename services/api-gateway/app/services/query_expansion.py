@@ -532,7 +532,15 @@ class QueryExpansionService:
             entities["drugs"].extend(matches)
 
         # Check for symptoms
-        symptom_terms = ["pain", "ache", "fever", "fatigue", "nausea", "vomiting", "cough"]
+        symptom_terms = [
+            "pain",
+            "ache",
+            "fever",
+            "fatigue",
+            "nausea",
+            "vomiting",
+            "cough",
+        ]
         for term in symptom_terms:
             if term in query_lower:
                 entities["symptoms"].append(term)

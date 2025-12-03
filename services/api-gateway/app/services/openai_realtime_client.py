@@ -39,9 +39,7 @@ class OpenAIRealtimeClient:
 
         return bool(self.api_key) and bool(self.base_url) and bool(self.model)
 
-    async def create_session(
-        self, *, voice: str = "alloy", modalities: Optional[list[str]] = None
-    ) -> Dict[str, Any]:
+    async def create_session(self, *, voice: str = "alloy", modalities: Optional[list[str]] = None) -> Dict[str, Any]:
         """Create an ephemeral realtime session.
 
         Args:
@@ -77,9 +75,7 @@ class OpenAIRealtimeClient:
                     "response": response.text,
                 },
             )
-            raise ValueError(
-                f"Failed to create realtime session: {response.status_code}"
-            )
+            raise ValueError(f"Failed to create realtime session: {response.status_code}")
 
         data = response.json()
         logger.info(
@@ -87,4 +83,3 @@ class OpenAIRealtimeClient:
             extra={"voice": voice, "modalities": modalities or ["text", "audio"]},
         )
         return data
-

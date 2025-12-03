@@ -59,15 +59,15 @@
 
 - name: Configure system limits
   ansible.builtin.pam_limits:
-    domain: '*'
+    domain: "*"
     limit_type: "{{ item.limit_type }}"
     limit_item: "{{ item.limit_item }}"
     value: "{{ item.value }}"
   loop:
-    - { limit_type: 'soft', limit_item: 'nofile', value: '65536' }
-    - { limit_type: 'hard', limit_item: 'nofile', value: '65536' }
-    - { limit_type: 'soft', limit_item: 'nproc', value: '32768' }
-    - { limit_type: 'hard', limit_item: 'nproc', value: '32768' }
+    - { limit_type: "soft", limit_item: "nofile", value: "65536" }
+    - { limit_type: "hard", limit_item: "nofile", value: "65536" }
+    - { limit_type: "soft", limit_item: "nproc", value: "32768" }
+    - { limit_type: "hard", limit_item: "nproc", value: "32768" }
   tags: [limits]
 
 - name: Configure sysctl parameters
@@ -77,13 +77,13 @@
     state: present
     reload: yes
   loop:
-    - { name: 'net.ipv4.ip_forward', value: '1' }
-    - { name: 'net.ipv4.tcp_max_syn_backlog', value: '8192' }
-    - { name: 'net.core.somaxconn', value: '32768' }
-    - { name: 'net.core.netdev_max_backlog', value: '16384' }
-    - { name: 'vm.swappiness', value: '10' }
-    - { name: 'vm.max_map_count', value: '262144' }
-    - { name: 'fs.file-max', value: '2097152' }
+    - { name: "net.ipv4.ip_forward", value: "1" }
+    - { name: "net.ipv4.tcp_max_syn_backlog", value: "8192" }
+    - { name: "net.core.somaxconn", value: "32768" }
+    - { name: "net.core.netdev_max_backlog", value: "16384" }
+    - { name: "vm.swappiness", value: "10" }
+    - { name: "vm.max_map_count", value: "262144" }
+    - { name: "fs.file-max", value: "2097152" }
   tags: [sysctl]
 
 - name: Disable swap (for Kubernetes)
@@ -97,7 +97,7 @@
   ansible.builtin.template:
     src: logrotate.conf.j2
     dest: /etc/logrotate.d/voiceassist
-    mode: '0644'
+    mode: "0644"
   tags: [logging]
 
 - name: Enable and configure auditd (HIPAA requirement)
@@ -112,7 +112,7 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
   loop:
     - /opt/voiceassist
     - /var/log/voiceassist

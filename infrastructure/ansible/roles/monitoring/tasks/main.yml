@@ -10,7 +10,7 @@
       ansible.builtin.get_url:
         url: https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
         dest: /tmp/amazon-cloudwatch-agent.deb
-        mode: '0644'
+        mode: "0644"
       tags: [cloudwatch]
 
     - name: Install CloudWatch agent
@@ -107,7 +107,7 @@
               }
             }
           }
-        mode: '0644'
+        mode: "0644"
       tags: [cloudwatch]
 
     - name: Start CloudWatch agent
@@ -134,7 +134,7 @@
       ansible.builtin.get_url:
         url: https://github.com/prometheus/node_exporter/releases/download/v1.7.0/node_exporter-1.7.0.linux-amd64.tar.gz
         dest: /tmp/node_exporter.tar.gz
-        mode: '0644'
+        mode: "0644"
       tags: [prometheus]
 
     - name: Extract Node Exporter
@@ -148,7 +148,7 @@
       ansible.builtin.copy:
         src: /tmp/node_exporter-1.7.0.linux-amd64/node_exporter
         dest: /usr/local/bin/node_exporter
-        mode: '0755'
+        mode: "0755"
         remote_src: yes
       tags: [prometheus]
 
@@ -170,7 +170,7 @@
 
           [Install]
           WantedBy=multi-user.target
-        mode: '0644'
+        mode: "0644"
       notify: restart node_exporter
       tags: [prometheus]
 
@@ -199,5 +199,5 @@
           systemctl reload voiceassist-server 2>/dev/null || true
         endscript
       }
-    mode: '0644'
+    mode: "0644"
   tags: [logging]

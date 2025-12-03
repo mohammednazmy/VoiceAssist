@@ -326,7 +326,9 @@ async def synthesize_speech(
 
             latency = time.monotonic() - tts_start
             external_api_requests_total.labels(
-                service="openai", endpoint="audio/speech", status_code=str(response.status_code)
+                service="openai",
+                endpoint="audio/speech",
+                status_code=str(response.status_code),
             ).inc()
             external_api_duration_seconds.labels(service="openai", endpoint="audio/speech").observe(latency)
 
@@ -420,7 +422,11 @@ async def synthesize_speech(
     except ValueError as e:
         logger.error(
             f"Speech synthesis error: {str(e)}",
-            extra={"user_id": current_user.id, "provider": effective_provider, "error": str(e)},
+            extra={
+                "user_id": current_user.id,
+                "provider": effective_provider,
+                "error": str(e),
+            },
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -429,7 +435,11 @@ async def synthesize_speech(
     except Exception as e:
         logger.error(
             f"Speech synthesis error: {str(e)}",
-            extra={"user_id": current_user.id, "provider": effective_provider, "error": str(e)},
+            extra={
+                "user_id": current_user.id,
+                "provider": effective_provider,
+                "error": str(e),
+            },
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -547,7 +557,10 @@ async def synthesize_speech_stream(
             )
 
         except Exception as e:
-            logger.error(f"Streaming TTS error: {str(e)}", extra={"user_id": str(current_user.id)})
+            logger.error(
+                f"Streaming TTS error: {str(e)}",
+                extra={"user_id": str(current_user.id)},
+            )
             # Fall through to non-streaming fallback
 
     # Fallback: Use non-streaming synthesize (OpenAI or ElevenLabs fallback)
@@ -1030,7 +1043,10 @@ async def relay_voice_transcript(
         session_id=session.id,
         role="user",
         content=payload.transcript,
-        message_metadata={"source": "voice_relay", "clinical_context_id": payload.clinical_context_id},
+        message_metadata={
+            "source": "voice_relay",
+            "clinical_context_id": payload.clinical_context_id,
+        },
     )
     db.add(user_message)
     session.message_count = (session.message_count or 0) + 1
@@ -1155,7 +1171,10 @@ async def voice_relay_websocket(websocket: WebSocket, db: Session = Depends(get_
                 session_id=session.id,
                 role="user",
                 content=transcript,
-                message_metadata={"source": "voice_ws_relay", "clinical_context_id": clinical_context_id},
+                message_metadata={
+                    "source": "voice_ws_relay",
+                    "clinical_context_id": clinical_context_id,
+                },
             )
             db.add(user_message)
             session.message_count = (session.message_count or 0) + 1

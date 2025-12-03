@@ -60,7 +60,7 @@ export function ClinicalContextsPage() {
   const [contexts, setContexts] = useState<ClinicalContextSummary[]>([]);
   const [stats, setStats] = useState<ClinicalStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [statsLoading, setStatsLoading] = useState(true);
+  const [_statsLoading, setStatsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [pageSize] = useState(25);

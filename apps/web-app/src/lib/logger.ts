@@ -31,7 +31,6 @@ export function debugLog(prefix: string, ...args: unknown[]): void {
  * Automatically reports to Sentry as a warning breadcrumb
  */
 export function warnLog(prefix: string, ...args: unknown[]): void {
-  // eslint-disable-next-line no-console
   console.warn(`[${prefix}]`, ...args);
 
   // Add Sentry breadcrumb for warnings
@@ -50,7 +49,6 @@ export function warnLog(prefix: string, ...args: unknown[]): void {
  * Automatically captures exception to Sentry if Error object is present
  */
 export function errorLog(prefix: string, ...args: unknown[]): void {
-  // eslint-disable-next-line no-console
   console.error(`[${prefix}]`, ...args);
 
   // Find any Error objects in args and capture to Sentry

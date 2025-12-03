@@ -407,7 +407,7 @@ async def handle_kb_search(arguments: Dict[str, Any], context: ToolExecutionCont
                 {
                     "id": doc.id,
                     "title": doc.title,
-                    "content": doc.content[:500] + "..." if len(doc.content) > 500 else doc.content,
+                    "content": (doc.content[:500] + "..." if len(doc.content) > 500 else doc.content),
                     "source_type": doc.source_type,
                     "source_name": doc.source_name,
                     "location": doc.location,

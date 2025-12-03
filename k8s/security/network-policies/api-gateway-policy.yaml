@@ -29,7 +29,7 @@ spec:
               app.kubernetes.io/name: ingress-nginx
       ports:
         - protocol: TCP
-          port: 8000  # FastAPI port
+          port: 8000 # FastAPI port
     # Allow health checks from kubelet
     - from:
         - namespaceSelector: {}
@@ -65,7 +65,7 @@ spec:
         - protocol: TCP
           port: 6379
         - protocol: TCP
-          port: 6380  # TLS port
+          port: 6380 # TLS port
     # Allow connection to Qdrant
     - to:
         - podSelector:

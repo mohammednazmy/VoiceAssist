@@ -2,15 +2,7 @@
  * Tests for useRealtimeEvents hook - WebSocket connection, events, metrics
  */
 
-import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeEach,
-  afterEach,
-  MockInstance,
-} from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { useRealtimeEvents, useAdminEventListener } from "./useRealtimeEvents";
 
@@ -230,7 +222,7 @@ describe("useRealtimeEvents", () => {
 
     it("should call onEvent callback when event received", async () => {
       const onEvent = vi.fn();
-      const { result } = renderHook(() => useRealtimeEvents({ onEvent }));
+      renderHook(() => useRealtimeEvents({ onEvent }));
 
       await act(async () => {
         vi.advanceTimersByTime(10);
@@ -382,7 +374,7 @@ describe("useRealtimeEvents", () => {
 
     it("should call onMetrics callback when metrics received", async () => {
       const onMetrics = vi.fn();
-      const { result } = renderHook(() => useRealtimeEvents({ onMetrics }));
+      renderHook(() => useRealtimeEvents({ onMetrics }));
 
       await act(async () => {
         vi.advanceTimersByTime(10);

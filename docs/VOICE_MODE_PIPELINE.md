@@ -1,13 +1,13 @@
 ---
 title: Voice Mode Pipeline
 slug: voice/pipeline
-summary: Unified Voice Mode pipeline architecture, data flow, barge-in, audio playback, metrics, and testing strategy.
+summary: Unified Voice Mode pipeline architecture, data flow, barge-in, audio playback, metrics, offline fallback, and testing strategy.
 status: stable
 stability: production
 owner: backend
-lastUpdated: "2025-12-02"
+lastUpdated: "2025-12-03"
 audience: ["human", "agent", "backend", "frontend"]
-tags: ["voice", "realtime", "websocket", "openai", "api", "barge-in", "audio"]
+tags: ["voice", "realtime", "websocket", "openai", "api", "barge-in", "audio", "offline", "multilingual"]
 category: reference
 relatedServices: ["api-gateway", "web-app"]
 ---
@@ -918,6 +918,187 @@ voice_log.error("voice_connection_failed", error_code="CONN_001")
 
 ---
 
+## Phase 9: Offline & Network Fallback
+
+**Implemented:** 2025-12-03
+
+The voice pipeline now includes comprehensive offline support and network-aware fallback mechanisms.
+
+### Network Monitoring (`networkMonitor.ts`)
+
+Location: `apps/web-app/src/lib/offline/networkMonitor.ts`
+
+Continuously monitors network health using multiple signals:
+
+- **Navigator.onLine**: Basic online/offline detection
+- **Network Information API**: Connection type, downlink speed, RTT
+- **Health Check Pinging**: Periodic `/api/health` pings for latency measurement
+
+```typescript
+import { getNetworkMonitor } from "@/lib/offline/networkMonitor";
+
+const monitor = getNetworkMonitor();
+monitor.subscribe((status) => {
+  console.log(`Network quality: ${status.quality}`);
+  console.log(`Health check latency: ${status.healthCheckLatencyMs}ms`);
+});
+```
+
+#### Network Quality Levels
+
+| Quality   | Latency     | isHealthy | Action                     |
+| --------- | ----------- | --------- | -------------------------- |
+| Excellent | < 100ms     | true      | Full cloud processing      |
+| Good      | < 200ms     | true      | Full cloud processing      |
+| Moderate  | < 500ms     | true      | Cloud with quality warning |
+| Poor      | ≥ 500ms     | variable  | Consider offline fallback  |
+| Offline   | Unreachable | false     | Automatic offline fallback |
+
+#### Configuration
+
+```typescript
+const monitor = createNetworkMonitor({
+  healthCheckUrl: "/api/health",
+  healthCheckIntervalMs: 30000, // 30 seconds
+  healthCheckTimeoutMs: 5000, // 5 seconds
+  goodLatencyThresholdMs: 100,
+  moderateLatencyThresholdMs: 200,
+  poorLatencyThresholdMs: 500,
+  failuresBeforeUnhealthy: 3,
+});
+```
+
+### useNetworkStatus Hook
+
+Location: `apps/web-app/src/hooks/useNetworkStatus.ts`
+
+React hook providing network status with computed properties:
+
+```typescript
+const {
+  isOnline,
+  isHealthy,
+  quality,
+  healthCheckLatencyMs,
+  effectiveType, // "4g", "3g", "2g", "slow-2g"
+  downlink, // Mbps
+  rtt, // Round-trip time ms
+  isSuitableForVoice, // quality >= "good" && isHealthy
+  shouldUseOffline, // !isOnline || !isHealthy || quality < "moderate"
+  qualityScore, // 0-4 (offline=0, poor=1, moderate=2, good=3, excellent=4)
+  checkNow, // Force immediate health check
+} = useNetworkStatus();
+```
+
+### Offline VAD with Network Fallback
+
+Location: `apps/web-app/src/hooks/useOfflineVAD.ts`
+
+The `useOfflineVADWithFallback` hook automatically switches between network and offline VAD:
+
+```typescript
+const {
+  isListening,
+  isSpeaking,
+  currentEnergy,
+  isUsingOfflineVAD, // Currently using offline mode?
+  networkAvailable,
+  networkQuality,
+  modeReason, // "network_vad" | "network_unavailable" | "poor_quality" | "forced_offline"
+  forceOffline, // Manually switch to offline
+  forceNetwork, // Manually switch to network (if available)
+  startListening,
+  stopListening,
+} = useOfflineVADWithFallback({
+  useNetworkMonitor: true,
+  minNetworkQuality: "moderate",
+  networkRecoveryDelayMs: 2000, // Prevent flapping
+  onFallbackToOffline: () => console.log("Switched to offline VAD"),
+  onReturnToNetwork: () => console.log("Returned to network VAD"),
+});
+```
+
+### Fallback Decision Flow
+
+```
+┌────────────────────┐
+│  Network Monitor   │
+│  Health Check      │
+└─────────┬──────────┘
+          │
+          ▼
+┌────────────────────┐     NO     ┌────────────────────┐
+│  Is Online?        │──────────▶│  Use Offline VAD   │
+└─────────┬──────────┘            └────────────────────┘
+          │ YES
+          ▼
+┌────────────────────┐     NO     ┌────────────────────┐
+│  Is Healthy?       │──────────▶│  Use Offline VAD   │
+│  (3+ checks pass)  │            │  reason: unhealthy │
+└─────────┬──────────┘            └────────────────────┘
+          │ YES
+          ▼
+┌────────────────────┐     NO     ┌────────────────────┐
+│  Quality ≥ Min?    │──────────▶│  Use Offline VAD   │
+│  (e.g., moderate)  │            │  reason: poor_qual │
+└─────────┬──────────┘            └────────────────────┘
+          │ YES
+          ▼
+┌────────────────────┐
+│  Use Network VAD   │
+│  (cloud processing)│
+└────────────────────┘
+```
+
+### TTS Caching (`useTTSCache`)
+
+Location: `apps/web-app/src/hooks/useOfflineVAD.ts`
+
+Caches synthesized TTS audio for offline playback:
+
+```typescript
+const {
+  getTTS, // Get audio (from cache or fresh)
+  preload, // Preload common phrases
+  isCached, // Check if text is cached
+  stats, // { entryCount, sizeMB, hitRate }
+  clear, // Clear cache
+} = useTTSCache({
+  voice: "alloy",
+  maxSizeMB: 50,
+  ttsFunction: async (text) => synthesizeAudio(text),
+});
+
+// Preload common phrases on app start
+await preload(); // Caches "I'm listening", "Go ahead", etc.
+
+// Get TTS (cache hit = instant, cache miss = synthesize + cache)
+const audio = await getTTS("Hello world");
+```
+
+### User Settings Integration
+
+Phase 9 settings are stored in `voiceSettingsStore`:
+
+| Setting                 | Default | Description                              |
+| ----------------------- | ------- | ---------------------------------------- |
+| `enableOfflineFallback` | `true`  | Auto-switch to offline when network poor |
+| `preferOfflineVAD`      | `false` | Force offline VAD (privacy mode)         |
+| `ttsCacheEnabled`       | `true`  | Enable TTS response caching              |
+
+### File Reference (Phase 9)
+
+| File                                                            | Purpose                         |
+| --------------------------------------------------------------- | ------------------------------- |
+| `apps/web-app/src/lib/offline/networkMonitor.ts`                | Network health monitoring       |
+| `apps/web-app/src/lib/offline/webrtcVAD.ts`                     | WebRTC-based offline VAD        |
+| `apps/web-app/src/lib/offline/types.ts`                         | Offline module type definitions |
+| `apps/web-app/src/hooks/useNetworkStatus.ts`                    | React hook for network status   |
+| `apps/web-app/src/hooks/useOfflineVAD.ts`                       | Offline VAD + TTS cache hooks   |
+| `apps/web-app/src/lib/offline/__tests__/networkMonitor.test.ts` | Network monitor tests           |
+
+---
+
 ## Future Work
 
 - ~~**Metrics export to backend**: Send metrics to backend for aggregation/alerting~~ ✓ Implemented
@@ -927,6 +1108,10 @@ voice_log.error("voice_connection_failed", error_code="CONN_001")
 - ~~**Context-aware voice styles**: Auto-detect tone from content~~ ✓ Implemented (2025-11-29)
 - ~~**Aggressive latency optimization**: 200ms VAD, 256-sample chunks, 300ms reconnect~~ ✓ Implemented (2025-11-29)
 - ~~**Observability & Monitoring (Phase 3)**: Error taxonomy, metrics, SLO alerts, telemetry~~ ✓ Implemented (2025-12-02)
+- ~~**Phase 7: Multilingual Support**: Auto language detection, accent profiles, language switch confidence~~ ✓ Implemented (2025-12-03)
+- ~~**Phase 8: Voice Calibration**: Personalized VAD thresholds, calibration wizard, adaptive learning~~ ✓ Implemented (2025-12-03)
+- ~~**Phase 9: Offline Fallback**: Network monitoring, offline VAD, TTS caching, quality-based switching~~ ✓ Implemented (2025-12-03)
+- ~~**Phase 10: Conversation Intelligence**: Sentiment tracking, discourse analysis, response recommendations~~ ✓ Implemented (2025-12-03)
 - **Voice→chat transcript content E2E**: Test actual transcript content in chat timeline
 - **Error tracking integration**: Send errors to Sentry/similar
 - **Session analytics**: Track voice session patterns for UX improvements

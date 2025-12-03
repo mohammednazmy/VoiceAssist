@@ -122,7 +122,11 @@ class TestToolCall:
 
     def test_tool_call_creation(self):
         """Test ToolCall creation."""
-        tc = ToolCall(id="call_abc123", name="kb_search", arguments='{"query": "diabetes treatment"}')
+        tc = ToolCall(
+            id="call_abc123",
+            name="kb_search",
+            arguments='{"query": "diabetes treatment"}',
+        )
         assert tc.id == "call_abc123"
         assert tc.name == "kb_search"
         assert tc.arguments == '{"query": "diabetes treatment"}'

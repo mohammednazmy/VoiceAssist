@@ -23,19 +23,13 @@ from app.core.dependencies import ensure_admin_privileges, get_current_admin_or_
 from app.core.logging import get_logger
 from app.models.user import User
 from app.schemas.prompt import (
-    PromptCompareResponse,
     PromptCreate,
     PromptDuplicate,
     PromptListResponse,
     PromptPublish,
-    PromptResponse,
     PromptRollback,
-    PromptStatsResponse,
     PromptTest,
-    PromptTestResponse,
     PromptUpdate,
-    PromptVersionDiffResponse,
-    PromptVersionResponse,
 )
 from app.services.prompt_service import prompt_service
 from fastapi import APIRouter, Depends, Query, status
@@ -57,7 +51,10 @@ async def list_prompts(
     search: Optional[str] = Query(None, max_length=255, description="Search in name, display_name, description"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
-    sort_by: str = Query("updated_at", description="Sort field: name, display_name, updated_at, created_at"),
+    sort_by: str = Query(
+        "updated_at",
+        description="Sort field: name, display_name, updated_at, created_at",
+    ),
     sort_order: str = Query("desc", description="Sort order: asc, desc"),
     db: Session = Depends(get_db),
     current_admin_user: User = Depends(get_current_admin_or_viewer),
@@ -715,10 +712,11 @@ async def test_prompt(
             )
 
         # Get the content to test (draft or published)
+        # NOTE: test_content is prepared for future system prompt override feature
         if test_data.use_draft:
-            test_content = prompt.system_prompt
+            _test_content = prompt.system_prompt  # noqa: F841
         else:
-            test_content = prompt.published_content or prompt.system_prompt
+            _test_content = prompt.published_content or prompt.system_prompt  # noqa: F841
 
         # Import LLM client for testing
         import time
@@ -751,10 +749,10 @@ async def test_prompt(
             "model": response.model_name,
             "latency_ms": latency_ms,
             "tokens_used": response.used_tokens,
-            "prompt_tokens": response.prompt_tokens if hasattr(response, "prompt_tokens") else None,
-            "completion_tokens": response.completion_tokens if hasattr(response, "completion_tokens") else None,
+            "prompt_tokens": (response.prompt_tokens if hasattr(response, "prompt_tokens") else None),
+            "completion_tokens": (response.completion_tokens if hasattr(response, "completion_tokens") else None),
             "used_draft": test_data.use_draft,
-            "cost_estimate": response.cost_dollars if hasattr(response, "cost_dollars") else None,
+            "cost_estimate": (response.cost_dollars if hasattr(response, "cost_dollars") else None),
         }
 
         logger.info(f"Admin {current_admin_user.email} tested prompt: {prompt.name}")

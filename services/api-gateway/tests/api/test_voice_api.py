@@ -63,7 +63,11 @@ class TestVoiceSynthesizeAPI:
 
                 response = authenticated_client.post(
                     "/api/voice/synthesize",
-                    json={"text": "Hello world", "provider": "openai", "voiceId": "alloy"},
+                    json={
+                        "text": "Hello world",
+                        "provider": "openai",
+                        "voiceId": "alloy",
+                    },
                 )
 
         assert response.status_code in [200, 500]

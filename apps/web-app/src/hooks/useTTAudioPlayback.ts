@@ -81,7 +81,9 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
 /**
  * Add WAV header to raw PCM data for proper browser decoding
  * This allows the browser to handle sample rate conversion correctly
+ * Note: Currently unused but kept for potential future use
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function createWavFromPcm(
   pcmData: ArrayBuffer,
   sampleRate: number = 24000,

@@ -2,17 +2,18 @@
 
 ## Workflow Triggers
 
-| Workflow | Auto Trigger | Manual Trigger | Schedule |
-|----------|--------------|----------------|----------|
-| CI Pipeline | Push, PR | ❌ | ❌ |
-| Security Scan | Push, PR | ✅ | Daily 2 AM |
-| Build & Deploy | Push to main/develop | ✅ | ❌ |
-| Terraform Plan | PR with infra changes | ❌ | ❌ |
-| Terraform Apply | Push to main | ✅ | ❌ |
+| Workflow        | Auto Trigger          | Manual Trigger | Schedule   |
+| --------------- | --------------------- | -------------- | ---------- |
+| CI Pipeline     | Push, PR              | ❌             | ❌         |
+| Security Scan   | Push, PR              | ✅             | Daily 2 AM |
+| Build & Deploy  | Push to main/develop  | ✅             | ❌         |
+| Terraform Plan  | PR with infra changes | ❌             | ❌         |
+| Terraform Apply | Push to main          | ✅             | ❌         |
 
 ## Common Commands
 
 ### Run Manual Workflow
+
 ```bash
 # Via GitHub CLI
 gh workflow run build-deploy.yml -f environment=staging
@@ -22,6 +23,7 @@ Actions > Select workflow > Run workflow
 ```
 
 ### Check Workflow Status
+
 ```bash
 # List recent runs
 gh run list --workflow=ci.yml --limit 5
@@ -34,26 +36,29 @@ gh run watch RUN_ID
 ```
 
 ### Cancel Running Workflow
+
 ```bash
 gh run cancel RUN_ID
 ```
 
 ### Download Artifacts
+
 ```bash
 gh run download RUN_ID
 ```
 
 ## Environment Deployment Map
 
-| Branch | Environment | Auto Deploy | Approval Required |
-|--------|-------------|-------------|-------------------|
-| develop | staging | ✅ | ❌ |
-| main | production | ✅ | ✅ (2 approvers) |
-| feature/* | - | ❌ | - |
+| Branch     | Environment | Auto Deploy | Approval Required |
+| ---------- | ----------- | ----------- | ----------------- |
+| develop    | staging     | ✅          | ❌                |
+| main       | production  | ✅          | ✅ (2 approvers)  |
+| feature/\* | -           | ❌          | -                 |
 
 ## Deployment Process
 
 ### Deploy to Staging
+
 ```bash
 1. Create PR to develop
 2. Wait for CI to pass
@@ -63,6 +68,7 @@ gh run download RUN_ID
 ```
 
 ### Deploy to Production
+
 ```bash
 1. Create PR from develop to main
 2. Wait for CI to pass
@@ -76,6 +82,7 @@ gh run download RUN_ID
 ## Infrastructure Changes
 
 ### Staging Changes
+
 ```bash
 1. Modify infrastructure/terraform/**
 2. Create PR
@@ -85,6 +92,7 @@ gh run download RUN_ID
 ```
 
 ### Production Changes
+
 ```bash
 1. Modify infrastructure/terraform/**
 2. Create PR to main
@@ -98,6 +106,7 @@ gh run download RUN_ID
 ## Security Scan Results
 
 ### Check Latest Scan
+
 ```bash
 # Via CLI
 gh run list --workflow=security-scan.yml --limit 1
@@ -107,6 +116,7 @@ gh api /repos/OWNER/REPO/code-scanning/alerts
 ```
 
 ### View Security Reports
+
 ```
 Actions > Security Scan > Latest run > Artifacts
 - bandit-security-report
@@ -117,6 +127,7 @@ Actions > Security Scan > Latest run > Artifacts
 ## Debugging Workflows
 
 ### View Logs
+
 ```bash
 # List jobs in a run
 gh run view RUN_ID
@@ -129,6 +140,7 @@ gh run download RUN_ID
 ```
 
 ### Re-run Failed Jobs
+
 ```bash
 # Re-run failed jobs only
 gh run rerun RUN_ID --failed
@@ -140,6 +152,7 @@ gh run rerun RUN_ID
 ## Common Failures & Fixes
 
 ### Lint Failures
+
 ```bash
 # Fix locally
 pre-commit run --all-files
@@ -150,6 +163,7 @@ isort services/
 ```
 
 ### Test Failures
+
 ```bash
 # Run tests locally
 cd services/api-gateway
@@ -160,6 +174,7 @@ pytest tests/unit/ --cov=app
 ```
 
 ### Build Failures
+
 ```bash
 # Test Docker build locally
 docker build -t test services/api-gateway
@@ -169,6 +184,7 @@ hadolint services/api-gateway/Dockerfile
 ```
 
 ### Deployment Failures
+
 ```bash
 # Check deployment status
 kubectl get deployments -n voiceassist-staging
@@ -205,11 +221,13 @@ kubectl rollout undo deployment/voiceassist-api -n voiceassist-staging
 ## Secrets Reference
 
 ### Required
+
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 - `GITHUB_TOKEN` (auto-provided)
 
 ### Optional
+
 - `CODECOV_TOKEN` - Code coverage
 - `SNYK_TOKEN` - Snyk scanning
 - `INFRACOST_API_KEY` - Cost estimation
@@ -219,6 +237,7 @@ kubectl rollout undo deployment/voiceassist-api -n voiceassist-staging
 ## Useful GitHub CLI Commands
 
 ### Setup
+
 ```bash
 # Install GitHub CLI
 brew install gh  # macOS
@@ -229,6 +248,7 @@ gh auth login
 ```
 
 ### Common Operations
+
 ```bash
 # Create PR
 gh pr create --title "Fix bug" --body "Description"
@@ -256,6 +276,7 @@ gh workflow disable ci.yml
 ## Monitoring & Metrics
 
 ### Key Metrics to Watch
+
 - **Build Time**: Should be < 10 minutes
 - **Test Success Rate**: Should be > 95%
 - **Deployment Frequency**: Track via GitHub Insights
@@ -263,6 +284,7 @@ gh workflow disable ci.yml
 - **MTTR**: Mean time to recovery from failures
 
 ### Where to Check
+
 ```bash
 # Workflow insights
 Actions > Workflows > Select workflow > View metrics
@@ -282,6 +304,7 @@ gh api /repos/OWNER/REPO/actions/workflows/ci.yml/timing
 ## Emergency Procedures
 
 ### Rollback Deployment
+
 ```bash
 # Staging
 kubectl rollout undo deployment/voiceassist-api -n voiceassist-staging
@@ -292,6 +315,7 @@ kubectl patch service voiceassist-api -n voiceassist-production \
 ```
 
 ### Disable Auto-Deploy
+
 ```bash
 # Temporarily disable workflow
 gh workflow disable build-deploy.yml
@@ -301,6 +325,7 @@ gh workflow enable build-deploy.yml
 ```
 
 ### Force Terraform Unlock
+
 ```bash
 # If state is locked
 cd infrastructure/terraform
@@ -310,6 +335,7 @@ terraform force-unlock LOCK_ID
 ## Best Practices
 
 ✅ **DO:**
+
 - Always run pre-commit hooks before pushing
 - Review Terraform plans carefully
 - Test in staging first
@@ -318,6 +344,7 @@ terraform force-unlock LOCK_ID
 - Review security scans regularly
 
 ❌ **DON'T:**
+
 - Skip CI checks
 - Deploy directly to production
 - Ignore security warnings

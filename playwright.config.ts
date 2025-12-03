@@ -147,7 +147,10 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'pnpm dev',
+    // In CI, use 'preview' to serve pre-built files; locally use 'dev' for HMR
+    command: process.env.CI
+      ? 'pnpm --filter voiceassist-web preview --port 5173'
+      : 'pnpm dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

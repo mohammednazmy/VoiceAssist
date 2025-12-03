@@ -33,7 +33,8 @@ class TestCompleteUserJourney:
 
         # Step 1: User Registration
         register_response = client.post(
-            "/api/auth/register", json={"email": "newuser@example.com", "password": "SecurePass123!@#"}
+            "/api/auth/register",
+            json={"email": "newuser@example.com", "password": "SecurePass123!@#"},
         )
         assert register_response.status_code == 200
         register_data = register_response.json()
@@ -42,7 +43,8 @@ class TestCompleteUserJourney:
 
         # Step 2: User Login
         login_response = client.post(
-            "/api/auth/login", json={"email": "newuser@example.com", "password": "SecurePass123!@#"}
+            "/api/auth/login",
+            json={"email": "newuser@example.com", "password": "SecurePass123!@#"},
         )
         assert login_response.status_code == 200
         login_data = login_response.json()
@@ -75,15 +77,28 @@ class TestCompleteUserJourney:
         assert me_after_logout.status_code in [401, 403, 200]
 
     def test_admin_document_upload_workflow(
-        self, client: TestClient, test_admin_user, admin_auth_headers: dict, sample_medical_document: str
+        self,
+        client: TestClient,
+        test_admin_user,
+        admin_auth_headers: dict,
+        sample_medical_document: str,
     ):
         """Test admin document upload and indexing workflow."""
 
         # Step 1: Admin uploads document
         upload_response = client.post(
             "/api/admin/kb/documents",
-            files={"file": ("diabetes_guide.txt", sample_medical_document.encode(), "text/plain")},
-            data={"title": "Diabetes Mellitus Type 2 Guidelines", "source_type": "guideline"},
+            files={
+                "file": (
+                    "diabetes_guide.txt",
+                    sample_medical_document.encode(),
+                    "text/plain",
+                )
+            },
+            data={
+                "title": "Diabetes Mellitus Type 2 Guidelines",
+                "source_type": "guideline",
+            },
             headers=admin_auth_headers,
         )
 
@@ -132,7 +147,10 @@ class TestCompleteUserJourney:
         # Step 1: First query (cache miss)
         first_response = client.post("/api/realtime/query", json=query_request, headers=auth_headers)
 
-        assert first_response.status_code in [200, 404]  # 404 if endpoint doesn't exist yet
+        assert first_response.status_code in [
+            200,
+            404,
+        ]  # 404 if endpoint doesn't exist yet
 
         if first_response.status_code == 200:
             first_data = first_response.json()
@@ -185,7 +203,11 @@ class TestCompleteUserJourney:
 
         # Test 1: Invalid credentials
         invalid_login = client.post(
-            "/api/auth/login", json={"email": "nonexistent@example.com", "password": "WrongPassword123!@#"}
+            "/api/auth/login",
+            json={
+                "email": "nonexistent@example.com",
+                "password": "WrongPassword123!@#",
+            },
         )
         assert invalid_login.status_code == 401
         error_data = invalid_login.json()
@@ -193,16 +215,21 @@ class TestCompleteUserJourney:
 
         # Test 2: Weak password during registration
         weak_password_register = client.post(
-            "/api/auth/register", json={"email": "weakpass@example.com", "password": "weak"}
+            "/api/auth/register",
+            json={"email": "weakpass@example.com", "password": "weak"},
         )
         assert weak_password_register.status_code == 400
         error_data = weak_password_register.json()
         assert error_data["status"] == "error"
 
         # Test 3: Duplicate email registration
-        client.post("/api/auth/register", json={"email": "duplicate@example.com", "password": "SecurePass123!@#"})
+        client.post(
+            "/api/auth/register",
+            json={"email": "duplicate@example.com", "password": "SecurePass123!@#"},
+        )
         duplicate_register = client.post(
-            "/api/auth/register", json={"email": "duplicate@example.com", "password": "SecurePass123!@#"}
+            "/api/auth/register",
+            json={"email": "duplicate@example.com", "password": "SecurePass123!@#"},
         )
         assert duplicate_register.status_code == 400
 

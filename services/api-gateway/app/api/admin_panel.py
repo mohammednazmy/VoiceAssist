@@ -291,7 +291,11 @@ async def update_user(
     db.refresh(user)
 
     # Log audit event
-    audit_updates = {**update_data, "admin_role": user.admin_role, "is_admin": user.is_admin}
+    audit_updates = {
+        **update_data,
+        "admin_role": user.admin_role,
+        "is_admin": user.is_admin,
+    }
     log_audit_event(
         db=db,
         action="user.update",
@@ -300,7 +304,13 @@ async def update_user(
         resource_type="user",
         resource_id=user_id,
         success=True,
-        details=json.dumps({"original": original_values, "updated": audit_updates, "reason": action_reason}),
+        details=json.dumps(
+            {
+                "original": original_values,
+                "updated": audit_updates,
+                "reason": action_reason,
+            }
+        ),
         request=request,
     )
 
@@ -688,7 +698,7 @@ async def reset_user_password(
                 "success": True,
                 "method": "email",
                 "email_sent": email_sent,
-                "message": "Password reset email sent" if email_sent else "Failed to send email",
+                "message": ("Password reset email sent" if email_sent else "Failed to send email"),
             },
             trace_id=trace_id,
         )
@@ -1026,7 +1036,7 @@ async def bulk_user_operation(
                     {
                         "original": original_values,
                         "action": bulk_request.action,
-                        "new_role": bulk_request.role if bulk_request.action == "set_role" else None,
+                        "new_role": (bulk_request.role if bulk_request.action == "set_role" else None),
                         "reason": bulk_request.reason,
                     }
                 ),
@@ -1468,7 +1478,10 @@ async def admin_websocket(websocket: WebSocket):
                 # Handle ping/pong
                 if data.get("type") == "ping":
                     await websocket.send_json(
-                        {"type": "pong", "payload": {"timestamp": datetime.now(timezone.utc).isoformat() + "Z"}}
+                        {
+                            "type": "pong",
+                            "payload": {"timestamp": datetime.now(timezone.utc).isoformat() + "Z"},
+                        }
                     )
 
                 # Handle event subscription
@@ -1488,7 +1501,10 @@ async def admin_websocket(websocket: WebSocket):
                 # Send heartbeat on timeout
                 if websocket.client_state == WebSocketState.CONNECTED:
                     await websocket.send_json(
-                        {"type": "heartbeat", "payload": {"timestamp": datetime.now(timezone.utc).isoformat() + "Z"}}
+                        {
+                            "type": "heartbeat",
+                            "payload": {"timestamp": datetime.now(timezone.utc).isoformat() + "Z"},
+                        }
                     )
 
     except WebSocketDisconnect:

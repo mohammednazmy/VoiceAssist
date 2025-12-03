@@ -24,21 +24,19 @@ Usage:
     # Warm cache on startup
     await feature_flag_service.warm_cache()
 """
+
 from __future__ import annotations
 
 import json
-import logging
-import time
-from typing import Any, Optional, Dict, List
 from datetime import datetime, timezone
-from cachetools import TTLCache
-
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+from typing import Any, Dict, List, Optional
 
 from app.core.database import SessionLocal, redis_client
-from app.models.feature_flag import FeatureFlag, FeatureFlagType
 from app.core.logging import get_logger
+from app.models.feature_flag import FeatureFlag, FeatureFlagType
+from cachetools import TTLCache
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 logger = get_logger(__name__)
 
@@ -76,17 +74,14 @@ class FeatureFlagService:
 
         # L1 Cache: Local in-memory cache with TTL
         # Uses cachetools.TTLCache for automatic expiration
-        self._local_cache: TTLCache = TTLCache(
-            maxsize=LOCAL_CACHE_MAX_SIZE,
-            ttl=LOCAL_CACHE_TTL
-        )
+        self._local_cache: TTLCache = TTLCache(maxsize=LOCAL_CACHE_MAX_SIZE, ttl=LOCAL_CACHE_TTL)
         self._cache_stats = {
-            'l1_hits': 0,
-            'l1_misses': 0,
-            'l2_hits': 0,
-            'l2_misses': 0,
-            'l3_hits': 0,
-            'l3_misses': 0
+            "l1_hits": 0,
+            "l1_misses": 0,
+            "l2_hits": 0,
+            "l2_misses": 0,
+            "l3_hits": 0,
+            "l3_misses": 0,
         }
 
     def _get_cache_key(self, flag_name: str) -> str:
@@ -104,11 +99,11 @@ class FeatureFlagService:
         """
         try:
             if flag_name in self._local_cache:
-                self._cache_stats['l1_hits'] += 1
+                self._cache_stats["l1_hits"] += 1
                 self.logger.debug(f"L1 cache hit for flag: {flag_name}")
                 return self._local_cache[flag_name]
             else:
-                self._cache_stats['l1_misses'] += 1
+                self._cache_stats["l1_misses"] += 1
                 return None
         except Exception as e:
             self.logger.warning(f"Failed to get from L1 cache: {e}")
@@ -153,11 +148,11 @@ class FeatureFlagService:
             cache_key = self._get_cache_key(flag_name)
             cached_value = redis_client.get(cache_key)
             if cached_value:
-                self._cache_stats['l2_hits'] += 1
+                self._cache_stats["l2_hits"] += 1
                 self.logger.debug(f"L2 cache hit for flag: {flag_name}")
                 return json.loads(cached_value)
             else:
-                self._cache_stats['l2_misses'] += 1
+                self._cache_stats["l2_misses"] += 1
                 return None
         except Exception as e:
             self.logger.warning(f"Failed to get feature flag from L2 cache: {e}")
@@ -176,11 +171,7 @@ class FeatureFlagService:
         # Set in L2 (Redis cache)
         try:
             cache_key = self._get_cache_key(flag_name)
-            redis_client.setex(
-                cache_key,
-                FEATURE_FLAG_CACHE_TTL,
-                json.dumps(flag_data)
-            )
+            redis_client.setex(cache_key, FEATURE_FLAG_CACHE_TTL, json.dumps(flag_data))
             self.logger.debug(f"Set L2 cache for flag: {flag_name}")
         except Exception as e:
             self.logger.warning(f"Failed to set L2 cache: {e}")
@@ -202,12 +193,7 @@ class FeatureFlagService:
         except Exception as e:
             self.logger.warning(f"Failed to invalidate L2 cache: {e}")
 
-    async def is_enabled(
-        self,
-        flag_name: str,
-        default: bool = False,
-        db: Optional[Session] = None
-    ) -> bool:
+    async def is_enabled(self, flag_name: str, default: bool = False, db: Optional[Session] = None) -> bool:
         """Check if a boolean feature flag is enabled.
 
         Uses three-tier cache lookup: L1 (local) -> L2 (Redis) -> L3 (PostgreSQL)
@@ -243,11 +229,11 @@ class FeatureFlagService:
 
             if flag:
                 # Cache the result in both L1 and L2
-                self._cache_stats['l3_hits'] += 1
+                self._cache_stats["l3_hits"] += 1
                 await self._set_cache(flag_name, flag.to_dict())
                 return flag.enabled
             else:
-                self._cache_stats['l3_misses'] += 1
+                self._cache_stats["l3_misses"] += 1
                 return default
         except Exception as e:
             self.logger.error(f"Failed to query feature flag '{flag_name}': {e}", exc_info=True)
@@ -256,12 +242,7 @@ class FeatureFlagService:
             if should_close_db:
                 db.close()
 
-    async def get_value(
-        self,
-        flag_name: str,
-        default: Any = None,
-        db: Optional[Session] = None
-    ) -> Any:
+    async def get_value(self, flag_name: str, default: Any = None, db: Optional[Session] = None) -> Any:
         """Get feature flag value (for non-boolean flags).
 
         Uses three-tier cache lookup: L1 (local) -> L2 (Redis) -> L3 (PostgreSQL)
@@ -308,11 +289,7 @@ class FeatureFlagService:
             if should_close_db:
                 db.close()
 
-    async def get_flag(
-        self,
-        flag_name: str,
-        db: Optional[Session] = None
-    ) -> Optional[FeatureFlag]:
+    async def get_flag(self, flag_name: str, db: Optional[Session] = None) -> Optional[FeatureFlag]:
         """Get complete feature flag object.
 
         Args:
@@ -361,7 +338,7 @@ class FeatureFlagService:
         value: Any = None,
         default_value: Any = None,
         metadata: Optional[Dict] = None,
-        db: Session = None
+        db: Session = None,
     ) -> Optional[FeatureFlag]:
         """Create a new feature flag.
 
@@ -421,7 +398,7 @@ class FeatureFlagService:
         value: Any = None,
         description: Optional[str] = None,
         metadata: Optional[Dict] = None,
-        db: Session = None
+        db: Session = None,
     ) -> Optional[FeatureFlag]:
         """Update an existing feature flag.
 
@@ -476,11 +453,7 @@ class FeatureFlagService:
             if should_close_db:
                 db.close()
 
-    async def delete_flag(
-        self,
-        name: str,
-        db: Session = None
-    ) -> bool:
+    async def delete_flag(self, name: str, db: Session = None) -> bool:
         """Delete a feature flag.
 
         Args:
@@ -559,40 +532,38 @@ class FeatureFlagService:
         Returns:
             Dictionary with cache hit/miss statistics for all cache levels
         """
-        total_l1_requests = self._cache_stats['l1_hits'] + self._cache_stats['l1_misses']
-        total_l2_requests = self._cache_stats['l2_hits'] + self._cache_stats['l2_misses']
-        total_l3_requests = self._cache_stats['l3_hits'] + self._cache_stats['l3_misses']
+        total_l1_requests = self._cache_stats["l1_hits"] + self._cache_stats["l1_misses"]
+        total_l2_requests = self._cache_stats["l2_hits"] + self._cache_stats["l2_misses"]
+        total_l3_requests = self._cache_stats["l3_hits"] + self._cache_stats["l3_misses"]
 
         stats = {
-            'l1_cache': {
-                'hits': self._cache_stats['l1_hits'],
-                'misses': self._cache_stats['l1_misses'],
-                'hit_rate': (self._cache_stats['l1_hits'] / total_l1_requests * 100)
-                           if total_l1_requests > 0 else 0,
-                'size': len(self._local_cache),
-                'max_size': LOCAL_CACHE_MAX_SIZE,
-                'ttl_seconds': LOCAL_CACHE_TTL
+            "l1_cache": {
+                "hits": self._cache_stats["l1_hits"],
+                "misses": self._cache_stats["l1_misses"],
+                "hit_rate": ((self._cache_stats["l1_hits"] / total_l1_requests * 100) if total_l1_requests > 0 else 0),
+                "size": len(self._local_cache),
+                "max_size": LOCAL_CACHE_MAX_SIZE,
+                "ttl_seconds": LOCAL_CACHE_TTL,
             },
-            'l2_cache': {
-                'hits': self._cache_stats['l2_hits'],
-                'misses': self._cache_stats['l2_misses'],
-                'hit_rate': (self._cache_stats['l2_hits'] / total_l2_requests * 100)
-                           if total_l2_requests > 0 else 0,
-                'ttl_seconds': FEATURE_FLAG_CACHE_TTL
+            "l2_cache": {
+                "hits": self._cache_stats["l2_hits"],
+                "misses": self._cache_stats["l2_misses"],
+                "hit_rate": ((self._cache_stats["l2_hits"] / total_l2_requests * 100) if total_l2_requests > 0 else 0),
+                "ttl_seconds": FEATURE_FLAG_CACHE_TTL,
             },
-            'l3_database': {
-                'hits': self._cache_stats['l3_hits'],
-                'misses': self._cache_stats['l3_misses'],
-                'hit_rate': (self._cache_stats['l3_hits'] / total_l3_requests * 100)
-                           if total_l3_requests > 0 else 0
+            "l3_database": {
+                "hits": self._cache_stats["l3_hits"],
+                "misses": self._cache_stats["l3_misses"],
+                "hit_rate": ((self._cache_stats["l3_hits"] / total_l3_requests * 100) if total_l3_requests > 0 else 0),
             },
-            'overall': {
-                'total_requests': total_l1_requests,
-                'cache_hit_rate': (
-                    (self._cache_stats['l1_hits'] + self._cache_stats['l2_hits']) /
-                    total_l1_requests * 100
-                ) if total_l1_requests > 0 else 0
-            }
+            "overall": {
+                "total_requests": total_l1_requests,
+                "cache_hit_rate": (
+                    ((self._cache_stats["l1_hits"] + self._cache_stats["l2_hits"]) / total_l1_requests * 100)
+                    if total_l1_requests > 0
+                    else 0
+                ),
+            },
         }
 
         return stats

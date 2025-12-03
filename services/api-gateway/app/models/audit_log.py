@@ -3,12 +3,13 @@ Audit log model for tracking user actions and system events.
 
 Required for HIPAA compliance - all access to PHI must be logged.
 """
-from sqlalchemy import Column, String, DateTime, Boolean, JSON, UUID
-from sqlalchemy.sql import func
-from app.core.database import Base
-import uuid
+
 import hashlib
-from datetime import datetime
+import uuid
+
+from app.core.database import Base
+from sqlalchemy import JSON, UUID, Boolean, Column, DateTime, String
+from sqlalchemy.sql import func
 
 
 class AuditLog(Base):
@@ -18,6 +19,7 @@ class AuditLog(Base):
     Includes integrity verification via hash to detect tampering.
     Immutable - should never be updated or deleted.
     """
+
     __tablename__ = "audit_logs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

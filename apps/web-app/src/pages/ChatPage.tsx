@@ -296,7 +296,6 @@ export function ChatPage() {
 
     initializeConversation();
     // Note: loadingState intentionally excluded to prevent infinite loops
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, activeConversationId, apiClient, navigate, useUnifiedUI]);
 
   // Load older messages (pagination)
@@ -418,7 +417,7 @@ export function ChatPage() {
     regenerateMessage,
     deleteMessage,
     reconnect,
-    addMessage,
+    addMessage: _addMessage,
   } = useChatSession({
     conversationId: useUnifiedUI
       ? undefined

@@ -84,7 +84,7 @@ def configure_logging():
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
             structlog.processors.UnicodeDecoder(),
-            structlog.processors.JSONRenderer() if not settings.DEBUG else structlog.dev.ConsoleRenderer(),
+            (structlog.processors.JSONRenderer() if not settings.DEBUG else structlog.dev.ConsoleRenderer()),
         ],
         wrapper_class=structlog.stdlib.BoundLogger,
         context_class=dict,

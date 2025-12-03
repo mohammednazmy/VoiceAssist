@@ -275,12 +275,22 @@ class TestCalendarStats:
         mock_stats_result.fetchone.return_value = mock_stats_row
 
         mock_provider_result = MagicMock()
-        mock_provider_result.fetchall.return_value = [mock_provider_row_google, mock_provider_row_ms]
+        mock_provider_result.fetchall.return_value = [
+            mock_provider_row_google,
+            mock_provider_row_ms,
+        ]
 
         mock_status_result = MagicMock()
-        mock_status_result.fetchall.return_value = [mock_status_row_connected, mock_status_row_error]
+        mock_status_result.fetchall.return_value = [
+            mock_status_row_connected,
+            mock_status_row_error,
+        ]
 
-        mock_db.execute.side_effect = [mock_stats_result, mock_provider_result, mock_status_result]
+        mock_db.execute.side_effect = [
+            mock_stats_result,
+            mock_provider_result,
+            mock_status_result,
+        ]
 
         response = await get_calendar_stats(
             request=mock_request,

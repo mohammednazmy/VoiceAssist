@@ -6,7 +6,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useChatSession } from "../useChatSession";
-import type { WebSocketEvent, Message } from "@voiceassist/types";
+import type { Message } from "@voiceassist/types";
 import {
   setupWebSocketMock,
   cleanupWebSocketMock,

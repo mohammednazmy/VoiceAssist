@@ -244,7 +244,9 @@ INTEGRATIONS = {
 }
 
 
-def get_integration_status(integration_id: str) -> tuple[IntegrationStatus, Optional[str]]:
+def get_integration_status(
+    integration_id: str,
+) -> tuple[IntegrationStatus, Optional[str]]:
     """Get the current status of an integration."""
     if integration_id == "postgres":
         try:

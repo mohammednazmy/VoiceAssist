@@ -45,7 +45,7 @@ export function BackupsPage() {
     setConfirmBackup(false);
   };
 
-  const getBackupStatusType = (result: string | undefined): StatusType => {
+  const _getBackupStatusType = (result: string | undefined): StatusType => {
     const mapping: Record<string, StatusType> = {
       success: "healthy",
       failed: "unhealthy",
@@ -93,7 +93,7 @@ export function BackupsPage() {
     { id: "dr" as const, label: "Disaster Recovery" },
   ];
 
-  const overallStatus = getBackupStatusType(backupStatus?.last_backup_result);
+  const overallStatus = _getBackupStatusType(backupStatus?.last_backup_result);
 
   return (
     <PageContainer>
@@ -410,7 +410,10 @@ interface DRStatusTabProps {
   getStatusType: (result: string | undefined) => StatusType;
 }
 
-function DRStatusTab({ drStatus, getStatusType }: DRStatusTabProps) {
+function DRStatusTab({
+  drStatus,
+  getStatusType: _getStatusType,
+}: DRStatusTabProps) {
   if (!drStatus) {
     return (
       <DataPanel title="Disaster Recovery Status">

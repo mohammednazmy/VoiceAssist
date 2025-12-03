@@ -16,7 +16,6 @@ import { extractErrorMessage } from "@voiceassist/types";
 const STORAGE_KEY = "voiceassist:templates";
 
 export function useTemplates() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user: _user } = useAuth();
   const [templates, setTemplates] = useState<ConversationTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(false);

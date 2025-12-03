@@ -44,17 +44,11 @@ class ClinicalContext(Base):
     allergies = Column(JSONB, nullable=True)  # Array of allergies
 
     # Vitals
-    vitals = Column(
-        JSONB, nullable=True
-    )  # {temp, heart_rate, blood_pressure, respiratory_rate, spo2}
+    vitals = Column(JSONB, nullable=True)  # {temp, heart_rate, blood_pressure, respiratory_rate, spo2}
 
     # Timestamps
-    last_updated = Column(
-        DateTime(timezone=True), default=datetime.utcnow, nullable=False
-    )
-    created_at = Column(
-        DateTime(timezone=True), default=datetime.utcnow, nullable=False
-    )
+    last_updated = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     def __repr__(self):
         return f"<ClinicalContext(id={self.id}, user_id={self.user_id}, session_id={self.session_id})>"
@@ -74,9 +68,7 @@ class ClinicalContext(Base):
             "medications": self.medications or [],
             "allergies": self.allergies or [],
             "vitals": self.vitals or {},
-            "last_updated": (
-                self.last_updated.isoformat() if self.last_updated else None
-            ),
+            "last_updated": (self.last_updated.isoformat() if self.last_updated else None),
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 

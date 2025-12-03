@@ -156,7 +156,7 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
 
     for (let lag = 0; lag < maxLag; lag += lagStep) {
       // Get reference window starting at (writeIndex - lag - windowSize)
-      let refStart =
+      const refStart =
         (this.referenceWriteIndex -
           lag -
           windowSize +
@@ -190,7 +190,7 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
     return maxCorrelation;
   }
 
-  process(inputs, outputs, parameters) {
+  process(inputs, _outputs, _parameters) {
     // Return false to stop if marked inactive
     if (!this.isActive) {
       return false;

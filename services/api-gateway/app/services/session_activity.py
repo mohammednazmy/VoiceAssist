@@ -135,7 +135,10 @@ class SessionActivityService:
 
             if now - last_activity > inactivity_limit:
                 logger.info(f"Session inactivity timeout for user {user_id}")
-                return (False, "Session timed out due to inactivity. Please log in again.")
+                return (
+                    False,
+                    "Session timed out due to inactivity. Please log in again.",
+                )
 
         # Session is valid - record new activity
         await self.record_activity(user_id, token_iat)

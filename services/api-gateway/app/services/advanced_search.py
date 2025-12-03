@@ -370,9 +370,7 @@ class AdvancedSearchAggregator:
         for i, result in enumerate(results, 1):
             source = result.title or result.source_type or "Unknown source"
             source_tag = (result.source_type or result.metadata.get("source_type") or "source").upper()
-            context_parts.append(
-                f"\n[{i} | {source_tag}] {source}:\n{result.content}\n"
-            )
+            context_parts.append(f"\n[{i} | {source_tag}] {source}:\n{result.content}\n")
 
         formatted_context = "\n".join(context_parts)
         return results, formatted_context

@@ -19,29 +19,35 @@ Navigate to your repository settings: `Settings > Secrets and variables > Action
 #### Required Secrets
 
 **AWS Credentials:**
+
 ```
 AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY
 ```
 
 Generate IAM credentials with these policies:
+
 - AmazonEC2ContainerRegistryFullAccess
 - AmazonEKSClusterPolicy
 - AmazonEKSServicePolicy
 - Custom policy for Terraform state access
 
 **GitHub Token:**
+
 - `GITHUB_TOKEN` is automatically provided - no setup needed
 
 #### Optional Secrets
 
 **Code Coverage:**
+
 ```
 CODECOV_TOKEN
 ```
+
 Get from: https://codecov.io/
 
 **Security Tools:**
+
 ```
 SNYK_TOKEN              # From https://snyk.io/
 GITLEAKS_LICENSE        # Optional, for Gitleaks Pro
@@ -49,9 +55,11 @@ INFRACOST_API_KEY       # From https://www.infracost.io/
 ```
 
 **Notifications:**
+
 ```
 SLACK_WEBHOOK_URL
 ```
+
 Create webhook in Slack: Apps > Incoming Webhooks
 
 ### 2. Configure GitHub Environments
@@ -59,11 +67,13 @@ Create webhook in Slack: Apps > Incoming Webhooks
 Create four environments in `Settings > Environments`:
 
 #### staging
+
 - **Protection rules**: None (auto-deploy)
 - **Environment secrets**: None needed (inherits from repository)
 - **Reviewers**: Optional
 
 #### production
+
 - **Protection rules**:
   - Required reviewers: Add 1-2 team members
   - Wait timer: 5 minutes (optional)
@@ -72,10 +82,12 @@ Create four environments in `Settings > Environments`:
 - **Reviewers**: DevOps/SRE team members
 
 #### staging-infrastructure
+
 - **Protection rules**: Optional approval
 - **Deployment branches**: Any branch
 
 #### production-infrastructure
+
 - **Protection rules**:
   - Required reviewers: Add 1-2 infrastructure team members
   - Deployment branches: `main` only
@@ -134,6 +146,7 @@ aws dynamodb create-table \
 ```
 
 Update `infrastructure/terraform/backend.tf`:
+
 ```hcl
 terraform {
   backend "s3" {
@@ -150,6 +163,7 @@ terraform {
 
 1. Create workspace on Terraform Cloud
 2. Update `infrastructure/terraform/backend.tf`:
+
 ```hcl
 terraform {
   cloud {
@@ -178,17 +192,20 @@ terraform {
 ### 6. Enable GitHub Security Features
 
 #### Enable Dependabot
+
 - Go to `Settings > Security & analysis`
 - Enable "Dependabot alerts"
 - Enable "Dependabot security updates"
 - The `.github/dependabot.yml` file is already configured
 
 #### Enable Code Scanning
+
 - Go to `Settings > Security & analysis`
 - Enable "Code scanning"
 - GitHub will use workflows that upload SARIF results
 
 #### Enable Secret Scanning
+
 - Go to `Settings > Security & analysis`
 - Enable "Secret scanning"
 - Enable "Push protection"
@@ -196,6 +213,7 @@ terraform {
 ### 7. Configure Branch Protection Rules
 
 #### For `main` branch:
+
 ```
 Settings > Branches > Add rule
 
@@ -221,6 +239,7 @@ Branch name pattern: main
 ```
 
 #### For `develop` branch:
+
 ```
 Branch name pattern: develop
 
@@ -264,6 +283,7 @@ terraform apply -var-file="environments/production.tfvars"
 ### 10. Test Workflows
 
 #### Test CI Pipeline
+
 ```bash
 # Create a test branch
 git checkout -b test/ci-setup
@@ -280,11 +300,13 @@ git push origin test/ci-setup
 ```
 
 #### Test Security Scan
+
 - The security scan will run automatically
 - Check Actions tab for results
 - Review any findings
 
 #### Test Terraform Plan
+
 ```bash
 # Make a small infrastructure change
 git checkout -b test/terraform-plan
@@ -302,6 +324,7 @@ git push origin test/terraform-plan
 ### 11. Setup Monitoring (Optional)
 
 #### CloudWatch Dashboards
+
 ```bash
 # Create dashboard for monitoring deployments
 aws cloudwatch put-dashboard \
@@ -310,6 +333,7 @@ aws cloudwatch put-dashboard \
 ```
 
 #### Setup Alerts
+
 ```bash
 # Create SNS topic for alerts
 aws sns create-topic --name voiceassist-deployment-alerts
@@ -343,11 +367,13 @@ After setup, verify:
 ### Common Issues
 
 **Issue: AWS credentials not working**
+
 - Verify IAM user has required permissions
 - Check access key is active
 - Ensure secrets are named exactly as shown
 
 **Issue: Terraform state lock errors**
+
 - Check DynamoDB table exists
 - Verify table name matches backend config
 - Release locks manually if needed:
@@ -356,17 +382,20 @@ After setup, verify:
   ```
 
 **Issue: Docker build fails**
+
 - Check Dockerfile syntax
 - Verify base images are accessible
 - Check if ECR repository exists
 
 **Issue: Kubernetes deployment fails**
+
 - Verify EKS cluster is accessible
 - Check kubectl context is correct
 - Verify namespace exists
 - Check RBAC permissions
 
 **Issue: Coverage upload fails**
+
 - Verify CODECOV_TOKEN is correct
 - Check Codecov service status
 - Review workflow logs for errors
@@ -395,16 +424,19 @@ After successful setup:
 ### Regular Tasks
 
 **Weekly:**
+
 - Review Dependabot PRs
 - Check security scan results
 - Monitor workflow performance
 
 **Monthly:**
+
 - Review and update workflows
 - Audit AWS costs (ECR, CloudWatch)
 - Review access controls
 
 **Quarterly:**
+
 - Update GitHub Actions versions
 - Review and update secrets
 - Disaster recovery testing

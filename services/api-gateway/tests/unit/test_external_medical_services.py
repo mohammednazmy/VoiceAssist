@@ -128,7 +128,11 @@ class TestMedicalCalculators:
     def test_meld_na_dialysis(self):
         """Test MELD-Na with dialysis."""
         result = MedicalCalculators.meld_na(
-            bilirubin=5.0, inr=2.0, creatinine=1.5, sodium=130, dialysis_twice_past_week=True
+            bilirubin=5.0,
+            inr=2.0,
+            creatinine=1.5,
+            sodium=130,
+            dialysis_twice_past_week=True,
         )
 
         # Dialysis sets creatinine to 4.0
@@ -151,7 +155,11 @@ class TestMedicalCalculators:
     def test_child_pugh_class_c(self):
         """Test Child-Pugh Class C."""
         result = MedicalCalculators.child_pugh(
-            bilirubin=8.0, albumin=2.0, inr=2.8, ascites="moderate_severe", encephalopathy="grade_3_4"
+            bilirubin=8.0,
+            albumin=2.0,
+            inr=2.8,
+            ascites="moderate_severe",
+            encephalopathy="grade_3_4",
         )
 
         assert result.score >= 10
@@ -184,7 +192,12 @@ class TestMedicalCalculators:
     def test_sofa_low_score(self):
         """Test SOFA with minimal organ dysfunction."""
         result = MedicalCalculators.sofa(
-            pao2_fio2=450, platelets=200, bilirubin=0.8, cardiovascular=0, gcs=15, creatinine=0.9
+            pao2_fio2=450,
+            platelets=200,
+            bilirubin=0.8,
+            cardiovascular=0,
+            gcs=15,
+            creatinine=0.9,
         )
 
         assert result.score <= 2
@@ -193,7 +206,12 @@ class TestMedicalCalculators:
     def test_sofa_high_score(self):
         """Test SOFA with severe organ dysfunction."""
         result = MedicalCalculators.sofa(
-            pao2_fio2=90, platelets=40, bilirubin=8.0, cardiovascular=4, gcs=6, creatinine=4.5
+            pao2_fio2=90,
+            platelets=40,
+            bilirubin=8.0,
+            cardiovascular=4,
+            gcs=6,
+            creatinine=4.5,
         )
 
         assert result.score >= 12
@@ -202,7 +220,12 @@ class TestMedicalCalculators:
     def test_sofa_sepsis_criteria(self):
         """Test SOFA for sepsis detection."""
         result = MedicalCalculators.sofa(
-            pao2_fio2=250, platelets=100, bilirubin=2.5, cardiovascular=2, gcs=13, creatinine=2.2
+            pao2_fio2=250,
+            platelets=100,
+            bilirubin=2.5,
+            cardiovascular=2,
+            gcs=13,
+            creatinine=2.2,
         )
 
         # Score should trigger sepsis consideration
@@ -216,7 +239,9 @@ class TestMedicalCalculators:
     def test_qsofa_low_risk(self):
         """Test qSOFA with low risk."""
         result = MedicalCalculators.qsofa(
-            respiratory_rate_gte_22=False, altered_mentation=False, systolic_bp_lte_100=False
+            respiratory_rate_gte_22=False,
+            altered_mentation=False,
+            systolic_bp_lte_100=False,
         )
 
         assert result.score == 0
@@ -225,7 +250,9 @@ class TestMedicalCalculators:
     def test_qsofa_high_risk(self):
         """Test qSOFA with high risk."""
         result = MedicalCalculators.qsofa(
-            respiratory_rate_gte_22=True, altered_mentation=True, systolic_bp_lte_100=True
+            respiratory_rate_gte_22=True,
+            altered_mentation=True,
+            systolic_bp_lte_100=True,
         )
 
         assert result.score == 3
@@ -716,7 +743,10 @@ class TestEnhancedPubMedService:
                     "studies": [
                         {
                             "protocolSection": {
-                                "identificationModule": {"nctId": "NCT12345678", "briefTitle": "Heart Failure Trial"},
+                                "identificationModule": {
+                                    "nctId": "NCT12345678",
+                                    "briefTitle": "Heart Failure Trial",
+                                },
                                 "statusModule": {"overallStatus": "Recruiting"},
                                 "designModule": {
                                     "phases": ["Phase 3"],
@@ -760,11 +790,25 @@ class TestAPIEndpoints:
 
     @pytest.fixture
     def client(self):
-        """Create test client."""
-        from app.main import app
-        from fastapi.testclient import TestClient
+        """Create test client with mocked external dependencies."""
+        from unittest.mock import MagicMock
 
-        return TestClient(app)
+        # Mock QdrantClient class to prevent connection attempts
+        mock_qdrant_instance = MagicMock()
+        mock_qdrant_instance.get_collections.return_value = MagicMock(collections=[])
+
+        with patch("qdrant_client.QdrantClient", return_value=mock_qdrant_instance):
+            # Need to reimport app after mocking
+            import importlib
+
+            import app.api.admin_kb
+
+            importlib.reload(app.api.admin_kb)
+
+            from app.main import app
+            from fastapi.testclient import TestClient
+
+            return TestClient(app)
 
     def test_calculator_list_endpoint(self, client):
         """Test calculator list endpoint."""
@@ -799,7 +843,8 @@ class TestAPIEndpoints:
     def test_ckd_epi_endpoint(self, client):
         """Test CKD-EPI calculator endpoint."""
         response = client.post(
-            "/api/external-medical/calculators/ckd-epi", json={"creatinine": 1.2, "age": 55, "sex": "female"}
+            "/api/external-medical/calculators/ckd-epi",
+            json={"creatinine": 1.2, "age": 55, "sex": "female"},
         )
 
         assert response.status_code == 200
@@ -811,7 +856,10 @@ class TestAPIEndpoints:
         """Test generic calculator endpoint."""
         response = client.post(
             "/api/external-medical/calculators/generic",
-            json={"calculator_name": "bmi", "parameters": {"weight": 75, "height": 180}},
+            json={
+                "calculator_name": "bmi",
+                "parameters": {"weight": 75, "height": 180},
+            },
         )
 
         assert response.status_code == 200

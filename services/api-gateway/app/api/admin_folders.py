@@ -117,7 +117,7 @@ def folder_to_info(
         name=folder.name,
         color=folder.color,
         icon=folder.icon,
-        parent_folder_id=str(folder.parent_folder_id) if folder.parent_folder_id else None,
+        parent_folder_id=(str(folder.parent_folder_id) if folder.parent_folder_id else None),
         parent_folder_name=parent.name if parent else None,
         created_at=folder.created_at.isoformat() if folder.created_at else "",
         conversation_count=conversation_count,
@@ -356,7 +356,12 @@ async def get_folder_stats(
         )
 
         stats.top_users_by_folders = [
-            {"user_id": str(u.id), "user_email": u.email, "folder_count": u.folder_count} for u in top_users
+            {
+                "user_id": str(u.id),
+                "user_email": u.email,
+                "folder_count": u.folder_count,
+            }
+            for u in top_users
         ]
 
         # Empty folders (no conversations)

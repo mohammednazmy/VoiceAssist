@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { CollapsibleSidebar } from "../CollapsibleSidebar";
 
@@ -201,9 +201,8 @@ describe("CollapsibleSidebar - Mobile", () => {
       useIsMobile: () => true,
     }));
 
-    const { CollapsibleSidebar: MobileSidebar } = await import(
-      "../CollapsibleSidebar"
-    );
+    const { CollapsibleSidebar: MobileSidebar } =
+      await import("../CollapsibleSidebar");
 
     const { container } = render(
       <BrowserRouter>

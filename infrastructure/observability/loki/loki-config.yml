@@ -40,7 +40,7 @@ compactor:
   shared_store: filesystem
 
 limits_config:
-  retention_period: 90d  # HIPAA: 90 days log retention
+  retention_period: 90d # HIPAA: 90 days log retention
   reject_old_samples: true
   reject_old_samples_max_age: 168h
   ingestion_rate_mb: 10

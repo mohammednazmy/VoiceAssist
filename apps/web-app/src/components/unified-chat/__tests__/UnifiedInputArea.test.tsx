@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { UnifiedInputArea } from "../UnifiedInputArea";
 
@@ -199,7 +199,7 @@ describe("UnifiedInputArea", () => {
       const textarea = screen.getByPlaceholderText(
         "Type a message...",
       ) as HTMLTextAreaElement;
-      const initialHeight = textarea.style.height;
+      const _initialHeight = textarea.style.height;
 
       await user.type(textarea, "Line 1\nLine 2\nLine 3\nLine 4");
 
@@ -234,9 +234,8 @@ describe("UnifiedInputArea - Voice Mode", () => {
     }));
 
     vi.resetModules();
-    const { UnifiedInputArea: VoiceInputArea } = await import(
-      "../UnifiedInputArea"
-    );
+    const { UnifiedInputArea: VoiceInputArea } =
+      await import("../UnifiedInputArea");
 
     render(<VoiceInputArea conversationId="conv-1" onSendMessage={vi.fn()} />);
 

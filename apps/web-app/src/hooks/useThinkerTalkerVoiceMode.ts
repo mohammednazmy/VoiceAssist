@@ -125,7 +125,6 @@ export function useThinkerTalkerVoiceMode(
 
   // Track current response for streaming
   let currentResponseId: string | null = null;
-  let currentResponseContent = "";
 
   // Audio playback hook
   const audioPlayback = useTTAudioPlayback({
@@ -179,21 +178,18 @@ export function useThinkerTalkerVoiceMode(
         // Resetting here causes race conditions with arriving audio chunks
         voiceLog.debug(`[TTVoiceMode] New response started: ${messageId}`);
         currentResponseId = messageId;
-        currentResponseContent = "";
       }
-      currentResponseContent += delta;
       onAIResponse?.(delta, false);
     },
 
     // Handle complete response
-    onResponseComplete: (content: string, messageId: string) => {
+    onResponseComplete: (content: string, _messageId: string) => {
       addMessage({
         role: "assistant",
         content,
         source: "voice" as MessageSource,
       });
       currentResponseId = null;
-      currentResponseContent = "";
       onAIResponse?.(content, true);
     },
 

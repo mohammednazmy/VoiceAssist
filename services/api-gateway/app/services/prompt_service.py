@@ -72,7 +72,14 @@ class PromptService:
 
         # L1 Cache: Local in-memory cache with TTL
         self._local_cache: TTLCache = TTLCache(maxsize=LOCAL_CACHE_MAX_SIZE, ttl=LOCAL_CACHE_TTL)
-        self._cache_stats = {"l1_hits": 0, "l1_misses": 0, "l2_hits": 0, "l2_misses": 0, "l3_hits": 0, "l3_misses": 0}
+        self._cache_stats = {
+            "l1_hits": 0,
+            "l1_misses": 0,
+            "l2_hits": 0,
+            "l2_misses": 0,
+            "l3_hits": 0,
+            "l3_misses": 0,
+        }
 
         # Default prompts for fallback
         self._default_prompts = self._load_default_prompts()
@@ -304,7 +311,10 @@ Remember: You're SPEAKING, not writing. Keep it brief and natural.""",
                 db.close()
 
     async def get_voice_instructions(
-        self, persona: Optional[str] = None, conversation_id: Optional[str] = None, db: Optional[Session] = None
+        self,
+        persona: Optional[str] = None,
+        conversation_id: Optional[str] = None,
+        db: Optional[Session] = None,
     ) -> str:
         """Get voice mode system instructions.
 
@@ -754,7 +764,11 @@ Important: Always recommend consulting a healthcare provider for specific medica
                 db.close()
 
     async def publish_prompt(
-        self, prompt_id: UUID, change_summary: Optional[str] = None, actor: Optional[User] = None, db: Session = None
+        self,
+        prompt_id: UUID,
+        change_summary: Optional[str] = None,
+        actor: Optional[User] = None,
+        db: Session = None,
     ) -> Optional[Prompt]:
         """Publish a prompt (make draft content live)."""
         should_close_db = False
@@ -779,7 +793,10 @@ Important: Always recommend consulting a healthcare provider for specific medica
             latest_version = (
                 db.query(PromptVersion)
                 .filter(
-                    and_(PromptVersion.prompt_id == prompt.id, PromptVersion.version_number == prompt.current_version)
+                    and_(
+                        PromptVersion.prompt_id == prompt.id,
+                        PromptVersion.version_number == prompt.current_version,
+                    )
                 )
                 .first()
             )
@@ -849,7 +866,12 @@ Important: Always recommend consulting a healthcare provider for specific medica
             # Get the target version
             target_version = (
                 db.query(PromptVersion)
-                .filter(and_(PromptVersion.prompt_id == prompt_id, PromptVersion.version_number == version_number))
+                .filter(
+                    and_(
+                        PromptVersion.prompt_id == prompt_id,
+                        PromptVersion.version_number == version_number,
+                    )
+                )
                 .first()
             )
 
@@ -995,7 +1017,12 @@ Important: Always recommend consulting a healthcare provider for specific medica
         try:
             return (
                 db.query(PromptVersion)
-                .filter(and_(PromptVersion.prompt_id == prompt_id, PromptVersion.version_number == version_number))
+                .filter(
+                    and_(
+                        PromptVersion.prompt_id == prompt_id,
+                        PromptVersion.version_number == version_number,
+                    )
+                )
                 .first()
             )
         except Exception as e:
@@ -1056,7 +1083,12 @@ Important: Always recommend consulting a healthcare provider for specific medica
         try:
             prompts = (
                 db.query(Prompt)
-                .filter(and_(Prompt.status == PromptStatus.PUBLISHED.value, Prompt.is_active is True))
+                .filter(
+                    and_(
+                        Prompt.status == PromptStatus.PUBLISHED.value,
+                        Prompt.is_active is True,
+                    )
+                )
                 .all()
             )
 
@@ -1068,7 +1100,8 @@ Important: Always recommend consulting a healthcare provider for specific medica
                 # Also cache by intent for quick lookup
                 if prompt.intent_category:
                     await self._set_cache(
-                        self._get_cache_key("intent", f"{prompt.prompt_type}:{prompt.intent_category}"), prompt_data
+                        self._get_cache_key("intent", f"{prompt.prompt_type}:{prompt.intent_category}"),
+                        prompt_data,
                     )
 
             self.logger.info(f"Prompt cache warmed: {len(prompts)} prompts cached")
@@ -1090,7 +1123,7 @@ Important: Always recommend consulting a healthcare provider for specific medica
             "l1_cache": {
                 "hits": self._cache_stats["l1_hits"],
                 "misses": self._cache_stats["l1_misses"],
-                "hit_rate": (self._cache_stats["l1_hits"] / total_l1 * 100) if total_l1 > 0 else 0,
+                "hit_rate": ((self._cache_stats["l1_hits"] / total_l1 * 100) if total_l1 > 0 else 0),
                 "size": len(self._local_cache),
                 "max_size": LOCAL_CACHE_MAX_SIZE,
                 "ttl_seconds": LOCAL_CACHE_TTL,
@@ -1098,7 +1131,7 @@ Important: Always recommend consulting a healthcare provider for specific medica
             "l2_cache": {
                 "hits": self._cache_stats["l2_hits"],
                 "misses": self._cache_stats["l2_misses"],
-                "hit_rate": (self._cache_stats["l2_hits"] / total_l2 * 100) if total_l2 > 0 else 0,
+                "hit_rate": ((self._cache_stats["l2_hits"] / total_l2 * 100) if total_l2 > 0 else 0),
                 "ttl_seconds": PROMPT_CACHE_TTL,
             },
             "l3_database": {

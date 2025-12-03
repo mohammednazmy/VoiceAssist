@@ -295,7 +295,8 @@ class TestAdminVoiceFeatureFlagsAPI:
         mock_get_db.return_value = iter([mock_session])
 
         response = auth_client.patch(
-            "/api/admin/voice/feature-flags/voice.echo_detection_enabled", json={"enabled": False}
+            "/api/admin/voice/feature-flags/voice.echo_detection_enabled",
+            json={"enabled": False},
         )
 
         assert response.status_code == 200

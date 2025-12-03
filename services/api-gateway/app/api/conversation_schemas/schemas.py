@@ -181,7 +181,10 @@ class ConversationSettingsSchema(BaseModel):
     language: Optional[str] = Field(None, description="Preferred language code (e.g., 'en', 'es', 'fr')")
     auto_tts: Optional[bool] = Field(None, description="Automatically read assistant responses aloud")
     context_window: Optional[int] = Field(
-        None, ge=1, le=100, description="Number of previous messages to include as context"
+        None,
+        ge=1,
+        le=100,
+        description="Number of previous messages to include as context",
     )
     temperature: Optional[float] = Field(None, ge=0.0, le=2.0, description="LLM temperature setting")
     max_tokens: Optional[int] = Field(None, ge=100, le=8000, description="Max tokens for responses")

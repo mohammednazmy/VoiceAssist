@@ -16,7 +16,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from app.core.database import Base
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
@@ -98,7 +98,12 @@ class Prompt(Base):
     current_version = Column(Integer, nullable=False, default=1)
 
     # Model settings (per-prompt overrides)
-    temperature = Column(Float, nullable=True, default=0.7, comment="LLM temperature (0.0-2.0), higher = more creative")
+    temperature = Column(
+        Float,
+        nullable=True,
+        default=0.7,
+        comment="LLM temperature (0.0-2.0), higher = more creative",
+    )
     max_tokens = Column(Integer, nullable=True, default=1024, comment="Maximum response tokens")
     model_name = Column(String(100), nullable=True, comment="Optional model override (e.g., 'gpt-4o')")
 
@@ -106,7 +111,11 @@ class Prompt(Base):
     prompt_metadata = Column("metadata", JSONB, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
     updated_at = Column(
         DateTime(timezone=True),
         nullable=False,
@@ -152,7 +161,7 @@ class Prompt(Base):
             "metadata": self.prompt_metadata,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-            "published_at": self.published_at.isoformat() if self.published_at else None,
+            "published_at": (self.published_at.isoformat() if self.published_at else None),
             "created_by_id": str(self.created_by_id) if self.created_by_id else None,
             "updated_by_id": str(self.updated_by_id) if self.updated_by_id else None,
             "created_by_email": self.created_by.email if self.created_by else None,
@@ -190,7 +199,12 @@ class PromptVersion(Base):
     __tablename__ = "prompt_versions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    prompt_id = Column(UUID(as_uuid=True), ForeignKey("prompts.id", ondelete="CASCADE"), nullable=False, index=True)
+    prompt_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("prompts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
 
     # Version info
     version_number = Column(Integer, nullable=False)
@@ -210,7 +224,11 @@ class PromptVersion(Base):
     status = Column(String(20), nullable=False)
 
     # Timestamp
-    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
 
     # Relationships
     prompt = relationship("Prompt", back_populates="versions")

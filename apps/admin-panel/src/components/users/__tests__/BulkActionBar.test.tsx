@@ -6,11 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BulkActionBar } from "../BulkActionBar";
-import type {
-  BulkOperationResult,
-  BulkAction,
-  AdminRole,
-} from "../../../hooks/useBulkOperations";
+import type { BulkOperationResult } from "../../../hooks/useBulkOperations";
 
 // Mock window.prompt
 const mockPrompt = vi.fn();

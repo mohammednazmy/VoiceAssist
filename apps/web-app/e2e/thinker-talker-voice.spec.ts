@@ -352,8 +352,9 @@ async function openVoicePanel(page: Page): Promise<boolean> {
     await page.waitForSelector("[data-testid='voice-mode-panel']", {
       timeout: 5000,
     });
-  } catch (e) {
+  } catch {
     // Panel may not have appeared - let the test handle this
+    // eslint-disable-next-line no-console
     console.log("[openVoicePanel] Panel did not appear after clicking button");
   }
   return true;
@@ -416,7 +417,7 @@ test.describe("Thinker/Talker Voice Mode UI", () => {
     // Mock WebSocket to immediately return connected status
     // This prevents the button from being disabled
     await page.routeWebSocket(/\/api\/realtime\/ws/, (ws) => {
-      const server = ws.connectToServer();
+      const _server = ws.connectToServer();
       // Send connected message to client
       ws.onMessage((message) => {
         // Forward messages to server if needed, or just acknowledge
@@ -914,7 +915,7 @@ test.describe("Thinker/Talker Barge-In Functionality", () => {
     await openVoicePanel(page);
 
     // The connection status indicator should exist
-    const statusIndicator = page
+    const _statusIndicator = page
       .locator("[data-testid*='connection'], [data-testid*='status']")
       .first();
 

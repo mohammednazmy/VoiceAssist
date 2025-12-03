@@ -74,7 +74,11 @@ class TestEnhancedRegistration:
         for password in weak_passwords:
             response = client.post(
                 "/api/auth/register",
-                json={"email": f"test{uuid.uuid4()}@example.com", "password": password, "role": "clinician"},
+                json={
+                    "email": f"test{uuid.uuid4()}@example.com",
+                    "password": password,
+                    "role": "clinician",
+                },
             )
 
             # Should reject weak password
@@ -90,7 +94,11 @@ class TestEnhancedRegistration:
         """Test successful registration with strong password."""
         response = client.post(
             "/api/auth/register",
-            json={"email": f"test{uuid.uuid4()}@example.com", "password": "Str0ng!P@ssw0rd", "role": "clinician"},
+            json={
+                "email": f"test{uuid.uuid4()}@example.com",
+                "password": "Str0ng!P@ssw0rd",
+                "role": "clinician",
+            },
         )
 
         # Should accept strong password
@@ -106,7 +114,11 @@ class TestEnhancedRegistration:
         """Test that registration response includes request ID."""
         response = client.post(
             "/api/auth/register",
-            json={"email": f"test{uuid.uuid4()}@example.com", "password": "Str0ng!P@ssw0rd", "role": "clinician"},
+            json={
+                "email": f"test{uuid.uuid4()}@example.com",
+                "password": "Str0ng!P@ssw0rd",
+                "role": "clinician",
+            },
         )
 
         # Should include X-Request-ID header
@@ -121,7 +133,11 @@ class TestEnhancedRegistration:
         """Test that registration response follows envelope format."""
         response = client.post(
             "/api/auth/register",
-            json={"email": f"test{uuid.uuid4()}@example.com", "password": "Str0ng!P@ssw0rd", "role": "clinician"},
+            json={
+                "email": f"test{uuid.uuid4()}@example.com",
+                "password": "Str0ng!P@ssw0rd",
+                "role": "clinician",
+            },
         )
 
         data = response.json()
@@ -146,7 +162,10 @@ class TestEnhancedLogin:
         email = f"test{uuid.uuid4()}@example.com"
         password = "Str0ng!P@ssw0rd"
 
-        client.post("/api/auth/register", json={"email": email, "password": password, "role": "clinician"})
+        client.post(
+            "/api/auth/register",
+            json={"email": email, "password": password, "role": "clinician"},
+        )
 
         # Now login
         response = client.post("/api/auth/login", json={"email": email, "password": password})
@@ -162,7 +181,8 @@ class TestEnhancedLogin:
     def test_login_with_invalid_credentials(self, client):
         """Test login with invalid credentials."""
         response = client.post(
-            "/api/auth/login", json={"email": "nonexistent@example.com", "password": "WrongPassword123!"}
+            "/api/auth/login",
+            json={"email": "nonexistent@example.com", "password": "WrongPassword123!"},
         )
 
         assert response.status_code == 401
@@ -174,7 +194,10 @@ class TestEnhancedLogin:
 
     def test_login_includes_request_id(self, client):
         """Test that login response includes request ID."""
-        response = client.post("/api/auth/login", json={"email": "test@example.com", "password": "Password123!"})
+        response = client.post(
+            "/api/auth/login",
+            json={"email": "test@example.com", "password": "Password123!"},
+        )
 
         # Should include X-Request-ID header
         assert "X-Request-ID" in response.headers
@@ -202,7 +225,10 @@ class TestEnhancedTokenRefresh:
         email = f"test{uuid.uuid4()}@example.com"
         password = "Str0ng!P@ssw0rd"
 
-        client.post("/api/auth/register", json={"email": email, "password": password, "role": "clinician"})
+        client.post(
+            "/api/auth/register",
+            json={"email": email, "password": password, "role": "clinician"},
+        )
 
         login_response = client.post("/api/auth/login", json={"email": email, "password": password})
 
@@ -241,7 +267,10 @@ class TestEnhancedLogout:
         email = f"test{uuid.uuid4()}@example.com"
         password = "Str0ng!P@ssw0rd"
 
-        client.post("/api/auth/register", json={"email": email, "password": password, "role": "clinician"})
+        client.post(
+            "/api/auth/register",
+            json={"email": email, "password": password, "role": "clinician"},
+        )
 
         login_response = client.post("/api/auth/login", json={"email": email, "password": password})
 
@@ -253,7 +282,10 @@ class TestEnhancedLogout:
         assert response.status_code == 200
 
         # Token should be revoked - attempting to use it should fail
-        protected_response = client.get("/api/protected-endpoint", headers={"Authorization": f"Bearer {access_token}"})
+        protected_response = client.get(
+            "/api/protected-endpoint",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
 
         # Should be unauthorized due to revocation
         assert protected_response.status_code == 401
@@ -268,7 +300,10 @@ class TestEnhancedProtectedEndpoints:
         email = f"test{uuid.uuid4()}@example.com"
         password = "Str0ng!P@ssw0rd"
 
-        client.post("/api/auth/register", json={"email": email, "password": password, "role": "clinician"})
+        client.post(
+            "/api/auth/register",
+            json={"email": email, "password": password, "role": "clinician"},
+        )
 
         login_response = client.post("/api/auth/login", json={"email": email, "password": password})
 
@@ -303,9 +338,17 @@ class TestRequestIDPropagation:
             (
                 "POST",
                 "/api/auth/register",
-                {"email": f"test{uuid.uuid4()}@example.com", "password": "Str0ng!P@ssw0rd", "role": "clinician"},
+                {
+                    "email": f"test{uuid.uuid4()}@example.com",
+                    "password": "Str0ng!P@ssw0rd",
+                    "role": "clinician",
+                },
             ),
-            ("POST", "/api/auth/login", {"email": "test@example.com", "password": "Password123!"}),
+            (
+                "POST",
+                "/api/auth/login",
+                {"email": "test@example.com", "password": "Password123!"},
+            ),
             ("GET", "/health", None),
         ]
 
@@ -344,7 +387,10 @@ class TestAPIEnvelopeConsistency:
 
     def test_all_error_responses_follow_envelope(self, client):
         """Test that error responses follow envelope format."""
-        response = client.post("/api/auth/login", json={"email": "invalid@example.com", "password": "wrong"})
+        response = client.post(
+            "/api/auth/login",
+            json={"email": "invalid@example.com", "password": "wrong"},
+        )
 
         data = response.json()
         required_keys = {"success", "data", "error", "metadata", "timestamp"}
@@ -356,7 +402,10 @@ class TestAPIEnvelopeConsistency:
 
     def test_error_response_has_code_and_message(self, client):
         """Test that error responses include code and message."""
-        response = client.post("/api/auth/login", json={"email": "invalid@example.com", "password": "wrong"})
+        response = client.post(
+            "/api/auth/login",
+            json={"email": "invalid@example.com", "password": "wrong"},
+        )
 
         data = response.json()
         error = data["error"]
@@ -374,7 +423,11 @@ class TestPasswordValidationIntegration:
         """Test that password validation provides helpful feedback."""
         response = client.post(
             "/api/auth/register",
-            json={"email": f"test{uuid.uuid4()}@example.com", "password": "weak", "role": "clinician"},
+            json={
+                "email": f"test{uuid.uuid4()}@example.com",
+                "password": "weak",
+                "role": "clinician",
+            },
         )
 
         assert response.status_code in [400, 422]
@@ -399,10 +452,17 @@ class TestPasswordValidationIntegration:
         for password, should_succeed in test_cases:
             response = client.post(
                 "/api/auth/register",
-                json={"email": f"test{uuid.uuid4()}@example.com", "password": password, "role": "clinician"},
+                json={
+                    "email": f"test{uuid.uuid4()}@example.com",
+                    "password": password,
+                    "role": "clinician",
+                },
             )
 
             if should_succeed:
                 assert response.status_code == 201, f"Expected success for {password}"
             else:
-                assert response.status_code in [400, 422], f"Expected failure for {password}"
+                assert response.status_code in [
+                    400,
+                    422,
+                ], f"Expected failure for {password}"

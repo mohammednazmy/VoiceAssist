@@ -1,0 +1,18 @@
+# Gitleaks ignore file
+# These are false positives - test fixtures and example passwords, not real secrets
+
+# Test files with example/test passwords
+services/api-gateway/tests/e2e/conftest.py
+services/api-gateway/tests/e2e/test_complete_user_journey.py
+services/api-gateway/tests/e2e/test_performance_characteristics.py
+services/api-gateway/tests/e2e/test_service_resilience.py
+services/api-gateway/tests/integration/test_auth_flow_enhanced.py
+services/api-gateway/tests/integration/test_phase6_integrations.py
+
+# Storybook files with placeholder text
+packages/ui/src/stories/Input.stories.tsx
+
+# Service files with "password" as variable names (not actual secrets)
+services/api-gateway/app/services/caldav_service.py
+services/api-gateway/app/services/nextcloud_file_indexer.py
+services/api-gateway/app/services/tools/oauth_service.py

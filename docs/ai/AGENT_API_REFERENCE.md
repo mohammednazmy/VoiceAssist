@@ -538,9 +538,9 @@ Test the endpoints directly:
 
 ## Version History
 
-| Version | Date       | Changes                                           |
-| ------- | ---------- | ------------------------------------------------- |
-| 1.3.0   | 2025-12-03 | Added AI-Docs semantic search section             |
-| 1.2.0   | 2025-11-27 | Added /agent/tasks.json endpoint documentation    |
-| 1.1.0   | 2025-11-27 | Updated to reflect static JSON endpoints          |
-| 1.0.0   | 2025-11-27 | Initial release                                   |
+| Version | Date       | Changes                                        |
+| ------- | ---------- | ---------------------------------------------- |
+| 1.3.0   | 2025-12-03 | Added AI-Docs semantic search section          |
+| 1.2.0   | 2025-11-27 | Added /agent/tasks.json endpoint documentation |
+| 1.1.0   | 2025-11-27 | Updated to reflect static JSON endpoints       |
+| 1.0.0   | 2025-11-27 | Initial release                                |

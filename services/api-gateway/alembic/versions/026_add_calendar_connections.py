@@ -23,7 +23,12 @@ def upgrade():
     # Create user_calendar_connections table
     op.create_table(
         "user_calendar_connections",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text("gen_random_uuid()"),
+        ),
         sa.Column("user_id", sa.String(255), nullable=False, index=True),
         sa.Column("provider", sa.String(50), nullable=False),  # 'google', 'microsoft', 'apple', 'nextcloud', 'caldav'
         sa.Column("provider_display_name", sa.String(100), nullable=True),  # User-friendly name: "Work Google Calendar"
@@ -46,8 +51,18 @@ def upgrade():
         sa.Column("last_sync_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("sync_interval_minutes", sa.Integer, nullable=True, server_default="15"),
         # Timestamps
-        sa.Column("connected_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "connected_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
         # Unique constraint: one connection per provider per user (caldav_url differentiates multiple CalDAV servers)
         sa.UniqueConstraint("user_id", "provider", "caldav_url", name="uq_user_calendar_connection"),
     )
@@ -56,7 +71,11 @@ def upgrade():
     op.create_index("ix_calendar_connections_user_id", "user_calendar_connections", ["user_id"])
     op.create_index("ix_calendar_connections_status", "user_calendar_connections", ["status"])
     op.create_index("ix_calendar_connections_provider", "user_calendar_connections", ["provider"])
-    op.create_index("ix_calendar_connections_user_provider", "user_calendar_connections", ["user_id", "provider"])
+    op.create_index(
+        "ix_calendar_connections_user_provider",
+        "user_calendar_connections",
+        ["user_id", "provider"],
+    )
 
     # Add updated_at trigger
     op.execute(
