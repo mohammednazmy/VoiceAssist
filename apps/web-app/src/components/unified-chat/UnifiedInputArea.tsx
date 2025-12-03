@@ -5,14 +5,12 @@
  * Supports automatic input detection, push-to-talk, and always-on voice modes.
  */
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
-  Keyboard,
   Mic,
   MicOff,
   Send,
   Paperclip,
-  Settings,
   Loader2,
   Volume2,
   Square,
