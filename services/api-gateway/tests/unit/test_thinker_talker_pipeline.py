@@ -447,7 +447,7 @@ class TestTalkerServiceTypes:
         config = VoiceConfig()
         assert config.voice_id == "TxGEqnHWrfWFTfGW9XjX"  # Josh (premium male voice)
         assert config.model_id == "eleven_turbo_v2_5"  # Best balance of quality and latency
-        assert config.stability == 0.5
+        assert config.stability == 0.78  # Higher for consistent voice
         assert config.similarity_boost == 0.75
         assert config.style == 0.0
         assert config.output_format == "mp3_22050_32"
