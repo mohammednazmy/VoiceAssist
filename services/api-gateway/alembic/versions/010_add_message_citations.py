@@ -45,9 +45,7 @@ def upgrade():
         sa.Column("url", sa.Text, nullable=True),
         # Source metadata
         sa.Column("authors", JSONB, nullable=True, comment="Array of author names"),
-        sa.Column(
-            "publication_date", sa.String(50), nullable=True, comment="Publication date"
-        ),
+        sa.Column("publication_date", sa.String(50), nullable=True, comment="Publication date"),
         sa.Column("journal", sa.String(255), nullable=True, comment="Journal name"),
         sa.Column("volume", sa.String(50), nullable=True),
         sa.Column("issue", sa.String(50), nullable=True),
@@ -61,11 +59,12 @@ def upgrade():
             nullable=True,
             comment="0-100 score from semantic search",
         ),
+        sa.Column("quoted_text", sa.Text, nullable=True, comment="Excerpt from source"),
         sa.Column(
-            "quoted_text", sa.Text, nullable=True, comment="Excerpt from source"
-        ),
-        sa.Column(
-            "context", JSONB, nullable=True, comment="Additional context (section, chapter, etc.)"
+            "context",
+            JSONB,
+            nullable=True,
+            comment="Additional context (section, chapter, etc.)",
         ),
         # Timestamps
         sa.Column(

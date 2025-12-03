@@ -241,7 +241,10 @@ async def calendar_oauth_callback_get(
             allowed_origins = settings.ALLOWED_ORIGINS.split(",") if settings.ALLOWED_ORIGINS else []
             frontend_url = next(
                 (o.strip() for o in allowed_origins if "dev.asimo.io" in o),
-                next((o.strip() for o in allowed_origins if o.strip().startswith("https")), "https://dev.asimo.io"),
+                next(
+                    (o.strip() for o in allowed_origins if o.strip().startswith("https")),
+                    "https://dev.asimo.io",
+                ),
             )
 
         # Redirect to integrations page with success status

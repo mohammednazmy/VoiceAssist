@@ -33,7 +33,10 @@ class TestPerformanceCharacteristics:
         for _ in range(iterations):
             start_time = time.time()
 
-            response = client.post("/api/auth/login", json={"email": test_user.email, "password": "Test123!@#"})
+            response = client.post(
+                "/api/auth/login",
+                json={"email": test_user.email, "password": "Test123!@#"},
+            )
 
             duration = time.time() - start_time
             login_times.append(duration)
@@ -125,14 +128,20 @@ class TestPerformanceCharacteristics:
         for i in range(10):
             client.post(
                 "/api/auth/register",
-                json={"email": f"concurrent_perf_{i}@example.com", "password": "ConcurrentPerf123!@#"},
+                json={
+                    "email": f"concurrent_perf_{i}@example.com",
+                    "password": "ConcurrentPerf123!@#",
+                },
             )
 
         def login_user(user_id: int):
             start_time = time.time()
             response = client.post(
                 "/api/auth/login",
-                json={"email": f"concurrent_perf_{user_id}@example.com", "password": "ConcurrentPerf123!@#"},
+                json={
+                    "email": f"concurrent_perf_{user_id}@example.com",
+                    "password": "ConcurrentPerf123!@#",
+                },
             )
             duration = time.time() - start_time
             return duration, response.status_code

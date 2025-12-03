@@ -237,7 +237,10 @@ class TestCalendarTool:
         }
 
         with patch.object(
-            self.tool, "_get_user_calendars", new_callable=AsyncMock, return_value=[mock_calendar]
+            self.tool,
+            "_get_user_calendars",
+            new_callable=AsyncMock,
+            return_value=[mock_calendar],
         ), patch.object(self.tool, "_fetch_events", new_callable=AsyncMock, return_value=mock_events):
             result = await self.tool.list_events(
                 args={"start_date": "today"},
@@ -266,8 +269,16 @@ class TestCalendarTool:
         }
 
         with patch.object(
-            self.tool, "_get_user_calendars", new_callable=AsyncMock, return_value=[mock_calendar]
-        ), patch.object(self.tool, "_create_calendar_event", new_callable=AsyncMock, return_value=created_event):
+            self.tool,
+            "_get_user_calendars",
+            new_callable=AsyncMock,
+            return_value=[mock_calendar],
+        ), patch.object(
+            self.tool,
+            "_create_calendar_event",
+            new_callable=AsyncMock,
+            return_value=created_event,
+        ):
             result = await self.tool.create_event(
                 args={
                     "title": "Test Event",

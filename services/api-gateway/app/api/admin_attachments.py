@@ -130,7 +130,7 @@ def attachment_to_info(
         file_url=attachment.file_url,
         mime_type=attachment.mime_type,
         file_metadata=attachment.file_metadata,
-        uploaded_at=attachment.uploaded_at.isoformat() if attachment.uploaded_at else "",
+        uploaded_at=(attachment.uploaded_at.isoformat() if attachment.uploaded_at else ""),
         created_at=attachment.created_at.isoformat() if attachment.created_at else "",
     )
 
@@ -253,7 +253,10 @@ async def list_attachments(
             admin_user=admin_user,
             action="list",
             request=request,
-            details={"count": len(attachments), "filters": {"user_id": user_id, "file_type": file_type}},
+            details={
+                "count": len(attachments),
+                "filters": {"user_id": user_id, "file_type": file_type},
+            },
         )
 
         return success_response(
@@ -536,7 +539,7 @@ async def delete_attachment(
             "attachment_id": attachment_id,
             "storage_deleted": storage_deleted,
             "storage_freed": file_size if storage_deleted else 0,
-            "storage_freed_formatted": format_file_size(file_size) if storage_deleted else "0 B",
+            "storage_freed_formatted": (format_file_size(file_size) if storage_deleted else "0 B"),
         },
         message="Attachment deleted successfully",
     )

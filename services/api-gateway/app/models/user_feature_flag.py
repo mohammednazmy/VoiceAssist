@@ -2,17 +2,15 @@
 
 Provides per-user feature flag overrides for A/B testing and gradual rollouts.
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Optional
 import uuid
-
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Index
-from sqlalchemy.dialects.postgresql import UUID, JSON
-from sqlalchemy.orm import relationship
+from datetime import datetime, timezone
 
 from app.core.database import Base
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, String
+from sqlalchemy.dialects.postgresql import JSON, UUID
 
 
 class UserFeatureFlag(Base):
@@ -46,9 +44,7 @@ class UserFeatureFlag(Base):
     override_metadata = Column("metadata", JSON, nullable=True)
 
     # Composite unique constraint: one override per user per flag
-    __table_args__ = (
-        Index('ix_user_feature_flags_user_flag', 'user_id', 'flag_name', unique=True),
-    )
+    __table_args__ = (Index("ix_user_feature_flags_user_flag", "user_id", "flag_name", unique=True),)
 
     def __repr__(self):
         return f"<UserFeatureFlag(user_id='{self.user_id}', flag='{self.flag_name}', enabled={self.enabled})>"

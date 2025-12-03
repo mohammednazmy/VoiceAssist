@@ -55,13 +55,12 @@ class WebRTCSignalingService:
         session = self._get_or_create(session_id, user_id)
         session.offer_sdp = sdp
         logger.info(
-            "webrtc_offer_registered", extra={"session_id": session_id, "user_id": user_id}
+            "webrtc_offer_registered",
+            extra={"session_id": session_id, "user_id": user_id},
         )
         return session
 
-    def register_answer(
-        self, *, session_id: str, user_id: str, sdp: str
-    ) -> Optional[WebRTCSession]:
+    def register_answer(self, *, session_id: str, user_id: str, sdp: str) -> Optional[WebRTCSession]:
         session = self._sessions.get(session_id)
         if not session:
             logger.warning(
@@ -72,13 +71,12 @@ class WebRTCSignalingService:
 
         session.answer_sdp = sdp
         logger.info(
-            "webrtc_answer_registered", extra={"session_id": session_id, "user_id": user_id}
+            "webrtc_answer_registered",
+            extra={"session_id": session_id, "user_id": user_id},
         )
         return session
 
-    def add_ice_candidate(
-        self, *, session_id: str, user_id: str, candidate: dict
-    ) -> Optional[WebRTCSession]:
+    def add_ice_candidate(self, *, session_id: str, user_id: str, candidate: dict) -> Optional[WebRTCSession]:
         session = self._sessions.get(session_id)
         if not session:
             logger.warning(
@@ -104,4 +102,3 @@ class WebRTCSignalingService:
 
 
 signaling_service = WebRTCSignalingService()
-

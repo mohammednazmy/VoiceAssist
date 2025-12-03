@@ -286,7 +286,11 @@ class SentenceChunker:
                     end_pos += 1
 
                 # Check for space after (confirms sentence end)
-                if end_pos >= len(self._buffer) or self._buffer[end_pos] in {" ", "\n", "\t"}:
+                if end_pos >= len(self._buffer) or self._buffer[end_pos] in {
+                    " ",
+                    "\n",
+                    "\t",
+                }:
                     return end_pos
 
         return None

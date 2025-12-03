@@ -63,7 +63,10 @@ async def test_message_with_attachments_and_citations(db: Session):
 
     # Create message
     message = Message(
-        id=message_id, session_id=session_id, role="assistant", content="Based on the attached file and research..."
+        id=message_id,
+        session_id=session_id,
+        role="assistant",
+        content="Based on the attached file and research...",
     )
 
     db.add(message)
@@ -128,14 +131,23 @@ async def test_folder_hierarchy_with_sessions(db: Session):
 
     # Create subfolder
     sub_folder = ConversationFolder(
-        id=uuid4(), user_id=user_id, name="Cardiology", parent_folder_id=root_folder.id, color="#e74c3c"
+        id=uuid4(),
+        user_id=user_id,
+        name="Cardiology",
+        parent_folder_id=root_folder.id,
+        color="#e74c3c",
     )
 
     db.add(sub_folder)
     db.commit()
 
     # Create session in subfolder
-    session = ChatSession(id=uuid4(), user_id=user_id, title="Patient consultation", folder_id=sub_folder.id)
+    session = ChatSession(
+        id=uuid4(),
+        user_id=user_id,
+        title="Patient consultation",
+        folder_id=sub_folder.id,
+    )
 
     db.add(session)
     db.commit()
@@ -166,7 +178,13 @@ async def test_complete_workflow(db: Session):
     db.add(folder)
 
     # 2. Create clinical context
-    context = ClinicalContext(id=uuid4(), user_id=user_id, age=50, gender="female", problems=["Diabetes Type 2"])
+    context = ClinicalContext(
+        id=uuid4(),
+        user_id=user_id,
+        age=50,
+        gender="female",
+        problems=["Diabetes Type 2"],
+    )
     db.add(context)
 
     # 3. Create session in folder
@@ -176,7 +194,10 @@ async def test_complete_workflow(db: Session):
 
     # 4. Create message
     message = Message(
-        id=uuid4(), session_id=session.id, role="assistant", content="Based on the clinical data and research..."
+        id=uuid4(),
+        session_id=session.id,
+        role="assistant",
+        content="Based on the clinical data and research...",
     )
     db.add(message)
     db.commit()

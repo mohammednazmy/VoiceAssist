@@ -80,7 +80,8 @@ class PromptTest(BaseModel):
 
     test_message: str = Field(..., min_length=1, max_length=4000)
     use_draft: bool = Field(
-        default=True, description="If true, test with draft content; if false, test with published content"
+        default=True,
+        description="If true, test with draft content; if false, test with published content",
     )
     model_override: Optional[str] = Field(None, max_length=100)
     temperature_override: Optional[float] = Field(None, ge=0, le=2)

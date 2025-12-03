@@ -166,7 +166,10 @@ class AnionGapRequest(BaseModel):
 
 
 @router.post("/uptodate/search", response_model=List[dict])
-async def search_uptodate(request: UpToDateSearchRequest, service: UpToDateService = Depends(get_uptodate_service)):
+async def search_uptodate(
+    request: UpToDateSearchRequest,
+    service: UpToDateService = Depends(get_uptodate_service),
+):
     """
     Search UpToDate topics.
 
@@ -199,7 +202,10 @@ async def search_uptodate(request: UpToDateSearchRequest, service: UpToDateServi
 
 
 @router.post("/uptodate/topic", response_model=dict)
-async def get_uptodate_topic(request: UpToDateTopicRequest, service: UpToDateService = Depends(get_uptodate_service)):
+async def get_uptodate_topic(
+    request: UpToDateTopicRequest,
+    service: UpToDateService = Depends(get_uptodate_service),
+):
     """
     Get full content of an UpToDate topic.
 
@@ -230,7 +236,8 @@ async def get_uptodate_topic(request: UpToDateTopicRequest, service: UpToDateSer
 
 @router.post("/uptodate/drug-interactions", response_model=dict)
 async def check_drug_interactions(
-    request: DrugInteractionRequest, service: UpToDateService = Depends(get_uptodate_service)
+    request: DrugInteractionRequest,
+    service: UpToDateService = Depends(get_uptodate_service),
 ):
     """
     Check for drug-drug interactions.
@@ -292,7 +299,10 @@ async def get_topic_graphics(topic_id: str, service: UpToDateService = Depends(g
 
 
 @router.post("/pubmed/search", response_model=dict)
-async def search_pubmed(request: PubMedSearchRequest, service: EnhancedPubMedService = Depends(get_pubmed_service)):
+async def search_pubmed(
+    request: PubMedSearchRequest,
+    service: EnhancedPubMedService = Depends(get_pubmed_service),
+):
     """
     Search PubMed with enhanced features.
 
@@ -403,7 +413,9 @@ async def get_full_text(pmid: str, service: EnhancedPubMedService = Depends(get_
 
 @router.get("/pubmed/similar/{pmid}", response_model=List[dict])
 async def find_similar_articles(
-    pmid: str, max_results: int = 10, service: EnhancedPubMedService = Depends(get_pubmed_service)
+    pmid: str,
+    max_results: int = 10,
+    service: EnhancedPubMedService = Depends(get_pubmed_service),
 ):
     """
     Find similar articles using PubMed's related articles feature.
@@ -439,11 +451,21 @@ async def get_citation_network(pmid: str, service: EnhancedPubMedService = Depen
         return {
             "pmid": network.pmid,
             "cited_by": [
-                {"pmid": a.pmid, "title": a.title, "authors": a.authors[:3], "publication_date": a.publication_date}
+                {
+                    "pmid": a.pmid,
+                    "title": a.title,
+                    "authors": a.authors[:3],
+                    "publication_date": a.publication_date,
+                }
                 for a in network.cited_by
             ],
             "references": [
-                {"pmid": a.pmid, "title": a.title, "authors": a.authors[:3], "publication_date": a.publication_date}
+                {
+                    "pmid": a.pmid,
+                    "title": a.title,
+                    "authors": a.authors[:3],
+                    "publication_date": a.publication_date,
+                }
                 for a in network.references
             ],
             "cited_by_count": network.cited_by_count,
@@ -455,7 +477,8 @@ async def get_citation_network(pmid: str, service: EnhancedPubMedService = Depen
 
 @router.post("/pubmed/clinical-trials", response_model=List[dict])
 async def search_clinical_trials(
-    request: ClinicalTrialSearchRequest, service: EnhancedPubMedService = Depends(get_pubmed_service)
+    request: ClinicalTrialSearchRequest,
+    service: EnhancedPubMedService = Depends(get_pubmed_service),
 ):
     """
     Search for clinical trials related to a condition.
@@ -599,7 +622,10 @@ async def calculate_anion_gap(request: AnionGapRequest):
     """
     try:
         result = MedicalCalculators.anion_gap(
-            sodium=request.sodium, chloride=request.chloride, bicarbonate=request.bicarbonate, albumin=request.albumin
+            sodium=request.sodium,
+            chloride=request.chloride,
+            bicarbonate=request.bicarbonate,
+            albumin=request.albumin,
         )
 
         return _format_calculator_result(result)
@@ -685,6 +711,10 @@ async def health_check():
     """Check health of external medical integration services."""
     return {
         "status": "healthy",
-        "services": {"uptodate": "configured", "pubmed": "available", "calculators": "available"},
+        "services": {
+            "uptodate": "configured",
+            "pubmed": "available",
+            "calculators": "available",
+        },
         "calculator_count": len(list_calculators()),
     }

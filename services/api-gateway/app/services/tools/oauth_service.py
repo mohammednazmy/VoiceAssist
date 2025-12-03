@@ -563,7 +563,7 @@ class OAuthService:
         return {
             "url": row.caldav_url,
             "username": row.caldav_username,
-            "password": self._decrypt(row.caldav_password_encrypted) if row.caldav_password_encrypted else None,
+            "password": (self._decrypt(row.caldav_password_encrypted) if row.caldav_password_encrypted else None),
         }
 
     async def get_user_connections(
@@ -605,8 +605,8 @@ class OAuthService:
                 "is_active": row.status == "connected" and (row.token_expires_at is None or row.token_expires_at > now),
                 "is_default": row.is_default or False,
                 "caldav_url": row.caldav_url,
-                "last_sync_at": row.last_sync_at.isoformat() if row.last_sync_at else None,
-                "connected_at": row.connected_at.isoformat() if row.connected_at else None,
+                "last_sync_at": (row.last_sync_at.isoformat() if row.last_sync_at else None),
+                "connected_at": (row.connected_at.isoformat() if row.connected_at else None),
                 "error_message": row.error_message,
             }
             for row in rows

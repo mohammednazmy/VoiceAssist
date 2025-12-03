@@ -423,7 +423,10 @@ async def delete_all_conversations(
     logger.info(f"Deleted {deleted_count} conversations and {deleted_messages} messages for user {current_user.id}")
 
     return success_response(
-        data={"deleted_count": deleted_count, "message": f"Successfully deleted {deleted_count} conversation(s)"}
+        data={
+            "deleted_count": deleted_count,
+            "message": f"Successfully deleted {deleted_count} conversation(s)",
+        }
     )
 
 

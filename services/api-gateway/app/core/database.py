@@ -109,7 +109,11 @@ def transaction(db: Session) -> Generator[Session, None, None]:
         logger.debug("Transaction committed successfully")
     except Exception as e:
         db.rollback()
-        logger.error("Transaction rolled back due to error", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "Transaction rolled back due to error",
+            error=str(e),
+            error_type=type(e).__name__,
+        )
         raise
 
 
@@ -138,7 +142,11 @@ async def async_transaction(db: AsyncSession) -> AsyncGenerator[AsyncSession, No
         logger.debug("Async transaction committed successfully")
     except Exception as e:
         await db.rollback()
-        logger.error("Async transaction rolled back due to error", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "Async transaction rolled back due to error",
+            error=str(e),
+            error_type=type(e).__name__,
+        )
         raise
 
 

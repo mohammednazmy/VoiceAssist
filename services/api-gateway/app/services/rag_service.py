@@ -459,7 +459,11 @@ class QueryOrchestrator:
         total_tokens = llm_response.used_tokens or 0
         conversation_messages = [
             {"role": "user", "content": llm_request.prompt},
-            {"role": "assistant", "content": llm_response.text or "", "tool_calls": None},
+            {
+                "role": "assistant",
+                "content": llm_response.text or "",
+                "tool_calls": None,
+            },
         ]
 
         # Update the assistant message with tool_calls if present
@@ -506,7 +510,7 @@ class QueryOrchestrator:
                         "type": "tool_call",
                         "iteration": iteration,
                         "tool": tool_call.name,
-                        "result_keys": list(tool_result.keys()) if isinstance(tool_result, dict) else None,
+                        "result_keys": (list(tool_result.keys()) if isinstance(tool_result, dict) else None),
                     }
                 )
 

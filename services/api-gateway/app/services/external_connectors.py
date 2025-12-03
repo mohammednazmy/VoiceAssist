@@ -12,7 +12,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional
 
 import httpx
 from app.core.config import settings
@@ -66,9 +66,7 @@ class OpenEvidenceConnector:
         self.default_topics = list(default_topics or ["cardiology", "infectious disease"])
         self.timeout = timeout
 
-    async def fetch_recent(
-        self, query: str, limit: int = 5
-    ) -> List[ExternalRecord]:
+    async def fetch_recent(self, query: str, limit: int = 5) -> List[ExternalRecord]:
         """Fetch recent evidence for a query.
 
         Returns empty results when credentials are missing to avoid noisy
@@ -86,15 +84,11 @@ class OpenEvidenceConnector:
         close_client = False
         client = self.client
         if client is None:
-            client = httpx.AsyncClient(
-                base_url=self.base_url, headers=headers, timeout=self.timeout
-            )
+            client = httpx.AsyncClient(base_url=self.base_url, headers=headers, timeout=self.timeout)
             close_client = True
 
         try:
-            response = await client.get(
-                "/v1/search", params={"q": query, "limit": limit}
-            )
+            response = await client.get("/v1/search", params={"q": query, "limit": limit})
             response.raise_for_status()
             payload = response.json()
             records: List[ExternalRecord] = []
@@ -163,15 +157,11 @@ class PubMedConnector:
             self.service = service
         self.default_queries = ["systematic review", "randomized trial"]
 
-    async def fetch_recent(
-        self, query: str, max_results: int = 5
-    ) -> List[ExternalRecord]:
+    async def fetch_recent(self, query: str, max_results: int = 5) -> List[ExternalRecord]:
         """Search PubMed for recent articles."""
 
         try:
-            search_result = await self.service.search(
-                query=query, max_results=max_results, sort="pub_date"
-            )
+            search_result = await self.service.search(query=query, max_results=max_results, sort="pub_date")
         except Exception as exc:  # noqa: BLE001
             logger.error("PubMed search failed for '%s': %s", query, exc)
             return []
@@ -239,9 +229,7 @@ class ExternalSyncScheduler:
 
         self._stop_event.clear()
         for connector in self.connectors:
-            interval = self.per_connector_intervals.get(
-                getattr(connector, "name", ""), self.default_interval_minutes
-            )
+            interval = self.per_connector_intervals.get(getattr(connector, "name", ""), self.default_interval_minutes)
             if interval <= 0:
                 logger.info(
                     "Skipping connector %s because interval is %s",
@@ -271,11 +259,7 @@ class ExternalSyncScheduler:
     async def _run_connector(self, connector: object, interval_minutes: int) -> None:
         """Run a connector on an interval until stopped."""
 
-        interval_seconds = (
-            self.tick_seconds
-            if self.tick_seconds is not None
-            else max(interval_minutes, 1) * 60
-        )
+        interval_seconds = self.tick_seconds if self.tick_seconds is not None else max(interval_minutes, 1) * 60
 
         while not self._stop_event.is_set():
             try:
@@ -283,7 +267,9 @@ class ExternalSyncScheduler:
                 await sync_method()
             except Exception as exc:  # noqa: BLE001
                 logger.error(
-                    "External sync failed for %s: %s", getattr(connector, "name", "unknown"), exc
+                    "External sync failed for %s: %s",
+                    getattr(connector, "name", "unknown"),
+                    exc,
                 )
 
             try:

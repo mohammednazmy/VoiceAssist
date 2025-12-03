@@ -84,9 +84,12 @@ class PostalAddress:
     def to_vcard_value(self) -> str:
         """Convert to vCard ADR value."""
         # vCard ADR format: PO Box;Extended;Street;City;State;Postal;Country
-        return (
-            f";;{self.street or ''};{self.city or ''};{self.state or ''};{self.postal_code or ''};{self.country or ''}"
-        )
+        street = self.street or ""
+        city = self.city or ""
+        state = self.state or ""
+        postal = self.postal_code or ""
+        country = self.country or ""
+        return f";;{street};{city};{state};{postal};{country}"
 
 
 @dataclass
@@ -870,7 +873,6 @@ _carddav_service: Optional[CardDAVService] = None
 
 def get_carddav_service() -> Optional[CardDAVService]:
     """Get CardDAV service singleton."""
-    global _carddav_service
     return _carddav_service
 
 

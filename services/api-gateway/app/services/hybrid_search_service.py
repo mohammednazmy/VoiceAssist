@@ -262,9 +262,7 @@ class HybridSearchService:
 
         return Filter(must=must)
 
-    def _metadata_matches_filters(
-        self, metadata: Dict[str, Any], filters: Optional[Dict[str, Any]]
-    ) -> bool:
+    def _metadata_matches_filters(self, metadata: Dict[str, Any], filters: Optional[Dict[str, Any]]) -> bool:
         """Check if metadata satisfies filter conditions."""
 
         if not filters:
@@ -321,7 +319,13 @@ class HybridSearchService:
                             **{
                                 k: v
                                 for k, v in result.payload.items()
-                                if k not in ["content", "document_id", "title", "source_type"]
+                                if k
+                                not in [
+                                    "content",
+                                    "document_id",
+                                    "title",
+                                    "source_type",
+                                ]
                             },
                         },
                         source="vector",

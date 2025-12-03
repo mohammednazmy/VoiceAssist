@@ -2,7 +2,9 @@
 
 Provides utilities for W3C Trace Context propagation across service boundaries.
 """
+
 from typing import Dict
+
 from opentelemetry import trace
 from opentelemetry.propagate import inject
 
@@ -31,7 +33,7 @@ def get_current_trace_id() -> str:
     """
     span = trace.get_current_span()
     if span and span.get_span_context().is_valid:
-        return format(span.get_span_context().trace_id, '032x')
+        return format(span.get_span_context().trace_id, "032x")
     return ""
 
 
@@ -43,5 +45,5 @@ def get_current_span_id() -> str:
     """
     span = trace.get_current_span()
     if span and span.get_span_context().is_valid:
-        return format(span.get_span_context().span_id, '016x')
+        return format(span.get_span_context().span_id, "016x")
     return ""

@@ -241,7 +241,10 @@ class VoicePipelineSession:
         Args:
             audio_data: Raw PCM16 audio bytes
         """
-        if self._cancelled or self._state not in (PipelineState.LISTENING, PipelineState.IDLE):
+        if self._cancelled or self._state not in (
+            PipelineState.LISTENING,
+            PipelineState.IDLE,
+        ):
             if self._metrics.audio_chunks_received == 0:
                 logger.warning(f"Dropping audio - state: {self._state}, cancelled: {self._cancelled}")
             return
@@ -548,7 +551,7 @@ class VoicePipelineSession:
             PipelineMessage(
                 type="audio.output",
                 data={
-                    "audio": base64.b64encode(chunk.data).decode() if chunk.data else "",
+                    "audio": (base64.b64encode(chunk.data).decode() if chunk.data else ""),
                     "format": chunk.format,
                     "is_final": chunk.is_final,
                 },

@@ -123,7 +123,13 @@ def upgrade():
         sa.Column("name", sa.String(255), unique=True, nullable=False, index=True),
         sa.Column("display_name", sa.String(255), nullable=False),
         sa.Column("description", sa.Text, nullable=True),
-        sa.Column("prompt_type", sa.String(50), nullable=False, server_default="chat", index=True),
+        sa.Column(
+            "prompt_type",
+            sa.String(50),
+            nullable=False,
+            server_default="chat",
+            index=True,
+        ),
         sa.Column("intent_category", sa.String(100), nullable=True, index=True),
         sa.Column("system_prompt", sa.Text, nullable=False),
         sa.Column("published_content", sa.Text, nullable=True),
@@ -131,8 +137,18 @@ def upgrade():
         sa.Column("is_active", sa.Boolean, nullable=False, server_default="true"),
         sa.Column("current_version", sa.Integer, nullable=False, server_default="1"),
         sa.Column("metadata", postgresql.JSONB, nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
         sa.Column("published_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("created_by_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("updated_by_id", postgresql.UUID(as_uuid=True), nullable=True),
@@ -154,7 +170,12 @@ def upgrade():
         sa.Column("changed_by_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("changed_by_email", sa.String(255), nullable=True),
         sa.Column("status", sa.String(20), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
         sa.ForeignKeyConstraint(["prompt_id"], ["prompts.id"], ondelete="CASCADE"),
         sa.UniqueConstraint("prompt_id", "version_number", name="uq_prompt_version"),
     )
@@ -162,7 +183,11 @@ def upgrade():
     # Create additional indexes for common queries
     op.create_index("ix_prompts_type_intent", "prompts", ["prompt_type", "intent_category"])
     op.create_index("ix_prompts_status_active", "prompts", ["status", "is_active"])
-    op.create_index("ix_prompt_versions_prompt_version", "prompt_versions", ["prompt_id", "version_number"])
+    op.create_index(
+        "ix_prompt_versions_prompt_version",
+        "prompt_versions",
+        ["prompt_id", "version_number"],
+    )
 
     # Seed default prompts
     prompts_table = sa.table(

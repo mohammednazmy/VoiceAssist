@@ -19,7 +19,11 @@ class AdminAuditLog(Base):
     __tablename__ = "admin_audit_logs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
 
     actor_id = Column(UUID(as_uuid=True), nullable=True, index=True)
     actor_email = Column(String(255), nullable=True)

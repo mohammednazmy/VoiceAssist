@@ -17,6 +17,14 @@ category: reference
 **Purpose**: Comprehensive summary of the final documentation enhancement pass
 **Status**: Complete
 
+> **Note:** This is a historical summary from the 2025-11-20 documentation pass. For current documentation architecture and status:
+>
+> - **Current Status:** [IMPLEMENTATION_STATUS.md](overview/IMPLEMENTATION_STATUS.md)
+> - **Docs System Architecture:** [INTERNAL_DOCS_SYSTEM.md](INTERNAL_DOCS_SYSTEM.md) (includes AI-Docs/Qdrant integration)
+> - **AI Agent API:** [AGENT_API_REFERENCE.md](ai/AGENT_API_REFERENCE.md) (machine-readable endpoints)
+>
+> The `DOC_INDEX.yml` approach mentioned below has been superseded by the new `agent/index.json`, `agent/docs.json`, and Qdrant-based AI-Docs semantic search pipeline.
+
 ---
 
 ## Overview

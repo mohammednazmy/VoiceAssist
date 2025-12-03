@@ -5,20 +5,320 @@ summary: Debug WebSocket connections, STT, TTS, and voice pipeline issues in Voi
 status: stable
 stability: production
 owner: backend
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-02"
 audience: ["human", "agent", "ai-agents", "backend", "frontend", "sre"]
-tags: ["debugging", "runbook", "voice", "realtime", "websocket", "stt", "tts", "troubleshooting"]
+tags: ["debugging", "runbook", "voice", "realtime", "websocket", "stt", "tts", "troubleshooting", "thinker-talker"]
 relatedServices: ["api-gateway", "web-app"]
 category: debugging
-version: "1.0.0"
+version: "2.0.0"
 ---
 
 # Voice & Realtime Debugging Guide
 
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-12-02
 **Components:** Voice pipeline, WebSocket service, STT/TTS
 
 ---
+
+## Voice Pipeline Overview
+
+VoiceAssist has two voice pipelines:
+
+| Pipeline                | Status          | Endpoint                 | Components                             |
+| ----------------------- | --------------- | ------------------------ | -------------------------------------- |
+| **Thinker-Talker**      | Primary         | `/api/voice/pipeline-ws` | Deepgram STT → GPT-4o → ElevenLabs TTS |
+| **OpenAI Realtime API** | Legacy/Fallback | `/api/realtime`          | OpenAI Realtime API (WebSocket)        |
+
+**Always debug Thinker-Talker first** unless specifically working with the legacy pipeline.
+
+---
+
+## Part A: Thinker-Talker Voice Pipeline (Primary)
+
+### Architecture
+
+```
+┌─────────────┐    ┌─────────────┐    ┌──────────────┐    ┌─────────────┐
+│   Browser   │───▶│ Deepgram    │───▶│  GPT-4o      │───▶│ ElevenLabs  │
+│ Audio Input │    │ STT Service │    │ Thinker Svc  │    │ TTS Service │
+└─────────────┘    └─────────────┘    └──────────────┘    └─────────────┘
+       │                  │                  │                  │
+       │                  ▼                  ▼                  ▼
+       │           transcript.delta    response.delta     audio.output
+       │           transcript.complete response.complete
+       └───────────────────────────────────────────────────────────────▶
+                                WebSocket Messages
+```
+
+### Key Files
+
+| File                                                  | Purpose                               |
+| ----------------------------------------------------- | ------------------------------------- |
+| `app/services/voice_pipeline_service.py`              | Main pipeline orchestrator            |
+| `app/services/thinker_service.py`                     | LLM service (GPT-4o, tool calling)    |
+| `app/services/talker_service.py`                      | TTS service (ElevenLabs streaming)    |
+| `app/services/streaming_stt_service.py`               | STT service (Deepgram streaming)      |
+| `app/services/sentence_chunker.py`                    | Phrase-level chunking for low latency |
+| `app/services/thinker_talker_websocket_handler.py`    | WebSocket handler                     |
+| `apps/web-app/src/hooks/useThinkerTalkerSession.ts`   | Client WebSocket hook                 |
+| `apps/web-app/src/hooks/useThinkerTalkerVoiceMode.ts` | Voice mode state machine              |
+
+### WebSocket Message Types
+
+| Message Type          | Direction     | Description                    |
+| --------------------- | ------------- | ------------------------------ |
+| `audio.input`         | Client→Server | Base64-encoded PCM audio       |
+| `transcript.delta`    | Server→Client | Partial transcript from STT    |
+| `transcript.complete` | Server→Client | Final transcript               |
+| `response.delta`      | Server→Client | Streaming LLM token            |
+| `response.complete`   | Server→Client | Full LLM response              |
+| `audio.output`        | Server→Client | Base64-encoded TTS audio chunk |
+| `tool.call`           | Server→Client | Function/tool invocation       |
+| `tool.result`         | Server→Client | Tool execution result          |
+| `voice.state`         | Server→Client | Pipeline state change          |
+| `error`               | Server→Client | Error notification             |
+
+### Pipeline States
+
+```python
+PipelineState = {
+    IDLE,           # Waiting for input
+    LISTENING,      # Recording user audio
+    PROCESSING,     # Running STT/LLM
+    SPEAKING,       # Playing TTS audio
+    CANCELLED,      # Barge-in triggered
+    ERROR
+}
+```
+
+### Thinker-Talker Debugging
+
+#### No Transcripts
+
+**Likely Causes:**
+
+- Deepgram API key invalid or expired
+- Audio not reaching server
+- Wrong audio format (expects 16kHz PCM16)
+- Deepgram service down
+
+**Steps to Investigate:**
+
+1. Check Deepgram health:
+
+```bash
+# Check environment variable
+echo $DEEPGRAM_API_KEY | head -c 10
+
+# Test Deepgram directly
+curl -X POST "https://api.deepgram.com/v1/listen" \
+  -H "Authorization: Token $DEEPGRAM_API_KEY" \
+  -H "Content-Type: audio/wav" \
+  --data-binary @test.wav
+```
+
+2. Check server logs for STT errors:
+
+```bash
+docker logs voiceassist-server --since "5m" 2>&1 | grep -iE "deepgram|stt|transcri"
+```
+
+3. Verify audio format in client:
+
+```javascript
+// Should be PCM16 at 16kHz
+console.log("Sample rate:", audioContext.sampleRate);
+// If 48kHz, ensure resampling is active
+```
+
+4. Check WebSocket messages in browser DevTools → Network → WS.
+
+**Relevant Code:**
+
+- `app/services/streaming_stt_service.py` - Deepgram integration
+
+#### No LLM Response
+
+**Likely Causes:**
+
+- OpenAI API key invalid
+- Rate limiting
+- Context too long
+- Tool call hanging
+
+**Steps to Investigate:**
+
+1. Check Thinker service logs:
+
+```bash
+docker logs voiceassist-server --since "5m" 2>&1 | grep -iE "thinker|openai|llm|gpt"
+```
+
+2. Verify OpenAI API:
+
+```bash
+curl https://api.openai.com/v1/chat/completions \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "gpt-4o", "messages": [{"role": "user", "content": "Hello"}], "max_tokens": 10}'
+```
+
+3. Check for tool call issues:
+
+```bash
+docker logs voiceassist-server --since "5m" 2>&1 | grep -iE "tool|function|call"
+```
+
+**Relevant Code:**
+
+- `app/services/thinker_service.py` - LLM orchestration
+- `app/services/llm_client.py` - OpenAI client
+
+#### No Audio Output
+
+**Likely Causes:**
+
+- ElevenLabs API key invalid
+- Voice ID not found
+- TTS service failed
+- Audio not playing in browser (autoplay policy)
+
+**Steps to Investigate:**
+
+1. Check ElevenLabs health:
+
+```bash
+curl https://api.elevenlabs.io/v1/voices \
+  -H "xi-api-key: $ELEVENLABS_API_KEY" | jq '.voices[0].voice_id'
+```
+
+2. Check Talker service logs:
+
+```bash
+docker logs voiceassist-server --since "5m" 2>&1 | grep -iE "talker|elevenlabs|tts|audio"
+```
+
+3. Verify voice ID in config:
+
+```bash
+grep -r "voice_id" services/api-gateway/app/core/config.py
+# Default: TxGEqnHWrfWFTfGW9XjX (Josh)
+```
+
+4. Check browser autoplay:
+
+```javascript
+// AudioContext must be resumed after user interaction
+if (audioContext.state === "suspended") {
+  await audioContext.resume();
+}
+```
+
+**Relevant Code:**
+
+- `app/services/talker_service.py` - TTS orchestration
+- `app/services/elevenlabs_service.py` - ElevenLabs client
+
+#### Barge-in Not Working
+
+**Likely Causes:**
+
+- Barge-in disabled in config
+- Voice Activity Detection (VAD) not triggering
+- Audio overlap prevention issue
+
+**Steps to Investigate:**
+
+1. Check config:
+
+```python
+# In voice_pipeline_service.py
+PipelineConfig:
+  barge_in_enabled: True  # Should be True
+```
+
+2. Check VAD sensitivity:
+
+```javascript
+// Client-side VAD config
+const vadConfig = {
+  threshold: 0.5, // Lower = more sensitive
+  minSpeechFrames: 3,
+};
+```
+
+3. Check logs for barge-in events:
+
+```bash
+docker logs voiceassist-server --since "5m" 2>&1 | grep -iE "barge|cancel|interrupt"
+```
+
+**Relevant Code:**
+
+- `app/services/voice_pipeline_service.py` - `barge_in()` method
+- `apps/web-app/src/hooks/useThinkerTalkerVoiceMode.ts` - Client barge-in
+
+#### High Latency
+
+**Targets:**
+
+| Metric                   | Target  | Alert   |
+| ------------------------ | ------- | ------- |
+| STT latency              | < 300ms | > 800ms |
+| First LLM token          | < 500ms | > 1.5s  |
+| First TTS audio          | < 200ms | > 600ms |
+| Total (speech-to-speech) | < 1.2s  | > 3s    |
+
+**Steps to Investigate:**
+
+1. Check pipeline metrics:
+
+```bash
+curl http://localhost:8000/api/voice/metrics | jq '.'
+```
+
+2. Check sentence chunker config:
+
+```python
+# In sentence_chunker.py - phrase-level for low latency
+ChunkerConfig:
+  min_chunk_chars: 15    # Avoid tiny fragments
+  optimal_chunk_chars: 50 # Clause boundary
+  max_chunk_chars: 80    # Force split limit
+```
+
+3. Enable debug logging:
+
+```bash
+export VOICE_LOG_LEVEL=DEBUG
+docker restart voiceassist-server
+```
+
+---
+
+## Part B: Legacy OpenAI Realtime API (Fallback)
+
+> **Note:** This pipeline is maintained for backward compatibility. Prefer Thinker-Talker for new development.
+
+### Key Files
+
+| File                                                | Purpose                     |
+| --------------------------------------------------- | --------------------------- |
+| `app/api/realtime.py`                               | Legacy WebSocket endpoint   |
+| `app/services/realtime_voice_service.py`            | OpenAI Realtime integration |
+| `apps/web-app/src/hooks/useRealtimeVoiceSession.ts` | Legacy client hook          |
+
+### Legacy Debugging
+
+For OpenAI Realtime API issues, refer to:
+
+- OpenAI Realtime API documentation
+- Check `OPENAI_API_KEY` environment variable
+- Verify WebSocket connection to `/api/realtime`
+
+---
+
+## Part C: Common Issues (Both Pipelines)
 
 ## Symptoms
 
@@ -42,31 +342,36 @@ WebSocket connection to 'wss://...' failed
 2. Verify WebSocket URL:
 
 ```javascript
-// Should be wss:// for production, ws:// for local
-const wsUrl = `wss://assist.asimo.io/ws?token=${accessToken}`;
+// Thinker-Talker voice pipeline (primary)
+const voiceWsUrl = `wss://assist.asimo.io/api/voice/pipeline-ws?token=${accessToken}`;
+
+// Chat streaming
+const chatWsUrl = `wss://assist.asimo.io/api/realtime/ws?token=${accessToken}`;
 ```
 
 3. Test WebSocket connection manually:
 
 ```bash
-# Using websocat
-websocat "wss://assist.asimo.io/ws?token=YOUR_TOKEN"
+# Test Thinker-Talker voice pipeline (primary)
+websocat "wss://assist.asimo.io/api/voice/pipeline-ws?token=YOUR_TOKEN"
 
-# Or wscat
-wscat -c "wss://assist.asimo.io/ws?token=YOUR_TOKEN"
+# Test chat streaming WebSocket
+wscat -c "wss://assist.asimo.io/api/realtime/ws?token=YOUR_TOKEN"
 ```
 
 4. Check Apache/Nginx proxy config:
 
 ```apache
-# Required headers for WebSocket upgrade
-ProxyPass /ws ws://127.0.0.1:8000/ws
-ProxyPassReverse /ws ws://127.0.0.1:8000/ws
+# WebSocket proxy for API endpoints
+ProxyPass /api/voice/pipeline-ws ws://127.0.0.1:8000/api/voice/pipeline-ws
+ProxyPassReverse /api/voice/pipeline-ws ws://127.0.0.1:8000/api/voice/pipeline-ws
+ProxyPass /api/realtime/ws ws://127.0.0.1:8000/api/realtime/ws
+ProxyPassReverse /api/realtime/ws ws://127.0.0.1:8000/api/realtime/ws
 
-# Or for wss
+# WebSocket upgrade headers
 RewriteCond %{HTTP:Upgrade} websocket [NC]
 RewriteCond %{HTTP:Connection} upgrade [NC]
-RewriteRule ^/ws$ ws://127.0.0.1:8000/ws [P,L]
+RewriteRule ^/api/(.*)$ ws://127.0.0.1:8000/api/$1 [P,L]
 ```
 
 **Relevant Code Paths:**
@@ -370,11 +675,13 @@ function draw() {
 
 ```bash
 # websocat - WebSocket Swiss Army knife
-websocat -v wss://assist.asimo.io/ws
+# Test Thinker-Talker voice pipeline
+websocat -v "wss://assist.asimo.io/api/voice/pipeline-ws?token=YOUR_TOKEN"
 
 # wscat - WebSocket cat
 npm install -g wscat
-wscat -c wss://assist.asimo.io/ws
+# Test chat streaming WebSocket
+wscat -c "wss://assist.asimo.io/api/realtime/ws?token=YOUR_TOKEN"
 ```
 
 ---
@@ -402,9 +709,31 @@ wscat -c wss://assist.asimo.io/ws
 
 ---
 
+## Voice Health Endpoint
+
+Check voice pipeline health:
+
+```bash
+# Health check for all voice components
+curl http://localhost:8000/health/voice | jq '.'
+
+# Example response
+{
+  "status": "healthy",
+  "components": {
+    "deepgram": "healthy",
+    "openai": "healthy",
+    "elevenlabs": "healthy"
+  }
+}
+```
+
+---
+
 ## Related Documentation
 
-- [Debugging Overview](./DEBUGGING_OVERVIEW.md)
-- [Voice Mode Pipeline](../VOICE_MODE_PIPELINE.md)
-- [Realtime Architecture](../REALTIME_ARCHITECTURE.md)
-- [WebSocket Protocol](../WEBSOCKET_PROTOCOL.md)
+- [Debugging Overview](/operations/debugging-overview)
+- [Voice Mode Pipeline](../VOICE_MODE_PIPELINE.md) - Detailed Thinker-Talker architecture
+- [Thinker-Talker Pipeline](../THINKER_TALKER_PIPELINE.md) - Pipeline design and implementation
+- [Implementation Status](/ai/status) - Voice feature status
+- [API Reference](/reference/api) - Voice endpoints

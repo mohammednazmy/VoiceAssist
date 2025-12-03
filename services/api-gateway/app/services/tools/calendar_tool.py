@@ -457,15 +457,30 @@ async def handle_list_events(arguments: Dict[str, Any], context: ToolExecutionCo
         try:
             if conn["provider"] == "google":
                 events = await _list_google_events(
-                    context.user_id, conn, start_dt, end_dt, max_results, context.db_session
+                    context.user_id,
+                    conn,
+                    start_dt,
+                    end_dt,
+                    max_results,
+                    context.db_session,
                 )
             elif conn["provider"] == "microsoft":
                 events = await _list_microsoft_events(
-                    context.user_id, conn, start_dt, end_dt, max_results, context.db_session
+                    context.user_id,
+                    conn,
+                    start_dt,
+                    end_dt,
+                    max_results,
+                    context.db_session,
                 )
             elif conn["provider"] in ["apple", "nextcloud", "caldav"]:
                 events = await _list_caldav_events(
-                    context.user_id, conn, start_dt, end_dt, max_results, context.db_session
+                    context.user_id,
+                    conn,
+                    start_dt,
+                    end_dt,
+                    max_results,
+                    context.db_session,
                 )
             else:
                 continue

@@ -32,11 +32,11 @@ relatedServices: ["api-gateway", "web-app"]
 
 VoiceAssist provides multiple WebSocket endpoints:
 
-| Endpoint                      | Purpose                  | Protocol Doc                                               |
-| ----------------------------- | ------------------------ | ---------------------------------------------------------- |
-| `/api/realtime/ws`            | Chat streaming           | This document                                              |
-| `/ws/voice/thinker-talker`    | Thinker-Talker voice     | [voice-pipeline-ws.md](api-reference/voice-pipeline-ws.md) |
-| `/api/voice/realtime-session` | OpenAI Realtime (Legacy) | [VOICE_MODE_PIPELINE.md](VOICE_MODE_PIPELINE.md)           |
+| Endpoint                      | Purpose                        | Protocol Doc                                               |
+| ----------------------------- | ------------------------------ | ---------------------------------------------------------- |
+| `/api/realtime/ws`            | Chat streaming                 | This document                                              |
+| `/api/voice/pipeline-ws`      | Thinker-Talker voice (Primary) | [voice-pipeline-ws.md](api-reference/voice-pipeline-ws.md) |
+| `/api/voice/realtime-session` | OpenAI Realtime (Legacy)       | [VOICE_MODE_PIPELINE.md](VOICE_MODE_PIPELINE.md)           |
 
 ---
 

@@ -196,7 +196,9 @@ class SystemKeyService:
             "masked_value": masked_value,
             "is_override": record.is_override if record else False,
             "validation_status": record.validation_status if record else None,
-            "last_validated_at": record.last_validated_at.isoformat() if record and record.last_validated_at else None,
+            "last_validated_at": (
+                record.last_validated_at.isoformat() if record and record.last_validated_at else None
+            ),
             "updated_at": record.updated_at.isoformat() if record else None,
         }
 

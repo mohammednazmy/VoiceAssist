@@ -158,7 +158,7 @@ class ToolAnalyticsService:
                 "success_count": row.success_count,
                 "error_count": row.error_count,
                 "success_rate": round(
-                    (row.success_count / row.call_count * 100) if row.call_count > 0 else 0,
+                    ((row.success_count / row.call_count * 100) if row.call_count > 0 else 0),
                     2,
                 ),
                 "avg_duration_ms": round(row.avg_duration_ms or 0, 2),
@@ -206,7 +206,7 @@ class ToolAnalyticsService:
                 "call_count": row.call_count,
                 "success_count": row.success_count,
                 "success_rate": round(
-                    (row.success_count / row.call_count * 100) if row.call_count > 0 else 0,
+                    ((row.success_count / row.call_count * 100) if row.call_count > 0 else 0),
                     2,
                 ),
                 "avg_duration_ms": round(row.avg_duration_ms or 0, 2),
@@ -264,7 +264,7 @@ class ToolAnalyticsService:
                 "call_count": row.call_count,
                 "success_count": row.success_count,
                 "success_rate": round(
-                    (row.success_count / row.call_count * 100) if row.call_count > 0 else 0,
+                    ((row.success_count / row.call_count * 100) if row.call_count > 0 else 0),
                     2,
                 ),
                 "avg_duration_ms": round(row.avg_duration_ms or 0, 2),
@@ -392,7 +392,7 @@ class ToolAnalyticsService:
                 2,
             ),
             "avg_duration_ms": round(
-                summary_row.avg_duration_ms if summary_row and summary_row.avg_duration_ms else 0,
+                (summary_row.avg_duration_ms if summary_row and summary_row.avg_duration_ms else 0),
                 2,
             ),
             "unique_sessions": summary_row.unique_sessions if summary_row else 0,
@@ -463,7 +463,7 @@ class ToolAnalyticsService:
                 "error_message": row.error_message,
                 "duration_ms": row.duration_ms,
                 "mode": row.mode,
-                "user_id": row.user_id[:8] + "..." if row.user_id and len(row.user_id) > 8 else row.user_id,
+                "user_id": (row.user_id[:8] + "..." if row.user_id and len(row.user_id) > 8 else row.user_id),
                 "session_id": (
                     row.session_id[:8] + "..." if row.session_id and len(row.session_id) > 8 else row.session_id
                 ),

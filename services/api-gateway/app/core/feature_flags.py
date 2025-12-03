@@ -19,21 +19,17 @@ Usage:
             # Use old algorithm
             pass
 """
+
 from __future__ import annotations
 
 from functools import wraps
-from typing import Callable, Any, Optional
-
-from fastapi import HTTPException, status
+from typing import Any, Callable, Optional
 
 from app.services.feature_flags import feature_flag_service
+from fastapi import HTTPException, status
 
 
-def require_feature(
-    flag_name: str,
-    default: bool = False,
-    error_message: Optional[str] = None
-):
+def require_feature(flag_name: str, default: bool = False, error_message: Optional[str] = None):
     """Decorator to require a feature flag to be enabled.
 
     Args:
@@ -50,6 +46,7 @@ def require_feature(
         async def beta_feature():
             return {"message": "Beta feature"}
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -57,21 +54,16 @@ def require_feature(
 
             if not enabled:
                 message = error_message or f"Feature '{flag_name}' is not enabled"
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=message
-                )
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
 
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
-async def feature_gate(
-    flag_name: str,
-    default: bool = False
-) -> bool:
+async def feature_gate(flag_name: str, default: bool = False) -> bool:
     """Check if a feature is enabled (simple boolean check).
 
     Args:
@@ -92,10 +84,7 @@ async def feature_gate(
     return await feature_flag_service.is_enabled(flag_name, default=default)
 
 
-async def get_feature_value(
-    flag_name: str,
-    default: Any = None
-) -> Any:
+async def get_feature_value(flag_name: str, default: Any = None) -> Any:
     """Get feature flag value (for non-boolean flags).
 
     Args:

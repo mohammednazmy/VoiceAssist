@@ -3,20 +3,19 @@
 Provides runtime feature toggles for controlled rollouts and A/B testing.
 Supports boolean, string, number, and JSON feature values.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional, Any
 from enum import Enum
 
-from sqlalchemy import Column, String, Boolean, Text, DateTime, JSON, Integer
-from sqlalchemy.ext.declarative import declarative_base
-
 from app.core.database import Base
+from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
 
 
 class FeatureFlagType(str, Enum):
     """Feature flag value types."""
+
     BOOLEAN = "boolean"
     STRING = "string"
     NUMBER = "number"

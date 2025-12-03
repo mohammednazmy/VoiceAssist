@@ -906,7 +906,10 @@ async def get_voice_providers(
             "configured": elevenlabs_configured,
             "features": ["tts", "streaming", "emotion_control", "multilingual"],
             "models": [
-                {"id": "eleven_multilingual_v2", "name": "Multilingual v2 (Best Quality)"},
+                {
+                    "id": "eleven_multilingual_v2",
+                    "name": "Multilingual v2 (Best Quality)",
+                },
                 {"id": "eleven_turbo_v2", "name": "Turbo v2 (Fast, English)"},
                 {"id": "eleven_monolingual_v1", "name": "Monolingual v1 (Legacy)"},
             ],
@@ -939,12 +942,42 @@ async def get_available_voices(
     # OpenAI voices
     if provider is None or provider == "openai":
         openai_voices = [
-            {"voice_id": "alloy", "name": "Alloy", "provider": "openai", "category": "neural"},
-            {"voice_id": "echo", "name": "Echo", "provider": "openai", "category": "neural"},
-            {"voice_id": "fable", "name": "Fable", "provider": "openai", "category": "neural"},
-            {"voice_id": "onyx", "name": "Onyx", "provider": "openai", "category": "neural"},
-            {"voice_id": "nova", "name": "Nova", "provider": "openai", "category": "neural"},
-            {"voice_id": "shimmer", "name": "Shimmer", "provider": "openai", "category": "neural"},
+            {
+                "voice_id": "alloy",
+                "name": "Alloy",
+                "provider": "openai",
+                "category": "neural",
+            },
+            {
+                "voice_id": "echo",
+                "name": "Echo",
+                "provider": "openai",
+                "category": "neural",
+            },
+            {
+                "voice_id": "fable",
+                "name": "Fable",
+                "provider": "openai",
+                "category": "neural",
+            },
+            {
+                "voice_id": "onyx",
+                "name": "Onyx",
+                "provider": "openai",
+                "category": "neural",
+            },
+            {
+                "voice_id": "nova",
+                "name": "Nova",
+                "provider": "openai",
+                "category": "neural",
+            },
+            {
+                "voice_id": "shimmer",
+                "name": "Shimmer",
+                "provider": "openai",
+                "category": "neural",
+            },
         ]
         voices.extend(openai_voices)
 
@@ -1132,7 +1165,7 @@ async def get_voice_feature_flags(
                     "description": flag.description,
                     "enabled": flag.enabled,
                     "rollout_percentage": flag.rollout_percentage or 100,
-                    "updated_at": flag.updated_at.isoformat() if flag.updated_at else None,
+                    "updated_at": (flag.updated_at.isoformat() if flag.updated_at else None),
                 }
             )
         else:

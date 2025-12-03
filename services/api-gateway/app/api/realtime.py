@@ -430,7 +430,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                         "id": str(msg.id),
                         "role": msg.role,
                         "content": msg.content,
-                        "timestamp": int(msg.created_at.timestamp() * 1000) if msg.created_at else 0,
+                        "timestamp": (int(msg.created_at.timestamp() * 1000) if msg.created_at else 0),
                     }
                     # Include citations from metadata if present
                     if msg.message_metadata and "citations" in msg.message_metadata:
@@ -461,7 +461,11 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
 
             logger.info(
                 "Received WebSocket message",
-                extra={"client_id": client_id, "message_type": message_type, "user_id": user_id},
+                extra={
+                    "client_id": client_id,
+                    "message_type": message_type,
+                    "user_id": user_id,
+                },
             )
 
             if message_type == "message":

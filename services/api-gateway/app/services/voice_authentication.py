@@ -595,9 +595,7 @@ class VoiceAuthenticationService:
         payload_json = json.dumps(payload, separators=(",", ":"), sort_keys=True)
         payload_b64 = base64.urlsafe_b64encode(payload_json.encode()).decode()
 
-        signature = hmac.new(
-            settings.JWT_SECRET.encode(), payload_b64.encode(), hashlib.sha256
-        ).digest()
+        signature = hmac.new(settings.JWT_SECRET.encode(), payload_b64.encode(), hashlib.sha256).digest()
         signature_b64 = base64.urlsafe_b64encode(signature).decode()
         return f"{payload_b64}.{signature_b64}"
 
@@ -608,9 +606,7 @@ class VoiceAuthenticationService:
             raise ValueError("Malformed voice session token")
 
         payload_b64, signature_b64 = token.split(".", 1)
-        expected_sig = hmac.new(
-            settings.JWT_SECRET.encode(), payload_b64.encode(), hashlib.sha256
-        ).digest()
+        expected_sig = hmac.new(settings.JWT_SECRET.encode(), payload_b64.encode(), hashlib.sha256).digest()
         expected_sig_b64 = base64.urlsafe_b64encode(expected_sig).decode()
 
         if not hmac.compare_digest(signature_b64, expected_sig_b64):

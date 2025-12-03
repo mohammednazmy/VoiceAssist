@@ -48,7 +48,11 @@ T = TypeVar("T")
 
 
 def _generate_cache_key(
-    func: Callable, namespace: Optional[str], args: tuple, kwargs: dict, exclude_args: Set[str]
+    func: Callable,
+    namespace: Optional[str],
+    args: tuple,
+    kwargs: dict,
+    exclude_args: Set[str],
 ) -> str:
     """Generate a cache key from function name and arguments.
 
@@ -151,12 +155,16 @@ def cache_result(
                 cached_value = await cache_service.get(cache_key)
                 if cached_value is not None:
                     logger.debug(
-                        f"Cache hit for {func.__name__}", extra={"cache_key": cache_key, "namespace": namespace}
+                        f"Cache hit for {func.__name__}",
+                        extra={"cache_key": cache_key, "namespace": namespace},
                     )
                     return cached_value
 
                 # Cache miss - execute function
-                logger.debug(f"Cache miss for {func.__name__}", extra={"cache_key": cache_key, "namespace": namespace})
+                logger.debug(
+                    f"Cache miss for {func.__name__}",
+                    extra={"cache_key": cache_key, "namespace": namespace},
+                )
                 result = await func(*args, **kwargs)
 
                 # Store in cache
@@ -190,12 +198,16 @@ def cache_result(
 
                 if cached_value is not None:
                     logger.debug(
-                        f"Cache hit for {func.__name__}", extra={"cache_key": cache_key, "namespace": namespace}
+                        f"Cache hit for {func.__name__}",
+                        extra={"cache_key": cache_key, "namespace": namespace},
                     )
                     return cached_value
 
                 # Cache miss - execute function
-                logger.debug(f"Cache miss for {func.__name__}", extra={"cache_key": cache_key, "namespace": namespace})
+                logger.debug(
+                    f"Cache miss for {func.__name__}",
+                    extra={"cache_key": cache_key, "namespace": namespace},
+                )
                 result = func(*args, **kwargs)
 
                 # Store in cache
@@ -283,7 +295,9 @@ async def invalidate_namespace(namespace: str) -> int:
 
 
 def cache_on_mutation(
-    mutation_func: Callable, invalidate_funcs: list[tuple[Callable, dict]], namespace: Optional[str] = None
+    mutation_func: Callable,
+    invalidate_funcs: list[tuple[Callable, dict]],
+    namespace: Optional[str] = None,
 ):
     """Decorator to invalidate caches when a mutation occurs.
 

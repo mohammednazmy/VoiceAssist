@@ -273,7 +273,10 @@ voice_errors_total = _safe_counter(
 voice_error_recovery_total = _safe_counter(
     "voiceassist_voice_error_recovery_total",
     "Successful error recovery attempts",
-    ["category", "recovery_method"],  # recovery_method: retry, failover, reconnect, reset
+    [
+        "category",
+        "recovery_method",
+    ],  # recovery_method: retry, failover, reconnect, reset
 )
 voice_provider_failures_total = _safe_counter(
     "voiceassist_voice_provider_failures_total",

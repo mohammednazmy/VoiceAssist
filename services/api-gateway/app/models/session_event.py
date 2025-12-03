@@ -151,7 +151,7 @@ class SessionEvent(Base):
         """
         return cls(
             conversation_id=conversation_id,
-            event_type=event_type.value if isinstance(event_type, EventType) else event_type,
+            event_type=(event_type.value if isinstance(event_type, EventType) else event_type),
             payload=payload,
             session_id=session_id,
             branch_id=branch_id,

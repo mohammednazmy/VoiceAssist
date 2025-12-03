@@ -190,7 +190,8 @@ def get_recent_logs(
                     entry = json.loads(line)
                     log = {
                         "timestamp": datetime.fromtimestamp(
-                            int(entry.get("__REALTIME_TIMESTAMP", 0)) / 1_000_000, tz=timezone.utc
+                            int(entry.get("__REALTIME_TIMESTAMP", 0)) / 1_000_000,
+                            tz=timezone.utc,
                         ).isoformat()
                         + "Z",
                         "level": _priority_to_level(entry.get("PRIORITY", "6")),
@@ -376,7 +377,10 @@ async def check_redis_health() -> DependencyHealth:
             status="healthy" if pong and latency < 50 else "degraded",
             latency_ms=round(latency, 2),
             version=version,
-            details={"memory_mb": memory_mb, "connected_clients": info.get("connected_clients", 0)},
+            details={
+                "memory_mb": memory_mb,
+                "connected_clients": info.get("connected_clients", 0),
+            },
         )
     except Exception as e:
         return DependencyHealth(
@@ -571,7 +575,13 @@ async def get_logs(
             "search": search,
             "since_hours": since_hours,
         },
-        "available_services": ["api-gateway", "web-app", "admin-panel", "worker", "scheduler"],
+        "available_services": [
+            "api-gateway",
+            "web-app",
+            "admin-panel",
+            "worker",
+            "scheduler",
+        ],
         "available_levels": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
     }

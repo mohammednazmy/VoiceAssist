@@ -32,11 +32,10 @@ class _DynamicModule(types.ModuleType):
 stub_uptodate = _DynamicModule("app.services.uptodate_service")
 sys.modules.setdefault("app.services.uptodate_service", stub_uptodate)
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
-from app.api import realtime
-from app.core.dependencies import get_current_user
+from app.api import realtime  # noqa: E402
+from app.core.dependencies import get_current_user  # noqa: E402
+from fastapi import FastAPI  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
 
 
 class _DummyUser:
@@ -71,4 +70,3 @@ def test_webrtc_offer_round_trip() -> None:
     )
     assert candidate_resp.status_code == 200
     assert candidate_resp.json()["ice_candidates"][0]["candidate"] == "abc"
-

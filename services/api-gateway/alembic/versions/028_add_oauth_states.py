@@ -27,7 +27,12 @@ def upgrade():
         sa.Column("provider", sa.String(50), nullable=False),  # 'google', 'microsoft'
         sa.Column("redirect_uri", sa.String(500), nullable=True),  # Where to redirect after auth
         sa.Column("connection_name", sa.String(100), nullable=True),  # Optional user-friendly name for the connection
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
         sa.Column(
             "expires_at",
             sa.DateTime(timezone=True),

@@ -11,18 +11,19 @@ tags: ["admin", "implementation", "plan", "roadmap"]
 relatedServices: ["api-gateway", "admin-panel"]
 category: admin
 source_of_truth: true
-version: "2.7.0"
+version: "2.8.0"
 ---
 
 # Admin Panel Implementation Plan
 
-**Last Updated:** 2025-11-28
-**Version:** 2.7.0
+**Last Updated:** 2025-12-02
+**Version:** 2.8.0
 
 ## Changelog
 
 | Version | Date       | Changes                                                                 |
 | ------- | ---------- | ----------------------------------------------------------------------- |
+| 2.8.0   | 2025-12-02 | Current State updated to 17 pages, admin API status refreshed           |
 | 2.7.0   | 2025-11-28 | Sprint 6 COMPLETE: Tools Admin, Troubleshooting, Backups, Feature Flags |
 | 2.6.0   | 2025-11-28 | Sprint 5 COMPLETE: Shared components, E2E tests, mobile responsive      |
 | 2.5.0   | 2025-11-28 | Sprint 4 COMPLETE: Analytics & System pages enhanced, tests added       |
@@ -60,11 +61,18 @@ This document provides a repo-aware, implementation-ready plan for completing th
 
 ### Current State
 
+> **Note:** This section reflects the state as of 2025-12-02. For the most up-to-date component status, see [IMPLEMENTATION_STATUS.md](../overview/IMPLEMENTATION_STATUS.md).
+
 Based on analysis of the actual codebase:
 
-- **Backend**: `services/api-gateway/` - 21 API modules, 40+ services, production-ready
-- **Admin Panel**: `apps/admin-panel/` - 5 pages implemented (Dashboard, Users, KB, Analytics, System) + Login
-- **Admin API Endpoints**: 4 dedicated modules (`admin_panel.py`, `admin_kb.py`, `admin_feature_flags.py`, `admin_cache.py`)
+- **Backend**: `services/api-gateway/` - 25+ API modules, 40+ services, production-ready
+- **Admin Panel**: `apps/admin-panel/` - 17 pages implemented:
+  - Dashboard, Users, Analytics, System, Security
+  - Knowledge Base, Feature Flags, Integrations
+  - Voice Monitor, Conversations, Clinical Contexts
+  - Backups, Tools, Troubleshooting, Function Call Analytics
+  - Calendar Connections, Prompts (subdirectory)
+- **Admin API Endpoints**: 15+ dedicated admin modules (`admin_panel.py`, `admin_kb.py`, `admin_voice.py`, `admin_integrations.py`, etc.)
 - **Shared Packages**: 7 packages in `packages/` including `@voiceassist/ui`, `@voiceassist/api-client`, `@voiceassist/types`
 
 ### Implementation Status (Per IMPLEMENTATION_STATUS.md)
@@ -149,24 +157,24 @@ From `package.json`:
 
 Cross-referenced with [SERVICE_CATALOG.md](../SERVICE_CATALOG.md) and actual backend code at `services/api-gateway/app/api/`:
 
-| Service Category     | Backend Module(s)                            | Current Admin Endpoints       | Admin UI Status      | Priority | Expected Admin Capabilities           |
-| -------------------- | -------------------------------------------- | ----------------------------- | -------------------- | -------- | ------------------------------------- |
-| **Core Admin**       | `admin_panel.py`                             | `/api/admin/panel/*`          | Dashboard            | Complete | status, metrics                       |
-| **User Management**  | `users.py`, `auth.py`                        | `/api/admin/panel/users/*`    | UsersPage            | Complete | CRUD, roles, sessions                 |
-| **Knowledge Base**   | `admin_kb.py`, `kb_indexer.py`               | `/api/admin/kb/*`             | KnowledgeBasePage    | Complete | upload, index, status, reindex        |
-| **Feature Flags**    | `admin_feature_flags.py`                     | `/api/admin/feature-flags/*`  | SystemPage (partial) | High     | CRUD, toggle, rollout %               |
-| **Cache**            | `admin_cache.py`, `cache_service.py`         | `/api/admin/cache/*`          | Missing              | High     | stats, invalidate, clear              |
-| **Audit Logs**       | `audit_service.py`                           | `/api/admin/panel/audit-logs` | UsersPage (partial)  | Medium   | filter, search, export                |
-| **Voice/Realtime**   | `voice.py`, `realtime.py`                    | Missing                       | Missing              | **High** | sessions, metrics, config, disconnect |
-| **Integrations**     | `integrations.py`                            | Missing admin routes          | Missing              | **High** | status, test, config                  |
-| **Medical AI**       | `medical_ai.py`, `rag_service.py`            | Missing admin routes          | Missing              | Medium   | models, routing, metrics              |
-| **External Medical** | `external_medical.py`                        | Missing admin routes          | Missing              | Medium   | PubMed/UpToDate status                |
-| **Health/Metrics**   | `health.py`, `metrics.py`                    | `/health`, `/metrics`         | Dashboard (partial)  | Medium   | service health grid                   |
-| **PHI Detection**    | `phi_detector.py`                            | Missing                       | Missing              | **High** | rules, config, test, routing stats    |
-| **Search**           | `advanced_search.py`, `search_aggregator.py` | Missing                       | Missing              | Low      | stats, query analysis                 |
-| **Tools Registry**   | `tool_executor.py`, `tool_registry.py`       | Missing                       | Missing              | **High** | status, config, logs, analytics       |
-| **Backups/DR**       | N/A (infrastructure)                         | Missing                       | Missing              | **High** | status, trigger, history, DR test     |
-| **Troubleshooting**  | `health.py`, logs                            | `/health`, `/metrics`         | Missing              | Medium   | log viewer, error summary, runbooks   |
+| Service Category     | Backend Module(s)                            | Current Admin Endpoints        | Admin UI Status         | Priority | Expected Admin Capabilities           |
+| -------------------- | -------------------------------------------- | ------------------------------ | ----------------------- | -------- | ------------------------------------- |
+| **Core Admin**       | `admin_panel.py`                             | `/api/admin/panel/*`           | Dashboard ✅            | Complete | status, metrics                       |
+| **User Management**  | `users.py`, `auth.py`                        | `/api/admin/panel/users/*`     | UsersPage ✅            | Complete | CRUD, roles, sessions                 |
+| **Knowledge Base**   | `admin_kb.py`, `kb_indexer.py`               | `/api/admin/kb/*`              | KnowledgeBasePage ✅    | Complete | upload, index, status, reindex        |
+| **Feature Flags**    | `admin_feature_flags.py`                     | `/api/admin/feature-flags/*`   | FeatureFlagsPage ✅     | Complete | CRUD, toggle, rollout %               |
+| **Cache**            | `admin_cache.py`, `cache_service.py`         | `/api/admin/cache/*`           | SystemPage ✅           | Complete | stats, invalidate, clear              |
+| **Audit Logs**       | `audit_service.py`                           | `/api/admin/panel/audit-logs`  | SecurityPage ✅         | Complete | filter, search, export                |
+| **Voice/Realtime**   | `admin_voice.py`, `voice.py`                 | `/api/admin/voice/*`           | VoiceMonitorPage ✅     | Complete | sessions, metrics, config, disconnect |
+| **Integrations**     | `admin_integrations.py`, `integrations.py`   | `/api/admin/integrations/*`    | IntegrationsPage ✅     | Complete | status, test, config                  |
+| **Medical AI**       | `medical_ai.py`, `rag_service.py`            | `/api/medical/*`               | AnalyticsPage (partial) | Medium   | models, routing, metrics              |
+| **External Medical** | `external_medical.py`                        | `/api/external-medical/*`      | Planned                 | Medium   | PubMed/UpToDate status                |
+| **Health/Metrics**   | `health.py`, `metrics.py`                    | `/health`, `/metrics`          | DashboardPage ✅        | Complete | service health grid                   |
+| **PHI Detection**    | `admin_phi.py`                               | `/api/admin/phi/*`             | SecurityPage ✅         | Complete | rules, config, test, routing stats    |
+| **Search**           | `advanced_search.py`, `search_aggregator.py` | `/api/search/*`                | Planned                 | Low      | stats, query analysis                 |
+| **Tools Registry**   | `admin_tools.py`, `tool_executor.py`         | `/api/admin/tools/*`           | ToolsPage ✅            | Complete | status, config, logs, analytics       |
+| **Backups/DR**       | N/A (infrastructure)                         | `/api/admin/system/backups`    | BackupsPage ✅          | Complete | status, trigger, history, DR test     |
+| **Troubleshooting**  | `admin_troubleshooting.py`                   | `/api/admin/troubleshooting/*` | TroubleshootingPage ✅  | Complete | log viewer, error summary, runbooks   |
 
 ### Priority Services: Detailed Admin Requirements
 

@@ -17,6 +17,12 @@ category: reference
 **Status**: Design Complete
 **Version**: V2.0
 
+> **Implementation Note:** This document describes the V2 tools architecture design. The current production implementation lives in:
+>
+> - **Tool Service:** `services/api-gateway/app/services/tools/tool_service.py`
+> - **Individual Tools:** `services/api-gateway/app/services/tools/*.py`
+> - **Legacy Location:** `server/app/tools/` (deprecated)
+
 ---
 
 ## Table of Contents

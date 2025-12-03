@@ -1,0 +1,8 @@
+[flake8]
+max-line-length = 120
+extend-ignore = E203, W503
+per-file-ignores =
+    # Email templates contain long CSS lines in HTML f-strings
+    services/api-gateway/app/services/email_service.py: E501
+    # Alembic migrations with long prompts in multi-line strings
+    services/api-gateway/alembic/versions/025_add_prompt_model_settings.py: E501

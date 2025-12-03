@@ -15,9 +15,9 @@ See SECURITY_COMPLIANCE.md for full HIPAA requirements.
 
 from __future__ import annotations
 
+import logging
 import re
 from typing import Dict, List, Optional
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -62,13 +62,14 @@ class PHIDetector:
             # SSN patterns (xxx-xx-xxxx or xxxxxxxxx)
             "ssn": re.compile(r"\b\d{3}[- ]?\d{2}[- ]?\d{4}\b"),
             # Phone numbers (various formats)
-            "phone": re.compile(
-                r"\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b"
-            ),
+            "phone": re.compile(r"\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b"),
             # Email addresses
             "email": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"),
             # Medical Record Numbers (MRN-xxxxxxx or MRN xxxxxxx)
-            "mrn": re.compile(r"\b(?:MRN|mrn|medical record|record number)[\s:-]?\d{6,}\b", re.IGNORECASE),
+            "mrn": re.compile(
+                r"\b(?:MRN|mrn|medical record|record number)[\s:-]?\d{6,}\b",
+                re.IGNORECASE,
+            ),
             # Account numbers (ACCT-xxxxxx or Account: xxxxxx)
             "account": re.compile(r"\b(?:ACCT|acct|account)[\s:-]?\d{6,}\b", re.IGNORECASE),
             # IP addresses
@@ -78,7 +79,8 @@ class PHIDetector:
             # Dates with specific patient context (conservative - many false positives)
             # Only flag if date appears with words like "patient", "born", "dob", etc.
             "dob": re.compile(
-                r"\b(?:born|dob|date of birth|birthday)[\s:]?(?:0?[1-9]|1[0-2])[/-](?:0?[1-9]|[12][0-9]|3[01])[/-](?:19|20)\d{2}\b",
+                r"\b(?:born|dob|date of birth|birthday)[\s:]?"
+                r"(?:0?[1-9]|1[0-2])[/-](?:0?[1-9]|[12][0-9]|3[01])[/-](?:19|20)\d{2}\b",
                 re.IGNORECASE,
             ),
         }
@@ -101,9 +103,7 @@ class PHIDetector:
             # Add more as needed
         }
 
-    def detect(
-        self, text: str, clinical_context: Optional[Dict] = None
-    ) -> PHIDetectionResult:
+    def detect(self, text: str, clinical_context: Optional[Dict] = None) -> PHIDetectionResult:
         """Detect PHI in text and clinical context.
 
         Args:
@@ -125,25 +125,17 @@ class PHIDetector:
             if matches:
                 phi_types.append(phi_type)
                 details[phi_type] = len(matches)
-                logger.warning(
-                    f"Detected potential PHI type '{phi_type}' in query (count={len(matches)})"
-                )
+                logger.warning(f"Detected potential PHI type '{phi_type}' in query (count={len(matches)})")
 
         # Check for names (but filter out medical terms)
         name_matches = self.name_pattern.findall(text)
         if name_matches:
             # Filter out known medical terms
-            actual_names = [
-                name
-                for name in name_matches
-                if name.lower() not in self.medical_terms
-            ]
+            actual_names = [name for name in name_matches if name.lower() not in self.medical_terms]
             if actual_names:
                 phi_types.append("name")
                 details["name"] = len(actual_names)
-                logger.warning(
-                    f"Detected potential names in query (count={len(actual_names)})"
-                )
+                logger.warning(f"Detected potential names in query (count={len(actual_names)})")
 
         # Check clinical context for PHI
         if clinical_context:
@@ -158,9 +150,7 @@ class PHIDetector:
         contains_phi = len(phi_types) > 0
 
         if contains_phi:
-            logger.warning(
-                f"PHI detected: types={phi_types}, confidence=high, details={details}"
-            )
+            logger.warning(f"PHI detected: types={phi_types}, confidence=high, details={details}")
 
         return PHIDetectionResult(
             contains_phi=contains_phi,

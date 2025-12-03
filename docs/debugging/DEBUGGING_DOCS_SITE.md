@@ -236,7 +236,7 @@ curl -I https://assistdocs.asimo.io/search-index.json
 
 **Relevant Code Paths:**
 
-- `apps/docs-site/scripts/generate-search-index.ts`
+- `apps/docs-site/scripts/generate-search-index.js`
 - `apps/docs-site/src/components/SearchModal.tsx`
 
 ---
@@ -374,8 +374,9 @@ python scripts/embed-docs.py --force
 5. Verify docs search tool is registered:
 
 ```bash
-# Check tool registration
+# Check tool registration (note: server/ is deprecated, but tool stub still exists there)
 grep -r "docs_search" server/app/tools/
+# Production implementation is via services/api-gateway
 ```
 
 **Common Fixes:**
@@ -399,7 +400,8 @@ curl -X POST http://localhost:8000/api/tools/docs_search \
 **Relevant Code Paths:**
 
 - `scripts/embed-docs.py` - Embedding script
-- `server/app/tools/docs_search_tool.py` - Search tool implementation
+- `services/api-gateway/app/tools/` - Production tool implementations
+- `server/app/tools/docs_search_tool.py` - Legacy search tool (deprecated)
 - `docker-compose.yml` - Qdrant service configuration
 
 **Related Docs:**
@@ -439,8 +441,10 @@ sudo cp -r apps/docs-site/out/* /var/www/assistdocs.asimo.io/
 # 3. Verify permissions
 sudo chown -R www-data:www-data /var/www/assistdocs.asimo.io/
 
-# 4. Test
-curl https://assistdocs.asimo.io/health
+# 4. Test (docs site has no /health endpoint - use these instead)
+curl -I https://assistdocs.asimo.io/                  # Homepage
+curl https://assistdocs.asimo.io/agent/index.json    # AI agent discovery
+curl https://assistdocs.asimo.io/search-index.json   # Search index
 ```
 
 ### Apache Configuration

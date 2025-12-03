@@ -13,10 +13,10 @@ category: reference
 
 # Voice Pipeline WebSocket API
 
-> **Endpoint:** `wss://{host}/ws/voice/thinker-talker`
+> **Endpoint:** `wss://{host}/api/voice/pipeline-ws`
 > **Protocol:** JSON over WebSocket
 > **Status:** Production Ready
-> **Last Updated:** 2025-12-01
+> **Last Updated:** 2025-12-02
 
 ## Overview
 
@@ -29,7 +29,7 @@ The Voice Pipeline WebSocket provides bidirectional communication for the Thinke
 Include JWT token in connection URL or headers:
 
 ```javascript
-const ws = new WebSocket(`wss://assist.asimo.io/ws/voice/thinker-talker?token=${accessToken}`);
+const ws = new WebSocket(`wss://assist.asimo.io/api/voice/pipeline-ws?token=${accessToken}`);
 ```
 
 ### Connection Lifecycle
@@ -391,7 +391,7 @@ Error occurred.
 
 ```javascript
 // 1. Connect
-const ws = new WebSocket(`wss://assist.asimo.io/ws/voice/thinker-talker?token=${token}`);
+const ws = new WebSocket(`wss://assist.asimo.io/api/voice/pipeline-ws?token=${token}`);
 
 ws.onopen = () => {
   console.log("Connected");

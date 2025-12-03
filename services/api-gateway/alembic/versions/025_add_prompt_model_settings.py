@@ -53,9 +53,23 @@ Important: Always recommend consulting a healthcare provider for specific medica
 
 def upgrade():
     # Add new columns to prompts table
-    op.add_column("prompts", sa.Column("temperature", sa.Float, nullable=True, comment="LLM temperature (0.0-2.0)"))
-    op.add_column("prompts", sa.Column("max_tokens", sa.Integer, nullable=True, comment="Maximum response tokens"))
-    op.add_column("prompts", sa.Column("model_name", sa.String(100), nullable=True, comment="Optional model override"))
+    op.add_column(
+        "prompts",
+        sa.Column("temperature", sa.Float, nullable=True, comment="LLM temperature (0.0-2.0)"),
+    )
+    op.add_column(
+        "prompts",
+        sa.Column("max_tokens", sa.Integer, nullable=True, comment="Maximum response tokens"),
+    )
+    op.add_column(
+        "prompts",
+        sa.Column(
+            "model_name",
+            sa.String(100),
+            nullable=True,
+            comment="Optional model override",
+        ),
+    )
 
     # Update existing prompts with default values
     op.execute(

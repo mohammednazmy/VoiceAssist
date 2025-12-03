@@ -418,7 +418,7 @@ async def rerank_documents(
                 "results": [
                     {
                         "index": int(r.chunk_id),
-                        "content": r.content[:200] + "..." if len(r.content) > 200 else r.content,
+                        "content": (r.content[:200] + "..." if len(r.content) > 200 else r.content),
                         "score": round(r.final_score, 4),
                         "rerank_score": round(r.rerank_score, 4),
                     }
@@ -513,12 +513,23 @@ async def list_search_modes():
                 {
                     "name": "precise",
                     "description": "Adds re-ranking for higher precision. Best for important queries.",
-                    "features": ["vector_search", "bm25_search", "query_expansion", "reranking"],
+                    "features": [
+                        "vector_search",
+                        "bm25_search",
+                        "query_expansion",
+                        "reranking",
+                    ],
                 },
                 {
                     "name": "comprehensive",
                     "description": "Maximum recall with diversity filtering. Best for research queries.",
-                    "features": ["vector_search", "bm25_search", "query_expansion", "reranking", "diversity"],
+                    "features": [
+                        "vector_search",
+                        "bm25_search",
+                        "query_expansion",
+                        "reranking",
+                        "diversity",
+                    ],
                 },
             ]
         }

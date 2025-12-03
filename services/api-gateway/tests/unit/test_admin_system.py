@@ -333,7 +333,13 @@ class TestAdminSystemEndpoints:
     @patch("app.api.admin_system._get_cpu_usage")
     @patch("app.api.admin_system.redis_client")
     def test_get_system_resources_success(
-        self, mock_redis, mock_cpu, mock_memory, mock_disk, mock_request, mock_admin_user
+        self,
+        mock_redis,
+        mock_cpu,
+        mock_memory,
+        mock_disk,
+        mock_request,
+        mock_admin_user,
     ):
         """Test successful system resources retrieval."""
         import asyncio
@@ -341,9 +347,25 @@ class TestAdminSystemEndpoints:
         from app.api.admin_system import get_system_resources
 
         mock_redis.get.return_value = None
-        mock_disk.return_value = {"total_gb": 500, "used_gb": 300, "free_gb": 200, "percent": 60}
-        mock_memory.return_value = {"total_gb": 16, "used_gb": 8, "free_gb": 8, "percent": 50}
-        mock_cpu.return_value = {"count": 8, "percent": 25, "load_1m": 2, "load_5m": 1.5, "load_15m": 1}
+        mock_disk.return_value = {
+            "total_gb": 500,
+            "used_gb": 300,
+            "free_gb": 200,
+            "percent": 60,
+        }
+        mock_memory.return_value = {
+            "total_gb": 16,
+            "used_gb": 8,
+            "free_gb": 8,
+            "percent": 50,
+        }
+        mock_cpu.return_value = {
+            "count": 8,
+            "percent": 25,
+            "load_1m": 2,
+            "load_5m": 1.5,
+            "load_15m": 1,
+        }
 
         result = asyncio.get_event_loop().run_until_complete(get_system_resources(mock_request, mock_admin_user))
 

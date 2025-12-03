@@ -433,7 +433,7 @@ class OpenAITTSService:
                     "text_length": len(text),
                     "total_bytes": total_bytes,
                     "total_latency_ms": total_latency_ms,
-                    "ttfb_ms": int((first_chunk_time - start_time) * 1000) if first_chunk_time else None,
+                    "ttfb_ms": (int((first_chunk_time - start_time) * 1000) if first_chunk_time else None),
                 },
             )
 

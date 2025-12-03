@@ -20,13 +20,27 @@ This document describes the documentation infrastructure for VoiceAssist, includ
 
 The VoiceAssist documentation system consists of:
 
-| Component          | Purpose                         | Location                      |
-| ------------------ | ------------------------------- | ----------------------------- |
-| Docs Directory     | Markdown source files           | `docs/`                       |
-| Docs Site          | Next.js documentation website   | `apps/docs-site/`             |
-| Agent API          | Machine-readable JSON endpoints | `/agent/*`                    |
-| Validation Scripts | Quality gates and linting       | `apps/docs-site/scripts/`     |
-| API Doc Generator  | OpenAPI introspection           | `services/api-gateway/tools/` |
+| Component          | Purpose                         | Location                                           |
+| ------------------ | ------------------------------- | -------------------------------------------------- |
+| Docs Directory     | Markdown source files           | `docs/`                                            |
+| Docs Site          | Next.js documentation website   | `apps/docs-site/`                                  |
+| Agent API          | Machine-readable JSON endpoints | See [Agent Endpoints](#agent-json-endpoints) below |
+| Validation Scripts | Quality gates and linting       | `apps/docs-site/scripts/`                          |
+| API Doc Generator  | OpenAPI introspection           | `services/api-gateway/tools/`                      |
+
+### Agent JSON Endpoints
+
+Static JSON endpoints served at `assistdocs.asimo.io`:
+
+| Endpoint             | Purpose                            |
+| -------------------- | ---------------------------------- |
+| `/agent/index.json`  | Documentation system metadata      |
+| `/agent/docs.json`   | Full document list with metadata   |
+| `/agent/tasks.json`  | Common agent tasks with commands   |
+| `/agent/schema.json` | JSON Schema for API response types |
+| `/search-index.json` | Full-text search index (Fuse.js)   |
+
+For detailed usage, see [Agent API Reference](ai/AGENT_API_REFERENCE.md).
 
 ## Validation Scripts
 
@@ -289,7 +303,7 @@ python scripts/embed-docs.py --collection NAME  # Custom collection
 
 **Purpose:** LLM tool for semantic documentation search.
 
-**Script:** `server/app/tools/docs_search_tool.py`
+**Script:** `server/app/tools/docs_search_tool.py` _(legacy location - `server/` is deprecated; current implementation uses Qdrant-backed semantic search via the AI-Docs pipeline)_
 
 **Functions:**
 

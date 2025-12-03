@@ -63,34 +63,27 @@ class TestRealtimeWebSocket:
     @pytest.mark.skip(reason="WebSocket authenticated tests require database user - needs E2E test setup")
     def test_websocket_connection_established(self):
         """Test that WebSocket connection can be established with authentication."""
-        pass
 
     @pytest.mark.skip(reason="WebSocket authenticated tests require database user - needs E2E test setup")
     def test_websocket_ping_pong(self):
         """Test WebSocket keepalive ping/pong."""
-        pass
 
     @pytest.mark.skip(reason="WebSocket authenticated tests require database user - needs E2E test setup")
     def test_websocket_unknown_message_type(self):
         """Test handling of unknown message types."""
-        pass
 
     @pytest.mark.skip(reason="Requires QueryOrchestrator mocking for streaming response")
     def test_websocket_message_flow(self):
         """Test complete message flow from client to server."""
-        pass
 
     @pytest.mark.skip(reason="Requires QueryOrchestrator mocking for streaming response")
     def test_websocket_query_orchestrator_integration(self):
         """Test that QueryOrchestrator is properly integrated."""
-        pass
 
     @pytest.mark.skip(reason="Requires QueryOrchestrator mocking for streaming response")
     def test_websocket_with_clinical_context(self):
         """Test message with clinical context."""
-        pass
 
     @pytest.mark.skip(reason="Requires QueryOrchestrator mocking for streaming response")
     def test_websocket_empty_message_handling(self):
         """Test handling of empty messages."""
-        pass

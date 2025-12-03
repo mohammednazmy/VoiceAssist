@@ -532,8 +532,8 @@ async def list_events(
                 "uid": event.uid,
                 "summary": event.summary,
                 "description": event.description,
-                "start": event.start.isoformat() if hasattr(event.start, "isoformat") else str(event.start),
-                "end": event.end.isoformat() if hasattr(event.end, "isoformat") else str(event.end),
+                "start": (event.start.isoformat() if hasattr(event.start, "isoformat") else str(event.start)),
+                "end": (event.end.isoformat() if hasattr(event.end, "isoformat") else str(event.end)),
                 "location": event.location,
                 "organizer": event.organizer,
                 "attendees": event.attendees,
@@ -789,7 +789,7 @@ async def create_contact(
             emails=[
                 CardEmailAddress(
                     email=e.email,
-                    type=EmailType[e.type.upper()] if e.type.upper() in EmailType.__members__ else EmailType.OTHER,
+                    type=(EmailType[e.type.upper()] if e.type.upper() in EmailType.__members__ else EmailType.OTHER),
                     is_primary=e.is_primary,
                 )
                 for e in request.emails
@@ -797,7 +797,7 @@ async def create_contact(
             phones=[
                 PhoneNumber(
                     number=p.number,
-                    type=PhoneType[p.type.upper()] if p.type.upper() in PhoneType.__members__ else PhoneType.OTHER,
+                    type=(PhoneType[p.type.upper()] if p.type.upper() in PhoneType.__members__ else PhoneType.OTHER),
                     is_primary=p.is_primary,
                 )
                 for p in request.phones
@@ -881,7 +881,7 @@ async def update_contact(
             existing.emails = [
                 CardEmailAddress(
                     email=e.email,
-                    type=EmailType[e.type.upper()] if e.type.upper() in EmailType.__members__ else EmailType.OTHER,
+                    type=(EmailType[e.type.upper()] if e.type.upper() in EmailType.__members__ else EmailType.OTHER),
                     is_primary=e.is_primary,
                 )
                 for e in request.emails
@@ -891,7 +891,7 @@ async def update_contact(
             existing.phones = [
                 PhoneNumber(
                     number=p.number,
-                    type=PhoneType[p.type.upper()] if p.type.upper() in PhoneType.__members__ else PhoneType.OTHER,
+                    type=(PhoneType[p.type.upper()] if p.type.upper() in PhoneType.__members__ else PhoneType.OTHER),
                     is_primary=p.is_primary,
                 )
                 for p in request.phones
@@ -1246,7 +1246,9 @@ async def get_email_thread(
                         "participants": [str(p) for p in thread.participants],
                         "total_count": thread.total_count,
                         "unread_count": thread.unread_count,
-                        "last_message_date": thread.last_message_date.isoformat() if thread.last_message_date else None,
+                        "last_message_date": (
+                            thread.last_message_date.isoformat() if thread.last_message_date else None
+                        ),
                         "messages": [email_to_dict(m) for m in thread.messages],
                     }
                 }

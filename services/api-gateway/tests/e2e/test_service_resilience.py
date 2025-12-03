@@ -186,11 +186,15 @@ class TestServiceResilience:
         """Test that failed operations roll back database changes."""
 
         # Attempt to create user with duplicate email
-        client.post("/api/auth/register", json={"email": "rollback_test@example.com", "password": "SecurePass123!@#"})
+        client.post(
+            "/api/auth/register",
+            json={"email": "rollback_test@example.com", "password": "SecurePass123!@#"},
+        )
 
         # Second attempt should fail and not corrupt database
         duplicate_response = client.post(
-            "/api/auth/register", json={"email": "rollback_test@example.com", "password": "SecurePass123!@#"}
+            "/api/auth/register",
+            json={"email": "rollback_test@example.com", "password": "SecurePass123!@#"},
         )
 
         assert duplicate_response.status_code == 400

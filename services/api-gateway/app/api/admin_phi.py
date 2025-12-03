@@ -168,7 +168,10 @@ def get_builtin_rules() -> List[PHIRule]:
 
     # Pattern-based rules from PHI_PATTERNS
     pattern_descriptions = {
-        "ssn": ("Social Security Number", "Detects SSN in xxx-xx-xxxx or xxxxxxxxx format"),
+        "ssn": (
+            "Social Security Number",
+            "Detects SSN in xxx-xx-xxxx or xxxxxxxxx format",
+        ),
         "phone": ("Phone Number", "Detects US phone numbers in various formats"),
         "email": ("Email Address", "Detects email addresses"),
         "mrn": ("Medical Record Number", "Detects MRN patterns with labels"),
@@ -191,7 +194,7 @@ def get_builtin_rules() -> List[PHIRule]:
                 id=f"builtin_{phi_type}",
                 name=name,
                 description=description,
-                phi_type=PHIRuleType(phi_type) if phi_type in [t.value for t in PHIRuleType] else PHIRuleType.SSN,
+                phi_type=(PHIRuleType(phi_type) if phi_type in [t.value for t in PHIRuleType] else PHIRuleType.SSN),
                 pattern=pattern,
                 is_builtin=True,
             )

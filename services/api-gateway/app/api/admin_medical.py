@@ -298,7 +298,7 @@ async def get_model_details(
     model_details = {
         "id": model_id,
         "name": model_id.replace("-", " ").title(),
-        "provider": "openai" if "gpt" in model_id else "anthropic" if "claude" in model_id else "local",
+        "provider": ("openai" if "gpt" in model_id else "anthropic" if "claude" in model_id else "local"),
         "type": "embedding" if "embedding" in model_id else "chat",
         "enabled": True,
         "configuration": {
@@ -383,12 +383,14 @@ async def get_model_usage_metrics(
             ModelBreakdown(
                 model_id=model_id,
                 model_name=model_id.replace("-", " ").title(),
-                provider="openai" if "gpt" in model_id else "anthropic" if "claude" in model_id else "local",
+                provider=("openai" if "gpt" in model_id else "anthropic" if "claude" in model_id else "local"),
                 requests=model_data.get("requests", 0),
                 tokens_input=model_data.get("tokens_input", 0),
                 tokens_output=model_data.get("tokens_output", 0),
                 estimated_cost=_calculate_cost(
-                    model_data.get("tokens_input", 0), model_data.get("tokens_output", 0), model_id
+                    model_data.get("tokens_input", 0),
+                    model_data.get("tokens_output", 0),
+                    model_id,
                 ),
                 avg_latency_ms=model_data.get("avg_latency_ms", 0),
             ).model_dump()
@@ -544,7 +546,10 @@ async def update_routing_config(
     # Validate PHI detection cannot be disabled in production
     # This is a HIPAA compliance requirement
     if config_update.phi_detection_enabled is False:
-        raise HTTPException(status_code=400, detail="PHI detection cannot be disabled (HIPAA requirement)")
+        raise HTTPException(
+            status_code=400,
+            detail="PHI detection cannot be disabled (HIPAA requirement)",
+        )
 
     # In production, persist to config store and emit audit log
     # For now, return the updated config

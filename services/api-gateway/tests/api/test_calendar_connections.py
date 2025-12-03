@@ -47,8 +47,18 @@ def mock_oauth_service():
         mock.test_connection = AsyncMock(return_value={"success": True})
         mock.get_provider_status = MagicMock(
             return_value=[
-                {"id": "google", "name": "Google Calendar", "type": "oauth", "configured": True},
-                {"id": "microsoft", "name": "Microsoft Outlook", "type": "oauth", "configured": True},
+                {
+                    "id": "google",
+                    "name": "Google Calendar",
+                    "type": "oauth",
+                    "configured": True,
+                },
+                {
+                    "id": "microsoft",
+                    "name": "Microsoft Outlook",
+                    "type": "oauth",
+                    "configured": True,
+                },
             ]
         )
         yield mock
@@ -84,7 +94,10 @@ class TestListConnections:
         mock_request = MagicMock(spec=Request)
         mock_db = AsyncMock()
 
-        with patch("app.api.calendar_connections.get_current_user", return_value=mock_current_user):
+        with patch(
+            "app.api.calendar_connections.get_current_user",
+            return_value=mock_current_user,
+        ):
             response = await list_user_calendars(
                 request=mock_request,
                 current_user=mock_current_user,
@@ -121,7 +134,10 @@ class TestListConnections:
         mock_request = MagicMock(spec=Request)
         mock_db = AsyncMock()
 
-        with patch("app.api.calendar_connections.get_current_user", return_value=mock_current_user):
+        with patch(
+            "app.api.calendar_connections.get_current_user",
+            return_value=mock_current_user,
+        ):
             response = await list_user_calendars(
                 request=mock_request,
                 current_user=mock_current_user,
@@ -151,7 +167,10 @@ class TestOAuthAuthorize:
         mock_request.base_url = "https://api.example.com/"
         mock_db = AsyncMock()
 
-        with patch("app.api.calendar_connections.get_current_user", return_value=mock_current_user):
+        with patch(
+            "app.api.calendar_connections.get_current_user",
+            return_value=mock_current_user,
+        ):
             response = await oauth_authorize(
                 request=mock_request,
                 provider="google",
@@ -229,7 +248,10 @@ class TestCalDAVConnect:
             password="testpass",
         )
 
-        with patch("app.api.calendar_connections.get_current_user", return_value=mock_current_user):
+        with patch(
+            "app.api.calendar_connections.get_current_user",
+            return_value=mock_current_user,
+        ):
             response = await connect_caldav(
                 request=mock_request,
                 data=request_data,
@@ -283,7 +305,10 @@ class TestDisconnect:
         mock_request = MagicMock(spec=Request)
         mock_db = AsyncMock()
 
-        with patch("app.api.calendar_connections.get_current_user", return_value=mock_current_user):
+        with patch(
+            "app.api.calendar_connections.get_current_user",
+            return_value=mock_current_user,
+        ):
             response = await disconnect_calendar(
                 request=mock_request,
                 connection_id="conn-123",
@@ -332,7 +357,10 @@ class TestSetDefault:
         mock_request = MagicMock(spec=Request)
         mock_db = AsyncMock()
 
-        with patch("app.api.calendar_connections.get_current_user", return_value=mock_current_user):
+        with patch(
+            "app.api.calendar_connections.get_current_user",
+            return_value=mock_current_user,
+        ):
             response = await set_default_calendar(
                 request=mock_request,
                 connection_id="conn-123",
@@ -358,7 +386,10 @@ class TestTestConnection:
         mock_request = MagicMock(spec=Request)
         mock_db = AsyncMock()
 
-        with patch("app.api.calendar_connections.get_current_user", return_value=mock_current_user):
+        with patch(
+            "app.api.calendar_connections.get_current_user",
+            return_value=mock_current_user,
+        ):
             response = await test_calendar_connection(
                 request=mock_request,
                 connection_id="conn-123",
@@ -373,7 +404,10 @@ class TestTestConnection:
     async def test_connection_failure(self, mock_oauth_service, mock_current_user):
         """Test failed connection test."""
         mock_oauth_service.get_user_connections.return_value = [{"id": "conn-123", "provider": "google"}]
-        mock_oauth_service.test_connection.return_value = {"success": False, "error": "Token expired"}
+        mock_oauth_service.test_connection.return_value = {
+            "success": False,
+            "error": "Token expired",
+        }
 
         from app.api.calendar_connections import test_calendar_connection
         from fastapi import Request
@@ -381,7 +415,10 @@ class TestTestConnection:
         mock_request = MagicMock(spec=Request)
         mock_db = AsyncMock()
 
-        with patch("app.api.calendar_connections.get_current_user", return_value=mock_current_user):
+        with patch(
+            "app.api.calendar_connections.get_current_user",
+            return_value=mock_current_user,
+        ):
             response = await test_calendar_connection(
                 request=mock_request,
                 connection_id="conn-123",

@@ -51,7 +51,12 @@ from app.core.metrics import (  # noqa: E402
 )
 from app.services.cache_service import cache_service, generate_cache_key  # noqa: E402
 from qdrant_client import QdrantClient  # noqa: E402
-from qdrant_client.models import FieldCondition, Filter, MatchAny, MatchValue  # noqa: E402
+from qdrant_client.models import (  # noqa: E402
+    FieldCondition,
+    Filter,
+    MatchAny,
+    MatchValue,
+)
 
 # isort: on
 
