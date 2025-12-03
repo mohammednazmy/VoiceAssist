@@ -203,6 +203,7 @@ jobs:
           REDIS_PASSWORD: ""
           SECRET_KEY: test-secret-key-for-ci
           JWT_SECRET: test-jwt-secret-for-ci
+          NEXTCLOUD_ADMIN_PASSWORD: test_nextcloud_password
 
       - name: Run integration tests
         working-directory: services/api-gateway
