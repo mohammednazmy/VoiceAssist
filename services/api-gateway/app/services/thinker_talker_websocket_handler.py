@@ -75,6 +75,25 @@ class TTSessionConfig:
     connection_timeout_sec: float = 10.0
     idle_timeout_sec: float = 300.0
 
+    # Phase 7: Multilingual settings
+    accent_profile_id: Optional[str] = None
+    auto_language_detection: bool = True
+    language_switch_confidence: float = 0.75
+
+    # Phase 8: Personalization settings
+    vad_sensitivity: float = 0.5  # 0-1 scale
+    personalized_vad_threshold: Optional[float] = None
+    enable_behavior_learning: bool = True
+
+    # Phase 9: Offline/fallback settings
+    enable_offline_fallback: bool = True
+    tts_cache_enabled: bool = True
+
+    # Phase 10: Conversation management settings
+    enable_sentiment_tracking: bool = True
+    enable_discourse_analysis: bool = True
+    enable_response_recommendations: bool = True
+
 
 @dataclass
 class TTSessionMetrics:
@@ -304,7 +323,11 @@ class ThinkerTalkerWebSocketHandler:
             # Session initialization from client (optional config updates)
             voice_settings = message.get("voice_settings", {})
             conversation_id = message.get("conversation_id")
-            logger.info(f"Session init received: conv_id={conversation_id}, settings={voice_settings}")
+            advanced_settings = message.get("advanced_settings", {})
+            logger.info(
+                f"Session init received: conv_id={conversation_id}, "
+                f"settings={voice_settings}, advanced={advanced_settings}"
+            )
 
             # Apply voice settings to the pipeline config
             if self._pipeline_session and voice_settings:
@@ -315,6 +338,40 @@ class ThinkerTalkerWebSocketHandler:
                     self._pipeline_session.config.stt_language = voice_settings["language"]
                 if "barge_in_enabled" in voice_settings:
                     self._pipeline_session.config.barge_in_enabled = voice_settings["barge_in_enabled"]
+
+            # Apply Phase 7-10 advanced settings to session config
+            if advanced_settings:
+                # Phase 7: Multilingual
+                if "accent_profile_id" in advanced_settings:
+                    self.config.accent_profile_id = advanced_settings["accent_profile_id"]
+                if "auto_language_detection" in advanced_settings:
+                    self.config.auto_language_detection = advanced_settings["auto_language_detection"]
+                if "language_switch_confidence" in advanced_settings:
+                    self.config.language_switch_confidence = advanced_settings["language_switch_confidence"]
+
+                # Phase 8: Personalization
+                if "vad_sensitivity" in advanced_settings:
+                    self.config.vad_sensitivity = advanced_settings["vad_sensitivity"]
+                if "personalized_vad_threshold" in advanced_settings:
+                    self.config.personalized_vad_threshold = advanced_settings["personalized_vad_threshold"]
+                if "enable_behavior_learning" in advanced_settings:
+                    self.config.enable_behavior_learning = advanced_settings["enable_behavior_learning"]
+
+                # Phase 9: Offline
+                if "enable_offline_fallback" in advanced_settings:
+                    self.config.enable_offline_fallback = advanced_settings["enable_offline_fallback"]
+                if "tts_cache_enabled" in advanced_settings:
+                    self.config.tts_cache_enabled = advanced_settings["tts_cache_enabled"]
+
+                # Phase 10: Conversation management
+                if "enable_sentiment_tracking" in advanced_settings:
+                    self.config.enable_sentiment_tracking = advanced_settings["enable_sentiment_tracking"]
+                if "enable_discourse_analysis" in advanced_settings:
+                    self.config.enable_discourse_analysis = advanced_settings["enable_discourse_analysis"]
+                if "enable_response_recommendations" in advanced_settings:
+                    self.config.enable_response_recommendations = advanced_settings["enable_response_recommendations"]
+
+                logger.info(f"Applied advanced settings: {advanced_settings}")
 
             # Acknowledge the init
             await self._send_message({"type": "session.init.ack"})
