@@ -167,6 +167,36 @@ interface VoiceSettingsState {
   // Voice quality preset (Phase: Talker Enhancement)
   qualityPreset: QualityPreset; // Controls latency vs naturalness trade-off
 
+  // ============================================================================
+  // Phase 7-10: Advanced Voice Barge-In Settings
+  // ============================================================================
+
+  // Phase 7: Multilingual settings
+  accentProfileId: string | null; // Selected accent profile
+  autoLanguageDetection: boolean; // Enable automatic language detection
+  languageSwitchConfidence: number; // 0-1: Confidence threshold for auto-switch
+
+  // Phase 8: Personalization/Calibration settings
+  vadCalibrated: boolean; // Whether user has completed calibration
+  lastCalibrationDate: number | null; // When calibration was completed
+  personalizedVadThreshold: number | null; // Personalized VAD threshold from calibration
+  enableBehaviorLearning: boolean; // Allow adaptive learning from barge-in patterns
+
+  // Phase 9: Offline mode settings
+  enableOfflineFallback: boolean; // Enable offline VAD when network unavailable
+  preferOfflineVAD: boolean; // Prefer local VAD processing even when online
+  ttsCacheEnabled: boolean; // Cache common TTS phrases for offline playback
+
+  // Phase 10: Conversation management settings
+  enableSentimentTracking: boolean; // Track user sentiment during conversation
+  enableDiscourseAnalysis: boolean; // Enable discourse/topic tracking
+  enableResponseRecommendations: boolean; // Get AI response behavior recommendations
+  showSuggestedFollowUps: boolean; // Display suggested follow-up questions
+
+  // Privacy settings
+  storeTranscriptHistory: boolean; // Store transcript history locally
+  shareAnonymousAnalytics: boolean; // Share anonymous usage data for improvement
+
   // Actions
   setVoice: (voice: VoiceOption) => void;
   setLanguage: (language: LanguageOption) => void;
@@ -201,6 +231,36 @@ interface VoiceSettingsState {
   // Bulk update from backend
   syncFromBackend: (prefs: BackendVoicePreferences) => void;
   reset: () => void;
+
+  // ============================================================================
+  // Phase 7-10: Advanced Voice Barge-In Actions
+  // ============================================================================
+
+  // Phase 7: Multilingual actions
+  setAccentProfileId: (id: string | null) => void;
+  setAutoLanguageDetection: (enabled: boolean) => void;
+  setLanguageSwitchConfidence: (confidence: number) => void;
+
+  // Phase 8: Personalization/Calibration actions
+  setVadCalibrated: (calibrated: boolean) => void;
+  setLastCalibrationDate: (date: number | null) => void;
+  setPersonalizedVadThreshold: (threshold: number | null) => void;
+  setEnableBehaviorLearning: (enabled: boolean) => void;
+
+  // Phase 9: Offline mode actions
+  setEnableOfflineFallback: (enabled: boolean) => void;
+  setPreferOfflineVAD: (enabled: boolean) => void;
+  setTtsCacheEnabled: (enabled: boolean) => void;
+
+  // Phase 10: Conversation management actions
+  setEnableSentimentTracking: (enabled: boolean) => void;
+  setEnableDiscourseAnalysis: (enabled: boolean) => void;
+  setEnableResponseRecommendations: (enabled: boolean) => void;
+  setShowSuggestedFollowUps: (enabled: boolean) => void;
+
+  // Privacy actions
+  setStoreTranscriptHistory: (enabled: boolean) => void;
+  setShareAnonymousAnalytics: (enabled: boolean) => void;
 }
 
 // Backend voice preferences response shape
@@ -252,6 +312,36 @@ const defaultSettings = {
   lastSyncedAt: null as number | null,
   // Voice quality preset (Phase: Talker Enhancement)
   qualityPreset: "balanced" as QualityPreset, // Default: balanced for speed + naturalness
+
+  // ============================================================================
+  // Phase 7-10: Advanced Voice Barge-In Default Settings
+  // ============================================================================
+
+  // Phase 7: Multilingual defaults
+  accentProfileId: null as string | null,
+  autoLanguageDetection: true, // Enable auto-detection by default
+  languageSwitchConfidence: 0.75, // 75% confidence required to switch
+
+  // Phase 8: Personalization/Calibration defaults
+  vadCalibrated: false,
+  lastCalibrationDate: null as number | null,
+  personalizedVadThreshold: null as number | null,
+  enableBehaviorLearning: true, // Allow learning by default
+
+  // Phase 9: Offline mode defaults
+  enableOfflineFallback: true, // Enable fallback for reliability
+  preferOfflineVAD: false, // Use network VAD when available
+  ttsCacheEnabled: true, // Cache for better offline experience
+
+  // Phase 10: Conversation management defaults
+  enableSentimentTracking: true, // Track sentiment for better responses
+  enableDiscourseAnalysis: true, // Enable topic tracking
+  enableResponseRecommendations: true, // Get AI behavior recommendations
+  showSuggestedFollowUps: true, // Show follow-up suggestions
+
+  // Privacy defaults
+  storeTranscriptHistory: true, // Store history for continuity
+  shareAnonymousAnalytics: false, // Opt-out by default for privacy
 };
 
 /**
@@ -351,6 +441,66 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
           lastSyncedAt: Date.now(),
         }),
 
+      // ========================================================================
+      // Phase 7-10: Advanced Voice Barge-In Actions
+      // ========================================================================
+
+      // Phase 7: Multilingual actions
+      setAccentProfileId: (accentProfileId) => set({ accentProfileId }),
+
+      setAutoLanguageDetection: (autoLanguageDetection) =>
+        set({ autoLanguageDetection }),
+
+      setLanguageSwitchConfidence: (languageSwitchConfidence) =>
+        set({
+          languageSwitchConfidence: clamp(languageSwitchConfidence, 0, 1),
+        }),
+
+      // Phase 8: Personalization/Calibration actions
+      setVadCalibrated: (vadCalibrated) => set({ vadCalibrated }),
+
+      setLastCalibrationDate: (lastCalibrationDate) =>
+        set({ lastCalibrationDate }),
+
+      setPersonalizedVadThreshold: (personalizedVadThreshold) =>
+        set({
+          personalizedVadThreshold:
+            personalizedVadThreshold !== null
+              ? clamp(personalizedVadThreshold, 0, 1)
+              : null,
+        }),
+
+      setEnableBehaviorLearning: (enableBehaviorLearning) =>
+        set({ enableBehaviorLearning }),
+
+      // Phase 9: Offline mode actions
+      setEnableOfflineFallback: (enableOfflineFallback) =>
+        set({ enableOfflineFallback }),
+
+      setPreferOfflineVAD: (preferOfflineVAD) => set({ preferOfflineVAD }),
+
+      setTtsCacheEnabled: (ttsCacheEnabled) => set({ ttsCacheEnabled }),
+
+      // Phase 10: Conversation management actions
+      setEnableSentimentTracking: (enableSentimentTracking) =>
+        set({ enableSentimentTracking }),
+
+      setEnableDiscourseAnalysis: (enableDiscourseAnalysis) =>
+        set({ enableDiscourseAnalysis }),
+
+      setEnableResponseRecommendations: (enableResponseRecommendations) =>
+        set({ enableResponseRecommendations }),
+
+      setShowSuggestedFollowUps: (showSuggestedFollowUps) =>
+        set({ showSuggestedFollowUps }),
+
+      // Privacy actions
+      setStoreTranscriptHistory: (storeTranscriptHistory) =>
+        set({ storeTranscriptHistory }),
+
+      setShareAnonymousAnalytics: (shareAnonymousAnalytics) =>
+        set({ shareAnonymousAnalytics }),
+
       reset: () => set({ ...defaultSettings }),
     }),
     {
@@ -386,6 +536,36 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
         lastSyncedAt: state.lastSyncedAt,
         // Voice quality preset (Phase: Talker Enhancement)
         qualityPreset: state.qualityPreset,
+
+        // ======================================================================
+        // Phase 7-10: Advanced Voice Barge-In Settings (Persisted)
+        // ======================================================================
+
+        // Phase 7: Multilingual
+        accentProfileId: state.accentProfileId,
+        autoLanguageDetection: state.autoLanguageDetection,
+        languageSwitchConfidence: state.languageSwitchConfidence,
+
+        // Phase 8: Personalization/Calibration
+        vadCalibrated: state.vadCalibrated,
+        lastCalibrationDate: state.lastCalibrationDate,
+        personalizedVadThreshold: state.personalizedVadThreshold,
+        enableBehaviorLearning: state.enableBehaviorLearning,
+
+        // Phase 9: Offline mode
+        enableOfflineFallback: state.enableOfflineFallback,
+        preferOfflineVAD: state.preferOfflineVAD,
+        ttsCacheEnabled: state.ttsCacheEnabled,
+
+        // Phase 10: Conversation management
+        enableSentimentTracking: state.enableSentimentTracking,
+        enableDiscourseAnalysis: state.enableDiscourseAnalysis,
+        enableResponseRecommendations: state.enableResponseRecommendations,
+        showSuggestedFollowUps: state.showSuggestedFollowUps,
+
+        // Privacy
+        storeTranscriptHistory: state.storeTranscriptHistory,
+        shareAnonymousAnalytics: state.shareAnonymousAnalytics,
       }),
     },
   ),

@@ -16,12 +16,23 @@
  * 3. ElevenLabs streaming TTS
  *
  * Phase: Thinker/Talker Voice Pipeline Migration
+ * Enhanced: Phases 7-10 (Multilingual, Personalization, Offline, Conversation Management)
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { captureVoiceError } from "../lib/sentry";
 import { useAuth } from "./useAuth";
 import { voiceLog } from "../lib/logger";
+
+// Phase 7-10: Advanced voice barge-in hooks
+import { useMultilingual } from "./useMultilingual";
+import { usePersonalization } from "./usePersonalization";
+import {
+  useOfflineVADWithFallback,
+  type UseOfflineVADWithFallbackReturn,
+} from "./useOfflineVAD";
+import { useConversationManager } from "./useConversationManager";
+import type { BargeInType as ConversationBargeInType } from "../lib/conversationManager/types";
 
 // ============================================================================
 // Types
@@ -147,6 +158,24 @@ export interface UseThinkerTalkerSessionOptions {
   /** Called when AI audio playback should stop */
   onStopPlayback?: () => void;
   autoConnect?: boolean;
+
+  // Phase 7-10: Advanced options
+  /** Enable multilingual detection and switching */
+  enableMultilingual?: boolean;
+  /** Enable adaptive personalization */
+  enablePersonalization?: boolean;
+  /** Enable offline VAD fallback */
+  enableOfflineVAD?: boolean;
+  /** Enable conversation management (sentiment, discourse) */
+  enableConversationManagement?: boolean;
+  /** Personalization sync endpoint */
+  personalizationSyncEndpoint?: string;
+  /** Callback when language is detected */
+  onLanguageDetected?: (language: string, confidence: number) => void;
+  /** Callback when sentiment changes */
+  onSentimentChange?: (sentiment: string, confidence: number) => void;
+  /** Callback when calibration completes */
+  onCalibrationComplete?: (result: unknown) => void;
 }
 
 // ============================================================================
@@ -203,6 +232,66 @@ export function useThinkerTalkerSession(
   options: UseThinkerTalkerSessionOptions = {},
 ) {
   const { tokens } = useAuth();
+
+  // Extract Phase 7-10 options
+  const {
+    enableMultilingual = true,
+    enablePersonalization = true,
+    enableOfflineVAD = true,
+    enableConversationManagement = true,
+    personalizationSyncEndpoint,
+    onLanguageDetected,
+    onSentimentChange,
+    onCalibrationComplete,
+  } = options;
+
+  // Phase 7: Multilingual support
+  const multilingual = useMultilingual({
+    autoDetect: enableMultilingual,
+    autoSwitch: false, // User controls language switching
+    enableAccentDetection: true,
+    onLanguageDetected: (result) => {
+      onLanguageDetected?.(result.detectedLanguage, result.confidence);
+    },
+  });
+
+  // Phase 8: Personalization
+  const personalization = usePersonalization({
+    syncEndpoint: personalizationSyncEndpoint,
+    autoAdapt: enablePersonalization,
+    onCalibrationComplete: (result) => {
+      onCalibrationComplete?.(result);
+    },
+  });
+
+  // Phase 9: Offline VAD fallback
+  // Note: networkVADAvailable is updated via effect when status changes
+  const [networkVADAvailable, setNetworkVADAvailable] = useState(false);
+  const offlineVAD = useOfflineVADWithFallback({
+    enabled: enableOfflineVAD,
+    networkVADAvailable,
+    onSpeechStart: () => {
+      voiceLog.debug("[ThinkerTalker] Offline VAD: speech started");
+    },
+    onSpeechEnd: () => {
+      voiceLog.debug("[ThinkerTalker] Offline VAD: speech ended");
+    },
+    onFallbackToOffline: () => {
+      voiceLog.debug("[ThinkerTalker] Falling back to offline VAD");
+    },
+    onReturnToNetwork: () => {
+      voiceLog.debug("[ThinkerTalker] Returning to network VAD");
+    },
+  });
+
+  // Phase 10: Conversation management
+  const conversationManager = useConversationManager({
+    enableSentimentTracking: enableConversationManagement,
+    enableDiscourseAnalysis: enableConversationManagement,
+    onSentimentChange: (sentiment) => {
+      onSentimentChange?.(sentiment.sentiment, sentiment.confidence);
+    },
+  });
 
   // State
   const [status, setStatus] = useState<TTConnectionStatus>("disconnected");
@@ -417,6 +506,11 @@ export function useThinkerTalkerSession(
     statusRef.current = status;
   }, [status]);
 
+  // Update network VAD availability when status changes
+  useEffect(() => {
+    setNetworkVADAvailable(status === "connected" || status === "ready");
+  }, [status]);
+
   /**
    * Handle errors
    */
@@ -475,6 +569,9 @@ export function useThinkerTalkerSession(
 
           // Track STT latency
           const now = Date.now();
+          const duration = speechEndTimeRef.current
+            ? now - speechEndTimeRef.current
+            : 0;
           if (speechEndTimeRef.current) {
             const sttLatency = now - speechEndTimeRef.current;
             firstTranscriptTimeRef.current = now;
@@ -483,6 +580,16 @@ export function useThinkerTalkerSession(
               userUtteranceCount: metrics.userUtteranceCount + 1,
             });
             voiceLog.debug(`[ThinkerTalker] STT latency: ${sttLatency}ms`);
+          }
+
+          // Phase 7: Detect language from transcript
+          if (enableMultilingual && text) {
+            multilingual.detectLanguage(text);
+          }
+
+          // Phase 10: Process utterance for sentiment/discourse
+          if (enableConversationManagement && text) {
+            conversationManager.processUtterance(text, duration);
           }
 
           options.onTranscript?.({
@@ -617,14 +724,26 @@ export function useThinkerTalkerSession(
           break;
         }
 
-        case "input_audio_buffer.speech_started":
+        case "input_audio_buffer.speech_started": {
           setIsSpeaking(true);
           setPartialTranscript("");
+
+          // Phase 8: Record barge-in event
+          const vadConfidence = (message.vad_confidence as number) || 0.8;
+          if (enablePersonalization) {
+            personalization.recordBargeIn(
+              "hard_barge", // Will be determined by duration
+              0, // Duration not known yet
+              vadConfidence,
+              { aiWasSpeaking: pipelineState === "speaking" },
+            );
+          }
 
           // Notify for barge-in handling
           options.onSpeechStarted?.();
           options.onStopPlayback?.();
           break;
+        }
 
         case "input_audio_buffer.speech_stopped":
           setIsSpeaking(false);
@@ -682,6 +801,13 @@ export function useThinkerTalkerSession(
       metrics,
       currentToolCalls,
       startHeartbeat,
+      enableMultilingual,
+      multilingual,
+      enablePersonalization,
+      personalization,
+      enableConversationManagement,
+      conversationManager,
+      pipelineState,
     ],
   );
 
@@ -1055,15 +1181,46 @@ export function useThinkerTalkerSession(
   /**
    * Send barge-in signal to interrupt AI response
    */
-  const bargeIn = useCallback(() => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      return;
-    }
+  const bargeIn = useCallback(
+    (bargeInType: ConversationBargeInType = "hard_barge") => {
+      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+        return { shouldInterrupt: false };
+      }
 
-    voiceLog.debug("[ThinkerTalker] Sending barge-in signal");
-    wsRef.current.send(JSON.stringify({ type: "barge_in" }));
-    updateMetrics({ bargeInCount: metrics.bargeInCount + 1 });
-  }, [updateMetrics, metrics.bargeInCount]);
+      // Phase 10: Check with conversation manager if barge-in should be allowed
+      if (enableConversationManagement) {
+        const result = conversationManager.handleBargeIn({
+          id: `bi_${Date.now()}`,
+          type: bargeInType,
+          timestamp: Date.now(),
+          duration: 0, // Duration not known at this point
+          vadConfidence: personalization.vadSensitivity || 0.5,
+          aiWasSpeaking: pipelineState === "speaking",
+        });
+
+        if (!result.shouldInterrupt) {
+          voiceLog.debug(
+            "[ThinkerTalker] Barge-in blocked by conversation manager:",
+            result.message,
+          );
+          return result;
+        }
+      }
+
+      voiceLog.debug("[ThinkerTalker] Sending barge-in signal");
+      wsRef.current.send(JSON.stringify({ type: "barge_in" }));
+      updateMetrics({ bargeInCount: metrics.bargeInCount + 1 });
+      return { shouldInterrupt: true };
+    },
+    [
+      updateMetrics,
+      metrics.bargeInCount,
+      enableConversationManagement,
+      conversationManager,
+      pipelineState,
+      personalization.vadSensitivity,
+    ],
+  );
 
   /**
    * Send text message (fallback mode)
@@ -1190,6 +1347,56 @@ export function useThinkerTalkerSession(
       wsRef.current?.readyState === WebSocket.OPEN,
     isProcessing: pipelineState === "processing",
     isListening: pipelineState === "listening",
+
+    // Phase 7: Multilingual
+    multilingual: {
+      currentLanguage: multilingual.currentLanguage,
+      currentAccent: multilingual.currentAccent,
+      detectedLanguage: multilingual.detectedLanguage,
+      detectionConfidence: multilingual.detectionConfidence,
+      isRtl: multilingual.isRtl,
+      setLanguage: multilingual.setLanguage,
+      setAccent: multilingual.setAccent,
+      availableLanguages: multilingual.availableLanguages,
+      availableAccents: multilingual.availableAccents,
+      vadAdjustments: multilingual.vadAdjustments,
+    },
+
+    // Phase 8: Personalization
+    personalization: {
+      isCalibrated: personalization.isCalibrated,
+      isCalibrating: personalization.isCalibrating,
+      vadSensitivity: personalization.vadSensitivity,
+      behaviorStats: personalization.behaviorStats,
+      runCalibration: personalization.runCalibration,
+      cancelCalibration: personalization.cancelCalibration,
+      setVadSensitivity: personalization.setVadSensitivity,
+      getRecommendedVadThreshold: personalization.getRecommendedVadThreshold,
+    },
+
+    // Phase 9: Offline VAD
+    offlineVAD: {
+      isListening: offlineVAD.isListening,
+      isSpeaking: offlineVAD.isSpeaking,
+      isUsingOfflineVAD: offlineVAD.isUsingOfflineVAD,
+      currentEnergy: offlineVAD.currentEnergy,
+      startListening: offlineVAD.startListening,
+      stopListening: offlineVAD.stopListening,
+      forceOffline: offlineVAD.forceOffline,
+      forceNetwork: offlineVAD.forceNetwork,
+      reset: offlineVAD.reset,
+    },
+
+    // Phase 10: Conversation Management
+    conversationManager: {
+      sentiment: conversationManager.sentiment,
+      discourse: conversationManager.discourse,
+      recommendations: conversationManager.recommendations,
+      suggestedFollowUps: conversationManager.suggestedFollowUps,
+      activeToolCalls: conversationManager.activeToolCalls,
+      registerToolCall: conversationManager.registerToolCall,
+      updateToolCallStatus: conversationManager.updateToolCallStatus,
+    },
   };
 }
 
