@@ -425,7 +425,7 @@ describe("MessageActionMenu", () => {
     it("should show spinner icon when action is in progress", async () => {
       const user = userEvent.setup();
 
-      const { container } = render(
+      const { container: _container } = render(
         <MessageActionMenu
           messageId="msg-1"
           role="assistant"

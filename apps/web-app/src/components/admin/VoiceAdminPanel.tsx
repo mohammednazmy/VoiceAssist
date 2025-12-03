@@ -235,7 +235,7 @@ export function VoiceAdminPanel() {
   const [defaultVoiceId, setDefaultVoiceId] = useState<string | null>(null);
   const [defaultProvider, setDefaultProvider] = useState<string>("openai");
   const [providerFilter, setProviderFilter] = useState<string>("all");
-  const [elevenlabsUsage, setElevenlabsUsage] =
+  const [elevenlabsUsage, _setElevenlabsUsage] =
     useState<ElevenLabsUsage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -314,7 +314,7 @@ export function VoiceAdminPanel() {
           provider: voice.provider,
         }),
       );
-    } catch (err) {
+    } catch (_err) {
       setError("Failed to set default voice");
     }
   };
