@@ -50,7 +50,7 @@ resource "aws_security_group" "eks_node" {
   tags = merge(
     var.tags,
     {
-      Name                                        = "${var.name_prefix}-eks-node-sg"
+      Name                                       = "${var.name_prefix}-eks-node-sg"
       "kubernetes.io/cluster/${var.name_prefix}" = "owned"
     }
   )
