@@ -42,7 +42,7 @@ interface UnifiedInputAreaProps {
   isVoicePanelOpen?: boolean;
 }
 
-type InputMode = "text" | "voice";
+type _InputMode = "text" | "voice";
 
 // ============================================================================
 // Component
@@ -61,9 +61,9 @@ export function UnifiedInputArea({
 
   // Unified store state
   const {
-    inputMode,
+    inputMode: _inputMode,
     voiceModeActive,
-    voiceModeType,
+    voiceModeType: _voiceModeType,
     voiceState,
     isListening,
     isSpeaking,
@@ -86,12 +86,12 @@ export function UnifiedInputArea({
     voiceState: machineVoiceState,
     isActive: _machineIsActive,
     isListening: machineIsListening,
-    isProcessing,
-    isResponding,
+    isProcessing: _isProcessing,
+    isResponding: _isResponding,
     hasError: voiceHasError,
     error: voiceError,
     partialTranscript: machinePartialTranscript,
-    finalTranscript,
+    finalTranscript: _finalTranscript,
     activate: activateVoice,
     deactivate: deactivateVoice,
     retryConnection,
@@ -166,7 +166,7 @@ export function UnifiedInputArea({
     ],
   );
 
-  const handleKeyUp = useCallback(
+  const _handleKeyUp = useCallback(
     (e: React.KeyboardEvent) => {
       // Release space in push-to-talk mode
       if (
