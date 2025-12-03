@@ -91,6 +91,11 @@ jobs:
           ENVIRONMENT: test
           SECRET_KEY: test-secret-key-for-ci
           JWT_SECRET: test-jwt-secret-for-ci
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+          REDIS_PASSWORD: test_redis_password
+          NEXTCLOUD_ADMIN_PASSWORD: test_nextcloud_password
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == env.PYTHON_VERSION_MAIN
@@ -203,6 +208,7 @@ jobs:
           QDRANT_PORT: 6333
           SECRET_KEY: test-secret-key-for-ci
           JWT_SECRET: test-jwt-secret-for-ci
+          NEXTCLOUD_ADMIN_PASSWORD: test_nextcloud_password
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -290,9 +296,17 @@ jobs:
             echo "No contract tests found, skipping..."
           fi
         env:
+          ENVIRONMENT: test
           PACT_BROKER_URL: http://localhost:9292
           PACT_BROKER_USERNAME: pact
           PACT_BROKER_PASSWORD: pact
+          SECRET_KEY: test-secret-key-for-ci
+          JWT_SECRET: test-jwt-secret-for-ci
+          POSTGRES_USER: voiceassist
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: pact_broker
+          REDIS_PASSWORD: ""
+          NEXTCLOUD_ADMIN_PASSWORD: test_nextcloud_password
 
       - name: Publish pacts to broker
         if: github.event_name == 'push'

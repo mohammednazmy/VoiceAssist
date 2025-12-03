@@ -161,6 +161,16 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps
 
+      - name: Build shared packages
+        run: |
+          pnpm --filter @voiceassist/ui build
+          pnpm --filter @voiceassist/api-client build
+          pnpm --filter @voiceassist/utils build
+          pnpm --filter @voiceassist/telemetry build
+
+      - name: Build web app for E2E tests
+        run: pnpm --filter voiceassist-web build
+
       # AI test generation is skipped by default to avoid OpenAI API costs
       # The generator skips existing files anyway, so this only matters for new scenarios
       # Set CI_GENERATE_AI_TESTS=true in workflow to enable
