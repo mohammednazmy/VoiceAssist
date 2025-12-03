@@ -23,7 +23,6 @@ import type {
   TurnTakingConfig,
   TurnTakingEvent,
   TurnTakingEventCallback,
-  ProsodicFeatures,
   SilencePrediction,
   ResumptionContext,
   SupportedLanguage,
@@ -295,7 +294,7 @@ export class TurnTakingManager {
   /**
    * Handle user turn start
    */
-  private handleUserTurnStart(from: TurnState): void {
+  private handleUserTurnStart(_from: TurnState): void {
     this.turnStartedAt = Date.now();
     this.state.currentSpeaker = "user";
 
@@ -315,7 +314,7 @@ export class TurnTakingManager {
   /**
    * Handle AI turn start
    */
-  private handleAITurnStart(from: TurnState): void {
+  private handleAITurnStart(_from: TurnState): void {
     this.turnStartedAt = Date.now();
     this.state.currentSpeaker = "ai";
 

@@ -358,8 +358,8 @@ export class ProsodicAnalyzer {
    * as syllable approximation.
    */
   private estimateSpeakingRate(
-    samples: Float32Array,
-    currentEnergy: number,
+    _samples: Float32Array,
+    _currentEnergy: number,
   ): number {
     if (this.energyHistory.length < 5) {
       return 0;

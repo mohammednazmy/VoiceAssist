@@ -417,7 +417,7 @@ export function ChatPage() {
     regenerateMessage,
     deleteMessage,
     reconnect,
-    addMessage,
+    addMessage: _addMessage,
   } = useChatSession({
     conversationId: useUnifiedUI
       ? undefined

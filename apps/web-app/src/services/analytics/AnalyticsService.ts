@@ -400,7 +400,8 @@ class AnalyticsService {
     if (!this.config.trackWebVitals) return;
 
     const rating = this.getWebVitalRating(name, value);
-    const metric: WebVitalMetric = {
+    // Note: metric object captures all Web Vital data for potential future use
+    const _metric: WebVitalMetric = {
       name,
       value,
       rating,

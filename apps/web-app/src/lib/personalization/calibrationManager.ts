@@ -271,14 +271,14 @@ export class CalibrationManager {
       const buffer = new Float32Array(this.analyser!.fftSize);
       const noiseFloor = this.getNoiseFloor();
       const speechThreshold = noiseFloor * 3; // Voice should be 3x louder than noise
-      let speechDetected = false;
+      let _speechDetected = false;
 
       this.analysisInterval = window.setInterval(() => {
         this.analyser!.getFloatTimeDomainData(buffer);
         const energy = this.calculateRMS(buffer);
 
         if (energy > speechThreshold) {
-          speechDetected = true;
+          _speechDetected = true;
           window.clearInterval(this.analysisInterval!);
           this.analysisInterval = null;
           resolve();

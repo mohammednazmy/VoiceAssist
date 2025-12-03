@@ -269,7 +269,7 @@ export class OverlapHandler {
    */
   private resolveUserPriority(
     vadConfidence: number,
-    overlapDuration: number,
+    _overlapDuration: number,
   ): OverlapResolution {
     if (vadConfidence >= this.config.interruptThreshold) {
       this.stats.totalInterrupts++;
@@ -326,7 +326,7 @@ export class OverlapHandler {
   private resolveIntelligent(
     vadConfidence: number,
     overlapDuration: number,
-    transcript?: string,
+    _transcript?: string,
   ): OverlapResolution {
     // Check detection delay
     if (overlapDuration < this.config.overlapDetectionDelay) {
@@ -469,7 +469,7 @@ export class OverlapHandler {
   /**
    * Update statistics
    */
-  private updateStats(duration: number): void {
+  private updateStats(_duration: number): void {
     // Update average overlap duration
     const totalDuration = this.overlapHistory.reduce(
       (sum, e) => sum + e.duration,

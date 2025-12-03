@@ -179,7 +179,7 @@ export class FullDuplexManager {
    */
   private applyResolution(
     resolution: OverlapResolution,
-    prevState: DuplexState,
+    _prevState: DuplexState,
   ): void {
     switch (resolution.action) {
       case "interrupt_ai":

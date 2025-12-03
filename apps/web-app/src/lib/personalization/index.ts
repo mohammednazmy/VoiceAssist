@@ -107,7 +107,7 @@ export class PersonalizationManager {
     }
 
     // Subscribe to preference changes
-    this.preferenceStore.onChange((prefs, changedKeys) => {
+    this.preferenceStore.onChange((prefs, _changedKeys) => {
       this.state.preferences = prefs;
       this.emitEvent({ type: "preferences_updated", preferences: prefs });
     });

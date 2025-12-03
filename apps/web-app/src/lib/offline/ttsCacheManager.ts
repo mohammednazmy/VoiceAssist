@@ -65,7 +65,7 @@ export class TTSCacheManager {
    * Open IndexedDB database
    */
   private openDatabase(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       const request = indexedDB.open(this.config.dbName, 1);
 
       request.onerror = () => {
@@ -104,7 +104,7 @@ export class TTSCacheManager {
   private async loadFromDatabase(): Promise<void> {
     if (!this.db) return;
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       const transaction = this.db!.transaction(
         this.config.storeName,
         "readonly",
@@ -256,7 +256,7 @@ export class TTSCacheManager {
     this.stats.misses = 0;
 
     if (this.db) {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, _reject) => {
         const transaction = this.db!.transaction(
           this.config.storeName,
           "readwrite",
@@ -327,7 +327,7 @@ export class TTSCacheManager {
   private async saveToDatabase(entry: TTSCacheEntry): Promise<void> {
     if (!this.db) return;
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       const transaction = this.db!.transaction(
         this.config.storeName,
         "readwrite",
@@ -357,7 +357,7 @@ export class TTSCacheManager {
   private async deleteFromDatabase(key: string): Promise<void> {
     if (!this.db) return;
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       const transaction = this.db!.transaction(
         this.config.storeName,
         "readwrite",

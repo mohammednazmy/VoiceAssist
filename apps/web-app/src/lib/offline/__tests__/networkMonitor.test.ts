@@ -7,7 +7,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   NetworkMonitor,
   createNetworkMonitor,
-  type NetworkStatus,
   type NetworkQuality,
 } from "../networkMonitor";
 

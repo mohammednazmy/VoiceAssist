@@ -7,7 +7,7 @@
  * Phase 6: Full Duplex Experience
  */
 
-import type { AudioChannelConfig, MixerState, FullDuplexConfig } from "./types";
+import type { MixerState, FullDuplexConfig } from "./types";
 import { DEFAULT_MIXER_STATE, DEFAULT_FULL_DUPLEX_CONFIG } from "./types";
 
 // ============================================================================
