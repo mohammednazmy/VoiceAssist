@@ -86,7 +86,7 @@ export function DuplexIndicator({
   className = "",
   onClick,
 }: DuplexIndicatorProps): JSX.Element {
-  const [pulseIntensity, setPulseIntensity] = useState(0);
+  const [_pulseIntensity, setPulseIntensity] = useState(0);
 
   // Animate pulse based on overlap duration
   useEffect(() => {

@@ -169,7 +169,7 @@ const minimalVariants = {
 export function BargeInFeedback({
   isActive,
   type,
-  confidence = 0,
+  confidence: _confidence = 0,
   preferences,
   language = "en",
   onAnimationComplete,

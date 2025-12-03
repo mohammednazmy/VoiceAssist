@@ -103,7 +103,7 @@ export function VoiceModePanel({
   const {
     playStream,
     stop: stopStreamingAudio,
-    state: streamingState,
+    state: _streamingState,
   } = useStreamingAudio({
     onFirstAudio: (ttfaMs) => {
       console.log(`[VoiceModePanel] Streaming TTFA: ${ttfaMs}ms`);
@@ -145,9 +145,9 @@ export function VoiceModePanel({
   }, [stopStreamingAudio]);
 
   const {
-    state: webRTCState,
-    vadState,
-    noiseSuppressionEnabled,
+    state: _webRTCState,
+    vadState: _vadState,
+    noiseSuppressionEnabled: _noiseSuppressionEnabled,
     connect: connectWebRTC,
     disconnect: disconnectWebRTC,
     bargeIn: bargeInWebRTC,

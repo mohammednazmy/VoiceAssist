@@ -4,7 +4,7 @@
  * Tests the main voice mode panel using the Thinker/Talker pipeline.
  */
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ThinkerTalkerVoicePanel } from "../ThinkerTalkerVoicePanel";
 import type { TTToolCall } from "../../../hooks/useThinkerTalkerSession";
@@ -70,9 +70,9 @@ vi.mock("../CompactVoiceBar", () => ({
     onClose,
     onOpenSettings,
     isConnected,
-    isConnecting,
-    isListening,
-    isPlaying,
+    isConnecting: _isConnecting,
+    isListening: _isListening,
+    isPlaying: _isPlaying,
     partialTranscript,
   }: {
     onConnect: () => void;
