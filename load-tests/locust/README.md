@@ -97,6 +97,7 @@ docker-compose up -d
 ## Test Scenarios
 
 ### Smoke Test
+
 **Purpose**: Quick sanity check
 **Load**: 10 users, 2 minutes
 **Use Case**: After deployments, quick validation
@@ -106,6 +107,7 @@ docker-compose up -d
 ```
 
 ### Load Test
+
 **Purpose**: Test expected load
 **Load**: 100 users, 10 minutes
 **Use Case**: Performance testing, capacity planning
@@ -115,6 +117,7 @@ docker-compose up -d
 ```
 
 ### Stress Test
+
 **Purpose**: Find breaking points
 **Load**: 500 users, 15 minutes
 **Use Case**: Identify system limits
@@ -124,6 +127,7 @@ docker-compose up -d
 ```
 
 ### Spike Test
+
 **Purpose**: Test sudden traffic increase
 **Load**: 1000 users, 5 minutes (high spawn rate)
 **Use Case**: Test auto-scaling, circuit breakers
@@ -133,6 +137,7 @@ docker-compose up -d
 ```
 
 ### Soak Test
+
 **Purpose**: Test stability over time
 **Load**: 100 users, 60 minutes
 **Use Case**: Memory leak detection, resource exhaustion
@@ -142,6 +147,7 @@ docker-compose up -d
 ```
 
 ### User Journey
+
 **Purpose**: End-to-end user flow
 **Flow**: Register → Login → Query → Logout
 **Use Case**: Functional validation
@@ -151,6 +157,7 @@ docker-compose up -d
 ```
 
 ### Admin Workflow
+
 **Purpose**: Admin operations
 **Flow**: Login → Upload → Manage → Monitor
 **Use Case**: Admin feature testing
@@ -242,6 +249,7 @@ docker-compose down
 ### Manual Distributed Setup
 
 **Terminal 1 - Master:**
+
 ```bash
 locust -f locustfile.py \
     --master \
@@ -250,6 +258,7 @@ locust -f locustfile.py \
 ```
 
 **Terminals 2-5 - Workers:**
+
 ```bash
 locust -f locustfile.py \
     --worker \
@@ -261,6 +270,7 @@ locust -f locustfile.py \
 ### HTML Report
 
 Generated HTML reports include:
+
 - Request statistics (RPS, response times, failures)
 - Charts (requests/sec, response times)
 - Failure details
@@ -274,6 +284,7 @@ open ../results/locust/load_test_*.html
 ### CSV Export
 
 CSV files include detailed statistics:
+
 - `*_stats.csv`: Request statistics
 - `*_stats_history.csv`: Time-series data
 - `*_failures.csv`: Failure details
@@ -288,6 +299,7 @@ print(stats.describe())
 ### Custom Metrics
 
 The test suite tracks custom metrics:
+
 - Authentication failures
 - Rate limit hits
 - WebSocket connections
@@ -299,6 +311,7 @@ View in logs or implement custom exporters.
 ### Performance Thresholds
 
 Thresholds defined in `config.py`:
+
 - Login: < 1s
 - Chat query: < 3s
 - Document upload: < 10s
@@ -316,7 +329,7 @@ name: Load Testing
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM
+    - cron: "0 2 * * *" # Daily at 2 AM
   workflow_dispatch:
 
 jobs:
@@ -416,24 +429,28 @@ pipeline {
 ### Troubleshooting
 
 **High Failure Rate**
+
 - Check if services are running: `docker-compose ps`
 - Verify network connectivity
 - Check authentication (register test users first)
 - Review logs: `docker-compose logs voiceassist-server`
 
 **Slow Response Times**
+
 - Increase resources (CPU, memory)
 - Check database connection pool
 - Monitor database performance
 - Review API logs for slow queries
 
 **Connection Errors**
+
 - Verify host URL is correct
 - Check firewall rules
 - Ensure adequate file descriptors
 - Monitor connection pool limits
 
 **Rate Limiting**
+
 - Expected for registration/login endpoints
 - Adjust test user pool
 - Implement token reuse strategies
@@ -453,6 +470,7 @@ export VOICEASSIST_WS_URL=ws://staging.example.com:8000
 ### Custom Configuration
 
 Edit `config.py` to customize:
+
 - Test users and credentials
 - Task weights and distribution
 - Wait times between actions
@@ -530,6 +548,7 @@ class WSUser(HttpUser):
 ## Support
 
 For issues or questions:
+
 - Check logs: `docker-compose logs -f voiceassist-server`
 - Review Locust docs: https://docs.locust.io
 - Open GitHub issue with test output

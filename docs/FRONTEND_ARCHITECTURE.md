@@ -289,7 +289,7 @@ if (detectPHI(userInput)) {
 
 ## Version History
 
-| Version | Date       | Changes                                              |
-| ------- | ---------- | ---------------------------------------------------- |
-| 1.1.0   | 2025-12-03 | Updated status to Production Ready (Phase 3.5 done)  |
-| 1.0.0   | 2025-11-27 | Initial architecture document                        |
+| Version | Date       | Changes                                             |
+| ------- | ---------- | --------------------------------------------------- |
+| 1.1.0   | 2025-12-03 | Updated status to Production Ready (Phase 3.5 done) |
+| 1.0.0   | 2025-11-27 | Initial architecture document                       |

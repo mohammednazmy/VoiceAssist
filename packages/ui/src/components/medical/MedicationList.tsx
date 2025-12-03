@@ -137,7 +137,8 @@ const medicationListVariants = cva("", {
 });
 
 export interface MedicationListProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends
+    React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof medicationListVariants> {
   /**
    * Array of medications to display

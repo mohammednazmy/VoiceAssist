@@ -88,7 +88,8 @@ const statusLabels = {
 } as const;
 
 export interface VitalSignCardProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends
+    React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof vitalSignCardVariants> {
   /**
    * Label for the vital sign (e.g., "Heart Rate", "Blood Pressure")

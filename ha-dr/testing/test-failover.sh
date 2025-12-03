@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2181
 # PostgreSQL Failover Testing Procedure (Phase 12 - HA/DR)
 # Tests primary-to-replica failover and measures recovery time
 

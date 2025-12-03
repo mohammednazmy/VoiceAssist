@@ -171,8 +171,10 @@ export interface DynamicVirtualItem<T> extends VirtualItem<T> {
   measured: boolean;
 }
 
-export interface UseDynamicVirtualListOptions<T>
-  extends Omit<UseVirtualListOptions<T>, "itemHeight"> {
+export interface UseDynamicVirtualListOptions<T> extends Omit<
+  UseVirtualListOptions<T>,
+  "itemHeight"
+> {
   /** Estimated height for items before measurement */
   estimatedItemHeight: number;
   /** Get unique key for an item */

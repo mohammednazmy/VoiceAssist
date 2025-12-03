@@ -29,7 +29,7 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION_MAIN }}
-          cache: 'pip'
+          cache: "pip"
 
       - name: Cache pre-commit
         uses: actions/cache@v4
@@ -67,8 +67,8 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: 'services/api-gateway/requirements.txt'
+          cache: "pip"
+          cache-dependency-path: "services/api-gateway/requirements.txt"
 
       - name: Install dependencies
         run: |
@@ -163,8 +163,8 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION_MAIN }}
-          cache: 'pip'
-          cache-dependency-path: 'services/api-gateway/requirements.txt'
+          cache: "pip"
+          cache-dependency-path: "services/api-gateway/requirements.txt"
 
       - name: Install dependencies
         run: |
@@ -267,8 +267,8 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION_MAIN }}
-          cache: 'pip'
-          cache-dependency-path: 'services/api-gateway/requirements.txt'
+          cache: "pip"
+          cache-dependency-path: "services/api-gateway/requirements.txt"
 
       - name: Install dependencies
         run: |

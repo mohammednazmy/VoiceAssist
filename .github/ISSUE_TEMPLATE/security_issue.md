@@ -1,9 +1,9 @@
 ---
 name: Security Issue
 about: Report a security vulnerability (use private reporting for critical issues)
-title: '[SECURITY] '
+title: "[SECURITY] "
 labels: security
-assignees: ''
+assignees: ""
 ---
 
 ## ⚠️ IMPORTANT SECURITY NOTICE ⚠️
@@ -11,6 +11,7 @@ assignees: ''
 **For critical security vulnerabilities, please DO NOT use this public issue tracker.**
 
 Instead:
+
 1. Use GitHub's [Private Vulnerability Reporting](https://github.com/YOUR_ORG/VoiceAssist/security/advisories/new)
 2. Or email: security@voiceassist.example.com
 3. Or contact the security team directly
@@ -37,6 +38,7 @@ Instead:
 ## Affected Component
 
 <!-- Which service/component is affected? -->
+
 - Service:
 - Version:
 - Environment: [ ] Development [ ] Staging [ ] Production
@@ -48,6 +50,7 @@ Instead:
 ## Steps to Reproduce
 
 <!-- If safe to share, describe how to reproduce the vulnerability -->
+
 1.
 2.
 3.
@@ -59,6 +62,7 @@ Instead:
 ## Affected Users/Systems
 
 <!-- Who or what is affected? -->
+
 - [ ] All users
 - [ ] Specific user roles
 - [ ] Internal systems only
@@ -74,13 +78,14 @@ Instead:
 
 ## References
 
-<!-- Links to CVEs, security advisories, or related issues -->
--
+## <!-- Links to CVEs, security advisories, or related issues -->
+
 -
 
 ## Disclosure Timeline
 
 <!-- When did you discover this? When do you plan to disclose publicly? -->
+
 - Discovery Date:
 - Planned Disclosure Date:
 

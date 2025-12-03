@@ -337,9 +337,8 @@ describe("ThinkerTalkerVoicePanel", () => {
 
   describe("Callbacks", () => {
     it("should pass conversationId to voice mode hook", async () => {
-      const { useThinkerTalkerVoiceMode } = await import(
-        "../../../hooks/useThinkerTalkerVoiceMode"
-      );
+      const { useThinkerTalkerVoiceMode } =
+        await import("../../../hooks/useThinkerTalkerVoiceMode");
 
       render(<ThinkerTalkerVoicePanel conversationId="test-conv-123" />);
 
@@ -351,9 +350,8 @@ describe("ThinkerTalkerVoicePanel", () => {
     });
 
     it("should pass voice settings to hook", async () => {
-      const { useThinkerTalkerVoiceMode } = await import(
-        "../../../hooks/useThinkerTalkerVoiceMode"
-      );
+      const { useThinkerTalkerVoiceMode } =
+        await import("../../../hooks/useThinkerTalkerVoiceMode");
 
       render(<ThinkerTalkerVoicePanel />);
 
@@ -369,9 +367,8 @@ describe("ThinkerTalkerVoicePanel", () => {
     });
 
     it("should call onUserMessage for final transcripts", async () => {
-      const { useThinkerTalkerVoiceMode } = await import(
-        "../../../hooks/useThinkerTalkerVoiceMode"
-      );
+      const { useThinkerTalkerVoiceMode } =
+        await import("../../../hooks/useThinkerTalkerVoiceMode");
       const mockImpl = vi.mocked(useThinkerTalkerVoiceMode);
 
       const onUserMessage = vi.fn();
@@ -387,9 +384,8 @@ describe("ThinkerTalkerVoicePanel", () => {
     });
 
     it("should not call onUserMessage for partial transcripts", async () => {
-      const { useThinkerTalkerVoiceMode } = await import(
-        "../../../hooks/useThinkerTalkerVoiceMode"
-      );
+      const { useThinkerTalkerVoiceMode } =
+        await import("../../../hooks/useThinkerTalkerVoiceMode");
       const mockImpl = vi.mocked(useThinkerTalkerVoiceMode);
 
       const onUserMessage = vi.fn();
@@ -402,9 +398,8 @@ describe("ThinkerTalkerVoicePanel", () => {
     });
 
     it("should call onAssistantMessage for final AI responses", async () => {
-      const { useThinkerTalkerVoiceMode } = await import(
-        "../../../hooks/useThinkerTalkerVoiceMode"
-      );
+      const { useThinkerTalkerVoiceMode } =
+        await import("../../../hooks/useThinkerTalkerVoiceMode");
       const mockImpl = vi.mocked(useThinkerTalkerVoiceMode);
 
       const onAssistantMessage = vi.fn();
@@ -419,9 +414,8 @@ describe("ThinkerTalkerVoicePanel", () => {
     });
 
     it("should call onMetricsUpdate when metrics change", async () => {
-      const { useThinkerTalkerVoiceMode } = await import(
-        "../../../hooks/useThinkerTalkerVoiceMode"
-      );
+      const { useThinkerTalkerVoiceMode } =
+        await import("../../../hooks/useThinkerTalkerVoiceMode");
       const mockImpl = vi.mocked(useThinkerTalkerVoiceMode);
 
       const onMetricsUpdate = vi.fn();
@@ -478,9 +472,8 @@ describe("ThinkerTalkerVoicePanel", () => {
     it("should log tool calls", async () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-      const { useThinkerTalkerVoiceMode } = await import(
-        "../../../hooks/useThinkerTalkerVoiceMode"
-      );
+      const { useThinkerTalkerVoiceMode } =
+        await import("../../../hooks/useThinkerTalkerVoiceMode");
       const mockImpl = vi.mocked(useThinkerTalkerVoiceMode);
 
       render(<ThinkerTalkerVoicePanel />);

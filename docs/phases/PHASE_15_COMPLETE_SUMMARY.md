@@ -597,13 +597,13 @@ Phase 15 successfully completed the final review, validation, and handoff of the
 
 ### Sign-Off
 
-**Project Manager:** ****\*\*****\_****\*\*****
-**Development Lead:** ****\*\*****\_****\*\*****
-**Operations Lead:** ****\*\*****\_****\*\*****
-**Security Lead:** ****\*\*****\_****\*\*****
-**CTO/Director:** ****\*\*****\_****\*\*****
+**Project Manager:** \***\*\*\*\*\***\_\***\*\*\*\*\***
+**Development Lead:** \***\*\*\*\*\***\_\***\*\*\*\*\***
+**Operations Lead:** \***\*\*\*\*\***\_\***\*\*\*\*\***
+**Security Lead:** \***\*\*\*\*\***\_\***\*\*\*\*\***
+**CTO/Director:** \***\*\*\*\*\***\_\***\*\*\*\*\***
 
-**Date:** ****\*\*****\_****\*\*****
+**Date:** \***\*\*\*\*\***\_\***\*\*\*\*\***
 
 ---
 

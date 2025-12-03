@@ -3,6 +3,7 @@
 ## TL;DR - Most Common Commands
 
 ### First Time Setup
+
 ```bash
 # 1. Setup AWS infrastructure
 ./scripts/init/setup-aws-resources.sh -e prod
@@ -14,6 +15,7 @@
 ```
 
 ### Deploy New Version
+
 ```bash
 # Dev
 ./scripts/deploy/deploy.sh -e dev -v v1.2.3
@@ -26,6 +28,7 @@
 ```
 
 ### Rollback
+
 ```bash
 # Quick rollback (auto-detects previous version)
 ./scripts/deploy/rollback.sh -e staging
@@ -35,6 +38,7 @@
 ```
 
 ### Health Check
+
 ```bash
 # Quick check
 ./scripts/monitoring/health-check.sh -e prod
@@ -44,6 +48,7 @@
 ```
 
 ### Scale
+
 ```bash
 # Update HPA limits
 ./scripts/k8s/scale.sh -e prod -m 3 -M 10
@@ -75,6 +80,7 @@ scripts/
 ## Common Flags
 
 All scripts support:
+
 - `-d, --dry-run` - Preview without executing
 - `-V, --verbose` - Detailed output
 - `-h, --help` - Show help
@@ -121,6 +127,7 @@ All scripts support:
 ## Emergency Procedures
 
 ### Application Down
+
 ```bash
 # 1. Check status
 ./scripts/monitoring/health-check.sh -e prod --verbose
@@ -133,6 +140,7 @@ kubectl logs -n voiceassist-prod -l app=voiceassist-backend --tail=100
 ```
 
 ### Database Issues
+
 ```bash
 # 1. Check database connectivity
 ./scripts/deploy/pre-deploy-checks.sh -e prod
@@ -142,6 +150,7 @@ kubectl logs -n voiceassist-prod -l app=voiceassist-backend --tail=100
 ```
 
 ### Scale Up Quickly
+
 ```bash
 # Immediate scale up
 ./scripts/k8s/scale.sh -e prod -d voiceassist-backend -r 10
@@ -149,27 +158,31 @@ kubectl logs -n voiceassist-prod -l app=voiceassist-backend --tail=100
 
 ## Environment Mappings
 
-| Environment | EKS Cluster              | Namespace           |
-|-------------|--------------------------|---------------------|
-| dev         | voiceassist-eks-dev      | voiceassist-dev     |
-| staging     | voiceassist-eks-staging  | voiceassist-staging |
-| prod        | voiceassist-eks-prod     | voiceassist-prod    |
+| Environment | EKS Cluster             | Namespace           |
+| ----------- | ----------------------- | ------------------- |
+| dev         | voiceassist-eks-dev     | voiceassist-dev     |
+| staging     | voiceassist-eks-staging | voiceassist-staging |
+| prod        | voiceassist-eks-prod    | voiceassist-prod    |
 
 ## Required AWS Resources
 
 ### ECR Repositories
+
 - voiceassist-backend
 - voiceassist-worker
 - voiceassist-frontend
 
 ### S3 Buckets
+
 - voiceassist-terraform-state-{account-id}
 - voiceassist-backups-{account-id}
 
 ### DynamoDB Tables
+
 - voiceassist-terraform-locks
 
 ### Secrets Manager
+
 - voiceassist/{env}/database
 - voiceassist/{env}/redis
 - voiceassist/{env}/jwt-secret
@@ -330,6 +343,7 @@ alias va-describe='kubectl describe pod -n'
 ## Script Features
 
 All scripts include:
+
 - Comprehensive error handling
 - Color-coded output (red=error, green=success, yellow=warning, blue=info)
 - Detailed logging to files
@@ -342,6 +356,7 @@ All scripts include:
 ## Version Naming Convention
 
 Use semantic versioning:
+
 - `v1.0.0` - Major.Minor.Patch
 - `v1.2.3-rc1` - Release candidate
 - `v1.2.3-beta` - Beta release
@@ -350,6 +365,7 @@ Use semantic versioning:
 ## Contact
 
 For questions or issues with deployment scripts:
+
 1. Check logs in `logs/` directory
 2. Run with `--verbose` flag
 3. Review error messages

@@ -8,33 +8,34 @@
  * - Accessible with aria-label
  */
 
-import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../lib/utils';
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "../lib/utils";
 
-const spinnerVariants = cva('animate-spin', {
+const spinnerVariants = cva("animate-spin", {
   variants: {
     size: {
-      sm: 'h-4 w-4',
-      md: 'h-6 w-6',
-      lg: 'h-8 w-8',
+      sm: "h-4 w-4",
+      md: "h-6 w-6",
+      lg: "h-8 w-8",
     },
     color: {
-      primary: 'text-primary-600',
-      secondary: 'text-secondary-600',
-      neutral: 'text-neutral-600',
-      white: 'text-white',
-      current: 'text-current',
+      primary: "text-primary-600",
+      secondary: "text-secondary-600",
+      neutral: "text-neutral-600",
+      white: "text-white",
+      current: "text-current",
     },
   },
   defaultVariants: {
-    size: 'md',
-    color: 'primary',
+    size: "md",
+    color: "primary",
   },
 });
 
 export interface SpinnerProps
-  extends Omit<React.SVGAttributes<SVGSVGElement>, 'color'>,
+  extends
+    Omit<React.SVGAttributes<SVGSVGElement>, "color">,
     VariantProps<typeof spinnerVariants> {
   /**
    * Accessible label for screen readers
@@ -46,7 +47,7 @@ function Spinner({
   className,
   size,
   color,
-  label = 'Loading',
+  label = "Loading",
   ...props
 }: SpinnerProps) {
   return (
@@ -95,7 +96,7 @@ export interface SpinnerOverlayProps extends SpinnerProps {
 function SpinnerOverlay({
   show = true,
   text,
-  size = 'lg',
+  size = "lg",
   ...props
 }: SpinnerOverlayProps) {
   if (!show) return null;

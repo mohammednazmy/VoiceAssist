@@ -10,6 +10,7 @@ Phase 6: Nextcloud App Integration & Unified Services.
 - Packaged via `../package.sh` for deployment testing.
 
 See:
+
 - `docs/phases/PHASE_06_NEXTCLOUD_APPS.md`
 - `docs/NEXTCLOUD_INTEGRATION.md`
 

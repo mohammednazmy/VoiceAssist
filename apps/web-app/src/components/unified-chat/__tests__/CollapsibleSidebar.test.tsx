@@ -201,9 +201,8 @@ describe("CollapsibleSidebar - Mobile", () => {
       useIsMobile: () => true,
     }));
 
-    const { CollapsibleSidebar: MobileSidebar } = await import(
-      "../CollapsibleSidebar"
-    );
+    const { CollapsibleSidebar: MobileSidebar } =
+      await import("../CollapsibleSidebar");
 
     const { container } = render(
       <BrowserRouter>

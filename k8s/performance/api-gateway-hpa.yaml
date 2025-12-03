@@ -66,13 +66,13 @@ spec:
     scaleUp:
       # Allow scaling up 100% of current pods every 30 seconds
       # Example: 2 pods -> 4 pods -> 8 pods (if needed)
-      stabilizationWindowSeconds: 0  # No stabilization, react immediately
+      stabilizationWindowSeconds: 0 # No stabilization, react immediately
       policies:
         - type: Percent
-          value: 100  # Double the number of pods
+          value: 100 # Double the number of pods
           periodSeconds: 30
         - type: Pods
-          value: 2  # Add maximum 2 pods at once
+          value: 2 # Add maximum 2 pods at once
           periodSeconds: 30
       # Use the policy that scales faster
       selectPolicy: Max
@@ -84,10 +84,10 @@ spec:
       stabilizationWindowSeconds: 300
       policies:
         - type: Percent
-          value: 10  # Remove 10% of current pods
-          periodSeconds: 300  # Every 5 minutes
+          value: 10 # Remove 10% of current pods
+          periodSeconds: 300 # Every 5 minutes
         - type: Pods
-          value: 1  # Remove maximum 1 pod at once
+          value: 1 # Remove maximum 1 pod at once
           periodSeconds: 300
       # Use the policy that scales slower (more conservative)
       selectPolicy: Min

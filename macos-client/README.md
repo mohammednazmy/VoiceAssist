@@ -89,33 +89,39 @@ macos-client/
 ### Setup
 
 1. Install Ollama:
+
 ```bash
 brew install ollama
 ```
 
 2. Download a model:
+
 ```bash
 ollama pull llama3.1:8b  # or llama3.1:70b if you have enough RAM
 ```
 
 3. Install Python dependencies:
+
 ```bash
 cd macos-client
 pip3 install -r requirements.txt
 ```
 
 4. Configure:
+
 ```bash
 cp .env.example .env
 # Edit .env with your settings
 ```
 
 5. Grant permissions:
+
 - Microphone access
 - Accessibility access (for system integrations)
 - Full Disk Access (for file indexing)
 
 6. Run:
+
 ```bash
 python3 main.py
 ```
@@ -123,6 +129,7 @@ python3 main.py
 ### Auto-Start on Login
 
 Install as LaunchAgent:
+
 ```bash
 ./install_launch_agent.sh
 ```
@@ -130,6 +137,7 @@ Install as LaunchAgent:
 This creates `~/Library/LaunchAgents/io.asimo.voiceassist.plist`
 
 To start/stop manually:
+
 ```bash
 launchctl load ~/Library/LaunchAgents/io.asimo.voiceassist.plist
 launchctl unload ~/Library/LaunchAgents/io.asimo.voiceassist.plist
@@ -200,21 +208,25 @@ Hold Option key while speaking (configurable)
 ### Example Commands
 
 **System Integration:**
+
 - "What's on my calendar today?"
 - "Read my recent emails"
 - "Create a reminder to call the pharmacy at 3pm"
 - "Show me files about diabetes"
 
 **Medical Queries:**
+
 - "Find recent papers on SGLT2 inhibitors"
 - "What does Harrison's say about diabetic ketoacidosis?"
 - "CDC guidelines for hypertension management"
 
 **File Operations:**
+
 - "Summarize the PDF on my desktop"
 - "Find documents mentioning ACE inhibitors"
 
 **General:**
+
 - "What's the weather today?"
 - "Set a timer for 25 minutes"
 - "Search the web for latest medical news"
@@ -224,6 +236,7 @@ Hold Option key while speaking (configurable)
 ### Calendar (EventKit/AppleScript)
 
 Capabilities:
+
 - Read events
 - Create new events
 - Update events
@@ -235,6 +248,7 @@ Permissions required: Calendar access
 ### Mail
 
 Capabilities:
+
 - Read emails (IMAP or Mail.app)
 - Send emails
 - Search emails
@@ -244,6 +258,7 @@ Permissions required: Mail.app access
 ### Files
 
 Capabilities:
+
 - Search indexed files
 - Read file contents
 - File metadata
@@ -253,6 +268,7 @@ Permissions required: Full Disk Access
 ### Reminders
 
 Capabilities:
+
 - Create reminders
 - List reminders
 - Complete reminders
@@ -262,6 +278,7 @@ Permissions required: Reminders access
 ### Notes
 
 Capabilities:
+
 - Read notes
 - Create notes
 - Search notes
@@ -273,17 +290,20 @@ Permissions required: Notes access
 ### Data Classification
 
 **Tier 1 - Local Only (Highest Privacy):**
+
 - Files in specified private directories
 - Queries containing PHI keywords
 - Patient information
 - Personal medical records
 
 **Tier 2 - Server (Private but not PHI):**
+
 - General documents
 - Calendar events
 - Emails
 
 **Tier 3 - Cloud APIs (Public knowledge):**
+
 - Medical literature queries
 - General questions
 - Web searches
@@ -298,6 +318,7 @@ Permissions required: Notes access
 ### Audit Logging
 
 All queries logged locally with classification:
+
 ```
 2024-11-19 14:32:15 [INFO] Query: "Calendar today" [Tier 2]
 2024-11-19 14:33:01 [INFO] Query: "Latest diabetes guidelines" [Tier 3]
@@ -368,11 +389,13 @@ python3 setup.py py2app
 ### Resource Usage
 
 Typical usage:
+
 - CPU: 2-5% idle, 20-40% during voice processing
 - RAM: 200-500 MB (excluding Ollama)
 - Disk: 50-200 MB for embeddings
 
 Ollama (with llama3.1:8b):
+
 - RAM: 4-6 GB
 - CPU: 50-100% during inference
 
@@ -388,12 +411,14 @@ Ollama (with llama3.1:8b):
 For a truly native macOS experience, consider rewriting in Swift:
 
 Benefits:
+
 - Better performance
 - Native UI
 - Lower resource usage
 - App Store distribution
 
 Drawbacks:
+
 - More development time
 - Less code sharing with server
 

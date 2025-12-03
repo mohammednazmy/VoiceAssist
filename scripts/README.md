@@ -65,11 +65,13 @@ scripts/
 Complete end-to-end deployment automation.
 
 **Usage:**
+
 ```bash
 ./scripts/deploy/deploy.sh -e <environment> -v <version> [options]
 ```
 
 **Options:**
+
 - `-e, --environment ENV` - Target environment (dev/staging/prod) [required]
 - `-v, --version TAG` - Version tag to deploy [required]
 - `-d, --dry-run` - Perform dry-run without actual deployment
@@ -78,6 +80,7 @@ Complete end-to-end deployment automation.
 - `-h, --help` - Show help message
 
 **Examples:**
+
 ```bash
 # Deploy v1.2.3 to staging
 ./scripts/deploy/deploy.sh -e staging -v v1.2.3
@@ -90,6 +93,7 @@ Complete end-to-end deployment automation.
 ```
 
 **What it does:**
+
 1. Validates environment and dependencies
 2. Runs pre-deployment checks
 3. Creates backup of current state
@@ -101,6 +105,7 @@ Complete end-to-end deployment automation.
 9. Records deployment metadata
 
 **Environment Variables:**
+
 - `AWS_REGION` - AWS region (default: us-east-1)
 - `SLACK_WEBHOOK_URL` - Slack webhook for notifications
 
@@ -111,11 +116,13 @@ Complete end-to-end deployment automation.
 Safely rollback deployments to previous version.
 
 **Usage:**
+
 ```bash
 ./scripts/deploy/rollback.sh -e <environment> [options]
 ```
 
 **Options:**
+
 - `-e, --environment ENV` - Target environment [required]
 - `-v, --version TAG` - Version to rollback to (auto-detects if not specified)
 - `-d, --dry-run` - Perform dry-run
@@ -124,6 +131,7 @@ Safely rollback deployments to previous version.
 - `-h, --help` - Show help message
 
 **Examples:**
+
 ```bash
 # Rollback to previous successful deployment
 ./scripts/deploy/rollback.sh -e staging
@@ -136,6 +144,7 @@ Safely rollback deployments to previous version.
 ```
 
 **What it does:**
+
 1. Gets current and target versions
 2. Confirms rollback (especially for production)
 3. Rolls back Kubernetes deployments
@@ -150,11 +159,13 @@ Safely rollback deployments to previous version.
 Comprehensive pre-deployment environment validation.
 
 **Usage:**
+
 ```bash
 ./scripts/deploy/pre-deploy-checks.sh -e <environment> [options]
 ```
 
 **Checks performed:**
+
 - AWS credentials validity
 - EKS cluster access
 - Database connectivity
@@ -166,6 +177,7 @@ Comprehensive pre-deployment environment validation.
 - Disk space
 
 **Exit codes:**
+
 - 0: All checks passed
 - 1: One or more checks failed
 
@@ -176,11 +188,13 @@ Comprehensive pre-deployment environment validation.
 Creates comprehensive backups before deployment.
 
 **Usage:**
+
 ```bash
 ./scripts/deploy/backup.sh -e <environment> -v <version> [options]
 ```
 
 **Options:**
+
 - `-e, --environment ENV` - Target environment [required]
 - `-v, --version TAG` - Version tag for backup naming [required]
 - `-t, --type TYPE` - Backup type: all, db, k8s, redis (default: all)
@@ -188,6 +202,7 @@ Creates comprehensive backups before deployment.
 - `-V, --verbose` - Enable verbose output
 
 **Examples:**
+
 ```bash
 # Full backup
 ./scripts/deploy/backup.sh -e staging -v v1.2.3
@@ -200,12 +215,14 @@ Creates comprehensive backups before deployment.
 ```
 
 **What it backs up:**
+
 - RDS database snapshots
 - Kubernetes configurations (deployments, services, secrets, etc.)
 - Redis data (ElastiCache snapshots or RDB dumps)
 - Backup metadata
 
 **Storage:**
+
 - Backups stored in S3 bucket: `voiceassist-backups-<account-id>`
 - Organized by environment and timestamp
 - Lifecycle policies for cost optimization
@@ -217,11 +234,13 @@ Creates comprehensive backups before deployment.
 Runs Alembic database migrations with safety checks.
 
 **Usage:**
+
 ```bash
 ./scripts/deploy/migrate.sh -e <environment> [options]
 ```
 
 **Options:**
+
 - `-e, --environment ENV` - Target environment [required]
 - `-D, --direction DIR` - Migration direction: up, down (default: up)
 - `-s, --steps N` - Number of migration steps
@@ -230,6 +249,7 @@ Runs Alembic database migrations with safety checks.
 - `-V, --verbose` - Enable verbose output
 
 **Examples:**
+
 ```bash
 # Run all pending migrations
 ./scripts/deploy/migrate.sh -e staging -D up
@@ -253,11 +273,13 @@ Runs Alembic database migrations with safety checks.
 Deploys application to Kubernetes cluster.
 
 **Usage:**
+
 ```bash
 ./scripts/k8s/deploy-to-k8s.sh -e <environment> -v <version> [options]
 ```
 
 **Options:**
+
 - `-e, --environment ENV` - Target environment [required]
 - `-v, --version TAG` - Version tag [required]
 - `-w, --wait-timeout SEC` - Rollout wait timeout (default: 300)
@@ -265,6 +287,7 @@ Deploys application to Kubernetes cluster.
 - `-V, --verbose` - Enable verbose output
 
 **What it deploys:**
+
 1. ConfigMaps
 2. Secrets
 3. Services
@@ -273,6 +296,7 @@ Deploys application to Kubernetes cluster.
 6. HorizontalPodAutoscaler
 
 **Examples:**
+
 ```bash
 # Deploy v1.2.3
 ./scripts/k8s/deploy-to-k8s.sh -e staging -v v1.2.3
@@ -291,11 +315,13 @@ Deploys application to Kubernetes cluster.
 Scale deployments manually or update HPA configurations.
 
 **Usage:**
+
 ```bash
 ./scripts/k8s/scale.sh -e <environment> [options]
 ```
 
 **Options:**
+
 - `-e, --environment ENV` - Target environment [required]
 - `-d, --deployment NAME` - Specific deployment to scale (optional)
 - `-r, --replicas N` - Number of replicas for manual scaling
@@ -305,6 +331,7 @@ Scale deployments manually or update HPA configurations.
 - `-V, --verbose` - Enable verbose output
 
 **Examples:**
+
 ```bash
 # Scale backend to 5 replicas
 ./scripts/k8s/scale.sh -e staging -d voiceassist-backend -r 5
@@ -325,11 +352,13 @@ Scale deployments manually or update HPA configurations.
 Comprehensive health checks on deployed application.
 
 **Usage:**
+
 ```bash
 ./scripts/monitoring/health-check.sh -e <environment> [options]
 ```
 
 **Checks performed:**
+
 - /health endpoint
 - /ready endpoint
 - Database connectivity
@@ -342,6 +371,7 @@ Comprehensive health checks on deployed application.
 - Prometheus metrics
 
 **Examples:**
+
 ```bash
 # Run health checks
 ./scripts/monitoring/health-check.sh -e staging
@@ -354,6 +384,7 @@ Comprehensive health checks on deployed application.
 ```
 
 **Exit codes:**
+
 - 0: All checks passed
 - 1: One or more critical checks failed
 
@@ -366,11 +397,13 @@ Comprehensive health checks on deployed application.
 Sets up required AWS resources (run once per account).
 
 **Usage:**
+
 ```bash
 ./scripts/init/setup-aws-resources.sh -e <environment> [options]
 ```
 
 **Creates:**
+
 - ECR repositories (backend, worker, frontend)
 - S3 bucket for Terraform state
 - S3 bucket for backups
@@ -379,6 +412,7 @@ Sets up required AWS resources (run once per account).
 - IAM roles (EKS cluster role, node group role)
 
 **Examples:**
+
 ```bash
 # Setup for dev environment
 ./scripts/init/setup-aws-resources.sh -e dev
@@ -399,11 +433,13 @@ Sets up required AWS resources (run once per account).
 Installs essential Kubernetes components (run once per cluster).
 
 **Usage:**
+
 ```bash
 ./scripts/init/bootstrap-k8s.sh -e <environment> [options]
 ```
 
 **Installs:**
+
 - metrics-server (for HPA)
 - ingress-nginx (for ingress)
 - cert-manager (for SSL certificates)
@@ -413,9 +449,11 @@ Installs essential Kubernetes components (run once per cluster).
 - Applies network policies (production)
 
 **Options:**
+
 - `-s, --skip COMPONENT` - Skip component installation (comma-separated)
 
 **Examples:**
+
 ```bash
 # Full bootstrap
 ./scripts/init/bootstrap-k8s.sh -e dev
@@ -489,27 +527,33 @@ kubectl logs -n voiceassist-prod -l app=voiceassist-backend --tail=100
 ## Environment Variables
 
 ### AWS Configuration
+
 - `AWS_REGION` - AWS region (default: us-east-1)
 - `AWS_ACCOUNT_ID` - AWS account ID (auto-detected)
 - `AWS_PROFILE` - AWS CLI profile to use
 
 ### S3 Buckets
+
 - `S3_BACKUP_BUCKET` - S3 bucket for backups (default: voiceassist-backups)
 
 ### Notifications
+
 - `SLACK_WEBHOOK_URL` - Slack webhook URL for deployment notifications
 
 ### Database
+
 - Database credentials stored in AWS Secrets Manager:
   - `voiceassist/<env>/database`
 
 ### Redis
+
 - Redis credentials stored in AWS Secrets Manager:
   - `voiceassist/<env>/redis`
 
 ## Logging
 
 All scripts log to:
+
 ```
 logs/
 ├── deploy/          # Deployment logs
@@ -524,6 +568,7 @@ logs/
 ```
 
 Logs include:
+
 - Timestamp
 - Log level (INFO, SUCCESS, WARNING, ERROR)
 - Detailed operation information
@@ -533,12 +578,14 @@ Logs include:
 ## Best Practices
 
 ### Pre-Deployment
+
 1. Always run pre-deployment checks first
 2. Test in dev/staging before production
 3. Use `--dry-run` flag to preview changes
 4. Create backups before major changes
 
 ### Deployment
+
 1. Use semantic versioning for tags
 2. Tag Docker images with git commit SHA
 3. Never deploy `latest` to production
@@ -546,12 +593,14 @@ Logs include:
 5. Run health checks after deployment
 
 ### Rollback
+
 1. Keep deployment records for reference
 2. Test rollback procedures regularly
 3. Always verify after rollback
 4. Document rollback reasons
 
 ### Security
+
 1. Never commit secrets to git
 2. Use AWS Secrets Manager for credentials
 3. Rotate secrets regularly
@@ -559,6 +608,7 @@ Logs include:
 5. Enable audit logging
 
 ### Monitoring
+
 1. Set up Slack notifications
 2. Monitor Prometheus metrics
 3. Check logs regularly
@@ -569,6 +619,7 @@ Logs include:
 ### Common Issues
 
 **Issue: AWS credentials not configured**
+
 ```bash
 # Configure AWS CLI
 aws configure
@@ -580,12 +631,14 @@ export AWS_REGION="us-east-1"
 ```
 
 **Issue: kubectl not configured**
+
 ```bash
 # Update kubeconfig
 aws eks update-kubeconfig --region us-east-1 --name voiceassist-eks-prod
 ```
 
 **Issue: Docker image build fails**
+
 ```bash
 # Check Docker daemon
 docker info
@@ -595,6 +648,7 @@ docker build -t test .
 ```
 
 **Issue: Deployment stuck**
+
 ```bash
 # Check pod status
 kubectl get pods -n voiceassist-prod
@@ -607,6 +661,7 @@ kubectl describe pod -n voiceassist-prod <pod-name>
 ```
 
 **Issue: Health checks fail after deployment**
+
 ```bash
 # Check pod readiness
 kubectl get pods -n voiceassist-prod
@@ -621,6 +676,7 @@ kubectl get ingress -n voiceassist-prod
 ## Support
 
 For issues or questions:
+
 1. Check logs in `logs/` directory
 2. Review error messages carefully
 3. Consult Kubernetes documentation
@@ -630,6 +686,7 @@ For issues or questions:
 ## Contributing
 
 When adding new scripts:
+
 1. Follow existing naming conventions
 2. Include comprehensive help text
 3. Add error handling

@@ -873,9 +873,9 @@ The VoiceAssist project has been successfully completed and is ready for product
 
 **Handoff Approved:**
 
-**Development Lead:** ****\*\*****\_****\*\*****
-**Operations Lead:** ****\*\*****\_****\*\*****
-**Security Lead:** ****\*\*****\_****\*\*****
-**Project Manager:** ****\*\*****\_****\*\*****
+**Development Lead:** \***\*\*\*\*\***\_\***\*\*\*\*\***
+**Operations Lead:** \***\*\*\*\*\***\_\***\*\*\*\*\***
+**Security Lead:** \***\*\*\*\*\***\_\***\*\*\*\*\***
+**Project Manager:** \***\*\*\*\*\***\_\***\*\*\*\*\***
 
-**Date:** ****\*\*****\_****\*\*****
+**Date:** \***\*\*\*\*\***\_\***\*\*\*\*\***

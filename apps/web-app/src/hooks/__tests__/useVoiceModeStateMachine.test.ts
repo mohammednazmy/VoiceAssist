@@ -283,9 +283,8 @@ describe("useVoiceModeStateMachine", () => {
       const testError = new Error("Test error");
 
       // Get the onError callback from useThinkerTalkerSession mock
-      const { useThinkerTalkerSession } = await import(
-        "../useThinkerTalkerSession"
-      );
+      const { useThinkerTalkerSession } =
+        await import("../useThinkerTalkerSession");
       const mockImpl = vi.mocked(useThinkerTalkerSession);
 
       renderHook(() =>
@@ -307,9 +306,8 @@ describe("useVoiceModeStateMachine", () => {
     it("should call onTranscriptComplete for final transcripts", async () => {
       const onTranscriptComplete = vi.fn();
 
-      const { useThinkerTalkerSession } = await import(
-        "../useThinkerTalkerSession"
-      );
+      const { useThinkerTalkerSession } =
+        await import("../useThinkerTalkerSession");
       const mockImpl = vi.mocked(useThinkerTalkerSession);
 
       renderHook(() =>
@@ -336,9 +334,8 @@ describe("useVoiceModeStateMachine", () => {
     });
 
     it("should update partial transcript for non-final transcripts", async () => {
-      const { useThinkerTalkerSession } = await import(
-        "../useThinkerTalkerSession"
-      );
+      const { useThinkerTalkerSession } =
+        await import("../useThinkerTalkerSession");
       const mockImpl = vi.mocked(useThinkerTalkerSession);
 
       renderHook(() =>
@@ -365,9 +362,8 @@ describe("useVoiceModeStateMachine", () => {
 
   describe("Connection Status Mapping", () => {
     it("should map 'connecting' status to 'connecting' state", async () => {
-      const { useThinkerTalkerSession } = await import(
-        "../useThinkerTalkerSession"
-      );
+      const { useThinkerTalkerSession } =
+        await import("../useThinkerTalkerSession");
       const mockImpl = vi.mocked(useThinkerTalkerSession);
 
       renderHook(() =>
@@ -384,9 +380,8 @@ describe("useVoiceModeStateMachine", () => {
     });
 
     it("should map 'connected' status to 'listening' state", async () => {
-      const { useThinkerTalkerSession } = await import(
-        "../useThinkerTalkerSession"
-      );
+      const { useThinkerTalkerSession } =
+        await import("../useThinkerTalkerSession");
       const mockImpl = vi.mocked(useThinkerTalkerSession);
 
       renderHook(() =>
@@ -404,9 +399,8 @@ describe("useVoiceModeStateMachine", () => {
     });
 
     it("should map 'error' status to 'error' state", async () => {
-      const { useThinkerTalkerSession } = await import(
-        "../useThinkerTalkerSession"
-      );
+      const { useThinkerTalkerSession } =
+        await import("../useThinkerTalkerSession");
       const mockImpl = vi.mocked(useThinkerTalkerSession);
 
       renderHook(() =>
@@ -424,9 +418,8 @@ describe("useVoiceModeStateMachine", () => {
     });
 
     it("should map 'disconnected' status to 'idle' state", async () => {
-      const { useThinkerTalkerSession } = await import(
-        "../useThinkerTalkerSession"
-      );
+      const { useThinkerTalkerSession } =
+        await import("../useThinkerTalkerSession");
       const mockImpl = vi.mocked(useThinkerTalkerSession);
 
       renderHook(() =>

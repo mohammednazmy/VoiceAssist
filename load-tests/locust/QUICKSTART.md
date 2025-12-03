@@ -38,6 +38,7 @@ make web
 ```
 
 Then:
+
 1. Open browser: http://localhost:8089
 2. Set number of users: 10
 3. Set spawn rate: 2
@@ -87,6 +88,7 @@ make admin-workflow
 ### Customize Tests
 
 Edit `config.py` to customize:
+
 - Test users
 - Sample queries
 - Performance thresholds
@@ -126,11 +128,13 @@ make logs
 ## Troubleshooting
 
 ### "Locust not found"
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ### "Connection refused"
+
 ```bash
 # Start VoiceAssist
 cd ../..
@@ -138,12 +142,14 @@ docker-compose up -d
 ```
 
 ### "Too many authentication failures"
+
 ```bash
 # Test users will be auto-registered on first run
 # Just retry the test
 ```
 
 ### "High failure rate"
+
 ```bash
 # Check VoiceAssist logs
 docker-compose logs voiceassist-server
@@ -155,6 +161,7 @@ docker-compose logs voiceassist-server
 ## Performance Targets
 
 Expected performance (healthy system):
+
 - Login: < 1 second
 - Chat query: < 3 seconds
 - Health check: < 500ms
@@ -162,13 +169,13 @@ Expected performance (healthy system):
 
 ## Test Types Overview
 
-| Test | Users | Duration | Purpose |
-|------|-------|----------|---------|
-| Smoke | 10 | 2 min | Quick validation |
-| Load | 100 | 10 min | Performance testing |
-| Stress | 500 | 15 min | Find limits |
-| Spike | 1000 | 5 min | Test scaling |
-| Soak | 100 | 60 min | Stability test |
+| Test   | Users | Duration | Purpose             |
+| ------ | ----- | -------- | ------------------- |
+| Smoke  | 10    | 2 min    | Quick validation    |
+| Load   | 100   | 10 min   | Performance testing |
+| Stress | 500   | 15 min   | Find limits         |
+| Spike  | 1000  | 5 min    | Test scaling        |
+| Soak   | 100   | 60 min   | Stability test      |
 
 ## Need Help?
 

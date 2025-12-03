@@ -13,11 +13,11 @@ spec:
         - name: server
           resources:
             requests:
-              cpu: 750m      # Increased from 500m
-              memory: 768Mi  # Increased from 512Mi
+              cpu: 750m # Increased from 500m
+              memory: 768Mi # Increased from 512Mi
             limits:
-              cpu: 3000m     # Increased from 2000m
-              memory: 3Gi    # Increased from 2Gi
+              cpu: 3000m # Increased from 2000m
+              memory: 3Gi # Increased from 2Gi
 
 ---
 apiVersion: apps/v1
@@ -31,11 +31,11 @@ spec:
         - name: worker
           resources:
             requests:
-              cpu: 1500m     # Increased from 1000m
-              memory: 1.5Gi  # Increased from 1Gi
+              cpu: 1500m # Increased from 1000m
+              memory: 1.5Gi # Increased from 1Gi
             limits:
-              cpu: 6000m     # Increased from 4000m
-              memory: 6Gi    # Increased from 4Gi
+              cpu: 6000m # Increased from 4000m
+              memory: 6Gi # Increased from 4Gi
 
 ---
 apiVersion: apps/v1
@@ -49,8 +49,8 @@ spec:
         - name: postgres
           resources:
             requests:
-              cpu: 2000m     # Increased from 1000m
-              memory: 4Gi    # Increased from 2Gi
+              cpu: 2000m # Increased from 1000m
+              memory: 4Gi # Increased from 2Gi
             limits:
-              cpu: 6000m     # Increased from 4000m
-              memory: 12Gi   # Increased from 8Gi
+              cpu: 6000m # Increased from 4000m
+              memory: 12Gi # Increased from 8Gi

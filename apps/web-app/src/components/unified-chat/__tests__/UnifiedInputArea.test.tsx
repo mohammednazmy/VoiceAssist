@@ -234,9 +234,8 @@ describe("UnifiedInputArea - Voice Mode", () => {
     }));
 
     vi.resetModules();
-    const { UnifiedInputArea: VoiceInputArea } = await import(
-      "../UnifiedInputArea"
-    );
+    const { UnifiedInputArea: VoiceInputArea } =
+      await import("../UnifiedInputArea");
 
     render(<VoiceInputArea conversationId="conv-1" onSendMessage={vi.fn()} />);
 

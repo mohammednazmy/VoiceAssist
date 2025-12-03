@@ -45,9 +45,11 @@ let audioContext: AudioContext | null = null;
  */
 function getAudioContext(): AudioContext {
   if (!audioContext) {
-    audioContext = new (window.AudioContext ||
+    audioContext = new (
+      window.AudioContext ||
       (window as unknown as { webkitAudioContext: typeof AudioContext })
-        .webkitAudioContext)();
+        .webkitAudioContext
+    )();
   }
 
   // Resume if suspended (autoplay policy)

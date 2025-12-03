@@ -233,9 +233,8 @@ describe("CollapsibleContextPane - Mobile", () => {
       useIsMobile: () => true,
     }));
 
-    const { CollapsibleContextPane: MobilePane } = await import(
-      "../CollapsibleContextPane"
-    );
+    const { CollapsibleContextPane: MobilePane } =
+      await import("../CollapsibleContextPane");
 
     const { container } = render(
       <MobilePane isOpen={false} onToggle={vi.fn()} conversationId="conv-1" />,
