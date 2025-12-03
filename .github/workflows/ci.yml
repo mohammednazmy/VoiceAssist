@@ -182,7 +182,9 @@ jobs:
           echo "Waiting for PostgreSQL..."
           timeout 30 bash -c 'until pg_isready -h localhost -p 5432 -U voiceassist; do sleep 2; done'
           echo "Waiting for Redis..."
-          timeout 30 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 2; done'
+          timeout 30 bash -c 'until (echo PING | nc -w 1 localhost 6379 | grep -q PONG); do sleep 2; done'
+          echo "Waiting for Qdrant..."
+          timeout 30 bash -c 'until curl -sf http://localhost:6333/collections; do sleep 2; done'
           echo "All services ready!"
 
       - name: Run integration tests
