@@ -1,5 +1,5 @@
 # Use specific Python version with security patches (Bookworm/Debian 12)
-FROM python:3.11.10-slim-bookworm
+FROM python:3.14.1-slim-bookworm
 
 # Set working directory
 WORKDIR /app
