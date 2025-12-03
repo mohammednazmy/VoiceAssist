@@ -1,11 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { usePrompts } from "../../hooks/usePrompts";
-import type {
-  Prompt,
-  PromptVersion,
-  PromptVersionsResponse,
-  PromptDiffResponse,
-} from "../../types";
+import type { Prompt, PromptVersion, PromptDiffResponse } from "../../types";
 import { StatusBadge, LoadingState } from "../../components/shared";
 
 interface VersionHistoryDrawerProps {

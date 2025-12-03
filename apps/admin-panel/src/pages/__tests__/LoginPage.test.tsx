@@ -3,10 +3,10 @@
  * Tests authentication flow including 2FA
  */
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { LoginPage } from "../LoginPage";
 
 // Mock dependencies

@@ -313,7 +313,7 @@ function ToolRegistryTab({
   isAdmin,
   onToggle,
   onSelect,
-  getCategoryColor,
+  getCategoryColor: _getCategoryColor,
 }: ToolRegistryTabProps) {
   if (tools.length === 0) {
     return (
@@ -547,7 +547,7 @@ interface ToolAnalyticsTabProps {
 function ToolAnalyticsTab({
   analytics,
   summary,
-  getCategoryColor,
+  getCategoryColor: _getCategoryColor,
 }: ToolAnalyticsTabProps) {
   if (!analytics.length) {
     return (

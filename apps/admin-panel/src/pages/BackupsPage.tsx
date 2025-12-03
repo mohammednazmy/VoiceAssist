@@ -410,7 +410,10 @@ interface DRStatusTabProps {
   getStatusType: (result: string | undefined) => StatusType;
 }
 
-function DRStatusTab({ drStatus, getStatusType }: DRStatusTabProps) {
+function DRStatusTab({
+  drStatus,
+  getStatusType: _getStatusType,
+}: DRStatusTabProps) {
   if (!drStatus) {
     return (
       <DataPanel title="Disaster Recovery Status">
