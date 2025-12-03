@@ -13,8 +13,6 @@ import type {
   SoftBargePattern,
   HardBargePattern,
   CommandPattern,
-  UserIntent,
-  InterruptionPriority,
 } from "./types";
 
 // ============================================================================

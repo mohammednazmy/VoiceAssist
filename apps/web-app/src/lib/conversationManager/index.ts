@@ -107,7 +107,7 @@ export class ConversationManager {
    */
   processUserUtterance(
     transcript: string,
-    duration: number,
+    _duration: number,
   ): ConversationState {
     this.state.turnCount++;
 

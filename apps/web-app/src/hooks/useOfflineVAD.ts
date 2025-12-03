@@ -249,23 +249,27 @@ export function useOfflineVADWithFallback(
     if (!useNetworkMonitor) return;
 
     // Dynamically import to avoid SSR issues
-    import("./useNetworkStatus").then(({ useNetworkStatus }) => {
-      // This is a hack - we can't call hooks dynamically
-      // Instead, we'll subscribe directly to the monitor
-      import("../lib/offline/networkMonitor").then(({ getNetworkMonitor }) => {
-        const monitor = getNetworkMonitor();
-        const unsubscribe = monitor.subscribe((status) => {
-          setNetworkStatus({
-            isOnline: status.isOnline,
-            isHealthy: status.isHealthy,
-            quality: status.quality,
-          });
-          setNetworkQuality(status.quality);
-          onNetworkQualityChange?.(status.quality, status.isHealthy);
-        });
-        return unsubscribe;
-      });
-    });
+    import("./useNetworkStatus").then(
+      ({ useNetworkStatus: _useNetworkStatus }) => {
+        // This is a hack - we can't call hooks dynamically
+        // Instead, we'll subscribe directly to the monitor
+        import("../lib/offline/networkMonitor").then(
+          ({ getNetworkMonitor }) => {
+            const monitor = getNetworkMonitor();
+            const unsubscribe = monitor.subscribe((status) => {
+              setNetworkStatus({
+                isOnline: status.isOnline,
+                isHealthy: status.isHealthy,
+                quality: status.quality,
+              });
+              setNetworkQuality(status.quality);
+              onNetworkQualityChange?.(status.quality, status.isHealthy);
+            });
+            return unsubscribe;
+          },
+        );
+      },
+    );
   }, [useNetworkMonitor, onNetworkQualityChange]);
 
   // Determine if network is available

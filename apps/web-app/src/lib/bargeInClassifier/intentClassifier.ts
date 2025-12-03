@@ -23,13 +23,9 @@ import type {
 import {
   HARD_BARGE_PATTERNS,
   COMMAND_PATTERNS,
-  getAllPatternsForLanguage,
   getRandomAcknowledgment,
 } from "./phraseLibrary";
-import {
-  BackchannelDetector,
-  type BackchannelDetectorConfig,
-} from "./backchannelDetector";
+import { BackchannelDetector } from "./backchannelDetector";
 
 // ============================================================================
 // Intent Classifier Class

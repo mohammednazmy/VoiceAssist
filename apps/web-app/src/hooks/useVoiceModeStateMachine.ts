@@ -185,7 +185,7 @@ export function useVoiceModeStateMachine(
   // Use the Thinker/Talker voice session hook
   const {
     error,
-    transcript,
+    transcript: _transcript,
     partialTranscript,
     isSpeaking,
     metrics,
