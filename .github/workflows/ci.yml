@@ -102,7 +102,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: services/api-gateway/coverage.xml
+          files: services/api-gateway/coverage.xml
           flags: unit
           name: unit-tests-py${{ matrix.python-version }}
           fail_ci_if_error: false
@@ -234,7 +234,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: services/api-gateway/coverage.xml
+          files: services/api-gateway/coverage.xml
           flags: integration
           name: integration-tests
           fail_ci_if_error: false
@@ -281,9 +281,10 @@ jobs:
           - 9292:9292
         options: >-
           --health-cmd "wget -q --tries=1 --spider http://localhost:9292/diagnostic/status/heartbeat"
-          --health-interval 30s
+          --health-interval 15s
           --health-timeout 10s
-          --health-retries 5
+          --health-retries 10
+          --health-start-period 60s
 
     steps:
       - name: Checkout code
