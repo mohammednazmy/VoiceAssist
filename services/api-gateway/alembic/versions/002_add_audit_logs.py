@@ -49,7 +49,7 @@ def upgrade():
         sa.Column("status_code", sa.String(10), nullable=True),
         sa.Column("error_message", sa.String(1000), nullable=True),
         # Additional context
-        sa.Column("metadata", postgresql.JSONB, nullable=True),
+        sa.Column("additional_data", postgresql.JSONB, nullable=True),
         # Integrity verification
         sa.Column("hash", sa.String(64), nullable=False),
     )
