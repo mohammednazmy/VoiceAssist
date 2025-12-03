@@ -5,17 +5,17 @@ summary: Debug Next.js docs site, static export, Apache routing, and documentati
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-03"
 audience: ["human", "agent", "ai-agents", "frontend", "sre"]
 tags: ["debugging", "runbook", "docs-site", "nextjs", "apache", "troubleshooting"]
 relatedServices: ["docs-site"]
 category: debugging
-version: "1.0.0"
+version: "1.1.0"
 ---
 
 # Docs Site Debugging Guide
 
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-12-03
 **Component:** `apps/docs-site/`
 **Live Site:** https://assistdocs.asimo.io
 
@@ -329,6 +329,83 @@ pnpm validate:metadata
 
 - `apps/docs-site/src/lib/docs.ts` - `parseMetadata()`
 - `apps/docs-site/src/components/DocPage.tsx` - Metadata display
+
+---
+
+### AI-Docs / Semantic Search Not Working
+
+**Symptoms:**
+
+- `docs_search` tool returns empty results
+- AI agents can't find documentation via semantic search
+- Qdrant collection missing or outdated
+
+**Steps to Investigate:**
+
+1. Check Qdrant is running:
+
+```bash
+curl http://localhost:6333/collections
+# Should list 'platform_docs' collection
+```
+
+2. Verify collection exists and has documents:
+
+```bash
+curl http://localhost:6333/collections/platform_docs
+# Check 'vectors_count' is > 0
+```
+
+3. Check embedding script output:
+
+```bash
+cd /home/asimo/VoiceAssist
+python scripts/embed-docs.py --dry-run
+# Shows which docs would be embedded
+```
+
+4. Re-index documentation:
+
+```bash
+# Force re-embed all docs
+python scripts/embed-docs.py --force
+```
+
+5. Verify docs search tool is registered:
+
+```bash
+# Check tool registration
+grep -r "docs_search" server/app/tools/
+```
+
+**Common Fixes:**
+
+```bash
+# 1. Ensure Qdrant is running
+docker compose up -d qdrant
+
+# 2. Re-embed documentation
+python scripts/embed-docs.py --force
+
+# 3. Restart API server to pick up changes
+docker compose restart api-gateway
+
+# 4. Verify tool is working
+curl -X POST http://localhost:8000/api/tools/docs_search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "voice pipeline"}'
+```
+
+**Relevant Code Paths:**
+
+- `scripts/embed-docs.py` - Embedding script
+- `server/app/tools/docs_search_tool.py` - Search tool implementation
+- `docker-compose.yml` - Qdrant service configuration
+
+**Related Docs:**
+
+- [Internal Docs System](../INTERNAL_DOCS_SYSTEM.md#ai-integration-ai-docs)
+- [Agent API Reference](../ai/AGENT_API_REFERENCE.md#ai-docs-semantic-search)
 
 ---
 
