@@ -5,9 +5,9 @@ summary: "This guide explains how to use and configure Voice Mode settings in Vo
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-29"
+lastUpdated: "2025-12-03"
 audience: ["frontend"]
-tags: ["voice", "mode", "settings", "guide", "preferences", "tts"]
+tags: ["voice", "mode", "settings", "guide", "preferences", "tts", "multilingual", "offline", "calibration"]
 category: operations
 ---
 
@@ -20,6 +20,8 @@ This guide explains how to use and configure Voice Mode settings in VoiceAssist.
 Voice Mode provides real-time voice conversations with the AI assistant. Users can customize their voice experience through the settings panel, including voice selection, language preferences, TTS quality parameters, and behavior options.
 
 **Voice Mode Overhaul (2025-11-29)**: Added backend persistence for voice preferences, context-aware voice style detection, and advanced TTS quality controls.
+
+**Phase 7-10 Enhancements (2025-12-03)**: Added multilingual support with auto-detection, voice calibration, offline fallback with network monitoring, and conversation intelligence features.
 
 ## Accessing Settings
 
@@ -89,6 +91,180 @@ Expand this section to fine-tune TTS output parameters:
 
 These settings primarily affect ElevenLabs TTS but also influence context-aware style blending for OpenAI TTS.
 
+---
+
+## Phase 7: Language & Detection Settings
+
+### Auto-Detect Language
+
+When enabled, the system automatically detects the language being spoken and adjusts processing accordingly. This is useful for multilingual users who switch between languages naturally.
+
+- **Default**: Enabled
+- **Store Key**: `autoLanguageDetection`
+
+### Language Switch Confidence (0-100%)
+
+Controls how confident the system must be before switching to a detected language. Higher values prevent false-positive language switches.
+
+- **Lower values (50-70%)**: More responsive language switching, but may switch accidentally on similar-sounding phrases
+- **Medium values (70-85%)**: Balanced detection (recommended)
+- **Higher values (85-100%)**: Very confident switching, stays in current language unless clearly different
+
+- **Default**: 75%
+- **Store Key**: `languageSwitchConfidence`
+
+### Accent Profile
+
+Select a regional accent profile to improve speech recognition accuracy for your specific accent or dialect.
+
+- **Default**: None (auto-detect)
+- **Available Profiles**: en-us-midwest, en-gb-london, en-au-sydney, ar-eg-cairo, ar-sa-riyadh, etc.
+- **Store Key**: `accentProfileId`
+
+---
+
+## Phase 8: Voice Calibration Settings
+
+Voice calibration optimizes the VAD (Voice Activity Detection) thresholds specifically for your voice and environment.
+
+### Calibration Status
+
+Shows whether voice calibration has been completed:
+
+- **Not Calibrated**: Default state, using generic thresholds
+- **Calibrated**: Personal thresholds active (shows last calibration date)
+
+### Recalibrate Button
+
+Launches the calibration wizard to:
+
+1. Record ambient noise samples
+2. Record your speaking voice at different volumes
+3. Compute personalized VAD thresholds
+
+Calibration takes approximately 30-60 seconds.
+
+### Personalized VAD Threshold
+
+After calibration, the system uses a custom threshold tuned to your voice:
+
+- **Store Key**: `personalizedVadThreshold`
+- **Range**: 0.0-1.0 (null if not calibrated)
+
+### Adaptive Learning
+
+When enabled, the system continuously learns from your voice patterns and subtly adjusts thresholds over time.
+
+- **Default**: Enabled
+- **Store Key**: `enableBehaviorLearning`
+
+---
+
+## Phase 9: Offline Mode Settings
+
+Configure how the voice assistant behaves when network connectivity is poor or unavailable.
+
+### Enable Offline Fallback
+
+When enabled, the system automatically switches to offline VAD processing when:
+
+- Network is offline
+- Health check fails consecutively
+- Network quality drops below threshold
+
+- **Default**: Enabled
+- **Store Key**: `enableOfflineFallback`
+
+### Prefer Local VAD
+
+Force the use of local (on-device) VAD processing even when network is available. Useful for:
+
+- Privacy-conscious users who don't want audio sent to servers
+- Environments with unreliable connectivity
+- Lower latency at the cost of accuracy
+
+- **Default**: Disabled
+- **Store Key**: `preferOfflineVAD`
+
+### TTS Audio Caching
+
+When enabled, previously synthesized audio responses are cached locally for:
+
+- Faster playback of repeated phrases
+- Offline playback of cached responses
+- Reduced bandwidth and API costs
+
+- **Default**: Enabled
+- **Store Key**: `ttsCacheEnabled`
+
+### Network Quality Monitoring
+
+The system continuously monitors network quality and categorizes it into five levels:
+
+| Quality   | Latency    | Behavior                           |
+| --------- | ---------- | ---------------------------------- |
+| Excellent | < 100ms    | Full cloud processing              |
+| Good      | < 200ms    | Full cloud processing              |
+| Moderate  | < 500ms    | Cloud processing, may show warning |
+| Poor      | ≥ 500ms    | Auto-fallback to offline VAD       |
+| Offline   | No network | Full offline mode                  |
+
+Network status is displayed in the voice panel header when quality is degraded.
+
+---
+
+## Phase 10: Conversation Intelligence Settings
+
+These settings control advanced AI features that enhance conversation quality.
+
+### Enable Sentiment Tracking
+
+When enabled, the AI tracks emotional tone throughout the conversation and adapts its responses accordingly.
+
+- **Default**: Enabled
+- **Store Key**: `enableSentimentTracking`
+
+### Enable Discourse Analysis
+
+Tracks conversation structure (topic changes, question chains, clarifications) to provide more contextually aware responses.
+
+- **Default**: Enabled
+- **Store Key**: `enableDiscourseAnalysis`
+
+### Enable Response Recommendations
+
+The AI suggests relevant follow-up questions or actions based on conversation context.
+
+- **Default**: Enabled
+- **Store Key**: `enableResponseRecommendations`
+
+### Show Suggested Follow-Ups
+
+Display AI-suggested follow-up questions after responses. These appear as clickable chips below the assistant's message.
+
+- **Default**: Enabled
+- **Store Key**: `showSuggestedFollowUps`
+
+---
+
+## Privacy Settings
+
+### Store Transcript History
+
+When enabled, voice transcripts are stored in the conversation history. Disable for ephemeral voice sessions.
+
+- **Default**: Enabled
+- **Store Key**: `storeTranscriptHistory`
+
+### Share Anonymous Analytics
+
+Opt-in to share anonymized voice interaction metrics to help improve the service. **No transcript content or personal data is shared** - only timing metrics (latency, error rates).
+
+- **Default**: Disabled
+- **Store Key**: `shareAnonymousAnalytics`
+
+---
+
 ## Persistence
 
 Voice preferences are now stored in two locations for maximum reliability:
@@ -103,6 +279,8 @@ Changes are debounced (1 second) before being sent to the backend to reduce API 
 
 Click "Reset to defaults" in the settings modal to restore all settings to their original values:
 
+### Core Settings
+
 - Voice: Alloy
 - Language: English
 - VAD Sensitivity: 50%
@@ -112,6 +290,37 @@ Click "Reset to defaults" in the settings modal to restore all settings to their
 - Stability: 50%
 - Clarity: 75%
 - Expressiveness: 0%
+
+### Phase 7 Defaults
+
+- Auto Language Detection: Enabled
+- Language Switch Confidence: 75%
+- Accent Profile ID: null
+
+### Phase 8 Defaults
+
+- VAD Calibrated: false
+- Last Calibration Date: null
+- Personalized VAD Threshold: null
+- Adaptive Learning: Enabled
+
+### Phase 9 Defaults
+
+- Offline Fallback: Enabled
+- Prefer Local VAD: Disabled
+- TTS Cache: Enabled
+
+### Phase 10 Defaults
+
+- Sentiment Tracking: Enabled
+- Discourse Analysis: Enabled
+- Response Recommendations: Enabled
+- Show Suggested Follow-Ups: Enabled
+
+### Privacy Defaults
+
+- Store Transcript History: Enabled
+- Share Anonymous Analytics: Disabled
 
 Reset also syncs to the backend via `POST /api/voice/preferences/reset`.
 
@@ -148,6 +357,15 @@ apps/web-app/src/stores/voiceSettingsStore.ts
 
 - Settings UI: `apps/web-app/src/components/voice/VoiceModeSettings.tsx`
 - Enhanced Settings: `apps/web-app/src/components/voice/VoiceSettingsEnhanced.tsx`
+- Calibration Dialog: `apps/web-app/src/components/voice/CalibrationDialog.tsx`
+
+### Phase 9 Offline/Network Files
+
+- Network Monitor: `apps/web-app/src/lib/offline/networkMonitor.ts`
+- WebRTC VAD: `apps/web-app/src/lib/offline/webrtcVAD.ts`
+- Offline Types: `apps/web-app/src/lib/offline/types.ts`
+- Network Status Hook: `apps/web-app/src/hooks/useNetworkStatus.ts`
+- Offline VAD Hook: `apps/web-app/src/hooks/useOfflineVAD.ts`
 
 ### Backend Files (New)
 
@@ -188,8 +406,14 @@ Run the voice settings test suites individually to avoid memory issues:
 ```bash
 cd apps/web-app
 
-# Unit tests for voice settings store
+# Unit tests for voice settings store (core)
 npx vitest run src/stores/__tests__/voiceSettingsStore.test.ts --reporter=dot
+
+# Unit tests for voice settings store (Phase 7-10)
+npx vitest run src/stores/__tests__/voiceSettingsStore-phase7-10.test.ts --reporter=dot
+
+# Unit tests for network monitor
+npx vitest run src/lib/offline/__tests__/networkMonitor.test.ts --reporter=dot
 
 # Component tests for VoiceModeSettings
 npx vitest run src/components/voice/__tests__/VoiceModeSettings.test.tsx --reporter=dot
@@ -202,7 +426,7 @@ npx vitest run src/components/chat/__tests__/MessageInput-voice-settings.test.ts
 
 The test suites cover:
 
-**voiceSettingsStore.test.ts**
+**voiceSettingsStore.test.ts** (17 tests)
 
 - Default values verification
 - All setter functions (voice, language, sensitivity, toggles)
@@ -210,7 +434,27 @@ The test suites cover:
 - Reset functionality
 - LocalStorage persistence
 
-**VoiceModeSettings.test.tsx**
+**voiceSettingsStore-phase7-10.test.ts** (41 tests)
+
+- Phase 7: Multilingual settings (accent profile, auto-detection, confidence)
+- Phase 8: Calibration settings (VAD calibrated, dates, thresholds)
+- Phase 9: Offline mode settings (fallback, prefer offline VAD, TTS cache)
+- Phase 10: Conversation intelligence (sentiment, discourse, recommendations)
+- Privacy settings (transcript history, anonymous analytics)
+- Persistence tests for all Phase 7-10 settings
+- Reset tests verifying all defaults
+
+**networkMonitor.test.ts** (13 tests)
+
+- Initial state detection (online/offline)
+- Health check latency measurement
+- Quality computation from latency thresholds
+- Consecutive failure handling before marking unhealthy
+- Subscription/unsubscription for status changes
+- Custom configuration (latency thresholds, health check URL)
+- Offline detection via navigator.onLine
+
+**VoiceModeSettings.test.tsx** (25 tests)
 
 - Modal visibility (isOpen prop)
 - Current settings display
@@ -219,7 +463,7 @@ The test suites cover:
 - Close behavior (Done, X, backdrop)
 - Accessibility (labels, ARIA attributes)
 
-**MessageInput-voice-settings.test.tsx**
+**MessageInput-voice-settings.test.tsx** (12 tests)
 
 - Auto-open via store setting (autoStartOnOpen)
 - Auto-open via prop (autoOpenRealtimeVoice)
@@ -227,8 +471,11 @@ The test suites cover:
 - Voice/language display in panel header
 - Status hints visibility toggle
 
+**Total: 108+ tests** for voice settings and related functionality.
+
 ### Notes
 
 - Tests mock `useRealtimeVoiceSession` and `WaveformVisualizer` to avoid browser API dependencies
 - Run tests individually rather than the full suite to prevent memory issues
 - All tests use Vitest + React Testing Library
+- Phase 7-10 tests also mock `fetch` and `performance.now` for network monitoring
