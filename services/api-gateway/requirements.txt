@@ -67,7 +67,7 @@ webdavclient3==3.14.6
 dateparser==1.2.0  # Natural language date parsing for calendar tools
 google-auth==2.29.0  # Google OAuth2 authentication
 google-auth-oauthlib==1.2.0  # OAuth2 flow for Google APIs
-google-api-python-client==2.127.0  # Google Calendar API client
+google-api-python-client==2.187.0  # Google Calendar API client
 
 # Testing
 pytest==9.0.1
