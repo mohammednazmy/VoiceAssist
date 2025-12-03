@@ -163,7 +163,7 @@ class TestPipelineConfig:
         assert config.max_response_tokens == 1024
         assert config.temperature == 0.7
         assert config.voice_id == "TxGEqnHWrfWFTfGW9XjX"  # Josh (premium male voice)
-        assert config.tts_model == "eleven_turbo_v2"
+        assert config.tts_model == "eleven_flash_v2_5"  # Better quality + low latency
         assert config.barge_in_enabled is True
 
     def test_config_custom_values(self):
@@ -261,7 +261,7 @@ class TestTTSessionConfig:
         assert config.user_id == "user-123"
         assert config.session_id == "session-456"
         assert config.voice_id == "TxGEqnHWrfWFTfGW9XjX"  # Josh (premium male voice)
-        assert config.tts_model == "eleven_turbo_v2"
+        assert config.tts_model == "eleven_flash_v2_5"  # Better quality + low latency
         assert config.language == "en"
         assert config.barge_in_enabled is True
         assert config.stt_sample_rate == 16000
@@ -446,7 +446,7 @@ class TestTalkerServiceTypes:
 
         config = VoiceConfig()
         assert config.voice_id == "TxGEqnHWrfWFTfGW9XjX"  # Josh (premium male voice)
-        assert config.model_id == "eleven_turbo_v2"
+        assert config.model_id == "eleven_turbo_v2_5"  # Best balance of quality and latency
         assert config.stability == 0.5
         assert config.similarity_boost == 0.75
         assert config.style == 0.0

@@ -793,14 +793,22 @@ class TestAPIEndpoints:
         """Create test client with mocked external dependencies."""
         from unittest.mock import MagicMock
 
-        # Mock Qdrant client to prevent connection attempts
-        with patch("app.services.kb_indexer.QdrantClient") as mock_qdrant:
-            mock_qdrant.return_value = MagicMock()
-            with patch("app.services.kb_indexer.qdrant_client", MagicMock()):
-                from app.main import app
-                from fastapi.testclient import TestClient
+        # Mock QdrantClient class to prevent connection attempts
+        mock_qdrant_instance = MagicMock()
+        mock_qdrant_instance.get_collections.return_value = MagicMock(collections=[])
 
-                return TestClient(app)
+        with patch("qdrant_client.QdrantClient", return_value=mock_qdrant_instance):
+            # Need to reimport app after mocking
+            import importlib
+
+            import app.api.admin_kb
+
+            importlib.reload(app.api.admin_kb)
+
+            from app.main import app
+            from fastapi.testclient import TestClient
+
+            return TestClient(app)
 
     def test_calculator_list_endpoint(self, client):
         """Test calculator list endpoint."""
