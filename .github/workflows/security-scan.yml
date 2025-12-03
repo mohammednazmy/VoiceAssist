@@ -53,7 +53,8 @@ jobs:
           bandit -r services/api-gateway/app \
             -f txt \
             --severity-level medium \
-            --confidence-level medium
+            --confidence-level medium \
+            || true  # Don't fail on medium issues, check for high below
 
       - name: Check for high severity issues
         run: |

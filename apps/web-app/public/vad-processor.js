@@ -38,7 +38,7 @@ class VADProcessor extends AudioWorkletProcessor {
    * Process audio samples
    * Called for each audio block (typically 128 samples at a time)
    */
-  process(inputs, outputs, parameters) {
+  process(inputs, _outputs, _parameters) {
     if (!this.isActive) {
       return true; // Keep processor alive but don't process
     }

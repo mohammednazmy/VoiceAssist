@@ -13,7 +13,7 @@ import path from "path";
 
 // Target the dev.asimo.io environment or local dev server
 const baseURL = process.env.E2E_BASE_URL || "http://localhost:5173";
-const apiURL = process.env.E2E_API_URL || "http://localhost:8200";
+const _apiURL = process.env.E2E_API_URL || "http://localhost:8200";
 
 // Auth state file path
 const AUTH_STATE_PATH = path.join(__dirname, "e2e", ".auth-state.json");

@@ -22,7 +22,7 @@ interface VoiceInfo {
   labels?: Record<string, string>;
 }
 
-interface VoiceListResponse {
+interface _VoiceListResponse {
   voices: VoiceInfo[];
   default_voice_id?: string | null;
   default_provider: string;

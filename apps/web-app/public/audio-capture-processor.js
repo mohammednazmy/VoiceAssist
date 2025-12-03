@@ -190,7 +190,7 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
     return maxCorrelation;
   }
 
-  process(inputs, outputs, parameters) {
+  process(inputs, _outputs, _parameters) {
     // Return false to stop if marked inactive
     if (!this.isActive) {
       return false;
