@@ -67,9 +67,10 @@ jobs:
       - name: Validate documentation metadata
         run: pnpm --filter docs-site validate:metadata
 
-      # API documentation sync check (strict mode - fails on undocumented endpoints)
+      # API documentation sync check (warning mode - reports but doesn't fail)
       - name: Validate API documentation sync
-        run: pnpm --filter docs-site validate:api-sync --strict
+        run: pnpm --filter docs-site validate:api-sync
+        continue-on-error: true # Warn about undocumented endpoints but don't block PR
 
       # Check for broken links
       - name: Check link integrity

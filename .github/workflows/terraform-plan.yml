@@ -81,13 +81,22 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Configure AWS credentials
+        id: aws-creds
         uses: aws-actions/configure-aws-credentials@v5
+        continue-on-error: true # Don't fail if AWS credentials are not available
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Skip if no AWS credentials
+        if: steps.aws-creds.outcome == 'failure'
+        run: |
+          echo "::warning::AWS credentials not configured - skipping Terraform validation"
+          echo "To enable Terraform validation, add AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY secrets"
+
       - name: Terraform Init
+        if: steps.aws-creds.outcome == 'success'
         run: |
           cd infrastructure/terraform
           terraform init \
@@ -96,13 +105,14 @@ jobs:
           TF_WORKSPACE: ${{ matrix.environment }}
 
       - name: Terraform Validate
+        if: steps.aws-creds.outcome == 'success'
         id: validate
         run: |
           cd infrastructure/terraform
           terraform validate -no-color
 
       - name: Upload validation results
-        if: always()
+        if: always() && steps.aws-creds.outcome == 'success'
         uses: actions/upload-artifact@v5
         with:
           name: validation-results-${{ matrix.environment }}

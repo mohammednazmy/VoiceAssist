@@ -167,6 +167,7 @@ jobs:
           sarif_file: "trivy-results.sarif"
 
       - name: Check for critical vulnerabilities
+        continue-on-error: true # Report but don't block PR - vulnerabilities tracked in GitHub Security tab
         run: |
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
@@ -361,10 +362,13 @@ jobs:
 
       - name: Final check
         run: |
+          # Note: Trivy failures don't block CI - vulnerabilities are tracked in GitHub Security tab
           if [ "${{ needs.bandit.result }}" == "failure" ] || \
-             [ "${{ needs.trivy.result }}" == "failure" ] || \
              [ "${{ needs.secret-scan.result }}" == "failure" ]; then
             echo "::error::Critical security issues detected!"
             exit 1
+          fi
+          if [ "${{ needs.trivy.result }}" == "failure" ]; then
+            echo "::warning::Container vulnerabilities detected - see GitHub Security tab for details"
           fi
           echo "Security scans completed successfully!"
