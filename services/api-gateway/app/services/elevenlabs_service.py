@@ -12,6 +12,7 @@ Phase 11: VoiceAssist Voice Pipeline Sprint
 - Circuit breaker protection for resilience
 """
 
+import asyncio
 import time
 from dataclasses import dataclass, field
 from typing import AsyncIterator, Dict, List, Optional
@@ -23,6 +24,11 @@ from app.core.resilience import elevenlabs_breaker
 from pybreaker import CircuitBreakerError
 
 logger = get_logger(__name__)
+
+# Rate limit retry configuration
+RATE_LIMIT_MAX_RETRIES = 3
+RATE_LIMIT_BASE_DELAY = 1.0  # seconds
+RATE_LIMIT_MAX_DELAY = 10.0  # seconds
 
 
 # ==============================================================================
@@ -334,6 +340,7 @@ class ElevenLabsService:
         Synthesize text to speech with streaming output.
 
         Yields audio chunks as they become available for low-latency playback.
+        Includes automatic retry with exponential backoff for rate limit errors (429).
 
         Args:
             text: Text to synthesize (max 5000 chars)
@@ -370,59 +377,108 @@ class ElevenLabsService:
         voice_id = voice_id or self.default_voice_id
         model_id = model_id or self.default_model
 
-        try:
-            client = await self._get_http_client()
-            url = f"{self.BASE_URL}{self.TTS_ENDPOINT}/{voice_id}/stream"
+        # Retry loop for rate limit errors
+        last_error: Optional[Exception] = None
+        for attempt in range(RATE_LIMIT_MAX_RETRIES + 1):
+            try:
+                client = await self._get_http_client()
+                url = f"{self.BASE_URL}{self.TTS_ENDPOINT}/{voice_id}/stream"
 
-            payload = {
-                "text": text,
-                "model_id": model_id,
-                "voice_settings": {
-                    "stability": stability,
-                    "similarity_boost": similarity_boost,
-                    "style": style,
-                    "use_speaker_boost": use_speaker_boost,
-                },
-            }
+                payload = {
+                    "text": text,
+                    "model_id": model_id,
+                    "voice_settings": {
+                        "stability": stability,
+                        "similarity_boost": similarity_boost,
+                        "style": style,
+                        "use_speaker_boost": use_speaker_boost,
+                    },
+                }
 
-            # Add context for voice continuity (ElevenLabs uses this to maintain
-            # consistent prosody and voice characteristics across chunks)
-            if previous_text:
-                # Limit previous text to last ~200 chars for efficiency
-                payload["previous_text"] = previous_text[-200:] if len(previous_text) > 200 else previous_text
-            if next_text:
-                # Limit next text to first ~100 chars
-                payload["next_text"] = next_text[:100] if len(next_text) > 100 else next_text
+                # Add context for voice continuity (ElevenLabs uses this to maintain
+                # consistent prosody and voice characteristics across chunks)
+                if previous_text:
+                    # Limit previous text to last ~200 chars for efficiency
+                    payload["previous_text"] = previous_text[-200:] if len(previous_text) > 200 else previous_text
+                if next_text:
+                    # Limit next text to first ~100 chars
+                    payload["next_text"] = next_text[:100] if len(next_text) > 100 else next_text
 
-            params = {"output_format": output_format}
+                params = {"output_format": output_format}
 
-            async with client.stream(
-                "POST",
-                url,
-                headers=self._get_headers(),
-                json=payload,
-                params=params,
-            ) as response:
-                if response.status_code != 200:
-                    error_text = await response.aread()
-                    raise ValueError(f"ElevenLabs stream failed: {error_text.decode()}")
+                async with client.stream(
+                    "POST",
+                    url,
+                    headers=self._get_headers(),
+                    json=payload,
+                    params=params,
+                ) as response:
+                    # Handle rate limiting with retry
+                    if response.status_code == 429:
+                        error_text = await response.aread()
+                        if attempt < RATE_LIMIT_MAX_RETRIES:
+                            # Calculate exponential backoff delay
+                            delay = min(
+                                RATE_LIMIT_BASE_DELAY * (2**attempt),
+                                RATE_LIMIT_MAX_DELAY,
+                            )
+                            logger.warning(
+                                "ElevenLabs rate limit hit, retrying",
+                                extra={
+                                    "attempt": attempt + 1,
+                                    "max_retries": RATE_LIMIT_MAX_RETRIES,
+                                    "delay_seconds": delay,
+                                    "error": error_text.decode()[:100],
+                                },
+                            )
+                            await asyncio.sleep(delay)
+                            continue  # Retry the request
+                        else:
+                            # Max retries exceeded
+                            logger.error(
+                                "ElevenLabs rate limit - max retries exceeded",
+                                extra={
+                                    "attempts": attempt + 1,
+                                    "error": error_text.decode()[:100],
+                                },
+                            )
+                            raise ValueError(f"ElevenLabs rate limit exceeded after {attempt + 1} attempts")
 
-                async for chunk in response.aiter_bytes(chunk_size):
-                    yield chunk
+                    if response.status_code != 200:
+                        error_text = await response.aread()
+                        raise ValueError(f"ElevenLabs stream failed: {error_text.decode()}")
 
-            logger.debug(
-                "ElevenLabs streaming TTS complete",
-                extra={"voice_id": voice_id, "text_length": len(text)},
-            )
+                    async for chunk in response.aiter_bytes(chunk_size):
+                        yield chunk
 
-            # Circuit breaker auto-tracks via decorator pattern
+                logger.debug(
+                    "ElevenLabs streaming TTS complete",
+                    extra={"voice_id": voice_id, "text_length": len(text)},
+                )
 
-        except httpx.TimeoutException as e:
-            logger.error(f"ElevenLabs streaming TTS timeout: {str(e)}")
-            raise ValueError("Streaming TTS request timed out")
-        except httpx.HTTPError as e:
-            logger.error(f"ElevenLabs streaming TTS error: {str(e)}")
-            raise ValueError(f"Streaming TTS request failed: {str(e)}")
+                # Success - exit the retry loop
+                return
+
+            except httpx.TimeoutException as e:
+                logger.error(f"ElevenLabs streaming TTS timeout: {str(e)}")
+                last_error = ValueError("Streaming TTS request timed out")
+                if attempt < RATE_LIMIT_MAX_RETRIES:
+                    delay = min(RATE_LIMIT_BASE_DELAY * (2**attempt), RATE_LIMIT_MAX_DELAY)
+                    await asyncio.sleep(delay)
+                    continue
+                raise last_error
+            except httpx.HTTPError as e:
+                logger.error(f"ElevenLabs streaming TTS error: {str(e)}")
+                last_error = ValueError(f"Streaming TTS request failed: {str(e)}")
+                if attempt < RATE_LIMIT_MAX_RETRIES:
+                    delay = min(RATE_LIMIT_BASE_DELAY * (2**attempt), RATE_LIMIT_MAX_DELAY)
+                    await asyncio.sleep(delay)
+                    continue
+                raise last_error
+
+        # Should not reach here, but just in case
+        if last_error:
+            raise last_error
 
     async def get_voices(self, force_refresh: bool = False) -> List[ElevenLabsVoice]:
         """

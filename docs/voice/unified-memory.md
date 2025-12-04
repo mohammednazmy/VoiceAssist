@@ -50,6 +50,95 @@ The unified memory system provides:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### Thinker-Talker Pipeline Integration
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant Memory as Unified Memory
+    participant Thinker
+    participant RAG
+    participant Talker
+
+    User->>Frontend: Voice or Text input
+    Frontend->>Memory: add_entry(role="user", mode, content)
+
+    Note over Memory: Store with mode tag<br/>(voice/text)
+
+    Memory->>Thinker: get_context(max_messages=10)
+    Thinker->>RAG: retrieve_passages(query)
+    RAG-->>Thinker: relevant_passages
+
+    Note over Thinker: Build LLM context<br/>with history + RAG
+
+    Thinker-->>Memory: add_entry(role="assistant")
+    Thinker-->>Talker: response_stream
+    Talker-->>Frontend: audio_chunks
+
+    Note over Memory: Context preserved<br/>across mode switches
+```
+
+### Memory Flow on Mode Switch
+
+```mermaid
+flowchart TD
+    subgraph Voice Mode
+        VA[🎤 Voice Input]
+        VT[Voice Transcript]
+        VM[Voice Message Entry]
+    end
+
+    subgraph Text Mode
+        TA[⌨️ Text Input]
+        TM[Text Message Entry]
+    end
+
+    subgraph Unified Memory
+        MC[Message Context]
+        LC[Language Events]
+        RC[RAG Context]
+        ME[Mode Events]
+    end
+
+    subgraph Thinker-Talker
+        TH[Thinker LLM]
+        TK[Talker TTS]
+    end
+
+    VA --> VT --> VM --> MC
+    TA --> TM --> MC
+
+    VM --> ME
+    TM --> ME
+
+    MC --> TH
+    LC --> TH
+    RC --> TH
+
+    TH --> TK
+
+    style MC fill:#FFD700
+```
+
+### Environment Variable for Data Directory
+
+When customizing lexicon paths, use the `_resolve_data_dir()` helper:
+
+```python
+from app.core.config import _resolve_data_dir
+
+# Returns VOICEASSIST_DATA_DIR env var or default ./data
+data_dir = _resolve_data_dir()
+
+# Lexicon paths relative to data dir
+lexicons_path = data_dir / "lexicons" / "medical_terms.txt"
+```
+
+**Environment variable**: `VOICEASSIST_DATA_DIR=/path/to/data`
+
+If not set, defaults to `./data` relative to the working directory.
+
 ## Memory Architecture
 
 ### Memory Layers

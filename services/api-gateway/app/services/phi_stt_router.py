@@ -10,6 +10,29 @@ Features:
 - Dynamic routing: Cloud STT / Hybrid / Local Whisper
 - Session-level PHI context tracking
 - Audit logging for HIPAA compliance
+- Telemetry hooks for frontend PHI mode indicator
+
+Routing Priority Order (most secure to fastest):
+============================================
+1. LOCAL (on-device Whisper)
+   - Triggered when: PHI score >= 0.7 OR explicit prior PHI in session
+   - Latency: ~200-400ms additional
+   - Security: Full HIPAA compliance, no data leaves device
+
+2. HYBRID (cloud with redaction)
+   - Triggered when: 0.3 <= PHI score < 0.7
+   - Latency: ~50-100ms additional for redaction
+   - Security: PHI entities redacted before cloud transmission
+
+3. CLOUD (standard cloud STT)
+   - Triggered when: PHI score < 0.3 AND no prior PHI context
+   - Latency: Fastest (~100-150ms)
+   - Security: Standard cloud processing (not for PHI)
+
+The router biases toward more secure routing when:
+- Medical context is detected (is_medical_session=True)
+- Session has prior PHI detected (has_prior_phi=True)
+- User explicitly requests secure mode
 """
 
 import logging
@@ -20,6 +43,7 @@ from typing import Any, Dict, List, Optional
 
 from app.core.config import settings
 from app.services.phi_detector import PHIDetectionResult, PHIDetector
+from app.services.phi_telemetry import PHIRoutingMode, PHITelemetryService, get_phi_telemetry_service
 
 logger = logging.getLogger(__name__)
 
@@ -294,15 +318,22 @@ class PHISTTRouter:
     - PHI score < 0.3: Cloud STT (fastest)
     - PHI score 0.3-0.7: Hybrid mode with redaction
     - PHI score >= 0.7: Local Whisper (most secure)
+
+    Telemetry Integration:
+    - Broadcasts routing decisions to subscribed frontends
+    - Provides real-time PHI mode indicator state
+    - Records metrics for observability
     """
 
     def __init__(
         self,
         config: Optional[PHIRoutingConfig] = None,
         phi_detector: Optional[PHIDetector] = None,
+        telemetry_service: Optional[PHITelemetryService] = None,
     ):
         self.config = config or PHIRoutingConfig()
         self.phi_detector = phi_detector or PHIDetector()
+        self._telemetry = telemetry_service or get_phi_telemetry_service()
         self._session_contexts: Dict[str, SessionPHIContext] = {}
         self._local_transcriber: Optional[LocalWhisperTranscriber] = None
         self._cloud_client: Optional[CloudSTTClient] = None
@@ -425,6 +456,18 @@ class PHISTTRouter:
             },
         )
 
+        # Update telemetry for frontend visibility
+        if session_id:
+            telemetry_mode = PHIRoutingMode(routing.value)
+            self._telemetry.update_routing_state(
+                session_id=session_id,
+                mode=telemetry_mode,
+                phi_score=phi_score,
+                phi_entities=list(set(phi_entities)),
+                routing_reason=decision_reason,
+                has_prior_phi=from_session_context,
+            )
+
         return result
 
     async def transcribe(
@@ -492,9 +535,46 @@ class PHISTTRouter:
             raise
 
     def clear_session(self, session_id: str) -> None:
-        """Clear session context."""
+        """Clear session context and telemetry state."""
         if session_id in self._session_contexts:
             del self._session_contexts[session_id]
+        # Clean up telemetry
+        self._telemetry.end_session(session_id)
+
+    def get_frontend_state(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get current PHI routing state for frontend display.
+
+        Returns a dictionary suitable for the PHI indicator component:
+        {
+            "sessionId": "...",
+            "phiMode": "local" | "hybrid" | "cloud",
+            "phiScore": 0.0-1.0,
+            "isSecureMode": bool,
+            "hasPriorPhi": bool,
+            "indicatorColor": "green" | "yellow" | "blue",
+            "indicatorIcon": "shield" | "lock" | "cloud",
+            "tooltip": "..."
+        }
+        """
+        return self._telemetry.get_frontend_state(session_id)
+
+    def init_session(
+        self,
+        session_id: str,
+        is_medical_context: bool = False,
+    ) -> None:
+        """
+        Initialize a new PHI routing session with telemetry.
+
+        Args:
+            session_id: Unique session identifier
+            is_medical_context: Whether this is a medical context session
+        """
+        # Initialize session context
+        self._get_session_context(session_id)
+        # Initialize telemetry
+        self._telemetry.init_session(session_id, is_medical_context)
 
 
 # Singleton instance

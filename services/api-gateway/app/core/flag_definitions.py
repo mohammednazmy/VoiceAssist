@@ -461,6 +461,55 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 other_flags=["backend.voice_v4_multilingual_rag"],
             ),
         ),
+        #
+        # Phase 3: Advanced Services
+        # ---------------------------------------------------------------------
+        "voice_v4_fhir_streaming": FeatureFlagDefinition(
+            name="backend.voice_v4_fhir_streaming",
+            description="[Phase 3] Real-time FHIR data streaming for clinical context enrichment.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="high",
+                owner="clinical-team",
+                docs_url="https://assistdocs.asimo.io/voice/fhir-streaming",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                other_flags=["backend.voice_v4_phi_routing"],
+            ),
+        ),
+        "voice_v4_speaker_diarization": FeatureFlagDefinition(
+            name="backend.voice_v4_speaker_diarization",
+            description="[Phase 3] Multi-speaker detection and attribution for conversations.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/speaker-diarization",
+            ),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        "voice_v4_adaptive_quality": FeatureFlagDefinition(
+            name="backend.voice_v4_adaptive_quality",
+            description="[Phase 3] Adapt voice quality based on connection speed and latency.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/adaptive-quality",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                other_flags=["backend.voice_v4_latency_budgets"],
+            ),
+        ),
     },
     # -------------------------------------------------------------------------
     # Admin Flags - Admin panel features

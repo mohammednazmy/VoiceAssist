@@ -42,6 +42,67 @@ The PHI-aware STT router intelligently routes audio based on content sensitivity
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### Thinker-Talker Pipeline Integration
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant VoicePipeline
+    participant PHIRouter
+    participant Thinker as Thinker (LLM)
+    participant Talker as Talker (TTS)
+    participant Telemetry
+
+    User->>Frontend: Speaks audio
+    Frontend->>VoicePipeline: Audio stream
+    VoicePipeline->>PHIRouter: route(audio_context)
+
+    Note over PHIRouter: PHI Detection & Scoring
+    PHIRouter->>Telemetry: update_routing_state()
+    Telemetry-->>Frontend: PHI mode indicator (🛡️/🔒/☁️)
+
+    alt PHI Score >= 0.7
+        PHIRouter->>VoicePipeline: route="local"
+        Note over VoicePipeline: Use Local Whisper
+    else PHI Score 0.3-0.7
+        PHIRouter->>VoicePipeline: route="hybrid"
+        Note over VoicePipeline: Use Cloud + Redaction
+    else PHI Score < 0.3
+        PHIRouter->>VoicePipeline: route="cloud"
+        Note over VoicePipeline: Use Cloud STT
+    end
+
+    VoicePipeline->>Thinker: transcript + context
+    Thinker-->>VoicePipeline: response_stream
+    VoicePipeline->>Talker: text_stream
+    Talker-->>Frontend: audio_chunks
+    Frontend-->>User: Plays response
+```
+
+### Routing Priority Order
+
+```mermaid
+flowchart TD
+    A[Audio Input] --> B{Session has prior PHI?}
+    B -->|Yes| L[LOCAL<br/>🛡️ On-device Whisper]
+    B -->|No| C{PHI Score >= 0.7?}
+    C -->|Yes| L
+    C -->|No| D{PHI Score >= 0.3?}
+    D -->|Yes| H[HYBRID<br/>🔒 Cloud + Redaction]
+    D -->|No| E{Medical Context?}
+    E -->|Yes| H
+    E -->|No| CL[CLOUD<br/>☁️ Standard STT]
+
+    L --> T[Thinker-Talker Pipeline]
+    H --> T
+    CL --> T
+
+    style L fill:#90EE90
+    style H fill:#FFE4B5
+    style CL fill:#ADD8E6
+```
+
 ## PHI Detection
 
 ### Detection Signals

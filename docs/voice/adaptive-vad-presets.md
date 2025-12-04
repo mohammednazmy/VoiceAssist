@@ -37,6 +37,78 @@ The adaptive VAD system allows users to choose from presets optimized for differ
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### Thinker-Talker Pipeline Integration
+
+```mermaid
+sequenceDiagram
+    participant Mic as Microphone
+    participant VAD as Adaptive VAD
+    participant STT
+    participant Thinker
+    participant Talker
+
+    Mic->>VAD: Audio stream (16kHz PCM)
+
+    Note over VAD: Apply preset thresholds<br/>Energy: -45 to -25 dB
+
+    loop Voice Activity Detection
+        VAD->>VAD: Check energy > threshold
+        alt Speech detected
+            VAD->>VAD: Buffer speech segment
+        else Silence > preset duration
+            VAD->>STT: Speech segment complete
+        end
+    end
+
+    STT->>Thinker: Transcript
+    Thinker->>Talker: Response text
+    Talker-->>Mic: Playback (VAD pauses during output)
+```
+
+### VAD Preset Selection Flow
+
+```mermaid
+flowchart LR
+    subgraph User Settings
+        A[Voice Settings Panel]
+    end
+
+    subgraph Presets
+        S[🤫 Sensitive<br/>-45dB / 300ms]
+        B[⚖️ Balanced<br/>-35dB / 500ms]
+        R[🔊 Relaxed<br/>-25dB / 800ms]
+        AC[♿ Accessibility<br/>-42dB / 1000ms]
+        C[⚙️ Custom<br/>User-defined]
+    end
+
+    subgraph Backend
+        VAD[Adaptive VAD Service]
+        Pipeline[Voice Pipeline]
+    end
+
+    A --> S
+    A --> B
+    A --> R
+    A --> AC
+    A --> C
+
+    S --> VAD
+    B --> VAD
+    R --> VAD
+    AC --> VAD
+    C --> VAD
+
+    VAD --> Pipeline
+
+    style B fill:#90EE90
+```
+
+### Cross-Link to Voice Settings
+
+See [Voice Settings Panel](/docs/frontend/voice-settings-panel.md) for UI implementation details.
+
+See [RTL Support](/docs/voice/rtl-support.md) for right-to-left language support in the voice interface.
+
 ## VAD Presets
 
 ### 1. Sensitive (Quiet Environment)

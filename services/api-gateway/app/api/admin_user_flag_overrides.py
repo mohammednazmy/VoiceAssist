@@ -79,7 +79,7 @@ class UserOverrideListResponse(BaseModel):
 # User-centric endpoints
 
 
-@router.get("/users/{user_id}/flag-overrides")
+@router.get("/users/{user_id}/flag-overrides", response_model=None)
 async def list_user_overrides(
     user_id: UUID = Path(..., description="User ID"),
     include_expired: bool = Query(False, description="Include expired overrides"),
@@ -121,12 +121,12 @@ async def list_user_overrides(
         )
 
 
-@router.post("/users/{user_id}/flag-overrides", status_code=status.HTTP_201_CREATED)
+@router.post("/users/{user_id}/flag-overrides", status_code=status.HTTP_201_CREATED, response_model=None)
 async def create_user_override(
     user_id: UUID = Path(..., description="User ID"),
     override: UserOverrideCreate = ...,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(ensure_admin_privileges),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Create a new flag override for a user.
 
@@ -135,6 +135,7 @@ async def create_user_override(
 
     Requires: Admin authentication (not Viewer)
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         result = await user_flag_override_service.set_override(
             user_id=user_id,
@@ -161,7 +162,7 @@ async def create_user_override(
         )
 
 
-@router.get("/users/{user_id}/flag-overrides/{flag_name}")
+@router.get("/users/{user_id}/flag-overrides/{flag_name}", response_model=None)
 async def get_user_override(
     user_id: UUID = Path(..., description="User ID"),
     flag_name: str = Path(..., description="Feature flag name"),
@@ -199,13 +200,13 @@ async def get_user_override(
         )
 
 
-@router.patch("/users/{user_id}/flag-overrides/{flag_name}")
+@router.patch("/users/{user_id}/flag-overrides/{flag_name}", response_model=None)
 async def update_user_override(
     user_id: UUID = Path(..., description="User ID"),
     flag_name: str = Path(..., description="Feature flag name"),
     update: UserOverrideUpdate = ...,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(ensure_admin_privileges),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Update an existing user flag override.
 
@@ -213,6 +214,7 @@ async def update_user_override(
 
     Requires: Admin authentication (not Viewer)
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         # Get existing override
         existing = await user_flag_override_service.get_override(
@@ -259,12 +261,12 @@ async def update_user_override(
         )
 
 
-@router.delete("/users/{user_id}/flag-overrides/{flag_name}")
+@router.delete("/users/{user_id}/flag-overrides/{flag_name}", response_model=None)
 async def delete_user_override(
     user_id: UUID = Path(..., description="User ID"),
     flag_name: str = Path(..., description="Feature flag name"),
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(ensure_admin_privileges),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Delete a user flag override.
 
@@ -272,6 +274,7 @@ async def delete_user_override(
 
     Requires: Admin authentication (not Viewer)
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         deleted = await user_flag_override_service.remove_override(
             user_id=user_id,
@@ -303,7 +306,7 @@ async def delete_user_override(
 # Flag-centric endpoints
 
 
-@router.get("/feature-flags/{flag_name}/user-overrides")
+@router.get("/feature-flags/{flag_name}/user-overrides", response_model=None)
 async def list_flag_user_overrides(
     flag_name: str = Path(..., description="Feature flag name"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum results"),
@@ -353,7 +356,7 @@ async def list_flag_user_overrides(
 # Current user endpoint
 
 
-@router.get("/flags/me")
+@router.get("/flags/me", response_model=None)
 async def get_current_user_flags(
     db: Session = Depends(get_db),
     current_admin_user: User = Depends(get_current_admin_or_viewer),
@@ -394,7 +397,7 @@ async def get_current_user_flags(
 # Resolution endpoint - get all flags with source
 
 
-@router.get("/users/{user_id}/flags/resolved")
+@router.get("/users/{user_id}/flags/resolved", response_model=None)
 async def get_resolved_flags_for_user(
     user_id: UUID = Path(..., description="User ID"),
     db: Session = Depends(get_db),
@@ -446,11 +449,11 @@ class BulkOverrideCreate(BaseModel):
     )
 
 
-@router.post("/flag-overrides/bulk", status_code=status.HTTP_201_CREATED)
+@router.post("/flag-overrides/bulk", status_code=status.HTTP_201_CREATED, response_model=None)
 async def bulk_create_overrides(
     bulk_request: BulkOverrideCreate,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(ensure_admin_privileges),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Create or update multiple flag overrides in a single request.
 
@@ -465,6 +468,7 @@ async def bulk_create_overrides(
 
     Requires: Admin authentication
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         result = await user_flag_override_service.bulk_set_overrides(
             overrides=bulk_request.overrides,
@@ -501,11 +505,11 @@ class BulkOverrideDelete(BaseModel):
     )
 
 
-@router.delete("/flag-overrides/bulk")
+@router.delete("/flag-overrides/bulk", response_model=None)
 async def bulk_delete_overrides(
     bulk_request: BulkOverrideDelete,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(ensure_admin_privileges),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Delete flag overrides for multiple users.
 
@@ -513,6 +517,7 @@ async def bulk_delete_overrides(
 
     Requires: Admin authentication
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         count = await user_flag_override_service.bulk_delete_overrides(
             user_ids=bulk_request.user_ids,
@@ -540,7 +545,7 @@ async def bulk_delete_overrides(
 # Statistics endpoint
 
 
-@router.get("/flag-overrides/stats")
+@router.get("/flag-overrides/stats", response_model=None)
 async def get_override_statistics(
     db: Session = Depends(get_db),
     current_admin_user: User = Depends(get_current_admin_or_viewer),
@@ -568,10 +573,10 @@ async def get_override_statistics(
 # Cleanup endpoint
 
 
-@router.post("/flag-overrides/cleanup")
+@router.post("/flag-overrides/cleanup", response_model=None)
 async def cleanup_expired_overrides(
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(ensure_admin_privileges),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """Clean up expired user flag overrides.
 
@@ -580,6 +585,7 @@ async def cleanup_expired_overrides(
 
     Requires: Admin authentication
     """
+    ensure_admin_privileges(current_admin_user)
     try:
         count = await user_flag_override_service.cleanup_expired_overrides(db=db)
 

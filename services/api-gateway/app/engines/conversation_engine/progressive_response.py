@@ -128,7 +128,7 @@ class ProgressiveResponse:
             available = fillers
             self._filler_history[domain] = []
 
-        selected = random.choice(available)
+        selected = random.choice(available)  # nosec B311 - non-cryptographic UI variety
 
         # Track usage
         if domain not in self._filler_history:

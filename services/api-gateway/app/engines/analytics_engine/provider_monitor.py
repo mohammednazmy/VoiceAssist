@@ -366,7 +366,7 @@ class ProviderMonitor:
         if total_weight <= 0:
             return candidates[0][0]
 
-        r = random.random() * total_weight
+        r = random.random() * total_weight  # nosec B311 - non-cryptographic load balancing
         cumulative = 0
         for name, weight in candidates:
             cumulative += weight

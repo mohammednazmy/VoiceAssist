@@ -140,7 +140,8 @@ class SurrogateGenerator:
     STATES = ["CA", "TX", "FL", "NY", "PA", "IL", "OH", "GA", "NC", "MI"]
 
     def __init__(self, seed: Optional[int] = None):
-        self._rng = random.Random(seed)
+        # Non-cryptographic PRNG for PHI surrogate generation (HIPAA compliant)
+        self._rng = random.Random(seed)  # nosec B311
 
     def generate_name(self, gender: Optional[str] = None) -> str:
         """Generate a surrogate name"""
@@ -431,8 +432,8 @@ class DeidentificationService:
             if self.config.date_shift_days:
                 self._date_shifts[session_id] = self.config.date_shift_days
             else:
-                # Random shift between 30-365 days
-                self._date_shifts[session_id] = random.randint(30, 365)
+                # Random shift between 30-365 days (non-cryptographic use is safe for de-id)
+                self._date_shifts[session_id] = random.randint(30, 365)  # nosec B311
         return self._date_shifts[session_id]
 
     def _shift_date(self, date_str: str, session_id: str) -> str:
