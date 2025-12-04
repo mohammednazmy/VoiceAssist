@@ -1,6 +1,6 @@
 {
-  "count": 256,
-  "generated_at": "2025-12-04T12:44:28.807Z",
+  "count": 275,
+  "generated_at": "2025-12-04T23:00:04.333Z",
   "docs": [
     {
       "slug": "style-guide",
@@ -112,6 +112,23 @@
       "status": "draft",
       "owner": "backend",
       "audience": ["developers"],
+      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "todo-docs-enhancement-phase2",
+      "path": "planning/TODO_DOCS_ENHANCEMENT_PHASE2.md",
+      "title": "TODO: Documentation Enhancement Phase 2",
+      "status": "draft",
+      "owner": "docs",
+      "audience": ["ai-agent", "developers"],
+      "category": "planning",
+      "tags": [
+        "todo",
+        "ai-agent-task",
+        "documentation",
+        "code-excerpts",
+        "versioning"
+      ],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
@@ -260,6 +277,41 @@
       "audience": ["human", "stakeholders", "backend", "frontend", "ai-agents"],
       "category": "planning",
       "tags": ["roadmap", "strategy", "planning", "future", "enhancement"],
+      "lastUpdated": "2025-12-04"
+    },
+    {
+      "slug": "adaptive-quality-service",
+      "path": "voice/adaptive-quality-service.md",
+      "title": "adaptive-quality-service",
+      "status": "draft",
+      "lastUpdated": "2025-12-04"
+    },
+    {
+      "slug": "fhir-streaming-service",
+      "path": "voice/fhir-streaming-service.md",
+      "title": "fhir-streaming-service",
+      "status": "draft",
+      "lastUpdated": "2025-12-04"
+    },
+    {
+      "slug": "speaker-diarization-service",
+      "path": "voice/speaker-diarization-service.md",
+      "title": "speaker-diarization-service",
+      "status": "draft",
+      "lastUpdated": "2025-12-04"
+    },
+    {
+      "slug": "streaming-text-display",
+      "path": "voice/streaming-text-display.md",
+      "title": "streaming-text-display",
+      "status": "draft",
+      "lastUpdated": "2025-12-04"
+    },
+    {
+      "slug": "voice-first-input-bar",
+      "path": "voice/voice-first-input-bar.md",
+      "title": "voice-first-input-bar",
+      "status": "draft",
       "lastUpdated": "2025-12-04"
     },
     {
@@ -3457,6 +3509,180 @@
       "category": "testing",
       "tags": ["e2e", "testing", "guide"],
       "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "adaptive-vad-presets",
+      "path": "voice/adaptive-vad-presets.md",
+      "title": "Adaptive VAD Presets",
+      "summary": "Guide to user-tunable Voice Activity Detection presets",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "ai-agents"],
+      "tags": [
+        "voice",
+        "vad",
+        "audio",
+        "speech-detection",
+        "accessibility",
+        "v4"
+      ],
+      "lastUpdated": "2024-12-04"
+    },
+    {
+      "slug": "latency-budgets-guide",
+      "path": "voice/latency-budgets-guide.md",
+      "title": "Latency Budgets Guide",
+      "summary": "Guide to latency-aware orchestration and graceful degradation",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "ai-agents"],
+      "tags": ["voice", "performance", "latency", "degradation", "v4"],
+      "lastUpdated": "2024-12-04"
+    },
+    {
+      "slug": "lexicon-service-guide",
+      "path": "voice/lexicon-service-guide.md",
+      "title": "Lexicon Service Guide",
+      "summary": "Guide to using the medical pronunciation lexicon service",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "ai-agents"],
+      "tags": ["voice", "tts", "pronunciation", "lexicon", "medical", "v4"],
+      "lastUpdated": "2024-12-04"
+    },
+    {
+      "slug": "multilingual-rag-architecture",
+      "path": "voice/multilingual-rag-architecture.md",
+      "title": "Multilingual RAG Architecture",
+      "summary": "Technical architecture for multilingual voice RAG with translation fallback",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "ai-agents"],
+      "tags": ["voice", "multilingual", "rag", "translation", "v4"],
+      "lastUpdated": "2024-12-04"
+    },
+    {
+      "slug": "phase3-implementation-plan",
+      "path": "voice/phase3-implementation-plan.md",
+      "title": "Voice Mode v4.1 Phase 3 Implementation Plan",
+      "summary": "Implementation plan for Voice Mode v4.1 Phase 3 features",
+      "status": "draft",
+      "owner": "backend",
+      "audience": ["human", "ai-agents"],
+      "tags": ["voice", "planning", "phase3", "roadmap", "v4"],
+      "lastUpdated": "2024-12-04"
+    },
+    {
+      "slug": "phi-aware-stt-routing",
+      "path": "voice/phi-aware-stt-routing.md",
+      "title": "PHI-Aware STT Routing",
+      "summary": "Guide to PHI-aware speech-to-text routing for HIPAA compliance",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "ai-agents"],
+      "tags": ["voice", "security", "phi", "stt", "whisper", "hipaa", "v4"],
+      "lastUpdated": "2024-12-04"
+    },
+    {
+      "slug": "next-prs-planning",
+      "path": "voice/roadmap/next-prs-planning.md",
+      "title": "Next PRs Planning - Post Phase 3",
+      "summary": "Planning document for lexicon expansion and security cleanup PRs",
+      "status": "draft",
+      "owner": "backend",
+      "audience": ["human", "ai-agents"],
+      "tags": ["planning", "security", "lexicon", "roadmap"],
+      "lastUpdated": "2024-12-04"
+    },
+    {
+      "slug": "voice-mode-post-v41-roadmap",
+      "path": "voice/roadmap/voice-mode-post-v41-roadmap.md",
+      "title": "Voice Mode Post-v4.1 Roadmap",
+      "summary": "Post-release improvements planned after Voice Mode v4.1",
+      "status": "draft",
+      "audience": ["human", "ai-agents"],
+      "tags": ["voice", "roadmap", "v4.2", "planning"],
+      "lastUpdated": "2024-12-04"
+    },
+    {
+      "slug": "rtl-support-guide",
+      "path": "voice/rtl-support-guide.md",
+      "title": "RTL Support Guide",
+      "summary": "Guide to right-to-left language support in Voice Mode",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human", "ai-agents"],
+      "tags": [
+        "voice",
+        "i18n",
+        "rtl",
+        "arabic",
+        "urdu",
+        "hebrew",
+        "accessibility",
+        "v4"
+      ],
+      "lastUpdated": "2024-12-04"
+    },
+    {
+      "slug": "thinking-tone-settings",
+      "path": "voice/thinking-tone-settings.md",
+      "title": "Thinking Tone Settings",
+      "summary": "Configuration guide for thinking feedback during AI processing",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["human", "ai-agents"],
+      "tags": ["voice", "ux", "thinking-feedback", "audio", "haptic", "v4"],
+      "lastUpdated": "2024-12-04"
+    },
+    {
+      "slug": "unified-memory",
+      "path": "voice/unified-memory.md",
+      "title": "Unified Conversation Memory",
+      "summary": "Guide to unified conversation memory across voice and text modes",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "ai-agents"],
+      "tags": [
+        "voice",
+        "memory",
+        "context",
+        "conversation",
+        "multimodal",
+        "v4"
+      ],
+      "lastUpdated": "2024-12-04"
+    },
+    {
+      "slug": "voice-mode-v4-overview",
+      "path": "voice/voice-mode-v4-overview.md",
+      "title": "Voice Mode v4.1 Overview",
+      "summary": "Overview of Voice Mode Enhancement Plan v4.1 features",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "ai-agents"],
+      "tags": ["voice", "v4", "multilingual", "latency", "thinking-feedback"],
+      "lastUpdated": "2024-12-04"
+    },
+    {
+      "slug": "whats-new-v4-1",
+      "path": "voice/whats-new-v4-1.md",
+      "title": "What's New in Voice Mode v4.1",
+      "summary": "Complete feature summary for Voice Mode v4.1 release",
+      "status": "stable",
+      "stability": "production",
+      "audience": ["human", "ai-agents"],
+      "tags": ["voice", "release-notes", "v4.1", "features"],
+      "lastUpdated": "2024-12-04"
     }
   ]
 }
