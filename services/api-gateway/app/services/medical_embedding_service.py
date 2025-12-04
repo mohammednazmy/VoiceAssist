@@ -39,9 +39,10 @@ class ModelConfig:
     max_length: int = 512
     embedding_dim: int = 768
     supports_generation: bool = False
+    revision: str = "main"  # Pinned revision for reproducibility
 
 
-# Model configurations
+# Model configurations with pinned revisions
 MODEL_CONFIGS = {
     MedicalModelType.PUBMEDBERT: ModelConfig(
         name="PubMedBERT",
@@ -50,6 +51,7 @@ MODEL_CONFIGS = {
         max_length=512,
         embedding_dim=768,
         supports_generation=False,
+        revision="v1.1",  # Pinned stable release
     ),
     MedicalModelType.BIOGPT: ModelConfig(
         name="BioGPT",
@@ -58,6 +60,7 @@ MODEL_CONFIGS = {
         max_length=1024,
         embedding_dim=1024,
         supports_generation=True,
+        revision="main",  # Pinned to main branch
     ),
     MedicalModelType.SCIBERT: ModelConfig(
         name="SciBERT",
@@ -66,6 +69,7 @@ MODEL_CONFIGS = {
         max_length=512,
         embedding_dim=768,
         supports_generation=False,
+        revision="main",  # Pinned to main branch
     ),
 }
 
@@ -166,17 +170,17 @@ class MedicalEmbeddingService:
         try:
             from transformers import AutoModel, AutoTokenizer
 
-            logger.info(f"Loading medical model: {config.name}")
+            logger.info(f"Loading medical model: {config.name} (revision: {config.revision})")
 
-            tokenizer = AutoTokenizer.from_pretrained(config.tokenizer_id)
+            tokenizer = AutoTokenizer.from_pretrained(config.tokenizer_id, revision=config.revision)
 
             if model_type == MedicalModelType.BIOGPT:
                 from transformers import BioGptForCausalLM, BioGptTokenizer
 
-                tokenizer = BioGptTokenizer.from_pretrained(config.tokenizer_id)
-                model = BioGptForCausalLM.from_pretrained(config.model_id)
+                tokenizer = BioGptTokenizer.from_pretrained(config.tokenizer_id, revision=config.revision)
+                model = BioGptForCausalLM.from_pretrained(config.model_id, revision=config.revision)
             else:
-                model = AutoModel.from_pretrained(config.model_id)
+                model = AutoModel.from_pretrained(config.model_id, revision=config.revision)
 
             model = model.to(self._device)
             model.eval()

@@ -26,15 +26,13 @@ import asyncio
 import hashlib
 import io
 import logging
-import struct
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
-
 from app.core.config import settings
 from app.core.feature_flags import feature_flag_service
 
@@ -204,9 +202,7 @@ class SpeakerDiarizationService:
 
             try:
                 # Check feature flag
-                if not await feature_flag_service.is_enabled(
-                    "backend.voice_v4_speaker_diarization"
-                ):
+                if not await feature_flag_service.is_enabled("backend.voice_v4_speaker_diarization"):
                     logger.info("Speaker diarization feature flag is disabled")
                     return False
 
@@ -284,9 +280,7 @@ class SpeakerDiarizationService:
             if sr != sample_rate:
                 from scipy import signal
 
-                audio_np = signal.resample(
-                    audio_np, int(len(audio_np) * sample_rate / sr)
-                )
+                audio_np = signal.resample(audio_np, int(len(audio_np) * sample_rate / sr))
 
             # Normalize to float32
             if audio_np.dtype == np.int16:
@@ -387,9 +381,7 @@ class SpeakerDiarizationService:
                         yield segment
 
                 # Keep overlap for continuity
-                overlap_bytes = int(
-                    sample_rate * self.config.overlap_duration_ms / 1000 * 2
-                )
+                overlap_bytes = int(sample_rate * self.config.overlap_duration_ms / 1000 * 2)
                 buffer = buffer[-overlap_bytes:]
 
     def get_speaker_profile(self, speaker_id: str) -> Optional[SpeakerProfile]:
@@ -445,9 +437,7 @@ class SpeakerDiarizationService:
 
         return best_match
 
-    def _compute_similarity(
-        self, embedding1: List[float], embedding2: List[float]
-    ) -> float:
+    def _compute_similarity(self, embedding1: List[float], embedding2: List[float]) -> float:
         """Compute cosine similarity between embeddings."""
         import numpy as np
 
@@ -488,8 +478,8 @@ class SpeakerEmbeddingExtractor:
             return True
 
         try:
-            from pyannote.audio import Model, Inference
             import torch
+            from pyannote.audio import Inference, Model
 
             # Load embedding model
             self._model = Model.from_pretrained(
@@ -550,9 +540,8 @@ class SpeakerEmbeddingExtractor:
             # Resample if needed
             if sr != sample_rate:
                 from scipy import signal
-                audio_np = signal.resample(
-                    audio_np, int(len(audio_np) * sample_rate / sr)
-                )
+
+                audio_np = signal.resample(audio_np, int(len(audio_np) * sample_rate / sr))
 
             # Normalize to float32
             if audio_np.dtype == np.int16:
@@ -682,9 +671,7 @@ class StreamingDiarizationSession:
             # Get dominant speaker in this chunk
             speaker_times: Dict[str, int] = {}
             for seg in result.segments:
-                speaker_times[seg.speaker_id] = (
-                    speaker_times.get(seg.speaker_id, 0) + seg.duration_ms
-                )
+                speaker_times[seg.speaker_id] = speaker_times.get(seg.speaker_id, 0) + seg.duration_ms
 
             if not speaker_times:
                 return None
@@ -692,10 +679,7 @@ class StreamingDiarizationSession:
             dominant_speaker = max(speaker_times.keys(), key=lambda k: speaker_times[k])
 
             # Check for speaker change
-            speaker_changed = (
-                self._current_speaker is not None
-                and dominant_speaker != self._current_speaker
-            )
+            speaker_changed = self._current_speaker is not None and dominant_speaker != self._current_speaker
 
             # Create segment
             segment = SpeakerSegment(
@@ -878,7 +862,8 @@ class SpeakerDatabase:
         """Generate a unique speaker ID."""
         timestamp = datetime.now(timezone.utc).isoformat()
         hash_input = f"{timestamp}-{len(self._profiles)}"
-        return f"spk_{hashlib.md5(hash_input.encode()).hexdigest()[:8]}"
+        # MD5 used for ID generation, not security purposes
+        return f"spk_{hashlib.md5(hash_input.encode(), usedforsecurity=False).hexdigest()[:8]}"
 
     def to_dict(self) -> Dict[str, Any]:
         """Export database to dictionary for persistence."""

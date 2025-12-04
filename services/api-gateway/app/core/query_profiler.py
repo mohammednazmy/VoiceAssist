@@ -274,7 +274,7 @@ class QueryProfiler:
                     statement_upper[from_idx:].split()[1] if len(statement_upper[from_idx:].split()) > 1 else ""
                 )
 
-            return f"SELECT FROM {table_part}"
+            return f"SELECT FROM {table_part}"  # nosec B608 - logging description, not executed SQL
 
         return statement_upper[:100]  # Fallback to first 100 chars
 
