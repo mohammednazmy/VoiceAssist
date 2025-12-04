@@ -472,3 +472,42 @@ flag_cache_invalidations_total = _safe_counter(
     "Flag cache invalidation events",
     ["scope"],  # "flag", "user", "all"
 )
+
+# ====================================================================
+# User Flag Override Metrics (Phase 4)
+# ====================================================================
+
+# Total override operations (create, update, delete)
+flag_user_overrides_total = _safe_counter(
+    "voiceassist_flag_user_overrides_total",
+    "Total user flag override operations",
+    ["flag_name", "action"],  # action: "create", "update", "delete"
+)
+
+# Active overrides gauge (current count of non-expired overrides)
+flag_user_overrides_active_total = _safe_gauge(
+    "voiceassist_flag_user_overrides_active_total",
+    "Number of active (non-expired) user flag overrides",
+    ["flag_name"],
+)
+
+# Expired overrides processed during cleanup
+flag_user_overrides_expired_total = _safe_counter(
+    "voiceassist_flag_user_overrides_expired_total",
+    "Total expired user flag overrides cleaned up",
+    ["flag_name"],
+)
+
+# Bulk operations
+flag_user_overrides_bulk_total = _safe_counter(
+    "voiceassist_flag_user_overrides_bulk_total",
+    "Total bulk override operations",
+    ["action"],  # action: "create", "delete"
+)
+
+# Override resolution source tracking
+flag_override_resolutions_total = _safe_counter(
+    "voiceassist_flag_override_resolutions_total",
+    "Total flag resolutions by source",
+    ["flag_name", "source"],  # source: "override", "segmentation", "scheduled", "default"
+)

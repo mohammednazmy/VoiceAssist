@@ -34,6 +34,7 @@ from app.api import (
     admin_system,
     admin_tools,
     admin_troubleshooting,
+    admin_user_flag_overrides,
     admin_voice,
     attachments,
     auth,
@@ -173,6 +174,7 @@ app.include_router(admin_panel.router)  # Phase 7: Admin Panel API
 app.include_router(admin_conversations.router)  # Admin Conversations API
 app.include_router(admin_cache.router)  # Phase 7: Cache Management API (P2.1)
 app.include_router(admin_feature_flags.router)  # Phase 7: Feature Flags API (P3.1)
+app.include_router(admin_user_flag_overrides.router)  # Phase 4: User Flag Overrides API
 app.include_router(experiments.router)  # Public experiments/feature flags API
 app.include_router(feature_flags_realtime.router)  # Phase 3: Real-time flag updates via SSE
 app.include_router(admin_voice.router)  # Sprint 1: Voice Admin API

@@ -1,6 +1,11 @@
-"""User Feature Flag Override Model (Phase 7 - P3.1+).
+"""User Feature Flag Override Model (Phase 7 - P3.1+ / Phase 4 Enhanced).
 
 Provides per-user feature flag overrides for A/B testing and gradual rollouts.
+
+Phase 4 enhancements:
+- reason: Audit reason for the override
+- created_by: Admin who created the override
+- updated_by: Admin who last modified the override
 """
 
 from __future__ import annotations
@@ -28,7 +33,10 @@ class UserFeatureFlag(Base):
         created_at: When override was created
         updated_at: When override was last updated
         expires_at: Optional expiration datetime
-        override_metadata: Additional metadata (A/B test group, reason, etc.)
+        override_metadata: Additional metadata (A/B test group, ticket, experiment ID, etc.)
+        reason: Audit reason for creating the override (Phase 4)
+        created_by: Admin who created this override (Phase 4)
+        updated_by: Admin who last modified this override (Phase 4)
     """
 
     __tablename__ = "user_feature_flags"
@@ -42,6 +50,11 @@ class UserFeatureFlag(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     expires_at = Column(DateTime, nullable=True)
     override_metadata = Column("metadata", JSON, nullable=True)
+
+    # Phase 4: Audit and accountability fields
+    reason = Column(String(500), nullable=True)  # Why this override was created
+    created_by = Column(String(255), nullable=True)  # Admin who created it
+    updated_by = Column(String(255), nullable=True)  # Admin who last modified it
 
     # Composite unique constraint: one override per user per flag
     __table_args__ = (Index("ix_user_feature_flags_user_flag", "user_id", "flag_name", unique=True),)
@@ -61,6 +74,9 @@ class UserFeatureFlag(Base):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "expires_at": self.expires_at.isoformat() if self.expires_at else None,
             "metadata": self.override_metadata,
+            "reason": self.reason,
+            "created_by": self.created_by,
+            "updated_by": self.updated_by,
         }
 
     def is_expired(self) -> bool:
