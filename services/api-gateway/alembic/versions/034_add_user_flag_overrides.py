@@ -9,11 +9,13 @@ Phase 4: User-Specific Flag Overrides Enhancement
 This migration enhances the existing user_feature_flags table with:
 1. reason - Audit reason for the override
 2. created_by - Admin who created the override
-3. Additional indexes for override management
+3. updated_by - Admin who last modified the override
+4. Additional indexes for override management
 
 These additions enable:
 - Better auditing of override changes
 - Admin accountability tracking
+- Full audit trail of modifications
 - Efficient override cleanup queries
 """
 
@@ -52,6 +54,17 @@ def upgrade() -> None:
         ),
     )
 
+    # Add updated_by column for tracking modifications
+    op.add_column(
+        "user_feature_flags",
+        sa.Column(
+            "updated_by",
+            sa.String(255),
+            nullable=True,
+            comment="Admin who last modified this override",
+        ),
+    )
+
     # Add partial index for expired override cleanup
     op.create_index(
         "idx_user_feature_flags_expires",
@@ -77,5 +90,6 @@ def downgrade() -> None:
     op.drop_index("idx_user_feature_flags_expires", table_name="user_feature_flags")
 
     # Drop columns
+    op.drop_column("user_feature_flags", "updated_by")
     op.drop_column("user_feature_flags", "created_by")
     op.drop_column("user_feature_flags", "reason")

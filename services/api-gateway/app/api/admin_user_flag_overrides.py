@@ -38,15 +38,9 @@ class UserOverrideCreate(BaseModel):
     flag_name: str = Field(..., description="Feature flag name to override", max_length=255)
     value: Any = Field(..., description="Override value (JSON-serializable)")
     enabled: bool = Field(default=True, description="Whether override is active")
-    reason: Optional[str] = Field(
-        default=None, description="Audit reason for override", max_length=500
-    )
-    expires_at: Optional[datetime] = Field(
-        default=None, description="Optional expiration datetime"
-    )
-    metadata: Optional[Dict[str, Any]] = Field(
-        default=None, description="Additional metadata"
-    )
+    reason: Optional[str] = Field(default=None, description="Audit reason for override", max_length=500)
+    expires_at: Optional[datetime] = Field(default=None, description="Optional expiration datetime")
+    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata")
 
 
 class UserOverrideUpdate(BaseModel):
@@ -54,15 +48,9 @@ class UserOverrideUpdate(BaseModel):
 
     value: Optional[Any] = Field(default=None, description="New override value")
     enabled: Optional[bool] = Field(default=None, description="New enabled state")
-    reason: Optional[str] = Field(
-        default=None, description="Updated reason", max_length=500
-    )
-    expires_at: Optional[datetime] = Field(
-        default=None, description="New expiration datetime"
-    )
-    metadata: Optional[Dict[str, Any]] = Field(
-        default=None, description="Updated metadata"
-    )
+    reason: Optional[str] = Field(default=None, description="Updated reason", max_length=500)
+    expires_at: Optional[datetime] = Field(default=None, description="New expiration datetime")
+    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Updated metadata")
 
 
 class UserOverrideResponse(BaseModel):
@@ -115,9 +103,7 @@ async def list_user_overrides(
         # Convert to list format
         override_list = list(overrides.values())
 
-        logger.info(
-            f"Admin {current_admin_user.email} listed {len(override_list)} overrides for user {user_id}"
-        )
+        logger.info(f"Admin {current_admin_user.email} listed {len(override_list)} overrides for user {user_id}")
 
         return success_response(
             data={
@@ -163,8 +149,7 @@ async def create_user_override(
         )
 
         logger.info(
-            f"Admin {current_admin_user.email} created override for user {user_id}, "
-            f"flag {override.flag_name}"
+            f"Admin {current_admin_user.email} created override for user {user_id}, " f"flag {override.flag_name}"
         )
 
         return success_response(data=result, version="2.0.0")
@@ -203,10 +188,7 @@ async def get_user_override(
                 http_status=status.HTTP_404_NOT_FOUND,
             )
 
-        logger.info(
-            f"Admin {current_admin_user.email} retrieved override for user {user_id}, "
-            f"flag {flag_name}"
-        )
+        logger.info(f"Admin {current_admin_user.email} retrieved override for user {user_id}, " f"flag {flag_name}")
 
         return success_response(data=override, version="2.0.0")
     except Exception as e:
@@ -262,13 +244,11 @@ async def update_user_override(
             reason=new_reason,
             expires_at=new_expires,
             metadata=new_metadata,
+            updated_by=current_admin_user.email,  # Track who made this update
             db=db,
         )
 
-        logger.info(
-            f"Admin {current_admin_user.email} updated override for user {user_id}, "
-            f"flag {flag_name}"
-        )
+        logger.info(f"Admin {current_admin_user.email} updated override for user {user_id}, " f"flag {flag_name}")
 
         return success_response(data=result, version="2.0.0")
     except Exception as e:
@@ -306,10 +286,7 @@ async def delete_user_override(
                 http_status=status.HTTP_404_NOT_FOUND,
             )
 
-        logger.info(
-            f"Admin {current_admin_user.email} deleted override for user {user_id}, "
-            f"flag {flag_name}"
-        )
+        logger.info(f"Admin {current_admin_user.email} deleted override for user {user_id}, " f"flag {flag_name}")
 
         return success_response(
             data={"message": "Override deleted successfully"},
@@ -353,10 +330,7 @@ async def list_flag_user_overrides(
             db=db,
         )
 
-        logger.info(
-            f"Admin {current_admin_user.email} listed {len(overrides)} user overrides "
-            f"for flag {flag_name}"
-        )
+        logger.info(f"Admin {current_admin_user.email} listed {len(overrides)} user overrides " f"for flag {flag_name}")
 
         return success_response(
             data={
@@ -399,10 +373,7 @@ async def get_current_user_flags(
             include_expired=False,
         )
 
-        logger.info(
-            f"User {current_admin_user.email} retrieved their flag overrides "
-            f"({len(overrides)} active)"
-        )
+        logger.info(f"User {current_admin_user.email} retrieved their flag overrides " f"({len(overrides)} active)")
 
         return success_response(
             data={
@@ -417,6 +388,180 @@ async def get_current_user_flags(
         return error_response(
             code=ErrorCodes.INTERNAL_ERROR,
             message="Failed to get current user flags",
+        )
+
+
+# Resolution endpoint - get all flags with source
+
+
+@router.get("/users/{user_id}/flags/resolved")
+async def get_resolved_flags_for_user(
+    user_id: UUID = Path(..., description="User ID"),
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+):
+    """Get all feature flags for a user with resolution source.
+
+    Returns all flags with their effective values and the source
+    of the value (override, segmentation, scheduled, or default).
+    Useful for debugging and user support.
+
+    Requires: Admin or Viewer authentication
+    """
+    try:
+        flags = await user_flag_override_service.get_all_flags_for_user(
+            user_id=user_id,
+            db=db,
+        )
+
+        logger.info(f"Admin {current_admin_user.email} retrieved resolved flags for user {user_id}")
+
+        return success_response(
+            data={
+                "user_id": str(user_id),
+                "flags": flags,
+                "flag_count": len(flags),
+            },
+            version="2.0.0",
+        )
+    except Exception as e:
+        logger.error(f"Failed to get resolved flags: {e}", exc_info=True)
+        return error_response(
+            code=ErrorCodes.INTERNAL_ERROR,
+            message="Failed to get resolved flags",
+        )
+
+
+# Bulk operations
+
+
+class BulkOverrideCreate(BaseModel):
+    """Request model for bulk override creation."""
+
+    overrides: List[Dict[str, Any]] = Field(
+        ...,
+        description="List of override specs",
+        min_length=1,
+        max_length=100,
+    )
+
+
+@router.post("/flag-overrides/bulk", status_code=status.HTTP_201_CREATED)
+async def bulk_create_overrides(
+    bulk_request: BulkOverrideCreate,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(ensure_admin_privileges),
+):
+    """Create or update multiple flag overrides in a single request.
+
+    Each override spec should contain:
+    - user_id: UUID
+    - flag_name: str
+    - value: Any
+    - enabled: bool (optional, default True)
+    - reason: str (optional)
+    - expires_at: datetime (optional)
+    - metadata: dict (optional)
+
+    Requires: Admin authentication
+    """
+    try:
+        result = await user_flag_override_service.bulk_set_overrides(
+            overrides=bulk_request.overrides,
+            created_by=current_admin_user.email,
+            db=db,
+        )
+
+        logger.info(
+            f"Admin {current_admin_user.email} bulk created/updated overrides: "
+            f"{result['created']} created, {result['updated']} updated"
+        )
+
+        return success_response(data=result, version="2.0.0")
+    except Exception as e:
+        logger.error(f"Failed to bulk create overrides: {e}", exc_info=True)
+        return error_response(
+            code=ErrorCodes.INTERNAL_ERROR,
+            message="Failed to bulk create overrides",
+        )
+
+
+class BulkOverrideDelete(BaseModel):
+    """Request model for bulk override deletion."""
+
+    user_ids: List[UUID] = Field(
+        ...,
+        description="List of user IDs",
+        min_length=1,
+        max_length=100,
+    )
+    flag_name: Optional[str] = Field(
+        default=None,
+        description="Optional flag name filter",
+    )
+
+
+@router.delete("/flag-overrides/bulk")
+async def bulk_delete_overrides(
+    bulk_request: BulkOverrideDelete,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(ensure_admin_privileges),
+):
+    """Delete flag overrides for multiple users.
+
+    Optionally filter by flag name.
+
+    Requires: Admin authentication
+    """
+    try:
+        count = await user_flag_override_service.bulk_delete_overrides(
+            user_ids=bulk_request.user_ids,
+            flag_name=bulk_request.flag_name,
+            db=db,
+        )
+
+        logger.info(f"Admin {current_admin_user.email} bulk deleted {count} overrides")
+
+        return success_response(
+            data={
+                "message": f"Deleted {count} overrides",
+                "deleted_count": count,
+            },
+            version="2.0.0",
+        )
+    except Exception as e:
+        logger.error(f"Failed to bulk delete overrides: {e}", exc_info=True)
+        return error_response(
+            code=ErrorCodes.INTERNAL_ERROR,
+            message="Failed to bulk delete overrides",
+        )
+
+
+# Statistics endpoint
+
+
+@router.get("/flag-overrides/stats")
+async def get_override_statistics(
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+):
+    """Get statistics about user flag overrides.
+
+    Returns counts and breakdowns useful for monitoring.
+
+    Requires: Admin or Viewer authentication
+    """
+    try:
+        stats = await user_flag_override_service.get_override_stats(db=db)
+
+        logger.info(f"Admin {current_admin_user.email} retrieved override statistics")
+
+        return success_response(data=stats, version="2.0.0")
+    except Exception as e:
+        logger.error(f"Failed to get override statistics: {e}", exc_info=True)
+        return error_response(
+            code=ErrorCodes.INTERNAL_ERROR,
+            message="Failed to get override statistics",
         )
 
 
@@ -438,10 +583,7 @@ async def cleanup_expired_overrides(
     try:
         count = await user_flag_override_service.cleanup_expired_overrides(db=db)
 
-        logger.info(
-            f"Admin {current_admin_user.email} triggered cleanup, "
-            f"removed {count} expired overrides"
-        )
+        logger.info(f"Admin {current_admin_user.email} triggered cleanup, " f"removed {count} expired overrides")
 
         return success_response(
             data={
