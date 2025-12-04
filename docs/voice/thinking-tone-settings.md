@@ -58,13 +58,17 @@ function VoicePanel({ isThinking }: { isThinking: boolean }) {
 
 ### TTS Conflict Prevention
 
-Audio tones are automatically muted when TTS is playing:
+Audio tones are automatically muted when TTS is playing to prevent audio overlap:
 
 ```typescript
 const shouldPlayAudio = settings.thinkingToneEnabled && !isTTSPlaying && isThinking;
 
 useThinkingTone(shouldPlayAudio, options);
 ```
+
+This ensures a clean audio experience where thinking tones only play during silence, not over the AI's spoken responses. The `isTTSPlaying` state is managed by the voice state store and updated by the TTS playback hooks.
+
+**Default Behavior**: Thinking tones are muted by default during any TTS playback. Users cannot override this behavior to prevent audio conflicts.
 
 ## Visual Feedback
 
@@ -195,6 +199,18 @@ This renders:
 - Audio toggle + preset selector + volume slider
 - Visual toggle + style selector
 - Haptic toggle + pattern selector (mobile only)
+
+### Settings Panel Integration
+
+The thinking feedback settings are integrated into the main Voice Settings panel (`settings-panel.js`). Users can access these controls via the gear icon in the voice mode interface.
+
+The settings panel includes:
+
+1. **Audio Section**: Master toggle, preset dropdown, volume slider (0-100)
+2. **Visual Section**: Toggle and style selector
+3. **Haptic Section** (mobile only): Toggle and pattern selector
+
+All changes are persisted immediately to `voiceSettingsStore` and take effect without requiring a page refresh.
 
 ## Accessibility Considerations
 

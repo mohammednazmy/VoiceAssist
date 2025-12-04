@@ -108,6 +108,17 @@ DEEPL_API_KEY=your-key
 VOICE_V4_ENABLED=false  # Master toggle
 ```
 
+### Data Directory Resolution
+
+The `_resolve_data_dir()` function in `lexicon_service.py` automatically locates the lexicon data directory:
+
+1. **Environment variable**: If `VOICEASSIST_DATA_DIR` is set, use that path
+2. **Repository root**: Walk up from the service file to find `data/lexicons/`
+3. **Current working directory**: Check `./data/` relative to cwd
+4. **Fallback**: Use relative path from the service file
+
+This allows the lexicon service to work in development, CI, and production without manual configuration.
+
 ## Migration Guide
 
 ### Upgrading from v3

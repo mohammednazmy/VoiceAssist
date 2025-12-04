@@ -98,6 +98,27 @@ class DegradationType(str, Enum):
 | LLM context too large   | Exceeds token limit          | Truncate context                      |
 | TTS cold start          | First request                | Use cached greeting audio             |
 
+### Translation Failure Handling
+
+When translation fails, the orchestrator raises `TranslationFailedError`:
+
+```python
+from app.services.latency_aware_orchestrator import TranslationFailedError
+
+try:
+    result = await orchestrator.process_with_budgets(audio_data, user_language="es")
+except TranslationFailedError as e:
+    # Graceful degradation: use original query
+    logger.warning(f"Translation failed: {e}, using original query")
+```
+
+The orchestrator checks both:
+
+- **Exception handling**: Wraps translation API exceptions
+- **Failed result flag**: Checks `result.failed` on translation results
+
+This triggers `DegradationType.TRANSLATION_FAILED` in the degradation list, allowing the system to continue processing with the original (non-translated) query while informing the user of reduced accuracy.
+
 ## Usage
 
 ### Basic Usage

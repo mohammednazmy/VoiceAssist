@@ -259,20 +259,32 @@ export VOICEASSIST_DATA_DIR=/path/to/data
 VOICEASSIST_DATA_DIR=/opt/voiceassist/data
 ```
 
-### Auto-Discovery
+### Auto-Discovery via `_resolve_data_dir()`
 
-If not set, the service discovers the data directory:
+The `_resolve_data_dir()` function provides flexible path resolution that works across environments:
 
-1. Check `VOICEASSIST_DATA_DIR` environment variable
-2. Walk up from service file to find `data/lexicons/` directory
-3. Check current working directory + `data/`
-4. Fall back to relative path from service file
+1. **Environment variable**: Check `VOICEASSIST_DATA_DIR` for an absolute path
+2. **Repository root**: Walk up from the service file to find `data/lexicons/` directory
+3. **Current working directory**: Check `./data/` relative to cwd
+4. **Fallback**: Use relative path from service file
+
+This ensures the lexicon service works correctly in:
+
+- Local development (uses repo-relative path)
+- CI/CD pipelines (set `VOICEASSIST_DATA_DIR` to test fixture path)
+- Production (set `VOICEASSIST_DATA_DIR` to deployed data location)
 
 ```python
 from app.services.lexicon_service import _resolve_data_dir
 
 data_dir = _resolve_data_dir()
 print(f"Using data directory: {data_dir}")
+```
+
+For production deployments, explicitly set the environment variable:
+
+```bash
+export VOICEASSIST_DATA_DIR=/opt/voiceassist/data
 ```
 
 ## TTS Integration
