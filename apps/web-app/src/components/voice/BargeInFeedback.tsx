@@ -56,6 +56,13 @@ interface BargeInFeedbackProps {
 
   /** Callback when animation completes */
   onAnimationComplete?: () => void;
+
+  /**
+   * Optional callback to play voice prompts using ElevenLabs TTS.
+   * If provided, this will be used instead of browser speech synthesis
+   * to ensure consistent voice across the app.
+   */
+  onPlayVoicePrompt?: (text?: string) => Promise<void>;
 }
 
 // ============================================================================
@@ -173,6 +180,7 @@ export function BargeInFeedback({
   preferences,
   language = "en",
   onAnimationComplete,
+  onPlayVoicePrompt,
 }: BargeInFeedbackProps) {
   const [showPulse, setShowPulse] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
@@ -205,11 +213,27 @@ export function BargeInFeedback({
         playAudioFeedback(AUDIO_MAP[type]);
       } else if (preferences.audioFeedbackType === "voice" && type === "hard") {
         if (preferences.voicePromptAfterHardBarge) {
-          speakPrompt(preferences.voicePromptText || "I'm listening", language);
+          const promptText = preferences.voicePromptText || "I'm listening";
+          // Use ElevenLabs TTS if callback provided, otherwise fall back to browser TTS
+          if (onPlayVoicePrompt) {
+            onPlayVoicePrompt(promptText).catch(() => {
+              // Fallback to browser TTS if ElevenLabs fails
+              speakPrompt(promptText, language);
+            });
+          } else {
+            speakPrompt(promptText, language);
+          }
         }
       }
     }
-  }, [preferences, type, language, triggerHaptic, onAnimationComplete]);
+  }, [
+    preferences,
+    type,
+    language,
+    triggerHaptic,
+    onAnimationComplete,
+    onPlayVoicePrompt,
+  ]);
 
   // Trigger feedback when activated
   useEffect(() => {
