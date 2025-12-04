@@ -372,6 +372,14 @@ Voice Mode v4.1 was developed with contributions from:
 
 ## UI Components Guide
 
+> **Screenshots**: For visual reference, see the annotated screenshots in `/docs/voice/screenshots/`:
+>
+> - `voice-input-bar-states.png` - VoiceFirstInputBar in idle, recording, processing states
+> - `streaming-text-rtl.png` - StreamingTextDisplay with RTL Arabic content
+> - `quality-badge-tiers.png` - QualityBadge showing all 4 quality levels
+> - `phi-indicator-states.png` - PHI indicator (green/yellow/red states)
+> - `vad-presets-panel.png` - VAD preset selection in settings panel
+
 ### VoiceFirstInputBar Component
 
 **Location:** `/var/www/quran/js/components/VoiceFirstInputBar.js`
