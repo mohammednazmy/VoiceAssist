@@ -7,25 +7,17 @@ Part of Voice Mode Enhancement Plan v4.1
 
 import asyncio
 import os
-import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from app.services.latency_aware_orchestrator import (
     DegradationType,
     LatencyAwareVoiceOrchestrator,
     LatencyBudget,
     TranslationFailedError,
 )
-from app.services.lexicon_service import (
-    G2PService,
-    LexiconReport,
-    LexiconService,
-    PronunciationResult,
-    _resolve_data_dir,
-)
+from app.services.lexicon_service import G2PService, LexiconReport, LexiconService, _resolve_data_dir
 
 
 class TestLexiconDataDirectory:
@@ -88,18 +80,14 @@ class TestLexiconLoading:
             "hypertension": "ˌhaɪpərˈtɛnʃən",
             "aspirin": "ˈæsprɪn",
         }
-        (en_dir / "medical_phonemes.json").write_text(
-            __import__("json").dumps(en_lexicon)
-        )
+        (en_dir / "medical_phonemes.json").write_text(__import__("json").dumps(en_lexicon))
 
         # Create shared drug lexicon
         shared_lexicon = {
             "_meta": {"version": "1.0.0"},
             "metformin": "mɛtˈfɔrmɪn",
         }
-        (shared_dir / "drug_names.json").write_text(
-            __import__("json").dumps(shared_lexicon)
-        )
+        (shared_dir / "drug_names.json").write_text(__import__("json").dumps(shared_lexicon))
 
         return LexiconService(data_dir=tmp_path)
 
@@ -253,16 +241,16 @@ class TestLatencyOrchestration:
 
         orchestrator.translator.translate = slow_translate
         orchestrator.rag.search = AsyncMock(return_value=[])
-        orchestrator.llm.generate = AsyncMock(
-            return_value=MagicMock(content="Response")
+        orchestrator.llm.generate = AsyncMock(return_value=MagicMock(content="Response"))
+
+        # Set high total budget so translation is attempted, but short translation timeout
+        # Budget check: remaining > translation_ms + rag_ms + llm_ms + tts_ms (200+300+300+150=950)
+        orchestrator.budget = LatencyBudget(
+            total_budget_ms=2000,  # High enough to attempt translation
+            translation_ms=1,  # But translation times out quickly
         )
 
-        # Use very short timeout
-        orchestrator.budget = LatencyBudget(translation_ms=1)
-
-        result = await orchestrator.process_with_budgets(
-            audio_data=b"fake_audio", user_language="es"
-        )
+        result = await orchestrator.process_with_budgets(audio_data=b"fake_audio", user_language="es")
 
         assert DegradationType.TRANSLATION_SKIPPED.value in result.degradation_applied
 
@@ -280,13 +268,13 @@ class TestLatencyOrchestration:
         orchestrator.translator.translate = AsyncMock(return_value=mock_result)
 
         orchestrator.rag.search = AsyncMock(return_value=[])
-        orchestrator.llm.generate = AsyncMock(
-            return_value=MagicMock(content="Response")
-        )
+        orchestrator.llm.generate = AsyncMock(return_value=MagicMock(content="Response"))
 
-        result = await orchestrator.process_with_budgets(
-            audio_data=b"fake_audio", user_language="es"
-        )
+        # Set high total budget so translation is attempted
+        # Budget check: remaining > translation_ms + rag_ms + llm_ms + tts_ms (200+300+300+150=950)
+        orchestrator.budget = LatencyBudget(total_budget_ms=2000)
+
+        result = await orchestrator.process_with_budgets(audio_data=b"fake_audio", user_language="es")
 
         assert DegradationType.TRANSLATION_FAILED.value in result.degradation_applied
 
@@ -297,16 +285,12 @@ class TestLatencyOrchestration:
         orchestrator.stt.transcribe = AsyncMock(return_value="test query")
         orchestrator.language_detector.detect = AsyncMock(return_value="en")
         orchestrator.rag.search = AsyncMock(return_value=[])
-        orchestrator.llm.generate = AsyncMock(
-            return_value=MagicMock(content="Response")
-        )
+        orchestrator.llm.generate = AsyncMock(return_value=MagicMock(content="Response"))
 
         # Set very low total budget to force RAG limiting
         orchestrator.budget = LatencyBudget(total_budget_ms=100)
 
-        result = await orchestrator.process_with_budgets(
-            audio_data=b"fake_audio", user_language="en"
-        )
+        result = await orchestrator.process_with_budgets(audio_data=b"fake_audio", user_language="en")
 
         # Should have limited RAG due to budget
         # The exact degradation depends on timing, but result should be valid
