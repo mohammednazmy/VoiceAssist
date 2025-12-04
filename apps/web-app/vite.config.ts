@@ -168,6 +168,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      // App-local imports
+      "@": path.resolve(__dirname, "./src"),
+      // Package aliases
       "@voiceassist/ui": path.resolve(__dirname, "../../packages/ui/src"),
       "@voiceassist/types": path.resolve(__dirname, "../../packages/types/src"),
       "@voiceassist/api-client": path.resolve(
