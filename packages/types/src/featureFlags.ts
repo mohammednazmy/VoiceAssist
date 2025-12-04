@@ -53,11 +53,11 @@ export type FlagCriticality = "low" | "medium" | "high" | "critical";
  */
 export interface FlagDependencies {
   /** Services that use this flag */
-  services: string[];
+  services: readonly string[];
   /** UI components that depend on this flag */
-  components: string[];
+  components: readonly string[];
   /** Other flags this flag depends on or affects */
-  otherFlags: string[];
+  otherFlags: readonly string[];
 }
 
 /**
