@@ -199,6 +199,7 @@ class VoicePipelineSession:
                     on_partial=self._handle_partial_transcript,
                     on_final=self._handle_final_transcript,
                     on_endpoint=self._handle_speech_end,
+                    on_speech_start=self._handle_speech_start,
                     config=STTSessionConfig(
                         language=self.config.stt_language,
                         sample_rate=self.config.stt_sample_rate,
@@ -328,6 +329,7 @@ class VoicePipelineSession:
                 on_partial=self._handle_partial_transcript,
                 on_final=self._handle_final_transcript,
                 on_endpoint=self._handle_speech_end,
+                on_speech_start=self._handle_speech_start,
             )
             await self._stt_session.start()
 
@@ -398,6 +400,26 @@ class VoicePipelineSession:
         # The transcript.complete message in _process_transcript() is the
         # authoritative final transcript. Emitting both causes duplicate
         # messages in the chat UI.
+
+    async def _handle_speech_start(self) -> None:
+        """Handle speech start detection from STT (for barge-in)."""
+        logger.info(f"[Pipeline] Speech start detected: {self.session_id}, current_state={self._state}")
+
+        # Notify frontend of speech start
+        await self._on_message(
+            PipelineMessage(
+                type="input_audio_buffer.speech_started",
+                data={
+                    "timestamp": time.time(),
+                    "vad_confidence": 0.9,  # Deepgram VAD is high confidence
+                },
+            )
+        )
+
+        # Auto-trigger barge-in if AI is currently speaking
+        if self._state == PipelineState.SPEAKING:
+            logger.info("[Pipeline] Auto-triggering barge-in (AI was speaking)")
+            await self.barge_in()
 
     async def _handle_speech_end(self) -> None:
         """Handle speech endpoint detection from STT."""
@@ -502,6 +524,7 @@ class VoicePipelineSession:
                 on_partial=self._handle_partial_transcript,
                 on_final=self._handle_final_transcript,
                 on_endpoint=self._handle_speech_end,
+                on_speech_start=self._handle_speech_start,
             )
             await self._stt_session.start()
 

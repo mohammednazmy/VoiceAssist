@@ -105,12 +105,14 @@ class DeepgramStreamingSession:
         on_partial: Callable[[str, float], Awaitable[None]],
         on_final: Callable[[str], Awaitable[None]],
         on_endpoint: Callable[[], Awaitable[None]],
+        on_speech_start: Optional[Callable[[], Awaitable[None]]] = None,
     ):
         self.api_key = api_key
         self.config = config
         self.on_partial = on_partial
         self.on_final = on_final
         self.on_endpoint = on_endpoint
+        self.on_speech_start = on_speech_start
 
         self._websocket: Optional[websockets.WebSocketClientProtocol] = None
         self._running = False
@@ -268,7 +270,9 @@ class DeepgramStreamingSession:
                 logger.info("[Deepgram] UtteranceEnd - speech endpoint detected")
                 await self.on_endpoint()
             elif msg_type == "SpeechStarted":
-                logger.info("[Deepgram] SpeechStarted detected")
+                logger.info("[Deepgram] SpeechStarted detected - triggering barge-in callback")
+                if self.on_speech_start:
+                    await self.on_speech_start()
             elif msg_type == "Metadata":
                 logger.info(f"[Deepgram] Metadata: request_id={data.get('request_id', 'N/A')}")
             elif msg_type == "Error":
@@ -469,6 +473,7 @@ class StreamingSTTService:
         on_partial: Callable[[str, float], Awaitable[None]],
         on_final: Callable[[str], Awaitable[None]],
         on_endpoint: Callable[[], Awaitable[None]],
+        on_speech_start: Optional[Callable[[], Awaitable[None]]] = None,
         config: Optional[STTSessionConfig] = None,
     ) -> DeepgramStreamingSession:
         """
@@ -478,6 +483,7 @@ class StreamingSTTService:
             on_partial: Callback for partial transcripts (text, confidence)
             on_final: Callback for final transcripts
             on_endpoint: Callback for speech endpoint detection
+            on_speech_start: Optional callback for speech start (barge-in)
             config: Optional session configuration
 
         Returns:
@@ -497,6 +503,7 @@ class StreamingSTTService:
             on_partial=on_partial,
             on_final=on_final,
             on_endpoint=on_endpoint,
+            on_speech_start=on_speech_start,
         )
 
     async def transcribe_batch(
