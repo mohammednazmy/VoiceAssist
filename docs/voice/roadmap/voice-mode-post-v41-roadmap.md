@@ -59,31 +59,31 @@ Following the successful release of Voice Mode v4.1.0, this document outlines pl
 
 ### Current Coverage
 
-| Language   | Terms | Status      |
-| ---------- | ----- | ----------- |
-| Arabic     | 485   | Complete    |
-| English    | 852   | Partial     |
-| Spanish    | 205   | Minimal     |
-| Chinese    | 180   | Minimal     |
-| German     | 10    | Placeholder |
-| French     | 10    | Placeholder |
-| Italian    | 10    | Placeholder |
-| Portuguese | 10    | Placeholder |
-| Hindi      | 10    | Placeholder |
-| Urdu       | 10    | Placeholder |
-| Japanese   | 0     | Placeholder |
-| Korean     | 0     | Placeholder |
-| Polish     | 0     | Placeholder |
-| Russian    | 0     | Placeholder |
-| Turkish    | 0     | Placeholder |
+| Language   | Terms             | Status      |
+| ---------- | ----------------- | ----------- |
+| Arabic     | 485               | Complete    |
+| English    | 852+334 (Quranic) | Complete    |
+| Spanish    | 210               | Complete    |
+| Chinese    | 160               | Complete    |
+| German     | 10                | Placeholder |
+| French     | 10                | Placeholder |
+| Italian    | 10                | Placeholder |
+| Portuguese | 10                | Placeholder |
+| Hindi      | 10                | Placeholder |
+| Urdu       | 10                | Placeholder |
+| Japanese   | 0                 | Placeholder |
+| Korean     | 0                 | Placeholder |
+| Polish     | 0                 | Placeholder |
+| Russian    | 0                 | Placeholder |
+| Turkish    | 0                 | Placeholder |
 
 ### Roadmap
 
-**Phase 1: Complete Core Languages**
+**Phase 1: Complete Core Languages** ✅ COMPLETE
 
-- Expand Spanish lexicon to 200+ medical terms
-- Add Chinese medical terminology
-- Complete English Quranic transliteration lookups
+- [x] Expand Spanish lexicon to 200+ medical terms (210 terms)
+- [x] Add Chinese medical terminology (160 terms)
+- [x] Complete English Quranic transliteration lookups (334 terms)
 
 **Phase 2: Add High-Demand Languages**
 
@@ -165,27 +165,28 @@ English transliterated Quranic terms falling back to raw G2P when espeak-ng unav
 
 ## Timeline
 
-| Phase                   | Target  | Status      | Owner         | PR/Issue |
-| ----------------------- | ------- | ----------- | ------------- | -------- |
-| Test suite fixes        | v4.1.1  | Complete    | Platform Team | PR #159  |
-| Bandit B615 fixes       | v4.1.1  | In Progress | Backend Team  | -        |
-| Bandit B608 review      | v4.1.1  | Planned     | Backend Team  | -        |
-| Lexicon Phase 1         | v4.1.2  | Planned     | Platform Team | -        |
-| G2P enhancement         | v4.1.2  | Planned     | Backend Team  | -        |
-| Feature enhancements    | v4.2.0  | Planned     | Full Team     | -        |
-| Community contributions | Ongoing | Open        | Community     | -        |
+| Phase                   | Target  | Status   | Owner         | PR/Issue          |
+| ----------------------- | ------- | -------- | ------------- | ----------------- |
+| Test suite fixes        | v4.1.1  | Complete | Platform Team | PR #159           |
+| Bandit B615 fixes       | v4.1.1  | Complete | Backend Team  | PR #161           |
+| Bandit B608 review      | v4.1.1  | Complete | Backend Team  | (false positives) |
+| Lexicon Phase 1         | v4.1.2  | Complete | Platform Team | Pre-existing      |
+| G2P enhancement         | v4.1.2  | Planned  | Backend Team  | -                 |
+| Feature enhancements    | v4.2.0  | Planned  | Full Team     | -                 |
+| Community contributions | Ongoing | Open     | Community     | -                 |
 
 ### v4.1.1 Scope
 
 - [x] Fix 8 failing tests (PR #159)
-- [ ] Pin HuggingFace model revisions (13 occurrences)
-- [ ] Review SQL expression warnings (5 occurrences)
+- [x] Pin HuggingFace model revisions (PR #161)
+- [x] Review SQL expression warnings (5 occurrences - all false positives with nosec)
 - [ ] Add Bandit to CI pipeline
 
 ### v4.1.2 Scope
 
-- [ ] Expand Spanish lexicon (200+ terms)
-- [ ] Add Chinese medical terminology
+- [x] Expand Spanish lexicon (210 terms)
+- [x] Add Chinese medical terminology (160 terms)
+- [x] Complete English Quranic transliteration (334 terms)
 - [ ] Implement G2P fallback pronunciation cache
 - [ ] Add espeak-ng to deployment
 
