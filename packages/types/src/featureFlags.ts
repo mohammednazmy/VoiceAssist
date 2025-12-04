@@ -838,14 +838,52 @@ export const LEGACY_FLAG_NAME_MAP: Record<string, string> = {
 /**
  * Resolve a flag name, handling legacy names.
  * @param name Flag name (old or new format)
+ * @param warn Whether to emit a deprecation warning for legacy names
  * @returns Resolved flag name in new format
  */
-export function resolveFlagName(name: string): string {
+export function resolveFlagName(name: string, warn: boolean = false): string {
   // If it's already in new format, return as-is
   if (name.includes(".")) {
     return name;
   }
 
   // Check if it's a legacy name
-  return LEGACY_FLAG_NAME_MAP[name] || name;
+  const newName = LEGACY_FLAG_NAME_MAP[name];
+  if (newName) {
+    if (warn && typeof console !== "undefined") {
+      console.warn(
+        `[DEPRECATION] Feature flag '${name}' is deprecated. ` +
+          `Use '${newName}' instead. ` +
+          `Legacy flag names will be removed in a future release.`,
+      );
+    }
+    return newName;
+  }
+
+  return name;
+}
+
+/**
+ * Get a flag definition, warning if using a deprecated name.
+ *
+ * This is the preferred method for accessing flags as it handles
+ * legacy name resolution and deprecation warnings.
+ *
+ * @param name Flag name (old or new format)
+ * @returns Flag definition or undefined if not found
+ */
+export function getFlagWithDeprecationCheck(
+  name: string,
+): FeatureFlagDefinition | undefined {
+  const resolvedName = resolveFlagName(name, true);
+  return getFlagByName(resolvedName);
+}
+
+/**
+ * Check if a flag name is deprecated (using legacy naming).
+ * @param name Flag name to check
+ * @returns true if the name is a legacy name that has been remapped
+ */
+export function isDeprecatedFlagName(name: string): boolean {
+  return !name.includes(".") && name in LEGACY_FLAG_NAME_MAP;
 }

@@ -483,18 +483,49 @@ LEGACY_FLAG_NAME_MAP: Dict[str, str] = {
 }
 
 
-def resolve_flag_name(name: str) -> str:
+def resolve_flag_name(name: str, warn: bool = True) -> str:
     """Resolve a flag name, handling legacy names.
 
     Args:
         name: Flag name (old or new format)
+        warn: Whether to emit a deprecation warning for legacy names
 
     Returns:
         Resolved flag name in new format
     """
+    import warnings
+
     # If it's already in new format, return as-is
     if "." in name:
         return name
 
     # Check if it's a legacy name
-    return LEGACY_FLAG_NAME_MAP.get(name, name)
+    new_name = LEGACY_FLAG_NAME_MAP.get(name)
+    if new_name:
+        if warn:
+            warnings.warn(
+                f"Feature flag '{name}' is deprecated. "
+                f"Use '{new_name}' instead. "
+                f"Legacy flag names will be removed in a future release.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+        return new_name
+
+    return name
+
+
+def get_flag_with_deprecation_check(name: str) -> Optional[FeatureFlagDefinition]:
+    """Get a flag definition, warning if using a deprecated name.
+
+    This is the preferred method for accessing flags as it handles
+    legacy name resolution and deprecation warnings.
+
+    Args:
+        name: Flag name (old or new format)
+
+    Returns:
+        FeatureFlagDefinition or None if not found
+    """
+    resolved_name = resolve_flag_name(name, warn=True)
+    return get_flag_by_name(resolved_name)
