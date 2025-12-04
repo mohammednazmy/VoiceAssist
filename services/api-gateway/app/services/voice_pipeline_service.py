@@ -372,15 +372,74 @@ class VoicePipelineSession:
     # Internal Handlers
     # ==========================================================================
 
+    def _is_substantial_transcript(self, text: str) -> bool:
+        """
+        Check if a transcript is substantial enough to trigger barge-in.
+
+        Filters out noise like sighs, "um", "uh", single short sounds that
+        Deepgram might transcribe from background noise.
+
+        Returns True if the transcript looks like intentional speech.
+        """
+        if not text:
+            return False
+
+        cleaned = text.strip().lower()
+
+        # Filter out common filler sounds and very short utterances
+        # These are often background noise or non-intentional sounds
+        noise_patterns = {
+            "um",
+            "uh",
+            "hmm",
+            "hm",
+            "mm",
+            "ah",
+            "oh",
+            "er",
+            "erm",
+            "mhm",
+            "uhm",
+            "ehm",
+            "ahem",
+            "huh",
+            "eh",
+        }
+
+        # Single word that's a noise pattern
+        if cleaned in noise_patterns:
+            logger.debug(f"[Pipeline] Ignoring noise transcript: '{text}'")
+            return False
+
+        # Too short (less than 3 characters after stripping) - likely noise
+        if len(cleaned) < 3:
+            logger.debug(f"[Pipeline] Ignoring too-short transcript: '{text}'")
+            return False
+
+        # Require at least 2 words OR a clear command word for barge-in
+        # This reduces false positives from sighs/noise
+        words = cleaned.split()
+        command_words = {"stop", "wait", "hold", "pause", "no", "actually", "but", "hey", "okay", "ok"}
+
+        if len(words) >= 2:
+            return True
+
+        if len(words) == 1 and words[0] in command_words:
+            return True
+
+        # Single word that's not a command - might be noise, don't barge-in
+        logger.debug(f"[Pipeline] Single non-command word, not triggering barge-in: '{text}'")
+        return False
+
     async def _handle_partial_transcript(self, text: str, confidence: float) -> None:
         """Handle partial transcript from STT."""
         logger.info(f"[Pipeline] Partial transcript received: '{text}' (conf={confidence:.2f})")
         self._partial_transcript = text
 
-        # Trigger barge-in if AI is speaking and we got actual words
-        # This is more reliable than VAD-based barge-in (SpeechStarted)
-        if self._state == PipelineState.SPEAKING and text.strip():
-            logger.info(f"[Pipeline] Triggering barge-in (got transcript while AI speaking): '{text}'")
+        # Trigger barge-in if AI is speaking and we got substantial speech
+        # Requires multiple words or a command word to avoid false positives from noise
+        if self._state == PipelineState.SPEAKING and self._is_substantial_transcript(text):
+            logger.info(f"[Pipeline] Triggering barge-in (substantial transcript while AI speaking): '{text}'")
             await self.barge_in()
             return  # Don't send transcript delta after barge-in
 
@@ -399,9 +458,9 @@ class VoicePipelineSession:
         """Handle final transcript segment from STT."""
         logger.info(f"[Pipeline] Final transcript received: '{text}'")
 
-        # Trigger barge-in if AI is speaking and we got actual words
-        if self._state == PipelineState.SPEAKING and text.strip():
-            logger.info(f"[Pipeline] Triggering barge-in (got final transcript while AI speaking): '{text}'")
+        # Trigger barge-in if AI is speaking and we got substantial speech
+        if self._state == PipelineState.SPEAKING and self._is_substantial_transcript(text):
+            logger.info(f"[Pipeline] Triggering barge-in (substantial final transcript while AI speaking): '{text}'")
             await self.barge_in()
             # Store the transcript for the next turn
             self._final_transcript = text
