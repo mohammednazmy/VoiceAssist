@@ -377,6 +377,13 @@ class VoicePipelineSession:
         logger.info(f"[Pipeline] Partial transcript received: '{text}' (conf={confidence:.2f})")
         self._partial_transcript = text
 
+        # Trigger barge-in if AI is speaking and we got actual words
+        # This is more reliable than VAD-based barge-in (SpeechStarted)
+        if self._state == PipelineState.SPEAKING and text.strip():
+            logger.info(f"[Pipeline] Triggering barge-in (got transcript while AI speaking): '{text}'")
+            await self.barge_in()
+            return  # Don't send transcript delta after barge-in
+
         await self._on_message(
             PipelineMessage(
                 type="transcript.delta",
@@ -391,6 +398,15 @@ class VoicePipelineSession:
     async def _handle_final_transcript(self, text: str) -> None:
         """Handle final transcript segment from STT."""
         logger.info(f"[Pipeline] Final transcript received: '{text}'")
+
+        # Trigger barge-in if AI is speaking and we got actual words
+        if self._state == PipelineState.SPEAKING and text.strip():
+            logger.info(f"[Pipeline] Triggering barge-in (got final transcript while AI speaking): '{text}'")
+            await self.barge_in()
+            # Store the transcript for the next turn
+            self._final_transcript = text
+            return
+
         if self._final_transcript:
             self._final_transcript += " " + text
         else:
@@ -402,10 +418,16 @@ class VoicePipelineSession:
         # messages in the chat UI.
 
     async def _handle_speech_start(self) -> None:
-        """Handle speech start detection from STT (for barge-in)."""
+        """Handle speech start detection from STT (for barge-in).
+
+        NOTE: We do NOT auto-trigger barge-in here because Deepgram's SpeechStarted
+        event can fire on background noise or TTS echo. Instead, barge-in is only
+        triggered when we receive actual transcript text (partial or final) while
+        the AI is speaking. See _handle_partial_transcript() and _handle_final_transcript().
+        """
         logger.info(f"[Pipeline] Speech start detected: {self.session_id}, current_state={self._state}")
 
-        # Notify frontend of speech start
+        # Notify frontend of speech start (for UI feedback only)
         await self._on_message(
             PipelineMessage(
                 type="input_audio_buffer.speech_started",
@@ -416,10 +438,10 @@ class VoicePipelineSession:
             )
         )
 
-        # Auto-trigger barge-in if AI is currently speaking
-        if self._state == PipelineState.SPEAKING:
-            logger.info("[Pipeline] Auto-triggering barge-in (AI was speaking)")
-            await self.barge_in()
+        # NOTE: DO NOT auto-trigger barge-in here! SpeechStarted fires on ANY
+        # audio that looks like speech (including noise, echo from TTS, etc.)
+        # Barge-in is now triggered in _handle_partial_transcript() when we
+        # get actual words, which is more reliable.
 
     async def _handle_speech_end(self) -> None:
         """Handle speech endpoint detection from STT."""
