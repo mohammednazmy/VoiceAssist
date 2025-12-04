@@ -71,11 +71,11 @@ Following the successful release of Voice Mode v4.1.0, this document outlines pl
 | Portuguese | 10                | Placeholder |
 | Hindi      | 10                | Placeholder |
 | Urdu       | 10                | Placeholder |
-| Japanese   | 0                 | Placeholder |
-| Korean     | 0                 | Placeholder |
-| Polish     | 0                 | Placeholder |
-| Russian    | 0                 | Placeholder |
-| Turkish    | 0                 | Placeholder |
+| Japanese   | 55                | Expanded    |
+| Korean     | 55                | Expanded    |
+| Polish     | 55                | Expanded    |
+| Russian    | 55                | Expanded    |
+| Turkish    | 55                | Expanded    |
 
 ### Roadmap
 
@@ -85,13 +85,21 @@ Following the successful release of Voice Mode v4.1.0, this document outlines pl
 - [x] Add Chinese medical terminology (160 terms)
 - [x] Complete English Quranic transliteration lookups (334 terms)
 
-**Phase 2: Add High-Demand Languages**
+**Phase 2: Expand Additional Languages** ✅ COMPLETE (v4.1.2)
+
+- [x] Japanese medical lexicon (55 terms)
+- [x] Korean medical lexicon (55 terms)
+- [x] Polish medical lexicon (55 terms)
+- [x] Russian medical lexicon (55 terms)
+- [x] Turkish medical lexicon (55 terms)
+
+**Phase 3: Add High-Demand Languages**
 
 - French medical lexicon
 - German medical lexicon
 - Urdu/Hindi Islamic vocabulary
 
-**Phase 3: Community Contributions**
+**Phase 4: Community Contributions**
 
 - Document contribution guidelines
 - Create validation tooling for community submissions
