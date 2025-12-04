@@ -13,6 +13,8 @@
  * - DataPanel: Section containers with headers
  * - TabGroup: Tab navigation pattern
  * - ConfirmDialog: Confirmation dialogs for dangerous actions
+ * - AskAIButton: AI-powered documentation assistant
+ * - HelpTooltip: Contextual help with documentation links
  */
 
 export { PageContainer } from "./PageContainer";
@@ -34,3 +36,5 @@ export { RefreshButton } from "./RefreshButton";
 export { ErrorBoundary } from "./ErrorBoundary";
 export { AskAIButton } from "./AskAIButton";
 export type { AskAIButtonProps } from "./AskAIButton";
+export { HelpTooltip } from "./HelpTooltip";
+export type { HelpTooltipProps, HelpTopic } from "./HelpTooltip";

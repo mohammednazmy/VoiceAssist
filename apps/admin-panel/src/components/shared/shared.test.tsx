@@ -18,6 +18,7 @@ import {
   TabGroup,
   ConfirmDialog,
   RefreshButton,
+  HelpTooltip,
 } from "./index";
 
 describe("PageContainer", () => {
@@ -395,5 +396,88 @@ describe("RefreshButton", () => {
   it("should use custom label", () => {
     render(<RefreshButton onClick={() => {}} label="Reload" />);
     expect(screen.getByText("Reload")).toBeInTheDocument();
+  });
+});
+
+describe("HelpTooltip", () => {
+  it("should render help icon button", () => {
+    render(<HelpTooltip topic="feature-flags" />);
+    expect(
+      screen.getByRole("button", { name: /help: feature flags/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("should show tooltip on hover", async () => {
+    render(<HelpTooltip topic="feature-flags" trigger="hover" />);
+    const button = screen.getByRole("button", { name: /help/i });
+
+    fireEvent.mouseEnter(button);
+
+    expect(screen.getByRole("tooltip")).toBeInTheDocument();
+    expect(screen.getByText("Feature Flags")).toBeInTheDocument();
+  });
+
+  it("should show tooltip on click when trigger is click", () => {
+    render(<HelpTooltip topic="feature-flags" trigger="click" />);
+    const button = screen.getByRole("button", { name: /help/i });
+
+    fireEvent.click(button);
+
+    expect(screen.getByRole("tooltip")).toBeInTheDocument();
+  });
+
+  it("should hide tooltip on mouseLeave", () => {
+    render(<HelpTooltip topic="feature-flags" trigger="hover" />);
+    const button = screen.getByRole("button", { name: /help/i });
+
+    fireEvent.mouseEnter(button);
+    expect(screen.getByRole("tooltip")).toBeInTheDocument();
+
+    fireEvent.mouseLeave(button);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("should include documentation link", () => {
+    render(<HelpTooltip topic="feature-flags" trigger="hover" />);
+    const button = screen.getByRole("button", { name: /help/i });
+
+    fireEvent.mouseEnter(button);
+
+    expect(screen.getByText("View docs")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /view docs/i })).toHaveAttribute(
+      "href",
+      expect.stringContaining("admin-guide/feature-flags"),
+    );
+  });
+
+  it("should show tips when available", () => {
+    render(<HelpTooltip topic="feature-flags" trigger="hover" />);
+    const button = screen.getByRole("button", { name: /help/i });
+
+    fireEvent.mouseEnter(button);
+
+    expect(screen.getByText("Tips")).toBeInTheDocument();
+  });
+
+  it("should apply different sizes", () => {
+    const { rerender } = render(
+      <HelpTooltip topic="feature-flags" size="xs" />,
+    );
+    expect(screen.getByRole("button")).toHaveClass("w-3.5", "h-3.5");
+
+    rerender(<HelpTooltip topic="feature-flags" size="md" />);
+    expect(screen.getByRole("button")).toHaveClass("w-5", "h-5");
+  });
+
+  it("should return null for unknown topic", () => {
+    // Mock console.warn to avoid noise in tests
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const { container } = render(
+      <HelpTooltip topic={"unknown-topic" as any} />,
+    );
+    expect(container.firstChild).toBeNull();
+
+    warnSpy.mockRestore();
   });
 });
