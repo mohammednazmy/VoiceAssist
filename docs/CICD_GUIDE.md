@@ -1,14 +1,23 @@
 ---
-title: "Cicd Guide"
-slug: "cicd-guide"
+title: Cicd Guide
+slug: cicd-guide
 summary: "1. [Overview](#overview)"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["frontend"]
-tags: ["cicd", "guide"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - cicd
+  - guide
 category: operations
+ai_summary: >-
+  1. Overview 2. GitHub Actions Workflows 3. CI Pipeline 4. CD Pipeline 5.
+  Terraform Automation 6. Required Secrets 7. Deployment Process 8. Rollback
+  Procedures 9. Monitoring Deployments 10. Troubleshooting VoiceAssist uses
+  GitHub Actions for continuous integration and continuous deployment. The CI...
 ---
 
 # CI/CD Pipeline Guide

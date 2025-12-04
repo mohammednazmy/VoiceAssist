@@ -6,6 +6,7 @@ audience: [developers, admin, ai-agents]
 category: reference
 owner: backend
 summary: Understanding when to use configuration settings vs feature flags
+ai_summary: Use system settings for permanent config (API_TIMEOUT, DATABASE_URL). Use feature flags for temporary toggles (new features, A/B tests, gradual rollouts). Settings need deployment to change; flags change at runtime.
 ---
 
 # System Settings vs Feature Flags
@@ -21,34 +22,34 @@ VoiceAssist uses two mechanisms for runtime configuration:
 
 ### Use System Settings For
 
-| Scenario | Example |
-|----------|---------|
-| Configuration values | `API_TIMEOUT=30000` |
-| Resource limits | `MAX_UPLOAD_SIZE=10MB` |
-| Integration endpoints | `OPENAI_API_URL=...` |
-| Default behaviors | `DEFAULT_LANGUAGE=en` |
-| Permanent toggles | `ENABLE_ANALYTICS=true` |
+| Scenario              | Example                 |
+| --------------------- | ----------------------- |
+| Configuration values  | `API_TIMEOUT=30000`     |
+| Resource limits       | `MAX_UPLOAD_SIZE=10MB`  |
+| Integration endpoints | `OPENAI_API_URL=...`    |
+| Default behaviors     | `DEFAULT_LANGUAGE=en`   |
+| Permanent toggles     | `ENABLE_ANALYTICS=true` |
 
 ### Use Feature Flags For
 
-| Scenario | Example |
-|----------|---------|
-| New features in development | `ui.new_voice_panel` |
-| A/B experiments | `experiment.pricing_v2` |
-| Gradual rollouts | `backend.rag_v2` at 25% |
-| Kill switches | `ops.disable_heavy_features` |
-| Time-limited features | `ops.holiday_mode` |
+| Scenario                    | Example                      |
+| --------------------------- | ---------------------------- |
+| New features in development | `ui.new_voice_panel`         |
+| A/B experiments             | `experiment.pricing_v2`      |
+| Gradual rollouts            | `backend.rag_v2` at 25%      |
+| Kill switches               | `ops.disable_heavy_features` |
+| Time-limited features       | `ops.holiday_mode`           |
 
 ## Key Differences
 
-| Aspect | System Settings | Feature Flags |
-|--------|-----------------|---------------|
-| Lifespan | Permanent | Temporary (remove after rollout) |
-| Changes | Require deployment | Runtime, no deployment |
-| Audience | All users | Can target segments |
-| Rollback | Redeploy | Instant toggle |
-| Storage | Environment variables | Redis |
-| UI | Config files | Admin Panel |
+| Aspect   | System Settings       | Feature Flags                    |
+| -------- | --------------------- | -------------------------------- |
+| Lifespan | Permanent             | Temporary (remove after rollout) |
+| Changes  | Require deployment    | Runtime, no deployment           |
+| Audience | All users             | Can target segments              |
+| Rollback | Redeploy              | Instant toggle                   |
+| Storage  | Environment variables | Redis                            |
+| UI       | Config files          | Admin Panel                      |
 
 ## Decision Tree
 
@@ -78,7 +79,7 @@ DEFAULT_TTS_VOICE=alloy
 ### Feature Flags (Correct)
 
 ```typescript
-// featureFlags.ts - using category.feature_name pattern
+// Using category.feature_name pattern
 ui: {
   new_chat_layout: {
     name: 'ui.new_chat_layout',
@@ -134,28 +135,6 @@ When you need gradual rollout of a setting change:
 3. Gradually roll out
 4. Once at 100%, update system setting
 5. Remove flag
-
-## Storage Locations
-
-### System Settings
-
-```
-├── .env                    # Local development
-├── .env.production         # Production defaults
-├── docker-compose.yml      # Container environment
-└── k8s/configmap.yml       # Kubernetes config
-```
-
-### Feature Flags
-
-```
-├── packages/types/src/featureFlags.ts  # Definitions
-├── Redis (runtime state)
-│   ├── flags:dev:<name>
-│   ├── flags:staging:<name>
-│   └── flags:prod:<name>
-└── Admin Panel (UI management)
-```
 
 ## Related Documentation
 

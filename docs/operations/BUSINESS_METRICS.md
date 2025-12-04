@@ -1,14 +1,23 @@
 ---
-title: "Business Metrics"
-slug: "operations/business-metrics"
+title: Business Metrics
+slug: operations/business-metrics
 summary: "**Last Updated**: 2025-11-21 (Phase 7 - P3.3)"
 status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["business", "metrics"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - business
+  - metrics
 category: operations
+ai_summary: >-
+  Last Updated: 2025-11-21 (Phase 7 - P3.3) Purpose: Guide for understanding and
+  using VoiceAssist V2 business metrics --- VoiceAssist V2 tracks comprehensive
+  business KPIs to measure user engagement, system performance, and operational
+  costs. All metrics are collected via Prometheus and visualized...
 ---
 
 # Business Metrics Guide

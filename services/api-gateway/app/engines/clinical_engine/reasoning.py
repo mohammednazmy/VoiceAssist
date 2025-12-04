@@ -17,7 +17,7 @@ Phase 5 Enhancements:
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -289,13 +289,21 @@ class ClinicalReasoning:
         "lisinopril": [
             ("pregnancy", "contraindicated", "Teratogenic - avoid in pregnancy"),
             ("angioedema", "contraindicated", "History of ACE-inhibitor angioedema"),
-            ("bilateral renal artery stenosis", "contraindicated", "Risk of acute renal failure"),
+            (
+                "bilateral renal artery stenosis",
+                "contraindicated",
+                "Risk of acute renal failure",
+            ),
         ],
         "nsaid": [
             ("gi bleed", "major", "Increased bleeding risk"),
             ("renal failure", "moderate", "May worsen renal function"),
             ("heart failure", "moderate", "May cause fluid retention"),
-            ("pregnancy", "contraindicated", "Third trimester - premature ductus closure"),
+            (
+                "pregnancy",
+                "contraindicated",
+                "Third trimester - premature ductus closure",
+            ),
         ],
         "warfarin": [
             ("active bleeding", "contraindicated", "Will worsen hemorrhage"),
@@ -317,13 +325,21 @@ class ClinicalReasoning:
     ALLERGY_CROSSREACTIVITY = {
         "penicillin": {
             "high_risk": ["ampicillin", "amoxicillin", "piperacillin"],
-            "moderate_risk": ["cephalexin", "cefazolin", "ceftriaxone"],  # ~2% cross-reactivity
+            "moderate_risk": [
+                "cephalexin",
+                "cefazolin",
+                "ceftriaxone",
+            ],  # ~2% cross-reactivity
             "low_risk": ["aztreonam", "carbapenems"],  # <1% cross-reactivity
             "safe_alternatives": ["azithromycin", "fluoroquinolones", "vancomycin"],
         },
         "sulfa": {
             "high_risk": ["sulfamethoxazole", "sulfasalazine"],
-            "moderate_risk": ["thiazides", "furosemide", "sulfonylureas"],  # Controversial
+            "moderate_risk": [
+                "thiazides",
+                "furosemide",
+                "sulfonylureas",
+            ],  # Controversial
             "low_risk": [],
             "safe_alternatives": ["fluoroquinolones", "nitrofurantoin"],
         },

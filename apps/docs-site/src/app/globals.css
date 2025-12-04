@@ -92,3 +92,56 @@ mark {
 [data-highlighted-line] {
   @apply block rounded bg-slate-800/70 px-3 py-0.5;
 }
+
+/* === WCAG 2.1 AA Accessibility Improvements === */
+
+/* Skip to content link */
+.skip-to-content {
+  @apply absolute left-4 top-4 z-[100] -translate-y-20 rounded-md bg-primary-600 px-4 py-2 text-white font-medium transition-transform duration-200;
+}
+
+.skip-to-content:focus {
+  @apply translate-y-0 outline-none ring-2 ring-primary-400 ring-offset-2;
+}
+
+/* Enhanced focus indicators for all interactive elements */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  @apply outline-none ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-gray-900;
+}
+
+/* Focus indicator for sidebar links */
+.sidebar-link:focus-visible {
+  @apply outline-none ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-gray-900;
+}
+
+/* High contrast mode adjustments */
+@media (prefers-contrast: high) {
+  a:focus-visible,
+  button:focus-visible {
+    @apply ring-4 ring-black dark:ring-white;
+  }
+
+  .prose a {
+    @apply underline decoration-2;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .skip-to-content {
+    @apply transition-none;
+  }
+}

@@ -1,14 +1,26 @@
 ---
-title: "All Phases Summary"
-slug: "all-phases-summary"
-summary: "This is the V2 15-phase implementation plan for VoiceAssist. Each phase is a focused unit of work designed for completion in one session (4-10 hours)."
+title: All Phases Summary
+slug: all-phases-summary
+summary: >-
+  This is the V2 15-phase implementation plan for VoiceAssist. Each phase is a
+  focused unit of work designed for completion in one session (4-10 hours).
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["all", "phases", "summary"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - all
+  - phases
+  - summary
 category: planning
+ai_summary: >-
+  This is the V2 16-phase implementation plan for VoiceAssist. Each phase is a
+  focused unit of work designed for completion in one session (4-10 hours). For
+  detailed phase documentation, see docs/phases/ directory. For timeline and
+  milestones, see ROADMAP.md. --- - Total Phases: 16 (Phase 0 through...
 ---
 
 # VoiceAssist V2 All Phases Summary (Phase 0-15)

@@ -11,9 +11,8 @@ Emits prosody.turn_signal events for cross-engine coordination.
 """
 
 import logging
-import re
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 

@@ -1,14 +1,23 @@
 ---
-title: "Development Workflow"
-slug: "client-implementation/development-workflow"
+title: Development Workflow
+slug: client-implementation/development-workflow
 summary: "**Date:** 2025-11-21"
 status: stable
 stability: production
 owner: frontend
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["development", "workflow"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - development
+  - workflow
 category: planning
+ai_summary: >-
+  Version: 1.0.0 Date: 2025-11-21 Status: Production Ready Project: VoiceAssist
+  Enterprise Medical AI Assistant --- 1. Git Workflow & Branching Strategy 2.
+  Code Review Process 3. Testing Requirements 4. CI/CD Pipelines 5. Deployment
+  Procedures 6. Documentation Standards 7. Code Style Guide 8. Perfo...
 ---
 
 # VoiceAssist Development Workflow Guide

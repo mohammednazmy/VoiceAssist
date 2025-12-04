@@ -1,0 +1,122 @@
+# VoiceAssist Documentation CODEOWNERS
+# See Sprint 3 Design Docs: docs/planning/SPRINT_3_DESIGN_DOCS.md
+#
+# These owners will be requested for review when someone opens a PR
+# that modifies files in their designated areas.
+
+# Default owner for everything in docs/
+docs/ @voiceassist/docs-team
+
+# ============================================================
+# Feature-Specific Documentation Ownership
+# ============================================================
+
+# Feature flags documentation
+docs/admin-guide/feature-flags/ @voiceassist/backend-team
+
+# Voice mode documentation
+docs/voice/ @voiceassist/voice-team
+docs/VOICE_MODE_PIPELINE.md @voiceassist/voice-team
+docs/THINKER_TALKER_PIPELINE.md @voiceassist/voice-team
+
+# API documentation
+docs/api/ @voiceassist/backend-team
+docs/api-reference/ @voiceassist/backend-team
+docs/API_REFERENCE.md @voiceassist/backend-team
+
+# Security documentation
+docs/security/ @voiceassist/security-team
+docs/SECURITY*.md @voiceassist/security-team
+docs/HIPAA*.md @voiceassist/security-team
+
+# Deployment and infrastructure
+docs/deployment/ @voiceassist/devops-team
+docs/INFRASTRUCTURE*.md @voiceassist/devops-team
+docs/TERRAFORM*.md @voiceassist/devops-team
+
+# Testing documentation
+docs/testing/ @voiceassist/qa-team
+docs/TESTING*.md @voiceassist/qa-team
+
+# ============================================================
+# Admin Panel Documentation
+# ============================================================
+
+docs/admin/ @voiceassist/frontend-team
+apps/admin-panel/ @voiceassist/frontend-team
+
+# ============================================================
+# AI and RAG Documentation
+# ============================================================
+
+docs/ai/ @voiceassist/ai-team
+docs/SEMANTIC_SEARCH*.md @voiceassist/ai-team
+docs/RAG*.md @voiceassist/ai-team
+
+# ============================================================
+# Architecture Documentation (Multiple Reviewers)
+# ============================================================
+
+docs/architecture/ @voiceassist/backend-team @voiceassist/frontend-team
+docs/ARCHITECTURE*.md @voiceassist/backend-team @voiceassist/frontend-team
+docs/UNIFIED_ARCHITECTURE.md @voiceassist/backend-team @voiceassist/frontend-team
+
+# ============================================================
+# Operations and Runbooks
+# ============================================================
+
+docs/operations/ @voiceassist/sre-team
+docs/operations/runbooks/ @voiceassist/sre-team
+docs/debugging/ @voiceassist/sre-team
+
+# ============================================================
+# Planning Documentation (Product + Docs Review)
+# ============================================================
+
+docs/planning/ @voiceassist/product-team @voiceassist/docs-team
+
+# ============================================================
+# Scripts and Tooling
+# ============================================================
+
+scripts/ @voiceassist/devops-team
+
+# Agent JSON generation (shared ownership)
+scripts/generate-all-agent-json.js @voiceassist/docs-team @voiceassist/ai-team
+scripts/validate-frontmatter.js @voiceassist/docs-team
+scripts/generate-ai-summaries.js @voiceassist/docs-team @voiceassist/ai-team
+
+# ============================================================
+# Application-Specific Ownership
+# ============================================================
+
+# Web application
+apps/web-app/ @voiceassist/frontend-team
+
+# Documentation site
+apps/docs-site/ @voiceassist/docs-team
+
+# API Gateway
+services/api-gateway/ @voiceassist/backend-team
+
+# Shared packages
+packages/ @voiceassist/frontend-team @voiceassist/backend-team
+packages/types/ @voiceassist/backend-team @voiceassist/frontend-team
+
+# ============================================================
+# Root Configuration Files
+# ============================================================
+
+# Repository configuration
+.github/ @voiceassist/devops-team
+docker-compose*.yml @voiceassist/devops-team
+Dockerfile* @voiceassist/devops-team
+*.env.example @voiceassist/devops-team
+
+# Package management
+package.json @voiceassist/devops-team
+pnpm-workspace.yaml @voiceassist/devops-team
+pnpm-lock.yaml @voiceassist/devops-team
+
+# TypeScript configuration
+tsconfig*.json @voiceassist/frontend-team

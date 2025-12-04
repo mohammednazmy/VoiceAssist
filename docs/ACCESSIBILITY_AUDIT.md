@@ -1,14 +1,23 @@
 ---
-title: "Accessibility Audit"
-slug: "accessibility-audit"
+title: Accessibility Audit
+slug: accessibility-audit
 summary: "**Date**: 2025-11-23"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["accessibility", "audit"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - accessibility
+  - audit
 category: reference
+ai_summary: >-
+  Date: 2025-11-23 Target: WCAG 2.1 Level AA Compliance Status: In Progress This
+  document tracks accessibility improvements for the VoiceAssist web application
+  to achieve WCAG 2.1 Level AA compliance. - Semantic HTML structure - Some ARIA
+  labels on interactive elements - Keyboard navigation for cha...
 ---
 
 # VoiceAssist Web App - Accessibility Audit & Improvements

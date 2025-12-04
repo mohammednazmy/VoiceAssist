@@ -30,14 +30,11 @@ from app.services.backchannel_service import (
     BackchannelSession,
     backchannel_service,
 )
-from app.services.dictation_phi_monitor import DictationPHIMonitor, PHIAlertLevel, PHIScanResult, dictation_phi_monitor
+from app.services.dictation_phi_monitor import DictationPHIMonitor, dictation_phi_monitor
 from app.services.dictation_service import (
     DictationEvent,
-    DictationService,
     DictationSession,
     DictationSessionConfig,
-    DictationState,
-    NoteSection,
     NoteType,
     dictation_service,
 )
@@ -47,35 +44,17 @@ from app.services.emotion_detection_service import (
     EmotionResult,
     emotion_detection_service,
 )
-from app.services.feedback_service import FeedbackPrompt, FeedbackService, feedback_service
-from app.services.medical_vocabulary_service import (
-    MedicalSpecialty,
-    MedicalVocabularyService,
-    medical_vocabulary_service,
-)
+from app.services.feedback_service import FeedbackService, feedback_service
+from app.services.medical_vocabulary_service import MedicalSpecialty
 from app.services.memory_context_service import ConversationMemoryManager, MemoryType, memory_context_service
-from app.services.note_formatter_service import (
-    FormattingConfig,
-    FormattingLevel,
-    NoteFormatterService,
-    note_formatter_service,
-)
+from app.services.note_formatter_service import FormattingConfig, FormattingLevel, note_formatter_service
 from app.services.patient_context_service import (
-    ContextPrompt,
     DictationContext,
     PatientContextService,
-    PatientDataCategory,
     PatientPHIContext,
     patient_context_service,
 )
-from app.services.prosody_analysis_service import (
-    ProsodyService,
-    ProsodySession,
-    ProsodySnapshot,
-    TurnTakingPrediction,
-    TurnTakingState,
-    prosody_service,
-)
+from app.services.prosody_analysis_service import ProsodySession, ProsodySnapshot, prosody_service
 from app.services.session_analytics_service import (
     InteractionType,
     SessionAnalytics,
@@ -90,13 +69,7 @@ from app.services.streaming_stt_service import (
 )
 from app.services.talker_service import AudioChunk, TalkerService, TalkerSession, VoiceConfig, talker_service
 from app.services.thinker_service import ThinkerService, ThinkerSession, ToolCallEvent, ToolResultEvent, thinker_service
-from app.services.voice_command_service import (
-    CommandCategory,
-    CommandResult,
-    ParsedCommand,
-    VoiceCommandService,
-    voice_command_service,
-)
+from app.services.voice_command_service import voice_command_service
 
 logger = get_logger(__name__)
 
@@ -255,8 +228,26 @@ def classify_query_type(transcript: str) -> QueryType:
         return QueryType.CLARIFICATION
 
     # Simple queries (yes/no, confirmations, short questions)
-    simple_starters = ["is ", "are ", "do ", "does ", "did ", "can ", "will ", "should "]
-    simple_endings = ["yes", "no", "ok", "okay", "sure", "thanks", "thank you", "got it"]
+    simple_starters = [
+        "is ",
+        "are ",
+        "do ",
+        "does ",
+        "did ",
+        "can ",
+        "will ",
+        "should ",
+    ]
+    simple_endings = [
+        "yes",
+        "no",
+        "ok",
+        "okay",
+        "sure",
+        "thanks",
+        "thank you",
+        "got it",
+    ]
     if word_count <= 5 and (
         any(text.startswith(s) for s in simple_starters)
         or text in simple_endings
@@ -555,7 +546,7 @@ class VoicePipelineSession:
                     dictation_config = DictationSessionConfig(
                         note_type=self.config.dictation_note_type,
                         language=self.config.stt_language,
-                        specialty=self.config.dictation_specialty.value if self.config.dictation_specialty else None,
+                        specialty=(self.config.dictation_specialty.value if self.config.dictation_specialty else None),
                         auto_punctuate=True,
                         auto_format=self.config.dictation_auto_format,
                         enable_commands=self.config.dictation_enable_commands,
@@ -926,7 +917,7 @@ class VoicePipelineSession:
                 type="backchannel.trigger",
                 data={
                     "phrase": audio.phrase,
-                    "audio": base64.b64encode(audio.audio_data).decode() if audio.audio_data else "",
+                    "audio": (base64.b64encode(audio.audio_data).decode() if audio.audio_data else ""),
                     "format": audio.format,
                     "duration_ms": audio.duration_ms,
                 },
@@ -1056,7 +1047,18 @@ class VoicePipelineSession:
         # Require at least 2 words OR a clear command word for barge-in
         # This reduces false positives from sighs/noise
         words = cleaned.split()
-        command_words = {"stop", "wait", "hold", "pause", "no", "actually", "but", "hey", "okay", "ok"}
+        command_words = {
+            "stop",
+            "wait",
+            "hold",
+            "pause",
+            "no",
+            "actually",
+            "but",
+            "hey",
+            "okay",
+            "ok",
+        }
 
         if len(words) >= 2:
             return True
@@ -1251,10 +1253,10 @@ class VoicePipelineSession:
         if self._current_emotion and self._emotion_service:
             emotion_context = {
                 "emotion": self._current_emotion,
-                "trend": self._emotion_session.get_trend() if self._emotion_session else None,
+                "trend": (self._emotion_session.get_trend() if self._emotion_session else None),
                 "prompt_addition": self._emotion_service.build_emotion_context_prompt(
                     self._current_emotion,
-                    self._emotion_session.get_trend() if self._emotion_session else None,
+                    (self._emotion_session.get_trend() if self._emotion_session else None),
                 ),
             }
 

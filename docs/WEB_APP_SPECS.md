@@ -1,14 +1,27 @@
 ---
-title: "Web App Specs"
-slug: "web-app-specs"
-summary: "The VoiceAssist web application provides browser-based access to the medical AI assistant for clinicians, supporting both text and voice interactions ..."
+title: Web App Specs
+slug: web-app-specs
+summary: >-
+  The VoiceAssist web application provides browser-based access to the medical
+  AI assistant for clinicians, supporting both text and voice interactions ...
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["frontend"]
-tags: ["web", "app", "specs"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - web
+  - app
+  - specs
 category: reference
+ai_summary: >-
+  The VoiceAssist web application provides browser-based access to the medical
+  AI assistant for clinicians, supporting both text and voice interactions with
+  deep integration into clinical workflows. Accessible at
+  voiceassist.yourdomain.com. --- 1. Clinician UX & Workflows 2. Core Types &
+  Interfaces...
 ---
 
 # Web Application Specifications

@@ -66,7 +66,6 @@ class SessionContext:
         context: Optional[Dict] = None,
     ) -> "SessionMemory":
         """Update session with new context"""
-        from . import SessionMemory
 
         session = await self.get_or_create(session_id)
 
@@ -117,7 +116,7 @@ class SessionContext:
                 "user_id": session.user_id,
                 "recent_entities": session.recent_entities[:5],  # Top 5
                 "recent_topics": session.recent_topics[:3],  # Top 3
-                "last_topic": session.recent_topics[0] if session.recent_topics else None,
+                "last_topic": (session.recent_topics[0] if session.recent_topics else None),
             },
             session_id=session.session_id,
             source_engine="memory",

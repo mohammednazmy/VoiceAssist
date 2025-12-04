@@ -8,7 +8,6 @@ Supports A/B testing between ML and heuristic approaches.
 """
 
 import logging
-import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -80,8 +79,28 @@ class QueryClassifier:
         "would",
         "should",
     }
-    URGENT_WORDS = {"urgent", "emergency", "asap", "immediately", "quickly", "stat", "critical", "now"}
-    COMMAND_WORDS = {"do", "make", "create", "send", "order", "prescribe", "schedule", "cancel", "stop", "start"}
+    URGENT_WORDS = {
+        "urgent",
+        "emergency",
+        "asap",
+        "immediately",
+        "quickly",
+        "stat",
+        "critical",
+        "now",
+    }
+    COMMAND_WORDS = {
+        "do",
+        "make",
+        "create",
+        "send",
+        "order",
+        "prescribe",
+        "schedule",
+        "cancel",
+        "stop",
+        "start",
+    }
     MEDICAL_WORDS = {
         "patient",
         "medication",
@@ -134,8 +153,6 @@ class QueryClassifier:
         Publishes query.classified event through event bus.
         """
         import time
-
-        from . import QueryClassification
 
         start_time = time.time()
 
@@ -211,7 +228,7 @@ class QueryClassifier:
             return {
                 "count": len(logs),
                 "avg_latency_ms": sum(latencies) / len(latencies),
-                "p95_latency_ms": sorted(latencies)[int(len(latencies) * 0.95)] if len(latencies) >= 20 else None,
+                "p95_latency_ms": (sorted(latencies)[int(len(latencies) * 0.95)] if len(latencies) >= 20 else None),
                 "avg_confidence": sum(confidences) / len(confidences),
                 "type_distribution": self._compute_type_distribution(logs),
             }
@@ -351,7 +368,6 @@ class QueryClassifier:
         emotion_state: Optional[Dict],
     ) -> "QueryClassification":
         """ML-based classification using ONNX model"""
-        from . import QueryClassification
 
         # TODO: Implement ONNX model inference
         # For now, fall back to heuristics

@@ -1,17 +1,36 @@
 ---
 title: Admin Panel Implementation Plan
 slug: admin/implementation-plan
-summary: Comprehensive implementation plan for making admin.asimo.io the canonical operational mission control for VoiceAssist.
+summary: >-
+  Comprehensive implementation plan for making admin.asimo.io the canonical
+  operational mission control for VoiceAssist.
 status: stable
 stability: production
 owner: frontend
 lastUpdated: "2025-12-02"
-audience: ["human", "agent", "ai-agents", "frontend", "backend", "devops"]
-tags: ["admin", "implementation", "plan", "roadmap"]
-relatedServices: ["api-gateway", "admin-panel"]
+audience:
+  - human
+  - agent
+  - ai-agents
+  - frontend
+  - backend
+  - devops
+tags:
+  - admin
+  - implementation
+  - plan
+  - roadmap
+relatedServices:
+  - api-gateway
+  - admin-panel
 category: admin
 source_of_truth: true
-version: "2.8.0"
+version: 2.8.0
+ai_summary: >-
+  Last Updated: 2025-12-02 Version: 2.8.0 Status: Canonical Implementation Guide
+  Purpose: Transform admin.asimo.io into the definitive operational mission
+  control for VoiceAssist --- 1. Executive Summary 2. Admin Panel Tech Stack
+  (Ground Truth) 3. Phase 1: Backend-to-Admin Service Matrix 4. Phase 2...
 ---
 
 # Admin Panel Implementation Plan

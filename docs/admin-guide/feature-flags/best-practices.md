@@ -2,160 +2,113 @@
 title: Feature Flag Best Practices
 status: stable
 lastUpdated: 2025-12-04
-audience: [developers, admin, ai-agents]
+audience: [developers, ai-agents]
 category: feature-flags
 owner: backend
 summary: Guidelines for effective feature flag usage
+ai_summary: Keep flags temporary (remove after stable rollout). Use descriptive names. Start with 10% rollouts. Always have rollback plan. Review flags quarterly. Document in code and commit messages.
 ---
 
 # Feature Flag Best Practices
 
-## When to Use Feature Flags
+## 1. Keep Flags Temporary
 
-### Good Use Cases
-
-| Scenario | Example |
-|----------|---------|
-| Gradual rollout | `ui.new_chat_interface` at 10% -> 50% -> 100% |
-| A/B testing | `experiment.onboarding_v2` for conversion testing |
-| Kill switches | `ops.disable_heavy_rag` during incidents |
-| Beta features | `ui.beta_voice_mode` for early adopters |
-| Infrastructure migration | `backend.use_new_db_cluster` |
-
-### Avoid Feature Flags For
-
-- **Configuration** - Use environment variables or config files
-- **Permanent toggles** - If it won't be removed, it's not a flag
-- **Authorization** - Use proper RBAC, not flags
-- **A/B tests without metrics** - Flags without tracking waste effort
-
-## Design Principles
-
-### 1. Keep Flags Short-Lived
-
-```
-Target: Remove flag within 2-4 sprints after 100% rollout
-```
-
-Long-lived flags accumulate tech debt. Set `removeBy` dates.
-
-### 2. Minimize Flag Dependencies
+Feature flags should be **temporary**, not permanent configuration:
 
 ```typescript
-// Bad - nested flags create complexity
-if (flags['ui.new_layout'] && flags['ui.dark_mode'] && flags['backend.v2']) {
-  // Hard to test all combinations
+// GOOD: Temporary rollout flag
+experiment.new_checkout_flow; // Remove after 100% rollout
+
+// BAD: Permanent config disguised as flag
+backend.database_url; // Should be env var
+```
+
+**Rule**: If a flag will never be removed, it's configuration, not a feature flag.
+
+## 2. Use Descriptive Names
+
+Names should clearly indicate what the flag controls:
+
+```typescript
+// GOOD: Clear purpose
+ui.compact_message_list;
+backend.streaming_responses_v2;
+ops.circuit_breaker_openai;
+
+// BAD: Vague or abbreviated
+ui.new_thing;
+backend.v2;
+ops.cb;
+```
+
+## 3. Start Small with Rollouts
+
+Never go from 0% to 100% in one step:
+
+```
+Day 1:  10% - Monitor errors and performance
+Day 2:  25% - Check user feedback
+Day 3:  50% - Validate at scale
+Day 4:  75% - Final verification
+Day 5: 100% - Full rollout
+```
+
+## 4. Always Have a Rollback Plan
+
+Before enabling any flag:
+
+1. Document the disable procedure
+2. Test that disabling works
+3. Know who can disable in emergency
+4. Set up monitoring alerts
+
+## 5. Review Flags Quarterly
+
+Schedule quarterly reviews:
+
+- [ ] Remove flags at 100% for 30+ days
+- [ ] Archive deprecated flags
+- [ ] Update documentation
+- [ ] Clean up unused code paths
+
+## 6. Document in Code
+
+```typescript
+/**
+ * Feature flag: experiment.voice_streaming
+ *
+ * Purpose: Enable real-time voice streaming
+ * Created: 2025-12-01
+ * Owner: @voice-team
+ * Rollout: 25% as of 2025-12-04
+ * Remove after: Stable at 100% for 2 sprints
+ */
+if (await featureGate("experiment.voice_streaming")) {
+  // New streaming implementation
 }
-
-// Good - independent flags
-if (flags['ui.new_layout']) {
-  renderNewLayout();
-}
 ```
 
-### 3. Default to Off
+## 7. Use Feature Flags for Risk, Not Laziness
 
-```typescript
-// Good - safe default (ui.experimental_feature)
-experimental_feature: { default: false }
+**Good uses:**
 
-// Bad - risky default
-experimental_feature: { default: true }
-```
+- Risky changes that need gradual rollout
+- Features that might need quick rollback
+- A/B testing with clear metrics
+- Operational controls (maintenance, rate limiting)
 
-### 4. Document Thoroughly
+**Bad uses:**
 
-Every flag needs:
-- Clear description
-- Owner team/person
-- JIRA ticket reference
-- Expected removal date
+- Avoiding proper code review
+- Keeping dead code "just in case"
+- Configuration that never changes
+- Avoiding proper deployment processes
 
-### 5. Test Both States
+## 8. Monitor Flag Performance
 
-```typescript
-describe('VoicePanel', () => {
-  it('renders old UI when flag is off', () => {
-    mockFlag('ui.new_voice_panel', false);
-    // assertions
-  });
+Track for each flag:
 
-  it('renders new UI when flag is on', () => {
-    mockFlag('ui.new_voice_panel', true);
-    // assertions
-  });
-});
-```
-
-## Cleanup Strategies
-
-### Regular Audits
-
-Run monthly:
-```bash
-npm run flags:audit
-```
-
-Reports:
-- Flags at 100% > 14 days (candidates for removal)
-- Flags deprecated > 30 days (overdue removal)
-- Orphan flags (no code references)
-
-### Removal Checklist
-
-- [ ] All code paths using flag removed
-- [ ] Tests updated to not mock the flag
-- [ ] Flag definition removed from `featureFlags.ts`
-- [ ] Redis state cleaned up
-- [ ] Documentation updated
-- [ ] Admin panel verified (no stale entries)
-
-## Operational Guidelines
-
-### Emergency Disabling
-
-If a flagged feature causes issues:
-
-1. Navigate to Admin Panel > Feature Flags
-2. Set flag to `false` (production)
-3. Verify rollback
-4. Create incident ticket
-
-Or via API:
-```bash
-curl -X POST https://assist.asimo.io/api/flags/ui.problem_feature \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -d '{"enabled": false}'
-```
-
-### Percentage Rollouts
-
-Recommended progression:
-```
-1% -> 5% -> 10% -> 25% -> 50% -> 100%
-```
-
-Wait 24-48 hours between increases. Monitor:
-- Error rates
-- Performance metrics
-- User feedback
-
-### Monitoring Integration
-
-All flag changes emit metrics:
-```
-voiceassist_flag_evaluation{flag="ui.new_layout",result="true"} 1234
-voiceassist_flag_evaluation{flag="ui.new_layout",result="false"} 5678
-```
-
-View in Grafana: Dashboard > Feature Flags
-
-## Common Pitfalls
-
-| Pitfall | Solution |
-|---------|----------|
-| Flag soup (too many) | Regular cleanup, flag budget per sprint |
-| Stale flags | Automated cleanup alerts |
-| Untested flag states | CI requires both-state tests |
-| Missing documentation | Pre-commit hooks validate docs |
-| Flag dependencies | Architectural review for cross-flag logic |
+- Error rate (enabled vs disabled)
+- Latency impact
+- User engagement metrics
+- Memory/CPU impact

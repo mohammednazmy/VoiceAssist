@@ -1,14 +1,23 @@
 ---
-title: "Phase 08 Observability"
-slug: "phases/phase-08-observability"
+title: Phase 08 Observability
+slug: phases/phase-08-observability
 summary: "> **V2 PHASE DOCUMENT**"
 status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["phase", "observability"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - phase
+  - observability
 category: planning
+ai_summary: >-
+  > V2 PHASE DOCUMENT > > This phase description is part of the canonical 0–14
+  V2 plan. > It is intended to guide both human developers and Claude Code >
+  sessions. Always read DEVELOPMENT_PHASES_V2.md and BACKEND_ARCHITECTURE.md >
+  alongside this document. Deploy full observability stack and integra...
 ---
 
 # Phase 8: Tracing, Metrics & Logging

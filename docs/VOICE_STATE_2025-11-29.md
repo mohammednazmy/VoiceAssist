@@ -1,14 +1,31 @@
 ---
-title: "Voice State 2025-11-29"
-slug: "voice-state-2025-11-29"
-summary: "Voice mode now includes barge-in support, audio overlap prevention, user preferences persistence, context-aware styles, and aggressive latency optimizations."
+title: Voice State 2025-11-29
+slug: voice-state-2025-11-29
+summary: >-
+  Voice mode now includes barge-in support, audio overlap prevention, user
+  preferences persistence, context-aware styles, and aggressive latency
+  optimizations.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-29"
-audience: ["human", "agent"]
-tags: ["voice", "barge-in", "audio", "state", "2025"]
+audience:
+  - human
+  - agent
+  - ai-agents
+tags:
+  - voice
+  - barge-in
+  - audio
+  - state
+  - "2025"
 category: reference
+ai_summary: >-
+  Voice mode has been significantly improved with barge-in support, audio
+  overlap prevention, and graceful error handling. The system now properly
+  handles user interruptions during AI responses. Voice Mode Overhaul
+  (2025-11-29): Added per-user voice preferences persistence, context-aware
+  voice styl...
 ---
 
 # VoiceAssist Voice State - November 28, 2025

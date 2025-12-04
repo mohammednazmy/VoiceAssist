@@ -1,14 +1,28 @@
 ---
-title: "Realtime Proxy Spec"
-slug: "client-implementation/realtime-proxy-spec"
-summary: "The VoiceAssist platform uses WebSocket connections for real-time bidirectional communication between the client and the OpenAI Realtime API. This doc..."
+title: Realtime Proxy Spec
+slug: client-implementation/realtime-proxy-spec
+summary: >-
+  The VoiceAssist platform uses WebSocket connections for real-time
+  bidirectional communication between the client and the OpenAI Realtime API.
+  This doc...
 status: stable
 stability: production
 owner: frontend
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["realtime", "proxy", "spec"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - realtime
+  - proxy
+  - spec
 category: planning
+ai_summary: >-
+  The VoiceAssist platform uses WebSocket connections for real-time
+  bidirectional communication between the client and the OpenAI Realtime API.
+  This document specifies the protocol, message formats, error handling, and
+  implementation details. --- wss://assist.asimo.io/api/realtime const
+  conversatio...
 ---
 
 # Real-time Proxy Specification

@@ -6,11 +6,28 @@ status: stable
 stability: production
 owner: backend
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "backend", "frontend"]
-tags: ["api", "rest", "reference", "endpoints", "examples"]
+audience:
+  - human
+  - agent
+  - backend
+  - frontend
+  - ai-agents
+tags:
+  - api
+  - rest
+  - reference
+  - endpoints
+  - examples
 category: api
-relatedServices: ["api-gateway"]
-version: "2.0.0"
+relatedServices:
+  - api-gateway
+version: 2.0.0
+ai_summary: >-
+  Version: 2.0 Base URL: https://assist.asimo.io/api (production) or
+  http://localhost:8000/api (development) Last Updated: 2025-11-27 > See Also:
+  Auto-generated API Routes - Complete route listing from OpenAPI spec --- The
+  VoiceAssist API provides a comprehensive set of endpoints for building
+  medic...
 ---
 
 # VoiceAssist REST API Reference

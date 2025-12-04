@@ -1,14 +1,25 @@
 ---
-title: "Development Phases V2"
-slug: "development-phases-v2"
-summary: "VoiceAssist has been redesigned as an **enterprise-grade, HIPAA-compliant, multi-user medical AI assistant** with microservices architecture, Kubernet..."
+title: Development Phases V2
+slug: development-phases-v2
+summary: >-
+  VoiceAssist has been redesigned as an **enterprise-grade, HIPAA-compliant,
+  multi-user medical AI assistant** with microservices architecture, Kubernet...
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["development", "phases"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - development
+  - phases
 category: planning
+ai_summary: >-
+  VoiceAssist has been redesigned as an enterprise-grade, HIPAA-compliant,
+  multi-user medical AI assistant with microservices architecture, Kubernetes
+  orchestration, service mesh, and full Nextcloud integration. - Personal use
+  system - Single user - Simple Docker deployment - macOS client focus - M...
 ---
 
 # VoiceAssist Development Phases V2 - Enterprise Architecture

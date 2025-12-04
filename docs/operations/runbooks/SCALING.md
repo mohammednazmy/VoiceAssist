@@ -6,11 +6,24 @@ status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-11-27"
-audience: ["devops", "backend"]
-tags: ["runbook", "scaling", "performance", "infrastructure"]
+audience:
+  - devops
+  - backend
+  - ai-agents
+tags:
+  - runbook
+  - scaling
+  - performance
+  - infrastructure
 category: debugging
-relatedServices: ["api-gateway"]
-version: "1.0.0"
+relatedServices:
+  - api-gateway
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 Purpose: Comprehensive guide for scaling VoiceAssist
+  V2 infrastructure --- Load Balancer (if configured) ↓ VoiceAssist Server
+  (Scalable) ↓ ├── PostgreSQL (Primary + Read Replicas) ├── Redis (Cluster or
+  Sentinel) └── Qdrant (Distributed) --- Scale immediately if: - CPU usa...
 ---
 
 # Scaling Runbook

@@ -1,14 +1,25 @@
 ---
-title: "Web App Feature Specs"
-slug: "client-implementation/web-app-feature-specs"
+title: Web App Feature Specs
+slug: client-implementation/web-app-feature-specs
 summary: "**Date:** 2025-11-21"
 status: stable
 stability: production
 owner: frontend
 lastUpdated: "2025-11-27"
-audience: ["frontend"]
-tags: ["web", "app", "feature", "specs"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - web
+  - app
+  - feature
+  - specs
 category: planning
+ai_summary: >-
+  Version: 1.0 Date: 2025-11-21 Application: Main User-Facing Medical AI
+  Assistant URL: https://voiceassist.asimo.io --- 1. Overview 2. Authentication
+  & User Management (5 features) 3. Chat Interface (12 features) 4. Voice Mode
+  (8 features) 5. Clinical Context (6 features) 6. File Management (4 fea...
 ---
 
 # VoiceAssist Web App - Comprehensive Feature Specifications

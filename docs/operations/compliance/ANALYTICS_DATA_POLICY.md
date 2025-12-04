@@ -1,14 +1,26 @@
 ---
-title: "Analytics Data Policy"
-slug: "operations/compliance/analytics-data-policy"
-summary: "VoiceAssist uses privacy-preserving analytics to understand feature adoption and reliability. Analytics are **opt-in** and disabled by default until a..."
+title: Analytics Data Policy
+slug: operations/compliance/analytics-data-policy
+summary: >-
+  VoiceAssist uses privacy-preserving analytics to understand feature adoption
+  and reliability. Analytics are **opt-in** and disabled by default until a...
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["analytics", "data", "policy"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - analytics
+  - data
+  - policy
 category: security
+ai_summary: >-
+  VoiceAssist uses privacy-preserving analytics to understand feature adoption
+  and reliability. Analytics are opt-in and disabled by default until a user
+  provides consent through the in-app analytics preferences control. - Anonymous
+  event metadata (page views, feature interactions) - Basic technica...
 ---
 
 # VoiceAssist Web Analytics Data Policy

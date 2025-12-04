@@ -1,14 +1,24 @@
 ---
-title: "Phase 01 Infrastructure"
-slug: "phases/phase-01-infrastructure"
+title: Phase 01 Infrastructure
+slug: phases/phase-01-infrastructure
 summary: "> **V2 PHASE DOCUMENT**"
 status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-11-27"
-audience: ["devops", "sre"]
-tags: ["phase", "infrastructure"]
+audience:
+  - devops
+  - sre
+  - ai-agents
+tags:
+  - phase
+  - infrastructure
 category: planning
+ai_summary: >-
+  > V2 PHASE DOCUMENT > > This phase description is part of the canonical 0–14
+  V2 plan. > It is intended to guide both human developers and Claude Code >
+  sessions. Always read DEVELOPMENT_PHASES_V2.md and BACKEND_ARCHITECTURE.md >
+  alongside this document. Provision Postgres, Redis, and Qdrant via D...
 ---
 
 # Phase 1: Core Infrastructure & Database Setup

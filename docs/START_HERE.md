@@ -1,14 +1,25 @@
 ---
-title: "Start Here"
-slug: "start-here"
-summary: "**Welcome to VoiceAssist V2** - A HIPAA-compliant voice-enabled clinical decision support system."
+title: Start Here
+slug: start-here
+summary: >-
+  **Welcome to VoiceAssist V2** - A HIPAA-compliant voice-enabled clinical
+  decision support system.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-12-02"
-audience: ["human"]
-tags: ["start", "here"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - start
+  - here
 category: overview
+ai_summary: >-
+  Welcome to VoiceAssist V2 - A HIPAA-compliant voice-enabled clinical decision
+  support system. This document is your entry point to the project. Choose your
+  path below based on your role and experience level. Status update: All 16
+  project phases (0-15) are complete. Backend, infrastructure, admin...
 ---
 
 # 🚀 VoiceAssist V2 - Start Here

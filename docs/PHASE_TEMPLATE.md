@@ -1,14 +1,23 @@
 ---
-title: "Phase Template"
-slug: "phase-template"
+title: Phase Template
+slug: phase-template
 summary: "[One paragraph describing what this phase accomplishes]"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["phase", "template"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - phase
+  - template
 category: planning
+ai_summary: >-
+  [One paragraph describing what this phase accomplishes] [X-Y] hours - Phase
+  [N-1] completed - [Specific service/dependency requirements] - [ ] Previous
+  phase complete - [ ] All services running - [ ] [Specific prerequisites
+  verified] [Description] Verify: [Description with code examples] [Wrap-up...
 ---
 
 # Phase [NUMBER]: [NAME]

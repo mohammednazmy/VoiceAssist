@@ -537,8 +537,22 @@ class EmotionDetectionSession:
 
         Positive emotions increase valence, negative decrease it.
         """
-        positive_emotions = ["joy", "excitement", "interest", "amusement", "contentment"]
-        negative_emotions = ["sadness", "anger", "fear", "disgust", "contempt", "frustration", "anxiety"]
+        positive_emotions = [
+            "joy",
+            "excitement",
+            "interest",
+            "amusement",
+            "contentment",
+        ]
+        negative_emotions = [
+            "sadness",
+            "anger",
+            "fear",
+            "disgust",
+            "contempt",
+            "frustration",
+            "anxiety",
+        ]
 
         positive_sum = sum(emotions.get(e, 0) for e in positive_emotions)
         negative_sum = sum(emotions.get(e, 0) for e in negative_emotions)

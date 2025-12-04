@@ -1,16 +1,32 @@
 ---
 title: Documentation Metadata Standard
 slug: docs/metadata-standard
-summary: Defines the YAML frontmatter schema used across all VoiceAssist documentation for consistency and machine-readability.
+summary: >-
+  Defines the YAML frontmatter schema used across all VoiceAssist documentation
+  for consistency and machine-readability.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "docs"]
-tags: ["documentation", "metadata", "standards", "frontmatter"]
+audience:
+  - human
+  - agent
+  - docs
+  - ai-agents
+tags:
+  - documentation
+  - metadata
+  - standards
+  - frontmatter
 category: reference
-relatedServices: ["docs-site"]
-version: "1.0.0"
+relatedServices:
+  - docs-site
+version: 1.0.0
+ai_summary: >-
+  This document defines the standard YAML frontmatter schema for all VoiceAssist
+  documentation. Following this standard ensures consistent metadata across docs
+  and enables machine-readable indexing for AI agents and search systems. Every
+  markdown document should include a YAML frontmatter block at...
 ---
 
 # Documentation Metadata Standard

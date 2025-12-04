@@ -6,11 +6,25 @@ status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-11-27"
-audience: ["devops", "backend", "admin"]
-tags: ["runbook", "incident", "operations", "on-call"]
+audience:
+  - devops
+  - backend
+  - admin
+  - ai-agents
+tags:
+  - runbook
+  - incident
+  - operations
+  - on-call
 category: debugging
-relatedServices: ["api-gateway"]
-version: "1.0.0"
+relatedServices:
+  - api-gateway
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 Purpose: Comprehensive guide for handling incidents
+  in VoiceAssist V2 --- --- curl -s http://localhost:8000/health | jq '.' docker
+  compose ps docker compose logs --since 10m voiceassist-server | grep -i error
+  curl -s http://localhost:8000/metrics | grep -E "(error|failure...
 ---
 
 # Incident Response Runbook

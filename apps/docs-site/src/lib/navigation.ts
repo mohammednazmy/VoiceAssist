@@ -60,7 +60,7 @@ export const navigation: NavSection[] = [
         title: "For AI Agents",
         href: "/start/ai-agents",
         description: "Quick reference for AI coding assistants",
-        docPaths: ["start/ai-agents.md"],
+        docPaths: ["admin-guide/for-ai-agents.md"],
       },
     ],
   },
@@ -376,6 +376,12 @@ export const navigation: NavSection[] = [
   {
     title: "For AI Agents",
     items: [
+      {
+        title: "Documentation Guide",
+        href: "/ai/docs-guide",
+        description: "How AI agents should navigate and use VoiceAssist docs",
+        docPaths: ["admin-guide/for-ai-agents.md"],
+      },
       {
         title: "Agent Onboarding",
         href: "/ai/onboarding",

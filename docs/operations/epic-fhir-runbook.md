@@ -1,15 +1,37 @@
 ---
 title: Epic FHIR Integration Operations Runbook
 slug: operations/epic-fhir-runbook
-summary: Operational procedures for Epic FHIR integration including credential rotation, provider outage recovery, feature flag management, write operation failures, chaos engineering, and emergency procedures.
+summary: >-
+  Operational procedures for Epic FHIR integration including credential
+  rotation, provider outage recovery, feature flag management, write operation
+  failures, chaos engineering, and emergency procedures.
 status: stable
 stability: production
 owner: backend
 lastUpdated: "2025-12-04"
-audience: ["human", "agent", "backend", "ops"]
-tags: ["epic", "fhir", "ehr", "operations", "runbook", "hipaa", "audit", "chaos-engineering"]
+audience:
+  - human
+  - agent
+  - backend
+  - sre
+  - ai-agents
+tags:
+  - epic
+  - fhir
+  - ehr
+  - operations
+  - runbook
+  - hipaa
+  - audit
+  - chaos-engineering
 category: operations
-relatedServices: ["api-gateway"]
+relatedServices:
+  - api-gateway
+ai_summary: >-
+  This runbook covers operational procedures for the Epic FHIR integration
+  (Phase 6 & 6b) in VoiceAssist Voice Mode. --- - Every 90 days (recommended) -
+  After security incidents - When staff with access leave organization 1.
+  Generate New Credentials in Epic - Log into Epic App Orchard - Navigate to...
 ---
 
 # Epic FHIR Integration Operations Runbook
@@ -348,6 +370,7 @@ grep "EHR_WRITE_FAILED" /var/log/voiceassist/audit.log | tail -50
 ### Data Subject Access Request (DSAR)
 
 1. **Identify User Data**
+
    ```python
    from app.core.audit_service import get_audit_service
 
@@ -383,6 +406,7 @@ grep "EHR_WRITE_FAILED" /var/log/voiceassist/audit.log | tail -50
    - Document the request in audit log
 
 2. **Delete User Data**
+
    ```python
    from app.core.audit_service import get_audit_service
 
@@ -405,13 +429,13 @@ grep "EHR_WRITE_FAILED" /var/log/voiceassist/audit.log | tail -50
 
 ### Audit Log Retention Policy
 
-| Data Type               | Retention Period | Legal Basis              |
-| ----------------------- | ---------------- | ------------------------ |
-| EHR Access Logs         | 6 years          | HIPAA §164.530(j)        |
-| Write Operation Logs    | 6 years          | HIPAA §164.530(j)        |
-| User Session Data       | 1 year           | Business requirement     |
-| Error Logs              | 90 days          | Operational requirement  |
-| Chaos Test Results      | 30 days          | Testing documentation    |
+| Data Type            | Retention Period | Legal Basis             |
+| -------------------- | ---------------- | ----------------------- |
+| EHR Access Logs      | 6 years          | HIPAA §164.530(j)       |
+| Write Operation Logs | 6 years          | HIPAA §164.530(j)       |
+| User Session Data    | 1 year           | Business requirement    |
+| Error Logs           | 90 days          | Operational requirement |
+| Chaos Test Results   | 30 days          | Testing documentation   |
 
 ### Accounting of Disclosures
 

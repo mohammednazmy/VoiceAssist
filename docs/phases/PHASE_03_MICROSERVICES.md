@@ -1,14 +1,23 @@
 ---
-title: "Phase 03 Microservices"
-slug: "phases/phase-03-microservices"
+title: Phase 03 Microservices
+slug: phases/phase-03-microservices
 summary: "> **V2 PHASE DOCUMENT**"
 status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["phase", "microservices"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - phase
+  - microservices
 category: planning
+ai_summary: >-
+  > V2 PHASE DOCUMENT > > This phase description is part of the canonical 0–14
+  V2 plan. > It is intended to guide both human developers and Claude Code >
+  sessions. Always read DEVELOPMENT_PHASES_V2.md and BACKEND_ARCHITECTURE.md >
+  alongside this document. Harden API layer and service boundaries wit...
 ---
 
 # Phase 3: API Gateway & Core Services

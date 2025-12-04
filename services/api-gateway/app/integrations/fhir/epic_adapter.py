@@ -16,7 +16,6 @@ References:
 """
 
 import asyncio
-import json
 import logging
 import os
 import time
@@ -27,28 +26,9 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 import jwt
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
 
-from .fhir_client import (
-    FHIRAuthenticationError,
-    FHIRClient,
-    FHIRClientConfig,
-    FHIRConflictError,
-    FHIRError,
-    FHIRPreconditionError,
-    FHIRValidationError,
-    FHIRWriteResult,
-)
-from .fhir_models import (
-    FHIRAllergyIntolerance,
-    FHIRCondition,
-    FHIRMedication,
-    FHIRObservation,
-    FHIRPatient,
-    FHIRProcedure,
-    FHIRResourceType,
-)
+from .fhir_client import FHIRAuthenticationError, FHIRClient, FHIRClientConfig, FHIRError, FHIRWriteResult
+from .fhir_models import FHIRPatient, FHIRResourceType
 
 logger = logging.getLogger(__name__)
 
@@ -375,9 +355,9 @@ class EpicAdapter(FHIRClient):
         # Handle errors gracefully
         summary = {
             "patient": patient.to_dict() if isinstance(patient, FHIRPatient) else None,
-            "medications": [m.to_dict() for m in medications] if isinstance(medications, list) else [],
-            "conditions": [c.to_dict() for c in conditions] if isinstance(conditions, list) else [],
-            "allergies": [a.to_dict() for a in allergies] if isinstance(allergies, list) else [],
+            "medications": ([m.to_dict() for m in medications] if isinstance(medications, list) else []),
+            "conditions": ([c.to_dict() for c in conditions] if isinstance(conditions, list) else []),
+            "allergies": ([a.to_dict() for a in allergies] if isinstance(allergies, list) else []),
             "vitals": [v.to_dict() for v in vitals] if isinstance(vitals, list) else [],
             "labs": [l.to_dict() for l in labs] if isinstance(labs, list) else [],
             "fetched_at": datetime.utcnow().isoformat(),
@@ -940,7 +920,7 @@ class EpicAdapter(FHIRClient):
                         "id": med.id,
                         "name": med.medication_name,
                         "dosage": med.dosage_instruction,
-                        "authored_on": med.authored_on.isoformat() if med.authored_on else None,
+                        "authored_on": (med.authored_on.isoformat() if med.authored_on else None),
                     }
                 )
 

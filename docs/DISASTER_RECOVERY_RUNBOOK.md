@@ -1,14 +1,26 @@
 ---
-title: "Disaster Recovery Runbook"
-slug: "disaster-recovery-runbook"
+title: Disaster Recovery Runbook
+slug: disaster-recovery-runbook
 summary: "**Document Version:** 1.0"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["sre", "backend", "frontend"]
-tags: ["disaster", "recovery", "runbook"]
+audience:
+  - sre
+  - backend
+  - frontend
+  - ai-agents
+tags:
+  - disaster
+  - recovery
+  - runbook
 category: debugging
+ai_summary: >-
+  Document Version: 1.0 Last Updated: 2025-11-21 Status: Production-Ready Phase:
+  Phase 12 - High Availability & Disaster Recovery --- This runbook provides
+  step-by-step procedures for recovering the VoiceAssist platform from various
+  disaster scenarios. It covers database failures, complete system f...
 ---
 
 # Disaster Recovery Runbook

@@ -1,15 +1,38 @@
 ---
 title: Voice Mode Pipeline
 slug: voice/pipeline
-summary: Unified Voice Mode pipeline architecture, data flow, barge-in, audio playback, metrics, offline fallback, and testing strategy.
+summary: >-
+  Unified Voice Mode pipeline architecture, data flow, barge-in, audio playback,
+  metrics, offline fallback, and testing strategy.
 status: stable
 stability: production
 owner: backend
 lastUpdated: "2025-12-03"
-audience: ["human", "agent", "backend", "frontend"]
-tags: ["voice", "realtime", "websocket", "openai", "api", "barge-in", "audio", "offline", "multilingual"]
+audience:
+  - human
+  - agent
+  - backend
+  - frontend
+  - ai-agents
+tags:
+  - voice
+  - realtime
+  - websocket
+  - openai
+  - api
+  - barge-in
+  - audio
+  - offline
+  - multilingual
 category: reference
-relatedServices: ["api-gateway", "web-app"]
+relatedServices:
+  - api-gateway
+  - web-app
+ai_summary: >-
+  > Status: Production-ready > Last Updated: 2025-12-03 This document describes
+  the unified Voice Mode pipeline architecture, data flow, metrics, and testing
+  strategy. It serves as the canonical reference for developers working on
+  real-time voice features. VoiceAssist supports two voice pipeline mo...
 ---
 
 # Voice Mode Pipeline

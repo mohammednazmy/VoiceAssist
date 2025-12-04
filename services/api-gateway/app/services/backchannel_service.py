@@ -16,7 +16,6 @@ Phase: Voice Mode Backchanneling Enhancement (Phase 3)
 """
 
 import asyncio
-import base64
 import hashlib
 import random
 import time
@@ -109,11 +108,17 @@ BACKCHANNEL_PHRASES: Dict[str, List[BackchannelPhrase]] = {
 # Maps emotion states to preferred backchannel types
 EMOTION_PHRASE_MAP: Dict[str, Dict[str, Any]] = {
     "neutral": {
-        "preferred_types": [BackchannelType.ACKNOWLEDGMENT, BackchannelType.UNDERSTANDING],
+        "preferred_types": [
+            BackchannelType.ACKNOWLEDGMENT,
+            BackchannelType.UNDERSTANDING,
+        ],
         "weight_boost": 1.0,
     },
     "happy": {
-        "preferred_types": [BackchannelType.ENCOURAGEMENT, BackchannelType.ACKNOWLEDGMENT],
+        "preferred_types": [
+            BackchannelType.ENCOURAGEMENT,
+            BackchannelType.ACKNOWLEDGMENT,
+        ],
         "weight_boost": 1.2,
     },
     "sad": {
@@ -143,7 +148,10 @@ EMOTION_PHRASE_MAP: Dict[str, Dict[str, Any]] = {
         ],
     },
     "confused": {
-        "preferred_types": [BackchannelType.UNDERSTANDING, BackchannelType.ENCOURAGEMENT],
+        "preferred_types": [
+            BackchannelType.UNDERSTANDING,
+            BackchannelType.ENCOURAGEMENT,
+        ],
         "weight_boost": 1.0,
         "extra_phrases": [
             BackchannelPhrase("go on", BackchannelType.ENCOURAGEMENT, weight=1.5),
@@ -596,7 +604,7 @@ class BackchannelAudioCache:
 
     def _cache_key(self, phrase: str, voice_id: str) -> str:
         """Generate cache key for phrase/voice combination."""
-        return hashlib.md5(f"{phrase}:{voice_id}".encode()).hexdigest()
+        return hashlib.md5(f"{phrase}:{voice_id}".encode(), usedforsecurity=False).hexdigest()
 
     def get(self, phrase: str, voice_id: str) -> Optional[BackchannelAudio]:
         """Get cached audio for phrase/voice."""

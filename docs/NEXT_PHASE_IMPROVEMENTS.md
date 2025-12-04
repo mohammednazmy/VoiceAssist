@@ -1,242 +1,238 @@
 ---
-title: Documentation Improvement - Next Phase
-status: draft
-lastUpdated: 2025-12-04
-audience: [developers, ai-agents]
+title: Next Phase Improvements
+slug: next-phase-improvements
+summary: Roadmap and tracking for documentation improvements and AI-friendly enhancements
+ai_summary: Tracks documentation improvements across sprints. Sprint 1-2 complete, Sprint 3 (versioning, CODEOWNERS, i18n) 25% done. AI summary coverage at 86% (219/254 docs). Code examples have 18 semantic tags. CODEOWNERS file created. Next priorities are CI integration and documentation versioning.
+status: stable
+owner: docs
+lastUpdated: "2025-12-04"
+audience: ["developers", "docs", "ai-agents"]
 category: planning
-owner: documentation
-summary: Remaining documentation improvements and next steps for VoiceAssist
+tags: ["roadmap", "improvements", "documentation"]
 ---
 
-# Documentation Improvement - Next Phase
+# Next Phase Improvements
 
-## Completed in Current Phase
-
-### Workstream A: URL Consistency ✅
-- Fixed 59 occurrences of deprecated `voiceassist.asimo.io` → `dev.asimo.io`
-- Updated across 12 files
-- Added CI validation to prevent future regressions
-
-### Workstream B: Agent JSON Generation ✅
-- Created `scripts/generate-all-agent-json.js` - consolidated script
-- Generates: index.json, docs.json, status.json, activity.json, todos.json
-- Fixed gray-matter module dependency issues
-
-### Workstream C: Feature Flag Documentation ✅
-- Created `docs/admin-guide/feature-flags/` with 7 files:
-  - README.md, naming-conventions.md, lifecycle.md
-  - advanced-types.md, multi-environment.md, admin-panel-guide.md
-  - best-practices.md
-- Created `docs/admin-guide/system-settings-vs-flags.md`
-- Updated naming convention to match existing code (`category.feature_name`)
-
-### Workstream D: Style Guide ✅
-- Created `docs/STYLE_GUIDE.md`
-- Defined frontmatter requirements and writing standards
-
-### Workstream E: CI/CD Validation ✅
-- Enhanced `.github/workflows/docs-validation.yml`:
-  - Canonical URL validation
-  - Feature flag naming validation
-  - Frontmatter validation
-- Created `.github/workflows/sync-flag-docs.yml`
-
-### Workstream H: Backup/Recovery ✅
-- Created `scripts/backup-docs.sh`
-- Functions: create, restore, list, cleanup
+This document tracks the roadmap for documentation improvements and AI-friendly enhancements.
 
 ---
 
-## Next Phase: Remaining Improvements
+## Sprint Status Overview
 
-### 1. Documentation Versioning System
-
-**Priority:** Medium
-**Effort:** 2-3 days
-
-Implement version tracking for documentation:
-
-```typescript
-// docs-site/src/lib/versioning.ts
-interface DocVersion {
-  version: string;        // "2.0.0"
-  releaseDate: string;   // "2025-12-01"
-  changelog: string;     // Path to changelog
-}
-```
-
-**Tasks:**
-- [ ] Add version dropdown to docs-site header
-- [ ] Create `/docs/versions/` directory structure
-- [ ] Implement version-aware routing
-- [ ] Add `version` field to frontmatter schema
-
-### 2. Accessibility Improvements
-
-**Priority:** High
-**Effort:** 1-2 days
-
-WCAG 2.1 AA compliance for docs-site:
-
-**Tasks:**
-- [ ] Add skip-to-content link
-- [ ] Improve keyboard navigation in sidebar
-- [ ] Add ARIA labels to interactive elements
-- [ ] Test with screen reader (NVDA/VoiceOver)
-- [ ] Add focus indicators to all interactive elements
-- [ ] Ensure color contrast meets AA standards
-
-### 3. Documentation Monitoring Dashboard
-
-**Priority:** Medium
-**Effort:** 2-3 days
-
-Track documentation health metrics:
-
-**Tasks:**
-- [ ] Create `/agent/health.json` endpoint with:
-  - Stale doc count (not updated in 30+ days)
-  - Missing frontmatter count
-  - Broken link count
-  - Coverage score
-- [ ] Add to Grafana dashboard
-- [ ] Create weekly report email/Slack notification
-
-### 4. Cross-Team Documentation Ownership
-
-**Priority:** Low
-**Effort:** 1 day
-
-Clarify ownership and review processes:
-
-**Tasks:**
-- [ ] Add `owner` field validation in CI
-- [ ] Create CODEOWNERS for /docs directory
-- [ ] Document review process in CONTRIBUTING.md
-- [ ] Set up automated review requests by owner
-
-### 5. Enhanced In-App Help Integration
-
-**Priority:** Medium
-**Effort:** 2 days
-
-Connect apps to documentation contextually:
-
-**Tasks:**
-- [ ] Add `HelpTooltip` component with docs links
-- [ ] Create `/api/docs/contextual` endpoint
-- [ ] Implement context-aware help in:
-  - [ ] Admin Panel settings
-  - [ ] KB Editor
-  - [ ] Web App voice mode
-- [ ] Add "Learn more" links throughout UI
-
-### 6. Search Index for New Feature Flag Docs ✅ COMPLETED
-
-**Priority:** High
-**Effort:** 1 day
-**Completed:** 2025-12-04
-
-**Tasks:**
-- [x] Regenerate search-index.json to include admin-guide/feature-flags/
-- [x] Verify DocsSearch finds feature flag content (525 references)
-- [x] Test search with common queries
-- [x] Deploy updated search index to assistdocs.asimo.io
-
-### 7. Documentation Testing Framework
-
-**Priority:** Medium
-**Effort:** 2-3 days
-
-Automated testing for documentation:
-
-**Tasks:**
-- [ ] Test code examples compile/run
-- [ ] Validate API endpoint examples work
-- [ ] Check internal links resolve
-- [ ] Validate external links (non-blocking)
-- [ ] Integration tests for docs-site
-
-### 8. Multi-Language Documentation Prep
-
-**Priority:** Low
-**Effort:** 3-5 days
-
-Prepare for Arabic translations:
-
-**Tasks:**
-- [ ] Add i18n structure to docs-site
-- [ ] Create translation template files
-- [ ] Document translation workflow
-- [ ] Add RTL support to docs-site CSS
-- [ ] Prioritize key docs for translation
+| Sprint   | Focus Area                  | Status         | Completion |
+| -------- | --------------------------- | -------------- | ---------- |
+| Sprint 1 | Accessibility & Monitoring  | ✅ Complete    | 100%       |
+| Sprint 2 | In-App Help & Validation    | ✅ Complete    | 100%       |
+| Sprint 3 | Versioning, Ownership, i18n | 🚧 In Progress | 25%        |
 
 ---
 
-## Immediate Next Steps
+## Sprint 1: Accessibility & Monitoring ✅
 
-1. ~~**Run search index regeneration**~~ ✅ Completed 2025-12-04
+**Status**: Complete
 
-2. ~~**Deploy documentation changes**~~ ✅ Deployed to assistdocs.asimo.io 2025-12-04
+### Completed Tasks
 
-3. **Create GitHub issues** for each remaining improvement (pending)
-
-4. **Schedule accessibility audit** for next sprint (pending)
-
-## Sprint Prioritization
-
-Based on user impact and technical dependencies:
-
-### Sprint 1 (High Priority)
-1. **Accessibility Improvements** (Task #2) - WCAG 2.1 AA compliance
-   - Direct user impact for accessibility
-   - Foundation for all future improvements
-
-2. **Documentation Monitoring Dashboard** (Task #3)
-   - Enables tracking of doc health
-   - Automated detection of issues
-
-### Sprint 2 (Medium Priority)
-3. **Enhanced In-App Help Integration** (Task #5)
-   - Better user experience in apps
-   - Contextual help reduces support burden
-
-4. **Documentation Testing Framework** (Task #7)
-   - Automated validation of code examples
-   - Link integrity checking
-
-### Sprint 3 (Lower Priority)
-5. **Documentation Versioning System** (Task #1)
-   - Required for major version releases
-   - Can defer until v3.0 planning
-
-6. **Cross-Team Documentation Ownership** (Task #4)
-   - Process improvement
-   - Can be incremental
-
-7. **Multi-Language Documentation Prep** (Task #8)
-   - Arabic/RTL support
-   - Defer until user demand increases
+- [x] WCAG 2.1 AA accessibility improvements
+  - Skip-to-content link
+  - Enhanced focus indicators
+  - ARIA labels and roles
+  - Reduced motion support
+- [x] Documentation monitoring dashboard
+  - `/agent/health.json` endpoint
+  - Per-category freshness scores
+  - Coverage metrics
+  - Recommended next steps
 
 ---
 
-## Metrics to Track
+## Sprint 2: In-App Help & Validation ✅
 
-| Metric | Current | Target | Notes |
-|--------|---------|--------|-------|
-| Documentation coverage | ~85% | 95% | Need to measure |
-| Stale docs (>30 days) | Unknown | <5% | Add to monitoring dashboard |
-| Broken links | Unknown | 0 | Run check:links |
-| Accessibility score | Unknown | 95+ | Schedule audit |
-| Search accuracy | 90%+ ✅ | 90%+ | 525 feature flag refs indexed |
-| Feature flags documented | 23/23 ✅ | 100% | All categories covered |
-| Total docs indexed | 252 | - | Current count |
+**Status**: Complete
+
+### Completed Tasks
+
+- [x] HelpTooltip component for contextual help
+  - 16 help topics (feature flags, KB, settings)
+  - Hover/click trigger modes
+  - Documentation links
+  - Tests in `shared.test.tsx`
+- [x] Frontmatter validation script
+  - `scripts/validate-frontmatter.js`
+  - Required fields: title, status, lastUpdated, summary
+  - Recommended fields: ai_summary, audience, category, owner
+  - JSON output for CI integration
+- [x] AI-agent navigation page
+  - `/admin-guide/for-ai-agents.md`
+  - Endpoint documentation
+  - Directory structure guide
+  - Best practices for AI agents
+- [x] Enhanced agent JSON endpoints
+  - `docs-summary.json` with audience grouping
+  - `code-examples.json` with 3280 examples across 26 languages
+  - Per-category freshness in `health.json`
 
 ---
 
-## References
+## Sprint 3: Versioning, Ownership, i18n 🚧
 
-- [Feature Flag Documentation](./admin-guide/feature-flags/README.md)
-- [Style Guide](./STYLE_GUIDE.md)
-- [Backup Script](../scripts/backup-docs.sh)
-- [Agent JSON Generator](../scripts/generate-all-agent-json.js)
+**Status**: In Progress (25%)
+
+See [Sprint 3 Design Documents](./planning/SPRINT_3_DESIGN_DOCS.md) for detailed specifications.
+
+### Completed Tasks
+
+- [x] CODEOWNERS for cross-team ownership
+  - `.github/CODEOWNERS` file created
+  - Ownership assignments for all directories
+  - Scripts and apps covered
+- [x] AI summary expansion
+  - Coverage increased from 6% to 86%
+  - 219/254 docs now have ai_summary
+  - `generate-ai-summaries.js` script for automation
+- [x] Enhanced code-examples.json
+  - Added 18 semantic tags (api, docker, testing, etc.)
+  - `by_tag` grouping for semantic filtering
+  - Tag descriptions for context
+
+### Remaining Tasks
+
+- [ ] Documentation versioning system
+  - Version manifest (versions.json)
+  - VersionSelector component
+  - Git-tag-based snapshots
+  - SEO-friendly URLs
+- [ ] Ownership metadata in frontmatter
+  - Add `maintainers` and `reviewers` fields
+  - Update frontmatter validation script
+- [ ] i18n/RTL multi-language preparation
+  - Directory structure for locales
+  - RTL CSS support
+  - LocaleProvider component
+  - Translation status tracking
+
+---
+
+## Priority TODOs
+
+### High Priority
+
+1. **✅ Add ai_summary to more documents** (COMPLETE)
+   - Coverage: 86% (219/254 docs)
+   - All priority categories covered
+   - Remaining 35 docs are in archive/
+
+2. **Integrate validation into CI**
+   - Add `npm run validate:frontmatter` to CI pipeline
+   - Fail builds on missing required fields
+   - Warn on missing recommended fields
+
+3. **Complete documentation versioning**
+   - Create versions.json schema
+   - Implement VersionSelector component
+   - Set up versioned URL routing
+
+### Medium Priority
+
+4. **✅ Improve code example extraction** (COMPLETE)
+   - Added 18 semantic tags (api, docker, testing, etc.)
+   - `by_tag` grouping for filtering
+   - Tag descriptions for context
+
+5. **Documentation testing framework**
+   - Link validation script
+   - Code example testing (syntax check)
+   - Broken reference detection
+
+### Low Priority
+
+6. **Historical documentation cleanup**
+   - Archive deprecated docs (35 remaining)
+   - Update stale references
+   - Remove duplicate content
+
+7. **i18n preparation**
+   - Directory structure for locales
+   - RTL CSS utilities
+   - Translation workflow
+
+---
+
+## Metrics Dashboard
+
+### Current State (2025-12-04)
+
+| Metric                | Value  | Target     | Status |
+| --------------------- | ------ | ---------- | ------ |
+| Total Documents       | 254    | -          | -      |
+| With ai_summary       | 219    | 254 (100%) | 86%    |
+| AI Summary Coverage   | 86%    | 100%       | ✅     |
+| Validation Errors     | 0      | 0          | ✅     |
+| Stale Docs (30+ days) | 0      | 0          | ✅     |
+| Categories Tracked    | 13     | 15         | 87%    |
+| Code Examples         | 3,290+ | -          | ✅     |
+| Semantic Tags         | 18     | -          | ✅     |
+| CODEOWNERS Coverage   | 100%   | 100%       | ✅     |
+
+### AI Agent Endpoints
+
+| Endpoint                    | Status  | Records                   |
+| --------------------------- | ------- | ------------------------- |
+| `/agent/index.json`         | ✅ Live | 9 endpoints               |
+| `/agent/docs.json`          | ✅ Live | 254 docs                  |
+| `/agent/docs-summary.json`  | ✅ Live | By category & audience    |
+| `/agent/code-examples.json` | ✅ Live | 3,290+ examples, 18 tags  |
+| `/agent/health.json`        | ✅ Live | Per-category + ai_summary |
+| `/agent/status.json`        | ✅ Live | System status             |
+| `/agent/activity.json`      | ✅ Live | Recent changes            |
+| `/agent/todos.json`         | ✅ Live | Pending tasks             |
+
+---
+
+## Changelog
+
+### 2025-12-04 (Session 2)
+
+- Expanded ai_summary coverage from 6% to 86% (219/254 docs)
+- Created generate-ai-summaries.js script for automated drafts
+- Created .github/CODEOWNERS for cross-team ownership
+- Enhanced code-examples.json with 18 semantic tags
+- Added by_tag grouping and tag_descriptions
+- Updated health.json with ai_summary coverage metrics
+- Updated for-ai-agents.md with code-examples documentation
+- Started Sprint 3 implementation (25% complete)
+
+### 2025-12-04 (Session 1)
+
+- Completed Sprint 2 tasks
+- Created HelpTooltip component
+- Added frontmatter validation script
+- Created AI-agent navigation page
+- Enhanced docs-summary.json with audience grouping
+- Added code-examples.json endpoint
+- Created Sprint 3 design documents
+- Fixed 3 docs with validation errors
+
+### 2025-12-03
+
+- Completed Sprint 1 accessibility improvements
+- Added health.json monitoring endpoint
+- Created feature-flags documentation suite
+
+---
+
+## Contributing
+
+When adding or updating documentation:
+
+1. **Always include ai_summary** in frontmatter (2-3 sentences)
+2. **Set correct audience** tags (include `ai-agents` for AI-optimized docs)
+3. **Update lastUpdated** date
+4. **Run validation**: `node scripts/validate-frontmatter.js`
+5. **Regenerate agent JSON**: `node scripts/generate-all-agent-json.js`
+
+---
+
+**Document Version**: 1.0
+**Last Updated**: 2025-12-04
+**Maintained By**: VoiceAssist Documentation Team

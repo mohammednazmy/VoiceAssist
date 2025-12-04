@@ -2,190 +2,205 @@
 title: Feature Flags Admin Panel Guide
 status: stable
 lastUpdated: 2025-12-04
-audience: [admin, ai-agents]
+audience: [admin, developers, ai-agents]
 category: feature-flags
 owner: frontend
-summary: Using admin.asimo.io to manage feature flags
+summary: Using the Admin Panel to manage feature flags and scheduled variant changes
+ai_summary: Admin Panel at admin.asimo.io provides UI for flag management. Navigate to Settings > Feature Flags. Toggle, edit percentage, filter by category. Real-time updates via SSE. Scheduled Changes tab for time-based variant weight modifications with timezone support. RBAC enforced (admin for write, viewer for read). Prometheus metrics track scheduled changes. Requires admin JWT.
 ---
 
 # Feature Flags Admin Panel Guide
 
-## Accessing the Admin Panel
+## Accessing Feature Flags
 
 1. Navigate to [admin.asimo.io](https://admin.asimo.io)
-2. Log in with admin credentials
-3. Select **Settings > Feature Flags** from the sidebar
+2. Login with admin credentials
+3. Go to **Settings** > **Feature Flags**
 
-## Dashboard Overview
+## Interface Overview
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  Feature Flags                           [+ New Flag]   │
+│ Feature Flags                           [+ New Flag]    │
 ├─────────────────────────────────────────────────────────┤
-│  Environment: [Development] [Staging] [Production]      │
-│                                                         │
-│  Filter: [All ▼] [Active ▼]  Search: [____________]     │
+│ Filter: [All Categories ▼] [Search...          ]       │
 ├─────────────────────────────────────────────────────────┤
-│  ☐  FLAG NAME              TYPE      STATUS    ACTIONS  │
-├─────────────────────────────────────────────────────────┤
-│  ☐  ui.new_voice_panel     boolean   Active    [⚙]     │
-│  ☐  backend.rag_v2         boolean   Active    [⚙]     │
-│  ☐  experiment.chat        percentage 25%      [⚙]     │
-│  ☐  ops.maintenance        scheduled Pending   [⚙]     │
+│ ┌─────────────────────────────────────────────────────┐│
+│ │ ui.dark_mode                              [Toggle]  ││
+│ │ Enable dark mode theme                              ││
+│ │ Type: boolean | Status: Active | Updated: Dec 04   ││
+│ └─────────────────────────────────────────────────────┘│
+│ ┌─────────────────────────────────────────────────────┐│
+│ │ backend.rag_strategy                      [Edit]    ││
+│ │ RAG retrieval strategy selection                    ││
+│ │ Type: string | Value: "hybrid" | Updated: Dec 03   ││
+│ └─────────────────────────────────────────────────────┘│
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Managing Flags
+## Common Operations
 
-### Toggle a Flag
+### Toggle a Boolean Flag
 
 1. Find the flag in the list
 2. Click the toggle switch
-3. Confirm the change (production only)
+3. Confirm the change
+4. Change takes effect immediately
 
-### View Flag Details
+### Edit a Percentage Flag
 
-Click the flag name to see:
-- Description
-- Type and configuration
-- Current value per environment
-- Change history
-- Code references
+1. Click **Edit** on the flag
+2. Adjust the percentage slider (0-100%)
+3. Click **Save**
+4. New percentage applies to next evaluation
 
-### Edit Flag Configuration
+### Create a New Flag
 
-Click the gear icon [⚙] to:
-- Update description
-- Modify percentage (for percentage flags)
-- Edit schedule (for scheduled flags)
-- Configure variants (for variant flags)
+1. Click **+ New Flag**
+2. Select category from dropdown
+3. Enter flag name (snake_case)
+4. Choose type (boolean/percentage/variant/scheduled)
+5. Set default value
+6. Add description
+7. Click **Create**
 
-## Creating New Flags
+### Filter and Search
 
-1. Click **[+ New Flag]**
-2. Fill in the form:
+- **Category filter**: Show only `ui`, `backend`, etc.
+- **Search**: Filter by name or description
+- **Status filter**: Active, deprecated, disabled
 
-```
-┌─────────────────────────────────────┐
-│  Create Feature Flag                │
-├─────────────────────────────────────┤
-│  Category: [ui ▼]                   │
-│  Name: [____________]               │
-│  (Full name: ui.feature_name)       │
-│                                     │
-│  Type: [Boolean ▼]                  │
-│                                     │
-│  Description:                       │
-│  [______________________________]   │
-│                                     │
-│  Default Value: [Off ▼]             │
-│                                     │
-│  Owner: [@____________]             │
-│  JIRA Ticket: [____________]        │
-│                                     │
-│  [Cancel]              [Create]     │
-└─────────────────────────────────────┘
-```
+## Real-Time Updates
 
-3. Click **Create**
-4. Flag is created in development environment
+The Admin Panel uses Server-Sent Events (SSE) for real-time flag updates:
 
-## Flag Analytics
+- Changes by other admins appear immediately
+- No page refresh needed
+- Connection status shown in header
 
-View usage metrics for each flag:
+## Scheduled Variant Changes
 
-- **Evaluation count**: How often the flag is checked
-- **True/False ratio**: Percentage of enabled vs disabled
-- **Error rate**: Failed evaluations
-- **Performance**: Latency impact
+The Scheduled Changes feature allows you to schedule variant weight modifications for a future time. This is useful for:
+
+- Gradual rollouts scheduled for specific times
+- Feature releases coordinated with marketing campaigns
+- A/B test phase transitions
+- Time-zone aware deployments
+
+### Accessing Scheduled Changes
+
+1. Navigate to **Settings** > **Feature Flags**
+2. Click the **Scheduled Changes** tab (or click the 📅 badge on a flag with pending changes)
+
+### Interface Overview
 
 ```
-┌─────────────────────────────────────┐
-│  ui.new_voice_panel Analytics       │
-├─────────────────────────────────────┤
-│  Evaluations (24h): 12,456          │
-│  True: 62%  False: 38%              │
-│  Avg latency: 0.3ms                 │
-│  Errors: 0                          │
-├─────────────────────────────────────┤
-│  [Chart: Evaluations over time]     │
-└─────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│ Feature Flags                                               │
+├─────────────────────────────────────────────────────────────┤
+│ [Feature Flags] [Scheduled Changes (3)]                     │
+├─────────────────────────────────────────────────────────────┤
+│ Pending Scheduled Changes                    [+ New Change] │
+├─────────────────────────────────────────────────────────────┤
+│ ┌─────────────────────────────────────────────────────────┐│
+│ │ ui.new_feature_rollout                                  ││
+│ │ Increase variant_a to 50%                               ││
+│ │ Scheduled: Dec 10, 2025 09:00 (America/New_York)       ││
+│ │ [Preview] [Edit] [Cancel]                              ││
+│ └─────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Bulk Operations
+### Creating a Scheduled Change
 
-### Select Multiple Flags
+1. Click **+ New Change** or **Schedule** on a flag
+2. Select the target flag (if not pre-selected)
+3. Set the scheduled date and time
+4. Choose the timezone (IANA identifier, e.g., "America/New_York")
+5. Configure variant weight changes:
+   ```
+   control:   30%  →  20%
+   variant_a: 70%  →  80%
+   ```
+6. Add an optional description
+7. Click **Schedule Change**
 
-1. Check boxes next to flags
-2. Use bulk action menu:
-   - Enable all
-   - Disable all
-   - Export configuration
-   - Delete (development only)
+### Previewing Changes
 
-### Export/Import
+Before a scheduled change is applied, you can preview its effect:
 
-**Export:**
-```bash
-Settings > Feature Flags > Export > JSON
-```
+1. Click **Preview** on a scheduled change
+2. View the before/after comparison:
+   - Current variant weights
+   - New variant weights after change
+   - Affected user percentage
 
-**Import:**
-```bash
-Settings > Feature Flags > Import > Select JSON file
-```
+### Managing Scheduled Changes
 
-## Search and Filter
+#### Edit a Pending Change
 
-### Search
+1. Click **Edit** on the scheduled change
+2. Modify time, timezone, or variant weights
+3. Click **Save Changes**
 
-- Type in search box to filter by name
-- Searches description too
+#### Cancel a Scheduled Change
 
-### Filters
+1. Click **Cancel** on the scheduled change
+2. Confirm the cancellation
+3. The change is marked as cancelled (kept for audit)
 
-| Filter | Options |
-|--------|---------|
-| Category | ui, backend, experiment, ops |
-| Type | boolean, percentage, variant, scheduled |
-| Status | active, deprecated, disabled |
-| Owner | team/person filter |
+#### Delete a Scheduled Change
 
-## Keyboard Shortcuts
+1. Click the delete icon (requires admin role)
+2. Confirm permanent deletion
+3. The change is removed from the system
 
-| Key | Action |
-|-----|--------|
-| `/` | Focus search |
-| `n` | New flag |
-| `e` | Edit selected flag |
-| `d` | View details |
-| `Esc` | Close modal |
+### Timezone Handling
 
-## Permissions
+- All times are stored in UTC internally
+- Display time uses the selected timezone
+- DST transitions are handled automatically
+- Common timezones: UTC, America/New_York, America/Los_Angeles, Europe/London
 
-| Role | Capabilities |
-|------|--------------|
-| Viewer | View flags and analytics |
-| Editor | Create, edit flags in dev/staging |
-| Admin | All operations, including production |
+### Pending Changes Indicator
 
-## Troubleshooting
+Flags with pending scheduled changes show a badge:
 
-### Flag not updating
+- 📅 badge appears next to the flag name
+- Badge count shows number of pending changes
+- Click the badge to jump to Scheduled Changes tab
 
-1. Check environment selector
-2. Clear browser cache
-3. Check SSE connection status
-4. View browser console for errors
+### RBAC Permissions
 
-### Can't create flag
+| Action                  | Admin | Viewer |
+| ----------------------- | ----- | ------ |
+| List scheduled changes  | ✅    | ✅     |
+| Preview changes         | ✅    | ✅     |
+| Create scheduled change | ✅    | ❌     |
+| Update scheduled change | ✅    | ❌     |
+| Cancel scheduled change | ✅    | ❌     |
+| Delete scheduled change | ✅    | ❌     |
 
-1. Verify naming convention (`<category>.<feature_name>`)
-2. Check for duplicate names
-3. Ensure you have Editor permissions
+### Monitoring
 
-### Analytics not showing
+Prometheus metrics for scheduled changes:
 
-1. Flag must have evaluations
-2. Check time range filter
-3. Verify analytics service is running
+- `voiceassist_flag_scheduled_changes_total{status}` - Counter for applied/cancelled/skipped changes
+- `voiceassist_flag_scheduled_changes_pending` - Gauge for pending changes count
+
+## Audit Trail
+
+All flag changes are logged:
+
+- Who made the change
+- When it occurred
+- Previous and new values
+- Environment affected
+
+View audit log: **Settings** > **Audit Logs** > Filter by "feature_flags"
+
+## Related Documentation
+
+- [Phase 4: User Overrides](../../feature-flags/PHASE_4_USER_OVERRIDES_PLAN.md) - Per-user flag overrides for testing and debugging
+- [Feature Flags API Reference](/reference/api) - REST API endpoints for flag management
+- [Real-time SSE Updates](/backend/websocket) - Server-Sent Events for live updates

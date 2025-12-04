@@ -1,16 +1,36 @@
 ---
 title: Docs Site Deployment and TLS Runbook
 slug: operations/runbooks/docs-site-deployment-tls
-summary: Step-by-step guide for building, deploying, and managing TLS for assistdocs.asimo.io.
+summary: >-
+  Step-by-step guide for building, deploying, and managing TLS for
+  assistdocs.asimo.io.
 status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "sre", "devops"]
-tags: ["deployment", "runbook", "docs-site", "tls", "apache", "certbot"]
-relatedServices: ["docs-site"]
+audience:
+  - human
+  - agent
+  - sre
+  - devops
+  - ai-agents
+tags:
+  - deployment
+  - runbook
+  - docs-site
+  - tls
+  - apache
+  - certbot
+relatedServices:
+  - docs-site
 category: operations
-version: "1.0.0"
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 URL: https://assistdocs.asimo.io Document Root:
+  /var/www/assistdocs.asimo.io --- cd ~/VoiceAssist git pull origin main pnpm
+  install cd apps/docs-site pnpm validate:metadata pnpm check:links node
+  scripts/generate-agent-json.mjs pnpm build sudo rm -rf
+  /var/www/assistdocs.as...
 ---
 
 # Docs Site Deployment and TLS Runbook

@@ -1,14 +1,23 @@
 ---
-title: "Data Model"
-slug: "data-model"
+title: Data Model
+slug: data-model
 summary: "**Last Updated**: 2025-11-20"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["data", "model"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - data
+  - model
 category: reference
+ai_summary: >-
+  Last Updated: 2025-11-20 Status: Canonical Reference Purpose: Single source of
+  truth for all data entities across VoiceAssist V2 --- This document defines
+  ALL data entities used in VoiceAssist V2. Each entity has: 1. Purpose - What
+  the entity represents 2. Storage Location - Where data is persist...
 ---
 
 # VoiceAssist V2 - Canonical Data Model

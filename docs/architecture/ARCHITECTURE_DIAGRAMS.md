@@ -1,14 +1,23 @@
 ---
-title: "Architecture Diagrams"
-slug: "architecture/architecture-diagrams"
+title: Architecture Diagrams
+slug: architecture/architecture-diagrams
 summary: "**Last Updated**: 2025-11-20 (Phase 7)"
 status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["architecture", "diagrams"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - architecture
+  - diagrams
 category: architecture
+ai_summary: >-
+  Last Updated: 2025-11-20 (Phase 7) Purpose: Visual architecture diagrams for
+  system understanding --- 1. System Context Diagram 2. Container Diagram 3.
+  Component Diagram 4. Data Flow Diagrams 5. Deployment Diagram 6. Sequence
+  Diagrams --- High-level view of VoiceAssist and its external dependenci...
 ---
 
 # VoiceAssist V2 - Architecture Diagrams

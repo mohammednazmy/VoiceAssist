@@ -6,11 +6,26 @@ status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-11-27"
-audience: ["devops", "backend"]
-tags: ["runbook", "deployment", "operations", "production"]
+audience:
+  - devops
+  - backend
+  - ai-agents
+tags:
+  - runbook
+  - deployment
+  - operations
+  - production
 category: debugging
-relatedServices: ["api-gateway", "web-app", "admin-panel"]
-version: "1.0.0"
+relatedServices:
+  - api-gateway
+  - web-app
+  - admin-panel
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 Purpose: Step-by-step guide for deploying VoiceAssist
+  V2 --- - [ ] All tests passing in CI/CD - [ ] Code reviewed and approved - [ ]
+  Database migrations reviewed - [ ] Breaking changes documented - [ ] Rollback
+  plan documented - [ ] Stakeholders notified - [ ] Maintenance...
 ---
 
 # Deployment Runbook

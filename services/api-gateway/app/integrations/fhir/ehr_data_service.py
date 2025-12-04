@@ -15,7 +15,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .epic_adapter import EpicAdapter
 from .fhir_models import (
@@ -100,7 +100,7 @@ class EHRSessionContext:
             "labs": [l.to_dict() for l in self.labs],
             "procedures": [p.to_dict() for p in self.procedures],
             "status": self.status.value,
-            "last_updated": self.last_updated.isoformat() if self.last_updated else None,
+            "last_updated": (self.last_updated.isoformat() if self.last_updated else None),
             "errors": self.errors,
             "is_stale": self.is_stale,
         }
@@ -164,13 +164,17 @@ class EHRSessionContext:
         if self.vitals:
             # Get most recent vitals
             recent_vitals = {}
-            for v in sorted(self.vitals, key=lambda x: x.effective_datetime or datetime.min, reverse=True):
+            for v in sorted(
+                self.vitals,
+                key=lambda x: x.effective_datetime or datetime.min,
+                reverse=True,
+            ):
                 name = v.observation_name
                 if name not in recent_vitals:
                     recent_vitals[name] = {
                         "value": v.display_value,
                         "is_abnormal": v.is_abnormal,
-                        "timestamp": v.effective_datetime.isoformat() if v.effective_datetime else None,
+                        "timestamp": (v.effective_datetime.isoformat() if v.effective_datetime else None),
                     }
             context["vitals"] = recent_vitals
 
@@ -181,7 +185,7 @@ class EHRSessionContext:
                     "name": l.observation_name,
                     "value": l.display_value,
                     "reference_range": l.reference_range_display,
-                    "timestamp": l.effective_datetime.isoformat() if l.effective_datetime else None,
+                    "timestamp": (l.effective_datetime.isoformat() if l.effective_datetime else None),
                 }
                 for l in self.labs
                 if l.is_abnormal
@@ -223,9 +227,24 @@ class EHRDataService:
 
     # Voice command patterns
     VOICE_COMMANDS = {
-        "medications": ["show medications", "list medications", "current medications", "what medications"],
-        "allergies": ["show allergies", "list allergies", "patient allergies", "what allergies"],
-        "conditions": ["show conditions", "list conditions", "problem list", "diagnoses"],
+        "medications": [
+            "show medications",
+            "list medications",
+            "current medications",
+            "what medications",
+        ],
+        "allergies": [
+            "show allergies",
+            "list allergies",
+            "patient allergies",
+            "what allergies",
+        ],
+        "conditions": [
+            "show conditions",
+            "list conditions",
+            "problem list",
+            "diagnoses",
+        ],
         "vitals": ["show vitals", "latest vitals", "vital signs", "current vitals"],
         "labs": ["show labs", "recent labs", "lab results", "latest cbc", "latest bmp"],
         "summary": ["patient summary", "clinical summary", "show summary"],
@@ -776,7 +795,7 @@ class EHRDataService:
             "loaded_sessions": sum(1 for c in contexts if c.status == EHRDataStatus.LOADED),
             "partial_sessions": sum(1 for c in contexts if c.status == EHRDataStatus.PARTIAL),
             "error_sessions": sum(1 for c in contexts if c.status == EHRDataStatus.ERROR),
-            "adapter_healthy": self.epic_adapter.is_healthy() if self.epic_adapter else False,
+            "adapter_healthy": (self.epic_adapter.is_healthy() if self.epic_adapter else False),
         }
 
 

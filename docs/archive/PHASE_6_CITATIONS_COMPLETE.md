@@ -1,14 +1,24 @@
 ---
-title: "Phase 6 Citations Complete"
-slug: "archive/phase-6-citations-complete"
+title: Phase 6 Citations Complete
+slug: archive/phase-6-citations-complete
 summary: "**Status**: ✅ Implemented and Deployed"
 status: deprecated
 stability: legacy
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["phase", "citations", "complete"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - phase
+  - citations
+  - complete
 category: reference
+ai_summary: >-
+  Phase 6 adds a comprehensive citation sidebar that displays and manages all
+  citations from the current conversation, with search and export functionality.
+  This phase enhances the credibility and traceability of medical information
+  provided by the AI assistant.
 ---
 
 # Phase 6: Citations & Sources UI - COMPLETE ✓

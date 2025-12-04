@@ -6,11 +6,25 @@ status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-11-27"
-audience: ["devops", "backend", "admin"]
-tags: ["slo", "reliability", "metrics", "operations"]
+audience:
+  - devops
+  - backend
+  - admin
+  - ai-agents
+tags:
+  - slo
+  - reliability
+  - metrics
+  - operations
 category: operations
-relatedServices: ["api-gateway"]
-version: "1.0.0"
+relatedServices:
+  - api-gateway
+version: 1.0.0
+ai_summary: >-
+  Version: 1.0 Last Updated: 2025-11-27 Owner: Platform Engineering Team This
+  document defines the Service Level Objectives (SLOs) for VoiceAssist V2. SLOs
+  are reliability targets that balance user expectations with engineering
+  effort. - SLI (Service Level Indicator): Quantitative measure of servic...
 ---
 
 # Service Level Objectives (SLOs) - VoiceAssist V2

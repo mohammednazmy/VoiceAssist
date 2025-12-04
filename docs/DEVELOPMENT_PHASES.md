@@ -1,14 +1,24 @@
 ---
-title: "Development Phases"
-slug: "development-phases"
+title: Development Phases
+slug: development-phases
 summary: "> **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["development", "phases"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - development
+  - phases
 category: planning
+ai_summary: >-
+  > ⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2 > This describes the original
+  20-phase plan. > For the current architecture and phases, see: > > -
+  ARCHITECTURE_V2.md > - DEVELOPMENT_PHASES_V2.md > - START_HERE.md > -
+  Implementation Status This document breaks down VoiceAssist development into
+  self...
 ---
 
 > **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**

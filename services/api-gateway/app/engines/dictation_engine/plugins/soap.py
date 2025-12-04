@@ -9,7 +9,7 @@ Phase 4 Enhancements:
 - Custom validation for clinical completeness
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from .base import BaseDictationPlugin, SectionConstraint, ValidationResult, ValidationSeverity
 
@@ -160,7 +160,11 @@ class SOAPPlugin(BaseDictationPlugin):
                     plan.content += f"\n\nMedications:\n- {medication}"
                 else:
                     plan.content = f"Medications:\n- {medication}"
-            return {"success": True, "action": "add_medication", "medication": medication}
+            return {
+                "success": True,
+                "action": "add_medication",
+                "medication": medication,
+            }
 
         return {"success": False, "error": "Plan section not found"}
 

@@ -1,14 +1,22 @@
 ---
-title: "Readme"
-slug: "archive/readme"
-summary: "This directory contains archived documentation from completed development phases. These files are preserved for historical reference."
+title: Readme
+slug: archive/readme
+summary: >-
+  This directory contains archived documentation from completed development
+  phases. These files are preserved for historical reference.
 status: deprecated
 stability: legacy
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["readme"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - readme
 category: reference
+ai_summary: >-
+  This directory contains archived documentation from completed development
+  phases. These files are preserved for historical reference.
 ---
 
 # Archived Documentation

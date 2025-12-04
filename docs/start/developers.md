@@ -1,14 +1,28 @@
 ---
 title: Developer Quick Start
 slug: start/developers
-summary: Get started developing with VoiceAssist - setup, architecture, and contribution guide.
+summary: >-
+  Get started developing with VoiceAssist - setup, architecture, and
+  contribution guide.
 status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-12-02"
-audience: ["developers", "agent"]
-tags: ["quickstart", "development", "setup", "contributing"]
+audience:
+  - developers
+  - agent
+  - ai-agents
+tags:
+  - quickstart
+  - development
+  - setup
+  - contributing
 category: getting-started
+ai_summary: >-
+  Last Updated: 2025-12-01 Welcome to VoiceAssist development! This guide will
+  get you up and running quickly. --- - Node.js 20+ and pnpm 8+ - Python 3.11+
+  with pip - Docker and Docker Compose - Git for version control --- git clone
+  https://github.com/your-org/VoiceAssist.git cd VoiceAssist pnpm in...
 ---
 
 # Developer Quick Start

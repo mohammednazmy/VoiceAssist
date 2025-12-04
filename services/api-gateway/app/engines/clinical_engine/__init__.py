@@ -30,9 +30,8 @@ Phase 6 Enhancements:
 """
 
 import logging
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -236,8 +235,8 @@ class ClinicalEngine:
             # Create Epic config
             epic_config = EpicConfig(
                 environment=environment,
-                timeout_seconds=getattr(self.policy_config, "epic_timeout_seconds", 30) if self.policy_config else 30,
-                max_retries=getattr(self.policy_config, "epic_max_retries", 3) if self.policy_config else 3,
+                timeout_seconds=(getattr(self.policy_config, "epic_timeout_seconds", 30) if self.policy_config else 30),
+                max_retries=(getattr(self.policy_config, "epic_max_retries", 3) if self.policy_config else 3),
             )
 
             # Initialize Epic adapter
@@ -912,7 +911,7 @@ class ClinicalEngine:
             "epic_fhir": {
                 "enabled": self._use_epic_fhir,
                 "available": self.is_epic_available(),
-                "health": self.get_epic_health_status() if self._provider_monitor else None,
+                "health": (self.get_epic_health_status() if self._provider_monitor else None),
             },
         }
 

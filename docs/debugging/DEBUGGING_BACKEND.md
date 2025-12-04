@@ -1,16 +1,33 @@
 ---
 title: Backend Debugging Guide
 slug: debugging/backend
-summary: Debug API Gateway, database, cache, and backend services in VoiceAssist.
+summary: "Debug API Gateway, database, cache, and backend services in VoiceAssist."
 status: stable
 stability: production
 owner: backend
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "ai-agents", "backend", "sre"]
-tags: ["debugging", "runbook", "backend", "api-gateway", "database", "troubleshooting"]
-relatedServices: ["api-gateway"]
+audience:
+  - human
+  - agent
+  - ai-agents
+  - backend
+  - sre
+tags:
+  - debugging
+  - runbook
+  - backend
+  - api-gateway
+  - database
+  - troubleshooting
+relatedServices:
+  - api-gateway
 category: debugging
-version: "1.0.0"
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 Component: services/api-gateway/ --- Likely Causes: -
+  Unhandled exception in request handler - Database connection timeout - Missing
+  required environment variable - External service failure (OpenAI, Qdrant)
+  Steps to Investigate: 1. Check API Gateway logs (Docker container...
 ---
 
 # Backend Debugging Guide

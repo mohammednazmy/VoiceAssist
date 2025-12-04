@@ -1,15 +1,32 @@
 ---
 title: Internal Documentation System
 slug: internal-docs-system
-summary: Developer guide for documentation tooling, validation scripts, and quality gates.
+summary: >-
+  Developer guide for documentation tooling, validation scripts, and quality
+  gates.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-12-02"
-audience: ["human", "backend", "frontend", "devops"]
-tags: ["documentation", "tooling", "ci-cd", "quality"]
+audience:
+  - human
+  - backend
+  - frontend
+  - devops
+  - ai-agents
+tags:
+  - documentation
+  - tooling
+  - ci-cd
+  - quality
 category: reference
-relatedServices: ["docs-site"]
+relatedServices:
+  - docs-site
+ai_summary: >-
+  This document describes the documentation infrastructure for VoiceAssist,
+  including validation scripts, quality gates, and how to maintain documentation
+  quality. The VoiceAssist documentation system consists of: Static JSON
+  endpoints served at assistdocs.asimo.io: For detailed usage, see Agent AP...
 ---
 
 # Internal Documentation System

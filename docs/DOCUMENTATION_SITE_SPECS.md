@@ -1,14 +1,29 @@
 ---
-title: "Documentation Site Specs"
-slug: "documentation-site-specs"
-summary: "VoiceAssist documentation site implementation details, automation pipelines, and AI integration."
+title: Documentation Site Specs
+slug: documentation-site-specs
+summary: >-
+  VoiceAssist documentation site implementation details, automation pipelines,
+  and AI integration.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-12-02"
-audience: ["human", "agent"]
-tags: ["documentation", "site", "specs", "automation", "ai"]
+audience:
+  - human
+  - agent
+  - ai-agents
+tags:
+  - documentation
+  - site
+  - specs
+  - automation
+  - ai
 category: reference
+ai_summary: >-
+  - Framework: Next.js 14 (app router) with static export - Styling: Tailwind
+  CSS + shadcn/ui components - Content: MDX for markdown with React components -
+  Search: Fuse.js client-side with /search-index.json - Code Highlighting: Shiki
+  - Diagrams: Mermaid - Theme: next-themes for dark mode Search i...
 ---
 
 # Documentation Site Specifications

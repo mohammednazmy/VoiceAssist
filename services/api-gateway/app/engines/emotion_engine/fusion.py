@@ -9,7 +9,7 @@ Combines emotion signals from multiple sources:
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -161,8 +161,24 @@ class EmotionFusion:
         text_lower = text.lower()
 
         # Simple sentiment keywords
-        positive_words = ["great", "good", "happy", "love", "thanks", "wonderful", "excellent"]
-        negative_words = ["bad", "wrong", "hate", "frustrated", "confused", "angry", "sad"]
+        positive_words = [
+            "great",
+            "good",
+            "happy",
+            "love",
+            "thanks",
+            "wonderful",
+            "excellent",
+        ]
+        negative_words = [
+            "bad",
+            "wrong",
+            "hate",
+            "frustrated",
+            "confused",
+            "angry",
+            "sad",
+        ]
 
         positive_count = sum(1 for w in positive_words if w in text_lower)
         negative_count = sum(1 for w in negative_words if w in text_lower)

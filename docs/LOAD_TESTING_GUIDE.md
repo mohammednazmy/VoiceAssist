@@ -1,14 +1,26 @@
 ---
-title: "Load Testing Guide"
-slug: "load-testing-guide"
-summary: "This comprehensive guide covers load testing for VoiceAssist, including when to run tests, how to interpret results, choosing between tools (k6 vs Loc..."
+title: Load Testing Guide
+slug: load-testing-guide
+summary: >-
+  This comprehensive guide covers load testing for VoiceAssist, including when
+  to run tests, how to interpret results, choosing between tools (k6 vs Loc...
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["frontend"]
-tags: ["load", "testing", "guide"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - load
+  - testing
+  - guide
 category: testing
+ai_summary: >-
+  This comprehensive guide covers load testing for VoiceAssist, including when
+  to run tests, how to interpret results, choosing between tools (k6 vs Locust),
+  understanding test scenarios, troubleshooting issues, CI/CD integration, and
+  best practices. --- Run comprehensive load tests before every pr...
 ---
 
 # VoiceAssist Load Testing Guide

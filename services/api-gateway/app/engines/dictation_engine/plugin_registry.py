@@ -6,7 +6,7 @@ Allows hospitals to enable/disable plugins at granular level.
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -151,11 +151,9 @@ class DictationPlugin:
 
     async def on_activate(self, context: Dict) -> None:
         """Called when plugin is activated for a session"""
-        pass
 
     async def on_deactivate(self, context: Dict) -> None:
         """Called when plugin is deactivated"""
-        pass
 
     async def format_note(self, note: "DictationNote") -> str:
         """Format note for output/export"""

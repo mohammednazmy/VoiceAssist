@@ -1,14 +1,27 @@
 ---
-title: "Admin Panel Specs"
-slug: "admin-panel-specs"
-summary: "The VoiceAssist Admin Panel provides a centralized web interface for system configuration, monitoring, and management. Accessible at `admin.asimo.io`."
+title: Admin Panel Specs
+slug: admin-panel-specs
+summary: >-
+  The VoiceAssist Admin Panel provides a centralized web interface for system
+  configuration, monitoring, and management. Accessible at `admin.asimo.io`.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-12-02"
-audience: ["devops", "sre"]
-tags: ["admin", "panel", "specs"]
+audience:
+  - devops
+  - sre
+  - ai-agents
+tags:
+  - admin
+  - panel
+  - specs
 category: operations
+ai_summary: >-
+  The VoiceAssist Admin Panel provides a centralized web interface for system
+  configuration, monitoring, and management. Accessible at admin.asimo.io. -
+  Framework: React 18+ with TypeScript - Build Tool: Vite - Styling: Tailwind
+  CSS - Component Library: shadcn/ui or Tremor (for dashboards) - Charts...
 ---
 
 # Admin Panel Specifications

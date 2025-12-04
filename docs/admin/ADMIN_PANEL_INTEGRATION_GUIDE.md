@@ -1,13 +1,15 @@
 ---
 title: Admin Panel Integration Guide
-description: Comprehensive guide for the VoiceAssist admin panel with cross-app navigation, real-time events, and voice monitoring
-version: 1.0.0
-status: active
-last_updated: "2025-12-01"
+summary: Comprehensive guide for the VoiceAssist admin panel with cross-app navigation, real-time events, and voice monitoring
+ai_summary: Admin panel integrates cross-app navigation, real-time event streaming via WebSocket/Redis, and voice session monitoring. Provides centralized control for feature flags, knowledge base, and system health.
+status: stable
+owner: frontend
+lastUpdated: "2025-12-04"
 audience:
   - admin
   - developers
   - ai-agents
+category: reference
 tags:
   - admin
   - integration

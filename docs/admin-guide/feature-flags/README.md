@@ -2,86 +2,75 @@
 title: Feature Flags Overview
 status: stable
 lastUpdated: 2025-12-04
-audience: [admin, developers, ai-agents]
+audience: [developers, admin, ai-agents]
 category: feature-flags
 owner: backend
 summary: Comprehensive guide to VoiceAssist feature flag system
+ai_summary: Feature flags enable runtime feature toggling without deployments. Use category.feature_name pattern (e.g., ui.dark_mode, backend.rag_strategy). Flags stored in PostgreSQL, cached in Redis (5min TTL).
 ---
 
 # Feature Flags Overview
 
-This guide covers the VoiceAssist feature flag system, which enables controlled rollout of new features, A/B testing, and operational control across all platform components.
+VoiceAssist uses a comprehensive feature flag system for runtime feature management, A/B testing, and gradual rollouts.
 
-## Quick Start
+## Quick Reference
 
-### For Administrators
-
-1. Access the Admin Panel at [admin.asimo.io](https://admin.asimo.io)
-2. Navigate to **Settings > Feature Flags**
-3. Toggle flags on/off per environment (dev, staging, production)
-
-### For Developers
-
-```typescript
-import { useFeatureFlag } from "@voiceassist/feature-flags";
-
-// Simple boolean flag
-const showNewUI = useFeatureFlag("ui.new_voice_settings");
-
-// Percentage rollout
-const experimentEnabled = useFeatureFlag("experiment.voice_v2", {
-  userId: currentUser.id,
-});
-```
+| Category      | Purpose              | Examples                                           |
+| ------------- | -------------------- | -------------------------------------------------- |
+| `ui`          | Frontend/UX features | `ui.dark_mode`, `ui.new_navigation`                |
+| `backend`     | API/Server features  | `backend.rag_strategy`, `backend.rbac_enforcement` |
+| `admin`       | Admin panel features | `admin.bulk_operations`, `admin.analytics`         |
+| `integration` | External services    | `integration.nextcloud`, `integration.openai`      |
+| `experiment`  | A/B tests            | `experiment.experimental_api`                      |
+| `ops`         | Operational controls | `ops.maintenance_mode`, `ops.rate_limiting`        |
 
 ## Naming Convention
 
-All feature flags follow the pattern: `<category>.<feature_name>`
+All flags follow the pattern: `<category>.<feature_name>`
 
-| Category      | Purpose                  | Example                       |
-| ------------- | ------------------------ | ----------------------------- |
-| `ui`          | Frontend/visual changes  | `ui.dark_mode_v2`             |
-| `backend`     | API/backend features     | `backend.streaming_responses` |
-| `admin`       | Admin panel features     | `admin.bulk_operations`       |
-| `integration` | Third-party integrations | `integration.elevenlabs_tts`  |
-| `experiment`  | A/B tests                | `experiment.onboarding_flow`  |
-| `ops`         | Operational controls     | `ops.rate_limiting_enabled`   |
+```typescript
+// Good examples
+ui.dark_mode;
+backend.rag_strategy;
+ops.maintenance_mode;
 
-> **Note:** The TypeScript definition uses dot notation (e.g., `backend.rag_strategy`).
-> See [Naming Conventions](./naming-conventions.md) for full details.
-
-## Flag Types
-
-| Type         | Description               | Example                    |
-| ------------ | ------------------------- | -------------------------- |
-| `boolean`    | Simple on/off toggle      | `ui.show_beta_badge`       |
-| `percentage` | Gradual rollout (0-100%)  | `experiment.new_chat_ui`   |
-| `variant`    | Multiple variants (A/B/C) | `experiment.pricing_tiers` |
-| `scheduled`  | Time-based activation     | `ops.holiday_mode`         |
-
-## Documentation Structure
-
-- **[Naming Conventions](./naming-conventions.md)** - Flag naming standards
-- **[Lifecycle](./lifecycle.md)** - Flag lifecycle: create > test > promote > deprecate
-- **[Advanced Types](./advanced-types.md)** - Boolean, percentage, variant, scheduled flags
-- **[Multi-Environment](./multi-environment.md)** - Dev, staging, production management
-- **[Admin Panel Guide](./admin-panel-guide.md)** - Using admin.asimo.io to manage flags
-- **[CLI Reference](./cli-reference.md)** - Command-line tools, curl commands, automation scripts
-- **[Best Practices](./best-practices.md)** - When to use flags, cleanup strategies
-
-## Source of Truth
-
-The authoritative flag definitions are in:
-
-```
-packages/types/src/featureFlags.ts
+// Bad examples
+darkMode; // Missing category
+ui - dark - mode; // Wrong separator
+ff_ui_dark_mode; // Old deprecated pattern
 ```
 
-Flag states are stored in Redis and synced via SSE at `/api/feature-flags/stream`.
+## Architecture
+
+```
+┌─────────────────┐     ┌──────────────────┐     ┌──────────────┐
+│  Application    │────▶│  Feature Flag    │────▶│  PostgreSQL  │
+│                 │     │  Service         │     │  (persist)   │
+└─────────────────┘     └──────────────────┘     └──────────────┘
+                              │
+                              ▼
+                        ┌──────────────┐
+                        │    Redis     │
+                        │  (5min TTL)  │
+                        └──────────────┘
+```
 
 ## Related Documentation
 
-- [System Settings vs Feature Flags](../system-settings-vs-flags.md)
-- [Backend Implementation Details](../../FEATURE_FLAGS.md) - Database schema, Python API, Redis caching
-- [Feature Flags API Reference](/reference/feature-flags-api.md)
-- [Admin Panel Specs](/overview/ADMIN_PANEL_SPECS.md)
+- [Naming Conventions](./naming-conventions.md)
+- [Lifecycle Management](./lifecycle.md)
+- [Advanced Types](./advanced-types.md)
+- [Multi-Environment](./multi-environment.md)
+- [Admin Panel Guide](./admin-panel-guide.md)
+- [Best Practices](./best-practices.md)
+
+## API Endpoints
+
+| Endpoint                                 | Method | Description         |
+| ---------------------------------------- | ------ | ------------------- |
+| `/api/admin/feature-flags`               | GET    | List all flags      |
+| `/api/admin/feature-flags/{name}`        | GET    | Get specific flag   |
+| `/api/admin/feature-flags`               | POST   | Create flag         |
+| `/api/admin/feature-flags/{name}`        | PATCH  | Update flag         |
+| `/api/admin/feature-flags/{name}`        | DELETE | Delete flag         |
+| `/api/admin/feature-flags/{name}/toggle` | POST   | Toggle boolean flag |

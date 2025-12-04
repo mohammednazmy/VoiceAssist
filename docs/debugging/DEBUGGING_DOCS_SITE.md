@@ -1,16 +1,36 @@
 ---
 title: Docs Site Debugging Guide
 slug: debugging/docs-site
-summary: Debug Next.js docs site, static export, Apache routing, and documentation issues.
+summary: >-
+  Debug Next.js docs site, static export, Apache routing, and documentation
+  issues.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-12-03"
-audience: ["human", "agent", "ai-agents", "frontend", "sre"]
-tags: ["debugging", "runbook", "docs-site", "nextjs", "apache", "troubleshooting"]
-relatedServices: ["docs-site"]
+audience:
+  - human
+  - agent
+  - ai-agents
+  - frontend
+  - sre
+tags:
+  - debugging
+  - runbook
+  - docs-site
+  - nextjs
+  - apache
+  - troubleshooting
+relatedServices:
+  - docs-site
 category: debugging
-version: "1.1.0"
+version: 1.1.0
+ai_summary: >-
+  Last Updated: 2025-12-03 Component: apps/docs-site/ Live Site:
+  https://assistdocs.asimo.io --- The docs site is a static Next.js export
+  served by Apache: docs/.md → Next.js build → static HTML → Apache →
+  assistdocs.asimo.io (apps/docs-site) (out/) (rewrite rules) Key points: - All
+  pages are pre-r...
 ---
 
 # Docs Site Debugging Guide

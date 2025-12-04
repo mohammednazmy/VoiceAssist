@@ -1,14 +1,26 @@
 ---
 title: User Guide - Getting Started
 slug: start/users
-summary: Get started using VoiceAssist - voice mode, text chat, and key features.
+summary: "Get started using VoiceAssist - voice mode, text chat, and key features."
 status: stable
 stability: production
 owner: product
 lastUpdated: "2025-12-01"
-audience: ["user", "human"]
-tags: ["quickstart", "user-guide", "voice", "chat"]
+audience:
+  - user
+  - human
+  - ai-agents
+tags:
+  - quickstart
+  - user-guide
+  - voice
+  - chat
 category: getting-started
+ai_summary: >-
+  Last Updated: 2025-12-01 Welcome to VoiceAssist! This guide will help you get
+  started with voice and text interactions. --- VoiceAssist is a HIPAA-compliant
+  medical AI assistant that helps healthcare professionals with: - Medical
+  Questions - Evidence-based answers with citations - Clinical Guidel...
 ---
 
 # User Guide - Getting Started

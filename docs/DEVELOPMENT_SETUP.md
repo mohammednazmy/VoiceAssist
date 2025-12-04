@@ -1,14 +1,25 @@
 ---
-title: "Development Setup"
-slug: "development-setup"
-summary: "This guide walks you through setting up your local development environment for VoiceAssist."
+title: Development Setup
+slug: development-setup
+summary: >-
+  This guide walks you through setting up your local development environment for
+  VoiceAssist.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["development", "setup"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - development
+  - setup
 category: reference
+ai_summary: >-
+  This guide walks you through setting up your local development environment for
+  VoiceAssist. --- - Git 2.30+ - Docker 24.0+ and Docker Compose 2.20+ - Python
+  3.11+ (for backend development) - Node.js 18+ (for frontend development) -
+  pnpm 8+ (package manager for frontend monorepo) - Visual Studio C...
 ---
 
 # VoiceAssist Development Setup Guide

@@ -1,31 +1,21 @@
 ---
-title: "Feature Flags Backend Implementation"
-slug: "feature-flags-backend"
-summary: "Backend implementation details for the VoiceAssist feature flag system - database schema, Python API, and caching architecture."
+title: "Feature Flags"
+slug: "feature-flags"
+summary: "Runtime feature toggling and configuration management system"
+ai_summary: Feature flags enable runtime toggles without deployments. Use category.feature_name pattern (e.g., ui.dark_mode, backend.rag_strategy). Stored in PostgreSQL, cached in Redis (5min TTL). See admin-guide/feature-flags/ for detailed docs.
 status: stable
 stability: production
 owner: backend
 lastUpdated: "2025-12-04"
-audience: [backend, devops, ai-agents]
-tags: ["feature", "flags", "backend", "implementation"]
+audience: ["developers", "admin", "ai-agents"]
+tags: ["feature", "flags", "configuration", "runtime"]
 category: reference
 ---
 
-# Feature Flags Backend Implementation
+# Feature Flags System
 
-**Last Updated**: 2025-12-04
-**Purpose**: Backend implementation details for runtime feature toggling
-
-> **Looking for usage documentation?**
->
-> This document covers backend implementation (database schema, Python API, Redis caching).
-> For user-facing documentation, see the **[Feature Flags Admin Guide](admin-guide/feature-flags/README.md)**:
-> - [Naming Conventions](admin-guide/feature-flags/naming-conventions.md)
-> - [Lifecycle Management](admin-guide/feature-flags/lifecycle.md)
-> - [Best Practices](admin-guide/feature-flags/best-practices.md)
-> - [Advanced Types](admin-guide/feature-flags/advanced-types.md)
-> - [Multi-Environment](admin-guide/feature-flags/multi-environment.md)
-> - [Admin Panel Guide](admin-guide/feature-flags/admin-panel-guide.md)
+**Last Updated**: 2025-11-21 (Phase 7 - P3.1)
+**Purpose**: Runtime feature toggling and configuration management
 
 ---
 
@@ -611,6 +601,19 @@ async def process_request():
 
 ## Related Documentation
 
+### Feature Flag Guides (New - Recommended)
+
+- [Feature Flags Overview](./admin-guide/feature-flags/README.md) - Comprehensive guide
+- [Naming Conventions](./admin-guide/feature-flags/naming-conventions.md) - `category.feature_name` pattern
+- [Feature Flag Lifecycle](./admin-guide/feature-flags/lifecycle.md) - Draft → Active → Deprecated → Removed
+- [Advanced Types](./admin-guide/feature-flags/advanced-types.md) - Boolean, percentage, variant, scheduled
+- [Multi-Environment](./admin-guide/feature-flags/multi-environment.md) - Dev, staging, production configs
+- [Admin Panel Guide](./admin-guide/feature-flags/admin-panel-guide.md) - UI usage
+- [Best Practices](./admin-guide/feature-flags/best-practices.md) - Guidelines and tips
+- [System Settings vs Feature Flags](./admin-guide/system-settings-vs-flags.md) - When to use each
+
+### Architecture & System Docs
+
 - [UNIFIED_ARCHITECTURE.md](./UNIFIED_ARCHITECTURE.md) - System architecture
 - [SERVICE_CATALOG.md](./SERVICE_CATALOG.md) - API endpoint catalog
 - [SECURITY_COMPLIANCE.md](./SECURITY_COMPLIANCE.md) - Security guidelines
@@ -618,7 +621,7 @@ async def process_request():
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2025-11-21
+**Document Version**: 2.0
+**Last Updated**: 2025-12-04
 **Maintained By**: VoiceAssist Engineering Team
 **Review Cycle**: Quarterly or after major feature additions

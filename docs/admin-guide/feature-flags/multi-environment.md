@@ -1,171 +1,97 @@
 ---
-title: Multi-Environment Feature Flag Management
+title: Multi-Environment Feature Flags
 status: stable
 lastUpdated: 2025-12-04
-audience: [developers, admin, devops, ai-agents]
+audience: [developers, devops, ai-agents]
 category: feature-flags
 owner: backend
-summary: Managing feature flags across development, staging, and production environments
+summary: Managing feature flags across dev, staging, and production environments
+ai_summary: Flags have per-environment states. Dev flags auto-enable, staging mirrors prod with overrides, prod requires explicit enablement. Use Redis namespaced keys (flags:dev:name, flags:prod:name).
 ---
 
-# Multi-Environment Feature Flag Management
+# Multi-Environment Feature Flags
 
-## Environments
+## Environment Overview
 
-VoiceAssist uses three deployment environments:
+| Environment | Purpose             | Default State         |
+| ----------- | ------------------- | --------------------- |
+| `dev`       | Development/testing | Flags often enabled   |
+| `staging`   | Pre-production QA   | Mirror production     |
+| `prod`      | Production          | Conservative defaults |
 
-| Environment | URL | Purpose |
-|-------------|-----|---------|
-| Development | `localhost:3000` | Local development |
-| Staging | `staging.dev.asimo.io` | QA and testing |
-| Production | `dev.asimo.io` | Live users |
+## Redis Key Structure
 
-## Environment-Specific Configuration
-
-### Flag State Storage
+Flags are namespaced by environment:
 
 ```
-Redis Keys:
-- flags:dev:<flag_name>     # Development
-- flags:staging:<flag_name> # Staging
-- flags:prod:<flag_name>    # Production
+flags:<environment>:<flag_name>
+
+# Examples
+flags:dev:ui.dark_mode
+flags:staging:ui.dark_mode
+flags:prod:ui.dark_mode
 ```
 
-### Configuration Override Priority
-
-1. Environment variable (`FF_<FLAG_NAME>=true`)
-2. Redis state for current environment
-3. Default from `featureFlags.ts`
-
-## Promotion Workflow
-
-### Development → Staging
-
-```bash
-# Via CLI
-npm run flags:promote ui.new_feature --from=dev --to=staging
-
-# Via Admin Panel
-1. Go to admin.asimo.io > Feature Flags
-2. Select flag
-3. Click "Promote to Staging"
-```
-
-### Staging → Production
-
-```bash
-# Via CLI (requires confirmation)
-npm run flags:promote ui.new_feature --from=staging --to=prod
-
-# Via Admin Panel
-1. Go to admin.asimo.io > Feature Flags
-2. Select flag
-3. Click "Promote to Production"
-4. Confirm in modal
-```
-
-## Environment Isolation
+## Environment Configuration
 
 ### Development
 
-- All flags accessible
-- Can override any flag locally
-- Changes don't affect other developers
-
-```bash
-# Local override via .env.local
-FF_UI_NEW_FEATURE=true
-FF_EXPERIMENT_VOICE_V2=false
-
-# These map to flags: ui.new_feature and experiment.voice_v2
+```typescript
+// Auto-enable experimental features in dev
+if (process.env.NODE_ENV === "development") {
+  defaultEnabled: true;
+}
 ```
 
 ### Staging
 
-- Mirrors production structure
-- Safe to test production workflows
-- Integration testing environment
+```typescript
+// Mirror production with test overrides
+const stagingOverrides = {
+  "experiment.new_feature": true, // Test before prod
+  "ops.debug_logging": true, // Extra logging
+};
+```
 
 ### Production
 
-- Requires elevated permissions
-- Changes logged and auditable
-- Automatic rollback on error spike
-
-## Real-Time Sync
-
-Flags sync across environments via SSE:
-
-```
-/api/feature-flags/stream?env=staging
+```typescript
+// Conservative defaults, explicit enablement
+const prodDefaults = {
+  "backend.rbac_enforcement": true,
+  "ops.rate_limiting": true,
+  "experiment.new_feature": false, // Requires explicit rollout
+};
 ```
 
-When a flag changes:
-1. Redis updated
-2. SSE broadcast to connected clients
-3. Clients update local cache
-4. UI reflects new state (no refresh needed)
+## API Usage
 
-## Admin Panel Features
+### Get Flag for Environment
 
-### Environment Switcher
-
-```
-┌─────────────────────────────────────┐
-│  Environment: [Dev ▼] [Staging] [Prod]  │
-│                                     │
-│  ui.new_voice_panel                 │
-│  ├── Dev:     ✓ Enabled             │
-│  ├── Staging: ✓ Enabled             │
-│  └── Prod:    ✗ Disabled            │
-└─────────────────────────────────────┘
+```bash
+curl /api/admin/feature-flags/ui.dark_mode?env=staging
 ```
 
-### Bulk Operations
+### Set Flag for Environment
 
-- Enable/disable flags per environment
-- Copy configuration between environments
-- Export/import flag states
+```bash
+curl -X PATCH /api/admin/feature-flags/ui.dark_mode \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": true, "environment": "staging"}'
+```
+
+### Promote Flag to Production
+
+```bash
+# Copy staging state to production
+curl -X POST /api/admin/feature-flags/ui.dark_mode/promote \
+  -d '{"from": "staging", "to": "prod"}'
+```
 
 ## Best Practices
 
-### Testing Workflow
-
-1. Enable flag in **development**
-2. Test locally, fix issues
-3. Promote to **staging**
-4. Run E2E tests
-5. Stakeholder review
-6. Promote to **production** (gradual rollout)
-
-### Emergency Procedures
-
-Production issue with flagged feature:
-
-1. Navigate to Admin Panel
-2. Disable flag in Production
-3. Create incident ticket
-4. Debug in Development/Staging
-
-```bash
-# Emergency CLI disable
-npm run flags:disable ui.problem_feature --env=prod --reason="Incident #123"
-```
-
-### Audit Trail
-
-All changes logged:
-```json
-{
-  "flag": "ui.new_feature",
-  "action": "enable",
-  "environment": "production",
-  "user": "admin@asimo.io",
-  "timestamp": "2025-12-04T10:30:00Z",
-  "reason": "Rollout approved by PM"
-}
-```
-
-View logs:
-- Admin Panel > Feature Flags > History
-- `/api/flags/audit?flag=ui.new_feature`
+1. **Test in dev first** - Always validate in development
+2. **Stage mirrors prod** - Staging should have same state as prod
+3. **Document overrides** - Record why staging differs from prod
+4. **Gradual promotion** - Use percentage rollouts in prod
+5. **Rollback plan** - Know how to quickly disable in prod
