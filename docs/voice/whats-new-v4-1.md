@@ -370,6 +370,152 @@ Voice Mode v4.1 was developed with contributions from:
 
 ---
 
+## UI Components Guide
+
+### VoiceFirstInputBar Component
+
+**Location:** `/var/www/quran/js/components/VoiceFirstInputBar.js`
+
+The primary interface for voice interaction in v4.1:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│    ┌──────────────────────────────────────────────────┐    │
+│    │  "What would you like to learn about today?"      │    │
+│    └──────────────────────────────────────────────────┘    │
+│                                                             │
+│              ╭─────────────────────────╮                   │
+│              │     [  🎤  ]            │  ← Tap to Speak   │
+│              │   Recording...          │                   │
+│              ╰─────────────────────────╯                   │
+│                                                             │
+│         [ ⌨️ Text ]    [ ⚙️ Settings ]    [ ❓ Help ]      │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**States:**
+
+| State      | Visual                 | Behavior                    |
+| ---------- | ---------------------- | --------------------------- |
+| Idle       | Grey microphone        | Tap to start recording      |
+| Recording  | Pulsing red + waveform | Real-time audio levels      |
+| Processing | Spinning indicator     | Transcription in progress   |
+| Error      | Red outline + message  | Retry or switch to keyboard |
+
+**Props:**
+
+```javascript
+<VoiceFirstInputBar
+  onTranscript={(text) => handleSubmit(text)}
+  vadPreset="normal"
+  language="ar"
+  placeholder="Ask about any Surah..."
+  showKeyboardToggle={true}
+/>
+```
+
+### StreamingTextDisplay Component
+
+**Location:** `/var/www/quran/js/components/StreamingTextDisplay.js`
+
+Renders AI responses with real-time streaming:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  🤖 Assistant                                    12:34 PM   │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Surah Al-Fatihah (الفاتحة) is the opening chapter of     │
+│  the Quran. It consists of seven verses and is recited     │
+│  in every unit of prayer...                                │
+│                                                             │
+│  **Key Themes:**                                           │
+│  • Praise of Allah (verses 1-4)                            │
+│  • Request for guidance (verses 5-7)                       │
+│  • The straight path (الصراط المستقيم)█                   │
+│                                                    ↑cursor │
+│  ─────────────────────────────────────────────────────────│
+│  📖 Source: Tafsir Ibn Kathir, Vol 1, p.23  [View →]       │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Features:**
+
+- Token-by-token rendering with cursor animation
+- Markdown support (bold, lists, code blocks)
+- RTL text detection and rendering
+- Citation card expansion on click
+- Copy/share buttons on completion
+
+**Props:**
+
+```javascript
+<StreamingTextDisplay
+  stream={responseStream}
+  onComplete={() => setIsStreaming(false)}
+  showCitations={true}
+  enableRTL="auto"
+  animationSpeed={30} // ms per character
+/>
+```
+
+### QualityBadge Component
+
+**Location:** `/var/www/quran/js/components/QualityBadge.js`
+
+Displays current audio quality and network status:
+
+```
+Normal view:          Expanded on hover/tap:
+┌─────────┐          ┌─────────────────────────┐
+│ 📶 High │          │ 📶 High Quality         │
+└─────────┘          │ ─────────────────────── │
+                     │ Bitrate: 128 kbps       │
+                     │ RTT: 45ms               │
+                     │ Packet Loss: 0.1%       │
+                     └─────────────────────────┘
+```
+
+**Quality Indicators:**
+
+| Badge   | Color  | Meaning              |
+| ------- | ------ | -------------------- |
+| 📶 High | Green  | Excellent connection |
+| 📶 Med  | Yellow | Acceptable quality   |
+| 📶 Low  | Orange | Degraded quality     |
+| 📶 Min  | Red    | Minimal quality mode |
+
+**Props:**
+
+```javascript
+<QualityBadge quality={networkQuality} showDetails={true} onQualityChange={(tier) => logQualityEvent(tier)} />
+```
+
+### Component Integration Example
+
+```javascript
+// Main voice interface integration
+function VoiceInterface() {
+  const [streaming, setStreaming] = useState(false);
+  const [quality, setQuality] = useState("high");
+
+  return (
+    <div className="voice-interface">
+      <QualityBadge quality={quality} />
+
+      <StreamingTextDisplay stream={responseStream} onComplete={() => setStreaming(false)} showCitations={true} />
+
+      <VoiceFirstInputBar onTranscript={handleSubmit} disabled={streaming} vadPreset={settings.vadPreset} />
+    </div>
+  );
+}
+```
+
+---
+
 ## Related Documentation
 
 - [Voice Mode Architecture](./voice-mode-v4-overview.md)
