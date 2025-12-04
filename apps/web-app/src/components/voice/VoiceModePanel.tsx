@@ -1,8 +1,12 @@
 /**
- * @deprecated This component uses OpenAI Realtime API which has been replaced
- * by the Thinker/Talker pipeline for better latency and tool support.
+ * LEGACY - OpenAI Realtime API Voice Panel
  *
- * Use ThinkerTalkerVoicePanel instead.
+ * @deprecated This component uses OpenAI Realtime API which has been REPLACED
+ * by the Thinker/Talker pipeline (Deepgram STT + GPT-4o + ElevenLabs TTS).
+ *
+ * USE INSTEAD: ThinkerTalkerVoicePanel
+ *
+ * This component is maintained for backwards compatibility only.
  *
  * Original description:
  * Voice Mode Panel

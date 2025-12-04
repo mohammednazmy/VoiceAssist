@@ -1,8 +1,14 @@
 /**
- * @deprecated This hook uses OpenAI Realtime API which has been replaced
- * by the Thinker/Talker pipeline for better latency and tool support.
+ * LEGACY - OpenAI Realtime API Voice Session
  *
- * Use useThinkerTalkerSession instead.
+ * @deprecated This hook uses OpenAI Realtime API which has been REPLACED
+ * by the Thinker/Talker pipeline (Deepgram STT + GPT-4o + ElevenLabs TTS).
+ * The T/T pipeline offers better latency, full tool/RAG support, and
+ * unified conversation context with chat mode.
+ *
+ * USE INSTEAD: useThinkerTalkerSession (or useThinkerTalkerVoiceMode for complete voice UI)
+ *
+ * This module is maintained for backwards compatibility only.
  *
  * Original description:
  * useRealtimeVoiceSession Hook

@@ -863,6 +863,24 @@ export function useThinkerTalkerSession(
             `[ThinkerTalker] WebSocket closed: ${event.code} ${event.reason}`,
           );
 
+          // Check for auth-related close codes (1008 = Policy Violation, typically auth failure)
+          const isAuthError = event.code === 1008;
+
+          if (isAuthError) {
+            // Don't reconnect on auth errors - user needs to re-login
+            voiceLog.warn(
+              "[ThinkerTalker] WebSocket closed due to auth error - not reconnecting",
+            );
+            fatalErrorRef.current = true;
+            handleError(
+              new Error(
+                event.reason || "Authentication failed - please log in again",
+              ),
+            );
+            updateStatus("error");
+            return;
+          }
+
           if (!intentionalDisconnectRef.current) {
             scheduleReconnect();
           } else {

@@ -463,7 +463,23 @@ export function useChatSession(
         // Only treat as error if not a clean close (1000) or going away (1001)
         const isNormalClosure = event.code === 1000 || event.code === 1001;
 
-        // Attempt reconnection for abnormal closures
+        // Check for auth-related close codes (1008 = Policy Violation, typically auth failure)
+        const isAuthError = event.code === 1008;
+
+        if (isAuthError) {
+          // Don't reconnect on auth errors - user needs to re-login
+          websocketLog.warn(
+            "WebSocket closed due to auth error - not reconnecting",
+          );
+          handleError(
+            "AUTH_FAILED",
+            event.reason || "Authentication failed - please log in again",
+          );
+          // Don't attempt reconnection - the token is likely expired
+          return;
+        }
+
+        // Attempt reconnection for abnormal closures (but not auth errors)
         if (
           !isNormalClosure &&
           reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS

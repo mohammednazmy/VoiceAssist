@@ -1,7 +1,11 @@
 """
 OpenAI Realtime API client
 
-Lightweight helper for creating realtime sessions and exchanging
+DEPRECATED: This module is LEGACY and maintained for backwards compatibility only.
+The Thinker/Talker pipeline (Deepgram STT + GPT-4o + ElevenLabs TTS) is now the
+primary voice implementation. See voice_pipeline_service.py for the current approach.
+
+This client was a lightweight helper for creating realtime sessions and exchanging
 signaling metadata without exposing the primary API key to callers.
 
 The client intentionally mirrors the semantics used by

@@ -1,11 +1,20 @@
 """
 OpenAI Realtime API Integration Service
-Generates ephemeral tokens and session configuration for voice mode
 
-This service provides:
+DEPRECATED: This module is LEGACY and maintained for backwards compatibility only.
+The Thinker/Talker pipeline (Deepgram STT + GPT-4o + ElevenLabs TTS) is now the
+primary voice implementation. See voice_pipeline_service.py for the current approach.
+
+This service was used to generate ephemeral tokens and session configuration for
+OpenAI's Realtime API voice mode.
+
+Historical functionality:
 1. OpenAI Realtime API session configuration
 2. Provider abstraction for future STT/TTS integrations
 3. Safe provider config (never exposes raw API keys)
+
+Note: The AdaptiveVADManager in this file may still be used for VAD tuning
+across both implementations.
 """
 
 import asyncio
