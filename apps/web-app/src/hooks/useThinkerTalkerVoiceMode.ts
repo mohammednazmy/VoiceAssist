@@ -15,7 +15,7 @@
  * Phase: Thinker/Talker Voice Pipeline Migration
  */
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   useThinkerTalkerSession,
   type TTConnectionStatus,
@@ -24,8 +24,11 @@ import {
   type TTToolCall,
   type TTVoiceMetrics,
   type TTVoiceSettings,
+  type TTEmotionResult,
+  type TTBackchannelEvent,
 } from "./useThinkerTalkerSession";
 import { useTTAudioPlayback, type TTPlaybackState } from "./useTTAudioPlayback";
+import { useBackchannelAudio } from "./useBackchannelAudio";
 import {
   useUnifiedConversationStore,
   type MessageSource,
@@ -53,6 +56,12 @@ export interface TTVoiceModeOptions {
   onToolCall?: (toolCall: TTToolCall) => void;
   /** Callback when metrics are updated */
   onMetricsUpdate?: (metrics: TTVoiceMetrics) => void;
+  /** Callback when user emotion is detected (Phase 1: Hume AI) */
+  onEmotionDetected?: (emotion: TTEmotionResult) => void;
+  /** Enable backchannel audio playback (Phase 2) */
+  enableBackchannel?: boolean;
+  /** Callback when backchannel plays (Phase 2) */
+  onBackchannelPlay?: (phrase: string) => void;
 }
 
 export interface TTVoiceModeReturn {
@@ -84,6 +93,13 @@ export interface TTVoiceModeReturn {
   // Error
   error: Error | null;
 
+  // Phase 1: Emotion Detection
+  currentEmotion: TTEmotionResult | null;
+
+  // Phase 2: Backchanneling
+  backchannelPhrase: string | null;
+  isBackchanneling: boolean;
+
   // Actions
   connect: () => Promise<void>;
   disconnect: () => void;
@@ -109,7 +125,15 @@ export function useThinkerTalkerVoiceMode(
     onAIResponse,
     onToolCall,
     onMetricsUpdate,
+    onEmotionDetected,
+    enableBackchannel = true,
+    onBackchannelPlay,
   } = options;
+
+  // Phase 1: Emotion state
+  const [currentEmotion, setCurrentEmotion] = useState<TTEmotionResult | null>(
+    null,
+  );
 
   // Get store actions
   const {
@@ -125,6 +149,19 @@ export function useThinkerTalkerVoiceMode(
 
   // Track current response for streaming
   let currentResponseId: string | null = null;
+
+  // Phase 2: Backchannel audio hook
+  const backchannelAudio = useBackchannelAudio({
+    volume: volume * 0.6, // Backchannels at 60% of main volume
+    enabled: enableBackchannel,
+    onPlayStart: (phrase) => {
+      voiceLog.debug(`[TTVoiceMode] Backchannel playing: "${phrase}"`);
+      onBackchannelPlay?.(phrase);
+    },
+    onPlayEnd: (phrase) => {
+      voiceLog.debug(`[TTVoiceMode] Backchannel ended: "${phrase}"`);
+    },
+  });
 
   // Audio playback hook
   const audioPlayback = useTTAudioPlayback({
@@ -269,6 +306,22 @@ export function useThinkerTalkerVoiceMode(
     onMetricsUpdate: (metrics: TTVoiceMetrics) => {
       onMetricsUpdate?.(metrics);
     },
+
+    // Phase 1: Handle emotion detection from Hume AI
+    onEmotionDetected: (emotion: TTEmotionResult) => {
+      voiceLog.debug(
+        `[TTVoiceMode] Emotion detected: ${emotion.primary_emotion} ` +
+          `(conf=${emotion.primary_confidence.toFixed(2)})`,
+      );
+      setCurrentEmotion(emotion);
+      onEmotionDetected?.(emotion);
+    },
+
+    // Phase 2: Handle backchannel audio playback
+    onBackchannel: (event: TTBackchannelEvent) => {
+      voiceLog.debug(`[TTVoiceMode] Backchannel received: "${event.phrase}"`);
+      backchannelAudio.playBackchannel(event);
+    },
   });
 
   // Barge-in handler - combines session signal with audio stop
@@ -331,6 +384,13 @@ export function useThinkerTalkerVoiceMode(
       // Error
       error: session.error,
 
+      // Phase 1: Emotion Detection
+      currentEmotion,
+
+      // Phase 2: Backchanneling
+      backchannelPhrase: backchannelAudio.currentPhrase,
+      isBackchanneling: backchannelAudio.isPlaying,
+
       // Actions
       connect,
       disconnect,
@@ -339,7 +399,15 @@ export function useThinkerTalkerVoiceMode(
       setVolume: audioPlayback.setVolume,
       resetError: session.resetFatalError,
     }),
-    [session, audioPlayback, connect, disconnect, bargeIn],
+    [
+      session,
+      audioPlayback,
+      backchannelAudio,
+      currentEmotion,
+      connect,
+      disconnect,
+      bargeIn,
+    ],
   );
 }
 

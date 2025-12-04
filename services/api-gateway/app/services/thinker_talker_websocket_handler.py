@@ -338,6 +338,11 @@ class ThinkerTalkerWebSocketHandler:
                     self._pipeline_session.config.stt_language = voice_settings["language"]
                 if "barge_in_enabled" in voice_settings:
                     self._pipeline_session.config.barge_in_enabled = voice_settings["barge_in_enabled"]
+                if "vad_sensitivity" in voice_settings:
+                    # Convert to int (0-100 scale)
+                    vad_sens = int(voice_settings["vad_sensitivity"])
+                    self._pipeline_session.config.vad_sensitivity = max(0, min(100, vad_sens))
+                    logger.info(f"Updated pipeline vad_sensitivity to: {self._pipeline_session.config.vad_sensitivity}")
 
             # Apply Phase 7-10 advanced settings to session config
             if advanced_settings:

@@ -1,8 +1,8 @@
 # VoiceAssist API Gateway
 
-**Version:** 2.0
+**Version:** 2.1
 **Status:** Production Ready
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-12-03
 
 ---
 
@@ -240,6 +240,28 @@ pytest tests/unit/test_auth.py -v
 - WebSocket support for streaming responses
 - Voice input processing
 - Typing indicators and presence
+
+### Voice Mode Enhancement (10-Phase - Complete 2025-12-03)
+
+The voice pipeline has been enhanced with 10 phases of improvements:
+
+| Service                         | Purpose                               |
+| ------------------------------- | ------------------------------------- |
+| `emotion_detection_service.py`  | Hume AI emotion detection from speech |
+| `backchannel_service.py`        | Natural verbal acknowledgments        |
+| `prosody_analysis_service.py`   | Speech pattern analysis               |
+| `memory_context_service.py`     | Three-tier conversation memory        |
+| `repair_strategy_service.py`    | Conversational repair strategies      |
+| `dictation_service.py`          | Medical dictation state management    |
+| `voice_command_service.py`      | Voice command processing              |
+| `note_formatter_service.py`     | Medical note formatting               |
+| `medical_vocabulary_service.py` | Medical terminology support           |
+| `patient_context_service.py`    | HIPAA-compliant patient context       |
+| `dictation_phi_monitor.py`      | Real-time PHI monitoring              |
+| `session_analytics_service.py`  | Session analytics tracking            |
+| `feedback_service.py`           | User feedback collection              |
+
+**Documentation:** See `docs/VOICE_MODE_ENHANCEMENT_10_PHASE.md`
 
 ### Observability
 

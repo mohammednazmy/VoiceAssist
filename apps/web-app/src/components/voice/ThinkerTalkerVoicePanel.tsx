@@ -24,6 +24,7 @@ import type {
 import { CompactVoiceBar } from "./CompactVoiceBar";
 import { VoiceExpandedDrawer } from "./VoiceExpandedDrawer";
 import { VoiceModeSettings } from "./VoiceModeSettings";
+import { EmotionIndicator } from "./EmotionIndicator";
 import { useVoiceSettingsStore } from "../../stores/voiceSettingsStore";
 
 // ============================================================================
@@ -58,7 +59,8 @@ export function ThinkerTalkerVoicePanel({
   const [showSettings, setShowSettings] = useState(false);
 
   // Voice settings from store
-  const { elevenlabsVoiceId, language } = useVoiceSettingsStore();
+  const { elevenlabsVoiceId, language, vadSensitivity } =
+    useVoiceSettingsStore();
 
   // T/T Voice Mode hook
   const voiceMode = useThinkerTalkerVoiceMode({
@@ -67,6 +69,7 @@ export function ThinkerTalkerVoicePanel({
       voice_id: elevenlabsVoiceId || "TxGEqnHWrfWFTfGW9XjX", // Josh as default
       language,
       barge_in_enabled: true,
+      vad_sensitivity: vadSensitivity, // 0-100 from settings
     },
     onUserTranscript: (text, isFinal) => {
       if (isFinal) {
@@ -120,6 +123,17 @@ export function ThinkerTalkerVoicePanel({
         onDismissError={voiceMode.resetError}
         ttfaMs={voiceMode.ttfaMs}
       />
+
+      {/* Phase 1: Emotion indicator (floats above compact bar when emotion detected) */}
+      {voiceMode.isConnected && voiceMode.currentEmotion && (
+        <div className="absolute bottom-24 right-4 z-10">
+          <EmotionIndicator
+            emotion={voiceMode.currentEmotion}
+            size="sm"
+            showDetails={false}
+          />
+        </div>
+      )}
 
       {/* Compact bar (always visible) */}
       <CompactVoiceBar

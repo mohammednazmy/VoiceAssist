@@ -1747,6 +1747,8 @@ async def voice_pipeline_websocket(
     - tool.call: Tool being called
     - tool.result: Tool result
     - voice.state: Pipeline state
+    - emotion.detected: User emotion detected (Hume AI integration)
+    - backchannel.trigger: Natural verbal cue audio (e.g., "uh-huh", "I see")
     - error: Error message
 
     Query Parameters:

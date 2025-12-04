@@ -1,6 +1,6 @@
 {
-  "count": 238,
-  "generated_at": "2025-12-03T20:14:27.070Z",
+  "count": 239,
+  "generated_at": "2025-12-04T04:18:46.416Z",
   "docs": [
     {
       "slug": "architecture/frontend",
@@ -14,6 +14,42 @@
       "category": "architecture",
       "tags": ["architecture", "frontend", "react", "typescript", "monorepo"],
       "relatedServices": ["web-app", "admin-panel", "docs-site"],
+      "lastUpdated": "2025-12-03"
+    },
+    {
+      "slug": "roadmap",
+      "path": "ROADMAP.md",
+      "title": "Roadmap",
+      "summary": "This is the canonical V2 development roadmap for VoiceAssist. It presents a **15-phase implementation plan (Phase 0-14)** organized by timeframe and d...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["human"],
+      "category": "reference",
+      "tags": ["roadmap"],
+      "lastUpdated": "2025-12-03"
+    },
+    {
+      "slug": "voice/enhancement-10-phase",
+      "path": "VOICE_MODE_ENHANCEMENT_10_PHASE.md",
+      "title": "Voice Mode Enhancement - 10 Phase Implementation",
+      "summary": "Comprehensive 10-phase enhancement plan transforming VoiceAssist voice mode into a human-like conversational partner with medical dictation capabilities. All phases complete.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["human", "agent", "backend", "frontend"],
+      "category": "reference",
+      "tags": [
+        "voice",
+        "enhancement",
+        "emotion",
+        "dictation",
+        "medical",
+        "backchanneling",
+        "memory",
+        "analytics"
+      ],
+      "relatedServices": ["api-gateway", "web-app"],
       "lastUpdated": "2025-12-03"
     },
     {
@@ -1467,19 +1503,6 @@
       "audience": ["human"],
       "category": "reference",
       "tags": ["remaining", "message", "edit", "work"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "roadmap",
-      "path": "ROADMAP.md",
-      "title": "Roadmap",
-      "summary": "This is the canonical V2 development roadmap for VoiceAssist. It presents a **15-phase implementation plan (Phase 0-14)** organized by timeframe and d...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human"],
-      "category": "planning",
-      "tags": ["roadmap"],
       "lastUpdated": "2025-11-27"
     },
     {

@@ -5,6 +5,7 @@ from app.models.attachment import MessageAttachment
 from app.models.audit_log import AuditLog
 from app.models.citation import MessageCitation
 from app.models.clinical_context import ClinicalContext
+from app.models.conversation_memory import ConversationMemory, UserContext, UserSpeechProfile
 from app.models.document import Document
 from app.models.feature_flag import FeatureFlag
 from app.models.feature_flag_analytics import FeatureFlagAnalytics
@@ -16,6 +17,7 @@ from app.models.session_event import SessionEvent
 from app.models.system_api_key import SystemAPIKey
 from app.models.user import User
 from app.models.user_api_key import UserAPIKey
+from app.models.user_emotion_profile import RepairSessionHistory, UserEmotionProfile, UserNote, UserProgressRecord
 from app.models.user_feature_flag import UserFeatureFlag
 from app.models.user_voice_preferences import UserVoicePreferences
 from app.models.voice_session_metrics import VoiceSessionMetrics
@@ -25,7 +27,10 @@ __all__ = [
     "AuditLog",
     "ClinicalContext",
     "ConversationFolder",
+    "ConversationMemory",
     "User",
+    "UserContext",
+    "UserSpeechProfile",
     "Session",
     "Message",
     "MessageAttachment",
@@ -43,4 +48,8 @@ __all__ = [
     "PromptType",
     "PromptStatus",
     "VoiceSessionMetrics",
+    "UserEmotionProfile",
+    "UserProgressRecord",
+    "UserNote",
+    "RepairSessionHistory",
 ]
