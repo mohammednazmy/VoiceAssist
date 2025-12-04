@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "version": "0.1.0",
+    "term_count": 5,
+    "last_updated": "2024-12-04",
+    "language": "pl",
+    "alphabet": "ipa",
+    "status": "placeholder",
+    "categories": [],
+    "note": "Placeholder lexicon for Polish. Requires native speaker review."
+  },
+  "cukrzyca": "t͡sukˈʐɨt͡sa",
+  "nadciśnienie": "natˈt͡ɕiɕɲɛɲɛ",
+  "serce": "ˈsɛrt͡sɛ",
+  "ból głowy": "bul ˈɡwɔvɨ",
+  "lek": "lɛk"
+}

@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "version": "0.1.0",
+    "term_count": 5,
+    "last_updated": "2024-12-04",
+    "language": "tr",
+    "alphabet": "ipa",
+    "status": "placeholder",
+    "categories": [],
+    "note": "Placeholder lexicon for Turkish. Requires native speaker review."
+  },
+  "diyabet": "dijaˈbet",
+  "hipertansiyon": "hipertansiˈjon",
+  "kalp": "kalp",
+  "baş ağrısı": "baʃ aːɾɯsɯ",
+  "ilaç": "iˈlatʃ"
+}

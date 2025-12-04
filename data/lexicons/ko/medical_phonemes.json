@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "version": "0.1.0",
+    "term_count": 5,
+    "last_updated": "2024-12-04",
+    "language": "ko",
+    "alphabet": "ipa",
+    "status": "placeholder",
+    "categories": [],
+    "note": "Placeholder lexicon for Korean. Requires native speaker review."
+  },
+  "당뇨병": "taŋɲobʲʌŋ",
+  "고혈압": "koɦjʌɾap",
+  "심장": "ɕimdʑaŋ",
+  "두통": "tutʰoŋ",
+  "약": "jak"
+}

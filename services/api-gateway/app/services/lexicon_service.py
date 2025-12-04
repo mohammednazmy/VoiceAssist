@@ -8,11 +8,55 @@ Reference: /home/asimo/.claude/plans/noble-bubbling-trinket.md#lexicon--language
 
 import json
 import logging
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_data_dir() -> Path:
+    """
+    Resolve the data directory path using multiple strategies.
+
+    Resolution order:
+    1. VOICEASSIST_DATA_DIR environment variable (absolute path)
+    2. Relative to repository root (walks up from this file)
+    3. Fallback to current working directory + data/
+
+    Returns:
+        Path to the data directory
+    """
+    # 1. Check environment variable
+    env_data_dir = os.environ.get("VOICEASSIST_DATA_DIR")
+    if env_data_dir:
+        data_path = Path(env_data_dir)
+        if data_path.exists():
+            logger.debug(f"Using data dir from env: {data_path}")
+            return data_path
+        else:
+            logger.warning(f"VOICEASSIST_DATA_DIR={env_data_dir} does not exist")
+
+    # 2. Walk up from this file to find repo root (contains data/ directory)
+    current = Path(__file__).resolve()
+    for _ in range(10):  # Max 10 levels up
+        current = current.parent
+        data_candidate = current / "data"
+        if data_candidate.exists() and (data_candidate / "lexicons").exists():
+            logger.debug(f"Found data dir relative to repo: {data_candidate}")
+            return data_candidate
+
+    # 3. Try relative to cwd
+    cwd_data = Path.cwd() / "data"
+    if cwd_data.exists():
+        logger.debug(f"Using data dir from cwd: {cwd_data}")
+        return cwd_data
+
+    # 4. Final fallback - may not exist, but let caller handle it
+    fallback = Path(__file__).resolve().parent.parent.parent.parent.parent / "data"
+    logger.warning(f"Using fallback data dir: {fallback}")
+    return fallback
 
 
 @dataclass
@@ -166,6 +210,7 @@ class LexiconService:
     """
 
     # Paths to lexicon files (relative to data directory)
+    # Core supported languages
     LEXICON_PATHS = {
         "en": "lexicons/en/medical_phonemes.json",
         "es": "lexicons/es/medical_phonemes.json",
@@ -177,11 +222,17 @@ class LexiconService:
         "zh": "lexicons/zh/medical_phonemes.json",
         "hi": "lexicons/hi/medical_phonemes.json",
         "ur": "lexicons/ur/medical_phonemes.json",
+        # Placeholder languages (future expansion)
+        "ja": "lexicons/ja/medical_phonemes.json",
+        "ko": "lexicons/ko/medical_phonemes.json",
+        "ru": "lexicons/ru/medical_phonemes.json",
+        "pl": "lexicons/pl/medical_phonemes.json",
+        "tr": "lexicons/tr/medical_phonemes.json",
     }
 
     SHARED_LEXICON_PATH = "lexicons/shared/drug_names.json"
 
-    # Languages with placeholder lexicons (not yet complete)
+    # Languages with placeholder lexicons (minimal coverage, require expansion)
     PLACEHOLDER_LANGUAGES = ["ja", "ko", "ru", "pl", "tr"]
 
     # Required term categories for complete coverage
@@ -195,8 +246,9 @@ class LexiconService:
     ]
 
     def __init__(self, data_dir: Optional[Path] = None, g2p_service: Optional[G2PService] = None):
-        self.data_dir = data_dir or Path("/home/asimo/VoiceAssist/data")
+        self.data_dir = data_dir or _resolve_data_dir()
         self.g2p_service = g2p_service or G2PService()
+        logger.info(f"LexiconService initialized with data_dir: {self.data_dir}")
 
         # Lazy-loaded lexicons
         self.lexicons: Dict[str, Dict[str, str]] = {}

@@ -34,6 +34,12 @@ class DegradationType(str, Enum):
     PARALLEL_STT_REDUCED = "parallel_stt_reduced"
 
 
+class TranslationFailedError(Exception):
+    """Exception raised when translation fails or returns a failed result."""
+
+    pass
+
+
 @dataclass
 class LatencyBudget:
     """Latency budget configuration per stage."""
@@ -205,16 +211,27 @@ class LatencyAwareVoiceOrchestrator:
                 if translation_budget_available:
                     try:
                         english_query = await asyncio.wait_for(
-                            self._translate(transcript, detected_lang, "en"), timeout=self.budget.translation_ms / 1000
+                            self._translate(transcript, detected_lang, "en"),
+                            timeout=self.budget.translation_ms / 1000,
                         )
                     except asyncio.TimeoutError:
                         english_query = transcript  # Use original
                         degradation_applied.append(DegradationType.TRANSLATION_SKIPPED)
                         warnings.append("Translation timed out, using original query")
+                    except TranslationFailedError as e:
+                        # Translation service returned failed=True or raised error
+                        english_query = transcript  # Fallback to original query
+                        degradation_applied.append(DegradationType.TRANSLATION_FAILED)
+                        warnings.append(f"Translation failed (graceful degradation): {str(e)}")
+                        logger.warning(
+                            f"Translation degradation applied for {detected_lang}->en: {e}"
+                        )
                     except Exception as e:
+                        # Unexpected error - still degrade gracefully
                         english_query = transcript
                         degradation_applied.append(DegradationType.TRANSLATION_FAILED)
-                        warnings.append(f"Translation failed: {str(e)}")
+                        warnings.append(f"Translation failed (unexpected): {str(e)}")
+                        logger.error(f"Unexpected translation error: {e}", exc_info=True)
                 else:
                     degradation_applied.append(DegradationType.TRANSLATION_BUDGET_EXCEEDED)
                     warnings.append("Translation skipped due to latency budget")
@@ -369,16 +386,38 @@ class LatencyAwareVoiceOrchestrator:
             return "en"
 
     async def _translate(self, text: str, source: str, target: str) -> str:
-        """Translate text."""
+        """
+        Translate text with proper failure handling.
+
+        Args:
+            text: Text to translate
+            source: Source language code
+            target: Target language code
+
+        Returns:
+            Translated text
+
+        Raises:
+            TranslationFailedError: When translation fails or result.failed is True
+        """
         if not self.translator:
             return text
 
         try:
             result = await self.translator.translate(text, source, target)
+
+            # Check for failed flag in result (graceful degradation marker)
+            if hasattr(result, "failed") and result.failed:
+                error_msg = getattr(result, "error_message", "Translation failed")
+                logger.warning(f"Translation marked as failed: {error_msg}")
+                raise TranslationFailedError(error_msg)
+
             return result.text if hasattr(result, "text") else str(result)
+        except TranslationFailedError:
+            raise  # Re-raise our custom exception
         except Exception as e:
             logger.error(f"Translation failed: {e}")
-            raise
+            raise TranslationFailedError(str(e))
 
     async def _retrieve_context(self, query: str, limit: int = 5) -> List[Dict]:
         """Retrieve RAG context."""
