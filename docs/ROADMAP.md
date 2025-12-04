@@ -5,10 +5,10 @@ summary: "This is the canonical V2 development roadmap for VoiceAssist. It prese
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-03"
 audience: ["human"]
 tags: ["roadmap"]
-category: planning
+category: reference
 ---
 
 # VoiceAssist V2 Development Roadmap (15 Phases)
@@ -575,6 +575,6 @@ Phase 11 (Security)   Phase 12 (HA/DR)
 
 ---
 
-**Last Updated**: 2025-11-20
+**Last Updated**: 2025-12-03
 **Version**: V2.0
-**Status**: Planning Complete, Ready for Implementation
+**Status**: Implementation Complete (Phases 0-10)

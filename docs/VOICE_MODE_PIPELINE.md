@@ -15,7 +15,7 @@ relatedServices: ["api-gateway", "web-app"]
 # Voice Mode Pipeline
 
 > **Status**: Production-ready
-> **Last Updated**: 2025-12-02
+> **Last Updated**: 2025-12-03
 
 This document describes the unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy. It serves as the canonical reference for developers working on real-time voice features.
 
@@ -754,8 +754,7 @@ LIVE_REALTIME_E2E=1 npx playwright test e2e/voice-mode-session-smoke.spec.ts
 ## Related Documentation
 
 - [VOICE_MODE_SETTINGS_GUIDE.md](./VOICE_MODE_SETTINGS_GUIDE.md) - User settings configuration
-- [TESTING_GUIDE.md](./TESTING_GUIDE.md) - E2E testing strategy
-- [.ai/VOICE_MODE_END_TO_END_CHECKLIST.md](../.ai/VOICE_MODE_END_TO_END_CHECKLIST.md) - Quick validation checklist
+- [TESTING_GUIDE.md](./TESTING_GUIDE.md) - E2E testing strategy and validation checklist
 
 ## Observability & Monitoring (Phase 3)
 
