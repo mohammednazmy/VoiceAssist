@@ -1,0 +1,500 @@
+"""Feature Flag Shared Definitions (Phase 7 Enhancement).
+
+Single source of truth for feature flag definitions in Python.
+These definitions must match the TypeScript definitions in packages/types/src/featureFlags.ts.
+
+Naming Convention: {category}.{feature_name}
+- category: ui | backend | admin | integration | experiment | ops
+- feature_name: snake_case identifier
+
+Example: ui.unified_chat_voice, backend.rag_strategy, ops.maintenance_mode
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Literal, Optional
+
+# ============================================================================
+# Type Definitions
+# ============================================================================
+
+
+class FlagCategory(str, Enum):
+    """Unified categories for feature flags.
+
+    Must match TypeScript FLAG_CATEGORIES exactly.
+    """
+
+    UI = "ui"
+    BACKEND = "backend"
+    ADMIN = "admin"
+    INTEGRATION = "integration"
+    EXPERIMENT = "experiment"
+    OPS = "ops"
+
+
+class FlagType(str, Enum):
+    """Feature flag value types."""
+
+    BOOLEAN = "boolean"
+    STRING = "string"
+    NUMBER = "number"
+    JSON = "json"
+    MULTIVARIATE = "multivariate"
+
+
+@dataclass
+class FlagDependencies:
+    """Feature flag dependencies for impact analysis."""
+
+    services: List[str] = field(default_factory=list)
+    components: List[str] = field(default_factory=list)
+    other_flags: List[str] = field(default_factory=list)
+
+
+@dataclass
+class FlagMetadata:
+    """Feature flag metadata."""
+
+    criticality: Literal["low", "medium", "high", "critical"]
+    owner: Optional[str] = None
+    docs_url: Optional[str] = None
+    deprecated: bool = False
+    deprecated_message: Optional[str] = None
+    archived: bool = False
+    allowed_values: Optional[List[str]] = None
+    min_value: Optional[float] = None
+    max_value: Optional[float] = None
+
+
+@dataclass
+class FeatureFlagDefinition:
+    """Complete feature flag definition."""
+
+    name: str
+    description: str
+    category: FlagCategory
+    flag_type: FlagType
+    default_value: Any
+    default_enabled: bool
+    metadata: FlagMetadata
+    dependencies: FlagDependencies = field(default_factory=FlagDependencies)
+
+
+# ============================================================================
+# Feature Flag Definitions - Single Source of Truth
+# ============================================================================
+
+FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
+    # -------------------------------------------------------------------------
+    # UI Flags - Frontend toggles
+    # -------------------------------------------------------------------------
+    "ui": {
+        "unified_chat_voice": FeatureFlagDefinition(
+            name="ui.unified_chat_voice",
+            description="Enable unified chat and voice interface",
+            category=FlagCategory.UI,
+            flag_type=FlagType.BOOLEAN,
+            default_value=None,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/admin/feature-flags#ui",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["VoiceChat", "ChatInterface", "UnifiedChatContainer"],
+            ),
+        ),
+        "new_navigation": FeatureFlagDefinition(
+            name="ui.new_navigation",
+            description="Enable new sidebar navigation layout",
+            category=FlagCategory.UI,
+            flag_type=FlagType.BOOLEAN,
+            default_value=None,
+            default_enabled=False,
+            metadata=FlagMetadata(criticality="low"),
+            dependencies=FlagDependencies(
+                services=["web-app", "admin-panel"],
+                components=["Sidebar", "Navigation"],
+            ),
+        ),
+        "beta_features": FeatureFlagDefinition(
+            name="ui.beta_features",
+            description="Enable beta/experimental UI features",
+            category=FlagCategory.UI,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(criticality="low"),
+            dependencies=FlagDependencies(services=["web-app"]),
+        ),
+        "dark_mode": FeatureFlagDefinition(
+            name="ui.dark_mode",
+            description="Enable dark mode theme option",
+            category=FlagCategory.UI,
+            flag_type=FlagType.BOOLEAN,
+            default_value=None,
+            default_enabled=True,
+            metadata=FlagMetadata(criticality="low"),
+            dependencies=FlagDependencies(
+                services=["web-app", "admin-panel"],
+                components=["ThemeProvider", "SettingsPanel"],
+            ),
+        ),
+    },
+    # -------------------------------------------------------------------------
+    # Backend Flags - API/service behavior
+    # -------------------------------------------------------------------------
+    "backend": {
+        "rbac_enforcement": FeatureFlagDefinition(
+            name="backend.rbac_enforcement",
+            description="Enable RBAC permission checks on admin endpoints",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(criticality="high", owner="security-team"),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                other_flags=["backend.rbac_strict_mode"],
+            ),
+        ),
+        "rbac_strict_mode": FeatureFlagDefinition(
+            name="backend.rbac_strict_mode",
+            description="Enable strict RBAC mode (deny by default)",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(criticality="medium", owner="security-team"),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                other_flags=["backend.rbac_enforcement"],
+            ),
+        ),
+        "rag_strategy": FeatureFlagDefinition(
+            name="backend.rag_strategy",
+            description="RAG query strategy (simple, multi_hop, hybrid)",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.STRING,
+            default_value="simple",
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="high",
+                allowed_values=["simple", "multi_hop", "hybrid"],
+            ),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        "rag_max_results": FeatureFlagDefinition(
+            name="backend.rag_max_results",
+            description="Maximum number of RAG search results to return",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.NUMBER,
+            default_value=5,
+            default_enabled=True,
+            metadata=FlagMetadata(criticality="medium", min_value=1, max_value=20),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        "rag_score_threshold": FeatureFlagDefinition(
+            name="backend.rag_score_threshold",
+            description="Minimum similarity score threshold for RAG results",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.NUMBER,
+            default_value=0.2,
+            default_enabled=True,
+            metadata=FlagMetadata(criticality="medium", min_value=0.0, max_value=1.0),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        "cache_enabled": FeatureFlagDefinition(
+            name="backend.cache_enabled",
+            description="Enable multi-level caching (L1/L2)",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(criticality="medium"),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        "async_indexing": FeatureFlagDefinition(
+            name="backend.async_indexing",
+            description="Enable asynchronous document indexing",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(criticality="medium"),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+    },
+    # -------------------------------------------------------------------------
+    # Admin Flags - Admin panel features
+    # -------------------------------------------------------------------------
+    "admin": {
+        "bulk_operations": FeatureFlagDefinition(
+            name="admin.bulk_operations",
+            description="Enable bulk operations in admin panel",
+            category=FlagCategory.ADMIN,
+            flag_type=FlagType.BOOLEAN,
+            default_value=None,
+            default_enabled=True,
+            metadata=FlagMetadata(criticality="medium"),
+            dependencies=FlagDependencies(
+                services=["admin-panel"],
+                components=["BulkActionsToolbar", "DataTable"],
+            ),
+        ),
+        "advanced_analytics": FeatureFlagDefinition(
+            name="admin.advanced_analytics",
+            description="Enable advanced analytics dashboard",
+            category=FlagCategory.ADMIN,
+            flag_type=FlagType.BOOLEAN,
+            default_value=None,
+            default_enabled=False,
+            metadata=FlagMetadata(criticality="low"),
+            dependencies=FlagDependencies(
+                services=["admin-panel", "api-gateway"],
+                components=["AnalyticsDashboard"],
+            ),
+        ),
+        "audit_log_export": FeatureFlagDefinition(
+            name="admin.audit_log_export",
+            description="Enable audit log export functionality",
+            category=FlagCategory.ADMIN,
+            flag_type=FlagType.BOOLEAN,
+            default_value=None,
+            default_enabled=True,
+            metadata=FlagMetadata(criticality="low"),
+            dependencies=FlagDependencies(
+                services=["admin-panel", "api-gateway"],
+                components=["AuditLogPanel"],
+            ),
+        ),
+    },
+    # -------------------------------------------------------------------------
+    # Integration Flags - External services
+    # -------------------------------------------------------------------------
+    "integration": {
+        "nextcloud": FeatureFlagDefinition(
+            name="integration.nextcloud",
+            description="Enable Nextcloud integration features",
+            category=FlagCategory.INTEGRATION,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(criticality="high"),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                other_flags=["integration.nextcloud_auto_index"],
+            ),
+        ),
+        "nextcloud_auto_index": FeatureFlagDefinition(
+            name="integration.nextcloud_auto_index",
+            description="Enable automatic indexing of Nextcloud files",
+            category=FlagCategory.INTEGRATION,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(criticality="medium"),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                other_flags=["integration.nextcloud"],
+            ),
+        ),
+        "openai": FeatureFlagDefinition(
+            name="integration.openai",
+            description="Enable OpenAI API for RAG queries",
+            category=FlagCategory.INTEGRATION,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(criticality="high"),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+    },
+    # -------------------------------------------------------------------------
+    # Experiment Flags - A/B tests and experiments
+    # -------------------------------------------------------------------------
+    "experiment": {
+        "onboarding_v2": FeatureFlagDefinition(
+            name="experiment.onboarding_v2",
+            description="A/B test for new onboarding flow",
+            category=FlagCategory.EXPERIMENT,
+            flag_type=FlagType.BOOLEAN,
+            default_value=None,
+            default_enabled=False,
+            metadata=FlagMetadata(criticality="low"),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["OnboardingWizard"],
+            ),
+        ),
+        "experimental_api": FeatureFlagDefinition(
+            name="experiment.experimental_api",
+            description="Enable experimental API endpoints",
+            category=FlagCategory.EXPERIMENT,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(criticality="low"),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+    },
+    # -------------------------------------------------------------------------
+    # Ops Flags - Operational controls
+    # -------------------------------------------------------------------------
+    "ops": {
+        "maintenance_mode": FeatureFlagDefinition(
+            name="ops.maintenance_mode",
+            description="Enable maintenance mode (read-only access)",
+            category=FlagCategory.OPS,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(criticality="critical", owner="ops-team"),
+            dependencies=FlagDependencies(services=["api-gateway", "web-app", "admin-panel"]),
+        ),
+        "rate_limiting": FeatureFlagDefinition(
+            name="ops.rate_limiting",
+            description="Enable API rate limiting",
+            category=FlagCategory.OPS,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(criticality="high"),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        "metrics_enabled": FeatureFlagDefinition(
+            name="ops.metrics_enabled",
+            description="Enable Prometheus metrics collection",
+            category=FlagCategory.OPS,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(criticality="medium"),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        "tracing_enabled": FeatureFlagDefinition(
+            name="ops.tracing_enabled",
+            description="Enable OpenTelemetry distributed tracing",
+            category=FlagCategory.OPS,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(criticality="medium"),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        "verbose_logging": FeatureFlagDefinition(
+            name="ops.verbose_logging",
+            description="Enable verbose logging (debug level)",
+            category=FlagCategory.OPS,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(criticality="low"),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+    },
+}
+
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+
+def get_all_flags() -> List[FeatureFlagDefinition]:
+    """Get all feature flag definitions as a flat list."""
+    all_flags: List[FeatureFlagDefinition] = []
+    for category_flags in FEATURE_FLAGS.values():
+        all_flags.extend(category_flags.values())
+    return all_flags
+
+
+def get_flag_by_name(name: str) -> Optional[FeatureFlagDefinition]:
+    """Get a flag definition by its full name.
+
+    Args:
+        name: Full flag name (e.g., "ui.unified_chat_voice")
+
+    Returns:
+        FeatureFlagDefinition or None if not found
+    """
+    parts = name.split(".", 1)
+    if len(parts) != 2:
+        return None
+
+    category, flag_name = parts
+    category_flags = FEATURE_FLAGS.get(category)
+    if not category_flags:
+        return None
+
+    return category_flags.get(flag_name)
+
+
+def get_flags_by_category(category: FlagCategory) -> List[FeatureFlagDefinition]:
+    """Get all flag definitions for a specific category."""
+    category_flags = FEATURE_FLAGS.get(category.value, {})
+    return list(category_flags.values())
+
+
+def is_valid_flag_name(name: str) -> bool:
+    """Validate a flag name matches the naming convention.
+
+    Pattern: {category}.{snake_case_name}
+    """
+    import re
+
+    pattern = r"^(ui|backend|admin|integration|experiment|ops)\.[a-z][a-z0-9_]*$"
+    return bool(re.match(pattern, name))
+
+
+def get_flag_names_by_category() -> Dict[str, List[str]]:
+    """Get flag names grouped by category."""
+    result: Dict[str, List[str]] = {}
+    for category, flags in FEATURE_FLAGS.items():
+        result[category] = [flag.name for flag in flags.values()]
+    return result
+
+
+# ============================================================================
+# Legacy Compatibility - Map old flag names to new names
+# ============================================================================
+
+LEGACY_FLAG_NAME_MAP: Dict[str, str] = {
+    # Old name -> New name
+    "rbac_enforcement": "backend.rbac_enforcement",
+    "rbac_strict_mode": "backend.rbac_strict_mode",
+    "metrics_enabled": "ops.metrics_enabled",
+    "tracing_enabled": "ops.tracing_enabled",
+    "logging_verbose": "ops.verbose_logging",
+    "nextcloud_integration": "integration.nextcloud",
+    "openai_enabled": "integration.openai",
+    "nextcloud_auto_index": "integration.nextcloud_auto_index",
+    "rag_strategy": "backend.rag_strategy",
+    "rag_max_results": "backend.rag_max_results",
+    "rag_score_threshold": "backend.rag_score_threshold",
+    "cache_enabled": "backend.cache_enabled",
+    "async_indexing": "backend.async_indexing",
+    "beta_features": "ui.beta_features",
+    "experimental_api": "experiment.experimental_api",
+}
+
+
+def resolve_flag_name(name: str) -> str:
+    """Resolve a flag name, handling legacy names.
+
+    Args:
+        name: Flag name (old or new format)
+
+    Returns:
+        Resolved flag name in new format
+    """
+    # If it's already in new format, return as-is
+    if "." in name:
+        return name
+
+    # Check if it's a legacy name
+    return LEGACY_FLAG_NAME_MAP.get(name, name)
