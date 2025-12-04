@@ -144,10 +144,12 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 components=["ThemeProvider", "SettingsPanel"],
             ),
         ),
-        # Voice Mode v4 UI Flags
+        # =====================================================================
+        # Voice Mode v4 UI Flags - Workstream 5: UI Enhancements
+        # =====================================================================
         "voice_v4_voice_first_ui": FeatureFlagDefinition(
             name="ui.voice_v4_voice_first_ui",
-            description="Enable voice-first unified input bar UI",
+            description="[Workstream 5] Voice-first unified input bar with seamless voice/text switching.",
             category=FlagCategory.UI,
             flag_type=FlagType.BOOLEAN,
             default_value=False,
@@ -163,12 +165,15 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
         ),
         "voice_v4_streaming_text": FeatureFlagDefinition(
             name="ui.voice_v4_streaming_text",
-            description="Enable streaming text display during TTS playback",
+            description="[Workstream 5] Streaming text display synchronized with TTS playback for accessibility.",
             category=FlagCategory.UI,
             flag_type=FlagType.BOOLEAN,
             default_value=False,
             default_enabled=False,
-            metadata=FlagMetadata(criticality="low"),
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/streaming-text-display",
+            ),
             dependencies=FlagDependencies(
                 services=["web-app"],
                 components=["StreamingTextDisplay"],
@@ -176,32 +181,53 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
         ),
         "voice_v4_latency_indicator": FeatureFlagDefinition(
             name="ui.voice_v4_latency_indicator",
-            description="Enable voice mode latency indicator with degradation info",
-            category=FlagCategory.UI,
-            flag_type=FlagType.BOOLEAN,
-            default_value=False,
-            default_enabled=False,
-            metadata=FlagMetadata(criticality="low"),
-            dependencies=FlagDependencies(
-                services=["web-app"],
-                components=["LatencyIndicator"],
-            ),
-        ),
-        "voice_v4_thinking_feedback_panel": FeatureFlagDefinition(
-            name="ui.voice_v4_thinking_feedback_panel",
-            description="Enable thinking feedback panel with audio/visual/haptic options",
+            description="[Workstream 5] Latency status indicator showing E2E timing and degradation tooltips.",
             category=FlagCategory.UI,
             flag_type=FlagType.BOOLEAN,
             default_value=False,
             default_enabled=False,
             metadata=FlagMetadata(
                 criticality="low",
-                docs_url="https://assistdocs.asimo.io/voice/thinking-feedback",
+                docs_url="https://assistdocs.asimo.io/voice/latency-budgets-guide",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["LatencyIndicator"],
+                other_flags=["backend.voice_v4_latency_budgets"],
+            ),
+        ),
+        "voice_v4_thinking_feedback_panel": FeatureFlagDefinition(
+            name="ui.voice_v4_thinking_feedback_panel",
+            description="[Workstream 5] Audio/visual/haptic feedback during AI processing.",
+            category=FlagCategory.UI,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/thinking-tone-settings",
             ),
             dependencies=FlagDependencies(
                 services=["web-app"],
                 components=["ThinkingFeedbackPanel", "ThinkingVisualIndicator"],
                 other_flags=["backend.voice_v4_thinking_tones"],
+            ),
+        ),
+        "voice_v4_rtl_ui": FeatureFlagDefinition(
+            name="ui.voice_v4_rtl_ui",
+            description="[Workstream 4] RTL layout and text direction for Arabic, Urdu, and Hebrew chat messages.",
+            category=FlagCategory.UI,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/rtl-support-guide",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["ChatMessage", "ChatContainer"],
+                other_flags=["backend.voice_v4_rtl_support"],
             ),
         ),
     },
@@ -288,81 +314,62 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
             metadata=FlagMetadata(criticality="medium"),
             dependencies=FlagDependencies(services=["api-gateway"]),
         ),
-        # Voice Mode v4 Feature Flags
+        # =====================================================================
+        # Voice Mode v4 Feature Flags - Grouped by Workstream
+        # =====================================================================
+        #
+        # Workstream 1: Translation & Multilingual RAG
+        # ---------------------------------------------------------------------
         "voice_v4_translation_fallback": FeatureFlagDefinition(
             name="backend.voice_v4_translation_fallback",
-            description="Enable translation service with fallback and caching",
+            description="[Workstream 1] Multi-provider translation with fallback and caching.",
             category=FlagCategory.BACKEND,
             flag_type=FlagType.BOOLEAN,
             default_value=False,
             default_enabled=False,
             metadata=FlagMetadata(
                 criticality="medium",
-                docs_url="https://assistdocs.asimo.io/voice/multilingual-rag",
+                docs_url="https://assistdocs.asimo.io/voice/multilingual-rag-architecture",
             ),
             dependencies=FlagDependencies(
                 services=["api-gateway"],
-                other_flags=["backend.voice_v4_multilingual_rag"],
             ),
         ),
         "voice_v4_multilingual_rag": FeatureFlagDefinition(
             name="backend.voice_v4_multilingual_rag",
-            description="Enable multilingual RAG with translation layer",
+            description="[Workstream 1] Translate-then-retrieve pipeline for non-English queries.",
             category=FlagCategory.BACKEND,
             flag_type=FlagType.BOOLEAN,
             default_value=False,
             default_enabled=False,
             metadata=FlagMetadata(
                 criticality="medium",
-                docs_url="https://assistdocs.asimo.io/voice/multilingual-rag",
+                docs_url="https://assistdocs.asimo.io/voice/multilingual-rag-architecture",
             ),
             dependencies=FlagDependencies(
                 services=["api-gateway"],
                 other_flags=["backend.voice_v4_translation_fallback"],
             ),
         ),
+        #
+        # Workstream 2: Audio & Speech Processing
+        # ---------------------------------------------------------------------
         "voice_v4_lexicon_service": FeatureFlagDefinition(
             name="backend.voice_v4_lexicon_service",
-            description="Enable medical pronunciation lexicon service with G2P",
+            description="[Workstream 2] Medical pronunciation lexicons for 15 languages with espeak-ng G2P fallback.",
             category=FlagCategory.BACKEND,
             flag_type=FlagType.BOOLEAN,
             default_value=False,
             default_enabled=False,
             metadata=FlagMetadata(
                 criticality="low",
-                docs_url="https://assistdocs.asimo.io/voice/tunable-vad",
+                docs_url="https://assistdocs.asimo.io/voice/lexicon-service-guide",
             ),
-            dependencies=FlagDependencies(services=["api-gateway"]),
-        ),
-        "voice_v4_thinking_tones": FeatureFlagDefinition(
-            name="backend.voice_v4_thinking_tones",
-            description="Enable thinking tone audio/visual/haptic feedback",
-            category=FlagCategory.BACKEND,
-            flag_type=FlagType.BOOLEAN,
-            default_value=False,
-            default_enabled=False,
-            metadata=FlagMetadata(
-                criticality="low",
-                docs_url="https://assistdocs.asimo.io/voice/thinking-feedback",
-            ),
-            dependencies=FlagDependencies(
-                services=["api-gateway", "web-app"],
-                components=["ThinkingFeedbackPanel", "ThinkingTonePlayer"],
-            ),
-        ),
-        "voice_v4_latency_budgets": FeatureFlagDefinition(
-            name="backend.voice_v4_latency_budgets",
-            description="Enable latency-aware voice orchestration with degradation",
-            category=FlagCategory.BACKEND,
-            flag_type=FlagType.BOOLEAN,
-            default_value=False,
-            default_enabled=False,
-            metadata=FlagMetadata(criticality="medium"),
             dependencies=FlagDependencies(services=["api-gateway"]),
         ),
         "voice_v4_phi_routing": FeatureFlagDefinition(
             name="backend.voice_v4_phi_routing",
-            description="Enable PHI-aware STT routing with local Whisper fallback",
+            description="[Workstream 2] PHI-aware STT routing to local Whisper or cloud.",
             category=FlagCategory.BACKEND,
             flag_type=FlagType.BOOLEAN,
             default_value=False,
@@ -370,37 +377,137 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
             metadata=FlagMetadata(
                 criticality="high",
                 owner="security-team",
-                docs_url="https://assistdocs.asimo.io/voice/phi-aware-stt",
+                docs_url="https://assistdocs.asimo.io/voice/phi-aware-stt-routing",
             ),
             dependencies=FlagDependencies(services=["api-gateway"]),
         ),
         "voice_v4_adaptive_vad": FeatureFlagDefinition(
             name="backend.voice_v4_adaptive_vad",
-            description="Enable user-tunable adaptive VAD presets",
+            description="[Workstream 2] User-tunable VAD presets for different environments.",
             category=FlagCategory.BACKEND,
             flag_type=FlagType.BOOLEAN,
             default_value=False,
             default_enabled=False,
             metadata=FlagMetadata(
                 criticality="medium",
-                docs_url="https://assistdocs.asimo.io/voice/tunable-vad",
+                docs_url="https://assistdocs.asimo.io/voice/adaptive-vad-presets",
             ),
             dependencies=FlagDependencies(
                 services=["api-gateway", "web-app"],
                 components=["VADSettings"],
             ),
         ),
-        "voice_v4_rtl_support": FeatureFlagDefinition(
-            name="backend.voice_v4_rtl_support",
-            description="Enable RTL language support (Arabic, Urdu, Hebrew)",
+        #
+        # Workstream 3: Performance & Orchestration
+        # ---------------------------------------------------------------------
+        "voice_v4_latency_budgets": FeatureFlagDefinition(
+            name="backend.voice_v4_latency_budgets",
+            description="[Workstream 3] Latency-aware orchestration with graceful degradation.",
             category=FlagCategory.BACKEND,
             flag_type=FlagType.BOOLEAN,
             default_value=False,
             default_enabled=False,
-            metadata=FlagMetadata(criticality="low"),
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/latency-budgets-guide",
+            ),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        "voice_v4_thinking_tones": FeatureFlagDefinition(
+            name="backend.voice_v4_thinking_tones",
+            description="[Workstream 3] Backend events for thinking feedback indicators.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/thinking-tone-settings",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["ThinkingFeedbackPanel", "ThinkingTonePlayer"],
+            ),
+        ),
+        "voice_v4_unified_memory": FeatureFlagDefinition(
+            name="backend.voice_v4_unified_memory",
+            description="[Workstream 3] Unified memory shared between voice and text modes.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/unified-memory",
+            ),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        #
+        # Workstream 4: Internationalization
+        # ---------------------------------------------------------------------
+        "voice_v4_rtl_support": FeatureFlagDefinition(
+            name="backend.voice_v4_rtl_support",
+            description="[Workstream 4] RTL text rendering and layout for Arabic, Urdu, and Hebrew in chat UI.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/rtl-support-guide",
+            ),
             dependencies=FlagDependencies(
                 services=["web-app"],
                 other_flags=["backend.voice_v4_multilingual_rag"],
+            ),
+        ),
+        #
+        # Phase 3: Advanced Services
+        # ---------------------------------------------------------------------
+        "voice_v4_fhir_streaming": FeatureFlagDefinition(
+            name="backend.voice_v4_fhir_streaming",
+            description="[Phase 3] Real-time FHIR data streaming for clinical context enrichment.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="high",
+                owner="clinical-team",
+                docs_url="https://assistdocs.asimo.io/voice/fhir-streaming",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                other_flags=["backend.voice_v4_phi_routing"],
+            ),
+        ),
+        "voice_v4_speaker_diarization": FeatureFlagDefinition(
+            name="backend.voice_v4_speaker_diarization",
+            description="[Phase 3] Multi-speaker detection and attribution for conversations.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/speaker-diarization",
+            ),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        "voice_v4_adaptive_quality": FeatureFlagDefinition(
+            name="backend.voice_v4_adaptive_quality",
+            description="[Phase 3] Adapt voice quality based on connection speed and latency.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/adaptive-quality",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                other_flags=["backend.voice_v4_latency_budgets"],
             ),
         ),
     },

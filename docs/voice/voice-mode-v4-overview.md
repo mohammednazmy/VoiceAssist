@@ -70,31 +70,61 @@ See [Thinking Tone Settings](./thinking-tone-settings.md) for configuration.
 
 ## Feature Flags
 
-All v4.1 features are gated behind feature flags for safe rollout:
+All v4.1 features are gated behind feature flags for safe rollout. Flags are grouped by workstream for independent deployment.
 
-### Backend Flags
+### Workstream 1: Translation & Multilingual RAG
 
-| Flag                            | Description                    | Default |
-| ------------------------------- | ------------------------------ | ------- |
-| `voice_v4_translation_fallback` | Multi-provider translation     | Off     |
-| `voice_v4_multilingual_rag`     | Multilingual RAG wrapper       | Off     |
-| `voice_v4_lexicon_service`      | Medical pronunciation lexicons | Off     |
-| `voice_v4_thinking_tones`       | Backend thinking tone events   | Off     |
-| `voice_v4_latency_budgets`      | Latency-aware orchestration    | Off     |
-| `voice_v4_phi_routing`          | PHI-aware STT routing          | Off     |
-| `voice_v4_adaptive_vad`         | Adaptive VAD presets           | Off     |
-| `voice_v4_rtl_support`          | RTL text rendering             | Off     |
+| Flag                                    | Description                             | Default | Docs                                                   |
+| --------------------------------------- | --------------------------------------- | ------- | ------------------------------------------------------ |
+| `backend.voice_v4_translation_fallback` | Multi-provider translation with caching | Off     | [Multilingual RAG](./multilingual-rag-architecture.md) |
+| `backend.voice_v4_multilingual_rag`     | Translate-then-retrieve pipeline        | Off     | [Multilingual RAG](./multilingual-rag-architecture.md) |
 
-### Frontend Flags
+### Workstream 2: Audio & Speech Processing
 
-| Flag                               | Description              | Default |
-| ---------------------------------- | ------------------------ | ------- |
-| `voice_v4_voice_first_ui`          | Voice-first UI mode      | Off     |
-| `voice_v4_streaming_text`          | Streaming text display   | Off     |
-| `voice_v4_latency_indicator`       | Latency status component | Off     |
-| `voice_v4_thinking_feedback_panel` | Thinking feedback panel  | Off     |
+| Flag                               | Description                      | Default | Docs                                          |
+| ---------------------------------- | -------------------------------- | ------- | --------------------------------------------- |
+| `backend.voice_v4_lexicon_service` | Medical pronunciation lexicons   | Off     | [Lexicon Service](./lexicon-service-guide.md) |
+| `backend.voice_v4_phi_routing`     | PHI-aware STT with local Whisper | Off     | [PHI-Aware STT](./phi-aware-stt-routing.md)   |
+| `backend.voice_v4_adaptive_vad`    | User-tunable VAD presets         | Off     | [Adaptive VAD](./adaptive-vad-presets.md)     |
+
+### Workstream 3: Performance & Orchestration
+
+| Flag                               | Description                  | Default | Docs                                          |
+| ---------------------------------- | ---------------------------- | ------- | --------------------------------------------- |
+| `backend.voice_v4_latency_budgets` | Latency-aware orchestration  | Off     | [Latency Budgets](./latency-budgets-guide.md) |
+| `backend.voice_v4_thinking_tones`  | Backend thinking tone events | Off     | [Thinking Tones](./thinking-tone-settings.md) |
+
+### Workstream 4: Internationalization
+
+| Flag                           | Description                      | Default | Docs                                  |
+| ------------------------------ | -------------------------------- | ------- | ------------------------------------- |
+| `backend.voice_v4_rtl_support` | RTL text rendering (Arabic/Urdu) | Off     | [RTL Support](./rtl-support-guide.md) |
+
+### Workstream 5: UI Enhancements
+
+| Flag                                  | Description                          | Default | Docs                                             |
+| ------------------------------------- | ------------------------------------ | ------- | ------------------------------------------------ |
+| `ui.voice_v4_voice_first_ui`          | Voice-first unified input bar        | Off     | [Voice UI Components](./ui-components.md)        |
+| `ui.voice_v4_streaming_text`          | Streaming text display during TTS    | Off     | [Streaming Text](./streaming-text-display.md)    |
+| `ui.voice_v4_latency_indicator`       | Latency status with degradation info | Off     | [Latency Indicator](./latency-indicator.md)      |
+| `ui.voice_v4_thinking_feedback_panel` | Audio/visual/haptic feedback         | Off     | [Thinking Feedback](./thinking-tone-settings.md) |
+
+### Flag Dependencies
+
+```
+voice_v4_multilingual_rag
+    └── voice_v4_translation_fallback (required)
+
+voice_v4_thinking_feedback_panel (UI)
+    └── voice_v4_thinking_tones (backend)
+
+voice_v4_rtl_support
+    └── voice_v4_multilingual_rag (recommended)
+```
 
 ## Environment Variables
+
+### Core Configuration
 
 ```bash
 # Lexicon data directory (optional, auto-detected if not set)
@@ -106,18 +136,138 @@ DEEPL_API_KEY=your-key
 
 # Feature flag defaults
 VOICE_V4_ENABLED=false  # Master toggle
+
+# Latency budget overrides (milliseconds)
+VOICE_LATENCY_BUDGET_TOTAL=700
+VOICE_LATENCY_BUDGET_STT=200
+VOICE_LATENCY_BUDGET_TRANSLATION=200
+VOICE_LATENCY_BUDGET_RAG=300
+```
+
+### VOICEASSIST_DATA_DIR Configuration
+
+The `VOICEASSIST_DATA_DIR` environment variable specifies the root directory for lexicon files and other data assets.
+
+**Setting the variable:**
+
+```bash
+# Linux/macOS - add to ~/.bashrc or systemd service
+export VOICEASSIST_DATA_DIR=/opt/voiceassist/data
+
+# Docker - add to docker-compose.yml
+environment:
+  - VOICEASSIST_DATA_DIR=/app/data
+
+# Kubernetes - add to deployment.yaml
+env:
+  - name: VOICEASSIST_DATA_DIR
+    value: /app/data
+
+# CI/CD - set in pipeline configuration
+env:
+  VOICEASSIST_DATA_DIR: ${{ github.workspace }}/data
+```
+
+**Expected directory structure:**
+
+```
+$VOICEASSIST_DATA_DIR/
+├── lexicons/
+│   ├── shared/
+│   │   └── drug_names.json
+│   ├── en/
+│   │   └── medical_phonemes.json
+│   ├── es/
+│   │   └── medical_phonemes.json
+│   └── ... (other languages)
+└── models/
+    └── whisper/  (for local PHI-aware STT)
 ```
 
 ### Data Directory Resolution
 
-The `_resolve_data_dir()` function in `lexicon_service.py` automatically locates the lexicon data directory:
+The `_resolve_data_dir()` function in `lexicon_service.py` automatically locates the lexicon data directory using this priority:
 
-1. **Environment variable**: If `VOICEASSIST_DATA_DIR` is set, use that path
+1. **Environment variable**: If `VOICEASSIST_DATA_DIR` is set and the path exists, use it
 2. **Repository root**: Walk up from the service file to find `data/lexicons/`
 3. **Current working directory**: Check `./data/` relative to cwd
 4. **Fallback**: Use relative path from the service file
 
 This allows the lexicon service to work in development, CI, and production without manual configuration.
+
+## Error Propagation
+
+Voice Mode v4.1 implements structured error propagation to ensure graceful degradation without silent failures.
+
+### Translation Errors
+
+When translation fails, the system raises `TranslationFailedError` and applies graceful degradation:
+
+```python
+from app.services.latency_aware_orchestrator import (
+    TranslationFailedError,
+    DegradationType
+)
+
+try:
+    result = await orchestrator.process_with_budgets(
+        audio_data=audio_bytes,
+        user_language="es"
+    )
+except TranslationFailedError as e:
+    # Degradation already applied: uses original query
+    logger.warning(f"Translation failed: {e}")
+    # DegradationType.TRANSLATION_FAILED is in result.degradation_applied
+```
+
+### Error → Degradation Mapping
+
+| Error                      | Degradation Type                        | Fallback Behavior                    |
+| -------------------------- | --------------------------------------- | ------------------------------------ |
+| `TranslationFailedError`   | `TRANSLATION_FAILED`                    | Use original query, inform user      |
+| Translation timeout        | `TRANSLATION_BUDGET_EXCEEDED`           | Skip translation, use original       |
+| Language detection timeout | `LANGUAGE_DETECTION_SKIPPED`            | Default to user's preferred language |
+| RAG retrieval slow         | `RAG_LIMITED_TO_1` / `RAG_LIMITED_TO_3` | Return fewer results                 |
+| LLM context overflow       | `LLM_CONTEXT_SHORTENED`                 | Truncate context history             |
+| TTS cold start             | `TTS_USED_CACHED_GREETING`              | Play cached audio while warming up   |
+
+### UI Error Surfacing
+
+Degradation events are propagated to the frontend via WebSocket:
+
+```typescript
+// Frontend receives degradation events
+socket.on("voice:degradation", (event: DegradationEvent) => {
+  if (event.type === "TRANSLATION_FAILED") {
+    showToast("Translation unavailable, using original language", "warning");
+  }
+});
+
+// LatencyIndicator component shows degradation tooltips
+<LatencyIndicator
+  latencyMs={result.total_latency_ms}
+  degradations={result.degradation_applied}
+  showDetails={true}
+/>;
+```
+
+### Logging and Monitoring
+
+All errors emit structured logs and Prometheus metrics:
+
+```python
+# Structured logging
+logger.warning("Translation failed", extra={
+    "error_type": "TranslationFailedError",
+    "source_language": "es",
+    "degradation": "TRANSLATION_FAILED",
+    "fallback": "original_query"
+})
+
+# Prometheus metrics
+voice_degradation_total.labels(type="translation_failed").inc()
+voice_error_total.labels(stage="translation", error="timeout").inc()
+```
 
 ## Migration Guide
 

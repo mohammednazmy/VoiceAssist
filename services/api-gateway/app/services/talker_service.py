@@ -565,6 +565,11 @@ class TalkerService:
         ]
 
 
+# Fallback recovery configuration
+FALLBACK_COOLDOWN_SECONDS = 30.0  # Try ElevenLabs again after 30 seconds in fallback
+FALLBACK_MIN_SENTENCES_BEFORE_RETRY = 3  # Don't retry until at least 3 sentences synthesized
+
+
 class TalkerSession:
     """
     A single TTS speaking session with streaming support.
@@ -579,6 +584,7 @@ class TalkerSession:
     - Primary: ElevenLabs (premium quality)
     - Fallback: OpenAI TTS (reliable, good quality)
     - Triggers: Circuit breaker open, connection errors, API errors
+    - Recovery: After cooldown period, retry ElevenLabs
     """
 
     def __init__(
@@ -596,6 +602,7 @@ class TalkerSession:
         # Track failover state for this session
         self._using_fallback = False
         self._fallback_triggered_at: Optional[float] = None
+        self._sentences_since_fallback: int = 0  # Track sentences since fallback triggered
 
         # Get adaptive chunking config from quality preset (if set) or use defaults
         if config.quality_preset:
@@ -832,6 +839,29 @@ class TalkerSession:
                 # Determine which provider to use
                 use_fallback = self._using_fallback
 
+                # Check if we should try to recover from fallback
+                if use_fallback and self._fallback_triggered_at:
+                    time_in_fallback = time.time() - self._fallback_triggered_at
+                    if (
+                        time_in_fallback >= FALLBACK_COOLDOWN_SECONDS
+                        and self._sentences_since_fallback >= FALLBACK_MIN_SENTENCES_BEFORE_RETRY
+                    ):
+                        # Check if ElevenLabs circuit breaker is now closed
+                        try:
+                            elevenlabs_breaker.call(lambda: None)
+                            # Circuit breaker is closed, try to recover
+                            logger.info(
+                                "Attempting to recover from TTS fallback to ElevenLabs",
+                                extra={
+                                    "time_in_fallback_sec": round(time_in_fallback, 1),
+                                    "sentences_since_fallback": self._sentences_since_fallback,
+                                },
+                            )
+                            use_fallback = False  # Try ElevenLabs again
+                        except CircuitBreakerError:
+                            # Circuit breaker still open, stay in fallback
+                            pass
+
                 # Check if ElevenLabs circuit breaker is open
                 if not use_fallback:
                     try:
@@ -844,6 +874,7 @@ class TalkerSession:
                         use_fallback = True
                         self._using_fallback = True
                         self._fallback_triggered_at = time.time()
+                        self._sentences_since_fallback = 0
 
                 chunk_count = 0
                 provider_used = "openai" if use_fallback else "elevenlabs"
@@ -851,10 +882,27 @@ class TalkerSession:
                 if use_fallback and self._openai_tts.is_enabled():
                     # Use OpenAI TTS fallback
                     chunk_count = await self._synthesize_with_openai(tts_text, sentence_idx, start_time)
+                    self._sentences_since_fallback += 1
                 else:
                     # Try ElevenLabs (primary)
                     try:
                         chunk_count = await self._synthesize_with_elevenlabs(tts_text, sentence_idx, start_time)
+                        # ElevenLabs succeeded - if we were recovering from fallback, reset state
+                        if self._using_fallback:
+                            logger.info(
+                                "TTS fallback recovery successful - back to ElevenLabs",
+                                extra={
+                                    "sentence_idx": sentence_idx,
+                                    "time_in_fallback_sec": (
+                                        round(time.time() - self._fallback_triggered_at, 1)
+                                        if self._fallback_triggered_at
+                                        else 0
+                                    ),
+                                },
+                            )
+                            self._using_fallback = False
+                            self._fallback_triggered_at = None
+                            self._sentences_since_fallback = 0
                     except (CircuitBreakerError, Exception) as e:
                         # ElevenLabs failed, try OpenAI fallback
                         if self._openai_tts.is_enabled():
@@ -867,8 +915,10 @@ class TalkerSession:
                             )
                             self._using_fallback = True
                             self._fallback_triggered_at = time.time()
+                            self._sentences_since_fallback = 0
                             provider_used = "openai"
                             chunk_count = await self._synthesize_with_openai(tts_text, sentence_idx, start_time)
+                            self._sentences_since_fallback += 1
                         else:
                             # No fallback available, re-raise
                             raise

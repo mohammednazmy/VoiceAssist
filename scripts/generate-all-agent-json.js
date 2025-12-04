@@ -16,6 +16,10 @@
  *
  * @version 2.0.0
  * @date 2025-12-04
+ *
+ * TODO [AI-AGENT]: Phase 2 enhancements pending - see docs/planning/TODO_DOCS_ENHANCEMENT_PHASE2.md
+ *   1. Add code_refs frontmatter support: Link docs to code-excerpts.json entries
+ *   2. Add versioning support: Filter docs/endpoints by version field
  */
 
 const fs = require('fs');
@@ -371,16 +375,57 @@ function generateActivity() {
  * Generate /agent/todos.json
  */
 function generateTodos() {
+  // Static tasks for AI agents - Phase 2 documentation enhancements
+  const phase2Tasks = [
+    {
+      id: 'docs-phase2-code-refs',
+      title: 'Add code_refs frontmatter to documentation',
+      description: 'Link documentation pages to relevant code excerpts in code-excerpts.json using a code_refs frontmatter field',
+      category: 'documentation',
+      priority: 'high',
+      status: 'pending',
+      estimated_effort: '2-4 hours',
+      planning_doc: 'docs/planning/TODO_DOCS_ENHANCEMENT_PHASE2.md',
+      acceptance_criteria: [
+        'At least 50 high-priority docs have code_refs frontmatter',
+        'docs-summary.json includes code_refs for each doc',
+        'Validation script catches broken references',
+        'Health.json reports code_refs_coverage percentage'
+      ]
+    },
+    {
+      id: 'docs-phase2-versioning',
+      title: 'Implement documentation versioning groundwork',
+      description: 'Enable version-specific documentation and API endpoints to support multiple product versions',
+      category: 'documentation',
+      priority: 'medium',
+      status: 'pending',
+      estimated_effort: '2-4 hours',
+      planning_doc: 'docs/planning/TODO_DOCS_ENHANCEMENT_PHASE2.md',
+      acceptance_criteria: [
+        'Docs can have version frontmatter field',
+        'Agent endpoints can filter by version',
+        'index.json lists available versions',
+        'Version selector UI component exists'
+      ]
+    }
+  ];
+
   return {
     generated_at: new Date().toISOString(),
-    total_tasks: 0,
+    total_tasks: phase2Tasks.length,
     by_category: {
-      documentation: 0,
+      documentation: phase2Tasks.filter(t => t.category === 'documentation').length,
       feature_flags: 0,
       infrastructure: 0,
       testing: 0
     },
-    tasks: []
+    tasks: phase2Tasks,
+    usage_notes: [
+      'Tasks are sourced from docs/planning/TODO_*.md files',
+      'AI agents should read planning_doc for full implementation details',
+      'Mark tasks complete by updating the planning doc status'
+    ]
   };
 }
 

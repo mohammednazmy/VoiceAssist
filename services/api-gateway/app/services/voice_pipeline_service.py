@@ -30,7 +30,7 @@ from app.services.backchannel_service import (
     BackchannelSession,
     backchannel_service,
 )
-from app.services.dictation_phi_monitor import DictationPHIMonitor, dictation_phi_monitor
+from app.services.dictation_phi_monitor import DictationPHIMonitor, PatientPHIContext, dictation_phi_monitor
 from app.services.dictation_service import (
     DictationEvent,
     DictationSession,
@@ -48,12 +48,7 @@ from app.services.feedback_service import FeedbackService, feedback_service
 from app.services.medical_vocabulary_service import MedicalSpecialty
 from app.services.memory_context_service import ConversationMemoryManager, MemoryType, memory_context_service
 from app.services.note_formatter_service import FormattingConfig, FormattingLevel, note_formatter_service
-from app.services.patient_context_service import (
-    DictationContext,
-    PatientContextService,
-    PatientPHIContext,
-    patient_context_service,
-)
+from app.services.patient_context_service import DictationContext, PatientContextService, patient_context_service
 from app.services.prosody_analysis_service import ProsodySession, ProsodySnapshot, prosody_service
 from app.services.session_analytics_service import (
     InteractionType,
@@ -1347,8 +1342,8 @@ class VoicePipelineSession:
         # Phase 6: Apply thinking filler for complex queries
         if timing_config.use_filler and timing_config.filler_phrases and self._talker_session:
             try:
-                # Select a random filler phrase
-                filler = random.choice(timing_config.filler_phrases)
+                # Select a random filler phrase (not security-sensitive, just for UI variety)
+                filler = random.choice(timing_config.filler_phrases)  # nosec B311
                 logger.info(f"Sending thinking filler: '{filler}'")
 
                 # Send filler to TTS immediately (before the main response)

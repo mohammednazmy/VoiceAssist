@@ -25,6 +25,23 @@ export type LanguageOption = "en" | "es" | "fr" | "de" | "it" | "pt";
 export type PlaybackSpeed = 0.5 | 0.75 | 1 | 1.25 | 1.5 | 2;
 
 /**
+ * VAD preset types for adaptive voice activity detection
+ * Phase 2 Voice Mode v4.1 - Workstream 4
+ *
+ * - sensitive: Quiet environments, soft speech
+ * - balanced: General-purpose (default)
+ * - relaxed: Noisy environments, distant microphones
+ * - accessibility: Optimized for speech impairments
+ * - custom: User-defined parameters
+ */
+export type VADPresetType =
+  | "sensitive"
+  | "balanced"
+  | "relaxed"
+  | "accessibility"
+  | "custom";
+
+/**
  * Voice quality presets for latency vs naturalness trade-off
  * - speed: Fastest response (~100-150ms TTFA), may sound slightly choppy
  * - balanced: Good balance (~200-250ms TTFA), natural after first chunk (default)
@@ -89,6 +106,60 @@ export const QUALITY_PRESET_OPTIONS: {
     value: "natural",
     label: "Natural",
     description: "Most natural sounding speech, slightly slower response",
+  },
+];
+
+/**
+ * VAD preset options for Voice Mode v4.1
+ * Reference: docs/voice/adaptive-vad-presets.md
+ */
+export const VAD_PRESET_OPTIONS: {
+  value: VADPresetType;
+  label: string;
+  description: string;
+  icon: string;
+  energyThresholdDb: number;
+  silenceDurationMs: number;
+}[] = [
+  {
+    value: "sensitive",
+    label: "Sensitive",
+    description: "Quiet environments with minimal background noise",
+    icon: "🤫",
+    energyThresholdDb: -45,
+    silenceDurationMs: 300,
+  },
+  {
+    value: "balanced",
+    label: "Balanced",
+    description: "General-purpose for typical environments (recommended)",
+    icon: "⚖️",
+    energyThresholdDb: -35,
+    silenceDurationMs: 500,
+  },
+  {
+    value: "relaxed",
+    label: "Relaxed",
+    description: "Noisy environments or distant microphones",
+    icon: "🔊",
+    energyThresholdDb: -25,
+    silenceDurationMs: 800,
+  },
+  {
+    value: "accessibility",
+    label: "Accessibility",
+    description: "Optimized for users with speech impairments",
+    icon: "♿",
+    energyThresholdDb: -42,
+    silenceDurationMs: 1000,
+  },
+  {
+    value: "custom",
+    label: "Custom",
+    description: "Advanced: Set your own sensitivity and timing",
+    icon: "⚙️",
+    energyThresholdDb: -35,
+    silenceDurationMs: 500,
   },
 ];
 
@@ -264,6 +335,17 @@ interface VoiceSettingsState {
   thinkingHapticEnabled: boolean; // Enable haptic feedback (mobile)
   thinkingHapticPattern: "gentle" | "rhythmic" | "none";
 
+  // ============================================================================
+  // Voice Mode v4.1 Phase 2: VAD Presets & RTL Support
+  // ============================================================================
+  vadPreset: VADPresetType; // Selected VAD preset (sensitive, balanced, relaxed, etc.)
+  vadCustomEnergyThresholdDb: number; // Custom preset: energy threshold (-50 to -20 dB)
+  vadCustomSilenceDurationMs: number; // Custom preset: silence duration (200-1500 ms)
+
+  // RTL (Right-to-Left) language support
+  rtlEnabled: boolean; // Enable RTL layout mirroring for chat interface
+  rtlAutoDetect: boolean; // Automatically detect RTL languages (ar, he, fa, ur)
+
   // Actions
   setVoice: (voice: VoiceOption) => void;
   setLanguage: (language: LanguageOption) => void;
@@ -342,6 +424,13 @@ interface VoiceSettingsState {
   ) => void;
   setThinkingHapticEnabled: (enabled: boolean) => void;
   setThinkingHapticPattern: (pattern: "gentle" | "rhythmic" | "none") => void;
+
+  // Voice Mode v4.1 Phase 2: VAD Presets & RTL Support Actions
+  setVadPreset: (preset: VADPresetType) => void;
+  setVadCustomEnergyThresholdDb: (threshold: number) => void;
+  setVadCustomSilenceDurationMs: (duration: number) => void;
+  setRtlEnabled: (enabled: boolean) => void;
+  setRtlAutoDetect: (enabled: boolean) => void;
 }
 
 // Backend voice preferences response shape
@@ -435,6 +524,17 @@ const defaultSettings = {
   thinkingVisualStyle: "dots" as const,
   thinkingHapticEnabled: true,
   thinkingHapticPattern: "gentle" as const,
+
+  // ============================================================================
+  // Voice Mode v4.1 Phase 2: VAD Presets & RTL Support Defaults
+  // ============================================================================
+  vadPreset: "balanced" as VADPresetType, // Default to balanced
+  vadCustomEnergyThresholdDb: -35, // Default custom energy threshold
+  vadCustomSilenceDurationMs: 500, // Default custom silence duration
+
+  // RTL support defaults
+  rtlEnabled: false, // Disabled by default, enable manually or via auto-detect
+  rtlAutoDetect: true, // Auto-detect RTL languages by default
 };
 
 /**
@@ -619,6 +719,31 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
       setThinkingHapticPattern: (thinkingHapticPattern) =>
         set({ thinkingHapticPattern }),
 
+      // Voice Mode v4.1 Phase 2: VAD Presets & RTL Support Actions
+      setVadPreset: (vadPreset) => set({ vadPreset }),
+
+      setVadCustomEnergyThresholdDb: (vadCustomEnergyThresholdDb) =>
+        set({
+          vadCustomEnergyThresholdDb: clamp(
+            vadCustomEnergyThresholdDb,
+            -50,
+            -20,
+          ),
+        }),
+
+      setVadCustomSilenceDurationMs: (vadCustomSilenceDurationMs) =>
+        set({
+          vadCustomSilenceDurationMs: clamp(
+            vadCustomSilenceDurationMs,
+            200,
+            1500,
+          ),
+        }),
+
+      setRtlEnabled: (rtlEnabled) => set({ rtlEnabled }),
+
+      setRtlAutoDetect: (rtlAutoDetect) => set({ rtlAutoDetect }),
+
       reset: () => set({ ...defaultSettings }),
     }),
     {
@@ -694,6 +819,13 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
         thinkingVisualStyle: state.thinkingVisualStyle,
         thinkingHapticEnabled: state.thinkingHapticEnabled,
         thinkingHapticPattern: state.thinkingHapticPattern,
+
+        // Voice Mode v4.1 Phase 2: VAD Presets & RTL Support
+        vadPreset: state.vadPreset,
+        vadCustomEnergyThresholdDb: state.vadCustomEnergyThresholdDb,
+        vadCustomSilenceDurationMs: state.vadCustomSilenceDurationMs,
+        rtlEnabled: state.rtlEnabled,
+        rtlAutoDetect: state.rtlAutoDetect,
       }),
     },
   ),

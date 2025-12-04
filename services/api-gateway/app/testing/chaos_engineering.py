@@ -379,12 +379,12 @@ class ChaosController:
             if config.is_active():
                 return True
 
-        # Check error rate
+        # Check error rate (intentionally non-cryptographic for chaos testing)
         error_key = f"error:{target}"
         if error_key in self._active_chaos:
             config = self._active_chaos[error_key]
             if config.is_active():
-                return random.random() < config.error_rate
+                return random.random() < config.error_rate  # nosec B311
 
         return False
 
@@ -397,7 +397,8 @@ class ChaosController:
         if latency_key in self._active_chaos:
             config = self._active_chaos[latency_key]
             if config.is_active():
-                return random.randint(
+                # Intentionally non-cryptographic for chaos testing
+                return random.randint(  # nosec B311
                     config.latency_min_ms,
                     config.latency_max_ms,
                 )
@@ -410,7 +411,7 @@ class ChaosController:
         if error_key in self._active_chaos:
             config = self._active_chaos[error_key]
             if config.error_codes:
-                return random.choice(config.error_codes)
+                return random.choice(config.error_codes)  # nosec B311
         return 500
 
     async def intercept_request(

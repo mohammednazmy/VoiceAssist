@@ -18,6 +18,7 @@ Phase: Voice Mode Backchanneling Enhancement (Phase 3)
 import asyncio
 import hashlib
 import random
+import tempfile
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -569,10 +570,10 @@ class BackchannelTimingEngine:
             # All phrases used recently, reset and use any
             available_phrases = self._phrases
 
-        # Weighted random selection
+        # Weighted random selection (not security-sensitive, just for UI variety)
         weights = [p.weight for p in available_phrases]
         total_weight = sum(weights)
-        r = random.random() * total_weight
+        r = random.random() * total_weight  # nosec B311
 
         cumulative = 0
         for phrase, weight in zip(available_phrases, weights):
@@ -598,7 +599,7 @@ class BackchannelAudioCache:
 
     def __init__(self, cache_dir: Optional[Path] = None):
         self._cache: Dict[str, BackchannelAudio] = {}
-        self._cache_dir = cache_dir or Path("/tmp/voiceassist_backchannel_cache")
+        self._cache_dir = cache_dir or Path(tempfile.gettempdir()) / "voiceassist_backchannel_cache"
         self._cache_dir.mkdir(parents=True, exist_ok=True)
         self._generating: Set[str] = set()  # Track in-progress generations
 
