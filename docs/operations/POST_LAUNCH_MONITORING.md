@@ -6,12 +6,12 @@ summary: >-
   launch, including Epic FHIR integration monitoring.
 status: stable
 stability: production
-owner: ops
+owner: sre
 lastUpdated: "2025-12-04"
 audience:
   - human
   - agent
-  - ops
+  - sre
   - backend
   - ai-agents
 tags:

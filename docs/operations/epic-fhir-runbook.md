@@ -13,7 +13,7 @@ audience:
   - human
   - agent
   - backend
-  - ops
+  - sre
   - ai-agents
 tags:
   - epic

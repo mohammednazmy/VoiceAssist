@@ -6,12 +6,12 @@ summary: >-
   expansion, clinical intelligence, EHR enhancements, voice/AI advancements, and
   infrastructure scaling.
 status: draft
-stability: planning
+stability: experimental
 owner: product
 lastUpdated: "2025-12-04"
 audience:
   - human
-  - product
+  - stakeholders
   - backend
   - frontend
   - ai-agents
