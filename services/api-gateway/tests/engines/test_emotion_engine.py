@@ -124,12 +124,12 @@ class TestEmotionPersonalization:
         emotion = EmotionState(valence=0.8, arousal=0.9)
         baseline = await personalization.get_baseline("test-user")
 
-        # Only a few samples, confidence too low
-        for _ in range(5):
+        # Only a few samples, confidence too low (4/10 = 0.4 < 0.5 threshold)
+        for _ in range(4):
             await personalization.update_baseline("test-user", EmotionState())
 
         deviation = await personalization.check_deviation(emotion, baseline)
-        assert deviation is None  # Not enough samples
+        assert deviation is None  # Not enough samples (confidence < 0.5)
 
     @pytest.mark.asyncio
     async def test_deviation_detection_significant(self, personalization):

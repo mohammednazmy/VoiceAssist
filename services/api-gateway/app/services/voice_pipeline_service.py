@@ -1446,12 +1446,13 @@ class VoicePipelineSession:
         async with self._state_lock:
             self._state = PipelineState.LISTENING
 
-            # Restart STT for next input
+            # Restart STT for next input, preserving on_words callback for prosody/backchannel
             self._stt_session = await self._stt_service.create_session(
                 on_partial=self._handle_partial_transcript,
                 on_final=self._handle_final_transcript,
                 on_endpoint=self._handle_speech_end,
                 on_speech_start=self._handle_speech_start,
+                on_words=self._handle_word_data,
             )
             await self._stt_session.start()
 
