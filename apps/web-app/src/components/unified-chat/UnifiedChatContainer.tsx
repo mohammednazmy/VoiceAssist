@@ -36,6 +36,7 @@ import { CollapsibleSidebar } from "./CollapsibleSidebar";
 import { CollapsibleContextPane } from "./CollapsibleContextPane";
 import { UnifiedHeader } from "./UnifiedHeader";
 import { ThinkerTalkerVoicePanel } from "../voice/ThinkerTalkerVoicePanel";
+import { VoiceModeSettings } from "../voice/VoiceModeSettings";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 import type { TTVoiceMetrics } from "../../hooks/useThinkerTalkerSession";
 
@@ -165,6 +166,7 @@ export function UnifiedChatContainer({
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(startVoiceMode);
+  const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
 
   // Pagination state
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
@@ -812,6 +814,7 @@ export function UnifiedChatContainer({
             onTitleChange={handleTitleChange}
             onExport={handleExport}
             onShare={handleShare}
+            onSettings={() => setIsVoiceSettingsOpen(true)}
           />
 
           {/* Connection Status */}
@@ -898,6 +901,12 @@ export function UnifiedChatContainer({
             />
           )}
         </Suspense>
+
+        {/* Voice Settings Modal */}
+        <VoiceModeSettings
+          isOpen={isVoiceSettingsOpen}
+          onClose={() => setIsVoiceSettingsOpen(false)}
+        />
       </div>
     </ChatErrorBoundary>
   );

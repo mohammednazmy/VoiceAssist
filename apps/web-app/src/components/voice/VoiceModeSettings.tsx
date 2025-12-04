@@ -160,13 +160,9 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
     [setLanguageSwitchConfidence],
   );
 
-  console.log("[VoiceModeSettings] Rendering with isOpen:", isOpen);
-
   if (!isOpen) {
     return null;
   }
-
-  console.log("[VoiceModeSettings] Modal is open, rendering content");
 
   return (
     <div
