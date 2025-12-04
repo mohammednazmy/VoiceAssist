@@ -56,7 +56,7 @@ class ConversationMemory(Base):
     # Memory content
     key = Column(String(255), nullable=False)  # e.g., "current_topic", "mentioned_person"
     value = Column(Text, nullable=False)  # The actual memory value
-    metadata = Column(JSONB, default=dict)  # Additional context (confidence, source, etc.)
+    memory_metadata = Column("metadata", JSONB, default=dict)  # Additional context (confidence, source, etc.) - renamed to avoid SQLAlchemy reserved 'metadata'
 
     # Relevance tracking
     relevance_score = Column(Float, default=1.0)  # Decays over time
@@ -110,7 +110,7 @@ class UserContext(Base):
     key = Column(String(255), nullable=False)  # e.g., "medical_topics", "preferred_detail_level"
     value = Column(Text, nullable=False)
     confidence = Column(Float, default=0.5)  # How confident are we in this context
-    metadata = Column(JSONB, default=dict)
+    context_metadata = Column("metadata", JSONB, default=dict)  # Renamed to avoid SQLAlchemy reserved 'metadata'
 
     # Learning tracking
     observation_count = Column(Integer, default=1)  # Times we've observed this
