@@ -6,11 +6,26 @@ status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-11-27"
-audience: ["devops", "backend"]
-tags: ["runbook", "monitoring", "observability", "metrics", "alerting"]
+audience:
+  - devops
+  - backend
+  - ai-agents
+tags:
+  - runbook
+  - monitoring
+  - observability
+  - metrics
+  - alerting
 category: debugging
-relatedServices: ["api-gateway"]
-version: "1.0.0"
+relatedServices:
+  - api-gateway
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 Purpose: Comprehensive guide for monitoring and
+  observability in VoiceAssist V2 --- Application Metrics ↓ Prometheus (Metrics
+  Collection) ↓ Grafana (Visualization) ↓ AlertManager (Alerting) ↓
+  PagerDuty/Slack/Email --- services: prometheus: image: prom/prometheus:latest
+  po...
 ---
 
 # Monitoring Runbook

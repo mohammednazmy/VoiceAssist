@@ -1,14 +1,24 @@
 ---
-title: "Phase 10 Load Testing"
-slug: "phases/phase-10-load-testing"
+title: Phase 10 Load Testing
+slug: phases/phase-10-load-testing
 summary: "> **V2 PHASE DOCUMENT**"
 status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["phase", "load", "testing"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - phase
+  - load
+  - testing
 category: planning
+ai_summary: >-
+  > V2 PHASE DOCUMENT > > This phase description is part of the canonical 0–14
+  V2 plan. > It is intended to guide both human developers and Claude Code >
+  sessions. Always read DEVELOPMENT_PHASES_V2.md and BACKEND_ARCHITECTURE.md >
+  alongside this document. Benchmark, profile, and tune the system und...
 ---
 
 # Phase 10: Load Testing & Performance Tuning

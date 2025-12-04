@@ -1,14 +1,24 @@
 ---
-title: "Phase 11 Security Hipaa"
-slug: "phases/phase-11-security-hipaa"
+title: Phase 11 Security Hipaa
+slug: phases/phase-11-security-hipaa
 summary: "> **V2 PHASE DOCUMENT**"
 status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["phase", "security", "hipaa"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - phase
+  - security
+  - hipaa
 category: planning
+ai_summary: >-
+  > V2 PHASE DOCUMENT > > This phase description is part of the canonical 0–14
+  V2 plan. > It is intended to guide both human developers and Claude Code >
+  sessions. Always read DEVELOPMENT_PHASES_V2.md and BACKEND_ARCHITECTURE.md >
+  alongside this document. Implement full HIPAA controls and security...
 ---
 
 # Phase 11: Security Hardening & HIPAA Compliance

@@ -1,14 +1,24 @@
 ---
-title: "Phase 06 Nextcloud Apps"
-slug: "phases/phase-06-nextcloud-apps"
+title: Phase 06 Nextcloud Apps
+slug: phases/phase-06-nextcloud-apps
 summary: "> **V2 PHASE DOCUMENT**"
 status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["phase", "nextcloud", "apps"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - phase
+  - nextcloud
+  - apps
 category: planning
+ai_summary: >-
+  > V2 PHASE DOCUMENT > > This phase description is part of the canonical 0–14
+  V2 plan. > It is intended to guide both human developers and Claude Code >
+  sessions. Always read DEVELOPMENT_PHASES_V2.md and BACKEND_ARCHITECTURE.md >
+  alongside this document. Expose VoiceAssist as a Nextcloud app and i...
 ---
 
 # Phase 6: Nextcloud Apps Integration

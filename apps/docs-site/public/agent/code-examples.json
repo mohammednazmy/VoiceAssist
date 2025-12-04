@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "generated_at": "2025-12-04T10:17:00.918Z",
+  "generated_at": "2025-12-04T10:37:09.725Z",
   "description": "Code examples extracted from documentation",
   "stats": {
     "total_examples": 3294,
@@ -8,11 +8,11 @@
     "top_languages": [
       {
         "language": "bash",
-        "count": 1098
+        "count": 1097
       },
       {
         "language": "text",
-        "count": 612
+        "count": 613
       },
       {
         "language": "typescript",
@@ -24,11 +24,11 @@
       },
       {
         "language": "json",
-        "count": 183
+        "count": 184
       },
       {
         "language": "yaml",
-        "count": 176
+        "count": 175
       },
       {
         "language": "tsx",
@@ -255,7 +255,7 @@
       ]
     },
     "bash": {
-      "count": 1098,
+      "count": 1097,
       "examples": [
         {
           "id": "ACCESSIBILITY_AUDIT.md:7",
@@ -360,7 +360,7 @@
       ]
     },
     "text": {
-      "count": 612,
+      "count": 613,
       "examples": [
         {
           "id": "ADMIN_PANEL_DEPLOYMENT.md:3",
@@ -515,7 +515,7 @@
       ]
     },
     "json": {
-      "count": 183,
+      "count": 184,
       "examples": [
         {
           "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:2",
@@ -955,7 +955,7 @@
       ]
     },
     "yaml": {
-      "count": 176,
+      "count": 175,
       "examples": [
         {
           "id": "ANSIBLE_GUIDE.md:1",
@@ -1120,7 +1120,7 @@
         {
           "id": "STYLE_GUIDE.md:4",
           "doc_path": "STYLE_GUIDE.md",
-          "description": "Follow this structure for endpoints:"
+          "description": "`"
         },
         {
           "id": "archive/PHASE_7_EXPORT_COMPLETE.md:0",
@@ -2499,12 +2499,12 @@
   },
   "by_tag": {
     "snippet": {
-      "count": 846,
+      "count": 847,
       "languages": {
         "tsx": 9,
         "css": 17,
         "bash": 159,
-        "text": 265,
+        "text": 266,
         "apache": 5,
         "diff": 2,
         "typescript": 141,
@@ -2642,11 +2642,11 @@
       ]
     },
     "database": {
-      "count": 522,
+      "count": 521,
       "languages": {
         "tsx": 16,
         "text": 61,
-        "bash": 151,
+        "bash": 150,
         "sql": 32,
         "python": 77,
         "typescript": 102,
@@ -2778,9 +2778,9 @@
       ]
     },
     "package-manager": {
-      "count": 155,
+      "count": 153,
       "languages": {
-        "bash": 155
+        "bash": 153
       },
       "examples": [
         {
@@ -2899,10 +2899,10 @@
         "text": 160,
         "apache": 4,
         "typescript": 69,
-        "bash": 375,
+        "bash": 376,
         "python": 92,
         "tsx": 15,
-        "yaml": 37,
+        "yaml": 36,
         "json": 25,
         "markdown": 7,
         "nginx": 2,
@@ -3040,7 +3040,7 @@
       ]
     },
     "authentication": {
-      "count": 492,
+      "count": 491,
       "languages": {
         "text": 112,
         "bash": 105,
@@ -3048,7 +3048,7 @@
         "typescript": 62,
         "python": 101,
         "json": 25,
-        "yaml": 18,
+        "yaml": 17,
         "markdown": 7,
         "http": 8,
         "env": 4,
@@ -3315,8 +3315,8 @@
     "config": {
       "count": 359,
       "languages": {
-        "json": 183,
-        "yaml": 176
+        "json": 184,
+        "yaml": 175
       },
       "examples": [
         {

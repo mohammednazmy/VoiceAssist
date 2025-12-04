@@ -1,14 +1,27 @@
 ---
-title: "Frontend Completion Plan"
-slug: "frontend-completion-plan"
-summary: "This document outlines the comprehensive implementation plan for completing the VoiceAssist frontend MVP. Based on thorough codebase analysis, the fro..."
+title: Frontend Completion Plan
+slug: frontend-completion-plan
+summary: >-
+  This document outlines the comprehensive implementation plan for completing
+  the VoiceAssist frontend MVP. Based on thorough codebase analysis, the fro...
 status: stable
 stability: beta
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["frontend"]
-tags: ["frontend", "completion", "plan"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - frontend
+  - completion
+  - plan
 category: planning
+ai_summary: >-
+  This document outlines the comprehensive implementation plan for completing
+  the VoiceAssist frontend MVP. Based on thorough codebase analysis, the
+  frontend is approximately 65% complete with solid foundations in place.
+  Current State Assessment: Estimated Total Effort: 180-240 hours (9-12 weeks
+  at...
 ---
 
 # VoiceAssist Frontend Completion Plan

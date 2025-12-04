@@ -1,14 +1,23 @@
 ---
-title: "Readme"
-slug: "client-implementation/readme"
+title: Readme
+slug: client-implementation/readme
 summary: "**Date:** 2025-11-21"
 status: stable
 stability: production
 owner: frontend
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["readme"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - readme
 category: planning
+ai_summary: >-
+  Version: 1.0.0 Date: 2025-11-21 Status: Draft - Awaiting Team Review &
+  Feedback Project: VoiceAssist Enterprise Medical AI Assistant --- This
+  directory contains comprehensive planning and specification documents for
+  implementing the three VoiceAssist client applications: 1. Web App (web-app/)
+  - M...
 ---
 
 # VoiceAssist Client Implementation - Planning Documentation

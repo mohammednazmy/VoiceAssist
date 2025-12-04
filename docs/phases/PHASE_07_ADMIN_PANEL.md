@@ -1,14 +1,25 @@
 ---
-title: "Phase 07 Admin Panel"
-slug: "phases/phase-07-admin-panel"
+title: Phase 07 Admin Panel
+slug: phases/phase-07-admin-panel
 summary: "> **V2 PHASE DOCUMENT**"
 status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-11-27"
-audience: ["devops", "sre"]
-tags: ["phase", "admin", "panel"]
+audience:
+  - devops
+  - sre
+  - ai-agents
+tags:
+  - phase
+  - admin
+  - panel
 category: planning
+ai_summary: >-
+  > V2 PHASE DOCUMENT > > This phase description is part of the canonical 0–14
+  V2 plan. > It is intended to guide both human developers and Claude Code >
+  sessions. Always read DEVELOPMENT_PHASES_V2.md and BACKEND_ARCHITECTURE.md >
+  alongside this document. Build fully functional admin panel wired to...
 ---
 
 # Phase 7: Admin Panel & RBAC

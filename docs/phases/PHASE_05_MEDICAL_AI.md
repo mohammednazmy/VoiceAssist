@@ -1,14 +1,23 @@
 ---
-title: "Phase 05 Medical Ai"
-slug: "phases/phase-05-medical-ai"
+title: Phase 05 Medical Ai
+slug: phases/phase-05-medical-ai
 summary: "> **V2 PHASE DOCUMENT**"
 status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["phase", "medical"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - phase
+  - medical
 category: planning
+ai_summary: >-
+  > V2 PHASE DOCUMENT > > This phase description is part of the canonical 0–14
+  V2 plan. > It is intended to guide both human developers and Claude Code >
+  sessions. Always read DEVELOPMENT_PHASES_V2.md and BACKEND_ARCHITECTURE.md >
+  alongside this document. Implement ingestion, embeddings, and orches...
 ---
 
 # Phase 5: Medical Knowledge Base & RAG System

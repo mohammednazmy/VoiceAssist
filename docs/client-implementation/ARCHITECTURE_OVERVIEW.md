@@ -1,14 +1,26 @@
 ---
-title: "Architecture Overview"
-slug: "client-implementation/architecture-overview"
-summary: "The VoiceAssist platform is deployed across three dedicated domains, each serving a specific purpose:"
+title: Architecture Overview
+slug: client-implementation/architecture-overview
+summary: >-
+  The VoiceAssist platform is deployed across three dedicated domains, each
+  serving a specific purpose:
 status: stable
 stability: production
 owner: frontend
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["architecture", "overview"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - architecture
+  - overview
 category: planning
+ai_summary: >-
+  The VoiceAssist platform is deployed across three dedicated domains, each
+  serving a specific purpose:
+  ┌─────────────────────────────────────────────────────────────┐ │ VoiceAssist
+  Platform │ │ │ │ ┌──────────────────┐ ┌──────────────────┐ ┌────────────┐ │ │
+  │ assist.asimo.io │ │ admin.asimo.io │...
 ---
 
 # VoiceAssist Client Architecture Overview

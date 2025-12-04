@@ -1,14 +1,25 @@
 ---
-title: "Phase 02 Database Schema"
-slug: "phases/phase-02-database-schema"
+title: Phase 02 Database Schema
+slug: phases/phase-02-database-schema
 summary: "> **WARNING: LEGACY V1 PHASE - NOT CANONICAL FOR V2**"
 status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-11-27"
-audience: ["backend"]
-tags: ["phase", "database", "schema"]
+audience:
+  - backend
+  - ai-agents
+tags:
+  - phase
+  - database
+  - schema
 category: planning
+ai_summary: >-
+  > WARNING: LEGACY V1 PHASE - NOT CANONICAL FOR V2 > This describes the
+  original V1 phase. > For the current 15-phase V2 plan, see: > > -
+  DEVELOPMENT_PHASES_V2.md > - PHASE_00_INITIALIZATION.md > - Implementation
+  Status > - PHASE_STATUS.md > > Note: New V2 phase docs will be created later.
+  Do not...
 ---
 
 # Phase 2: Database Schema & Models

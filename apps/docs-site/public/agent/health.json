@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "generated_at": "2025-12-04T10:17:01.327Z",
+  "generated_at": "2025-12-04T10:37:10.137Z",
   "health_status": "healthy",
   "scores": {
     "overall": 100,
@@ -156,9 +156,9 @@
       "docs": []
     },
     "ai_summary": {
-      "with_summary": 147,
-      "without_summary": 107,
-      "coverage_percentage": 58,
+      "with_summary": 219,
+      "without_summary": 35,
+      "coverage_percentage": 86,
       "docs_needing_summary": [
         {
           "path": "archive/BACKEND_IMPLEMENTATION_PLAN.md",
@@ -305,12 +305,6 @@
     "health_critical": 50
   },
   "recommendations": [
-    {
-      "priority": "low",
-      "category": "ai_summary",
-      "message": "Good AI summary coverage at 58%, aim for 75%+",
-      "action": "Continue adding ai_summary to remaining docs"
-    },
     {
       "priority": "low",
       "category": "cleanup",

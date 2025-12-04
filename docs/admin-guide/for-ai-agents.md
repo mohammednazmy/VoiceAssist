@@ -49,16 +49,27 @@ curl https://assistdocs.asimo.io/agent/health.json
 
 All endpoints are available at `https://assistdocs.asimo.io/agent/`
 
-| Endpoint                   | Purpose                           | Best For                |
-| -------------------------- | --------------------------------- | ----------------------- |
-| `/agent/index.json`        | Lists all available endpoints     | Initial discovery       |
-| `/agent/docs.json`         | Full document index with metadata | Browsing/filtering docs |
-| `/agent/docs-summary.json` | AI-friendly summaries by category | Quick context loading   |
-| `/agent/status.json`       | System status and feature flags   | Health checks           |
-| `/agent/health.json`       | Documentation health metrics      | Quality monitoring      |
-| `/agent/activity.json`     | Recent changes                    | Staying up to date      |
-| `/agent/todos.json`        | Pending documentation tasks       | Finding work items      |
-| `/search-index.json`       | Full-text search index            | Client-side searching   |
+| Endpoint                    | Purpose                           | Best For                |
+| --------------------------- | --------------------------------- | ----------------------- |
+| `/agent/index.json`         | Lists all available endpoints     | Initial discovery       |
+| `/agent/docs.json`          | Full document index with metadata | Browsing/filtering docs |
+| `/agent/docs-summary.json`  | AI-friendly summaries by category | Quick context loading   |
+| `/agent/code-examples.json` | Code snippets with semantic tags  | Finding implementation  |
+| `/agent/status.json`        | System status and feature flags   | Health checks           |
+| `/agent/health.json`        | Documentation health metrics      | Quality monitoring      |
+| `/agent/activity.json`      | Recent changes                    | Staying up to date      |
+| `/agent/todos.json`         | Pending documentation tasks       | Finding work items      |
+| `/search-index.json`        | Full-text search index            | Client-side searching   |
+
+### Code Examples Endpoint
+
+The `/agent/code-examples.json` endpoint provides 3,290+ code snippets with semantic tags:
+
+```bash
+curl https://assistdocs.asimo.io/agent/code-examples.json | jq '.by_tag | keys'
+```
+
+**Available tags**: `api`, `authentication`, `cache`, `component`, `config`, `database`, `docker`, `environment`, `git`, `http`, `infrastructure`, `kubernetes`, `package-manager`, `react`, `realtime`, `snippet`, `system`, `testing`
 
 ---
 
@@ -221,14 +232,31 @@ Target audiences include:
 
 ---
 
+## Current Documentation Metrics
+
+Check `/agent/health.json` for real-time metrics. Current status:
+
+| Metric          | Value     |
+| --------------- | --------- |
+| Total Documents | 254       |
+| With AI Summary | 219 (86%) |
+| Code Examples   | 3,290+    |
+| Languages       | 26        |
+| Semantic Tags   | 18        |
+| Categories      | 13        |
+| Health Status   | Healthy   |
+
+---
+
 ## Best Practices for AI Agents
 
 1. **Prefer ai_summary over full text** when you only need a quick understanding
 2. **Check lastUpdated** before using documentation (prefer recent docs)
 3. **Filter by audience** to find relevant docs faster
 4. **Use health.json** to identify stale or incomplete areas
-5. **Follow cross-references** in "Related Documentation" sections
-6. **Cache endpoints** - JSON endpoints can be cached for performance
+5. **Use code-examples.json by_tag** to find implementation patterns
+6. **Follow cross-references** in "Related Documentation" sections
+7. **Cache endpoints** - JSON endpoints can be cached for performance
 
 ---
 

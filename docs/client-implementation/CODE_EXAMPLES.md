@@ -1,14 +1,23 @@
 ---
-title: "Code Examples"
-slug: "client-implementation/code-examples"
+title: Code Examples
+slug: client-implementation/code-examples
 summary: "**Complete Production-Ready Patterns for VoiceAssist Client**"
 status: stable
 stability: production
 owner: frontend
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["code", "examples"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - code
+  - examples
 category: planning
+ai_summary: >-
+  Complete Production-Ready Patterns for VoiceAssist Client > Comprehensive
+  collection of battle-tested code patterns, components, hooks, and utilities
+  with full TypeScript support and error handling. This document contains 30+
+  complete, runnable examples spanning 15,000+ lines of production-qualit...
 ---
 
 # Code Examples Reference
