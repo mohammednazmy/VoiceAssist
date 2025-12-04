@@ -198,3 +198,9 @@ All flag changes are logged:
 - Environment affected
 
 View audit log: **Settings** > **Audit Logs** > Filter by "feature_flags"
+
+## Related Documentation
+
+- [Phase 4: User Overrides](../../feature-flags/PHASE_4_USER_OVERRIDES_PLAN.md) - Per-user flag overrides for testing and debugging
+- [Feature Flags API Reference](/reference/api) - REST API endpoints for flag management
+- [Real-time SSE Updates](/backend/websocket) - Server-Sent Events for live updates

@@ -210,3 +210,9 @@ user_flag_overrides_active = Gauge(
 - [ ] Real-time updates propagate override changes
 - [ ] All RBAC permissions enforced
 - [ ] 90%+ test coverage for new code
+
+## Related Documentation
+
+- [Admin Panel Guide](../admin-guide/feature-flags/admin-panel-guide.md) - Feature flags admin UI documentation
+- [Scheduled Variant Changes](../admin-guide/feature-flags/admin-panel-guide.md#scheduled-variant-changes) - Phase 3 scheduled changes feature
+- [Phase 2: Targeting Rules](../UNIFIED_ARCHITECTURE.md) - Advanced flag types and user targeting
