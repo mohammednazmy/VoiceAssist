@@ -155,7 +155,10 @@ EMOTION_STYLE_MAP: Dict[EmotionCategory, ResponseStyleAdjustment] = {
         stability_modifier=0.1,  # More stable = calming
         speech_rate_modifier=0.9,  # Slower = more patient
         style_modifier=-0.1,  # Less expressive = calming
-        tone_instruction="The user seems frustrated. Respond with patience, acknowledge their concern, and provide clear, helpful guidance.",
+        tone_instruction=(
+            "The user seems frustrated. Respond with patience, acknowledge their concern, "
+            "and provide clear, helpful guidance."
+        ),
         response_length_hint="brief",
         prioritize_empathy=True,
     ),
@@ -163,7 +166,9 @@ EMOTION_STYLE_MAP: Dict[EmotionCategory, ResponseStyleAdjustment] = {
         stability_modifier=0.15,
         speech_rate_modifier=0.85,
         style_modifier=-0.05,
-        tone_instruction="The user seems anxious. Respond calmly and reassuringly, breaking down information into simple steps.",
+        tone_instruction=(
+            "The user seems anxious. Respond calmly and reassuringly, " "breaking down information into simple steps."
+        ),
         response_length_hint="brief",
         prioritize_empathy=True,
         prioritize_clarity=True,
@@ -195,7 +200,10 @@ EMOTION_STYLE_MAP: Dict[EmotionCategory, ResponseStyleAdjustment] = {
         stability_modifier=0.15,
         speech_rate_modifier=0.85,
         style_modifier=-0.15,
-        tone_instruction="The user seems upset. Respond calmly without being defensive, acknowledge their concern, and focus on solutions.",
+        tone_instruction=(
+            "The user seems upset. Respond calmly without being defensive, "
+            "acknowledge their concern, and focus on solutions."
+        ),
         response_length_hint="brief",
         prioritize_empathy=True,
     ),
@@ -203,7 +211,10 @@ EMOTION_STYLE_MAP: Dict[EmotionCategory, ResponseStyleAdjustment] = {
         stability_modifier=0.15,
         speech_rate_modifier=0.8,
         style_modifier=-0.1,
-        tone_instruction="The user seems worried or fearful. Respond with reassurance, provide accurate information, and offer support.",
+        tone_instruction=(
+            "The user seems worried or fearful. Respond with reassurance, "
+            "provide accurate information, and offer support."
+        ),
         response_length_hint="detailed",
         prioritize_empathy=True,
         prioritize_clarity=True,

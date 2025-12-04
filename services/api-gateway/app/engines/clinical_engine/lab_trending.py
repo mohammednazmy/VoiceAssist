@@ -285,7 +285,10 @@ class LabTrendingService:
                         alert_type="critical_value",
                         current_value=lab.value,
                         unit=critical["unit"],
-                        message=f"CRITICAL LOW {test_name}: {lab.value} {critical['unit']} (critical <{critical['low']})",
+                        message=(
+                            f"CRITICAL LOW {test_name}: {lab.value} {critical['unit']} "
+                            f"(critical <{critical['low']})"
+                        ),
                         recommendations=self._get_critical_recommendations(test_name, "low"),
                     )
                 )
@@ -297,7 +300,10 @@ class LabTrendingService:
                         alert_type="critical_value",
                         current_value=lab.value,
                         unit=critical["unit"],
-                        message=f"CRITICAL HIGH {test_name}: {lab.value} {critical['unit']} (critical >{critical['high']})",
+                        message=(
+                            f"CRITICAL HIGH {test_name}: {lab.value} {critical['unit']} "
+                            f"(critical >{critical['high']})"
+                        ),
                         recommendations=self._get_critical_recommendations(test_name, "high"),
                     )
                 )
@@ -313,7 +319,10 @@ class LabTrendingService:
                         alert_type="out_of_range",
                         current_value=lab.value,
                         unit=ref["unit"],
-                        message=f"Low {test_name}: {lab.value} {ref['unit']} (normal {ref['low']}-{ref.get('high', 'N/A')})",
+                        message=(
+                            f"Low {test_name}: {lab.value} {ref['unit']} "
+                            f"(normal {ref['low']}-{ref.get('high', 'N/A')})"
+                        ),
                         reference_range=f"{ref['low']}-{ref.get('high', 'N/A')} {ref['unit']}",
                     )
                 )
@@ -325,7 +334,10 @@ class LabTrendingService:
                         alert_type="out_of_range",
                         current_value=lab.value,
                         unit=ref["unit"],
-                        message=f"High {test_name}: {lab.value} {ref['unit']} (normal {ref.get('low', 'N/A')}-{ref['high']})",
+                        message=(
+                            f"High {test_name}: {lab.value} {ref['unit']} "
+                            f"(normal {ref.get('low', 'N/A')}-{ref['high']})"
+                        ),
                         reference_range=f"{ref.get('low', 'N/A')}-{ref['high']} {ref['unit']}",
                     )
                 )
@@ -508,9 +520,15 @@ class LabTrendingService:
         message = ""
         if is_significant:
             if direction == TrendDirection.INCREASING:
-                message = f"{test_name} increasing: {first_value} -> {last_value} ({percent_change:+.1%}) over {time_span} days"
+                message = (
+                    f"{test_name} increasing: {first_value} -> {last_value} "
+                    f"({percent_change:+.1%}) over {time_span} days"
+                )
             elif direction == TrendDirection.DECREASING:
-                message = f"{test_name} decreasing: {first_value} -> {last_value} ({percent_change:+.1%}) over {time_span} days"
+                message = (
+                    f"{test_name} decreasing: {first_value} -> {last_value} "
+                    f"({percent_change:+.1%}) over {time_span} days"
+                )
 
         trend = LabTrend(
             test_name=test_name,

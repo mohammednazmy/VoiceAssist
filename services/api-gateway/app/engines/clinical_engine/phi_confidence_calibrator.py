@@ -11,6 +11,8 @@ Phase 4 Features:
 - Persistence of calibration parameters
 """
 
+from __future__ import annotations
+
 import logging
 import math
 from dataclasses import dataclass, field

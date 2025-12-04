@@ -6,3 +6,12 @@ per-file-ignores =
     services/api-gateway/app/services/email_service.py: E501
     # Alembic migrations with long prompts in multi-line strings
     services/api-gateway/alembic/versions/025_add_prompt_model_settings.py: E501
+    # Engine files use PEP 563 (from __future__ import annotations) for forward references
+    # Flake8/pyflakes doesn't understand deferred annotation evaluation
+    services/api-gateway/app/engines/analytics_engine/*.py: F821
+    services/api-gateway/app/engines/clinical_engine/*.py: F821
+    services/api-gateway/app/engines/conversation_engine/*.py: F821
+    services/api-gateway/app/engines/dictation_engine/*.py: F821
+    services/api-gateway/app/engines/dictation_engine/plugins/*.py: F821
+    services/api-gateway/app/engines/emotion_engine/*.py: F821
+    services/api-gateway/app/engines/memory_engine/*.py: F821

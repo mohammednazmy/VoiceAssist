@@ -147,7 +147,11 @@ class OrderSession:
 # Medication patterns
 MEDICATION_PATTERNS = [
     # "prescribe amoxicillin 500 mg twice daily"
-    r"(?:prescribe|order|start)\s+(\w+(?:\s+\w+)?)\s+(\d+(?:\.\d+)?)\s*(mg|mcg|g|ml|units?)\s*(?:(\w+(?:\s+\w+)?)\s*(?:daily|times?\s+(?:a\s+)?day|bid|tid|qid|prn))?",
+    (
+        r"(?:prescribe|order|start)\s+(\w+(?:\s+\w+)?)\s+(\d+(?:\.\d+)?)\s*"
+        r"(mg|mcg|g|ml|units?)\s*(?:(\w+(?:\s+\w+)?)\s*"
+        r"(?:daily|times?\s+(?:a\s+)?day|bid|tid|qid|prn))?"
+    ),
     # "prescribe metformin"
     r"(?:prescribe|order|start)\s+(\w+(?:\s+\w+)?)",
     # "give patient lisinopril 10 mg daily"

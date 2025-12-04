@@ -5,6 +5,8 @@ Provides appropriate "thinking" responses for complex queries.
 Manages response timing for natural conversation flow.
 """
 
+from __future__ import annotations
+
 import logging
 import random
 from dataclasses import dataclass

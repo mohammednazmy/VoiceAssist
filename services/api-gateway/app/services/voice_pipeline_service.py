@@ -1070,14 +1070,16 @@ class VoicePipelineSession:
             if confidence >= threshold:
                 logger.info(
                     f"[Pipeline] Triggering barge-in (substantial transcript while AI speaking): "
-                    f"'{text}' (conf={confidence:.2f} >= threshold={threshold:.2f}, vad_sensitivity={self.config.vad_sensitivity})"
+                    f"'{text}' (conf={confidence:.2f} >= threshold={threshold:.2f}, "
+                    f"vad_sensitivity={self.config.vad_sensitivity})"
                 )
                 await self.barge_in()
                 return  # Don't send transcript delta after barge-in
             else:
                 logger.info(
                     f"[Pipeline] Skipping barge-in (confidence too low): '{text}' "
-                    f"(conf={confidence:.2f} < threshold={threshold:.2f}, vad_sensitivity={self.config.vad_sensitivity})"
+                    f"(conf={confidence:.2f} < threshold={threshold:.2f}, "
+                    f"vad_sensitivity={self.config.vad_sensitivity})"
                 )
 
         await self._on_message(
@@ -1264,7 +1266,8 @@ class VoicePipelineSession:
         query_type = classify_query_type(transcript)
         timing_config = RESPONSE_TIMING.get(query_type, RESPONSE_TIMING[QueryType.UNKNOWN])
         logger.debug(
-            f"Query type: {query_type.value}, timing: delay={timing_config.delay_ms}ms, filler={timing_config.use_filler}"
+            f"Query type: {query_type.value}, timing: delay={timing_config.delay_ms}ms, "
+            f"filler={timing_config.use_filler}"
         )
 
         # Phase 3, 5 & 6: Apply combined response delay

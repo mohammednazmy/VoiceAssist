@@ -97,7 +97,7 @@ class EHRSessionContext:
             "conditions": [c.to_dict() for c in self.conditions],
             "allergies": [a.to_dict() for a in self.allergies],
             "vitals": [v.to_dict() for v in self.vitals],
-            "labs": [l.to_dict() for l in self.labs],
+            "labs": [lab.to_dict() for lab in self.labs],
             "procedures": [p.to_dict() for p in self.procedures],
             "status": self.status.value,
             "last_updated": self.last_updated.isoformat() if self.last_updated else None,
@@ -178,13 +178,13 @@ class EHRSessionContext:
             # Get most recent abnormal labs
             context["abnormal_labs"] = [
                 {
-                    "name": l.observation_name,
-                    "value": l.display_value,
-                    "reference_range": l.reference_range_display,
-                    "timestamp": l.effective_datetime.isoformat() if l.effective_datetime else None,
+                    "name": lab.observation_name,
+                    "value": lab.display_value,
+                    "reference_range": lab.reference_range_display,
+                    "timestamp": lab.effective_datetime.isoformat() if lab.effective_datetime else None,
                 }
-                for l in self.labs
-                if l.is_abnormal
+                for lab in self.labs
+                if lab.is_abnormal
             ][
                 :10
             ]  # Limit to 10 most recent
@@ -431,7 +431,7 @@ class EHRDataService:
                 "has_vitals": bool(context.vitals),
                 "has_labs": bool(context.labs),
                 "severe_allergies": sum(1 for a in context.allergies if a.is_severe),
-                "abnormal_labs": sum(1 for l in context.labs if l.is_abnormal),
+                "abnormal_labs": sum(1 for lab in context.labs if lab.is_abnormal),
             },
             session_id=session_id,
             source_engine="integration",
@@ -682,19 +682,19 @@ class EHRDataService:
         labs = context.labs
         if "cbc" in query:
             labs = [
-                l
-                for l in labs
-                if "cbc" in l.observation_name.lower() or l.loinc_code in ["6690-2", "718-7", "789-8", "787-2"]
+                lab
+                for lab in labs
+                if "cbc" in lab.observation_name.lower() or lab.loinc_code in ["6690-2", "718-7", "789-8", "787-2"]
             ]
         elif "bmp" in query or "metabolic" in query:
             labs = [
-                l
-                for l in labs
-                if "metabolic" in l.observation_name.lower()
-                or l.observation_name.lower() in ["sodium", "potassium", "glucose", "creatinine"]
+                lab
+                for lab in labs
+                if "metabolic" in lab.observation_name.lower()
+                or lab.observation_name.lower() in ["sodium", "potassium", "glucose", "creatinine"]
             ]
 
-        abnormal = [l for l in labs if l.is_abnormal]
+        abnormal = [lab for lab in labs if lab.is_abnormal]
 
         summary = f"Found {len(labs)} lab results"
         if abnormal:
@@ -704,14 +704,14 @@ class EHRDataService:
         if abnormal:
             speak_text += f"Note: {len(abnormal)} are abnormal. "
             speak_text += "Abnormal results include: "
-            speak_text += ", ".join(f"{l.observation_name} at {l.display_value}" for l in abnormal[:3])
+            speak_text += ", ".join(f"{lab.observation_name} at {lab.display_value}" for lab in abnormal[:3])
         elif labs:
             speak_text += "All results are within normal limits."
 
         return EHRQueryResult(
             success=True,
             query_type="labs",
-            data=[l.to_dict() for l in labs],
+            data=[lab.to_dict() for lab in labs],
             summary=summary,
             speak_text=speak_text,
         )

@@ -5,6 +5,8 @@ Combines regex patterns (fast, high precision) with NER models
 (comprehensive) for robust PHI detection.
 """
 
+from __future__ import annotations
+
 import logging
 import re
 from dataclasses import dataclass

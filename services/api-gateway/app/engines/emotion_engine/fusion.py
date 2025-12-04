@@ -7,6 +7,8 @@ Combines emotion signals from multiple sources:
 - Text sentiment: 10% weight
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from typing import Dict, Optional

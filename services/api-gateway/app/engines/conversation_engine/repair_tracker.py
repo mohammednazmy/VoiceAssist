@@ -12,6 +12,8 @@ Phase 3 Enhancements:
 - User-specific repair history tracking
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta

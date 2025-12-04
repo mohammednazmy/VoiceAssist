@@ -29,6 +29,8 @@ Phase 6 Enhancements:
 - Voice commands for EHR queries
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
@@ -976,17 +978,17 @@ __all__ = [
     "FHIRAllergyIntolerance",
 ]
 
-from .care_gaps import CareGap, PatientGapSummary
+from .care_gaps import CareGap, PatientGapSummary  # noqa: E402
 
 # Phase 5 re-exports for convenience
-from .code_extractor import ClinicalAlert, CodeSeverity, CodeSuggestion
-from .deidentification_service import DeidentificationMethod, DeidentificationResult
+from .code_extractor import ClinicalAlert, CodeSeverity, CodeSuggestion  # noqa: E402
+from .deidentification_service import DeidentificationMethod, DeidentificationResult  # noqa: E402
 
 # Phase 4 re-exports for convenience
-from .enhanced_phi_detector import EnhancedPHIDetection, PHICategory
-from .lab_trending import LabAlert, LabTrend, LabValue
-from .medication_reconciliation import MedicationDiscrepancy, MedicationEntry, ReconciliationResult
-from .reasoning import AllergyAlert, DosingGuidance, DrugInteractionDetail, InteractionSeverity
+from .enhanced_phi_detector import EnhancedPHIDetection, PHICategory  # noqa: E402
+from .lab_trending import LabAlert, LabTrend, LabValue  # noqa: E402
+from .medication_reconciliation import MedicationDiscrepancy, MedicationEntry, ReconciliationResult  # noqa: E402
+from .reasoning import AllergyAlert, DosingGuidance, DrugInteractionDetail, InteractionSeverity  # noqa: E402
 
 # Phase 6 re-exports for convenience (conditional to handle missing dependencies)
 try:
@@ -1004,4 +1006,4 @@ try:
 except ImportError:
     # Phase 6 components not installed
     pass
-from .clinical_plugins import BaseClinicalPlugin, ClinicalPluginRegistry
+from .clinical_plugins import BaseClinicalPlugin, ClinicalPluginRegistry  # noqa: E402

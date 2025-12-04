@@ -11,6 +11,8 @@ Phase 4 Features:
 - Organization context for facility names
 """
 
+from __future__ import annotations
+
 import logging
 import re
 from dataclasses import dataclass

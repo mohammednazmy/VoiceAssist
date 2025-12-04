@@ -9,9 +9,11 @@ Tracks HEDIS/MIPS quality measures and identifies care gaps:
 Phase 5: Complete interface definitions (implementation requires EHR integration).
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -527,9 +529,6 @@ class CareGapsService:
             "screening_intervals": len(self.SCREENING_INTERVALS),
         }
 
-
-# Import timedelta for date calculations
-from datetime import timedelta
 
 __all__ = [
     "CareGapsService",

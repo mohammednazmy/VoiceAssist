@@ -4,6 +4,8 @@ Metrics Collector - Metrics Collection and Aggregation
 Collects and aggregates metrics from the voice pipeline.
 """
 
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field

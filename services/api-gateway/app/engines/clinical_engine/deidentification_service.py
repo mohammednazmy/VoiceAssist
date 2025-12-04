@@ -12,6 +12,8 @@ Phase 4 Features:
 - Audit logging of all operations
 """
 
+from __future__ import annotations
+
 import logging
 import random
 import secrets

@@ -5,6 +5,8 @@ Central registry for all dictation plugins.
 Allows hospitals to enable/disable plugins at granular level.
 """
 
+from __future__ import annotations
+
 import logging
 from typing import Callable, Dict, List, Optional
 
