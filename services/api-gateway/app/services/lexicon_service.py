@@ -230,6 +230,12 @@ class LexiconService:
         "tr": "lexicons/tr/medical_phonemes.json",
     }
 
+    # Additional domain-specific lexicons
+    DOMAIN_LEXICON_PATHS = {
+        "ar": ["lexicons/ar/quranic_phonemes.json"],  # Quranic Arabic vocabulary
+        "en": ["lexicons/en/quranic_phonemes.json"],  # Transliterated Quranic terms
+    }
+
     SHARED_LEXICON_PATH = "lexicons/shared/drug_names.json"
 
     # Languages with placeholder lexicons (minimal coverage, require expansion)
@@ -266,6 +272,9 @@ class LexiconService:
         if language in self._loaded_languages:
             return
 
+        self.lexicons[language] = {}
+
+        # Load main lexicon
         lexicon_path = self.data_dir / self.LEXICON_PATHS.get(language, "")
         if lexicon_path.exists():
             try:
@@ -276,10 +285,22 @@ class LexiconService:
                 logger.info(f"Loaded {len(self.lexicons[language])} terms for {language}")
             except Exception as e:
                 logger.error(f"Failed to load lexicon for {language}: {e}")
-                self.lexicons[language] = {}
         else:
             logger.warning(f"Lexicon file not found: {lexicon_path}")
-            self.lexicons[language] = {}
+
+        # Load domain-specific lexicons (e.g., Quranic vocabulary for Arabic)
+        domain_paths = self.DOMAIN_LEXICON_PATHS.get(language, [])
+        for domain_path_str in domain_paths:
+            domain_path = self.data_dir / domain_path_str
+            if domain_path.exists():
+                try:
+                    with open(domain_path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                        domain_terms = {k: v for k, v in data.items() if not k.startswith("_")}
+                        self.lexicons[language].update(domain_terms)
+                    logger.info(f"Loaded {len(domain_terms)} domain terms from {domain_path_str}")
+                except Exception as e:
+                    logger.error(f"Failed to load domain lexicon {domain_path_str}: {e}")
 
         self._loaded_languages.add(language)
 

@@ -28,23 +28,33 @@ The lexicon service provides:
 
 ## Supported Languages
 
-| Code | Language   | Status      | Terms |
-| ---- | ---------- | ----------- | ----- |
-| en   | English    | Complete    | 146   |
-| es   | Spanish    | In Progress | 30    |
-| fr   | French     | In Progress | 10    |
-| de   | German     | In Progress | 10    |
-| it   | Italian    | In Progress | 10    |
-| pt   | Portuguese | In Progress | 10    |
-| ar   | Arabic     | In Progress | 25    |
-| zh   | Chinese    | In Progress | 25    |
-| hi   | Hindi      | In Progress | 10    |
-| ur   | Urdu       | In Progress | 10    |
-| ja   | Japanese   | Placeholder | 5     |
-| ko   | Korean     | Placeholder | 5     |
-| ru   | Russian    | Placeholder | 5     |
-| pl   | Polish     | Placeholder | 5     |
-| tr   | Turkish    | Placeholder | 5     |
+| Code | Language   | Status      | Terms | Domain Terms |
+| ---- | ---------- | ----------- | ----- | ------------ |
+| en   | English    | Complete    | 146   | +280 Quranic |
+| es   | Spanish    | In Progress | 30    | -            |
+| fr   | French     | In Progress | 10    | -            |
+| de   | German     | In Progress | 10    | -            |
+| it   | Italian    | In Progress | 10    | -            |
+| pt   | Portuguese | In Progress | 10    | -            |
+| ar   | Arabic     | Complete    | 155   | +364 Quranic |
+| zh   | Chinese    | In Progress | 25    | -            |
+| hi   | Hindi      | In Progress | 10    | -            |
+| ur   | Urdu       | In Progress | 10    | -            |
+| ja   | Japanese   | Placeholder | 5     | -            |
+| ko   | Korean     | Placeholder | 5     | -            |
+| ru   | Russian    | Placeholder | 5     | -            |
+| pl   | Polish     | Placeholder | 5     | -            |
+| tr   | Turkish    | Placeholder | 5     | -            |
+
+### Quranic Lexicons
+
+For the Quran Voice Tutor application, dedicated Quranic lexicons provide pronunciations for:
+
+- **114 Surah names** (Arabic and transliterated)
+- **50+ Tajweed terms** (Idgham, Ikhfa, Qalqalah, Madd, etc.)
+- **200+ Quranic vocabulary** (Islamic terms, prophets, concepts)
+
+These are automatically loaded alongside the medical lexicons for Arabic and English.
 
 ## Basic Usage
 
@@ -352,6 +362,60 @@ LEXICON_PATHS = {
 
 ```bash
 pytest tests/services/test_voice_v4_services.py::TestLexiconLoading -v
+```
+
+## Contributing to Lexicons
+
+### Adding New Terms
+
+1. **Identify the correct lexicon file**:
+   - Medical terms: `data/lexicons/{lang}/medical_phonemes.json`
+   - Quranic terms: `data/lexicons/{lang}/quranic_phonemes.json`
+
+2. **Use proper IPA notation**:
+   - Consult [IPA chart](https://www.internationalphoneticassociation.org/content/ipa-chart)
+   - Use consistent stress markers (ˈ for primary, ˌ for secondary)
+   - Include vowel length markers (ː) for Arabic/English
+
+3. **Follow the JSON format**:
+
+   ```json
+   {
+     "term_in_target_language": "ipa_pronunciation"
+   }
+   ```
+
+4. **Update metadata**:
+   - Increment `term_count` in `_meta`
+   - Update `last_updated` date
+   - Add new categories if needed
+
+### Quranic Term Guidelines
+
+- **Surah names**: Use both Arabic script and transliterated forms
+- **Tajweed terms**: Include common spelling variations
+- **Arabic IPA**: Use proper pharyngeal (ħ, ʕ), emphatic (tˤ, sˤ, dˤ), and uvular (q) consonants
+- **English transliteration IPA**: Approximate Arabic sounds with closest English equivalents
+
+### Validation
+
+Run the lexicon validation to check coverage:
+
+```bash
+cd services/api-gateway
+python -c "
+from app.services.lexicon_service import get_lexicon_service
+import asyncio
+
+async def validate():
+    service = get_lexicon_service()
+    reports = await service.validate_all_lexicons()
+    for lang, report in reports.items():
+        status_icon = '✓' if report.status == 'complete' else '○'
+        print(f'{status_icon} {lang}: {report.term_count} terms ({report.status})')
+
+asyncio.run(validate())
+"
 ```
 
 ## Related Documentation
