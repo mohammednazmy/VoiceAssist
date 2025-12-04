@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "generated_at": "2025-12-04T09:43:40.902Z",
+  "generated_at": "2025-12-04T09:59:30.729Z",
   "health_status": "healthy",
   "scores": {
     "overall": 100,
@@ -8,18 +8,18 @@
     "freshness": 100
   },
   "summary": {
-    "total_docs": 251,
+    "total_docs": 252,
     "stale_count": 0,
-    "missing_frontmatter_count": 1,
+    "missing_frontmatter_count": 0,
     "coverage_percentage": 100
   },
   "category_freshness": {
     "reference": {
       "freshness_score": 100,
-      "total_docs": 88,
-      "fresh_docs": 88,
+      "total_docs": 91,
+      "fresh_docs": 91,
       "stale_docs": 0,
-      "newest_update": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)",
+      "newest_update": "2025-12-04",
       "oldest_update": "2025-11-27",
       "status": "healthy",
       "docs_needing_update": []
@@ -46,8 +46,8 @@
     },
     "planning": {
       "freshness_score": 100,
-      "total_docs": 72,
-      "fresh_docs": 72,
+      "total_docs": 74,
+      "fresh_docs": 74,
       "stale_docs": 0,
       "newest_update": "2025-12-04",
       "oldest_update": "2025-11-27",
@@ -126,10 +126,10 @@
     },
     "uncategorized": {
       "freshness_score": 100,
-      "total_docs": 10,
-      "fresh_docs": 10,
+      "total_docs": 6,
+      "fresh_docs": 6,
       "stale_docs": 0,
-      "newest_update": "2025-12-03",
+      "newest_update": "2025-12-02",
       "oldest_update": "2025-11-27",
       "status": "healthy",
       "docs_needing_update": []
@@ -152,35 +152,30 @@
       "docs": []
     },
     "missing_frontmatter": {
-      "count": 1,
-      "docs": [
-        {
-          "path": "WORLD_CLASS_BARGE_IN_IMPLEMENTATION_PLAN.md",
-          "missing_fields": ["summary"]
-        }
-      ]
+      "count": 0,
+      "docs": []
     },
     "by_status": {
-      "stable": 209,
-      "draft": 4,
+      "stable": 213,
+      "draft": 1,
       "deprecated": 35,
       "experimental": 3
     },
     "by_owner": {
       "docs": 139,
-      "backend": 24,
+      "backend": 27,
       "product": 3,
-      "frontend": 30,
+      "frontend": 31,
       "security": 1,
       "mixed": 33,
       "sre": 15,
       "infra": 2
     },
     "by_category": {
-      "reference": 88,
+      "reference": 91,
       "deployment": 7,
       "operations": 18,
-      "planning": 72,
+      "planning": 74,
       "api": 5,
       "architecture": 10,
       "testing": 7,
@@ -191,9 +186,9 @@
       "feature-flags": 7
     },
     "coverage": {
-      "total": 251,
-      "documented": 250,
-      "undocumented": 1
+      "total": 252,
+      "documented": 252,
+      "undocumented": 0
     }
   },
   "thresholds": {
@@ -204,12 +199,6 @@
   },
   "recommendations": [
     {
-      "priority": "medium",
-      "category": "metadata",
-      "message": "1 docs are missing required frontmatter",
-      "action": "Add title, status, lastUpdated, and summary to frontmatter"
-    },
-    {
       "priority": "low",
       "category": "cleanup",
       "message": "35 deprecated docs should be reviewed",
@@ -217,12 +206,6 @@
     }
   ],
   "next_steps": [
-    {
-      "priority": 2,
-      "action": "Add missing frontmatter",
-      "reason": "1 docs are missing required metadata",
-      "suggested_docs": ["WORLD_CLASS_BARGE_IN_IMPLEMENTATION_PLAN.md"]
-    },
     {
       "priority": 4,
       "action": "Clean up deprecated documentation",

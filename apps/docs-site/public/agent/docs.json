@@ -1,6 +1,6 @@
 {
-  "count": 251,
-  "generated_at": "2025-12-04T09:43:40.802Z",
+  "count": 252,
+  "generated_at": "2025-12-04T09:59:30.310Z",
   "docs": [
     {
       "title": "VoiceAssist Documentation Style Guide",
@@ -108,6 +108,86 @@
       "audience": ["developers", "admin", "ai-agents"],
       "category": "reference",
       "path": "admin-guide/system-settings-vs-flags.md"
+    },
+    {
+      "title": "Feature Flags",
+      "slug": "feature-flags",
+      "status": "stable",
+      "lastUpdated": "2025-12-04",
+      "summary": "Runtime feature toggling and configuration management system",
+      "aiSummary": "Feature flags enable runtime toggles without deployments. Use category.feature_name pattern (e.g., ui.dark_mode, backend.rag_strategy). Stored in PostgreSQL, cached in Redis (5min TTL). See admin-guide/feature-flags/ for detailed docs.",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["developers", "admin", "ai-agents"],
+      "category": "reference",
+      "tags": ["feature", "flags", "configuration", "runtime"],
+      "path": "FEATURE_FLAGS.md"
+    },
+    {
+      "title": "Unified Chat/Voice UI Implementation",
+      "slug": "unified-chat-voice-ui",
+      "status": "stable",
+      "lastUpdated": "2025-12-04",
+      "summary": "Implementation guide for the merged Chat and Voice Mode interface with seamless mode switching.",
+      "aiSummary": "Unified Chat/Voice UI merges text and voice interfaces. Feature flag ui.unified_chat_voice controls enablement. Three-panel layout with collapsible sidebar and context pane. Uses Zustand for state management.",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["developers", "frontend", "ai-agents"],
+      "category": "planning",
+      "tags": ["voice", "ui", "chat", "frontend", "unified"],
+      "path": "UNIFIED_CHAT_VOICE_UI.md"
+    },
+    {
+      "title": "World-Class Voice Barge-In Implementation Plan",
+      "slug": "world-class-barge-in-implementation-plan",
+      "status": "stable",
+      "lastUpdated": "2025-12-04",
+      "summary": "Transform VoiceAssist voice mode to human-like conversation with <30ms speech detection, intelligent interruptions, and natural turn-taking.",
+      "aiSummary": "Voice barge-in system enables human-like interruption handling. Features neural VAD (<30ms detection), context-aware interruptions, full duplex audio, and adaptive personalization. Implementation complete across 10 phases.",
+      "owner": "backend",
+      "audience": ["developers", "ai-agents"],
+      "category": "planning",
+      "tags": ["voice", "barge-in", "vad", "real-time"],
+      "path": "WORLD_CLASS_BARGE_IN_IMPLEMENTATION_PLAN.md"
+    },
+    {
+      "title": "Admin Panel Integration Guide",
+      "slug": "admin-panel-integration-guide",
+      "status": "stable",
+      "lastUpdated": "2025-12-04",
+      "summary": "Comprehensive guide for the VoiceAssist admin panel with cross-app navigation, real-time events, and voice monitoring",
+      "aiSummary": "Admin panel integrates cross-app navigation, real-time event streaming via WebSocket/Redis, and voice session monitoring. Provides centralized control for feature flags, knowledge base, and system health.",
+      "owner": "frontend",
+      "audience": ["admin", "developers", "ai-agents"],
+      "category": "reference",
+      "tags": ["admin", "integration", "voice-monitoring", "real-time"],
+      "path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md"
+    },
+    {
+      "title": "Real-Time Events Guide",
+      "slug": "realtime-events-guide",
+      "status": "stable",
+      "lastUpdated": "2025-12-04",
+      "summary": "Guide to the admin panel real-time event system using WebSocket and Redis pub/sub",
+      "aiSummary": "Real-time events use WebSocket connections with Redis pub/sub for live updates. Supports feature flag changes, voice session events, and system health broadcasts. Auto-reconnects with exponential backoff.",
+      "owner": "backend",
+      "audience": ["admin", "developers", "ai-agents"],
+      "category": "reference",
+      "tags": ["admin", "real-time", "websocket", "redis", "events"],
+      "path": "admin/REALTIME_EVENTS_GUIDE.md"
+    },
+    {
+      "title": "Documentation Guide for AI Agents",
+      "slug": "for-ai-agents",
+      "status": "stable",
+      "lastUpdated": "2025-12-04",
+      "summary": "Guide for AI agents on how to navigate and use VoiceAssist documentation effectively",
+      "aiSummary": "AI agents should use /agent/*.json endpoints for structured data. Start with index.json for available endpoints, docs-summary.json for quick context, health.json for documentation status. Use ai_summary fields in frontmatter for quick understanding.",
+      "owner": "docs",
+      "audience": ["ai-agents"],
+      "category": "reference",
+      "tags": ["ai", "navigation", "meta", "documentation"],
+      "path": "admin-guide/for-ai-agents.md"
     },
     {
       "title": "Post-Launch Monitoring Guide",
@@ -255,13 +335,6 @@
       "path": "VOICE_MODE_SETTINGS_GUIDE.md"
     },
     {
-      "title": "WORLD CLASS BARGE IN IMPLEMENTATION PLAN",
-      "slug": "world-class-barge-in-implementation-plan",
-      "status": "draft",
-      "lastUpdated": "2025-12-03",
-      "path": "WORLD_CLASS_BARGE_IN_IMPLEMENTATION_PLAN.md"
-    },
-    {
       "title": "Agent API Reference",
       "slug": "ai/agent-api-reference",
       "status": "stable",
@@ -396,18 +469,6 @@
       "tags": ["architecture", "system-design", "overview"],
       "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
       "path": "UNIFIED_ARCHITECTURE.md"
-    },
-    {
-      "title": "Unified Chat/Voice UI Implementation",
-      "slug": "unified-chat-voice-ui",
-      "status": "stable",
-      "lastUpdated": "2025-12-02",
-      "summary": "Implementation guide for the merged Chat and Voice Mode interface with seamless mode switching.",
-      "stability": "production",
-      "owner": "frontend",
-      "audience": ["developers", "frontend", "agent"],
-      "tags": ["voice", "ui", "chat", "frontend", "unified"],
-      "path": "UNIFIED_CHAT_VOICE_UI.md"
     },
     {
       "title": "Admin Panel Implementation Plan",
@@ -630,26 +691,6 @@
       "category": "architecture",
       "tags": ["architecture"],
       "path": "ARCHITECTURE_V2.md"
-    },
-    {
-      "title": "Admin Panel Integration Guide",
-      "slug": "admin-panel-integration-guide",
-      "status": "draft",
-      "lastUpdated": "2025-12-01",
-      "summary": "Comprehensive guide for the VoiceAssist admin panel with cross-app navigation, real-time events, and voice monitoring",
-      "audience": ["admin", "developers", "ai-agents"],
-      "tags": ["admin", "integration", "voice-monitoring", "real-time"],
-      "path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md"
-    },
-    {
-      "title": "Real-Time Events Guide",
-      "slug": "realtime-events-guide",
-      "status": "draft",
-      "lastUpdated": "2025-12-01",
-      "summary": "Guide to the admin panel real-time event system using WebSocket and Redis pub/sub",
-      "audience": ["admin", "developers", "ai-agents"],
-      "tags": ["admin", "real-time", "websocket", "redis", "events"],
-      "path": "admin/REALTIME_EVENTS_GUIDE.md"
     },
     {
       "title": "User Guide - Getting Started",
@@ -1073,19 +1114,6 @@
       "category": "reference",
       "tags": ["enhancement", "summary"],
       "path": "ENHANCEMENT_SUMMARY.md"
-    },
-    {
-      "title": "Feature Flags",
-      "slug": "feature-flags",
-      "status": "stable",
-      "lastUpdated": "2025-11-27",
-      "summary": "**Last Updated**: 2025-11-21 (Phase 7 - P3.1)",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human"],
-      "category": "reference",
-      "tags": ["feature", "flags"],
-      "path": "FEATURE_FLAGS.md"
     },
     {
       "title": "File",

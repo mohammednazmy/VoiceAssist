@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "generated_at": "2025-12-04T09:43:40.674Z",
+  "generated_at": "2025-12-04T09:59:30.166Z",
   "description": "VoiceAssist documentation and system index for AI agents",
   "canonical_urls": {
     "web_app": "https://dev.asimo.io",
@@ -16,7 +16,12 @@
     },
     "docs_summary": {
       "path": "/agent/docs-summary.json",
-      "description": "AI-friendly summaries aggregated by category for quick context loading",
+      "description": "AI-friendly summaries aggregated by category and audience for quick context loading",
+      "method": "GET"
+    },
+    "code_examples": {
+      "path": "/agent/code-examples.json",
+      "description": "Code examples extracted from documentation, grouped by language and category",
       "method": "GET"
     },
     "status": {

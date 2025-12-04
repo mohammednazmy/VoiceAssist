@@ -251,7 +251,12 @@ function generateIndex() {
       },
       docs_summary: {
         path: '/agent/docs-summary.json',
-        description: 'AI-friendly summaries aggregated by category for quick context loading',
+        description: 'AI-friendly summaries aggregated by category and audience for quick context loading',
+        method: 'GET'
+      },
+      code_examples: {
+        path: '/agent/code-examples.json',
+        description: 'Code examples extracted from documentation, grouped by language and category',
         method: 'GET'
       },
       status: {
@@ -648,20 +653,22 @@ function generateHealthRecommendations(metrics, totalDocs) {
 }
 
 /**
- * Generate /agent/docs-summary.json - AI-friendly summaries aggregated by category
+ * Generate /agent/docs-summary.json - AI-friendly summaries aggregated by category and audience
  */
 function generateDocsSummary() {
   const docs = scanDocsDir(CONFIG.DOCS_DIR);
   const now = new Date();
 
-  // Group summaries by category
+  // Group summaries by category and audience
   const byCategory = {};
+  const byAudience = {};
   const withAiSummary = [];
   const withoutAiSummary = [];
 
   for (const doc of docs) {
     const category = doc.category || 'uncategorized';
 
+    // Initialize category
     if (!byCategory[category]) {
       byCategory[category] = {
         count: 0,
@@ -676,18 +683,33 @@ function generateDocsSummary() {
       ai_summary: doc.aiSummary || null,
       status: doc.status,
       owner: doc.owner || null,
+      audience: doc.audience || [],
       last_updated: doc.lastUpdated
     };
 
     byCategory[category].count++;
     byCategory[category].docs.push(summaryEntry);
 
+    // Group by audience
+    const audiences = doc.audience || ['general'];
+    for (const aud of audiences) {
+      if (!byAudience[aud]) {
+        byAudience[aud] = {
+          count: 0,
+          docs: []
+        };
+      }
+      byAudience[aud].count++;
+      byAudience[aud].docs.push(summaryEntry);
+    }
+
     if (doc.aiSummary) {
       withAiSummary.push(summaryEntry);
     } else {
       withoutAiSummary.push({
         path: doc.path,
-        title: doc.title
+        title: doc.title,
+        category: category
       });
     }
   }
@@ -696,6 +718,9 @@ function generateDocsSummary() {
   const aiCoverage = docs.length > 0
     ? Math.round((withAiSummary.length / docs.length) * 100)
     : 0;
+
+  // AI-agent specific docs for quick access
+  const aiAgentDocs = (byAudience['ai-agents'] || byAudience['ai-agent'] || { docs: [] }).docs;
 
   return {
     version: CONFIG.VERSION,
@@ -706,15 +731,129 @@ function generateDocsSummary() {
       with_ai_summary: withAiSummary.length,
       without_ai_summary: withoutAiSummary.length,
       ai_coverage_percentage: aiCoverage,
-      categories: Object.keys(byCategory).length
+      categories: Object.keys(byCategory).length,
+      audiences: Object.keys(byAudience).length,
+      ai_agent_docs: aiAgentDocs.length
     },
     by_category: byCategory,
-    missing_ai_summaries: withoutAiSummary.slice(0, 50), // Limit to first 50
+    by_audience: byAudience,
+    for_ai_agents: aiAgentDocs, // Quick access to AI-targeted docs
+    missing_ai_summaries: withoutAiSummary.slice(0, 50),
     usage_notes: [
       'Use ai_summary for quick context when available',
       'Fall back to summary field if ai_summary is missing',
       'Filter by category for domain-specific queries',
+      'Filter by audience for role-specific docs',
+      'Check for_ai_agents array for AI-optimized docs',
       'Check missing_ai_summaries to prioritize adding summaries'
+    ]
+  };
+}
+
+/**
+ * Generate /agent/code-examples.json - Extract code examples from documentation
+ */
+function generateCodeExamples() {
+  const docs = scanDocsDir(CONFIG.DOCS_DIR);
+  const now = new Date();
+
+  const examples = [];
+  const byLanguage = {};
+  const byCategory = {};
+
+  for (const doc of docs) {
+    try {
+      const fullPath = path.join(CONFIG.DOCS_DIR, doc.path);
+      const content = fs.readFileSync(fullPath, 'utf-8');
+
+      // Extract fenced code blocks with language
+      const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+      let match;
+      let blockIndex = 0;
+
+      while ((match = codeBlockRegex.exec(content)) !== null) {
+        const language = match[1] || 'text';
+        const code = match[2].trim();
+
+        // Skip very short or empty blocks
+        if (code.length < 10) continue;
+
+        // Try to extract a description from context (text before the code block)
+        const beforeBlock = content.substring(0, match.index);
+        const lines = beforeBlock.split('\n').filter(l => l.trim());
+        const lastLine = lines[lines.length - 1] || '';
+        const description = lastLine.startsWith('#')
+          ? lastLine.replace(/^#+\s*/, '')
+          : lastLine.length < 200 ? lastLine : '';
+
+        const example = {
+          id: `${doc.path}:${blockIndex}`,
+          doc_path: doc.path,
+          doc_title: doc.title,
+          language,
+          description: description || `Code example from ${doc.title}`,
+          code: code.length > 500 ? code.substring(0, 500) + '...' : code,
+          full_length: code.length,
+          category: doc.category || 'uncategorized'
+        };
+
+        examples.push(example);
+        blockIndex++;
+
+        // Group by language
+        if (!byLanguage[language]) {
+          byLanguage[language] = { count: 0, examples: [] };
+        }
+        byLanguage[language].count++;
+        if (byLanguage[language].examples.length < 20) {
+          byLanguage[language].examples.push({
+            id: example.id,
+            doc_path: example.doc_path,
+            description: example.description
+          });
+        }
+
+        // Group by category
+        const cat = doc.category || 'uncategorized';
+        if (!byCategory[cat]) {
+          byCategory[cat] = { count: 0, examples: [] };
+        }
+        byCategory[cat].count++;
+        if (byCategory[cat].examples.length < 10) {
+          byCategory[cat].examples.push({
+            id: example.id,
+            language: example.language,
+            description: example.description
+          });
+        }
+      }
+    } catch (error) {
+      // Skip files that can't be read
+    }
+  }
+
+  // Language statistics
+  const languageStats = Object.entries(byLanguage)
+    .map(([lang, data]) => ({ language: lang, count: data.count }))
+    .sort((a, b) => b.count - a.count);
+
+  return {
+    version: CONFIG.VERSION,
+    generated_at: now.toISOString(),
+    description: 'Code examples extracted from documentation',
+    stats: {
+      total_examples: examples.length,
+      languages: Object.keys(byLanguage).length,
+      top_languages: languageStats.slice(0, 10)
+    },
+    by_language: byLanguage,
+    by_category: byCategory,
+    recent_examples: examples.slice(0, 50),
+    usage_notes: [
+      'Use by_language to find examples in specific languages',
+      'Use by_category to find examples related to specific topics',
+      'Code snippets are truncated to 500 chars - fetch full doc for complete code',
+      'Each example has an id in format "doc_path:index"'
     ]
   };
 }
@@ -741,6 +880,7 @@ function main() {
     index: generateIndex,
     docs: generateDocs,
     'docs-summary': generateDocsSummary,
+    'code-examples': generateCodeExamples,
     status: generateStatus,
     activity: generateActivity,
     todos: generateTodos,
@@ -806,4 +946,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { generateIndex, generateDocs, generateDocsSummary, generateStatus, generateActivity, generateTodos, generateHealth };
+module.exports = { generateIndex, generateDocs, generateDocsSummary, generateCodeExamples, generateStatus, generateActivity, generateTodos, generateHealth };

@@ -1,13 +1,14 @@
 ---
 title: "Feature Flags"
 slug: "feature-flags"
-summary: "**Last Updated**: 2025-11-21 (Phase 7 - P3.1)"
+summary: "Runtime feature toggling and configuration management system"
+ai_summary: Feature flags enable runtime toggles without deployments. Use category.feature_name pattern (e.g., ui.dark_mode, backend.rag_strategy). Stored in PostgreSQL, cached in Redis (5min TTL). See admin-guide/feature-flags/ for detailed docs.
 status: stable
 stability: production
-owner: docs
-lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["feature", "flags"]
+owner: backend
+lastUpdated: "2025-12-04"
+audience: ["developers", "admin", "ai-agents"]
+tags: ["feature", "flags", "configuration", "runtime"]
 category: reference
 ---
 
@@ -600,6 +601,19 @@ async def process_request():
 
 ## Related Documentation
 
+### Feature Flag Guides (New - Recommended)
+
+- [Feature Flags Overview](./admin-guide/feature-flags/README.md) - Comprehensive guide
+- [Naming Conventions](./admin-guide/feature-flags/naming-conventions.md) - `category.feature_name` pattern
+- [Feature Flag Lifecycle](./admin-guide/feature-flags/lifecycle.md) - Draft → Active → Deprecated → Removed
+- [Advanced Types](./admin-guide/feature-flags/advanced-types.md) - Boolean, percentage, variant, scheduled
+- [Multi-Environment](./admin-guide/feature-flags/multi-environment.md) - Dev, staging, production configs
+- [Admin Panel Guide](./admin-guide/feature-flags/admin-panel-guide.md) - UI usage
+- [Best Practices](./admin-guide/feature-flags/best-practices.md) - Guidelines and tips
+- [System Settings vs Feature Flags](./admin-guide/system-settings-vs-flags.md) - When to use each
+
+### Architecture & System Docs
+
 - [UNIFIED_ARCHITECTURE.md](./UNIFIED_ARCHITECTURE.md) - System architecture
 - [SERVICE_CATALOG.md](./SERVICE_CATALOG.md) - API endpoint catalog
 - [SECURITY_COMPLIANCE.md](./SECURITY_COMPLIANCE.md) - Security guidelines
@@ -607,7 +621,7 @@ async def process_request():
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2025-11-21
+**Document Version**: 2.0
+**Last Updated**: 2025-12-04
 **Maintained By**: VoiceAssist Engineering Team
 **Review Cycle**: Quarterly or after major feature additions
