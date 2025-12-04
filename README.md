@@ -63,12 +63,13 @@ If you're an AI coding assistant (Claude, GPT, Copilot, etc.), start here:
 
 - ✅ **Production Ready** - Complete with HA/DR, monitoring, and security hardening
 - 🏥 **Healthcare Focused** - HIPAA-compliant with PHI data protection
-- 🎤 **Voice Interface** - Advanced voice recognition and natural language processing
+- 🎤 **Voice Interface** - Advanced voice recognition with emotion detection and backchanneling
 - 📚 **Medical Knowledge** - RAG-powered medical information retrieval
-- 🔐 **Enterprise Security** - Zero-trust architecture with audit logging
+- 🏨 **EHR Integration** - Epic FHIR read/write operations with voice-driven orders
+- 🔐 **Enterprise Security** - Zero-trust architecture with comprehensive audit logging
 - 📊 **Full Observability** - Prometheus, Grafana, Jaeger, and Loki
 - 🚀 **High Availability** - PostgreSQL replication, automated backups, failover
-- 🧪 **Comprehensive Tests** - 50+ E2E, integration, and voice tests
+- 🧪 **Comprehensive Tests** - 550+ automated tests with 95% coverage
 
 ---
 
@@ -291,6 +292,22 @@ A comprehensive 10-phase enhancement transforming voice mode into a human-like c
 | 10    | Analytics & Feedback   | Session metrics, user feedback collection          |
 
 **Documentation:** [VOICE_MODE_ENHANCEMENT_10_PHASE.md](docs/VOICE_MODE_ENHANCEMENT_10_PHASE.md)
+
+### Epic FHIR Integration (✅ Complete - 2025-12-04)
+
+Comprehensive EHR integration enabling voice-driven clinical workflows:
+
+| Component           | Capability                                                   |
+| ------------------- | ------------------------------------------------------------ |
+| Read Operations     | Patient, Observation, MedicationRequest, AllergyIntolerance  |
+| Write Operations    | MedicationRequest, ServiceRequest, DocumentReference (ETag)  |
+| Voice Commands      | "Prescribe amoxicillin 500mg twice daily", "Order CBC stat"  |
+| Order Confirmation  | Duplicate detection, conflict checks, confirmation workflow  |
+| Provider Monitoring | Circuit breaker, health checks, fallback activation          |
+| Chaos Engineering   | Resilience testing (outage simulation, latency injection)    |
+| Audit Logging       | HIPAA-compliant event capture for all EHR operations         |
+
+**Documentation:** [Epic FHIR Operational Runbook](docs/operations/epic-fhir-runbook.md)
 
 ### Enterprise Features
 
