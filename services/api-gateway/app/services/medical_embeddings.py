@@ -150,8 +150,11 @@ class PubMedBERTEmbeddings:
             try:
                 from transformers import AutoModel, AutoTokenizer
 
-                self._tokenizer = AutoTokenizer.from_pretrained(self.model_name, revision=self.model_revision)
-                self._model = AutoModel.from_pretrained(self.model_name, revision=self.model_revision)
+                # nosec B615 - revision pinned via self.model_revision
+                self._tokenizer = AutoTokenizer.from_pretrained(  # nosec B615
+                    self.model_name, revision=self.model_revision
+                )
+                self._model = AutoModel.from_pretrained(self.model_name, revision=self.model_revision)  # nosec B615
 
                 # Move to device
                 if self.device != "cpu":
@@ -247,8 +250,11 @@ class BioBERTEmbeddings:
             try:
                 from transformers import AutoModel, AutoTokenizer
 
-                self._tokenizer = AutoTokenizer.from_pretrained(self.model_name, revision=self.model_revision)
-                self._model = AutoModel.from_pretrained(self.model_name, revision=self.model_revision)
+                # nosec B615 - revision pinned via self.model_revision
+                self._tokenizer = AutoTokenizer.from_pretrained(  # nosec B615
+                    self.model_name, revision=self.model_revision
+                )
+                self._model = AutoModel.from_pretrained(self.model_name, revision=self.model_revision)  # nosec B615
 
                 if self.device != "cpu":
                     import torch

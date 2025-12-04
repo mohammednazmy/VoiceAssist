@@ -207,8 +207,10 @@ class QueryClassifierTrainer:
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
-        # Load tokenizer with pinned revision
-        self._tokenizer = DistilBertTokenizer.from_pretrained(self.model_name, revision=self.model_revision)
+        # Load tokenizer with pinned revision (nosec B615 - revision pinned)
+        self._tokenizer = DistilBertTokenizer.from_pretrained(  # nosec B615
+            self.model_name, revision=self.model_revision
+        )
 
         # Prepare labels
         type_labels = {t: i for i, t in enumerate(self.QUERY_TYPES)}
@@ -254,8 +256,8 @@ class QueryClassifierTrainer:
                 domain_labels,
             )
 
-        # Load model with pinned revision
-        self._model = DistilBertForSequenceClassification.from_pretrained(
+        # Load model with pinned revision (nosec B615 - revision pinned)
+        self._model = DistilBertForSequenceClassification.from_pretrained(  # nosec B615
             self.model_name,
             revision=self.model_revision,
             num_labels=len(self.QUERY_TYPES),
@@ -463,7 +465,8 @@ class MLQueryClassifier:
                 providers=["CPUExecutionProvider"],
             )
 
-            # Load tokenizer
+            # Load tokenizer from local path (no revision needed - not downloading from HuggingFace)
+            # nosec B615 - tokenizer_path is a local file path, not a HuggingFace model ID
             self._tokenizer = DistilBertTokenizer.from_pretrained(self.tokenizer_path)
 
             # Get model version from path
