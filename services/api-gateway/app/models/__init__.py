@@ -17,6 +17,7 @@ from app.models.session_event import SessionEvent
 from app.models.system_api_key import SystemAPIKey
 from app.models.user import User
 from app.models.user_api_key import UserAPIKey
+from app.models.user_emotion_profile import RepairSessionHistory, UserEmotionProfile, UserNote, UserProgressRecord
 from app.models.user_feature_flag import UserFeatureFlag
 from app.models.user_voice_preferences import UserVoicePreferences
 from app.models.voice_session_metrics import VoiceSessionMetrics
@@ -47,4 +48,8 @@ __all__ = [
     "PromptType",
     "PromptStatus",
     "VoiceSessionMetrics",
+    "UserEmotionProfile",
+    "UserProgressRecord",
+    "UserNote",
+    "RepairSessionHistory",
 ]
