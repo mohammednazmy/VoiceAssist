@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "generated_at": "2025-12-04T09:27:38.818Z",
+  "generated_at": "2025-12-04T09:43:40.902Z",
   "health_status": "healthy",
   "scores": {
     "overall": 100,
@@ -8,10 +8,142 @@
     "freshness": 100
   },
   "summary": {
-    "total_docs": 253,
+    "total_docs": 251,
     "stale_count": 0,
     "missing_frontmatter_count": 1,
     "coverage_percentage": 100
+  },
+  "category_freshness": {
+    "reference": {
+      "freshness_score": 100,
+      "total_docs": 88,
+      "fresh_docs": 88,
+      "stale_docs": 0,
+      "newest_update": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "deployment": {
+      "freshness_score": 100,
+      "total_docs": 7,
+      "fresh_docs": 7,
+      "stale_docs": 0,
+      "newest_update": "2025-11-27",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "operations": {
+      "freshness_score": 100,
+      "total_docs": 18,
+      "fresh_docs": 18,
+      "stale_docs": 0,
+      "newest_update": "2025-12-04",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "planning": {
+      "freshness_score": 100,
+      "total_docs": 72,
+      "fresh_docs": 72,
+      "stale_docs": 0,
+      "newest_update": "2025-12-04",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "api": {
+      "freshness_score": 100,
+      "total_docs": 5,
+      "fresh_docs": 5,
+      "stale_docs": 0,
+      "newest_update": "2025-12-02",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "architecture": {
+      "freshness_score": 100,
+      "total_docs": 10,
+      "fresh_docs": 10,
+      "stale_docs": 0,
+      "newest_update": "2025-12-03",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "testing": {
+      "freshness_score": 100,
+      "total_docs": 7,
+      "fresh_docs": 7,
+      "stale_docs": 0,
+      "newest_update": "2025-11-27",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "ai": {
+      "freshness_score": 100,
+      "total_docs": 5,
+      "fresh_docs": 5,
+      "stale_docs": 0,
+      "newest_update": "2025-12-03",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "debugging": {
+      "freshness_score": 100,
+      "total_docs": 14,
+      "fresh_docs": 14,
+      "stale_docs": 0,
+      "newest_update": "2025-12-03",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "security": {
+      "freshness_score": 100,
+      "total_docs": 4,
+      "fresh_docs": 4,
+      "stale_docs": 0,
+      "newest_update": "2025-11-27",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "overview": {
+      "freshness_score": 100,
+      "total_docs": 4,
+      "fresh_docs": 4,
+      "stale_docs": 0,
+      "newest_update": "2025-12-02",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "uncategorized": {
+      "freshness_score": 100,
+      "total_docs": 10,
+      "fresh_docs": 10,
+      "stale_docs": 0,
+      "newest_update": "2025-12-03",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "feature-flags": {
+      "freshness_score": 100,
+      "total_docs": 7,
+      "fresh_docs": 7,
+      "stale_docs": 0,
+      "newest_update": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)",
+      "oldest_update": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)",
+      "status": "healthy",
+      "docs_needing_update": []
+    }
   },
   "metrics": {
     "stale_docs": {
@@ -24,23 +156,21 @@
       "docs": [
         {
           "path": "WORLD_CLASS_BARGE_IN_IMPLEMENTATION_PLAN.md",
-          "missing_fields": [
-            "summary"
-          ]
+          "missing_fields": ["summary"]
         }
       ]
     },
     "by_status": {
-      "stable": 210,
-      "draft": 5,
+      "stable": 209,
+      "draft": 4,
       "deprecated": 35,
       "experimental": 3
     },
     "by_owner": {
-      "frontend": 31,
-      "docs": 137,
-      "backend": 26,
+      "docs": 139,
+      "backend": 24,
       "product": 3,
+      "frontend": 30,
       "security": 1,
       "mixed": 33,
       "sre": 15,
@@ -50,7 +180,7 @@
       "reference": 88,
       "deployment": 7,
       "operations": 18,
-      "planning": 73,
+      "planning": 72,
       "api": 5,
       "architecture": 10,
       "testing": 7,
@@ -58,22 +188,17 @@
       "debugging": 14,
       "security": 4,
       "overview": 4,
-      "feature-flags": 8
+      "feature-flags": 7
     },
     "coverage": {
-      "total": 253,
-      "documented": 252,
+      "total": 251,
+      "documented": 250,
       "undocumented": 1
     }
   },
   "thresholds": {
     "stale_days": 30,
-    "required_frontmatter": [
-      "title",
-      "status",
-      "lastUpdated",
-      "summary"
-    ],
+    "required_frontmatter": ["title", "status", "lastUpdated", "summary"],
     "health_warning": 70,
     "health_critical": 50
   },
@@ -89,6 +214,20 @@
       "category": "cleanup",
       "message": "35 deprecated docs should be reviewed",
       "action": "Archive or remove deprecated documentation"
+    }
+  ],
+  "next_steps": [
+    {
+      "priority": 2,
+      "action": "Add missing frontmatter",
+      "reason": "1 docs are missing required metadata",
+      "suggested_docs": ["WORLD_CLASS_BARGE_IN_IMPLEMENTATION_PLAN.md"]
+    },
+    {
+      "priority": 4,
+      "action": "Clean up deprecated documentation",
+      "reason": "35 deprecated docs should be archived or removed",
+      "suggested_docs": []
     }
   ]
 }

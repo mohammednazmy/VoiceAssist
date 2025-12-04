@@ -98,6 +98,7 @@ function parseArgs() {
 function parseMetadata(rawData, filePath) {
   const lastUpdated = rawData.lastUpdated || rawData.last_updated || '';
   const summary = rawData.summary || rawData.description || '';
+  const aiSummary = rawData.ai_summary || rawData.aiSummary || '';
 
   // Generate slug from filename if not provided
   const defaultSlug = path.basename(filePath, '.md')
@@ -111,6 +112,7 @@ function parseMetadata(rawData, filePath) {
     status: ENUMS.STATUS.includes(rawData.status) ? rawData.status : 'draft',
     lastUpdated: lastUpdated.toString(),
     summary: summary || undefined,
+    aiSummary: aiSummary || undefined,
     stability: ENUMS.STABILITY.includes(rawData.stability) ? rawData.stability : undefined,
     owner: ENUMS.OWNER.includes(rawData.owner) ? rawData.owner : undefined,
     audience: Array.isArray(rawData.audience)
@@ -247,6 +249,11 @@ function generateIndex() {
         description: 'Full list of all documentation with metadata',
         method: 'GET'
       },
+      docs_summary: {
+        path: '/agent/docs-summary.json',
+        description: 'AI-friendly summaries aggregated by category for quick context loading',
+        method: 'GET'
+      },
       status: {
         path: '/agent/status.json',
         description: 'System status including feature flags and health',
@@ -254,7 +261,7 @@ function generateIndex() {
       },
       health: {
         path: '/agent/health.json',
-        description: 'Documentation health metrics - stale docs, missing frontmatter, coverage',
+        description: 'Documentation health metrics - stale docs, missing frontmatter, per-category freshness',
         method: 'GET'
       },
       activity: {
@@ -390,20 +397,59 @@ function generateHealth() {
     coverage: { total: docs.length, documented: 0, undocumented: 0 }
   };
 
+  // Per-category freshness tracking
+  const categoryFreshness = {};
+
   for (const doc of docs) {
+    const category = doc.category || 'uncategorized';
+
+    // Initialize category freshness tracking
+    if (!categoryFreshness[category]) {
+      categoryFreshness[category] = {
+        total: 0,
+        fresh: 0,
+        stale: 0,
+        newest_update: null,
+        oldest_update: null,
+        docs_needing_update: []
+      };
+    }
+    categoryFreshness[category].total++;
+
     // Check for stale docs
     if (doc.lastUpdated) {
       const lastUpdated = new Date(doc.lastUpdated);
+
+      // Track category freshness
+      if (!categoryFreshness[category].newest_update || lastUpdated > new Date(categoryFreshness[category].newest_update)) {
+        categoryFreshness[category].newest_update = doc.lastUpdated;
+      }
+      if (!categoryFreshness[category].oldest_update || lastUpdated < new Date(categoryFreshness[category].oldest_update)) {
+        categoryFreshness[category].oldest_update = doc.lastUpdated;
+      }
+
       if (lastUpdated < thirtyDaysAgo) {
         metrics.stale_docs.count++;
+        categoryFreshness[category].stale++;
+
+        const daysStale = Math.floor((now - lastUpdated) / (24 * 60 * 60 * 1000));
+
         if (metrics.stale_docs.docs.length < 20) {
-          const daysStale = Math.floor((now - lastUpdated) / (24 * 60 * 60 * 1000));
           metrics.stale_docs.docs.push({
             path: doc.path,
             last_updated: doc.lastUpdated,
             days_stale: daysStale
           });
         }
+
+        if (categoryFreshness[category].docs_needing_update.length < 5) {
+          categoryFreshness[category].docs_needing_update.push({
+            path: doc.path,
+            days_stale: daysStale
+          });
+        }
+      } else {
+        categoryFreshness[category].fresh++;
       }
     }
 
@@ -440,6 +486,24 @@ function generateHealth() {
 
   metrics.coverage.undocumented = metrics.coverage.total - metrics.coverage.documented;
 
+  // Calculate per-category freshness scores
+  const categoryScores = {};
+  for (const [category, data] of Object.entries(categoryFreshness)) {
+    const freshnessScore = data.total > 0
+      ? Math.round((data.fresh / data.total) * 100)
+      : 100;
+    categoryScores[category] = {
+      freshness_score: freshnessScore,
+      total_docs: data.total,
+      fresh_docs: data.fresh,
+      stale_docs: data.stale,
+      newest_update: data.newest_update,
+      oldest_update: data.oldest_update,
+      status: freshnessScore >= 90 ? 'healthy' : freshnessScore >= 70 ? 'warning' : 'critical',
+      docs_needing_update: data.docs_needing_update
+    };
+  }
+
   // Calculate coverage score (0-100)
   const coverageScore = metrics.coverage.total > 0
     ? Math.round((metrics.coverage.documented / metrics.coverage.total) * 100)
@@ -452,6 +516,9 @@ function generateHealth() {
 
   // Overall health score
   const healthScore = Math.round((coverageScore + freshnessScore) / 2);
+
+  // Generate recommended next steps
+  const nextSteps = generateNextSteps(metrics, categoryScores, docs.length);
 
   return {
     version: CONFIG.VERSION,
@@ -468,6 +535,7 @@ function generateHealth() {
       missing_frontmatter_count: metrics.missing_frontmatter.count,
       coverage_percentage: coverageScore
     },
+    category_freshness: categoryScores,
     metrics,
     thresholds: {
       stale_days: 30,
@@ -475,8 +543,63 @@ function generateHealth() {
       health_warning: 70,
       health_critical: 50
     },
-    recommendations: generateHealthRecommendations(metrics, docs.length)
+    recommendations: generateHealthRecommendations(metrics, docs.length),
+    next_steps: nextSteps
   };
+}
+
+/**
+ * Generate recommended next steps based on health metrics
+ */
+function generateNextSteps(metrics, categoryScores, totalDocs) {
+  const steps = [];
+
+  // Find categories with worst freshness
+  const criticalCategories = Object.entries(categoryScores)
+    .filter(([_, data]) => data.status === 'critical')
+    .sort((a, b) => a[1].freshness_score - b[1].freshness_score);
+
+  if (criticalCategories.length > 0) {
+    const [category, data] = criticalCategories[0];
+    steps.push({
+      priority: 1,
+      action: `Update ${category} documentation`,
+      reason: `${category} category has ${data.stale_docs} stale docs (${data.freshness_score}% freshness)`,
+      suggested_docs: data.docs_needing_update.slice(0, 3).map(d => d.path)
+    });
+  }
+
+  // Missing frontmatter
+  if (metrics.missing_frontmatter.count > 0) {
+    steps.push({
+      priority: 2,
+      action: 'Add missing frontmatter',
+      reason: `${metrics.missing_frontmatter.count} docs are missing required metadata`,
+      suggested_docs: metrics.missing_frontmatter.docs.slice(0, 3).map(d => d.path)
+    });
+  }
+
+  // Draft docs to review
+  if (metrics.by_status.draft > totalDocs * 0.15) {
+    steps.push({
+      priority: 3,
+      action: 'Review draft documentation',
+      reason: `${metrics.by_status.draft} docs are still in draft status (${Math.round(metrics.by_status.draft / totalDocs * 100)}%)`,
+      suggested_docs: []
+    });
+  }
+
+  // Deprecated docs cleanup
+  if (metrics.by_status.deprecated > 0) {
+    steps.push({
+      priority: 4,
+      action: 'Clean up deprecated documentation',
+      reason: `${metrics.by_status.deprecated} deprecated docs should be archived or removed`,
+      suggested_docs: []
+    });
+  }
+
+  return steps;
 }
 
 /**
@@ -525,6 +648,78 @@ function generateHealthRecommendations(metrics, totalDocs) {
 }
 
 /**
+ * Generate /agent/docs-summary.json - AI-friendly summaries aggregated by category
+ */
+function generateDocsSummary() {
+  const docs = scanDocsDir(CONFIG.DOCS_DIR);
+  const now = new Date();
+
+  // Group summaries by category
+  const byCategory = {};
+  const withAiSummary = [];
+  const withoutAiSummary = [];
+
+  for (const doc of docs) {
+    const category = doc.category || 'uncategorized';
+
+    if (!byCategory[category]) {
+      byCategory[category] = {
+        count: 0,
+        docs: []
+      };
+    }
+
+    const summaryEntry = {
+      path: doc.path,
+      title: doc.title,
+      summary: doc.summary || null,
+      ai_summary: doc.aiSummary || null,
+      status: doc.status,
+      owner: doc.owner || null,
+      last_updated: doc.lastUpdated
+    };
+
+    byCategory[category].count++;
+    byCategory[category].docs.push(summaryEntry);
+
+    if (doc.aiSummary) {
+      withAiSummary.push(summaryEntry);
+    } else {
+      withoutAiSummary.push({
+        path: doc.path,
+        title: doc.title
+      });
+    }
+  }
+
+  // Calculate AI summary coverage
+  const aiCoverage = docs.length > 0
+    ? Math.round((withAiSummary.length / docs.length) * 100)
+    : 0;
+
+  return {
+    version: CONFIG.VERSION,
+    generated_at: now.toISOString(),
+    description: 'AI-friendly document summaries for quick context loading',
+    stats: {
+      total_docs: docs.length,
+      with_ai_summary: withAiSummary.length,
+      without_ai_summary: withoutAiSummary.length,
+      ai_coverage_percentage: aiCoverage,
+      categories: Object.keys(byCategory).length
+    },
+    by_category: byCategory,
+    missing_ai_summaries: withoutAiSummary.slice(0, 50), // Limit to first 50
+    usage_notes: [
+      'Use ai_summary for quick context when available',
+      'Fall back to summary field if ai_summary is missing',
+      'Filter by category for domain-specific queries',
+      'Check missing_ai_summaries to prioritize adding summaries'
+    ]
+  };
+}
+
+/**
  * Main execution
  */
 function main() {
@@ -545,6 +740,7 @@ function main() {
   const generators = {
     index: generateIndex,
     docs: generateDocs,
+    'docs-summary': generateDocsSummary,
     status: generateStatus,
     activity: generateActivity,
     todos: generateTodos,
@@ -610,4 +806,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { generateIndex, generateDocs, generateStatus, generateActivity, generateTodos, generateHealth };
+module.exports = { generateIndex, generateDocs, generateDocsSummary, generateStatus, generateActivity, generateTodos, generateHealth };

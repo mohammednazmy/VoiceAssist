@@ -1,53 +1,54 @@
 {
-  "version": "1.1",
-  "generated_at": "2025-12-04T09:32:24.798Z",
-  "description": "VoiceAssist documentation index for AI agents and integrations",
+  "version": "2.0.0",
+  "generated_at": "2025-12-04T09:43:40.674Z",
+  "description": "VoiceAssist documentation and system index for AI agents",
+  "canonical_urls": {
+    "web_app": "https://dev.asimo.io",
+    "api": "https://assist.asimo.io",
+    "admin": "https://admin.asimo.io",
+    "docs": "https://assistdocs.asimo.io"
+  },
   "endpoints": {
     "docs_list": {
       "path": "/agent/docs.json",
       "description": "Full list of all documentation with metadata",
-      "method": "GET",
-      "response_format": "JSON array of DocIndexEntry objects"
+      "method": "GET"
+    },
+    "docs_summary": {
+      "path": "/agent/docs-summary.json",
+      "description": "AI-friendly summaries aggregated by category for quick context loading",
+      "method": "GET"
+    },
+    "status": {
+      "path": "/agent/status.json",
+      "description": "System status including feature flags and health",
+      "method": "GET"
+    },
+    "health": {
+      "path": "/agent/health.json",
+      "description": "Documentation health metrics - stale docs, missing frontmatter, per-category freshness",
+      "method": "GET"
+    },
+    "activity": {
+      "path": "/agent/activity.json",
+      "description": "Recent changes and activity log",
+      "method": "GET"
+    },
+    "todos": {
+      "path": "/agent/todos.json",
+      "description": "Aggregated documentation and feature flag tasks",
+      "method": "GET"
     },
     "search_index": {
       "path": "/search-index.json",
       "description": "Full-text search index for client-side searching",
-      "method": "GET",
-      "response_format": "JSON with 'docs' array for Fuse.js"
-    },
-    "tasks": {
-      "path": "/agent/tasks.json",
-      "description": "Common tasks AI agents can perform with commands and prerequisites",
-      "method": "GET",
-      "response_format": "JSON with 'tasks' array of TaskEntry objects"
-    },
-    "schema": {
-      "path": "/agent/schema.json",
-      "description": "JSON Schema definitions for all agent API responses",
-      "method": "GET",
-      "response_format": "JSON Schema (draft-07)"
-    }
-  },
-  "schema": {
-    "DocIndexEntry": {
-      "slug": "string - URL-friendly identifier",
-      "path": "string - Relative path to markdown file",
-      "title": "string - Document title",
-      "summary": "string? - Brief description",
-      "status": "draft|experimental|stable|deprecated",
-      "stability": "production|beta|experimental|legacy",
-      "owner": "backend|frontend|infra|sre|docs|product|security|mixed",
-      "audience": "string[] - Target readers",
-      "category": "ai|api|architecture|debugging|deployment|operations|overview|planning|reference|security|testing",
-      "tags": "string[] - Categorization tags",
-      "relatedServices": "string[] - Related service names",
-      "lastUpdated": "string - ISO date"
+      "method": "GET"
     }
   },
   "usage_notes": [
     "Use docs.json for browsing and filtering documentation",
-    "Use search-index.json with Fuse.js for full-text search",
-    "All paths are relative to the docs/ directory",
-    "Filter client-side by status, audience, tags, etc."
+    "Use status.json for system health and feature flag states",
+    "All paths are relative to assistdocs.asimo.io",
+    "Filter client-side by status, audience, category, tags, etc."
   ]
 }
