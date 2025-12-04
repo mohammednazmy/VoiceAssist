@@ -84,6 +84,179 @@ export interface FlagMetadata {
   max?: number;
 }
 
+// ============================================================================
+// Phase 3.2: Advanced Flag Types - Variants, Targeting, Scheduling
+// ============================================================================
+
+/**
+ * Variant definition for multivariate flags.
+ * Each variant has a unique ID, name, value, and traffic weight.
+ */
+export interface FlagVariant {
+  /** Unique identifier for this variant */
+  id: string;
+  /** Human-readable variant name */
+  name: string;
+  /** The value returned when this variant is selected */
+  value: unknown;
+  /** Traffic weight (0-100), sum of all variants should equal 100 */
+  weight: number;
+  /** Optional description of what this variant tests */
+  description?: string;
+}
+
+/**
+ * Supported operators for targeting rule conditions.
+ */
+export type TargetingOperator =
+  | "equals"
+  | "not_equals"
+  | "in"
+  | "not_in"
+  | "contains"
+  | "starts_with"
+  | "ends_with"
+  | "regex"
+  | "gt"
+  | "gte"
+  | "lt"
+  | "lte"
+  | "semver_gt"
+  | "semver_gte"
+  | "semver_lt"
+  | "semver_lte";
+
+/**
+ * User attributes available for targeting rules.
+ */
+export type TargetingAttribute =
+  | "user_id"
+  | "user_email"
+  | "user_role"
+  | "user_created_at"
+  | "user_plan"
+  | "user_country"
+  | "user_language"
+  | "app_version"
+  | "platform"
+  | "custom";
+
+/**
+ * A single targeting rule condition.
+ */
+export interface TargetingCondition {
+  /** The user attribute to evaluate */
+  attribute: TargetingAttribute | string;
+  /** The comparison operator */
+  operator: TargetingOperator;
+  /** The value(s) to compare against */
+  value: string | string[] | number | boolean;
+  /** For custom attributes, the custom attribute key */
+  customAttributeKey?: string;
+}
+
+/**
+ * A targeting rule that maps conditions to a variant or enabled state.
+ */
+export interface TargetingRule {
+  /** Unique identifier for this rule */
+  id: string;
+  /** Human-readable rule name */
+  name: string;
+  /** Priority order (lower = higher priority) */
+  priority: number;
+  /** Conditions that must ALL match for this rule to apply (AND logic) */
+  conditions: TargetingCondition[];
+  /** For multivariate: which variant to serve */
+  variant?: string;
+  /** For boolean: whether to enable the flag */
+  enabled?: boolean;
+  /** For non-boolean: the value to return */
+  value?: unknown;
+  /** Optional description of this rule's purpose */
+  description?: string;
+}
+
+/**
+ * Complete targeting rules configuration for a flag.
+ */
+export interface FlagTargetingRules {
+  /** List of targeting rules, evaluated in priority order */
+  rules: TargetingRule[];
+  /** Default variant/value when no rules match */
+  defaultVariant?: string;
+  /** Whether flag is enabled when no rules match (for boolean flags) */
+  defaultEnabled?: boolean;
+}
+
+/**
+ * Schedule configuration for time-based flag activation.
+ */
+export interface FlagSchedule {
+  /** ISO 8601 timestamp when flag should activate */
+  startAt?: string;
+  /** ISO 8601 timestamp when flag should deactivate */
+  endAt?: string;
+  /** Timezone for schedule evaluation (default: UTC) */
+  timezone?: string;
+  /** Optional recurring schedule (cron-like) */
+  recurring?: {
+    /** Cron expression for recurring activation */
+    cronExpression: string;
+    /** Duration in minutes the flag stays active */
+    durationMinutes: number;
+  };
+}
+
+/**
+ * User context for evaluating targeting rules.
+ */
+export interface UserContext {
+  /** User's unique ID */
+  userId?: string;
+  /** User's email address */
+  userEmail?: string;
+  /** User's role */
+  userRole?: string;
+  /** User account creation date */
+  userCreatedAt?: string;
+  /** User's subscription plan */
+  userPlan?: string;
+  /** User's country (ISO 3166-1 alpha-2) */
+  userCountry?: string;
+  /** User's preferred language */
+  userLanguage?: string;
+  /** Application version */
+  appVersion?: string;
+  /** Platform (web, ios, android) */
+  platform?: string;
+  /** Custom attributes for targeting */
+  customAttributes?: Record<string, string | number | boolean>;
+}
+
+/**
+ * Environment types for multi-environment flag management.
+ */
+export type FlagEnvironment = "development" | "staging" | "production";
+
+/**
+ * Extended feature flag state including runtime values.
+ */
+export interface FeatureFlagState {
+  /** The evaluated value for this user */
+  value: unknown;
+  /** Data source: realtime (SSE), api (HTTP), or cache (localStorage) */
+  source: "realtime" | "api" | "cache";
+  /** Whether the cached value may be stale */
+  isStale: boolean;
+  /** Error message if evaluation failed */
+  error: string | null;
+  /** For multivariate: which variant was selected */
+  variant?: string;
+  /** Which targeting rule matched (if any) */
+  matchedRule?: string;
+}
+
 /**
  * Complete feature flag definition.
  */
