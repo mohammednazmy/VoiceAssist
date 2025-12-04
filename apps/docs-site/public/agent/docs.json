@@ -1,7 +1,32 @@
 {
-  "count": 240,
-  "generated_at": "2025-12-04T07:55:52.936Z",
+  "count": 242,
+  "generated_at": "2025-12-04T08:19:22.878Z",
   "docs": [
+    {
+      "slug": "operations/post-launch-monitoring",
+      "path": "operations/POST_LAUNCH_MONITORING.md",
+      "title": "Post-Launch Monitoring Guide",
+      "summary": "Monitoring checklist and procedures for the VoiceAssist Voice Mode enhancement launch, including Epic FHIR integration monitoring.",
+      "status": "stable",
+      "stability": "production",
+      "audience": [
+        "human",
+        "agent",
+        "backend"
+      ],
+      "category": "operations",
+      "tags": [
+        "monitoring",
+        "post-launch",
+        "operations",
+        "fhir",
+        "voice-mode"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
+      "lastUpdated": "2025-12-04"
+    },
     {
       "slug": "operations/epic-fhir-runbook",
       "path": "operations/epic-fhir-runbook.md",
@@ -28,6 +53,28 @@
       ],
       "relatedServices": [
         "api-gateway"
+      ],
+      "lastUpdated": "2025-12-04"
+    },
+    {
+      "slug": "plans/strategic-roadmap-2025-q1",
+      "path": "plans/STRATEGIC_ROADMAP_2025_Q1.md",
+      "title": "Strategic Roadmap Q1 2025",
+      "summary": "Strategic planning document for VoiceAssist future phases, covering platform expansion, clinical intelligence, EHR enhancements, voice/AI advancements, and infrastructure scaling.",
+      "status": "draft",
+      "owner": "product",
+      "audience": [
+        "human",
+        "backend",
+        "frontend"
+      ],
+      "category": "planning",
+      "tags": [
+        "roadmap",
+        "strategy",
+        "planning",
+        "future",
+        "enhancement"
       ],
       "lastUpdated": "2025-12-04"
     },
