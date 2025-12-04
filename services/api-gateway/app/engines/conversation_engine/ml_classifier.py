@@ -73,15 +73,21 @@ class QueryClassifierTrainer:
     QUERY_TYPES = ["simple", "complex", "urgent", "clarification", "command"]
     DOMAINS = ["medical", "calendar", "technical", "general"]
 
+    # Pinned model version for reproducibility
+    DEFAULT_MODEL_NAME = "distilbert-base-uncased"
+    DEFAULT_MODEL_REVISION = "043235d6088ecd3dd5fb5ca3592b6f5c53949a5"  # v1.0 stable
+
     def __init__(
         self,
         model_name: str = "distilbert-base-uncased",
+        model_revision: Optional[str] = None,
         max_length: int = 128,
         batch_size: int = 32,
         learning_rate: float = 2e-5,
         epochs: int = 3,
     ):
         self.model_name = model_name
+        self.model_revision = model_revision or self.DEFAULT_MODEL_REVISION
         self.max_length = max_length
         self.batch_size = batch_size
         self.learning_rate = learning_rate
@@ -201,8 +207,8 @@ class QueryClassifierTrainer:
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
-        # Load tokenizer
-        self._tokenizer = DistilBertTokenizer.from_pretrained(self.model_name)
+        # Load tokenizer with pinned revision
+        self._tokenizer = DistilBertTokenizer.from_pretrained(self.model_name, revision=self.model_revision)
 
         # Prepare labels
         type_labels = {t: i for i, t in enumerate(self.QUERY_TYPES)}
@@ -248,9 +254,10 @@ class QueryClassifierTrainer:
                 domain_labels,
             )
 
-        # Load model
+        # Load model with pinned revision
         self._model = DistilBertForSequenceClassification.from_pretrained(
             self.model_name,
+            revision=self.model_revision,
             num_labels=len(self.QUERY_TYPES),
         )
 

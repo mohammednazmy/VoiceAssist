@@ -62,6 +62,7 @@ class ToolAnalyticsService:
         where_clause = " AND ".join(filters)
 
         # Get overall statistics
+        # nosec B608 - where_clause is built from hardcoded filter strings, all values are parameterized
         stats_query = f"""
             SELECT
                 COUNT(*) as total_calls,
@@ -243,6 +244,7 @@ class ToolAnalyticsService:
 
         where_clause = " AND ".join(filters)
 
+        # nosec B608 - where_clause is built from hardcoded filter strings, all values are parameterized
         query = f"""
             SELECT
                 DATE(created_at) as date,
@@ -439,6 +441,7 @@ class ToolAnalyticsService:
 
         where_clause = " AND ".join(filters)
 
+        # nosec B608 - where_clause is built from hardcoded filter strings, all values are parameterized
         query = f"""
             SELECT
                 id, tool_name, arguments, result, status, error_type, error_message,

@@ -93,6 +93,7 @@ async def list_all_calendar_connections(
     where_clause = " AND ".join(filters)
 
     # Query connections with user info
+    # nosec B608 - where_clause is built from hardcoded filter strings, all values are parameterized
     query = f"""
         SELECT
             c.id, c.user_id, u.email as user_email, c.provider,
@@ -109,6 +110,7 @@ async def list_all_calendar_connections(
     rows = result.fetchall()
 
     # Get total count
+    # nosec B608 - where_clause is built from hardcoded filter strings, all values are parameterized
     count_query = f"""
         SELECT COUNT(*) as total
         FROM user_calendar_connections c
