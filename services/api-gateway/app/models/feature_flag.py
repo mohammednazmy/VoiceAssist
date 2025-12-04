@@ -18,7 +18,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from app.core.database import Base
-from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Column, DateTime, Index, Integer, String, Text
 
 
 class FeatureFlagType(str, Enum):
@@ -58,8 +58,8 @@ class FeatureFlag(Base):
 
     name = Column(String(255), primary_key=True, index=True)
     description = Column(Text, nullable=False)
-    flag_type = Column(String(50), nullable=False, default=FeatureFlagType.BOOLEAN.value)
-    enabled = Column(Boolean, nullable=False, default=False)
+    flag_type = Column(String(50), nullable=False, default=FeatureFlagType.BOOLEAN.value, index=True)
+    enabled = Column(Boolean, nullable=False, default=False, index=True)
     value = Column(JSON, nullable=True)
     default_value = Column(JSON, nullable=True)
     rollout_percentage = Column(Integer, nullable=True, default=100)  # For A/B testing (0-100)
@@ -69,13 +69,19 @@ class FeatureFlag(Base):
     variants = Column(JSON, nullable=True)  # List of variant definitions
     targeting_rules = Column(JSON, nullable=True)  # Segmentation rules
     schedule = Column(JSON, nullable=True)  # Scheduled activation config
-    environment = Column(String(50), nullable=False, default="production")
-    archived = Column(Boolean, nullable=False, default=False)
+    environment = Column(String(50), nullable=False, default="production", index=True)
+    archived = Column(Boolean, nullable=False, default=False, index=True)
     archived_at = Column(DateTime(timezone=True), nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     flag_metadata = Column("metadata", JSON, nullable=True)  # Renamed to avoid SQLAlchemy reserved keyword
+
+    # Composite indexes for common query patterns
+    __table_args__ = (
+        Index("ix_feature_flags_env_archived", "environment", "archived"),
+        Index("ix_feature_flags_type_enabled", "flag_type", "enabled"),
+    )
 
     def __repr__(self):
         return f"<FeatureFlag(name='{self.name}', enabled={self.enabled}, type={self.flag_type})>"

@@ -1,20 +1,31 @@
 ---
-title: "Feature Flags"
-slug: "feature-flags"
-summary: "**Last Updated**: 2025-11-21 (Phase 7 - P3.1)"
+title: "Feature Flags Backend Implementation"
+slug: "feature-flags-backend"
+summary: "Backend implementation details for the VoiceAssist feature flag system - database schema, Python API, and caching architecture."
 status: stable
 stability: production
-owner: docs
-lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["feature", "flags"]
+owner: backend
+lastUpdated: "2025-12-04"
+audience: [backend, devops, ai-agents]
+tags: ["feature", "flags", "backend", "implementation"]
 category: reference
 ---
 
-# Feature Flags System
+# Feature Flags Backend Implementation
 
-**Last Updated**: 2025-11-21 (Phase 7 - P3.1)
-**Purpose**: Runtime feature toggling and configuration management
+**Last Updated**: 2025-12-04
+**Purpose**: Backend implementation details for runtime feature toggling
+
+> **Looking for usage documentation?**
+>
+> This document covers backend implementation (database schema, Python API, Redis caching).
+> For user-facing documentation, see the **[Feature Flags Admin Guide](admin-guide/feature-flags/README.md)**:
+> - [Naming Conventions](admin-guide/feature-flags/naming-conventions.md)
+> - [Lifecycle Management](admin-guide/feature-flags/lifecycle.md)
+> - [Best Practices](admin-guide/feature-flags/best-practices.md)
+> - [Advanced Types](admin-guide/feature-flags/advanced-types.md)
+> - [Multi-Environment](admin-guide/feature-flags/multi-environment.md)
+> - [Admin Panel Guide](admin-guide/feature-flags/admin-panel-guide.md)
 
 ---
 

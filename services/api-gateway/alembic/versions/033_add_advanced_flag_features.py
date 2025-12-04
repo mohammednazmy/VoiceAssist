@@ -131,9 +131,25 @@ def upgrade() -> None:
         ["archived"],
     )
 
+    # Create composite index for environment + archived queries (most common pattern)
+    op.create_index(
+        "ix_feature_flags_env_archived",
+        "feature_flags",
+        ["environment", "archived"],
+    )
+
+    # Create composite index for flag_type + enabled queries
+    op.create_index(
+        "ix_feature_flags_type_enabled",
+        "feature_flags",
+        ["flag_type", "enabled"],
+    )
+
 
 def downgrade() -> None:
     """Remove advanced flag features columns."""
+    op.drop_index("ix_feature_flags_type_enabled", table_name="feature_flags")
+    op.drop_index("ix_feature_flags_env_archived", table_name="feature_flags")
     op.drop_index("ix_feature_flags_archived", table_name="feature_flags")
     op.drop_index("ix_feature_flags_environment", table_name="feature_flags")
     op.drop_column("feature_flags", "archived_at")

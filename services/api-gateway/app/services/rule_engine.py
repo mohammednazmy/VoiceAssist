@@ -20,11 +20,13 @@ from __future__ import annotations
 
 import hashlib
 import re
+import warnings
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from app.core.logging import get_logger
+from packaging.version import InvalidVersion, Version
 
 logger = get_logger(__name__)
 
@@ -170,7 +172,26 @@ class RuleEngine:
 
     The engine processes rules in priority order, evaluating conditions
     against user context to determine which variant/value to serve.
+
+    Features:
+    - 16 comparison operators for targeting conditions
+    - Consistent variant selection using SHA-256 hashing
+    - Per-request bucket caching to reduce repeated hash computations
     """
+
+    def __init__(self):
+        """Initialize the rule engine with empty bucket cache."""
+        # Per-request cache for bucket computations
+        # Key: (user_id, flag_name, salt), Value: bucket (0-99)
+        self._bucket_cache: Dict[tuple, int] = {}
+
+    def clear_bucket_cache(self) -> None:
+        """Clear the bucket cache.
+
+        Call this at the start of each request to prevent stale data
+        when processing multiple flags for the same user.
+        """
+        self._bucket_cache.clear()
 
     def evaluate_condition(
         self,
@@ -282,10 +303,26 @@ class RuleEngine:
         if operator.startswith("semver_"):
             return self._compare_semver(operator, str(user_value), str(target_value))
 
-        return False
+        # Unrecognized operator - emit warning and raise error
+        logger.warning(
+            "unrecognized_operator",
+            operator=operator,
+            user_value=user_value,
+            target_value=target_value,
+        )
+        warnings.warn(
+            f"Unrecognized operator '{operator}' in targeting rule. "
+            f"Valid operators: {[op.value for op in Operator]}",
+            category=UserWarning,
+            stacklevel=3,
+        )
+        raise ValueError(f"Unrecognized operator: {operator}")
 
     def _compare_semver(self, operator: str, user_version: str, target_version: str) -> bool:
-        """Compare semantic versions.
+        """Compare semantic versions using the packaging library.
+
+        Handles prerelease versions (e.g., 1.0.0-alpha < 1.0.0) and
+        build metadata properly according to PEP 440 / SemVer.
 
         Args:
             operator: Semver comparison operator
@@ -296,67 +333,102 @@ class RuleEngine:
             True if comparison succeeds
         """
         try:
-            user_parts = self._parse_semver(user_version)
-            target_parts = self._parse_semver(target_version)
+            user_ver = self._parse_version(user_version)
+            target_ver = self._parse_version(target_version)
 
-            if user_parts is None or target_parts is None:
+            if user_ver is None or target_ver is None:
+                logger.debug(
+                    "semver_parse_failed",
+                    user_version=user_version,
+                    target_version=target_version,
+                )
                 return False
 
-            comparison = self._compare_version_tuples(user_parts, target_parts)
-
             if operator == Operator.SEMVER_GT.value:
-                return comparison > 0
+                return user_ver > target_ver
             if operator == Operator.SEMVER_GTE.value:
-                return comparison >= 0
+                return user_ver >= target_ver
             if operator == Operator.SEMVER_LT.value:
-                return comparison < 0
+                return user_ver < target_ver
             if operator == Operator.SEMVER_LTE.value:
-                return comparison <= 0
+                return user_ver <= target_ver
 
-        except Exception:
+        except Exception as e:
+            logger.warning(
+                "semver_comparison_error",
+                operator=operator,
+                user_version=user_version,
+                target_version=target_version,
+                error=str(e),
+            )
             return False
 
         return False
 
-    def _parse_semver(self, version: str) -> Optional[tuple]:
-        """Parse a semantic version string into components.
+    def _parse_version(self, version: str) -> Optional[Version]:
+        """Parse a version string using the packaging library.
+
+        Handles both SemVer-style (1.2.3-beta+build) and PEP 440 versions.
 
         Args:
-            version: Version string (e.g., "1.2.3", "2.0.0-beta")
+            version: Version string (e.g., "1.2.3", "2.0.0-beta.1", "v1.0.0")
 
         Returns:
-            Tuple of (major, minor, patch) or None if invalid
+            packaging.version.Version or None if invalid
         """
-        # Remove any prefix like 'v'
-        version = version.lstrip("vV")
+        # Remove any prefix like 'v' or 'V'
+        version = version.lstrip("vV").strip()
 
-        # Remove prerelease/metadata suffix
-        version = version.split("-")[0].split("+")[0]
-
-        parts = version.split(".")
-        if len(parts) < 2:
+        if not version:
             return None
 
         try:
-            major = int(parts[0])
-            minor = int(parts[1])
-            patch = int(parts[2]) if len(parts) > 2 else 0
-            return (major, minor, patch)
-        except ValueError:
-            return None
+            return Version(version)
+        except InvalidVersion:
+            # Try converting SemVer prerelease format to PEP 440
+            # e.g., "1.0.0-beta.1" -> "1.0.0b1"
+            try:
+                # Replace common SemVer prerelease separators
+                pep440_version = self._semver_to_pep440(version)
+                return Version(pep440_version)
+            except InvalidVersion:
+                return None
 
-    def _compare_version_tuples(self, v1: tuple, v2: tuple) -> int:
-        """Compare two version tuples.
+    def _semver_to_pep440(self, version: str) -> str:
+        """Convert SemVer-style version to PEP 440 format.
+
+        Args:
+            version: SemVer string (e.g., "1.0.0-beta.1")
 
         Returns:
-            -1 if v1 < v2, 0 if equal, 1 if v1 > v2
+            PEP 440 compatible string (e.g., "1.0.0b1")
         """
-        for a, b in zip(v1, v2):
-            if a < b:
-                return -1
-            if a > b:
-                return 1
-        return 0
+        # Split on prerelease separator
+        if "-" in version:
+            base, prerelease = version.split("-", 1)
+            # Remove build metadata
+            prerelease = prerelease.split("+")[0]
+
+            # Map common prerelease identifiers to PEP 440
+            prerelease_lower = prerelease.lower()
+            if prerelease_lower.startswith("alpha"):
+                suffix = prerelease_lower.replace("alpha", "a").replace(".", "")
+                return f"{base}{suffix}"
+            elif prerelease_lower.startswith("beta"):
+                suffix = prerelease_lower.replace("beta", "b").replace(".", "")
+                return f"{base}{suffix}"
+            elif prerelease_lower.startswith("rc"):
+                suffix = prerelease_lower.replace(".", "")
+                return f"{base}{suffix}"
+            elif prerelease_lower.startswith("pre"):
+                suffix = prerelease_lower.replace("pre", "rc").replace(".", "")
+                return f"{base}{suffix}"
+            else:
+                # Generic prerelease: use .dev suffix
+                return f"{base}.dev0"
+
+        # Remove build metadata only
+        return version.split("+")[0]
 
     def evaluate_rule(
         self,
@@ -467,7 +539,8 @@ class RuleEngine:
         """Select a variant for a user using consistent hashing.
 
         The same user will always get the same variant for a given flag,
-        ensuring consistency across sessions.
+        ensuring consistency across sessions. Weights are validated and
+        normalized to ensure they sum to 100.
 
         Args:
             variants: List of variant definitions
@@ -481,44 +554,112 @@ class RuleEngine:
         if not variants:
             return None
 
-        # Parse variants
-        parsed_variants = [
-            Variant(
-                id=v.get("id", ""),
-                name=v.get("name", ""),
-                value=v.get("value"),
-                weight=v.get("weight", 0),
-                description=v.get("description"),
-            )
-            for v in variants
-        ]
-
-        # Calculate total weight
-        total_weight = sum(v.weight for v in parsed_variants)
-        if total_weight == 0:
-            # Equal distribution if no weights
-            total_weight = len(parsed_variants) * 100
-            for v in parsed_variants:
-                v.weight = 100
+        # Parse and validate variants
+        parsed_variants = self._parse_and_validate_variants(variants, flag_name)
+        if not parsed_variants:
+            return None
 
         # Generate consistent hash bucket (0-99)
         bucket = self._get_bucket(user_id, flag_name, salt)
 
-        # Map bucket to percentage of total weight
-        bucket_percentage = bucket * total_weight / 100
-
-        # Find which variant this bucket falls into
+        # Find which variant this bucket falls into (weights normalized to 100)
         cumulative_weight = 0
         for variant in parsed_variants:
             cumulative_weight += variant.weight
-            if bucket_percentage < cumulative_weight:
+            if bucket < cumulative_weight:
                 return variant
 
         # Fallback to last variant
         return parsed_variants[-1] if parsed_variants else None
 
+    def _parse_and_validate_variants(
+        self,
+        variants: List[Dict[str, Any]],
+        flag_name: str,
+    ) -> List[Variant]:
+        """Parse variant dictionaries and validate/normalize weights.
+
+        Ensures:
+        - All weights are non-negative
+        - Weights sum to exactly 100 (normalized if needed)
+        - At least one variant has a positive weight
+
+        Args:
+            variants: List of variant definitions
+            flag_name: Flag name for logging
+
+        Returns:
+            List of validated Variant objects with normalized weights
+        """
+        parsed_variants = []
+        has_negative_weight = False
+
+        for v in variants:
+            raw_weight = v.get("weight", 0)
+
+            # Validate non-negative
+            if raw_weight < 0:
+                has_negative_weight = True
+                logger.warning(
+                    "negative_variant_weight",
+                    flag_name=flag_name,
+                    variant_name=v.get("name", ""),
+                    weight=raw_weight,
+                )
+                raw_weight = 0  # Treat negative as zero
+
+            parsed_variants.append(
+                Variant(
+                    id=v.get("id", ""),
+                    name=v.get("name", ""),
+                    value=v.get("value"),
+                    weight=raw_weight,
+                    description=v.get("description"),
+                )
+            )
+
+        if has_negative_weight:
+            warnings.warn(
+                f"Flag '{flag_name}' has variants with negative weights. " "Negative weights are treated as zero.",
+                category=UserWarning,
+                stacklevel=3,
+            )
+
+        # Calculate total weight
+        total_weight = sum(v.weight for v in parsed_variants)
+
+        # Handle edge case: all weights are zero
+        if total_weight == 0:
+            logger.warning(
+                "zero_total_variant_weight",
+                flag_name=flag_name,
+                variant_count=len(parsed_variants),
+            )
+            # Equal distribution: each variant gets 100 / count
+            if parsed_variants:
+                equal_weight = 100 / len(parsed_variants)
+                for v in parsed_variants:
+                    v.weight = equal_weight
+            return parsed_variants
+
+        # Normalize weights to sum to 100
+        if total_weight != 100:
+            logger.debug(
+                "normalizing_variant_weights",
+                flag_name=flag_name,
+                original_total=total_weight,
+            )
+            scale_factor = 100 / total_weight
+            for v in parsed_variants:
+                v.weight = v.weight * scale_factor
+
+        return parsed_variants
+
     def _get_bucket(self, user_id: str, flag_name: str, salt: Optional[str] = None) -> int:
         """Calculate a consistent bucket (0-99) for user/flag combination.
+
+        Uses caching to reduce repeated SHA-256 computations when evaluating
+        multiple flags for the same user within a single request.
 
         Args:
             user_id: User's unique identifier
@@ -528,11 +669,21 @@ class RuleEngine:
         Returns:
             Bucket number 0-99
         """
+        # Check cache first
+        cache_key = (user_id, flag_name, salt or flag_name)
+        if cache_key in self._bucket_cache:
+            return self._bucket_cache[cache_key]
+
+        # Compute hash
         hash_input = f"{user_id}:{flag_name}:{salt or flag_name}"
         hash_bytes = hashlib.sha256(hash_input.encode()).digest()
         # Use first 4 bytes as unsigned int, mod 100 for bucket
         hash_int = int.from_bytes(hash_bytes[:4], byteorder="big", signed=False)
-        return hash_int % 100
+        bucket = hash_int % 100
+
+        # Cache result
+        self._bucket_cache[cache_key] = bucket
+        return bucket
 
     def is_in_rollout(
         self,

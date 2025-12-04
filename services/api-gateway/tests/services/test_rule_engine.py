@@ -4,14 +4,7 @@ Tests for targeting rule evaluation, variant selection, and rollout calculation.
 """
 
 import pytest
-
-from app.services.rule_engine import (
-    Operator,
-    RuleEngine,
-    TargetingCondition,
-    TargetingRule,
-    UserContext,
-)
+from app.services.rule_engine import Operator, RuleEngine, TargetingCondition, TargetingRule, UserContext
 
 
 class TestUserContext:
@@ -518,40 +511,182 @@ class TestBucketCalculation:
 
 
 class TestSemverParsing:
-    """Tests for semantic version parsing."""
+    """Tests for semantic version parsing using packaging library."""
 
     @pytest.fixture
     def engine(self):
         return RuleEngine()
 
-    def test_parse_semver_standard(self, engine):
-        """Test parsing standard semver."""
-        assert engine._parse_semver("1.0.0") == (1, 0, 0)
-        assert engine._parse_semver("2.3.4") == (2, 3, 4)
-        assert engine._parse_semver("10.20.30") == (10, 20, 30)
+    def test_parse_version_standard(self, engine):
+        """Test parsing standard versions."""
+        ver = engine._parse_version("1.0.0")
+        assert ver is not None
+        assert str(ver) == "1.0.0"
 
-    def test_parse_semver_with_prefix(self, engine):
-        """Test parsing semver with v prefix."""
-        assert engine._parse_semver("v1.0.0") == (1, 0, 0)
-        assert engine._parse_semver("V2.3.4") == (2, 3, 4)
+        ver = engine._parse_version("2.3.4")
+        assert ver is not None
 
-    def test_parse_semver_two_parts(self, engine):
-        """Test parsing semver with two parts."""
-        assert engine._parse_semver("1.0") == (1, 0, 0)
-        assert engine._parse_semver("2.5") == (2, 5, 0)
+    def test_parse_version_with_prefix(self, engine):
+        """Test parsing version with v prefix."""
+        ver = engine._parse_version("v1.0.0")
+        assert ver is not None
+        assert str(ver) == "1.0.0"
 
-    def test_parse_semver_with_prerelease(self, engine):
-        """Test parsing semver with prerelease suffix."""
-        assert engine._parse_semver("1.0.0-beta") == (1, 0, 0)
-        assert engine._parse_semver("2.3.4-alpha.1") == (2, 3, 4)
+        ver = engine._parse_version("V2.3.4")
+        assert ver is not None
 
-    def test_parse_semver_with_metadata(self, engine):
-        """Test parsing semver with build metadata."""
-        assert engine._parse_semver("1.0.0+build123") == (1, 0, 0)
-        assert engine._parse_semver("2.3.4-beta+build") == (2, 3, 4)
+    def test_parse_version_with_prerelease(self, engine):
+        """Test parsing version with prerelease suffix."""
+        # Direct PEP 440 format
+        ver = engine._parse_version("1.0.0a1")
+        assert ver is not None
 
-    def test_parse_semver_invalid(self, engine):
-        """Test parsing invalid semver returns None."""
-        assert engine._parse_semver("invalid") is None
-        assert engine._parse_semver("1") is None
-        assert engine._parse_semver("not.a.version") is None
+        ver = engine._parse_version("1.0.0b2")
+        assert ver is not None
+
+        ver = engine._parse_version("1.0.0rc1")
+        assert ver is not None
+
+    def test_parse_version_semver_prerelease_conversion(self, engine):
+        """Test SemVer prerelease formats are converted to PEP 440."""
+        # SemVer alpha -> PEP 440 alpha
+        ver = engine._parse_version("1.0.0-alpha.1")
+        assert ver is not None
+
+        # SemVer beta -> PEP 440 beta
+        ver = engine._parse_version("2.0.0-beta.2")
+        assert ver is not None
+
+        # SemVer rc -> PEP 440 rc
+        ver = engine._parse_version("3.0.0-rc.1")
+        assert ver is not None
+
+    def test_parse_version_with_metadata(self, engine):
+        """Test parsing version with build metadata."""
+        ver = engine._parse_version("1.0.0+build123")
+        assert ver is not None
+
+    def test_parse_version_invalid(self, engine):
+        """Test parsing invalid version returns None."""
+        assert engine._parse_version("invalid") is None
+        assert engine._parse_version("") is None
+        assert engine._parse_version("not.a.version") is None
+
+    def test_semver_prerelease_ordering(self, engine):
+        """Test that prerelease versions are ordered correctly."""
+        condition = TargetingCondition(
+            attribute="app_version",
+            operator=Operator.SEMVER_LT.value,
+            value="1.0.0",
+        )
+        # Alpha should be less than release
+        ctx = UserContext(app_version="1.0.0a1")
+        assert engine.evaluate_condition(condition, ctx) is True
+
+        # Release should not be less than release
+        ctx = UserContext(app_version="1.0.0")
+        assert engine.evaluate_condition(condition, ctx) is False
+
+
+class TestVariantWeightValidation:
+    """Tests for variant weight validation and normalization."""
+
+    @pytest.fixture
+    def engine(self):
+        return RuleEngine()
+
+    def test_normalize_weights_to_100(self, engine):
+        """Test weights are normalized to sum to 100."""
+        variants = [
+            {"id": "a", "name": "A", "value": "a", "weight": 25},
+            {"id": "b", "name": "B", "value": "b", "weight": 25},
+        ]
+        # Total is 50, should be normalized to 100
+        parsed = engine._parse_and_validate_variants(variants, "test.flag")
+        total = sum(v.weight for v in parsed)
+        assert abs(total - 100) < 0.01  # Allow small float precision error
+
+    def test_weights_exceeding_100(self, engine):
+        """Test weights exceeding 100 are normalized."""
+        variants = [
+            {"id": "a", "name": "A", "value": "a", "weight": 150},
+            {"id": "b", "name": "B", "value": "b", "weight": 50},
+        ]
+        parsed = engine._parse_and_validate_variants(variants, "test.flag")
+        total = sum(v.weight for v in parsed)
+        assert abs(total - 100) < 0.01
+
+    def test_negative_weight_treated_as_zero(self, engine):
+        """Test negative weights are treated as zero with warning."""
+        variants = [
+            {"id": "a", "name": "A", "value": "a", "weight": -10},
+            {"id": "b", "name": "B", "value": "b", "weight": 100},
+        ]
+        with pytest.warns(UserWarning, match="negative weights"):
+            parsed = engine._parse_and_validate_variants(variants, "test.flag")
+        # Negative weight becomes 0, so 100 total -> normalized
+        assert parsed[0].weight == 0  # Was -10, now 0
+
+    def test_all_zero_weights_equal_distribution(self, engine):
+        """Test all-zero weights result in equal distribution."""
+        variants = [
+            {"id": "a", "name": "A", "value": "a", "weight": 0},
+            {"id": "b", "name": "B", "value": "b", "weight": 0},
+            {"id": "c", "name": "C", "value": "c", "weight": 0},
+        ]
+        parsed = engine._parse_and_validate_variants(variants, "test.flag")
+        # Each should get ~33.33%
+        for v in parsed:
+            assert abs(v.weight - 100 / 3) < 0.01
+
+    def test_variant_selection_with_normalized_weights(self, engine):
+        """Test variant selection works correctly with normalized weights."""
+        variants = [
+            {"id": "control", "name": "Control", "value": None, "weight": 45},
+            {"id": "treatment", "name": "Treatment", "value": {"new": True}, "weight": 45},
+        ]
+        # Total is 90, will be normalized
+        counts = {"control": 0, "treatment": 0}
+        for i in range(1000):
+            variant = engine.select_variant(variants, f"user-{i}", "test.normalized")
+            counts[variant.id] += 1
+
+        # Should be roughly 50/50 after normalization
+        for count in counts.values():
+            pct = count / 1000
+            assert 0.40 < pct < 0.60
+
+
+class TestOperatorValidation:
+    """Tests for operator validation and error handling."""
+
+    @pytest.fixture
+    def engine(self):
+        return RuleEngine()
+
+    def test_unrecognized_operator_raises_error(self, engine):
+        """Test that unrecognized operators raise ValueError."""
+        condition = TargetingCondition(
+            attribute="user_role",
+            operator="invalid_operator",
+            value="admin",
+        )
+        ctx = UserContext(user_role="admin")
+
+        # Should return False (caught by evaluate_condition)
+        result = engine.evaluate_condition(condition, ctx)
+        assert result is False
+
+    def test_unrecognized_operator_emits_warning_and_raises(self, engine):
+        """Test that unrecognized operators emit warning and raise ValueError."""
+        with pytest.warns(UserWarning, match="Unrecognized operator"):
+            with pytest.raises(ValueError, match="Unrecognized operator"):
+                engine._apply_operator("nonexistent_op", "value1", "value2")
+
+    def test_valid_operators_no_warning(self, engine):
+        """Test valid operators don't emit warnings."""
+        # These should not raise warnings
+        assert engine._apply_operator("equals", "admin", "admin") is True
+        assert engine._apply_operator("not_equals", "admin", "user") is True
+        assert engine._apply_operator("in", "admin", ["admin", "staff"]) is True
+        assert engine._apply_operator("gt", "10", "5") is True

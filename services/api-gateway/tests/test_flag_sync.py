@@ -330,3 +330,133 @@ class TestFlagDependencies:
                 cycles.add(" -> ".join(normalized))
 
         assert not cycles, f"Deep circular dependencies found: {cycles}"
+
+
+class TestPhase32TypeSupport:
+    """Tests for Phase 3.2 advanced flag features type support."""
+
+    def test_ts_has_variant_type(self):
+        """Verify TypeScript has FlagVariant type definition."""
+        project_root = get_project_root()
+        ts_file = project_root / "packages" / "types" / "src" / "featureFlags.ts"
+
+        if not ts_file.exists():
+            pytest.skip(f"TypeScript file not found: {ts_file}")
+
+        content = ts_file.read_text()
+
+        # Check for FlagVariant interface/type
+        assert "FlagVariant" in content, "FlagVariant type not found in TypeScript"
+        assert "weight" in content, "weight field not found in TypeScript types"
+
+    def test_ts_has_targeting_rule_type(self):
+        """Verify TypeScript has TargetingRule type definition."""
+        project_root = get_project_root()
+        ts_file = project_root / "packages" / "types" / "src" / "featureFlags.ts"
+
+        if not ts_file.exists():
+            pytest.skip(f"TypeScript file not found: {ts_file}")
+
+        content = ts_file.read_text()
+
+        # Check for TargetingRule interface/type
+        assert "TargetingRule" in content, "TargetingRule type not found in TypeScript"
+        assert "operator" in content, "operator field not found in TypeScript types"
+
+    def test_ts_has_schedule_type(self):
+        """Verify TypeScript has FlagSchedule type definition."""
+        project_root = get_project_root()
+        ts_file = project_root / "packages" / "types" / "src" / "featureFlags.ts"
+
+        if not ts_file.exists():
+            pytest.skip(f"TypeScript file not found: {ts_file}")
+
+        content = ts_file.read_text()
+
+        # Check for schedule-related types
+        assert "FlagSchedule" in content or "schedule" in content.lower(), "Schedule type not found in TypeScript"
+
+    def test_ts_has_environment_type(self):
+        """Verify TypeScript has FlagEnvironment type definition."""
+        project_root = get_project_root()
+        ts_file = project_root / "packages" / "types" / "src" / "featureFlags.ts"
+
+        if not ts_file.exists():
+            pytest.skip(f"TypeScript file not found: {ts_file}")
+
+        content = ts_file.read_text()
+
+        # Check for environment type
+        assert (
+            "FlagEnvironment" in content or "environment" in content.lower()
+        ), "Environment type not found in TypeScript"
+        # Verify environment values
+        assert "production" in content.lower()
+        assert "staging" in content.lower() or "development" in content.lower()
+
+    def test_python_model_has_phase32_columns(self):
+        """Verify Python FeatureFlag model has Phase 3.2 columns."""
+        from app.models.feature_flag import FeatureFlag
+
+        # Check model has the required attributes
+        assert hasattr(FeatureFlag, "variants"), "variants column missing from FeatureFlag"
+        assert hasattr(FeatureFlag, "targeting_rules"), "targeting_rules column missing"
+        assert hasattr(FeatureFlag, "schedule"), "schedule column missing"
+        assert hasattr(FeatureFlag, "environment"), "environment column missing"
+        assert hasattr(FeatureFlag, "archived"), "archived column missing"
+        assert hasattr(FeatureFlag, "archived_at"), "archived_at column missing"
+
+    def test_python_has_multivariate_flag_type(self):
+        """Verify Python has MULTIVARIATE flag type."""
+        from app.models.feature_flag import FeatureFlagType
+
+        assert hasattr(FeatureFlagType, "MULTIVARIATE"), "MULTIVARIATE type missing from FeatureFlagType"
+        assert FeatureFlagType.MULTIVARIATE.value == "multivariate"
+
+
+class TestOperatorSync:
+    """Tests for operator definitions sync between TypeScript and Python."""
+
+    def test_python_operators_complete(self):
+        """Verify Python has all expected operators."""
+        from app.services.rule_engine import Operator
+
+        expected_operators = [
+            "equals",
+            "not_equals",
+            "in",
+            "not_in",
+            "contains",
+            "starts_with",
+            "ends_with",
+            "regex",
+            "gt",
+            "gte",
+            "lt",
+            "lte",
+            "semver_gt",
+            "semver_gte",
+            "semver_lt",
+            "semver_lte",
+        ]
+
+        python_operators = [op.value for op in Operator]
+
+        for expected in expected_operators:
+            assert expected in python_operators, f"Operator '{expected}' missing from Python Operator enum"
+
+    def test_ts_has_operator_definitions(self):
+        """Verify TypeScript has operator definitions."""
+        project_root = get_project_root()
+        ts_file = project_root / "packages" / "types" / "src" / "featureFlags.ts"
+
+        if not ts_file.exists():
+            pytest.skip(f"TypeScript file not found: {ts_file}")
+
+        content = ts_file.read_text()
+
+        # Check for operator-related definitions
+        expected_operators = ["equals", "not_equals", "in", "contains", "semver"]
+
+        found_count = sum(1 for op in expected_operators if op in content.lower())
+        assert found_count >= 3, f"Expected operators in TypeScript, found only {found_count} matches"
