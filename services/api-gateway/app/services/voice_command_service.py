@@ -17,7 +17,7 @@ dictation session.
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from app.core.logging import get_logger
 from app.services.dictation_service import DictationSession, NoteSection
@@ -507,7 +507,7 @@ class VoiceCommandService:
                     return CommandResult(
                         success=success,
                         command_type=command_type,
-                        message=f"Moved to {section.value}" if success else f"Section '{section_name}' not available",
+                        message=(f"Moved to {section.value}" if success else f"Section '{section_name}' not available"),
                         data={"section": section.value if success else None},
                     )
                 return CommandResult(
@@ -521,7 +521,7 @@ class VoiceCommandService:
                 return CommandResult(
                     success=success,
                     command_type=command_type,
-                    message="Moved to next section" if success else "Already at last section",
+                    message=("Moved to next section" if success else "Already at last section"),
                     data={"section": session.current_section.value},
                 )
 
@@ -530,7 +530,7 @@ class VoiceCommandService:
                 return CommandResult(
                     success=success,
                     command_type=command_type,
-                    message="Moved to previous section" if success else "Already at first section",
+                    message=("Moved to previous section" if success else "Already at first section"),
                     data={"section": session.current_section.value},
                 )
 
@@ -643,7 +643,7 @@ class VoiceCommandService:
                 return CommandResult(
                     success=success,
                     command_type=command_type,
-                    message="Dictation paused" if success else "Not currently dictating",
+                    message=("Dictation paused" if success else "Not currently dictating"),
                 )
 
             elif command_type == CommandType.RESUME_DICTATION:

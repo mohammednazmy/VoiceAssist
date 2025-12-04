@@ -11,13 +11,12 @@ Requires explicit confirmation before submitting any order.
 Publishes ehr.order_submitted events for auditing.
 """
 
-import asyncio
 import logging
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from ..plugin_registry import DictationPlugin
 
@@ -217,7 +216,11 @@ LAB_CODE_MAP = {
     "bmp": ("51990-0", "http://loinc.org", "Basic metabolic panel"),
     "basic metabolic panel": ("51990-0", "http://loinc.org", "Basic metabolic panel"),
     "cmp": ("24323-8", "http://loinc.org", "Complete metabolic panel"),
-    "complete metabolic panel": ("24323-8", "http://loinc.org", "Complete metabolic panel"),
+    "complete metabolic panel": (
+        "24323-8",
+        "http://loinc.org",
+        "Complete metabolic panel",
+    ),
     "lft": ("24325-3", "http://loinc.org", "Liver function panel"),
     "liver function": ("24325-3", "http://loinc.org", "Liver function panel"),
     "tsh": ("3016-3", "http://loinc.org", "TSH"),
@@ -251,16 +254,40 @@ IMAGING_CODE_MAP = {
 
 # Common medication RxNorm codes (simplified)
 MEDICATION_CODE_MAP = {
-    "amoxicillin": ("723", "http://www.nlm.nih.gov/research/umls/rxnorm", "Amoxicillin"),
-    "lisinopril": ("29046", "http://www.nlm.nih.gov/research/umls/rxnorm", "Lisinopril"),
+    "amoxicillin": (
+        "723",
+        "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "Amoxicillin",
+    ),
+    "lisinopril": (
+        "29046",
+        "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "Lisinopril",
+    ),
     "metformin": ("6809", "http://www.nlm.nih.gov/research/umls/rxnorm", "Metformin"),
-    "atorvastatin": ("83367", "http://www.nlm.nih.gov/research/umls/rxnorm", "Atorvastatin"),
+    "atorvastatin": (
+        "83367",
+        "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "Atorvastatin",
+    ),
     "omeprazole": ("7646", "http://www.nlm.nih.gov/research/umls/rxnorm", "Omeprazole"),
-    "amlodipine": ("17767", "http://www.nlm.nih.gov/research/umls/rxnorm", "Amlodipine"),
+    "amlodipine": (
+        "17767",
+        "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "Amlodipine",
+    ),
     "metoprolol": ("6918", "http://www.nlm.nih.gov/research/umls/rxnorm", "Metoprolol"),
     "losartan": ("52175", "http://www.nlm.nih.gov/research/umls/rxnorm", "Losartan"),
-    "gabapentin": ("25480", "http://www.nlm.nih.gov/research/umls/rxnorm", "Gabapentin"),
-    "hydrochlorothiazide": ("5487", "http://www.nlm.nih.gov/research/umls/rxnorm", "Hydrochlorothiazide"),
+    "gabapentin": (
+        "25480",
+        "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "Gabapentin",
+    ),
+    "hydrochlorothiazide": (
+        "5487",
+        "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "Hydrochlorothiazide",
+    ),
 }
 
 
@@ -521,7 +548,7 @@ class EHRCommandExecutor(DictationPlugin):
     ) -> ParsedOrder:
         """Parse voice command into structured order"""
         order = ParsedOrder(
-            order_type=OrderType(command_type) if command_type != "note" else OrderType.NOTE,
+            order_type=(OrderType(command_type) if command_type != "note" else OrderType.NOTE),
             raw_text=text,
         )
 
@@ -637,7 +664,16 @@ class EHRCommandExecutor(DictationPlugin):
 
         # Try to extract body part for CT/MRI
         if not order.code:
-            body_parts = ["head", "brain", "chest", "abdomen", "pelvis", "spine", "knee", "shoulder"]
+            body_parts = [
+                "head",
+                "brain",
+                "chest",
+                "abdomen",
+                "pelvis",
+                "spine",
+                "knee",
+                "shoulder",
+            ]
             for part in body_parts:
                 if part in text:
                     if "ct" in text:

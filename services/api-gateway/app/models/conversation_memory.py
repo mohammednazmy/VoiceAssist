@@ -23,7 +23,7 @@ Phase: Voice Mode Intelligence Enhancement - Phase 4
 
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from app.core.database import Base
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
@@ -56,7 +56,9 @@ class ConversationMemory(Base):
     # Memory content
     key = Column(String(255), nullable=False)  # e.g., "current_topic", "mentioned_person"
     value = Column(Text, nullable=False)  # The actual memory value
-    memory_metadata = Column("metadata", JSONB, default=dict)  # Additional context (confidence, source, etc.) - renamed to avoid SQLAlchemy reserved 'metadata'
+    memory_metadata = Column(
+        "metadata", JSONB, default=dict
+    )  # Additional context (confidence, source, etc.) - renamed to avoid SQLAlchemy reserved 'metadata'
 
     # Relevance tracking
     relevance_score = Column(Float, default=1.0)  # Decays over time
@@ -120,7 +122,9 @@ class UserContext(Base):
     # Timestamps
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relationships
@@ -164,7 +168,13 @@ class UserSpeechProfile(Base):
     __tablename__ = "user_speech_profiles"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True, index=True)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
 
     # Speech rate metrics
     avg_words_per_minute = Column(Float, default=140.0)  # Average WPM
@@ -195,7 +205,9 @@ class UserSpeechProfile(Base):
     # Timestamps
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relationships

@@ -1,14 +1,28 @@
 ---
-title: "Branching And Shortcuts Implementation"
-slug: "archive/branching-and-shortcuts-implementation"
+title: Branching And Shortcuts Implementation
+slug: archive/branching-and-shortcuts-implementation
 summary: "**Date:** 2025-11-23"
 status: deprecated
 stability: legacy
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["branching", "and", "shortcuts", "implementation"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - branching
+  - and
+  - shortcuts
+  - implementation
 category: reference
+ai_summary: >-
+  Date: 2025-11-23 Status: In Progress Epic: Advanced Chat Features --- This
+  document tracks the implementation of two major features: - Conversation
+  Branching - Allow users to fork conversations at any message - Enhanced
+  Keyboard Shortcuts - Global shortcuts with help dialog --- - [x] Message Model
+  Updates () - Added column (UUID, nullable, indexed) - Added column
+  (String(100), nullable, indexed) - Added self-referential foreign key for
+  parent_message_id - [x] Alembic Migration ()
 ---
 
 # Conversation Branching and Keyboard Shortcuts Implementation Plan

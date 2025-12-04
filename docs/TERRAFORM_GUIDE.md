@@ -1,14 +1,23 @@
 ---
-title: "Terraform Guide"
-slug: "terraform-guide"
+title: Terraform Guide
+slug: terraform-guide
 summary: "1. [Overview](#overview)"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["frontend"]
-tags: ["terraform", "guide"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - terraform
+  - guide
 category: deployment
+ai_summary: >-
+  1. Overview 2. Directory Structure 3. Module Documentation 4. Variables
+  Reference 5. Outputs Reference 6. State Management 7. Multi-Environment Setup
+  8. Best Practices 9. Common Operations 10. Troubleshooting VoiceAssist uses
+  Terraform to provision and manage all AWS infrastructure. The configura...
 ---
 
 # Terraform Guide

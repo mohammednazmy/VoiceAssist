@@ -2,20 +2,21 @@
 title: Unified Chat/Voice UI Implementation
 slug: unified-chat-voice-ui
 summary: Implementation guide for the merged Chat and Voice Mode interface with seamless mode switching.
+ai_summary: Unified Chat/Voice UI merges text and voice interfaces. Feature flag ui.unified_chat_voice controls enablement. Three-panel layout with collapsible sidebar and context pane. Uses Zustand for state management.
 status: stable
 stability: production
 owner: frontend
-lastUpdated: "2025-12-02"
-audience: ["developers", "frontend", "agent"]
+lastUpdated: "2025-12-04"
+audience: ["developers", "frontend", "ai-agents"]
 tags: ["voice", "ui", "chat", "frontend", "unified"]
-category: guide
+category: planning
 ---
 
 # Unified Chat/Voice UI Implementation
 
-**Last Updated**: 2025-12-02
+**Last Updated**: 2025-12-04
 **Status**: Complete (Phases 1-4)
-**Feature Flag**: `unified_chat_voice_ui`
+**Feature Flag**: `ui.unified_chat_voice`
 
 ---
 
@@ -164,21 +165,31 @@ The UnifiedInputArea provides seamless switching between text and voice modes:
 
 ## Feature Flag
 
-The unified interface is gated behind the `unified_chat_voice_ui` feature flag:
+The unified interface is gated behind the `ui.unified_chat_voice` feature flag:
 
 ```typescript
 // src/lib/featureFlags.ts
-export function isUnifiedChatVoiceUIEnabled(): boolean {
-  // Check user preference, environment, or A/B test
-  return localStorage.getItem("ff_unified_chat_voice_ui") === "true" || import.meta.env.VITE_UNIFIED_UI === "true";
+import { featureGate } from "@voiceassist/shared";
+
+export async function isUnifiedChatVoiceUIEnabled(): Promise<boolean> {
+  // Use the new category.feature_name pattern
+  return await featureGate("ui.unified_chat_voice");
+}
+
+// Legacy fallback (deprecated - will be removed)
+export function isUnifiedChatVoiceUIEnabledSync(): boolean {
+  return localStorage.getItem("ui.unified_chat_voice") === "true" || import.meta.env.VITE_UNIFIED_UI === "true";
 }
 ```
 
 ### Enabling the Feature
 
 1. **Environment Variable**: Set `VITE_UNIFIED_UI=true` in `.env`
-2. **Local Storage**: Set `ff_unified_chat_voice_ui` to `"true"`
-3. **URL Parameter**: `?unified=true` (for testing)
+2. **Feature Flag Service**: Enable `ui.unified_chat_voice` in Admin Panel
+3. **Local Storage** (dev only): Set `ui.unified_chat_voice` to `"true"`
+4. **URL Parameter**: `?unified=true` (for testing)
+
+> **Note**: The old `ff_unified_chat_voice_ui` pattern is deprecated. Use the new `ui.unified_chat_voice` naming convention. See [Naming Conventions](./admin-guide/feature-flags/naming-conventions.md).
 
 ---
 

@@ -1,14 +1,30 @@
 ---
 title: Administrator Quick Start
 slug: start/admins
-summary: Get started administering VoiceAssist - deployment, configuration, and monitoring.
+summary: >-
+  Get started administering VoiceAssist - deployment, configuration, and
+  monitoring.
 status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-12-02"
-audience: ["admin", "devops", "agent"]
-tags: ["quickstart", "admin", "deployment", "configuration"]
+audience:
+  - admin
+  - devops
+  - agent
+  - ai-agents
+tags:
+  - quickstart
+  - admin
+  - deployment
+  - configuration
 category: getting-started
+ai_summary: >-
+  Last Updated: 2025-12-01 This guide covers deployment, configuration, and
+  ongoing administration of VoiceAssist. --- git clone
+  https://github.com/your-org/VoiceAssist.git cd VoiceAssist cp .env.example
+  .env docker-compose up -d curl http://localhost:8000/health For production
+  environments, see: -...
 ---
 
 # Administrator Quick Start

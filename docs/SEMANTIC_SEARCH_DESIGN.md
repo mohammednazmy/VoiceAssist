@@ -1,14 +1,26 @@
 ---
-title: "Semantic Search Design"
-slug: "semantic-search-design"
-summary: "VoiceAssist uses a sophisticated semantic search system to retrieve relevant medical knowledge from textbooks, journals, and clinical guidelines. This..."
+title: Semantic Search Design
+slug: semantic-search-design
+summary: >-
+  VoiceAssist uses a sophisticated semantic search system to retrieve relevant
+  medical knowledge from textbooks, journals, and clinical guidelines. This...
 status: stable
 stability: beta
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["semantic", "search", "design"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - semantic
+  - search
+  - design
 category: reference
+ai_summary: >-
+  VoiceAssist uses a sophisticated semantic search system to retrieve relevant
+  medical knowledge from textbooks, journals, and clinical guidelines. This
+  document describes the complete ingestion and query pipeline. Note: For
+  canonical entity definitions (KnowledgeDocument, KBChunk, IndexingJob), se...
 ---
 
 # Semantic Search & Knowledge Base Design

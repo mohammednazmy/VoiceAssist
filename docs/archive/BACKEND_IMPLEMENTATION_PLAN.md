@@ -1,14 +1,27 @@
 ---
-title: "Backend Implementation Plan"
-slug: "archive/backend-implementation-plan"
+title: Backend Implementation Plan
+slug: archive/backend-implementation-plan
 summary: "**Date**: 2025-11-23"
 status: deprecated
 stability: legacy
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["backend"]
-tags: ["backend", "implementation", "plan"]
+audience:
+  - backend
+  - ai-agents
+tags:
+  - backend
+  - implementation
+  - plan
 category: reference
+ai_summary: >-
+  Date: 2025-11-23 Status: Planning Phase Based on: PR#24
+  (claude/review-codebase-planning-01BPQKdZZnAgjqJ8F3ztUYtV) Priority: High -
+  Frontend features are waiting for backend support --- The frontend team has
+  successfully implemented Phases 3-8 with 15+ new components and features.
+  However, several features require backend API endpoints and functionality that
+  are either missing or incomplete. This document outlines the required backend
+  work to fully support the frontend implementation.
 ---
 
 # Backend Implementation Plan for Frontend Features

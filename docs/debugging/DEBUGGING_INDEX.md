@@ -1,16 +1,41 @@
 ---
 title: Debugging Index
 slug: debugging/index
-summary: Central hub for all VoiceAssist troubleshooting documentation - logs, metrics, health endpoints, and debugging guides by subsystem.
+summary: >-
+  Central hub for all VoiceAssist troubleshooting documentation - logs, metrics,
+  health endpoints, and debugging guides by subsystem.
 status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-12-02"
-audience: ["human", "agent", "ai-agents", "developers", "sre", "backend", "frontend"]
-tags: ["debugging", "runbook", "troubleshooting", "logs", "metrics", "index"]
-relatedServices: ["api-gateway", "web-app", "admin-panel", "docs-site"]
+audience:
+  - human
+  - agent
+  - ai-agents
+  - developers
+  - sre
+  - backend
+  - frontend
+tags:
+  - debugging
+  - runbook
+  - troubleshooting
+  - logs
+  - metrics
+  - index
+relatedServices:
+  - api-gateway
+  - web-app
+  - admin-panel
+  - docs-site
 category: debugging
-version: "1.1.0"
+version: 1.1.0
+ai_summary: >-
+  Last Updated: 2025-12-02 Version: 1.1.0 Audience: Developers, SREs, AI
+  Assistants > Note: Voice/Realtime rows now target the Thinker-Talker pipeline
+  at /api/voice/pipeline-ws. The legacy OpenAI Realtime API is documented
+  separately. This is the central hub for all VoiceAssist troubleshooting
+  docu...
 ---
 
 # Debugging Index

@@ -1,14 +1,26 @@
 ---
-title: "Compose To K8s Migration"
-slug: "compose-to-k8s-migration"
-summary: "This guide covers migrating VoiceAssist from Docker Compose (Phases 0-10) to Kubernetes (Phases 11-14). The migration maintains the **separate Nextclo..."
+title: Compose To K8s Migration
+slug: compose-to-k8s-migration
+summary: >-
+  This guide covers migrating VoiceAssist from Docker Compose (Phases 0-10) to
+  Kubernetes (Phases 11-14). The migration maintains the **separate Nextclo...
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["compose", "k8s", "migration"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - compose
+  - k8s
+  - migration
 category: reference
+ai_summary: >-
+  This guide covers migrating VoiceAssist from Docker Compose (Phases 0-10) to
+  Kubernetes (Phases 11-14). The migration maintains the separate Nextcloud and
+  VoiceAssist stacks architecture while adding Kubernetes features like
+  auto-scaling, self-healing, and service mesh. 1. Migration Strategy 2. P...
 ---
 
 # Docker Compose to Kubernetes Migration Guide

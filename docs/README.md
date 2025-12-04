@@ -1,14 +1,22 @@
 ---
-title: "Readme"
-slug: "readme"
+title: Readme
+slug: readme
 summary: "**Last Updated**: 2025-11-27"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["readme"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - readme
 category: reference
+ai_summary: >-
+  Last Updated: 2025-11-27 Project Status: ✅ All 15 Phases Complete - Production
+  Ready (100%) --- If you're an AI coding assistant (Claude, GPT, Copilot,
+  etc.): - ai/AGENT_ONBOARDING.md - Start here for quick context, repository
+  structure, critical rules, and common tasks - overview/IMPLEMENTATION_...
 ---
 
 # VoiceAssist V2 Documentation Index

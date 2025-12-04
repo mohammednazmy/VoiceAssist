@@ -1,14 +1,24 @@
 ---
-title: "Infrastructure As Code"
-slug: "infrastructure-as-code"
+title: Infrastructure As Code
+slug: infrastructure-as-code
 summary: "1. [Overview](#overview)"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["devops", "sre"]
-tags: ["infrastructure", "code"]
+audience:
+  - devops
+  - sre
+  - ai-agents
+tags:
+  - infrastructure
+  - code
 category: deployment
+ai_summary: >-
+  1. Overview 2. Architecture 3. Components 4. Getting Started 5. Prerequisites
+  6. Common Workflows 7. Related Documentation 8. Troubleshooting VoiceAssist V2
+  uses a comprehensive Infrastructure as Code (IaC) approach to manage all
+  infrastructure components. This approach provides: - Version Contro...
 ---
 
 # Infrastructure as Code Guide

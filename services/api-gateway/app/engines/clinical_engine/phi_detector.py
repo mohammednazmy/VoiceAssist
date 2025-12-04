@@ -8,7 +8,7 @@ Combines regex patterns (fast, high precision) with NER models
 import logging
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Pattern
+from typing import Dict, List, Optional, Pattern
 
 logger = logging.getLogger(__name__)
 
@@ -66,8 +66,16 @@ class PHIDetector:
         # Phone numbers
         (r"\b(?:\+1[-\s]?)?\(?\d{3}\)?[-\s]?\d{3}[-\s]?\d{4}\b", "phone", 0.9),
         # Dates (various formats)
-        (r"\b(?:0?[1-9]|1[0-2])[-/](?:0?[1-9]|[12]\d|3[01])[-/](?:19|20)\d{2}\b", "dob", 0.8),
-        (r"\b(?:19|20)\d{2}[-/](?:0?[1-9]|1[0-2])[-/](?:0?[1-9]|[12]\d|3[01])\b", "dob", 0.8),
+        (
+            r"\b(?:0?[1-9]|1[0-2])[-/](?:0?[1-9]|[12]\d|3[01])[-/](?:19|20)\d{2}\b",
+            "dob",
+            0.8,
+        ),
+        (
+            r"\b(?:19|20)\d{2}[-/](?:0?[1-9]|1[0-2])[-/](?:0?[1-9]|[12]\d|3[01])\b",
+            "dob",
+            0.8,
+        ),
         # Email
         (r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", "email", 0.95),
         # MRN (common formats)
@@ -118,7 +126,6 @@ class PHIDetector:
         Returns:
             List of PHI detections
         """
-        from . import PHIDetection
 
         detections = []
 
@@ -163,7 +170,6 @@ class PHIDetector:
 
     async def _detect_ner(self, text: str) -> List["PHIDetection"]:
         """Detect PHI using NER model"""
-        from . import PHIDetection
 
         # TODO: Implement NER model inference
         # Will use fine-tuned model on i2b2 PHI dataset

@@ -1,14 +1,25 @@
 ---
-title: "Connection Pool Optimization"
-slug: "operations/connection-pool-optimization"
+title: Connection Pool Optimization
+slug: operations/connection-pool-optimization
 summary: "**Last Updated**: 2025-11-20 (Phase 7 - P2.5)"
 status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["connection", "pool", "optimization"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - connection
+  - pool
+  - optimization
 category: operations
+ai_summary: >-
+  Last Updated: 2025-11-20 (Phase 7 - P2.5) Purpose: Guide for optimizing and
+  monitoring database connection pools --- VoiceAssist V2 uses connection
+  pooling for efficient database resource management. This document covers
+  configuration, monitoring, and optimization of connection pools for
+  PostgreS...
 ---
 
 # Connection Pool Optimization Guide

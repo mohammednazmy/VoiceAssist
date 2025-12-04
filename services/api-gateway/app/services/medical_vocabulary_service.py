@@ -10,11 +10,9 @@ Features:
 - Medical abbreviation and terminology management
 """
 
-import json
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 from app.core.logging import get_logger
 

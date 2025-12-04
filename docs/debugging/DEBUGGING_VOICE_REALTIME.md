@@ -1,16 +1,41 @@
 ---
 title: Voice & Realtime Debugging Guide
 slug: debugging/voice-realtime
-summary: Debug WebSocket connections, STT, TTS, and voice pipeline issues in VoiceAssist.
+summary: >-
+  Debug WebSocket connections, STT, TTS, and voice pipeline issues in
+  VoiceAssist.
 status: stable
 stability: production
 owner: backend
 lastUpdated: "2025-12-02"
-audience: ["human", "agent", "ai-agents", "backend", "frontend", "sre"]
-tags: ["debugging", "runbook", "voice", "realtime", "websocket", "stt", "tts", "troubleshooting", "thinker-talker"]
-relatedServices: ["api-gateway", "web-app"]
+audience:
+  - human
+  - agent
+  - ai-agents
+  - backend
+  - frontend
+  - sre
+tags:
+  - debugging
+  - runbook
+  - voice
+  - realtime
+  - websocket
+  - stt
+  - tts
+  - troubleshooting
+  - thinker-talker
+relatedServices:
+  - api-gateway
+  - web-app
 category: debugging
-version: "2.0.0"
+version: 2.0.0
+ai_summary: >-
+  Last Updated: 2025-12-02 Components: Voice pipeline, WebSocket service,
+  STT/TTS --- VoiceAssist has two voice pipelines: Always debug Thinker-Talker
+  first unless specifically working with the legacy pipeline. ---
+  ┌─────────────┐ ┌─────────────┐ ┌──────────────┐ ┌─────────────┐ │ Browser
+  │───▶│ De...
 ---
 
 # Voice & Realtime Debugging Guide

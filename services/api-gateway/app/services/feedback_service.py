@@ -277,8 +277,14 @@ class FeedbackService:
             "accuracy": (FeedbackType.ACCURACY, FeedbackCategory.UNDERSTANDING),
             "speed": (FeedbackType.LATENCY, FeedbackCategory.SPEED),
             "voice_quality": (FeedbackType.NATURALNESS, FeedbackCategory.VOICE_QUALITY),
-            "response_quality": (FeedbackType.ACCURACY, FeedbackCategory.RESPONSE_QUALITY),
-            "medical_accuracy": (FeedbackType.DICTATION_QUALITY, FeedbackCategory.MEDICAL_ACCURACY),
+            "response_quality": (
+                FeedbackType.ACCURACY,
+                FeedbackCategory.RESPONSE_QUALITY,
+            ),
+            "medical_accuracy": (
+                FeedbackType.DICTATION_QUALITY,
+                FeedbackCategory.MEDICAL_ACCURACY,
+            ),
         }
 
         if categories:
@@ -559,7 +565,7 @@ class FeedbackService:
         return {
             "total_sessions": total_sessions,
             "avg_rating": round(avg_rating, 2) if avg_rating else None,
-            "satisfaction_rate": round(satisfaction_rate, 3) if satisfaction_rate else None,
+            "satisfaction_rate": (round(satisfaction_rate, 3) if satisfaction_rate else None),
             "thumbs_up": total_thumbs_up,
             "thumbs_down": total_thumbs_down,
             "categories": all_categories,

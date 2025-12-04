@@ -1,14 +1,25 @@
 ---
-title: "Nextcloud Integration"
-slug: "nextcloud-integration"
-summary: "VoiceAssist integrates with Nextcloud for identity management, file storage, calendar, and email functionality."
+title: Nextcloud Integration
+slug: nextcloud-integration
+summary: >-
+  VoiceAssist integrates with Nextcloud for identity management, file storage,
+  calendar, and email functionality.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["nextcloud", "integration"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - nextcloud
+  - integration
 category: reference
+ai_summary: >-
+  VoiceAssist integrates with Nextcloud for identity management, file storage,
+  calendar, and email functionality. Current Status (Phase 6): VoiceAssist now
+  has working CalDAV calendar integration, WebDAV file auto-indexing, and email
+  service skeleton. Implementation Notes: - Phase 2: Nextcloud adde...
 ---
 
 # Nextcloud Integration Guide

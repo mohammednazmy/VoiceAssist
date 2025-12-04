@@ -1,14 +1,28 @@
 ---
-title: "E2e Testing Guide"
-slug: "testing/e2e-testing-guide"
-summary: "This guide describes the comprehensive end-to-end (E2E) test suite for VoiceAssist V2. These tests verify complete user workflows, service integration..."
+title: E2e Testing Guide
+slug: testing/e2e-testing-guide
+summary: >-
+  This guide describes the comprehensive end-to-end (E2E) test suite for
+  VoiceAssist V2. These tests verify complete user workflows, service
+  integration...
 status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-11-27"
-audience: ["frontend"]
-tags: ["e2e", "testing", "guide"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - e2e
+  - testing
+  - guide
 category: testing
+ai_summary: >-
+  This guide describes the comprehensive end-to-end (E2E) test suite for
+  VoiceAssist V2. These tests verify complete user workflows, service
+  integrations, failure recovery, and performance characteristics. Tests full
+  user workflows from registration through complex operations: - User
+  Registration &...
 ---
 
 # End-to-End Testing Guide (Phase 7 - P2.2)

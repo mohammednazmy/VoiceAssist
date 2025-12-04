@@ -1,14 +1,24 @@
 ---
-title: "Nextcloud Apps Design"
-slug: "nextcloud-apps-design"
+title: Nextcloud Apps Design
+slug: nextcloud-apps-design
 summary: "**Status:** In Progress (Phase 6 foundation started)"
 status: stable
 stability: beta
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["nextcloud", "apps", "design"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - nextcloud
+  - apps
+  - design
 category: reference
+ai_summary: >-
+  Status: In Progress (Phase 6 foundation started) Scope: Define how VoiceAssist
+  integrates with Nextcloud via dedicated apps. Phase 6 introduces three
+  Nextcloud apps under nextcloud-apps/: - voiceassist-client – entry point for
+  clinicians to launch the VoiceAssist web client from Nextcloud. - voic...
 ---
 
 # Nextcloud Apps Design (Phase 6)

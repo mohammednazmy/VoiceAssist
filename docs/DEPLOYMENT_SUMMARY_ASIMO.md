@@ -1,14 +1,25 @@
 ---
-title: "Deployment Summary Asimo"
-slug: "deployment-summary-asimo"
+title: Deployment Summary Asimo
+slug: deployment-summary-asimo
 summary: "**Deployment Date:** 2025-11-22 (Initial) / 2025-11-23 (Final Configuration)"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["devops", "sre"]
-tags: ["deployment", "summary", "asimo"]
+audience:
+  - devops
+  - sre
+  - ai-agents
+tags:
+  - deployment
+  - summary
+  - asimo
 category: deployment
+ai_summary: >-
+  Deployment Date: 2025-11-22 (Initial) / 2025-11-23 (Final Configuration)
+  Environment: Production (Ubuntu 24.04 LTS) Server: asimo.io (107.204.29.210)
+  Status: ✅ FULLY CONFIGURED & OPERATIONAL --- VoiceAssist has been successfully
+  deployed to production on the asimo.io server with full monitoring,...
 ---
 
 # VoiceAssist Production Deployment Summary - asimo.io

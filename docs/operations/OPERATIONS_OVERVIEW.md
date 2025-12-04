@@ -1,16 +1,33 @@
 ---
 title: Operations Overview
 slug: operations/overview
-summary: Central hub for operations documentation, runbooks, SLOs, and compliance.
+summary: "Central hub for operations documentation, runbooks, SLOs, and compliance."
 status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-11-27"
-audience: ["devops", "backend", "admin"]
-tags: ["operations", "overview", "runbooks", "sre"]
+audience:
+  - devops
+  - backend
+  - admin
+  - ai-agents
+tags:
+  - operations
+  - overview
+  - runbooks
+  - sre
 category: operations
-relatedServices: ["api-gateway", "web-app", "admin-panel"]
-version: "1.0.0"
+relatedServices:
+  - api-gateway
+  - web-app
+  - admin-panel
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 This document provides a central hub for all
+  operations-related documentation for VoiceAssist. --- --- All runbooks follow
+  a standardized format with severity levels, step-by-step procedures, and
+  verification steps. --- For HIPAA compliance, see Security & Compliance.
+  ---...
 ---
 
 # Operations Overview

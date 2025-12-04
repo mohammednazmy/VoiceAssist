@@ -1,17 +1,34 @@
 ---
 title: Service Catalog
 slug: architecture/service-catalog
-summary: Comprehensive catalog of all backend services with implementation details and API contracts.
+summary: >-
+  Comprehensive catalog of all backend services with implementation details and
+  API contracts.
 status: stable
 stability: production
 owner: backend
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "ai-agents", "backend", "devops"]
-tags: ["service", "catalog", "api", "architecture"]
-relatedServices: ["api-gateway"]
+audience:
+  - human
+  - agent
+  - ai-agents
+  - backend
+  - devops
+tags:
+  - service
+  - catalog
+  - api
+  - architecture
+relatedServices:
+  - api-gateway
 category: architecture
 source_of_truth: true
-version: "1.0.0"
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-21 (Phase 6: Nextcloud App Integration & Unified
+  Services) Status: Canonical Reference Purpose: Comprehensive catalog of all
+  backend services with implementation details --- This document catalogs all
+  backend services in VoiceAssist V2. These are logical services - clear bou...
 ---
 
 # VoiceAssist V2 Service Catalog

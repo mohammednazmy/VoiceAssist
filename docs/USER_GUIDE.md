@@ -1,14 +1,23 @@
 ---
-title: "User Guide"
-slug: "user-guide"
+title: User Guide
+slug: user-guide
 summary: "**Last Updated:** 2025-11-21"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["frontend"]
-tags: ["user", "guide"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - user
+  - guide
 category: operations
+ai_summary: >-
+  Version: 1.0 Last Updated: 2025-11-21 --- VoiceAssist is an AI-powered medical
+  assistant that helps healthcare professionals with voice-based queries,
+  document management, and medical knowledge retrieval. --- 1. Getting Started
+  2. User Interface 3. Voice Interactions 4. Document Management 5. Med...
 ---
 
 # VoiceAssist User Guide

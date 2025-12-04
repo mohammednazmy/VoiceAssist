@@ -6,10 +6,28 @@ status: stable
 stability: production
 owner: backend
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "backend", "frontend"]
-tags: ["websocket", "protocol", "api", "realtime", "streaming"]
+audience:
+  - human
+  - agent
+  - backend
+  - frontend
+  - ai-agents
+tags:
+  - websocket
+  - protocol
+  - api
+  - realtime
+  - streaming
 category: reference
-relatedServices: ["api-gateway", "web-app"]
+relatedServices:
+  - api-gateway
+  - web-app
+ai_summary: >-
+  Version: 1.0 Last Updated: 2025-11-27 Status: Production Related
+  Documentation: - Realtime Architecture - System architecture - Voice Mode
+  Pipeline - Voice implementation - Thinker-Talker Pipeline - T/T voice
+  architecture - Voice Pipeline WebSocket API - T/T WebSocket protocol -
+  Implementation St...
 ---
 
 # WebSocket Protocol Specification

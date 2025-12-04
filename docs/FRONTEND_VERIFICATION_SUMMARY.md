@@ -1,14 +1,24 @@
 ---
-title: "Frontend Verification Summary"
-slug: "frontend-verification-summary"
+title: Frontend Verification Summary
+slug: frontend-verification-summary
 summary: "**Date**: 2025-11-20"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["frontend"]
-tags: ["frontend", "verification", "summary"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - frontend
+  - verification
+  - summary
 category: reference
+ai_summary: >-
+  Date: 2025-11-20 Status: ✅ Complete Task: Frontend verification pass for
+  VoiceAssist V2 web-app and admin-panel --- This document summarizes the
+  frontend verification and refinement work completed for both the clinician web
+  app (web-app/) and the Admin Center (admin-panel/). This was treated as a...
 ---
 
 # Frontend Verification & Refinement Summary

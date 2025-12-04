@@ -6,11 +6,24 @@ status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-11-27"
-audience: ["devops"]
-tags: ["runbook", "backup", "restore", "disaster-recovery", "operations"]
+audience:
+  - devops
+  - ai-agents
+tags:
+  - runbook
+  - backup
+  - restore
+  - disaster-recovery
+  - operations
 category: debugging
-relatedServices: ["api-gateway"]
-version: "1.0.0"
+relatedServices:
+  - api-gateway
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 Purpose: Comprehensive guide for backup and restore
+  operations in VoiceAssist V2 --- /backups/ ├── postgres/ │ ├── daily/ │ ├──
+  weekly/ │ └── monthly/ ├── redis/ ├── qdrant/ ├── config/ ├── volumes/ └──
+  logs/ --- BACKUP_DATE=$(date +%Y%m%d_%H%M%S) BACKUP_DIR="/backups/pos...
 ---
 
 # Backup & Restore Runbook

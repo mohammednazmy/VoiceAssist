@@ -1,14 +1,23 @@
 ---
-title: "Chaos Engineering"
-slug: "chaos-engineering"
+title: Chaos Engineering
+slug: chaos-engineering
 summary: "**Last Updated**: 2025-11-21 (Phase 7 - P3.5)"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["chaos", "engineering"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - chaos
+  - engineering
 category: testing
+ai_summary: >-
+  Last Updated: 2025-11-21 (Phase 7 - P3.5) Purpose: Guide for running chaos
+  experiments to validate VoiceAssist V2 resilience --- Chaos Engineering is the
+  discipline of experimenting on a system to build confidence in its capability
+  to withstand turbulent conditions in production. VoiceAssist V2 u...
 ---
 
 # Chaos Engineering Guide

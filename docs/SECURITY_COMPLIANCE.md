@@ -1,16 +1,34 @@
 ---
 title: Security & Compliance Guide
 slug: security/compliance
-summary: HIPAA compliance, zero-trust architecture, PHI protection, and security requirements for VoiceAssist.
+summary: >-
+  HIPAA compliance, zero-trust architecture, PHI protection, and security
+  requirements for VoiceAssist.
 status: stable
 stability: production
 owner: security
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "ai-agents", "security-engineers", "architects"]
-tags: ["security", "hipaa", "compliance", "phi", "encryption"]
+audience:
+  - human
+  - agent
+  - ai-agents
+  - security-engineers
+  - architects
+tags:
+  - security
+  - hipaa
+  - compliance
+  - phi
+  - encryption
 category: security
 source_of_truth: true
-version: "2.0.0"
+version: 2.0.0
+ai_summary: >-
+  VoiceAssist V2 is designed as a HIPAA-compliant, zero-trust medical AI
+  assistant that handles Protected Health Information (PHI). This document
+  outlines security requirements, implementation strategies, and compliance
+  procedures. 1. HIPAA Compliance 2. Zero-Trust Architecture 3. Encryption 4.
+  Aut...
 ---
 
 # Security & Compliance Guide

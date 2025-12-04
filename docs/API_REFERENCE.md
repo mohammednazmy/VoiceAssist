@@ -1,16 +1,33 @@
 ---
 title: API Reference
 slug: api-reference/overview
-summary: High-level API overview, endpoint groups, and quick reference for the VoiceAssist API.
+summary: >-
+  High-level API overview, endpoint groups, and quick reference for the
+  VoiceAssist API.
 status: stable
 stability: production
 owner: backend
 lastUpdated: "2025-12-02"
-audience: ["human", "agent", "backend", "frontend"]
-tags: ["api", "rest", "reference", "endpoints"]
+audience:
+  - human
+  - agent
+  - backend
+  - frontend
+  - ai-agents
+tags:
+  - api
+  - rest
+  - reference
+  - endpoints
 category: api
-relatedServices: ["api-gateway"]
-version: "2.0.0"
+relatedServices:
+  - api-gateway
+version: 2.0.0
+ai_summary: >-
+  Last Updated: 2025-12-02 The VoiceAssist API provides comprehensive REST
+  endpoints for building medical AI assistant applications. - Complete REST API
+  Reference - Full endpoint documentation with examples - OpenAPI/Swagger UI -
+  Interactive docs at http://localhost:8000/docs - ReDoc - Alternative...
 ---
 
 # API Reference

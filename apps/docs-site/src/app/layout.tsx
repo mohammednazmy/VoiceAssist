@@ -62,10 +62,14 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.className} h-full bg-white dark:bg-gray-900`}>
+        {/* Skip to content link for keyboard navigation (WCAG 2.1 AA) */}
+        <a href="#main-content" className="skip-to-content">
+          Skip to main content
+        </a>
         <HeadingProvider>
           <Header />
           <Sidebar />
-          <main className="lg:pl-64">
+          <main id="main-content" className="lg:pl-64" role="main" aria-label="Documentation content">
             <PageFrame>{children}</PageFrame>
           </main>
         </HeadingProvider>

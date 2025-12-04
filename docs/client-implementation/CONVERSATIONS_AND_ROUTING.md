@@ -1,14 +1,27 @@
 ---
-title: "Conversations And Routing"
-slug: "client-implementation/conversations-and-routing"
-summary: "This document describes the conversation management and routing system in VoiceAssist. It covers URL patterns, navigation behavior, conversation lifec..."
+title: Conversations And Routing
+slug: client-implementation/conversations-and-routing
+summary: >-
+  This document describes the conversation management and routing system in
+  VoiceAssist. It covers URL patterns, navigation behavior, conversation
+  lifec...
 status: stable
 stability: production
 owner: frontend
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["conversations", "and", "routing"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - conversations
+  - and
+  - routing
 category: planning
+ai_summary: >-
+  This document describes the conversation management and routing system in
+  VoiceAssist. It covers URL patterns, navigation behavior, conversation
+  lifecycle, and state management. --- /chat # Conversation auto-creation route
+  /chat/:conversationId # Specific conversation route - conversationId - UUI...
 ---
 
 # Conversations and Routing

@@ -1,14 +1,24 @@
 ---
-title: "Configuration Reference"
-slug: "configuration-reference"
+title: Configuration Reference
+slug: configuration-reference
 summary: "**VoiceAssist V2 - Complete Configuration Guide**"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["configuration", "reference"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - configuration
+  - reference
 category: reference
+ai_summary: >-
+  VoiceAssist V2 - Complete Configuration Guide This document provides
+  comprehensive documentation for all configuration options available in
+  VoiceAssist V2. Usage: ENVIRONMENT=production DEBUG=false LOG_LEVEL=INFO
+  Validation Rules: - ENVIRONMENT must be one of: development, staging,
+  production - D...
 ---
 
 # Configuration Reference

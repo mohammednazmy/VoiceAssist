@@ -8,8 +8,8 @@ import logging
 import math
 from collections import deque
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ class AnomalyDetector:
 
         Returns AnomalyAlert if anomaly detected, None otherwise.
         """
-        from . import AnomalyAlert, MetricSample
+        from . import AnomalyAlert
 
         metric_key = sample.name
 
@@ -156,7 +156,6 @@ class AnomalyDetector:
     ) -> None:
         """Set custom threshold for a metric"""
         # TODO: Implement custom per-metric thresholds
-        pass
 
     async def reset_baseline(self, metric_name: str) -> bool:
         """Reset baseline for a metric"""

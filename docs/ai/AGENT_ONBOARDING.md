@@ -1,16 +1,34 @@
 ---
 title: AI Agent Onboarding Guide
 slug: ai/agent-onboarding
-summary: Quick context, repository structure, critical rules, and common tasks for AI coding assistants.
+summary: >-
+  Quick context, repository structure, critical rules, and common tasks for AI
+  coding assistants.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-12-02"
-audience: ["agent", "ai-agents"]
-tags: ["onboarding", "ai-agent", "getting-started", "workflows"]
-relatedServices: ["api-gateway", "web-app", "admin-panel", "docs-site"]
+audience:
+  - agent
+  - ai-agents
+tags:
+  - onboarding
+  - ai-agent
+  - getting-started
+  - workflows
+relatedServices:
+  - api-gateway
+  - web-app
+  - admin-panel
+  - docs-site
 category: ai
-version: "1.2.0"
+version: 1.2.0
+ai_summary: >-
+  Version: 1.3.0 Last Updated: 2025-12-02 Audience: AI coding assistants
+  (Claude, GPT, Copilot, etc.) --- Start here. This section provides the fastest
+  path to context. Base URL: https://assistdocs.asimo.io ALWAYS use:
+  services/api-gateway/ (FastAPI, production-ready) NEVER use: server/
+  (deprecated...
 ---
 
 # AI Agent Onboarding Guide

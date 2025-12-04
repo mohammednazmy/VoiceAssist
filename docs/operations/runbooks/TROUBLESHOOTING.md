@@ -6,11 +6,25 @@ status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-11-27"
-audience: ["devops", "backend"]
-tags: ["runbook", "troubleshooting", "operations", "debugging"]
+audience:
+  - devops
+  - backend
+  - ai-agents
+tags:
+  - runbook
+  - troubleshooting
+  - operations
+  - debugging
 category: debugging
-relatedServices: ["api-gateway"]
-version: "1.0.0"
+relatedServices:
+  - api-gateway
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 Purpose: Comprehensive troubleshooting guide for
+  VoiceAssist V2 common issues --- echo "VoiceAssist Quick Diagnostics -
+  $(date)" echo "=========================================" echo -e "\n[1]
+  Service Status:" docker compose ps echo -e "\n[2] Health Checks:" curl -s
+  http:...
 ---
 
 # Troubleshooting Runbook

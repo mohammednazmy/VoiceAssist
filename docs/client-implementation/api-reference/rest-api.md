@@ -1,14 +1,19 @@
 ---
-title: "Rest Api"
-slug: "client-implementation/api-reference/rest-api"
-summary: "Placeholder for client-specific REST API integration details."
+title: Rest Api
+slug: client-implementation/api-reference/rest-api
+summary: Placeholder for client-specific REST API integration details.
 status: stable
 stability: production
 owner: backend
 lastUpdated: "2025-11-27"
-audience: ["backend"]
-tags: ["rest", "api"]
+audience:
+  - backend
+  - ai-agents
+tags:
+  - rest
+  - api
 category: planning
+ai_summary: Placeholder for client-specific REST API integration details.
 ---
 
 # Client REST API Reference

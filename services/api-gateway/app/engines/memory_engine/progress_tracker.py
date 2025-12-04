@@ -218,12 +218,10 @@ class ProgressTracker:
     async def _persist_progress(self, entry: ProgressEntry) -> None:
         """Persist progress to database"""
         # TODO: Implement database persistence
-        pass
 
     async def _persist_note(self, note: UserNote) -> None:
         """Persist note to database"""
         # TODO: Implement database persistence
-        pass
 
 
 __all__ = ["ProgressTracker", "ProgressEntry", "UserNote"]

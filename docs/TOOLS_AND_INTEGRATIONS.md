@@ -1,14 +1,25 @@
 ---
-title: "Tools And Integrations"
-slug: "tools-and-integrations"
+title: Tools And Integrations
+slug: tools-and-integrations
 summary: "**Last Updated**: 2025-11-20"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["tools", "and", "integrations"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - tools
+  - and
+  - integrations
 category: reference
+ai_summary: >-
+  Last Updated: 2025-11-20 Status: Design Complete Version: V2.0 >
+  Implementation Note: This document describes the V2 tools architecture design.
+  The current production implementation lives in: > > - Tool Service:
+  services/api-gateway/app/services/tools/tool_service.py > - Individual Tools:
+  service...
 ---
 
 # VoiceAssist V2 - Tools and Integrations

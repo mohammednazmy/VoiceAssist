@@ -1,14 +1,20 @@
 ---
-title: "Voice Endpoint Fix"
-slug: "archive/voice-endpoint-fix"
+title: Voice Endpoint Fix
+slug: archive/voice-endpoint-fix
 summary: "**Date:** 2025-11-24"
 status: deprecated
 stability: legacy
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["voice", "endpoint", "fix"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - voice
+  - endpoint
+  - fix
 category: reference
+ai_summary: "\U0001F389 --- Status: ✅ Voice endpoints are now working correctly!"
 ---
 
 # Voice Endpoint Fix

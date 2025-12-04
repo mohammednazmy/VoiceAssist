@@ -1,14 +1,22 @@
 ---
-title: "Readme"
-slug: "architecture/readme"
+title: Readme
+slug: architecture/readme
 summary: "**Last Updated**: 2025-11-20 (Phase 7)"
 status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["readme"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - readme
 category: architecture
+ai_summary: >-
+  Last Updated: 2025-11-20 (Phase 7) This directory contains comprehensive
+  architecture documentation for VoiceAssist V2. --- New to VoiceAssist? Start
+  here: 1. UNIFIED_ARCHITECTURE.md - Comprehensive system architecture (START
+  HERE) 2. ARCHITECTURE_DIAGRAMS.md - Visual diagrams (Mermaid) 3. SERVIC...
 ---
 
 # VoiceAssist V2 - Architecture Documentation

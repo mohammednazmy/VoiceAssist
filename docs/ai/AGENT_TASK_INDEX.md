@@ -1,15 +1,29 @@
 ---
 title: Agent Task Index
 slug: ai/agent-task-index
-summary: Common AI agent tasks with relevant documentation and machine-readable endpoints.
+summary: >-
+  Common AI agent tasks with relevant documentation and machine-readable
+  endpoints.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-12-02"
-audience: ["agent", "ai-agents"]
-tags: ["ai-agent", "tasks", "index", "reference"]
+audience:
+  - agent
+  - ai-agents
+tags:
+  - ai-agent
+  - tasks
+  - index
+  - reference
 category: ai
-version: "1.0.0"
+version: 1.0.0
+ai_summary: >-
+  This document lists common AI agent tasks with the relevant documentation and
+  endpoints needed to complete them. Machine-Readable Endpoints: -
+  https://assistdocs.asimo.io/agent/index.json - Documentation metadata -
+  https://assistdocs.asimo.io/agent/docs.json - Full document list with
+  filtering -...
 ---
 
 # Agent Task Index

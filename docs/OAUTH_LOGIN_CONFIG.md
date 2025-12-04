@@ -1,14 +1,26 @@
 ---
-title: "Oauth Login Config"
-slug: "oauth-login-config"
-summary: "This document explains how to configure Google and Microsoft OAuth login for VoiceAssist."
+title: Oauth Login Config
+slug: oauth-login-config
+summary: >-
+  This document explains how to configure Google and Microsoft OAuth login for
+  VoiceAssist.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["oauth", "login", "config"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - oauth
+  - login
+  - config
 category: reference
+ai_summary: >-
+  This document explains how to configure Google and Microsoft OAuth login for
+  VoiceAssist. VoiceAssist supports OAuth 2.0 authentication with: - Google
+  (Google Sign-In) - Microsoft (Microsoft Entra ID / Azure AD) When configured,
+  users can sign in using their existing Google or Microsoft accounts...
 ---
 
 # OAuth Login Configuration Guide

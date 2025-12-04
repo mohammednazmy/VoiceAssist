@@ -1,14 +1,27 @@
 ---
-title: "Voice Ready State 2025 11 25"
-slug: "voice-ready-state-2025-11-25"
-summary: "The voice pipeline is now stable on `main` with all tests passing. This document serves as context for future AI assistant sessions."
+title: Voice Ready State 2025 11 25
+slug: voice-ready-state-2025-11-25
+summary: >-
+  The voice pipeline is now stable on `main` with all tests passing. This
+  document serves as context for future AI assistant sessions.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["voice", "ready", "state", "2025"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - voice
+  - ready
+  - state
+  - "2025"
 category: reference
+ai_summary: >-
+  The voice pipeline is now stable on main with all tests passing. This document
+  serves as context for future AI assistant sessions. - PR #47: Unified Voice
+  Mode pipeline (ephemeral tokens, settings -> backend, chat integration,
+  metrics) - PR #48: /api/voice/metrics + frontend metrics export (sendB...
 ---
 
 # VoiceAssist Voice-Ready State - November 25, 2025

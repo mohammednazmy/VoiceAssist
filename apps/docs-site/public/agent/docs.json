@@ -1,7 +1,195 @@
 {
-  "count": 242,
-  "generated_at": "2025-12-04T08:19:22.878Z",
+  "count": 255,
+  "generated_at": "2025-12-04T11:27:14.942Z",
   "docs": [
+    {
+      "slug": "style-guide",
+      "path": "STYLE_GUIDE.md",
+      "title": "VoiceAssist Documentation Style Guide",
+      "summary": "Writing standards for VoiceAssist documentation",
+      "status": "stable",
+      "owner": "docs",
+      "audience": ["developers", "technical-writers", "ai-agents"],
+      "category": "reference",
+      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "readme",
+      "path": "admin-guide/feature-flags/README.md",
+      "title": "Feature Flags Overview",
+      "summary": "Comprehensive guide to VoiceAssist feature flag system",
+      "status": "stable",
+      "owner": "backend",
+      "audience": ["developers", "admin", "ai-agents"],
+      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "admin-panel-guide",
+      "path": "admin-guide/feature-flags/admin-panel-guide.md",
+      "title": "Feature Flags Admin Panel Guide",
+      "summary": "Using the Admin Panel to manage feature flags and scheduled variant changes",
+      "status": "stable",
+      "owner": "frontend",
+      "audience": ["admin", "developers", "ai-agents"],
+      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "advanced-types",
+      "path": "admin-guide/feature-flags/advanced-types.md",
+      "title": "Advanced Feature Flag Types",
+      "summary": "Boolean, percentage, variant, and scheduled feature flag types",
+      "status": "stable",
+      "owner": "backend",
+      "audience": ["developers", "ai-agents"],
+      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "best-practices",
+      "path": "admin-guide/feature-flags/best-practices.md",
+      "title": "Feature Flag Best Practices",
+      "summary": "Guidelines for effective feature flag usage",
+      "status": "stable",
+      "owner": "backend",
+      "audience": ["developers", "ai-agents"],
+      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "lifecycle",
+      "path": "admin-guide/feature-flags/lifecycle.md",
+      "title": "Feature Flag Lifecycle",
+      "summary": "Managing feature flags from creation to retirement",
+      "status": "stable",
+      "owner": "backend",
+      "audience": ["developers", "ai-agents"],
+      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "multi-environment",
+      "path": "admin-guide/feature-flags/multi-environment.md",
+      "title": "Multi-Environment Feature Flags",
+      "summary": "Managing feature flags across dev, staging, and production environments",
+      "status": "stable",
+      "owner": "backend",
+      "audience": ["developers", "devops", "ai-agents"],
+      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "naming-conventions",
+      "path": "admin-guide/feature-flags/naming-conventions.md",
+      "title": "Feature Flag Naming Conventions",
+      "summary": "Standards for naming feature flags in VoiceAssist",
+      "status": "stable",
+      "owner": "backend",
+      "audience": ["developers", "ai-agents"],
+      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "system-settings-vs-flags",
+      "path": "admin-guide/system-settings-vs-flags.md",
+      "title": "System Settings vs Feature Flags",
+      "summary": "Understanding when to use configuration settings vs feature flags",
+      "status": "stable",
+      "owner": "backend",
+      "audience": ["developers", "admin", "ai-agents"],
+      "category": "reference",
+      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "phase-4-user-overrides-plan",
+      "path": "feature-flags/PHASE_4_USER_OVERRIDES_PLAN.md",
+      "title": "Feature Flags Phase 4 - User Overrides",
+      "summary": "Implementation plan for user-specific feature flag overrides and admin UI enhancements",
+      "status": "draft",
+      "owner": "backend",
+      "audience": ["developers"],
+      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "feature-flags",
+      "path": "FEATURE_FLAGS.md",
+      "title": "Feature Flags",
+      "summary": "Runtime feature toggling and configuration management system",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["developers", "admin", "ai-agents"],
+      "category": "reference",
+      "tags": ["feature", "flags", "configuration", "runtime"],
+      "lastUpdated": "2025-12-04"
+    },
+    {
+      "slug": "next-phase-improvements",
+      "path": "NEXT_PHASE_IMPROVEMENTS.md",
+      "title": "Next Phase Improvements",
+      "summary": "Roadmap and tracking for documentation improvements and AI-friendly enhancements",
+      "status": "stable",
+      "owner": "docs",
+      "audience": ["developers", "docs", "ai-agents"],
+      "category": "planning",
+      "tags": ["roadmap", "improvements", "documentation"],
+      "lastUpdated": "2025-12-04"
+    },
+    {
+      "slug": "unified-chat-voice-ui",
+      "path": "UNIFIED_CHAT_VOICE_UI.md",
+      "title": "Unified Chat/Voice UI Implementation",
+      "summary": "Implementation guide for the merged Chat and Voice Mode interface with seamless mode switching.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": ["developers", "frontend", "ai-agents"],
+      "category": "planning",
+      "tags": ["voice", "ui", "chat", "frontend", "unified"],
+      "lastUpdated": "2025-12-04"
+    },
+    {
+      "slug": "world-class-barge-in-implementation-plan",
+      "path": "WORLD_CLASS_BARGE_IN_IMPLEMENTATION_PLAN.md",
+      "title": "World-Class Voice Barge-In Implementation Plan",
+      "summary": "Transform VoiceAssist voice mode to human-like conversation with <30ms speech detection, intelligent interruptions, and natural turn-taking.",
+      "status": "stable",
+      "owner": "backend",
+      "audience": ["developers", "ai-agents"],
+      "category": "planning",
+      "tags": ["voice", "barge-in", "vad", "real-time"],
+      "lastUpdated": "2025-12-04"
+    },
+    {
+      "slug": "admin-panel-integration-guide",
+      "path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
+      "title": "Admin Panel Integration Guide",
+      "summary": "Comprehensive guide for the VoiceAssist admin panel with cross-app navigation, real-time events, and voice monitoring",
+      "status": "stable",
+      "owner": "frontend",
+      "audience": ["admin", "developers", "ai-agents"],
+      "category": "reference",
+      "tags": ["admin", "integration", "voice-monitoring", "real-time"],
+      "lastUpdated": "2025-12-04"
+    },
+    {
+      "slug": "realtime-events-guide",
+      "path": "admin/REALTIME_EVENTS_GUIDE.md",
+      "title": "Real-Time Events Guide",
+      "summary": "Guide to the admin panel real-time event system using WebSocket and Redis pub/sub",
+      "status": "stable",
+      "owner": "backend",
+      "audience": ["admin", "developers", "ai-agents"],
+      "category": "reference",
+      "tags": ["admin", "real-time", "websocket", "redis", "events"],
+      "lastUpdated": "2025-12-04"
+    },
+    {
+      "slug": "for-ai-agents",
+      "path": "admin-guide/for-ai-agents.md",
+      "title": "Documentation Guide for AI Agents",
+      "summary": "Guide for AI agents on how to navigate and use VoiceAssist documentation effectively",
+      "status": "stable",
+      "owner": "docs",
+      "audience": ["ai-agents"],
+      "category": "reference",
+      "tags": ["ai", "navigation", "meta", "documentation"],
+      "lastUpdated": "2025-12-04"
+    },
     {
       "slug": "operations/post-launch-monitoring",
       "path": "operations/POST_LAUNCH_MONITORING.md",
@@ -9,22 +197,11 @@
       "summary": "Monitoring checklist and procedures for the VoiceAssist Voice Mode enhancement launch, including Epic FHIR integration monitoring.",
       "status": "stable",
       "stability": "production",
-      "audience": [
-        "human",
-        "agent",
-        "backend"
-      ],
+      "owner": "sre",
+      "audience": ["human", "agent", "sre", "backend", "ai-agents"],
       "category": "operations",
-      "tags": [
-        "monitoring",
-        "post-launch",
-        "operations",
-        "fhir",
-        "voice-mode"
-      ],
-      "relatedServices": [
-        "api-gateway"
-      ],
+      "tags": ["monitoring", "post-launch", "operations", "fhir", "voice-mode"],
+      "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -35,11 +212,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "human",
-        "agent",
-        "backend"
-      ],
+      "audience": ["human", "agent", "backend", "sre", "ai-agents"],
       "category": "operations",
       "tags": [
         "epic",
@@ -51,9 +224,19 @@
         "audit",
         "chaos-engineering"
       ],
-      "relatedServices": [
-        "api-gateway"
-      ],
+      "relatedServices": ["api-gateway"],
+      "lastUpdated": "2025-12-04"
+    },
+    {
+      "slug": "sprint-3-design-docs",
+      "path": "planning/SPRINT_3_DESIGN_DOCS.md",
+      "title": "Sprint 3 Design Documents",
+      "summary": "Design specifications for documentation versioning, CODEOWNERS, and i18n/RTL support",
+      "status": "draft",
+      "owner": "docs",
+      "audience": ["developers", "docs", "ai-agents"],
+      "category": "planning",
+      "tags": ["versioning", "codeowners", "i18n", "sprint-3"],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -62,20 +245,11 @@
       "title": "Strategic Roadmap Q1 2025",
       "summary": "Strategic planning document for VoiceAssist future phases, covering platform expansion, clinical intelligence, EHR enhancements, voice/AI advancements, and infrastructure scaling.",
       "status": "draft",
+      "stability": "experimental",
       "owner": "product",
-      "audience": [
-        "human",
-        "backend",
-        "frontend"
-      ],
+      "audience": ["human", "stakeholders", "backend", "frontend", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "roadmap",
-        "strategy",
-        "planning",
-        "future",
-        "enhancement"
-      ],
+      "tags": ["roadmap", "strategy", "planning", "future", "enhancement"],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -86,25 +260,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human",
-        "agent",
-        "ai-agents",
-        "frontend"
-      ],
+      "audience": ["human", "agent", "ai-agents", "frontend"],
       "category": "architecture",
-      "tags": [
-        "architecture",
-        "frontend",
-        "react",
-        "typescript",
-        "monorepo"
-      ],
-      "relatedServices": [
-        "web-app",
-        "admin-panel",
-        "docs-site"
-      ],
+      "tags": ["architecture", "frontend", "react", "typescript", "monorepo"],
+      "relatedServices": ["web-app", "admin-panel", "docs-site"],
       "lastUpdated": "2025-12-03"
     },
     {
@@ -115,13 +274,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "roadmap"
-      ],
+      "tags": ["roadmap"],
       "lastUpdated": "2025-12-03"
     },
     {
@@ -132,12 +287,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "human",
-        "agent",
-        "backend",
-        "frontend"
-      ],
+      "audience": ["human", "agent", "backend", "frontend", "ai-agents"],
       "category": "reference",
       "tags": [
         "voice",
@@ -149,10 +299,7 @@
         "memory",
         "analytics"
       ],
-      "relatedServices": [
-        "api-gateway",
-        "web-app"
-      ],
+      "relatedServices": ["api-gateway", "web-app"],
       "lastUpdated": "2025-12-03"
     },
     {
@@ -163,12 +310,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "human",
-        "agent",
-        "backend",
-        "frontend"
-      ],
+      "audience": ["human", "agent", "backend", "frontend", "ai-agents"],
       "category": "reference",
       "tags": [
         "voice",
@@ -181,10 +323,7 @@
         "offline",
         "multilingual"
       ],
-      "relatedServices": [
-        "api-gateway",
-        "web-app"
-      ],
+      "relatedServices": ["api-gateway", "web-app"],
       "lastUpdated": "2025-12-03"
     },
     {
@@ -195,9 +334,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "operations",
       "tags": [
         "voice",
@@ -213,13 +350,6 @@
       "lastUpdated": "2025-12-03"
     },
     {
-      "slug": "world-class-barge-in-implementation-plan",
-      "path": "WORLD_CLASS_BARGE_IN_IMPLEMENTATION_PLAN.md",
-      "title": "WORLD CLASS BARGE IN IMPLEMENTATION PLAN",
-      "status": "draft",
-      "lastUpdated": "2025-12-03"
-    },
-    {
       "slug": "ai/agent-api-reference",
       "path": "ai/AGENT_API_REFERENCE.md",
       "title": "Agent API Reference",
@@ -227,22 +357,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "agent",
-        "ai-agents",
-        "backend"
-      ],
+      "audience": ["agent", "ai-agents", "backend"],
       "category": "ai",
-      "tags": [
-        "api",
-        "ai-agent",
-        "json",
-        "documentation",
-        "endpoints"
-      ],
-      "relatedServices": [
-        "docs-site"
-      ],
+      "tags": ["api", "ai-agent", "json", "documentation", "endpoints"],
+      "relatedServices": ["docs-site"],
       "lastUpdated": "2025-12-03"
     },
     {
@@ -253,13 +371,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human",
-        "agent",
-        "ai-agents",
-        "frontend",
-        "sre"
-      ],
+      "audience": ["human", "agent", "ai-agents", "frontend", "sre"],
       "category": "debugging",
       "tags": [
         "debugging",
@@ -269,9 +381,7 @@
         "apache",
         "troubleshooting"
       ],
-      "relatedServices": [
-        "docs-site"
-      ],
+      "relatedServices": ["docs-site"],
       "lastUpdated": "2025-12-03"
     },
     {
@@ -282,16 +392,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "devops",
-        "sre"
-      ],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "operations",
-      "tags": [
-        "admin",
-        "panel",
-        "specs"
-      ],
+      "tags": ["admin", "panel", "specs"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -302,22 +405,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "human",
-        "agent",
-        "backend",
-        "frontend"
-      ],
+      "audience": ["human", "agent", "backend", "frontend", "ai-agents"],
       "category": "api",
-      "tags": [
-        "api",
-        "rest",
-        "reference",
-        "endpoints"
-      ],
-      "relatedServices": [
-        "api-gateway"
-      ],
+      "tags": ["api", "rest", "reference", "endpoints"],
+      "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -328,18 +419,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human",
-        "agent"
-      ],
+      "audience": ["human", "agent", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "documentation",
-        "site",
-        "specs",
-        "automation",
-        "ai"
-      ],
+      "tags": ["documentation", "site", "specs", "automation", "ai"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -350,22 +432,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human",
-        "backend",
-        "frontend",
-        "devops"
-      ],
+      "audience": ["human", "backend", "frontend", "devops", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "documentation",
-        "tooling",
-        "ci-cd",
-        "quality"
-      ],
-      "relatedServices": [
-        "docs-site"
-      ],
+      "tags": ["documentation", "tooling", "ci-cd", "quality"],
+      "relatedServices": ["docs-site"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -376,14 +446,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "overview",
-      "tags": [
-        "start",
-        "here"
-      ],
+      "tags": ["start", "here"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -394,19 +459,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "developers",
-        "backend",
-        "agent"
-      ],
+      "audience": ["developers", "backend", "agent", "ai-agents"],
       "category": "architecture",
-      "tags": [
-        "voice",
-        "pipeline",
-        "thinker-talker",
-        "stt",
-        "tts"
-      ],
+      "tags": ["voice", "pipeline", "thinker-talker", "stt", "tts"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -426,39 +481,8 @@
         "devops"
       ],
       "category": "architecture",
-      "tags": [
-        "architecture",
-        "system-design",
-        "overview"
-      ],
-      "relatedServices": [
-        "api-gateway",
-        "web-app",
-        "admin-panel",
-        "docs-site"
-      ],
-      "lastUpdated": "2025-12-02"
-    },
-    {
-      "slug": "unified-chat-voice-ui",
-      "path": "UNIFIED_CHAT_VOICE_UI.md",
-      "title": "Unified Chat/Voice UI Implementation",
-      "summary": "Implementation guide for the merged Chat and Voice Mode interface with seamless mode switching.",
-      "status": "stable",
-      "stability": "production",
-      "owner": "frontend",
-      "audience": [
-        "developers",
-        "frontend",
-        "agent"
-      ],
-      "tags": [
-        "voice",
-        "ui",
-        "chat",
-        "frontend",
-        "unified"
-      ],
+      "tags": ["architecture", "system-design", "overview"],
+      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -477,16 +501,8 @@
         "backend",
         "devops"
       ],
-      "tags": [
-        "admin",
-        "implementation",
-        "plan",
-        "roadmap"
-      ],
-      "relatedServices": [
-        "api-gateway",
-        "admin-panel"
-      ],
+      "tags": ["admin", "implementation", "plan", "roadmap"],
+      "relatedServices": ["api-gateway", "admin-panel"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -497,23 +513,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "agent",
-        "ai-agents"
-      ],
+      "audience": ["agent", "ai-agents"],
       "category": "ai",
-      "tags": [
-        "onboarding",
-        "ai-agent",
-        "getting-started",
-        "workflows"
-      ],
-      "relatedServices": [
-        "api-gateway",
-        "web-app",
-        "admin-panel",
-        "docs-site"
-      ],
+      "tags": ["onboarding", "ai-agent", "getting-started", "workflows"],
+      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -524,17 +527,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "agent",
-        "ai-agents"
-      ],
+      "audience": ["agent", "ai-agents"],
       "category": "ai",
-      "tags": [
-        "ai-agent",
-        "tasks",
-        "index",
-        "reference"
-      ],
+      "tags": ["ai-agent", "tasks", "index", "reference"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -545,19 +540,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "developers",
-        "backend",
-        "frontend",
-        "agent"
-      ],
+      "audience": ["developers", "backend", "frontend", "agent", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "api",
-        "websocket",
-        "voice",
-        "streaming"
-      ],
+      "tags": ["api", "websocket", "voice", "streaming"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -586,12 +571,7 @@
         "metrics",
         "index"
       ],
-      "relatedServices": [
-        "api-gateway",
-        "web-app",
-        "admin-panel",
-        "docs-site"
-      ],
+      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -602,14 +582,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "human",
-        "agent",
-        "ai-agents",
-        "backend",
-        "frontend",
-        "sre"
-      ],
+      "audience": ["human", "agent", "ai-agents", "backend", "frontend", "sre"],
       "category": "debugging",
       "tags": [
         "debugging",
@@ -622,10 +595,7 @@
         "troubleshooting",
         "thinker-talker"
       ],
-      "relatedServices": [
-        "api-gateway",
-        "web-app"
-      ],
+      "relatedServices": ["api-gateway", "web-app"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -636,19 +606,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "developers",
-        "frontend",
-        "agent"
-      ],
+      "audience": ["developers", "frontend", "agent", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "hooks",
-        "react",
-        "voice",
-        "frontend",
-        "websocket"
-      ],
+      "tags": ["hooks", "react", "voice", "frontend", "websocket"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -668,19 +628,8 @@
         "devops"
       ],
       "category": "overview",
-      "tags": [
-        "status",
-        "overview",
-        "components",
-        "roadmap",
-        "architecture"
-      ],
-      "relatedServices": [
-        "api-gateway",
-        "web-app",
-        "admin-panel",
-        "docs-site"
-      ],
+      "tags": ["status", "overview", "components", "roadmap", "architecture"],
+      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -691,19 +640,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "developers",
-        "backend",
-        "agent"
-      ],
+      "audience": ["developers", "backend", "agent", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "service",
-        "tts",
-        "elevenlabs",
-        "voice",
-        "backend"
-      ],
+      "tags": ["service", "tts", "elevenlabs", "voice", "backend"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -714,19 +653,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "developers",
-        "backend",
-        "agent"
-      ],
+      "audience": ["developers", "backend", "agent", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "service",
-        "llm",
-        "reasoning",
-        "voice",
-        "backend"
-      ],
+      "tags": ["service", "llm", "reasoning", "voice", "backend"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -737,17 +666,8 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": [
-        "admin",
-        "devops",
-        "agent"
-      ],
-      "tags": [
-        "quickstart",
-        "admin",
-        "deployment",
-        "configuration"
-      ],
+      "audience": ["admin", "devops", "agent", "ai-agents"],
+      "tags": ["quickstart", "admin", "deployment", "configuration"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -758,15 +678,8 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "agent"
-      ],
-      "tags": [
-        "quickstart",
-        "ai",
-        "agent",
-        "automation"
-      ],
+      "audience": ["agent", "ai-agents"],
+      "tags": ["quickstart", "ai", "agent", "automation"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -777,16 +690,8 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "developers",
-        "agent"
-      ],
-      "tags": [
-        "quickstart",
-        "development",
-        "setup",
-        "contributing"
-      ],
+      "audience": ["developers", "agent", "ai-agents"],
+      "tags": ["quickstart", "development", "setup", "contributing"],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -797,52 +702,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "architecture",
-      "tags": [
-        "architecture"
-      ],
-      "lastUpdated": "2025-12-01"
-    },
-    {
-      "slug": "admin-panel-integration-guide",
-      "path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
-      "title": "Admin Panel Integration Guide",
-      "summary": "Comprehensive guide for the VoiceAssist admin panel with cross-app navigation, real-time events, and voice monitoring",
-      "status": "draft",
-      "audience": [
-        "admin",
-        "developers",
-        "ai-agents"
-      ],
-      "tags": [
-        "admin",
-        "integration",
-        "voice-monitoring",
-        "real-time"
-      ],
-      "lastUpdated": "2025-12-01"
-    },
-    {
-      "slug": "realtime-events-guide",
-      "path": "admin/REALTIME_EVENTS_GUIDE.md",
-      "title": "Real-Time Events Guide",
-      "summary": "Guide to the admin panel real-time event system using WebSocket and Redis pub/sub",
-      "status": "draft",
-      "audience": [
-        "admin",
-        "developers",
-        "ai-agents"
-      ],
-      "tags": [
-        "admin",
-        "real-time",
-        "websocket",
-        "redis",
-        "events"
-      ],
+      "tags": ["architecture"],
       "lastUpdated": "2025-12-01"
     },
     {
@@ -853,16 +715,8 @@
       "status": "stable",
       "stability": "production",
       "owner": "product",
-      "audience": [
-        "user",
-        "human"
-      ],
-      "tags": [
-        "quickstart",
-        "user-guide",
-        "voice",
-        "chat"
-      ],
+      "audience": ["user", "human", "ai-agents"],
+      "tags": ["quickstart", "user-guide", "voice", "chat"],
       "lastUpdated": "2025-12-01"
     },
     {
@@ -873,18 +727,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human",
-        "agent"
-      ],
+      "audience": ["human", "agent", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "voice",
-        "barge-in",
-        "audio",
-        "state",
-        "2025"
-      ],
+      "tags": ["voice", "barge-in", "audio", "state", "2025"],
       "lastUpdated": "2025-11-29"
     },
     {
@@ -895,14 +740,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "accessibility",
-        "audit"
-      ],
+      "tags": ["accessibility", "audit"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -913,16 +753,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "devops",
-        "sre"
-      ],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "deployment",
-      "tags": [
-        "admin",
-        "panel",
-        "deployment"
-      ],
+      "tags": ["admin", "panel", "deployment"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -933,17 +766,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "devops",
-        "sre"
-      ],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "operations",
-      "tags": [
-        "admin",
-        "panel",
-        "implementation",
-        "summary"
-      ],
+      "tags": ["admin", "panel", "implementation", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -954,17 +779,9 @@
       "status": "experimental",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "devops",
-        "sre"
-      ],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "operations",
-      "tags": [
-        "admin",
-        "panel",
-        "login",
-        "fix"
-      ],
+      "tags": ["admin", "panel", "login", "fix"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -975,17 +792,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "devops",
-        "sre"
-      ],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "operations",
-      "tags": [
-        "admin",
-        "panel",
-        "login",
-        "fix"
-      ],
+      "tags": ["admin", "panel", "login", "fix"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -996,15 +805,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "all",
-        "phases",
-        "summary"
-      ],
+      "tags": ["all", "phases", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1015,14 +818,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "operations",
-      "tags": [
-        "ansible",
-        "guide"
-      ],
+      "tags": ["ansible", "guide"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1033,13 +831,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "architecture",
-      "tags": [
-        "architecture"
-      ],
+      "tags": ["architecture"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1050,22 +844,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "human",
-        "agent",
-        "ai-agents",
-        "backend"
-      ],
+      "audience": ["human", "agent", "ai-agents", "backend"],
       "category": "architecture",
-      "tags": [
-        "architecture",
-        "backend",
-        "fastapi",
-        "microservices"
-      ],
-      "relatedServices": [
-        "api-gateway"
-      ],
+      "tags": ["architecture", "backend", "fastapi", "microservices"],
+      "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1076,15 +858,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "backend"
-      ],
+      "audience": ["backend", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "backend",
-        "skeleton",
-        "verification"
-      ],
+      "tags": ["backend", "skeleton", "verification"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1095,14 +871,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "testing",
-      "tags": [
-        "chaos",
-        "engineering"
-      ],
+      "tags": ["chaos", "engineering"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1113,14 +884,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "operations",
-      "tags": [
-        "cicd",
-        "guide"
-      ],
+      "tags": ["cicd", "guide"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1131,18 +897,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "agent",
-        "ai-agents",
-        "human"
-      ],
+      "audience": ["agent", "ai-agents", "human"],
       "category": "ai",
-      "tags": [
-        "claude",
-        "execution",
-        "guide",
-        "ai-agent"
-      ],
+      "tags": ["claude", "execution", "guide", "ai-agent"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1153,18 +910,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "agent",
-        "ai-agents",
-        "human"
-      ],
+      "audience": ["agent", "ai-agents", "human"],
       "category": "ai",
-      "tags": [
-        "claude",
-        "prompts",
-        "ai-agent",
-        "templates"
-      ],
+      "tags": ["claude", "prompts", "ai-agent", "templates"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1175,15 +923,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "compose",
-        "first",
-        "summary"
-      ],
+      "tags": ["compose", "first", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1194,15 +936,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "compose",
-        "k8s",
-        "migration"
-      ],
+      "tags": ["compose", "k8s", "migration"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1213,14 +949,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "configuration",
-        "reference"
-      ],
+      "tags": ["configuration", "reference"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1239,12 +970,7 @@
         "project-managers"
       ],
       "category": "planning",
-      "tags": [
-        "roadmap",
-        "planning",
-        "improvements",
-        "future"
-      ],
+      "tags": ["roadmap", "planning", "improvements", "future"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1255,15 +981,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "continuous",
-        "improvement",
-        "summary"
-      ],
+      "tags": ["continuous", "improvement", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1274,14 +994,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "data",
-        "model"
-      ],
+      "tags": ["data", "model"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1292,15 +1007,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "deep",
-        "verification",
-        "summary"
-      ],
+      "tags": ["deep", "verification", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1311,15 +1020,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "devops",
-        "sre"
-      ],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "deployment",
-      "tags": [
-        "deployment",
-        "guide"
-      ],
+      "tags": ["deployment", "guide"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1330,16 +1033,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "devops",
-        "sre"
-      ],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "deployment",
-      "tags": [
-        "deployment",
-        "summary",
-        "asimo"
-      ],
+      "tags": ["deployment", "summary", "asimo"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1350,14 +1046,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "development",
-        "phases"
-      ],
+      "tags": ["development", "phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1368,14 +1059,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "development",
-        "phases"
-      ],
+      "tags": ["development", "phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1386,14 +1072,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "development",
-        "setup"
-      ],
+      "tags": ["development", "setup"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1404,17 +1085,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "sre",
-        "backend",
-        "frontend"
-      ],
+      "audience": ["sre", "backend", "frontend", "ai-agents"],
       "category": "debugging",
-      "tags": [
-        "disaster",
-        "recovery",
-        "runbook"
-      ],
+      "tags": ["disaster", "recovery", "runbook"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1425,15 +1098,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "documentation",
-        "completion",
-        "summary"
-      ],
+      "tags": ["documentation", "completion", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1444,21 +1111,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human",
-        "agent",
-        "docs"
-      ],
+      "audience": ["human", "agent", "docs", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "documentation",
-        "metadata",
-        "standards",
-        "frontmatter"
-      ],
-      "relatedServices": [
-        "docs-site"
-      ],
+      "tags": ["documentation", "metadata", "standards", "frontmatter"],
+      "relatedServices": ["docs-site"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1469,32 +1125,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "enhancement",
-        "summary"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "feature-flags",
-      "path": "FEATURE_FLAGS.md",
-      "title": "Feature Flags",
-      "summary": "**Last Updated**: 2025-11-21 (Phase 7 - P3.1)",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "human"
-      ],
-      "category": "reference",
-      "tags": [
-        "feature",
-        "flags"
-      ],
+      "tags": ["enhancement", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1505,13 +1138,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "file"
-      ],
+      "tags": ["file"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1522,15 +1151,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "final",
-        "documentation",
-        "summary"
-      ],
+      "tags": ["final", "documentation", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1541,15 +1164,9 @@
       "status": "stable",
       "stability": "beta",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "frontend",
-        "completion",
-        "plan"
-      ],
+      "tags": ["frontend", "completion", "plan"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1560,15 +1177,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "frontend",
-        "verification",
-        "summary"
-      ],
+      "tags": ["frontend", "verification", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1579,15 +1190,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "security",
-      "tags": [
-        "hipaa",
-        "compliance",
-        "matrix"
-      ],
+      "tags": ["hipaa", "compliance", "matrix"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1598,15 +1203,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "devops",
-        "sre"
-      ],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "deployment",
-      "tags": [
-        "infrastructure",
-        "code"
-      ],
+      "tags": ["infrastructure", "code"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1617,15 +1216,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "devops",
-        "sre"
-      ],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "deployment",
-      "tags": [
-        "infrastructure",
-        "setup"
-      ],
+      "tags": ["infrastructure", "setup"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1636,14 +1229,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "integration",
-        "handoff"
-      ],
+      "tags": ["integration", "handoff"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1654,15 +1242,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "integration",
-        "improvements",
-        "phase"
-      ],
+      "tags": ["integration", "improvements", "phase"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1673,15 +1255,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "testing",
-      "tags": [
-        "load",
-        "testing",
-        "guide"
-      ],
+      "tags": ["load", "testing", "guide"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1692,14 +1268,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "local",
-        "development"
-      ],
+      "tags": ["local", "development"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1710,16 +1281,9 @@
       "status": "experimental",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "login",
-        "500",
-        "fix",
-        "2025"
-      ],
+      "tags": ["login", "500", "fix", "2025"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1730,14 +1294,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "medical",
-        "features"
-      ],
+      "tags": ["medical", "features"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1748,15 +1307,9 @@
       "status": "experimental",
       "stability": "experimental",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "message",
-        "edit",
-        "progress"
-      ],
+      "tags": ["message", "edit", "progress"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1767,15 +1320,9 @@
       "status": "stable",
       "stability": "beta",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "nextcloud",
-        "apps",
-        "design"
-      ],
+      "tags": ["nextcloud", "apps", "design"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1786,14 +1333,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "nextcloud",
-        "integration"
-      ],
+      "tags": ["nextcloud", "integration"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1804,15 +1346,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "oauth",
-        "login",
-        "config"
-      ],
+      "tags": ["oauth", "login", "config"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1823,13 +1359,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "observability"
-      ],
+      "tags": ["observability"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1840,14 +1372,9 @@
       "status": "stable",
       "stability": "beta",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "orchestration",
-        "design"
-      ],
+      "tags": ["orchestration", "design"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1858,16 +1385,9 @@
       "status": "stable",
       "stability": "beta",
       "owner": "docs",
-      "audience": [
-        "backend"
-      ],
+      "audience": ["backend", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "part2",
-        "deferred",
-        "backend",
-        "features"
-      ],
+      "tags": ["part2", "deferred", "backend", "features"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1878,16 +1398,9 @@
       "status": "stable",
       "stability": "beta",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "part3",
-        "platform",
-        "enhancements",
-        "plan"
-      ],
+      "tags": ["part3", "platform", "enhancements", "plan"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1898,14 +1411,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "performance",
-        "benchmarks"
-      ],
+      "tags": ["performance", "benchmarks"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1916,15 +1424,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "operations",
-      "tags": [
-        "performance",
-        "tuning",
-        "guide"
-      ],
+      "tags": ["performance", "tuning", "guide"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1935,15 +1437,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "completion",
-        "report"
-      ],
+      "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1954,15 +1450,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "enhancements",
-        "report"
-      ],
+      "tags": ["phase", "enhancements", "report"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1973,15 +1463,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "completion",
-        "report"
-      ],
+      "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1992,15 +1476,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "completion",
-        "report"
-      ],
+      "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2011,15 +1489,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "completion",
-        "report"
-      ],
+      "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2030,15 +1502,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "completion",
-        "report"
-      ],
+      "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2049,15 +1515,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "completion",
-        "report"
-      ],
+      "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2068,15 +1528,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "backend"
-      ],
+      "audience": ["backend", "ai-agents"],
       "category": "api",
-      "tags": [
-        "phase",
-        "api",
-        "contracts"
-      ],
+      "tags": ["phase", "api", "contracts"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2087,15 +1541,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "completion",
-        "report"
-      ],
+      "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2106,15 +1554,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "completion",
-        "report"
-      ],
+      "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2125,15 +1567,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "completion",
-        "report"
-      ],
+      "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2144,15 +1580,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "optimization",
-        "recommendations"
-      ],
+      "tags": ["phase", "optimization", "recommendations"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2163,15 +1593,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "completion",
-        "report"
-      ],
+      "tags": ["phase", "completion", "report"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2182,15 +1606,9 @@
       "status": "stable",
       "stability": "beta",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "optimized",
-        "plan"
-      ],
+      "tags": ["phase", "optimized", "plan"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2201,14 +1619,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "template"
-      ],
+      "tags": ["phase", "template"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2219,16 +1632,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "devops",
-        "sre"
-      ],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "debugging",
-      "tags": [
-        "production",
-        "deployment",
-        "runbook"
-      ],
+      "tags": ["production", "deployment", "runbook"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2239,15 +1645,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "production",
-        "readiness",
-        "checklist"
-      ],
+      "tags": ["production", "readiness", "checklist"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2258,14 +1658,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "project",
-        "summary"
-      ],
+      "tags": ["project", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2276,13 +1671,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "readme"
-      ],
+      "tags": ["readme"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2293,25 +1684,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "human",
-        "agent",
-        "ai-agents",
-        "backend",
-        "frontend"
-      ],
+      "audience": ["human", "agent", "ai-agents", "backend", "frontend"],
       "category": "architecture",
-      "tags": [
-        "architecture",
-        "websocket",
-        "realtime",
-        "voice",
-        "streaming"
-      ],
-      "relatedServices": [
-        "api-gateway",
-        "web-app"
-      ],
+      "tags": ["architecture", "websocket", "realtime", "voice", "streaming"],
+      "relatedServices": ["api-gateway", "web-app"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2322,16 +1698,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "remaining",
-        "message",
-        "edit",
-        "work"
-      ],
+      "tags": ["remaining", "message", "edit", "work"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2342,15 +1711,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "rto",
-        "rpo",
-        "documentation"
-      ],
+      "tags": ["rto", "rpo", "documentation"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2361,13 +1724,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "security",
-      "tags": [
-        "security"
-      ],
+      "tags": ["security"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2386,13 +1745,7 @@
         "architects"
       ],
       "category": "security",
-      "tags": [
-        "security",
-        "hipaa",
-        "compliance",
-        "phi",
-        "encryption"
-      ],
+      "tags": ["security", "hipaa", "compliance", "phi", "encryption"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2403,15 +1756,9 @@
       "status": "stable",
       "stability": "beta",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "semantic",
-        "search",
-        "design"
-      ],
+      "tags": ["semantic", "search", "design"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2422,23 +1769,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "human",
-        "agent",
-        "ai-agents",
-        "backend",
-        "devops"
-      ],
+      "audience": ["human", "agent", "ai-agents", "backend", "devops"],
       "category": "architecture",
-      "tags": [
-        "service",
-        "catalog",
-        "api",
-        "architecture"
-      ],
-      "relatedServices": [
-        "api-gateway"
-      ],
+      "tags": ["service", "catalog", "api", "architecture"],
+      "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2449,15 +1783,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "system",
-        "review",
-        "2025"
-      ],
+      "tags": ["system", "review", "2025"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2468,14 +1796,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "deployment",
-      "tags": [
-        "terraform",
-        "guide"
-      ],
+      "tags": ["terraform", "guide"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2486,14 +1809,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "testing",
-      "tags": [
-        "testing",
-        "contracts"
-      ],
+      "tags": ["testing", "contracts"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2504,14 +1822,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "testing",
-      "tags": [
-        "testing",
-        "guide"
-      ],
+      "tags": ["testing", "guide"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2522,15 +1835,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "testing",
-      "tags": [
-        "testing",
-        "results",
-        "2025"
-      ],
+      "tags": ["testing", "results", "2025"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2541,15 +1848,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "tools",
-        "and",
-        "integrations"
-      ],
+      "tags": ["tools", "and", "integrations"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2560,15 +1861,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "tools",
-        "completion",
-        "summary"
-      ],
+      "tags": ["tools", "completion", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2579,15 +1874,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "tools",
-        "integration",
-        "summary"
-      ],
+      "tags": ["tools", "integration", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2598,14 +1887,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "operations",
-      "tags": [
-        "user",
-        "guide"
-      ],
+      "tags": ["user", "guide"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2616,16 +1900,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "voice",
-        "ready",
-        "state",
-        "2025"
-      ],
+      "tags": ["voice", "ready", "state", "2025"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2636,24 +1913,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "human",
-        "agent",
-        "backend",
-        "frontend"
-      ],
+      "audience": ["human", "agent", "backend", "frontend", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "websocket",
-        "protocol",
-        "api",
-        "realtime",
-        "streaming"
-      ],
-      "relatedServices": [
-        "api-gateway",
-        "web-app"
-      ],
+      "tags": ["websocket", "protocol", "api", "realtime", "streaming"],
+      "relatedServices": ["api-gateway", "web-app"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2664,15 +1927,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "web",
-        "app",
-        "specs"
-      ],
+      "tags": ["web", "app", "specs"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2683,15 +1940,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "web",
-        "app",
-        "wireframes"
-      ],
+      "tags": ["web", "app", "wireframes"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2702,14 +1953,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "operations",
-      "tags": [
-        "feature",
-        "parity"
-      ],
+      "tags": ["feature", "parity"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2720,21 +1966,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "human",
-        "agent",
-        "backend",
-        "frontend"
-      ],
+      "audience": ["human", "agent", "backend", "frontend", "ai-agents"],
       "category": "api",
-      "tags": [
-        "api",
-        "routes",
-        "auto-generated"
-      ],
-      "relatedServices": [
-        "api-gateway"
-      ],
+      "tags": ["api", "routes", "auto-generated"],
+      "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2745,23 +1980,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "human",
-        "agent",
-        "backend",
-        "frontend"
-      ],
+      "audience": ["human", "agent", "backend", "frontend", "ai-agents"],
       "category": "api",
-      "tags": [
-        "api",
-        "rest",
-        "reference",
-        "endpoints",
-        "examples"
-      ],
-      "relatedServices": [
-        "api-gateway"
-      ],
+      "tags": ["api", "rest", "reference", "endpoints", "examples"],
+      "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2772,14 +1994,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "architecture",
-      "tags": [
-        "architecture",
-        "diagrams"
-      ],
+      "tags": ["architecture", "diagrams"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2790,13 +2007,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "architecture",
-      "tags": [
-        "readme"
-      ],
+      "tags": ["readme"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2807,15 +2020,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "backend"
-      ],
+      "audience": ["backend", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "backend",
-        "implementation",
-        "plan"
-      ],
+      "tags": ["backend", "implementation", "plan"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2826,15 +2033,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "backend"
-      ],
+      "audience": ["backend", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "backend",
-        "implementation",
-        "summary"
-      ],
+      "tags": ["backend", "implementation", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2845,16 +2046,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "branching",
-        "and",
-        "shortcuts",
-        "implementation"
-      ],
+      "tags": ["branching", "and", "shortcuts", "implementation"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2865,14 +2059,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "changes",
-        "summary"
-      ],
+      "tags": ["changes", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2883,14 +2072,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "current",
-        "phase"
-      ],
+      "tags": ["current", "phase"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2901,15 +2085,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "devops",
-        "sre"
-      ],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "deployment",
-        "complete"
-      ],
+      "tags": ["deployment", "complete"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2920,16 +2098,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "design",
-        "system",
-        "implementation",
-        "plan"
-      ],
+      "tags": ["design", "system", "implementation", "plan"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2940,14 +2111,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "development",
-        "log"
-      ],
+      "tags": ["development", "log"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2958,15 +2124,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "development",
-        "session",
-        "summary"
-      ],
+      "tags": ["development", "session", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2977,16 +2137,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "dev",
-        "cors",
-        "fix",
-        "summary"
-      ],
+      "tags": ["dev", "cors", "fix", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2997,14 +2150,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "documentation",
-        "created"
-      ],
+      "tags": ["documentation", "created"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3015,16 +2163,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "frontend",
-        "phase1",
-        "phase2",
-        "summary"
-      ],
+      "tags": ["frontend", "phase1", "phase2", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3035,15 +2176,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "frontend",
-        "phase8",
-        "tests"
-      ],
+      "tags": ["frontend", "phase8", "tests"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3054,15 +2189,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "phase",
-        "complete",
-        "summary"
-      ],
+      "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3073,15 +2202,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "phase",
-        "complete",
-        "summary"
-      ],
+      "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3092,15 +2215,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "phase",
-        "locust",
-        "summary"
-      ],
+      "tags": ["phase", "locust", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3111,15 +2228,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "phase",
-        "optimization",
-        "summary"
-      ],
+      "tags": ["phase", "optimization", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3130,15 +2241,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "phase",
-        "voice",
-        "complete"
-      ],
+      "tags": ["phase", "voice", "complete"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3149,14 +2254,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "phase",
-        "complete"
-      ],
+      "tags": ["phase", "complete"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3167,15 +2267,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "phase",
-        "citations",
-        "complete"
-      ],
+      "tags": ["phase", "citations", "complete"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3186,14 +2280,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "phase",
-        "complete"
-      ],
+      "tags": ["phase", "complete"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3204,16 +2293,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "phase",
-        "conversation",
-        "management",
-        "progress"
-      ],
+      "tags": ["phase", "conversation", "management", "progress"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3224,15 +2306,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "phase",
-        "export",
-        "complete"
-      ],
+      "tags": ["phase", "export", "complete"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3243,15 +2319,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "phase",
-        "accessibility",
-        "complete"
-      ],
+      "tags": ["phase", "accessibility", "complete"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3262,13 +2332,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "plan"
-      ],
+      "tags": ["plan"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3279,14 +2345,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "pull",
-        "request"
-      ],
+      "tags": ["pull", "request"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3297,13 +2358,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "readme"
-      ],
+      "tags": ["readme"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3314,15 +2371,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "realtime",
-        "sanity",
-        "check"
-      ],
+      "tags": ["realtime", "sanity", "check"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3333,16 +2384,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "session",
-        "summary",
-        "2025",
-        "phase"
-      ],
+      "tags": ["session", "summary", "2025", "phase"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3353,16 +2397,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "session",
-        "summary",
-        "2025",
-        "phase"
-      ],
+      "tags": ["session", "summary", "2025", "phase"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3373,15 +2410,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "voice",
-        "endpoint",
-        "fix"
-      ],
+      "tags": ["voice", "endpoint", "fix"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3392,16 +2423,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "voice",
-        "mode",
-        "enhancement",
-        "summary"
-      ],
+      "tags": ["voice", "mode", "enhancement", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3412,15 +2436,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "voice",
-        "realtime",
-        "integration"
-      ],
+      "tags": ["voice", "realtime", "integration"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3431,16 +2449,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "web",
-        "app",
-        "development",
-        "summary"
-      ],
+      "tags": ["web", "app", "development", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3451,15 +2462,9 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
-      "tags": [
-        "work",
-        "completed",
-        "2025"
-      ],
+      "tags": ["work", "completed", "2025"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3470,17 +2475,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "devops",
-        "sre"
-      ],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "admin",
-        "panel",
-        "feature",
-        "specs"
-      ],
+      "tags": ["admin", "panel", "feature", "specs"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3491,14 +2488,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "backend"
-      ],
+      "audience": ["backend", "ai-agents"],
       "category": "api",
-      "tags": [
-        "api",
-        "reference"
-      ],
+      "tags": ["api", "reference"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3509,14 +2501,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "architecture",
-        "overview"
-      ],
+      "tags": ["architecture", "overview"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3527,13 +2514,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "buttongroup"
-      ],
+      "tags": ["buttongroup"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3544,15 +2527,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "client",
-        "dev",
-        "roadmap"
-      ],
+      "tags": ["client", "dev", "roadmap"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3563,15 +2540,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "client",
-        "folder",
-        "structure"
-      ],
+      "tags": ["client", "folder", "structure"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3582,14 +2553,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "code",
-        "examples"
-      ],
+      "tags": ["code", "examples"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3600,14 +2566,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "component",
-        "library"
-      ],
+      "tags": ["component", "library"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3618,15 +2579,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "conversations",
-        "and",
-        "routing"
-      ],
+      "tags": ["conversations", "and", "routing"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3637,14 +2592,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "development",
-        "workflow"
-      ],
+      "tags": ["development", "workflow"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3655,15 +2605,8 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
-      "tags": [
-        "docs",
-        "site",
-        "feature",
-        "specs"
-      ],
+      "audience": ["human", "ai-agents"],
+      "tags": ["docs", "site", "feature", "specs"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3674,15 +2617,9 @@
       "status": "stable",
       "stability": "beta",
       "owner": "frontend",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "frontend",
-        "phase3",
-        "plan"
-      ],
+      "tags": ["frontend", "phase3", "plan"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3693,14 +2630,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "integration",
-        "guide"
-      ],
+      "tags": ["integration", "guide"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3711,13 +2643,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "iconbutton"
-      ],
+      "tags": ["iconbutton"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3728,15 +2656,9 @@
       "status": "stable",
       "stability": "beta",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "master",
-        "implementation",
-        "plan"
-      ],
+      "tags": ["master", "implementation", "plan"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3747,14 +2669,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "open",
-        "questions"
-      ],
+      "tags": ["open", "questions"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3765,13 +2682,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "readme"
-      ],
+      "tags": ["readme"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3782,15 +2695,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "realtime",
-        "proxy",
-        "spec"
-      ],
+      "tags": ["realtime", "proxy", "spec"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3801,14 +2708,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "technical",
-        "architecture"
-      ],
+      "tags": ["technical", "architecture"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3819,14 +2721,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "testing",
-        "guide"
-      ],
+      "tags": ["testing", "guide"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3837,14 +2734,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "testing",
-        "phase2"
-      ],
+      "tags": ["testing", "phase2"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3855,14 +2747,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "testing",
-        "phase3"
-      ],
+      "tags": ["testing", "phase3"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3873,16 +2760,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "web",
-        "app",
-        "feature",
-        "specs"
-      ],
+      "tags": ["web", "app", "feature", "specs"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3893,14 +2773,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "backend"
-      ],
+      "audience": ["backend", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "rest",
-        "api"
-      ],
+      "tags": ["rest", "api"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3911,13 +2786,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "overview",
-      "tags": [
-        "architecture"
-      ],
+      "tags": ["architecture"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3928,14 +2799,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "proxy",
-        "spec"
-      ],
+      "tags": ["proxy", "spec"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3946,13 +2812,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": [
-        "human",
-        "agent",
-        "ai-agents",
-        "backend",
-        "sre"
-      ],
+      "audience": ["human", "agent", "ai-agents", "backend", "sre"],
       "category": "debugging",
       "tags": [
         "debugging",
@@ -3962,9 +2822,7 @@
         "database",
         "troubleshooting"
       ],
-      "relatedServices": [
-        "api-gateway"
-      ],
+      "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3975,12 +2833,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human",
-        "agent",
-        "ai-agents",
-        "frontend"
-      ],
+      "audience": ["human", "agent", "ai-agents", "frontend"],
       "category": "debugging",
       "tags": [
         "debugging",
@@ -3990,10 +2843,7 @@
         "web-app",
         "troubleshooting"
       ],
-      "relatedServices": [
-        "web-app",
-        "admin-panel"
-      ],
+      "relatedServices": ["web-app", "admin-panel"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4004,14 +2854,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": [
-        "human",
-        "agent",
-        "ai-agents",
-        "sre",
-        "backend",
-        "frontend"
-      ],
+      "audience": ["human", "agent", "ai-agents", "sre", "backend", "frontend"],
       "category": "debugging",
       "tags": [
         "debugging",
@@ -4021,12 +2864,7 @@
         "metrics",
         "troubleshooting"
       ],
-      "relatedServices": [
-        "api-gateway",
-        "web-app",
-        "admin-panel",
-        "docs-site"
-      ],
+      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4037,15 +2875,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "infra",
-      "audience": [
-        "devops",
-        "sre"
-      ],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "deployment",
-      "tags": [
-        "deployment",
-        "summary"
-      ],
+      "tags": ["deployment", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4056,14 +2888,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "breakdown"
-      ],
+      "tags": ["phase", "breakdown"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4074,14 +2901,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "infra",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "operations",
-      "tags": [
-        "docs",
-        "domain"
-      ],
+      "tags": ["docs", "domain"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4092,14 +2914,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "operations",
-      "tags": [
-        "business",
-        "metrics"
-      ],
+      "tags": ["business", "metrics"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4110,15 +2927,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "operations",
-      "tags": [
-        "connection",
-        "pool",
-        "optimization"
-      ],
+      "tags": ["connection", "pool", "optimization"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4129,23 +2940,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": [
-        "devops",
-        "backend",
-        "admin"
-      ],
+      "audience": ["devops", "backend", "admin", "ai-agents"],
       "category": "operations",
-      "tags": [
-        "operations",
-        "overview",
-        "runbooks",
-        "sre"
-      ],
-      "relatedServices": [
-        "api-gateway",
-        "web-app",
-        "admin-panel"
-      ],
+      "tags": ["operations", "overview", "runbooks", "sre"],
+      "relatedServices": ["api-gateway", "web-app", "admin-panel"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4156,21 +2954,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": [
-        "devops",
-        "backend",
-        "admin"
-      ],
+      "audience": ["devops", "backend", "admin", "ai-agents"],
       "category": "operations",
-      "tags": [
-        "slo",
-        "reliability",
-        "metrics",
-        "operations"
-      ],
-      "relatedServices": [
-        "api-gateway"
-      ],
+      "tags": ["slo", "reliability", "metrics", "operations"],
+      "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4181,15 +2968,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "security",
-      "tags": [
-        "analytics",
-        "data",
-        "policy"
-      ],
+      "tags": ["analytics", "data", "policy"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4200,9 +2981,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": [
-        "devops"
-      ],
+      "audience": ["devops", "ai-agents"],
       "category": "debugging",
       "tags": [
         "runbook",
@@ -4211,9 +2990,7 @@
         "disaster-recovery",
         "operations"
       ],
-      "relatedServices": [
-        "api-gateway"
-      ],
+      "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4224,22 +3001,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": [
-        "devops",
-        "backend"
-      ],
+      "audience": ["devops", "backend", "ai-agents"],
       "category": "debugging",
-      "tags": [
-        "runbook",
-        "deployment",
-        "operations",
-        "production"
-      ],
-      "relatedServices": [
-        "api-gateway",
-        "web-app",
-        "admin-panel"
-      ],
+      "tags": ["runbook", "deployment", "operations", "production"],
+      "relatedServices": ["api-gateway", "web-app", "admin-panel"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4250,12 +3015,7 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": [
-        "human",
-        "agent",
-        "sre",
-        "devops"
-      ],
+      "audience": ["human", "agent", "sre", "devops", "ai-agents"],
       "category": "operations",
       "tags": [
         "deployment",
@@ -4265,9 +3025,7 @@
         "apache",
         "certbot"
       ],
-      "relatedServices": [
-        "docs-site"
-      ],
+      "relatedServices": ["docs-site"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4278,21 +3036,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": [
-        "devops",
-        "backend",
-        "admin"
-      ],
+      "audience": ["devops", "backend", "admin", "ai-agents"],
       "category": "debugging",
-      "tags": [
-        "runbook",
-        "incident",
-        "operations",
-        "on-call"
-      ],
-      "relatedServices": [
-        "api-gateway"
-      ],
+      "tags": ["runbook", "incident", "operations", "on-call"],
+      "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4303,21 +3050,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": [
-        "devops",
-        "backend"
-      ],
+      "audience": ["devops", "backend", "ai-agents"],
       "category": "debugging",
-      "tags": [
-        "runbook",
-        "monitoring",
-        "observability",
-        "metrics",
-        "alerting"
-      ],
-      "relatedServices": [
-        "api-gateway"
-      ],
+      "tags": ["runbook", "monitoring", "observability", "metrics", "alerting"],
+      "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4328,20 +3064,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": [
-        "devops",
-        "backend"
-      ],
+      "audience": ["devops", "backend", "ai-agents"],
       "category": "debugging",
-      "tags": [
-        "runbook",
-        "scaling",
-        "performance",
-        "infrastructure"
-      ],
-      "relatedServices": [
-        "api-gateway"
-      ],
+      "tags": ["runbook", "scaling", "performance", "infrastructure"],
+      "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4352,20 +3078,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": [
-        "devops",
-        "backend"
-      ],
+      "audience": ["devops", "backend", "ai-agents"],
       "category": "debugging",
-      "tags": [
-        "runbook",
-        "troubleshooting",
-        "operations",
-        "debugging"
-      ],
-      "relatedServices": [
-        "api-gateway"
-      ],
+      "tags": ["runbook", "troubleshooting", "operations", "debugging"],
+      "relatedServices": ["api-gateway"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4376,13 +3092,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "overview",
-      "tags": [
-        "architecture"
-      ],
+      "tags": ["architecture"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4393,15 +3105,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "final",
-        "code",
-        "review"
-      ],
+      "tags": ["final", "code", "review"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4412,15 +3118,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "project",
-        "handoff",
-        "package"
-      ],
+      "tags": ["project", "handoff", "package"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4431,16 +3131,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "testing",
-      "tags": [
-        "phase8",
-        "folders",
-        "testing",
-        "guide"
-      ],
+      "tags": ["phase8", "folders", "testing", "guide"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4451,14 +3144,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "initialization"
-      ],
+      "tags": ["phase", "initialization"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4469,15 +3157,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "devops",
-        "sre"
-      ],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "infrastructure"
-      ],
+      "tags": ["phase", "infrastructure"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4488,15 +3170,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "local",
-        "environment"
-      ],
+      "tags": ["phase", "local", "environment"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4507,15 +3183,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "backend"
-      ],
+      "audience": ["backend", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "database",
-        "schema"
-      ],
+      "tags": ["phase", "database", "schema"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4526,15 +3196,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "security",
-        "nextcloud"
-      ],
+      "tags": ["phase", "security", "nextcloud"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4545,14 +3209,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "microservices"
-      ],
+      "tags": ["phase", "microservices"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4563,15 +3222,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "voice",
-        "pipeline"
-      ],
+      "tags": ["phase", "voice", "pipeline"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4582,14 +3235,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "medical"
-      ],
+      "tags": ["phase", "medical"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4600,15 +3248,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "nextcloud",
-        "apps"
-      ],
+      "tags": ["phase", "nextcloud", "apps"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4619,16 +3261,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "devops",
-        "sre"
-      ],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "admin",
-        "panel"
-      ],
+      "tags": ["phase", "admin", "panel"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4639,14 +3274,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "observability"
-      ],
+      "tags": ["phase", "observability"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4657,15 +3287,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "iac",
-        "cicd"
-      ],
+      "tags": ["phase", "iac", "cicd"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4676,15 +3300,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "load",
-        "testing"
-      ],
+      "tags": ["phase", "load", "testing"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4695,15 +3313,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "complete",
-        "summary"
-      ],
+      "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4714,15 +3326,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "security",
-        "hipaa"
-      ],
+      "tags": ["phase", "security", "hipaa"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4733,15 +3339,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "complete",
-        "summary"
-      ],
+      "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4752,13 +3352,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase"
-      ],
+      "tags": ["phase"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4769,15 +3365,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "complete",
-        "summary"
-      ],
+      "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4788,15 +3378,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "testing",
-        "docs"
-      ],
+      "tags": ["phase", "testing", "docs"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4807,15 +3391,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "complete",
-        "summary"
-      ],
+      "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4826,15 +3404,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "production",
-        "deploy"
-      ],
+      "tags": ["phase", "production", "deploy"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4845,15 +3417,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "phase",
-        "complete",
-        "summary"
-      ],
+      "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4864,16 +3430,9 @@
       "status": "stable",
       "stability": "beta",
       "owner": "mixed",
-      "audience": [
-        "human"
-      ],
+      "audience": ["human", "ai-agents"],
       "category": "planning",
-      "tags": [
-        "docs",
-        "site",
-        "path",
-        "resolution"
-      ],
+      "tags": ["docs", "site", "path", "resolution"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4884,15 +3443,9 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": [
-        "frontend"
-      ],
+      "audience": ["frontend", "ai-agents"],
       "category": "testing",
-      "tags": [
-        "e2e",
-        "testing",
-        "guide"
-      ],
+      "tags": ["e2e", "testing", "guide"],
       "lastUpdated": "2025-11-27"
     }
   ]

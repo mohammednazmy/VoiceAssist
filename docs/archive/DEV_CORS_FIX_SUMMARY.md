@@ -1,14 +1,27 @@
 ---
-title: "Dev Cors Fix Summary"
-slug: "archive/dev-cors-fix-summary"
+title: Dev Cors Fix Summary
+slug: archive/dev-cors-fix-summary
 summary: "**Date:** 2025-11-24"
 status: deprecated
 stability: legacy
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["dev", "cors", "fix", "summary"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - dev
+  - cors
+  - fix
+  - summary
 category: reference
+ai_summary: >-
+  Date: 2025-11-24 Issue: Dev frontend (dev.asimo.io) was calling without
+  prefix, causing 404s and CORS errors The dev.asimo.io Apache vhost was
+  proxying all requests (including ) to the Vite dev server on port 5173,
+  instead of proxying API requests to the backend on port 8000. Before:
+  ${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api After: Why:
+  already includes : - Dev: - Prod: Appending was creating URLs like (404).
 ---
 
 # Dev Frontend CORS Fix Summary

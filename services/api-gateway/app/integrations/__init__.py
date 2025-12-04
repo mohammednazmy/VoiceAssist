@@ -10,9 +10,9 @@ Provides adapters for external clinical systems:
 Phase 6: Read-Only Epic FHIR Integration
 """
 
-from .fhir import (  # Client; Epic; EHR Service; Models
+from .fhir import EHRDataStatus  # Client; Epic; EHR Service; Models
+from .fhir import (
     EHRDataService,
-    EHRDataStatus,
     EHRQueryResult,
     EHRSessionContext,
     EpicAdapter,

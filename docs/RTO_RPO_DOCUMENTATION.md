@@ -1,14 +1,24 @@
 ---
-title: "Rto Rpo Documentation"
-slug: "rto-rpo-documentation"
+title: Rto Rpo Documentation
+slug: rto-rpo-documentation
 summary: "**Document Version:** 1.0"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["rto", "rpo", "documentation"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - rto
+  - rpo
+  - documentation
 category: reference
+ai_summary: >-
+  Document Version: 1.0 Last Updated: 2025-11-21 Status: Production-Ready Phase:
+  Phase 12 - High Availability & Disaster Recovery --- This document defines the
+  Recovery Time Objectives (RTO) and Recovery Point Objectives (RPO) for the
+  VoiceAssist platform. These metrics establish the maximum accept...
 ---
 
 # RTO/RPO Documentation

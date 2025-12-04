@@ -10,10 +10,10 @@ Provides:
 
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -104,7 +104,7 @@ class QueryClassifierTrainer:
 
         Returns number of examples exported.
         """
-        from app.models import Message, Session
+        from app.models import Message
         from sqlalchemy import and_, select
 
         # Query recent sessions with messages
@@ -167,7 +167,7 @@ class QueryClassifierTrainer:
                     query_type=item.get("query_type", "simple"),
                     domain=item.get("domain", "general"),
                     session_id=item.get("session_id"),
-                    timestamp=datetime.fromisoformat(item["timestamp"]) if item.get("timestamp") else None,
+                    timestamp=(datetime.fromisoformat(item["timestamp"]) if item.get("timestamp") else None),
                 )
             )
 
@@ -240,7 +240,13 @@ class QueryClassifierTrainer:
 
         val_dataset = None
         if val_examples:
-            val_dataset = QueryDataset(val_examples, self._tokenizer, self.max_length, type_labels, domain_labels)
+            val_dataset = QueryDataset(
+                val_examples,
+                self._tokenizer,
+                self.max_length,
+                type_labels,
+                domain_labels,
+            )
 
         # Load model
         self._model = DistilBertForSequenceClassification.from_pretrained(
@@ -602,7 +608,14 @@ class MLQueryClassifier:
             "pain",
             "dose",
         }
-        calendar_words = {"schedule", "meeting", "appointment", "calendar", "remind", "time"}
+        calendar_words = {
+            "schedule",
+            "meeting",
+            "appointment",
+            "calendar",
+            "remind",
+            "time",
+        }
         technical_words = {"system", "error", "code", "debug", "deploy", "server"}
 
         if any(w in text_lower for w in medical_words):

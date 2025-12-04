@@ -7,7 +7,6 @@ Provides decoupled communication between voice mode engines with:
 - Event history for debugging/analytics
 """
 
-import asyncio
 import logging
 import uuid
 from collections import defaultdict

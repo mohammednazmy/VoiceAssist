@@ -1,14 +1,28 @@
 ---
-title: "Docs Site Path Resolution Plan"
-slug: "plans/docs-site-path-resolution-plan"
-summary: "**Issue**: The `navigation.ts` file references package and service READMEs (`packages/api-client/README.md`, `services/api-gateway/README.md`) that ex..."
+title: Docs Site Path Resolution Plan
+slug: plans/docs-site-path-resolution-plan
+summary: >-
+  **Issue**: The `navigation.ts` file references package and service READMEs
+  (`packages/api-client/README.md`, `services/api-gateway/README.md`) that ex...
 status: stable
 stability: beta
 owner: mixed
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["docs", "site", "path", "resolution"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - docs
+  - site
+  - path
+  - resolution
 category: planning
+ai_summary: >-
+  Issue: The navigation.ts file references package and service READMEs
+  (packages/api-client/README.md, services/api-gateway/README.md) that exist at
+  the project root, but loadDoc() only resolves paths relative to the docs/
+  directory. Current Behavior: Pages show "Content coming soon" for these
+  navi...
 ---
 
 # Docs Site Path Resolution Plan

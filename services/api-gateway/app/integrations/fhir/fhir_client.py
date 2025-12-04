@@ -13,14 +13,11 @@ Designed to be extended by EHR-specific adapters (Epic, Cerner, etc.)
 """
 
 import asyncio
-import hashlib
 import logging
 import time
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from typing import Any, Dict, List, Optional, TypeVar
 
 import aiohttp
 
@@ -55,43 +52,29 @@ class FHIRError(Exception):
 class FHIRAuthenticationError(FHIRError):
     """Authentication failed"""
 
-    pass
-
 
 class FHIRAuthorizationError(FHIRError):
     """Authorization denied"""
-
-    pass
 
 
 class FHIRNotFoundError(FHIRError):
     """Resource not found"""
 
-    pass
-
 
 class FHIRRateLimitError(FHIRError):
     """Rate limit exceeded"""
-
-    pass
 
 
 class FHIRServerError(FHIRError):
     """Server error"""
 
-    pass
-
 
 class FHIRTimeoutError(FHIRError):
     """Request timeout"""
 
-    pass
-
 
 class FHIRConflictError(FHIRError):
     """Resource conflict (version mismatch or duplicate)"""
-
-    pass
 
 
 class FHIRValidationError(FHIRError):
@@ -104,8 +87,6 @@ class FHIRValidationError(FHIRError):
 
 class FHIRPreconditionError(FHIRError):
     """Precondition failed (ETag mismatch)"""
-
-    pass
 
 
 # ==============================================================================

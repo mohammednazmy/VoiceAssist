@@ -15,7 +15,7 @@ Phase 3 Enhancements:
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +135,7 @@ class RepairTracker:
             session = RepairSession(
                 session_id=session_id,
                 user_id=user_id,
-                emotion_at_start=emotion_state.get("dominant_emotion") if emotion_state else None,
+                emotion_at_start=(emotion_state.get("dominant_emotion") if emotion_state else None),
             )
             self._sessions[session_id] = session
 
@@ -207,7 +207,7 @@ class RepairTracker:
                     "attempt_count": len(session.attempts),
                     "error_type": error_type,
                     "emotion_triggered": emotion_triggered,
-                    "emotion_state": emotion_state.get("dominant_emotion") if emotion_state else None,
+                    "emotion_state": (emotion_state.get("dominant_emotion") if emotion_state else None),
                     "recent_attempts": len(recent_attempts),
                 },
                 session_id=session_id,

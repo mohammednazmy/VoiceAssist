@@ -1,4 +1,4 @@
-"""Feature Flag Service (Phase 7 - P3.1 + Phase 10 Enhancement).
+"""Feature Flag Service (Phase 7 - P3.1, P3.2 + Phase 10 Enhancement).
 
 Provides runtime feature flag management with multi-level caching for performance:
 - L1 Cache: In-memory LRU cache (1-minute TTL) for super fast access
@@ -10,8 +10,15 @@ This three-tier architecture provides:
 - Cross-instance consistency via L2 (Redis)
 - Durability and management via L3 (PostgreSQL)
 
+Phase 3.2 enhancements:
+- Multivariate flag support with variant selection
+- Targeting rules for user segmentation
+- Percentage rollout with consistent user assignment
+- Schedule-based activation
+
 Usage:
     from app.services.feature_flags import feature_flag_service
+    from app.services.rule_engine import UserContext
 
     # Check if feature is enabled (uses L1 -> L2 -> L3 cascade)
     if await feature_flag_service.is_enabled("rbac_enforcement"):
@@ -20,6 +27,13 @@ Usage:
 
     # Get feature value
     rag_strategy = await feature_flag_service.get_value("rag_strategy", default="simple")
+
+    # Get variant for multivariate flag (Phase 3.2)
+    user_ctx = UserContext(user_id="user-123", user_role="admin")
+    variant = await feature_flag_service.get_variant_for_user(
+        "experiment.onboarding_v2",
+        user_ctx
+    )
 
     # Warm cache on startup
     await feature_flag_service.warm_cache()
@@ -377,6 +391,9 @@ class FeatureFlagService:
             # Cache the new flag
             await self._set_cache(name, flag.to_dict())
 
+            # Publish real-time update to connected clients
+            await self._publish_flag_update(name, flag.to_dict())
+
             self.logger.info(f"Created feature flag: {name}")
             return flag
         except IntegrityError:
@@ -443,6 +460,9 @@ class FeatureFlagService:
             # Invalidate cache to force refresh
             await self._invalidate_cache(name)
 
+            # Publish real-time update to connected clients
+            await self._publish_flag_update(name, flag.to_dict())
+
             self.logger.info(f"Updated feature flag: {name}")
             return flag
         except Exception as e:
@@ -452,6 +472,26 @@ class FeatureFlagService:
         finally:
             if should_close_db:
                 db.close()
+
+    async def _publish_flag_update(self, flag_name: str, flag_data: Dict[str, Any]) -> None:
+        """Publish a flag update to real-time subscribers.
+
+        Imports the publish function lazily to avoid circular imports.
+
+        Args:
+            flag_name: Name of the updated flag
+            flag_data: Complete flag data dictionary
+        """
+        try:
+            from app.api.feature_flags_realtime import publish_flag_update
+
+            await publish_flag_update(flag_name, flag_data)
+        except ImportError:
+            # Real-time module not available (e.g., in tests)
+            self.logger.debug("Real-time publish not available")
+        except Exception as e:
+            # Don't fail the update if publish fails
+            self.logger.warning(f"Failed to publish flag update: {e}")
 
     async def delete_flag(self, name: str, db: Session = None) -> bool:
         """Delete a feature flag.
@@ -568,6 +608,467 @@ class FeatureFlagService:
 
         return stats
 
+    # =========================================================================
+    # Phase 3.2: Multivariate and Targeting Support
+    # =========================================================================
+
+    async def get_variant_for_user(
+        self,
+        flag_name: str,
+        user_context: Optional["UserContext"] = None,
+        db: Optional[Session] = None,
+    ) -> Dict[str, Any]:
+        """Get the variant for a user for a multivariate flag.
+
+        Evaluates targeting rules and rollout percentage to determine
+        which variant a user should see.
+
+        Args:
+            flag_name: Name of the feature flag
+            user_context: User context for targeting (optional)
+            db: Optional database session
+
+        Returns:
+            Dictionary with variant info:
+            {
+                "enabled": bool,
+                "variant": str or None,
+                "value": Any,
+                "reason": str ("targeting_rule", "rollout", "default", "disabled")
+            }
+        """
+        from app.services.rule_engine import UserContext, rule_engine
+
+        # Get flag data
+        flag_data = await self._get_flag_data(flag_name, db)
+
+        if not flag_data:
+            return {
+                "enabled": False,
+                "variant": None,
+                "value": None,
+                "reason": "flag_not_found",
+            }
+
+        # Check if flag is globally disabled
+        if not flag_data.get("enabled", False):
+            return {
+                "enabled": False,
+                "variant": None,
+                "value": flag_data.get("default_value"),
+                "reason": "disabled",
+            }
+
+        # Check schedule (Phase 3.2)
+        schedule = flag_data.get("schedule")
+        if schedule:
+            if not self._is_schedule_active(schedule):
+                return {
+                    "enabled": False,
+                    "variant": None,
+                    "value": flag_data.get("default_value"),
+                    "reason": "scheduled_inactive",
+                }
+
+        # Create user context if not provided
+        if user_context is None:
+            user_context = UserContext()
+
+        # Check targeting rules first (Phase 3.2)
+        targeting_rules = flag_data.get("targeting_rules")
+        if targeting_rules:
+            result = rule_engine.evaluate_targeting_rules(
+                targeting_rules,
+                user_context,
+                flag_data.get("flag_type", "boolean"),
+            )
+            if result.matched:
+                return {
+                    "enabled": result.enabled if result.enabled is not None else True,
+                    "variant": result.variant,
+                    "value": (
+                        result.value
+                        if result.value is not None
+                        else self._get_variant_value(
+                            flag_data.get("variants", []),
+                            result.variant,
+                        )
+                    ),
+                    "reason": "targeting_rule",
+                    "matched_rule": result.matched_rule_name,
+                }
+
+        # Check rollout percentage
+        rollout_percentage = flag_data.get("rollout_percentage", 100)
+        if rollout_percentage < 100 and user_context.user_id:
+            if not rule_engine.is_in_rollout(
+                user_context.user_id,
+                flag_name,
+                rollout_percentage,
+                flag_data.get("rollout_salt"),
+            ):
+                return {
+                    "enabled": False,
+                    "variant": None,
+                    "value": flag_data.get("default_value"),
+                    "reason": "rollout_excluded",
+                }
+
+        # For multivariate flags, select a variant
+        variants = flag_data.get("variants", [])
+        if variants and user_context.user_id:
+            selected_variant = rule_engine.select_variant(
+                variants,
+                user_context.user_id,
+                flag_name,
+                flag_data.get("rollout_salt"),
+            )
+            if selected_variant:
+                return {
+                    "enabled": True,
+                    "variant": selected_variant.id,
+                    "value": selected_variant.value,
+                    "reason": "variant_selected",
+                }
+
+        # Return default
+        return {
+            "enabled": True,
+            "variant": None,
+            "value": flag_data.get("value", flag_data.get("default_value")),
+            "reason": "default",
+        }
+
+    async def is_enabled_for_user(
+        self,
+        flag_name: str,
+        user_context: Optional["UserContext"] = None,
+        default: bool = False,
+        db: Optional[Session] = None,
+    ) -> bool:
+        """Check if a feature flag is enabled for a specific user.
+
+        Takes targeting rules and rollout percentage into account.
+
+        Args:
+            flag_name: Name of the feature flag
+            user_context: User context for targeting
+            default: Default value if flag not found
+            db: Optional database session
+
+        Returns:
+            True if feature is enabled for this user
+        """
+        result = await self.get_variant_for_user(flag_name, user_context, db)
+        return result.get("enabled", default)
+
+    async def _get_flag_data(
+        self,
+        flag_name: str,
+        db: Optional[Session] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Get flag data from cache or database.
+
+        Args:
+            flag_name: Name of the feature flag
+            db: Optional database session
+
+        Returns:
+            Flag data dictionary or None
+        """
+        # Try L1 cache
+        cached = await self._get_from_local_cache(flag_name)
+        if cached is not None:
+            return cached
+
+        # Try L2 cache
+        cached = await self._get_from_cache(flag_name)
+        if cached is not None:
+            await self._set_local_cache(flag_name, cached)
+            return cached
+
+        # Query database
+        should_close_db = False
+        if db is None:
+            db = SessionLocal()
+            should_close_db = True
+
+        try:
+            flag = db.query(FeatureFlag).filter(FeatureFlag.name == flag_name).first()
+            if flag:
+                flag_data = flag.to_dict()
+                await self._set_cache(flag_name, flag_data)
+                return flag_data
+            return None
+        except Exception as e:
+            self.logger.error(f"Failed to get flag data '{flag_name}': {e}")
+            return None
+        finally:
+            if should_close_db:
+                db.close()
+
+    def _get_variant_value(
+        self,
+        variants: List[Dict[str, Any]],
+        variant_id: Optional[str],
+    ) -> Any:
+        """Get the value for a specific variant.
+
+        Args:
+            variants: List of variant definitions
+            variant_id: ID of the variant to find
+
+        Returns:
+            Variant value or None
+        """
+        if not variants or not variant_id:
+            return None
+        for variant in variants:
+            if variant.get("id") == variant_id:
+                return variant.get("value")
+        return None
+
+    def _is_schedule_active(self, schedule: Dict[str, Any]) -> bool:
+        """Check if a schedule is currently active.
+
+        Args:
+            schedule: Schedule configuration
+
+        Returns:
+            True if schedule is currently active
+        """
+        if not schedule:
+            return True
+
+        now = datetime.now(timezone.utc)
+
+        start_at = schedule.get("start_at")
+        if start_at:
+            try:
+                start_dt = datetime.fromisoformat(start_at.replace("Z", "+00:00"))
+                if now < start_dt:
+                    return False
+            except (ValueError, TypeError):
+                pass
+
+        end_at = schedule.get("end_at")
+        if end_at:
+            try:
+                end_dt = datetime.fromisoformat(end_at.replace("Z", "+00:00"))
+                if now > end_dt:
+                    return False
+            except (ValueError, TypeError):
+                pass
+
+        return True
+
+    async def update_flag_variants(
+        self,
+        flag_name: str,
+        variants: List[Dict[str, Any]],
+        db: Optional[Session] = None,
+    ) -> Optional[FeatureFlag]:
+        """Update variants for a multivariate flag.
+
+        Args:
+            flag_name: Name of the feature flag
+            variants: List of variant definitions
+            db: Database session
+
+        Returns:
+            Updated FeatureFlag or None
+        """
+        should_close_db = False
+        if db is None:
+            db = SessionLocal()
+            should_close_db = True
+
+        try:
+            flag = db.query(FeatureFlag).filter(FeatureFlag.name == flag_name).first()
+            if not flag:
+                return None
+
+            flag.variants = variants
+            flag.flag_type = FeatureFlagType.MULTIVARIATE.value
+            flag.updated_at = datetime.now(timezone.utc)
+
+            db.commit()
+            db.refresh(flag)
+
+            await self._invalidate_cache(flag_name)
+            return flag
+        except Exception as e:
+            db.rollback()
+            self.logger.error(f"Failed to update variants for '{flag_name}': {e}")
+            return None
+        finally:
+            if should_close_db:
+                db.close()
+
+    async def update_flag_targeting_rules(
+        self,
+        flag_name: str,
+        targeting_rules: Dict[str, Any],
+        db: Optional[Session] = None,
+    ) -> Optional[FeatureFlag]:
+        """Update targeting rules for a flag.
+
+        Args:
+            flag_name: Name of the feature flag
+            targeting_rules: Targeting rules configuration
+            db: Database session
+
+        Returns:
+            Updated FeatureFlag or None
+        """
+        should_close_db = False
+        if db is None:
+            db = SessionLocal()
+            should_close_db = True
+
+        try:
+            flag = db.query(FeatureFlag).filter(FeatureFlag.name == flag_name).first()
+            if not flag:
+                return None
+
+            flag.targeting_rules = targeting_rules
+            flag.updated_at = datetime.now(timezone.utc)
+
+            db.commit()
+            db.refresh(flag)
+
+            await self._invalidate_cache(flag_name)
+            return flag
+        except Exception as e:
+            db.rollback()
+            self.logger.error(f"Failed to update targeting rules for '{flag_name}': {e}")
+            return None
+        finally:
+            if should_close_db:
+                db.close()
+
+    async def update_flag_schedule(
+        self,
+        flag_name: str,
+        schedule: Dict[str, Any],
+        db: Optional[Session] = None,
+    ) -> Optional[FeatureFlag]:
+        """Update schedule for a flag.
+
+        Args:
+            flag_name: Name of the feature flag
+            schedule: Schedule configuration
+            db: Database session
+
+        Returns:
+            Updated FeatureFlag or None
+        """
+        should_close_db = False
+        if db is None:
+            db = SessionLocal()
+            should_close_db = True
+
+        try:
+            flag = db.query(FeatureFlag).filter(FeatureFlag.name == flag_name).first()
+            if not flag:
+                return None
+
+            flag.schedule = schedule
+            flag.updated_at = datetime.now(timezone.utc)
+
+            db.commit()
+            db.refresh(flag)
+
+            await self._invalidate_cache(flag_name)
+            return flag
+        except Exception as e:
+            db.rollback()
+            self.logger.error(f"Failed to update schedule for '{flag_name}': {e}")
+            return None
+        finally:
+            if should_close_db:
+                db.close()
+
+    async def archive_flag(
+        self,
+        flag_name: str,
+        db: Optional[Session] = None,
+    ) -> Optional[FeatureFlag]:
+        """Archive a feature flag (soft delete).
+
+        Args:
+            flag_name: Name of the feature flag
+            db: Database session
+
+        Returns:
+            Archived FeatureFlag or None
+        """
+        should_close_db = False
+        if db is None:
+            db = SessionLocal()
+            should_close_db = True
+
+        try:
+            flag = db.query(FeatureFlag).filter(FeatureFlag.name == flag_name).first()
+            if not flag:
+                return None
+
+            flag.archived = True
+            flag.archived_at = datetime.now(timezone.utc)
+            flag.updated_at = datetime.now(timezone.utc)
+
+            db.commit()
+            db.refresh(flag)
+
+            await self._invalidate_cache(flag_name)
+            self.logger.info(f"Archived feature flag: {flag_name}")
+            return flag
+        except Exception as e:
+            db.rollback()
+            self.logger.error(f"Failed to archive flag '{flag_name}': {e}")
+            return None
+        finally:
+            if should_close_db:
+                db.close()
+
+    async def list_flags_by_environment(
+        self,
+        environment: str = "production",
+        include_archived: bool = False,
+        db: Optional[Session] = None,
+    ) -> List[FeatureFlag]:
+        """List flags for a specific environment.
+
+        Args:
+            environment: Environment name (development, staging, production)
+            include_archived: Whether to include archived flags
+            db: Database session
+
+        Returns:
+            List of FeatureFlag objects
+        """
+        should_close_db = False
+        if db is None:
+            db = SessionLocal()
+            should_close_db = True
+
+        try:
+            query = db.query(FeatureFlag).filter(FeatureFlag.environment == environment)
+            if not include_archived:
+                query = query.filter(FeatureFlag.archived == False)  # noqa: E712
+            return query.order_by(FeatureFlag.name).all()
+        except Exception as e:
+            self.logger.error(f"Failed to list flags for environment '{environment}': {e}")
+            return []
+        finally:
+            if should_close_db:
+                db.close()
+
 
 # Global singleton instance
 feature_flag_service = FeatureFlagService()
+
+
+# Type import for annotations
+if False:  # TYPE_CHECKING
+    from app.services.rule_engine import UserContext

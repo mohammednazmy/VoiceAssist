@@ -1,14 +1,30 @@
 ---
-title: "Design System Implementation Plan"
-slug: "archive/design-system-implementation-plan"
-summary: "This plan outlines a comprehensive approach to modernizing the VoiceAssist frontend design while maintaining all existing functionality. The implement..."
+title: Design System Implementation Plan
+slug: archive/design-system-implementation-plan
+summary: >-
+  This plan outlines a comprehensive approach to modernizing the VoiceAssist
+  frontend design while maintaining all existing functionality. The implement...
 status: deprecated
 stability: legacy
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["design", "system", "implementation", "plan"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - design
+  - system
+  - implementation
+  - plan
 category: reference
+ai_summary: >-
+  This plan outlines a comprehensive approach to modernizing the VoiceAssist
+  frontend design while maintaining all existing functionality. The
+  implementation follows a phased approach to minimize risk and ensure
+  continuous integration. Update Typography - File: - Changes: - Adopt modern
+  sans-serif (Inter or Roboto) - Define font scales for headings (h1-h6), body,
+  captions - Set consistent font weights for hierarchy - Define line-heights for
+  readability C.
 ---
 
 # VoiceAssist Design System Implementation Plan

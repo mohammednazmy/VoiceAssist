@@ -1,14 +1,25 @@
 ---
-title: "Medical Features"
-slug: "medical-features"
-summary: "VoiceAssist includes specialized medical capabilities designed for healthcare professionals, with a focus on evidence-based information retrieval, cli..."
+title: Medical Features
+slug: medical-features
+summary: >-
+  VoiceAssist includes specialized medical capabilities designed for healthcare
+  professionals, with a focus on evidence-based information retrieval, cli...
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["medical", "features"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - medical
+  - features
 category: reference
+ai_summary: >-
+  VoiceAssist includes specialized medical capabilities designed for healthcare
+  professionals, with a focus on evidence-based information retrieval, clinical
+  decision support, and privacy-conscious handling of medical data. Pre-loaded
+  medical textbooks are indexed and available for semantic search...
 ---
 
 # Medical Features Documentation

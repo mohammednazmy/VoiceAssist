@@ -180,7 +180,11 @@ PHI_PATTERNS = {
     ],
     # Email
     PHIType.EMAIL: [
-        (r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", "email_standard", 0.95),
+        (
+            r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
+            "email_standard",
+            0.95,
+        ),
     ],
     # Dates (more specific than year)
     PHIType.DATE: [

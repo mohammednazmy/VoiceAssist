@@ -1,14 +1,24 @@
 ---
-title: "Architecture V2"
-slug: "architecture-v2"
-summary: "VoiceAssist V2 is an **enterprise-grade, HIPAA-compliant, multi-user medical AI assistant** designed to support hundreds of concurrent users with high..."
+title: Architecture V2
+slug: architecture-v2
+summary: >-
+  VoiceAssist V2 is an **enterprise-grade, HIPAA-compliant, multi-user medical
+  AI assistant** designed to support hundreds of concurrent users with high...
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-12-01"
-audience: ["human"]
-tags: ["architecture"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - architecture
 category: architecture
+ai_summary: >-
+  VoiceAssist V2 is an enterprise-grade, HIPAA-compliant, multi-user medical AI
+  assistant designed to support hundreds of concurrent users with high
+  availability, security, and performance. Key Architectural Decision: Nextcloud
+  is a separate stack, not part of VoiceAssist deployment. ┌─────────────...
 ---
 
 # VoiceAssist Architecture V2 - Enterprise Microservices

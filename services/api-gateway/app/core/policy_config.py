@@ -11,7 +11,7 @@ Provides centralized configuration with:
 import hashlib
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -385,7 +385,7 @@ class PolicyService:
 
         # Calculate variant deterministically
         hash_input = f"{user_id}:{test_name}"
-        hash_value = int(hashlib.md5(hash_input.encode()).hexdigest(), 16)
+        hash_value = int(hashlib.md5(hash_input.encode(), usedforsecurity=False).hexdigest(), 16)
         bucket = hash_value % 100
 
         control_percent = test_config.get("control_percent", 50)

@@ -1,14 +1,23 @@
 ---
-title: "Integration Guide"
-slug: "client-implementation/integration-guide"
+title: Integration Guide
+slug: client-implementation/integration-guide
 summary: "**Date:** 2025-11-21"
 status: stable
 stability: production
 owner: frontend
 lastUpdated: "2025-11-27"
-audience: ["frontend"]
-tags: ["integration", "guide"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - integration
+  - guide
 category: planning
+ai_summary: >-
+  Version: 1.0 Date: 2025-11-21 Status: Draft - Awaiting Team Review --- This
+  guide provides step-by-step instructions for integrating the VoiceAssist
+  client applications with the existing backend infrastructure. Backend Status:
+  ✅ Complete (15/15 phases, HIPAA-compliant, production-ready) Backend L...
 ---
 
 # VoiceAssist - Frontend-Backend Integration Guide

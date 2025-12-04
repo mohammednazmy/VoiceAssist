@@ -1,14 +1,26 @@
 ---
-title: "Admin Panel Deployment"
-slug: "admin-panel-deployment"
+title: Admin Panel Deployment
+slug: admin-panel-deployment
 summary: "**Date**: 2025-11-22"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["devops", "sre"]
-tags: ["admin", "panel", "deployment"]
+audience:
+  - devops
+  - sre
+  - ai-agents
+tags:
+  - admin
+  - panel
+  - deployment
 category: deployment
+ai_summary: >-
+  Date: 2025-11-22 Server: asimo.io (Ubuntu 24.04.3 LTS) Domain:
+  https://admin.asimo.io Status: ✅ DEPLOYED & OPERATIONAL --- The VoiceAssist
+  Admin Panel has been successfully deployed to production on asimo.io. The
+  admin panel is a React-based SPA (Single Page Application) served via Apache
+  with SS...
 ---
 
 # Admin Panel Deployment Summary

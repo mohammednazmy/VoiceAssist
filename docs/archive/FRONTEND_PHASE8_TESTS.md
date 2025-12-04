@@ -1,14 +1,25 @@
 ---
-title: "Frontend Phase8 Tests"
-slug: "archive/frontend-phase8-tests"
-summary: "This document summarizes the test coverage for Phase 8 citation features in the frontend application. All tests are implemented using Vitest and React..."
+title: Frontend Phase8 Tests
+slug: archive/frontend-phase8-tests
+summary: >-
+  This document summarizes the test coverage for Phase 8 citation features in
+  the frontend application. All tests are implemented using Vitest and React...
 status: deprecated
 stability: legacy
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["frontend"]
-tags: ["frontend", "phase8", "tests"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - frontend
+  - phase8
+  - tests
 category: reference
+ai_summary: >-
+  This document summarizes the test coverage for Phase 8 citation features in
+  the frontend application. All tests are implemented using Vitest and React
+  Testing Library. **Test Status**: ✅ 52 tests passing
 ---
 
 # Frontend Phase 8 Test Coverage

@@ -1,14 +1,25 @@
 ---
-title: "Performance Benchmarks"
-slug: "performance-benchmarks"
-summary: "This document provides comprehensive performance benchmarks for VoiceAssist Phase 10, including baseline metrics, load test results, and performance t..."
+title: Performance Benchmarks
+slug: performance-benchmarks
+summary: >-
+  This document provides comprehensive performance benchmarks for VoiceAssist
+  Phase 10, including baseline metrics, load test results, and performance t...
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["performance", "benchmarks"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - performance
+  - benchmarks
 category: reference
+ai_summary: >-
+  This document provides comprehensive performance benchmarks for VoiceAssist
+  Phase 10, including baseline metrics, load test results, and performance
+  targets. Use these benchmarks to: - Evaluate system performance under various
+  load conditions - Identify performance regressions - Set realistic SLO...
 ---
 
 # VoiceAssist Performance Benchmarks

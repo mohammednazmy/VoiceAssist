@@ -1,14 +1,25 @@
 ---
-title: "Deployment Guide"
-slug: "deployment-guide"
+title: Deployment Guide
+slug: deployment-guide
 summary: "**Last Updated:** 2025-11-21"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["devops", "sre"]
-tags: ["deployment", "guide"]
+audience:
+  - devops
+  - sre
+  - ai-agents
+tags:
+  - deployment
+  - guide
 category: deployment
+ai_summary: >-
+  Version: 1.0 Last Updated: 2025-11-21 Phase: 13 - Production Ready --- 1.
+  Prerequisites 2. Local Development Setup 3. Production Deployment 4.
+  Configuration 5. Security Hardening 6. High Availability 7. Monitoring &
+  Observability 8. Backup & Recovery 9. Troubleshooting --- Minimum
+  (Development):...
 ---
 
 # VoiceAssist Deployment Guide

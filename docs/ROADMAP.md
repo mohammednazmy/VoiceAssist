@@ -1,14 +1,25 @@
 ---
-title: "Roadmap"
-slug: "roadmap"
-summary: "This is the canonical V2 development roadmap for VoiceAssist. It presents a **15-phase implementation plan (Phase 0-14)** organized by timeframe and d..."
+title: Roadmap
+slug: roadmap
+summary: >-
+  This is the canonical V2 development roadmap for VoiceAssist. It presents a
+  **15-phase implementation plan (Phase 0-14)** organized by timeframe and d...
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-12-03"
-audience: ["human"]
-tags: ["roadmap"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - roadmap
 category: reference
+ai_summary: >-
+  This is the canonical V2 development roadmap for VoiceAssist. It presents a
+  15-phase implementation plan (Phase 0-14) organized by timeframe and
+  deliverables. For detailed phase documentation, see: -
+  DEVELOPMENT_PHASES_V2.md - Complete phase descriptions - ALL_PHASES_SUMMARY.md
+  - Quick phase summ...
 ---
 
 # VoiceAssist V2 Development Roadmap (15 Phases)
@@ -558,29 +569,34 @@ Phase 11 (Security)   Phase 12 (HA/DR)
 ### Future Enhancements
 
 **Platform Expansion:**
+
 - Mobile app (iOS/Android) with offline voice mode
 - Multi-user collaboration features (shared case reviews)
 - Telemedicine integration (video conferencing, remote monitoring)
 
 **Clinical Intelligence:**
+
 - Full care-gap detection and preventive care reminders
 - Additional medical specialties (cardiology, oncology, pediatrics)
 - Advanced ML models for medical diagnosis assistance
 - Clinical decision support (CDS) rules engine
 
 **EHR Enhancements:**
+
 - Offline EHR sync with conflict resolution
 - Additional EHR systems (Cerner, Allscripts, athenahealth)
 - Bidirectional patient messaging integration
 - Lab result trending and alerts
 
 **Voice & AI:**
+
 - Multi-language voice support (Spanish, Arabic, Mandarin)
 - Custom voice cloning for personalized TTS
 - Context-aware medical terminology pronunciation
 - Voice biometrics for patient authentication
 
 **Infrastructure:**
+
 - ~~Integration with EHR systems (HL7 FHIR)~~ ✅ **COMPLETE** - Epic FHIR integration implemented
 - Federated learning for privacy-preserving model improvement
 - Edge deployment for low-latency voice processing
@@ -588,6 +604,7 @@ Phase 11 (Security)   Phase 12 (HA/DR)
 ### Recently Completed (Dec 2025)
 
 **Epic FHIR Integration (Phase 6b/7)**:
+
 - Read-only FHIR operations: Patient, Observation, MedicationRequest, AllergyIntolerance
 - Write operations: Create/update/delete for MedicationRequest, ServiceRequest, DocumentReference
 - EHRCommandExecutor plugin for voice-driven orders ("prescribe amoxicillin 500mg twice daily")

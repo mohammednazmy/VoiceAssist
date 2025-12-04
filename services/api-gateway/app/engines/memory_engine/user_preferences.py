@@ -7,10 +7,9 @@ Manages persistent user preferences:
 - Workflow customizations
 """
 
-import json
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 

@@ -1,14 +1,33 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchAPI } from "../lib/api";
+import type {
+  FlagVariant,
+  TargetingRule,
+  FlagSchedule,
+  FlagEnvironment,
+} from "@voiceassist/types";
 
 // Types for Feature Flags Admin API
 export interface FeatureFlag {
   name: string;
   description: string;
-  flag_type: "boolean" | "string" | "number" | "json";
+  flag_type: "boolean" | "string" | "number" | "json" | "multivariate";
   enabled: boolean;
   value?: unknown;
   default_value?: unknown;
+  rollout_percentage?: number;
+  rollout_salt?: string;
+  // Phase 3.2: Advanced features
+  variants?: FlagVariant[];
+  targeting_rules?: {
+    rules: TargetingRule[];
+    defaultVariant?: string;
+    defaultEnabled?: boolean;
+  };
+  schedule?: FlagSchedule;
+  environment: FlagEnvironment;
+  archived: boolean;
+  archived_at?: string;
   created_at: string;
   updated_at: string;
   metadata?: Record<string, unknown>;
@@ -17,10 +36,19 @@ export interface FeatureFlag {
 export interface FeatureFlagCreate {
   name: string;
   description: string;
-  flag_type?: "boolean" | "string" | "number" | "json";
+  flag_type?: "boolean" | "string" | "number" | "json" | "multivariate";
   enabled?: boolean;
   value?: unknown;
   default_value?: unknown;
+  rollout_percentage?: number;
+  variants?: FlagVariant[];
+  targeting_rules?: {
+    rules: TargetingRule[];
+    defaultVariant?: string;
+    defaultEnabled?: boolean;
+  };
+  schedule?: FlagSchedule;
+  environment?: FlagEnvironment;
   metadata?: Record<string, unknown>;
 }
 
@@ -28,12 +56,25 @@ export interface FeatureFlagUpdate {
   enabled?: boolean;
   value?: unknown;
   description?: string;
+  rollout_percentage?: number;
+  variants?: FlagVariant[];
+  targeting_rules?: {
+    rules: TargetingRule[];
+    defaultVariant?: string;
+    defaultEnabled?: boolean;
+  };
+  schedule?: FlagSchedule;
+  archived?: boolean;
   metadata?: Record<string, unknown>;
 }
 
 interface UseFeatureFlagsOptions {
   refreshIntervalMs?: number;
   autoRefresh?: boolean;
+  /** Filter by environment */
+  environment?: FlagEnvironment;
+  /** Include archived flags */
+  includeArchived?: boolean;
 }
 
 interface UseFeatureFlagsState {
@@ -46,6 +87,19 @@ interface UseFeatureFlagsState {
   updateFlag: (name: string, updates: FeatureFlagUpdate) => Promise<boolean>;
   deleteFlag: (name: string) => Promise<boolean>;
   toggleFlag: (name: string) => Promise<boolean>;
+  /** Archive a flag (soft delete) */
+  archiveFlag: (name: string) => Promise<boolean>;
+  /** Update flag variants */
+  updateVariants: (name: string, variants: FlagVariant[]) => Promise<boolean>;
+  /** Update targeting rules */
+  updateTargetingRules: (
+    name: string,
+    rules: {
+      rules: TargetingRule[];
+      defaultVariant?: string;
+      defaultEnabled?: boolean;
+    },
+  ) => Promise<boolean>;
 }
 
 const DEFAULT_REFRESH_MS = 30000;
@@ -55,6 +109,8 @@ export function useFeatureFlags(
 ): UseFeatureFlagsState {
   const refreshIntervalMs = options.refreshIntervalMs ?? DEFAULT_REFRESH_MS;
   const autoRefresh = options.autoRefresh ?? false;
+  const environment = options.environment;
+  const includeArchived = options.includeArchived ?? false;
 
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,9 +119,17 @@ export function useFeatureFlags(
 
   const refreshFlags = useCallback(async () => {
     try {
-      const data = await fetchAPI<{ flags: FeatureFlag[]; total: number }>(
-        "/api/admin/feature-flags",
-      );
+      const params = new URLSearchParams();
+      if (environment) {
+        params.set("environment", environment);
+      }
+      if (includeArchived) {
+        params.set("include_archived", "true");
+      }
+      const queryString = params.toString();
+      const url = `/api/admin/feature-flags${queryString ? `?${queryString}` : ""}`;
+
+      const data = await fetchAPI<{ flags: FeatureFlag[]; total: number }>(url);
       setFlags(data.flags);
       setLastUpdated(new Date().toISOString());
       setError(null);
@@ -74,7 +138,7 @@ export function useFeatureFlags(
         err instanceof Error ? err.message : "Failed to load feature flags";
       setError(message);
     }
-  }, []);
+  }, [environment, includeArchived]);
 
   const createFlag = useCallback(
     async (flag: FeatureFlagCreate): Promise<boolean> => {
@@ -141,6 +205,71 @@ export function useFeatureFlags(
     [flags, updateFlag],
   );
 
+  const archiveFlag = useCallback(
+    async (name: string): Promise<boolean> => {
+      try {
+        await fetchAPI(`/api/admin/feature-flags/${name}/archive`, {
+          method: "POST",
+        });
+        await refreshFlags();
+        return true;
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to archive feature flag";
+        setError(message);
+        return false;
+      }
+    },
+    [refreshFlags],
+  );
+
+  const updateVariants = useCallback(
+    async (name: string, variants: FlagVariant[]): Promise<boolean> => {
+      try {
+        await fetchAPI(`/api/admin/feature-flags/${name}/variants`, {
+          method: "PUT",
+          body: JSON.stringify({ variants }),
+        });
+        await refreshFlags();
+        return true;
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to update variants";
+        setError(message);
+        return false;
+      }
+    },
+    [refreshFlags],
+  );
+
+  const updateTargetingRules = useCallback(
+    async (
+      name: string,
+      targetingRules: {
+        rules: TargetingRule[];
+        defaultVariant?: string;
+        defaultEnabled?: boolean;
+      },
+    ): Promise<boolean> => {
+      try {
+        await fetchAPI(`/api/admin/feature-flags/${name}/targeting-rules`, {
+          method: "PUT",
+          body: JSON.stringify({ targeting_rules: targetingRules }),
+        });
+        await refreshFlags();
+        return true;
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to update targeting rules";
+        setError(message);
+        return false;
+      }
+    },
+    [refreshFlags],
+  );
+
   // Initial load
   useEffect(() => {
     setLoading(true);
@@ -171,6 +300,9 @@ export function useFeatureFlags(
       updateFlag,
       deleteFlag,
       toggleFlag,
+      archiveFlag,
+      updateVariants,
+      updateTargetingRules,
     }),
     [
       flags,
@@ -182,6 +314,9 @@ export function useFeatureFlags(
       updateFlag,
       deleteFlag,
       toggleFlag,
+      archiveFlag,
+      updateVariants,
+      updateTargetingRules,
     ],
   );
 

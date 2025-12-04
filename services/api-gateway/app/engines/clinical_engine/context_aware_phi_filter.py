@@ -16,7 +16,7 @@ import re
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -259,7 +259,12 @@ class ContextAwarePHIFilter:
             if patient.email and text == patient.email.lower():
                 return SuppressionReason.CURRENT_PATIENT_NAME
 
-        elif category in (PHICategory.ADDRESS, PHICategory.CITY, PHICategory.STATE, PHICategory.ZIP):
+        elif category in (
+            PHICategory.ADDRESS,
+            PHICategory.CITY,
+            PHICategory.STATE,
+            PHICategory.ZIP,
+        ):
             if patient.address and self._matches_address(text, patient.address):
                 return SuppressionReason.CURRENT_PATIENT_ADDRESS
 

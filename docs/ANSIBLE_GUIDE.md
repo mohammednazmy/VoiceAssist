@@ -1,14 +1,24 @@
 ---
-title: "Ansible Guide"
-slug: "ansible-guide"
+title: Ansible Guide
+slug: ansible-guide
 summary: "1. [Overview](#overview)"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["frontend"]
-tags: ["ansible", "guide"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - ansible
+  - guide
 category: operations
+ai_summary: >-
+  1. Overview 2. Playbook Structure 3. Role Documentation 4. Inventory
+  Management 5. Variables and Secrets 6. Running Playbooks 7. HIPAA Compliance
+  Configuration 8. Best Practices 9. Troubleshooting Ansible is used to
+  configure and maintain VoiceAssist servers after they've been provisioned by
+  Terr...
 ---
 
 # Ansible Guide

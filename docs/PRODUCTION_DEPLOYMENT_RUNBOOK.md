@@ -1,14 +1,26 @@
 ---
-title: "Production Deployment Runbook"
-slug: "production-deployment-runbook"
+title: Production Deployment Runbook
+slug: production-deployment-runbook
 summary: "**Last Updated:** 2025-11-21"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["devops", "sre"]
-tags: ["production", "deployment", "runbook"]
+audience:
+  - devops
+  - sre
+  - ai-agents
+tags:
+  - production
+  - deployment
+  - runbook
 category: debugging
+ai_summary: >-
+  Version: 1.0 Last Updated: 2025-11-21 Owner: DevOps Team Phase: 14 -
+  Production Deployment --- 1. Overview 2. Prerequisites 3. Pre-Deployment
+  Checklist 4. Deployment Process 5. Post-Deployment Verification 6. Rollback
+  Procedures 7. Monitoring and Alerts 8. Troubleshooting 9. Maintenance Windows
+  1...
 ---
 
 # VoiceAssist Production Deployment Runbook

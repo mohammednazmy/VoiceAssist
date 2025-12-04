@@ -4,10 +4,9 @@ Emotion Detection - Hume AI Integration
 Handles audio emotion analysis using Hume AI's expression measurement API.
 """
 
-import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 

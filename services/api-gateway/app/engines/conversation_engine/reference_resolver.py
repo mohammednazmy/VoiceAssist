@@ -13,7 +13,7 @@ Phase 3: Conversation Quality Improvements
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -84,12 +84,27 @@ class ReferenceResolver:
     PERSONAL_PRONOUNS = {
         "he": {"gender": "male", "number": "singular", "person": 3},
         "him": {"gender": "male", "number": "singular", "person": 3, "case": "object"},
-        "his": {"gender": "male", "number": "singular", "person": 3, "case": "possessive"},
+        "his": {
+            "gender": "male",
+            "number": "singular",
+            "person": 3,
+            "case": "possessive",
+        },
         "she": {"gender": "female", "number": "singular", "person": 3},
         "her": {"gender": "female", "number": "singular", "person": 3},
-        "hers": {"gender": "female", "number": "singular", "person": 3, "case": "possessive"},
+        "hers": {
+            "gender": "female",
+            "number": "singular",
+            "person": 3,
+            "case": "possessive",
+        },
         "it": {"gender": "neuter", "number": "singular", "person": 3},
-        "its": {"gender": "neuter", "number": "singular", "person": 3, "case": "possessive"},
+        "its": {
+            "gender": "neuter",
+            "number": "singular",
+            "person": 3,
+            "case": "possessive",
+        },
         "they": {"number": "plural", "person": 3},
         "them": {"number": "plural", "person": 3, "case": "object"},
         "their": {"number": "plural", "person": 3, "case": "possessive"},

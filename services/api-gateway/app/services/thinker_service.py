@@ -22,7 +22,7 @@ import pytz
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.services.llm_client import LLMClient, LLMRequest, ToolCall
-from app.services.repair_strategy_service import RepairRecommendation, RepairStrategy, repair_strategy_service
+from app.services.repair_strategy_service import RepairStrategy, repair_strategy_service
 from app.services.tools.tool_service import ToolExecutionContext, tool_service
 
 logger = get_logger(__name__)

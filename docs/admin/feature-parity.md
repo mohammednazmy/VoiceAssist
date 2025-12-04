@@ -1,14 +1,25 @@
 ---
-title: "Feature Parity"
-slug: "admin/feature-parity"
-summary: "This document inventories the current admin/backend endpoints, compares them to the admin panel's expectations, and tracks implementation status."
+title: Feature Parity
+slug: admin/feature-parity
+summary: >-
+  This document inventories the current admin/backend endpoints, compares them
+  to the admin panel's expectations, and tracks implementation status.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["feature", "parity"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - feature
+  - parity
 category: operations
+ai_summary: >-
+  This document inventories the current admin/backend endpoints, compares them
+  to the admin panel's expectations, and tracks implementation status. The
+  backend API is located in services/api-gateway/app/api/. Key admin-related
+  modules: - auth.py - Authentication endpoints (/api/auth/) - admin_panel...
 ---
 
 # Admin Feature Parity Matrix

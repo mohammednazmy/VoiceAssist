@@ -1,14 +1,26 @@
 ---
-title: "Testing Guide"
-slug: "testing-guide"
-summary: "This guide describes how to run, write, and generate end-to-end (E2E) tests for the VoiceAssist web application using Playwright and Auto Playwright (..."
+title: Testing Guide
+slug: testing-guide
+summary: >-
+  This guide describes how to run, write, and generate end-to-end (E2E) tests
+  for the VoiceAssist web application using Playwright and Auto Playwright (...
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["frontend"]
-tags: ["testing", "guide"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - testing
+  - guide
 category: testing
+ai_summary: >-
+  This guide describes how to run, write, and generate end-to-end (E2E) tests
+  for the VoiceAssist web application using Playwright and Auto Playwright
+  (AI-powered test generation). VoiceAssist uses a multi-layered testing
+  approach: - Unit Tests: Component-level tests using Vitest (in
+  apps/web-app/s...
 ---
 
 # VoiceAssist E2E Testing Guide

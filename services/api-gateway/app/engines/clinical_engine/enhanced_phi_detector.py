@@ -287,7 +287,6 @@ class EnhancedPHIDetector:
 
     async def _detect_regex(self, text: str) -> List[EnhancedPHIDetection]:
         """Detect PHI using regex patterns"""
-        from . import PHIDetection
 
         regex_results = self._regex_detector._detect_regex(text)
         enhanced = []
