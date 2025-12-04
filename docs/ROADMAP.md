@@ -557,11 +557,33 @@ Phase 11 (Security)   Phase 12 (HA/DR)
 
 ### Future Enhancements
 
-- Mobile app (iOS/Android)
-- Multi-user collaboration features
-- Advanced ML models (medical diagnosis assistance)
+**Platform Expansion:**
+- Mobile app (iOS/Android) with offline voice mode
+- Multi-user collaboration features (shared case reviews)
+- Telemedicine integration (video conferencing, remote monitoring)
+
+**Clinical Intelligence:**
+- Full care-gap detection and preventive care reminders
+- Additional medical specialties (cardiology, oncology, pediatrics)
+- Advanced ML models for medical diagnosis assistance
+- Clinical decision support (CDS) rules engine
+
+**EHR Enhancements:**
+- Offline EHR sync with conflict resolution
+- Additional EHR systems (Cerner, Allscripts, athenahealth)
+- Bidirectional patient messaging integration
+- Lab result trending and alerts
+
+**Voice & AI:**
+- Multi-language voice support (Spanish, Arabic, Mandarin)
+- Custom voice cloning for personalized TTS
+- Context-aware medical terminology pronunciation
+- Voice biometrics for patient authentication
+
+**Infrastructure:**
 - ~~Integration with EHR systems (HL7 FHIR)~~ ✅ **COMPLETE** - Epic FHIR integration implemented
-- Telemedicine integration
+- Federated learning for privacy-preserving model improvement
+- Edge deployment for low-latency voice processing
 
 ### Recently Completed (Dec 2025)
 
