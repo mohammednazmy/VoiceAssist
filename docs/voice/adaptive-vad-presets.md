@@ -109,6 +109,115 @@ See [Voice Settings Panel](/docs/frontend/voice-settings-panel.md) for UI implem
 
 See [RTL Support](/docs/voice/rtl-support.md) for right-to-left language support in the voice interface.
 
+## Choosing the Right VAD Preset
+
+### Quick Selection Guide
+
+```mermaid
+flowchart TD
+    Q1{Where are you<br/>using voice mode?}
+    Q1 -->|Quiet room| S[🤫 Sensitive]
+    Q1 -->|Office/Home| B[⚖️ Balanced]
+    Q1 -->|Public/Noisy| R[🔊 Relaxed]
+    Q1 -->|Speech difficulties| A[♿ Accessibility]
+    Q1 -->|Need specific tuning| C[⚙️ Custom]
+
+    S --> S1[Best for:<br/>• Home office<br/>• Private rooms<br/>• Close mic]
+    B --> B1[Best for:<br/>• Normal offices<br/>• Mixed environments<br/>• Default choice]
+    R --> R1[Best for:<br/>• Open offices<br/>• Public spaces<br/>• Distant mic]
+    A --> A1[Best for:<br/>• Speech impairments<br/>• Stuttering<br/>• Slow speech]
+    C --> C1[Best for:<br/>• Power users<br/>• Specific needs<br/>• Testing]
+
+    style S fill:#E6F3FF
+    style B fill:#90EE90
+    style R fill:#FFE4B5
+    style A fill:#DDA0DD
+    style C fill:#D3D3D3
+```
+
+### Preset Comparison Table
+
+| Preset | Energy Threshold | Silence Duration | Min Speech | Best For |
+|--------|------------------|------------------|------------|----------|
+| 🤫 **Sensitive** | -45 dB | 300 ms | 100 ms | Quiet environments, soft speakers |
+| ⚖️ **Balanced** | -35 dB | 500 ms | 150 ms | General use (recommended default) |
+| 🔊 **Relaxed** | -25 dB | 800 ms | 200 ms | Noisy environments, distant mics |
+| ♿ **Accessibility** | -42 dB | 1000 ms | 80 ms | Speech impairments, slow speakers |
+| ⚙️ **Custom** | User-defined | User-defined | User-defined | Power users, specific needs |
+
+## Understanding VAD Parameters
+
+### Energy Threshold (dB)
+
+The **energy threshold** determines how loud speech must be to be detected:
+
+```
+Sound Level (dB)    Example
+─────────────────────────────────
+-50 dB              Very soft whisper
+-45 dB              Soft speech / quiet room
+-35 dB              Normal conversation
+-25 dB              Raised voice
+-20 dB              Loud speech
+
+More negative = More sensitive (detects softer sounds)
+Less negative = Less sensitive (requires louder speech)
+```
+
+**Recommendations:**
+- **-45 dB**: Use in quiet environments or with soft speakers
+- **-35 dB**: Good default for most situations
+- **-25 dB**: Use when background noise is present
+
+### Silence Duration (ms)
+
+The **silence duration** determines how long to wait after speech stops before finalizing:
+
+```
+Duration    Effect
+─────────────────────────────────
+300 ms      Quick response, may cut off pauses
+500 ms      Balanced (recommended default)
+800 ms      Tolerates longer pauses
+1000 ms     For speakers who pause frequently
+1500 ms     Maximum tolerance for hesitant speech
+```
+
+**Trade-offs:**
+- **Shorter (< 400 ms)**: Faster response but may interrupt natural pauses
+- **Medium (400-600 ms)**: Good balance for most speakers
+- **Longer (> 700 ms)**: Better for thoughtful speech but slower response
+
+### How Energy and Silence Work Together
+
+```mermaid
+sequenceDiagram
+    participant Audio as Audio Input
+    participant VAD as VAD Detector
+    participant STT as Speech-to-Text
+
+    Note over Audio,STT: Example with Balanced preset (-35 dB, 500 ms)
+
+    Audio->>VAD: Audio chunk (-40 dB)
+    Note over VAD: Below threshold (-35 dB)<br/>No speech detected
+
+    Audio->>VAD: Audio chunk (-30 dB)
+    Note over VAD: Above threshold!<br/>Speech started
+
+    loop Speech continues
+        Audio->>VAD: Audio chunks (-25 to -30 dB)
+        Note over VAD: Buffering speech...
+    end
+
+    Audio->>VAD: Audio chunk (-45 dB)
+    Note over VAD: Below threshold<br/>Start silence timer
+
+    Note over VAD: 500 ms silence elapsed
+    VAD->>STT: Speech segment complete
+```
+
+## Detailed Preset Explanations
+
 ## VAD Presets
 
 ### 1. Sensitive (Quiet Environment)

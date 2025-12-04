@@ -272,6 +272,111 @@ import { PHIIndicator } from "@/components/voice/PHIIndicator";
 | hybrid  | 🔒   | Yellow | "Sensitive content detected" |
 | local   | 🛡️   | Green  | "Secure local processing"    |
 
+### Subscribing to PHI Routing Updates (Frontend)
+
+The `PHITelemetryService` provides real-time PHI routing state to the frontend via WebSocket events and a polling API.
+
+#### Option 1: WebSocket Subscription
+
+```tsx
+import { useEffect, useState } from 'react';
+import { useWebSocket } from '@/hooks/useWebSocket';
+
+interface PHIState {
+  sessionId: string;
+  phiMode: 'local' | 'hybrid' | 'cloud';
+  phiScore: number;
+  isSecureMode: boolean;
+  hasPriorPhi: boolean;
+  indicatorColor: 'green' | 'yellow' | 'blue';
+  indicatorIcon: 'shield' | 'lock' | 'cloud';
+  tooltip: string;
+}
+
+function usePHIRoutingState(sessionId: string) {
+  const [phiState, setPHIState] = useState<PHIState | null>(null);
+  const { subscribe, unsubscribe } = useWebSocket();
+
+  useEffect(() => {
+    // Subscribe to PHI telemetry events
+    const handlePHIEvent = (event: { type: string; data: PHIState }) => {
+      if (event.type === 'phi.routing_decision' || event.type === 'phi.mode_change') {
+        setPHIState(event.data);
+      }
+    };
+
+    subscribe(`phi.${sessionId}`, handlePHIEvent);
+
+    return () => unsubscribe(`phi.${sessionId}`, handlePHIEvent);
+  }, [sessionId, subscribe, unsubscribe]);
+
+  return phiState;
+}
+```
+
+#### Option 2: REST API Polling
+
+```tsx
+// GET /api/voice/phi-state/{session_id}
+// Returns current PHI routing state for the session
+
+async function fetchPHIState(sessionId: string): Promise<PHIState> {
+  const response = await fetch(`/api/voice/phi-state/${sessionId}`);
+  return response.json();
+}
+
+// Example usage in a component
+function PHIIndicator({ sessionId }: { sessionId: string }) {
+  const [state, setState] = useState<PHIState | null>(null);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const newState = await fetchPHIState(sessionId);
+      setState(newState);
+    }, 1000); // Poll every second
+
+    return () => clearInterval(interval);
+  }, [sessionId]);
+
+  if (!state) return null;
+
+  return (
+    <div className={`phi-indicator phi-${state.indicatorColor}`}>
+      <span className="icon">{getIcon(state.indicatorIcon)}</span>
+      <span className="tooltip">{state.tooltip}</span>
+    </div>
+  );
+}
+```
+
+#### Backend API for Frontend State
+
+```python
+# In your FastAPI router
+from app.services.phi_stt_router import get_phi_stt_router
+
+@router.get("/api/voice/phi-state/{session_id}")
+async def get_phi_state(session_id: str):
+    """Get current PHI routing state for frontend indicator."""
+    router = get_phi_stt_router()
+    state = router.get_frontend_state(session_id)
+
+    if state is None:
+        raise HTTPException(404, "Session not found")
+
+    return state
+```
+
+### Telemetry Event Types
+
+| Event Type | Description | Payload |
+|------------|-------------|---------|
+| `phi.routing_decision` | New routing decision made | Full PHI state + previous mode |
+| `phi.mode_change` | PHI mode changed (e.g., cloud → local) | From/to modes, reason |
+| `phi.phi_detected` | PHI entities detected in audio | Score, entity types |
+| `phi.session_start` | New PHI session initialized | Initial state |
+| `phi.session_end` | PHI session ended | Final mode, had PHI flag |
+
 ## Audit Logging
 
 All PHI routing decisions are logged for compliance:

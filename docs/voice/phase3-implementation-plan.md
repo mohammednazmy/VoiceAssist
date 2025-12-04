@@ -361,6 +361,243 @@ PHASE_3_FLAGS = {
 - [ ] Load testing complete (100 concurrent sessions)
 - [ ] Documentation updated
 
+## Prototypes: Surfacing Data to Users
+
+### FHIR Data Display Prototype
+
+When FHIR streaming detects new patient data, it will be surfaced in the voice interface:
+
+```tsx
+// VitalsPanel component prototype
+interface VitalsPanelProps {
+  patientId: string;
+  observations: FHIRObservation[];
+  onVitalClick: (observation: FHIRObservation) => void;
+}
+
+const VitalsPanel: React.FC<VitalsPanelProps> = ({
+  patientId,
+  observations,
+  onVitalClick,
+}) => {
+  // Group by category
+  const vitals = observations.filter((o) => o.resourceType === "vital-signs");
+  const labs = observations.filter((o) => o.resourceType === "laboratory");
+
+  return (
+    <div className="vitals-panel bg-white dark:bg-gray-800 rounded-lg p-4">
+      <h3 className="text-lg font-semibold mb-3">Latest Patient Data</h3>
+
+      {/* Real-time indicator */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+        <span className="text-sm text-gray-500">Live updates</span>
+      </div>
+
+      {/* Vital signs grid */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {vitals.slice(0, 4).map((vital) => (
+          <VitalCard
+            key={vital.resourceId}
+            label={vital.codeDisplay}
+            value={`${vital.valueQuantity} ${vital.valueUnit}`}
+            interpretation={vital.interpretation}
+            onClick={() => onVitalClick(vital)}
+          />
+        ))}
+      </div>
+
+      {/* Lab results list */}
+      {labs.length > 0 && (
+        <div className="mt-4">
+          <h4 className="text-sm font-medium mb-2">Recent Labs</h4>
+          <ul className="space-y-2">
+            {labs.slice(0, 5).map((lab) => (
+              <LabResultRow
+                key={lab.resourceId}
+                label={lab.codeDisplay}
+                value={lab.value || `${lab.valueQuantity} ${lab.valueUnit}`}
+                interpretation={lab.interpretation}
+                referenceRange={lab.referenceRange}
+              />
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+```
+
+**Voice Context Injection:**
+
+```python
+# In Thinker service, inject FHIR context into prompt
+async def build_context_with_fhir(
+    session_id: str,
+    patient_id: str,
+    query: str,
+) -> str:
+    # Get latest observations
+    fhir_service = get_fhir_subscription_service()
+    vitals = await fhir_service.get_latest_vitals(patient_id, max_results=5)
+    labs = await fhir_service.get_latest_labs(patient_id, max_results=5)
+
+    # Build context string
+    context_parts = ["## Current Patient Data"]
+
+    if vitals:
+        context_parts.append("\n### Vital Signs")
+        for v in vitals:
+            context_parts.append(f"- {v.to_context_string()}")
+
+    if labs:
+        context_parts.append("\n### Recent Lab Results")
+        for l in labs:
+            context_parts.append(f"- {l.to_context_string()}")
+
+    return "\n".join(context_parts)
+```
+
+### Speaker Diarization Display Prototype
+
+When multiple speakers are detected, the UI will show speaker attribution:
+
+```tsx
+// SpeakerAttributedTranscript component prototype
+interface SpeakerAttributedTranscriptProps {
+  segments: SpeakerSegment[];
+  speakerProfiles: Map<string, SpeakerProfile>;
+  currentSpeaker?: string;
+}
+
+const SpeakerAttributedTranscript: React.FC<SpeakerAttributedTranscriptProps> = ({
+  segments,
+  speakerProfiles,
+  currentSpeaker,
+}) => {
+  // Get speaker color
+  const getSpeakerColor = (speakerId: string) => {
+    const colors = ["blue", "green", "purple", "orange"];
+    const index = parseInt(speakerId.replace("SPEAKER_", "")) || 0;
+    return colors[index % colors.length];
+  };
+
+  return (
+    <div className="speaker-transcript space-y-3">
+      {/* Speaker legend */}
+      <div className="flex gap-2 mb-4">
+        {Array.from(speakerProfiles.entries()).map(([id, profile]) => (
+          <div
+            key={id}
+            className={cn(
+              "flex items-center gap-1 px-2 py-1 rounded-full text-xs",
+              `bg-${getSpeakerColor(id)}-100 text-${getSpeakerColor(id)}-700`,
+              currentSpeaker === id && "ring-2 ring-blue-500"
+            )}
+          >
+            <span className="w-2 h-2 rounded-full bg-current" />
+            {profile.name || id}
+          </div>
+        ))}
+      </div>
+
+      {/* Transcript with speaker labels */}
+      {segments.map((segment, index) => (
+        <div
+          key={index}
+          className={cn(
+            "flex gap-3",
+            segment.speakerId === currentSpeaker && "animate-pulse"
+          )}
+        >
+          {/* Speaker indicator */}
+          <div
+            className={cn(
+              "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium",
+              `bg-${getSpeakerColor(segment.speakerId)}-100`,
+              `text-${getSpeakerColor(segment.speakerId)}-700`
+            )}
+          >
+            {segment.speakerId.replace("SPEAKER_", "")}
+          </div>
+
+          {/* Transcript text */}
+          <div className="flex-1">
+            <div className="text-xs text-gray-500 mb-1">
+              {formatTime(segment.startMs)} - {formatTime(segment.endMs)}
+            </div>
+            <div className="text-sm">{segment.transcript}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+```
+
+**Multi-Party Context for Thinker:**
+
+```python
+# Build multi-speaker context for Thinker
+def build_multi_speaker_context(
+    diarization_result: DiarizationResult,
+    transcripts: Dict[str, str],  # speaker_id -> transcript
+) -> str:
+    context_parts = ["## Conversation Participants"]
+
+    speaker_summary = diarization_result.get_speaker_summary()
+    for speaker_id, speaking_time_ms in speaker_summary.items():
+        context_parts.append(
+            f"- {speaker_id}: {speaking_time_ms / 1000:.1f}s speaking time"
+        )
+
+    context_parts.append("\n## Conversation Transcript")
+    for speaker_id, transcript in transcripts.items():
+        context_parts.append(f"\n### {speaker_id}:")
+        context_parts.append(transcript)
+
+    return "\n".join(context_parts)
+```
+
+## PR Breakdown for Phase 3
+
+### PR #1: UI Integration (Voice-First Input)
+
+**Branch:** `feature/voice-mode-v4.1-phase3-ui`
+
+**Files:**
+
+- `apps/web-app/src/components/voice/VoiceFirstInputBar.tsx`
+- `apps/web-app/src/components/voice/StreamingTextDisplay.tsx`
+- `apps/web-app/src/components/voice/LatencyIndicator.tsx`
+- `apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx`
+- `apps/web-app/src/hooks/useStreamingText.ts`
+- `apps/web-app/src/hooks/useThinkingFeedback.ts`
+
+### PR #2: Advanced Services (FHIR + Diarization)
+
+**Branch:** `feature/voice-mode-v4.1-phase3-services`
+
+**Files:**
+
+- `services/api-gateway/app/services/speaker_diarization_service.py` ✓
+- `services/api-gateway/app/services/fhir_subscription_service.py` ✓
+- `services/api-gateway/app/api/voice_fhir.py`
+- `services/api-gateway/app/api/voice_diarization.py`
+- `apps/web-app/src/components/voice/VitalsPanel.tsx`
+- `apps/web-app/src/components/voice/SpeakerAttributedTranscript.tsx`
+
+### PR #3: Performance & Quality
+
+**Branch:** `feature/voice-mode-v4.1-phase3-performance`
+
+**Files:**
+
+- `services/api-gateway/app/services/adaptive_quality_service.py`
+- `services/api-gateway/tests/load/voice_load_test.py`
+- `docs/voice/performance-tuning-guide.md`
+
 ## Related Documentation
 
 - [PHI-Aware STT Routing](./phi-aware-stt-routing.md)
