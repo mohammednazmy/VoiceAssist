@@ -132,6 +132,9 @@ class DiarizationConfig:
 
     # Model settings
     model_name: str = "pyannote/speaker-diarization-3.1"
+    # Pin model revisions for supply chain security (Bandit B615)
+    # Update these hashes when upgrading model versions
+    model_revision: str = "cb03e11cae0c1f3c75fd7be406b7f0bbf33cd28c"  # v3.1.0
     use_gpu: bool = True
     device: str = "cuda"  # "cuda" or "cpu"
 
@@ -143,6 +146,7 @@ class DiarizationConfig:
 
     # Embedding settings
     embedding_model: str = "pyannote/embedding"
+    embedding_model_revision: str = "a9b3e59b43ceb4a4b04fb82bc7a1c36da47fe18a"  # Latest stable
     embedding_dim: int = 512
     similarity_threshold: float = 0.75  # For speaker matching
 
@@ -214,9 +218,10 @@ class SpeakerDiarizationService:
                     extra={"device": self.config.device},
                 )
 
-                # Load the diarization pipeline
-                self._pipeline = Pipeline.from_pretrained(
+                # Load the diarization pipeline with pinned revision (Bandit B615)
+                self._pipeline = Pipeline.from_pretrained(  # nosec B615 - revision pinned
                     self.config.model_name,
+                    revision=self.config.model_revision,
                     use_auth_token=settings.huggingface_token,
                 )
 
@@ -466,9 +471,18 @@ class SpeakerEmbeddingExtractor:
     Uses pyannote/embedding model for voice print extraction.
     """
 
-    def __init__(self, model_name: str = "pyannote/embedding", device: str = "cuda"):
+    # Default revision for supply chain security (Bandit B615)
+    DEFAULT_REVISION = "a9b3e59b43ceb4a4b04fb82bc7a1c36da47fe18a"
+
+    def __init__(
+        self,
+        model_name: str = "pyannote/embedding",
+        device: str = "cuda",
+        revision: str = DEFAULT_REVISION,
+    ):
         self.model_name = model_name
         self.device = device
+        self.revision = revision
         self._model = None
         self._initialized = False
 
@@ -481,9 +495,10 @@ class SpeakerEmbeddingExtractor:
             import torch
             from pyannote.audio import Inference, Model
 
-            # Load embedding model
-            self._model = Model.from_pretrained(
+            # Load embedding model with pinned revision (Bandit B615)
+            self._model = Model.from_pretrained(  # nosec B615 - revision pinned
                 self.model_name,
+                revision=self.revision,
                 use_auth_token=settings.huggingface_token,
             )
 

@@ -172,15 +172,17 @@ class MedicalEmbeddingService:
 
             logger.info(f"Loading medical model: {config.name} (revision: {config.revision})")
 
-            tokenizer = AutoTokenizer.from_pretrained(config.tokenizer_id, revision=config.revision)
+            # nosec B615 - revision pinned via config.revision
+            tokenizer = AutoTokenizer.from_pretrained(config.tokenizer_id, revision=config.revision)  # nosec B615
 
             if model_type == MedicalModelType.BIOGPT:
                 from transformers import BioGptForCausalLM, BioGptTokenizer
 
-                tokenizer = BioGptTokenizer.from_pretrained(config.tokenizer_id, revision=config.revision)
-                model = BioGptForCausalLM.from_pretrained(config.model_id, revision=config.revision)
+                # nosec B615 - revision pinned via config.revision
+                tokenizer = BioGptTokenizer.from_pretrained(config.tokenizer_id, revision=config.revision)  # nosec B615
+                model = BioGptForCausalLM.from_pretrained(config.model_id, revision=config.revision)  # nosec B615
             else:
-                model = AutoModel.from_pretrained(config.model_id, revision=config.revision)
+                model = AutoModel.from_pretrained(config.model_id, revision=config.revision)  # nosec B615
 
             model = model.to(self._device)
             model.eval()

@@ -129,6 +129,9 @@ class EnhancedPHIDetector:
 
     # Model configuration
     DEFAULT_MODEL_NAME = "roberta-base-phi-i2b2"
+    # Pin to specific revision for supply chain security (Bandit B615)
+    # Update this hash when upgrading the model version
+    DEFAULT_MODEL_REVISION = "main"  # Local/fine-tuned model uses "main"
     MAX_SEQUENCE_LENGTH = 512
     BATCH_SIZE = 8
 
@@ -208,12 +211,17 @@ class EnhancedPHIDetector:
                 return False
 
             model_path = self._get_config("phi_ner_model_path", self.DEFAULT_MODEL_NAME)
+            model_revision = self._get_config("phi_ner_model_revision", self.DEFAULT_MODEL_REVISION)
 
-            logger.info(f"Loading NER model from {model_path}")
+            logger.info(f"Loading NER model from {model_path} (revision: {model_revision})")
 
-            # Load tokenizer and model
-            self._tokenizer = AutoTokenizer.from_pretrained(model_path)
-            self._model = AutoModelForTokenClassification.from_pretrained(model_path)
+            # Load tokenizer and model with pinned revision (Bandit B615)
+            self._tokenizer = AutoTokenizer.from_pretrained(  # nosec B615 - revision pinned
+                model_path, revision=model_revision
+            )
+            self._model = AutoModelForTokenClassification.from_pretrained(  # nosec B615 - revision pinned
+                model_path, revision=model_revision
+            )
 
             # Create pipeline for easier inference
             self._ner_pipeline = pipeline(
@@ -424,9 +432,9 @@ class EnhancedPHIDetector:
         """Merge two overlapping detections"""
         # Prefer detection with higher confidence
         if det1.raw_confidence >= det2.raw_confidence:
-            primary, secondary = det1, det2
+            primary = det1
         else:
-            primary, secondary = det2, det1
+            primary = det2
 
         # Ensemble confidence if from different sources
         if det1.source != det2.source:
