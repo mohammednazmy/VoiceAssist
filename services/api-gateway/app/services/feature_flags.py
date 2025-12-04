@@ -377,6 +377,9 @@ class FeatureFlagService:
             # Cache the new flag
             await self._set_cache(name, flag.to_dict())
 
+            # Publish real-time update to connected clients
+            await self._publish_flag_update(name, flag.to_dict())
+
             self.logger.info(f"Created feature flag: {name}")
             return flag
         except IntegrityError:
@@ -443,6 +446,9 @@ class FeatureFlagService:
             # Invalidate cache to force refresh
             await self._invalidate_cache(name)
 
+            # Publish real-time update to connected clients
+            await self._publish_flag_update(name, flag.to_dict())
+
             self.logger.info(f"Updated feature flag: {name}")
             return flag
         except Exception as e:
@@ -452,6 +458,26 @@ class FeatureFlagService:
         finally:
             if should_close_db:
                 db.close()
+
+    async def _publish_flag_update(self, flag_name: str, flag_data: Dict[str, Any]) -> None:
+        """Publish a flag update to real-time subscribers.
+
+        Imports the publish function lazily to avoid circular imports.
+
+        Args:
+            flag_name: Name of the updated flag
+            flag_data: Complete flag data dictionary
+        """
+        try:
+            from app.api.feature_flags_realtime import publish_flag_update
+
+            await publish_flag_update(flag_name, flag_data)
+        except ImportError:
+            # Real-time module not available (e.g., in tests)
+            self.logger.debug("Real-time publish not available")
+        except Exception as e:
+            # Don't fail the update if publish fails
+            self.logger.warning(f"Failed to publish flag update: {e}")
 
     async def delete_flag(self, name: str, db: Session = None) -> bool:
         """Delete a feature flag.

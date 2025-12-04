@@ -1,0 +1,94 @@
+{
+  "version": "2.0.0",
+  "generated_at": "2025-12-04T09:27:38.818Z",
+  "health_status": "healthy",
+  "scores": {
+    "overall": 100,
+    "coverage": 100,
+    "freshness": 100
+  },
+  "summary": {
+    "total_docs": 253,
+    "stale_count": 0,
+    "missing_frontmatter_count": 1,
+    "coverage_percentage": 100
+  },
+  "metrics": {
+    "stale_docs": {
+      "count": 0,
+      "threshold_days": 30,
+      "docs": []
+    },
+    "missing_frontmatter": {
+      "count": 1,
+      "docs": [
+        {
+          "path": "WORLD_CLASS_BARGE_IN_IMPLEMENTATION_PLAN.md",
+          "missing_fields": [
+            "summary"
+          ]
+        }
+      ]
+    },
+    "by_status": {
+      "stable": 210,
+      "draft": 5,
+      "deprecated": 35,
+      "experimental": 3
+    },
+    "by_owner": {
+      "frontend": 31,
+      "docs": 137,
+      "backend": 26,
+      "product": 3,
+      "security": 1,
+      "mixed": 33,
+      "sre": 15,
+      "infra": 2
+    },
+    "by_category": {
+      "reference": 88,
+      "deployment": 7,
+      "operations": 18,
+      "planning": 73,
+      "api": 5,
+      "architecture": 10,
+      "testing": 7,
+      "ai": 5,
+      "debugging": 14,
+      "security": 4,
+      "overview": 4,
+      "feature-flags": 8
+    },
+    "coverage": {
+      "total": 253,
+      "documented": 252,
+      "undocumented": 1
+    }
+  },
+  "thresholds": {
+    "stale_days": 30,
+    "required_frontmatter": [
+      "title",
+      "status",
+      "lastUpdated",
+      "summary"
+    ],
+    "health_warning": 70,
+    "health_critical": 50
+  },
+  "recommendations": [
+    {
+      "priority": "medium",
+      "category": "metadata",
+      "message": "1 docs are missing required frontmatter",
+      "action": "Add title, status, lastUpdated, and summary to frontmatter"
+    },
+    {
+      "priority": "low",
+      "category": "cleanup",
+      "message": "35 deprecated docs should be reviewed",
+      "action": "Archive or remove deprecated documentation"
+    }
+  ]
+}

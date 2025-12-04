@@ -45,6 +45,7 @@ from app.api import (
     experiments,
     export,
     external_medical,
+    feature_flags_realtime,
     folders,
     health,
     integrations,
@@ -173,6 +174,7 @@ app.include_router(admin_conversations.router)  # Admin Conversations API
 app.include_router(admin_cache.router)  # Phase 7: Cache Management API (P2.1)
 app.include_router(admin_feature_flags.router)  # Phase 7: Feature Flags API (P3.1)
 app.include_router(experiments.router)  # Public experiments/feature flags API
+app.include_router(feature_flags_realtime.router)  # Phase 3: Real-time flag updates via SSE
 app.include_router(admin_voice.router)  # Sprint 1: Voice Admin API
 app.include_router(admin_integrations.router)  # Sprint 2: Integrations Admin API
 app.include_router(admin_phi.router)  # Sprint 3: PHI & Security Admin API

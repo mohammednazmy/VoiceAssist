@@ -1,7 +1,22 @@
 {
-  "count": 242,
-  "generated_at": "2025-12-04T08:19:22.878Z",
+  "count": 243,
+  "generated_at": "2025-12-04T09:32:24.928Z",
   "docs": [
+    {
+      "slug": "style-guide",
+      "path": "STYLE_GUIDE.md",
+      "title": "VoiceAssist Documentation Style Guide",
+      "summary": "Writing standards for VoiceAssist documentation",
+      "status": "stable",
+      "owner": "docs",
+      "audience": [
+        "developers",
+        "technical-writers",
+        "ai-agents"
+      ],
+      "category": "reference",
+      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
     {
       "slug": "operations/post-launch-monitoring",
       "path": "operations/POST_LAUNCH_MONITORING.md",

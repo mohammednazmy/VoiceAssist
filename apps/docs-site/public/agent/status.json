@@ -1,0 +1,180 @@
+{
+  "version": "2.0.0",
+  "generated_at": "2025-12-04T09:27:38.768Z",
+  "system": {
+    "name": "VoiceAssist",
+    "environment": "development",
+    "backend_status": "operational",
+    "docs_status": "operational"
+  },
+  "implementation_status": {
+    "backend": {
+      "completion": 100,
+      "phase": "15/15 complete"
+    },
+    "frontend": {
+      "completion": 80,
+      "phase": "Phase 3.5 complete"
+    },
+    "admin_panel": {
+      "completion": 90,
+      "phase": "Complete"
+    },
+    "docs_site": {
+      "completion": 85,
+      "phase": "Active development"
+    }
+  },
+  "feature_flags": {
+    "total_count": 23,
+    "by_category": {
+      "ui": 4,
+      "backend": 7,
+      "admin": 3,
+      "integration": 3,
+      "experiment": 1,
+      "ops": 5
+    },
+    "by_status": {
+      "active": 23,
+      "deprecated": 0,
+      "scheduled": 0,
+      "disabled": 0
+    },
+    "recent_changes": [],
+    "flags": [
+      {
+        "name": "ui.unified_chat_voice",
+        "category": "ui",
+        "status": "active"
+      },
+      {
+        "name": "ui.new_navigation",
+        "category": "ui",
+        "status": "active"
+      },
+      {
+        "name": "ui.beta_features",
+        "category": "ui",
+        "status": "active"
+      },
+      {
+        "name": "ui.dark_mode",
+        "category": "ui",
+        "status": "active"
+      },
+      {
+        "name": "backend.rbac_enforcement",
+        "category": "backend",
+        "status": "active"
+      },
+      {
+        "name": "backend.rbac_strict_mode",
+        "category": "backend",
+        "status": "active"
+      },
+      {
+        "name": "backend.rag_strategy",
+        "category": "backend",
+        "status": "active"
+      },
+      {
+        "name": "backend.rag_max_results",
+        "category": "backend",
+        "status": "active"
+      },
+      {
+        "name": "backend.rag_score_threshold",
+        "category": "backend",
+        "status": "active"
+      },
+      {
+        "name": "backend.cache_enabled",
+        "category": "backend",
+        "status": "active"
+      },
+      {
+        "name": "backend.async_indexing",
+        "category": "backend",
+        "status": "active"
+      },
+      {
+        "name": "admin.bulk_operations",
+        "category": "admin",
+        "status": "active"
+      },
+      {
+        "name": "admin.advanced_analytics",
+        "category": "admin",
+        "status": "active"
+      },
+      {
+        "name": "admin.audit_log_export",
+        "category": "admin",
+        "status": "active"
+      },
+      {
+        "name": "integration.nextcloud",
+        "category": "integration",
+        "status": "active"
+      },
+      {
+        "name": "integration.nextcloud_auto_index",
+        "category": "integration",
+        "status": "active"
+      },
+      {
+        "name": "integration.openai",
+        "category": "integration",
+        "status": "active"
+      },
+      {
+        "name": "experiment.experimental_api",
+        "category": "experiment",
+        "status": "active"
+      },
+      {
+        "name": "ops.maintenance_mode",
+        "category": "ops",
+        "status": "active"
+      },
+      {
+        "name": "ops.rate_limiting",
+        "category": "ops",
+        "status": "active"
+      },
+      {
+        "name": "ops.metrics_enabled",
+        "category": "ops",
+        "status": "active"
+      },
+      {
+        "name": "ops.tracing_enabled",
+        "category": "ops",
+        "status": "active"
+      },
+      {
+        "name": "ops.verbose_logging",
+        "category": "ops",
+        "status": "active"
+      }
+    ],
+    "source_file": "packages/types/src/featureFlags.ts"
+  },
+  "canonical_urls": {
+    "web_app": "https://dev.asimo.io",
+    "api": "https://assist.asimo.io",
+    "admin": "https://admin.asimo.io",
+    "docs": "https://assistdocs.asimo.io",
+    "monitoring": "https://monitor.asimo.io"
+  },
+  "documentation": {
+    "total_docs": 253,
+    "by_status": {
+      "stable": 210,
+      "draft": 5,
+      "deprecated": 35,
+      "experimental": 3
+    }
+  }
+}
