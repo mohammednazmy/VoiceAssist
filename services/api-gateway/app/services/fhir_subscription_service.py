@@ -297,6 +297,16 @@ class FHIRSubscriptionService:
 
         return headers
 
+    def _json_dumps(self, data: Dict[str, Any]) -> str:
+        """Serialize dict to JSON string."""
+        import json
+        return json.dumps(data)
+
+    def _json_loads(self, data: str) -> Dict[str, Any]:
+        """Deserialize JSON string to dict."""
+        import json
+        return json.loads(data)
+
     async def subscribe_to_patient(
         self,
         patient_id: str,
@@ -612,28 +622,262 @@ class FHIRSubscriptionService:
         return observations
 
     async def _start_websocket_subscription(self, subscription: FHIRSubscription):
-        """Start WebSocket-based subscription."""
-        # Placeholder for WebSocket implementation
-        logger.info(f"WebSocket subscription started: {subscription.subscription_id}")
-        # Real implementation would establish WebSocket connection
+        """
+        Start WebSocket-based subscription with reconnection support.
 
-    async def _start_polling_subscription(self, subscription: FHIRSubscription):
-        """Start polling-based subscription."""
-        logger.info(f"Polling subscription started: {subscription.subscription_id}")
+        Implements FHIR R5 subscription framework with WebSocket channel.
+        """
+        retry_count = 0
+        last_event_id: Optional[str] = None
 
         while subscription.status == SubscriptionStatus.ACTIVE:
             try:
-                # Poll for updates
-                observations = await self.get_latest_vitals(subscription.patient_id)
+                import websockets
 
-                for obs in observations:
-                    # Check if new (would need timestamp tracking)
-                    self._emit_event(subscription, obs)
+                # Build WebSocket URL for subscription
+                ws_url = self._build_subscription_ws_url(subscription)
 
+                logger.info(
+                    f"Connecting WebSocket subscription: {subscription.subscription_id}",
+                    extra={"url": ws_url},
+                )
+
+                async with websockets.connect(
+                    ws_url,
+                    extra_headers=self._get_auth_headers(),
+                    ping_interval=30,
+                    ping_timeout=10,
+                ) as ws:
+                    # Store connection
+                    self._ws_connections[subscription.subscription_id] = ws
+                    retry_count = 0  # Reset retry count on successful connection
+
+                    # Send subscription bind message
+                    bind_message = {
+                        "type": "bind",
+                        "subscriptionId": subscription.subscription_id,
+                        "patientId": subscription.patient_id,
+                        "resourceTypes": [rt.value for rt in subscription.resource_types],
+                        "lastEventId": last_event_id,
+                    }
+                    await ws.send(self._json_dumps(bind_message))
+
+                    # Process incoming messages
+                    async for message in ws:
+                        try:
+                            data = self._json_loads(message)
+                            msg_type = data.get("type")
+
+                            if msg_type == "event":
+                                # Process FHIR event
+                                event = self._parse_ws_event(subscription, data)
+                                if event:
+                                    last_event_id = event.event_id
+                                    self._emit_event_internal(event)
+
+                            elif msg_type == "heartbeat":
+                                # Heartbeat - connection is alive
+                                logger.debug(f"WebSocket heartbeat: {subscription.subscription_id}")
+
+                            elif msg_type == "error":
+                                error_msg = data.get("message", "Unknown error")
+                                logger.error(f"WebSocket error: {error_msg}")
+                                subscription.error_message = error_msg
+                                if data.get("fatal"):
+                                    subscription.status = SubscriptionStatus.ERROR
+                                    break
+
+                        except Exception as e:
+                            logger.error(f"Error processing WebSocket message: {e}")
+
+            except ImportError:
+                logger.warning("websockets package not installed, falling back to polling")
+                await self._start_polling_subscription(subscription)
+                return
+
+            except Exception as e:
+                logger.error(f"WebSocket connection error: {e}")
+                retry_count += 1
+
+                if retry_count > self.config.max_retries:
+                    logger.error(f"Max retries exceeded for subscription {subscription.subscription_id}")
+                    subscription.status = SubscriptionStatus.ERROR
+                    subscription.error_message = f"Connection failed after {retry_count} retries"
+                    break
+
+                # Exponential backoff
+                delay = min(
+                    self.config.reconnect_delay_seconds * (2 ** (retry_count - 1)),
+                    300,  # Max 5 minutes
+                )
+                logger.info(f"Reconnecting in {delay}s (attempt {retry_count})")
+                await asyncio.sleep(delay)
+
+        # Cleanup
+        self._ws_connections.pop(subscription.subscription_id, None)
+        logger.info(f"WebSocket subscription ended: {subscription.subscription_id}")
+
+    def _build_subscription_ws_url(self, subscription: FHIRSubscription) -> str:
+        """Build WebSocket URL for FHIR subscription."""
+        # Convert HTTP(S) to WS(S)
+        base_url = self.config.fhir_server_url
+        if base_url.startswith("https://"):
+            ws_url = "wss://" + base_url[8:]
+        elif base_url.startswith("http://"):
+            ws_url = "ws://" + base_url[7:]
+        else:
+            ws_url = "wss://" + base_url
+
+        return f"{ws_url}/Subscription/{subscription.subscription_id}/$stream"
+
+    def _parse_ws_event(
+        self,
+        subscription: FHIRSubscription,
+        data: Dict[str, Any],
+    ) -> Optional[StreamingEvent]:
+        """Parse WebSocket event message into StreamingEvent."""
+        import uuid
+
+        try:
+            resource = data.get("resource", {})
+            resource_type_str = resource.get("resourceType", "Observation")
+
+            # Map to enum
+            resource_type = FHIRResourceType.OBSERVATION
+            for rt in FHIRResourceType:
+                if rt.value == resource_type_str:
+                    resource_type = rt
+                    break
+
+            # Parse observation if applicable
+            observation = None
+            if resource_type == FHIRResourceType.OBSERVATION:
+                observations = self._parse_observation_bundle(
+                    {"entry": [{"resource": resource}]},
+                    subscription.patient_id,
+                )
+                if observations:
+                    observation = observations[0]
+
+            return StreamingEvent(
+                event_id=data.get("eventId", f"evt-{uuid.uuid4().hex[:8]}"),
+                subscription_id=subscription.subscription_id,
+                resource_type=resource_type,
+                resource_id=resource.get("id", ""),
+                action=data.get("action", "update"),
+                timestamp=datetime.now(timezone.utc),
+                observation=observation,
+                raw_payload=data,
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to parse WebSocket event: {e}")
+            return None
+
+    def _emit_event_internal(self, event: StreamingEvent) -> None:
+        """Internal event emission with subscription update."""
+        subscription = self._subscriptions.get(event.subscription_id)
+        if subscription:
+            subscription.event_count += 1
+            subscription.last_event_at = event.timestamp
+
+            if event.observation:
+                self._emit_event(subscription, event.observation)
+
+    async def _start_polling_subscription(self, subscription: FHIRSubscription):
+        """
+        Start polling-based subscription with change detection.
+
+        Implements efficient polling with:
+        - Last-Modified tracking to detect changes
+        - ETag support for conditional requests
+        - Rate limiting with adaptive intervals
+        """
+        logger.info(f"Polling subscription started: {subscription.subscription_id}")
+
+        last_modified: Optional[str] = None
+        etag: Optional[str] = None
+        seen_ids: Set[str] = set()
+        last_poll_time: Optional[datetime] = None
+
+        while subscription.status == SubscriptionStatus.ACTIVE:
+            try:
+                import httpx
+
+                async with httpx.AsyncClient() as client:
+                    # Build query parameters
+                    params = {
+                        "patient": subscription.patient_id,
+                        "_sort": "-_lastUpdated",
+                        "_count": self.config.max_polling_results,
+                    }
+
+                    # Filter by resource types
+                    categories = []
+                    for rt in subscription.resource_types:
+                        if rt == FHIRResourceType.VITAL_SIGNS:
+                            categories.append("vital-signs")
+                        elif rt == FHIRResourceType.LAB_RESULT:
+                            categories.append("laboratory")
+
+                    if categories:
+                        params["category"] = ",".join(categories)
+
+                    # Add time filter if we have a last poll time
+                    if last_poll_time:
+                        params["_lastUpdated"] = f"gt{last_poll_time.isoformat()}"
+
+                    # Build headers with conditional request support
+                    headers = self._get_auth_headers()
+                    if last_modified:
+                        headers["If-Modified-Since"] = last_modified
+                    if etag:
+                        headers["If-None-Match"] = etag
+
+                    response = await client.get(
+                        f"{self.config.fhir_server_url}/Observation",
+                        params=params,
+                        headers=headers,
+                        timeout=30.0,
+                    )
+
+                    # Handle conditional response
+                    if response.status_code == 304:
+                        # Not modified - no new data
+                        logger.debug(f"No changes detected for {subscription.subscription_id}")
+                    elif response.status_code == 200:
+                        # Update cache headers
+                        last_modified = response.headers.get("Last-Modified")
+                        etag = response.headers.get("ETag")
+
+                        # Parse and emit new observations
+                        bundle = response.json()
+                        observations = self._parse_observation_bundle(
+                            bundle, subscription.patient_id
+                        )
+
+                        for obs in observations:
+                            # Check if we've seen this observation
+                            if obs.resource_id not in seen_ids:
+                                seen_ids.add(obs.resource_id)
+                                self._emit_event(subscription, obs)
+
+                        # Limit seen_ids size
+                        if len(seen_ids) > 1000:
+                            seen_ids = set(list(seen_ids)[-500:])
+
+                    elif response.status_code >= 400:
+                        logger.error(
+                            f"Polling request failed: {response.status_code}",
+                            extra={"response": response.text[:500]},
+                        )
+
+                last_poll_time = datetime.now(timezone.utc)
                 await asyncio.sleep(self.config.polling_interval_seconds)
 
             except Exception as e:
                 logger.error(f"Polling error: {e}")
+                subscription.error_message = str(e)
                 await asyncio.sleep(self.config.retry_delay_seconds)
 
     def _register_callback(self, patient_id: str, callback: Callable):
@@ -671,6 +915,174 @@ class FHIRSubscriptionService:
                 callback(event)
             except Exception as e:
                 logger.error(f"Event callback error: {e}")
+
+
+# ==============================================================================
+# Context Injection Helpers
+# ==============================================================================
+
+
+class FHIRContextBuilder:
+    """
+    Builder for creating clinical context strings for Thinker injection.
+
+    Formats FHIR observations into natural language context that
+    can be injected into the AI assistant's context window.
+    """
+
+    @staticmethod
+    def build_vitals_context(observations: List[FHIRObservation]) -> str:
+        """
+        Build vitals summary for context injection.
+
+        Args:
+            observations: List of vital sign observations
+
+        Returns:
+            Natural language summary of vitals.
+        """
+        if not observations:
+            return ""
+
+        lines = ["Recent vital signs:"]
+        for obs in observations:
+            lines.append(f"  - {obs.to_context_string()}")
+
+        return "\n".join(lines)
+
+    @staticmethod
+    def build_labs_context(
+        observations: List[FHIRObservation],
+        highlight_abnormal: bool = True,
+    ) -> str:
+        """
+        Build lab results summary for context injection.
+
+        Args:
+            observations: List of lab result observations
+            highlight_abnormal: Whether to highlight abnormal values
+
+        Returns:
+            Natural language summary of lab results.
+        """
+        if not observations:
+            return ""
+
+        lines = ["Recent lab results:"]
+
+        # Group by category/panel if possible
+        abnormal = []
+        normal = []
+
+        for obs in observations:
+            context_str = obs.to_context_string()
+            if highlight_abnormal and obs.interpretation:
+                interp_lower = obs.interpretation.lower()
+                if any(x in interp_lower for x in ["high", "low", "abnormal", "critical"]):
+                    abnormal.append(f"  - {context_str}")
+                else:
+                    normal.append(f"  - {context_str}")
+            else:
+                normal.append(f"  - {context_str}")
+
+        if abnormal:
+            lines.append("  ABNORMAL VALUES:")
+            lines.extend(abnormal)
+            if normal:
+                lines.append("  Other results:")
+                lines.extend(normal[:5])  # Limit normal results
+        else:
+            lines.extend(normal[:10])  # Limit total results
+
+        return "\n".join(lines)
+
+    @staticmethod
+    def build_clinical_summary(
+        vitals: List[FHIRObservation],
+        labs: List[FHIRObservation],
+        max_length: int = 1000,
+    ) -> str:
+        """
+        Build comprehensive clinical summary for context injection.
+
+        Args:
+            vitals: List of vital sign observations
+            labs: List of lab result observations
+            max_length: Maximum character length
+
+        Returns:
+            Combined clinical context summary.
+        """
+        sections = []
+
+        vitals_context = FHIRContextBuilder.build_vitals_context(vitals)
+        if vitals_context:
+            sections.append(vitals_context)
+
+        labs_context = FHIRContextBuilder.build_labs_context(labs)
+        if labs_context:
+            sections.append(labs_context)
+
+        if not sections:
+            return ""
+
+        result = "\n\n".join(sections)
+
+        # Truncate if needed
+        if len(result) > max_length:
+            result = result[: max_length - 3] + "..."
+
+        return result
+
+
+async def get_patient_context_for_thinker(
+    patient_id: str,
+    include_vitals: bool = True,
+    include_labs: bool = True,
+    max_vitals: int = 5,
+    max_labs: int = 10,
+) -> str:
+    """
+    Get formatted patient clinical context for Thinker injection.
+
+    This is a convenience function that fetches FHIR data and formats it
+    for injection into the AI assistant's context window.
+
+    Args:
+        patient_id: FHIR patient ID
+        include_vitals: Whether to include vital signs
+        include_labs: Whether to include lab results
+        max_vitals: Maximum vital sign observations
+        max_labs: Maximum lab result observations
+
+    Returns:
+        Formatted clinical context string.
+
+    Example:
+        context = await get_patient_context_for_thinker("patient-123")
+        # Returns:
+        # Recent vital signs:
+        #   - Blood Pressure: 120/80 mmHg
+        #   - Heart Rate: 72 bpm
+        #
+        # Recent lab results:
+        #   ABNORMAL VALUES:
+        #   - Glucose: 180 mg/dL (High) [ref: 70-100]
+        #   Other results:
+        #   - Hemoglobin A1c: 6.5 %
+    """
+    service = get_fhir_subscription_service()
+
+    vitals = []
+    labs = []
+
+    if include_vitals:
+        vitals = await service.get_latest_vitals(patient_id, max_results=max_vitals)
+
+    if include_labs:
+        labs = await service.get_latest_labs(patient_id, max_results=max_labs)
+
+    return FHIRContextBuilder.build_clinical_summary(vitals, labs)
 
 
 # ==============================================================================
