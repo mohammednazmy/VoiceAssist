@@ -1,14 +1,24 @@
 ---
-title: "Testing Contracts"
-slug: "testing-contracts"
+title: Testing Contracts
+slug: testing-contracts
 summary: "**Last Updated**: 2025-11-21 (Phase 7 - P3.4)"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["testing", "contracts"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - testing
+  - contracts
 category: testing
+ai_summary: >-
+  Last Updated: 2025-11-21 (Phase 7 - P3.4) Purpose: Guide for implementing and
+  running contract tests with Pact --- VoiceAssist V2 uses Pact for
+  consumer-driven contract testing. Contract tests ensure that the API Gateway
+  meets the expectations of all consumers (frontend, mobile apps) without
+  requ...
 ---
 
 # Contract Testing Guide

@@ -1,22 +1,22 @@
 {
   "version": "2.0.0",
-  "generated_at": "2025-12-04T09:59:30.420Z",
+  "generated_at": "2025-12-04T10:17:00.918Z",
   "description": "Code examples extracted from documentation",
   "stats": {
-    "total_examples": 3280,
+    "total_examples": 3294,
     "languages": 26,
     "top_languages": [
       {
         "language": "bash",
-        "count": 1097
+        "count": 1098
       },
       {
         "language": "text",
-        "count": 607
+        "count": 612
       },
       {
         "language": "typescript",
-        "count": 458
+        "count": 460
       },
       {
         "language": "python",
@@ -24,11 +24,11 @@
       },
       {
         "language": "json",
-        "count": 180
+        "count": 183
       },
       {
         "language": "yaml",
-        "count": 174
+        "count": 176
       },
       {
         "language": "tsx",
@@ -155,7 +155,7 @@
       ]
     },
     "css": {
-      "count": 18,
+      "count": 19,
       "examples": [
         {
           "id": "ACCESSIBILITY_AUDIT.md:4",
@@ -246,11 +246,16 @@
           "id": "design-system/PHASE_1_BREAKDOWN.md:13",
           "doc_path": "design-system/PHASE_1_BREAKDOWN.md",
           "description": "3. Add base styles"
+        },
+        {
+          "id": "planning/SPRINT_3_DESIGN_DOCS.md:11",
+          "doc_path": "planning/SPRINT_3_DESIGN_DOCS.md",
+          "description": "CSS Variables"
         }
       ]
     },
     "bash": {
-      "count": 1097,
+      "count": 1098,
       "examples": [
         {
           "id": "ACCESSIBILITY_AUDIT.md:7",
@@ -355,7 +360,7 @@
       ]
     },
     "text": {
-      "count": 607,
+      "count": 612,
       "examples": [
         {
           "id": "ADMIN_PANEL_DEPLOYMENT.md:3",
@@ -510,7 +515,7 @@
       ]
     },
     "json": {
-      "count": 180,
+      "count": 183,
       "examples": [
         {
           "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:2",
@@ -615,7 +620,7 @@
       ]
     },
     "typescript": {
-      "count": 458,
+      "count": 460,
       "examples": [
         {
           "id": "ADMIN_PANEL_LOGIN_FIX.md:2",
@@ -950,7 +955,7 @@
       ]
     },
     "yaml": {
-      "count": 174,
+      "count": 176,
       "examples": [
         {
           "id": "ANSIBLE_GUIDE.md:1",
@@ -2182,7 +2187,7 @@
       ]
     },
     "planning": {
-      "count": 685,
+      "count": 699,
       "examples": [
         {
           "id": "DEVELOPMENT_PHASES.md:0",
@@ -2492,12 +2497,1208 @@
       ]
     }
   },
+  "by_tag": {
+    "snippet": {
+      "count": 846,
+      "languages": {
+        "tsx": 9,
+        "css": 17,
+        "bash": 159,
+        "text": 265,
+        "apache": 5,
+        "diff": 2,
+        "typescript": 141,
+        "python": 183,
+        "markdown": 6,
+        "promql": 8,
+        "mermaid": 4,
+        "sql": 6,
+        "txt": 2,
+        "javascript": 22,
+        "hcl": 1,
+        "http": 10,
+        "mdx": 3,
+        "env": 1,
+        "ini": 1,
+        "cron": 1
+      },
+      "examples": [
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:0",
+          "language": "tsx",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:1",
+          "language": "tsx",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:3",
+          "language": "tsx",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:4",
+          "language": "css",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:1",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:4",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:7",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:8",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:11",
+          "language": "apache",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:13",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        }
+      ]
+    },
+    "react": {
+      "count": 147,
+      "languages": {
+        "tsx": 30,
+        "typescript": 94,
+        "python": 1,
+        "xml": 1,
+        "mermaid": 10,
+        "html": 2,
+        "text": 6,
+        "markdown": 1,
+        "mdx": 2
+      },
+      "examples": [
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:2",
+          "language": "tsx",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:5",
+          "language": "tsx",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:6",
+          "language": "tsx",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:3",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:16",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:27",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:29",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:31",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "DOCUMENTATION_SITE_SPECS.md:5",
+          "language": "tsx",
+          "doc_path": "DOCUMENTATION_SITE_SPECS.md"
+        },
+        {
+          "id": "DOCUMENTATION_SITE_SPECS.md:6",
+          "language": "tsx",
+          "doc_path": "DOCUMENTATION_SITE_SPECS.md"
+        }
+      ]
+    },
+    "database": {
+      "count": 522,
+      "languages": {
+        "tsx": 16,
+        "text": 61,
+        "bash": 151,
+        "sql": 32,
+        "python": 77,
+        "typescript": 102,
+        "yaml": 39,
+        "markdown": 11,
+        "json": 23,
+        "http": 3,
+        "javascript": 3,
+        "mermaid": 1,
+        "css": 2,
+        "ini": 1
+      },
+      "examples": [
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:5",
+          "language": "tsx",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:3",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:6",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:11",
+          "language": "sql",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:14",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:15",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:5",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:7",
+          "language": "python",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:11",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:12",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        }
+      ]
+    },
+    "environment": {
+      "count": 70,
+      "languages": {
+        "bash": 35,
+        "typescript": 18,
+        "yaml": 1,
+        "text": 7,
+        "python": 4,
+        "tsx": 3,
+        "javascript": 1,
+        "txt": 1
+      },
+      "examples": [
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:7",
+          "language": "bash",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:2",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:3",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:1",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:3",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:12",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "BACKEND_ARCHITECTURE.md:1",
+          "language": "text",
+          "doc_path": "BACKEND_ARCHITECTURE.md"
+        },
+        {
+          "id": "CONFIGURATION_REFERENCE.md:13",
+          "language": "bash",
+          "doc_path": "CONFIGURATION_REFERENCE.md"
+        },
+        {
+          "id": "CONFIGURATION_REFERENCE.md:14",
+          "language": "bash",
+          "doc_path": "CONFIGURATION_REFERENCE.md"
+        },
+        {
+          "id": "DEPLOYMENT_GUIDE.md:2",
+          "language": "bash",
+          "doc_path": "DEPLOYMENT_GUIDE.md"
+        }
+      ]
+    },
+    "package-manager": {
+      "count": 155,
+      "languages": {
+        "bash": 155
+      },
+      "examples": [
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:7",
+          "language": "bash",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:0",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:6",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:10",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:1",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:6",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:18",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:7",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "BACKEND_ARCHITECTURE.md:10",
+          "language": "bash",
+          "doc_path": "BACKEND_ARCHITECTURE.md"
+        },
+        {
+          "id": "BACKEND_ARCHITECTURE.md:11",
+          "language": "bash",
+          "doc_path": "BACKEND_ARCHITECTURE.md"
+        }
+      ]
+    },
+    "system": {
+      "count": 188,
+      "languages": {
+        "bash": 188
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:2",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:9",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:6",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:13",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:1",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:2",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:29",
+          "language": "bash",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "CHAOS_ENGINEERING.md:2",
+          "language": "bash",
+          "doc_path": "CHAOS_ENGINEERING.md"
+        },
+        {
+          "id": "CHAOS_ENGINEERING.md:23",
+          "language": "bash",
+          "doc_path": "CHAOS_ENGINEERING.md"
+        },
+        {
+          "id": "CHAOS_ENGINEERING.md:24",
+          "language": "bash",
+          "doc_path": "CHAOS_ENGINEERING.md"
+        }
+      ]
+    },
+    "api": {
+      "count": 835,
+      "languages": {
+        "text": 160,
+        "apache": 4,
+        "typescript": 69,
+        "bash": 375,
+        "python": 92,
+        "tsx": 15,
+        "yaml": 37,
+        "json": 25,
+        "markdown": 7,
+        "nginx": 2,
+        "http": 13,
+        "env": 5,
+        "xml": 1,
+        "sql": 2,
+        "hcl": 3,
+        "javascript": 17,
+        "mermaid": 5,
+        "html": 2,
+        "promql": 1
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:3",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:5",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:12",
+          "language": "apache",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:1",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:2",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:3",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:4",
+          "language": "apache",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:7",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:8",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:9",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        }
+      ]
+    },
+    "http": {
+      "count": 487,
+      "languages": {
+        "text": 116,
+        "bash": 113,
+        "python": 101,
+        "typescript": 61,
+        "yaml": 33,
+        "json": 8,
+        "markdown": 5,
+        "http": 13,
+        "tsx": 18,
+        "env": 1,
+        "javascript": 8,
+        "mermaid": 7,
+        "promql": 3
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:3",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:5",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:8",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:20",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:24",
+          "language": "python",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:6",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:8",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:0",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:1",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:5",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        }
+      ]
+    },
+    "authentication": {
+      "count": 492,
+      "languages": {
+        "text": 112,
+        "bash": 105,
+        "sql": 8,
+        "typescript": 62,
+        "python": 101,
+        "json": 25,
+        "yaml": 18,
+        "markdown": 7,
+        "http": 8,
+        "env": 4,
+        "xml": 1,
+        "javascript": 10,
+        "mermaid": 5,
+        "tsx": 25,
+        "txt": 1
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:3",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:0",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:0",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:1",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:8",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:9",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:10",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:11",
+          "language": "sql",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:16",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:20",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        }
+      ]
+    },
+    "cache": {
+      "count": 360,
+      "languages": {
+        "text": 60,
+        "bash": 137,
+        "json": 19,
+        "yaml": 40,
+        "python": 53,
+        "markdown": 2,
+        "ini": 2,
+        "typescript": 24,
+        "diff": 1,
+        "sql": 2,
+        "hcl": 4,
+        "http": 1,
+        "env": 2,
+        "mermaid": 6,
+        "tsx": 3,
+        "promql": 3,
+        "txt": 1
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:5",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:20",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:2",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:3",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:4",
+          "language": "json",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:9",
+          "language": "json",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:10",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:5",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:1",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:4",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        }
+      ]
+    },
+    "realtime": {
+      "count": 224,
+      "languages": {
+        "text": 66,
+        "typescript": 56,
+        "bash": 31,
+        "python": 30,
+        "json": 8,
+        "yaml": 4,
+        "mermaid": 6,
+        "javascript": 9,
+        "tsx": 10,
+        "env": 2,
+        "apache": 1,
+        "txt": 1
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:5",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:3",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:14",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:17",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ARCHITECTURE.md:0",
+          "language": "text",
+          "doc_path": "ARCHITECTURE.md"
+        },
+        {
+          "id": "ARCHITECTURE.md:1",
+          "language": "text",
+          "doc_path": "ARCHITECTURE.md"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:3",
+          "language": "text",
+          "doc_path": "ARCHITECTURE_V2.md"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:8",
+          "language": "text",
+          "doc_path": "ARCHITECTURE_V2.md"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:11",
+          "language": "text",
+          "doc_path": "ARCHITECTURE_V2.md"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:20",
+          "language": "text",
+          "doc_path": "ARCHITECTURE_V2.md"
+        }
+      ]
+    },
+    "git": {
+      "count": 63,
+      "languages": {
+        "bash": 63
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:10",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:13",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:18",
+          "language": "bash",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:22",
+          "language": "bash",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:0",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:1",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:10",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:12",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:13",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:14",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        }
+      ]
+    },
+    "config": {
+      "count": 359,
+      "languages": {
+        "json": 183,
+        "yaml": 176
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:2",
+          "language": "json",
+          "doc_path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:4",
+          "language": "json",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:5",
+          "language": "json",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:9",
+          "language": "json",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:1",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:4",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:5",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:6",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:8",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:9",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        }
+      ]
+    },
+    "kubernetes": {
+      "count": 192,
+      "languages": {
+        "text": 33,
+        "yaml": 28,
+        "python": 33,
+        "bash": 93,
+        "json": 1,
+        "mermaid": 1,
+        "typescript": 1,
+        "markdown": 2
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:12",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:1",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:2",
+          "language": "text",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:8",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:12",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:13",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:3",
+          "language": "text",
+          "doc_path": "ARCHITECTURE_V2.md"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:20",
+          "language": "text",
+          "doc_path": "ARCHITECTURE_V2.md"
+        },
+        {
+          "id": "BACKEND_ARCHITECTURE.md:0",
+          "language": "text",
+          "doc_path": "BACKEND_ARCHITECTURE.md"
+        },
+        {
+          "id": "BACKEND_ARCHITECTURE.md:3",
+          "language": "python",
+          "doc_path": "BACKEND_ARCHITECTURE.md"
+        }
+      ]
+    },
+    "docker": {
+      "count": 477,
+      "languages": {
+        "bash": 348,
+        "yaml": 70,
+        "text": 40,
+        "markdown": 2,
+        "typescript": 7,
+        "json": 3,
+        "dockerfile": 1,
+        "python": 2,
+        "mermaid": 1,
+        "tsx": 2,
+        "css": 1
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:14",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:15",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:18",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:2",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:3",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:10",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:1",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:2",
+          "language": "text",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:9",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:11",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        }
+      ]
+    },
+    "component": {
+      "count": 100,
+      "languages": {
+        "typescript": 73,
+        "tsx": 27
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_SPECS.md:2",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:3",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:16",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:33",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:36",
+          "language": "tsx",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "DOCUMENTATION_SITE_SPECS.md:5",
+          "language": "tsx",
+          "doc_path": "DOCUMENTATION_SITE_SPECS.md"
+        },
+        {
+          "id": "DOCUMENTATION_SITE_SPECS.md:6",
+          "language": "tsx",
+          "doc_path": "DOCUMENTATION_SITE_SPECS.md"
+        },
+        {
+          "id": "FRONTEND_COMPLETION_PLAN.md:7",
+          "language": "typescript",
+          "doc_path": "FRONTEND_COMPLETION_PLAN.md"
+        },
+        {
+          "id": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md:3",
+          "language": "tsx",
+          "doc_path": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md"
+        },
+        {
+          "id": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md:4",
+          "language": "tsx",
+          "doc_path": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md"
+        }
+      ]
+    },
+    "testing": {
+      "count": 197,
+      "languages": {
+        "python": 61,
+        "yaml": 6,
+        "bash": 53,
+        "typescript": 57,
+        "text": 4,
+        "tsx": 15,
+        "txt": 1
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_SPECS.md:7",
+          "language": "python",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:3",
+          "language": "yaml",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:4",
+          "language": "yaml",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:5",
+          "language": "yaml",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:31",
+          "language": "bash",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:17",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:18",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:25",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "DEEP_VERIFICATION_QA_SUMMARY.md:6",
+          "language": "python",
+          "doc_path": "DEEP_VERIFICATION_QA_SUMMARY.md"
+        },
+        {
+          "id": "DEEP_VERIFICATION_QA_SUMMARY.md:21",
+          "language": "python",
+          "doc_path": "DEEP_VERIFICATION_QA_SUMMARY.md"
+        }
+      ]
+    },
+    "infrastructure": {
+      "count": 70,
+      "languages": {
+        "text": 10,
+        "yaml": 2,
+        "bash": 44,
+        "markdown": 1,
+        "json": 2,
+        "hcl": 10,
+        "env": 1
+      },
+      "examples": [
+        {
+          "id": "ARCHITECTURE_V2.md:20",
+          "language": "text",
+          "doc_path": "ARCHITECTURE_V2.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:0",
+          "language": "text",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:1",
+          "language": "text",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:8",
+          "language": "yaml",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:9",
+          "language": "yaml",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:10",
+          "language": "text",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:13",
+          "language": "text",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:22",
+          "language": "bash",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:39",
+          "language": "bash",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:41",
+          "language": "bash",
+          "doc_path": "CICD_GUIDE.md"
+        }
+      ]
+    }
+  },
   "recent_examples": [
     {
       "id": "ACCESSIBILITY_AUDIT.md:0",
       "doc_path": "ACCESSIBILITY_AUDIT.md",
       "doc_title": "Accessibility Audit",
       "language": "tsx",
+      "tags": ["snippet"],
       "description": "Improvements Needed:",
       "code": "// Add skip navigation\n<a href=\"#main-content\" className=\"sr-only focus:not-sr-only\">\n  Skip to main content\n</a>\n\n// Ensure all modals have focus trap\n// Use react-focus-lock or similar",
       "full_length": 186,
@@ -2508,6 +3709,7 @@
       "doc_path": "ACCESSIBILITY_AUDIT.md",
       "doc_title": "Accessibility Audit",
       "language": "tsx",
+      "tags": ["snippet"],
       "description": "Improvements:",
       "code": "// Message streaming\n<div aria-live=\"polite\" aria-atomic=\"true\">\n  {isTyping && <p>Assistant is typing...</p>}\n</div>\n\n// File upload progress\n<div\n  role=\"progressbar\"\n  aria-valuenow={progress}\n  aria-valuemin={0}\n  aria-valuemax={100}\n  aria-label=\"File upload progress\"\n>\n  {progress}%\n</div>",
       "full_length": 296,
@@ -2518,6 +3720,7 @@
       "doc_path": "ACCESSIBILITY_AUDIT.md",
       "doc_title": "Accessibility Audit",
       "language": "tsx",
+      "tags": ["react"],
       "description": "Improvements:",
       "code": "// Add live region for announcements\nconst [announcement, setAnnouncement] = useState(\"\");\n\n// Announce new messages\nuseEffect(() => {\n  if (newMessage && newMessage.role === \"assistant\") {\n    setAnnouncement(`New message from assistant: ${newMessage.content.substring(0, 100)}`);\n  }\n}, [newMessage]);\n\n<div role=\"status\" aria-live=\"polite\" aria-atomic=\"true\" className=\"sr-only\">\n  {announcement}\n</div>;",
       "full_length": 407,
@@ -2528,6 +3731,7 @@
       "doc_path": "ACCESSIBILITY_AUDIT.md",
       "doc_title": "Accessibility Audit",
       "language": "tsx",
+      "tags": ["snippet"],
       "description": "Improvements:",
       "code": "// Proper form field association\n<label htmlFor=\"patient-age\" className=\"...\">\n  Age <span aria-label=\"required\">*</span>\n</label>\n<input\n  id=\"patient-age\"\n  type=\"number\"\n  aria-required=\"true\"\n  aria-invalid={errors.age ? \"true\" : \"false\"}\n  aria-describedby={errors.age ? \"age-error\" : undefined}\n/>\n{errors.age && (\n  <span id=\"age-error\" role=\"alert\" className=\"...\">\n    {errors.age}\n  </span>\n)}",
       "full_length": 403,
@@ -2538,6 +3742,7 @@
       "doc_path": "ACCESSIBILITY_AUDIT.md",
       "doc_title": "Accessibility Audit",
       "language": "css",
+      "tags": ["snippet"],
       "description": "Improvements:",
       "code": "/* Enhanced focus indicators */\n*:focus-visible {\n  outline: 2px solid var(--color-primary-500);\n  outline-offset: 2px;\n}\n\n/* High contrast focus for critical elements */\nbutton:focus-visible,\na:focus-visible {\n  outline: 3px solid var(--color-primary-500);\n  outline-offset: 2px;\n}",
       "full_length": 282,
@@ -2548,6 +3753,7 @@
       "doc_path": "ACCESSIBILITY_AUDIT.md",
       "doc_title": "Accessibility Audit",
       "language": "tsx",
+      "tags": ["database", "react"],
       "description": "```",
       "code": "// Focus management in modals\nuseEffect(() => {\n  if (isOpen) {\n    const previouslyFocused = document.activeElement as HTMLElement;\n    const firstFocusable = dialogRef.current?.querySelector(\n      'button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])',\n    ) as HTMLElement;\n\n    firstFocusable?.focus();\n\n    return () => {\n      previouslyFocused?.focus();\n    };\n  }\n}, [isOpen]);",
       "full_length": 406,
@@ -2558,6 +3764,7 @@
       "doc_path": "ACCESSIBILITY_AUDIT.md",
       "doc_title": "Accessibility Audit",
       "language": "tsx",
+      "tags": ["react"],
       "description": "Improvements:",
       "code": "// SVG with title\n<svg aria-labelledby=\"icon-title\" role=\"img\">\n  <title id=\"icon-title\">Settings</title>\n  <path d=\"...\" />\n</svg>\n\n// Image preview\n<img\n  src={preview.url}\n  alt={`Preview of uploaded file: ${file.name}`}\n  loading=\"lazy\"\n/>",
       "full_length": 243,
@@ -2568,6 +3775,7 @@
       "doc_path": "ACCESSIBILITY_AUDIT.md",
       "doc_title": "Accessibility Audit",
       "language": "bash",
+      "tags": ["environment", "package-manager"],
       "description": "Tools:",
       "code": "# Install axe-core for testing\nnpm install --save-dev @axe-core/react\n\n# Add to app entry point (dev only)\nif (process.env.NODE_ENV !== 'production') {\n  import('@axe-core/react').then(axe => {\n    axe.default(React, ReactDOM, 1000);\n  });\n}",
       "full_length": 241,
@@ -2578,6 +3786,7 @@
       "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
       "doc_title": "Admin Panel Deployment",
       "language": "bash",
+      "tags": ["package-manager"],
       "description": "1. Build Process",
       "code": "cd ~/VoiceAssist/apps/admin-panel\nnpm run build",
       "full_length": 47,
@@ -2588,6 +3797,7 @@
       "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
       "doc_title": "Admin Panel Deployment",
       "language": "bash",
+      "tags": ["snippet"],
       "description": "2. File Deployment",
       "code": "# Create web directory\nsudo mkdir -p /var/www/admin.asimo.io\n\n# Copy built files\nsudo cp -r ~/VoiceAssist/apps/admin-panel/dist/* /var/www/admin.asimo.io/\n\n# Set ownership\nsudo chown -R www-data:www-data /var/www/admin.asimo.io",
       "full_length": 227,
@@ -2598,6 +3808,7 @@
       "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
       "doc_title": "Admin Panel Deployment",
       "language": "bash",
+      "tags": ["system"],
       "description": "4. Apache Activation",
       "code": "# Enable site\nsudo a2ensite admin.asimo.io.conf\n\n# Test configuration\nsudo apache2ctl configtest\n\n# Reload Apache\nsudo systemctl reload apache2",
       "full_length": 143,
@@ -2608,6 +3819,7 @@
       "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
       "doc_title": "Admin Panel Deployment",
       "language": "text",
+      "tags": ["api", "http", "database", "authentication"],
       "description": "HTTP Headers",
       "code": "HTTP/1.1 200 OK\nDate: Sun, 23 Nov 2025 01:05:50 GMT\nServer: Apache/2.4.58 (Ubuntu)\nX-Content-Type-Options: nosniff\nX-Frame-Options: SAMEORIGIN\nX-XSS-Protection: 1; mode=block\nReferrer-Policy: strict-origin-when-cross-origin\nContent-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' http://localhost:8000 https://api.asimo.io;\nAccess-Control-Allow-Origin: *\nAc...",
       "full_length": 648,
@@ -2618,6 +3830,7 @@
       "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
       "doc_title": "Admin Panel Deployment",
       "language": "text",
+      "tags": ["snippet"],
       "description": "Frontend (Static SPA)",
       "code": "Browser\n   ↓ HTTPS\nApache (admin.asimo.io:443)\n   ↓ Serves static files\n/var/www/admin.asimo.io/\n   ├── index.html\n   └── assets/\n       ├── index-C3epBpcL.js\n       └── index-D8qvZpew.css",
       "full_length": 188,
@@ -2628,6 +3841,7 @@
       "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
       "doc_title": "Admin Panel Deployment",
       "language": "text",
+      "tags": ["api", "http", "cache", "realtime"],
       "description": "API Communication",
       "code": "Admin Panel (Browser)\n   ↓ HTTP/HTTPS\nAPI Backend (localhost:8000 or api.asimo.io)\n   ↓ REST/WebSocket\nServices (PostgreSQL, Redis, Qdrant)",
       "full_length": 139,
@@ -2638,6 +3852,7 @@
       "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
       "doc_title": "Admin Panel Deployment",
       "language": "bash",
+      "tags": ["package-manager"],
       "description": "2. **Build**:",
       "code": "cd ~/VoiceAssist/apps/admin-panel\n   npm run build",
       "full_length": 50,
@@ -2648,6 +3863,7 @@
       "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
       "doc_title": "Admin Panel Deployment",
       "language": "bash",
+      "tags": ["snippet"],
       "description": "3. **Deploy**:",
       "code": "sudo cp -r dist/* /var/www/admin.asimo.io/\n   sudo chown -R www-data:www-data /var/www/admin.asimo.io",
       "full_length": 101,
@@ -2658,6 +3874,7 @@
       "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
       "doc_title": "Admin Panel Deployment",
       "language": "bash",
+      "tags": ["snippet"],
       "description": "**Apache Logs:**",
       "code": "# Error log\nsudo tail -f /var/log/apache2/admin-voiceassist-error.log\n\n# Access log\nsudo tail -f /var/log/apache2/admin-voiceassist-access.log",
       "full_length": 142,
@@ -2668,6 +3885,7 @@
       "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
       "doc_title": "Admin Panel Deployment",
       "language": "bash",
+      "tags": ["system"],
       "description": "**Service Status:**",
       "code": "# Apache status\nsudo systemctl status apache2\n\n# Test configuration\nsudo apache2ctl configtest\n\n# List virtual hosts\nsudo apache2ctl -S | grep admin",
       "full_length": 148,
@@ -2678,6 +3896,7 @@
       "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
       "doc_title": "Admin Panel Deployment",
       "language": "bash",
+      "tags": ["git", "package-manager"],
       "description": "If issues occur, rollback to previous version:",
       "code": "# 1. Checkout previous commit\ncd ~/VoiceAssist\ngit log --oneline | head -10  # Find previous commit\ngit checkout <previous-commit>\n\n# 2. Rebuild\ncd apps/admin-panel\nnpm run build\n\n# 3. Redeploy\nsudo cp -r dist/* /var/www/admin.asimo.io/\nsudo chown -R www-data:www-data /var/www/admin.asimo.io\n\n# 4. Return to main\ngit checkout main",
       "full_length": 331,
@@ -2688,6 +3907,7 @@
       "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
       "doc_title": "Admin Panel Deployment",
       "language": "apache",
+      "tags": ["snippet"],
       "description": "1. **HSTS Header**",
       "code": "Header always set Strict-Transport-Security \"max-age=31536000; includeSubDomains\"",
       "full_length": 81,
@@ -2698,6 +3918,7 @@
       "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
       "doc_title": "Admin Panel Deployment",
       "language": "apache",
+      "tags": ["api"],
       "description": "2. **Restrict CORS**",
       "code": "Header always set Access-Control-Allow-Origin \"https://admin.asimo.io\"",
       "full_length": 70,
@@ -2708,6 +3929,7 @@
       "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
       "doc_title": "Admin Panel Deployment",
       "language": "bash",
+      "tags": ["snippet"],
       "description": "   - Enable HTTP/2 protocol for faster loading",
       "code": "sudo a2enmod http2",
       "full_length": 18,
@@ -2718,6 +3940,7 @@
       "doc_path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
       "doc_title": "Admin Panel Implementation Summary",
       "language": "text",
+      "tags": ["authentication"],
       "description": "📈 Code Statistics",
       "code": "Total Files Created:      9\nTotal Files Modified:     3\nTotal Lines Added:        2,466\nTotal Lines Removed:      36\nDocumentation:            1,100+ lines\n\nComponents:              4 (AuthContext, ProtectedRoute, AdminLayoutWithRouter, and 4 page components)\nPages:                   5 (Login, Dashboard, Users, KB, System)\nContexts:                1 (AuthContext)\nRoutes:                  6 (/, /login, /dashboard, /users, /knowledge-base, /system)",
       "full_length": 450,
@@ -2728,6 +3951,7 @@
       "doc_path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
       "doc_title": "Admin Panel Implementation Summary",
       "language": "bash",
+      "tags": ["package-manager"],
       "description": "Build Testing",
       "code": "npm run build",
       "full_length": 13,
@@ -2738,6 +3962,7 @@
       "doc_path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
       "doc_title": "Admin Panel Implementation Summary",
       "language": "json",
+      "tags": ["config"],
       "description": "📦 Dependencies Added",
       "code": "{\n  \"react-router-dom\": \"^6.x\",\n  \"@heroicons/react\": \"^2.x\",\n  \"recharts\": \"^2.x\",\n  \"date-fns\": \"^3.x\"\n}",
       "full_length": 106,
@@ -2748,6 +3973,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "text",
+      "tags": ["authentication"],
       "description": "1. Firebase Errors (Wrong Bundle)",
       "code": "Firebase: Error (auth/network-request-failed)",
       "full_length": 45,
@@ -2758,6 +3984,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "text",
+      "tags": ["api", "authentication"],
       "description": "2. CORS Error",
       "code": "Access to fetch at 'http://localhost:8000/api/auth/login' from origin 'https://admin.asimo.io'\nhas been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present",
       "full_length": 178,
@@ -2768,6 +3995,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "typescript",
+      "tags": ["api", "environment"],
       "description": "**Original Code**:",
       "code": "const API_BASE = import.meta.env.VITE_API_URL || \"http://localhost:8000\";",
       "full_length": 73,
@@ -2778,6 +4006,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "typescript",
+      "tags": ["api", "environment"],
       "description": "**Changed**:",
       "code": "// Before\nconst API_BASE = import.meta.env.VITE_API_URL || \"http://localhost:8000\";\n\n// After\nconst API_BASE = import.meta.env.VITE_API_URL || \"\";",
       "full_length": 146,
@@ -2788,6 +4017,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "apache",
+      "tags": ["api"],
       "description": "**Added**:",
       "code": "# Proxy API requests to backend\nProxyPreserveHost On\nProxyPass /api http://localhost:8000/api\nProxyPassReverse /api http://localhost:8000/api\nProxyPass /health http://localhost:8000/health\nProxyPassReverse /health http://localhost:8000/health",
       "full_length": 242,
@@ -2798,6 +4028,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "apache",
+      "tags": ["snippet"],
       "description": "**Added to rewrite conditions**:",
       "code": "RewriteCond %{REQUEST_URI} !^/api\nRewriteCond %{REQUEST_URI} !^/health",
       "full_length": 70,
@@ -2808,6 +4039,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "bash",
+      "tags": ["database", "system", "package-manager"],
       "description": "4. Rebuilt and Redeployed ✅",
       "code": "# Rebuild with new configuration\ncd ~/VoiceAssist/apps/admin-panel\nnpm run build\n\n# Deploy new build\nsudo cp -r dist/* /var/www/admin.asimo.io/\nsudo chown -R www-data:www-data /var/www/admin.asimo.io\n\n# Update Apache config\nsudo cp /tmp/admin.asimo.io-static.conf /etc/apache2/sites-available/admin.asimo.io.conf\n\n# Reload Apache\nsudo systemctl reload apache2",
       "full_length": 359,
@@ -2818,6 +4050,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "bash",
+      "tags": ["api"],
       "description": "1. Health Endpoint ✅",
       "code": "$ curl -s https://admin.asimo.io/health | jq .\n{\n  \"status\": \"healthy\",\n  \"version\": \"0.1.0\",\n  \"timestamp\": 1763861360.3138871\n}",
       "full_length": 129,
@@ -2828,6 +4061,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "bash",
+      "tags": ["api", "http", "authentication"],
       "description": "2. Auth Endpoint ✅",
       "code": "$ curl -s https://admin.asimo.io/api/auth/login -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\":\"test@example.com\",\"password\":\"test\"}'\n\n# Returns proper validation error (endpoint working)",
       "full_length": 205,
@@ -2838,6 +4072,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "text",
+      "tags": ["api", "authentication"],
       "description": "Before (Broken)",
       "code": "Browser (https://admin.asimo.io)\n   ↓ Fetch http://localhost:8000/api/auth/login\n   ✗ CORS Error: Cross-origin request blocked",
       "full_length": 126,
@@ -2848,6 +4083,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "text",
+      "tags": ["api", "authentication"],
       "description": "After (Working)",
       "code": "Browser (https://admin.asimo.io)\n   ↓ Fetch https://admin.asimo.io/api/auth/login (same-origin)\n   ↓\nApache (admin.asimo.io:443)\n   ↓ ProxyPass to http://localhost:8000/api/auth/login\n   ↓\nBackend (voiceassist-server:8000)\n   ↓ Process request\n   ↓\nApache\n   ↓ Return response\n   ↓\nBrowser\n   ✓ Success: Same-origin, no CORS issues",
       "full_length": 331,
@@ -2858,6 +4094,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "sql",
+      "tags": ["database", "authentication"],
       "description": "Created users table and admin user:",
       "code": "-- Create users table\nCREATE TABLE users (\n    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n    email VARCHAR(255) NOT NULL UNIQUE,\n    full_name VARCHAR(255) NOT NULL DEFAULT 'User',\n    hashed_password VARCHAR(255),\n    is_active BOOLEAN NOT NULL DEFAULT true,\n    is_admin BOOLEAN NOT NULL DEFAULT false,\n    nextcloud_user_id VARCHAR(255) UNIQUE,\n    created_at TIMESTAMP NOT NULL DEFAULT NOW(),\n    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),\n    last_login TIMESTAMP\n);\n\n-- Create admin user...",
       "full_length": 714,
@@ -2868,6 +4105,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "text",
+      "tags": ["api", "kubernetes"],
       "description": "Git Commits",
       "code": "e7125e3 - fix(admin-panel): Use same-origin API requests for production deployment\n- Changed API_BASE from 'http://localhost:8000' to '' (same origin)\n- API requests now go through Apache proxy\n- Fixes CORS issues in production\n- Admin panel now works at https://admin.asimo.io",
       "full_length": 277,
@@ -2878,6 +4116,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "bash",
+      "tags": ["api", "system"],
       "description": "If Apache proxy not working:",
       "code": "# Check Apache is running\nsudo systemctl status apache2\n\n# Check site is enabled\nsudo a2query -s admin.asimo.io\n\n# Check proxy module is enabled\nsudo a2query -m proxy\nsudo a2query -m proxy_http\n\n# Enable if needed\nsudo a2enmod proxy\nsudo a2enmod proxy_http\nsudo systemctl reload apache2\n\n# Test proxy\ncurl -s https://admin.asimo.io/health",
       "full_length": 338,
@@ -2888,6 +4127,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "bash",
+      "tags": ["docker", "database"],
       "description": "If database connection fails:",
       "code": "# Check container is running\ndocker ps | grep voiceassist-server\n\n# Check users table exists\ndocker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c \"\\dt users\"\n\n# Check admin user exists\ndocker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c \"SELECT email, is_admin FROM users WHERE email='admin@asimo.io';\"",
       "full_length": 339,
@@ -2898,6 +4138,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "bash",
+      "tags": ["docker", "database"],
       "description": "3. (Current) Update via database:",
       "code": "docker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c \"\n   UPDATE users\n   SET hashed_password = '<new-bcrypt-hash>'\n   WHERE email = 'admin@asimo.io';\n   \"",
       "full_length": 173,
@@ -2908,6 +4149,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "text",
+      "tags": ["authentication"],
       "description": "Error Message",
       "code": "Unexpected token 'I', 'Internal S'... is not valid JSON",
       "full_length": 55,
@@ -2918,6 +4160,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "text",
+      "tags": ["snippet"],
       "description": "- Docker logs showed:",
       "code": "ValueError: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])",
       "full_length": 107,
@@ -2928,6 +4171,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "bash",
+      "tags": ["api", "docker", "package-manager"],
       "description": "1. **Temporary fix** (in running container):",
       "code": "docker exec voiceassist-server pip install 'bcrypt==4.1.3' --force-reinstall\n   docker restart voiceassist-server",
       "full_length": 113,
@@ -2938,6 +4182,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "diff",
+      "tags": ["snippet"],
       "description": "2. **Permanent fix** (in requirements.txt):",
       "code": "# Security\n   python-jose[cryptography]==3.5.0\n   passlib[bcrypt]==1.7.4\n   -bcrypt==5.0.0\n   +bcrypt==4.1.3  # Pinned to 4.1.3 for passlib compatibility",
       "full_length": 153,
@@ -2948,6 +4193,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "bash",
+      "tags": ["api", "http", "cache", "authentication"],
       "description": "Verification",
       "code": "# Test login endpoint\ncurl -s https://admin.asimo.io/api/auth/login -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\":\"admin@asimo.io\",\"password\":\"admin123\"}' | jq .\n\n# Expected response:\n{\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"refresh_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"token_type\": \"bearer\",\n  \"expires_in\": 900\n}",
       "full_length": 375,
@@ -2958,6 +4204,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "text",
+      "tags": ["authentication"],
       "description": "Error Message",
       "code": "api/auth/login:1 Failed to load resource: the server responded with a status of 401 (Unauthorized)",
       "full_length": 98,
@@ -2968,6 +4215,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "typescript",
+      "tags": ["api", "authentication"],
       "description": "**Changes:**",
       "code": "// Before: Expected user in login response\nconst response = await fetchAPI<{ access_token: string; user: User }>('/api/auth/login', ...);\nif (!response.user.is_admin) { ... }\n\n// After: Fetch user data separately\nconst response = await fetchAPI<{ access_token: string; refresh_token: string; token_type: string }>('/api/auth/login', ...);\nlocalStorage.setItem('auth_token', response.access_token);\n\nconst userData = await fetchAPI<User>('/api/auth/me', {\n  headers: { Authorization: `Bearer ${respons...",
       "full_length": 655,
@@ -2978,6 +4226,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "text",
+      "tags": ["authentication"],
       "description": "Error Message",
       "code": "api/auth/login:1 Failed to load resource: the server responded with a status of 401 (Unauthorized)",
       "full_length": 98,
@@ -2988,6 +4237,7 @@
       "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
       "doc_title": "Admin Panel Login Fix",
       "language": "python",
+      "tags": ["http", "authentication"],
       "description": "**Pydantic Response Validation Error:**",
       "code": "fastapi.exceptions.ResponseValidationError: 3 validation errors:\n  {'type': 'string_type', 'loc': ('response', 'id'), 'msg': 'Input should be a valid string', 'input': UUID('e70ba65f-4283-4aca-aa6e-13ab97e4cbc4')}\n  {'type': 'string_type', 'loc': ('response', 'created_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2025, 11, 23, 1, 36, 37, 510969)}\n  {'type': 'string_type', 'loc': ('response', 'last_login'), 'msg': 'Input should be a valid string', 'input': datetime.dat...",
       "full_length": 539,
@@ -2997,7 +4247,28 @@
   "usage_notes": [
     "Use by_language to find examples in specific languages",
     "Use by_category to find examples related to specific topics",
+    "Use by_tag to find examples by semantic type (api, database, testing, etc.)",
     "Code snippets are truncated to 500 chars - fetch full doc for complete code",
-    "Each example has an id in format \"doc_path:index\""
-  ]
+    "Each example has an id in format \"doc_path:index\" and semantic tags"
+  ],
+  "tag_descriptions": {
+    "api": "Examples involving REST APIs, HTTP calls, or API endpoints",
+    "http": "HTTP methods (GET, POST, PUT, DELETE)",
+    "docker": "Docker/container configuration and commands",
+    "kubernetes": "Kubernetes manifests and kubectl commands",
+    "infrastructure": "Infrastructure as code (Terraform, AWS)",
+    "database": "SQL queries and database operations",
+    "cache": "Redis and caching patterns",
+    "testing": "Unit tests, integration tests, assertions",
+    "config": "Configuration files (YAML, JSON)",
+    "environment": "Environment variables and dotenv",
+    "system": "System administration commands",
+    "git": "Git operations and commands",
+    "package-manager": "npm, pnpm, pip package management",
+    "react": "React hooks and components",
+    "component": "UI component patterns",
+    "authentication": "Auth, login, tokens, OAuth",
+    "realtime": "WebSocket and real-time communication",
+    "snippet": "General code snippets"
+  }
 }

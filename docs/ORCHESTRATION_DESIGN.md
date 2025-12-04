@@ -1,14 +1,23 @@
 ---
-title: "Orchestration Design"
-slug: "orchestration-design"
+title: Orchestration Design
+slug: orchestration-design
 summary: "**Last Updated**: 2025-11-20"
 status: stable
 stability: beta
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["orchestration", "design"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - orchestration
+  - design
 category: reference
+ai_summary: >-
+  Last Updated: 2025-11-20 Status: Canonical Reference Purpose: Define the
+  Conductor/Orchestrator that routes and processes clinical queries --- The
+  Query Orchestrator (also called "Conductor" or "RAG Service") is the central
+  component that: 1. Receives user queries 2. Makes routing decisions (PHI...
 ---
 
 # VoiceAssist V2 - Query Orchestration Design

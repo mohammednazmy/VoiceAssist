@@ -1,16 +1,39 @@
 ---
 title: Debugging Overview
 slug: debugging/overview
-summary: High-level guide on how to debug VoiceAssist - logs, metrics, common symptoms, and where to look.
+summary: >-
+  High-level guide on how to debug VoiceAssist - logs, metrics, common symptoms,
+  and where to look.
 status: stable
 stability: production
 owner: sre
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "ai-agents", "sre", "backend", "frontend"]
-tags: ["debugging", "runbook", "incident", "logs", "metrics", "troubleshooting"]
-relatedServices: ["api-gateway", "web-app", "admin-panel", "docs-site"]
+audience:
+  - human
+  - agent
+  - ai-agents
+  - sre
+  - backend
+  - frontend
+tags:
+  - debugging
+  - runbook
+  - incident
+  - logs
+  - metrics
+  - troubleshooting
+relatedServices:
+  - api-gateway
+  - web-app
+  - admin-panel
+  - docs-site
 category: debugging
-version: "1.0.0"
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 Audience: Developers, SREs, AI Assistants This guide
+  provides a high-level overview of debugging VoiceAssist components. For
+  detailed component-specific debugging, see the linked documents. --- ---
+  Location: docker logs voiceassist-server -f (VoiceAssist runs in Docker) K...
 ---
 
 # Debugging Overview

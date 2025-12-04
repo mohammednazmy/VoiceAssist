@@ -1,14 +1,27 @@
 ---
-title: "Phase 08 Api Contracts"
-slug: "phase-08-api-contracts"
-summary: "This document defines the API contracts between frontend and backend for Phase 8 features."
+title: Phase 08 Api Contracts
+slug: phase-08-api-contracts
+summary: >-
+  This document defines the API contracts between frontend and backend for Phase
+  8 features.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["backend"]
-tags: ["phase", "api", "contracts"]
+audience:
+  - backend
+  - ai-agents
+tags:
+  - phase
+  - api
+  - contracts
 category: api
+ai_summary: >-
+  This document defines the API contracts between frontend and backend for Phase
+  8 features. Last Updated: 2025-11-24 - Endpoint: GET
+  /api/export/sessions/{session_id}/export/markdown - Auth: Bearer token
+  required - Response: text/markdown file download - Frontend:
+  VoiceAssistApiClient.exportConver...
 ---
 
 # Phase 8 API Contracts

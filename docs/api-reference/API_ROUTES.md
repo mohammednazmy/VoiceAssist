@@ -6,11 +6,25 @@ status: stable
 stability: production
 owner: backend
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "backend", "frontend"]
-tags: ["api", "routes", "auto-generated"]
+audience:
+  - human
+  - agent
+  - backend
+  - frontend
+  - ai-agents
+tags:
+  - api
+  - routes
+  - auto-generated
 category: api
-relatedServices: ["api-gateway"]
-version: "1.0.0"
+relatedServices:
+  - api-gateway
+version: 1.0.0
+ai_summary: >-
+  Generated: 2025-11-27 12:24:10 UTC App: VoiceAssist API Gateway Version: 0.1.0
+  --- - Total Routes: 98 - Total Tags/Modules: 9 --- --- Most endpoints require
+  authentication via Bearer token: Authorization: Bearer <access_token> Obtain
+  tokens via /api/auth/login or /api/auth/register. --- The compl...
 ---
 
 # API Routes Reference

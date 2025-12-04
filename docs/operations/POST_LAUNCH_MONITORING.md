@@ -1,15 +1,34 @@
 ---
 title: Post-Launch Monitoring Guide
 slug: operations/post-launch-monitoring
-summary: Monitoring checklist and procedures for the VoiceAssist Voice Mode enhancement launch, including Epic FHIR integration monitoring.
+summary: >-
+  Monitoring checklist and procedures for the VoiceAssist Voice Mode enhancement
+  launch, including Epic FHIR integration monitoring.
 status: stable
 stability: production
 owner: ops
 lastUpdated: "2025-12-04"
-audience: ["human", "agent", "ops", "backend"]
-tags: ["monitoring", "post-launch", "operations", "fhir", "voice-mode"]
+audience:
+  - human
+  - agent
+  - ops
+  - backend
+  - ai-agents
+tags:
+  - monitoring
+  - post-launch
+  - operations
+  - fhir
+  - voice-mode
 category: operations
-relatedServices: ["api-gateway"]
+relatedServices:
+  - api-gateway
+ai_summary: >-
+  This guide covers monitoring procedures for the VoiceAssist Voice Mode
+  enhancement (Phases 1-10 + Epic FHIR Phase 6b/7) following the December 2025
+  launch. --- curl http://localhost:5057/health curl
+  http://localhost:5057/health/epic curl
+  http://localhost:5057/api/admin/provider-status curl http:/...
 ---
 
 # Post-Launch Monitoring Guide
@@ -35,6 +54,7 @@ curl http://localhost:5057/api/admin/epic/status | jq '.circuit_breaker.state'
 ```
 
 **Expected Values:**
+
 - Health: `{"status": "healthy"}`
 - Epic Health: `{"status": "healthy", "fallback_active": false}`
 - Circuit State: `"closed"`
@@ -156,13 +176,13 @@ GET /api/admin/feedback/summary?days=7
 
 ### Metrics to Track
 
-| Category | Metric | Target |
-|----------|--------|--------|
-| Voice Quality | User rating | > 4.0/5.0 |
-| EHR Integration | Order success rate | > 99% |
-| Dictation | Transcription accuracy | > 95% |
-| Emotion Detection | Detection confidence | > 0.7 |
-| Clinical Reasoning | Suggestion acceptance | > 60% |
+| Category           | Metric                 | Target    |
+| ------------------ | ---------------------- | --------- |
+| Voice Quality      | User rating            | > 4.0/5.0 |
+| EHR Integration    | Order success rate     | > 99%     |
+| Dictation          | Transcription accuracy | > 95%     |
+| Emotion Detection  | Detection confidence   | > 0.7     |
+| Clinical Reasoning | Suggestion acceptance  | > 60%     |
 
 ### Weekly Feedback Review
 
@@ -175,12 +195,12 @@ GET /api/admin/feedback/summary?days=7
 
 ## Escalation Contacts
 
-| Issue Type | Primary Contact | Escalation |
-|------------|-----------------|------------|
-| Epic FHIR Issues | oncall@voiceassist.io | epic-support@example.com |
-| Voice Pipeline | oncall@voiceassist.io | ai-team@voiceassist.io |
-| Security/PHI | security@voiceassist.io | compliance@voiceassist.io |
-| Infrastructure | oncall@voiceassist.io | infra-team@voiceassist.io |
+| Issue Type       | Primary Contact         | Escalation                |
+| ---------------- | ----------------------- | ------------------------- |
+| Epic FHIR Issues | oncall@voiceassist.io   | epic-support@example.com  |
+| Voice Pipeline   | oncall@voiceassist.io   | ai-team@voiceassist.io    |
+| Security/PHI     | security@voiceassist.io | compliance@voiceassist.io |
+| Infrastructure   | oncall@voiceassist.io   | infra-team@voiceassist.io |
 
 ---
 

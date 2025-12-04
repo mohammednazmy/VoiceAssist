@@ -1,14 +1,23 @@
 ---
-title: "Architecture"
-slug: "architecture"
+title: Architecture
+slug: architecture
 summary: "> **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["architecture"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - architecture
 category: architecture
+ai_summary: >-
+  > ⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2 > This describes the original
+  20-phase plan. > For the current architecture and phases, see: > > -
+  ARCHITECTURE_V2.md > - DEVELOPMENT_PHASES_V2.md > - START_HERE.md > -
+  Implementation Status VoiceAssist uses a distributed architecture with
+  components...
 ---
 
 > **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**

@@ -6,9 +6,20 @@ status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-12-02"
-audience: ["agent"]
-tags: ["quickstart", "ai", "agent", "automation"]
+audience:
+  - agent
+  - ai-agents
+tags:
+  - quickstart
+  - ai
+  - agent
+  - automation
 category: getting-started
+ai_summary: >-
+  Last Updated: 2025-12-01 This guide helps AI coding assistants (Claude, GPT,
+  Copilot, etc.) quickly understand and work on VoiceAssist. --- VoiceAssist is
+  a HIPAA-compliant medical AI assistant platform with: - Voice Mode:
+  Thinker-Talker pipeline (Deepgram STT → GPT-4o → ElevenLabs TTS) - Text Mo...
 ---
 
 # AI Agent Quick Start

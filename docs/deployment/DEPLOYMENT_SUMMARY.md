@@ -1,14 +1,25 @@
 ---
-title: "Deployment Summary"
-slug: "deployment/deployment-summary"
+title: Deployment Summary
+slug: deployment/deployment-summary
 summary: "**Date:** 2025-11-21"
 status: stable
 stability: production
 owner: infra
 lastUpdated: "2025-11-27"
-audience: ["devops", "sre"]
-tags: ["deployment", "summary"]
+audience:
+  - devops
+  - sre
+  - ai-agents
+tags:
+  - deployment
+  - summary
 category: deployment
+ai_summary: >-
+  Date: 2025-11-21 Last Updated: 2025-11-21 (Nextcloud OAuth Integration
+  Completed) Status: ✅ FULLY DEPLOYED & OPERATIONAL WITH SSL & NEXTCLOUD
+  INTEGRATION Server: Ubuntu (Asimo.io) - 107.204.29.210 --- VoiceAssist is now
+  fully operational on your Ubuntu server with all services healthy and the
+  cri...
 ---
 
 # VoiceAssist Deployment Summary - asimo.io

@@ -1,17 +1,33 @@
 ---
 title: Agent API Reference
 slug: ai/agent-api-reference
-summary: Machine-readable JSON API endpoints for AI agents to discover and search documentation.
+summary: >-
+  Machine-readable JSON API endpoints for AI agents to discover and search
+  documentation.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-12-03"
-audience: ["agent", "ai-agents", "backend"]
-tags: ["api", "ai-agent", "json", "documentation", "endpoints"]
-relatedServices: ["docs-site"]
+audience:
+  - agent
+  - ai-agents
+  - backend
+tags:
+  - api
+  - ai-agent
+  - json
+  - documentation
+  - endpoints
+relatedServices:
+  - docs-site
 category: ai
 source_of_truth: true
-version: "1.3.0"
+version: 1.3.0
+ai_summary: >-
+  The VoiceAssist documentation site exposes machine-readable JSON endpoints
+  designed for AI agents to programmatically discover, filter, and search
+  documentation. Base URL: https://assistdocs.asimo.io --- Note: All endpoints
+  listed above are static JSON files generated at build time. For lexical s...
 ---
 
 # Agent API Reference

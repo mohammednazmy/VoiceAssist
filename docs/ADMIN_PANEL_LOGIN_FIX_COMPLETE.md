@@ -1,14 +1,26 @@
 ---
-title: "Admin Panel Login Fix Complete"
-slug: "admin-panel-login-fix-complete"
+title: Admin Panel Login Fix Complete
+slug: admin-panel-login-fix-complete
 summary: "**Date:** 2025-11-22"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["devops", "sre"]
-tags: ["admin", "panel", "login", "fix"]
+audience:
+  - devops
+  - sre
+  - ai-agents
+tags:
+  - admin
+  - panel
+  - login
+  - fix
 category: operations
+ai_summary: >-
+  Date: 2025-11-22 Issue: Admin panel login at https://admin.asimo.io was
+  failing with "Unexpected token '<', '<!DOCTYPE ' is not valid JSON" Status: ✅
+  RESOLVED The admin panel login was failing due to multiple compounding issues:
+  1. Frontend receiving HTML error pages instead of JSON responses 2....
 ---
 
 # Admin Panel Login Fix - Complete Resolution

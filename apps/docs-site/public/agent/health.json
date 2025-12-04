@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "generated_at": "2025-12-04T09:59:30.729Z",
+  "generated_at": "2025-12-04T10:17:01.327Z",
   "health_status": "healthy",
   "scores": {
     "overall": 100,
@@ -8,7 +8,7 @@
     "freshness": 100
   },
   "summary": {
-    "total_docs": 252,
+    "total_docs": 254,
     "stale_count": 0,
     "missing_frontmatter_count": 0,
     "coverage_percentage": 100
@@ -46,8 +46,8 @@
     },
     "planning": {
       "freshness_score": 100,
-      "total_docs": 74,
-      "fresh_docs": 74,
+      "total_docs": 76,
+      "fresh_docs": 76,
       "stale_docs": 0,
       "newest_update": "2025-12-04",
       "oldest_update": "2025-11-27",
@@ -155,14 +155,121 @@
       "count": 0,
       "docs": []
     },
+    "ai_summary": {
+      "with_summary": 147,
+      "without_summary": 107,
+      "coverage_percentage": 58,
+      "docs_needing_summary": [
+        {
+          "path": "archive/BACKEND_IMPLEMENTATION_PLAN.md",
+          "category": "reference",
+          "title": "Backend Implementation Plan"
+        },
+        {
+          "path": "archive/BACKEND_IMPLEMENTATION_SUMMARY.md",
+          "category": "reference",
+          "title": "Backend Implementation Summary"
+        },
+        {
+          "path": "archive/BRANCHING_AND_SHORTCUTS_IMPLEMENTATION.md",
+          "category": "reference",
+          "title": "Branching And Shortcuts Implementation"
+        },
+        {
+          "path": "archive/CHANGES_SUMMARY.md",
+          "category": "reference",
+          "title": "Changes Summary"
+        },
+        {
+          "path": "archive/CURRENT_PHASE.md",
+          "category": "reference",
+          "title": "Current Phase"
+        },
+        {
+          "path": "archive/DEPLOYMENT_COMPLETE.md",
+          "category": "reference",
+          "title": "Deployment Complete"
+        },
+        {
+          "path": "archive/DESIGN_SYSTEM_IMPLEMENTATION_PLAN.md",
+          "category": "reference",
+          "title": "Design System Implementation Plan"
+        },
+        {
+          "path": "archive/DEVELOPMENT_LOG.md",
+          "category": "reference",
+          "title": "Development Log"
+        },
+        {
+          "path": "archive/DEVELOPMENT_SESSION_SUMMARY.md",
+          "category": "reference",
+          "title": "Development Session Summary"
+        },
+        {
+          "path": "archive/DEV_CORS_FIX_SUMMARY.md",
+          "category": "reference",
+          "title": "Dev Cors Fix Summary"
+        },
+        {
+          "path": "archive/DOCUMENTATION_CREATED.md",
+          "category": "reference",
+          "title": "Documentation Created"
+        },
+        {
+          "path": "archive/FRONTEND_PHASE1_PHASE2_SUMMARY.md",
+          "category": "reference",
+          "title": "Frontend Phase1 Phase2 Summary"
+        },
+        {
+          "path": "archive/FRONTEND_PHASE8_TESTS.md",
+          "category": "reference",
+          "title": "Frontend Phase8 Tests"
+        },
+        {
+          "path": "archive/PHASE_09_COMPLETE_SUMMARY.md",
+          "category": "reference",
+          "title": "Phase 09 Complete Summary"
+        },
+        {
+          "path": "archive/PHASE_10_COMPLETE_SUMMARY.md",
+          "category": "reference",
+          "title": "Phase 10 Complete Summary"
+        },
+        {
+          "path": "archive/PHASE_10_LOCUST_SUMMARY.md",
+          "category": "reference",
+          "title": "Phase 10 Locust Summary"
+        },
+        {
+          "path": "archive/PHASE_10_OPTIMIZATION_SUMMARY.md",
+          "category": "reference",
+          "title": "Phase 10 Optimization Summary"
+        },
+        {
+          "path": "archive/PHASE_3_VOICE_COMPLETE.md",
+          "category": "reference",
+          "title": "Phase 3 Voice Complete"
+        },
+        {
+          "path": "archive/PHASE_5_COMPLETE.md",
+          "category": "reference",
+          "title": "Phase 5 Complete"
+        },
+        {
+          "path": "archive/PHASE_6_CITATIONS_COMPLETE.md",
+          "category": "reference",
+          "title": "Phase 6 Citations Complete"
+        }
+      ]
+    },
     "by_status": {
-      "stable": 213,
-      "draft": 1,
+      "stable": 214,
+      "draft": 2,
       "deprecated": 35,
       "experimental": 3
     },
     "by_owner": {
-      "docs": 139,
+      "docs": 141,
       "backend": 27,
       "product": 3,
       "frontend": 31,
@@ -175,7 +282,7 @@
       "reference": 91,
       "deployment": 7,
       "operations": 18,
-      "planning": 74,
+      "planning": 76,
       "api": 5,
       "architecture": 10,
       "testing": 7,
@@ -186,8 +293,8 @@
       "feature-flags": 7
     },
     "coverage": {
-      "total": 252,
-      "documented": 252,
+      "total": 254,
+      "documented": 254,
       "undocumented": 0
     }
   },
@@ -198,6 +305,12 @@
     "health_critical": 50
   },
   "recommendations": [
+    {
+      "priority": "low",
+      "category": "ai_summary",
+      "message": "Good AI summary coverage at 58%, aim for 75%+",
+      "action": "Continue adding ai_summary to remaining docs"
+    },
     {
       "priority": "low",
       "category": "cleanup",

@@ -1,14 +1,30 @@
 ---
 title: Thinker-Talker Frontend Hooks
 slug: frontend/thinker-talker-hooks
-summary: React hooks for WebSocket connections, audio capture, and playback in the Thinker-Talker voice mode.
+summary: >-
+  React hooks for WebSocket connections, audio capture, and playback in the
+  Thinker-Talker voice mode.
 status: stable
 stability: production
 owner: frontend
 lastUpdated: "2025-12-02"
-audience: ["developers", "frontend", "agent"]
-tags: ["hooks", "react", "voice", "frontend", "websocket"]
+audience:
+  - developers
+  - frontend
+  - agent
+  - ai-agents
+tags:
+  - hooks
+  - react
+  - voice
+  - frontend
+  - websocket
 category: reference
+ai_summary: >-
+  > Location: apps/web-app/src/hooks/ > Status: Production Ready > Last Updated:
+  2025-12-01 The Thinker-Talker frontend integration consists of several React
+  hooks that manage WebSocket connections, audio capture, and playback. These
+  hooks provide a complete voice mode implementation. ┌────────────...
 ---
 
 # Thinker-Talker Frontend Hooks

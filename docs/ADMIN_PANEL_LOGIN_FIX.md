@@ -1,14 +1,26 @@
 ---
-title: "Admin Panel Login Fix"
-slug: "admin-panel-login-fix"
+title: Admin Panel Login Fix
+slug: admin-panel-login-fix
 summary: "**Date**: 2025-11-22"
 status: experimental
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["devops", "sre"]
-tags: ["admin", "panel", "login", "fix"]
+audience:
+  - devops
+  - sre
+  - ai-agents
+tags:
+  - admin
+  - panel
+  - login
+  - fix
 category: operations
+ai_summary: >-
+  Date: 2025-11-22 Issue: Login failed with CORS errors and Firebase errors
+  Status: ✅ RESOLVED --- When attempting to log in to https://admin.asimo.io,
+  the following errors occurred: Firebase: Error (auth/network-request-failed) -
+  The admin panel was loading Firebase authentication code - This indi...
 ---
 
 # Admin Panel Login Fix - CORS & API Configuration

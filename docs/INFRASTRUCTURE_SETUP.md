@@ -1,14 +1,27 @@
 ---
-title: "Infrastructure Setup"
-slug: "infrastructure-setup"
-summary: "This guide covers infrastructure setup for VoiceAssist V2 across two deployment strategies:"
+title: Infrastructure Setup
+slug: infrastructure-setup
+summary: >-
+  This guide covers infrastructure setup for VoiceAssist V2 across two
+  deployment strategies:
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["devops", "sre"]
-tags: ["infrastructure", "setup"]
+audience:
+  - devops
+  - sre
+  - ai-agents
+tags:
+  - infrastructure
+  - setup
 category: deployment
+ai_summary: >-
+  This guide covers infrastructure setup for VoiceAssist V2 across two
+  deployment strategies: - Phases 0-10: Docker Compose on Ubuntu Server
+  (production-ready) - Phases 11-14: Kubernetes on Ubuntu Server (high
+  availability) Both strategies deploy two separate stacks: - Nextcloud stack:
+  Identity, fi...
 ---
 
 # Infrastructure Setup Guide

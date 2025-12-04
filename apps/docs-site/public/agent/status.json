@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "generated_at": "2025-12-04T09:59:30.677Z",
+  "generated_at": "2025-12-04T10:17:01.271Z",
   "system": {
     "name": "VoiceAssist",
     "environment": "development",
@@ -51,10 +51,10 @@
     "monitoring": "https://monitor.asimo.io"
   },
   "documentation": {
-    "total_docs": 252,
+    "total_docs": 254,
     "by_status": {
-      "stable": 213,
-      "draft": 1,
+      "stable": 214,
+      "draft": 2,
       "deprecated": 35,
       "experimental": 3
     }

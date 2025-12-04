@@ -1,16 +1,33 @@
 ---
 title: Frontend Debugging Guide
 slug: debugging/frontend
-summary: Debug React web app, admin panel, and frontend issues in VoiceAssist.
+summary: "Debug React web app, admin panel, and frontend issues in VoiceAssist."
 status: stable
 stability: production
 owner: frontend
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "ai-agents", "frontend"]
-tags: ["debugging", "runbook", "frontend", "react", "web-app", "troubleshooting"]
-relatedServices: ["web-app", "admin-panel"]
+audience:
+  - human
+  - agent
+  - ai-agents
+  - frontend
+tags:
+  - debugging
+  - runbook
+  - frontend
+  - react
+  - web-app
+  - troubleshooting
+relatedServices:
+  - web-app
+  - admin-panel
 category: debugging
-version: "1.0.0"
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 Components: apps/web-app/, apps/admin-panel/ ---
+  Likely Causes: - JavaScript syntax error - Missing environment variables -
+  Failed API call blocking render - CORS issues Steps to Investigate: 1. Open
+  Browser DevTools (F12) → Console tab 2. Look for red error messages 3. C...
 ---
 
 # Frontend Debugging Guide

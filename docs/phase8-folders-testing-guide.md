@@ -1,14 +1,26 @@
 ---
-title: "Phase8 Folders Testing Guide"
-slug: "phase8-folders-testing-guide"
+title: Phase8 Folders Testing Guide
+slug: phase8-folders-testing-guide
 summary: "**Date**: 2024-11-24"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["frontend"]
-tags: ["phase8", "folders", "testing", "guide"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - phase8
+  - folders
+  - testing
+  - guide
 category: testing
+ai_summary: >-
+  Date: 2024-11-24 Feature: Conversation Folders Organization Environment:
+  dev.asimo.io This guide provides comprehensive manual testing steps for the
+  new Folders feature in Phase 8, which allows users to organize their
+  conversations into hierarchical folder structures. - ✅ Database table:
+  conversa...
 ---
 
 # Phase 8 Folders Feature - Manual Testing Guide

@@ -1,14 +1,33 @@
 ---
-title: "Voice Mode Settings Guide"
-slug: "voice-mode-settings-guide"
-summary: "This guide explains how to use and configure Voice Mode settings in VoiceAssist."
+title: Voice Mode Settings Guide
+slug: voice-mode-settings-guide
+summary: >-
+  This guide explains how to use and configure Voice Mode settings in
+  VoiceAssist.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-12-03"
-audience: ["frontend"]
-tags: ["voice", "mode", "settings", "guide", "preferences", "tts", "multilingual", "offline", "calibration"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - voice
+  - mode
+  - settings
+  - guide
+  - preferences
+  - tts
+  - multilingual
+  - offline
+  - calibration
 category: operations
+ai_summary: >-
+  This guide explains how to use and configure Voice Mode settings in
+  VoiceAssist. Voice Mode provides real-time voice conversations with the AI
+  assistant. Users can customize their voice experience through the settings
+  panel, including voice selection, language preferences, TTS quality
+  parameters,...
 ---
 
 # Voice Mode Settings Guide

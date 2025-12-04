@@ -1,14 +1,25 @@
 ---
-title: "Local Development"
-slug: "local-development"
-summary: "VoiceAssist V2 uses a **Compose-first development approach** with two separate Docker Compose stacks:"
+title: Local Development
+slug: local-development
+summary: >-
+  VoiceAssist V2 uses a **Compose-first development approach** with two separate
+  Docker Compose stacks:
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["local", "development"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - local
+  - development
 category: reference
+ai_summary: >-
+  VoiceAssist V2 uses a Compose-first development approach with two separate
+  Docker Compose stacks: - Nextcloud stack (~/Nextcloud-Dev/) - Identity, files,
+  calendar, email - VoiceAssist stack (~/VoiceAssist/) - Microservices
+  architecture This allows for rapid iteration, testing, and debugging befor...
 ---
 
 # Local Development Guide (MacBook Pro)

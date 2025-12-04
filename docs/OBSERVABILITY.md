@@ -1,14 +1,24 @@
 ---
-title: "Observability"
-slug: "observability"
-summary: "**Purpose**: This document defines observability patterns for monitoring, logging, and alerting across all VoiceAssist services."
+title: Observability
+slug: observability
+summary: >-
+  **Purpose**: This document defines observability patterns for monitoring,
+  logging, and alerting across all VoiceAssist services.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["observability"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - observability
 category: reference
+ai_summary: >-
+  Purpose: This document defines observability patterns for monitoring, logging,
+  and alerting across all VoiceAssist services. Last Updated: 2025-11-20 ---
+  VoiceAssist V2 uses a three-pillar observability approach: 1. Metrics -
+  Prometheus for time-series metrics 2. Logs - Structured logging with tr...
 ---
 
 # VoiceAssist V2 Observability

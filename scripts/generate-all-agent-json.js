@@ -396,6 +396,7 @@ function generateHealth() {
   const metrics = {
     stale_docs: { count: 0, threshold_days: 30, docs: [] },
     missing_frontmatter: { count: 0, docs: [] },
+    ai_summary: { with_summary: 0, without_summary: 0, coverage_percentage: 0, docs_needing_summary: [] },
     by_status: { stable: 0, draft: 0, deprecated: 0, experimental: 0 },
     by_owner: {},
     by_category: {},
@@ -487,9 +488,31 @@ function generateHealth() {
     if (doc.category) {
       metrics.by_category[doc.category] = (metrics.by_category[doc.category] || 0) + 1;
     }
+
+    // Track ai_summary coverage
+    if (doc.aiSummary) {
+      metrics.ai_summary.with_summary++;
+    } else {
+      metrics.ai_summary.without_summary++;
+      // Only track high-priority docs needing summaries
+      if (['api', 'architecture', 'reference', 'operations', 'debugging'].includes(doc.category)) {
+        if (metrics.ai_summary.docs_needing_summary.length < 20) {
+          metrics.ai_summary.docs_needing_summary.push({
+            path: doc.path,
+            category: doc.category || 'uncategorized',
+            title: doc.title
+          });
+        }
+      }
+    }
   }
 
   metrics.coverage.undocumented = metrics.coverage.total - metrics.coverage.documented;
+
+  // Calculate ai_summary coverage percentage
+  metrics.ai_summary.coverage_percentage = docs.length > 0
+    ? Math.round((metrics.ai_summary.with_summary / docs.length) * 100)
+    : 0;
 
   // Calculate per-category freshness scores
   const categoryScores = {};
@@ -604,6 +627,16 @@ function generateNextSteps(metrics, categoryScores, totalDocs) {
     });
   }
 
+  // AI summary coverage
+  if (metrics.ai_summary.coverage_percentage < 50) {
+    steps.push({
+      priority: 2,
+      action: 'Add ai_summary to more documents',
+      reason: `Only ${metrics.ai_summary.coverage_percentage}% of docs have ai_summary (target: 50%+)`,
+      suggested_docs: metrics.ai_summary.docs_needing_summary.slice(0, 5).map(d => d.path)
+    });
+  }
+
   return steps;
 }
 
@@ -628,6 +661,23 @@ function generateHealthRecommendations(metrics, totalDocs) {
       category: 'metadata',
       message: `${metrics.missing_frontmatter.count} docs are missing required frontmatter`,
       action: 'Add title, status, lastUpdated, and summary to frontmatter'
+    });
+  }
+
+  // AI summary coverage
+  if (metrics.ai_summary.coverage_percentage < 50) {
+    recommendations.push({
+      priority: metrics.ai_summary.coverage_percentage < 25 ? 'high' : 'medium',
+      category: 'ai_summary',
+      message: `AI summary coverage is ${metrics.ai_summary.coverage_percentage}% (target: 50%+)`,
+      action: 'Add ai_summary to high-priority docs (api, architecture, operations)'
+    });
+  } else if (metrics.ai_summary.coverage_percentage < 75) {
+    recommendations.push({
+      priority: 'low',
+      category: 'ai_summary',
+      message: `Good AI summary coverage at ${metrics.ai_summary.coverage_percentage}%, aim for 75%+`,
+      action: 'Continue adding ai_summary to remaining docs'
     });
   }
 
@@ -751,6 +801,81 @@ function generateDocsSummary() {
 }
 
 /**
+ * Infer semantic tags from code content
+ */
+function inferCodeTags(code, language) {
+  const tags = [];
+  const lowerCode = code.toLowerCase();
+
+  // API-related tags
+  if (/fetch\(|axios|curl|http[s]?:\/\/|\/api\/|endpoint|rest|graphql/i.test(code)) {
+    tags.push('api');
+  }
+  if (/get|post|put|patch|delete/i.test(code) && /api|fetch|axios|request/i.test(code)) {
+    tags.push('http');
+  }
+
+  // Infrastructure tags
+  if (/docker|container|image:|volumes:|services:/i.test(code)) {
+    tags.push('docker');
+  }
+  if (/kubectl|kubernetes|deployment|service:|apiVersion:/i.test(code)) {
+    tags.push('kubernetes');
+  }
+  if (/terraform|aws_|resource\s*"|module\s*"/i.test(code)) {
+    tags.push('infrastructure');
+  }
+
+  // Database tags
+  if (/select|insert|update|delete|create\s+table|alter\s+table/i.test(code)) {
+    tags.push('database');
+  }
+  if (/redis|cache|ttl|expire/i.test(code)) {
+    tags.push('cache');
+  }
+
+  // Testing tags
+  if (/test\(|describe\(|it\(|expect\(|assert|jest|pytest|vitest/i.test(code)) {
+    tags.push('testing');
+  }
+
+  // Configuration tags
+  if (language === 'yaml' || language === 'json') {
+    tags.push('config');
+  }
+  if (/env\.|process\.env|os\.environ|dotenv/i.test(code)) {
+    tags.push('environment');
+  }
+
+  // Language-specific tags
+  if (language === 'bash' || language === 'shell') {
+    if (/systemctl|service|journalctl/i.test(code)) tags.push('system');
+    if (/git\s/i.test(code)) tags.push('git');
+    if (/npm|pnpm|yarn|pip|cargo/i.test(code)) tags.push('package-manager');
+  }
+
+  // React/Frontend tags
+  if (/usestate|useeffect|usecontext|usememo|usecallback|\<.*\/\>/i.test(code)) {
+    tags.push('react');
+  }
+  if (/component|props|render|jsx|tsx/i.test(code) && ['tsx', 'typescript', 'javascript'].includes(language)) {
+    tags.push('component');
+  }
+
+  // Authentication tags
+  if (/auth|login|logout|token|jwt|bearer|oauth/i.test(code)) {
+    tags.push('authentication');
+  }
+
+  // WebSocket/Realtime tags
+  if (/websocket|ws:|wss:|socket\.io|realtime/i.test(code)) {
+    tags.push('realtime');
+  }
+
+  return tags.length > 0 ? tags : ['snippet'];
+}
+
+/**
  * Generate /agent/code-examples.json - Extract code examples from documentation
  */
 function generateCodeExamples() {
@@ -760,6 +885,7 @@ function generateCodeExamples() {
   const examples = [];
   const byLanguage = {};
   const byCategory = {};
+  const byTag = {};
 
   for (const doc of docs) {
     try {
@@ -786,16 +912,36 @@ function generateCodeExamples() {
           ? lastLine.replace(/^#+\s*/, '')
           : lastLine.length < 200 ? lastLine : '';
 
+        // Infer semantic tags
+        const tags = inferCodeTags(code, language);
+
         const example = {
           id: `${doc.path}:${blockIndex}`,
           doc_path: doc.path,
           doc_title: doc.title,
           language,
+          tags,
           description: description || `Code example from ${doc.title}`,
           code: code.length > 500 ? code.substring(0, 500) + '...' : code,
           full_length: code.length,
           category: doc.category || 'uncategorized'
         };
+
+        // Group by tag
+        for (const tag of tags) {
+          if (!byTag[tag]) {
+            byTag[tag] = { count: 0, languages: {}, examples: [] };
+          }
+          byTag[tag].count++;
+          byTag[tag].languages[language] = (byTag[tag].languages[language] || 0) + 1;
+          if (byTag[tag].examples.length < 10) {
+            byTag[tag].examples.push({
+              id: example.id,
+              language: example.language,
+              doc_path: example.doc_path
+            });
+          }
+        }
 
         examples.push(example);
         blockIndex++;
@@ -848,13 +994,35 @@ function generateCodeExamples() {
     },
     by_language: byLanguage,
     by_category: byCategory,
+    by_tag: byTag,
     recent_examples: examples.slice(0, 50),
     usage_notes: [
       'Use by_language to find examples in specific languages',
       'Use by_category to find examples related to specific topics',
+      'Use by_tag to find examples by semantic type (api, database, testing, etc.)',
       'Code snippets are truncated to 500 chars - fetch full doc for complete code',
-      'Each example has an id in format "doc_path:index"'
-    ]
+      'Each example has an id in format "doc_path:index" and semantic tags'
+    ],
+    tag_descriptions: {
+      api: 'Examples involving REST APIs, HTTP calls, or API endpoints',
+      http: 'HTTP methods (GET, POST, PUT, DELETE)',
+      docker: 'Docker/container configuration and commands',
+      kubernetes: 'Kubernetes manifests and kubectl commands',
+      infrastructure: 'Infrastructure as code (Terraform, AWS)',
+      database: 'SQL queries and database operations',
+      cache: 'Redis and caching patterns',
+      testing: 'Unit tests, integration tests, assertions',
+      config: 'Configuration files (YAML, JSON)',
+      environment: 'Environment variables and dotenv',
+      system: 'System administration commands',
+      git: 'Git operations and commands',
+      'package-manager': 'npm, pnpm, pip package management',
+      react: 'React hooks and components',
+      component: 'UI component patterns',
+      authentication: 'Auth, login, tokens, OAuth',
+      realtime: 'WebSocket and real-time communication',
+      snippet: 'General code snippets'
+    }
   };
 }
 

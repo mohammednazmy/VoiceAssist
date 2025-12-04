@@ -1,14 +1,27 @@
 ---
-title: "Performance Tuning Guide"
-slug: "performance-tuning-guide"
-summary: "This comprehensive guide provides strategies, techniques, and best practices for optimizing VoiceAssist performance. Use this guide to identify bottle..."
+title: Performance Tuning Guide
+slug: performance-tuning-guide
+summary: >-
+  This comprehensive guide provides strategies, techniques, and best practices
+  for optimizing VoiceAssist performance. Use this guide to identify bottle...
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["frontend"]
-tags: ["performance", "tuning", "guide"]
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - performance
+  - tuning
+  - guide
 category: operations
+ai_summary: >-
+  This comprehensive guide provides strategies, techniques, and best practices
+  for optimizing VoiceAssist performance. Use this guide to identify
+  bottlenecks, implement optimizations, and maintain peak system performance.
+  --- 1. Measure First, Optimize Second - Never optimize without data -
+  Establi...
 ---
 
 # VoiceAssist Performance Tuning Guide

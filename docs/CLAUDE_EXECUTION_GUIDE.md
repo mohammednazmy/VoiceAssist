@@ -1,15 +1,29 @@
 ---
 title: Claude Execution Guide
 slug: ai/claude-execution-guide
-summary: Comprehensive instructions for Claude Code working on VoiceAssist - session startup, branching, safety rules, quality checks.
+summary: >-
+  Comprehensive instructions for Claude Code working on VoiceAssist - session
+  startup, branching, safety rules, quality checks.
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["agent", "ai-agents", "human"]
-tags: ["claude", "execution", "guide", "ai-agent"]
+audience:
+  - agent
+  - ai-agents
+  - human
+tags:
+  - claude
+  - execution
+  - guide
+  - ai-agent
 category: ai
-version: "1.0.0"
+version: 1.0.0
+ai_summary: >-
+  This guide provides comprehensive instructions for Claude Code (or other AI
+  assistants) working on the VoiceAssist V2 project. It covers session startup,
+  branching strategy, parallel session safety, quality checks, and phase
+  completion criteria. For ready-to-use prompts, see CLAUDE_PROMPTS.md ---...
 ---
 
 # Claude Code Execution Guide for VoiceAssist V2

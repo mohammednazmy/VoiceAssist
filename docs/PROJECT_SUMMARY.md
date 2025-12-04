@@ -1,14 +1,25 @@
 ---
-title: "Project Summary"
-slug: "project-summary"
-summary: "VoiceAssist is a comprehensive AI assistant system designed specifically for medical professionals. It combines voice and text interfaces with special..."
+title: Project Summary
+slug: project-summary
+summary: >-
+  VoiceAssist is a comprehensive AI assistant system designed specifically for
+  medical professionals. It combines voice and text interfaces with special...
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["project", "summary"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - project
+  - summary
 category: reference
+ai_summary: >-
+  VoiceAssist is a comprehensive AI assistant system designed specifically for
+  medical professionals. It combines voice and text interfaces with specialized
+  medical knowledge retrieval, system integrations, and privacy-conscious
+  architecture. 1. Medical Specialization: Access to medical textbooks,...
 ---
 
 # VoiceAssist Project Summary

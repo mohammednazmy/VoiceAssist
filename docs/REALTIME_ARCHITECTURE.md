@@ -1,17 +1,36 @@
 ---
 title: Real-time Architecture
 slug: architecture/realtime
-summary: WebSocket communication, voice processing, and streaming response architecture.
+summary: >-
+  WebSocket communication, voice processing, and streaming response
+  architecture.
 status: stable
 stability: production
 owner: backend
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "ai-agents", "backend", "frontend"]
-tags: ["architecture", "websocket", "realtime", "voice", "streaming"]
-relatedServices: ["api-gateway", "web-app"]
+audience:
+  - human
+  - agent
+  - ai-agents
+  - backend
+  - frontend
+tags:
+  - architecture
+  - websocket
+  - realtime
+  - voice
+  - streaming
+relatedServices:
+  - api-gateway
+  - web-app
 category: architecture
 source_of_truth: true
-version: "1.0.0"
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 Status: Production Ready Related Documentation: -
+  WebSocket Protocol - Wire protocol specification - Voice Mode Pipeline -
+  Voice-specific implementation - Implementation Status - Component status ---
+  VoiceAssist uses WebSocket connections for real-time bidirectional commu...
 ---
 
 # VoiceAssist Real-time Architecture

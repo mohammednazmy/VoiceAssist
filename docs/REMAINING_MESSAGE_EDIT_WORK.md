@@ -1,14 +1,26 @@
 ---
-title: "Remaining Message Edit Work"
-slug: "remaining-message-edit-work"
+title: Remaining Message Edit Work
+slug: remaining-message-edit-work
 summary: "**Created:** 2025-11-23"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["remaining", "message", "edit", "work"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - remaining
+  - message
+  - edit
+  - work
 category: reference
+ai_summary: >-
+  Created: 2025-11-23 Status: In Progress (API + Menu Complete, UI + Tests
+  Pending) Priority: High (Phase 2 Advanced Features) --- File:
+  packages/api-client/src/index.ts Added two new methods: async
+  editMessage(conversationId: string, messageId: string, content: string):
+  Promise<Message> async dele...
 ---
 
 # Message Editing & Regeneration - Remaining Implementation

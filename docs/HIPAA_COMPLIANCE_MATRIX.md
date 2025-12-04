@@ -1,14 +1,24 @@
 ---
-title: "Hipaa Compliance Matrix"
-slug: "hipaa-compliance-matrix"
+title: Hipaa Compliance Matrix
+slug: hipaa-compliance-matrix
 summary: "**Document Version:** 1.0"
 status: stable
 stability: production
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["hipaa", "compliance", "matrix"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - hipaa
+  - compliance
+  - matrix
 category: security
+ai_summary: >-
+  Document Version: 1.0 Last Updated: 2025-11-21 Status: Production-Ready Scope:
+  VoiceAssist HIPAA-Compliant Voice Assistant Platform --- This document
+  provides a comprehensive mapping of HIPAA Security Rule requirements (45 CFR
+  §164.308, §164.310, §164.312) to VoiceAssist platform implementations....
 ---
 
 # HIPAA Compliance Matrix

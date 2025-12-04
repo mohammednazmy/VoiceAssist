@@ -1,17 +1,37 @@
 ---
 title: Frontend Architecture
 slug: architecture/frontend
-summary: Client applications architecture - pnpm monorepo with React, TypeScript, and shared packages.
+summary: >-
+  Client applications architecture - pnpm monorepo with React, TypeScript, and
+  shared packages.
 status: stable
 stability: production
 owner: frontend
 lastUpdated: "2025-12-03"
-audience: ["human", "agent", "ai-agents", "frontend"]
-tags: ["architecture", "frontend", "react", "typescript", "monorepo"]
-relatedServices: ["web-app", "admin-panel", "docs-site"]
+audience:
+  - human
+  - agent
+  - ai-agents
+  - frontend
+tags:
+  - architecture
+  - frontend
+  - react
+  - typescript
+  - monorepo
+relatedServices:
+  - web-app
+  - admin-panel
+  - docs-site
 category: architecture
 source_of_truth: true
-version: "1.1.0"
+version: 1.1.0
+ai_summary: >-
+  Last Updated: 2025-12-03 Status: Production Ready (Phases 0-3.5 Complete, Web
+  App and Admin Panel stable) Detailed Spec:
+  client-implementation/TECHNICAL_ARCHITECTURE.md --- VoiceAssist uses a pnpm
+  monorepo with Turborepo for build orchestration. All frontend applications
+  share common packages for...
 ---
 
 # VoiceAssist Frontend Architecture
