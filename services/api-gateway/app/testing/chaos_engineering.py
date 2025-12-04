@@ -139,7 +139,7 @@ class ChaosExperiment:
             "status": self.status,
             "configs": [c.to_dict() for c in self.configs],
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": (self.completed_at.isoformat() if self.completed_at else None),
             "results": self.results,
         }
 
@@ -568,7 +568,9 @@ def create_epic_outage_experiment(duration_seconds: int = 60) -> ChaosExperiment
     )
 
 
-def create_network_degradation_experiment(duration_seconds: int = 300) -> ChaosExperiment:
+def create_network_degradation_experiment(
+    duration_seconds: int = 300,
+) -> ChaosExperiment:
     """Create an experiment simulating network degradation"""
     return ChaosExperiment(
         id="network-degraded",

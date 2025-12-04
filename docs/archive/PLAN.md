@@ -1,14 +1,23 @@
 ---
-title: "Plan"
-slug: "archive/plan"
+title: Plan
+slug: archive/plan
 summary: "This plan addresses two related issues in the VoiceAssist codebase:"
 status: deprecated
 stability: legacy
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["plan"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - plan
 category: reference
+ai_summary: >-
+  This plan addresses two related issues in the VoiceAssist codebase: 1.
+  **WebSocket timing issues in unit tests** - Flaky tests due to race conditions
+  between WebSocket lifecycle and React hooks 2. **MessageList performance
+  improvements** - Adding pagination and lazy loading for large conversations
+  ---
 ---
 
 # Implementation Plan: WebSocket Testing & MessageList Performance

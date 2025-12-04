@@ -1,14 +1,23 @@
 ---
-title: "Phase 7 Export Complete"
-slug: "archive/phase-7-export-complete"
+title: Phase 7 Export Complete
+slug: archive/phase-7-export-complete
 summary: "**Status**: ✅ Export Feature Complete"
 status: deprecated
 stability: legacy
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["phase", "export", "complete"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - phase
+  - export
+  - complete
 category: reference
+ai_summary: >-
+  Phase 7 focuses on conversation management features. The export functionality
+  has been successfully implemented, allowing users to export conversations to
+  PDF or Markdown format.
 ---
 
 # Phase 7 (Partial): Conversation Management - Export Feature ✓

@@ -69,19 +69,55 @@ class PrivacyEnforcer:
 
     # Voice commands for privacy control (pattern -> (setting, value))
     VOICE_COMMANDS = {
-        r"(disable|turn off|stop)\s+(emotion|emotional)\s*(tracking)?": ("emotion_tracking_enabled", False),
-        r"(enable|turn on|start)\s+(emotion|emotional)\s*(tracking)?": ("emotion_tracking_enabled", True),
-        r"(disable|turn off|stop)\s+(progress)\s*(tracking)?": ("progress_tracking_enabled", False),
-        r"(enable|turn on|start)\s+(progress)\s*(tracking)?": ("progress_tracking_enabled", True),
-        r"(disable|turn off|stop)\s+(analytics|telemetry)": ("analytics_participation", False),
-        r"(enable|turn on|start)\s+(analytics|telemetry)": ("analytics_participation", True),
-        r"(disable|turn off|stop)\s+(clinical|medical)\s*(reasoning)?": ("clinical_reasoning_enabled", False),
-        r"(enable|turn on|start)\s+(clinical|medical)\s*(reasoning)?": ("clinical_reasoning_enabled", True),
-        r"(disable|turn off|stop)\s+(personalization|personalisation)": ("personalization_enabled", False),
-        r"(enable|turn on|start)\s+(personalization|personalisation)": ("personalization_enabled", True),
-        r"(go|switch|enable)\s*(to)?\s*private\s*(mode)?": ("privacy_mode_active", True),
+        r"(disable|turn off|stop)\s+(emotion|emotional)\s*(tracking)?": (
+            "emotion_tracking_enabled",
+            False,
+        ),
+        r"(enable|turn on|start)\s+(emotion|emotional)\s*(tracking)?": (
+            "emotion_tracking_enabled",
+            True,
+        ),
+        r"(disable|turn off|stop)\s+(progress)\s*(tracking)?": (
+            "progress_tracking_enabled",
+            False,
+        ),
+        r"(enable|turn on|start)\s+(progress)\s*(tracking)?": (
+            "progress_tracking_enabled",
+            True,
+        ),
+        r"(disable|turn off|stop)\s+(analytics|telemetry)": (
+            "analytics_participation",
+            False,
+        ),
+        r"(enable|turn on|start)\s+(analytics|telemetry)": (
+            "analytics_participation",
+            True,
+        ),
+        r"(disable|turn off|stop)\s+(clinical|medical)\s*(reasoning)?": (
+            "clinical_reasoning_enabled",
+            False,
+        ),
+        r"(enable|turn on|start)\s+(clinical|medical)\s*(reasoning)?": (
+            "clinical_reasoning_enabled",
+            True,
+        ),
+        r"(disable|turn off|stop)\s+(personalization|personalisation)": (
+            "personalization_enabled",
+            False,
+        ),
+        r"(enable|turn on|start)\s+(personalization|personalisation)": (
+            "personalization_enabled",
+            True,
+        ),
+        r"(go|switch|enable)\s*(to)?\s*private\s*(mode)?": (
+            "privacy_mode_active",
+            True,
+        ),
         r"(exit|leave|disable)\s*private\s*(mode)?": ("privacy_mode_active", False),
-        r"don'?t\s+(track|remember|store)\s+(anything|my data)": ("privacy_mode_active", True),
+        r"don'?t\s+(track|remember|store)\s+(anything|my data)": (
+            "privacy_mode_active",
+            True,
+        ),
     }
 
     # Special commands with patterns

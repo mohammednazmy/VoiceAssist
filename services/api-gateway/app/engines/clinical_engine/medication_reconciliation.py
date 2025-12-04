@@ -99,21 +99,51 @@ class MedicationReconciliationService:
     # Therapeutic drug classes for duplicate detection
     DRUG_CLASSES = {
         # ACE Inhibitors
-        "ace_inhibitor": ["lisinopril", "enalapril", "benazepril", "ramipril", "captopril"],
+        "ace_inhibitor": [
+            "lisinopril",
+            "enalapril",
+            "benazepril",
+            "ramipril",
+            "captopril",
+        ],
         # ARBs
         "arb": ["losartan", "valsartan", "irbesartan", "olmesartan", "candesartan"],
         # Beta Blockers
-        "beta_blocker": ["metoprolol", "atenolol", "carvedilol", "bisoprolol", "propranolol"],
+        "beta_blocker": [
+            "metoprolol",
+            "atenolol",
+            "carvedilol",
+            "bisoprolol",
+            "propranolol",
+        ],
         # Calcium Channel Blockers
         "ccb": ["amlodipine", "nifedipine", "diltiazem", "verapamil"],
         # Statins
-        "statin": ["atorvastatin", "simvastatin", "rosuvastatin", "pravastatin", "lovastatin"],
+        "statin": [
+            "atorvastatin",
+            "simvastatin",
+            "rosuvastatin",
+            "pravastatin",
+            "lovastatin",
+        ],
         # PPIs
-        "ppi": ["omeprazole", "pantoprazole", "esomeprazole", "lansoprazole", "rabeprazole"],
+        "ppi": [
+            "omeprazole",
+            "pantoprazole",
+            "esomeprazole",
+            "lansoprazole",
+            "rabeprazole",
+        ],
         # H2 Blockers
         "h2_blocker": ["famotidine", "ranitidine", "cimetidine"],
         # SSRIs
-        "ssri": ["sertraline", "fluoxetine", "paroxetine", "escitalopram", "citalopram"],
+        "ssri": [
+            "sertraline",
+            "fluoxetine",
+            "paroxetine",
+            "escitalopram",
+            "citalopram",
+        ],
         # SNRIs
         "snri": ["venlafaxine", "duloxetine", "desvenlafaxine"],
         # Benzodiazepines
@@ -133,7 +163,13 @@ class MedicationReconciliationService:
         # SGLT2 inhibitors
         "sglt2": ["empagliflozin", "dapagliflozin", "canagliflozin"],
         # Anticoagulants
-        "anticoagulant": ["warfarin", "apixaban", "rivaroxaban", "dabigatran", "enoxaparin"],
+        "anticoagulant": [
+            "warfarin",
+            "apixaban",
+            "rivaroxaban",
+            "dabigatran",
+            "enoxaparin",
+        ],
     }
 
     # High-risk medications requiring extra attention
@@ -247,7 +283,10 @@ class MedicationReconciliationService:
                         ehr_entry=ehr_entry,
                         dictation_entry=dict_entry,
                         message=f"Dose change: {ehr_entry.dose} -> {dict_entry.dose}",
-                        recommendations=["Verify intended dose change", "Update medication list"],
+                        recommendations=[
+                            "Verify intended dose change",
+                            "Update medication list",
+                        ],
                     )
                 )
 

@@ -113,7 +113,10 @@ class FlagSubscriptionManager:
 
             self.logger.info(
                 f"SSE client connected: {client_id}",
-                extra={"filter": flag_filter, "total_connections": len(self._connections)},
+                extra={
+                    "filter": flag_filter,
+                    "total_connections": len(self._connections),
+                },
             )
             return queue
 
@@ -905,7 +908,10 @@ async def event_generator(
         logger.error(f"SSE generator error for client {client_id}: {e}")
         error_event = {
             "event": "error",
-            "data": {"message": str(e), "timestamp": datetime.now(timezone.utc).isoformat() + "Z"},
+            "data": {
+                "message": str(e),
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+            },
         }
         yield format_sse_event(error_event)
     finally:

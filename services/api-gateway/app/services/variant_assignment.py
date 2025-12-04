@@ -94,10 +94,10 @@ class RuleCondition:
         "ends_with": lambda a, b: str(a).endswith(str(b)) if a else False,
         "greater_than": lambda a, b: float(a) > float(b) if a is not None else False,
         "less_than": lambda a, b: float(a) < float(b) if a is not None else False,
-        "greater_than_or_equal": lambda a, b: float(a) >= float(b) if a is not None else False,
-        "less_than_or_equal": lambda a, b: float(a) <= float(b) if a is not None else False,
+        "greater_than_or_equal": lambda a, b: (float(a) >= float(b) if a is not None else False),
+        "less_than_or_equal": lambda a, b: (float(a) <= float(b) if a is not None else False),
         "in_list": lambda a, b: a in b if isinstance(b, (list, tuple, set)) else a == b,
-        "not_in_list": lambda a, b: a not in b if isinstance(b, (list, tuple, set)) else a != b,
+        "not_in_list": lambda a, b: (a not in b if isinstance(b, (list, tuple, set)) else a != b),
         "regex_match": lambda a, b: _regex_match(a, b),
         "semver_gt": lambda a, b: _semver_compare(a, b) > 0,
         "semver_lt": lambda a, b: _semver_compare(a, b) < 0,
@@ -254,7 +254,7 @@ class ScheduledChange:
         """Convert to dictionary."""
         return {
             "id": self.id,
-            "scheduled_at": self.scheduled_at.isoformat() if self.scheduled_at else None,
+            "scheduled_at": (self.scheduled_at.isoformat() if self.scheduled_at else None),
             "changes": self.changes,
             "applied": self.applied,
             "flag_name": self.flag_name,
@@ -265,7 +265,7 @@ class ScheduledChange:
             "modified_by": self.modified_by,
             "timezone_id": self.timezone_id,
             "cancelled": self.cancelled,
-            "cancelled_at": self.cancelled_at.isoformat() if self.cancelled_at else None,
+            "cancelled_at": (self.cancelled_at.isoformat() if self.cancelled_at else None),
             "cancelled_by": self.cancelled_by,
         }
 
@@ -297,7 +297,7 @@ class ScheduledChange:
         """
         preview_data = {
             "scheduled_change_id": self.id,
-            "scheduled_at": self.scheduled_at.isoformat() if self.scheduled_at else None,
+            "scheduled_at": (self.scheduled_at.isoformat() if self.scheduled_at else None),
             "changes": [],
         }
 
@@ -526,7 +526,7 @@ class VariantAssignmentService:
                 apply_log["skipped_already_applied"].append(
                     {
                         "id": schedule.id,
-                        "scheduled_at": schedule.scheduled_at.isoformat() if schedule.scheduled_at else None,
+                        "scheduled_at": (schedule.scheduled_at.isoformat() if schedule.scheduled_at else None),
                     }
                 )
                 updated_schedules.append(schedule)
@@ -537,7 +537,7 @@ class VariantAssignmentService:
                 apply_log["skipped_cancelled"].append(
                     {
                         "id": schedule.id,
-                        "cancelled_at": schedule.cancelled_at.isoformat() if schedule.cancelled_at else None,
+                        "cancelled_at": (schedule.cancelled_at.isoformat() if schedule.cancelled_at else None),
                         "cancelled_by": schedule.cancelled_by,
                     }
                 )
@@ -616,7 +616,7 @@ class VariantAssignmentService:
                 apply_log["applied"].append(
                     {
                         "id": schedule.id,
-                        "scheduled_at": schedule.scheduled_at.isoformat() if schedule.scheduled_at else None,
+                        "scheduled_at": (schedule.scheduled_at.isoformat() if schedule.scheduled_at else None),
                         "changes": changes_applied,
                     }
                 )
@@ -625,7 +625,7 @@ class VariantAssignmentService:
                 apply_log["skipped_future"].append(
                     {
                         "id": schedule.id,
-                        "scheduled_at": schedule.scheduled_at.isoformat() if schedule.scheduled_at else None,
+                        "scheduled_at": (schedule.scheduled_at.isoformat() if schedule.scheduled_at else None),
                         "seconds_until_due": (scheduled_at - current_time).total_seconds(),
                     }
                 )
@@ -1069,7 +1069,9 @@ class VariantAssignmentService:
             self.logger.error(f"Failed to delete scheduled change: {e}")
             return False
 
-    async def get_all_pending_scheduled_changes(self) -> Dict[str, List[ScheduledChange]]:
+    async def get_all_pending_scheduled_changes(
+        self,
+    ) -> Dict[str, List[ScheduledChange]]:
         """Get all pending scheduled changes across all flags.
 
         Returns:

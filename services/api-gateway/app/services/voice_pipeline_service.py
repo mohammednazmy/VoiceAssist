@@ -228,8 +228,26 @@ def classify_query_type(transcript: str) -> QueryType:
         return QueryType.CLARIFICATION
 
     # Simple queries (yes/no, confirmations, short questions)
-    simple_starters = ["is ", "are ", "do ", "does ", "did ", "can ", "will ", "should "]
-    simple_endings = ["yes", "no", "ok", "okay", "sure", "thanks", "thank you", "got it"]
+    simple_starters = [
+        "is ",
+        "are ",
+        "do ",
+        "does ",
+        "did ",
+        "can ",
+        "will ",
+        "should ",
+    ]
+    simple_endings = [
+        "yes",
+        "no",
+        "ok",
+        "okay",
+        "sure",
+        "thanks",
+        "thank you",
+        "got it",
+    ]
     if word_count <= 5 and (
         any(text.startswith(s) for s in simple_starters)
         or text in simple_endings
@@ -528,7 +546,7 @@ class VoicePipelineSession:
                     dictation_config = DictationSessionConfig(
                         note_type=self.config.dictation_note_type,
                         language=self.config.stt_language,
-                        specialty=self.config.dictation_specialty.value if self.config.dictation_specialty else None,
+                        specialty=(self.config.dictation_specialty.value if self.config.dictation_specialty else None),
                         auto_punctuate=True,
                         auto_format=self.config.dictation_auto_format,
                         enable_commands=self.config.dictation_enable_commands,
@@ -899,7 +917,7 @@ class VoicePipelineSession:
                 type="backchannel.trigger",
                 data={
                     "phrase": audio.phrase,
-                    "audio": base64.b64encode(audio.audio_data).decode() if audio.audio_data else "",
+                    "audio": (base64.b64encode(audio.audio_data).decode() if audio.audio_data else ""),
                     "format": audio.format,
                     "duration_ms": audio.duration_ms,
                 },
@@ -1029,7 +1047,18 @@ class VoicePipelineSession:
         # Require at least 2 words OR a clear command word for barge-in
         # This reduces false positives from sighs/noise
         words = cleaned.split()
-        command_words = {"stop", "wait", "hold", "pause", "no", "actually", "but", "hey", "okay", "ok"}
+        command_words = {
+            "stop",
+            "wait",
+            "hold",
+            "pause",
+            "no",
+            "actually",
+            "but",
+            "hey",
+            "okay",
+            "ok",
+        }
 
         if len(words) >= 2:
             return True
@@ -1224,10 +1253,10 @@ class VoicePipelineSession:
         if self._current_emotion and self._emotion_service:
             emotion_context = {
                 "emotion": self._current_emotion,
-                "trend": self._emotion_session.get_trend() if self._emotion_session else None,
+                "trend": (self._emotion_session.get_trend() if self._emotion_session else None),
                 "prompt_addition": self._emotion_service.build_emotion_context_prompt(
                     self._current_emotion,
-                    self._emotion_session.get_trend() if self._emotion_session else None,
+                    (self._emotion_session.get_trend() if self._emotion_session else None),
                 ),
             }
 

@@ -79,8 +79,28 @@ class QueryClassifier:
         "would",
         "should",
     }
-    URGENT_WORDS = {"urgent", "emergency", "asap", "immediately", "quickly", "stat", "critical", "now"}
-    COMMAND_WORDS = {"do", "make", "create", "send", "order", "prescribe", "schedule", "cancel", "stop", "start"}
+    URGENT_WORDS = {
+        "urgent",
+        "emergency",
+        "asap",
+        "immediately",
+        "quickly",
+        "stat",
+        "critical",
+        "now",
+    }
+    COMMAND_WORDS = {
+        "do",
+        "make",
+        "create",
+        "send",
+        "order",
+        "prescribe",
+        "schedule",
+        "cancel",
+        "stop",
+        "start",
+    }
     MEDICAL_WORDS = {
         "patient",
         "medication",
@@ -208,7 +228,7 @@ class QueryClassifier:
             return {
                 "count": len(logs),
                 "avg_latency_ms": sum(latencies) / len(latencies),
-                "p95_latency_ms": sorted(latencies)[int(len(latencies) * 0.95)] if len(latencies) >= 20 else None,
+                "p95_latency_ms": (sorted(latencies)[int(len(latencies) * 0.95)] if len(latencies) >= 20 else None),
                 "avg_confidence": sum(confidences) / len(confidences),
                 "type_distribution": self._compute_type_distribution(logs),
             }

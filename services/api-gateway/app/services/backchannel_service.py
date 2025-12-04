@@ -108,11 +108,17 @@ BACKCHANNEL_PHRASES: Dict[str, List[BackchannelPhrase]] = {
 # Maps emotion states to preferred backchannel types
 EMOTION_PHRASE_MAP: Dict[str, Dict[str, Any]] = {
     "neutral": {
-        "preferred_types": [BackchannelType.ACKNOWLEDGMENT, BackchannelType.UNDERSTANDING],
+        "preferred_types": [
+            BackchannelType.ACKNOWLEDGMENT,
+            BackchannelType.UNDERSTANDING,
+        ],
         "weight_boost": 1.0,
     },
     "happy": {
-        "preferred_types": [BackchannelType.ENCOURAGEMENT, BackchannelType.ACKNOWLEDGMENT],
+        "preferred_types": [
+            BackchannelType.ENCOURAGEMENT,
+            BackchannelType.ACKNOWLEDGMENT,
+        ],
         "weight_boost": 1.2,
     },
     "sad": {
@@ -142,7 +148,10 @@ EMOTION_PHRASE_MAP: Dict[str, Dict[str, Any]] = {
         ],
     },
     "confused": {
-        "preferred_types": [BackchannelType.UNDERSTANDING, BackchannelType.ENCOURAGEMENT],
+        "preferred_types": [
+            BackchannelType.UNDERSTANDING,
+            BackchannelType.ENCOURAGEMENT,
+        ],
         "weight_boost": 1.0,
         "extra_phrases": [
             BackchannelPhrase("go on", BackchannelType.ENCOURAGEMENT, weight=1.5),

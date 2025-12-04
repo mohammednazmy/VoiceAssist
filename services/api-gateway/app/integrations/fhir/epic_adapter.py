@@ -355,9 +355,9 @@ class EpicAdapter(FHIRClient):
         # Handle errors gracefully
         summary = {
             "patient": patient.to_dict() if isinstance(patient, FHIRPatient) else None,
-            "medications": [m.to_dict() for m in medications] if isinstance(medications, list) else [],
-            "conditions": [c.to_dict() for c in conditions] if isinstance(conditions, list) else [],
-            "allergies": [a.to_dict() for a in allergies] if isinstance(allergies, list) else [],
+            "medications": ([m.to_dict() for m in medications] if isinstance(medications, list) else []),
+            "conditions": ([c.to_dict() for c in conditions] if isinstance(conditions, list) else []),
+            "allergies": ([a.to_dict() for a in allergies] if isinstance(allergies, list) else []),
             "vitals": [v.to_dict() for v in vitals] if isinstance(vitals, list) else [],
             "labs": [l.to_dict() for l in labs] if isinstance(labs, list) else [],
             "fetched_at": datetime.utcnow().isoformat(),
@@ -920,7 +920,7 @@ class EpicAdapter(FHIRClient):
                         "id": med.id,
                         "name": med.medication_name,
                         "dosage": med.dosage_instruction,
-                        "authored_on": med.authored_on.isoformat() if med.authored_on else None,
+                        "authored_on": (med.authored_on.isoformat() if med.authored_on else None),
                     }
                 )
 

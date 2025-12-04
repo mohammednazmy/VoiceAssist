@@ -92,7 +92,7 @@ class UserEmotionProfile(Base):
             "total_samples": self.total_samples,
             "confidence_level": self.confidence_level,
             "tracking_enabled": self.tracking_enabled,
-            "last_sample_at": self.last_sample_at.isoformat() if self.last_sample_at else None,
+            "last_sample_at": (self.last_sample_at.isoformat() if self.last_sample_at else None),
         }
 
 

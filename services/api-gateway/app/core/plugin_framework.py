@@ -523,7 +523,10 @@ class KnowledgeBasePlugin(VoicePlugin):
                 pattern=r"search (for |the )?(.+)",
                 handler=search_handler,
                 description="Search the knowledge base",
-                examples=["search for API documentation", "search authentication guide"],
+                examples=[
+                    "search for API documentation",
+                    "search authentication guide",
+                ],
             ),
         ]
 

@@ -47,7 +47,9 @@ class EmotionPersonalization:
         if policy_config:
             self.alpha = getattr(policy_config, "baseline_learning_rate", self.DEFAULT_ALPHA)
             self.deviation_threshold = getattr(
-                policy_config, "emotion_deviation_threshold", self.DEFAULT_DEVIATION_THRESHOLD
+                policy_config,
+                "emotion_deviation_threshold",
+                self.DEFAULT_DEVIATION_THRESHOLD,
             )
         else:
             self.alpha = self.DEFAULT_ALPHA

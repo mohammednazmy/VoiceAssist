@@ -1,14 +1,24 @@
 ---
-title: "Voice Realtime Integration"
-slug: "archive/voice-realtime-integration"
-summary: "Comprehensive documentation for the OpenAI Realtime API integration in VoiceAssist."
+title: Voice Realtime Integration
+slug: archive/voice-realtime-integration
+summary: >-
+  Comprehensive documentation for the OpenAI Realtime API integration in
+  VoiceAssist.
 status: deprecated
 stability: legacy
 owner: docs
 lastUpdated: "2025-11-27"
-audience: ["human"]
-tags: ["voice", "realtime", "integration"]
+audience:
+  - human
+  - ai-agents
+tags:
+  - voice
+  - realtime
+  - integration
 category: reference
+ai_summary: >-
+  This integration adds full-duplex voice conversation capabilities using
+  OpenAI's Realtime API.
 ---
 
 # OpenAI Realtime API Integration

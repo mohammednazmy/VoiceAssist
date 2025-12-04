@@ -1,6 +1,6 @@
 {
-  "count": 254,
-  "generated_at": "2025-12-04T10:40:40.960Z",
+  "count": 255,
+  "generated_at": "2025-12-04T11:27:14.942Z",
   "docs": [
     {
       "slug": "style-guide",
@@ -27,7 +27,7 @@
       "slug": "admin-panel-guide",
       "path": "admin-guide/feature-flags/admin-panel-guide.md",
       "title": "Feature Flags Admin Panel Guide",
-      "summary": "Using the Admin Panel to manage feature flags",
+      "summary": "Using the Admin Panel to manage feature flags and scheduled variant changes",
       "status": "stable",
       "owner": "frontend",
       "audience": ["admin", "developers", "ai-agents"],
@@ -92,6 +92,16 @@
       "owner": "backend",
       "audience": ["developers", "admin", "ai-agents"],
       "category": "reference",
+      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "phase-4-user-overrides-plan",
+      "path": "feature-flags/PHASE_4_USER_OVERRIDES_PLAN.md",
+      "title": "Feature Flags Phase 4 - User Overrides",
+      "summary": "Implementation plan for user-specific feature flag overrides and admin UI enhancements",
+      "status": "draft",
+      "owner": "backend",
+      "audience": ["developers"],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
@@ -2010,7 +2020,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["backend"],
+      "audience": ["backend", "ai-agents"],
       "category": "reference",
       "tags": ["backend", "implementation", "plan"],
       "lastUpdated": "2025-11-27"
@@ -2023,7 +2033,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["backend"],
+      "audience": ["backend", "ai-agents"],
       "category": "reference",
       "tags": ["backend", "implementation", "summary"],
       "lastUpdated": "2025-11-27"
@@ -2036,7 +2046,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["branching", "and", "shortcuts", "implementation"],
       "lastUpdated": "2025-11-27"
@@ -2049,7 +2059,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["changes", "summary"],
       "lastUpdated": "2025-11-27"
@@ -2062,7 +2072,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["current", "phase"],
       "lastUpdated": "2025-11-27"
@@ -2075,7 +2085,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["devops", "sre"],
+      "audience": ["devops", "sre", "ai-agents"],
       "category": "reference",
       "tags": ["deployment", "complete"],
       "lastUpdated": "2025-11-27"
@@ -2088,7 +2098,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["design", "system", "implementation", "plan"],
       "lastUpdated": "2025-11-27"
@@ -2101,7 +2111,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["development", "log"],
       "lastUpdated": "2025-11-27"
@@ -2114,7 +2124,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["development", "session", "summary"],
       "lastUpdated": "2025-11-27"
@@ -2127,7 +2137,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["dev", "cors", "fix", "summary"],
       "lastUpdated": "2025-11-27"
@@ -2140,7 +2150,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["documentation", "created"],
       "lastUpdated": "2025-11-27"
@@ -2153,7 +2163,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["frontend"],
+      "audience": ["frontend", "ai-agents"],
       "category": "reference",
       "tags": ["frontend", "phase1", "phase2", "summary"],
       "lastUpdated": "2025-11-27"
@@ -2166,7 +2176,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["frontend"],
+      "audience": ["frontend", "ai-agents"],
       "category": "reference",
       "tags": ["frontend", "phase8", "tests"],
       "lastUpdated": "2025-11-27"
@@ -2179,7 +2189,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
@@ -2192,7 +2202,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["phase", "complete", "summary"],
       "lastUpdated": "2025-11-27"
@@ -2205,7 +2215,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["phase", "locust", "summary"],
       "lastUpdated": "2025-11-27"
@@ -2218,7 +2228,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["phase", "optimization", "summary"],
       "lastUpdated": "2025-11-27"
@@ -2231,7 +2241,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["phase", "voice", "complete"],
       "lastUpdated": "2025-11-27"
@@ -2244,7 +2254,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["phase", "complete"],
       "lastUpdated": "2025-11-27"
@@ -2257,7 +2267,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["phase", "citations", "complete"],
       "lastUpdated": "2025-11-27"
@@ -2270,7 +2280,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["phase", "complete"],
       "lastUpdated": "2025-11-27"
@@ -2283,7 +2293,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["phase", "conversation", "management", "progress"],
       "lastUpdated": "2025-11-27"
@@ -2296,7 +2306,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["phase", "export", "complete"],
       "lastUpdated": "2025-11-27"
@@ -2309,7 +2319,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["phase", "accessibility", "complete"],
       "lastUpdated": "2025-11-27"
@@ -2322,7 +2332,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["plan"],
       "lastUpdated": "2025-11-27"
@@ -2335,7 +2345,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["pull", "request"],
       "lastUpdated": "2025-11-27"
@@ -2348,7 +2358,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["readme"],
       "lastUpdated": "2025-11-27"
@@ -2361,7 +2371,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["realtime", "sanity", "check"],
       "lastUpdated": "2025-11-27"
@@ -2374,7 +2384,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["session", "summary", "2025", "phase"],
       "lastUpdated": "2025-11-27"
@@ -2387,7 +2397,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["session", "summary", "2025", "phase"],
       "lastUpdated": "2025-11-27"
@@ -2400,7 +2410,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["voice", "endpoint", "fix"],
       "lastUpdated": "2025-11-27"
@@ -2413,7 +2423,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["voice", "mode", "enhancement", "summary"],
       "lastUpdated": "2025-11-27"
@@ -2426,7 +2436,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["voice", "realtime", "integration"],
       "lastUpdated": "2025-11-27"
@@ -2439,7 +2449,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["frontend"],
+      "audience": ["frontend", "ai-agents"],
       "category": "reference",
       "tags": ["web", "app", "development", "summary"],
       "lastUpdated": "2025-11-27"
@@ -2452,7 +2462,7 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human"],
+      "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["work", "completed", "2025"],
       "lastUpdated": "2025-11-27"

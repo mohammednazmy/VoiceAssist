@@ -181,7 +181,10 @@ class AdaptiveTuning:
             if anomaly.severity == "high":
                 await self.apply(
                     {
-                        "use_fallback_provider": {"value": True, "reason": "High latency anomaly"},
+                        "use_fallback_provider": {
+                            "value": True,
+                            "reason": "High latency anomaly",
+                        },
                     }
                 )
         elif "error" in anomaly.metric_name.lower():

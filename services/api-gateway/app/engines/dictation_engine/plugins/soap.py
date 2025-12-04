@@ -160,7 +160,11 @@ class SOAPPlugin(BaseDictationPlugin):
                     plan.content += f"\n\nMedications:\n- {medication}"
                 else:
                     plan.content = f"Medications:\n- {medication}"
-            return {"success": True, "action": "add_medication", "medication": medication}
+            return {
+                "success": True,
+                "action": "add_medication",
+                "medication": medication,
+            }
 
         return {"success": False, "error": "Plan section not found"}
 

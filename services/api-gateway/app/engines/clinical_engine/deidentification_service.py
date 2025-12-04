@@ -338,7 +338,7 @@ class DeidentificationService:
             method_used=method,
             replacements=replacements,
             reversible=method == DeidentificationMethod.TOKEN,
-            token_map=self._token_store.get(session_id) if method == DeidentificationMethod.TOKEN else None,
+            token_map=(self._token_store.get(session_id) if method == DeidentificationMethod.TOKEN else None),
         )
 
     def _generate_replacement(

@@ -178,9 +178,24 @@ class CrossEngineContextHandler:
         self.event_bus.subscribe("repair.started", handle_repair_started, priority=5, engine="context")
         self.event_bus.subscribe("repair.escalation", handle_repair_escalation, priority=5, engine="context")
         self.event_bus.subscribe("provider.status", handle_provider_status, priority=10, engine="context")
-        self.event_bus.subscribe("degradation.activated", handle_degradation_activated, priority=10, engine="context")
-        self.event_bus.subscribe("degradation.recovered", handle_degradation_recovered, priority=10, engine="context")
-        self.event_bus.subscribe("memory.context_updated", handle_memory_context_updated, priority=5, engine="context")
+        self.event_bus.subscribe(
+            "degradation.activated",
+            handle_degradation_activated,
+            priority=10,
+            engine="context",
+        )
+        self.event_bus.subscribe(
+            "degradation.recovered",
+            handle_degradation_recovered,
+            priority=10,
+            engine="context",
+        )
+        self.event_bus.subscribe(
+            "memory.context_updated",
+            handle_memory_context_updated,
+            priority=5,
+            engine="context",
+        )
 
     def get_context(self, session_id: str) -> SessionContext:
         """Get or create session context"""
@@ -360,7 +375,11 @@ class CrossEngineContextHandler:
                 data={
                     "session_id": event.session_id,
                     "is_degraded": True,
-                    "actions": ["disable_progressive", "use_fallback", "reduce_features"],
+                    "actions": [
+                        "disable_progressive",
+                        "use_fallback",
+                        "reduce_features",
+                    ],
                 },
                 session_id=event.session_id,
                 source_engine="context",

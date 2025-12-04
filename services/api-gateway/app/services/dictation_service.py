@@ -680,11 +680,31 @@ class DictationService:
                 "name": "SOAP Note",
                 "description": "Subjective, Objective, Assessment, Plan",
             },
-            {"type": NoteType.HP.value, "name": "History & Physical", "description": "Comprehensive H&P"},
-            {"type": NoteType.PROGRESS.value, "name": "Progress Note", "description": "Follow-up progress note"},
-            {"type": NoteType.PROCEDURE.value, "name": "Procedure Note", "description": "Procedure documentation"},
-            {"type": NoteType.CONSULT.value, "name": "Consultation", "description": "Consultation note"},
-            {"type": NoteType.DISCHARGE.value, "name": "Discharge Summary", "description": "Discharge summary"},
+            {
+                "type": NoteType.HP.value,
+                "name": "History & Physical",
+                "description": "Comprehensive H&P",
+            },
+            {
+                "type": NoteType.PROGRESS.value,
+                "name": "Progress Note",
+                "description": "Follow-up progress note",
+            },
+            {
+                "type": NoteType.PROCEDURE.value,
+                "name": "Procedure Note",
+                "description": "Procedure documentation",
+            },
+            {
+                "type": NoteType.CONSULT.value,
+                "name": "Consultation",
+                "description": "Consultation note",
+            },
+            {
+                "type": NoteType.DISCHARGE.value,
+                "name": "Discharge Summary",
+                "description": "Discharge summary",
+            },
         ]
 
 

@@ -107,7 +107,10 @@ class CodeExtractor:
         "copd": ("J44.9", "Chronic obstructive pulmonary disease, unspecified"),
         "asthma": ("J45.909", "Unspecified asthma, uncomplicated"),
         "pneumonia": ("J18.9", "Pneumonia, unspecified organism"),
-        "pulmonary embolism": ("I26.99", "Other pulmonary embolism without acute cor pulmonale"),
+        "pulmonary embolism": (
+            "I26.99",
+            "Other pulmonary embolism without acute cor pulmonale",
+        ),
         "pe": ("I26.99", "Other pulmonary embolism without acute cor pulmonale"),
         # Neurological
         "stroke": ("I63.9", "Cerebral infarction, unspecified"),
@@ -117,7 +120,10 @@ class CodeExtractor:
         "migraine": ("G43.909", "Migraine, unspecified"),
         # Infections
         "uti": ("N39.0", "Urinary tract infection, site not specified"),
-        "urinary tract infection": ("N39.0", "Urinary tract infection, site not specified"),
+        "urinary tract infection": (
+            "N39.0",
+            "Urinary tract infection, site not specified",
+        ),
         "cellulitis": ("L03.90", "Cellulitis, unspecified"),
         "sepsis": ("A41.9", "Sepsis, unspecified organism"),
         # GI
@@ -179,11 +185,23 @@ class CodeExtractor:
     # Phrase patterns for high-impact conditions
     HIGH_IMPACT_PHRASES = {
         "sepsis": ("A41.9", CodeSeverity.CRITICAL, "Sepsis - initiate sepsis bundle"),
-        "septic shock": ("R65.21", CodeSeverity.CRITICAL, "Septic shock - vasopressors"),
+        "septic shock": (
+            "R65.21",
+            CodeSeverity.CRITICAL,
+            "Septic shock - vasopressors",
+        ),
         "stemi": ("I21.3", CodeSeverity.CRITICAL, "STEMI - activate cath lab"),
-        "st elevation mi": ("I21.3", CodeSeverity.CRITICAL, "STEMI - activate cath lab"),
+        "st elevation mi": (
+            "I21.3",
+            CodeSeverity.CRITICAL,
+            "STEMI - activate cath lab",
+        ),
         "nstemi": ("I21.4", CodeSeverity.HIGH, "NSTEMI - cardiology consult"),
-        "myocardial infarction": ("I21.9", CodeSeverity.CRITICAL, "MI - activate ACS protocol"),
+        "myocardial infarction": (
+            "I21.9",
+            CodeSeverity.CRITICAL,
+            "MI - activate ACS protocol",
+        ),
         "heart attack": ("I21.9", CodeSeverity.CRITICAL, "MI - activate ACS protocol"),
         "stroke": ("I63.9", CodeSeverity.CRITICAL, "Stroke - activate stroke protocol"),
         "cva": ("I63.9", CodeSeverity.CRITICAL, "CVA - activate stroke protocol"),
@@ -191,11 +209,23 @@ class CodeExtractor:
         "pe": ("I26.99", CodeSeverity.HIGH, "PE - anticoagulation"),
         "cardiac arrest": ("I46.9", CodeSeverity.CRITICAL, "Cardiac arrest - ACLS"),
         "respiratory failure": ("J96.00", CodeSeverity.CRITICAL, "Respiratory failure"),
-        "intracranial hemorrhage": ("I61.9", CodeSeverity.CRITICAL, "ICH - neurosurgery"),
+        "intracranial hemorrhage": (
+            "I61.9",
+            CodeSeverity.CRITICAL,
+            "ICH - neurosurgery",
+        ),
         "gi bleed": ("K92.2", CodeSeverity.HIGH, "GI bleed - GI consult"),
-        "gastrointestinal bleeding": ("K92.2", CodeSeverity.HIGH, "GI bleed - GI consult"),
+        "gastrointestinal bleeding": (
+            "K92.2",
+            CodeSeverity.HIGH,
+            "GI bleed - GI consult",
+        ),
         "anaphylaxis": ("T78.2", CodeSeverity.CRITICAL, "Anaphylaxis - epinephrine"),
-        "diabetic ketoacidosis": ("E10.10", CodeSeverity.CRITICAL, "DKA - insulin drip"),
+        "diabetic ketoacidosis": (
+            "E10.10",
+            CodeSeverity.CRITICAL,
+            "DKA - insulin drip",
+        ),
         "dka": ("E10.10", CodeSeverity.CRITICAL, "DKA - insulin drip"),
     }
 

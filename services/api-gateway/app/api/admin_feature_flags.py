@@ -412,7 +412,11 @@ async def list_scheduled_changes(
         )
 
 
-@router.post("/{flag_name}/scheduled-changes", response_model=dict, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{flag_name}/scheduled-changes",
+    response_model=dict,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_scheduled_change(
     flag_name: str,
     change_data: ScheduledChangeCreate,

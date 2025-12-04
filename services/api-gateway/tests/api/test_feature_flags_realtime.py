@@ -58,7 +58,10 @@ class TestFlagSubscriptionManager:
         """Test connecting with a flag filter."""
         await subscription_manager.connect("client-1", ["ui.dark_mode", "backend.rag"])
 
-        assert subscription_manager._subscriptions["client-1"] == {"ui.dark_mode", "backend.rag"}
+        assert subscription_manager._subscriptions["client-1"] == {
+            "ui.dark_mode",
+            "backend.rag",
+        }
 
     @pytest.mark.asyncio
     async def test_disconnect_removes_client(self, subscription_manager):

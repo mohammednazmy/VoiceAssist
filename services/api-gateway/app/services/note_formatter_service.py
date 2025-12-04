@@ -181,7 +181,10 @@ VITAL_PATTERNS = [
     # Temperature: "98.6 degrees" or "temp 98.6"
     (r"\btemperature?\s*(?:of\s*)?(\d{2,3}(?:\.\d)?)\s*(?:degrees?)?\b", r"Temp \1°F"),
     # O2 sat: "98 percent" or "o2 sat 98"
-    (r"\b(?:o2|oxygen)\s*(?:sat(?:uration)?)\s*(?:of\s*)?(\d{2,3})\s*(?:percent|%)?\b", r"SpO2 \1%"),
+    (
+        r"\b(?:o2|oxygen)\s*(?:sat(?:uration)?)\s*(?:of\s*)?(\d{2,3})\s*(?:percent|%)?\b",
+        r"SpO2 \1%",
+    ),
     # Respiratory rate
     (r"\brespiratory rate\s*(?:of\s*)?(\d{1,2})\b", r"RR \1 rpm"),
 ]

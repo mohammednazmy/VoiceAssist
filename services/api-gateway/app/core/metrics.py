@@ -394,7 +394,11 @@ flag_evaluations_total = _safe_counter(
 flag_variant_assignments_total = _safe_counter(
     "voiceassist_flag_variant_assignments_total",
     "Total variant assignments for multivariate flags",
-    ["flag_name", "variant_id", "assignment_method"],  # method: "bucket", "targeting_rule", "default"
+    [
+        "flag_name",
+        "variant_id",
+        "assignment_method",
+    ],  # method: "bucket", "targeting_rule", "default"
 )
 
 # Hash bucket cache stats
