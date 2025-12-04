@@ -537,6 +537,12 @@ class VoicePipelineSession:
         if self._talker_session:
             await self._talker_session.finish()
 
+        # Wait for TTS audio to finish playing on frontend and echo to settle
+        # This prevents the AI's own voice from being transcribed as user speech
+        # 800ms accounts for: audio buffer playback (~300ms) + room reverb (~200ms) + safety margin
+        logger.info("[Pipeline] Waiting for TTS echo to settle before restarting STT...")
+        await asyncio.sleep(0.8)
+
         # Return to listening
         async with self._state_lock:
             self._state = PipelineState.LISTENING
