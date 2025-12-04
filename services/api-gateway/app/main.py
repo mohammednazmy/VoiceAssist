@@ -228,6 +228,30 @@ async def startup_event():
     except Exception as e:
         logger.warning("prompt_cache_warm_failed", error=str(e))
 
+    # Auto-register feature flags from shared definitions and warm cache (Phase 7 Enhancement)
+    try:
+        from app.core.flag_definitions import get_all_flags
+        from app.services.feature_flags import feature_flag_service
+
+        # Warm the feature flag cache
+        flags_cached = await feature_flag_service.warm_cache()
+        logger.info("feature_flag_cache_warmed", flags_cached=flags_cached)
+
+        # Log flag definitions summary
+        all_flags = get_all_flags()
+        categories = {}
+        for flag in all_flags:
+            cat = flag.category.value
+            categories[cat] = categories.get(cat, 0) + 1
+
+        logger.info(
+            "feature_flags_loaded",
+            total_definitions=len(all_flags),
+            categories=categories,
+        )
+    except Exception as e:
+        logger.warning("feature_flag_init_failed", error=str(e))
+
     # FastAPI Cache disabled due to redis-py compatibility issues
     # TODO: Re-enable when fastapi-cache2 supports redis-py 5.x
     # FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")

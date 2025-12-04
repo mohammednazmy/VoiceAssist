@@ -102,32 +102,90 @@ async def get_feature_value(flag_name: str, default: Any = None) -> Any:
 
 
 # Predefined feature flag constants for common features
+# Phase 7 Enhancement: Using new dot-based naming convention
+# Legacy names are supported via resolve_flag_name()
 class FeatureFlags:
-    """Constants for commonly used feature flags."""
+    """Constants for commonly used feature flags.
 
-    # RBAC Features
-    RBAC_ENFORCEMENT = "rbac_enforcement"
-    RBAC_STRICT_MODE = "rbac_strict_mode"
+    Note: These constants use the new dot-based naming convention.
+    Legacy code using old names (e.g., "rbac_enforcement") will continue
+    to work via the resolve_flag_name() function in flag_definitions.py.
 
-    # Observability Features
-    METRICS_ENABLED = "metrics_enabled"
-    TRACING_ENABLED = "tracing_enabled"
-    LOGGING_VERBOSE = "logging_verbose"
+    Naming Convention: {category}.{feature_name}
+    Categories: ui, backend, admin, integration, experiment, ops
+    """
 
-    # External Integrations
-    NEXTCLOUD_INTEGRATION = "nextcloud_integration"
-    OPENAI_ENABLED = "openai_enabled"
-    NEXTCLOUD_AUTO_INDEX = "nextcloud_auto_index"
+    # RBAC Features (backend category)
+    RBAC_ENFORCEMENT = "backend.rbac_enforcement"
+    RBAC_STRICT_MODE = "backend.rbac_strict_mode"
 
-    # RAG Features
-    RAG_STRATEGY = "rag_strategy"  # Value: "simple", "multi_hop", "hybrid"
-    RAG_MAX_RESULTS = "rag_max_results"  # Value: integer
-    RAG_SCORE_THRESHOLD = "rag_score_threshold"  # Value: float
+    # Observability Features (ops category)
+    METRICS_ENABLED = "ops.metrics_enabled"
+    TRACING_ENABLED = "ops.tracing_enabled"
+    LOGGING_VERBOSE = "ops.verbose_logging"
 
-    # Performance Features
-    CACHE_ENABLED = "cache_enabled"
-    ASYNC_INDEXING = "async_indexing"
+    # External Integrations (integration category)
+    NEXTCLOUD_INTEGRATION = "integration.nextcloud"
+    OPENAI_ENABLED = "integration.openai"
+    NEXTCLOUD_AUTO_INDEX = "integration.nextcloud_auto_index"
+
+    # RAG Features (backend category)
+    RAG_STRATEGY = "backend.rag_strategy"  # Value: "simple", "multi_hop", "hybrid"
+    RAG_MAX_RESULTS = "backend.rag_max_results"  # Value: integer
+    RAG_SCORE_THRESHOLD = "backend.rag_score_threshold"  # Value: float
+
+    # Performance Features (backend category)
+    CACHE_ENABLED = "backend.cache_enabled"
+    ASYNC_INDEXING = "backend.async_indexing"
 
     # Experimental Features
-    BETA_FEATURES = "beta_features"
-    EXPERIMENTAL_API = "experimental_api"
+    BETA_FEATURES = "ui.beta_features"
+    EXPERIMENTAL_API = "experiment.experimental_api"
+
+    # Operations (ops category)
+    MAINTENANCE_MODE = "ops.maintenance_mode"
+    RATE_LIMITING = "ops.rate_limiting"
+
+    # Admin Features (admin category)
+    BULK_OPERATIONS = "admin.bulk_operations"
+    ADVANCED_ANALYTICS = "admin.advanced_analytics"
+    AUDIT_LOG_EXPORT = "admin.audit_log_export"
+
+    # UI Features (ui category)
+    UNIFIED_CHAT_VOICE = "ui.unified_chat_voice"
+    NEW_NAVIGATION = "ui.new_navigation"
+    DARK_MODE = "ui.dark_mode"
+
+    # Legacy name compatibility map
+    # Maps old names to new names for backward compatibility
+    _LEGACY_MAP = {
+        "rbac_enforcement": "backend.rbac_enforcement",
+        "rbac_strict_mode": "backend.rbac_strict_mode",
+        "metrics_enabled": "ops.metrics_enabled",
+        "tracing_enabled": "ops.tracing_enabled",
+        "logging_verbose": "ops.verbose_logging",
+        "nextcloud_integration": "integration.nextcloud",
+        "openai_enabled": "integration.openai",
+        "nextcloud_auto_index": "integration.nextcloud_auto_index",
+        "rag_strategy": "backend.rag_strategy",
+        "rag_max_results": "backend.rag_max_results",
+        "rag_score_threshold": "backend.rag_score_threshold",
+        "cache_enabled": "backend.cache_enabled",
+        "async_indexing": "backend.async_indexing",
+        "beta_features": "ui.beta_features",
+        "experimental_api": "experiment.experimental_api",
+    }
+
+    @classmethod
+    def resolve(cls, name: str) -> str:
+        """Resolve a flag name, handling legacy names.
+
+        Args:
+            name: Flag name (old or new format)
+
+        Returns:
+            Resolved flag name in new dot-based format
+        """
+        if "." in name:
+            return name
+        return cls._LEGACY_MAP.get(name, name)

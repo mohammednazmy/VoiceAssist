@@ -1633,3 +1633,9 @@ export function extractErrorMessage(err: unknown): string {
   if (typeof err === "string") return err;
   return "An unknown error occurred";
 }
+
+// ============================================================================
+// Feature Flag Types (Phase 7 Enhancement)
+// ============================================================================
+
+export * from "./featureFlags";

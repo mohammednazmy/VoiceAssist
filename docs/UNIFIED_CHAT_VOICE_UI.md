@@ -164,21 +164,25 @@ The UnifiedInputArea provides seamless switching between text and voice modes:
 
 ## Feature Flag
 
-The unified interface is gated behind the `unified_chat_voice_ui` feature flag:
+The unified interface is gated behind the `ui.unified_chat_voice` feature flag:
 
 ```typescript
 // src/lib/featureFlags.ts
+import { useFeatureFlag } from '@voiceassist/types';
+
 export function isUnifiedChatVoiceUIEnabled(): boolean {
-  // Check user preference, environment, or A/B test
-  return localStorage.getItem("ff_unified_chat_voice_ui") === "true" || import.meta.env.VITE_UNIFIED_UI === "true";
+  // Check feature flag system or environment fallback
+  return useFeatureFlag('ui.unified_chat_voice') || import.meta.env.VITE_UNIFIED_UI === "true";
 }
 ```
 
 ### Enabling the Feature
 
-1. **Environment Variable**: Set `VITE_UNIFIED_UI=true` in `.env`
-2. **Local Storage**: Set `ff_unified_chat_voice_ui` to `"true"`
+1. **Admin Panel**: Toggle `ui.unified_chat_voice` in Feature Flags settings
+2. **Environment Variable**: Set `VITE_UNIFIED_UI=true` in `.env`
 3. **URL Parameter**: `?unified=true` (for testing)
+
+> **Note**: See [Feature Flag Naming Conventions](admin-guide/feature-flags/naming-conventions.md) for the `category.feature_name` pattern.
 
 ---
 
