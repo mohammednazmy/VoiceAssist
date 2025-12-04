@@ -144,6 +144,66 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 components=["ThemeProvider", "SettingsPanel"],
             ),
         ),
+        # Voice Mode v4 UI Flags
+        "voice_v4_voice_first_ui": FeatureFlagDefinition(
+            name="ui.voice_v4_voice_first_ui",
+            description="Enable voice-first unified input bar UI",
+            category=FlagCategory.UI,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/ui-components",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["VoiceFirstInputBar", "VoiceModePanel"],
+            ),
+        ),
+        "voice_v4_streaming_text": FeatureFlagDefinition(
+            name="ui.voice_v4_streaming_text",
+            description="Enable streaming text display during TTS playback",
+            category=FlagCategory.UI,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(criticality="low"),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["StreamingTextDisplay"],
+            ),
+        ),
+        "voice_v4_latency_indicator": FeatureFlagDefinition(
+            name="ui.voice_v4_latency_indicator",
+            description="Enable voice mode latency indicator with degradation info",
+            category=FlagCategory.UI,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(criticality="low"),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["LatencyIndicator"],
+            ),
+        ),
+        "voice_v4_thinking_feedback_panel": FeatureFlagDefinition(
+            name="ui.voice_v4_thinking_feedback_panel",
+            description="Enable thinking feedback panel with audio/visual/haptic options",
+            category=FlagCategory.UI,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/thinking-feedback",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["ThinkingFeedbackPanel", "ThinkingVisualIndicator"],
+                other_flags=["backend.voice_v4_thinking_tones"],
+            ),
+        ),
     },
     # -------------------------------------------------------------------------
     # Backend Flags - API/service behavior
@@ -227,6 +287,121 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
             default_enabled=True,
             metadata=FlagMetadata(criticality="medium"),
             dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        # Voice Mode v4 Feature Flags
+        "voice_v4_translation_fallback": FeatureFlagDefinition(
+            name="backend.voice_v4_translation_fallback",
+            description="Enable translation service with fallback and caching",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/multilingual-rag",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                other_flags=["backend.voice_v4_multilingual_rag"],
+            ),
+        ),
+        "voice_v4_multilingual_rag": FeatureFlagDefinition(
+            name="backend.voice_v4_multilingual_rag",
+            description="Enable multilingual RAG with translation layer",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/multilingual-rag",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                other_flags=["backend.voice_v4_translation_fallback"],
+            ),
+        ),
+        "voice_v4_lexicon_service": FeatureFlagDefinition(
+            name="backend.voice_v4_lexicon_service",
+            description="Enable medical pronunciation lexicon service with G2P",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/tunable-vad",
+            ),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        "voice_v4_thinking_tones": FeatureFlagDefinition(
+            name="backend.voice_v4_thinking_tones",
+            description="Enable thinking tone audio/visual/haptic feedback",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/thinking-feedback",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["ThinkingFeedbackPanel", "ThinkingTonePlayer"],
+            ),
+        ),
+        "voice_v4_latency_budgets": FeatureFlagDefinition(
+            name="backend.voice_v4_latency_budgets",
+            description="Enable latency-aware voice orchestration with degradation",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(criticality="medium"),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        "voice_v4_phi_routing": FeatureFlagDefinition(
+            name="backend.voice_v4_phi_routing",
+            description="Enable PHI-aware STT routing with local Whisper fallback",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="high",
+                owner="security-team",
+                docs_url="https://assistdocs.asimo.io/voice/phi-aware-stt",
+            ),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        "voice_v4_adaptive_vad": FeatureFlagDefinition(
+            name="backend.voice_v4_adaptive_vad",
+            description="Enable user-tunable adaptive VAD presets",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/tunable-vad",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["VADSettings"],
+            ),
+        ),
+        "voice_v4_rtl_support": FeatureFlagDefinition(
+            name="backend.voice_v4_rtl_support",
+            description="Enable RTL language support (Arabic, Urdu, Hebrew)",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(criticality="low"),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                other_flags=["backend.voice_v4_multilingual_rag"],
+            ),
         ),
     },
     # -------------------------------------------------------------------------
@@ -529,3 +704,55 @@ def get_flag_with_deprecation_check(name: str) -> Optional[FeatureFlagDefinition
     """
     resolved_name = resolve_flag_name(name, warn=True)
     return get_flag_by_name(resolved_name)
+
+
+def sync_definitions_to_database(db_session) -> Dict[str, int]:
+    """Sync flag definitions to the database.
+
+    Creates new flags for definitions that don't exist in the database.
+    Does NOT update existing flags to preserve admin customizations.
+
+    Args:
+        db_session: SQLAlchemy database session
+
+    Returns:
+        Dict with counts: {"created": N, "skipped": M}
+    """
+    import json
+
+    from app.models.feature_flag import FeatureFlag
+
+    all_defs = get_all_flags()
+    created = 0
+    skipped = 0
+
+    for flag_def in all_defs:
+        # Check if flag already exists
+        existing = db_session.query(FeatureFlag).filter(FeatureFlag.name == flag_def.name).first()
+
+        if existing:
+            skipped += 1
+            continue
+
+        # Create new flag from definition
+        new_flag = FeatureFlag(
+            name=flag_def.name,
+            description=flag_def.description,
+            flag_type=flag_def.flag_type.value,
+            enabled=flag_def.default_value if flag_def.flag_type == FlagType.BOOLEAN else True,
+            value=None if flag_def.flag_type == FlagType.BOOLEAN else json.dumps(flag_def.default_value),
+            default_value=json.dumps(flag_def.default_value),
+            rollout_percentage=100,
+            environment="production",
+            metadata=json.dumps(
+                {
+                    "category": flag_def.category.value,
+                    "source": "flag_definitions",
+                }
+            ),
+        )
+        db_session.add(new_flag)
+        created += 1
+
+    db_session.commit()
+    return {"created": created, "skipped": skipped}

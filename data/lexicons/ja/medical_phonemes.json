@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "version": "0.1.0",
+    "term_count": 5,
+    "last_updated": "2024-12-04",
+    "language": "ja",
+    "alphabet": "ipa",
+    "status": "placeholder",
+    "categories": [],
+    "note": "Placeholder lexicon for Japanese. Requires native speaker review."
+  },
+  "糖尿病": "toːɲoːbjoː",
+  "高血圧": "koːketsɯatsɯ",
+  "心臓": "ɕinzoː",
+  "頭痛": "zɯtɯː",
+  "薬": "kɯsɯɾi"
+}

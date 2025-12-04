@@ -22,6 +22,15 @@ from app.services.carddav_service import AddressBook, CardDAVService, Contact, C
 from app.services.carddav_service import EmailAddress as CardEmailAddress
 from app.services.carddav_service import EmailType, PhoneNumber, PhoneType, PostalAddress
 from app.services.email_service import Email, EmailFolder, EmailService, EmailThread
+from app.services.latency_aware_orchestrator import (
+    DegradationType,
+    LatencyAwareVoiceOrchestrator,
+    LatencyBudget,
+    TranslationFailedError,
+    VoiceProcessingResult,
+    get_latency_aware_orchestrator,
+)
+from app.services.lexicon_service import LexiconReport, LexiconService, PronunciationResult, get_lexicon_service
 from app.services.medical_calculators import CalculatorResult, MedicalCalculators, RiskLevel, Sex, list_calculators
 from app.services.medical_embedding_service import (
     EmbeddingResult,
@@ -51,6 +60,12 @@ from app.services.multi_hop_reasoning_service import (
     hybrid_search_engine,
     multi_hop_reasoner,
 )
+from app.services.multilingual_rag_service import (
+    LanguageDetectionService,
+    MultilingualRAGResponse,
+    MultilingualRAGService,
+    get_multilingual_rag_service,
+)
 from app.services.oidc_service import (
     AuthorizationRequest,
     OIDCClaims,
@@ -68,6 +83,14 @@ from app.services.pubmed_enhanced_service import (
 )
 from app.services.pubmed_enhanced_service import SearchResult as PubMedSearchResult
 from app.services.realtime_voice_service import RealtimeVoiceService, realtime_voice_service
+
+# Voice Mode v4.1 Services
+from app.services.translation_service import (
+    LanguageCode,
+    TranslationResult,
+    TranslationService,
+    get_translation_service,
+)
 from app.services.uptodate_service import (
     DrugInteraction,
     DrugInteractionResult,
@@ -189,4 +212,22 @@ __all__ = [
     "Sex",
     "RiskLevel",
     "list_calculators",
+    # Voice Mode v4.1 Services
+    "TranslationService",
+    "TranslationResult",
+    "LanguageCode",
+    "get_translation_service",
+    "MultilingualRAGService",
+    "MultilingualRAGResponse",
+    "LanguageDetectionService",
+    "get_multilingual_rag_service",
+    "LexiconService",
+    "PronunciationResult",
+    "LexiconReport",
+    "get_lexicon_service",
+    "LatencyAwareVoiceOrchestrator",
+    "LatencyBudget",
+    "VoiceProcessingResult",
+    "DegradationType",
+    "get_latency_aware_orchestrator",
 ]

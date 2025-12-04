@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "version": "0.1.0",
+    "term_count": 5,
+    "last_updated": "2024-12-04",
+    "language": "ru",
+    "alphabet": "ipa",
+    "status": "placeholder",
+    "categories": [],
+    "note": "Placeholder lexicon for Russian. Requires native speaker review."
+  },
+  "диабет": "dʲɪɐˈbʲet",
+  "гипертония": "ɡʲɪpʲɪrˈtonʲɪjə",
+  "сердце": "ˈsʲertsə",
+  "головная боль": "ɡəlɐvˈnajə bolʲ",
+  "лекарство": "lʲɪˈkarstvə"
+}

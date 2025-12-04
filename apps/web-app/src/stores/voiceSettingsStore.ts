@@ -252,6 +252,18 @@ interface VoiceSettingsState {
   storeTranscriptHistory: boolean; // Store transcript history locally
   shareAnonymousAnalytics: boolean; // Share anonymous usage data for improvement
 
+  // ============================================================================
+  // Voice Mode v4: Thinking Feedback Settings
+  // ============================================================================
+  thinkingToneEnabled: boolean; // Master toggle for thinking tones
+  thinkingTonePreset: "gentle_beep" | "soft_chime" | "subtle_tick" | "none";
+  thinkingToneVolume: number; // 0-100
+  thinkingToneOnToolCalls: boolean; // Play during tool execution
+  thinkingVisualEnabled: boolean; // Show visual indicator
+  thinkingVisualStyle: "dots" | "pulse" | "spinner" | "progress";
+  thinkingHapticEnabled: boolean; // Enable haptic feedback (mobile)
+  thinkingHapticPattern: "gentle" | "rhythmic" | "none";
+
   // Actions
   setVoice: (voice: VoiceOption) => void;
   setLanguage: (language: LanguageOption) => void;
@@ -316,6 +328,20 @@ interface VoiceSettingsState {
   // Privacy actions
   setStoreTranscriptHistory: (enabled: boolean) => void;
   setShareAnonymousAnalytics: (enabled: boolean) => void;
+
+  // Voice Mode v4: Thinking Feedback Actions
+  setThinkingToneEnabled: (enabled: boolean) => void;
+  setThinkingTonePreset: (
+    preset: "gentle_beep" | "soft_chime" | "subtle_tick" | "none",
+  ) => void;
+  setThinkingToneVolume: (volume: number) => void;
+  setThinkingToneOnToolCalls: (enabled: boolean) => void;
+  setThinkingVisualEnabled: (enabled: boolean) => void;
+  setThinkingVisualStyle: (
+    style: "dots" | "pulse" | "spinner" | "progress",
+  ) => void;
+  setThinkingHapticEnabled: (enabled: boolean) => void;
+  setThinkingHapticPattern: (pattern: "gentle" | "rhythmic" | "none") => void;
 }
 
 // Backend voice preferences response shape
@@ -397,6 +423,18 @@ const defaultSettings = {
   // Privacy defaults
   storeTranscriptHistory: true, // Store history for continuity
   shareAnonymousAnalytics: false, // Opt-out by default for privacy
+
+  // ============================================================================
+  // Voice Mode v4: Thinking Feedback Defaults
+  // ============================================================================
+  thinkingToneEnabled: true, // Enabled by default
+  thinkingTonePreset: "gentle_beep" as const,
+  thinkingToneVolume: 30, // Low volume by default
+  thinkingToneOnToolCalls: true,
+  thinkingVisualEnabled: true,
+  thinkingVisualStyle: "dots" as const,
+  thinkingHapticEnabled: true,
+  thinkingHapticPattern: "gentle" as const,
 };
 
 /**
@@ -556,6 +594,31 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
       setShareAnonymousAnalytics: (shareAnonymousAnalytics) =>
         set({ shareAnonymousAnalytics }),
 
+      // Voice Mode v4: Thinking Feedback Actions
+      setThinkingToneEnabled: (thinkingToneEnabled) =>
+        set({ thinkingToneEnabled }),
+
+      setThinkingTonePreset: (thinkingTonePreset) =>
+        set({ thinkingTonePreset }),
+
+      setThinkingToneVolume: (thinkingToneVolume) =>
+        set({ thinkingToneVolume: clamp(thinkingToneVolume, 0, 100) }),
+
+      setThinkingToneOnToolCalls: (thinkingToneOnToolCalls) =>
+        set({ thinkingToneOnToolCalls }),
+
+      setThinkingVisualEnabled: (thinkingVisualEnabled) =>
+        set({ thinkingVisualEnabled }),
+
+      setThinkingVisualStyle: (thinkingVisualStyle) =>
+        set({ thinkingVisualStyle }),
+
+      setThinkingHapticEnabled: (thinkingHapticEnabled) =>
+        set({ thinkingHapticEnabled }),
+
+      setThinkingHapticPattern: (thinkingHapticPattern) =>
+        set({ thinkingHapticPattern }),
+
       reset: () => set({ ...defaultSettings }),
     }),
     {
@@ -621,6 +684,16 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
         // Privacy
         storeTranscriptHistory: state.storeTranscriptHistory,
         shareAnonymousAnalytics: state.shareAnonymousAnalytics,
+
+        // Voice Mode v4: Thinking Feedback
+        thinkingToneEnabled: state.thinkingToneEnabled,
+        thinkingTonePreset: state.thinkingTonePreset,
+        thinkingToneVolume: state.thinkingToneVolume,
+        thinkingToneOnToolCalls: state.thinkingToneOnToolCalls,
+        thinkingVisualEnabled: state.thinkingVisualEnabled,
+        thinkingVisualStyle: state.thinkingVisualStyle,
+        thinkingHapticEnabled: state.thinkingHapticEnabled,
+        thinkingHapticPattern: state.thinkingHapticPattern,
       }),
     },
   ),
