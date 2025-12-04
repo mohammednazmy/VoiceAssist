@@ -350,14 +350,37 @@ async def test_medical_term_quality(self):
 
 **Next Steps:**
 
-1. Add `cmudict` and `gruut` to requirements
-2. Implement `EnhancedG2PService` class
-3. Add ARPABET-to-IPA conversion utility
-4. Build pronunciation cache for medical terms
+1. ~~Add `cmudict` and `gruut` to requirements~~
+2. ~~Implement `EnhancedG2PService` class~~ ✅ DONE
+3. ~~Add ARPABET-to-IPA conversion utility~~ ✅ DONE
+4. ~~Build pronunciation cache for medical terms~~ ✅ DONE (50+ terms)
 5. Update lexicon service to use new G2P
+
+## Implementation Status
+
+**Prototype:** `services/api-gateway/app/services/enhanced_g2p_service.py`
+
+**Features Implemented:**
+
+- ARPABET-to-IPA conversion (100+ phoneme mappings)
+- Medical pronunciation cache (50+ common terms)
+- CMUdict lookup for English (~130k words)
+- gruut integration for 11 languages
+- espeak-ng fallback for all other languages
+- Runtime caching (up to 10k entries)
+- Batch generation support
+
+**Fallback Chain:**
+
+1. Medical pronunciation cache (confidence: 0.95)
+2. CMUdict lookup for English (confidence: 0.90)
+3. gruut for supported languages (confidence: 0.80)
+4. espeak-ng for all languages (confidence: 0.70)
+5. Raw term fallback (confidence: 0.30)
 
 ---
 
 **Created:** December 4, 2024
+**Updated:** December 4, 2025
 **Author:** Platform Team
-**Status:** Awaiting Review
+**Status:** Prototype Complete
