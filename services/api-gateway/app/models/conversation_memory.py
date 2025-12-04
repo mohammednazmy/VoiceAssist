@@ -23,7 +23,7 @@ Phase: Voice Mode Intelligence Enhancement - Phase 4
 
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from app.core.database import Base
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
@@ -56,7 +56,9 @@ class ConversationMemory(Base):
     # Memory content
     key = Column(String(255), nullable=False)  # e.g., "current_topic", "mentioned_person"
     value = Column(Text, nullable=False)  # The actual memory value
-    memory_metadata = Column("metadata", JSONB, default=dict)  # Additional context (confidence, source, etc.) - renamed to avoid SQLAlchemy reserved 'metadata'
+    memory_metadata = Column(
+        "metadata", JSONB, default=dict
+    )  # Additional context (confidence, source, etc.) - renamed to avoid SQLAlchemy reserved 'metadata'
 
     # Relevance tracking
     relevance_score = Column(Float, default=1.0)  # Decays over time

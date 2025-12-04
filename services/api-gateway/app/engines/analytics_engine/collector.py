@@ -5,11 +5,10 @@ Collects and aggregates metrics from the voice pipeline.
 """
 
 import logging
-import statistics
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,6 @@ class MetricsCollector:
 
     async def record(self, sample: "MetricSample") -> None:
         """Record a metric sample"""
-        from . import MetricSample
 
         metric_key = self._build_key(sample.name, sample.labels)
 

@@ -16,7 +16,7 @@ import re
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 

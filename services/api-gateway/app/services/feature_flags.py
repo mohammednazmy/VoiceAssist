@@ -552,6 +552,126 @@ class FeatureFlagService:
             if should_close_db:
                 db.close()
 
+    async def get_variant_for_user(
+        self,
+        flag_name: str,
+        user_id: str,
+        context: Optional[Dict[str, Any]] = None,
+        db: Optional[Session] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Get the assigned variant for a user in a multivariate flag.
+
+        Uses the VariantAssignmentService for consistent hash-based assignment
+        with Redis caching to avoid repeated computations.
+
+        Args:
+            flag_name: Name of the feature flag
+            user_id: Unique user identifier
+            context: Optional context for targeting rules
+            db: Optional database session
+
+        Returns:
+            Assigned variant dictionary or None if flag not found/not multivariate
+        """
+        from app.services.variant_assignment import (
+            FlagVariant,
+            ScheduledChange,
+            TargetingRule,
+            variant_assignment_service,
+        )
+
+        # Get the flag
+        flag = await self.get_flag(flag_name, db)
+        if not flag:
+            self.logger.warning(f"Flag not found for variant assignment: {flag_name}")
+            return None
+
+        # Check if it's a multivariate flag with variants
+        if not flag.variants:
+            # For non-multivariate flags, check if user is in rollout
+            if flag.rollout_percentage is not None and flag.rollout_percentage < 100:
+                in_rollout = await variant_assignment_service.is_user_in_rollout(
+                    flag_name, user_id, flag.rollout_percentage, flag.rollout_salt
+                )
+                if not in_rollout:
+                    return None
+            return {"enabled": flag.enabled, "value": flag.value}
+
+        # Parse variants
+        variants = [FlagVariant.from_dict(v) for v in flag.variants]
+
+        # Parse targeting rules if present
+        targeting_rules = None
+        if flag.targeting_rules:
+            targeting_rules = [TargetingRule.from_dict(r) for r in flag.targeting_rules]
+
+        # Parse scheduled changes if present
+        scheduled_changes = None
+        if flag.scheduled_changes:
+            scheduled_changes = [ScheduledChange.from_dict(s) for s in flag.scheduled_changes]
+
+        # Get variant assignment
+        variant, metadata = await variant_assignment_service.get_variant(
+            flag_name=flag_name,
+            user_id=user_id,
+            variants=variants,
+            targeting_rules=targeting_rules,
+            scheduled_changes=scheduled_changes,
+            context=context or {},
+            salt=flag.rollout_salt,
+            default_variant=flag.default_variant,
+        )
+
+        if variant:
+            return {
+                "variant_id": variant.id,
+                "variant_name": variant.name,
+                "value": variant.value,
+                "assignment_method": metadata.get("assignment_method"),
+                "bucket": metadata.get("bucket"),
+            }
+
+        return None
+
+    async def is_enabled_for_user(
+        self,
+        flag_name: str,
+        user_id: str,
+        default: bool = False,
+        db: Optional[Session] = None,
+    ) -> bool:
+        """Check if a feature is enabled for a specific user.
+
+        Considers rollout_percentage for gradual rollouts.
+
+        Args:
+            flag_name: Name of the feature flag
+            user_id: Unique user identifier
+            default: Default value if flag not found
+            db: Optional database session
+
+        Returns:
+            True if feature is enabled for this user
+        """
+        from app.services.variant_assignment import variant_assignment_service
+
+        # Get the flag
+        flag = await self.get_flag(flag_name, db)
+        if not flag:
+            return default
+
+        # If flag is disabled, return false
+        if not flag.enabled:
+            return False
+
+        # Check rollout percentage
+        if flag.rollout_percentage is not None and flag.rollout_percentage < 100:
+            return await variant_assignment_service.is_user_in_rollout(
+                flag_name, user_id, flag.rollout_percentage, flag.rollout_salt
+            )
+
+        return True
+
     def get_cache_stats(self) -> Dict[str, Any]:
         """Get cache statistics for monitoring.
 

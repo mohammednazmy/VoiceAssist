@@ -13,9 +13,8 @@ Phase 5 Implementation for VoiceAssist Voice Mode.
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Type
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -99,12 +98,10 @@ class BaseClinicalPlugin(ABC):
     @abstractmethod
     def get_capabilities(self) -> PluginCapabilities:
         """Return plugin capabilities"""
-        pass
 
     @abstractmethod
     async def process(self, context: PluginContext) -> PluginResult:
         """Process clinical context and return results"""
-        pass
 
     async def on_event(
         self,

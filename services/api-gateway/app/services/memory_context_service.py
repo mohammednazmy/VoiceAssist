@@ -14,15 +14,13 @@ This service integrates with the voice pipeline to:
 Phase: Voice Mode Intelligence Enhancement - Phase 4
 """
 
-import asyncio
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from app.core.database import AsyncSessionLocal, get_db
 from app.core.logging import get_logger
 from app.models.conversation_memory import ConversationMemory, UserContext, UserSpeechProfile
-from sqlalchemy import and_, delete, select, update
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 

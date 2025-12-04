@@ -194,6 +194,180 @@ See `.env.example` for all available options.
 - **ReDoc:** http://localhost:8000/redoc
 - **Full API Reference:** See `docs/api-reference/rest-api.md`
 
+### Feature Flags Real-time API (SSE)
+
+The feature flags system supports real-time updates via Server-Sent Events (SSE), enabling clients to receive flag changes instantly without polling.
+
+#### SSE Endpoints
+
+| Endpoint                   | Method | Description                                 |
+| -------------------------- | ------ | ------------------------------------------- |
+| `/api/flags/stream`        | GET    | Subscribe to real-time flag updates via SSE |
+| `/api/flags/version`       | GET    | Get current global flag version             |
+| `/api/flags/changes`       | GET    | Get flag changes since a specific version   |
+| `/api/flags/stats`         | GET    | Get real-time connection statistics         |
+| `/api/flags/history-stats` | GET    | Get detailed event history statistics       |
+
+#### SSE Security
+
+**Rate Limiting:**
+
+- Max 10 SSE connections per IP address per minute
+- Returns 429 with `Retry-After` header when exceeded
+- Connections are released when client disconnects
+
+**RBAC (Role-Based Access Control):**
+
+- Flag visibility levels: `public`, `authenticated`, `admin`, `internal`
+- Unauthenticated users only receive public flags
+- Authenticated users receive public + authenticated flags
+- Admin users receive public + authenticated + admin flags
+- Internal flags are never exposed via SSE
+- Use `Authorization: Bearer <token>` header for authenticated access
+
+#### SSE Stream Events
+
+| Event Type           | Description                                    | Data Fields                                                                |
+| -------------------- | ---------------------------------------------- | -------------------------------------------------------------------------- |
+| `connected`          | Initial connection with current flags          | `client_id`, `version`, `flags`, `timestamp`                               |
+| `reconnected`        | Reconnection after Last-Event-ID               | `client_id`, `version`, `events_replayed`, `history_complete`, `timestamp` |
+| `history_incomplete` | Event history was pruned, bulk refresh follows | `client_id`, `message`, `last_event_id`, `current_version`, `timestamp`    |
+| `flag_update`        | Single flag was updated                        | `flag`, `value`, `version`, `timestamp`, `replayed?`                       |
+| `flags_bulk_update`  | Multiple flags changed                         | `flags`, `version`, `timestamp`, `reason?`                                 |
+| `heartbeat`          | Keep-alive (every 30s)                         | `timestamp`, `version`                                                     |
+| `error`              | Error notification                             | `message`, `timestamp`                                                     |
+
+#### Usage Examples
+
+**JavaScript/Browser:**
+
+```javascript
+// Subscribe to all flag updates
+const eventSource = new EventSource("/api/flags/stream");
+
+// Or subscribe to specific flags
+const eventSource = new EventSource("/api/flags/stream?flags=ui.dark_mode,backend.rag");
+
+// Handle events
+eventSource.addEventListener("connected", (e) => {
+  const { flags, version, client_id } = JSON.parse(e.data);
+  console.log(`Connected with ${Object.keys(flags).length} flags at version ${version}`);
+});
+
+eventSource.addEventListener("flag_update", (e) => {
+  const { flag, value, version } = JSON.parse(e.data);
+  console.log(`Flag ${flag} updated:`, value.enabled);
+});
+
+eventSource.addEventListener("reconnected", (e) => {
+  const { events_replayed, version } = JSON.parse(e.data);
+  console.log(`Reconnected, replayed ${events_replayed} events`);
+});
+```
+
+**cURL:**
+
+```bash
+# Subscribe to all flags (streaming)
+curl -N http://localhost:8000/api/flags/stream
+
+# Subscribe to specific flags
+curl -N "http://localhost:8000/api/flags/stream?flags=ui.dark_mode,backend.cache"
+
+# Check current version
+curl http://localhost:8000/api/flags/version
+
+# Get connection stats
+curl http://localhost:8000/api/flags/stats
+```
+
+#### Last-Event-ID Reconnection
+
+The SSE endpoint supports the `Last-Event-ID` header for seamless reconnection. When a client reconnects with this header, the server replays any missed events before switching to live updates.
+
+```javascript
+// Browser EventSource handles this automatically
+// The server includes `id:` field in each event
+
+// Manual reconnection example:
+fetch("/api/flags/stream", {
+  headers: { "Last-Event-ID": "42" },
+});
+```
+
+#### Prometheus Metrics
+
+SSE connections are monitored with these metrics:
+
+| Metric                                           | Type      | Labels             | Description                            |
+| ------------------------------------------------ | --------- | ------------------ | -------------------------------------- |
+| `voiceassist_sse_connections_active`             | Gauge     | -                  | Current active connections             |
+| `voiceassist_sse_connections_total`              | Counter   | action             | Total connections (connect/disconnect) |
+| `voiceassist_sse_reconnects_total`               | Counter   | with_last_event_id | Reconnection attempts                  |
+| `voiceassist_sse_events_replayed_total`          | Counter   | -                  | Events replayed on reconnect           |
+| `voiceassist_sse_events_dropped_total`           | Counter   | reason             | Events dropped (queue errors)          |
+| `voiceassist_sse_flag_updates_broadcast_total`   | Counter   | event_type         | Flag broadcasts by type                |
+| `voiceassist_sse_flag_update_rate_total`         | Counter   | flag_name          | Per-flag update rate                   |
+| `voiceassist_sse_clients_notified`               | Histogram | -                  | Clients per broadcast                  |
+| `voiceassist_sse_version_lag`                    | Histogram | -                  | Version lag on reconnect               |
+| `voiceassist_sse_event_delivery_latency_seconds` | Histogram | event_type         | Event delivery latency                 |
+| `voiceassist_sse_connection_duration_seconds`    | Histogram | -                  | Connection duration                    |
+| `voiceassist_sse_client_version_drift`           | Gauge     | -                  | Max version drift across clients       |
+| `voiceassist_sse_history_incomplete_total`       | Counter   | -                  | Times history was incomplete           |
+
+### Scheduled Variant Changes API
+
+The feature flags system supports scheduling variant weight changes for A/B tests and gradual rollouts.
+
+#### Scheduled Changes Endpoints
+
+| Endpoint                                                         | Method | Description                         |
+| ---------------------------------------------------------------- | ------ | ----------------------------------- |
+| `/api/admin/feature-flags/{flag}/scheduled-changes`              | GET    | List scheduled changes for a flag   |
+| `/api/admin/feature-flags/{flag}/scheduled-changes`              | POST   | Create a new scheduled change       |
+| `/api/admin/feature-flags/{flag}/scheduled-changes/{id}/preview` | GET    | Preview change impact               |
+| `/api/admin/feature-flags/{flag}/scheduled-changes/{id}`         | PATCH  | Update a scheduled change           |
+| `/api/admin/feature-flags/{flag}/scheduled-changes/{id}/cancel`  | POST   | Cancel a scheduled change           |
+| `/api/admin/feature-flags/{flag}/scheduled-changes/{id}`         | DELETE | Delete a scheduled change           |
+| `/api/admin/feature-flags/scheduled-changes/all`                 | GET    | List all pending scheduled changes  |
+| `/api/admin/feature-flags/{flag}/invalidate-cache`               | POST   | Force cache invalidation for a flag |
+
+#### Example: Schedule a Variant Weight Change
+
+```bash
+# Schedule a variant weight change for 2025-01-15 at 14:00 UTC
+curl -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  "http://localhost:8000/api/admin/feature-flags/new_checkout/scheduled-changes" \
+  -d '{
+    "scheduled_at": "2025-01-15T14:00:00Z",
+    "changes": {
+      "control": 20,
+      "variant_a": 40,
+      "variant_b": 40
+    },
+    "description": "Increase variant exposure after Phase 1 analysis",
+    "timezone_id": "America/New_York"
+  }'
+
+# Preview the impact before applying
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8000/api/admin/feature-flags/new_checkout/scheduled-changes/abc123/preview"
+
+# Cancel a scheduled change
+curl -X POST -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8000/api/admin/feature-flags/new_checkout/scheduled-changes/abc123/cancel"
+```
+
+#### Cache Invalidation
+
+When variant weights change (immediately or via scheduled changes), the system automatically:
+
+- Invalidates cached bucket assignments for affected flags
+- Notifies SSE subscribers of the changes
+- Logs the cache invalidation for audit purposes
+
 ## Testing
 
 ```bash

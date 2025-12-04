@@ -7,9 +7,8 @@ Detects significant deviations from baseline for adaptive responses.
 
 import logging
 import math
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Dict, List, Optional
+from dataclasses import dataclass
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +77,6 @@ class EmotionPersonalization:
 
     async def update_baseline(self, user_id: str, emotion_state: "EmotionState") -> "UserEmotionBaseline":
         """Update baseline with new emotion sample using EMA"""
-        from . import EmotionState, UserEmotionBaseline
 
         baseline = await self.get_baseline(user_id)
 
@@ -192,7 +190,6 @@ class EmotionPersonalization:
 
     async def reset_baseline(self, user_id: str) -> bool:
         """Reset user's emotion baseline (privacy feature)"""
-        from . import UserEmotionBaseline
 
         if user_id in self._baselines:
             del self._baselines[user_id]

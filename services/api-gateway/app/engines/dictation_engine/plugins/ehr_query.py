@@ -14,7 +14,7 @@ Requires Phase 6 Epic FHIR integration to be enabled.
 
 import logging
 import re
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from ..plugin_registry import DictationPlugin
 

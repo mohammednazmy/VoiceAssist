@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import {
-  useFeatureFlags,
+  useFeatureFlagsRealtime,
   FeatureFlag,
   FeatureFlagCreate,
-} from "../hooks/useFeatureFlags";
+} from "../hooks/useFeatureFlagsRealtime";
+import { useScheduledChanges } from "../hooks/useScheduledChanges";
 import {
   PageContainer,
   PageHeader,
@@ -17,21 +18,53 @@ import {
   RefreshButton,
   ConfirmDialog,
   StatusType,
+  TabGroup,
 } from "../components/shared";
+import { ScheduledChangesPanel } from "../components/feature-flags";
 
 export function FeatureFlagsPage() {
   const { isAdmin } = useAuth();
+  const [useSSE, setUseSSE] = useState(true);
+  const [activeTab, setActiveTab] = useState<"flags" | "scheduled">("flags");
+
   const {
     flags,
     loading,
     error,
     lastUpdated,
+    version,
+    connected,
+    connectionMode,
+    reconnectCount,
+    eventsReplayed,
     refreshFlags,
     createFlag,
     updateFlag,
     deleteFlag,
     toggleFlag,
-  } = useFeatureFlags();
+    reconnect,
+  } = useFeatureFlagsRealtime({
+    useSSE,
+    autoRefresh: !useSSE, // Fallback to polling if SSE disabled
+    onFlagUpdate: (flag, value) => {
+      console.log(`Flag ${flag} updated in real-time:`, value.enabled);
+    },
+  });
+
+  // Scheduled changes for displaying badges
+  const { scheduledChanges, refreshChanges: refreshScheduledChanges } =
+    useScheduledChanges();
+
+  // Create a map of flag names to pending scheduled changes count
+  const flagsWithPendingChanges = useMemo(() => {
+    const map = new Map<string, number>();
+    scheduledChanges
+      .filter((c) => !c.cancelled && !c.applied)
+      .forEach((c) => {
+        map.set(c.flag_name, (map.get(c.flag_name) || 0) + 1);
+      });
+    return map;
+  }, [scheduledChanges]);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingFlag, setEditingFlag] = useState<FeatureFlag | null>(null);
@@ -152,6 +185,24 @@ export function FeatureFlagsPage() {
   const enabledCount = flags.filter((f) => f.enabled).length;
   const disabledCount = flags.filter((f) => !f.enabled).length;
   const booleanCount = flags.filter((f) => f.flag_type === "boolean").length;
+  const pendingScheduledCount = scheduledChanges.filter(
+    (c) => !c.cancelled && !c.applied,
+  ).length;
+
+  // Tab configuration
+  const tabs = [
+    {
+      id: "flags" as const,
+      label: "Feature Flags",
+      count: flags.length,
+    },
+    {
+      id: "scheduled" as const,
+      label: "Scheduled Changes",
+      count: pendingScheduledCount,
+      badge: pendingScheduledCount > 0 ? "warning" : undefined,
+    },
+  ];
 
   // Loading state
   if (loading && !flags.length) {
@@ -176,6 +227,17 @@ export function FeatureFlagsPage() {
         lastUpdated={lastUpdated}
         actions={
           <div className="flex items-center gap-3">
+            {/* Connection Status Indicator */}
+            <ConnectionStatus
+              connected={connected}
+              connectionMode={connectionMode}
+              version={version}
+              reconnectCount={reconnectCount}
+              eventsReplayed={eventsReplayed}
+              useSSE={useSSE}
+              onToggleSSE={() => setUseSSE(!useSSE)}
+              onReconnect={reconnect}
+            />
             {isAdmin && (
               <button
                 type="button"
@@ -194,7 +256,7 @@ export function FeatureFlagsPage() {
       {error && <ErrorState message={error} onRetry={refreshFlags} />}
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
         <StatCard
           title="Total Flags"
           value={flags.length}
@@ -219,112 +281,155 @@ export function FeatureFlagsPage() {
           icon="🔘"
           color="purple"
         />
+        <StatCard
+          title="Scheduled"
+          value={pendingScheduledCount}
+          icon="📅"
+          color={pendingScheduledCount > 0 ? "yellow" : "blue"}
+          onClick={() => setActiveTab("scheduled")}
+        />
       </div>
 
-      {/* Flags List */}
-      <DataPanel title={`Feature Flags (${flags.length})`} noPadding>
-        {flags.length === 0 ? (
-          <div className="p-4">
-            <EmptyState
-              message="No feature flags configured"
-              icon="🚩"
-              action={
-                isAdmin
-                  ? {
-                      label: "Create First Flag",
-                      onClick: openCreateModal,
-                    }
-                  : undefined
-              }
-            />
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-800">
-            {flags.map((flag) => (
-              <div
-                key={flag.name}
-                className="p-4 hover:bg-slate-800/30 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-1">
-                      <h4 className="font-medium text-slate-200 truncate">
-                        {flag.name}
-                      </h4>
-                      <StatusBadge
-                        status={getFlagTypeColor(flag.flag_type) as StatusType}
-                        label={flag.flag_type}
-                        size="sm"
-                        showDot={false}
-                      />
+      {/* Tab Navigation */}
+      <TabGroup
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={(tabId) => setActiveTab(tabId as "flags" | "scheduled")}
+      />
+
+      {/* Flags List - shown when flags tab is active */}
+      {activeTab === "flags" && (
+        <DataPanel title={`Feature Flags (${flags.length})`} noPadding>
+          {flags.length === 0 ? (
+            <div className="p-4">
+              <EmptyState
+                message="No feature flags configured"
+                icon="🚩"
+                action={
+                  isAdmin
+                    ? {
+                        label: "Create First Flag",
+                        onClick: openCreateModal,
+                      }
+                    : undefined
+                }
+              />
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-800">
+              {flags.map((flag) => (
+                <div
+                  key={flag.name}
+                  className="p-4 hover:bg-slate-800/30 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-1">
+                        <h4 className="font-medium text-slate-200 truncate">
+                          {flag.name}
+                        </h4>
+                        <StatusBadge
+                          status={
+                            getFlagTypeColor(flag.flag_type) as StatusType
+                          }
+                          label={flag.flag_type}
+                          size="sm"
+                          showDot={false}
+                        />
+                        {/* Badge for pending scheduled changes */}
+                        {flagsWithPendingChanges.has(flag.name) && (
+                          <button
+                            type="button"
+                            onClick={() => setActiveTab("scheduled")}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-yellow-900/50 text-yellow-400 border border-yellow-700/50 rounded hover:bg-yellow-900/70 transition-colors"
+                            title={`${flagsWithPendingChanges.get(flag.name)} scheduled change(s)`}
+                            aria-label={`View ${flagsWithPendingChanges.get(flag.name)} scheduled changes for ${flag.name}`}
+                          >
+                            <span className="text-yellow-500">📅</span>
+                            {flagsWithPendingChanges.get(flag.name)}
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-400 mb-2">
+                        {flag.description}
+                      </p>
+                      {flag.flag_type !== "boolean" &&
+                        flag.value !== undefined && (
+                          <div className="text-xs font-mono bg-slate-800/50 px-2 py-1 rounded inline-block">
+                            Value: {JSON.stringify(flag.value)}
+                          </div>
+                        )}
+                      <p className="text-xs text-slate-500 mt-2">
+                        Updated: {new Date(flag.updated_at).toLocaleString()}
+                      </p>
                     </div>
-                    <p className="text-sm text-slate-400 mb-2">
-                      {flag.description}
-                    </p>
-                    {flag.flag_type !== "boolean" &&
-                      flag.value !== undefined && (
-                        <div className="text-xs font-mono bg-slate-800/50 px-2 py-1 rounded inline-block">
-                          Value: {JSON.stringify(flag.value)}
+                    <div className="flex items-center gap-3">
+                      {/* Toggle switch for boolean flags */}
+                      {flag.flag_type === "boolean" && (
+                        <button
+                          type="button"
+                          onClick={() => handleToggle(flag)}
+                          disabled={!isAdmin}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            flag.enabled ? "bg-blue-600" : "bg-slate-700"
+                          } ${!isAdmin ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                          aria-label={`Toggle ${flag.name} ${flag.enabled ? "off" : "on"}`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              flag.enabled ? "translate-x-6" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                      )}
+
+                      {/* Status badge for non-boolean */}
+                      {flag.flag_type !== "boolean" && (
+                        <StatusBadge
+                          status={flag.enabled ? "online" : "offline"}
+                          label={flag.enabled ? "Enabled" : "Disabled"}
+                          size="sm"
+                        />
+                      )}
+
+                      {/* Action buttons */}
+                      {isAdmin && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(flag)}
+                            className="px-2 py-1 text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-700 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            aria-label={`Edit ${flag.name}`}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeletingFlag(flag)}
+                            className="px-2 py-1 text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+                            aria-label={`Delete ${flag.name}`}
+                          >
+                            Delete
+                          </button>
                         </div>
                       )}
-                    <p className="text-xs text-slate-500 mt-2">
-                      Updated: {new Date(flag.updated_at).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {/* Toggle switch for boolean flags */}
-                    {flag.flag_type === "boolean" && (
-                      <button
-                        type="button"
-                        onClick={() => handleToggle(flag)}
-                        disabled={!isAdmin}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          flag.enabled ? "bg-blue-600" : "bg-slate-700"
-                        } ${!isAdmin ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            flag.enabled ? "translate-x-6" : "translate-x-1"
-                          }`}
-                        />
-                      </button>
-                    )}
-
-                    {/* Status badge for non-boolean */}
-                    {flag.flag_type !== "boolean" && (
-                      <StatusBadge
-                        status={flag.enabled ? "online" : "offline"}
-                        label={flag.enabled ? "Enabled" : "Disabled"}
-                        size="sm"
-                      />
-                    )}
-
-                    {/* Action buttons */}
-                    {isAdmin && (
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(flag)}
-                          className="px-2 py-1 text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-700 rounded transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeletingFlag(flag)}
-                          className="px-2 py-1 text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded transition-colors"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </DataPanel>
+              ))}
+            </div>
+          )}
+        </DataPanel>
+      )}
+
+      {/* Scheduled Changes Panel - shown when scheduled tab is active */}
+      {activeTab === "scheduled" && (
+        <ScheduledChangesPanel
+          isAdmin={isAdmin}
+          onChangeCreated={refreshScheduledChanges}
+          onChangeCancelled={refreshScheduledChanges}
+        />
+      )}
 
       {/* Create Modal */}
       {showCreateModal && (
@@ -541,6 +646,143 @@ function FlagFormModal({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Connection Status Component for SSE real-time updates
+interface ConnectionStatusProps {
+  connected: boolean;
+  connectionMode: "sse" | "polling" | "disconnected";
+  version: number;
+  reconnectCount: number;
+  eventsReplayed: number;
+  useSSE: boolean;
+  onToggleSSE: () => void;
+  onReconnect: () => void;
+}
+
+function ConnectionStatus({
+  connected,
+  connectionMode,
+  version,
+  reconnectCount,
+  eventsReplayed,
+  useSSE,
+  onToggleSSE,
+  onReconnect,
+}: ConnectionStatusProps) {
+  const [showDetails, setShowDetails] = useState(false);
+
+  const getStatusColor = () => {
+    if (connectionMode === "sse" && connected) return "bg-green-500";
+    if (connectionMode === "polling") return "bg-yellow-500";
+    return "bg-red-500";
+  };
+
+  const getStatusLabel = () => {
+    if (connectionMode === "sse" && connected) return "Live";
+    if (connectionMode === "polling") return "Polling";
+    return "Disconnected";
+  };
+
+  return (
+    <div className="relative">
+      {/* Status indicator button */}
+      <button
+        type="button"
+        onClick={() => setShowDetails(!showDetails)}
+        className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded transition-colors"
+      >
+        <span
+          className={`w-2 h-2 rounded-full ${getStatusColor()} ${connected && connectionMode === "sse" ? "animate-pulse" : ""}`}
+        />
+        <span className="text-slate-300">{getStatusLabel()}</span>
+        <span className="text-slate-500">v{version}</span>
+      </button>
+
+      {/* Details dropdown */}
+      {showDetails && (
+        <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-lg z-50">
+          <div className="p-3 space-y-3">
+            {/* Connection status */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-400">Status</span>
+              <span
+                className={`text-xs font-medium ${connected ? "text-green-400" : "text-red-400"}`}
+              >
+                {connected ? "Connected" : "Disconnected"}
+              </span>
+            </div>
+
+            {/* Connection mode */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-400">Mode</span>
+              <span className="text-xs text-slate-300 capitalize">
+                {connectionMode}
+              </span>
+            </div>
+
+            {/* Version */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-400">Version</span>
+              <span className="text-xs font-mono text-slate-300">
+                {version}
+              </span>
+            </div>
+
+            {/* Reconnect count */}
+            {reconnectCount > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">Reconnects</span>
+                <span className="text-xs text-slate-300">{reconnectCount}</span>
+              </div>
+            )}
+
+            {/* Events replayed */}
+            {eventsReplayed > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">Events Replayed</span>
+                <span className="text-xs text-slate-300">{eventsReplayed}</span>
+              </div>
+            )}
+
+            <hr className="border-slate-700" />
+
+            {/* Live updates toggle */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-300">Live Updates</span>
+              <button
+                type="button"
+                onClick={onToggleSSE}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                  useSSE ? "bg-blue-600" : "bg-slate-700"
+                }`}
+              >
+                <span
+                  className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                    useSSE ? "translate-x-5" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Reconnect button */}
+            {!connected && useSSE && (
+              <button
+                type="button"
+                onClick={() => {
+                  onReconnect();
+                  setShowDetails(false);
+                }}
+                className="w-full px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+              >
+                Reconnect
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

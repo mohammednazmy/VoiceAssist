@@ -4,7 +4,7 @@ Emergency Department Plugin
 Emergency department encounter note template.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from .base import BaseDictationPlugin
 

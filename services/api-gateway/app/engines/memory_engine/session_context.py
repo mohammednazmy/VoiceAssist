@@ -66,7 +66,6 @@ class SessionContext:
         context: Optional[Dict] = None,
     ) -> "SessionMemory":
         """Update session with new context"""
-        from . import SessionMemory
 
         session = await self.get_or_create(session_id)
 

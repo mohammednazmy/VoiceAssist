@@ -16,7 +16,6 @@ Phase: Voice Mode Backchanneling Enhancement (Phase 3)
 """
 
 import asyncio
-import base64
 import hashlib
 import random
 import time
@@ -596,7 +595,7 @@ class BackchannelAudioCache:
 
     def _cache_key(self, phrase: str, voice_id: str) -> str:
         """Generate cache key for phrase/voice combination."""
-        return hashlib.md5(f"{phrase}:{voice_id}".encode()).hexdigest()
+        return hashlib.md5(f"{phrase}:{voice_id}".encode(), usedforsecurity=False).hexdigest()
 
     def get(self, phrase: str, voice_id: str) -> Optional[BackchannelAudio]:
         """Get cached audio for phrase/voice."""

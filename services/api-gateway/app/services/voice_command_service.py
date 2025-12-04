@@ -17,7 +17,7 @@ dictation session.
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from app.core.logging import get_logger
 from app.services.dictation_service import DictationSession, NoteSection

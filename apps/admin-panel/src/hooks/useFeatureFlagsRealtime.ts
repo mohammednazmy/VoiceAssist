@@ -97,6 +97,8 @@ interface SSEEvent {
     timestamp?: string;
     client_id?: string;
     message?: string;
+    events_replayed?: number;
+    replayed?: boolean;
   };
 }
 
@@ -113,6 +115,8 @@ interface UseFeatureFlagsRealtimeOptions {
   onFlagUpdate?: (flag: string, value: FeatureFlag) => void;
   /** Callback when connection status changes */
   onConnectionChange?: (connected: boolean) => void;
+  /** Callback when reconnected with replayed events (Last-Event-ID support) */
+  onReconnect?: (eventsReplayed: number) => void;
 }
 
 interface UseFeatureFlagsRealtimeState {
@@ -126,6 +130,10 @@ interface UseFeatureFlagsRealtimeState {
   connected: boolean;
   /** Connection mode: 'sse', 'polling', or 'disconnected' */
   connectionMode: "sse" | "polling" | "disconnected";
+  /** Number of reconnection attempts */
+  reconnectCount: number;
+  /** Number of events replayed on last reconnect */
+  eventsReplayed: number;
   refreshFlags: () => Promise<void>;
   createFlag: (flag: FeatureFlagCreate) => Promise<boolean>;
   updateFlag: (name: string, updates: FeatureFlagUpdate) => Promise<boolean>;
@@ -149,6 +157,7 @@ export function useFeatureFlagsRealtime(
     flagFilter,
     onFlagUpdate,
     onConnectionChange,
+    onReconnect,
   } = options;
 
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
@@ -160,6 +169,8 @@ export function useFeatureFlagsRealtime(
   const [connectionMode, setConnectionMode] = useState<
     "sse" | "polling" | "disconnected"
   >("disconnected");
+  const [reconnectCount, setReconnectCount] = useState(0);
+  const [eventsReplayed, setEventsReplayed] = useState(0);
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectAttemptsRef = useRef(0);
@@ -263,12 +274,29 @@ export function useFeatureFlagsRealtime(
           }
           break;
 
+        case "reconnected":
+          // Reconnected with Last-Event-ID support
+          if (data.version !== undefined) {
+            setVersion(data.version);
+          }
+          setLastUpdated(data.timestamp || new Date().toISOString());
+          setConnected(true);
+          setConnectionMode("sse");
+          setReconnectCount((prev) => prev + 1);
+          if (data.events_replayed !== undefined) {
+            setEventsReplayed(data.events_replayed);
+            onReconnect?.(data.events_replayed);
+          }
+          reconnectAttemptsRef.current = 0;
+          onConnectionChange?.(true);
+          break;
+
         case "error":
           setError(data.message || "SSE error");
           break;
       }
     },
-    [onFlagUpdate, onConnectionChange],
+    [onFlagUpdate, onConnectionChange, onReconnect],
   );
 
   // Connect to SSE endpoint
@@ -336,6 +364,15 @@ export function useFeatureFlagsRealtime(
       }
     });
 
+    eventSource.addEventListener("reconnected", (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        handleSSEEvent({ event: "reconnected", data });
+      } catch (err) {
+        console.error("Failed to parse reconnected event:", err);
+      }
+    });
+
     eventSource.addEventListener("error", (e) => {
       if (e instanceof MessageEvent) {
         try {
@@ -355,7 +392,8 @@ export function useFeatureFlagsRealtime(
       if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
         reconnectAttemptsRef.current++;
         const delay =
-          SSE_RECONNECT_DELAY_MS * Math.pow(2, reconnectAttemptsRef.current - 1);
+          SSE_RECONNECT_DELAY_MS *
+          Math.pow(2, reconnectAttemptsRef.current - 1);
 
         reconnectTimeoutRef.current = setTimeout(() => {
           connectSSE();
@@ -422,24 +460,21 @@ export function useFeatureFlagsRealtime(
     [refreshFlags, connectionMode],
   );
 
-  const deleteFlag = useCallback(
-    async (name: string): Promise<boolean> => {
-      try {
-        await fetchAPI(`/api/admin/feature-flags/${name}`, {
-          method: "DELETE",
-        });
-        // Remove from local state immediately
-        setFlags((prev) => prev.filter((f) => f.name !== name));
-        return true;
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to delete feature flag";
-        setError(message);
-        return false;
-      }
-    },
-    [],
-  );
+  const deleteFlag = useCallback(async (name: string): Promise<boolean> => {
+    try {
+      await fetchAPI(`/api/admin/feature-flags/${name}`, {
+        method: "DELETE",
+      });
+      // Remove from local state immediately
+      setFlags((prev) => prev.filter((f) => f.name !== name));
+      return true;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to delete feature flag";
+      setError(message);
+      return false;
+    }
+  }, []);
 
   const toggleFlag = useCallback(
     async (name: string): Promise<boolean> => {
@@ -495,6 +530,8 @@ export function useFeatureFlagsRealtime(
       version,
       connected,
       connectionMode,
+      reconnectCount,
+      eventsReplayed,
       refreshFlags,
       createFlag,
       updateFlag,
@@ -510,6 +547,8 @@ export function useFeatureFlagsRealtime(
       version,
       connected,
       connectionMode,
+      reconnectCount,
+      eventsReplayed,
       refreshFlags,
       createFlag,
       updateFlag,

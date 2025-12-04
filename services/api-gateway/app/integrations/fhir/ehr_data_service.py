@@ -15,7 +15,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .epic_adapter import EpicAdapter
 from .fhir_models import (

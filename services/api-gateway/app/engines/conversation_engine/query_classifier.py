@@ -8,7 +8,6 @@ Supports A/B testing between ML and heuristic approaches.
 """
 
 import logging
-import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -134,8 +133,6 @@ class QueryClassifier:
         Publishes query.classified event through event bus.
         """
         import time
-
-        from . import QueryClassification
 
         start_time = time.time()
 
@@ -351,7 +348,6 @@ class QueryClassifier:
         emotion_state: Optional[Dict],
     ) -> "QueryClassification":
         """ML-based classification using ONNX model"""
-        from . import QueryClassification
 
         # TODO: Implement ONNX model inference
         # For now, fall back to heuristics

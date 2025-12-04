@@ -11,13 +11,12 @@ Requires explicit confirmation before submitting any order.
 Publishes ehr.order_submitted events for auditing.
 """
 
-import asyncio
 import logging
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from ..plugin_registry import DictationPlugin
 

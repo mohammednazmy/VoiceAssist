@@ -9,13 +9,12 @@ Provides:
 - Organizational settings for plugin enablement
 """
 
-import asyncio
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Set, Type
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +92,6 @@ class VoicePlugin(ABC):
     @abstractmethod
     def metadata(self) -> PluginMetadata:
         """Return plugin metadata"""
-        pass
 
     @abstractmethod
     async def initialize(self, context: "PluginContext") -> bool:
@@ -106,12 +104,10 @@ class VoicePlugin(ABC):
         Returns:
             True if initialization successful
         """
-        pass
 
     @abstractmethod
     async def shutdown(self) -> None:
         """Clean up plugin resources"""
-        pass
 
     def get_vocabulary_boosts(self) -> List[VocabularyBoost]:
         """Return vocabulary boosts for this plugin"""

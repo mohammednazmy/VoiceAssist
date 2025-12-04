@@ -8,7 +8,7 @@ Combines regex patterns (fast, high precision) with NER models
 import logging
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Pattern
+from typing import Dict, List, Optional, Pattern
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +118,6 @@ class PHIDetector:
         Returns:
             List of PHI detections
         """
-        from . import PHIDetection
 
         detections = []
 
@@ -163,7 +162,6 @@ class PHIDetector:
 
     async def _detect_ner(self, text: str) -> List["PHIDetection"]:
         """Detect PHI using NER model"""
-        from . import PHIDetection
 
         # TODO: Implement NER model inference
         # Will use fine-tuned model on i2b2 PHI dataset

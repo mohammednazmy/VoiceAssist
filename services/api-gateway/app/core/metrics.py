@@ -324,3 +324,147 @@ voice_audio_chunk_size_bytes = _safe_histogram(
     ["direction"],
     buckets=[100, 500, 1000, 2000, 4000, 8000, 16000, 32000],
 )
+
+# ====================================================================
+# Feature Flags SSE Metrics (Phase 3 - Real-time Propagation)
+# ====================================================================
+
+# Active SSE connections
+sse_connections_active = _safe_gauge(
+    "voiceassist_sse_connections_active",
+    "Number of active SSE connections for feature flags",
+)
+
+# Total SSE connections (connect/disconnect)
+sse_connections_total = _safe_counter(
+    "voiceassist_sse_connections_total",
+    "Total SSE connections by action",
+    ["action"],  # "connect", "disconnect"
+)
+
+# SSE reconnection attempts
+sse_reconnects_total = _safe_counter(
+    "voiceassist_sse_reconnects_total",
+    "Total SSE reconnection attempts",
+    ["with_last_event_id"],  # "true", "false"
+)
+
+# Events replayed on reconnect
+sse_events_replayed_total = _safe_counter(
+    "voiceassist_sse_events_replayed_total",
+    "Total events replayed on SSE reconnection",
+)
+
+# Events dropped (client queue full, etc.)
+sse_events_dropped_total = _safe_counter(
+    "voiceassist_sse_events_dropped_total",
+    "Total SSE events dropped",
+    ["reason"],  # "queue_full", "client_disconnected", "error"
+)
+
+# Flag updates broadcast
+sse_flag_updates_broadcast_total = _safe_counter(
+    "voiceassist_sse_flag_updates_broadcast_total",
+    "Total flag updates broadcast via SSE",
+    ["event_type"],  # "flag_update", "flags_bulk_update"
+)
+
+# Clients notified per broadcast
+sse_clients_notified = _safe_histogram(
+    "voiceassist_sse_clients_notified",
+    "Number of clients notified per broadcast",
+    buckets=[0, 1, 2, 5, 10, 25, 50, 100, 250, 500],
+)
+
+# Version lag (difference between server and client versions)
+sse_version_lag = _safe_histogram(
+    "voiceassist_sse_version_lag",
+    "Version lag on reconnection (server - client last event ID)",
+    buckets=[0, 1, 5, 10, 25, 50, 100, 500, 1000],
+)
+
+# Feature flag evaluations
+flag_evaluations_total = _safe_counter(
+    "voiceassist_flag_evaluations_total",
+    "Total feature flag evaluations",
+    ["flag_name", "result"],  # result: "enabled", "disabled", "not_found"
+)
+
+# Variant assignments
+flag_variant_assignments_total = _safe_counter(
+    "voiceassist_flag_variant_assignments_total",
+    "Total variant assignments for multivariate flags",
+    ["flag_name", "variant_id", "assignment_method"],  # method: "bucket", "targeting_rule", "default"
+)
+
+# Hash bucket cache stats
+flag_bucket_cache_hits_total = _safe_counter(
+    "voiceassist_flag_bucket_cache_hits_total",
+    "Hash bucket cache hits",
+    ["cache_level"],  # "request", "redis"
+)
+
+flag_bucket_cache_misses_total = _safe_counter(
+    "voiceassist_flag_bucket_cache_misses_total",
+    "Hash bucket cache misses",
+)
+
+# Per-flag update rate (Phase 3 refinements)
+sse_flag_update_rate = _safe_counter(
+    "voiceassist_sse_flag_update_rate_total",
+    "Per-flag update events broadcast",
+    ["flag_name"],  # Track update frequency per flag
+)
+
+# SSE event delivery latency (time from update to client notification)
+sse_event_delivery_latency_seconds = _safe_histogram(
+    "voiceassist_sse_event_delivery_latency_seconds",
+    "SSE event delivery latency (update to client notification)",
+    ["event_type"],  # "flag_update", "flags_bulk_update", "heartbeat"
+    buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0],
+)
+
+# Version drift between server and client (for monitoring stale clients)
+sse_client_version_drift = _safe_gauge(
+    "voiceassist_sse_client_version_drift",
+    "Maximum version drift between server and connected clients",
+)
+
+# SSE connection duration
+sse_connection_duration_seconds = _safe_histogram(
+    "voiceassist_sse_connection_duration_seconds",
+    "Duration of SSE connections",
+    buckets=[1, 5, 10, 30, 60, 120, 300, 600, 1800, 3600],
+)
+
+# SSE event queue depth per client (for backpressure monitoring)
+sse_client_queue_depth = _safe_histogram(
+    "voiceassist_sse_client_queue_depth",
+    "SSE client event queue depth",
+    buckets=[0, 1, 5, 10, 25, 50, 100],
+)
+
+# History replay stats
+sse_history_incomplete_total = _safe_counter(
+    "voiceassist_sse_history_incomplete_total",
+    "Times history was incomplete requiring bulk refresh",
+)
+
+# Scheduled changes metrics
+flag_scheduled_changes_total = _safe_counter(
+    "voiceassist_flag_scheduled_changes_total",
+    "Scheduled variant changes processed",
+    ["status"],  # "applied", "cancelled", "skipped", "error"
+)
+
+flag_scheduled_changes_pending = _safe_gauge(
+    "voiceassist_flag_scheduled_changes_pending",
+    "Number of pending scheduled changes",
+)
+
+# Cache invalidation metrics
+flag_cache_invalidations_total = _safe_counter(
+    "voiceassist_flag_cache_invalidations_total",
+    "Flag cache invalidation events",
+    ["scope"],  # "flag", "user", "all"
+)

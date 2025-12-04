@@ -30,14 +30,11 @@ from app.services.backchannel_service import (
     BackchannelSession,
     backchannel_service,
 )
-from app.services.dictation_phi_monitor import DictationPHIMonitor, PHIAlertLevel, PHIScanResult, dictation_phi_monitor
+from app.services.dictation_phi_monitor import DictationPHIMonitor, dictation_phi_monitor
 from app.services.dictation_service import (
     DictationEvent,
-    DictationService,
     DictationSession,
     DictationSessionConfig,
-    DictationState,
-    NoteSection,
     NoteType,
     dictation_service,
 )
@@ -47,35 +44,17 @@ from app.services.emotion_detection_service import (
     EmotionResult,
     emotion_detection_service,
 )
-from app.services.feedback_service import FeedbackPrompt, FeedbackService, feedback_service
-from app.services.medical_vocabulary_service import (
-    MedicalSpecialty,
-    MedicalVocabularyService,
-    medical_vocabulary_service,
-)
+from app.services.feedback_service import FeedbackService, feedback_service
+from app.services.medical_vocabulary_service import MedicalSpecialty
 from app.services.memory_context_service import ConversationMemoryManager, MemoryType, memory_context_service
-from app.services.note_formatter_service import (
-    FormattingConfig,
-    FormattingLevel,
-    NoteFormatterService,
-    note_formatter_service,
-)
+from app.services.note_formatter_service import FormattingConfig, FormattingLevel, note_formatter_service
 from app.services.patient_context_service import (
-    ContextPrompt,
     DictationContext,
     PatientContextService,
-    PatientDataCategory,
     PatientPHIContext,
     patient_context_service,
 )
-from app.services.prosody_analysis_service import (
-    ProsodyService,
-    ProsodySession,
-    ProsodySnapshot,
-    TurnTakingPrediction,
-    TurnTakingState,
-    prosody_service,
-)
+from app.services.prosody_analysis_service import ProsodySession, ProsodySnapshot, prosody_service
 from app.services.session_analytics_service import (
     InteractionType,
     SessionAnalytics,
@@ -90,13 +69,7 @@ from app.services.streaming_stt_service import (
 )
 from app.services.talker_service import AudioChunk, TalkerService, TalkerSession, VoiceConfig, talker_service
 from app.services.thinker_service import ThinkerService, ThinkerSession, ToolCallEvent, ToolResultEvent, thinker_service
-from app.services.voice_command_service import (
-    CommandCategory,
-    CommandResult,
-    ParsedCommand,
-    VoiceCommandService,
-    voice_command_service,
-)
+from app.services.voice_command_service import voice_command_service
 
 logger = get_logger(__name__)
 

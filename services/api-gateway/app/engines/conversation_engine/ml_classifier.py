@@ -10,10 +10,10 @@ Provides:
 
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -104,7 +104,7 @@ class QueryClassifierTrainer:
 
         Returns number of examples exported.
         """
-        from app.models import Message, Session
+        from app.models import Message
         from sqlalchemy import and_, select
 
         # Query recent sessions with messages

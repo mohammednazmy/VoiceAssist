@@ -4,7 +4,7 @@ Radiology Report Plugin
 Radiology report template with imaging-specific sections.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from .base import BaseDictationPlugin
 

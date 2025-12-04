@@ -16,7 +16,6 @@ References:
 """
 
 import asyncio
-import json
 import logging
 import os
 import time
@@ -27,28 +26,9 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 import jwt
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
 
-from .fhir_client import (
-    FHIRAuthenticationError,
-    FHIRClient,
-    FHIRClientConfig,
-    FHIRConflictError,
-    FHIRError,
-    FHIRPreconditionError,
-    FHIRValidationError,
-    FHIRWriteResult,
-)
-from .fhir_models import (
-    FHIRAllergyIntolerance,
-    FHIRCondition,
-    FHIRMedication,
-    FHIRObservation,
-    FHIRPatient,
-    FHIRProcedure,
-    FHIRResourceType,
-)
+from .fhir_client import FHIRAuthenticationError, FHIRClient, FHIRClientConfig, FHIRError, FHIRWriteResult
+from .fhir_models import FHIRPatient, FHIRResourceType
 
 logger = logging.getLogger(__name__)
 

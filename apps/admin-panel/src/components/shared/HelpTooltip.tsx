@@ -201,11 +201,6 @@ export function HelpTooltip({
 
   const content = helpContentMap[topic];
 
-  if (!content) {
-    console.warn(`HelpTooltip: Unknown topic "${topic}"`);
-    return null;
-  }
-
   const docsBaseUrl =
     typeof import.meta !== "undefined" && import.meta.env?.VITE_DOCS_URL
       ? import.meta.env.VITE_DOCS_URL
@@ -299,6 +294,12 @@ export function HelpTooltip({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen, trigger]);
+
+  // Early return for unknown topic - MUST be after all hooks
+  if (!content) {
+    console.warn(`HelpTooltip: Unknown topic "${topic}"`);
+    return null;
+  }
 
   const sizeClasses = {
     xs: "w-3.5 h-3.5",

@@ -12,15 +12,13 @@ Phase 4 Features:
 - Audit logging of all operations
 """
 
-import hashlib
 import logging
 import random
 import secrets
-import string
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

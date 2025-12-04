@@ -19,7 +19,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -305,7 +305,6 @@ class CodeExtractor:
         Returns:
             List of extracted codes with confidence
         """
-        from . import ClinicalCode
 
         codes = []
         text_lower = text.lower()

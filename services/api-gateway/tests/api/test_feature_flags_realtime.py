@@ -5,7 +5,6 @@ Tests the SSE endpoint and version tracking for real-time flag updates.
 
 import asyncio
 import json
-from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -57,7 +56,7 @@ class TestFlagSubscriptionManager:
     @pytest.mark.asyncio
     async def test_connect_with_filter(self, subscription_manager):
         """Test connecting with a flag filter."""
-        queue = await subscription_manager.connect("client-1", ["ui.dark_mode", "backend.rag"])
+        await subscription_manager.connect("client-1", ["ui.dark_mode", "backend.rag"])
 
         assert subscription_manager._subscriptions["client-1"] == {"ui.dark_mode", "backend.rag"}
 
@@ -206,9 +205,7 @@ class TestPublishFlagUpdate:
     @patch("app.api.feature_flags_realtime.flag_subscription_manager")
     @patch("app.api.feature_flags_realtime.increment_version")
     @patch("app.api.feature_flags_realtime.redis_client")
-    async def test_publish_broadcasts_and_publishes(
-        self, mock_redis, mock_increment, mock_manager
-    ):
+    async def test_publish_broadcasts_and_publishes(self, mock_redis, mock_increment, mock_manager):
         """Test that publish broadcasts locally and publishes to Redis."""
         mock_increment.return_value = 10
         mock_manager.broadcast_flag_update = AsyncMock(return_value=2)
@@ -217,9 +214,7 @@ class TestPublishFlagUpdate:
         await publish_flag_update("ui.dark_mode", flag_data)
 
         # Should broadcast locally
-        mock_manager.broadcast_flag_update.assert_called_once_with(
-            "ui.dark_mode", flag_data, 10
-        )
+        mock_manager.broadcast_flag_update.assert_called_once_with("ui.dark_mode", flag_data, 10)
 
         # Should publish to Redis
         mock_redis.publish.assert_called_once()

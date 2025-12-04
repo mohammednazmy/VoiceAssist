@@ -7,7 +7,7 @@ Automatically adjusts pipeline parameters based on metrics.
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -175,7 +175,6 @@ class AdaptiveTuning:
 
     async def trigger_adjustment(self, anomaly: "AnomalyAlert") -> None:
         """Trigger adjustment based on anomaly"""
-        from . import AnomalyAlert
 
         # Map anomaly metrics to adjustments
         if "latency" in anomaly.metric_name.lower():

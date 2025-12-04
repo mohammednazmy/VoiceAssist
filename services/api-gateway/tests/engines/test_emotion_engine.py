@@ -11,8 +11,7 @@ Tests:
 
 # Import test subjects
 import sys
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -21,8 +20,8 @@ sys.path.insert(0, "/home/asimo/VoiceAssist/services/api-gateway/app")
 from app.core.event_bus import VoiceEvent, VoiceEventBus
 from app.engines.emotion_engine import EmotionEngine, EmotionState, UserEmotionBaseline
 from app.engines.emotion_engine.fusion import EmotionFusion, FusionWeights
-from app.engines.emotion_engine.personalization import DeviationResult, EmotionPersonalization
-from app.engines.emotion_engine.response_adaptation import AdaptationResult, ResponseAdaptation
+from app.engines.emotion_engine.personalization import EmotionPersonalization
+from app.engines.emotion_engine.response_adaptation import ResponseAdaptation
 
 
 class TestEmotionState:
