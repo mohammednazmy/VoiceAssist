@@ -1,3 +1,17 @@
+---
+title: Epic FHIR Integration Operations Runbook
+slug: operations/epic-fhir-runbook
+summary: Operational procedures for Epic FHIR integration including credential rotation, provider outage recovery, feature flag management, write operation failures, chaos engineering, and emergency procedures.
+status: stable
+stability: production
+owner: backend
+lastUpdated: "2025-12-04"
+audience: ["human", "agent", "backend", "ops"]
+tags: ["epic", "fhir", "ehr", "operations", "runbook", "hipaa", "audit", "chaos-engineering"]
+category: operations
+relatedServices: ["api-gateway"]
+---
+
 # Epic FHIR Integration Operations Runbook
 
 ## Overview
@@ -329,7 +343,96 @@ grep "EHR_WRITE_FAILED" /var/log/voiceassist/audit.log | tail -50
 
 ---
 
-## 9. Contact Information
+## 9. GDPR/CCPA Compliance Workflows
+
+### Data Subject Access Request (DSAR)
+
+1. **Identify User Data**
+   ```python
+   from app.core.audit_service import get_audit_service
+
+   audit = get_audit_service()
+
+   # Get all audit events for a user
+   user_events = await audit.get_events(
+       user_id="user_123",
+       limit=100000
+   )
+
+   # Get EHR access history
+   ehr_events = await audit.get_events(
+       user_id="user_123",
+       event_type_prefix="ehr."
+   )
+   ```
+
+2. **Generate Export**
+   ```python
+   export = await audit.export_user_data(
+       user_id="user_123",
+       format="json",
+       include_ehr_access=True
+   )
+   ```
+
+### Data Deletion Request (Right to Erasure)
+
+1. **Verify Request**
+   - Confirm identity of requestor
+   - Check for legal retention requirements
+   - Document the request in audit log
+
+2. **Delete User Data**
+   ```python
+   from app.core.audit_service import get_audit_service
+
+   audit = get_audit_service()
+
+   # Log the deletion request
+   await audit.log_event(
+       event_type=AuditEventType.DATA_DELETION_REQUESTED,
+       user_id="user_123",
+       details={"reason": "GDPR erasure request", "ticket": "GDPR-2025-001"}
+   )
+
+   # Delete EHR-related data (preserve audit logs per HIPAA)
+   # Note: Audit logs must be retained for 6 years per HIPAA
+   ```
+
+3. **Confirmation**
+   - Send confirmation to user
+   - Update data retention records
+
+### Audit Log Retention Policy
+
+| Data Type               | Retention Period | Legal Basis              |
+| ----------------------- | ---------------- | ------------------------ |
+| EHR Access Logs         | 6 years          | HIPAA §164.530(j)        |
+| Write Operation Logs    | 6 years          | HIPAA §164.530(j)        |
+| User Session Data       | 1 year           | Business requirement     |
+| Error Logs              | 90 days          | Operational requirement  |
+| Chaos Test Results      | 30 days          | Testing documentation    |
+
+### Accounting of Disclosures
+
+```python
+# Generate accounting of disclosures report (HIPAA requirement)
+accounting = await audit.get_accounting_of_disclosures(
+    patient_id="patient_456",
+    start_date=datetime(2024, 1, 1),
+    end_date=datetime.now()
+)
+
+# Export for patient request
+report = await audit.export_accounting_of_disclosures(
+    patient_id="patient_456",
+    format="pdf"
+)
+```
+
+---
+
+## 10. Contact Information
 
 | Role             | Contact                  |
 | ---------------- | ------------------------ |
