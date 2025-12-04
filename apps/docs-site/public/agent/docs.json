@@ -1,6 +1,6 @@
 {
-  "count": 255,
-  "generated_at": "2025-12-04T11:27:14.942Z",
+  "count": 256,
+  "generated_at": "2025-12-04T12:44:28.807Z",
   "docs": [
     {
       "slug": "style-guide",
@@ -51,6 +51,16 @@
       "status": "stable",
       "owner": "backend",
       "audience": ["developers", "ai-agents"],
+      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "cli-reference",
+      "path": "admin-guide/feature-flags/cli-reference.md",
+      "title": "Feature Flags CLI Reference",
+      "summary": "Command-line interface reference for managing feature flags",
+      "status": "stable",
+      "owner": "backend",
+      "audience": ["admin", "developers", "devops"],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {

@@ -427,6 +427,24 @@ export const navigation: NavSection[] = [
     ],
   },
   {
+    title: "Voice",
+    items: [
+      {
+        title: "Voice Documentation Hub",
+        href: "/voice",
+        description: "Voice Mode documentation overview and navigation",
+        docPaths: [],
+      },
+      {
+        title: "Voice Mode Architecture",
+        href: "/voice/architecture",
+        description:
+          "Comprehensive Voice Mode architecture: STT, LLM, TTS pipeline",
+        docPaths: [],
+      },
+    ],
+  },
+  {
     title: "Reference",
     items: [
       {
