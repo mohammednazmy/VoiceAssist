@@ -46,6 +46,8 @@ class TranscriptChunk:
     start_time: float = 0.0
     end_time: float = 0.0
     words: List[Dict] = field(default_factory=list)
+    # Prosody-related fields
+    speech_final: bool = False  # True when speech segment is complete
 
 
 @dataclass
@@ -106,6 +108,7 @@ class DeepgramStreamingSession:
         on_final: Callable[[str], Awaitable[None]],
         on_endpoint: Callable[[], Awaitable[None]],
         on_speech_start: Optional[Callable[[], Awaitable[None]]] = None,
+        on_words: Optional[Callable[[List[Dict]], Awaitable[None]]] = None,
     ):
         self.api_key = api_key
         self.config = config
@@ -113,6 +116,7 @@ class DeepgramStreamingSession:
         self.on_final = on_final
         self.on_endpoint = on_endpoint
         self.on_speech_start = on_speech_start
+        self.on_words = on_words  # Callback for word-level data (prosody analysis)
 
         self._websocket: Optional[websockets.WebSocketClientProtocol] = None
         self._running = False
@@ -296,6 +300,7 @@ class DeepgramStreamingSession:
         transcript = best.get("transcript", "")
         confidence = best.get("confidence", 0.0)
         is_final = data.get("is_final", False)
+        words = best.get("words", [])
 
         # Log all results for debugging
         if transcript:
@@ -308,6 +313,10 @@ class DeepgramStreamingSession:
             if self._empty_count <= 3 or self._empty_count % 20 == 0:
                 logger.debug(f"[Deepgram] Empty transcript #{self._empty_count} (final={is_final})")
             return
+
+        # Send word-level data for prosody analysis
+        if words and self.on_words:
+            await self.on_words(words)
 
         if is_final:
             # Append to final transcript
@@ -474,6 +483,7 @@ class StreamingSTTService:
         on_final: Callable[[str], Awaitable[None]],
         on_endpoint: Callable[[], Awaitable[None]],
         on_speech_start: Optional[Callable[[], Awaitable[None]]] = None,
+        on_words: Optional[Callable[[List[Dict]], Awaitable[None]]] = None,
         config: Optional[STTSessionConfig] = None,
     ) -> DeepgramStreamingSession:
         """
@@ -484,6 +494,7 @@ class StreamingSTTService:
             on_final: Callback for final transcripts
             on_endpoint: Callback for speech endpoint detection
             on_speech_start: Optional callback for speech start (barge-in)
+            on_words: Optional callback for word-level data (prosody analysis)
             config: Optional session configuration
 
         Returns:
@@ -504,6 +515,7 @@ class StreamingSTTService:
             on_final=on_final,
             on_endpoint=on_endpoint,
             on_speech_start=on_speech_start,
+            on_words=on_words,
         )
 
     async def transcribe_batch(

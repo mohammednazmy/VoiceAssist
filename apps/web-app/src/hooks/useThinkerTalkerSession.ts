@@ -95,6 +95,223 @@ export interface TTToolCall {
 }
 
 /**
+ * Emotion detected from user's voice (Phase 1: Hume AI integration)
+ */
+export interface TTEmotionResult {
+  primary_emotion: string;
+  primary_confidence: number;
+  secondary_emotion: string | null;
+  secondary_confidence: number | null;
+  valence: number; // -1 to 1 (negative to positive)
+  arousal: number; // 0 to 1 (calm to excited)
+  dominance: number; // 0 to 1 (submissive to dominant)
+  timestamp: number;
+}
+
+/**
+ * Backchannel audio trigger (Phase 2: Natural verbal cues)
+ */
+export interface TTBackchannelEvent {
+  phrase: string; // e.g., "uh-huh", "I see", "mmhmm"
+  audio: string; // Base64-encoded audio
+  format: string; // Audio format (e.g., "pcm_24000")
+  duration_ms: number;
+}
+
+/**
+ * Turn-taking state prediction (Phase 5: Advanced turn management)
+ */
+export interface TTTurnState {
+  state: "continuing" | "pausing" | "yielding" | "uncertain";
+  confidence: number; // 0 to 1
+  recommended_wait_ms: number;
+  signals: {
+    falling_intonation: boolean;
+    trailing_off: boolean;
+    thinking_aloud: boolean;
+    continuation_cue: boolean;
+  };
+}
+
+/**
+ * Repair strategy event (Phase 7: Conversational repair)
+ */
+export interface TTRepairEvent {
+  confidence: number; // 0 to 1 - AI's confidence in understanding
+  needsClarification: boolean; // True if AI needs more info from user
+  repairApplied: boolean; // True if a repair strategy was applied
+}
+
+/**
+ * Dictation state (Phase 8: Medical dictation)
+ */
+export type DictationState =
+  | "idle"
+  | "listening"
+  | "processing"
+  | "paused"
+  | "reviewing"
+  | "saving"
+  | "completed";
+
+/**
+ * Note type for dictation
+ */
+export type NoteType =
+  | "soap"
+  | "h_and_p"
+  | "progress"
+  | "procedure"
+  | "consult"
+  | "discharge"
+  | "custom";
+
+/**
+ * Dictation state event (Phase 8: Medical dictation)
+ */
+export interface TTDictationStateEvent {
+  state: DictationState;
+  noteType: NoteType;
+  currentSection: string;
+}
+
+/**
+ * Dictation section update event (Phase 8: Medical dictation)
+ */
+export interface TTDictationSectionEvent {
+  section: string;
+  content: string;
+  partialText?: string;
+  wordCount: number;
+  isFinal: boolean;
+}
+
+/**
+ * Dictation command event (Phase 8: Medical dictation)
+ */
+export interface TTDictationCommandEvent {
+  command: string;
+  category: string;
+  executed: boolean;
+  message: string;
+  data: Record<string, unknown>;
+}
+
+/**
+ * Patient context prompt (Phase 9: Patient context integration)
+ */
+export interface TTPatientContextPrompt {
+  type: "info" | "alert" | "suggestion" | "question";
+  category: string;
+  message: string;
+  priority: number;
+}
+
+/**
+ * Patient context loaded event (Phase 9: Patient context integration)
+ */
+export interface TTPatientContextEvent {
+  patientId: string;
+  prompts: TTPatientContextPrompt[];
+  summaries: {
+    medications: string;
+    allergies: string;
+    conditions: string;
+  };
+}
+
+/**
+ * PHI alert event (Phase 9: HIPAA compliance)
+ */
+export interface TTPHIAlertEvent {
+  alertLevel: "info" | "warning" | "critical";
+  phiType: string;
+  message: string;
+  recommendedAction: "allow" | "mask" | "redact" | "alert" | "block";
+}
+
+/**
+ * Session analytics data (Phase 10: Analytics)
+ */
+export interface TTSessionAnalytics {
+  sessionId: string;
+  userId: string | null;
+  phase: string;
+  mode: string;
+  timing: {
+    startedAt: string;
+    endedAt: string | null;
+    durationMs: number;
+  };
+  latency: {
+    stt: { avgMs: number; p50Ms: number; p95Ms: number; samples: number };
+    llm: { avgMs: number; p50Ms: number; p95Ms: number; samples: number };
+    tts: { avgMs: number; p50Ms: number; p95Ms: number; samples: number };
+    e2e: { avgMs: number; p50Ms: number; p95Ms: number; samples: number };
+  };
+  interactions: {
+    counts: Record<string, number>;
+    words: { user: number; ai: number };
+    speakingTimeMs: { user: number; ai: number };
+  };
+  quality: {
+    sttConfidence: { avg: number; samples: number };
+    aiConfidence: { avg: number; samples: number };
+    emotion: {
+      detected: Record<string, number>;
+      avgValence: number;
+      avgArousal: number;
+    };
+    turnTaking: { smooth: number; interrupted: number; overlaps: number };
+    repairs: number;
+  };
+  dictation: {
+    noteType: string | null;
+    sectionsUsed: string[];
+    wordsDictated: number;
+    commands: { executed: number; failed: number };
+    formattingCorrections: number;
+    abbreviationsExpanded: number;
+    phiAlerts: number;
+    durationMs: number;
+  } | null;
+  errors: {
+    count: number;
+    details: Array<{
+      type: string;
+      message: string;
+      recoverable: boolean;
+      timestamp: string;
+    }>;
+  };
+}
+
+/**
+ * Feedback prompt (Phase 10: Feedback collection)
+ */
+export interface TTFeedbackPrompt {
+  promptType: "rating" | "thumbs" | "comment" | "categories";
+  message: string;
+  options: string[] | null;
+  context: Record<string, unknown>;
+}
+
+/**
+ * Feedback prompts event (Phase 10: Feedback collection)
+ */
+export interface TTFeedbackPromptsEvent {
+  prompts: TTFeedbackPrompt[];
+}
+
+/**
+ * Feedback recorded event (Phase 10: Feedback collection)
+ */
+export interface TTFeedbackRecordedEvent {
+  thumbsUp: boolean;
+  messageId: string | null;
+}
+
+/**
  * Voice metrics for performance monitoring
  */
 export interface TTVoiceMetrics {
@@ -132,6 +349,7 @@ export interface TTVoiceSettings {
   language?: string; // STT language code
   barge_in_enabled?: boolean;
   tts_model?: string;
+  vad_sensitivity?: number; // 0-100 from settings, converted to 0-1 for backend
 }
 
 /**
@@ -173,6 +391,48 @@ export interface UseThinkerTalkerSessionOptions {
   onSentimentChange?: (sentiment: string, confidence: number) => void;
   /** Callback when calibration completes */
   onCalibrationComplete?: (result: unknown) => void;
+
+  // Phase 1-4: Conversational intelligence callbacks
+  /** Callback when user emotion is detected (Phase 1: Hume AI) */
+  onEmotionDetected?: (emotion: TTEmotionResult) => void;
+  /** Callback when backchannel audio should play (Phase 2) */
+  onBackchannel?: (event: TTBackchannelEvent) => void;
+
+  // Phase 5: Turn-taking
+  /** Callback when turn-taking state changes (Phase 5) */
+  onTurnStateChange?: (turnState: TTTurnState) => void;
+
+  // Phase 6: Variable response timing
+  /** Callback when thinking filler is spoken (Phase 6) */
+  onThinkingFiller?: (text: string, queryType: string) => void;
+
+  // Phase 7: Conversational repair
+  /** Callback when a repair strategy is applied (Phase 7) */
+  onRepairStrategy?: (event: TTRepairEvent) => void;
+
+  // Phase 8: Medical dictation
+  /** Callback when dictation state changes (Phase 8) */
+  onDictationState?: (event: TTDictationStateEvent) => void;
+  /** Callback when dictation section is updated (Phase 8) */
+  onDictationSection?: (event: TTDictationSectionEvent) => void;
+  /** Callback when dictation command is executed (Phase 8) */
+  onDictationCommand?: (event: TTDictationCommandEvent) => void;
+
+  // Phase 9: Patient context integration
+  /** Callback when patient context is loaded (Phase 9) */
+  onPatientContextLoaded?: (event: TTPatientContextEvent) => void;
+  /** Callback when PHI is detected in dictation (Phase 9) */
+  onPHIAlert?: (event: TTPHIAlertEvent) => void;
+
+  // Phase 10: Analytics and feedback
+  /** Callback when analytics update is received (Phase 10) */
+  onAnalyticsUpdate?: (analytics: TTSessionAnalytics) => void;
+  /** Callback when session analytics ends (Phase 10) */
+  onSessionEnded?: (analytics: TTSessionAnalytics) => void;
+  /** Callback when feedback prompts are available (Phase 10) */
+  onFeedbackPrompts?: (event: TTFeedbackPromptsEvent) => void;
+  /** Callback when feedback is recorded (Phase 10) */
+  onFeedbackRecorded?: (event: TTFeedbackRecordedEvent) => void;
 }
 
 // ============================================================================
@@ -260,6 +520,21 @@ export function useThinkerTalkerSession(
       onCalibrationComplete?.(result);
     },
   });
+
+  // Sync VAD sensitivity from voiceSettings to personalization hook
+  // The store uses 0-100, personalization uses 0-1
+  useEffect(() => {
+    if (options.voiceSettings?.vad_sensitivity !== undefined) {
+      const normalizedSensitivity = options.voiceSettings.vad_sensitivity / 100;
+      personalization.setVadSensitivity(normalizedSensitivity);
+      voiceLog.debug(
+        `[ThinkerTalker] VAD sensitivity synced: ${options.voiceSettings.vad_sensitivity}% → ${normalizedSensitivity.toFixed(2)}`,
+      );
+    }
+  }, [
+    options.voiceSettings?.vad_sensitivity,
+    personalization.setVadSensitivity,
+  ]);
 
   // Phase 9: Offline VAD fallback
   // Note: networkVADAvailable is updated via effect when status changes
@@ -627,6 +902,247 @@ export function useThinkerTalkerSession(
           break;
         }
 
+        case "response.filler": {
+          // Phase 6: Thinking filler before complex response
+          // e.g., "Hmm, let me think about that..."
+          const fillerText = message.text as string;
+          const queryType = message.query_type as string;
+
+          voiceLog.debug(
+            `[ThinkerTalker] Thinking filler: "${fillerText}" (query_type=${queryType})`,
+          );
+
+          // Notify callback if provided
+          options.onThinkingFiller?.(fillerText, queryType);
+          break;
+        }
+
+        case "response.repair": {
+          // Phase 7: Repair strategy was applied due to low confidence
+          const confidence = message.confidence as number;
+          const needsClarification = message.needs_clarification as boolean;
+          const repairApplied = message.repair_applied as boolean;
+
+          voiceLog.debug(
+            `[ThinkerTalker] Repair strategy: confidence=${confidence.toFixed(2)}, ` +
+              `needs_clarification=${needsClarification}, repair_applied=${repairApplied}`,
+          );
+
+          // Notify callback if provided
+          options.onRepairStrategy?.({
+            confidence,
+            needsClarification,
+            repairApplied,
+          });
+          break;
+        }
+
+        // ================================================================
+        // Phase 8: Medical Dictation Message Handlers
+        // ================================================================
+
+        case "dictation.state": {
+          // Phase 8: Dictation state change
+          const dictationState: TTDictationStateEvent = {
+            state: message.state as DictationState,
+            noteType: message.note_type as NoteType,
+            currentSection: message.current_section as string,
+          };
+
+          voiceLog.debug(
+            `[ThinkerTalker] Dictation state: ${dictationState.state}, ` +
+              `section=${dictationState.currentSection}`,
+          );
+
+          options.onDictationState?.(dictationState);
+          break;
+        }
+
+        case "dictation.section_update": {
+          // Phase 8: Dictation section content update
+          const sectionEvent: TTDictationSectionEvent = {
+            section: message.section as string,
+            content: message.content as string,
+            partialText: message.partial_text as string | undefined,
+            wordCount: message.word_count as number,
+            isFinal: message.is_final as boolean,
+          };
+
+          voiceLog.debug(
+            `[ThinkerTalker] Dictation section update: ${sectionEvent.section}, ` +
+              `words=${sectionEvent.wordCount}, final=${sectionEvent.isFinal}`,
+          );
+
+          options.onDictationSection?.(sectionEvent);
+          break;
+        }
+
+        case "dictation.section_change": {
+          // Phase 8: Navigation to different section
+          voiceLog.debug(
+            `[ThinkerTalker] Dictation section change: ` +
+              `${message.previous_section} -> ${message.current_section}`,
+          );
+
+          // Emit as a state event with the new section
+          options.onDictationState?.({
+            state: "listening",
+            noteType: "soap", // Default, actual value would come from session
+            currentSection: message.current_section as string,
+          });
+          break;
+        }
+
+        case "dictation.command": {
+          // Phase 8: Voice command executed
+          const commandEvent: TTDictationCommandEvent = {
+            command: message.command as string,
+            category: message.category as string,
+            executed: message.executed as boolean,
+            message: message.message as string,
+            data: message.data as Record<string, unknown>,
+          };
+
+          voiceLog.debug(
+            `[ThinkerTalker] Dictation command: ${commandEvent.command}, ` +
+              `executed=${commandEvent.executed}`,
+          );
+
+          options.onDictationCommand?.(commandEvent);
+          break;
+        }
+
+        // ================================================================
+        // Phase 9: Patient Context & PHI Monitoring Handlers
+        // ================================================================
+
+        case "patient.context_loaded": {
+          // Phase 9: Patient context loaded for dictation
+          const contextEvent: TTPatientContextEvent = {
+            patientId: message.patient_id as string,
+            prompts: (
+              (message.prompts as Array<Record<string, unknown>>) || []
+            ).map((p) => ({
+              type: p.type as "info" | "alert" | "suggestion" | "question",
+              category: p.category as string,
+              message: p.message as string,
+              priority: p.priority as number,
+            })),
+            summaries: message.summaries as {
+              medications: string;
+              allergies: string;
+              conditions: string;
+            },
+          };
+
+          voiceLog.debug(
+            `[ThinkerTalker] Patient context loaded: ${contextEvent.patientId}, ` +
+              `${contextEvent.prompts.length} prompts`,
+          );
+
+          options.onPatientContextLoaded?.(contextEvent);
+          break;
+        }
+
+        case "phi.alert": {
+          // Phase 9: PHI detected in dictation
+          const phiEvent: TTPHIAlertEvent = {
+            alertLevel: message.alert_level as "info" | "warning" | "critical",
+            phiType: message.phi_type as string,
+            message: message.message as string,
+            recommendedAction: message.recommended_action as
+              | "allow"
+              | "mask"
+              | "redact"
+              | "alert"
+              | "block",
+          };
+
+          voiceLog.debug(
+            `[ThinkerTalker] PHI alert: ${phiEvent.alertLevel} - ${phiEvent.phiType}, ` +
+              `action=${phiEvent.recommendedAction}`,
+          );
+
+          // Log warning for critical PHI alerts
+          if (phiEvent.alertLevel === "critical") {
+            voiceLog.warn(
+              `[ThinkerTalker] CRITICAL PHI alert: ${phiEvent.message}`,
+            );
+          }
+
+          options.onPHIAlert?.(phiEvent);
+          break;
+        }
+
+        // ================================================================
+        // Phase 10: Analytics & Feedback Message Handlers
+        // ================================================================
+
+        case "analytics.update": {
+          // Phase 10: Periodic analytics update
+          const analyticsData = message as unknown as TTSessionAnalytics;
+
+          voiceLog.debug(
+            `[ThinkerTalker] Analytics update: phase=${analyticsData.phase}, ` +
+              `duration=${analyticsData.timing?.durationMs?.toFixed(0) || 0}ms`,
+          );
+
+          options.onAnalyticsUpdate?.(analyticsData);
+          break;
+        }
+
+        case "analytics.session_ended": {
+          // Phase 10: Final session analytics
+          const finalAnalytics = message as unknown as TTSessionAnalytics;
+
+          voiceLog.debug(
+            `[ThinkerTalker] Session ended: duration=${finalAnalytics.timing?.durationMs?.toFixed(0) || 0}ms, ` +
+              `utterances=${finalAnalytics.interactions?.counts?.user_utterances || 0}`,
+          );
+
+          options.onSessionEnded?.(finalAnalytics);
+          break;
+        }
+
+        case "feedback.prompts": {
+          // Phase 10: Feedback prompts available
+          const promptsData = message.prompts as Array<Record<string, unknown>>;
+          const feedbackEvent: TTFeedbackPromptsEvent = {
+            prompts: (promptsData || []).map((p) => ({
+              promptType: p.prompt_type as
+                | "rating"
+                | "thumbs"
+                | "comment"
+                | "categories",
+              message: p.message as string,
+              options: p.options as string[] | null,
+              context: (p.context || {}) as Record<string, unknown>,
+            })),
+          };
+
+          voiceLog.debug(
+            `[ThinkerTalker] Feedback prompts: ${feedbackEvent.prompts.length} prompts available`,
+          );
+
+          options.onFeedbackPrompts?.(feedbackEvent);
+          break;
+        }
+
+        case "feedback.recorded": {
+          // Phase 10: Feedback recorded confirmation
+          const recordedEvent: TTFeedbackRecordedEvent = {
+            thumbsUp: message.thumbs_up as boolean,
+            messageId: (message.message_id as string) || null,
+          };
+
+          voiceLog.debug(
+            `[ThinkerTalker] Feedback recorded: thumbs_up=${recordedEvent.thumbsUp}`,
+          );
+
+          options.onFeedbackRecorded?.(recordedEvent);
+          break;
+        }
+
         case "audio.output": {
           // TTS audio chunk (base64)
           const audioBase64 = message.audio as string;
@@ -710,11 +1226,20 @@ export function useThinkerTalkerSession(
         case "voice.state": {
           // Pipeline state update
           const state = message.state as PipelineState;
+          const prevState = pipelineState;
           setPipelineState(state);
           options.onPipelineStateChange?.(state);
 
           if (state === "listening") {
             setIsSpeaking(false);
+            // If we were speaking and now listening, this is a barge-in from the backend
+            // Stop audio playback to prevent continued TTS output
+            if (prevState === "speaking") {
+              voiceLog.info(
+                "[ThinkerTalker] State changed from speaking to listening - stopping playback (barge-in)",
+              );
+              options.onStopPlayback?.();
+            }
           } else if (state === "speaking") {
             setIsSpeaking(true);
           }
@@ -736,9 +1261,16 @@ export function useThinkerTalkerSession(
             );
           }
 
-          // Notify for barge-in handling
+          // Notify for barge-in handling - but ONLY stop playback if:
+          // 1. AI is actually speaking (not just listening)
+          // 2. This is handled by actual transcript content, not just speech_started event
+          // The speech_started event from Deepgram fires too eagerly on background noise
+          // Real barge-in is now triggered by the backend when it receives actual transcript
+          // content during SPEAKING state (with confidence threshold based on vad_sensitivity)
           options.onSpeechStarted?.();
-          options.onStopPlayback?.();
+          // NOTE: Removed automatic onStopPlayback() call here - barge-in is now
+          // handled by the backend based on actual transcript content, not VAD events.
+          // This prevents false interruptions from background noise/TTS echo.
           break;
         }
 
@@ -783,6 +1315,79 @@ export function useThinkerTalkerSession(
           } else {
             handleError(err);
           }
+          break;
+        }
+
+        // ================================================================
+        // Phase 1-4: Conversational Intelligence Message Handlers
+        // ================================================================
+
+        case "emotion.detected": {
+          // Phase 1: Emotion detected from Hume AI
+          const emotionResult: TTEmotionResult = {
+            primary_emotion: message.primary_emotion as string,
+            primary_confidence: message.primary_confidence as number,
+            secondary_emotion: (message.secondary_emotion as string) || null,
+            secondary_confidence:
+              (message.secondary_confidence as number) || null,
+            valence: message.valence as number,
+            arousal: message.arousal as number,
+            dominance: message.dominance as number,
+            timestamp: Date.now(),
+          };
+
+          voiceLog.debug(
+            `[ThinkerTalker] Emotion detected: ${emotionResult.primary_emotion} ` +
+              `(conf=${emotionResult.primary_confidence.toFixed(2)}, ` +
+              `valence=${emotionResult.valence.toFixed(2)})`,
+          );
+
+          options.onEmotionDetected?.(emotionResult);
+          break;
+        }
+
+        case "backchannel.trigger": {
+          // Phase 2: Backchannel audio to play
+          const backchannelEvent: TTBackchannelEvent = {
+            phrase: message.phrase as string,
+            audio: message.audio as string,
+            format: message.format as string,
+            duration_ms: message.duration_ms as number,
+          };
+
+          voiceLog.debug(
+            `[ThinkerTalker] Backchannel: "${backchannelEvent.phrase}" ` +
+              `(${backchannelEvent.duration_ms}ms)`,
+          );
+
+          options.onBackchannel?.(backchannelEvent);
+          break;
+        }
+
+        case "turn.state": {
+          // Phase 5: Turn-taking state update
+          const turnState: TTTurnState = {
+            state: message.state as
+              | "continuing"
+              | "pausing"
+              | "yielding"
+              | "uncertain",
+            confidence: message.confidence as number,
+            recommended_wait_ms: message.recommended_wait_ms as number,
+            signals: message.signals as {
+              falling_intonation: boolean;
+              trailing_off: boolean;
+              thinking_aloud: boolean;
+              continuation_cue: boolean;
+            },
+          };
+
+          voiceLog.debug(
+            `[ThinkerTalker] Turn state: ${turnState.state} ` +
+              `(conf=${turnState.confidence.toFixed(2)})`,
+          );
+
+          options.onTurnStateChange?.(turnState);
           break;
         }
 

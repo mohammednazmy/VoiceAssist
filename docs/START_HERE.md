@@ -17,7 +17,7 @@ category: overview
 
 This document is your entry point to the project. Choose your path below based on your role and experience level.
 
-**Status update:** All 16 project phases (0-15) are complete. Backend, infrastructure, admin panel, and web app (through Phase 3.5) are production-ready. See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for the authoritative component status.
+**Status update:** All 16 project phases (0-15) are complete. Backend, infrastructure, admin panel, and web app (through Phase 3.5) are production-ready. **Voice Mode Enhancement (10-phase plan) completed 2025-12-03** - includes emotion detection, medical dictation, session analytics, and feedback collection. See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for the authoritative component status.
 
 ---
 
@@ -164,6 +164,16 @@ All documentation is in the `docs/` directory. Here's the complete index:
 | -------------------------------------------------------------- | ------------------------------------------ | -------- |
 | **[INFRASTRUCTURE_SETUP.md](INFRASTRUCTURE_SETUP.md)**         | Ubuntu server setup, production deployment | DevOps   |
 | **[COMPOSE_TO_K8S_MIGRATION.md](COMPOSE_TO_K8S_MIGRATION.md)** | Kubernetes migration guide                 | DevOps   |
+
+### 🎤 Voice Features
+
+| Document                                                                        | Purpose                                                         | Audience              |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------------- | --------------------- |
+| **[VOICE_MODE_PIPELINE.md](VOICE_MODE_PIPELINE.md)** ⭐                         | Core voice pipeline architecture, WebSocket protocol            | Backend/Frontend devs |
+| **[VOICE_MODE_ENHANCEMENT_10_PHASE.md](VOICE_MODE_ENHANCEMENT_10_PHASE.md)** ⭐ | **10-phase enhancement: emotion, dictation, memory, analytics** | All developers        |
+| **[VOICE_MODE_SETTINGS_GUIDE.md](VOICE_MODE_SETTINGS_GUIDE.md)**                | User voice settings configuration                               | Frontend devs         |
+| **[frontend/thinker-talker-hooks.md](frontend/thinker-talker-hooks.md)**        | Thinker-Talker React hooks                                      | Frontend devs         |
+| **[api-reference/voice-pipeline-ws.md](api-reference/voice-pipeline-ws.md)**    | Voice pipeline WebSocket API reference                          | Backend/Frontend devs |
 
 ### 🤖 For AI Assistants / Automation
 

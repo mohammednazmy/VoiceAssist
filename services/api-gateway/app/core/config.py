@@ -148,6 +148,11 @@ class Settings(BaseSettings):
     DEEPSEEK_API_KEY: Optional[str] = None  # DeepSeek LLM provider
     SERPAPI_API_KEY: Optional[str] = None  # SerpAPI web search
 
+    # Hume AI Emotion Detection (for voice mode emotional intelligence)
+    HUME_API_KEY: Optional[str] = None  # Hume AI Expression Measurement API key
+    HUME_SECRET_KEY: Optional[str] = None  # Hume AI Secret key for authentication
+    HUME_ENABLED: bool = True  # Enable emotion detection in voice pipeline
+
     # OAuth Providers (optional - leave empty to disable)
     GOOGLE_CLIENT_ID: Optional[str] = None
     GOOGLE_CLIENT_SECRET: Optional[str] = None

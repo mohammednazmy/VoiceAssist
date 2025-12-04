@@ -118,6 +118,61 @@ export const ELEVENLABS_VOICE_OPTIONS: ElevenLabsVoiceOption[] = [
     gender: "female",
     premium: true,
   },
+  // Conversational Voices (warm, natural tone)
+  {
+    id: "nPczCjzI2devNBz1zQrb",
+    name: "Brian",
+    gender: "male",
+    premium: true,
+  },
+  {
+    id: "XB0fDUnXU5powFXDhCwa",
+    name: "Charlotte",
+    gender: "female",
+    premium: true,
+  },
+  {
+    id: "XrExE9yKIg1WjnnlVkGX",
+    name: "Matilda",
+    gender: "female",
+    premium: true,
+  },
+  {
+    id: "JBFqnCBsd6RMkjVDRZzb",
+    name: "George",
+    gender: "male",
+    premium: true,
+  },
+  {
+    id: "IKne3meq5aSn9XLyUdCD",
+    name: "Charlie",
+    gender: "male",
+    premium: true,
+  },
+  {
+    id: "pFZP5JQG7iQjIQuC4Bku",
+    name: "Lily",
+    gender: "female",
+    premium: true,
+  },
+  {
+    id: "N2lVS1w4EtoT3dr4eOWO",
+    name: "Callum",
+    gender: "male",
+    premium: true,
+  },
+  {
+    id: "onwK4e9ZLuTAKqWW03F9",
+    name: "Daniel",
+    gender: "male",
+    premium: true,
+  },
+  {
+    id: "Xb7hH8MSUJpSbSDYk0k2",
+    name: "Alice",
+    gender: "female",
+    premium: true,
+  },
   // Standard Voices
   {
     id: "ErXwobaYiN019PkySvjV",

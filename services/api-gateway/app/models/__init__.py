@@ -5,6 +5,7 @@ from app.models.attachment import MessageAttachment
 from app.models.audit_log import AuditLog
 from app.models.citation import MessageCitation
 from app.models.clinical_context import ClinicalContext
+from app.models.conversation_memory import ConversationMemory, UserContext, UserSpeechProfile
 from app.models.document import Document
 from app.models.feature_flag import FeatureFlag
 from app.models.feature_flag_analytics import FeatureFlagAnalytics
@@ -25,7 +26,10 @@ __all__ = [
     "AuditLog",
     "ClinicalContext",
     "ConversationFolder",
+    "ConversationMemory",
     "User",
+    "UserContext",
+    "UserSpeechProfile",
     "Session",
     "Message",
     "MessageAttachment",

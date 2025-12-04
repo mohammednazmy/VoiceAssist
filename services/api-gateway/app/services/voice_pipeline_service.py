@@ -16,6 +16,7 @@ Phase: Thinker/Talker Voice Pipeline Migration
 
 import asyncio
 import base64
+import random
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -23,6 +24,64 @@ from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 from app.core.logging import get_logger
+from app.services.backchannel_service import (
+    BackchannelAudio,
+    BackchannelService,
+    BackchannelSession,
+    backchannel_service,
+)
+from app.services.dictation_phi_monitor import DictationPHIMonitor, PHIAlertLevel, PHIScanResult, dictation_phi_monitor
+from app.services.dictation_service import (
+    DictationEvent,
+    DictationService,
+    DictationSession,
+    DictationSessionConfig,
+    DictationState,
+    NoteSection,
+    NoteType,
+    dictation_service,
+)
+from app.services.emotion_detection_service import (
+    EmotionDetectionService,
+    EmotionDetectionSession,
+    EmotionResult,
+    emotion_detection_service,
+)
+from app.services.feedback_service import FeedbackPrompt, FeedbackService, feedback_service
+from app.services.medical_vocabulary_service import (
+    MedicalSpecialty,
+    MedicalVocabularyService,
+    medical_vocabulary_service,
+)
+from app.services.memory_context_service import ConversationMemoryManager, MemoryType, memory_context_service
+from app.services.note_formatter_service import (
+    FormattingConfig,
+    FormattingLevel,
+    NoteFormatterService,
+    note_formatter_service,
+)
+from app.services.patient_context_service import (
+    ContextPrompt,
+    DictationContext,
+    PatientContextService,
+    PatientDataCategory,
+    PatientPHIContext,
+    patient_context_service,
+)
+from app.services.prosody_analysis_service import (
+    ProsodyService,
+    ProsodySession,
+    ProsodySnapshot,
+    TurnTakingPrediction,
+    TurnTakingState,
+    prosody_service,
+)
+from app.services.session_analytics_service import (
+    InteractionType,
+    SessionAnalytics,
+    SessionAnalyticsService,
+    session_analytics_service,
+)
 from app.services.streaming_stt_service import (
     DeepgramStreamingSession,
     StreamingSTTService,
@@ -31,6 +90,13 @@ from app.services.streaming_stt_service import (
 )
 from app.services.talker_service import AudioChunk, TalkerService, TalkerSession, VoiceConfig, talker_service
 from app.services.thinker_service import ThinkerService, ThinkerSession, ToolCallEvent, ToolResultEvent, thinker_service
+from app.services.voice_command_service import (
+    CommandCategory,
+    CommandResult,
+    ParsedCommand,
+    VoiceCommandService,
+    voice_command_service,
+)
 
 logger = get_logger(__name__)
 
@@ -49,6 +115,184 @@ class PipelineState(str, Enum):
     SPEAKING = "speaking"
     CANCELLED = "cancelled"
     ERROR = "error"
+
+
+class PipelineMode(str, Enum):
+    """
+    Phase 8: Mode of the voice pipeline.
+
+    - CONVERSATION: Normal conversational voice mode with Thinker/Talker
+    - DICTATION: Medical dictation mode with transcription + formatting
+    """
+
+    CONVERSATION = "conversation"
+    DICTATION = "dictation"
+
+
+class QueryType(str, Enum):
+    """
+    Phase 6: Classification of user query types for response timing.
+
+    Different query types warrant different response delays to feel natural:
+    - URGENT: Medical emergencies, immediate answers needed
+    - SIMPLE: Yes/no questions, confirmations, short factual answers
+    - COMPLEX: Multi-part questions, explanations, comparisons
+    - CLARIFICATION: Requests for clarification after misunderstanding
+    """
+
+    URGENT = "urgent"
+    SIMPLE = "simple"
+    COMPLEX = "complex"
+    CLARIFICATION = "clarification"
+    UNKNOWN = "unknown"
+
+
+@dataclass
+class ResponseTimingConfig:
+    """
+    Phase 6: Configuration for human-like response timing.
+
+    Different query types warrant different response patterns:
+    - delay_ms: How long to wait before starting to respond
+    - use_filler: Whether to use a thinking filler ("Hmm, let me think...")
+    - filler_phrases: Available filler phrases for this query type
+    """
+
+    delay_ms: int
+    use_filler: bool
+    filler_phrases: list = field(default_factory=list)
+
+
+# Phase 6: Response timing configuration by query type
+RESPONSE_TIMING: Dict[QueryType, ResponseTimingConfig] = {
+    QueryType.URGENT: ResponseTimingConfig(
+        delay_ms=0,
+        use_filler=False,
+        filler_phrases=[],
+    ),
+    QueryType.SIMPLE: ResponseTimingConfig(
+        delay_ms=200,
+        use_filler=False,
+        filler_phrases=[],
+    ),
+    QueryType.COMPLEX: ResponseTimingConfig(
+        delay_ms=600,
+        use_filler=True,
+        filler_phrases=[
+            "Hmm, let me think about that...",
+            "That's a good question...",
+            "Let me consider this...",
+        ],
+    ),
+    QueryType.CLARIFICATION: ResponseTimingConfig(
+        delay_ms=0,
+        use_filler=False,
+        filler_phrases=[],
+    ),
+    QueryType.UNKNOWN: ResponseTimingConfig(
+        delay_ms=300,
+        use_filler=False,
+        filler_phrases=[],
+    ),
+}
+
+
+def classify_query_type(transcript: str) -> QueryType:
+    """
+    Phase 6: Classify user query to determine appropriate response timing.
+
+    Uses keyword matching and pattern detection to categorize queries:
+    - URGENT: Emergency keywords, medical distress
+    - SIMPLE: Yes/no questions, confirmations, short queries
+    - COMPLEX: Multiple questions, comparisons, explanations
+    - CLARIFICATION: "what did you mean", "I said", etc.
+
+    Args:
+        transcript: User's spoken text
+
+    Returns:
+        QueryType classification
+    """
+    text = transcript.lower().strip()
+    words = text.split()
+    word_count = len(words)
+
+    # Urgent keywords (medical emergencies, distress)
+    urgent_keywords = {
+        "emergency",
+        "help",
+        "urgent",
+        "911",
+        "ambulance",
+        "bleeding",
+        "chest pain",
+        "can't breathe",
+        "heart attack",
+        "stroke",
+        "overdose",
+        "unconscious",
+        "dying",
+        "severe pain",
+    }
+    if any(keyword in text for keyword in urgent_keywords):
+        return QueryType.URGENT
+
+    # Clarification patterns (user correcting or asking for clarification)
+    clarification_patterns = [
+        "what did you mean",
+        "i said",
+        "no i meant",
+        "that's not what",
+        "i was asking",
+        "let me clarify",
+        "to clarify",
+        "what i meant",
+        "i didn't say",
+        "i actually said",
+        "sorry i meant",
+    ]
+    if any(pattern in text for pattern in clarification_patterns):
+        return QueryType.CLARIFICATION
+
+    # Simple queries (yes/no, confirmations, short questions)
+    simple_starters = ["is ", "are ", "do ", "does ", "did ", "can ", "will ", "should "]
+    simple_endings = ["yes", "no", "ok", "okay", "sure", "thanks", "thank you", "got it"]
+    if word_count <= 5 and (
+        any(text.startswith(s) for s in simple_starters)
+        or text in simple_endings
+        or text.endswith("?")
+        and word_count <= 8
+    ):
+        return QueryType.SIMPLE
+
+    # Complex queries (multiple questions, comparisons, explanations)
+    complex_indicators = [
+        "explain",
+        "describe",
+        "compare",
+        "difference between",
+        "how does",
+        "why does",
+        "what are the",
+        "tell me about",
+        "can you walk me through",
+        "i need to understand",
+        "what's the relationship",
+        "pros and cons",
+    ]
+    if any(indicator in text for indicator in complex_indicators):
+        return QueryType.COMPLEX
+
+    # Multiple questions or very long queries
+    question_count = text.count("?")
+    if question_count >= 2 or word_count >= 25:
+        return QueryType.COMPLEX
+
+    # Longer explanatory questions
+    if word_count >= 15 and ("how" in text or "why" in text or "what" in text):
+        return QueryType.COMPLEX
+
+    return QueryType.UNKNOWN
 
 
 @dataclass
@@ -79,6 +323,22 @@ class PipelineConfig:
 
     # Barge-in settings
     barge_in_enabled: bool = True
+    # VAD sensitivity: 0-100 scale (higher = more sensitive, triggers on quieter speech)
+    # Used as confidence threshold for barge-in: lower values require higher confidence
+    # 0 = max threshold (0.95 confidence required), 100 = min threshold (0.5 confidence required)
+    vad_sensitivity: int = 50
+
+    # Phase 8: Pipeline mode and dictation settings
+    mode: PipelineMode = PipelineMode.CONVERSATION
+    dictation_note_type: NoteType = NoteType.SOAP
+    dictation_specialty: Optional[MedicalSpecialty] = None
+    dictation_auto_format: bool = True
+    dictation_enable_commands: bool = True
+
+    # Phase 9: Patient context integration
+    patient_id: Optional[str] = None  # Patient ID for context-aware dictation
+    enable_phi_monitoring: bool = True  # Enable real-time PHI detection
+    enable_patient_context: bool = True  # Enable patient context retrieval
 
 
 @dataclass
@@ -141,6 +401,8 @@ class VoicePipelineSession:
         talker_service: TalkerService,
         on_message: Callable[[PipelineMessage], Awaitable[None]],
         user_id: Optional[str] = None,
+        emotion_service: Optional[EmotionDetectionService] = None,
+        backchannel_svc: Optional[BackchannelService] = None,
     ):
         self.session_id = session_id
         self.conversation_id = conversation_id
@@ -150,11 +412,33 @@ class VoicePipelineSession:
         self._thinker_service = thinker_service
         self._talker_service = talker_service
         self._on_message = on_message
+        self._emotion_service = emotion_service or emotion_detection_service
+        self._backchannel_service = backchannel_svc or backchannel_service
+        self._prosody_service = prosody_service
 
         # Session components
         self._stt_session: Optional[DeepgramStreamingSession] = None
         self._thinker_session: Optional[ThinkerSession] = None
         self._talker_session: Optional[TalkerSession] = None
+        self._emotion_session: Optional[EmotionDetectionSession] = None
+        self._backchannel_session: Optional[BackchannelSession] = None
+        self._prosody_session: Optional[ProsodySession] = None
+
+        # Phase 4: Memory context manager for conversation continuity
+        self._memory_manager: Optional[ConversationMemoryManager] = None
+
+        # Phase 8: Dictation session for medical documentation
+        self._dictation_session: Optional[DictationSession] = None
+
+        # Phase 9: Patient context and PHI monitoring
+        self._patient_context: Optional[DictationContext] = None
+        self._phi_monitor: DictationPHIMonitor = dictation_phi_monitor
+        self._patient_context_service: PatientContextService = patient_context_service
+
+        # Phase 10: Analytics and feedback
+        self._analytics: Optional[SessionAnalytics] = None
+        self._analytics_service: SessionAnalyticsService = session_analytics_service
+        self._feedback_service: FeedbackService = feedback_service
 
         # State
         self._state = PipelineState.IDLE
@@ -163,6 +447,18 @@ class VoicePipelineSession:
         # Transcript accumulation
         self._partial_transcript = ""
         self._final_transcript = ""
+        self._transcript_confidence = 1.0  # Phase 7: Track STT confidence for repair strategies
+
+        # Current emotion state (for response adaptation)
+        self._current_emotion: Optional[EmotionResult] = None
+
+        # Current prosody analysis (for response timing)
+        self._current_prosody: Optional[ProsodySnapshot] = None
+
+        # Speech timing for backchannels
+        self._speech_start_time: Optional[float] = None
+        self._last_audio_time: float = 0.0
+        self._last_transcript_time: float = 0.0  # For pause detection
 
         # Metrics
         self._metrics = PipelineMetrics(session_id=session_id)
@@ -200,6 +496,7 @@ class VoicePipelineSession:
                     on_final=self._handle_final_transcript,
                     on_endpoint=self._handle_speech_end,
                     on_speech_start=self._handle_speech_start,
+                    on_words=self._handle_word_data,
                     config=STTSessionConfig(
                         language=self.config.stt_language,
                         sample_rate=self.config.stt_sample_rate,
@@ -212,6 +509,122 @@ class VoicePipelineSession:
                 if not await self._stt_session.start():
                     raise RuntimeError("Failed to start STT session")
 
+                # Create emotion detection session (parallel to STT)
+                if self._emotion_service and self._emotion_service.is_enabled():
+                    self._emotion_session = await self._emotion_service.create_session(
+                        session_id=self.session_id,
+                        on_emotion=self._handle_emotion_result,
+                    )
+                    logger.info(f"Emotion detection enabled for session: {self.session_id}")
+
+                # Create backchannel session for natural verbal cues
+                if self._backchannel_service and self._backchannel_service.is_enabled():
+                    self._backchannel_session = await self._backchannel_service.create_session(
+                        session_id=self.session_id,
+                        voice_id=self.config.voice_id,
+                        language=self.config.stt_language,
+                        on_backchannel=self._handle_backchannel,
+                    )
+                    logger.info(f"Backchanneling enabled for session: {self.session_id}")
+
+                # Create prosody analysis session for speech pattern tracking
+                if self._prosody_service:
+                    self._prosody_session = await self._prosody_service.create_session(
+                        session_id=self.session_id,
+                        user_id=self.user_id,
+                    )
+                    logger.info(f"Prosody analysis enabled for session: {self.session_id}")
+
+                # Phase 4: Initialize memory context manager
+                if self.user_id:
+                    try:
+                        session_uuid = (
+                            uuid.UUID(self.session_id) if isinstance(self.session_id, str) else self.session_id
+                        )
+                        user_uuid = uuid.UUID(self.user_id) if isinstance(self.user_id, str) else self.user_id
+                        self._memory_manager = memory_context_service.get_conversation_memory(
+                            session_id=session_uuid,
+                            user_id=user_uuid,
+                        )
+                        logger.info(f"Memory context enabled for session: {self.session_id}")
+                    except Exception as e:
+                        logger.warning(f"Failed to initialize memory context: {e}")
+
+                # Phase 8: Initialize dictation session if in dictation mode
+                if self.config.mode == PipelineMode.DICTATION:
+                    dictation_config = DictationSessionConfig(
+                        note_type=self.config.dictation_note_type,
+                        language=self.config.stt_language,
+                        specialty=self.config.dictation_specialty.value if self.config.dictation_specialty else None,
+                        auto_punctuate=True,
+                        auto_format=self.config.dictation_auto_format,
+                        enable_commands=self.config.dictation_enable_commands,
+                    )
+                    self._dictation_session = await dictation_service.create_session(
+                        user_id=self.user_id or "anonymous",
+                        config=dictation_config,
+                        on_event=self._handle_dictation_event,
+                    )
+                    await self._dictation_session.start()
+                    logger.info(
+                        f"Dictation mode enabled for session: {self.session_id}, "
+                        f"type={self.config.dictation_note_type.value}"
+                    )
+
+                    # Phase 9: Load patient context if patient_id is provided
+                    if self.config.patient_id and self.config.enable_patient_context:
+                        try:
+                            self._patient_context = await self._patient_context_service.get_context_for_dictation(
+                                user_id=self.user_id or "anonymous",
+                                patient_id=self.config.patient_id,
+                            )
+                            logger.info(
+                                f"Patient context loaded for {self.config.patient_id}: "
+                                f"{len(self._patient_context.medications)} meds, "
+                                f"{len(self._patient_context.allergies)} allergies, "
+                                f"{len(self._patient_context.conditions)} conditions"
+                            )
+
+                            # Set up PHI monitor with patient context
+                            if self.config.enable_phi_monitoring:
+                                phi_context = PatientPHIContext(
+                                    patient_id=self.config.patient_id,
+                                    known_mrn=self._patient_context.demographics.mrn,
+                                )
+                                # Add known names if available
+                                if self._patient_context.demographics.name:
+                                    phi_context.known_names.add(self._patient_context.demographics.name)
+                                self._phi_monitor.set_patient_context(phi_context)
+                                logger.info(f"PHI monitor configured for patient {self.config.patient_id}")
+
+                            # Generate and send context prompts to frontend
+                            prompts = self._patient_context_service.generate_context_prompts(self._patient_context)
+                            if prompts:
+                                await self._on_message(
+                                    PipelineMessage(
+                                        type="patient.context_loaded",
+                                        data={
+                                            "patient_id": self.config.patient_id,
+                                            "prompts": [
+                                                {
+                                                    "type": p.prompt_type,
+                                                    "category": p.category.value,
+                                                    "message": p.message,
+                                                    "priority": p.priority,
+                                                }
+                                                for p in prompts
+                                            ],
+                                            "summaries": {
+                                                "medications": self._patient_context.medication_summary,
+                                                "allergies": self._patient_context.allergy_summary,
+                                                "conditions": self._patient_context.condition_summary,
+                                            },
+                                        },
+                                    )
+                                )
+                        except Exception as e:
+                            logger.warning(f"Failed to load patient context: {e}")
+
                 # Create Thinker session with user_id for tool authentication
                 self._thinker_session = self._thinker_service.create_session(
                     conversation_id=self.conversation_id,
@@ -220,6 +633,17 @@ class VoicePipelineSession:
                     on_tool_result=self._handle_tool_result,
                     user_id=self.user_id,
                 )
+
+                # Phase 10: Initialize analytics session
+                pipeline_mode = "dictation" if self.config.mode == PipelineMode.DICTATION else "conversation"
+                self._analytics = self._analytics_service.create_session(
+                    session_id=self.session_id,
+                    user_id=self.user_id,
+                    mode=pipeline_mode,
+                    on_analytics_update=self._send_analytics_update,
+                )
+                self._analytics_service.set_session_active(self.session_id)
+                logger.info(f"Analytics session created: {self.session_id}, mode={pipeline_mode}")
 
                 self._state = PipelineState.LISTENING
 
@@ -256,8 +680,30 @@ class VoicePipelineSession:
         if self._metrics.audio_chunks_received % 100 == 0:
             logger.debug(f"Audio chunk #{self._metrics.audio_chunks_received}, {len(audio_data)} bytes")
 
+        # Send to STT
         if self._stt_session:
             await self._stt_session.send_audio(audio_data)
+
+        # Send to emotion detection (parallel, non-blocking)
+        if self._emotion_session:
+            await self._emotion_session.add_audio(audio_data, sample_rate=self.config.stt_sample_rate)
+
+        # Track speech duration for backchanneling
+        current_time = time.time()
+        if self._backchannel_session and self._speech_start_time:
+            speech_duration_ms = int((current_time - self._speech_start_time) * 1000)
+            await self._backchannel_session.on_speech_continue(speech_duration_ms)
+
+            # Pause detection: if we haven't received a transcript in 150-400ms,
+            # it might be a natural pause suitable for backchanneling
+            if self._last_transcript_time > 0:
+                pause_ms = int((current_time - self._last_transcript_time) * 1000)
+                # Only check pause window if we're in the right range (150-400ms)
+                # and the pipeline is in listening state (user speaking)
+                if 150 <= pause_ms <= 400 and self._state == PipelineState.LISTENING:
+                    await self._backchannel_session.on_pause_detected(pause_ms)
+
+        self._last_audio_time = current_time
 
     async def send_audio_base64(self, audio_b64: str) -> None:
         """
@@ -320,6 +766,7 @@ class VoicePipelineSession:
             self._state = PipelineState.LISTENING
             self._partial_transcript = ""
             self._final_transcript = ""
+            self._transcript_confidence = 1.0  # Phase 7: Reset confidence
 
             # Restart STT for new input
             if self._stt_session:
@@ -356,6 +803,77 @@ class VoicePipelineSession:
         if self._thinker_session:
             await self._thinker_session.cancel()
 
+        # Stop emotion detection session
+        if self._emotion_session:
+            await self._emotion_session.stop()
+            self._emotion_session = None
+
+        # Stop backchannel session
+        if self._backchannel_session:
+            await self._backchannel_session.stop()
+            self._backchannel_session = None
+
+        # Stop prosody session and update user profile
+        if self._prosody_session:
+            await self._prosody_service.remove_session(self.session_id)
+            self._prosody_session = None
+
+        # Phase 4: Clean up memory context session
+        if self._memory_manager:
+            try:
+                session_uuid = uuid.UUID(self.session_id) if isinstance(self.session_id, str) else self.session_id
+                memory_context_service.end_session(session_uuid)
+                self._memory_manager = None
+                logger.debug(f"Memory context cleaned up for session: {self.session_id}")
+            except Exception as e:
+                logger.warning(f"Failed to clean up memory context: {e}")
+
+        # Phase 9: Clean up patient context and PHI monitor
+        if self._patient_context:
+            self._patient_context = None
+            logger.debug(f"Patient context cleaned up for session: {self.session_id}")
+
+        if self._phi_monitor:
+            self._phi_monitor.clear_patient_context()
+            logger.debug(f"PHI monitor context cleared for session: {self.session_id}")
+
+        # Phase 8: Clean up dictation session
+        if self._dictation_session:
+            self._dictation_session = None
+            logger.debug(f"Dictation session cleaned up for session: {self.session_id}")
+
+        # Phase 10: End analytics session and send feedback prompts
+        if self._analytics:
+            # Get feedback prompts based on session
+            prompts = self._feedback_service.get_feedback_prompts(
+                session_id=self.session_id,
+                session_duration_ms=self._analytics.duration_ms,
+                interaction_count=self._analytics.interactions.user_utterance_count,
+                has_errors=self._analytics.error_count > 0,
+            )
+            if prompts:
+                await self._on_message(
+                    PipelineMessage(
+                        type="feedback.prompts",
+                        data={
+                            "prompts": [p.to_dict() for p in prompts],
+                        },
+                    )
+                )
+
+            # End the analytics session and send final summary
+            final_analytics = self._analytics_service.end_session(self.session_id)
+            if final_analytics:
+                await self._on_message(
+                    PipelineMessage(
+                        type="analytics.session_ended",
+                        data=final_analytics,
+                    )
+                )
+
+            self._analytics = None
+            logger.debug(f"Analytics session ended for session: {self.session_id}")
+
         self._state = PipelineState.IDLE
 
         logger.info(
@@ -371,6 +889,125 @@ class VoicePipelineSession:
     # ==========================================================================
     # Internal Handlers
     # ==========================================================================
+
+    async def _handle_emotion_result(self, emotion: EmotionResult) -> None:
+        """
+        Handle emotion detection result from Hume AI.
+
+        Updates internal state and sends to frontend for visualization.
+        """
+        self._current_emotion = emotion
+
+        # Log emotion detection
+        logger.info(
+            f"[Pipeline] Emotion detected: {emotion.primary_emotion.value} "
+            f"(conf={emotion.primary_confidence:.2f}, valence={emotion.valence:.2f}, arousal={emotion.arousal:.2f})"
+        )
+
+        # Send emotion update to frontend
+        await self._on_message(
+            PipelineMessage(
+                type="emotion.detected",
+                data=emotion.to_dict(),
+            )
+        )
+
+    async def _handle_backchannel(self, audio: BackchannelAudio) -> None:
+        """
+        Handle backchannel audio from the backchannel service.
+
+        Sends the pre-generated audio clip to the frontend for playback.
+        """
+        logger.info(f"[Pipeline] Emitting backchannel: '{audio.phrase}' ({audio.duration_ms}ms)")
+
+        # Send backchannel audio to frontend
+        await self._on_message(
+            PipelineMessage(
+                type="backchannel.trigger",
+                data={
+                    "phrase": audio.phrase,
+                    "audio": base64.b64encode(audio.audio_data).decode() if audio.audio_data else "",
+                    "format": audio.format,
+                    "duration_ms": audio.duration_ms,
+                },
+            )
+        )
+
+    async def _handle_dictation_event(self, event: DictationEvent) -> None:
+        """
+        Phase 8: Handle dictation events from the dictation service.
+
+        Forwards dictation state changes and section updates to the frontend.
+        """
+        logger.info(f"[Pipeline] Dictation event: {event.event_type} - {event.data}")
+
+        if event.event_type == "state_change":
+            await self._on_message(
+                PipelineMessage(
+                    type="dictation.state",
+                    data={
+                        "state": event.data.get("state"),
+                        "note_type": event.data.get("note_type"),
+                        "current_section": event.data.get("current_section"),
+                    },
+                )
+            )
+        elif event.event_type == "section_update":
+            await self._on_message(
+                PipelineMessage(
+                    type="dictation.section_update",
+                    data={
+                        "section": event.data.get("section"),
+                        "content": event.data.get("content"),
+                        "partial_text": event.data.get("partial_text"),
+                        "word_count": event.data.get("word_count"),
+                        "is_final": event.data.get("is_final", False),
+                    },
+                )
+            )
+        elif event.event_type == "section_change":
+            await self._on_message(
+                PipelineMessage(
+                    type="dictation.section_change",
+                    data={
+                        "previous_section": event.data.get("previous_section"),
+                        "current_section": event.data.get("current_section"),
+                    },
+                )
+            )
+
+    async def _handle_word_data(self, words: List[Dict]) -> None:
+        """
+        Handle word-level data from Deepgram for prosody analysis.
+
+        Updates the prosody session with word timing data for:
+        - Speech rate calculation
+        - Pause pattern detection
+        - Turn-taking signal analysis
+        """
+        if not self._prosody_session:
+            return
+
+        # Feed words to prosody analyzer
+        self._prosody_session.add_words(words)
+
+        # Get current analysis for potential backchannel triggers
+        snapshot = self._prosody_session.get_current_analysis()
+        self._current_prosody = snapshot
+
+        # Log significant prosody events
+        if snapshot.word_count > 0 and snapshot.word_count % 20 == 0:
+            logger.debug(
+                f"[Pipeline] Prosody update: WPM={snapshot.words_per_minute:.0f}, "
+                f"pace={snapshot.pace.value}, pauses={snapshot.pause_count}"
+            )
+
+        # Check if prosody suggests backchannel timing
+        if self._backchannel_session and self._prosody_session.should_backchannel():
+            # Trigger a backchannel check during natural pause
+            await self._backchannel_session.on_pause_detected(
+                int(snapshot.avg_pause_ms) if snapshot.avg_pause_ms > 0 else 300
+            )
 
     def _is_substantial_transcript(self, text: str) -> bool:
         """
@@ -431,17 +1068,44 @@ class VoicePipelineSession:
         logger.debug(f"[Pipeline] Single non-command word, not triggering barge-in: '{text}'")
         return False
 
+    def _get_barge_in_confidence_threshold(self) -> float:
+        """
+        Calculate the confidence threshold for barge-in based on VAD sensitivity.
+
+        VAD sensitivity 0-100 maps to confidence threshold:
+        - 0 (least sensitive) = 0.95 confidence required (very high bar)
+        - 50 (default) = 0.75 confidence required
+        - 100 (most sensitive) = 0.50 confidence required (low bar)
+        """
+        # Linear interpolation: sensitivity 0->0.95, 100->0.50
+        # threshold = 0.95 - (sensitivity/100) * 0.45
+        threshold = 0.95 - (self.config.vad_sensitivity / 100) * 0.45
+        return max(0.50, min(0.95, threshold))
+
     async def _handle_partial_transcript(self, text: str, confidence: float) -> None:
         """Handle partial transcript from STT."""
         logger.info(f"[Pipeline] Partial transcript received: '{text}' (conf={confidence:.2f})")
         self._partial_transcript = text
+        self._transcript_confidence = confidence  # Phase 7: Track for repair strategies
+        self._last_transcript_time = time.time()  # Track for pause detection
 
         # Trigger barge-in if AI is speaking and we got substantial speech
         # Requires multiple words or a command word to avoid false positives from noise
+        # Also requires confidence above threshold based on VAD sensitivity
         if self._state == PipelineState.SPEAKING and self._is_substantial_transcript(text):
-            logger.info(f"[Pipeline] Triggering barge-in (substantial transcript while AI speaking): '{text}'")
-            await self.barge_in()
-            return  # Don't send transcript delta after barge-in
+            threshold = self._get_barge_in_confidence_threshold()
+            if confidence >= threshold:
+                logger.info(
+                    f"[Pipeline] Triggering barge-in (substantial transcript while AI speaking): "
+                    f"'{text}' (conf={confidence:.2f} >= threshold={threshold:.2f}, vad_sensitivity={self.config.vad_sensitivity})"
+                )
+                await self.barge_in()
+                return  # Don't send transcript delta after barge-in
+            else:
+                logger.info(
+                    f"[Pipeline] Skipping barge-in (confidence too low): '{text}' "
+                    f"(conf={confidence:.2f} < threshold={threshold:.2f}, vad_sensitivity={self.config.vad_sensitivity})"
+                )
 
         await self._on_message(
             PipelineMessage(
@@ -486,6 +1150,13 @@ class VoicePipelineSession:
         """
         logger.info(f"[Pipeline] Speech start detected: {self.session_id}, current_state={self._state}")
 
+        # Track speech timing for backchannels
+        self._speech_start_time = time.time()
+
+        # Notify backchannel session
+        if self._backchannel_session:
+            await self._backchannel_session.on_speech_start()
+
         # Notify frontend of speech start (for UI feedback only)
         await self._on_message(
             PipelineMessage(
@@ -505,6 +1176,20 @@ class VoicePipelineSession:
     async def _handle_speech_end(self) -> None:
         """Handle speech endpoint detection from STT."""
         logger.info(f"[Pipeline] Speech end detected: {self.session_id}, accumulated='{self._final_transcript}'")
+
+        # Notify backchannel session of speech end
+        if self._backchannel_session:
+            await self._backchannel_session.on_speech_end()
+        self._speech_start_time = None
+
+        # Finalize prosody analysis for this utterance
+        if self._prosody_session:
+            prosody_snapshot = self._prosody_session.finalize_utterance()
+            self._current_prosody = prosody_snapshot
+            logger.info(
+                f"[Pipeline] Prosody analysis: WPM={prosody_snapshot.words_per_minute:.0f}, "
+                f"pace={prosody_snapshot.pace.value}, finished={prosody_snapshot.likely_finished}"
+            )
 
         # Get final transcript from STT
         if self._stt_session:
@@ -544,6 +1229,11 @@ class VoicePipelineSession:
         self._partial_transcript = ""
         self._final_transcript = ""
 
+        # Phase 8: Handle dictation mode separately
+        if self.config.mode == PipelineMode.DICTATION and self._dictation_session:
+            await self._process_dictation_transcript(transcript, message_id)
+            return
+
         # Create Talker session for TTS
         voice_config = VoiceConfig(
             voice_id=self.config.voice_id,
@@ -556,16 +1246,164 @@ class VoicePipelineSession:
             voice_config=voice_config,
         )
 
+        # Build emotion context for response adaptation
+        emotion_context = None
+        if self._current_emotion and self._emotion_service:
+            emotion_context = {
+                "emotion": self._current_emotion,
+                "trend": self._emotion_session.get_trend() if self._emotion_session else None,
+                "prompt_addition": self._emotion_service.build_emotion_context_prompt(
+                    self._current_emotion,
+                    self._emotion_session.get_trend() if self._emotion_session else None,
+                ),
+            }
+
+        # Phase 4: Track conversation context in memory
+        memory_context = None
+        if self._memory_manager:
+            try:
+                # Remember user's utterance as context
+                await self._memory_manager.remember(
+                    memory_type=MemoryType.CONTEXT,
+                    key="last_user_input",
+                    value=transcript,
+                )
+
+                # Track emotion if detected
+                if self._current_emotion:
+                    await self._memory_manager.remember(
+                        memory_type=MemoryType.EMOTION,
+                        key="current_emotion",
+                        value=self._current_emotion.primary_emotion,
+                        metadata={
+                            "confidence": self._current_emotion.primary_confidence,
+                            "valence": self._current_emotion.valence,
+                        },
+                    )
+
+                # Get conversation context summary for LLM
+                memory_context = await self._memory_manager.get_context_summary()
+                logger.debug(f"Memory context for LLM: {memory_context}")
+            except Exception as e:
+                logger.warning(f"Failed to track memory context: {e}")
+
+        # Phase 6: Classify query type for response timing
+        query_type = classify_query_type(transcript)
+        timing_config = RESPONSE_TIMING.get(query_type, RESPONSE_TIMING[QueryType.UNKNOWN])
+        logger.debug(
+            f"Query type: {query_type.value}, timing: delay={timing_config.delay_ms}ms, filler={timing_config.use_filler}"
+        )
+
+        # Phase 3, 5 & 6: Apply combined response delay
+        total_delay_ms = 0
+
+        # First, apply prosody-based delay with turn-taking awareness
+        if self._prosody_session:
+            try:
+                # Phase 5: Check turn-taking prediction
+                turn_prediction = self._prosody_session.get_turn_prediction()
+                if turn_prediction.confidence > 0.6:
+                    logger.debug(
+                        f"Turn prediction: {turn_prediction.state.value} " f"(conf={turn_prediction.confidence:.2f})"
+                    )
+
+                    # Send turn state to frontend for UI feedback
+                    await self._on_message(
+                        PipelineMessage(
+                            type="turn.state",
+                            data={
+                                "state": turn_prediction.state.value,
+                                "confidence": turn_prediction.confidence,
+                                "recommended_wait_ms": turn_prediction.recommended_wait_ms,
+                                "signals": {
+                                    "falling_intonation": turn_prediction.has_falling_intonation,
+                                    "trailing_off": turn_prediction.has_trailing_off,
+                                    "thinking_aloud": turn_prediction.is_thinking_aloud,
+                                    "continuation_cue": turn_prediction.has_continuation_cue,
+                                },
+                            },
+                        )
+                    )
+
+                    # If user is likely continuing or thinking, wait longer
+                    if self._prosody_session.should_wait_for_continuation():
+                        logger.info(
+                            f"Waiting for user continuation: "
+                            f"state={turn_prediction.state.value}, "
+                            f"wait={turn_prediction.recommended_wait_ms}ms"
+                        )
+
+                # Get prosody-recommended delay
+                prosody_delay_ms = self._prosody_session.get_recommended_response_delay_ms()
+                total_delay_ms = max(prosody_delay_ms, timing_config.delay_ms)
+            except Exception as e:
+                logger.warning(f"Failed to get prosody delay: {e}")
+                total_delay_ms = timing_config.delay_ms
+        else:
+            total_delay_ms = timing_config.delay_ms
+
+        # Phase 6: Apply thinking filler for complex queries
+        if timing_config.use_filler and timing_config.filler_phrases and self._talker_session:
+            try:
+                # Select a random filler phrase
+                filler = random.choice(timing_config.filler_phrases)
+                logger.info(f"Sending thinking filler: '{filler}'")
+
+                # Send filler to TTS immediately (before the main response)
+                await self._talker_session.add_text(filler + " ")
+
+                # Notify frontend about the filler
+                await self._on_message(
+                    PipelineMessage(
+                        type="response.filler",
+                        data={
+                            "text": filler,
+                            "query_type": query_type.value,
+                        },
+                    )
+                )
+
+                # Reduce delay since we're already responding with filler
+                total_delay_ms = max(0, total_delay_ms - 400)
+            except Exception as e:
+                logger.warning(f"Failed to send thinking filler: {e}")
+
+        # Apply remaining delay
+        if total_delay_ms > 0:
+            logger.debug(f"Applying response delay: {total_delay_ms}ms")
+            await asyncio.sleep(total_delay_ms / 1000.0)
+
         # Process through Thinker
         try:
             if self._thinker_session:
                 response = await self._thinker_session.think(
                     user_input=transcript,
                     source_mode="voice",
+                    emotion_context=emotion_context,
+                    memory_context=memory_context,  # Phase 4: Pass memory context
+                    transcript_confidence=self._transcript_confidence,  # Phase 7: For repair strategies
+                    session_id=self.session_id,  # Phase 7: For repair strategy tracking
                 )
 
                 self._metrics.tokens_generated = response.tokens_used
                 self._metrics.tool_calls_count = len(response.tool_calls_made)
+
+                # Phase 7: Send repair status if a repair strategy was applied
+                if response.repair_applied:
+                    await self._on_message(
+                        PipelineMessage(
+                            type="response.repair",
+                            data={
+                                "confidence": response.confidence,
+                                "needs_clarification": response.needs_clarification,
+                                "repair_applied": response.repair_applied,
+                            },
+                        )
+                    )
+                    logger.info(
+                        f"Repair strategy applied: confidence={response.confidence:.2f}, "
+                        f"needs_clarification={response.needs_clarification}"
+                    )
 
                 # Send response complete
                 await self._on_message(
@@ -575,6 +1413,8 @@ class VoicePipelineSession:
                             "text": response.text,
                             "message_id": message_id,
                             "citations": response.citations,
+                            "confidence": response.confidence,  # Phase 7: Include confidence
+                            "needs_clarification": response.needs_clarification,  # Phase 7
                         },
                     )
                 )
@@ -639,6 +1479,147 @@ class VoicePipelineSession:
         if self._talker_session and not self._talker_session.is_cancelled():
             await self._talker_session.add_token(token)
 
+    async def _process_dictation_transcript(
+        self,
+        transcript: str,
+        message_id: str,
+    ) -> None:
+        """
+        Phase 8: Process transcript in dictation mode.
+
+        In dictation mode:
+        1. Check for voice commands first
+        2. If command found, execute it
+        3. If not a command, add text to current section
+        4. Apply formatting if configured
+        5. Don't send to Thinker (no AI response needed for regular dictation)
+        """
+        logger.info(f"[Pipeline] Processing dictation transcript: '{transcript}'")
+
+        # Check for voice commands
+        if self.config.dictation_enable_commands:
+            parsed_command = voice_command_service.parse_command(transcript)
+            if parsed_command:
+                logger.info(f"[Pipeline] Voice command detected: {parsed_command.command_type.value}")
+
+                # Execute the command
+                result = await voice_command_service.execute_command(
+                    parsed_command,
+                    self._dictation_session,
+                )
+
+                # Send command result to frontend
+                await self._on_message(
+                    PipelineMessage(
+                        type="dictation.command",
+                        data={
+                            "command": parsed_command.command_type.value,
+                            "category": parsed_command.category.value,
+                            "executed": result.success,
+                            "message": result.message,
+                            "data": result.data,
+                        },
+                    )
+                )
+
+                # If there's remaining text after the command, add it to dictation
+                if parsed_command.remaining_text:
+                    await self._add_dictation_text(parsed_command.remaining_text)
+
+                # If "read back" was requested, speak the content
+                if result.data.get("speak") and result.message:
+                    await self._speak_dictation_feedback(result.message)
+
+                # Return to listening state
+                async with self._state_lock:
+                    self._state = PipelineState.LISTENING
+                    await self._send_state_update()
+                return
+
+        # Not a command - add text to current section
+        await self._add_dictation_text(transcript)
+
+        # Return to listening state
+        async with self._state_lock:
+            self._state = PipelineState.LISTENING
+            await self._send_state_update()
+
+    async def _add_dictation_text(self, text: str) -> None:
+        """Add text to the current dictation section with optional formatting."""
+        if not self._dictation_session:
+            return
+
+        # Phase 9: Scan for PHI before adding to dictation
+        if self.config.enable_phi_monitoring:
+            phi_result = self._phi_monitor.scan_text(text)
+            if phi_result.matches:
+                logger.info(
+                    f"[Pipeline] PHI detected in dictation: {len(phi_result.matches)} matches, "
+                    f"critical={phi_result.has_critical_phi}"
+                )
+
+                # Send PHI alerts to frontend
+                for alert in phi_result.alerts:
+                    await self._on_message(
+                        PipelineMessage(
+                            type="phi.alert",
+                            data={
+                                "alert_level": alert.alert_level.value,
+                                "phi_type": alert.phi_type.value,
+                                "message": alert.message,
+                                "recommended_action": alert.recommended_action.value,
+                            },
+                        )
+                    )
+
+                # If critical PHI detected outside patient context, use sanitized text
+                if phi_result.has_critical_phi:
+                    logger.warning(f"[Pipeline] Critical PHI detected - using sanitized text")
+                    text = phi_result.sanitized_text
+
+        # Apply formatting if configured
+        if self.config.dictation_auto_format:
+            format_result = note_formatter_service.format_text(
+                text,
+                FormattingConfig(level=FormattingLevel.STANDARD),
+            )
+            formatted_text = format_result.formatted
+            logger.debug(
+                f"[Pipeline] Formatted dictation: '{text}' -> '{formatted_text}', "
+                f"changes: {format_result.changes_made}"
+            )
+        else:
+            formatted_text = text
+
+        # Add to dictation session
+        await self._dictation_session.add_transcript(
+            formatted_text,
+            is_final=True,
+            confidence=self._transcript_confidence,
+        )
+
+    async def _speak_dictation_feedback(self, text: str) -> None:
+        """Speak feedback during dictation (e.g., read back content)."""
+        voice_config = VoiceConfig(
+            voice_id=self.config.voice_id,
+            model_id=self.config.tts_model,
+            output_format=self.config.tts_output_format,
+        )
+
+        self._talker_session = await self._talker_service.start_session(
+            on_audio_chunk=self._handle_audio_chunk,
+            voice_config=voice_config,
+        )
+
+        async with self._state_lock:
+            self._state = PipelineState.SPEAKING
+            await self._send_state_update()
+
+        # Send the text to TTS
+        if self._talker_session:
+            await self._talker_session.add_token(text)
+            await self._talker_session.finish()
+
     async def _handle_audio_chunk(self, chunk: AudioChunk) -> None:
         """Handle audio chunk from Talker."""
         if self._cancelled:
@@ -701,6 +1682,129 @@ class VoicePipelineSession:
             PipelineMessage(
                 type="voice.state",
                 data={"state": self._state.value},
+            )
+        )
+
+    # ==========================================================================
+    # Phase 10: Analytics Methods
+    # ==========================================================================
+
+    async def _send_analytics_update(self, analytics_data: Dict[str, Any]) -> None:
+        """
+        Send analytics update to frontend.
+
+        Called periodically by the analytics service.
+        """
+        await self._on_message(
+            PipelineMessage(
+                type="analytics.update",
+                data=analytics_data,
+            )
+        )
+
+    def _track_stt_latency(self, latency_ms: float) -> None:
+        """Track STT latency in analytics."""
+        if self._analytics:
+            self._analytics_service.record_latency(self.session_id, "stt", latency_ms)
+
+    def _track_llm_latency(self, latency_ms: float) -> None:
+        """Track LLM latency in analytics."""
+        if self._analytics:
+            self._analytics_service.record_latency(self.session_id, "llm", latency_ms)
+
+    def _track_tts_latency(self, latency_ms: float) -> None:
+        """Track TTS latency in analytics."""
+        if self._analytics:
+            self._analytics_service.record_latency(self.session_id, "tts", latency_ms)
+
+    def _track_e2e_latency(self, latency_ms: float) -> None:
+        """Track end-to-end latency in analytics."""
+        if self._analytics:
+            self._analytics_service.record_latency(self.session_id, "e2e", latency_ms)
+
+    def _track_user_utterance(self, word_count: int, duration_ms: float) -> None:
+        """Track user utterance in analytics."""
+        if self._analytics:
+            self._analytics_service.record_interaction(
+                self.session_id,
+                InteractionType.USER_UTTERANCE,
+                word_count=word_count,
+                duration_ms=duration_ms,
+            )
+
+    def _track_ai_response(self, word_count: int, duration_ms: float) -> None:
+        """Track AI response in analytics."""
+        if self._analytics:
+            self._analytics_service.record_interaction(
+                self.session_id,
+                InteractionType.AI_RESPONSE,
+                word_count=word_count,
+                duration_ms=duration_ms,
+            )
+
+    def _track_tool_call(self) -> None:
+        """Track tool call in analytics."""
+        if self._analytics:
+            self._analytics_service.record_interaction(
+                self.session_id,
+                InteractionType.TOOL_CALL,
+            )
+
+    def _track_barge_in(self) -> None:
+        """Track barge-in in analytics."""
+        if self._analytics:
+            self._analytics_service.record_interaction(
+                self.session_id,
+                InteractionType.BARGE_IN,
+            )
+
+    def _track_emotion(self, emotion: str, valence: float, arousal: float) -> None:
+        """Track detected emotion in analytics."""
+        if self._analytics:
+            self._analytics_service.record_emotion(self.session_id, emotion, valence, arousal)
+
+    def _track_repair(self) -> None:
+        """Track repair/clarification in analytics."""
+        if self._analytics:
+            self._analytics_service.record_repair(self.session_id)
+
+    def _track_dictation_event(self, event_type: str, data: Optional[Dict] = None) -> None:
+        """Track dictation event in analytics."""
+        if self._analytics:
+            self._analytics_service.record_dictation_event(self.session_id, event_type, data)
+
+    def _track_error(self, error_type: str, message: str, recoverable: bool = True) -> None:
+        """Track error in analytics."""
+        if self._analytics:
+            self._analytics_service.record_error(self.session_id, error_type, message, recoverable)
+
+    async def record_feedback(
+        self,
+        thumbs_up: bool = True,
+        message_id: Optional[str] = None,
+    ) -> None:
+        """
+        Record quick feedback from user.
+
+        Args:
+            thumbs_up: True for positive feedback
+            message_id: Optional ID of message being rated
+        """
+        self._feedback_service.record_quick_feedback(
+            session_id=self.session_id,
+            user_id=self.user_id,
+            thumbs_up=thumbs_up,
+            message_id=message_id,
+        )
+
+        # Send confirmation to frontend
+        await self._on_message(
+            PipelineMessage(
+                type="feedback.recorded",
+                data={
+                    "thumbs_up": thumbs_up,
+                    "message_id": message_id,
+                },
             )
         )
 

@@ -22,6 +22,7 @@ import pytz
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.services.llm_client import LLMClient, LLMRequest, ToolCall
+from app.services.repair_strategy_service import RepairRecommendation, RepairStrategy, repair_strategy_service
 from app.services.tools.tool_service import ToolExecutionContext, tool_service
 
 logger = get_logger(__name__)
@@ -88,6 +89,11 @@ class ThinkerResponse:
     latency_ms: int = 0
     tokens_used: int = 0
     state: ThinkingState = ThinkingState.COMPLETE
+
+    # Phase 7: Confidence scoring for conversational repair
+    confidence: float = 1.0  # 0-1, AI's confidence in understanding the query
+    needs_clarification: bool = False  # True if AI needs more info from user
+    repair_applied: bool = False  # True if a repair strategy was applied
 
 
 @dataclass
@@ -596,6 +602,10 @@ class ThinkerSession:
         self,
         user_input: str,
         source_mode: str = "voice",
+        emotion_context: Optional[Dict] = None,
+        memory_context: Optional[Dict] = None,
+        transcript_confidence: float = 1.0,
+        session_id: Optional[str] = None,
     ) -> ThinkerResponse:
         """
         Process user input and generate a response.
@@ -603,6 +613,17 @@ class ThinkerSession:
         Args:
             user_input: The user's question or statement
             source_mode: "voice" or "chat"
+            emotion_context: Optional emotion context for response adaptation
+                - emotion: EmotionResult from emotion detection
+                - trend: EmotionTrend for trending analysis
+                - prompt_addition: String to add to system prompt
+            memory_context: Optional conversation memory context (Phase 4)
+                - current_topic: What user is discussing
+                - recent_entities: People/places mentioned
+                - emotional_state: User's emotional state
+                - context_items: Other relevant context
+            transcript_confidence: STT confidence score (0-1) for Phase 7 repair
+            session_id: Session ID for repair strategy tracking
 
         Returns:
             ThinkerResponse with the generated text and metadata
@@ -624,6 +645,23 @@ class ThinkerSession:
         try:
             # Build LLM request
             messages = self._context.get_messages_for_llm()
+
+            # Inject emotion context into system prompt if available
+            if emotion_context and emotion_context.get("prompt_addition"):
+                # Find the system message and append emotion context
+                for msg in messages:
+                    if msg.get("role") == "system":
+                        msg["content"] = msg["content"] + "\n" + emotion_context["prompt_addition"]
+                        break
+
+            # Phase 4: Inject memory context into system prompt if available
+            if memory_context:
+                memory_prompt = self._build_memory_prompt(memory_context)
+                if memory_prompt:
+                    for msg in messages:
+                        if msg.get("role") == "system":
+                            msg["content"] = msg["content"] + "\n" + memory_prompt
+                            break
 
             # Get tool schemas if available
             tools = None
@@ -684,13 +722,47 @@ class ThinkerSession:
             else:
                 self._state = ThinkingState.COMPLETE
 
+            # Phase 7: Apply conversational repair strategy if needed
+            response_confidence, possible_interpretations = self._estimate_confidence(user_input, transcript_confidence)
+
+            repair_applied = False
+            needs_clarification = False
+            final_response = full_response
+
+            # Only apply repair strategies in voice mode and when confidence is low
+            if source_mode == "voice" and response_confidence < 0.7:
+                repair_recommendation = repair_strategy_service.get_repair_recommendation(
+                    transcript=user_input,
+                    transcript_confidence=transcript_confidence,
+                    response_confidence=response_confidence,
+                    session_id=session_id,
+                    possible_interpretations=possible_interpretations,
+                )
+
+                if repair_recommendation.strategy != RepairStrategy.NO_REPAIR:
+                    final_response = repair_strategy_service.apply_repair(repair_recommendation, full_response)
+                    repair_applied = True
+                    needs_clarification = repair_recommendation.strategy in [
+                        RepairStrategy.ECHO_CHECK,
+                        RepairStrategy.CLARIFY_SPECIFIC,
+                        RepairStrategy.REQUEST_REPHRASE,
+                    ]
+
+                    logger.info(
+                        f"Applied repair strategy: {repair_recommendation.strategy.value}, "
+                        f"confidence: {response_confidence:.2f}"
+                    )
+
             return ThinkerResponse(
-                text=full_response,
+                text=final_response,
                 message_id=message_id,
                 tool_calls_made=tool_calls_made,
                 latency_ms=self._metrics.total_latency_ms,
                 tokens_used=self._metrics.total_tokens,
                 state=self._state,
+                confidence=response_confidence,
+                needs_clarification=needs_clarification,
+                repair_applied=repair_applied,
             )
 
         except Exception as e:
@@ -869,6 +941,123 @@ class ThinkerSession:
         self._state = ThinkingState.CANCELLED
         self._metrics.cancelled = True
         logger.info("Thinker session cancelled")
+
+    def _build_memory_prompt(self, memory_context: Dict) -> Optional[str]:
+        """
+        Build a prompt addition from conversation memory context.
+
+        Phase 4: Memory & Context Enhancement
+
+        Args:
+            memory_context: Dict with conversation context summary
+                - current_topic: What the user is discussing
+                - recent_entities: People/places/terms mentioned
+                - emotional_state: User's current emotional state
+                - context_items: Other relevant context
+
+        Returns:
+            String to append to system prompt, or None if empty context
+        """
+        parts = []
+
+        # Add current topic
+        if memory_context.get("current_topic"):
+            parts.append(f"Current topic: {memory_context['current_topic']}")
+
+        # Add recent entities for reference resolution
+        entities = memory_context.get("recent_entities", [])
+        if entities:
+            parts.append(f"Recently mentioned: {', '.join(entities[:5])}")
+
+        # Add emotional state for tone adaptation
+        if memory_context.get("emotional_state"):
+            parts.append(f"User's emotional state: {memory_context['emotional_state']}")
+
+        if not parts:
+            return None
+
+        return "\n[Conversation Context]\n" + "\n".join(parts)
+
+    def _estimate_confidence(
+        self,
+        user_input: str,
+        transcript_confidence: float = 1.0,
+    ) -> tuple[float, list[str]]:
+        """
+        Phase 7: Estimate AI's confidence in understanding the user's query.
+
+        Analyzes query characteristics to determine how confident we should be
+        in our understanding before responding.
+
+        Args:
+            user_input: The user's transcribed text
+            transcript_confidence: STT confidence score (0-1)
+
+        Returns:
+            Tuple of (confidence_score, possible_interpretations)
+        """
+        import re
+
+        confidence = 1.0
+        possible_interpretations: list[str] = []
+
+        # Factor 1: Transcript confidence from STT
+        if transcript_confidence < 0.7:
+            confidence *= 0.7
+        elif transcript_confidence < 0.85:
+            confidence *= 0.85
+
+        # Factor 2: Query length (very short queries are often ambiguous)
+        words = user_input.strip().split()
+        word_count = len(words)
+        if word_count <= 2:
+            confidence *= 0.7
+            possible_interpretations.append("short query - may need clarification")
+        elif word_count <= 4:
+            confidence *= 0.85
+
+        # Factor 3: Ambiguous pronouns without clear referent
+        ambiguous_pronouns = re.findall(r"\b(it|that|this|those|them|they|he|she)\b", user_input.lower())
+        if ambiguous_pronouns and word_count < 6:
+            # Check if we have recent context that could resolve the pronoun
+            recent_messages = self._context.messages[-3:] if len(self._context.messages) >= 3 else []
+            has_context = len(recent_messages) > 0
+            if not has_context:
+                confidence *= 0.75
+                possible_interpretations.append(f"ambiguous reference: '{ambiguous_pronouns[0]}'")
+
+        # Factor 4: Question words that suggest incomplete information
+        incomplete_patterns = [
+            r"^\s*(what|which|where|when|how)\s*\??\s*$",  # Single question word
+            r"^\s*(um+|uh+|er+|ah+)\s",  # Hesitation markers at start
+        ]
+        for pattern in incomplete_patterns:
+            if re.search(pattern, user_input.lower()):
+                confidence *= 0.6
+                possible_interpretations.append("incomplete query detected")
+                break
+
+        # Factor 5: Multiple possible interpretations
+        # Check for words that have multiple common meanings
+        ambiguous_terms = {
+            "book": ["make a reservation", "a physical book"],
+            "set": ["configure", "a collection"],
+            "run": ["execute", "physical exercise"],
+            "check": ["verify", "medical checkup", "a bank check"],
+            "light": ["turn on light", "not heavy"],
+        }
+        for term, meanings in ambiguous_terms.items():
+            if re.search(rf"\b{term}\b", user_input.lower()):
+                # Only flag if context doesn't disambiguate
+                if word_count < 5:
+                    confidence *= 0.85
+                    possible_interpretations.extend(meanings[:2])
+                    break
+
+        # Cap confidence between 0.3 and 1.0
+        confidence = max(0.3, min(1.0, confidence))
+
+        return confidence, possible_interpretations
 
     def get_context(self) -> ConversationContext:
         """Get the conversation context."""

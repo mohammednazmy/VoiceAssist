@@ -113,6 +113,16 @@ ELEVENLABS_TO_OPENAI_VOICE_MAP = {
     "21m00Tcm4TlvDq8ikWAM": "shimmer",  # Rachel -> shimmer
     "AZnzlk1XvdvUeBnXmlld": "nova",  # Domi -> nova
     "MF3mGyEYCl7XYWbV9V6O": "shimmer",  # Elli -> shimmer
+    # Conversational voices (warm, natural)
+    "nPczCjzI2devNBz1zQrb": "echo",  # Brian -> echo (friendly male)
+    "XB0fDUnXU5powFXDhCwa": "shimmer",  # Charlotte -> shimmer (calm female)
+    "XrExE9yKIg1WjnnlVkGX": "nova",  # Matilda -> nova (friendly female)
+    "JBFqnCBsd6RMkjVDRZzb": "onyx",  # George -> onyx (British male)
+    "IKne3meq5aSn9XLyUdCD": "echo",  # Charlie -> echo (conversational male)
+    "pFZP5JQG7iQjIQuC4Bku": "shimmer",  # Lily -> shimmer (warm female)
+    "N2lVS1w4EtoT3dr4eOWO": "fable",  # Callum -> fable (character male)
+    "onwK4e9ZLuTAKqWW03F9": "onyx",  # Daniel -> onyx (deep male)
+    "Xb7hH8MSUJpSbSDYk0k2": "nova",  # Alice -> nova (confident female)
 }
 
 
