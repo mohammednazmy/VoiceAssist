@@ -137,7 +137,12 @@ export function ThinkerTalkerVoicePanel({
         onBargeIn={voiceMode.bargeIn}
         onExpand={() => setIsExpanded(true)}
         onClose={handleClose}
-        onOpenSettings={() => setShowSettings(true)}
+        onOpenSettings={() => {
+          console.log(
+            "[ThinkerTalkerVoicePanel] Settings button clicked, setting showSettings to true",
+          );
+          setShowSettings(true);
+        }}
       />
 
       {/* Settings Modal */}
