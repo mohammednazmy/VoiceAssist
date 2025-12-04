@@ -29,10 +29,12 @@ import {
 } from "./useThinkerTalkerSession";
 import { useTTAudioPlayback, type TTPlaybackState } from "./useTTAudioPlayback";
 import { useBackchannelAudio } from "./useBackchannelAudio";
+import { useBargeInPromptAudio } from "./useBargeInPromptAudio";
 import {
   useUnifiedConversationStore,
   type MessageSource,
 } from "../stores/unifiedConversationStore";
+import { useAuthStore } from "../stores/authStore";
 import { voiceLog } from "../lib/logger";
 
 // ============================================================================
@@ -103,10 +105,20 @@ export interface TTVoiceModeReturn {
   // Actions
   connect: () => Promise<void>;
   disconnect: () => void;
-  bargeIn: () => void;
+  bargeIn: (playVoicePrompt?: boolean) => void;
   sendTextMessage: (text: string) => void;
   setVolume: (volume: number) => void;
   resetError: () => void;
+
+  /**
+   * Play a barge-in voice prompt using ElevenLabs TTS.
+   * Uses the same voice as the main AI responses for consistency.
+   * Pass to BargeInFeedback's onPlayVoicePrompt prop.
+   */
+  playBargeInPrompt: (text?: string) => Promise<void>;
+
+  /** Whether barge-in prompts are ready (pre-cached) */
+  isBargeInPromptReady: boolean;
 }
 
 // ============================================================================
@@ -147,6 +159,13 @@ export function useThinkerTalkerVoiceMode(
     addMessage,
   } = useUnifiedConversationStore();
 
+  // Get auth token for API calls
+  const tokens = useAuthStore((state) => state.tokens);
+  const getAccessToken = useCallback(
+    () => tokens?.accessToken || null,
+    [tokens],
+  );
+
   // Track current response for streaming
   let currentResponseId: string | null = null;
 
@@ -161,6 +180,29 @@ export function useThinkerTalkerVoiceMode(
     onPlayEnd: (phrase) => {
       voiceLog.debug(`[TTVoiceMode] Backchannel ended: "${phrase}"`);
     },
+  });
+
+  // Barge-in prompt audio hook - uses ElevenLabs TTS for consistent voice
+  const bargeInPromptAudio = useBargeInPromptAudio({
+    voiceId: voiceSettings?.voice_id,
+    language:
+      (voiceSettings?.language as
+        | "en"
+        | "ar"
+        | "es"
+        | "fr"
+        | "de"
+        | "zh"
+        | "ja"
+        | "ko"
+        | "pt"
+        | "ru"
+        | "hi"
+        | "tr") || "en",
+    provider: "elevenlabs",
+    autoPreload: true,
+    volume: volume * 0.8, // Slightly lower than main voice
+    getAccessToken,
   });
 
   // Audio playback hook
@@ -325,11 +367,20 @@ export function useThinkerTalkerVoiceMode(
   });
 
   // Barge-in handler - combines session signal with audio stop
-  const bargeIn = useCallback(() => {
-    voiceLog.debug("[TTVoiceMode] Barge-in triggered");
-    audioPlayback.stop();
-    session.bargeIn();
-  }, [audioPlayback, session]);
+  // Optionally plays "I'm listening" prompt using ElevenLabs for consistent voice
+  const bargeIn = useCallback(
+    (playVoicePrompt = false) => {
+      voiceLog.debug("[TTVoiceMode] Barge-in triggered");
+      audioPlayback.stop();
+      session.bargeIn();
+
+      // Play barge-in prompt if requested (uses ElevenLabs TTS for consistent voice)
+      if (playVoicePrompt && bargeInPromptAudio.isReady) {
+        bargeInPromptAudio.playPrompt();
+      }
+    },
+    [audioPlayback, session, bargeInPromptAudio],
+  );
 
   // Enhanced disconnect that stops audio
   const disconnect = useCallback(() => {
@@ -398,11 +449,16 @@ export function useThinkerTalkerVoiceMode(
       sendTextMessage: session.sendMessage,
       setVolume: audioPlayback.setVolume,
       resetError: session.resetFatalError,
+
+      // Barge-in prompt audio (uses ElevenLabs for consistent voice)
+      playBargeInPrompt: bargeInPromptAudio.playPrompt,
+      isBargeInPromptReady: bargeInPromptAudio.isReady,
     }),
     [
       session,
       audioPlayback,
       backchannelAudio,
+      bargeInPromptAudio,
       currentEmotion,
       connect,
       disconnect,
