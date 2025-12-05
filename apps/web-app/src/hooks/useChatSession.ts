@@ -552,9 +552,41 @@ export function useChatSession(
 
   const sendMessage = useCallback(
     async (content: string, files?: File[]) => {
+      // If not connected, try to reconnect and wait briefly
       if (wsRef.current?.readyState !== WebSocket.OPEN) {
-        handleError("CONNECTION_DROPPED", "Cannot send message: not connected");
-        return;
+        websocketLog.debug(
+          "WebSocket not open, attempting reconnect before send",
+        );
+
+        // Trigger reconnect if not already reconnecting
+        if (connectionStatus !== "reconnecting") {
+          reconnectAttemptsRef.current = 0;
+          connect();
+        }
+
+        // Wait up to 3 seconds for connection to open
+        const maxWait = 3000;
+        const checkInterval = 100;
+        let waited = 0;
+
+        while (waited < maxWait) {
+          await new Promise((resolve) => setTimeout(resolve, checkInterval));
+          waited += checkInterval;
+
+          if (wsRef.current?.readyState === WebSocket.OPEN) {
+            websocketLog.debug("WebSocket reconnected, proceeding with send");
+            break;
+          }
+        }
+
+        // If still not connected after waiting, show error
+        if (wsRef.current?.readyState !== WebSocket.OPEN) {
+          handleError(
+            "CONNECTION_DROPPED",
+            "Cannot send message: reconnection failed",
+          );
+          return;
+        }
       }
 
       // Generate unique client message ID
@@ -606,7 +638,7 @@ export function useChatSession(
         }),
       );
     },
-    [handleError, conversationId],
+    [handleError, conversationId, connectionStatus, connect],
   );
 
   const editMessage = useCallback(
