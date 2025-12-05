@@ -109,7 +109,18 @@ export function usePWA() {
 
     setIsUpdating(true);
     try {
+      // Update service worker - the 'true' param should trigger reload
       await updateServiceWorker(true);
+
+      // If updateServiceWorker didn't reload the page (can happen in some cases),
+      // force a reload after a short delay to ensure the new SW is active
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      console.error("[PWA] Update failed:", error);
+      // Even on error, try to reload to get the latest version
+      window.location.reload();
     } finally {
       setIsUpdating(false);
     }
