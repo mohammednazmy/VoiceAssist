@@ -71,11 +71,11 @@ Following the successful release of Voice Mode v4.1.0, this document outlines pl
 | Portuguese | 10                | Placeholder |
 | Hindi      | 10                | Placeholder |
 | Urdu       | 10                | Placeholder |
-| Japanese   | 0                 | Placeholder |
-| Korean     | 0                 | Placeholder |
-| Polish     | 0                 | Placeholder |
-| Russian    | 0                 | Placeholder |
-| Turkish    | 0                 | Placeholder |
+| Japanese   | 55                | Expanded    |
+| Korean     | 55                | Expanded    |
+| Polish     | 55                | Expanded    |
+| Russian    | 55                | Expanded    |
+| Turkish    | 55                | Expanded    |
 
 ### Roadmap
 
@@ -85,13 +85,21 @@ Following the successful release of Voice Mode v4.1.0, this document outlines pl
 - [x] Add Chinese medical terminology (160 terms)
 - [x] Complete English Quranic transliteration lookups (334 terms)
 
-**Phase 2: Add High-Demand Languages**
+**Phase 2: Expand Additional Languages** ✅ COMPLETE (v4.1.2)
+
+- [x] Japanese medical lexicon (55 terms)
+- [x] Korean medical lexicon (55 terms)
+- [x] Polish medical lexicon (55 terms)
+- [x] Russian medical lexicon (55 terms)
+- [x] Turkish medical lexicon (55 terms)
+
+**Phase 3: Add High-Demand Languages**
 
 - French medical lexicon
 - German medical lexicon
 - Urdu/Hindi Islamic vocabulary
 
-**Phase 3: Community Contributions**
+**Phase 4: Community Contributions**
 
 - Document contribution guidelines
 - Create validation tooling for community submissions
@@ -165,30 +173,49 @@ English transliterated Quranic terms falling back to raw G2P when espeak-ng unav
 
 ## Timeline
 
-| Phase                   | Target  | Status   | Owner         | PR/Issue          |
-| ----------------------- | ------- | -------- | ------------- | ----------------- |
-| Test suite fixes        | v4.1.1  | Complete | Platform Team | PR #159           |
-| Bandit B615 fixes       | v4.1.1  | Complete | Backend Team  | PR #161           |
-| Bandit B608 review      | v4.1.1  | Complete | Backend Team  | (false positives) |
-| Lexicon Phase 1         | v4.1.2  | Complete | Platform Team | Pre-existing      |
-| G2P enhancement         | v4.1.2  | Planned  | Backend Team  | -                 |
-| Feature enhancements    | v4.2.0  | Planned  | Full Team     | -                 |
-| Community contributions | Ongoing | Open     | Community     | -                 |
+| Phase                     | Target  | Status      | Owner         | PR/Issue |
+| ------------------------- | ------- | ----------- | ------------- | -------- |
+| Test suite fixes          | v4.1.1  | ✅ Released | Platform Team | PR #159  |
+| Bandit B615 fixes         | v4.1.1  | ✅ Released | Backend Team  | PR #161  |
+| Lexicon Phase 1           | v4.1.1  | ✅ Released | Platform Team | PR #162  |
+| Lexicon Phase 2 (5 langs) | v4.1.2  | In Progress | Platform Team | PR #163  |
+| G2P prototype             | v4.1.2  | In Progress | Backend Team  | PR #163  |
+| Getting Started guide     | v4.1.2  | In Progress | Platform Team | PR #163  |
+| G2P full integration      | v4.2.0  | Planned     | Backend Team  | -        |
+| Feature enhancements      | v4.2.0  | Planned     | Full Team     | -        |
+| Community contributions   | Ongoing | Open        | Community     | -        |
 
-### v4.1.1 Scope
+### v4.1.1 Scope (Released Dec 4, 2025)
 
 - [x] Fix 8 failing tests (PR #159)
 - [x] Pin HuggingFace model revisions (PR #161)
 - [x] Review SQL expression warnings (5 occurrences - all false positives with nosec)
-- [ ] Add Bandit to CI pipeline
+- [x] Documentation updates and G2P evaluation (PR #162)
 
-### v4.1.2 Scope
+**Release:** [v4.1.1](https://github.com/mohammednazmy/VoiceAssist/releases/tag/v4.1.1)
+
+### v4.1.2 Scope (Target: Dec 2025)
+
+**Lexicon Expansion:**
 
 - [x] Expand Spanish lexicon (210 terms)
 - [x] Add Chinese medical terminology (160 terms)
 - [x] Complete English Quranic transliteration (334 terms)
-- [ ] Implement G2P fallback pronunciation cache
-- [ ] Add espeak-ng to deployment
+- [x] Expand Japanese, Korean, Polish, Russian, Turkish (55 terms each)
+
+**G2P Enhancement:**
+
+- [x] EnhancedG2PService prototype with CMUdict+gruut+espeak fallback
+- [x] ARPABET-to-IPA conversion (100+ mappings)
+- [x] Medical pronunciation cache (50+ terms)
+- [ ] Add cmudict and gruut to requirements
+- [ ] Integration tests for G2P quality
+
+**Documentation:**
+
+- [x] Getting Started guide in What's New
+- [x] Screenshot placeholders and guidelines
+- [x] VAD preset terminology alignment (Sensitive/Balanced/Relaxed)
 
 ---
 
@@ -202,6 +229,6 @@ English transliterated Quranic terms falling back to raw G2P when espeak-ng unav
 ---
 
 **Created:** December 4, 2024
-**Updated:** December 4, 2024
+**Updated:** December 5, 2025
 **Status:** Active
 **Owner:** Platform Team
