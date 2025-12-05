@@ -9,7 +9,13 @@ audience:
   - ai-agents
 tags: [voice, ux, thinking-feedback, audio, haptic, v4]
 summary: Configuration guide for thinking feedback during AI processing
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: voice
+ai_summary: >-
+  Multi-modal thinking feedback configuration for Voice Mode v4.1. Audio presets:
+  gentle_beep (440Hz), soft_chime (chord), subtle_tick, or none. Also supports
+  visual indicators and mobile haptic feedback. All modalities user-configurable
+  via voiceSettingsStore.
 ---
 
 # Thinking Tone Settings
@@ -300,5 +306,5 @@ function VoiceMode() {
 ## Related Documentation
 
 - [Voice Mode v4.1 Overview](./voice-mode-v4-overview.md)
-- [Voice Settings Store](../frontend/voice-settings-store.md)
-- [Latency Indicator Component](./latency-indicator.md)
+- [Voice First Input Bar](./voice-first-input-bar.md)
+- [Latency Budgets Guide](./latency-budgets-guide.md)

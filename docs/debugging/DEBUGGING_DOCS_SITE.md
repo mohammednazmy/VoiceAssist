@@ -192,11 +192,11 @@ ls -la /var/www/assistdocs.asimo.io/agent/
 # Should have index.json and docs.json
 ```
 
-2. Check generation script:
+2. Regenerate agent JSON:
 
 ```bash
 cd apps/docs-site
-node scripts/generate-agent-json.js
+pnpm generate-agent-json
 ```
 
 3. Verify public directory:

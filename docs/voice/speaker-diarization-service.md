@@ -1,3 +1,29 @@
+---
+title: Speaker Diarization Service
+slug: voice/speaker-diarization-service
+summary: >-
+  Multi-speaker detection and attribution for conversations using pyannote.audio.
+status: stable
+stability: production
+owner: backend
+lastUpdated: "2025-12-04"
+audience:
+  - human
+  - ai-agents
+  - backend
+tags:
+  - voice
+  - diarization
+  - speaker-detection
+  - pyannote
+category: voice
+ai_summary: >-
+  Backend service for multi-speaker detection using pyannote.audio. Provides
+  real-time speaker change detection, 512-dim voice embeddings, and speaker
+  database for re-identification. Supports up to 4 concurrent speakers. See
+  MODEL_VERSIONS.md for pinned model revisions.
+---
+
 # Speaker Diarization Service
 
 **Phase 3 - Voice Mode v4.1**

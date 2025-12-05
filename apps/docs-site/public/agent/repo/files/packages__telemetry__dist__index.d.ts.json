@@ -1,0 +1,8 @@
+{
+  "path": "packages/telemetry/dist/index.d.ts",
+  "language": "typescript",
+  "size": 832,
+  "last_modified": "2025-12-04T10:50:16.763Z",
+  "lines": 28,
+  "content": "import * as Sentry from '@sentry/browser';\nexport { Sentry };\n\ninterface TelemetryOptions {\n    release?: string;\n    environment?: string;\n    sentryDsn?: string;\n    grafanaUrl?: string;\n    app?: string;\n    /**\n     * Optional auth token for Grafana Loki/OTLP ingestion\n     */\n    grafanaToken?: string;\n    /**\n     * Additional context shared with all events\n     */\n    context?: Record<string, unknown>;\n}\ninterface TelemetryClient {\n    captureError: (error: unknown, context?: Record<string, unknown>) => void;\n    captureMessage: (message: string, level?: Sentry.SeverityLevel) => void;\n    trackWebVitals: () => void;\n    flush: () => Promise<boolean>;\n}\ndeclare function createTelemetryClient(options: TelemetryOptions): TelemetryClient;\n\nexport { type TelemetryClient, type TelemetryOptions, createTelemetryClient };\n"
+}

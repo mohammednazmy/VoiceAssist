@@ -21,8 +21,8 @@ const __dirname = path.dirname(__filename);
 const DOCS_DIR = path.join(__dirname, "..", "..", "..", "docs");
 
 // Valid enum values
-const VALID_STATUS = ["draft", "experimental", "stable", "deprecated", "active", "production", "in-progress", "in-development"];
-const VALID_STABILITY = ["production", "beta", "experimental", "legacy"];
+const VALID_STATUS = ["draft", "experimental", "stable", "deprecated", "active", "production", "in-progress", "in-development", "released", "complete", "planning"];
+const VALID_STABILITY = ["production", "beta", "experimental", "legacy", "stable", "draft"];
 const VALID_OWNER = [
   "backend",
   "frontend",
@@ -30,6 +30,7 @@ const VALID_OWNER = [
   "sre",
   "docs",
   "product",
+  "platform",
   "security",
   "mixed",
 ];
@@ -40,6 +41,7 @@ const VALID_AUDIENCE = [
   "frontend",
   "devops",
   "admin",
+  "admins",
   "user",
   "docs",
   "sre",
@@ -56,17 +58,22 @@ const VALID_AUDIENCE = [
   "technical-writers",
 ];
 const VALID_CATEGORY = [
+  "admin",
   "ai",
   "api",
   "architecture",
   "debugging",
   "deployment",
+  "feature-flags",
+  "getting-started",
   "operations",
   "overview",
   "planning",
   "reference",
+  "releases",
   "security",
   "testing",
+  "voice",
 ];
 
 function validateFile(filePath, relativePath) {
@@ -159,6 +166,63 @@ function validateFile(filePath, relativePath) {
     // Validate relatedServices is array
     if (data.relatedServices && !Array.isArray(data.relatedServices)) {
       result.errors.push("relatedServices must be an array");
+    }
+
+    // Validate component field (doc-code crosswalk)
+    if (data.component !== undefined) {
+      if (typeof data.component !== "string") {
+        result.errors.push("component must be a string");
+      } else if (data.component.trim() === "") {
+        result.warnings.push("component is present but empty");
+      } else if (!/^[a-z-]+\/[a-z0-9-]+$/.test(data.component)) {
+        result.warnings.push(
+          `component format should be "<layer>/<name>" (e.g., "backend/api-gateway"), got: "${data.component}"`
+        );
+      }
+    }
+
+    // Validate relatedPaths is array of strings (doc-code crosswalk)
+    if (data.relatedPaths !== undefined) {
+      if (!Array.isArray(data.relatedPaths)) {
+        result.errors.push("relatedPaths must be an array");
+      } else {
+        for (const p of data.relatedPaths) {
+          if (typeof p !== "string") {
+            result.errors.push(`relatedPaths entries must be strings, got: ${typeof p}`);
+          } else if (p.startsWith("/") || p.includes("\\")) {
+            result.warnings.push(
+              `relatedPaths should be repo-relative POSIX paths (no leading / or backslashes): "${p}"`
+            );
+          }
+        }
+      }
+    }
+
+    // AI-specific validation: if audience includes AI agents, ai_summary should be present
+    const hasAIAudience = Array.isArray(data.audience) &&
+      data.audience.some(a => ["ai-agents", "ai-agent", "agent"].includes(a));
+    if (hasAIAudience && !data.ai_summary) {
+      result.warnings.push(
+        "Missing ai_summary: Docs targeting AI agents should include an ai_summary field"
+      );
+    }
+
+    // Doc-code crosswalk: recommend relatedPaths for high-impact AI-facing docs
+    const HIGH_IMPACT_CATEGORIES = ["architecture", "voice", "admin", "api", "security", "infra"];
+    const isHighImpact = data.category && HIGH_IMPACT_CATEGORIES.includes(data.category);
+    if (hasAIAudience && isHighImpact) {
+      if (!data.relatedPaths || (Array.isArray(data.relatedPaths) && data.relatedPaths.length === 0)) {
+        result.warnings.push(
+          `Missing relatedPaths: ${data.category} docs targeting AI agents should link to related code files`
+        );
+      }
+    }
+
+    // Validate category if present
+    if (data.category && !VALID_CATEGORY.includes(data.category)) {
+      result.errors.push(
+        `Invalid category: "${data.category}". Must be one of: ${VALID_CATEGORY.join(", ")}`
+      );
     }
   } catch (error) {
     result.errors.push(`Could not parse file: ${error}`);

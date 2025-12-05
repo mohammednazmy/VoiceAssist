@@ -9,7 +9,13 @@ audience:
   - ai-agents
 tags: [voice, multilingual, rag, translation, v4]
 summary: Technical architecture for multilingual voice RAG with translation fallback
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: voice
+ai_summary: >-
+  Multilingual RAG architecture using translate-then-retrieve pattern. Queries
+  in any supported language are translated to English for RAG retrieval against
+  English embeddings, then responses translated back. Integrates with language
+  detection and graceful degradation.
 ---
 
 # Multilingual RAG Architecture
@@ -271,5 +277,5 @@ pytest tests/services/test_voice_v4_services.py::TestMultilingualRAG -v
 ## Related Documentation
 
 - [Voice Mode v4.1 Overview](./voice-mode-v4-overview.md)
-- [Translation Service API](../api-reference/translation-service.md)
+- [API Reference](../api-reference/rest-api.md)
 - [Latency Budgets Guide](./latency-budgets-guide.md)

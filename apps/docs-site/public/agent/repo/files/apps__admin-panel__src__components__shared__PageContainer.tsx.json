@@ -1,0 +1,8 @@
+{
+  "path": "apps/admin-panel/src/components/shared/PageContainer.tsx",
+  "language": "typescript",
+  "size": 414,
+  "last_modified": "2025-11-28T04:58:58.890Z",
+  "lines": 23,
+  "content": "/**\n * PageContainer - Consistent page wrapper component\n */\nimport { ReactNode } from \"react\";\n\ninterface PageContainerProps {\n  children: ReactNode;\n  className?: string;\n}\n\nexport function PageContainer({\n  children,\n  className = \"\",\n}: PageContainerProps) {\n  return (\n    <div\n      className={`flex-1 p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto ${className}`}\n    >\n      {children}\n    </div>\n  );\n}\n"
+}

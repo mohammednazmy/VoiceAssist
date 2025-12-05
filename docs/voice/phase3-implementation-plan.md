@@ -9,7 +9,13 @@ audience:
   - ai-agents
 tags: [voice, planning, phase3, roadmap, v4]
 summary: Implementation plan for Voice Mode v4.1 Phase 3 features
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: planning
+ai_summary: >-
+  Completed Phase 3 implementation plan for Voice Mode v4.1 (PR #155). Covers
+  three workstreams: UI integration (voice-first input, streaming text, latency
+  indicator), advanced services (FHIR streaming, speaker diarization), and
+  performance tuning. See voice-mode-v4-overview.md for full feature list.
 ---
 
 # Voice Mode v4.1 Phase 3 Implementation Plan

@@ -9,7 +9,13 @@ audience:
   - ai-agents
 tags: [voice, vad, audio, speech-detection, accessibility, v4]
 summary: Guide to user-tunable Voice Activity Detection presets
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: voice
+ai_summary: >-
+  VAD preset configuration for Voice Mode v4.1. Defines three presets: Sensitive
+  (quiet environments, -45dB), Balanced (default, -35dB), and Relaxed (noisy,
+  -25dB). Integrates with Thinker-Talker pipeline for speech segment detection.
+  See voice-first-input-bar.md for UI integration.
 ---
 
 # Adaptive VAD Presets
@@ -105,9 +111,9 @@ flowchart LR
 
 ### Cross-Link to Voice Settings
 
-See [Voice Settings Panel](/docs/frontend/voice-settings-panel.md) for UI implementation details.
+See [Voice First Input Bar](./voice-first-input-bar.md) for UI implementation details.
 
-See [RTL Support](/docs/voice/rtl-support.md) for right-to-left language support in the voice interface.
+See [RTL Support](./rtl-support-guide.md) for right-to-left language support in the voice interface.
 
 ## Choosing the Right VAD Preset
 
@@ -137,13 +143,13 @@ flowchart TD
 
 ### Preset Comparison Table
 
-| Preset | Energy Threshold | Silence Duration | Min Speech | Best For |
-|--------|------------------|------------------|------------|----------|
-| 🤫 **Sensitive** | -45 dB | 300 ms | 100 ms | Quiet environments, soft speakers |
-| ⚖️ **Balanced** | -35 dB | 500 ms | 150 ms | General use (recommended default) |
-| 🔊 **Relaxed** | -25 dB | 800 ms | 200 ms | Noisy environments, distant mics |
-| ♿ **Accessibility** | -42 dB | 1000 ms | 80 ms | Speech impairments, slow speakers |
-| ⚙️ **Custom** | User-defined | User-defined | User-defined | Power users, specific needs |
+| Preset               | Energy Threshold | Silence Duration | Min Speech   | Best For                          |
+| -------------------- | ---------------- | ---------------- | ------------ | --------------------------------- |
+| 🤫 **Sensitive**     | -45 dB           | 300 ms           | 100 ms       | Quiet environments, soft speakers |
+| ⚖️ **Balanced**      | -35 dB           | 500 ms           | 150 ms       | General use (recommended default) |
+| 🔊 **Relaxed**       | -25 dB           | 800 ms           | 200 ms       | Noisy environments, distant mics  |
+| ♿ **Accessibility** | -42 dB           | 1000 ms          | 80 ms        | Speech impairments, slow speakers |
+| ⚙️ **Custom**        | User-defined     | User-defined     | User-defined | Power users, specific needs       |
 
 ## Understanding VAD Parameters
 
@@ -165,6 +171,7 @@ Less negative = Less sensitive (requires louder speech)
 ```
 
 **Recommendations:**
+
 - **-45 dB**: Use in quiet environments or with soft speakers
 - **-35 dB**: Good default for most situations
 - **-25 dB**: Use when background noise is present
@@ -184,6 +191,7 @@ Duration    Effect
 ```
 
 **Trade-offs:**
+
 - **Shorter (< 400 ms)**: Faster response but may interrupt natural pauses
 - **Medium (400-600 ms)**: Good balance for most speakers
 - **Longer (> 700 ms)**: Better for thoughtful speech but slower response

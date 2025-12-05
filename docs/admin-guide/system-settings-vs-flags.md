@@ -140,4 +140,4 @@ When you need gradual rollout of a setting change:
 
 - [Feature Flags Overview](./feature-flags/README.md)
 - [Feature Flag Lifecycle](./feature-flags/lifecycle.md)
-- [Configuration Reference](/reference/configuration.md)
+- [API Reference](../api-reference/rest-api.md)

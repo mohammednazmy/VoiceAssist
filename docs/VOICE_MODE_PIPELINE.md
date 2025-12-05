@@ -24,10 +24,16 @@ tags:
   - audio
   - offline
   - multilingual
-category: reference
+category: voice
 relatedServices:
   - api-gateway
   - web-app
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/api/voice.py"
+  - "services/api-gateway/app/api/admin_voice.py"
+  - "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+  - "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
 ai_summary: >-
   > Status: Production-ready > Last Updated: 2025-12-03 This document describes
   the unified Voice Mode pipeline architecture, data flow, metrics, and testing

@@ -9,7 +9,13 @@ audience:
   - ai-agents
 tags: [voice, roadmap, v4.2, planning]
 summary: Post-release improvements planned after Voice Mode v4.1
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: planning
+ai_summary: >-
+  Post-v4.1 roadmap for Voice Mode. Priorities: security hardening (18 Bandit
+  issues), lexicon expansion, performance optimizations. Includes HuggingFace
+  model pinning (B615) and SQL expression cleanup (B608). See next-prs-planning.md
+  for detailed PR plans.
 ---
 
 # Voice Mode Post-v4.1 Roadmap

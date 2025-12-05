@@ -7,9 +7,8 @@ summary: >-
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-12-02"
+lastUpdated: "2025-12-04"
 audience:
-  - agent
   - ai-agents
 tags:
   - ai-agent
@@ -17,13 +16,14 @@ tags:
   - index
   - reference
 category: ai
-version: 1.0.0
+version: 1.3.0
 ai_summary: >-
-  This document lists common AI agent tasks with the relevant documentation and
-  endpoints needed to complete them. Machine-Readable Endpoints: -
-  https://assistdocs.asimo.io/agent/index.json - Documentation metadata -
-  https://assistdocs.asimo.io/agent/docs.json - Full document list with
-  filtering -...
+  Catalog of common AI agent tasks with relevant docs and commands. Tasks include:
+  understand project status, debug backend/frontend/voice issues, update documentation,
+  add API endpoints, work on admin panel, docs health audit, repository navigation tasks,
+  and NEW doc-code crosswalk tasks (audit relatedPaths, explain files using docs, find
+  feature implementations). Each task links to specific docs, code paths, API endpoints,
+  and diagnostic commands. Use /agent/doc-code-map.json for bidirectional doc ↔ code navigation.
 ---
 
 # Agent Task Index
@@ -36,6 +36,10 @@ This document lists common AI agent tasks with the relevant documentation and en
 - `https://assistdocs.asimo.io/agent/docs.json` - Full document list with filtering
 - `https://assistdocs.asimo.io/agent/tasks.json` - Common agent tasks with commands
 - `https://assistdocs.asimo.io/search-index.json` - Full-text search index
+- `https://assistdocs.asimo.io/agent/repo-index.json` - Repository structure index
+- `https://assistdocs.asimo.io/agent/repo/manifest.json` - Key files manifest
+- `https://assistdocs.asimo.io/agent/repo/files/{path}.json` - Source file content
+- `https://assistdocs.asimo.io/agent/doc-code-map.json` - Doc ↔ code crosswalk mapping
 
 ---
 
@@ -158,10 +162,11 @@ pnpm dev
 **Workflow:**
 
 1. Edit markdown files in `docs/`
-2. Add proper frontmatter with metadata
-3. Rebuild: `cd apps/docs-site && pnpm build`
-4. Regenerate agent JSON: `node scripts/generate-agent-json.mjs`
-5. Deploy to `/var/www/assistdocs.asimo.io/`
+2. Add proper frontmatter with metadata (see [Metadata Standard](../DOCUMENTATION_METADATA_STANDARD.md))
+3. Validate: `cd apps/docs-site && pnpm validate:all`
+4. Regenerate search index and agent JSON: `pnpm generate-search-index && pnpm generate-agent-json`
+5. Build: `pnpm build`
+6. Deploy: Copy `out/` to `/var/www/assistdocs.asimo.io/`
 
 ---
 
@@ -252,6 +257,334 @@ pnpm dev
 
 ---
 
+### 11. Docs Health Audit
+
+**Goal**: Assess documentation quality and identify improvement areas
+
+**Key Documents:**
+
+- [Documentation Metadata Standard](../DOCUMENTATION_METADATA_STANDARD.md)
+- [Internal Docs System](../INTERNAL_DOCS_SYSTEM.md)
+- [Agent API Reference](./AGENT_API_REFERENCE.md)
+
+**Workflow:**
+
+1. Fetch health metrics: `curl https://assistdocs.asimo.io/agent/health.json`
+2. Run local validation: `cd apps/docs-site && pnpm validate:all`
+3. Check AI summary coverage: `curl https://assistdocs.asimo.io/agent/docs-summary.json | jq '.stats'`
+4. Identify stale docs from health.json `category_freshness` section
+5. Add missing `ai_summary` fields to docs targeting AI agents
+
+**Quick Commands:**
+
+```bash
+cd apps/docs-site
+
+# Run all validation checks
+pnpm validate:all
+
+# Check for docs missing ai_summary
+pnpm validate:metadata 2>&1 | grep "Missing ai_summary"
+
+# Regenerate agent JSON after fixes
+pnpm generate-agent-json
+```
+
+---
+
+## Repository Navigation Tasks
+
+These tasks leverage the machine-readable repository endpoints to explore and understand the codebase.
+
+### 12. Discover Repository Components
+
+**Goal**: List and understand all major components in the codebase
+
+**API Endpoints:**
+
+- `https://assistdocs.asimo.io/agent/repo-index.json` - Full repository structure
+- `https://assistdocs.asimo.io/agent/repo/manifest.json` - Key files manifest
+
+**Workflow:**
+
+```bash
+# List all component categories
+curl https://assistdocs.asimo.io/agent/repo-index.json | jq '.stats.by_component'
+
+# Find all frontend components
+curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.component | startswith("frontend"))]'
+
+# Find all backend services
+curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.component | startswith("backend"))]'
+
+# Get language breakdown
+curl https://assistdocs.asimo.io/agent/repo-index.json | jq '.stats.by_language'
+```
+
+**Key Documents:**
+
+- [Agent API Reference](./AGENT_API_REFERENCE.md) - Full endpoint documentation
+- [Repo Navigation for Agents](./REPO_NAVIGATION_FOR_AGENTS.md) - Patterns and examples
+
+---
+
+### 13. Locate Feature Implementation
+
+**Goal**: Given a feature name, find relevant implementation files
+
+**API Endpoints:**
+
+- `https://assistdocs.asimo.io/agent/repo-index.json` - File paths by component
+- `https://assistdocs.asimo.io/agent/repo/files/{encoded-path}.json` - Source code content
+- `https://assistdocs.asimo.io/search-index.json` - Full-text search
+
+**Workflow:**
+
+1. Search documentation for feature context:
+
+   ```bash
+   curl https://assistdocs.asimo.io/agent/docs.json | jq '.docs[] | select(.title | test("voice"; "i"))'
+   ```
+
+2. Find implementation files by component:
+
+   ```bash
+   # Voice features are in backend/api-gateway and frontend/web-app
+   curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.path | test("voice"; "i"))]'
+   ```
+
+3. Get source code for specific file:
+
+   ```bash
+   # Path encoding: / → __ (double underscore)
+   # Example: services/api-gateway/app/api/voice.py → services__api-gateway__app__api__voice.py.json
+   curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__api__voice.py.json
+   ```
+
+4. Cross-reference with documentation:
+   ```bash
+   curl https://assistdocs.asimo.io/agent/docs.json | jq '.docs[] | select(.tags | index("voice"))'
+   ```
+
+**Key Documents:**
+
+- [Voice Mode Pipeline](../VOICE_MODE_PIPELINE.md) - Voice architecture
+- [Backend Architecture](../BACKEND_ARCHITECTURE.md) - Service structure
+- [Frontend Architecture](../FRONTEND_ARCHITECTURE.md) - App structure
+
+---
+
+### 14. Audit Implementation vs Documentation
+
+**Goal**: Compare documentation claims against actual code implementation
+
+**API Endpoints:**
+
+- `https://assistdocs.asimo.io/agent/docs.json` - Documentation metadata
+- `https://assistdocs.asimo.io/agent/repo-index.json` - Repository structure
+- `https://assistdocs.asimo.io/agent/repo/files/{encoded-path}.json` - Source code
+
+**Workflow:**
+
+1. Identify feature documentation:
+
+   ```bash
+   curl https://assistdocs.asimo.io/agent/docs.json | jq '.docs[] | select(.category == "admin")'
+   ```
+
+2. Extract documented paths/endpoints from docs
+3. Verify files exist in repo-index:
+
+   ```bash
+   curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.path | test("admin"))]'
+   ```
+
+4. Fetch and compare source code:
+
+   ```bash
+   curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__api__admin.py.json | jq '.content'
+   ```
+
+5. Report discrepancies:
+   - Missing files referenced in docs
+   - Undocumented endpoints in code
+   - Version/status mismatches
+
+**Key Documents:**
+
+- [Implementation Status](../overview/IMPLEMENTATION_STATUS.md) - Component status matrix
+- [API Reference](../API_REFERENCE.md) - Documented endpoints
+- [Documentation Metadata Standard](../DOCUMENTATION_METADATA_STANDARD.md) - Status values
+
+---
+
+### 15. Explore Codebase by Language
+
+**Goal**: Find all files of a specific programming language
+
+**API Endpoint:**
+
+- `https://assistdocs.asimo.io/agent/repo-index.json`
+
+**Workflow:**
+
+```bash
+# Find all TypeScript files
+curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.language == "typescript")]'
+
+# Find all Python files
+curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.language == "python")]'
+
+# Count files by language
+curl https://assistdocs.asimo.io/agent/repo-index.json | jq '.stats.by_language'
+
+# Find configuration files (YAML, JSON, TOML)
+curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.language | . == "yaml" or . == "json" or . == "toml")]'
+```
+
+**Supported Languages:**
+
+typescript, javascript, python, markdown, json, yaml, toml, html, css, scss, shell, dockerfile, terraform, prisma, graphql
+
+---
+
+### 16. Find Entry Points and Configuration
+
+**Goal**: Quickly locate main entry points and config files
+
+**API Endpoint:**
+
+- `https://assistdocs.asimo.io/agent/repo/manifest.json` - Curated key files
+
+**Workflow:**
+
+```bash
+# Get all exported key files
+curl https://assistdocs.asimo.io/agent/repo/manifest.json | jq '.files'
+
+# Find package.json files (entry points)
+curl https://assistdocs.asimo.io/agent/repo/manifest.json | jq '[.files[] | select(.path | endswith("package.json"))]'
+
+# Find Python entry points
+curl https://assistdocs.asimo.io/agent/repo/manifest.json | jq '[.files[] | select(.path | endswith("main.py"))]'
+
+# Get root configuration files
+curl https://assistdocs.asimo.io/agent/repo/manifest.json | jq '[.files[] | select(.path | contains("/") | not)]'
+```
+
+**Key Files Categories:**
+
+| Category      | Examples                                     |
+| ------------- | -------------------------------------------- |
+| Root Config   | package.json, turbo.json, docker-compose.yml |
+| API Gateway   | main.py, config.py, requirements.txt         |
+| Web App       | next.config.js, page.tsx, layout.tsx         |
+| Admin Panel   | next.config.js, page.tsx, layout.tsx         |
+| Documentation | START_HERE.md, AGENT_ONBOARDING.md           |
+
+---
+
+## Doc-Code Crosswalk Tasks
+
+These tasks use the `/agent/doc-code-map.json` endpoint to navigate between documentation and code.
+
+### 17. Doc-Code Crosswalk Audit
+
+**Goal**: Ensure docs' `relatedPaths` point to real files and key code files have documentation
+
+**API Endpoints:**
+
+- `https://assistdocs.asimo.io/agent/doc-code-map.json`
+- `https://assistdocs.asimo.io/agent/repo/manifest.json`
+
+**Workflow:**
+
+```bash
+# 1. Check for missing paths (relatedPaths that don't exist in repo)
+curl https://assistdocs.asimo.io/agent/doc-code-map.json | jq '.meta.missing_paths'
+
+# 2. Get stats on doc-code coverage
+curl https://assistdocs.asimo.io/agent/doc-code-map.json | jq '.meta.stats'
+
+# 3. Find key files in manifest that have no docs
+curl https://assistdocs.asimo.io/agent/doc-code-map.json -o map.json
+curl https://assistdocs.asimo.io/agent/repo/manifest.json | \
+  jq --slurpfile map map.json '[.files[].path] - [($map[0].by_path | keys)[]]'
+```
+
+**Report Format:**
+
+- List paths in `missing_paths` that need fixing in source docs
+- List key manifest files without documentation
+- Recommend adding `relatedPaths` to important docs
+
+---
+
+### 18. Explain This File Using Related Docs
+
+**Goal**: Given a repo path, pull relevant docs and summarize the file's purpose
+
+**API Endpoints:**
+
+- `https://assistdocs.asimo.io/agent/doc-code-map.json`
+- `https://assistdocs.asimo.io/agent/docs.json`
+- `https://assistdocs.asimo.io/agent/repo/files/{encoded}.json`
+
+**Workflow:**
+
+```bash
+# Example: Explain services/api-gateway/app/api/voice.py
+
+# 1. Find docs that reference this file
+curl https://assistdocs.asimo.io/agent/doc-code-map.json | \
+  jq '.by_path["services/api-gateway/app/api/voice.py"].docs'
+
+# 2. Get those docs' ai_summary
+SLUGS=$(curl -s https://assistdocs.asimo.io/agent/doc-code-map.json | \
+  jq -r '.by_path["services/api-gateway/app/api/voice.py"].docs[]')
+for slug in $SLUGS; do
+  curl -s https://assistdocs.asimo.io/agent/docs.json | \
+    jq --arg s "$slug" '.docs[] | select(.slug == $s) | {title, ai_summary}'
+done
+
+# 3. Get the file content
+curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__api__voice.py.json | \
+  jq '.content'
+```
+
+**Output**: Combine docs' `ai_summary` fields with file content to explain purpose.
+
+---
+
+### 19. Find Implementation for a Feature
+
+**Goal**: Given a feature name, find both docs and code
+
+**API Endpoints:**
+
+- `https://assistdocs.asimo.io/agent/docs.json`
+- `https://assistdocs.asimo.io/agent/doc-code-map.json`
+
+**Workflow:**
+
+```bash
+# Example: Find everything about "voice mode"
+
+# 1. Find docs mentioning the feature
+curl https://assistdocs.asimo.io/agent/docs.json | \
+  jq '[.docs[] | select(.title | test("voice"; "i")) | {slug, title, component, relatedPaths}]'
+
+# 2. Get code files from those docs
+curl https://assistdocs.asimo.io/agent/doc-code-map.json | \
+  jq '[.by_doc_slug | to_entries[] | select(.key | test("voice"; "i")) | .value.relatedPaths] | flatten | unique'
+
+# 3. Find docs for specific component
+curl https://assistdocs.asimo.io/agent/doc-code-map.json | \
+  jq '[.by_doc_slug | to_entries[] | select(.value.component == "backend/api-gateway") | .key]'
+```
+
+---
+
 ## Filtering Documents by Task
 
 Use the agent JSON API to filter documents:
@@ -259,16 +592,19 @@ Use the agent JSON API to filter documents:
 ```javascript
 // Fetch all docs
 const response = await fetch("https://assistdocs.asimo.io/agent/docs.json");
-const docs = await response.json();
+const data = await response.json();
 
 // Filter by category
-const debuggingDocs = docs.filter((d) => d.category === "debugging");
+const debuggingDocs = data.docs.filter((d) => d.category === "debugging");
 
-// Filter by audience
-const agentDocs = docs.filter((d) => d.audience && d.audience.includes("agent"));
+// Filter by audience (use canonical 'ai-agents' value)
+const agentDocs = data.docs.filter((d) => d.audience && d.audience.includes("ai-agents"));
 
 // Filter by tag
-const backendDocs = docs.filter((d) => d.tags && d.tags.includes("backend"));
+const backendDocs = data.docs.filter((d) => d.tags && d.tags.includes("backend"));
+
+// Find docs with ai_summary
+const docsWithSummary = data.docs.filter((d) => d.ai_summary);
 ```
 
 ---

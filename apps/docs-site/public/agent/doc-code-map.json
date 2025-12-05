@@ -1,0 +1,90 @@
+{
+  "generated_at": "2025-12-05T04:20:30.674Z",
+  "description": "Bidirectional mapping between documentation and repository files for AI agent navigation",
+  "usage": {
+    "from_doc": "Use by_doc_slug[slug].relatedPaths to find implementation files for a doc",
+    "from_code": "Use by_path[path].docs to find documentation for a code file",
+    "fetch_code": "Encode path (/ → __) and fetch /agent/repo/files/{encoded}.json",
+    "fetch_doc": "Use slug to look up full doc in /agent/docs.json"
+  },
+  "by_doc_slug": {
+    "ai/agent-api-reference": {
+      "slug": "ai/agent-api-reference",
+      "path": "ai/AGENT_API_REFERENCE.md",
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/scripts/generate-agent-json.js",
+        "apps/docs-site/scripts/generate-repo-index.mjs",
+        "apps/docs-site/scripts/generate-doc-code-map.mjs",
+        "apps/docs-site/public/agent/index.json"
+      ],
+      "title": "Agent API Reference",
+      "category": "ai",
+      "ai_summary": "Canonical reference for VoiceAssist documentation API endpoints. Base URL: https://assistdocs.asimo.io. Key endpoints: /agent/docs.json (full doc list with ai_summary), /agent/docs-summary.json (AI summaries by category), /agent/health.json (docs health metrics), /agent/tasks.json (common tasks), /search-index.json (Fuse.js search). All endpoints are static JSON generated at build time."
+    },
+    "voice/pipeline": {
+      "slug": "voice/pipeline",
+      "path": "VOICE_MODE_PIPELINE.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "services/api-gateway/app/api/admin_voice.py",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx",
+        "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
+      ],
+      "title": "Voice Mode Pipeline",
+      "category": "voice",
+      "ai_summary": "> Status: Production-ready > Last Updated: 2025-12-03 This document describes the unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy. It serves as the canonical reference for developers working on real-time voice features. VoiceAssist supports two voice pipeline mo..."
+    }
+  },
+  "by_path": {
+    "apps/docs-site/scripts/generate-agent-json.js": {
+      "path": "apps/docs-site/scripts/generate-agent-json.js",
+      "docs": ["ai/agent-api-reference"],
+      "component": "frontend/docs-site"
+    },
+    "apps/docs-site/scripts/generate-repo-index.mjs": {
+      "path": "apps/docs-site/scripts/generate-repo-index.mjs",
+      "docs": ["ai/agent-api-reference"],
+      "component": "frontend/docs-site"
+    },
+    "apps/docs-site/scripts/generate-doc-code-map.mjs": {
+      "path": "apps/docs-site/scripts/generate-doc-code-map.mjs",
+      "docs": ["ai/agent-api-reference"],
+      "component": "frontend/docs-site"
+    },
+    "apps/docs-site/public/agent/index.json": {
+      "path": "apps/docs-site/public/agent/index.json",
+      "docs": ["ai/agent-api-reference"],
+      "component": "frontend/docs-site"
+    },
+    "services/api-gateway/app/api/voice.py": {
+      "path": "services/api-gateway/app/api/voice.py",
+      "docs": ["voice/pipeline"],
+      "component": "backend/api-gateway"
+    },
+    "services/api-gateway/app/api/admin_voice.py": {
+      "path": "services/api-gateway/app/api/admin_voice.py",
+      "docs": ["voice/pipeline"],
+      "component": "backend/api-gateway"
+    },
+    "apps/web-app/src/components/voice/VoiceModePanel.tsx": {
+      "path": "apps/web-app/src/components/voice/VoiceModePanel.tsx",
+      "docs": ["voice/pipeline"],
+      "component": "backend/api-gateway"
+    },
+    "apps/web-app/src/hooks/useRealtimeVoiceSession.ts": {
+      "path": "apps/web-app/src/hooks/useRealtimeVoiceSession.ts",
+      "docs": ["voice/pipeline"],
+      "component": "backend/api-gateway"
+    }
+  },
+  "meta": {
+    "stats": {
+      "docs_with_links": 2,
+      "total_links": 8,
+      "unique_paths": 8,
+      "missing_paths": 0
+    }
+  }
+}

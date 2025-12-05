@@ -9,7 +9,13 @@ audience:
   - ai-agents
 tags: [voice, v4, multilingual, latency, thinking-feedback]
 summary: Overview of Voice Mode Enhancement Plan v4.1 features
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: voice
+ai_summary: >-
+  High-level overview of Voice Mode v4.1 features. Key capabilities: multilingual
+  RAG (15 languages), medical pronunciation lexicons (100+ drugs), latency-aware
+  orchestration (<700ms target), thinking feedback, adaptive VAD presets, and
+  PHI-aware STT routing. See individual docs for implementation details.
 ---
 
 # Voice Mode v4.1 Overview
@@ -102,12 +108,12 @@ All v4.1 features are gated behind feature flags for safe rollout. Flags are gro
 
 ### Workstream 5: UI Enhancements
 
-| Flag                                  | Description                          | Default | Docs                                             |
-| ------------------------------------- | ------------------------------------ | ------- | ------------------------------------------------ |
-| `ui.voice_v4_voice_first_ui`          | Voice-first unified input bar        | Off     | [Voice UI Components](./ui-components.md)        |
-| `ui.voice_v4_streaming_text`          | Streaming text display during TTS    | Off     | [Streaming Text](./streaming-text-display.md)    |
-| `ui.voice_v4_latency_indicator`       | Latency status with degradation info | Off     | [Latency Indicator](./latency-indicator.md)      |
-| `ui.voice_v4_thinking_feedback_panel` | Audio/visual/haptic feedback         | Off     | [Thinking Feedback](./thinking-tone-settings.md) |
+| Flag                                  | Description                          | Default | Docs                                                |
+| ------------------------------------- | ------------------------------------ | ------- | --------------------------------------------------- |
+| `ui.voice_v4_voice_first_ui`          | Voice-first unified input bar        | Off     | [Voice First Input Bar](./voice-first-input-bar.md) |
+| `ui.voice_v4_streaming_text`          | Streaming text display during TTS    | Off     | [Streaming Text](./streaming-text-display.md)       |
+| `ui.voice_v4_latency_indicator`       | Latency status with degradation info | Off     | [Latency Budgets](./latency-budgets-guide.md)       |
+| `ui.voice_v4_thinking_feedback_panel` | Audio/visual/haptic feedback         | Off     | [Thinking Feedback](./thinking-tone-settings.md)    |
 
 ### Flag Dependencies
 

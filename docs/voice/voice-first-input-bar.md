@@ -1,3 +1,30 @@
+---
+title: VoiceFirstInputBar Component
+slug: voice/voice-first-input-bar
+summary: >-
+  Primary voice-first input component with text fallback for Voice Mode v4.1.
+status: stable
+stability: production
+owner: frontend
+lastUpdated: "2025-12-04"
+audience:
+  - human
+  - ai-agents
+  - frontend
+tags:
+  - voice
+  - frontend
+  - input
+  - vad
+  - components
+category: voice
+ai_summary: >-
+  Primary input component for Voice Mode with voice-first design. Features VAD
+  preset integration, PHI mode indicator, RTL support, and keyboard shortcuts
+  (Space to talk, Escape to cancel). See adaptive-vad-presets.md for VAD
+  configuration.
+---
+
 # VoiceFirstInputBar Component
 
 **Phase 3 - Voice Mode v4.1**

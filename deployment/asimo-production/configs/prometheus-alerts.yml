@@ -192,3 +192,147 @@ groups:
         annotations:
           summary: "High rate of authentication failures"
           description: "{{ $value }} failed authentication attempts per second."
+
+  - name: voice_mode_v4_alerts
+    interval: 30s
+    rules:
+      # Voice Pipeline Latency
+      - alert: VoiceHighLatency
+        expr: histogram_quantile(0.95, rate(voice_pipeline_latency_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: voice
+        annotations:
+          summary: "Voice pipeline P95 latency exceeds SLO"
+          description: "Voice pipeline P95 latency is {{ $value }}s (target: <500ms)."
+
+      - alert: VoiceCriticalLatency
+        expr: histogram_quantile(0.95, rate(voice_pipeline_latency_seconds_bucket[5m])) > 1.0
+        for: 2m
+        labels:
+          severity: critical
+          component: voice
+        annotations:
+          summary: "Voice pipeline latency critically high"
+          description: "Voice pipeline P95 latency is {{ $value }}s - users experiencing significant delays."
+
+      # STT Service Health
+      - alert: STTServiceDown
+        expr: up{job="stt-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: voice
+        annotations:
+          summary: "STT service is down"
+          description: "Speech-to-text service has been unreachable for more than 1 minute."
+
+      - alert: STTHighErrorRate
+        expr: rate(stt_requests_failed_total[5m]) / rate(stt_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: voice
+        annotations:
+          summary: "High STT error rate"
+          description: "STT error rate is {{ $value | humanizePercentage }} (target: <5%)."
+
+      # TTS Service Health
+      - alert: TTSServiceDown
+        expr: up{job="tts-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: voice
+        annotations:
+          summary: "TTS service is down"
+          description: "Text-to-speech service has been unreachable for more than 1 minute."
+
+      - alert: TTSHighLatency
+        expr: histogram_quantile(0.95, rate(tts_time_to_first_audio_seconds_bucket[5m])) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+          component: voice
+        annotations:
+          summary: "TTS time-to-first-audio exceeds SLO"
+          description: "TTS TTFA P95 is {{ $value }}s (target: <300ms)."
+
+      # PHI Routing
+      - alert: PHIRoutingFailures
+        expr: rate(phi_routing_failures_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          component: voice
+          compliance: hipaa
+        annotations:
+          summary: "PHI routing failures detected"
+          description: "PHI-aware routing is failing - sensitive data may be misrouted."
+
+      - alert: LocalWhisperDown
+        expr: up{job="local-whisper"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          component: voice
+          compliance: hipaa
+        annotations:
+          summary: "Local Whisper service is down"
+          description: "Local Whisper for PHI-safe transcription is unavailable. Fallback to cloud may expose PHI."
+
+      # Circuit Breaker Status
+      - alert: VoiceCircuitBreakerOpen
+        expr: voice_circuit_breaker_state == 1
+        for: 1m
+        labels:
+          severity: warning
+          component: voice
+        annotations:
+          summary: "Voice service circuit breaker is open"
+          description: "Circuit breaker for {{ $labels.service }} is open - service degraded."
+
+      # QoS Policy Violations
+      - alert: VoiceQoSViolation
+        expr: rate(voice_qos_violations_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: voice
+        annotations:
+          summary: "Voice QoS policy violations"
+          description: "{{ $value }} QoS violations per second - latency budgets being exceeded."
+
+      # Active Voice Sessions
+      - alert: HighVoiceSessionCount
+        expr: voice_active_sessions > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: voice
+        annotations:
+          summary: "High number of active voice sessions"
+          description: "{{ $value }} active voice sessions - approaching capacity limits."
+
+      # Speaker Diarization
+      - alert: DiarizationHighLatency
+        expr: histogram_quantile(0.95, rate(speaker_diarization_latency_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: voice
+        annotations:
+          summary: "Speaker diarization latency high"
+          description: "Diarization P95 latency is {{ $value }}s (target: <500ms)."
+
+      # FHIR Streaming
+      - alert: FHIRStreamingDisconnected
+        expr: fhir_streaming_connections == 0 and fhir_streaming_enabled == 1
+        for: 5m
+        labels:
+          severity: warning
+          component: voice
+        annotations:
+          summary: "FHIR streaming disconnected"
+          description: "No active FHIR streaming connections despite being enabled."

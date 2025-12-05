@@ -1,3 +1,21 @@
+---
+title: Voice Mode Screenshots
+slug: voice/screenshots
+summary: Screenshot assets and capture instructions for Voice Mode v4.1 documentation.
+status: draft
+stability: experimental
+owner: docs
+lastUpdated: "2025-12-04"
+audience:
+  - human
+  - docs
+tags:
+  - voice
+  - screenshots
+  - assets
+category: voice
+---
+
 # Voice Mode v4.1 Screenshots
 
 This directory contains annotated screenshots for the Voice Mode v4.1 documentation.

@@ -9,7 +9,13 @@ audience:
   - ai-agents
 tags: [voice, g2p, pronunciation, tts, design]
 summary: Evaluation of G2P (Grapheme-to-Phoneme) alternatives for v4.1.2
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: voice
+ai_summary: >-
+  Design doc evaluating G2P alternatives for improved pronunciation. Compares
+  phonemizer, g2p-en, Deep Phonemizer, gruut, and Epitran against current
+  espeak-ng implementation. Addresses medical terminology and Arabic support
+  gaps. See lexicon-service-guide.md for current implementation.
 ---
 
 # G2P Service Alternatives Evaluation

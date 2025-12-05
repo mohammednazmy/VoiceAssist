@@ -1,0 +1,49 @@
+# Bandit Security Scanner Configuration
+# https://bandit.readthedocs.io/en/latest/config.html
+#
+# Run with: bandit -r app -c .bandit.yaml
+
+# Skip specific test IDs for the entire project
+# These are confirmed safe patterns in this codebase
+skips:
+  # B608: SQL injection via string construction
+  # Rationale: All SQL queries use SQLAlchemy text() with parameter binding.
+  # The where_clause variables are built from hardcoded filter strings only.
+  # User input is ONLY passed via params dict to :named_params.
+  # Each query location is documented with "# Security:" comment explaining safety.
+  - B608
+
+# Exclude directories
+exclude_dirs:
+  - tests
+  - venv
+  - .venv
+
+# Security Audit Notes:
+# ====================
+#
+# B608 (hardcoded_sql_expressions) - SKIPPED:
+# Files affected:
+#   - app/api/admin_calendar_connections.py
+#   - app/services/tools/analytics_service.py
+#
+# These files build SQL queries using f-strings with {where_clause} interpolation.
+# However, the pattern is SAFE because:
+#   1. where_clause is built from HARDCODED filter strings like "user_id = :user_id"
+#   2. NO user input is ever concatenated into the SQL string
+#   3. All user-provided values go through SQLAlchemy's text() parameter binding
+#   4. Each query has a "# Security:" comment documenting the safety rationale
+#
+# Example safe pattern:
+#   filters = ["1=1"]
+#   if user_id:
+#       filters.append("user_id = :user_id")
+#       params["user_id"] = user_id  # <-- user input goes to params, not SQL string
+#   where_clause = " AND ".join(filters)
+#   query = f"SELECT * FROM table WHERE {where_clause}"
+#   await db.execute(text(query), params)  # <-- SQLAlchemy handles escaping
+#
+# B615 (huggingface_unsafe_download) - INLINE NOSEC:
+# File: app/engines/conversation_engine/ml_classifier.py
+# Rationale: Tokenizer loads from local filesystem path, not HuggingFace Hub.
+# The path is configuration-controlled, not user input.

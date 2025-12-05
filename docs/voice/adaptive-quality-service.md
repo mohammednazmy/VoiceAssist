@@ -1,3 +1,30 @@
+---
+title: Adaptive Quality Service
+slug: voice/adaptive-quality-service
+summary: >-
+  Dynamic voice processing quality management based on network conditions and
+  system load.
+status: stable
+stability: production
+owner: backend
+lastUpdated: "2025-12-04"
+audience:
+  - human
+  - ai-agents
+  - backend
+tags:
+  - voice
+  - quality
+  - network
+  - latency
+category: voice
+ai_summary: >-
+  Backend service for adaptive voice quality control. Manages 5 quality levels
+  (ULTRA to MINIMAL) based on network metrics (RTT, bandwidth, packet loss).
+  Implements latency budgets per component and graceful degradation. See
+  latency-budgets-guide.md for budget details.
+---
+
 # Adaptive Quality Service
 
 **Phase 3 - Voice Mode v4.1**

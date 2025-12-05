@@ -7,7 +7,7 @@ summary: >-
 status: stable
 stability: production
 owner: mixed
-lastUpdated: "2025-12-02"
+lastUpdated: "2025-12-04"
 audience:
   - human
   - agent
@@ -28,7 +28,7 @@ relatedServices:
   - docs-site
 category: overview
 source_of_truth: true
-version: 1.9.0
+version: 2.3.0
 ai_summary: >-
   Last Updated: 2025-12-02 Source of Truth: This document is the authoritative
   reference for component status. --- VoiceAssist is an enterprise-grade,
@@ -38,7 +38,7 @@ ai_summary: >-
 
 # Implementation Status
 
-**Last Updated:** 2025-12-02
+**Last Updated:** 2025-12-04
 **Source of Truth:** This document is the authoritative reference for component status.
 
 ---
@@ -161,6 +161,49 @@ Main user-facing medical AI assistant application.
 | Debug logging               | Complete | Both            | `VOICE_LOG_LEVEL` configuration         |
 
 > **See:** [Voice Mode Pipeline](../VOICE_MODE_PIPELINE.md) for detailed architecture.
+
+**Voice Mode v4 Enhancement Services (Phase 1-2):**
+
+| Service                       | Status   | Phase   | Description                                        |
+| ----------------------------- | -------- | ------- | -------------------------------------------------- |
+| `audio_processing_service`    | Complete | Phase 1 | AEC, AGC, noise suppression pipeline               |
+| `tts_cache_service`           | Complete | Phase 1 | L1 memory + L2 Redis TTS caching                   |
+| `local_whisper_service`       | Complete | Phase 1 | PHI-safe on-premise STT with GPU                   |
+| `language_detection_service`  | Complete | Phase 1 | Code-switching and multi-language detection        |
+| `privacy_aware_stt_router`    | Complete | Phase 1 | PHI-aware routing to cloud/local STT               |
+| `thinking_feedback_service`   | Complete | Phase 1 | Audio cues during LLM processing                   |
+| `voice_fallback_orchestrator` | Complete | Phase 1 | Circuit breakers and graceful degradation          |
+| `parallel_stt_service`        | Complete | Phase 2 | Multi-provider parallel STT with confidence select |
+| `unified_voice_service`       | Complete | Phase 2 | Central v4 orchestrator                            |
+| `adaptive_vad_service`        | Existing | Phase 1 | User-tunable VAD presets                           |
+| `translation_service`         | Existing | Phase 1 | Multi-provider translation with fallback           |
+| `multilingual_rag_service`    | Existing | Phase 1 | Translate-then-retrieve pipeline                   |
+| `unified_memory_service`      | Existing | Phase 2 | Cross-modality conversation memory                 |
+| `lexicon_service`             | Existing | Phase 1 | Medical pronunciation with G2P fallback            |
+
+**Voice Mode v4 Frontend Components (Phase 2):**
+
+| Component              | Status   | Phase   | Description                          |
+| ---------------------- | -------- | ------- | ------------------------------------ |
+| `rtl-support.ts`       | Complete | Phase 2 | RTL utilities for Arabic/Urdu/Hebrew |
+| `MediaGallery.tsx`     | Complete | Phase 2 | Rich media gallery with lightbox     |
+| `ThinkingTonePlayer`   | Complete | Phase 2 | Audio cues during LLM processing     |
+| `PhiDetector.ts`       | Existing | Phase 2 | Client-side PHI detection            |
+| `StreamingTextDisplay` | Existing | Phase 2 | Streaming text animation             |
+
+**Voice Mode v4 Phase 3 (Polish & Rollout):**
+
+| Component                     | Status   | Type      | Description                                 |
+| ----------------------------- | -------- | --------- | ------------------------------------------- |
+| `qos_policies_service.py`     | Complete | Backend   | Latency budgets, priority scheduling, SLOs  |
+| `useVoiceAccessibility.ts`    | Complete | Frontend  | WCAG 2.1 AA, screen readers, haptics        |
+| `VoiceOnboardingTutorial.tsx` | Complete | Frontend  | Interactive 8-step tutorial flow            |
+| `voice-v4-features.spec.ts`   | Complete | E2E Tests | Playwright tests for RTL, media, a11y       |
+| `test_voice_v4_phase2*.py`    | Complete | Unit Test | Backend service unit tests                  |
+| `voice_v4_rollout.py`         | Complete | Script    | Staged rollout (10%→50%→100%) configuration |
+
+**Feature Flags (v4):** 20+ feature flags for phased rollout via `flag_definitions.py`
+**Rollout Script:** `scripts/voice_v4_rollout.py` for staged deployment
 
 #### Admin Panel (`apps/admin-panel/`)
 
@@ -303,18 +346,22 @@ curl https://assist.asimo.io/api/admin/panel/stats
 
 ## Version History
 
-| Date       | Version | Changes                                                                       |
-| ---------- | ------- | ----------------------------------------------------------------------------- |
-| 2025-12-02 | 1.9.0   | Clarify Thinker-Talker as primary voice pipeline; docs automation & AI-Docs   |
-| 2025-12-02 | 1.8.0   | Voice observability: error taxonomy, SLO alerts, telemetry, health endpoint   |
-| 2025-12-01 | 1.7.0   | Web App status updated to stable/production (Phase 3.5 complete)              |
-| 2025-11-28 | 1.6.0   | Voice Mode: Barge-in support, audio overlap prevention, benign error handling |
-| 2025-11-28 | 1.5.0   | Sprint 6 complete: Tools Admin, Troubleshooting, Backups & DR, Feature Flags  |
-| 2025-11-28 | 1.4.0   | Sprint 5 complete: Shared components, E2E tests, 128 total tests              |
-| 2025-11-28 | 1.3.0   | Sprint 4 complete: Analytics & System pages, 36 frontend tests                |
-| 2025-11-27 | 1.2.0   | Sprint 3 complete: Security/PHI admin page deployed at /security              |
-| 2025-11-27 | 1.1.0   | Sprint 1 & 2 complete: Voice Monitor, Integrations admin                      |
-| 2025-11-27 | 1.0.0   | Initial implementation status document                                        |
+| Date       | Version | Changes                                                                            |
+| ---------- | ------- | ---------------------------------------------------------------------------------- |
+| 2025-12-04 | 2.3.0   | Voice Mode v4 GA: All 25 feature flags enabled at 100%, alerts added               |
+| 2025-12-04 | 2.2.0   | Voice Mode v4 Phase 3 complete: QoS, accessibility, onboarding, E2E tests, rollout |
+| 2025-12-04 | 2.1.0   | Voice Mode v4 Phase 2 complete: RTL support, MediaGallery, ThinkingTonePlayer      |
+| 2025-12-04 | 2.0.0   | Voice Mode v4 Phase 1-2: 11 new backend services, unified orchestrator             |
+| 2025-12-02 | 1.9.0   | Clarify Thinker-Talker as primary voice pipeline; docs automation & AI-Docs        |
+| 2025-12-02 | 1.8.0   | Voice observability: error taxonomy, SLO alerts, telemetry, health endpoint        |
+| 2025-12-01 | 1.7.0   | Web App status updated to stable/production (Phase 3.5 complete)                   |
+| 2025-11-28 | 1.6.0   | Voice Mode: Barge-in support, audio overlap prevention, benign error handling      |
+| 2025-11-28 | 1.5.0   | Sprint 6 complete: Tools Admin, Troubleshooting, Backups & DR, Feature Flags       |
+| 2025-11-28 | 1.4.0   | Sprint 5 complete: Shared components, E2E tests, 128 total tests                   |
+| 2025-11-28 | 1.3.0   | Sprint 4 complete: Analytics & System pages, 36 frontend tests                     |
+| 2025-11-27 | 1.2.0   | Sprint 3 complete: Security/PHI admin page deployed at /security                   |
+| 2025-11-27 | 1.1.0   | Sprint 1 & 2 complete: Voice Monitor, Integrations admin                           |
+| 2025-11-27 | 1.0.0   | Initial implementation status document                                             |
 
 ---
 

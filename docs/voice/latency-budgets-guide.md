@@ -9,7 +9,13 @@ audience:
   - ai-agents
 tags: [voice, performance, latency, degradation, v4]
 summary: Guide to latency-aware orchestration and graceful degradation
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: voice
+ai_summary: >-
+  Latency budget configuration for Voice Mode v4.1 targeting sub-700ms E2E.
+  Defines per-stage budgets: audio capture (50ms), STT (200ms), lang detect
+  (50ms), translation (200ms), RAG (300ms), LLM first token (300ms), TTS
+  (150ms). Implements graceful degradation when stages exceed budgets.
 ---
 
 # Latency Budgets Guide

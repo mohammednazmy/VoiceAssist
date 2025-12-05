@@ -61,7 +61,7 @@ pnpm validate:metadata
 pnpm check:links
 
 # 6. Generate agent JSON (if docs changed)
-node scripts/generate-agent-json.mjs
+pnpm generate-agent-json
 
 # 7. Build the static site
 pnpm build
@@ -185,7 +185,7 @@ The agent JSON files provide machine-readable access to documentation.
 
 ```bash
 cd ~/VoiceAssist/apps/docs-site
-node scripts/generate-agent-json.mjs
+pnpm generate-agent-json
 ```
 
 ### 3.2 Verify Output
@@ -435,7 +435,7 @@ pnpm build
 
 ```bash
 # Regenerate agent JSON
-node scripts/generate-agent-json.mjs
+pnpm generate-agent-json
 
 # Rebuild and redeploy
 pnpm build

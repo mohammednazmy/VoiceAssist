@@ -107,3 +107,4 @@ infrastructure/observability/jaeger/data/
 infrastructure/observability/jaeger/key/
 apps/web-app/dev-dist/
 .ai/
+apps/docs-site/public/agent/repo-index.json

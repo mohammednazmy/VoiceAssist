@@ -397,6 +397,54 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 components=["VADSettings"],
             ),
         ),
+        "voice_v4_audio_processing": FeatureFlagDefinition(
+            name="backend.voice_v4_audio_processing",
+            description="[Workstream 2] Audio preprocessing pipeline with AEC, AGC, and noise suppression.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/audio-processing-pipeline",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+            ),
+        ),
+        "voice_v4_local_whisper": FeatureFlagDefinition(
+            name="backend.voice_v4_local_whisper",
+            description="[Workstream 2] Local Whisper STT for PHI-safe on-premise transcription.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="high",
+                owner="security-team",
+                docs_url="https://assistdocs.asimo.io/voice/local-whisper-stt",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                other_flags=["backend.voice_v4_phi_routing"],
+            ),
+        ),
+        "voice_v4_language_detection": FeatureFlagDefinition(
+            name="backend.voice_v4_language_detection",
+            description="[Workstream 2] Real-time language detection and code-switching support.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/language-detection",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                other_flags=["backend.voice_v4_multilingual_rag"],
+            ),
+        ),
         #
         # Workstream 3: Performance & Orchestration
         # ---------------------------------------------------------------------
@@ -441,6 +489,35 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 docs_url="https://assistdocs.asimo.io/voice/unified-memory",
             ),
             dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        "voice_v4_tts_cache": FeatureFlagDefinition(
+            name="backend.voice_v4_tts_cache",
+            description="[Workstream 3] Multi-level TTS caching with L1 memory and L2 Redis.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/tts-cache-service",
+            ),
+            dependencies=FlagDependencies(services=["api-gateway"]),
+        ),
+        "voice_v4_fallback_orchestration": FeatureFlagDefinition(
+            name="backend.voice_v4_fallback_orchestration",
+            description="[Workstream 3] Automatic failover with circuit breakers for voice providers.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="high",
+                docs_url="https://assistdocs.asimo.io/voice/fallback-orchestration",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                other_flags=["backend.voice_v4_latency_budgets"],
+            ),
         ),
         #
         # Workstream 4: Internationalization
@@ -508,6 +585,58 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
             dependencies=FlagDependencies(
                 services=["api-gateway", "web-app"],
                 other_flags=["backend.voice_v4_latency_budgets"],
+            ),
+        ),
+        "voice_v4_parallel_stt": FeatureFlagDefinition(
+            name="backend.voice_v4_parallel_stt",
+            description="[Phase 2] Parallel multi-provider STT with confidence-based selection.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/parallel-stt",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                other_flags=["backend.voice_v4_language_detection"],
+            ),
+        ),
+        "voice_v4_unified_orchestration": FeatureFlagDefinition(
+            name="backend.voice_v4_unified_orchestration",
+            description="[Phase 2] Unified voice pipeline orchestrator for v4 services.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="high",
+                docs_url="https://assistdocs.asimo.io/voice/unified-orchestration",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                other_flags=[
+                    "backend.voice_v4_audio_processing",
+                    "backend.voice_v4_phi_routing",
+                    "backend.voice_v4_tts_cache",
+                ],
+            ),
+        ),
+        "voice_v4_code_switching": FeatureFlagDefinition(
+            name="backend.voice_v4_code_switching",
+            description="[Phase 2] Mid-sentence language switching detection and handling.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/code-switching",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                other_flags=["backend.voice_v4_language_detection"],
             ),
         ),
     },

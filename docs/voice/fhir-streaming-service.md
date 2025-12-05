@@ -1,3 +1,31 @@
+---
+title: FHIR Streaming Service
+slug: voice/fhir-streaming-service
+summary: >-
+  Real-time FHIR data streaming for clinical context enrichment in voice
+  interactions.
+status: stable
+stability: production
+owner: backend
+lastUpdated: "2025-12-04"
+audience:
+  - human
+  - ai-agents
+  - backend
+tags:
+  - voice
+  - fhir
+  - clinical
+  - streaming
+  - ehr
+category: voice
+ai_summary: >-
+  FHIR subscription service for real-time clinical data streaming. Supports
+  WebSocket subscriptions (FHIR R5) and polling fallback. Injects patient
+  vitals/labs into Thinker context. Integrates with PHI routing via
+  phi-aware-stt-routing.md.
+---
+
 # FHIR Streaming Service
 
 **Phase 3 - Voice Mode v4.1**

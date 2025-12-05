@@ -264,7 +264,7 @@ Check `/agent/health.json` for real-time metrics. Current status:
 
 - [Feature Flags Overview](./feature-flags/README.md)
 - [System Settings vs Feature Flags](./system-settings-vs-flags.md)
-- [Admin Panel Integration Guide](/admin/ADMIN_PANEL_INTEGRATION_GUIDE.md)
+- [Admin Panel Integration Guide](../admin/ADMIN_PANEL_INTEGRATION_GUIDE.md)
 
 ---
 

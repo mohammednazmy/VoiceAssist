@@ -9,7 +9,13 @@ audience:
   - ai-agents
 tags: [voice, i18n, rtl, arabic, urdu, hebrew, accessibility, v4]
 summary: Guide to right-to-left language support in Voice Mode
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: voice
+ai_summary: >-
+  RTL support implementation for Voice Mode v4.1. Covers Arabic, Urdu, Hebrew,
+  Persian, and Pashto. Features auto dir="rtl", layout mirroring, mixed content
+  handling, and RTL TTS integration. See streaming-text-display.md for text
+  rendering component.
 ---
 
 # RTL Support Guide
