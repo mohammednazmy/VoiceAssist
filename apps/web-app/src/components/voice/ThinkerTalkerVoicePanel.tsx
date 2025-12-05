@@ -15,7 +15,7 @@
  * Phase 11: Compact Voice Mode UI
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useThinkerTalkerVoiceMode } from "../../hooks/useThinkerTalkerVoiceMode";
 import type {
   TTToolCall,
@@ -101,6 +101,20 @@ export function ThinkerTalkerVoicePanel({
     reconnectCount: voiceMode.metrics.reconnectCount,
     sessionStartedAt: voiceMode.metrics.sessionStartedAt,
   };
+
+  // Auto-connect when panel opens (single-click voice activation)
+  const hasAutoConnected = useRef(false);
+  useEffect(() => {
+    // Only auto-connect once when panel mounts
+    if (
+      !hasAutoConnected.current &&
+      !voiceMode.isConnected &&
+      !voiceMode.isConnecting
+    ) {
+      hasAutoConnected.current = true;
+      voiceMode.connect();
+    }
+  }, [voiceMode.isConnected, voiceMode.isConnecting, voiceMode.connect]);
 
   // Handle close - disconnect if connected
   const handleClose = useCallback(() => {
