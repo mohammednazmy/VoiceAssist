@@ -59,6 +59,7 @@ The VoiceAssist documentation site exposes machine-readable JSON endpoints desig
 | `/agent/repo-index.json`           | GET    | Repository structure index for codebase navigation |
 | `/agent/repo/manifest.json`        | GET    | Manifest of exported source files                  |
 | `/agent/repo/files/{encoded}.json` | GET    | Source file content (see encoding below)           |
+| `/agent/doc-code-map.json`         | GET    | Bidirectional doc ↔ code crosswalk mapping         |
 | `/search-index.json`               | GET    | Full-text search index (Fuse.js format)            |
 | `/sitemap.xml`                     | GET    | XML sitemap for crawlers                           |
 
@@ -807,6 +808,85 @@ Returns the content of a specific file.
 - Maximum file size: 100KB
 - See `/agent/repo/manifest.json` for the list of available files
 
+### GET /agent/doc-code-map.json
+
+Returns a bidirectional mapping between documentation and repository files, enabling AI agents to:
+
+- Navigate from a doc slug to related implementation files
+- Find relevant docs when examining a code file
+
+#### Response Structure
+
+```json
+{
+  "generated_at": "2025-12-05T04:15:45.414Z",
+  "description": "Bidirectional mapping between documentation and repository files",
+  "usage": {
+    "from_doc": "Use by_doc_slug[slug].relatedPaths to find implementation files",
+    "from_code": "Use by_path[path].docs to find documentation for a code file",
+    "fetch_code": "Encode path (/ → __) and fetch /agent/repo/files/{encoded}.json",
+    "fetch_doc": "Use slug to look up full doc in /agent/docs.json"
+  },
+  "by_doc_slug": {
+    "voice/pipeline": {
+      "slug": "voice/pipeline",
+      "path": "VOICE_MODE_PIPELINE.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": ["services/api-gateway/app/api/voice.py", "apps/web-app/src/components/voice/VoiceModePanel.tsx"],
+      "title": "Voice Mode Pipeline",
+      "category": "voice",
+      "ai_summary": "..."
+    }
+  },
+  "by_path": {
+    "services/api-gateway/app/api/voice.py": {
+      "path": "services/api-gateway/app/api/voice.py",
+      "docs": ["voice/pipeline"],
+      "component": "backend/api-gateway"
+    }
+  },
+  "meta": {
+    "stats": {
+      "docs_with_links": 12,
+      "total_links": 40,
+      "unique_paths": 25,
+      "missing_paths": 1
+    },
+    "missing_paths": [{ "docSlug": "voice/pipeline", "path": "nonexistent/file.py" }]
+  }
+}
+```
+
+#### Schema Fields
+
+| Field           | Type   | Description                                          |
+| --------------- | ------ | ---------------------------------------------------- |
+| `by_doc_slug`   | object | Map from doc slug to doc metadata with relatedPaths  |
+| `by_path`       | object | Reverse map from code path to docs that reference it |
+| `meta.stats`    | object | Counts: docs_with_links, total_links, unique_paths   |
+| `missing_paths` | array  | Paths in relatedPaths not found in repo-index        |
+
+#### Example Usage
+
+**From doc to code:**
+
+```bash
+# Get code files related to voice/pipeline doc
+curl https://assistdocs.asimo.io/agent/doc-code-map.json | \
+  jq '.by_doc_slug["voice/pipeline"].relatedPaths'
+
+# Fetch one of those code files
+curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__api__voice.py.json
+```
+
+**From code to docs:**
+
+```bash
+# Find docs that reference a specific file
+curl https://assistdocs.asimo.io/agent/doc-code-map.json | \
+  jq '.by_path["services/api-gateway/app/api/voice.py"].docs'
+```
+
 ### Related Documentation
 
 - [Repo Navigation for Agents](./REPO_NAVIGATION_FOR_AGENTS.md) - How to navigate the codebase as an AI agent
@@ -826,6 +906,7 @@ Test the endpoints directly:
 - **Schema:** https://assistdocs.asimo.io/agent/schema.json
 - **Repo Index:** https://assistdocs.asimo.io/agent/repo-index.json
 - **Repo Manifest:** https://assistdocs.asimo.io/agent/repo/manifest.json
+- **Doc-Code Map:** https://assistdocs.asimo.io/agent/doc-code-map.json
 - **Search Index:** https://assistdocs.asimo.io/search-index.json
 - **Sitemap:** https://assistdocs.asimo.io/sitemap.xml
 
@@ -843,6 +924,7 @@ Test the endpoints directly:
 
 | Version | Date       | Changes                                                                      |
 | ------- | ---------- | ---------------------------------------------------------------------------- |
+| 1.6.0   | 2025-12-05 | Added doc-code-map.json endpoint for bidirectional doc ↔ code crosswalk      |
 | 1.5.0   | 2025-12-04 | Added repository endpoints: repo-index, repo/manifest, repo/files            |
 | 1.4.0   | 2025-12-04 | Added docs-summary, health, code-examples endpoints; ai_summary in docs.json |
 | 1.3.0   | 2025-12-03 | Added AI-Docs semantic search section                                        |
