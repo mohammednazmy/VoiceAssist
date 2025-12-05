@@ -178,9 +178,9 @@ English transliterated Quranic terms falling back to raw G2P when espeak-ng unav
 | Test suite fixes          | v4.1.1  | ✅ Released | Platform Team | PR #159  |
 | Bandit B615 fixes         | v4.1.1  | ✅ Released | Backend Team  | PR #161  |
 | Lexicon Phase 1           | v4.1.1  | ✅ Released | Platform Team | PR #162  |
-| Lexicon Phase 2 (5 langs) | v4.1.2  | In Progress | Platform Team | PR #163  |
-| G2P prototype             | v4.1.2  | In Progress | Backend Team  | PR #163  |
-| Getting Started guide     | v4.1.2  | In Progress | Platform Team | PR #163  |
+| Lexicon Phase 2 (5 langs) | v4.1.2  | ✅ Released | Platform Team | PR #163  |
+| G2P prototype             | v4.1.2  | ✅ Released | Backend Team  | PR #165  |
+| Getting Started guide     | v4.1.2  | ✅ Released | Platform Team | PR #163  |
 | G2P full integration      | v4.2.0  | Planned     | Backend Team  | -        |
 | Feature enhancements      | v4.2.0  | Planned     | Full Team     | -        |
 | Community contributions   | Ongoing | Open        | Community     | -        |
@@ -194,7 +194,7 @@ English transliterated Quranic terms falling back to raw G2P when espeak-ng unav
 
 **Release:** [v4.1.1](https://github.com/mohammednazmy/VoiceAssist/releases/tag/v4.1.1)
 
-### v4.1.2 Scope (Target: Dec 2025)
+### v4.1.2 Scope (Released Dec 4, 2025)
 
 **Lexicon Expansion:**
 
@@ -208,14 +208,44 @@ English transliterated Quranic terms falling back to raw G2P when espeak-ng unav
 - [x] EnhancedG2PService prototype with CMUdict+gruut+espeak fallback
 - [x] ARPABET-to-IPA conversion (100+ mappings)
 - [x] Medical pronunciation cache (50+ terms)
-- [ ] Add cmudict and gruut to requirements
-- [ ] Integration tests for G2P quality
+- [x] Add cmudict and gruut to requirements (PR #165)
+- [x] Integration tests for G2P quality (34 tests, PR #165)
 
 **Documentation:**
 
 - [x] Getting Started guide in What's New
 - [x] Screenshot placeholders and guidelines
 - [x] VAD preset terminology alignment (Sensitive/Balanced/Relaxed)
+
+**Release:** [v4.1.2](https://github.com/mohammednazmy/VoiceAssist/releases/tag/v4.1.2)
+
+### v4.2.0 Scope (Target: Q1 2026)
+
+**G2P Full Integration:**
+
+- [ ] Integrate EnhancedG2PService with lexicon lookup pipeline
+- [ ] Add G2P caching layer with Redis
+- [ ] Performance optimization for batch processing
+- [ ] Add espeak-ng to Docker deployment
+
+**Feature Enhancements:**
+
+- [ ] Barge-in improvements (faster detection, smoother crossfade)
+- [ ] Speaker diarization expansion (8 speakers, labeling UI)
+- [ ] Adaptive quality with bandwidth prediction
+- [ ] FHIR SMART on FHIR authentication
+
+**Lexicon Phase 3:**
+
+- [ ] French medical lexicon (100+ terms)
+- [ ] German medical lexicon (100+ terms)
+- [ ] Urdu/Hindi Islamic vocabulary (100+ terms)
+
+**Technical Debt:**
+
+- [ ] Migrate deprecated datetime.utcnow() calls
+- [ ] Update Pydantic v2 config deprecations
+- [ ] Add pytest markers for external service tests
 
 ---
 
@@ -229,6 +259,6 @@ English transliterated Quranic terms falling back to raw G2P when espeak-ng unav
 ---
 
 **Created:** December 4, 2024
-**Updated:** December 5, 2025
+**Updated:** December 4, 2025
 **Status:** Active
 **Owner:** Platform Team
