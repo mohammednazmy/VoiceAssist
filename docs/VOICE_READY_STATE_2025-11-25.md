@@ -17,6 +17,10 @@ tags:
   - state
   - "2025"
 category: reference
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/api/voice.py"
+  - "apps/web-app/src/components/voice/VoiceModePanel.tsx"
 ai_summary: >-
   The voice pipeline is now stable on main with all tests passing. This document
   serves as context for future AI assistant sessions. - PR #47: Unified Voice

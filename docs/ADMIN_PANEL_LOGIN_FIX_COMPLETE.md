@@ -16,6 +16,10 @@ tags:
   - login
   - fix
 category: operations
+component: "frontend/admin-panel"
+relatedPaths:
+  - "apps/admin-panel/src/pages/Login.tsx"
+  - "services/api-gateway/app/api/auth.py"
 ai_summary: >-
   Date: 2025-11-22 Issue: Admin panel login at https://admin.asimo.io was
   failing with "Unexpected token '<', '<!DOCTYPE ' is not valid JSON" Status: ✅

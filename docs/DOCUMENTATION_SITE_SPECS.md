@@ -19,6 +19,11 @@ tags:
   - automation
   - ai
 category: reference
+component: "frontend/docs-site"
+relatedPaths:
+  - "apps/docs-site/src/app/layout.tsx"
+  - "apps/docs-site/src/lib/docs.ts"
+  - "apps/docs-site/scripts/generate-agent-json.js"
 ai_summary: >-
   - Framework: Next.js 14 (app router) with static export - Styling: Tailwind
   CSS + shadcn/ui components - Content: MDX for markdown with React components -

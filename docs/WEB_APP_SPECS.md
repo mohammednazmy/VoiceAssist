@@ -16,6 +16,10 @@ tags:
   - app
   - specs
 category: reference
+component: "frontend/web-app"
+relatedPaths:
+  - "apps/web-app/src/App.tsx"
+  - "apps/web-app/src/components"
 ai_summary: >-
   The VoiceAssist web application provides browser-based access to the medical
   AI assistant for clinicians, supporting both text and voice interactions with

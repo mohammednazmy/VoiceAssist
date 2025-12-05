@@ -16,6 +16,10 @@ tags:
   - completion
   - plan
 category: planning
+component: "frontend/web-app"
+relatedPaths:
+  - "apps/web-app/src/App.tsx"
+  - "apps/web-app/src/components"
 ai_summary: >-
   This document outlines the comprehensive implementation plan for completing
   the VoiceAssist frontend MVP. Based on thorough codebase analysis, the

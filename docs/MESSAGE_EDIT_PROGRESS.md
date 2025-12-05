@@ -14,6 +14,9 @@ tags:
   - edit
   - progress
 category: reference
+component: "frontend/web-app"
+relatedPaths:
+  - "apps/web-app/src/components/chat/MessageBubble.tsx"
 ai_summary: >-
   Date: 2025-11-23 Status: Phases 1-2 Complete, Phase 3-5 Pending Next Session:
   Wire up components and complete testing --- File:

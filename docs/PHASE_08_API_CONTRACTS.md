@@ -16,6 +16,9 @@ tags:
   - api
   - contracts
 category: api
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/api"
 ai_summary: >-
   This document defines the API contracts between frontend and backend for Phase
   8 features. Last Updated: 2025-11-24 - Endpoint: GET

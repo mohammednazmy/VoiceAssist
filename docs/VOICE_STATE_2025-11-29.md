@@ -20,6 +20,10 @@ tags:
   - state
   - "2025"
 category: reference
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/api/voice.py"
+  - "apps/web-app/src/components/voice/VoiceModePanel.tsx"
 ai_summary: >-
   Voice mode has been significantly improved with barge-in support, audio
   overlap prevention, and graceful error handling. The system now properly

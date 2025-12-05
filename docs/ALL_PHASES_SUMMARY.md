@@ -16,6 +16,10 @@ tags:
   - phases
   - summary
 category: planning
+component: "platform/planning"
+relatedPaths:
+  - "docs/phases"
+  - "docs/ROADMAP.md"
 ai_summary: >-
   This is the V2 16-phase implementation plan for VoiceAssist. Each phase is a
   focused unit of work designed for completion in one session (4-10 hours). For

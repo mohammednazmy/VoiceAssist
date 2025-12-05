@@ -9,6 +9,9 @@ lastUpdated: "2025-12-04"
 audience: ["developers", "docs", "ai-agents"]
 category: planning
 tags: ["roadmap", "improvements", "documentation"]
+component: "docs/planning"
+relatedPaths:
+  - "docs"
 ---
 
 # Next Phase Improvements

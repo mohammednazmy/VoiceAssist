@@ -14,6 +14,12 @@ audience:
 tags:
   - architecture
 category: architecture
+component: "platform/architecture"
+relatedPaths:
+  - "docker-compose.yml"
+  - "services/api-gateway/app/main.py"
+  - "apps/web-app/src/App.tsx"
+  - "apps/admin-panel/src/App.tsx"
 ai_summary: >-
   VoiceAssist V2 is an enterprise-grade, HIPAA-compliant, multi-user medical AI
   assistant designed to support hundreds of concurrent users with high

@@ -15,6 +15,9 @@ tags:
   - testing
   - guide
 category: testing
+component: "frontend/web-app"
+relatedPaths:
+  - "apps/web-app/src/components/folders"
 ai_summary: >-
   Date: 2024-11-24 Feature: Conversation Folders Organization Environment:
   dev.asimo.io This guide provides comprehensive manual testing steps for the

@@ -15,6 +15,10 @@ tags:
   - medical
   - features
 category: reference
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/services/rag_service.py"
+  - "services/api-gateway/app/services/medical_kb_service.py"
 ai_summary: >-
   VoiceAssist includes specialized medical capabilities designed for healthcare
   professionals, with a focus on evidence-based information retrieval, clinical

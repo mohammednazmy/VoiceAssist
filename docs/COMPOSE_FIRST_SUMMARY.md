@@ -14,6 +14,10 @@ tags:
   - first
   - summary
 category: reference
+component: "infra"
+relatedPaths:
+  - "docker-compose.yml"
+  - "docs/DEVELOPMENT_PHASES_V2.md"
 ai_summary: >-
   1. Updated DEVELOPMENT_PHASES_V2.md - Restructured for Compose-first approach
   - Phases 0-10 use Docker Compose exclusively - Phases 11-14 handle Kubernetes

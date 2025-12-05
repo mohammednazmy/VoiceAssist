@@ -14,6 +14,9 @@ tags:
   - completion
   - report
 category: planning
+component: "platform/planning"
+relatedPaths:
+  - "docs/phases"
 ai_summary: >-
   Project: VoiceAssist V2 - Enterprise Medical AI Assistant Phase: 6 - Nextcloud
   App Integration & Unified Services (MVP) Started: 2025-11-21 05:30 Completed:

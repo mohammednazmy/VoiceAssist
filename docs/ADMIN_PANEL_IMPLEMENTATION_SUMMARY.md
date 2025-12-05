@@ -16,6 +16,11 @@ tags:
   - implementation
   - summary
 category: operations
+component: "frontend/admin-panel"
+relatedPaths:
+  - "apps/admin-panel/src/App.tsx"
+  - "apps/admin-panel/src/pages/Login.tsx"
+  - "services/api-gateway/app/api/admin.py"
 ai_summary: >-
   Project: VoiceAssist Admin Panel Enhancement Date: 2025-11-22 Status: ✅
   COMPLETED Branch: fix/system-review-and-testing Commit: 3654fa5 --- Build a

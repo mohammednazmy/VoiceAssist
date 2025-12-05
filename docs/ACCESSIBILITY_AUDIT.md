@@ -13,6 +13,10 @@ tags:
   - accessibility
   - audit
 category: reference
+component: "frontend/web-app"
+relatedPaths:
+  - "apps/web-app/src/App.tsx"
+  - "apps/web-app/src/components"
 ai_summary: >-
   Date: 2025-11-23 Target: WCAG 2.1 Level AA Compliance Status: In Progress This
   document tracks accessibility improvements for the VoiceAssist web application

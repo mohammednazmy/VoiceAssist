@@ -14,6 +14,9 @@ tags:
   - rpo
   - documentation
 category: reference
+component: "infra/ha-dr"
+relatedPaths:
+  - "ha-dr"
 ai_summary: >-
   Document Version: 1.0 Last Updated: 2025-11-21 Status: Production-Ready Phase:
   Phase 12 - High Availability & Disaster Recovery --- This document defines the

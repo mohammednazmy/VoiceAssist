@@ -13,6 +13,9 @@ tags:
   - phase
   - template
 category: planning
+component: "platform/planning"
+relatedPaths:
+  - "docs/phases"
 ai_summary: >-
   [One paragraph describing what this phase accomplishes] [X-Y] hours - Phase
   [N-1] completed - [Specific service/dependency requirements] - [ ] Previous

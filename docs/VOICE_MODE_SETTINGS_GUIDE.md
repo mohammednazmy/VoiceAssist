@@ -22,6 +22,10 @@ tags:
   - offline
   - calibration
 category: operations
+component: "frontend/web-app"
+relatedPaths:
+  - "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+  - "apps/web-app/src/components/voice/VoiceSettings.tsx"
 ai_summary: >-
   This guide explains how to use and configure Voice Mode settings in
   VoiceAssist. Voice Mode provides real-time voice conversations with the AI

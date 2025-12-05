@@ -13,6 +13,10 @@ tags:
   - ansible
   - guide
 category: operations
+component: "infra/ansible"
+relatedPaths:
+  - "infrastructure/ansible/playbooks"
+  - "infrastructure/ansible/roles"
 ai_summary: >-
   1. Overview 2. Playbook Structure 3. Role Documentation 4. Inventory
   Management 5. Variables and Secrets 6. Running Playbooks 7. HIPAA Compliance

@@ -15,6 +15,11 @@ tags:
   - development
   - phases
 category: planning
+component: "platform/planning"
+relatedPaths:
+  - "docs/phases"
+  - "docs/ROADMAP.md"
+  - "docker-compose.yml"
 ai_summary: >-
   VoiceAssist has been redesigned as an enterprise-grade, HIPAA-compliant,
   multi-user medical AI assistant with microservices architecture, Kubernetes

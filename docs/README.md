@@ -12,6 +12,10 @@ audience:
 tags:
   - readme
 category: reference
+component: "docs/overview"
+relatedPaths:
+  - "docs/ai/AGENT_ONBOARDING.md"
+  - "docs/overview/IMPLEMENTATION_STATUS.md"
 ai_summary: >-
   Last Updated: 2025-11-27 Project Status: ✅ All 15 Phases Complete - Production
   Ready (100%) --- If you're an AI coding assistant (Claude, GPT, Copilot,

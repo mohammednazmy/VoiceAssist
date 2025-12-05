@@ -15,6 +15,10 @@ tags:
   - panel
   - deployment
 category: deployment
+component: "frontend/admin-panel"
+relatedPaths:
+  - "apps/admin-panel/vite.config.ts"
+  - "apps/admin-panel/package.json"
 ai_summary: >-
   Date: 2025-11-22 Server: asimo.io (Ubuntu 24.04.3 LTS) Domain:
   https://admin.asimo.io Status: ✅ DEPLOYED & OPERATIONAL --- The VoiceAssist

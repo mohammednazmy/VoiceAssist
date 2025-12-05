@@ -13,6 +13,9 @@ tags:
   - development
   - phases
 category: planning
+component: "platform/planning"
+relatedPaths:
+  - "docs/DEVELOPMENT_PHASES_V2.md"
 ai_summary: >-
   > ⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2 > This describes the original
   20-phase plan. > For the current architecture and phases, see: > > -

@@ -9,6 +9,9 @@ audience:
 category: reference
 owner: docs
 summary: Writing standards for VoiceAssist documentation
+component: "docs/standards"
+relatedPaths:
+  - "docs/DOCUMENTATION_METADATA_STANDARD.md"
 ai_summary: >-
   This guide establishes consistent writing standards for all VoiceAssist
   documentation, ensuring clarity for both human readers and AI agents. Every

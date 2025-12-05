@@ -14,6 +14,9 @@ tags:
   - improvement
   - summary
 category: reference
+component: "platform/planning"
+relatedPaths:
+  - "docs/CONTINUOUS_IMPROVEMENT_PLAN.md"
 ai_summary: >-
   Date: 2025-11-21 Branch: continuous-improvement-plan Status: Ready for Review
   --- This document summarizes the continuous improvement planning effort

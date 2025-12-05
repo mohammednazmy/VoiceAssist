@@ -14,6 +14,9 @@ tags:
   - completion
   - summary
 category: reference
+component: "docs/summary"
+relatedPaths:
+  - "docs"
 ai_summary: >-
   Date: November 19, 2024 Task: Complete VoiceAssist V2 planning documentation
   with Compose-first, Kubernetes-later approach and separate Nextcloud stack

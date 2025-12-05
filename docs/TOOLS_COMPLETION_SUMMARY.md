@@ -14,6 +14,9 @@ tags:
   - completion
   - summary
 category: reference
+component: "docs/summary"
+relatedPaths:
+  - "docs"
 ai_summary: >-
   Date: 2025-11-20 Session: Tools Integration Pass (Continued) Status: ✅
   COMPLETE Duration: Comprehensive enhancement pass --- Successfully completed

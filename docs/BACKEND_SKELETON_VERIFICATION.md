@@ -14,6 +14,10 @@ tags:
   - skeleton
   - verification
 category: reference
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/main.py"
+  - "services/api-gateway/app/api"
 ai_summary: >-
   Date: 2025-11-20 Task: Polish and verify new backend code skeleton Status: ✅
   COMPLETE Session Type: Consistency verification and enhancement ---

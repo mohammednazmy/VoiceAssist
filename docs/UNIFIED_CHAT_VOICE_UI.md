@@ -10,6 +10,10 @@ lastUpdated: "2025-12-04"
 audience: ["developers", "frontend", "ai-agents"]
 tags: ["voice", "ui", "chat", "frontend", "unified"]
 category: planning
+component: "frontend/web-app"
+relatedPaths:
+  - "apps/web-app/src/components/Chat.tsx"
+  - "apps/web-app/src/components/voice/VoiceModePanel.tsx"
 ---
 
 # Unified Chat/Voice UI Implementation

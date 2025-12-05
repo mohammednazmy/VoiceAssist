@@ -14,6 +14,9 @@ tags:
   - apps
   - design
 category: reference
+component: "integration/nextcloud"
+relatedPaths:
+  - "nextcloud-apps"
 ai_summary: >-
   Status: In Progress (Phase 6 foundation started) Scope: Define how VoiceAssist
   integrates with Nextcloud via dedicated apps. Phase 6 introduces three

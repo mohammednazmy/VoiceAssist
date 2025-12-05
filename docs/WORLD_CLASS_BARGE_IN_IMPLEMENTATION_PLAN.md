@@ -9,6 +9,10 @@ lastUpdated: "2025-12-04"
 audience: ["developers", "ai-agents"]
 tags: ["voice", "barge-in", "vad", "real-time"]
 category: planning
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/api/voice.py"
+  - "apps/web-app/src/components/voice/VoiceModePanel.tsx"
 ---
 
 # World-Class Voice Barge-In Implementation Plan

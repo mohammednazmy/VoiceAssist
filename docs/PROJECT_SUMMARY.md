@@ -15,6 +15,9 @@ tags:
   - project
   - summary
 category: reference
+component: "docs/overview"
+relatedPaths:
+  - "docs/START_HERE.md"
 ai_summary: >-
   VoiceAssist is a comprehensive AI assistant system designed specifically for
   medical professionals. It combines voice and text interfaces with specialized

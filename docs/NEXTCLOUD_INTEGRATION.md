@@ -15,6 +15,9 @@ tags:
   - nextcloud
   - integration
 category: reference
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/services/nextcloud_service.py"
 ai_summary: >-
   VoiceAssist integrates with Nextcloud for identity management, file storage,
   calendar, and email functionality. Current Status (Phase 6): VoiceAssist now

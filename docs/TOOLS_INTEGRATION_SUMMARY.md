@@ -14,6 +14,9 @@ tags:
   - integration
   - summary
 category: reference
+component: "backend/api-gateway"
+relatedPaths:
+  - "docs/TOOLS_AND_INTEGRATIONS.md"
 ai_summary: >-
   Date: 2025-11-20 Task: FINAL deep integration pass for tools and integrations
   Status: COMPLETE Duration: ~3 hours of comprehensive work --- Successfully

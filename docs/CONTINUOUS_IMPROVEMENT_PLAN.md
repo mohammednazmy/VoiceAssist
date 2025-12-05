@@ -19,6 +19,9 @@ tags:
   - future
 category: planning
 version: 1.0.0
+component: "platform/planning"
+relatedPaths:
+  - "docs/ROADMAP.md"
 ai_summary: >-
   Version: 1.0 Date: 2025-11-27 Status: Active - Post Phase 15 Project:
   VoiceAssist Enterprise Medical AI Assistant --- This document outlines the

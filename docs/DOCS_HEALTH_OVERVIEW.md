@@ -22,6 +22,10 @@ category: reference
 relatedServices:
   - docs-site
 version: 1.0.0
+component: "frontend/docs-site"
+relatedPaths:
+  - "apps/docs-site/scripts/validate-frontmatter.mjs"
+  - "apps/docs-site/scripts/generate-agent-json.js"
 ai_summary: >-
   Single-page overview of VoiceAssist documentation health. Key metrics available
   at /agent/health.json: total docs, ai_summary coverage, freshness scores by

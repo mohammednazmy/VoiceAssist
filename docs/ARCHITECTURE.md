@@ -12,6 +12,10 @@ audience:
 tags:
   - architecture
 category: architecture
+component: "platform/architecture"
+relatedPaths:
+  - "docker-compose.yml"
+  - "services/api-gateway/app/main.py"
 ai_summary: >-
   > ⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2 > This describes the original
   20-phase plan. > For the current architecture and phases, see: > > -

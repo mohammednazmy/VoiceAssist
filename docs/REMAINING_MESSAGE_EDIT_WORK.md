@@ -15,6 +15,11 @@ tags:
   - edit
   - work
 category: reference
+component: "frontend/web-app"
+relatedPaths:
+  - "packages/api-client/src/index.ts"
+  - "apps/web-app/src/components/chat/MessageBubble.tsx"
+  - "apps/web-app/src/components/chat/MessageActionMenu.tsx"
 ai_summary: >-
   Created: 2025-11-23 Status: In Progress (API + Menu Complete, UI + Tests
   Pending) Priority: High (Phase 2 Advanced Features) --- File:

@@ -16,6 +16,10 @@ tags:
   - login
   - fix
 category: operations
+component: "frontend/admin-panel"
+relatedPaths:
+  - "apps/admin-panel/src/pages/Login.tsx"
+  - "services/api-gateway/app/api/auth.py"
 ai_summary: >-
   Date: 2025-11-22 Issue: Login failed with CORS errors and Firebase errors
   Status: ✅ RESOLVED --- When attempting to log in to https://admin.asimo.io,

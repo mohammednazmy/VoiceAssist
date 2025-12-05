@@ -15,6 +15,10 @@ tags:
   - performance
   - benchmarks
 category: reference
+component: "platform/testing"
+relatedPaths:
+  - "tests/performance"
+  - "docs/LOAD_TESTING_GUIDE.md"
 ai_summary: >-
   This document provides comprehensive performance benchmarks for VoiceAssist
   Phase 10, including baseline metrics, load test results, and performance

@@ -20,11 +20,11 @@ tags:
   - enhancement
   - emotion
   - dictation
-  - medical
-  - backchanneling
-  - memory
-  - analytics
-category: reference
+category: voice
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/api/voice.py"
+  - "apps/web-app/src/components/voice/VoiceModePanel.tsx"
 relatedServices:
   - api-gateway
   - web-app

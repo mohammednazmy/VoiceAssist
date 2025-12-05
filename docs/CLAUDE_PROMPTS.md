@@ -19,6 +19,10 @@ tags:
   - templates
 category: ai
 version: 1.0.0
+component: "platform/ai-agents"
+relatedPaths:
+  - "docs/CLAUDE_EXECUTION_GUIDE.md"
+  - "docs/ai/AGENT_ONBOARDING.md"
 ai_summary: >-
   This document contains ready-to-use prompts for different types of work on
   VoiceAssist V2. Copy and paste these prompts into a Claude Code session, fill

@@ -14,6 +14,9 @@ tags:
   - improvements
   - phase
 category: planning
+component: "platform/planning"
+relatedPaths:
+  - "docs/phases"
 ai_summary: >-
   Date: 2025-11-21 Scope: VoiceAssist V2 - Phases 0 through 8 Status: Design
   Phase This document outlines key integration improvements to enhance cohesion,

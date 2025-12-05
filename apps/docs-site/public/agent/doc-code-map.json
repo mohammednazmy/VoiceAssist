@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-12-05T04:46:58.051Z",
+  "generated_at": "2025-12-05T05:05:40.368Z",
   "description": "Bidirectional mapping between documentation and repository files for AI agent navigation",
   "usage": {
     "from_doc": "Use by_doc_slug[slug].relatedPaths to find implementation files for a doc",
@@ -8,18 +8,26 @@
     "fetch_doc": "Use slug to look up full doc in /agent/docs.json"
   },
   "by_doc_slug": {
+    "style-guide": {
+      "slug": "style-guide",
+      "path": "STYLE_GUIDE.md",
+      "component": "docs/standards",
+      "relatedPaths": ["docs/DOCUMENTATION_METADATA_STANDARD.md"],
+      "title": "VoiceAssist Documentation Style Guide",
+      "category": "reference",
+      "ai_summary": "This guide establishes consistent writing standards for all VoiceAssist documentation, ensuring clarity for both human readers and AI agents. Every markdown document MUST include frontmatter: --- title: Document Title (required) status: draft|experimental|stable|deprecated (required) lastUpdated:..."
+    },
     "readme": {
       "slug": "readme",
-      "path": "admin-guide/feature-flags/README.md",
-      "component": "backend/api-gateway",
+      "path": "README.md",
+      "component": "docs/overview",
       "relatedPaths": [
-        "services/api-gateway/app/services/feature_flag_service.py",
-        "services/api-gateway/app/api/admin_feature_flags.py",
-        "packages/types/src/featureFlags.ts"
+        "docs/ai/AGENT_ONBOARDING.md",
+        "docs/overview/IMPLEMENTATION_STATUS.md"
       ],
-      "title": "Feature Flags Overview",
-      "category": "feature-flags",
-      "ai_summary": "Feature flags enable runtime feature toggling without deployments. Use category.feature_name pattern (e.g., ui.dark_mode, backend.rag_strategy). Flags stored in PostgreSQL, cached in Redis (5min TTL)."
+      "title": "Readme",
+      "category": "reference",
+      "ai_summary": "Last Updated: 2025-11-27 Project Status: ✅ All 15 Phases Complete - Production Ready (100%) --- If you're an AI coding assistant (Claude, GPT, Copilot, etc.): - ai/AGENT_ONBOARDING.md - Start here for quick context, repository structure, critical rules, and common tasks - overview/IMPLEMENTATION_..."
     },
     "admin-panel-guide": {
       "slug": "admin-panel-guide",
@@ -116,6 +124,18 @@
       "category": "reference",
       "ai_summary": "Use system settings for permanent config (API_TIMEOUT, DATABASE_URL). Use feature flags for temporary toggles (new features, A/B tests, gradual rollouts). Settings need deployment to change; flags change at runtime."
     },
+    "docs-health-overview": {
+      "slug": "docs-health-overview",
+      "path": "DOCS_HEALTH_OVERVIEW.md",
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/scripts/validate-frontmatter.mjs",
+        "apps/docs-site/scripts/generate-agent-json.js"
+      ],
+      "title": "Documentation Health Overview",
+      "category": "reference",
+      "ai_summary": "Single-page overview of VoiceAssist documentation health. Key metrics available at /agent/health.json: total docs, ai_summary coverage, freshness scores by category. Validation commands: pnpm validate:metadata, pnpm validate:all. AI agents should check health.json before relying on specific docs. Links to Documentation System, Agent API Reference, and Metadata Standard."
+    },
     "docs/metadata-standard": {
       "slug": "docs/metadata-standard",
       "path": "DOCUMENTATION_METADATA_STANDARD.md",
@@ -154,6 +174,39 @@
       "title": "Internal Documentation System",
       "category": "reference",
       "ai_summary": "Documentation infrastructure for VoiceAssist. Key validation commands: pnpm validate:metadata (frontmatter), pnpm validate:all (all checks). Agent endpoints at assistdocs.asimo.io/agent/*.json include docs.json (with ai_summary), docs-summary.json, health.json, and code-examples.json. See Agent API Reference for endpoint details."
+    },
+    "next-phase-improvements": {
+      "slug": "next-phase-improvements",
+      "path": "NEXT_PHASE_IMPROVEMENTS.md",
+      "component": "docs/planning",
+      "relatedPaths": ["docs"],
+      "title": "Next Phase Improvements",
+      "category": "planning",
+      "ai_summary": "Tracks documentation improvements across sprints. Sprint 1-2 complete, Sprint 3 (versioning, CODEOWNERS, i18n) 25% done. AI summary coverage at 86% (219/254 docs). Code examples have 18 semantic tags. CODEOWNERS file created. Next priorities are CI integration and documentation versioning."
+    },
+    "unified-chat-voice-ui": {
+      "slug": "unified-chat-voice-ui",
+      "path": "UNIFIED_CHAT_VOICE_UI.md",
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/components/Chat.tsx",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+      ],
+      "title": "Unified Chat/Voice UI Implementation",
+      "category": "planning",
+      "ai_summary": "Unified Chat/Voice UI merges text and voice interfaces. Feature flag ui.unified_chat_voice controls enablement. Three-panel layout with collapsible sidebar and context pane. Uses Zustand for state management."
+    },
+    "world-class-barge-in-implementation-plan": {
+      "slug": "world-class-barge-in-implementation-plan",
+      "path": "WORLD_CLASS_BARGE_IN_IMPLEMENTATION_PLAN.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+      ],
+      "title": "World-Class Voice Barge-In Implementation Plan",
+      "category": "planning",
+      "ai_summary": "Voice barge-in system enables human-like interruption handling. Features neural VAD (<30ms detection), context-aware interruptions, full duplex audio, and adaptive personalization. Implementation complete across 10 phases."
     },
     "admin-panel-integration-guide": {
       "slug": "admin-panel-integration-guide",
@@ -468,6 +521,18 @@
       "category": "reference",
       "ai_summary": "This is the canonical V2 development roadmap for VoiceAssist. It presents a 15-phase implementation plan (Phase 0-14) organized by timeframe and deliverables. For detailed phase documentation, see: - DEVELOPMENT_PHASES_V2.md - Complete phase descriptions - ALL_PHASES_SUMMARY.md - Quick phase summ..."
     },
+    "voice/enhancement-10-phase": {
+      "slug": "voice/enhancement-10-phase",
+      "path": "VOICE_MODE_ENHANCEMENT_10_PHASE.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+      ],
+      "title": "Voice Mode Enhancement - 10 Phase Implementation",
+      "category": "voice",
+      "ai_summary": "> Status: ✅ COMPLETE (2025-12-03) > All 10 phases implemented with full backend-frontend integration This document describes the comprehensive 10-phase enhancement to VoiceAssist's voice mode, transforming it from a functional voice assistant into a human-like conversational partner with medical..."
+    },
     "voice/pipeline": {
       "slug": "voice/pipeline",
       "path": "VOICE_MODE_PIPELINE.md",
@@ -482,6 +547,18 @@
       "category": "voice",
       "ai_summary": "> Status: Production-ready > Last Updated: 2025-12-03 This document describes the unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy. It serves as the canonical reference for developers working on real-time voice features. VoiceAssist supports two voice pipeline mo..."
     },
+    "voice-mode-settings-guide": {
+      "slug": "voice-mode-settings-guide",
+      "path": "VOICE_MODE_SETTINGS_GUIDE.md",
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx",
+        "apps/web-app/src/components/voice/VoiceSettings.tsx"
+      ],
+      "title": "Voice Mode Settings Guide",
+      "category": "operations",
+      "ai_summary": "This guide explains how to use and configure Voice Mode settings in VoiceAssist. Voice Mode provides real-time voice conversations with the AI assistant. Users can customize their voice experience through the settings panel, including voice selection, language preferences, TTS quality parameters,..."
+    },
     "debugging/docs-site": {
       "slug": "debugging/docs-site",
       "path": "debugging/DEBUGGING_DOCS_SITE.md",
@@ -494,6 +571,19 @@
       "title": "Docs Site Debugging Guide",
       "category": "debugging",
       "ai_summary": "Last Updated: 2025-12-03 Component: apps/docs-site/ Live Site: https://assistdocs.asimo.io --- The docs site is a static Next.js export served by Apache: docs/.md → Next.js build → static HTML → Apache → assistdocs.asimo.io (apps/docs-site) (out/) (rewrite rules) Key points: - All pages are pre-r..."
+    },
+    "admin-panel-specs": {
+      "slug": "admin-panel-specs",
+      "path": "ADMIN_PANEL_SPECS.md",
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/App.tsx",
+        "apps/admin-panel/src/pages/Dashboard.tsx",
+        "services/api-gateway/app/api/admin.py"
+      ],
+      "title": "Admin Panel Specs",
+      "category": "operations",
+      "ai_summary": "The VoiceAssist Admin Panel provides a centralized web interface for system configuration, monitoring, and management. Accessible at admin.asimo.io. - Framework: React 18+ with TypeScript - Build Tool: Vite - Styling: Tailwind CSS - Component Library: shadcn/ui or Tremor (for dashboards) - Charts..."
     },
     "api-reference/overview": {
       "slug": "api-reference/overview",
@@ -509,6 +599,19 @@
       "title": "API Reference",
       "category": "api",
       "ai_summary": "Last Updated: 2025-12-02 The VoiceAssist API provides comprehensive REST endpoints for building medical AI assistant applications. - Complete REST API Reference - Full endpoint documentation with examples - OpenAPI/Swagger UI - Interactive docs at http://localhost:8000/docs - ReDoc - Alternative..."
+    },
+    "documentation-site-specs": {
+      "slug": "documentation-site-specs",
+      "path": "DOCUMENTATION_SITE_SPECS.md",
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/src/app/layout.tsx",
+        "apps/docs-site/src/lib/docs.ts",
+        "apps/docs-site/scripts/generate-agent-json.js"
+      ],
+      "title": "Documentation Site Specs",
+      "category": "reference",
+      "ai_summary": "- Framework: Next.js 14 (app router) with static export - Styling: Tailwind CSS + shadcn/ui components - Content: MDX for markdown with React components - Search: Fuse.js client-side with /search-index.json - Code Highlighting: Shiki - Diagrams: Mermaid - Theme: next-themes for dark mode Search i..."
     },
     "start-here": {
       "slug": "start-here",
@@ -637,6 +740,20 @@
       "category": "getting-started",
       "ai_summary": "Last Updated: 2025-12-01 Welcome to VoiceAssist development! This guide will get you up and running quickly. --- - Node.js 20+ and pnpm 8+ - Python 3.11+ with pip - Docker and Docker Compose - Git for version control --- git clone https://github.com/your-org/VoiceAssist.git cd VoiceAssist pnpm in..."
     },
+    "architecture-v2": {
+      "slug": "architecture-v2",
+      "path": "ARCHITECTURE_V2.md",
+      "component": "platform/architecture",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "services/api-gateway/app/main.py",
+        "apps/web-app/src/App.tsx",
+        "apps/admin-panel/src/App.tsx"
+      ],
+      "title": "Architecture V2",
+      "category": "architecture",
+      "ai_summary": "VoiceAssist V2 is an enterprise-grade, HIPAA-compliant, multi-user medical AI assistant designed to support hundreds of concurrent users with high availability, security, and performance. Key Architectural Decision: Nextcloud is a separate stack, not part of VoiceAssist deployment. ┌─────────────..."
+    },
     "start/users": {
       "slug": "start/users",
       "path": "start/users.md",
@@ -649,6 +766,112 @@
       "title": "User Guide - Getting Started",
       "category": "getting-started",
       "ai_summary": "Last Updated: 2025-12-01 Welcome to VoiceAssist! This guide will help you get started with voice and text interactions. --- VoiceAssist is a HIPAA-compliant medical AI assistant that helps healthcare professionals with: - Medical Questions - Evidence-based answers with citations - Clinical Guidel..."
+    },
+    "voice-state-2025-11-29": {
+      "slug": "voice-state-2025-11-29",
+      "path": "VOICE_STATE_2025-11-29.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+      ],
+      "title": "Voice State 2025-11-29",
+      "category": "reference",
+      "ai_summary": "Voice mode has been significantly improved with barge-in support, audio overlap prevention, and graceful error handling. The system now properly handles user interruptions during AI responses. Voice Mode Overhaul (2025-11-29): Added per-user voice preferences persistence, context-aware voice styl..."
+    },
+    "accessibility-audit": {
+      "slug": "accessibility-audit",
+      "path": "ACCESSIBILITY_AUDIT.md",
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/App.tsx",
+        "apps/web-app/src/components"
+      ],
+      "title": "Accessibility Audit",
+      "category": "reference",
+      "ai_summary": "Date: 2025-11-23 Target: WCAG 2.1 Level AA Compliance Status: In Progress This document tracks accessibility improvements for the VoiceAssist web application to achieve WCAG 2.1 Level AA compliance. - Semantic HTML structure - Some ARIA labels on interactive elements - Keyboard navigation for cha..."
+    },
+    "admin-panel-deployment": {
+      "slug": "admin-panel-deployment",
+      "path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/vite.config.ts",
+        "apps/admin-panel/package.json"
+      ],
+      "title": "Admin Panel Deployment",
+      "category": "deployment",
+      "ai_summary": "Date: 2025-11-22 Server: asimo.io (Ubuntu 24.04.3 LTS) Domain: https://admin.asimo.io Status: ✅ DEPLOYED & OPERATIONAL --- The VoiceAssist Admin Panel has been successfully deployed to production on asimo.io. The admin panel is a React-based SPA (Single Page Application) served via Apache with SS..."
+    },
+    "admin-panel-implementation-summary": {
+      "slug": "admin-panel-implementation-summary",
+      "path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/App.tsx",
+        "apps/admin-panel/src/pages/Login.tsx",
+        "services/api-gateway/app/api/admin.py"
+      ],
+      "title": "Admin Panel Implementation Summary",
+      "category": "operations",
+      "ai_summary": "Project: VoiceAssist Admin Panel Enhancement Date: 2025-11-22 Status: ✅ COMPLETED Branch: fix/system-review-and-testing Commit: 3654fa5 --- Build a production-ready admin panel with the following requirements: - Secure Authentication: JWT-based login with admin role verification - User Management..."
+    },
+    "admin-panel-login-fix": {
+      "slug": "admin-panel-login-fix",
+      "path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/pages/Login.tsx",
+        "services/api-gateway/app/api/auth.py"
+      ],
+      "title": "Admin Panel Login Fix",
+      "category": "operations",
+      "ai_summary": "Date: 2025-11-22 Issue: Login failed with CORS errors and Firebase errors Status: ✅ RESOLVED --- When attempting to log in to https://admin.asimo.io, the following errors occurred: Firebase: Error (auth/network-request-failed) - The admin panel was loading Firebase authentication code - This indi..."
+    },
+    "admin-panel-login-fix-complete": {
+      "slug": "admin-panel-login-fix-complete",
+      "path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md",
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/pages/Login.tsx",
+        "services/api-gateway/app/api/auth.py"
+      ],
+      "title": "Admin Panel Login Fix Complete",
+      "category": "operations",
+      "ai_summary": "Date: 2025-11-22 Issue: Admin panel login at https://admin.asimo.io was failing with \"Unexpected token '<', '<!DOCTYPE ' is not valid JSON\" Status: ✅ RESOLVED The admin panel login was failing due to multiple compounding issues: 1. Frontend receiving HTML error pages instead of JSON responses 2...."
+    },
+    "all-phases-summary": {
+      "slug": "all-phases-summary",
+      "path": "ALL_PHASES_SUMMARY.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases", "docs/ROADMAP.md"],
+      "title": "All Phases Summary",
+      "category": "planning",
+      "ai_summary": "This is the V2 16-phase implementation plan for VoiceAssist. Each phase is a focused unit of work designed for completion in one session (4-10 hours). For detailed phase documentation, see docs/phases/ directory. For timeline and milestones, see ROADMAP.md. --- - Total Phases: 16 (Phase 0 through..."
+    },
+    "ansible-guide": {
+      "slug": "ansible-guide",
+      "path": "ANSIBLE_GUIDE.md",
+      "component": "infra/ansible",
+      "relatedPaths": [
+        "infrastructure/ansible/playbooks",
+        "infrastructure/ansible/roles"
+      ],
+      "title": "Ansible Guide",
+      "category": "operations",
+      "ai_summary": "1. Overview 2. Playbook Structure 3. Role Documentation 4. Inventory Management 5. Variables and Secrets 6. Running Playbooks 7. HIPAA Compliance Configuration 8. Best Practices 9. Troubleshooting Ansible is used to configure and maintain VoiceAssist servers after they've been provisioned by Terr..."
+    },
+    "architecture": {
+      "slug": "architecture",
+      "path": "ARCHITECTURE.md",
+      "component": "platform/architecture",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "services/api-gateway/app/main.py"
+      ],
+      "title": "Architecture",
+      "category": "architecture",
+      "ai_summary": "> ⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2 > This describes the original 20-phase plan. > For the current architecture and phases, see: > > - ARCHITECTURE_V2.md > - DEVELOPMENT_PHASES_V2.md > - START_HERE.md > - Implementation Status VoiceAssist uses a distributed architecture with components..."
     },
     "architecture/backend": {
       "slug": "architecture/backend",
@@ -664,6 +887,18 @@
       "title": "Backend Architecture",
       "category": "architecture",
       "ai_summary": "Last Updated: 2025-11-27 (All 15 Phases Complete) Status: Canonical Reference Purpose: Clarify backend structure evolution from monorepo to microservices --- VoiceAssist V2 backend follows a progressive architecture strategy: - Phases 0-10: Monorepo structure with clear module boundaries (Docker..."
+    },
+    "backend-skeleton-verification": {
+      "slug": "backend-skeleton-verification",
+      "path": "BACKEND_SKELETON_VERIFICATION.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "services/api-gateway/app/api"
+      ],
+      "title": "Backend Skeleton Verification",
+      "category": "reference",
+      "ai_summary": "Date: 2025-11-20 Task: Polish and verify new backend code skeleton Status: ✅ COMPLETE Session Type: Consistency verification and enhancement --- Successfully verified and enhanced the new backend code skeleton provided by external assistant. All files are now consistent with VoiceAssist V2 docume..."
     },
     "chaos-engineering": {
       "slug": "chaos-engineering",
@@ -695,6 +930,36 @@
       "category": "ai",
       "ai_summary": "This guide provides comprehensive instructions for Claude Code (or other AI assistants) working on the VoiceAssist V2 project. It covers session startup, branching strategy, parallel session safety, quality checks, and phase completion criteria. For ready-to-use prompts, see CLAUDE_PROMPTS.md ---..."
     },
+    "ai/claude-prompts": {
+      "slug": "ai/claude-prompts",
+      "path": "CLAUDE_PROMPTS.md",
+      "component": "platform/ai-agents",
+      "relatedPaths": [
+        "docs/CLAUDE_EXECUTION_GUIDE.md",
+        "docs/ai/AGENT_ONBOARDING.md"
+      ],
+      "title": "Claude Prompts Library",
+      "category": "ai",
+      "ai_summary": "This document contains ready-to-use prompts for different types of work on VoiceAssist V2. Copy and paste these prompts into a Claude Code session, fill in the bracketed placeholders, and Claude will follow the appropriate workflow. For detailed execution guidelines, see CLAUDE_EXECUTION_GUIDE.md..."
+    },
+    "compose-first-summary": {
+      "slug": "compose-first-summary",
+      "path": "COMPOSE_FIRST_SUMMARY.md",
+      "component": "infra",
+      "relatedPaths": ["docker-compose.yml", "docs/DEVELOPMENT_PHASES_V2.md"],
+      "title": "Compose First Summary",
+      "category": "reference",
+      "ai_summary": "1. Updated DEVELOPMENT_PHASES_V2.md - Restructured for Compose-first approach - Phases 0-10 use Docker Compose exclusively - Phases 11-14 handle Kubernetes migration - Clear migration timeline documented 2. Created PHASE_00_INITIALIZATION.md (Detailed) - Comprehensive 4-6 hour phase - Section A:..."
+    },
+    "compose-to-k8s-migration": {
+      "slug": "compose-to-k8s-migration",
+      "path": "COMPOSE_TO_K8S_MIGRATION.md",
+      "component": "infra/k8s",
+      "relatedPaths": ["docker-compose.yml", "k8s", "ha-dr"],
+      "title": "Compose To K8s Migration",
+      "category": "reference",
+      "ai_summary": "This guide covers migrating VoiceAssist from Docker Compose (Phases 0-10) to Kubernetes (Phases 11-14). The migration maintains the separate Nextcloud and VoiceAssist stacks architecture while adding Kubernetes features like auto-scaling, self-healing, and service mesh. 1. Migration Strategy 2. P..."
+    },
     "configuration-reference": {
       "slug": "configuration-reference",
       "path": "CONFIGURATION_REFERENCE.md",
@@ -707,6 +972,24 @@
       "title": "Configuration Reference",
       "category": "reference",
       "ai_summary": "VoiceAssist V2 - Complete Configuration Guide This document provides comprehensive documentation for all configuration options available in VoiceAssist V2. Usage: ENVIRONMENT=production DEBUG=false LOG_LEVEL=INFO Validation Rules: - ENVIRONMENT must be one of: development, staging, production - D..."
+    },
+    "overview/continuous-improvement-plan": {
+      "slug": "overview/continuous-improvement-plan",
+      "path": "CONTINUOUS_IMPROVEMENT_PLAN.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/ROADMAP.md"],
+      "title": "Continuous Improvement Plan",
+      "category": "planning",
+      "ai_summary": "Version: 1.0 Date: 2025-11-27 Status: Active - Post Phase 15 Project: VoiceAssist Enterprise Medical AI Assistant --- This document outlines the continuous improvement roadmap for VoiceAssist following the successful completion of all 15 initial development phases. The system is production-ready..."
+    },
+    "continuous-improvement-summary": {
+      "slug": "continuous-improvement-summary",
+      "path": "CONTINUOUS_IMPROVEMENT_SUMMARY.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/CONTINUOUS_IMPROVEMENT_PLAN.md"],
+      "title": "Continuous Improvement Summary",
+      "category": "reference",
+      "ai_summary": "Date: 2025-11-21 Branch: continuous-improvement-plan Status: Ready for Review --- This document summarizes the continuous improvement planning effort initiated after completion of Phase 15. The comprehensive plan is available in CONTINUOUS_IMPROVEMENT_PLAN.md. --- Status: ✅ PRODUCTION READY All 1..."
     },
     "data-model": {
       "slug": "data-model",
@@ -723,6 +1006,15 @@
       "category": "reference",
       "ai_summary": "Last Updated: 2025-11-20 Status: Canonical Reference Purpose: Single source of truth for all data entities across VoiceAssist V2 --- This document defines ALL data entities used in VoiceAssist V2. Each entity has: 1. Purpose - What the entity represents 2. Storage Location - Where data is persist..."
     },
+    "deep-verification-qa-summary": {
+      "slug": "deep-verification-qa-summary",
+      "path": "DEEP_VERIFICATION_QA_SUMMARY.md",
+      "component": "platform/qa",
+      "relatedPaths": ["services/api-gateway/app"],
+      "title": "Deep Verification Qa Summary",
+      "category": "reference",
+      "ai_summary": "Date: 2025-11-20 Status: ✅ Complete Task: Deep verification pass for new LLM abstraction, admin API, realtime API, and phase documents --- Performed comprehensive verification and refinement of new backend services and phase documentation. Found and fixed 3 critical bugs that would have prevented..."
+    },
     "deployment-guide": {
       "slug": "deployment-guide",
       "path": "DEPLOYMENT_GUIDE.md",
@@ -736,6 +1028,33 @@
       "title": "Deployment Guide",
       "category": "deployment",
       "ai_summary": "Version: 1.0 Last Updated: 2025-11-21 Phase: 13 - Production Ready --- 1. Prerequisites 2. Local Development Setup 3. Production Deployment 4. Configuration 5. Security Hardening 6. High Availability 7. Monitoring & Observability 8. Backup & Recovery 9. Troubleshooting --- Minimum (Development):..."
+    },
+    "deployment-summary-asimo": {
+      "slug": "deployment-summary-asimo",
+      "path": "DEPLOYMENT_SUMMARY_ASIMO.md",
+      "component": "infra/deployment",
+      "relatedPaths": ["docker-compose.yml"],
+      "title": "Deployment Summary Asimo",
+      "category": "deployment",
+      "ai_summary": "Deployment Date: 2025-11-22 (Initial) / 2025-11-23 (Final Configuration) Environment: Production (Ubuntu 24.04 LTS) Server: asimo.io (107.204.29.210) Status: ✅ FULLY CONFIGURED & OPERATIONAL --- VoiceAssist has been successfully deployed to production on the asimo.io server with full monitoring,..."
+    },
+    "development-phases": {
+      "slug": "development-phases",
+      "path": "DEVELOPMENT_PHASES.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/DEVELOPMENT_PHASES_V2.md"],
+      "title": "Development Phases",
+      "category": "planning",
+      "ai_summary": "> ⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2 > This describes the original 20-phase plan. > For the current architecture and phases, see: > > - ARCHITECTURE_V2.md > - DEVELOPMENT_PHASES_V2.md > - START_HERE.md > - Implementation Status This document breaks down VoiceAssist development into self..."
+    },
+    "development-phases-v2": {
+      "slug": "development-phases-v2",
+      "path": "DEVELOPMENT_PHASES_V2.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases", "docs/ROADMAP.md", "docker-compose.yml"],
+      "title": "Development Phases V2",
+      "category": "planning",
+      "ai_summary": "VoiceAssist has been redesigned as an enterprise-grade, HIPAA-compliant, multi-user medical AI assistant with microservices architecture, Kubernetes orchestration, service mesh, and full Nextcloud integration. - Personal use system - Single user - Simple Docker deployment - macOS client focus - M..."
     },
     "development-setup": {
       "slug": "development-setup",
@@ -764,6 +1083,63 @@
       "category": "debugging",
       "ai_summary": "Document Version: 1.0 Last Updated: 2025-11-21 Status: Production-Ready Phase: Phase 12 - High Availability & Disaster Recovery --- This runbook provides step-by-step procedures for recovering the VoiceAssist platform from various disaster scenarios. It covers database failures, complete system f..."
     },
+    "documentation-completion-summary": {
+      "slug": "documentation-completion-summary",
+      "path": "DOCUMENTATION_COMPLETION_SUMMARY.md",
+      "component": "docs/summary",
+      "relatedPaths": ["docs"],
+      "title": "Documentation Completion Summary",
+      "category": "reference",
+      "ai_summary": "Date: November 19, 2024 Task: Complete VoiceAssist V2 planning documentation with Compose-first, Kubernetes-later approach and separate Nextcloud stack architecture --- All documentation has been updated/created to reflect the Compose-first, Kubernetes-later development strategy with separate Nex..."
+    },
+    "enhancement-summary": {
+      "slug": "enhancement-summary",
+      "path": "ENHANCEMENT_SUMMARY.md",
+      "component": "docs/summary",
+      "relatedPaths": ["docs"],
+      "title": "Enhancement Summary",
+      "category": "reference",
+      "ai_summary": "This document summarizes the comprehensive documentation enhancements made to VoiceAssist V2, transforming it from a basic project concept into a fully-specified, production-ready HIPAA-compliant clinical decision support system. Date: November 2025 Version: 2.0 Status: Documentation Complete, Re..."
+    },
+    "file": {
+      "slug": "file",
+      "path": "FILE.md",
+      "component": "docs/placeholder",
+      "relatedPaths": ["docs"],
+      "title": "File",
+      "category": "reference",
+      "ai_summary": "This placeholder keeps existing references in sync until the source content is added."
+    },
+    "final-documentation-summary": {
+      "slug": "final-documentation-summary",
+      "path": "FINAL_DOCUMENTATION_SUMMARY.md",
+      "component": "docs/summary",
+      "relatedPaths": ["docs"],
+      "title": "Final Documentation Summary",
+      "category": "reference",
+      "ai_summary": "Date: 2025-11-20 Purpose: Comprehensive summary of the final documentation enhancement pass Status: Complete > Note: This is a historical summary from the 2025-11-20 documentation pass. For current documentation architecture and status: > > - Current Status: IMPLEMENTATION_STATUS.md > - Docs Syst..."
+    },
+    "frontend-completion-plan": {
+      "slug": "frontend-completion-plan",
+      "path": "FRONTEND_COMPLETION_PLAN.md",
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/App.tsx",
+        "apps/web-app/src/components"
+      ],
+      "title": "Frontend Completion Plan",
+      "category": "planning",
+      "ai_summary": "This document outlines the comprehensive implementation plan for completing the VoiceAssist frontend MVP. Based on thorough codebase analysis, the frontend is approximately 65% complete with solid foundations in place. Current State Assessment: Estimated Total Effort: 180-240 hours (9-12 weeks at..."
+    },
+    "frontend-verification-summary": {
+      "slug": "frontend-verification-summary",
+      "path": "FRONTEND_VERIFICATION_SUMMARY.md",
+      "component": "frontend/web-app",
+      "relatedPaths": ["apps/web-app/src", "apps/admin-panel/src"],
+      "title": "Frontend Verification Summary",
+      "category": "reference",
+      "ai_summary": "Date: 2025-11-20 Status: ✅ Complete Task: Frontend verification pass for VoiceAssist V2 web-app and admin-panel --- This document summarizes the frontend verification and refinement work completed for both the clinician web app (web-app/) and the Admin Center (admin-panel/). This was treated as a..."
+    },
     "hipaa-compliance-matrix": {
       "slug": "hipaa-compliance-matrix",
       "path": "HIPAA_COMPLIANCE_MATRIX.md",
@@ -777,6 +1153,19 @@
       "category": "security",
       "ai_summary": "Document Version: 1.0 Last Updated: 2025-11-21 Status: Production-Ready Scope: VoiceAssist HIPAA-Compliant Voice Assistant Platform --- This document provides a comprehensive mapping of HIPAA Security Rule requirements (45 CFR §164.308, §164.310, §164.312) to VoiceAssist platform implementations...."
     },
+    "infrastructure-as-code": {
+      "slug": "infrastructure-as-code",
+      "path": "INFRASTRUCTURE_AS_CODE.md",
+      "component": "infra",
+      "relatedPaths": [
+        "infrastructure/terraform",
+        "infrastructure/ansible",
+        "docker-compose.yml"
+      ],
+      "title": "Infrastructure As Code",
+      "category": "deployment",
+      "ai_summary": "1. Overview 2. Architecture 3. Components 4. Getting Started 5. Prerequisites 6. Common Workflows 7. Related Documentation 8. Troubleshooting VoiceAssist V2 uses a comprehensive Infrastructure as Code (IaC) approach to manage all infrastructure components. This approach provides: - Version Contro..."
+    },
     "infrastructure-setup": {
       "slug": "infrastructure-setup",
       "path": "INFRASTRUCTURE_SETUP.md",
@@ -789,6 +1178,24 @@
       "title": "Infrastructure Setup",
       "category": "deployment",
       "ai_summary": "This guide covers infrastructure setup for VoiceAssist V2 across two deployment strategies: - Phases 0-10: Docker Compose on Ubuntu Server (production-ready) - Phases 11-14: Kubernetes on Ubuntu Server (high availability) Both strategies deploy two separate stacks: - Nextcloud stack: Identity, fi..."
+    },
+    "integration-handoff": {
+      "slug": "integration-handoff",
+      "path": "INTEGRATION_HANDOFF.md",
+      "component": "platform/integration",
+      "relatedPaths": ["services/api-gateway/app/main.py"],
+      "title": "Integration Handoff",
+      "category": "reference",
+      "ai_summary": "Date: 2025-11-21 Scope: VoiceAssist V2 - Integration Improvements (Phases 0-8) Status: Priority 1-2 Complete, Priority 3 Partially Complete --- This document provides a comprehensive handoff of the Integration Improvements implementation for VoiceAssist V2. All Priority 1 and Priority 2 tasks are..."
+    },
+    "integration-improvements-phase-0-8": {
+      "slug": "integration-improvements-phase-0-8",
+      "path": "INTEGRATION_IMPROVEMENTS_PHASE_0-8.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
+      "title": "Integration Improvements Phase 0 8",
+      "category": "planning",
+      "ai_summary": "Date: 2025-11-21 Scope: VoiceAssist V2 - Phases 0 through 8 Status: Design Phase This document outlines key integration improvements to enhance cohesion, performance, and operational excellence across all completed phases (0-8) of VoiceAssist. These improvements focus on unifying disparate compon..."
     },
     "load-testing-guide": {
       "slug": "load-testing-guide",
@@ -812,6 +1219,68 @@
       "title": "Local Development",
       "category": "reference",
       "ai_summary": "VoiceAssist V2 uses a Compose-first development approach with two separate Docker Compose stacks: - Nextcloud stack (~/Nextcloud-Dev/) - Identity, files, calendar, email - VoiceAssist stack (~/VoiceAssist/) - Microservices architecture This allows for rapid iteration, testing, and debugging befor..."
+    },
+    "login-500-fix-2025-11-25": {
+      "slug": "login-500-fix-2025-11-25",
+      "path": "LOGIN_500_FIX_2025-11-25.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": ["services/api-gateway/app/api/auth.py"],
+      "title": "Login 500 Fix 2025 11 25",
+      "category": "reference",
+      "ai_summary": "Users were experiencing HTTP 500 errors when attempting to login at dev.asimo.io. - Browser console showed: Login failed: AxiosError 500 (Request failed with status code 500) - Backend logs showed stack trace with: - AttributeError: module 'bcrypt' has no attribute '__about__' - ValueError: passw..."
+    },
+    "medical-features": {
+      "slug": "medical-features",
+      "path": "MEDICAL_FEATURES.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/services/rag_service.py",
+        "services/api-gateway/app/services/medical_kb_service.py"
+      ],
+      "title": "Medical Features",
+      "category": "reference",
+      "ai_summary": "VoiceAssist includes specialized medical capabilities designed for healthcare professionals, with a focus on evidence-based information retrieval, clinical decision support, and privacy-conscious handling of medical data. Pre-loaded medical textbooks are indexed and available for semantic search..."
+    },
+    "message-edit-progress": {
+      "slug": "message-edit-progress",
+      "path": "MESSAGE_EDIT_PROGRESS.md",
+      "component": "frontend/web-app",
+      "relatedPaths": ["apps/web-app/src/components/chat/MessageBubble.tsx"],
+      "title": "Message Edit Progress",
+      "category": "reference",
+      "ai_summary": "Date: 2025-11-23 Status: Phases 1-2 Complete, Phase 3-5 Pending Next Session: Wire up components and complete testing --- File: apps/web-app/src/components/chat/MessageBubble.tsx Changes: - ✅ Added editing state management (isEditing, editedContent, isSaving) - ✅ Integrated MessageActionMenu comp..."
+    },
+    "nextcloud-apps-design": {
+      "slug": "nextcloud-apps-design",
+      "path": "NEXTCLOUD_APPS_DESIGN.md",
+      "component": "integration/nextcloud",
+      "relatedPaths": ["nextcloud-apps"],
+      "title": "Nextcloud Apps Design",
+      "category": "reference",
+      "ai_summary": "Status: In Progress (Phase 6 foundation started) Scope: Define how VoiceAssist integrates with Nextcloud via dedicated apps. Phase 6 introduces three Nextcloud apps under nextcloud-apps/: - voiceassist-client – entry point for clinicians to launch the VoiceAssist web client from Nextcloud. - voic..."
+    },
+    "nextcloud-integration": {
+      "slug": "nextcloud-integration",
+      "path": "NEXTCLOUD_INTEGRATION.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/services/nextcloud_service.py"
+      ],
+      "title": "Nextcloud Integration",
+      "category": "reference",
+      "ai_summary": "VoiceAssist integrates with Nextcloud for identity management, file storage, calendar, and email functionality. Current Status (Phase 6): VoiceAssist now has working CalDAV calendar integration, WebDAV file auto-indexing, and email service skeleton. Implementation Notes: - Phase 2: Nextcloud adde..."
+    },
+    "oauth-login-config": {
+      "slug": "oauth-login-config",
+      "path": "OAUTH_LOGIN_CONFIG.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/auth.py",
+        "services/api-gateway/app/core/security.py"
+      ],
+      "title": "Oauth Login Config",
+      "category": "reference",
+      "ai_summary": "This document explains how to configure Google and Microsoft OAuth login for VoiceAssist. VoiceAssist supports OAuth 2.0 authentication with: - Google (Google Sign-In) - Microsoft (Microsoft Entra ID / Azure AD) When configured, users can sign in using their existing Google or Microsoft accounts..."
     },
     "observability": {
       "slug": "observability",
@@ -839,6 +1308,33 @@
       "category": "reference",
       "ai_summary": "Last Updated: 2025-11-20 Status: Canonical Reference Purpose: Define the Conductor/Orchestrator that routes and processes clinical queries --- The Query Orchestrator (also called \"Conductor\" or \"RAG Service\") is the central component that: 1. Receives user queries 2. Makes routing decisions (PHI..."
     },
+    "part2-deferred-backend-features-plan": {
+      "slug": "part2-deferred-backend-features-plan",
+      "path": "PART2_DEFERRED_BACKEND_FEATURES_PLAN.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": ["services/api-gateway/app/main.py"],
+      "title": "Part2 Deferred Backend Features Plan",
+      "category": "planning",
+      "ai_summary": "Version: 1.0 Date: 2025-11-26 Status: Planning Complete - Ready for Implementation Priority: High - Enables Full Frontend Functionality Estimated Total Effort: 17-21 weeks (2-3 developers) --- This document consolidates and expands upon all deferred backend features from the VoiceAssist developme..."
+    },
+    "part3-platform-enhancements-plan": {
+      "slug": "part3-platform-enhancements-plan",
+      "path": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/ROADMAP.md"],
+      "title": "Part3 Platform Enhancements Plan",
+      "category": "planning",
+      "ai_summary": "Version: 1.0 Date: 2025-11-26 Status: Planning Priority: MEDIUM Estimated Duration: 11-14 weeks --- This document provides a comprehensive implementation plan for platform enhancements that improve the VoiceAssist foundation. These enhancements focus on design consistency, security hardening, sea..."
+    },
+    "performance-benchmarks": {
+      "slug": "performance-benchmarks",
+      "path": "PERFORMANCE_BENCHMARKS.md",
+      "component": "platform/testing",
+      "relatedPaths": ["tests/performance", "docs/LOAD_TESTING_GUIDE.md"],
+      "title": "Performance Benchmarks",
+      "category": "reference",
+      "ai_summary": "This document provides comprehensive performance benchmarks for VoiceAssist Phase 10, including baseline metrics, load test results, and performance targets. Use these benchmarks to: - Evaluate system performance under various load conditions - Identify performance regressions - Set realistic SLO..."
+    },
     "performance-tuning-guide": {
       "slug": "performance-tuning-guide",
       "path": "PERFORMANCE_TUNING_GUIDE.md",
@@ -851,6 +1347,141 @@
       "title": "Performance Tuning Guide",
       "category": "operations",
       "ai_summary": "This comprehensive guide provides strategies, techniques, and best practices for optimizing VoiceAssist performance. Use this guide to identify bottlenecks, implement optimizations, and maintain peak system performance. --- 1. Measure First, Optimize Second - Never optimize without data - Establi..."
+    },
+    "phase-02-completion-report": {
+      "slug": "phase-02-completion-report",
+      "path": "PHASE_02_COMPLETION_REPORT.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
+      "title": "Phase 02 Completion Report",
+      "category": "planning",
+      "ai_summary": "Date Completed: 2025-11-21 00:20 Duration: ~2.5 hours (started 2025-11-20 22:00) Status: ✅ Successfully Completed --- Phase 2 has been successfully completed, implementing a comprehensive JWT-based authentication system, user management API, and Nextcloud integration foundation. All core delivera..."
+    },
+    "phase-02-enhancements-report": {
+      "slug": "phase-02-enhancements-report",
+      "path": "PHASE_02_ENHANCEMENTS_REPORT.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
+      "title": "Phase 02 Enhancements Report",
+      "category": "planning",
+      "ai_summary": "Date: 2025-11-21 Scope: Post-Phase 2 Security & Observability Enhancements Status: ✅ Completed --- Following the successful completion of Phase 2 (Security Foundation & Nextcloud Integration), a comprehensive enhancement initiative was undertaken to strengthen security, improve observability, and..."
+    },
+    "phase-03-completion-report": {
+      "slug": "phase-03-completion-report",
+      "path": "PHASE_03_COMPLETION_REPORT.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
+      "title": "Phase 03 Completion Report",
+      "category": "planning",
+      "ai_summary": "Date Completed: 2025-11-21 03:00 Duration: ~1 hour Status: ✅ Successfully Completed --- Phase 3 established the API Gateway and core service boundaries on top of the infrastructure and security foundation built in Phases 0–2. The current system operates as a FastAPI monolith that cleanly separate..."
+    },
+    "phase-04-completion-report": {
+      "slug": "phase-04-completion-report",
+      "path": "PHASE_04_COMPLETION_REPORT.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
+      "title": "Phase 04 Completion Report",
+      "category": "planning",
+      "ai_summary": "Date Completed: 2025-11-21 03:45 Duration: ~2 hours Status: ✅ Successfully Completed (MVP Scope) --- Phase 4 established the realtime communication foundation for VoiceAssist by implementing a WebSocket-based streaming chat endpoint integrated with the QueryOrchestrator. The system now supports b..."
+    },
+    "phase-05-completion-report": {
+      "slug": "phase-05-completion-report",
+      "path": "PHASE_05_COMPLETION_REPORT.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
+      "title": "Phase 05 Completion Report",
+      "category": "planning",
+      "ai_summary": "Date Completed: 2025-11-21 05:00 Duration: ~1 hour (MVP scope) Status: ✅ Successfully Completed --- Phase 5 established a complete Retrieval-Augmented Generation (RAG) system for VoiceAssist, enabling the system to search and retrieve relevant medical knowledge to enhance AI responses with eviden..."
+    },
+    "phase-06-completion-report": {
+      "slug": "phase-06-completion-report",
+      "path": "PHASE_06_COMPLETION_REPORT.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
+      "title": "Phase 06 Completion Report",
+      "category": "planning",
+      "ai_summary": "Project: VoiceAssist V2 - Enterprise Medical AI Assistant Phase: 6 - Nextcloud App Integration & Unified Services (MVP) Started: 2025-11-21 05:30 Completed: 2025-11-21 07:00 Duration: 1.5 hours Status: ✅ COMPLETED (MVP Scope) --- Phase 6 successfully implements backend integration services for Ne..."
+    },
+    "phase-07-completion-report": {
+      "slug": "phase-07-completion-report",
+      "path": "PHASE_07_COMPLETION_REPORT.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
+      "title": "Phase 07 Completion Report",
+      "category": "planning",
+      "ai_summary": "Date Completed: 2025-11-21 Duration: ~1 hour Status: ✅ Successfully Completed (MVP scope) --- Phase 7 focused on making the Admin Panel and related backend endpoints RBAC-aware and wiring the dashboard to real backend data. The goal was to ensure that all admin-only operations are properly protec..."
+    },
+    "phase-08-api-contracts": {
+      "slug": "phase-08-api-contracts",
+      "path": "PHASE_08_API_CONTRACTS.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": ["services/api-gateway/app/api"],
+      "title": "Phase 08 Api Contracts",
+      "category": "api",
+      "ai_summary": "This document defines the API contracts between frontend and backend for Phase 8 features. Last Updated: 2025-11-24 - Endpoint: GET /api/export/sessions/{session_id}/export/markdown - Auth: Bearer token required - Response: text/markdown file download - Frontend: VoiceAssistApiClient.exportConver..."
+    },
+    "phase-08-completion-report": {
+      "slug": "phase-08-completion-report",
+      "path": "PHASE_08_COMPLETION_REPORT.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
+      "title": "Phase 08 Completion Report",
+      "category": "planning",
+      "ai_summary": "Date: 2025-11-21 Phase: 8 - Distributed Tracing & Advanced Observability Status: ✅ COMPLETED Duration: ~6 hours Successfully implemented comprehensive observability stack for VoiceAssist with Prometheus metrics, OpenTelemetry distributed tracing, centralized logging with Loki, and HIPAA-compliant..."
+    },
+    "phase-09-completion-report": {
+      "slug": "phase-09-completion-report",
+      "path": "PHASE_09_COMPLETION_REPORT.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
+      "title": "Phase 09 Completion Report",
+      "category": "planning",
+      "ai_summary": "Status: ✅ COMPLETE Completion Date: 2025-11-21 Phase Duration: 8 hours (estimated), Actual: 6-8 hours Total Deliverables: 100+ files, ~25,000 lines of code and documentation --- Phase 9 successfully delivers a complete Infrastructure as Code (IaC) and CI/CD solution for VoiceAssist V2. The implem..."
+    },
+    "phase-0-1-completion-report": {
+      "slug": "phase-0-1-completion-report",
+      "path": "PHASE_0_1_COMPLETION_REPORT.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
+      "title": "Phase 0 1 Completion Report",
+      "category": "planning",
+      "ai_summary": "Date: 2025-11-20 Status: ✅ 100% COMPLETE Progress: 2/15 phases (13%) --- Phases 0 and 1 are fully complete and operational. All infrastructure services are running, healthy, and verified. The foundation for the VoiceAssist enterprise medical AI assistant is solid and ready for Phase 2 (Security &..."
+    },
+    "phase-0-1-optimization-recommendations": {
+      "slug": "phase-0-1-optimization-recommendations",
+      "path": "PHASE_0_1_OPTIMIZATION_RECOMMENDATIONS.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
+      "title": "Phase 0 1 Optimization Recommendations",
+      "category": "planning",
+      "ai_summary": "Date: 2025-11-20 Focus: Hardening, Integration, and Performance Optimization --- While Phases 0 and 1 are fully functional, there are several strategic optimizations that will improve security, performance, reliability, and maintainability before proceeding to Phase 2. --- Current State: Plain te..."
+    },
+    "phase-10-completion-report": {
+      "slug": "phase-10-completion-report",
+      "path": "PHASE_10_COMPLETION_REPORT.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
+      "title": "Phase 10 Completion Report",
+      "category": "planning",
+      "ai_summary": "Status: ✅ COMPLETE Completion Date: 2025-11-21 Phase Duration: 6-8 hours (estimated), Actual: 6-8 hours Total Deliverables: 80+ files, ~15,000 lines of code and documentation --- Phase 10 successfully delivers a comprehensive load testing and performance optimization solution for VoiceAssist V2...."
+    },
+    "phase-2-optimized-plan": {
+      "slug": "phase-2-optimized-plan",
+      "path": "PHASE_2_OPTIMIZED_PLAN.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
+      "title": "Phase 2 Optimized Plan",
+      "category": "planning",
+      "ai_summary": "Date: 2025-11-20 Status: Ready to Start Estimated Duration: 4-5 hours (optimized from 6-8 hours) --- This document provides an optimized, tightened plan for Phase 2 based on lessons learned from Phases 0-1 and architectural analysis. The plan reduces complexity, improves integration, and focuses..."
+    },
+    "phase-template": {
+      "slug": "phase-template",
+      "path": "PHASE_TEMPLATE.md",
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
+      "title": "Phase Template",
+      "category": "planning",
+      "ai_summary": "[One paragraph describing what this phase accomplishes] [X-Y] hours - Phase [N-1] completed - [Specific service/dependency requirements] - [ ] Previous phase complete - [ ] All services running - [ ] [Specific prerequisites verified] [Description] Verify: [Description with code examples] [Wrap-up..."
     },
     "production-deployment-runbook": {
       "slug": "production-deployment-runbook",
@@ -878,6 +1509,15 @@
       "category": "reference",
       "ai_summary": "Version: 1.0 Date: 2025-11-21 Phase: 14 - Production Deployment --- This comprehensive checklist ensures all requirements are met before deploying VoiceAssist to production. Review each section and mark items as complete. Deployment Date: \\\\\\_\\_\\_\\\\ Reviewed By: \\\\\\_\\_\\_\\\\ Approved By: \\\\\\_\\_\\_\\\\..."
     },
+    "project-summary": {
+      "slug": "project-summary",
+      "path": "PROJECT_SUMMARY.md",
+      "component": "docs/overview",
+      "relatedPaths": ["docs/START_HERE.md"],
+      "title": "Project Summary",
+      "category": "reference",
+      "ai_summary": "VoiceAssist is a comprehensive AI assistant system designed specifically for medical professionals. It combines voice and text interfaces with specialized medical knowledge retrieval, system integrations, and privacy-conscious architecture. 1. Medical Specialization: Access to medical textbooks,..."
+    },
     "architecture/realtime": {
       "slug": "architecture/realtime",
       "path": "REALTIME_ARCHITECTURE.md",
@@ -891,6 +1531,37 @@
       "title": "Real-time Architecture",
       "category": "architecture",
       "ai_summary": "Last Updated: 2025-11-27 Status: Production Ready Related Documentation: - WebSocket Protocol - Wire protocol specification - Voice Mode Pipeline - Voice-specific implementation - Implementation Status - Component status --- VoiceAssist uses WebSocket connections for real-time bidirectional commu..."
+    },
+    "remaining-message-edit-work": {
+      "slug": "remaining-message-edit-work",
+      "path": "REMAINING_MESSAGE_EDIT_WORK.md",
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "packages/api-client/src/index.ts",
+        "apps/web-app/src/components/chat/MessageBubble.tsx",
+        "apps/web-app/src/components/chat/MessageActionMenu.tsx"
+      ],
+      "title": "Remaining Message Edit Work",
+      "category": "reference",
+      "ai_summary": "Created: 2025-11-23 Status: In Progress (API + Menu Complete, UI + Tests Pending) Priority: High (Phase 2 Advanced Features) --- File: packages/api-client/src/index.ts Added two new methods: async editMessage(conversationId: string, messageId: string, content: string): Promise<Message> async dele..."
+    },
+    "rto-rpo-documentation": {
+      "slug": "rto-rpo-documentation",
+      "path": "RTO_RPO_DOCUMENTATION.md",
+      "component": "infra/ha-dr",
+      "relatedPaths": ["ha-dr"],
+      "title": "Rto Rpo Documentation",
+      "category": "reference",
+      "ai_summary": "Document Version: 1.0 Last Updated: 2025-11-21 Status: Production-Ready Phase: Phase 12 - High Availability & Disaster Recovery --- This document defines the Recovery Time Objectives (RTO) and Recovery Point Objectives (RPO) for the VoiceAssist platform. These metrics establish the maximum accept..."
+    },
+    "security": {
+      "slug": "security",
+      "path": "SECURITY.md",
+      "component": "platform/security",
+      "relatedPaths": ["docs/SECURITY_COMPLIANCE.md"],
+      "title": "Security",
+      "category": "security",
+      "ai_summary": "This is a placeholder for infrastructure security documentation. Refer to SECURITY_COMPLIANCE.md for the current checklist."
     },
     "security/compliance": {
       "slug": "security/compliance",
@@ -934,6 +1605,15 @@
       "category": "architecture",
       "ai_summary": "Last Updated: 2025-11-21 (Phase 6: Nextcloud App Integration & Unified Services) Status: Canonical Reference Purpose: Comprehensive catalog of all backend services with implementation details --- This document catalogs all backend services in VoiceAssist V2. These are logical services - clear bou..."
     },
+    "system-review-2025-11-22": {
+      "slug": "system-review-2025-11-22",
+      "path": "SYSTEM_REVIEW_2025-11-22.md",
+      "component": "platform/review",
+      "relatedPaths": ["apps/web-app/src"],
+      "title": "System Review 2025 11 22",
+      "category": "reference",
+      "ai_summary": "Reviewer: Claude (AI Assistant) Date: November 22, 2025 Branch: fix/system-review-and-testing Scope: Chat interface, conversation management, WebSocket integration --- This document provides a comprehensive review of the VoiceAssist web application's current implementation, focusing on the chat i..."
+    },
     "terraform-guide": {
       "slug": "terraform-guide",
       "path": "TERRAFORM_GUIDE.md",
@@ -969,6 +1649,15 @@
       "category": "testing",
       "ai_summary": "This guide describes how to run, write, and generate end-to-end (E2E) tests for the VoiceAssist web application using Playwright and Auto Playwright (AI-powered test generation). VoiceAssist uses a multi-layered testing approach: - Unit Tests: Component-level tests using Vitest (in apps/web-app/s..."
     },
+    "testing-results-2025-11-22": {
+      "slug": "testing-results-2025-11-22",
+      "path": "TESTING_RESULTS_2025-11-22.md",
+      "component": "platform/testing",
+      "relatedPaths": ["apps/web-app/src"],
+      "title": "Testing Results 2025 11 22",
+      "category": "testing",
+      "ai_summary": "Date: 2025-11-22 Branch: fix/system-review-and-testing Tester: Claude (AI Assistant) Status: Code Review Complete, Manual Testing Required --- This document outlines the testing that has been performed and provides a manual testing checklist for validating the WebSocket protocol fixes and convers..."
+    },
     "tools-and-integrations": {
       "slug": "tools-and-integrations",
       "path": "TOOLS_AND_INTEGRATIONS.md",
@@ -981,6 +1670,24 @@
       "title": "Tools And Integrations",
       "category": "reference",
       "ai_summary": "Last Updated: 2025-11-20 Status: Design Complete Version: V2.0 > Implementation Note: This document describes the V2 tools architecture design. The current production implementation lives in: > > - Tool Service: services/api-gateway/app/services/tools/tool_service.py > - Individual Tools: service..."
+    },
+    "tools-completion-summary": {
+      "slug": "tools-completion-summary",
+      "path": "TOOLS_COMPLETION_SUMMARY.md",
+      "component": "docs/summary",
+      "relatedPaths": ["docs"],
+      "title": "Tools Completion Summary",
+      "category": "reference",
+      "ai_summary": "Date: 2025-11-20 Session: Tools Integration Pass (Continued) Status: ✅ COMPLETE Duration: Comprehensive enhancement pass --- Successfully completed the remaining tools integration work for VoiceAssist V2, building upon the existing tools layer foundation. This session focused on: 1. Frontend Inte..."
+    },
+    "tools-integration-summary": {
+      "slug": "tools-integration-summary",
+      "path": "TOOLS_INTEGRATION_SUMMARY.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": ["docs/TOOLS_AND_INTEGRATIONS.md"],
+      "title": "Tools Integration Summary",
+      "category": "reference",
+      "ai_summary": "Date: 2025-11-20 Task: FINAL deep integration pass for tools and integrations Status: COMPLETE Duration: ~3 hours of comprehensive work --- Successfully completed a comprehensive tools integration pass for VoiceAssist V2. This pass added: - 1 comprehensive documentation file (TOOLS_AND_INTEGRATIO..."
     },
     "user-guide": {
       "slug": "user-guide",
@@ -995,6 +1702,18 @@
       "category": "operations",
       "ai_summary": "Version: 1.0 Last Updated: 2025-11-21 --- VoiceAssist is an AI-powered medical assistant that helps healthcare professionals with voice-based queries, document management, and medical knowledge retrieval. --- 1. Getting Started 2. User Interface 3. Voice Interactions 4. Document Management 5. Med..."
     },
+    "voice-ready-state-2025-11-25": {
+      "slug": "voice-ready-state-2025-11-25",
+      "path": "VOICE_READY_STATE_2025-11-25.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+      ],
+      "title": "Voice Ready State 2025 11 25",
+      "category": "reference",
+      "ai_summary": "The voice pipeline is now stable on main with all tests passing. This document serves as context for future AI assistant sessions. - PR #47: Unified Voice Mode pipeline (ephemeral tokens, settings -> backend, chat integration, metrics) - PR #48: /api/voice/metrics + frontend metrics export (sendB..."
+    },
     "api-reference/websocket": {
       "slug": "api-reference/websocket",
       "path": "WEBSOCKET_PROTOCOL.md",
@@ -1008,6 +1727,27 @@
       "title": "WebSocket Protocol Specification",
       "category": "reference",
       "ai_summary": "Version: 1.0 Last Updated: 2025-11-27 Status: Production Related Documentation: - Realtime Architecture - System architecture - Voice Mode Pipeline - Voice implementation - Thinker-Talker Pipeline - T/T voice architecture - Voice Pipeline WebSocket API - T/T WebSocket protocol - Implementation St..."
+    },
+    "web-app-specs": {
+      "slug": "web-app-specs",
+      "path": "WEB_APP_SPECS.md",
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/App.tsx",
+        "apps/web-app/src/components"
+      ],
+      "title": "Web App Specs",
+      "category": "reference",
+      "ai_summary": "The VoiceAssist web application provides browser-based access to the medical AI assistant for clinicians, supporting both text and voice interactions with deep integration into clinical workflows. Accessible at voiceassist.yourdomain.com. --- 1. Clinician UX & Workflows 2. Core Types & Interfaces..."
+    },
+    "web-app-wireframes": {
+      "slug": "web-app-wireframes",
+      "path": "WEB_APP_WIREFRAMES.md",
+      "component": "frontend/web-app",
+      "relatedPaths": ["apps/web-app/src/components"],
+      "title": "Web App Wireframes",
+      "category": "reference",
+      "ai_summary": "Placeholder for the web app wireframe collection. Replace this with the latest design artifacts when available."
     },
     "api-reference/routes": {
       "slug": "api-reference/routes",
@@ -1088,9 +1828,23 @@
       "title": "Architecture",
       "category": "overview",
       "ai_summary": "Placeholder for a high-level architecture summary referenced by the client documentation."
+    },
+    "phase8-folders-testing-guide": {
+      "slug": "phase8-folders-testing-guide",
+      "path": "phase8-folders-testing-guide.md",
+      "component": "frontend/web-app",
+      "relatedPaths": ["apps/web-app/src/components/folders"],
+      "title": "Phase8 Folders Testing Guide",
+      "category": "testing",
+      "ai_summary": "Date: 2024-11-24 Feature: Conversation Folders Organization Environment: dev.asimo.io This guide provides comprehensive manual testing steps for the new Folders feature in Phase 8, which allows users to organize their conversations into hierarchical folder structures. - ✅ Database table: conversa..."
     }
   },
   "by_path": {
+    "docs/DOCUMENTATION_METADATA_STANDARD.md": {
+      "path": "docs/DOCUMENTATION_METADATA_STANDARD.md",
+      "docs": ["style-guide"],
+      "component": "docs/standards"
+    },
     "services/api-gateway/app/services/feature_flag_service.py": {
       "path": "services/api-gateway/app/services/feature_flag_service.py",
       "docs": [
@@ -1156,12 +1910,17 @@
     },
     "apps/docs-site/scripts/validate-frontmatter.mjs": {
       "path": "apps/docs-site/scripts/validate-frontmatter.mjs",
-      "docs": ["docs/metadata-standard", "internal-docs-system"],
+      "docs": [
+        "docs-health-overview",
+        "docs/metadata-standard",
+        "internal-docs-system"
+      ],
       "component": "frontend/docs-site"
     },
     "apps/docs-site/scripts/generate-agent-json.js": {
       "path": "apps/docs-site/scripts/generate-agent-json.js",
       "docs": [
+        "docs-health-overview",
         "docs/metadata-standard",
         "internal-docs-system",
         "for-ai-agents",
@@ -1169,6 +1928,7 @@
         "ai/agent-onboarding",
         "ai/agent-task-index",
         "debugging/docs-site",
+        "documentation-site-specs",
         "start/ai-agents"
       ],
       "components": ["frontend/docs-site", "platform/ai-agents"]
@@ -1198,6 +1958,73 @@
       ],
       "components": ["frontend/docs-site", "platform/ai-agents"]
     },
+    "docs": {
+      "path": "docs",
+      "docs": [
+        "next-phase-improvements",
+        "documentation-completion-summary",
+        "enhancement-summary",
+        "file",
+        "final-documentation-summary",
+        "tools-completion-summary"
+      ],
+      "components": ["docs/planning", "docs/summary", "docs/placeholder"]
+    },
+    "apps/web-app/src/components/Chat.tsx": {
+      "path": "apps/web-app/src/components/Chat.tsx",
+      "docs": ["unified-chat-voice-ui", "start/users", "user-guide"],
+      "component": "frontend/web-app"
+    },
+    "apps/web-app/src/components/voice/VoiceModePanel.tsx": {
+      "path": "apps/web-app/src/components/voice/VoiceModePanel.tsx",
+      "docs": [
+        "unified-chat-voice-ui",
+        "world-class-barge-in-implementation-plan",
+        "voice/streaming-text-display",
+        "voice-mode-v4-overview",
+        "voice/enhancement-10-phase",
+        "voice/pipeline",
+        "voice-mode-settings-guide",
+        "debugging/voice-realtime",
+        "start/users",
+        "voice-state-2025-11-29",
+        "user-guide",
+        "voice-ready-state-2025-11-25"
+      ],
+      "components": [
+        "frontend/web-app",
+        "backend/api-gateway",
+        "frontend/voice",
+        "backend/voice"
+      ]
+    },
+    "services/api-gateway/app/api/voice.py": {
+      "path": "services/api-gateway/app/api/voice.py",
+      "docs": [
+        "world-class-barge-in-implementation-plan",
+        "voice/adaptive-quality-service",
+        "adaptive-vad-presets",
+        "latency-budgets-guide",
+        "multilingual-rag-architecture",
+        "phi-aware-stt-routing",
+        "voice-mode-v4-overview",
+        "voice/enhancement-10-phase",
+        "voice/pipeline",
+        "api-reference/overview",
+        "thinker-talker-pipeline",
+        "debugging/voice-realtime",
+        "voice-state-2025-11-29",
+        "architecture/realtime",
+        "voice-ready-state-2025-11-25",
+        "api-reference/websocket"
+      ],
+      "components": [
+        "backend/api-gateway",
+        "backend/voice",
+        "frontend/voice",
+        "backend/websocket"
+      ]
+    },
     "apps/admin-panel/src/App.tsx": {
       "path": "apps/admin-panel/src/App.tsx",
       "docs": [
@@ -1205,10 +2032,13 @@
         "ai/agent-onboarding",
         "overview/implementation-status",
         "architecture/frontend",
+        "admin-panel-specs",
         "architecture/unified",
         "admin/implementation-plan",
         "debugging/index",
         "start/admins",
+        "architecture-v2",
+        "admin-panel-implementation-summary",
         "debugging/frontend"
       ],
       "components": [
@@ -1269,7 +2099,12 @@
         "start-here",
         "architecture/unified",
         "start/admins",
+        "architecture-v2",
+        "architecture",
         "architecture/backend",
+        "backend-skeleton-verification",
+        "integration-handoff",
+        "part2-deferred-backend-features-plan",
         "api-reference/routes",
         "debugging/backend",
         "overview/architecture"
@@ -1280,7 +2115,8 @@
         "docs/overview",
         "platform/architecture",
         "platform/admin",
-        "backend/api-gateway"
+        "backend/api-gateway",
+        "platform/integration"
       ]
     },
     "apps/web-app/src/App.tsx": {
@@ -1292,7 +2128,11 @@
         "start-here",
         "architecture/unified",
         "debugging/index",
+        "architecture-v2",
         "start/users",
+        "accessibility-audit",
+        "frontend-completion-plan",
+        "web-app-specs",
         "debugging/frontend",
         "overview/architecture"
       ],
@@ -1315,29 +2155,6 @@
       "docs": ["voice/adaptive-quality-service"],
       "component": "backend/voice"
     },
-    "services/api-gateway/app/api/voice.py": {
-      "path": "services/api-gateway/app/api/voice.py",
-      "docs": [
-        "voice/adaptive-quality-service",
-        "adaptive-vad-presets",
-        "latency-budgets-guide",
-        "multilingual-rag-architecture",
-        "phi-aware-stt-routing",
-        "voice-mode-v4-overview",
-        "voice/pipeline",
-        "api-reference/overview",
-        "thinker-talker-pipeline",
-        "debugging/voice-realtime",
-        "architecture/realtime",
-        "api-reference/websocket"
-      ],
-      "components": [
-        "backend/voice",
-        "frontend/voice",
-        "backend/api-gateway",
-        "backend/websocket"
-      ]
-    },
     "apps/web-app/src/components/voice/VoiceFirstInputBar.tsx": {
       "path": "apps/web-app/src/components/voice/VoiceFirstInputBar.tsx",
       "docs": ["adaptive-vad-presets", "voice/voice-first-input-bar"],
@@ -1345,8 +2162,12 @@
     },
     "apps/web-app/src/components/voice/VoiceSettings.tsx": {
       "path": "apps/web-app/src/components/voice/VoiceSettings.tsx",
-      "docs": ["adaptive-vad-presets", "thinking-tone-settings"],
-      "component": "frontend/voice"
+      "docs": [
+        "adaptive-vad-presets",
+        "thinking-tone-settings",
+        "voice-mode-settings-guide"
+      ],
+      "components": ["frontend/voice", "frontend/web-app"]
     },
     "services/api-gateway/app/services/fhir_service.py": {
       "path": "services/api-gateway/app/services/fhir_service.py",
@@ -1387,10 +2208,16 @@
       "path": "services/api-gateway/app/services/rag_service.py",
       "docs": [
         "multilingual-rag-architecture",
+        "medical-features",
         "orchestration-design",
         "semantic-search-design"
       ],
-      "components": ["backend/voice", "backend/orchestrator", "backend/search"]
+      "components": [
+        "backend/voice",
+        "backend/api-gateway",
+        "backend/orchestrator",
+        "backend/search"
+      ]
     },
     "services/api-gateway/app/services/translation_service.py": {
       "path": "services/api-gateway/app/services/translation_service.py",
@@ -1414,8 +2241,12 @@
     },
     "apps/web-app/src/components/chat/MessageBubble.tsx": {
       "path": "apps/web-app/src/components/chat/MessageBubble.tsx",
-      "docs": ["rtl-support-guide"],
-      "component": "frontend/voice"
+      "docs": [
+        "rtl-support-guide",
+        "message-edit-progress",
+        "remaining-message-edit-work"
+      ],
+      "components": ["frontend/voice", "frontend/web-app"]
     },
     "packages/config/i18n.ts": {
       "path": "packages/config/i18n.ts",
@@ -1431,23 +2262,6 @@
       "path": "apps/web-app/src/components/voice/SpeakerAttributedTranscript.tsx",
       "docs": ["voice/speaker-diarization-service"],
       "component": "backend/voice"
-    },
-    "apps/web-app/src/components/voice/VoiceModePanel.tsx": {
-      "path": "apps/web-app/src/components/voice/VoiceModePanel.tsx",
-      "docs": [
-        "voice/streaming-text-display",
-        "voice-mode-v4-overview",
-        "voice/pipeline",
-        "debugging/voice-realtime",
-        "start/users",
-        "user-guide"
-      ],
-      "components": [
-        "frontend/voice",
-        "backend/api-gateway",
-        "backend/voice",
-        "frontend/web-app"
-      ]
     },
     "apps/web-app/src/components/voice/ThinkingVisualIndicator.tsx": {
       "path": "apps/web-app/src/components/voice/ThinkingVisualIndicator.tsx",
@@ -1531,8 +2345,8 @@
     },
     "docs/DEVELOPMENT_PHASES_V2.md": {
       "path": "docs/DEVELOPMENT_PHASES_V2.md",
-      "docs": ["roadmap"],
-      "component": "platform/planning"
+      "docs": ["roadmap", "compose-first-summary", "development-phases"],
+      "components": ["platform/planning", "infra"]
     },
     "docs/ALL_PHASES_SUMMARY.md": {
       "path": "docs/ALL_PHASES_SUMMARY.md",
@@ -1541,7 +2355,7 @@
     },
     "docs/overview/IMPLEMENTATION_STATUS.md": {
       "path": "docs/overview/IMPLEMENTATION_STATUS.md",
-      "docs": ["roadmap", "start-here"],
+      "docs": ["roadmap", "start-here", "readme"],
       "components": ["platform/planning", "docs/overview"]
     },
     "services/api-gateway/app/api/admin_voice.py": {
@@ -1551,8 +2365,18 @@
     },
     "apps/docs-site/src/app/layout.tsx": {
       "path": "apps/docs-site/src/app/layout.tsx",
-      "docs": ["debugging/docs-site"],
+      "docs": ["debugging/docs-site", "documentation-site-specs"],
       "component": "frontend/docs-site"
+    },
+    "apps/admin-panel/src/pages/Dashboard.tsx": {
+      "path": "apps/admin-panel/src/pages/Dashboard.tsx",
+      "docs": ["admin-panel-specs"],
+      "component": "frontend/admin-panel"
+    },
+    "services/api-gateway/app/api/admin.py": {
+      "path": "services/api-gateway/app/api/admin.py",
+      "docs": ["admin-panel-specs", "admin-panel-implementation-summary"],
+      "component": "frontend/admin-panel"
     },
     "services/api-gateway/app/api/__init__.py": {
       "path": "services/api-gateway/app/api/__init__.py",
@@ -1574,10 +2398,18 @@
       "path": "services/api-gateway/app/api/auth.py",
       "docs": [
         "api-reference/overview",
+        "admin-panel-login-fix",
+        "admin-panel-login-fix-complete",
+        "login-500-fix-2025-11-25",
+        "oauth-login-config",
         "security/compliance",
         "api-reference/rest-api"
       ],
-      "components": ["backend/api-gateway", "backend/security"]
+      "components": [
+        "backend/api-gateway",
+        "frontend/admin-panel",
+        "backend/security"
+      ]
     },
     "services/api-gateway/app/api/health.py": {
       "path": "services/api-gateway/app/api/health.py",
@@ -1602,6 +2434,11 @@
         "infra/deployment"
       ]
     },
+    "apps/docs-site/src/lib/docs.ts": {
+      "path": "apps/docs-site/src/lib/docs.ts",
+      "docs": ["documentation-site-specs"],
+      "component": "frontend/docs-site"
+    },
     "apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx": {
       "path": "apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx",
       "docs": ["thinker-talker-pipeline"],
@@ -1613,11 +2450,18 @@
         "architecture/unified",
         "start/admins",
         "start/developers",
+        "architecture-v2",
+        "architecture",
         "chaos-engineering",
+        "compose-first-summary",
+        "compose-to-k8s-migration",
         "configuration-reference",
         "deployment-guide",
+        "deployment-summary-asimo",
+        "development-phases-v2",
         "development-setup",
         "disaster-recovery-runbook",
+        "infrastructure-as-code",
         "infrastructure-setup",
         "local-development",
         "performance-tuning-guide",
@@ -1631,8 +2475,11 @@
         "platform/admin",
         "platform/development",
         "testing/chaos",
+        "infra",
+        "infra/k8s",
         "backend/config",
         "infra/deployment",
+        "platform/planning",
         "infra/operations",
         "infra/development",
         "backend/performance",
@@ -1724,10 +2571,77 @@
         "infra/terraform"
       ]
     },
-    "apps/web-app/src/components/Chat.tsx": {
-      "path": "apps/web-app/src/components/Chat.tsx",
-      "docs": ["start/users", "user-guide"],
+    "apps/web-app/src/components": {
+      "path": "apps/web-app/src/components",
+      "docs": [
+        "accessibility-audit",
+        "frontend-completion-plan",
+        "web-app-specs",
+        "web-app-wireframes"
+      ],
       "component": "frontend/web-app"
+    },
+    "apps/admin-panel/vite.config.ts": {
+      "path": "apps/admin-panel/vite.config.ts",
+      "docs": ["admin-panel-deployment"],
+      "component": "frontend/admin-panel"
+    },
+    "apps/admin-panel/package.json": {
+      "path": "apps/admin-panel/package.json",
+      "docs": ["admin-panel-deployment"],
+      "component": "frontend/admin-panel"
+    },
+    "apps/admin-panel/src/pages/Login.tsx": {
+      "path": "apps/admin-panel/src/pages/Login.tsx",
+      "docs": [
+        "admin-panel-implementation-summary",
+        "admin-panel-login-fix",
+        "admin-panel-login-fix-complete"
+      ],
+      "component": "frontend/admin-panel"
+    },
+    "docs/phases": {
+      "path": "docs/phases",
+      "docs": [
+        "all-phases-summary",
+        "development-phases-v2",
+        "integration-improvements-phase-0-8",
+        "phase-02-completion-report",
+        "phase-02-enhancements-report",
+        "phase-03-completion-report",
+        "phase-04-completion-report",
+        "phase-05-completion-report",
+        "phase-06-completion-report",
+        "phase-07-completion-report",
+        "phase-08-completion-report",
+        "phase-09-completion-report",
+        "phase-0-1-completion-report",
+        "phase-0-1-optimization-recommendations",
+        "phase-10-completion-report",
+        "phase-2-optimized-plan",
+        "phase-template"
+      ],
+      "component": "platform/planning"
+    },
+    "docs/ROADMAP.md": {
+      "path": "docs/ROADMAP.md",
+      "docs": [
+        "all-phases-summary",
+        "overview/continuous-improvement-plan",
+        "development-phases-v2",
+        "part3-platform-enhancements-plan"
+      ],
+      "component": "platform/planning"
+    },
+    "infrastructure/ansible/playbooks": {
+      "path": "infrastructure/ansible/playbooks",
+      "docs": ["ansible-guide"],
+      "component": "infra/ansible"
+    },
+    "infrastructure/ansible/roles": {
+      "path": "infrastructure/ansible/roles",
+      "docs": ["ansible-guide"],
+      "component": "infra/ansible"
     },
     "services/api-gateway/app/core/database.py": {
       "path": "services/api-gateway/app/core/database.py",
@@ -1750,6 +2664,11 @@
       "docs": ["architecture/backend", "data-model"],
       "components": ["backend/api-gateway", "backend/models"]
     },
+    "services/api-gateway/app/api": {
+      "path": "services/api-gateway/app/api",
+      "docs": ["backend-skeleton-verification", "phase-08-api-contracts"],
+      "component": "backend/api-gateway"
+    },
     ".github/workflows": {
       "path": ".github/workflows",
       "docs": ["cicd-guide"],
@@ -1762,28 +2681,96 @@
     },
     "docs/ai/AGENT_ONBOARDING.md": {
       "path": "docs/ai/AGENT_ONBOARDING.md",
-      "docs": ["ai/claude-execution-guide"],
+      "docs": ["ai/claude-execution-guide", "ai/claude-prompts", "readme"],
+      "components": ["platform/ai-agents", "docs/overview"]
+    },
+    "docs/CLAUDE_EXECUTION_GUIDE.md": {
+      "path": "docs/CLAUDE_EXECUTION_GUIDE.md",
+      "docs": ["ai/claude-prompts"],
       "component": "platform/ai-agents"
+    },
+    "k8s": {
+      "path": "k8s",
+      "docs": ["compose-to-k8s-migration"],
+      "component": "infra/k8s"
+    },
+    "ha-dr": {
+      "path": "ha-dr",
+      "docs": ["compose-to-k8s-migration", "rto-rpo-documentation"],
+      "components": ["infra/k8s", "infra/ha-dr"]
+    },
+    "docs/CONTINUOUS_IMPROVEMENT_PLAN.md": {
+      "path": "docs/CONTINUOUS_IMPROVEMENT_PLAN.md",
+      "docs": ["continuous-improvement-summary"],
+      "component": "platform/planning"
     },
     "services/api-gateway/app/models/user.py": {
       "path": "services/api-gateway/app/models/user.py",
       "docs": ["data-model"],
       "component": "backend/models"
     },
+    "services/api-gateway/app": {
+      "path": "services/api-gateway/app",
+      "docs": ["deep-verification-qa-summary"],
+      "component": "platform/qa"
+    },
     "services/api-gateway/Dockerfile": {
       "path": "services/api-gateway/Dockerfile",
       "docs": ["deployment-guide", "infrastructure-setup"],
       "component": "infra/deployment"
     },
+    "apps/web-app/src": {
+      "path": "apps/web-app/src",
+      "docs": [
+        "frontend-verification-summary",
+        "system-review-2025-11-22",
+        "testing-results-2025-11-22"
+      ],
+      "components": ["frontend/web-app", "platform/review", "platform/testing"]
+    },
+    "apps/admin-panel/src": {
+      "path": "apps/admin-panel/src",
+      "docs": ["frontend-verification-summary"],
+      "component": "frontend/web-app"
+    },
     "services/api-gateway/app/core/security.py": {
       "path": "services/api-gateway/app/core/security.py",
-      "docs": ["hipaa-compliance-matrix", "security/compliance"],
-      "component": "backend/security"
+      "docs": [
+        "hipaa-compliance-matrix",
+        "oauth-login-config",
+        "security/compliance"
+      ],
+      "components": ["backend/security", "backend/api-gateway"]
     },
     "services/api-gateway/app/api/admin_phi.py": {
       "path": "services/api-gateway/app/api/admin_phi.py",
       "docs": ["hipaa-compliance-matrix"],
       "component": "backend/security"
+    },
+    "infrastructure/terraform": {
+      "path": "infrastructure/terraform",
+      "docs": ["infrastructure-as-code"],
+      "component": "infra"
+    },
+    "infrastructure/ansible": {
+      "path": "infrastructure/ansible",
+      "docs": ["infrastructure-as-code"],
+      "component": "infra"
+    },
+    "services/api-gateway/app/services/medical_kb_service.py": {
+      "path": "services/api-gateway/app/services/medical_kb_service.py",
+      "docs": ["medical-features"],
+      "component": "backend/api-gateway"
+    },
+    "nextcloud-apps": {
+      "path": "nextcloud-apps",
+      "docs": ["nextcloud-apps-design"],
+      "component": "integration/nextcloud"
+    },
+    "services/api-gateway/app/services/nextcloud_service.py": {
+      "path": "services/api-gateway/app/services/nextcloud_service.py",
+      "docs": ["nextcloud-integration"],
+      "component": "backend/api-gateway"
     },
     "services/api-gateway/app/core/logging.py": {
       "path": "services/api-gateway/app/core/logging.py",
@@ -1800,6 +2787,16 @@
       "docs": ["orchestration-design", "architecture/service-catalog"],
       "components": ["backend/orchestrator", "backend/services"]
     },
+    "tests/performance": {
+      "path": "tests/performance",
+      "docs": ["performance-benchmarks"],
+      "component": "platform/testing"
+    },
+    "docs/LOAD_TESTING_GUIDE.md": {
+      "path": "docs/LOAD_TESTING_GUIDE.md",
+      "docs": ["performance-benchmarks"],
+      "component": "platform/testing"
+    },
     "infrastructure/terraform/main.tf": {
       "path": "infrastructure/terraform/main.tf",
       "docs": ["production-deployment-runbook"],
@@ -1810,10 +2807,38 @@
       "docs": ["production-deployment-runbook"],
       "component": "infra/deployment"
     },
+    "docs/START_HERE.md": {
+      "path": "docs/START_HERE.md",
+      "docs": ["project-summary"],
+      "component": "docs/overview"
+    },
     "apps/web-app/src/hooks/useWebSocket.ts": {
       "path": "apps/web-app/src/hooks/useWebSocket.ts",
       "docs": ["architecture/realtime", "api-reference/websocket"],
       "component": "backend/websocket"
+    },
+    "packages/api-client/src/index.ts": {
+      "path": "packages/api-client/src/index.ts",
+      "docs": [
+        "remaining-message-edit-work",
+        "testing-contracts",
+        "api-reference/rest-api"
+      ],
+      "components": [
+        "frontend/web-app",
+        "testing/contracts",
+        "backend/api-gateway"
+      ]
+    },
+    "apps/web-app/src/components/chat/MessageActionMenu.tsx": {
+      "path": "apps/web-app/src/components/chat/MessageActionMenu.tsx",
+      "docs": ["remaining-message-edit-work"],
+      "component": "frontend/web-app"
+    },
+    "docs/SECURITY_COMPLIANCE.md": {
+      "path": "docs/SECURITY_COMPLIANCE.md",
+      "docs": ["security"],
+      "component": "platform/security"
     },
     "services/api-gateway/app/api/auth_2fa.py": {
       "path": "services/api-gateway/app/api/auth_2fa.py",
@@ -1855,11 +2880,6 @@
       "docs": ["terraform-guide"],
       "component": "infra/terraform"
     },
-    "packages/api-client/src/index.ts": {
-      "path": "packages/api-client/src/index.ts",
-      "docs": ["testing-contracts", "api-reference/rest-api"],
-      "components": ["testing/contracts", "backend/api-gateway"]
-    },
     "apps/web-app/playwright.config.ts": {
       "path": "apps/web-app/playwright.config.ts",
       "docs": ["testing-guide"],
@@ -1895,18 +2915,28 @@
       "docs": ["tools-and-integrations"],
       "component": "backend/tools"
     },
+    "docs/TOOLS_AND_INTEGRATIONS.md": {
+      "path": "docs/TOOLS_AND_INTEGRATIONS.md",
+      "docs": ["tools-integration-summary"],
+      "component": "backend/api-gateway"
+    },
     "services/api-gateway/openapi.yaml": {
       "path": "services/api-gateway/openapi.yaml",
       "docs": ["api-reference/routes"],
       "component": "backend/api-gateway"
+    },
+    "apps/web-app/src/components/folders": {
+      "path": "apps/web-app/src/components/folders",
+      "docs": ["phase8-folders-testing-guide"],
+      "component": "frontend/web-app"
     }
   },
   "meta": {
     "stats": {
-      "docs_with_links": 83,
-      "total_links": 265,
-      "unique_paths": 110,
-      "missing_paths": 43
+      "docs_with_links": 158,
+      "total_links": 381,
+      "unique_paths": 143,
+      "missing_paths": 96
     },
     "missing_paths": [
       {
@@ -1938,12 +2968,20 @@
         "path": "services/api-gateway/app/services/feature_flag_service.py"
       },
       {
+        "docSlug": "docs-health-overview",
+        "path": "apps/docs-site/scripts/validate-frontmatter.mjs"
+      },
+      {
         "docSlug": "docs/metadata-standard",
         "path": "apps/docs-site/scripts/validate-frontmatter.mjs"
       },
       {
         "docSlug": "internal-docs-system",
         "path": "apps/docs-site/scripts/validate-frontmatter.mjs"
+      },
+      {
+        "docSlug": "next-phase-improvements",
+        "path": "docs"
       },
       {
         "docSlug": "realtime-events-guide",
@@ -1986,6 +3024,14 @@
         "path": "apps/web-app/src/hooks/useConversation.ts"
       },
       {
+        "docSlug": "admin-panel-specs",
+        "path": "apps/admin-panel/src/pages/Dashboard.tsx"
+      },
+      {
+        "docSlug": "admin-panel-specs",
+        "path": "services/api-gateway/app/api/admin.py"
+      },
+      {
         "docSlug": "thinker-talker-pipeline",
         "path": "services/api-gateway/app/services/thinker_talker_service.py"
       },
@@ -1998,8 +3044,52 @@
         "path": ".env.example"
       },
       {
+        "docSlug": "accessibility-audit",
+        "path": "apps/web-app/src/components"
+      },
+      {
+        "docSlug": "admin-panel-implementation-summary",
+        "path": "apps/admin-panel/src/pages/Login.tsx"
+      },
+      {
+        "docSlug": "admin-panel-implementation-summary",
+        "path": "services/api-gateway/app/api/admin.py"
+      },
+      {
+        "docSlug": "admin-panel-login-fix",
+        "path": "apps/admin-panel/src/pages/Login.tsx"
+      },
+      {
+        "docSlug": "admin-panel-login-fix-complete",
+        "path": "apps/admin-panel/src/pages/Login.tsx"
+      },
+      {
+        "docSlug": "all-phases-summary",
+        "path": "docs/phases"
+      },
+      {
+        "docSlug": "ansible-guide",
+        "path": "infrastructure/ansible/playbooks"
+      },
+      {
+        "docSlug": "ansible-guide",
+        "path": "infrastructure/ansible/roles"
+      },
+      {
+        "docSlug": "backend-skeleton-verification",
+        "path": "services/api-gateway/app/api"
+      },
+      {
         "docSlug": "cicd-guide",
         "path": ".github/workflows"
+      },
+      {
+        "docSlug": "compose-to-k8s-migration",
+        "path": "k8s"
+      },
+      {
+        "docSlug": "compose-to-k8s-migration",
+        "path": "ha-dr"
       },
       {
         "docSlug": "configuration-reference",
@@ -2010,12 +3100,72 @@
         "path": "services/api-gateway/app/models/conversation.py"
       },
       {
+        "docSlug": "deep-verification-qa-summary",
+        "path": "services/api-gateway/app"
+      },
+      {
         "docSlug": "deployment-guide",
         "path": ".env.example"
       },
       {
+        "docSlug": "development-phases-v2",
+        "path": "docs/phases"
+      },
+      {
         "docSlug": "development-setup",
         "path": ".env.example"
+      },
+      {
+        "docSlug": "documentation-completion-summary",
+        "path": "docs"
+      },
+      {
+        "docSlug": "enhancement-summary",
+        "path": "docs"
+      },
+      {
+        "docSlug": "file",
+        "path": "docs"
+      },
+      {
+        "docSlug": "final-documentation-summary",
+        "path": "docs"
+      },
+      {
+        "docSlug": "frontend-completion-plan",
+        "path": "apps/web-app/src/components"
+      },
+      {
+        "docSlug": "frontend-verification-summary",
+        "path": "apps/web-app/src"
+      },
+      {
+        "docSlug": "frontend-verification-summary",
+        "path": "apps/admin-panel/src"
+      },
+      {
+        "docSlug": "infrastructure-as-code",
+        "path": "infrastructure/terraform"
+      },
+      {
+        "docSlug": "infrastructure-as-code",
+        "path": "infrastructure/ansible"
+      },
+      {
+        "docSlug": "integration-improvements-phase-0-8",
+        "path": "docs/phases"
+      },
+      {
+        "docSlug": "medical-features",
+        "path": "services/api-gateway/app/services/medical_kb_service.py"
+      },
+      {
+        "docSlug": "nextcloud-apps-design",
+        "path": "nextcloud-apps"
+      },
+      {
+        "docSlug": "nextcloud-integration",
+        "path": "services/api-gateway/app/services/nextcloud_service.py"
       },
       {
         "docSlug": "orchestration-design",
@@ -2024,6 +3174,70 @@
       {
         "docSlug": "orchestration-design",
         "path": "services/api-gateway/app/services/conversation_service.py"
+      },
+      {
+        "docSlug": "performance-benchmarks",
+        "path": "tests/performance"
+      },
+      {
+        "docSlug": "phase-02-completion-report",
+        "path": "docs/phases"
+      },
+      {
+        "docSlug": "phase-02-enhancements-report",
+        "path": "docs/phases"
+      },
+      {
+        "docSlug": "phase-03-completion-report",
+        "path": "docs/phases"
+      },
+      {
+        "docSlug": "phase-04-completion-report",
+        "path": "docs/phases"
+      },
+      {
+        "docSlug": "phase-05-completion-report",
+        "path": "docs/phases"
+      },
+      {
+        "docSlug": "phase-06-completion-report",
+        "path": "docs/phases"
+      },
+      {
+        "docSlug": "phase-07-completion-report",
+        "path": "docs/phases"
+      },
+      {
+        "docSlug": "phase-08-api-contracts",
+        "path": "services/api-gateway/app/api"
+      },
+      {
+        "docSlug": "phase-08-completion-report",
+        "path": "docs/phases"
+      },
+      {
+        "docSlug": "phase-09-completion-report",
+        "path": "docs/phases"
+      },
+      {
+        "docSlug": "phase-0-1-completion-report",
+        "path": "docs/phases"
+      },
+      {
+        "docSlug": "phase-0-1-optimization-recommendations",
+        "path": "docs/phases"
+      },
+      {
+        "docSlug": "phase-10-completion-report",
+        "path": "docs/phases"
+      },
+      {
+        "docSlug": "phase-2-optimized-plan",
+        "path": "docs/phases"
+      },
+      {
+        "docSlug": "phase-template",
+        "path": "docs/phases"
       },
       {
         "docSlug": "production-deployment-runbook",
@@ -2036,6 +3250,10 @@
       {
         "docSlug": "architecture/realtime",
         "path": "apps/web-app/src/hooks/useWebSocket.ts"
+      },
+      {
+        "docSlug": "rto-rpo-documentation",
+        "path": "ha-dr"
       },
       {
         "docSlug": "security/compliance",
@@ -2058,6 +3276,10 @@
         "path": "services/api-gateway/app/services/auth_service.py"
       },
       {
+        "docSlug": "system-review-2025-11-22",
+        "path": "apps/web-app/src"
+      },
+      {
         "docSlug": "terraform-guide",
         "path": "terraform"
       },
@@ -2070,6 +3292,14 @@
         "path": "apps/web-app/src/__tests__"
       },
       {
+        "docSlug": "testing-results-2025-11-22",
+        "path": "apps/web-app/src"
+      },
+      {
+        "docSlug": "tools-completion-summary",
+        "path": "docs"
+      },
+      {
         "docSlug": "api-reference/websocket",
         "path": "services/api-gateway/app/api/websocket.py"
       },
@@ -2078,8 +3308,20 @@
         "path": "apps/web-app/src/hooks/useWebSocket.ts"
       },
       {
+        "docSlug": "web-app-specs",
+        "path": "apps/web-app/src/components"
+      },
+      {
+        "docSlug": "web-app-wireframes",
+        "path": "apps/web-app/src/components"
+      },
+      {
         "docSlug": "api-reference/routes",
         "path": "services/api-gateway/openapi.yaml"
+      },
+      {
+        "docSlug": "phase8-folders-testing-guide",
+        "path": "apps/web-app/src/components/folders"
       }
     ]
   }

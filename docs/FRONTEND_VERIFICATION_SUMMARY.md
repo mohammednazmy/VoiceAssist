@@ -14,6 +14,10 @@ tags:
   - verification
   - summary
 category: reference
+component: "frontend/web-app"
+relatedPaths:
+  - "apps/web-app/src"
+  - "apps/admin-panel/src"
 ai_summary: >-
   Date: 2025-11-20 Status: ✅ Complete Task: Frontend verification pass for
   VoiceAssist V2 web-app and admin-panel --- This document summarizes the

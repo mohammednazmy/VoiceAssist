@@ -15,6 +15,9 @@ tags:
   - backend
   - features
 category: planning
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/main.py"
 ai_summary: >-
   Version: 1.0 Date: 2025-11-26 Status: Planning Complete - Ready for
   Implementation Priority: High - Enables Full Frontend Functionality Estimated

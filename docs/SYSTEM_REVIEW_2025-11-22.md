@@ -14,6 +14,9 @@ tags:
   - review
   - "2025"
 category: reference
+component: "platform/review"
+relatedPaths:
+  - "apps/web-app/src"
 ai_summary: >-
   Reviewer: Claude (AI Assistant) Date: November 22, 2025 Branch:
   fix/system-review-and-testing Scope: Chat interface, conversation management,

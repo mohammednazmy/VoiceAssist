@@ -17,6 +17,11 @@ tags:
   - panel
   - specs
 category: operations
+component: "frontend/admin-panel"
+relatedPaths:
+  - "apps/admin-panel/src/App.tsx"
+  - "apps/admin-panel/src/pages/Dashboard.tsx"
+  - "services/api-gateway/app/api/admin.py"
 ai_summary: >-
   The VoiceAssist Admin Panel provides a centralized web interface for system
   configuration, monitoring, and management. Accessible at admin.asimo.io. -

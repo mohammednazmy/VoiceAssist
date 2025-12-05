@@ -16,6 +16,10 @@ tags:
   - login
   - config
 category: reference
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/api/auth.py"
+  - "services/api-gateway/app/core/security.py"
 ai_summary: >-
   This document explains how to configure Google and Microsoft OAuth login for
   VoiceAssist. VoiceAssist supports OAuth 2.0 authentication with: - Google

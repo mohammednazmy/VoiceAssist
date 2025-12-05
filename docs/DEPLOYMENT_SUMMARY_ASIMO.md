@@ -15,6 +15,9 @@ tags:
   - summary
   - asimo
 category: deployment
+component: "infra/deployment"
+relatedPaths:
+  - "docker-compose.yml"
 ai_summary: >-
   Deployment Date: 2025-11-22 (Initial) / 2025-11-23 (Final Configuration)
   Environment: Production (Ubuntu 24.04 LTS) Server: asimo.io (107.204.29.210)

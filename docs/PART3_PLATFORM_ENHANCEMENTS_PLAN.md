@@ -15,6 +15,9 @@ tags:
   - enhancements
   - plan
 category: planning
+component: "platform/planning"
+relatedPaths:
+  - "docs/ROADMAP.md"
 ai_summary: >-
   Version: 1.0 Date: 2025-11-26 Status: Planning Priority: MEDIUM Estimated
   Duration: 11-14 weeks --- This document provides a comprehensive

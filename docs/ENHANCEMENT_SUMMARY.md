@@ -15,6 +15,9 @@ tags:
   - enhancement
   - summary
 category: reference
+component: "docs/summary"
+relatedPaths:
+  - "docs"
 ai_summary: >-
   This document summarizes the comprehensive documentation enhancements made to
   VoiceAssist V2, transforming it from a basic project concept into a

@@ -14,6 +14,9 @@ tags:
   - documentation
   - summary
 category: reference
+component: "docs/summary"
+relatedPaths:
+  - "docs"
 ai_summary: >-
   Date: 2025-11-20 Purpose: Comprehensive summary of the final documentation
   enhancement pass Status: Complete > Note: This is a historical summary from

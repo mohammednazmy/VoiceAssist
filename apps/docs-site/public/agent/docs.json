@@ -1,6 +1,6 @@
 {
   "count": 283,
-  "generated_at": "2025-12-05T04:47:07.289Z",
+  "generated_at": "2025-12-05T05:05:49.471Z",
   "docs": [
     {
       "slug": "style-guide",
@@ -12,6 +12,8 @@
       "owner": "docs",
       "audience": ["developers", "technical-writers", "ai-agents"],
       "category": "reference",
+      "component": "docs/standards",
+      "relatedPaths": ["docs/DOCUMENTATION_METADATA_STANDARD.md"],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
@@ -223,6 +225,11 @@
         "continuous-improvement"
       ],
       "relatedServices": ["docs-site"],
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/scripts/validate-frontmatter.mjs",
+        "apps/docs-site/scripts/generate-agent-json.js"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -298,6 +305,8 @@
       "audience": ["developers", "docs", "ai-agents"],
       "category": "planning",
       "tags": ["roadmap", "improvements", "documentation"],
+      "component": "docs/planning",
+      "relatedPaths": ["docs"],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -312,6 +321,11 @@
       "audience": ["developers", "frontend", "ai-agents"],
       "category": "planning",
       "tags": ["voice", "ui", "chat", "frontend", "unified"],
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/components/Chat.tsx",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -325,6 +339,11 @@
       "audience": ["developers", "ai-agents"],
       "category": "planning",
       "tags": ["voice", "barge-in", "vad", "real-time"],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -1023,18 +1042,14 @@
       "stability": "production",
       "owner": "backend",
       "audience": ["human", "agent", "backend", "frontend", "ai-agents"],
-      "category": "reference",
-      "tags": [
-        "voice",
-        "enhancement",
-        "emotion",
-        "dictation",
-        "medical",
-        "backchanneling",
-        "memory",
-        "analytics"
-      ],
+      "category": "voice",
+      "tags": ["voice", "enhancement", "emotion", "dictation"],
       "relatedServices": ["api-gateway", "web-app"],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+      ],
       "lastUpdated": "2025-12-03"
     },
     {
@@ -1091,6 +1106,11 @@
         "offline",
         "calibration"
       ],
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx",
+        "apps/web-app/src/components/voice/VoiceSettings.tsx"
+      ],
       "lastUpdated": "2025-12-03"
     },
     {
@@ -1133,6 +1153,12 @@
       "audience": ["devops", "sre", "ai-agents"],
       "category": "operations",
       "tags": ["admin", "panel", "specs"],
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/App.tsx",
+        "apps/admin-panel/src/pages/Dashboard.tsx",
+        "services/api-gateway/app/api/admin.py"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -1170,6 +1196,12 @@
       "audience": ["human", "agent", "ai-agents"],
       "category": "reference",
       "tags": ["documentation", "site", "specs", "automation", "ai"],
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/src/app/layout.tsx",
+        "apps/docs-site/src/lib/docs.ts",
+        "apps/docs-site/scripts/generate-agent-json.js"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -1473,6 +1505,13 @@
       "audience": ["human", "ai-agents"],
       "category": "architecture",
       "tags": ["architecture"],
+      "component": "platform/architecture",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "services/api-gateway/app/main.py",
+        "apps/web-app/src/App.tsx",
+        "apps/admin-panel/src/App.tsx"
+      ],
       "lastUpdated": "2025-12-01"
     },
     {
@@ -1507,6 +1546,11 @@
       "audience": ["human", "agent", "ai-agents"],
       "category": "reference",
       "tags": ["voice", "barge-in", "audio", "state", "2025"],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+      ],
       "lastUpdated": "2025-11-29"
     },
     {
@@ -1521,6 +1565,11 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["accessibility", "audit"],
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/App.tsx",
+        "apps/web-app/src/components"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1535,6 +1584,11 @@
       "audience": ["devops", "sre", "ai-agents"],
       "category": "deployment",
       "tags": ["admin", "panel", "deployment"],
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/vite.config.ts",
+        "apps/admin-panel/package.json"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1549,6 +1603,12 @@
       "audience": ["devops", "sre", "ai-agents"],
       "category": "operations",
       "tags": ["admin", "panel", "implementation", "summary"],
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/App.tsx",
+        "apps/admin-panel/src/pages/Login.tsx",
+        "services/api-gateway/app/api/admin.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1563,6 +1623,11 @@
       "audience": ["devops", "sre", "ai-agents"],
       "category": "operations",
       "tags": ["admin", "panel", "login", "fix"],
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/pages/Login.tsx",
+        "services/api-gateway/app/api/auth.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1577,6 +1642,11 @@
       "audience": ["devops", "sre", "ai-agents"],
       "category": "operations",
       "tags": ["admin", "panel", "login", "fix"],
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/pages/Login.tsx",
+        "services/api-gateway/app/api/auth.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1591,6 +1661,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["all", "phases", "summary"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases", "docs/ROADMAP.md"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1605,6 +1677,11 @@
       "audience": ["frontend", "ai-agents"],
       "category": "operations",
       "tags": ["ansible", "guide"],
+      "component": "infra/ansible",
+      "relatedPaths": [
+        "infrastructure/ansible/playbooks",
+        "infrastructure/ansible/roles"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1619,6 +1696,11 @@
       "audience": ["human", "ai-agents"],
       "category": "architecture",
       "tags": ["architecture"],
+      "component": "platform/architecture",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "services/api-gateway/app/main.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1656,6 +1738,11 @@
       "audience": ["backend", "ai-agents"],
       "category": "reference",
       "tags": ["backend", "skeleton", "verification"],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "services/api-gateway/app/api"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1721,6 +1808,11 @@
       "audience": ["agent", "ai-agents", "human"],
       "category": "ai",
       "tags": ["claude", "prompts", "ai-agent", "templates"],
+      "component": "platform/ai-agents",
+      "relatedPaths": [
+        "docs/CLAUDE_EXECUTION_GUIDE.md",
+        "docs/ai/AGENT_ONBOARDING.md"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1735,6 +1827,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["compose", "first", "summary"],
+      "component": "infra",
+      "relatedPaths": ["docker-compose.yml", "docs/DEVELOPMENT_PHASES_V2.md"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1749,6 +1843,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["compose", "k8s", "migration"],
+      "component": "infra/k8s",
+      "relatedPaths": ["docker-compose.yml", "k8s", "ha-dr"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1789,6 +1885,8 @@
       ],
       "category": "planning",
       "tags": ["roadmap", "planning", "improvements", "future"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/ROADMAP.md"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1803,6 +1901,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["continuous", "improvement", "summary"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/CONTINUOUS_IMPROVEMENT_PLAN.md"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1839,6 +1939,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["deep", "verification", "summary"],
+      "component": "platform/qa",
+      "relatedPaths": ["services/api-gateway/app"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1874,6 +1976,8 @@
       "audience": ["devops", "sre", "ai-agents"],
       "category": "deployment",
       "tags": ["deployment", "summary", "asimo"],
+      "component": "infra/deployment",
+      "relatedPaths": ["docker-compose.yml"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1888,6 +1992,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["development", "phases"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/DEVELOPMENT_PHASES_V2.md"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1902,6 +2008,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["development", "phases"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases", "docs/ROADMAP.md", "docker-compose.yml"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1957,6 +2065,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["documentation", "completion", "summary"],
+      "component": "docs/summary",
+      "relatedPaths": ["docs"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1971,6 +2081,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["enhancement", "summary"],
+      "component": "docs/summary",
+      "relatedPaths": ["docs"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1985,6 +2097,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["file"],
+      "component": "docs/placeholder",
+      "relatedPaths": ["docs"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1999,6 +2113,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["final", "documentation", "summary"],
+      "component": "docs/summary",
+      "relatedPaths": ["docs"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2013,6 +2129,11 @@
       "audience": ["frontend", "ai-agents"],
       "category": "planning",
       "tags": ["frontend", "completion", "plan"],
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/App.tsx",
+        "apps/web-app/src/components"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2027,6 +2148,8 @@
       "audience": ["frontend", "ai-agents"],
       "category": "reference",
       "tags": ["frontend", "verification", "summary"],
+      "component": "frontend/web-app",
+      "relatedPaths": ["apps/web-app/src", "apps/admin-panel/src"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2061,6 +2184,12 @@
       "audience": ["devops", "sre", "ai-agents"],
       "category": "deployment",
       "tags": ["infrastructure", "code"],
+      "component": "infra",
+      "relatedPaths": [
+        "infrastructure/terraform",
+        "infrastructure/ansible",
+        "docker-compose.yml"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2095,6 +2224,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["integration", "handoff"],
+      "component": "platform/integration",
+      "relatedPaths": ["services/api-gateway/app/main.py"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2109,6 +2240,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["integration", "improvements", "phase"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2160,6 +2293,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["login", "500", "fix", "2025"],
+      "component": "backend/api-gateway",
+      "relatedPaths": ["services/api-gateway/app/api/auth.py"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2174,6 +2309,11 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["medical", "features"],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/services/rag_service.py",
+        "services/api-gateway/app/services/medical_kb_service.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2188,6 +2328,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["message", "edit", "progress"],
+      "component": "frontend/web-app",
+      "relatedPaths": ["apps/web-app/src/components/chat/MessageBubble.tsx"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2202,6 +2344,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["nextcloud", "apps", "design"],
+      "component": "integration/nextcloud",
+      "relatedPaths": ["nextcloud-apps"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2216,6 +2360,10 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["nextcloud", "integration"],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/services/nextcloud_service.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2230,6 +2378,11 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["oauth", "login", "config"],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/auth.py",
+        "services/api-gateway/app/core/security.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2284,6 +2437,8 @@
       "audience": ["backend", "ai-agents"],
       "category": "planning",
       "tags": ["part2", "deferred", "backend", "features"],
+      "component": "backend/api-gateway",
+      "relatedPaths": ["services/api-gateway/app/main.py"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2298,6 +2453,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["part3", "platform", "enhancements", "plan"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/ROADMAP.md"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2312,6 +2469,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["performance", "benchmarks"],
+      "component": "platform/testing",
+      "relatedPaths": ["tests/performance", "docs/LOAD_TESTING_GUIDE.md"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2346,6 +2505,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["phase", "completion", "report"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2360,6 +2521,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["phase", "enhancements", "report"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2374,6 +2537,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["phase", "completion", "report"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2388,6 +2553,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["phase", "completion", "report"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2402,6 +2569,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["phase", "completion", "report"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2416,6 +2585,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["phase", "completion", "report"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2430,6 +2601,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["phase", "completion", "report"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2444,6 +2617,8 @@
       "audience": ["backend", "ai-agents"],
       "category": "api",
       "tags": ["phase", "api", "contracts"],
+      "component": "backend/api-gateway",
+      "relatedPaths": ["services/api-gateway/app/api"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2458,6 +2633,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["phase", "completion", "report"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2472,6 +2649,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["phase", "completion", "report"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2486,6 +2665,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["phase", "completion", "report"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2500,6 +2681,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["phase", "optimization", "recommendations"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2514,6 +2697,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["phase", "completion", "report"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2528,6 +2713,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["phase", "optimized", "plan"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2542,6 +2729,8 @@
       "audience": ["human", "ai-agents"],
       "category": "planning",
       "tags": ["phase", "template"],
+      "component": "platform/planning",
+      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2596,6 +2785,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["project", "summary"],
+      "component": "docs/overview",
+      "relatedPaths": ["docs/START_HERE.md"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2610,6 +2801,11 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["readme"],
+      "component": "docs/overview",
+      "relatedPaths": [
+        "docs/ai/AGENT_ONBOARDING.md",
+        "docs/overview/IMPLEMENTATION_STATUS.md"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2646,6 +2842,12 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["remaining", "message", "edit", "work"],
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "packages/api-client/src/index.ts",
+        "apps/web-app/src/components/chat/MessageBubble.tsx",
+        "apps/web-app/src/components/chat/MessageActionMenu.tsx"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2660,6 +2862,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["rto", "rpo", "documentation"],
+      "component": "infra/ha-dr",
+      "relatedPaths": ["ha-dr"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2674,6 +2878,8 @@
       "audience": ["human", "ai-agents"],
       "category": "security",
       "tags": ["security"],
+      "component": "platform/security",
+      "relatedPaths": ["docs/SECURITY_COMPLIANCE.md"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2758,6 +2964,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["system", "review", "2025"],
+      "component": "platform/review",
+      "relatedPaths": ["apps/web-app/src"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2828,6 +3036,8 @@
       "audience": ["human", "ai-agents"],
       "category": "testing",
       "tags": ["testing", "results", "2025"],
+      "component": "platform/testing",
+      "relatedPaths": ["apps/web-app/src"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2862,6 +3072,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["tools", "completion", "summary"],
+      "component": "docs/summary",
+      "relatedPaths": ["docs"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2876,6 +3088,8 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["tools", "integration", "summary"],
+      "component": "backend/api-gateway",
+      "relatedPaths": ["docs/TOOLS_AND_INTEGRATIONS.md"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2910,6 +3124,11 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["voice", "ready", "state", "2025"],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2946,6 +3165,11 @@
       "audience": ["frontend", "ai-agents"],
       "category": "reference",
       "tags": ["web", "app", "specs"],
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/App.tsx",
+        "apps/web-app/src/components"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2960,6 +3184,8 @@
       "audience": ["frontend", "ai-agents"],
       "category": "reference",
       "tags": ["web", "app", "wireframes"],
+      "component": "frontend/web-app",
+      "relatedPaths": ["apps/web-app/src/components"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4277,6 +4503,8 @@
       "audience": ["frontend", "ai-agents"],
       "category": "testing",
       "tags": ["phase8", "folders", "testing", "guide"],
+      "component": "frontend/web-app",
+      "relatedPaths": ["apps/web-app/src/components/folders"],
       "lastUpdated": "2025-11-27"
     },
     {

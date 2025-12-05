@@ -14,6 +14,9 @@ tags:
   - verification
   - summary
 category: reference
+component: "platform/qa"
+relatedPaths:
+  - "services/api-gateway/app"
 ai_summary: >-
   Date: 2025-11-20 Status: ✅ Complete Task: Deep verification pass for new LLM
   abstraction, admin API, realtime API, and phase documents --- Performed

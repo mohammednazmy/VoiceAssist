@@ -14,6 +14,11 @@ tags:
   - infrastructure
   - code
 category: deployment
+component: "infra"
+relatedPaths:
+  - "infrastructure/terraform"
+  - "infrastructure/ansible"
+  - "docker-compose.yml"
 ai_summary: >-
   1. Overview 2. Architecture 3. Components 4. Getting Started 5. Prerequisites
   6. Common Workflows 7. Related Documentation 8. Troubleshooting VoiceAssist V2

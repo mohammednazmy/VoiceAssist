@@ -14,6 +14,9 @@ tags:
   - optimization
   - recommendations
 category: planning
+component: "platform/planning"
+relatedPaths:
+  - "docs/phases"
 ai_summary: >-
   Date: 2025-11-20 Focus: Hardening, Integration, and Performance Optimization
   --- While Phases 0 and 1 are fully functional, there are several strategic

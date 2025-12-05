@@ -16,6 +16,11 @@ tags:
   - k8s
   - migration
 category: reference
+component: "infra/k8s"
+relatedPaths:
+  - "docker-compose.yml"
+  - "k8s"
+  - "ha-dr"
 ai_summary: >-
   This guide covers migrating VoiceAssist from Docker Compose (Phases 0-10) to
   Kubernetes (Phases 11-14). The migration maintains the separate Nextcloud and

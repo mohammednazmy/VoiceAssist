@@ -14,6 +14,9 @@ audience:
 tags:
   - file
 category: reference
+component: "docs/placeholder"
+relatedPaths:
+  - "docs"
 ai_summary: >-
   This placeholder keeps existing references in sync until the source content is
   added.

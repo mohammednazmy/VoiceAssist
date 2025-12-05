@@ -16,6 +16,9 @@ tags:
   - app
   - wireframes
 category: reference
+component: "frontend/web-app"
+relatedPaths:
+  - "apps/web-app/src/components"
 ai_summary: >-
   Placeholder for the web app wireframe collection. Replace this with the latest
   design artifacts when available.

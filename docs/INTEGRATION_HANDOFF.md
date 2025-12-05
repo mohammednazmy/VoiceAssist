@@ -13,6 +13,9 @@ tags:
   - integration
   - handoff
 category: reference
+component: "platform/integration"
+relatedPaths:
+  - "services/api-gateway/app/main.py"
 ai_summary: >-
   Date: 2025-11-21 Scope: VoiceAssist V2 - Integration Improvements (Phases 0-8)
   Status: Priority 1-2 Complete, Priority 3 Partially Complete --- This document

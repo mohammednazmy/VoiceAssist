@@ -14,6 +14,9 @@ tags:
   - results
   - "2025"
 category: testing
+component: "platform/testing"
+relatedPaths:
+  - "apps/web-app/src"
 ai_summary: >-
   Date: 2025-11-22 Branch: fix/system-review-and-testing Tester: Claude (AI
   Assistant) Status: Code Review Complete, Manual Testing Required --- This

@@ -14,6 +14,9 @@ tags:
   - optimized
   - plan
 category: planning
+component: "platform/planning"
+relatedPaths:
+  - "docs/phases"
 ai_summary: >-
   Date: 2025-11-20 Status: Ready to Start Estimated Duration: 4-5 hours
   (optimized from 6-8 hours) --- This document provides an optimized, tightened
