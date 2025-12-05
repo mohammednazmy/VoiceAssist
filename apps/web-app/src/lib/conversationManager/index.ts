@@ -390,11 +390,10 @@ export class ConversationManager {
       urgency,
     };
 
-    this.emitEvent({
-      type: "recommendation_update",
-      timestamp: Date.now(),
-      data: recommendations as unknown as Record<string, unknown>,
-    });
+    // NOTE: Do NOT emit event here - this is a getter method called from event handlers.
+    // Emitting here would cause infinite recursion (event → getRecommendations → event → ...)
+    // If recommendation change events are needed, emit them from the methods that
+    // actually change state (processUserUtterance, handleBargeIn, etc.)
 
     return recommendations;
   }
