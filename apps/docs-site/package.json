@@ -16,6 +16,8 @@
     "type-check": "tsc --noEmit",
     "generate-search-index": "node scripts/generate-search-index.js",
     "generate-agent-json": "node scripts/generate-agent-json.js",
+    "generate-repo-index": "node scripts/generate-repo-index.mjs",
+    "generate-repo-files": "node scripts/generate-repo-files.mjs",
     "validate-docs": "node ./scripts/validate-docs.mjs",
     "validate:metadata": "node scripts/validate-metadata.mjs",
     "check:links": "node scripts/check-links.mjs",

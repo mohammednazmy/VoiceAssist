@@ -21,7 +21,7 @@ relatedServices:
   - docs-site
 category: ai
 source_of_truth: true
-version: 1.4.0
+version: 1.5.0
 ai_summary: >-
   Canonical reference for VoiceAssist documentation API endpoints. Base URL:
   https://assistdocs.asimo.io. Key endpoints: /agent/docs.json (full doc list
@@ -41,17 +41,20 @@ The VoiceAssist documentation site exposes machine-readable JSON endpoints desig
 
 ## Endpoints Overview
 
-| Endpoint                    | Method | Purpose                                            |
-| --------------------------- | ------ | -------------------------------------------------- |
-| `/agent/index.json`         | GET    | Documentation system metadata and discovery        |
-| `/agent/docs.json`          | GET    | Full document list with metadata (incl ai_summary) |
-| `/agent/docs-summary.json`  | GET    | AI-friendly summaries organized by category        |
-| `/agent/tasks.json`         | GET    | Common agent tasks with commands and docs          |
-| `/agent/code-examples.json` | GET    | Code examples extracted from documentation         |
-| `/agent/health.json`        | GET    | Docs health metrics: coverage, freshness, status   |
-| `/agent/schema.json`        | GET    | JSON Schema for API response types                 |
-| `/search-index.json`        | GET    | Full-text search index (Fuse.js format)            |
-| `/sitemap.xml`              | GET    | XML sitemap for crawlers                           |
+| Endpoint                           | Method | Purpose                                            |
+| ---------------------------------- | ------ | -------------------------------------------------- |
+| `/agent/index.json`                | GET    | Documentation system metadata and discovery        |
+| `/agent/docs.json`                 | GET    | Full document list with metadata (incl ai_summary) |
+| `/agent/docs-summary.json`         | GET    | AI-friendly summaries organized by category        |
+| `/agent/tasks.json`                | GET    | Common agent tasks with commands and docs          |
+| `/agent/code-examples.json`        | GET    | Code examples extracted from documentation         |
+| `/agent/health.json`               | GET    | Docs health metrics: coverage, freshness, status   |
+| `/agent/schema.json`               | GET    | JSON Schema for API response types                 |
+| `/agent/repo-index.json`           | GET    | Repository structure index for codebase navigation |
+| `/agent/repo/manifest.json`        | GET    | Manifest of exported source files                  |
+| `/agent/repo/files/{encoded}.json` | GET    | Source file content (see encoding below)           |
+| `/search-index.json`               | GET    | Full-text search index (Fuse.js format)            |
+| `/sitemap.xml`                     | GET    | XML sitemap for crawlers                           |
 
 **Note:** All endpoints listed above are static JSON files generated at build time. For lexical search, use `/search-index.json` with client-side Fuse.js. For semantic search, see the [AI-Docs section](#ai-docs-semantic-search) below.
 
@@ -701,6 +704,109 @@ Documents with `audience: ["ai-agents"]` are specifically designed for AI assist
 
 ---
 
+## Repository Endpoints for AI
+
+These endpoints expose the repository structure and source code for AI agents to explore the codebase.
+
+### GET /agent/repo-index.json
+
+Returns a complete index of all files and directories in the repository.
+
+#### Request
+
+```http
+GET /agent/repo-index.json HTTP/1.1
+Host: assistdocs.asimo.io
+```
+
+#### Response
+
+```json
+{
+  "version": "1.0",
+  "generated_at": "2025-12-04T22:00:00.000Z",
+  "description": "VoiceAssist repository structure index for AI agents",
+  "stats": {
+    "total_files": 22921,
+    "total_dirs": 2810,
+    "total_size_bytes": 686000000,
+    "by_language": { "typescript": 1500, "python": 800, ... },
+    "by_component": { "frontend/web-app": 500, "backend/api-gateway": 800, ... }
+  },
+  "entries": [
+    {
+      "path": "apps/web-app/src/app/page.tsx",
+      "type": "file",
+      "size": 1234,
+      "last_modified": "2025-12-04T10:00:00.000Z",
+      "language": "typescript",
+      "component": "frontend/web-app"
+    }
+  ]
+}
+```
+
+#### Use Cases
+
+- Discover repository structure
+- Filter files by language (`by_language`) or component (`by_component`)
+- Find entry points for each app/service
+- Navigate to specific areas of the codebase
+
+### GET /agent/repo/manifest.json
+
+Returns a manifest of all files with exported content.
+
+```json
+{
+  "version": "1.0",
+  "total_files": 382,
+  "files": [
+    {
+      "path": "services/api-gateway/app/main.py",
+      "encoded": "services__api-gateway__app__main.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__main.py.json"
+    }
+  ]
+}
+```
+
+### GET /agent/repo/files/{encoded-path}.json
+
+Returns the content of a specific file.
+
+#### Path Encoding
+
+- `/` in file paths is replaced with `__` (double underscore)
+- `.json` extension is appended
+
+**Example:** `services/api-gateway/app/main.py` → `services__api-gateway__app__main.py.json`
+
+#### Response
+
+```json
+{
+  "path": "services/api-gateway/app/main.py",
+  "language": "python",
+  "size": 5432,
+  "last_modified": "2025-12-04T10:00:00.000Z",
+  "lines": 150,
+  "content": "#!/usr/bin/env python3\\n..."
+}
+```
+
+#### Limitations
+
+- Only key files are pre-exported (entry points, configs, important source files)
+- Maximum file size: 100KB
+- See `/agent/repo/manifest.json` for the list of available files
+
+### Related Documentation
+
+- [Repo Navigation for Agents](./REPO_NAVIGATION_FOR_AGENTS.md) - How to navigate the codebase as an AI agent
+
+---
+
 ## Live Endpoints
 
 Test the endpoints directly:
@@ -712,6 +818,8 @@ Test the endpoints directly:
 - **Code Examples:** https://assistdocs.asimo.io/agent/code-examples.json
 - **Tasks:** https://assistdocs.asimo.io/agent/tasks.json
 - **Schema:** https://assistdocs.asimo.io/agent/schema.json
+- **Repo Index:** https://assistdocs.asimo.io/agent/repo-index.json
+- **Repo Manifest:** https://assistdocs.asimo.io/agent/repo/manifest.json
 - **Search Index:** https://assistdocs.asimo.io/search-index.json
 - **Sitemap:** https://assistdocs.asimo.io/sitemap.xml
 
@@ -729,6 +837,7 @@ Test the endpoints directly:
 
 | Version | Date       | Changes                                                                      |
 | ------- | ---------- | ---------------------------------------------------------------------------- |
+| 1.5.0   | 2025-12-04 | Added repository endpoints: repo-index, repo/manifest, repo/files            |
 | 1.4.0   | 2025-12-04 | Added docs-summary, health, code-examples endpoints; ai_summary in docs.json |
 | 1.3.0   | 2025-12-03 | Added AI-Docs semantic search section                                        |
 | 1.2.0   | 2025-11-27 | Added /agent/tasks.json endpoint documentation                               |
