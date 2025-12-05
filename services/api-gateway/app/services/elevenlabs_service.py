@@ -119,7 +119,7 @@ class ElevenLabsService:
         self.enabled = bool(self.api_key)
         # Use flash model for lowest latency (Phase: Talker Enhancement)
         self.default_model = self.MODEL_FLASH_V2_5
-        self.default_voice_id = "TxGEqnHWrfWFTfGW9XjX"  # "Josh" voice (matches frontend default)
+        self.default_voice_id = "nPczCjzI2devNBz1zQrb"  # "Brian" voice (matches frontend default)
         self._connection_warmed = False
 
         # Voice cache (refreshed periodically)

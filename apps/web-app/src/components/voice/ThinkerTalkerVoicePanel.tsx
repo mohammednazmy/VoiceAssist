@@ -66,7 +66,7 @@ export function ThinkerTalkerVoicePanel({
   const voiceMode = useThinkerTalkerVoiceMode({
     conversation_id: conversationId,
     voiceSettings: {
-      voice_id: elevenlabsVoiceId || "TxGEqnHWrfWFTfGW9XjX", // Josh as default
+      voice_id: elevenlabsVoiceId || "nPczCjzI2devNBz1zQrb", // Brian as default
       language,
       barge_in_enabled: true,
       vad_sensitivity: vadSensitivity, // 0-100 from settings
