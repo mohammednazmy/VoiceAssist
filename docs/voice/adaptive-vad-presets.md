@@ -111,9 +111,9 @@ flowchart LR
 
 ### Cross-Link to Voice Settings
 
-See [Voice Settings Panel](/docs/frontend/voice-settings-panel.md) for UI implementation details.
+See [Voice First Input Bar](./voice-first-input-bar.md) for UI implementation details.
 
-See [RTL Support](/docs/voice/rtl-support.md) for right-to-left language support in the voice interface.
+See [RTL Support](./rtl-support-guide.md) for right-to-left language support in the voice interface.
 
 ## Choosing the Right VAD Preset
 

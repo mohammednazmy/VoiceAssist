@@ -277,5 +277,5 @@ pytest tests/services/test_voice_v4_services.py::TestMultilingualRAG -v
 ## Related Documentation
 
 - [Voice Mode v4.1 Overview](./voice-mode-v4-overview.md)
-- [Translation Service API](../api-reference/translation-service.md)
+- [API Reference](../api-reference/rest-api.md)
 - [Latency Budgets Guide](./latency-budgets-guide.md)

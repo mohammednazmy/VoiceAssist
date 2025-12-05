@@ -209,4 +209,4 @@ GET /api/admin/feedback/summary?days=7
 - [Epic FHIR Runbook](epic-fhir-runbook.md)
 - [Voice Mode Enhancement](../VOICE_MODE_ENHANCEMENT_10_PHASE.md)
 - [Chaos Engineering Guide](../CHAOS_ENGINEERING.md)
-- [Audit Service Documentation](../services/audit-service.md)
+- [Operations Overview](./OPERATIONS_OVERVIEW.md)

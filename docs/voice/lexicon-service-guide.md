@@ -428,4 +428,4 @@ asyncio.run(validate())
 
 - [Voice Mode v4.1 Overview](./voice-mode-v4-overview.md)
 - [Multilingual RAG Architecture](./multilingual-rag-architecture.md)
-- [ElevenLabs TTS Integration](../services/elevenlabs-service.md)
+- [G2P Alternatives Evaluation](./design/g2p-alternatives-evaluation.md)

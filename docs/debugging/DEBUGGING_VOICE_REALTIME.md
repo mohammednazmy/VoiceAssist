@@ -757,8 +757,8 @@ curl http://localhost:8000/health/voice | jq '.'
 
 ## Related Documentation
 
-- [Debugging Overview](/operations/debugging-overview)
+- [Debugging Overview](./DEBUGGING_OVERVIEW.md)
 - [Voice Mode Pipeline](../VOICE_MODE_PIPELINE.md) - Detailed Thinker-Talker architecture
 - [Thinker-Talker Pipeline](../THINKER_TALKER_PIPELINE.md) - Pipeline design and implementation
-- [Implementation Status](/ai/status) - Voice feature status
-- [API Reference](/reference/api) - Voice endpoints
+- [Implementation Status](../overview/IMPLEMENTATION_STATUS.md) - Voice feature status
+- [API Reference](../api-reference/rest-api.md) - Voice endpoints

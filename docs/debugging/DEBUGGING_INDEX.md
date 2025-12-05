@@ -52,18 +52,18 @@ This is the central hub for all VoiceAssist troubleshooting documentation. Use t
 
 ## Debug by Symptom
 
-| Symptom                      | Likely Subsystem | First Doc to Read                                    | Key Commands                                              |
-| ---------------------------- | ---------------- | ---------------------------------------------------- | --------------------------------------------------------- |
-| API returns 500 errors       | Backend          | [Backend Debugging](/operations/debugging-backend)   | `docker logs voiceassist-server --tail 100 \| grep ERROR` |
-| WebSocket disconnects        | Voice/Realtime   | [Voice Debugging](/operations/debugging-voice)       | `websocat "wss://assist.asimo.io/api/voice/pipeline-ws"`  |
-| Voice input not working      | Voice/Realtime   | [Voice Debugging](/operations/debugging-voice)       | Check browser audio permissions                           |
-| Pages return 404             | Docs Site        | [Docs Site Debugging](/operations/debugging-docs)    | `ls /var/www/assistdocs.asimo.io/`                        |
-| Slow response times          | Backend          | [Backend Debugging](/operations/debugging-backend)   | `curl /metrics \| grep http_request_duration`             |
-| Authentication failing       | Backend          | [Backend Debugging](/operations/debugging-backend)   | Check JWT token expiry, Redis status                      |
-| Search not returning results | Backend          | [Backend Debugging](/operations/debugging-backend)   | Check Qdrant connection, embedding status                 |
-| UI renders incorrectly       | Frontend         | [Frontend Debugging](/operations/debugging-frontend) | Browser DevTools Console & Network                        |
-| SSL certificate errors       | Infrastructure   | [Debugging Overview](/operations/debugging-overview) | `sudo certbot certificates`                               |
-| Service won't start          | Infrastructure   | [Debugging Overview](/operations/debugging-overview) | `sudo systemctl status <service>`                         |
+| Symptom                      | Likely Subsystem | First Doc to Read                                | Key Commands                                              |
+| ---------------------------- | ---------------- | ------------------------------------------------ | --------------------------------------------------------- |
+| API returns 500 errors       | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | `docker logs voiceassist-server --tail 100 \| grep ERROR` |
+| WebSocket disconnects        | Voice/Realtime   | [Voice Debugging](./DEBUGGING_VOICE_REALTIME.md) | `websocat "wss://assist.asimo.io/api/voice/pipeline-ws"`  |
+| Voice input not working      | Voice/Realtime   | [Voice Debugging](./DEBUGGING_VOICE_REALTIME.md) | Check browser audio permissions                           |
+| Pages return 404             | Docs Site        | [Docs Site Debugging](./DEBUGGING_DOCS_SITE.md)  | `ls /var/www/assistdocs.asimo.io/`                        |
+| Slow response times          | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | `curl /metrics \| grep http_request_duration`             |
+| Authentication failing       | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | Check JWT token expiry, Redis status                      |
+| Search not returning results | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | Check Qdrant connection, embedding status                 |
+| UI renders incorrectly       | Frontend         | [Frontend Debugging](./DEBUGGING_FRONTEND.md)    | Browser DevTools Console & Network                        |
+| SSL certificate errors       | Infrastructure   | [Debugging Overview](./DEBUGGING_OVERVIEW.md)    | `sudo certbot certificates`                               |
+| Service won't start          | Infrastructure   | [Debugging Overview](./DEBUGGING_OVERVIEW.md)    | `sudo systemctl status <service>`                         |
 
 ---
 
@@ -111,13 +111,13 @@ curl -s http://localhost:6333/collections | jq  # Qdrant
 
 ## Quick Reference: Subsystem Overview
 
-| Subsystem      | Primary Guide                                        | Key Logs                            | Health Endpoint               |
-| -------------- | ---------------------------------------------------- | ----------------------------------- | ----------------------------- |
-| Backend/API    | [Backend Debugging](/operations/debugging-backend)   | `docker logs voiceassist-server`    | `/health`, `/ready`           |
-| Frontend/Web   | [Frontend Debugging](/operations/debugging-frontend) | Browser Console, Network Tab        | N/A (static)                  |
-| Voice/Realtime | [Voice Debugging](/operations/debugging-voice)       | `docker logs voiceassist-server`    | `/ws` endpoint                |
-| Docs Site      | [Docs Site Debugging](/operations/debugging-docs)    | `/var/log/apache2/assistdocs-*.log` | `/agent/index.json`           |
-| Infrastructure | [Overview](/operations/debugging-overview)           | `docker logs`, Apache logs          | Docker health, systemd status |
+| Subsystem      | Primary Guide                                    | Key Logs                            | Health Endpoint               |
+| -------------- | ------------------------------------------------ | ----------------------------------- | ----------------------------- |
+| Backend/API    | [Backend Debugging](./DEBUGGING_BACKEND.md)      | `docker logs voiceassist-server`    | `/health`, `/ready`           |
+| Frontend/Web   | [Frontend Debugging](./DEBUGGING_FRONTEND.md)    | Browser Console, Network Tab        | N/A (static)                  |
+| Voice/Realtime | [Voice Debugging](./DEBUGGING_VOICE_REALTIME.md) | `docker logs voiceassist-server`    | `/ws` endpoint                |
+| Docs Site      | [Docs Site Debugging](./DEBUGGING_DOCS_SITE.md)  | `/var/log/apache2/assistdocs-*.log` | `/agent/index.json`           |
+| Infrastructure | [Overview](./DEBUGGING_OVERVIEW.md)              | `docker logs`, Apache logs          | Docker health, systemd status |
 
 ---
 
@@ -125,7 +125,7 @@ curl -s http://localhost:6333/collections | jq  # Qdrant
 
 ### Backend Services
 
-**Primary Guide:** [Backend Debugging](/operations/debugging-backend)
+**Primary Guide:** [Backend Debugging](./DEBUGGING_BACKEND.md)
 
 **Key Logs:**
 
@@ -152,7 +152,7 @@ docker logs voiceassist-server --tail 100 2>&1 | grep -i error
 
 ### Frontend (Web App & Admin Panel)
 
-**Primary Guide:** [Frontend Debugging](/operations/debugging-frontend)
+**Primary Guide:** [Frontend Debugging](./DEBUGGING_FRONTEND.md)
 
 **Key Logs:**
 
@@ -175,7 +175,7 @@ docker logs voiceassist-server --tail 100 2>&1 | grep -i error
 
 ### Voice & Realtime (WebSocket, STT, TTS)
 
-**Primary Guide:** [Voice & Realtime Debugging](/operations/debugging-voice)
+**Primary Guide:** [Voice & Realtime Debugging](./DEBUGGING_VOICE_REALTIME.md)
 
 **Key Logs:**
 
@@ -199,7 +199,7 @@ docker logs voiceassist-server --since "10m" 2>&1 | grep -i "websocket\|stt\|tts
 
 ### Documentation Site
 
-**Primary Guide:** [Docs Site Debugging](/operations/debugging-docs)
+**Primary Guide:** [Docs Site Debugging](./DEBUGGING_DOCS_SITE.md)
 
 **Key Logs:**
 
@@ -228,7 +228,7 @@ sudo tail -f /var/log/apache2/assistdocs-access.log
 
 ### Infrastructure
 
-**Primary Guide:** [Debugging Overview](/operations/debugging-overview)
+**Primary Guide:** [Debugging Overview](./DEBUGGING_OVERVIEW.md)
 
 **Key Services:**
 
@@ -336,7 +336,7 @@ Log format is structured JSON with trace IDs:
 
 ## Related Documentation
 
-- [Implementation Status](/ai/status) - Component status overview
-- [API Reference](/reference/api) - API endpoint documentation
-- [Backend Architecture](/architecture) - System design
+- [Implementation Status](../overview/IMPLEMENTATION_STATUS.md) - Component status overview
+- [API Reference](../api-reference/rest-api.md) - API endpoint documentation
+- [Backend Architecture](../architecture/README.md) - System design
 - [Service Catalog](../SERVICE_CATALOG.md) - Service inventory

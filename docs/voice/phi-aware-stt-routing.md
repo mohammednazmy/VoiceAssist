@@ -469,4 +469,4 @@ pytest tests/integration/test_phi_routing_e2e.py -v --audio-samples ./test_audio
 
 - [Voice Mode v4.1 Overview](./voice-mode-v4-overview.md)
 - [Latency Budgets Guide](./latency-budgets-guide.md)
-- [HIPAA Compliance Guide](../security/hipaa-compliance.md)
+- [HIPAA Compliance Matrix](../HIPAA_COMPLIANCE_MATRIX.md)

@@ -306,5 +306,5 @@ function VoiceMode() {
 ## Related Documentation
 
 - [Voice Mode v4.1 Overview](./voice-mode-v4-overview.md)
-- [Voice Settings Store](../frontend/voice-settings-store.md)
-- [Latency Indicator Component](./latency-indicator.md)
+- [Voice First Input Bar](./voice-first-input-bar.md)
+- [Latency Budgets Guide](./latency-budgets-guide.md)

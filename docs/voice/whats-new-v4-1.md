@@ -582,8 +582,8 @@ function VoiceInterface() {
 
 - [Voice Mode Architecture](./voice-mode-v4-overview.md)
 - [Speaker Diarization Service](./speaker-diarization-service.md)
-- [FHIR Streaming Integration](./fhir-streaming-integration.md)
-- [Adaptive Quality Controller](./adaptive-quality-controller.md)
+- [FHIR Streaming Service](./fhir-streaming-service.md)
+- [Adaptive Quality Service](./adaptive-quality-service.md)
 - [Lexicon Service Guide](./lexicon-service-guide.md)
 
 ---

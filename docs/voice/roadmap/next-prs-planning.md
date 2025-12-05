@@ -238,6 +238,6 @@ islamic_terms:
 
 ## Related Documentation
 
-- [Phase 3 Implementation Plan](./phase3-implementation-plan.md)
+- [Phase 3 Implementation Plan](../phase3-implementation-plan.md)
 - [Voice Mode v4.1 Overview](../voice-mode-v4-overview.md)
-- [KB Service Documentation](../../kb/kb-service.md)
+- [Model Versions Reference](../MODEL_VERSIONS.md)
