@@ -167,6 +167,7 @@ export function ThinkerTalkerVoicePanel({
                 ? `Running ${voiceMode.currentToolCalls[0]?.name || "tool"}...`
                 : "Thinking..."
             }
+            thinkingSource={voiceMode.thinkingSource}
           />
         </div>
       )}

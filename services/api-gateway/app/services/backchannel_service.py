@@ -47,6 +47,63 @@ class BackchannelType(str, Enum):
     EMPATHY = "empathy"  # "hmm", "I understand"
 
 
+class UserIntent(str, Enum):
+    """
+    User intent classification for smart acknowledgment selection.
+    Issue 2: Intent classification for contextually appropriate backchannels.
+    """
+
+    QUESTION = "question"  # User is asking a question
+    STATEMENT = "statement"  # User is making a statement/sharing info
+    INSTRUCTION = "instruction"  # User is giving instructions/commands
+    CONCERN = "concern"  # User is expressing worry/concern
+    STORY = "story"  # User is telling a story/narrative
+    CLARIFICATION = "clarification"  # User is clarifying something
+    ACKNOWLEDGMENT = "acknowledgment"  # User is acknowledging (don't backchannel)
+    UNKNOWN = "unknown"  # Cannot determine intent
+
+
+# Intent-to-backchannel type mappings (Issue 2)
+INTENT_PHRASE_MAP: Dict[UserIntent, Dict[str, Any]] = {
+    UserIntent.QUESTION: {
+        "preferred_types": [BackchannelType.UNDERSTANDING],
+        "weight_boost": 0.5,  # Reduce backchannels during questions
+        "suppress": True,  # Often suppress backchannels during questions
+    },
+    UserIntent.STATEMENT: {
+        "preferred_types": [BackchannelType.ACKNOWLEDGMENT, BackchannelType.UNDERSTANDING],
+        "weight_boost": 1.2,
+    },
+    UserIntent.INSTRUCTION: {
+        "preferred_types": [BackchannelType.UNDERSTANDING, BackchannelType.ACKNOWLEDGMENT],
+        "weight_boost": 1.3,
+        "extra_phrases": ["got it", "okay", "understood"],
+    },
+    UserIntent.CONCERN: {
+        "preferred_types": [BackchannelType.EMPATHY, BackchannelType.UNDERSTANDING],
+        "weight_boost": 1.4,
+    },
+    UserIntent.STORY: {
+        "preferred_types": [BackchannelType.ENCOURAGEMENT, BackchannelType.ACKNOWLEDGMENT],
+        "weight_boost": 1.1,
+        "extra_phrases": ["and then?", "wow"],
+    },
+    UserIntent.CLARIFICATION: {
+        "preferred_types": [BackchannelType.UNDERSTANDING],
+        "weight_boost": 1.0,
+    },
+    UserIntent.ACKNOWLEDGMENT: {
+        "preferred_types": [],
+        "weight_boost": 0.0,
+        "suppress": True,  # Don't backchannel when user is acknowledging
+    },
+    UserIntent.UNKNOWN: {
+        "preferred_types": [BackchannelType.ACKNOWLEDGMENT],
+        "weight_boost": 1.0,
+    },
+}
+
+
 @dataclass
 class BackchannelPhrase:
     """A backchannel phrase with metadata."""
@@ -396,6 +453,152 @@ class BackchannelCalibrationService:
 
 
 # ==============================================================================
+# Intent Classification (Issue 2)
+# ==============================================================================
+
+
+class IntentClassifier:
+    """
+    Classifies user intent from transcript text for smart acknowledgment selection.
+
+    Issue 2: Intent classification for contextually appropriate backchannels.
+    """
+
+    QUESTION_WORDS = {
+        "en": {
+            "what",
+            "where",
+            "when",
+            "why",
+            "how",
+            "who",
+            "which",
+            "can",
+            "could",
+            "would",
+            "should",
+            "is",
+            "are",
+            "do",
+            "does",
+            "did",
+        },
+        "ar": {"ما", "أين", "متى", "لماذا", "كيف", "من", "أي", "هل"},
+    }
+
+    INSTRUCTION_WORDS = {
+        "en": {
+            "please",
+            "can you",
+            "could you",
+            "tell me",
+            "show me",
+            "explain",
+            "help me",
+            "make sure",
+            "remember to",
+        },
+        "ar": {"من فضلك", "أخبرني", "اشرح", "ساعدني"},
+    }
+
+    CONCERN_WORDS = {
+        "en": {
+            "worried",
+            "concerned",
+            "anxious",
+            "nervous",
+            "afraid",
+            "scared",
+            "unsure",
+            "confused",
+            "frustrated",
+            "upset",
+            "stressed",
+        },
+        "ar": {"قلق", "خائف", "محبط", "متوتر"},
+    }
+
+    STORY_MARKERS = {
+        "en": {
+            "so",
+            "then",
+            "and then",
+            "after that",
+            "next",
+            "suddenly",
+            "eventually",
+            "finally",
+            "yesterday",
+            "last week",
+        },
+        "ar": {"ثم", "بعد ذلك", "في يوم"},
+    }
+
+    ACKNOWLEDGMENT_WORDS = {
+        "en": {"okay", "ok", "yes", "yeah", "uh-huh", "mm-hmm", "right", "got it", "understood", "i see", "thanks"},
+        "ar": {"نعم", "حسنا", "طيب", "تمام", "شكرا"},
+    }
+
+    def __init__(self, language: str = "en"):
+        self.language = language if language in self.QUESTION_WORDS else "en"
+
+    def classify(self, transcript: str) -> UserIntent:
+        """Classify user intent from transcript text."""
+        if not transcript:
+            return UserIntent.UNKNOWN
+
+        text = transcript.lower().strip()
+
+        if self._is_question(text):
+            return UserIntent.QUESTION
+        if self._is_acknowledgment(text):
+            return UserIntent.ACKNOWLEDGMENT
+        if self._is_instruction(text):
+            return UserIntent.INSTRUCTION
+        if self._is_concern(text):
+            return UserIntent.CONCERN
+        if self._is_story(text):
+            return UserIntent.STORY
+        if self._is_clarification(text):
+            return UserIntent.CLARIFICATION
+
+        return UserIntent.STATEMENT
+
+    def _is_question(self, text: str) -> bool:
+        if text.rstrip().endswith("?"):
+            return True
+        words = text.split()
+        if words:
+            question_words = self.QUESTION_WORDS.get(self.language, self.QUESTION_WORDS["en"])
+            if words[0].lower() in question_words:
+                return True
+        return False
+
+    def _is_instruction(self, text: str) -> bool:
+        instruction_words = self.INSTRUCTION_WORDS.get(self.language, self.INSTRUCTION_WORDS["en"])
+        return any(marker in text for marker in instruction_words)
+
+    def _is_concern(self, text: str) -> bool:
+        concern_words = self.CONCERN_WORDS.get(self.language, self.CONCERN_WORDS["en"])
+        return any(word in text for word in concern_words)
+
+    def _is_story(self, text: str) -> bool:
+        story_markers = self.STORY_MARKERS.get(self.language, self.STORY_MARKERS["en"])
+        return any(text.startswith(marker) or f" {marker} " in text for marker in story_markers)
+
+    def _is_clarification(self, text: str) -> bool:
+        markers = ["i mean", "what i meant", "to clarify", "in other words"]
+        return any(marker in text for marker in markers)
+
+    def _is_acknowledgment(self, text: str) -> bool:
+        ack_words = self.ACKNOWLEDGMENT_WORDS.get(self.language, self.ACKNOWLEDGMENT_WORDS["en"])
+        words = text.split()
+        if len(words) <= 3:
+            return any(word in text for word in ack_words)
+        return False
+
+
+# ==============================================================================
 # Backchannel Timing Logic
 # ==============================================================================
 
@@ -411,6 +614,7 @@ class BackchannelTimingEngine:
     - Never interrupt mid-sentence
     - Vary phrase selection to avoid repetition
     - Emotion-aware phrase selection for empathetic responses
+    - Intent-aware phrase selection (Issue 2)
     """
 
     # Timing constants
@@ -423,7 +627,7 @@ class BackchannelTimingEngine:
     # Reduced frequency multiplier for frustrated users
     FRUSTRATED_GAP_MULTIPLIER = 1.5
 
-    def __init__(self, language: str = "en", use_emotion_aware: bool = True):
+    def __init__(self, language: str = "en", use_emotion_aware: bool = True, use_intent_aware: bool = True):
         """
         Initialize backchannel timing engine.
 
@@ -431,14 +635,18 @@ class BackchannelTimingEngine:
             language: Language code for phrase selection
             use_emotion_aware: Whether to use emotion-aware phrase selection.
                                Set to False for A/B testing control group.
+            use_intent_aware: Whether to use intent-aware phrase selection (Issue 2).
         """
         self.language = language
         self._use_emotion_aware = use_emotion_aware
+        self._use_intent_aware = use_intent_aware
         self._base_phrases = BACKCHANNEL_PHRASES.get(language, BACKCHANNEL_PHRASES["en"])
         self._phrases = self._base_phrases.copy()
         self._phrase_weights = [p.weight for p in self._phrases]
         self._current_emotion: str = "neutral"
         self._emotion_config: Dict[str, Any] = EMOTION_PHRASE_MAP.get("neutral", {})
+        self._current_intent: UserIntent = UserIntent.UNKNOWN
+        self._intent_classifier = IntentClassifier(language)
 
     def set_emotion_state(self, emotion: str) -> None:
         """
@@ -489,6 +697,24 @@ class BackchannelTimingEngine:
             return int(base_gap * self.FRUSTRATED_GAP_MULTIPLIER)
         return base_gap
 
+    def update_intent(self, transcript: str) -> UserIntent:
+        """
+        Update intent classification based on transcript.
+
+        Issue 2: Intent-aware acknowledgment selection.
+
+        Args:
+            transcript: Current user transcript text
+
+        Returns:
+            Classified UserIntent
+        """
+        if not self._use_intent_aware or not transcript:
+            return UserIntent.UNKNOWN
+
+        self._current_intent = self._intent_classifier.classify(transcript)
+        return self._current_intent
+
     def should_trigger(
         self,
         state: BackchannelState,
@@ -496,6 +722,7 @@ class BackchannelTimingEngine:
         pause_duration_ms: int,
         is_speaking: bool,
         emotion_state: Optional[str] = None,
+        transcript: Optional[str] = None,
     ) -> BackchannelTrigger:
         """
         Determine if a backchannel should be triggered.
@@ -506,6 +733,7 @@ class BackchannelTimingEngine:
             pause_duration_ms: Duration of current pause in speech
             is_speaking: Whether user is currently speaking
             emotion_state: Optional current emotion state for adaptive timing
+            transcript: Optional current transcript for intent classification (Issue 2)
 
         Returns:
             BackchannelTrigger with decision and selected phrase
@@ -513,6 +741,19 @@ class BackchannelTimingEngine:
         # Update emotion if provided
         if emotion_state:
             self.set_emotion_state(emotion_state)
+
+        # Update intent if transcript provided (Issue 2)
+        if transcript and self._use_intent_aware:
+            self.update_intent(transcript)
+
+        # Issue 2: Check intent-based suppression
+        if self._use_intent_aware:
+            intent_config = INTENT_PHRASE_MAP.get(self._current_intent, {})
+            if intent_config.get("suppress", False):
+                return BackchannelTrigger(
+                    should_trigger=False,
+                    reason=f"Suppressed for intent: {self._current_intent.value}",
+                )
 
         # Rule 1: Minimum gap between backchannels (emotion-aware)
         min_gap = self.get_min_gap_ms()
@@ -550,18 +791,24 @@ class BackchannelTimingEngine:
                 reason=f"Pause too long ({pause_duration_ms}ms) - likely end of thought",
             )
 
-        # All conditions met - select phrase
+        # All conditions met - select phrase (with intent awareness)
         phrase = self._select_phrase(state)
 
         return BackchannelTrigger(
             should_trigger=True,
             phrase=phrase,
-            reason="Optimal timing",
+            reason=f"Optimal timing (intent: {self._current_intent.value})",
             confidence=0.8,
         )
 
     def _select_phrase(self, state: BackchannelState) -> BackchannelPhrase:
-        """Select a backchannel phrase, avoiding recent repetition."""
+        """
+        Select a backchannel phrase with intent and emotion awareness.
+
+        Issue 2: Intent-aware phrase selection prioritizes phrases that
+        match the user's current intent (e.g., empathy phrases for concerns,
+        understanding phrases for instructions).
+        """
         available_phrases = [
             p for p in self._phrases if p.text not in state.recent_phrases[-self.MAX_PHRASE_REPEAT_COUNT :]
         ]
@@ -570,9 +817,38 @@ class BackchannelTimingEngine:
             # All phrases used recently, reset and use any
             available_phrases = self._phrases
 
-        # Weighted random selection (not security-sensitive, just for UI variety)
-        weights = [p.weight for p in available_phrases]
+        # Issue 2: Apply intent-aware weight adjustments
+        intent_config = INTENT_PHRASE_MAP.get(self._current_intent, {}) if self._use_intent_aware else {}
+        intent_preferred_types = intent_config.get("preferred_types", [])
+        intent_weight_boost = intent_config.get("weight_boost", 1.0)
+
+        # Calculate weights with emotion and intent adjustments
+        weights = []
+        for p in available_phrases:
+            weight = p.weight
+
+            # Emotion-based boost (existing behavior)
+            if self._use_emotion_aware:
+                emotion_preferred = self._emotion_config.get("preferred_types", [])
+                emotion_boost = self._emotion_config.get("weight_boost", 1.0)
+                if p.type in emotion_preferred:
+                    weight *= emotion_boost
+
+            # Intent-based boost (Issue 2)
+            if self._use_intent_aware and intent_preferred_types:
+                if p.type in intent_preferred_types:
+                    weight *= intent_weight_boost
+                else:
+                    # Reduce weight for non-preferred types when intent is clear
+                    weight *= 0.7
+
+            weights.append(weight)
+
         total_weight = sum(weights)
+        if total_weight == 0:
+            return available_phrases[0]
+
+        # Weighted random selection (not security-sensitive, just for UI variety)
         r = random.random() * total_weight  # nosec B311
 
         cumulative = 0
@@ -686,6 +962,7 @@ class BackchannelSession:
         self._speech_active = False
         self._pause_start_time: Optional[float] = None
         self._current_emotion: str = "neutral"
+        self._current_transcript: str = ""  # Issue 2: Track transcript for intent
 
     async def start(self) -> None:
         """Start the backchannel session."""
@@ -780,18 +1057,32 @@ class BackchannelSession:
         self._state.speech_start_time = time.time()
         self._pause_start_time = None
 
-    async def on_speech_continue(self, duration_ms: int) -> None:
-        """Called periodically while user is speaking."""
+    async def on_speech_continue(self, duration_ms: int, transcript: str = "") -> None:
+        """
+        Called periodically while user is speaking.
+
+        Args:
+            duration_ms: Duration of continuous speech
+            transcript: Current transcript text (Issue 2: for intent classification)
+        """
         if not self._active or not self._speech_active:
             return
 
         self._state.continuous_speech_ms = duration_ms
 
-    async def on_pause_detected(self, pause_duration_ms: int) -> None:
+        # Issue 2: Update transcript for intent classification
+        if transcript:
+            self._current_transcript = transcript
+
+    async def on_pause_detected(self, pause_duration_ms: int, transcript: str = "") -> None:
         """
         Called when a pause is detected in user speech.
 
         This is the main trigger point for backchannels.
+
+        Args:
+            pause_duration_ms: Duration of the pause in milliseconds
+            transcript: Current transcript text (Issue 2: for intent classification)
         """
         if not self._active:
             return
@@ -799,15 +1090,20 @@ class BackchannelSession:
         if self._pause_start_time is None:
             self._pause_start_time = time.time()
 
+        # Issue 2: Update transcript if provided
+        if transcript:
+            self._current_transcript = transcript
+
         current_time = time.time()
 
-        # Check if we should backchannel (with emotion context)
+        # Check if we should backchannel (with emotion and intent context)
         trigger = self._timing.should_trigger(
             state=self._state,
             current_time=current_time,
             pause_duration_ms=pause_duration_ms,
             is_speaking=False,
             emotion_state=self._current_emotion,
+            transcript=self._current_transcript,  # Issue 2: Pass transcript
         )
 
         if trigger.should_trigger and trigger.phrase:
@@ -818,6 +1114,7 @@ class BackchannelSession:
         self._speech_active = False
         self._state.continuous_speech_ms = 0
         self._pause_start_time = None
+        self._current_transcript = ""  # Issue 2: Reset transcript
 
     async def _emit_backchannel(self, phrase: BackchannelPhrase) -> None:
         """Emit a backchannel audio clip."""

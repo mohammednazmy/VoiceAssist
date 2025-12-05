@@ -119,6 +119,21 @@ export interface TTBackchannelEvent {
 }
 
 /**
+ * Thinking feedback state event (Issue 1: Unified thinking tones)
+ * Coordinates frontend and backend thinking feedback systems.
+ */
+export interface TTThinkingStateEvent {
+  /** Whether thinking feedback is active */
+  isThinking: boolean;
+  /** Source of thinking feedback (backend or frontend) */
+  source: "backend" | "frontend";
+  /** Tone style being used */
+  style?: string;
+  /** Volume level (0-1) */
+  volume?: number;
+}
+
+/**
  * Turn-taking state prediction (Phase 5: Advanced turn management)
  */
 export interface TTTurnState {
@@ -405,6 +420,10 @@ export interface UseThinkerTalkerSessionOptions {
   // Phase 6: Variable response timing
   /** Callback when thinking filler is spoken (Phase 6) */
   onThinkingFiller?: (text: string, queryType: string) => void;
+
+  // Issue 1: Unified thinking feedback
+  /** Callback when thinking feedback state changes (from backend) */
+  onThinkingStateChange?: (event: TTThinkingStateEvent) => void;
 
   // Phase 7: Conversational repair
   /** Callback when a repair strategy is applied (Phase 7) */
@@ -1393,6 +1412,124 @@ export function useThinkerTalkerSession(
           );
 
           options.onTurnStateChange?.(turnState);
+          break;
+        }
+
+        // ================================================================
+        // Issue 3: Turn Management Events (via Event Bus)
+        // ================================================================
+
+        case "turn.taken": {
+          // AI has taken the conversational turn (started speaking)
+          const reason = message.reason as string;
+          voiceLog.debug(`[ThinkerTalker] Turn taken by AI: reason=${reason}`);
+
+          // Update turn state to indicate AI has the turn
+          options.onTurnStateChange?.({
+            state: "yielding",
+            confidence: 1.0,
+            recommended_wait_ms: 0,
+            signals: {
+              falling_intonation: false,
+              trailing_off: false,
+              thinking_aloud: false,
+              continuation_cue: false,
+            },
+          });
+          break;
+        }
+
+        case "turn.yielded": {
+          // AI has yielded the turn back to the user (finished speaking)
+          const reason = message.reason as string;
+          voiceLog.debug(
+            `[ThinkerTalker] Turn yielded by AI: reason=${reason}`,
+          );
+
+          // If it was a barge-in, the user interrupted
+          if (reason === "user_barge_in") {
+            voiceLog.info("[ThinkerTalker] User barge-in acknowledged");
+          }
+
+          // Update turn state to indicate user has the turn
+          options.onTurnStateChange?.({
+            state: "continuing",
+            confidence: 1.0,
+            recommended_wait_ms: 0,
+            signals: {
+              falling_intonation: true,
+              trailing_off: false,
+              thinking_aloud: false,
+              continuation_cue: false,
+            },
+          });
+          break;
+        }
+
+        // ================================================================
+        // Issue 4: Progressive Response / Filler Events (via Event Bus)
+        // ================================================================
+
+        case "filler.triggered": {
+          // A thinking filler has been selected and will be spoken
+          const fillerText = message.text as string;
+          const domain = message.domain as string;
+          const queryType = message.query_type as string;
+
+          voiceLog.debug(
+            `[ThinkerTalker] Filler triggered: "${fillerText}" (domain=${domain}, query_type=${queryType})`,
+          );
+
+          // Notify via existing callback
+          options.onThinkingFiller?.(fillerText, queryType);
+          break;
+        }
+
+        case "filler.played": {
+          // A thinking filler has finished playing
+          const fillerText = message.text as string;
+          const durationMs = message.duration_ms as number;
+
+          voiceLog.debug(
+            `[ThinkerTalker] Filler played: "${fillerText}" (${durationMs}ms)`,
+          );
+          break;
+        }
+
+        // ================================================================
+        // Issue 1: Unified Thinking Feedback Message Handlers
+        // ================================================================
+
+        case "thinking.started": {
+          // Backend started thinking feedback - notify frontend to avoid dual tones
+          const thinkingEvent: TTThinkingStateEvent = {
+            isThinking: true,
+            source: (message.source as "backend" | "frontend") || "backend",
+            style: message.style as string | undefined,
+            volume: message.volume as number | undefined,
+          };
+
+          voiceLog.debug(
+            `[ThinkerTalker] Thinking started: source=${thinkingEvent.source}, ` +
+              `style=${thinkingEvent.style || "default"}`,
+          );
+
+          options.onThinkingStateChange?.(thinkingEvent);
+          break;
+        }
+
+        case "thinking.stopped": {
+          // Backend stopped thinking feedback
+          const thinkingEvent: TTThinkingStateEvent = {
+            isThinking: false,
+            source: (message.source as "backend" | "frontend") || "backend",
+          };
+
+          voiceLog.debug(
+            `[ThinkerTalker] Thinking stopped: source=${thinkingEvent.source}`,
+          );
+
+          options.onThinkingStateChange?.(thinkingEvent);
           break;
         }
 

@@ -8,17 +8,22 @@ Provides configurable audio feedback during AI processing:
 - Progress indicators for long operations
 - Completion sounds
 - User-configurable tone styles and volumes
+
+Integrates with VoiceEventBus to publish:
+- thinking.started: When thinking feedback begins
+- thinking.stopped: When thinking feedback ends
 """
 
 import asyncio
-import base64
 import logging
-import math
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from app.core.event_bus import VoiceEventBus
 
 logger = logging.getLogger(__name__)
 
@@ -149,16 +154,29 @@ class ThinkingFeedbackService:
 
     Generates and manages thinking tones, progress indicators,
     and completion sounds.
+
+    Publishes events via VoiceEventBus:
+    - thinking.started: When a thinking loop begins for a session
+    - thinking.stopped: When a thinking loop ends for a session
     """
 
-    def __init__(self, config: Optional[ThinkingFeedbackConfig] = None):
+    def __init__(
+        self,
+        config: Optional[ThinkingFeedbackConfig] = None,
+        event_bus: Optional["VoiceEventBus"] = None,
+    ):
         self.config = config or ThinkingFeedbackConfig()
+        self._event_bus = event_bus
         self._tone_cache: Dict[str, bytes] = {}
         self._active_sessions: Dict[str, asyncio.Task] = {}
         self._initialized = False
 
         # Callbacks
         self._on_tone_generated: Optional[Callable[[ToneType, bytes], None]] = None
+
+    def set_event_bus(self, event_bus: "VoiceEventBus") -> None:
+        """Set the event bus for publishing thinking events."""
+        self._event_bus = event_bus
 
     async def initialize(self) -> None:
         """Initialize the service and pre-generate common tones."""
@@ -286,12 +304,29 @@ class ThinkingFeedbackService:
         Args:
             session_id: Unique session identifier
             on_tone: Callback to receive tone audio
+
+        Publishes:
+            thinking.started event via VoiceEventBus
         """
         if not self.config.enabled or self.config.style == ToneStyle.SILENT:
             return
 
         # Cancel existing loop for this session
         await self.stop_thinking_loop(session_id)
+
+        # Publish thinking.started event
+        if self._event_bus:
+            await self._event_bus.publish_event(
+                event_type="thinking.started",
+                data={
+                    "style": self.config.style.value,
+                    "volume": self.config.volume,
+                    "source": "backend",
+                },
+                session_id=session_id,
+                source_engine="thinking_feedback",
+                priority=5,
+            )
 
         async def loop():
             # Play start tone
@@ -323,8 +358,13 @@ class ThinkingFeedbackService:
             session_id: Session identifier
             play_end_tone: Whether to play completion tone
             on_tone: Callback for end tone
+
+        Publishes:
+            thinking.stopped event via VoiceEventBus
         """
-        if session_id in self._active_sessions:
+        was_active = session_id in self._active_sessions
+
+        if was_active:
             task = self._active_sessions[session_id]
             task.cancel()
             try:
@@ -333,6 +373,19 @@ class ThinkingFeedbackService:
                 pass
             del self._active_sessions[session_id]
             logger.debug(f"Stopped thinking loop for session {session_id}")
+
+        # Publish thinking.stopped event (only if loop was active)
+        if was_active and self._event_bus:
+            await self._event_bus.publish_event(
+                event_type="thinking.stopped",
+                data={
+                    "source": "backend",
+                    "play_end_tone": play_end_tone,
+                },
+                session_id=session_id,
+                source_engine="thinking_feedback",
+                priority=5,
+            )
 
         # Play end tone
         if play_end_tone and on_tone and self.config.enabled:
