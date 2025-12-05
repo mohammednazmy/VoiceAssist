@@ -57,9 +57,25 @@ function parseLastUpdated(frontmatter) {
     return null;
   }
 
-  const dateStr = frontmatter.lastUpdated.replace(/["']/g, "");
-  const parsed = new Date(dateStr);
-  return isNaN(parsed.getTime()) ? null : parsed;
+  // Handle Date objects (gray-matter parses ISO dates automatically)
+  if (frontmatter.lastUpdated instanceof Date) {
+    return isNaN(frontmatter.lastUpdated.getTime())
+      ? null
+      : frontmatter.lastUpdated;
+  }
+
+  // Handle string dates
+  if (typeof frontmatter.lastUpdated === "string") {
+    const dateStr = frontmatter.lastUpdated.replace(/["']/g, "");
+    const parsed = new Date(dateStr);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  // Unknown type
+  console.warn(
+    `Warning: lastUpdated is neither string nor Date (got ${typeof frontmatter.lastUpdated})`
+  );
+  return null;
 }
 
 function getDaysSince(date) {
