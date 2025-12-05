@@ -94,6 +94,8 @@ export function useChatSession(
   const intentionalDisconnectRef = useRef(false);
   // Track connection state to prevent duplicate connect attempts
   const isConnectingRef = useRef(false);
+  // Track if a connecting WebSocket should be aborted when it opens
+  const abortOnOpenRef = useRef(false);
   // Track pending file uploads waiting for server message ID
   const pendingFileUploadsRef = useRef<
     Map<
@@ -408,8 +410,9 @@ export function useChatSession(
       return;
     }
 
-    // Clear intentional disconnect flag when starting new connection
+    // Clear flags when starting new connection
     intentionalDisconnectRef.current = false;
+    abortOnOpenRef.current = false;
     isConnectingRef.current = true;
 
     updateConnectionStatus("connecting");
@@ -423,8 +426,19 @@ export function useChatSession(
       const ws = new WebSocket(url.toString());
 
       ws.onopen = () => {
-        websocketLog.debug("Connected");
         isConnectingRef.current = false;
+
+        // Check if this connection was aborted while connecting
+        if (abortOnOpenRef.current) {
+          websocketLog.debug(
+            "Connection opened but was aborted - closing cleanly",
+          );
+          abortOnOpenRef.current = false;
+          ws.close(1000, "Aborted");
+          return;
+        }
+
+        websocketLog.debug("Connected");
         updateConnectionStatus("connected");
         reconnectAttemptsRef.current = 0;
         startHeartbeat();
@@ -550,8 +564,20 @@ export function useChatSession(
     stopHeartbeat();
 
     if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
+      // If WebSocket is still connecting, don't close it immediately
+      // (this would cause "closed before established" browser error)
+      // Instead, mark it for abort when it opens
+      if (wsRef.current.readyState === WebSocket.CONNECTING) {
+        websocketLog.debug(
+          "WebSocket still connecting - marking for abort on open",
+        );
+        abortOnOpenRef.current = true;
+        // Still null the ref so a new connection can be started
+        wsRef.current = null;
+      } else {
+        wsRef.current.close(1000, "Intentional disconnect");
+        wsRef.current = null;
+      }
     }
 
     updateConnectionStatus("disconnected");
