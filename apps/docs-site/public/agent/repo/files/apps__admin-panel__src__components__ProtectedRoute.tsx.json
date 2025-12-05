@@ -1,0 +1,8 @@
+{
+  "path": "apps/admin-panel/src/components/ProtectedRoute.tsx",
+  "language": "typescript",
+  "size": 654,
+  "last_modified": "2025-11-29T04:26:40.442Z",
+  "lines": 26,
+  "content": "import { ReactNode } from \"react\";\nimport { Navigate } from \"react-router-dom\";\nimport { useAuth } from \"../contexts/AuthContext\";\n\ninterface ProtectedRouteProps {\n  children: ReactNode;\n}\n\nexport function ProtectedRoute({ children }: ProtectedRouteProps) {\n  const { isAuthenticated, isAdmin, isViewer, loading } = useAuth();\n\n  if (loading) {\n    return (\n      <div className=\"min-h-screen flex items-center justify-center bg-slate-950\">\n        <div className=\"text-slate-400\">Loading...</div>\n      </div>\n    );\n  }\n\n  if (!isAuthenticated || (!isAdmin && !isViewer)) {\n    return <Navigate to=\"/login\" replace />;\n  }\n\n  return <>{children}</>;\n}\n"
+}

@@ -1,0 +1,8 @@
+{
+  "path": "apps/web-app/src/components/accessibility/SkipLink.tsx",
+  "language": "typescript",
+  "size": 474,
+  "last_modified": "2025-11-23T14:20:26.443Z",
+  "lines": 16,
+  "content": "/**\n * Skip Navigation Link\n * Allows keyboard users to skip repetitive navigation\n */\n\nexport function SkipLink() {\n  return (\n    <a\n      href=\"#main-content\"\n      className=\"sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary-500 focus:text-white focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2\"\n    >\n      Skip to main content\n    </a>\n  );\n}\n"
+}

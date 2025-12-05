@@ -1,0 +1,8 @@
+{
+  "path": "apps/web-app/src/components/voice/index.ts",
+  "language": "typescript",
+  "size": 849,
+  "last_modified": "2025-12-04T18:47:50.951Z",
+  "lines": 36,
+  "content": "/**\n * Voice Components Module\n *\n * Exports all voice-related UI components for the barge-in system.\n *\n * Phase 2: Instant Response & Feedback\n * Phase v4.1: Thinking Feedback Components\n */\n\n// Feedback components\nexport {\n  BargeInFeedback,\n  ConfidenceIndicator,\n  SpeakingIndicator,\n  ListeningIndicator,\n  type BargeInFeedbackType,\n  type BargeInFeedbackProps,\n  type ConfidenceIndicatorProps,\n  type SpeakingIndicatorProps,\n  type ListeningIndicatorProps,\n} from \"./BargeInFeedback\";\n\n// Thinking Feedback components (Voice Mode v4.1)\nexport {\n  ThinkingFeedbackPanel,\n  ThinkingFeedbackSettings,\n} from \"./ThinkingFeedbackPanel\";\n\nexport {\n  ThinkingVisualIndicator,\n  type ThinkingVisualStyle,\n} from \"./ThinkingVisualIndicator\";\n\n// Latency Indicator (Voice Mode v4.1)\nexport { LatencyIndicator, LatencyBadge } from \"./LatencyIndicator\";\n"
+}

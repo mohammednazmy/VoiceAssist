@@ -1,0 +1,8 @@
+{
+  "path": "apps/admin-panel/src/components/shared/EmptyState.tsx",
+  "language": "typescript",
+  "size": 1248,
+  "last_modified": "2025-11-28T04:58:57.570Z",
+  "lines": 51,
+  "content": "/**\n * EmptyState - Consistent empty content messaging\n */\nimport { ReactNode } from \"react\";\n\ninterface EmptyStateProps {\n  title?: string;\n  message: string;\n  icon?: string;\n  action?: {\n    label: string;\n    onClick: () => void;\n    disabled?: boolean;\n  };\n  children?: ReactNode;\n  className?: string;\n}\n\nexport function EmptyState({\n  title,\n  message,\n  icon = \"📭\",\n  action,\n  children,\n  className = \"\",\n}: EmptyStateProps) {\n  return (\n    <div\n      className={`bg-slate-900/50 border border-slate-800 rounded-lg p-8 text-center ${className}`}\n    >\n      <div className=\"text-4xl mb-4\" aria-hidden=\"true\">\n        {icon}\n      </div>\n      {title && (\n        <h3 className=\"text-lg font-medium text-slate-200 mb-2\">{title}</h3>\n      )}\n      <p className=\"text-sm text-slate-400 max-w-md mx-auto\">{message}</p>\n      {action && (\n        <button\n          onClick={action.onClick}\n          disabled={action.disabled}\n          className=\"mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-950 disabled:text-slate-500 text-white rounded-md text-sm font-medium transition-colors\"\n        >\n          {action.label}\n        </button>\n      )}\n      {children && <div className=\"mt-4\">{children}</div>}\n    </div>\n  );\n}\n"
+}

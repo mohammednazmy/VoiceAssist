@@ -1,0 +1,8 @@
+{
+  "path": "apps/web-app/src/components/Sidebar.tsx",
+  "language": "typescript",
+  "size": 1153,
+  "last_modified": "2025-11-29T04:27:41.404Z",
+  "lines": 41,
+  "content": "const demoContexts = [\n  {\n    id: \"ctx-1\",\n    title: \"65M · HFrEF · CKD3 · AFib\",\n    updated: \"5 min ago\",\n  },\n  {\n    id: \"ctx-2\",\n    title: \"24F · RLQ pain · Fever\",\n    updated: \"32 min ago\",\n  },\n];\n\nexport function Sidebar() {\n  return (\n    <aside className=\"w-80 border-r border-slate-800 bg-slate-950/80 flex flex-col\">\n      <div className=\"px-4 py-3 border-b border-slate-800\">\n        <div className=\"text-xs uppercase tracking-wide text-slate-500\">\n          Cases\n        </div>\n        <button className=\"mt-2 px-3 py-1.5 text-xs rounded bg-emerald-600 hover:bg-emerald-500 text-white\">\n          + New case\n        </button>\n      </div>\n      <div className=\"flex-1 overflow-y-auto\">\n        {demoContexts.map((ctx) => (\n          <button\n            key={ctx.id}\n            className=\"w-full text-left px-4 py-3 hover:bg-slate-900 border-b border-slate-900\"\n          >\n            <div className=\"text-sm font-medium text-slate-100\">\n              {ctx.title}\n            </div>\n            <div className=\"text-xs text-slate-500\">Updated {ctx.updated}</div>\n          </button>\n        ))}\n      </div>\n    </aside>\n  );\n}\n"
+}

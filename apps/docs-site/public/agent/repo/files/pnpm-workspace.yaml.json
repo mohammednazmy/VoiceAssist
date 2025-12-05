@@ -1,0 +1,8 @@
+{
+  "path": "pnpm-workspace.yaml",
+  "language": "yaml",
+  "size": 192,
+  "last_modified": "2025-12-03T23:50:35.677Z",
+  "lines": 10,
+  "content": "# VoiceAssist Monorepo Workspace Configuration\n# Defines all packages in the monorepo for pnpm workspaces\n\npackages:\n  # Client applications\n  - \"apps/*\"\n\n  # Shared packages\n  - \"packages/*\"\n"
+}

@@ -1,6 +1,6 @@
 {
   "version": "1.1",
-  "generated_at": "2025-12-05T02:38:46.679Z",
+  "generated_at": "2025-12-05T04:20:40.506Z",
   "description": "VoiceAssist documentation index for AI agents and integrations",
   "endpoints": {
     "docs_list": {
@@ -42,6 +42,8 @@
       "category": "admin|ai|api|architecture|debugging|deployment|feature-flags|getting-started|operations|overview|planning|reference|releases|security|testing|voice",
       "tags": "string[] - Categorization tags",
       "relatedServices": "string[] - Related service names",
+      "component": "string? - Logical component identifier (e.g., backend/api-gateway)",
+      "relatedPaths": "string[]? - Repo-relative paths to related code files",
       "lastUpdated": "string - ISO date"
     }
   },
