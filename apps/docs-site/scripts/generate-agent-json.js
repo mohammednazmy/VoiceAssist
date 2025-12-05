@@ -130,6 +130,18 @@ function parseMetadata(rawData, filePath) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
+  // Doc-code crosswalk fields
+  let component = undefined;
+  if (rawData.component && typeof rawData.component === "string") {
+    component = rawData.component;
+  }
+
+  let relatedPaths = undefined;
+  if (Array.isArray(rawData.relatedPaths) && rawData.relatedPaths.length > 0) {
+    relatedPaths = rawData.relatedPaths.filter((p) => typeof p === "string");
+    if (relatedPaths.length === 0) relatedPaths = undefined;
+  }
+
   return {
     title: rawData.title || path.basename(filePath, ".md").replace(/_/g, " "),
     slug: rawData.slug || defaultSlug,
@@ -145,6 +157,8 @@ function parseMetadata(rawData, filePath) {
     relatedServices: Array.isArray(rawData.relatedServices)
       ? rawData.relatedServices
       : undefined,
+    component,
+    relatedPaths,
   };
 }
 
@@ -192,6 +206,8 @@ function scanDocsDir(dir, basePath = "") {
           category: metadata.category,
           tags: metadata.tags,
           relatedServices: metadata.relatedServices,
+          component: metadata.component,
+          relatedPaths: metadata.relatedPaths,
           lastUpdated: metadata.lastUpdated,
         });
       } catch (error) {
@@ -254,6 +270,9 @@ function generateAgentIndex() {
           "admin|ai|api|architecture|debugging|deployment|feature-flags|getting-started|operations|overview|planning|reference|releases|security|testing|voice",
         tags: "string[] - Categorization tags",
         relatedServices: "string[] - Related service names",
+        component:
+          "string? - Logical component identifier (e.g., backend/api-gateway)",
+        relatedPaths: "string[]? - Repo-relative paths to related code files",
         lastUpdated: "string - ISO date",
       },
     },

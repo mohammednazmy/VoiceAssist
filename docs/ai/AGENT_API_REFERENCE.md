@@ -21,7 +21,13 @@ relatedServices:
   - docs-site
 category: ai
 source_of_truth: true
-version: 1.5.0
+version: 1.6.0
+component: "frontend/docs-site"
+relatedPaths:
+  - "apps/docs-site/scripts/generate-agent-json.js"
+  - "apps/docs-site/scripts/generate-repo-index.mjs"
+  - "apps/docs-site/scripts/generate-doc-code-map.mjs"
+  - "apps/docs-site/public/agent/index.json"
 ai_summary: >-
   Canonical reference for VoiceAssist documentation API endpoints. Base URL:
   https://assistdocs.asimo.io. Key endpoints: /agent/docs.json (full doc list

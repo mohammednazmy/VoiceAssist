@@ -31,8 +31,10 @@
     "generate:api-reference": "node ./scripts/generate-api-reference.mjs",
     "generate:api-types": "node scripts/generate-api-types.mjs",
     "generate:component-docs": "node scripts/extract-component-docs.mjs",
-    "generate:all": "pnpm run generate:api-reference && pnpm run generate:api-types && pnpm run generate:component-docs && pnpm run generate-search-index && pnpm run generate-agent-json",
-    "generate:api-docs": "cd ../../services/api-gateway && python3 tools/generate_api_docs.py --format all"
+    "generate:all": "pnpm run generate:api-reference && pnpm run generate:api-types && pnpm run generate:component-docs && pnpm run generate-search-index && pnpm run generate-agent-json && pnpm run generate-doc-code-map",
+    "generate:api-docs": "cd ../../services/api-gateway && python3 tools/generate_api_docs.py --format all",
+    "generate-repo-index-lite": "node scripts/generate-repo-index-lite.mjs",
+    "generate-doc-code-map": "node scripts/generate-doc-code-map.mjs"
   },
   "dependencies": {
     "fuse.js": "^6.6.2",
