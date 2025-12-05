@@ -137,7 +137,7 @@ class Settings(BaseSettings):
 
     # ElevenLabs TTS settings
     ELEVENLABS_MODEL: str = "eleven_turbo_v2"  # Low-latency model
-    ELEVENLABS_VOICE_ID: str = "21m00Tcm4TlvDq8ikWAM"  # Default voice (Rachel)
+    ELEVENLABS_VOICE_ID: str = "nPczCjzI2devNBz1zQrb"  # Default voice (Brian)
     ELEVENLABS_OUTPUT_FORMAT: str = "mp3_22050_32"  # Low bandwidth for streaming
 
     # Provider API Keys (for future STT/TTS integration)

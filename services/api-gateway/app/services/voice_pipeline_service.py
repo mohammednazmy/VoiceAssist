@@ -298,7 +298,7 @@ class PipelineConfig:
     temperature: float = 0.7
 
     # TTS settings
-    voice_id: str = "TxGEqnHWrfWFTfGW9XjX"  # Josh (premium male voice)
+    voice_id: str = "nPczCjzI2devNBz1zQrb"  # Brian (matches frontend default)
     tts_model: str = "eleven_flash_v2_5"  # Better quality + low latency
     tts_output_format: str = "pcm_24000"  # Raw PCM for low-latency streaming
 
