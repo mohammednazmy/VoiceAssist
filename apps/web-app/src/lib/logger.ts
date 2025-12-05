@@ -76,16 +76,27 @@ export function errorLog(prefix: string, ...args: unknown[]): void {
 }
 
 /**
+ * Log info messages (always visible in dev, minimal in prod)
+ * Use for important operational information
+ */
+export function infoLog(prefix: string, ...args: unknown[]): void {
+  // eslint-disable-next-line no-console
+  console.log(`[${prefix}]`, ...args);
+}
+
+/**
  * Create a scoped logger for a specific module
  *
  * @example
  * const log = createLogger('WebSocket');
  * log.debug('Connected'); // [WebSocket] Connected (dev only)
+ * log.info('Ready'); // [WebSocket] Ready (always)
  * log.error('Failed', err); // [WebSocket] Failed (always)
  */
 export function createLogger(prefix: string) {
   return {
     debug: (...args: unknown[]) => debugLog(prefix, ...args),
+    info: (...args: unknown[]) => infoLog(prefix, ...args),
     warn: (...args: unknown[]) => warnLog(prefix, ...args),
     error: (...args: unknown[]) => errorLog(prefix, ...args),
   };

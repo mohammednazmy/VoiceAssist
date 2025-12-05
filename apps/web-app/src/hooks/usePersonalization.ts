@@ -160,8 +160,11 @@ export function usePersonalization(
 
     // Initialize
     managerRef.current.initialize(syncEndpoint).then(() => {
-      setIsInitialized(true);
-      setState(managerRef.current!.getState());
+      // Check if component is still mounted (managerRef.current not null)
+      if (managerRef.current) {
+        setIsInitialized(true);
+        setState(managerRef.current.getState());
+      }
     });
 
     return () => {
