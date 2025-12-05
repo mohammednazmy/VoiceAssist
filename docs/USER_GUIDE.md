@@ -13,6 +13,11 @@ tags:
   - user
   - guide
 category: operations
+component: "frontend/web-app"
+relatedPaths:
+  - "apps/web-app/src/components/Chat.tsx"
+  - "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+  - "apps/web-app/src/components/Layout.tsx"
 ai_summary: >-
   Version: 1.0 Last Updated: 2025-11-21 --- VoiceAssist is an AI-powered medical
   assistant that helps healthcare professionals with voice-based queries,

@@ -7,6 +7,10 @@ category: feature-flags
 owner: frontend
 summary: Using the Admin Panel to manage feature flags and scheduled variant changes
 ai_summary: Admin Panel at admin.asimo.io provides UI for flag management. Navigate to Settings > Feature Flags. Toggle, edit percentage, filter by category. Real-time updates via SSE. Scheduled Changes tab for time-based variant weight modifications with timezone support. RBAC enforced (admin for write, viewer for read). Prometheus metrics track scheduled changes. Requires admin JWT.
+component: "frontend/admin-panel"
+relatedPaths:
+  - "apps/admin-panel/src/pages/FeatureFlags.tsx"
+  - "services/api-gateway/app/api/admin_feature_flags.py"
 ---
 
 # Feature Flags Admin Panel Guide

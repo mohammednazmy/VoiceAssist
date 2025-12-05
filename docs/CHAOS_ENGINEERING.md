@@ -13,6 +13,10 @@ tags:
   - chaos
   - engineering
 category: testing
+component: "testing/chaos"
+relatedPaths:
+  - "services/api-gateway/app/api/health.py"
+  - "docker-compose.yml"
 ai_summary: >-
   Last Updated: 2025-11-21 (Phase 7 - P3.5) Purpose: Guide for running chaos
   experiments to validate VoiceAssist V2 resilience --- Chaos Engineering is the

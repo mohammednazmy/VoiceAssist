@@ -7,6 +7,10 @@ category: feature-flags
 owner: backend
 summary: Managing feature flags across dev, staging, and production environments
 ai_summary: Flags have per-environment states. Dev flags auto-enable, staging mirrors prod with overrides, prod requires explicit enablement. Use Redis namespaced keys (flags:dev:name, flags:prod:name).
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/core/config.py"
+  - "services/api-gateway/app/services/feature_flag_service.py"
 ---
 
 # Multi-Environment Feature Flags

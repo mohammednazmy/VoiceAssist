@@ -17,6 +17,11 @@ tags:
   - reference
 category: ai
 version: 1.3.0
+component: "platform/ai-agents"
+relatedPaths:
+  - "services/api-gateway/app/main.py"
+  - "apps/docs-site/scripts/generate-agent-json.js"
+  - "apps/docs-site/scripts/generate-doc-code-map.mjs"
 ai_summary: >-
   Catalog of common AI agent tasks with relevant docs and commands. Tasks include:
   understand project status, debug backend/frontend/voice issues, update documentation,

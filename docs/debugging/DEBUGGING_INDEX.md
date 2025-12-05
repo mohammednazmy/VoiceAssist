@@ -29,6 +29,11 @@ relatedServices:
   - admin-panel
   - docs-site
 category: debugging
+component: "platform/debugging"
+relatedPaths:
+  - "services/api-gateway/app/api/health.py"
+  - "apps/web-app/src/App.tsx"
+  - "apps/admin-panel/src/App.tsx"
 version: 1.1.0
 ai_summary: >-
   Last Updated: 2025-12-02 Version: 1.1.0 Audience: Developers, SREs, AI

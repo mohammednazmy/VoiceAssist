@@ -21,6 +21,10 @@ category: reference
 relatedServices:
   - docs-site
 version: 2.1.0
+component: "frontend/docs-site"
+relatedPaths:
+  - "apps/docs-site/scripts/validate-frontmatter.mjs"
+  - "apps/docs-site/scripts/generate-agent-json.js"
 ai_summary: >-
   Canonical reference for VoiceAssist documentation metadata schema. Defines required
   fields (title, slug, status, lastUpdated), recommended fields (summary, stability,

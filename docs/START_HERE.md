@@ -15,6 +15,11 @@ tags:
   - start
   - here
 category: overview
+component: "docs/overview"
+relatedPaths:
+  - "docs/overview/IMPLEMENTATION_STATUS.md"
+  - "apps/web-app/src/App.tsx"
+  - "services/api-gateway/app/main.py"
 ai_summary: >-
   Welcome to VoiceAssist V2 - A HIPAA-compliant voice-enabled clinical decision
   support system. This document is your entry point to the project. Choose your

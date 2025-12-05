@@ -22,6 +22,11 @@ relatedServices:
   - web-app
   - admin-panel
 category: debugging
+component: "frontend/web-app"
+relatedPaths:
+  - "apps/web-app/src/App.tsx"
+  - "apps/web-app/src/components/Layout.tsx"
+  - "apps/admin-panel/src/App.tsx"
 version: 1.0.0
 ai_summary: >-
   Last Updated: 2025-11-27 Components: apps/web-app/, apps/admin-panel/ ---

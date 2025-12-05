@@ -14,6 +14,11 @@ tags:
   - readiness
   - checklist
 category: reference
+component: "infra/deployment"
+relatedPaths:
+  - "docker-compose.yml"
+  - "services/api-gateway/app/api/health.py"
+  - "Makefile"
 ai_summary: >-
   Version: 1.0 Date: 2025-11-21 Phase: 14 - Production Deployment --- This
   comprehensive checklist ensures all requirements are met before deploying

@@ -7,6 +7,11 @@ category: feature-flags
 owner: backend
 summary: Comprehensive guide to VoiceAssist feature flag system
 ai_summary: Feature flags enable runtime feature toggling without deployments. Use category.feature_name pattern (e.g., ui.dark_mode, backend.rag_strategy). Flags stored in PostgreSQL, cached in Redis (5min TTL).
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/services/feature_flag_service.py"
+  - "services/api-gateway/app/api/admin_feature_flags.py"
+  - "packages/types/src/featureFlags.ts"
 ---
 
 # Feature Flags Overview

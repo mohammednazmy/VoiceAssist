@@ -1,6 +1,6 @@
 {
   "count": 283,
-  "generated_at": "2025-12-05T04:34:32.346Z",
+  "generated_at": "2025-12-05T04:47:07.289Z",
   "docs": [
     {
       "slug": "style-guide",
@@ -24,6 +24,12 @@
       "owner": "backend",
       "audience": ["developers", "admin", "ai-agents"],
       "category": "feature-flags",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/services/feature_flag_service.py",
+        "services/api-gateway/app/api/admin_feature_flags.py",
+        "packages/types/src/featureFlags.ts"
+      ],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
@@ -36,6 +42,11 @@
       "owner": "frontend",
       "audience": ["admin", "developers", "ai-agents"],
       "category": "feature-flags",
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/pages/FeatureFlags.tsx",
+        "services/api-gateway/app/api/admin_feature_flags.py"
+      ],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
@@ -48,6 +59,11 @@
       "owner": "backend",
       "audience": ["developers", "ai-agents"],
       "category": "feature-flags",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/services/feature_flag_service.py",
+        "packages/types/src/featureFlags.ts"
+      ],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
@@ -60,6 +76,11 @@
       "owner": "backend",
       "audience": ["developers", "ai-agents"],
       "category": "feature-flags",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/services/feature_flag_service.py",
+        "packages/types/src/featureFlags.ts"
+      ],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
@@ -71,6 +92,11 @@
       "owner": "backend",
       "audience": ["admin", "developers", "devops"],
       "category": "feature-flags",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/scripts/init_feature_flags.py",
+        "services/api-gateway/app/api/admin_feature_flags.py"
+      ],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
@@ -83,6 +109,11 @@
       "owner": "backend",
       "audience": ["developers", "ai-agents"],
       "category": "feature-flags",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/services/feature_flag_service.py",
+        "packages/types/src/featureFlags.ts"
+      ],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
@@ -95,6 +126,11 @@
       "owner": "backend",
       "audience": ["developers", "devops", "ai-agents"],
       "category": "feature-flags",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/core/config.py",
+        "services/api-gateway/app/services/feature_flag_service.py"
+      ],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
@@ -107,6 +143,11 @@
       "owner": "backend",
       "audience": ["developers", "ai-agents"],
       "category": "feature-flags",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "packages/types/src/featureFlags.ts",
+        "services/api-gateway/app/core/flag_definitions.py"
+      ],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
@@ -119,6 +160,11 @@
       "owner": "backend",
       "audience": ["developers", "admin", "ai-agents"],
       "category": "reference",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/core/config.py",
+        "services/api-gateway/app/services/feature_flag_service.py"
+      ],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
@@ -192,6 +238,11 @@
       "category": "reference",
       "tags": ["documentation", "metadata", "standards", "frontmatter"],
       "relatedServices": ["docs-site"],
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/scripts/validate-frontmatter.mjs",
+        "apps/docs-site/scripts/generate-agent-json.js"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -228,6 +279,12 @@
       "category": "reference",
       "tags": ["documentation", "tooling", "ci-cd", "quality"],
       "relatedServices": ["docs-site"],
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/scripts/generate-agent-json.js",
+        "apps/docs-site/scripts/validate-frontmatter.mjs",
+        "apps/docs-site/scripts/generate-doc-code-map.mjs"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -320,6 +377,11 @@
       "audience": ["ai-agents"],
       "category": "reference",
       "tags": ["ai", "navigation", "meta", "documentation"],
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/scripts/generate-agent-json.js",
+        "apps/docs-site/public/agent/index.json"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -357,6 +419,13 @@
       "category": "ai",
       "tags": ["onboarding", "ai-agent", "getting-started", "workflows"],
       "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "component": "platform/ai-agents",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "apps/web-app/src/App.tsx",
+        "apps/admin-panel/src/App.tsx",
+        "apps/docs-site/scripts/generate-agent-json.js"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -371,6 +440,12 @@
       "audience": ["ai-agents"],
       "category": "ai",
       "tags": ["ai-agent", "tasks", "index", "reference"],
+      "component": "platform/ai-agents",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "apps/docs-site/scripts/generate-agent-json.js",
+        "apps/docs-site/scripts/generate-doc-code-map.mjs"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -385,6 +460,11 @@
       "audience": ["ai-agents"],
       "category": "ai",
       "tags": ["ai-agent", "repository", "navigation", "codebase"],
+      "component": "platform/ai-agents",
+      "relatedPaths": [
+        "apps/docs-site/scripts/generate-repo-index.mjs",
+        "apps/docs-site/scripts/generate-doc-code-map.mjs"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -446,6 +526,13 @@
       "category": "overview",
       "tags": ["status", "overview", "components", "roadmap", "architecture"],
       "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "component": "platform/status",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "apps/web-app/src/App.tsx",
+        "apps/admin-panel/src/App.tsx",
+        "apps/docs-site/src/app/page.tsx"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -918,6 +1005,12 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["roadmap"],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/DEVELOPMENT_PHASES_V2.md",
+        "docs/ALL_PHASES_SUMMARY.md",
+        "docs/overview/IMPLEMENTATION_STATUS.md"
+      ],
       "lastUpdated": "2025-12-03"
     },
     {
@@ -1020,6 +1113,12 @@
         "troubleshooting"
       ],
       "relatedServices": ["docs-site"],
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/src/app/layout.tsx",
+        "apps/docs-site/src/app/page.tsx",
+        "apps/docs-site/scripts/generate-agent-json.js"
+      ],
       "lastUpdated": "2025-12-03"
     },
     {
@@ -1085,6 +1184,12 @@
       "audience": ["human", "ai-agents"],
       "category": "overview",
       "tags": ["start", "here"],
+      "component": "docs/overview",
+      "relatedPaths": [
+        "docs/overview/IMPLEMENTATION_STATUS.md",
+        "apps/web-app/src/App.tsx",
+        "services/api-gateway/app/main.py"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -1209,6 +1314,12 @@
         "index"
       ],
       "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "component": "platform/debugging",
+      "relatedPaths": [
+        "services/api-gateway/app/api/health.py",
+        "apps/web-app/src/App.tsx",
+        "apps/admin-panel/src/App.tsx"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -1234,6 +1345,12 @@
         "thinker-talker"
       ],
       "relatedServices": ["api-gateway", "web-app"],
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx",
+        "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -1290,6 +1407,14 @@
       "audience": ["admin", "devops", "agent", "ai-agents"],
       "category": "getting-started",
       "tags": ["quickstart", "admin", "deployment", "configuration"],
+      "component": "platform/admin",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "services/api-gateway/app/main.py",
+        "services/api-gateway/app/api/health.py",
+        "apps/admin-panel/src/App.tsx",
+        ".env.example"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -1304,6 +1429,14 @@
       "audience": ["agent", "ai-agents"],
       "category": "getting-started",
       "tags": ["quickstart", "ai", "agent", "automation"],
+      "component": "platform/ai-agents",
+      "relatedPaths": [
+        "services/api-gateway/app/services/thinker_service.py",
+        "services/api-gateway/app/services/talker_service.py",
+        "services/api-gateway/app/services/thinker_talker_websocket_handler.py",
+        "apps/web-app/src/hooks/useThinkerTalkerSession.ts",
+        "apps/docs-site/scripts/generate-agent-json.js"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -1318,6 +1451,14 @@
       "audience": ["developers", "agent", "ai-agents"],
       "category": "getting-started",
       "tags": ["quickstart", "development", "setup", "contributing"],
+      "component": "platform/development",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "pnpm-workspace.yaml",
+        "package.json",
+        "Makefile",
+        ".env.example"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -1346,6 +1487,12 @@
       "audience": ["user", "human", "ai-agents"],
       "category": "getting-started",
       "tags": ["quickstart", "user-guide", "voice", "chat"],
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/App.tsx",
+        "apps/web-app/src/components/Chat.tsx",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+      ],
       "lastUpdated": "2025-12-01"
     },
     {
@@ -1523,6 +1670,11 @@
       "audience": ["human", "ai-agents"],
       "category": "testing",
       "tags": ["chaos", "engineering"],
+      "component": "testing/chaos",
+      "relatedPaths": [
+        "services/api-gateway/app/api/health.py",
+        "docker-compose.yml"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1537,6 +1689,8 @@
       "audience": ["frontend", "ai-agents"],
       "category": "operations",
       "tags": ["cicd", "guide"],
+      "component": "infra/cicd",
+      "relatedPaths": [".github/workflows", "Makefile", "package.json"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1551,6 +1705,8 @@
       "audience": ["agent", "ai-agents", "human"],
       "category": "ai",
       "tags": ["claude", "execution", "guide", "ai-agent"],
+      "component": "platform/ai-agents",
+      "relatedPaths": ["docs/CLAUDE_PROMPTS.md", "docs/ai/AGENT_ONBOARDING.md"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1760,6 +1916,13 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["development", "setup"],
+      "component": "platform/development",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "pnpm-workspace.yaml",
+        "package.json",
+        ".env.example"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1774,6 +1937,12 @@
       "audience": ["sre", "backend", "frontend", "ai-agents"],
       "category": "debugging",
       "tags": ["disaster", "recovery", "runbook"],
+      "component": "infra/operations",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "services/api-gateway/app/core/database.py",
+        "Makefile"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1906,6 +2075,12 @@
       "audience": ["devops", "sre", "ai-agents"],
       "category": "deployment",
       "tags": ["infrastructure", "setup"],
+      "component": "infra/deployment",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "services/api-gateway/Dockerfile",
+        "Makefile"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1948,6 +2123,8 @@
       "audience": ["frontend", "ai-agents"],
       "category": "testing",
       "tags": ["load", "testing", "guide"],
+      "component": "testing/load",
+      "relatedPaths": ["services/api-gateway/app/api/health.py", "Makefile"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1962,6 +2139,13 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["local", "development"],
+      "component": "infra/development",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "Makefile",
+        "package.json",
+        "pnpm-workspace.yaml"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2142,6 +2326,12 @@
       "audience": ["frontend", "ai-agents"],
       "category": "operations",
       "tags": ["performance", "tuning", "guide"],
+      "component": "backend/performance",
+      "relatedPaths": [
+        "services/api-gateway/app/core/config.py",
+        "services/api-gateway/app/core/database.py",
+        "docker-compose.yml"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2366,6 +2556,12 @@
       "audience": ["devops", "sre", "ai-agents"],
       "category": "debugging",
       "tags": ["production", "deployment", "runbook"],
+      "component": "infra/deployment",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "infrastructure/terraform/main.tf",
+        "infrastructure/ansible/playbooks/deploy.yml"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2380,6 +2576,12 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["production", "readiness", "checklist"],
+      "component": "infra/deployment",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "services/api-gateway/app/api/health.py",
+        "Makefile"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2570,6 +2772,8 @@
       "audience": ["frontend", "ai-agents"],
       "category": "deployment",
       "tags": ["terraform", "guide"],
+      "component": "infra/terraform",
+      "relatedPaths": ["terraform", "Makefile"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2584,6 +2788,11 @@
       "audience": ["human", "ai-agents"],
       "category": "testing",
       "tags": ["testing", "contracts"],
+      "component": "testing/contracts",
+      "relatedPaths": [
+        "packages/api-client/src/index.ts",
+        "services/api-gateway/app/api/__init__.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2681,6 +2890,12 @@
       "audience": ["frontend", "ai-agents"],
       "category": "operations",
       "tags": ["user", "guide"],
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/components/Chat.tsx",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx",
+        "apps/web-app/src/components/Layout.tsx"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3705,6 +3920,13 @@
         "troubleshooting"
       ],
       "relatedServices": ["api-gateway"],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "services/api-gateway/app/core/database.py",
+        "services/api-gateway/app/core/config.py",
+        "services/api-gateway/app/api/health.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3727,6 +3949,12 @@
         "troubleshooting"
       ],
       "relatedServices": ["web-app", "admin-panel"],
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/App.tsx",
+        "apps/web-app/src/components/Layout.tsx",
+        "apps/admin-panel/src/App.tsx"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3749,6 +3977,12 @@
         "troubleshooting"
       ],
       "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "component": "platform/debugging",
+      "relatedPaths": [
+        "services/api-gateway/app/api/health.py",
+        "services/api-gateway/app/core/logging.py",
+        "docker-compose.yml"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3995,6 +4229,12 @@
       "audience": ["human", "ai-agents"],
       "category": "overview",
       "tags": ["architecture"],
+      "component": "platform/architecture",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "apps/web-app/src/App.tsx",
+        "docker-compose.yml"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {

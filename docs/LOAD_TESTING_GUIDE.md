@@ -16,6 +16,10 @@ tags:
   - testing
   - guide
 category: testing
+component: "testing/load"
+relatedPaths:
+  - "services/api-gateway/app/api/health.py"
+  - "Makefile"
 ai_summary: >-
   This comprehensive guide covers load testing for VoiceAssist, including when
   to run tests, how to interpret results, choosing between tools (k6 vs Locust),

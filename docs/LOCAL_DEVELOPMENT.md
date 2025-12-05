@@ -15,6 +15,12 @@ tags:
   - local
   - development
 category: reference
+component: "infra/development"
+relatedPaths:
+  - "docker-compose.yml"
+  - "Makefile"
+  - "package.json"
+  - "pnpm-workspace.yaml"
 ai_summary: >-
   VoiceAssist V2 uses a Compose-first development approach with two separate
   Docker Compose stacks: - Nextcloud stack (~/Nextcloud-Dev/) - Identity, files,

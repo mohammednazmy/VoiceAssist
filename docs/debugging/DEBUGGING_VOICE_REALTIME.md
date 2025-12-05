@@ -29,6 +29,11 @@ relatedServices:
   - api-gateway
   - web-app
 category: debugging
+component: "backend/voice"
+relatedPaths:
+  - "services/api-gateway/app/api/voice.py"
+  - "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+  - "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
 version: 2.0.0
 ai_summary: >-
   Last Updated: 2025-12-02 Components: Voice pipeline, WebSocket service,

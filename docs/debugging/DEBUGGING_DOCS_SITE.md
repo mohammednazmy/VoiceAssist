@@ -24,6 +24,11 @@ tags:
 relatedServices:
   - docs-site
 category: debugging
+component: "frontend/docs-site"
+relatedPaths:
+  - "apps/docs-site/src/app/layout.tsx"
+  - "apps/docs-site/src/app/page.tsx"
+  - "apps/docs-site/scripts/generate-agent-json.js"
 version: 1.1.0
 ai_summary: >-
   Last Updated: 2025-12-03 Component: apps/docs-site/ Live Site:

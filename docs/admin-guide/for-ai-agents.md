@@ -9,6 +9,10 @@ lastUpdated: "2025-12-04"
 audience: ["ai-agents"]
 category: reference
 tags: ["ai", "navigation", "meta", "documentation"]
+component: "frontend/docs-site"
+relatedPaths:
+  - "apps/docs-site/scripts/generate-agent-json.js"
+  - "apps/docs-site/public/agent/index.json"
 ---
 
 # Documentation Guide for AI Agents

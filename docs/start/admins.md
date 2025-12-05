@@ -19,6 +19,13 @@ tags:
   - deployment
   - configuration
 category: getting-started
+component: "platform/admin"
+relatedPaths:
+  - "docker-compose.yml"
+  - "services/api-gateway/app/main.py"
+  - "services/api-gateway/app/api/health.py"
+  - "apps/admin-panel/src/App.tsx"
+  - ".env.example"
 ai_summary: >-
   Last Updated: 2025-12-01 This guide covers deployment, configuration, and
   ongoing administration of VoiceAssist. --- git clone

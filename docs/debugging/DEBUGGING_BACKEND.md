@@ -22,6 +22,12 @@ tags:
 relatedServices:
   - api-gateway
 category: debugging
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/main.py"
+  - "services/api-gateway/app/core/database.py"
+  - "services/api-gateway/app/core/config.py"
+  - "services/api-gateway/app/api/health.py"
 version: 1.0.0
 ai_summary: >-
   Last Updated: 2025-11-27 Component: services/api-gateway/ --- Likely Causes: -

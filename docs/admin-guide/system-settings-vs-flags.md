@@ -7,6 +7,10 @@ category: reference
 owner: backend
 summary: Understanding when to use configuration settings vs feature flags
 ai_summary: Use system settings for permanent config (API_TIMEOUT, DATABASE_URL). Use feature flags for temporary toggles (new features, A/B tests, gradual rollouts). Settings need deployment to change; flags change at runtime.
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/core/config.py"
+  - "services/api-gateway/app/services/feature_flag_service.py"
 ---
 
 # System Settings vs Feature Flags

@@ -16,6 +16,11 @@ tags:
   - infrastructure
   - setup
 category: deployment
+component: "infra/deployment"
+relatedPaths:
+  - "docker-compose.yml"
+  - "services/api-gateway/Dockerfile"
+  - "Makefile"
 ai_summary: >-
   This guide covers infrastructure setup for VoiceAssist V2 across two
   deployment strategies: - Phases 0-10: Docker Compose on Ubuntu Server

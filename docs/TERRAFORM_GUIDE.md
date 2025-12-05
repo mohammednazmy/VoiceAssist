@@ -13,6 +13,10 @@ tags:
   - terraform
   - guide
 category: deployment
+component: "infra/terraform"
+relatedPaths:
+  - "terraform"
+  - "Makefile"
 ai_summary: >-
   1. Overview 2. Directory Structure 3. Module Documentation 4. Variables
   Reference 5. Outputs Reference 6. State Management 7. Multi-Environment Setup

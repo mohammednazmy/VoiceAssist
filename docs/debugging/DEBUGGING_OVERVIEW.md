@@ -28,6 +28,11 @@ relatedServices:
   - admin-panel
   - docs-site
 category: debugging
+component: "platform/debugging"
+relatedPaths:
+  - "services/api-gateway/app/api/health.py"
+  - "services/api-gateway/app/core/logging.py"
+  - "docker-compose.yml"
 version: 1.0.0
 ai_summary: >-
   Last Updated: 2025-11-27 Audience: Developers, SREs, AI Assistants This guide

@@ -15,6 +15,12 @@ tags:
   - development
   - setup
 category: reference
+component: "platform/development"
+relatedPaths:
+  - "docker-compose.yml"
+  - "pnpm-workspace.yaml"
+  - "package.json"
+  - ".env.example"
 ai_summary: >-
   This guide walks you through setting up your local development environment for
   VoiceAssist. --- - Git 2.30+ - Docker 24.0+ and Docker Compose 2.20+ - Python

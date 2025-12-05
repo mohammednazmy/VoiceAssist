@@ -7,6 +7,10 @@ category: feature-flags
 owner: backend
 summary: Boolean, percentage, variant, and scheduled feature flag types
 ai_summary: Four flag types available - boolean (on/off), percentage (gradual rollout 0-100%), variant (A/B/C testing), scheduled (time-based activation). Use percentage for safe rollouts, variant for A/B tests.
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/services/feature_flag_service.py"
+  - "packages/types/src/featureFlags.ts"
 ---
 
 # Advanced Feature Flag Types

@@ -6,6 +6,10 @@ audience: [admin, developers, devops]
 category: feature-flags
 owner: backend
 summary: Command-line interface reference for managing feature flags
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/scripts/init_feature_flags.py"
+  - "services/api-gateway/app/api/admin_feature_flags.py"
 ---
 
 # Feature Flags CLI Reference

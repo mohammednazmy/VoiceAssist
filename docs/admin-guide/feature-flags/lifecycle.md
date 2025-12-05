@@ -7,6 +7,10 @@ category: feature-flags
 owner: backend
 summary: Managing feature flags from creation to retirement
 ai_summary: Flags go through 4 stages - creation (disabled), testing (dev/staging), rollout (gradual %), retirement (cleanup). Always start disabled, test in non-prod, use percentage rollouts, clean up after 100% stable.
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/services/feature_flag_service.py"
+  - "packages/types/src/featureFlags.ts"
 ---
 
 # Feature Flag Lifecycle

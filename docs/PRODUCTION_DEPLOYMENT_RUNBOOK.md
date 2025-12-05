@@ -15,6 +15,11 @@ tags:
   - deployment
   - runbook
 category: debugging
+component: "infra/deployment"
+relatedPaths:
+  - "docker-compose.yml"
+  - "infrastructure/terraform/main.tf"
+  - "infrastructure/ansible/playbooks/deploy.yml"
 ai_summary: >-
   Version: 1.0 Last Updated: 2025-11-21 Owner: DevOps Team Phase: 14 -
   Production Deployment --- 1. Overview 2. Prerequisites 3. Pre-Deployment

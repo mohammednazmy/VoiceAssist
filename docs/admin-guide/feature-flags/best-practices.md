@@ -7,6 +7,10 @@ category: feature-flags
 owner: backend
 summary: Guidelines for effective feature flag usage
 ai_summary: Keep flags temporary (remove after stable rollout). Use descriptive names. Start with 10% rollouts. Always have rollback plan. Review flags quarterly. Document in code and commit messages.
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/services/feature_flag_service.py"
+  - "packages/types/src/featureFlags.ts"
 ---
 
 # Feature Flag Best Practices

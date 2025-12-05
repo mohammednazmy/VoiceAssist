@@ -7,6 +7,10 @@ category: feature-flags
 owner: backend
 summary: Standards for naming feature flags in VoiceAssist
 ai_summary: Use category.feature_name pattern. Categories are ui, backend, admin, integration, experiment, ops. Use snake_case for feature names. Never use hyphens or the deprecated ff_ prefix.
+component: "backend/api-gateway"
+relatedPaths:
+  - "packages/types/src/featureFlags.ts"
+  - "services/api-gateway/app/core/flag_definitions.py"
 ---
 
 # Feature Flag Naming Conventions

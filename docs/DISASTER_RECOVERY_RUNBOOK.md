@@ -16,6 +16,11 @@ tags:
   - recovery
   - runbook
 category: debugging
+component: "infra/operations"
+relatedPaths:
+  - "docker-compose.yml"
+  - "services/api-gateway/app/core/database.py"
+  - "Makefile"
 ai_summary: >-
   Document Version: 1.0 Last Updated: 2025-11-21 Status: Production-Ready Phase:
   Phase 12 - High Availability & Disaster Recovery --- This runbook provides

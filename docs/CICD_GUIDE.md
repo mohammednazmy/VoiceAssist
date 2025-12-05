@@ -13,6 +13,11 @@ tags:
   - cicd
   - guide
 category: operations
+component: "infra/cicd"
+relatedPaths:
+  - ".github/workflows"
+  - "Makefile"
+  - "package.json"
 ai_summary: >-
   1. Overview 2. GitHub Actions Workflows 3. CI Pipeline 4. CD Pipeline 5.
   Terraform Automation 6. Required Secrets 7. Deployment Process 8. Rollback

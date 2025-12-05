@@ -22,6 +22,11 @@ tags:
 category: reference
 relatedServices:
   - docs-site
+component: "frontend/docs-site"
+relatedPaths:
+  - "apps/docs-site/scripts/generate-agent-json.js"
+  - "apps/docs-site/scripts/validate-frontmatter.mjs"
+  - "apps/docs-site/scripts/generate-doc-code-map.mjs"
 ai_summary: >-
   Documentation infrastructure for VoiceAssist. Key validation commands:
   pnpm validate:metadata (frontmatter), pnpm validate:all (all checks).

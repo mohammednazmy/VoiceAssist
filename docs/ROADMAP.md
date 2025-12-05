@@ -14,6 +14,11 @@ audience:
 tags:
   - roadmap
 category: reference
+component: "platform/planning"
+relatedPaths:
+  - "docs/DEVELOPMENT_PHASES_V2.md"
+  - "docs/ALL_PHASES_SUMMARY.md"
+  - "docs/overview/IMPLEMENTATION_STATUS.md"
 ai_summary: >-
   This is the canonical V2 development roadmap for VoiceAssist. It presents a
   15-phase implementation plan (Phase 0-14) organized by timeframe and

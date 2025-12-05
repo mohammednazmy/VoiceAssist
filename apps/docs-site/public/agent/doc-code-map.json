@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-12-05T04:34:22.419Z",
+  "generated_at": "2025-12-05T04:46:58.051Z",
   "description": "Bidirectional mapping between documentation and repository files for AI agent navigation",
   "usage": {
     "from_doc": "Use by_doc_slug[slug].relatedPaths to find implementation files for a doc",
@@ -8,6 +8,126 @@
     "fetch_doc": "Use slug to look up full doc in /agent/docs.json"
   },
   "by_doc_slug": {
+    "readme": {
+      "slug": "readme",
+      "path": "admin-guide/feature-flags/README.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/services/feature_flag_service.py",
+        "services/api-gateway/app/api/admin_feature_flags.py",
+        "packages/types/src/featureFlags.ts"
+      ],
+      "title": "Feature Flags Overview",
+      "category": "feature-flags",
+      "ai_summary": "Feature flags enable runtime feature toggling without deployments. Use category.feature_name pattern (e.g., ui.dark_mode, backend.rag_strategy). Flags stored in PostgreSQL, cached in Redis (5min TTL)."
+    },
+    "admin-panel-guide": {
+      "slug": "admin-panel-guide",
+      "path": "admin-guide/feature-flags/admin-panel-guide.md",
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/pages/FeatureFlags.tsx",
+        "services/api-gateway/app/api/admin_feature_flags.py"
+      ],
+      "title": "Feature Flags Admin Panel Guide",
+      "category": "feature-flags",
+      "ai_summary": "Admin Panel at admin.asimo.io provides UI for flag management. Navigate to Settings > Feature Flags. Toggle, edit percentage, filter by category. Real-time updates via SSE. Scheduled Changes tab for time-based variant weight modifications with timezone support. RBAC enforced (admin for write, viewer for read). Prometheus metrics track scheduled changes. Requires admin JWT."
+    },
+    "advanced-types": {
+      "slug": "advanced-types",
+      "path": "admin-guide/feature-flags/advanced-types.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/services/feature_flag_service.py",
+        "packages/types/src/featureFlags.ts"
+      ],
+      "title": "Advanced Feature Flag Types",
+      "category": "feature-flags",
+      "ai_summary": "Four flag types available - boolean (on/off), percentage (gradual rollout 0-100%), variant (A/B/C testing), scheduled (time-based activation). Use percentage for safe rollouts, variant for A/B tests."
+    },
+    "best-practices": {
+      "slug": "best-practices",
+      "path": "admin-guide/feature-flags/best-practices.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/services/feature_flag_service.py",
+        "packages/types/src/featureFlags.ts"
+      ],
+      "title": "Feature Flag Best Practices",
+      "category": "feature-flags",
+      "ai_summary": "Keep flags temporary (remove after stable rollout). Use descriptive names. Start with 10% rollouts. Always have rollback plan. Review flags quarterly. Document in code and commit messages."
+    },
+    "cli-reference": {
+      "slug": "cli-reference",
+      "path": "admin-guide/feature-flags/cli-reference.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/scripts/init_feature_flags.py",
+        "services/api-gateway/app/api/admin_feature_flags.py"
+      ],
+      "title": "Feature Flags CLI Reference",
+      "category": "feature-flags"
+    },
+    "lifecycle": {
+      "slug": "lifecycle",
+      "path": "admin-guide/feature-flags/lifecycle.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/services/feature_flag_service.py",
+        "packages/types/src/featureFlags.ts"
+      ],
+      "title": "Feature Flag Lifecycle",
+      "category": "feature-flags",
+      "ai_summary": "Flags go through 4 stages - creation (disabled), testing (dev/staging), rollout (gradual %), retirement (cleanup). Always start disabled, test in non-prod, use percentage rollouts, clean up after 100% stable."
+    },
+    "multi-environment": {
+      "slug": "multi-environment",
+      "path": "admin-guide/feature-flags/multi-environment.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/core/config.py",
+        "services/api-gateway/app/services/feature_flag_service.py"
+      ],
+      "title": "Multi-Environment Feature Flags",
+      "category": "feature-flags",
+      "ai_summary": "Flags have per-environment states. Dev flags auto-enable, staging mirrors prod with overrides, prod requires explicit enablement. Use Redis namespaced keys (flags:dev:name, flags:prod:name)."
+    },
+    "naming-conventions": {
+      "slug": "naming-conventions",
+      "path": "admin-guide/feature-flags/naming-conventions.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "packages/types/src/featureFlags.ts",
+        "services/api-gateway/app/core/flag_definitions.py"
+      ],
+      "title": "Feature Flag Naming Conventions",
+      "category": "feature-flags",
+      "ai_summary": "Use category.feature_name pattern. Categories are ui, backend, admin, integration, experiment, ops. Use snake_case for feature names. Never use hyphens or the deprecated ff_ prefix."
+    },
+    "system-settings-vs-flags": {
+      "slug": "system-settings-vs-flags",
+      "path": "admin-guide/system-settings-vs-flags.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/core/config.py",
+        "services/api-gateway/app/services/feature_flag_service.py"
+      ],
+      "title": "System Settings vs Feature Flags",
+      "category": "reference",
+      "ai_summary": "Use system settings for permanent config (API_TIMEOUT, DATABASE_URL). Use feature flags for temporary toggles (new features, A/B tests, gradual rollouts). Settings need deployment to change; flags change at runtime."
+    },
+    "docs/metadata-standard": {
+      "slug": "docs/metadata-standard",
+      "path": "DOCUMENTATION_METADATA_STANDARD.md",
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/scripts/validate-frontmatter.mjs",
+        "apps/docs-site/scripts/generate-agent-json.js"
+      ],
+      "title": "Documentation Metadata Standard",
+      "category": "reference",
+      "ai_summary": "Canonical reference for VoiceAssist documentation metadata schema. Defines required fields (title, slug, status, lastUpdated), recommended fields (summary, stability, owner, audience, tags), AI-specific fields (ai_summary, category, component, relatedPaths), and their allowed values. Use `ai-agents` as the canonical audience value for AI readers. The `component` and `relatedPaths` fields enable doc-code crosswalk via /agent/doc-code-map.json. Run `pnpm validate:metadata` from apps/docs-site to validate frontmatter."
+    },
     "feature-flags": {
       "slug": "feature-flags",
       "path": "FEATURE_FLAGS.md",
@@ -21,6 +141,19 @@
       "title": "Feature Flags",
       "category": "reference",
       "ai_summary": "Feature flags enable runtime toggles without deployments. Use category.feature_name pattern (e.g., ui.dark_mode, backend.rag_strategy). Stored in PostgreSQL, cached in Redis (5min TTL). See admin-guide/feature-flags/ for detailed docs."
+    },
+    "internal-docs-system": {
+      "slug": "internal-docs-system",
+      "path": "INTERNAL_DOCS_SYSTEM.md",
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/scripts/generate-agent-json.js",
+        "apps/docs-site/scripts/validate-frontmatter.mjs",
+        "apps/docs-site/scripts/generate-doc-code-map.mjs"
+      ],
+      "title": "Internal Documentation System",
+      "category": "reference",
+      "ai_summary": "Documentation infrastructure for VoiceAssist. Key validation commands: pnpm validate:metadata (frontmatter), pnpm validate:all (all checks). Agent endpoints at assistdocs.asimo.io/agent/*.json include docs.json (with ai_summary), docs-summary.json, health.json, and code-examples.json. See Agent API Reference for endpoint details."
     },
     "admin-panel-integration-guide": {
       "slug": "admin-panel-integration-guide",
@@ -49,6 +182,18 @@
       "category": "reference",
       "ai_summary": "Real-time events use WebSocket connections with Redis pub/sub for live updates. Supports feature flag changes, voice session events, and system health broadcasts. Auto-reconnects with exponential backoff."
     },
+    "for-ai-agents": {
+      "slug": "for-ai-agents",
+      "path": "admin-guide/for-ai-agents.md",
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/scripts/generate-agent-json.js",
+        "apps/docs-site/public/agent/index.json"
+      ],
+      "title": "Documentation Guide for AI Agents",
+      "category": "reference",
+      "ai_summary": "AI agents should use /agent/*.json endpoints for structured data. Start with index.json for available endpoints, docs-summary.json for quick context, health.json for documentation status. Use ai_summary fields in frontmatter for quick understanding."
+    },
     "ai/agent-api-reference": {
       "slug": "ai/agent-api-reference",
       "path": "ai/AGENT_API_REFERENCE.md",
@@ -62,6 +207,59 @@
       "title": "Agent API Reference",
       "category": "ai",
       "ai_summary": "Canonical reference for VoiceAssist documentation API endpoints. Base URL: https://assistdocs.asimo.io. Key endpoints: /agent/docs.json (full doc list with ai_summary), /agent/docs-summary.json (AI summaries by category), /agent/health.json (docs health metrics), /agent/tasks.json (common tasks), /search-index.json (Fuse.js search). All endpoints are static JSON generated at build time."
+    },
+    "ai/agent-onboarding": {
+      "slug": "ai/agent-onboarding",
+      "path": "ai/AGENT_ONBOARDING.md",
+      "component": "platform/ai-agents",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "apps/web-app/src/App.tsx",
+        "apps/admin-panel/src/App.tsx",
+        "apps/docs-site/scripts/generate-agent-json.js"
+      ],
+      "title": "AI Agent Onboarding Guide",
+      "category": "ai",
+      "ai_summary": "Start here for AI agents working on VoiceAssist. Key directories: services/api-gateway/ (canonical backend, FastAPI), apps/ (web-app, admin-panel, docs-site). NEVER use server/ (deprecated). Machine-readable endpoints at https://assistdocs.asimo.io/agent/*.json. Read IMPLEMENTATION_STATUS.md first for component status. HIPAA-compliant platform - follow PHI handling rules."
+    },
+    "ai/agent-task-index": {
+      "slug": "ai/agent-task-index",
+      "path": "ai/AGENT_TASK_INDEX.md",
+      "component": "platform/ai-agents",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "apps/docs-site/scripts/generate-agent-json.js",
+        "apps/docs-site/scripts/generate-doc-code-map.mjs"
+      ],
+      "title": "Agent Task Index",
+      "category": "ai",
+      "ai_summary": "Catalog of common AI agent tasks with relevant docs and commands. Tasks include: understand project status, debug backend/frontend/voice issues, update documentation, add API endpoints, work on admin panel, docs health audit, repository navigation tasks, and NEW doc-code crosswalk tasks (audit relatedPaths, explain files using docs, find feature implementations). Each task links to specific docs, code paths, API endpoints, and diagnostic commands. Use /agent/doc-code-map.json for bidirectional doc ↔ code navigation."
+    },
+    "ai/repo-navigation-for-agents": {
+      "slug": "ai/repo-navigation-for-agents",
+      "path": "ai/REPO_NAVIGATION_FOR_AGENTS.md",
+      "component": "platform/ai-agents",
+      "relatedPaths": [
+        "apps/docs-site/scripts/generate-repo-index.mjs",
+        "apps/docs-site/scripts/generate-doc-code-map.mjs"
+      ],
+      "title": "Repository Navigation for AI Agents",
+      "category": "ai",
+      "ai_summary": "Guide for AI agents to navigate the VoiceAssist monorepo via JSON endpoints. Covers repo-index.json (25k+ entries with component/language metadata), manifest.json (400+ curated key files), and file content retrieval. Includes path encoding rules, component categories, navigation patterns, and example workflows for feature location and docs-vs-code auditing."
+    },
+    "overview/implementation-status": {
+      "slug": "overview/implementation-status",
+      "path": "overview/IMPLEMENTATION_STATUS.md",
+      "component": "platform/status",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "apps/web-app/src/App.tsx",
+        "apps/admin-panel/src/App.tsx",
+        "apps/docs-site/src/app/page.tsx"
+      ],
+      "title": "Implementation Status",
+      "category": "overview",
+      "ai_summary": "Last Updated: 2025-12-02 Source of Truth: This document is the authoritative reference for component status. --- VoiceAssist is an enterprise-grade, HIPAA-compliant medical AI assistant platform. This document provides the definitive status of all components. Overall Project Status: - Backend: Pr..."
     },
     "voice/adaptive-quality-service": {
       "slug": "voice/adaptive-quality-service",
@@ -257,6 +455,19 @@
       "category": "architecture",
       "ai_summary": "Last Updated: 2025-12-03 Status: Production Ready (Phases 0-3.5 Complete, Web App and Admin Panel stable) Detailed Spec: client-implementation/TECHNICAL_ARCHITECTURE.md --- VoiceAssist uses a pnpm monorepo with Turborepo for build orchestration. All frontend applications share common packages for..."
     },
+    "roadmap": {
+      "slug": "roadmap",
+      "path": "ROADMAP.md",
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/DEVELOPMENT_PHASES_V2.md",
+        "docs/ALL_PHASES_SUMMARY.md",
+        "docs/overview/IMPLEMENTATION_STATUS.md"
+      ],
+      "title": "Roadmap",
+      "category": "reference",
+      "ai_summary": "This is the canonical V2 development roadmap for VoiceAssist. It presents a 15-phase implementation plan (Phase 0-14) organized by timeframe and deliverables. For detailed phase documentation, see: - DEVELOPMENT_PHASES_V2.md - Complete phase descriptions - ALL_PHASES_SUMMARY.md - Quick phase summ..."
+    },
     "voice/pipeline": {
       "slug": "voice/pipeline",
       "path": "VOICE_MODE_PIPELINE.md",
@@ -270,6 +481,19 @@
       "title": "Voice Mode Pipeline",
       "category": "voice",
       "ai_summary": "> Status: Production-ready > Last Updated: 2025-12-03 This document describes the unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy. It serves as the canonical reference for developers working on real-time voice features. VoiceAssist supports two voice pipeline mo..."
+    },
+    "debugging/docs-site": {
+      "slug": "debugging/docs-site",
+      "path": "debugging/DEBUGGING_DOCS_SITE.md",
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/src/app/layout.tsx",
+        "apps/docs-site/src/app/page.tsx",
+        "apps/docs-site/scripts/generate-agent-json.js"
+      ],
+      "title": "Docs Site Debugging Guide",
+      "category": "debugging",
+      "ai_summary": "Last Updated: 2025-12-03 Component: apps/docs-site/ Live Site: https://assistdocs.asimo.io --- The docs site is a static Next.js export served by Apache: docs/.md → Next.js build → static HTML → Apache → assistdocs.asimo.io (apps/docs-site) (out/) (rewrite rules) Key points: - All pages are pre-r..."
     },
     "api-reference/overview": {
       "slug": "api-reference/overview",
@@ -285,6 +509,19 @@
       "title": "API Reference",
       "category": "api",
       "ai_summary": "Last Updated: 2025-12-02 The VoiceAssist API provides comprehensive REST endpoints for building medical AI assistant applications. - Complete REST API Reference - Full endpoint documentation with examples - OpenAPI/Swagger UI - Interactive docs at http://localhost:8000/docs - ReDoc - Alternative..."
+    },
+    "start-here": {
+      "slug": "start-here",
+      "path": "START_HERE.md",
+      "component": "docs/overview",
+      "relatedPaths": [
+        "docs/overview/IMPLEMENTATION_STATUS.md",
+        "apps/web-app/src/App.tsx",
+        "services/api-gateway/app/main.py"
+      ],
+      "title": "Start Here",
+      "category": "overview",
+      "ai_summary": "Welcome to VoiceAssist V2 - A HIPAA-compliant voice-enabled clinical decision support system. This document is your entry point to the project. Choose your path below based on your role and experience level. Status update: All 16 project phases (0-15) are complete. Backend, infrastructure, admin..."
     },
     "thinker-talker-pipeline": {
       "slug": "thinker-talker-pipeline",
@@ -329,6 +566,90 @@
       "category": "admin",
       "ai_summary": "Last Updated: 2025-12-02 Version: 2.8.0 Status: Canonical Implementation Guide Purpose: Transform admin.asimo.io into the definitive operational mission control for VoiceAssist --- 1. Executive Summary 2. Admin Panel Tech Stack (Ground Truth) 3. Phase 1: Backend-to-Admin Service Matrix 4. Phase 2..."
     },
+    "debugging/index": {
+      "slug": "debugging/index",
+      "path": "debugging/DEBUGGING_INDEX.md",
+      "component": "platform/debugging",
+      "relatedPaths": [
+        "services/api-gateway/app/api/health.py",
+        "apps/web-app/src/App.tsx",
+        "apps/admin-panel/src/App.tsx"
+      ],
+      "title": "Debugging Index",
+      "category": "debugging",
+      "ai_summary": "Last Updated: 2025-12-02 Version: 1.1.0 Audience: Developers, SREs, AI Assistants > Note: Voice/Realtime rows now target the Thinker-Talker pipeline at /api/voice/pipeline-ws. The legacy OpenAI Realtime API is documented separately. This is the central hub for all VoiceAssist troubleshooting docu..."
+    },
+    "debugging/voice-realtime": {
+      "slug": "debugging/voice-realtime",
+      "path": "debugging/DEBUGGING_VOICE_REALTIME.md",
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx",
+        "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
+      ],
+      "title": "Voice & Realtime Debugging Guide",
+      "category": "debugging",
+      "ai_summary": "Last Updated: 2025-12-02 Components: Voice pipeline, WebSocket service, STT/TTS --- VoiceAssist has two voice pipelines: Always debug Thinker-Talker first unless specifically working with the legacy pipeline. --- ┌─────────────┐ ┌─────────────┐ ┌──────────────┐ ┌─────────────┐ │ Browser │───▶│ De..."
+    },
+    "start/admins": {
+      "slug": "start/admins",
+      "path": "start/admins.md",
+      "component": "platform/admin",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "services/api-gateway/app/main.py",
+        "services/api-gateway/app/api/health.py",
+        "apps/admin-panel/src/App.tsx",
+        ".env.example"
+      ],
+      "title": "Administrator Quick Start",
+      "category": "getting-started",
+      "ai_summary": "Last Updated: 2025-12-01 This guide covers deployment, configuration, and ongoing administration of VoiceAssist. --- git clone https://github.com/your-org/VoiceAssist.git cd VoiceAssist cp .env.example .env docker-compose up -d curl http://localhost:8000/health For production environments, see: -..."
+    },
+    "start/ai-agents": {
+      "slug": "start/ai-agents",
+      "path": "start/ai-agents.md",
+      "component": "platform/ai-agents",
+      "relatedPaths": [
+        "services/api-gateway/app/services/thinker_service.py",
+        "services/api-gateway/app/services/talker_service.py",
+        "services/api-gateway/app/services/thinker_talker_websocket_handler.py",
+        "apps/web-app/src/hooks/useThinkerTalkerSession.ts",
+        "apps/docs-site/scripts/generate-agent-json.js"
+      ],
+      "title": "AI Agent Quick Start",
+      "category": "getting-started",
+      "ai_summary": "Last Updated: 2025-12-01 This guide helps AI coding assistants (Claude, GPT, Copilot, etc.) quickly understand and work on VoiceAssist. --- VoiceAssist is a HIPAA-compliant medical AI assistant platform with: - Voice Mode: Thinker-Talker pipeline (Deepgram STT → GPT-4o → ElevenLabs TTS) - Text Mo..."
+    },
+    "start/developers": {
+      "slug": "start/developers",
+      "path": "start/developers.md",
+      "component": "platform/development",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "pnpm-workspace.yaml",
+        "package.json",
+        "Makefile",
+        ".env.example"
+      ],
+      "title": "Developer Quick Start",
+      "category": "getting-started",
+      "ai_summary": "Last Updated: 2025-12-01 Welcome to VoiceAssist development! This guide will get you up and running quickly. --- - Node.js 20+ and pnpm 8+ - Python 3.11+ with pip - Docker and Docker Compose - Git for version control --- git clone https://github.com/your-org/VoiceAssist.git cd VoiceAssist pnpm in..."
+    },
+    "start/users": {
+      "slug": "start/users",
+      "path": "start/users.md",
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/App.tsx",
+        "apps/web-app/src/components/Chat.tsx",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+      ],
+      "title": "User Guide - Getting Started",
+      "category": "getting-started",
+      "ai_summary": "Last Updated: 2025-12-01 Welcome to VoiceAssist! This guide will help you get started with voice and text interactions. --- VoiceAssist is a HIPAA-compliant medical AI assistant that helps healthcare professionals with: - Medical Questions - Evidence-based answers with citations - Clinical Guidel..."
+    },
     "architecture/backend": {
       "slug": "architecture/backend",
       "path": "BACKEND_ARCHITECTURE.md",
@@ -343,6 +664,36 @@
       "title": "Backend Architecture",
       "category": "architecture",
       "ai_summary": "Last Updated: 2025-11-27 (All 15 Phases Complete) Status: Canonical Reference Purpose: Clarify backend structure evolution from monorepo to microservices --- VoiceAssist V2 backend follows a progressive architecture strategy: - Phases 0-10: Monorepo structure with clear module boundaries (Docker..."
+    },
+    "chaos-engineering": {
+      "slug": "chaos-engineering",
+      "path": "CHAOS_ENGINEERING.md",
+      "component": "testing/chaos",
+      "relatedPaths": [
+        "services/api-gateway/app/api/health.py",
+        "docker-compose.yml"
+      ],
+      "title": "Chaos Engineering",
+      "category": "testing",
+      "ai_summary": "Last Updated: 2025-11-21 (Phase 7 - P3.5) Purpose: Guide for running chaos experiments to validate VoiceAssist V2 resilience --- Chaos Engineering is the discipline of experimenting on a system to build confidence in its capability to withstand turbulent conditions in production. VoiceAssist V2 u..."
+    },
+    "cicd-guide": {
+      "slug": "cicd-guide",
+      "path": "CICD_GUIDE.md",
+      "component": "infra/cicd",
+      "relatedPaths": [".github/workflows", "Makefile", "package.json"],
+      "title": "Cicd Guide",
+      "category": "operations",
+      "ai_summary": "1. Overview 2. GitHub Actions Workflows 3. CI Pipeline 4. CD Pipeline 5. Terraform Automation 6. Required Secrets 7. Deployment Process 8. Rollback Procedures 9. Monitoring Deployments 10. Troubleshooting VoiceAssist uses GitHub Actions for continuous integration and continuous deployment. The CI..."
+    },
+    "ai/claude-execution-guide": {
+      "slug": "ai/claude-execution-guide",
+      "path": "CLAUDE_EXECUTION_GUIDE.md",
+      "component": "platform/ai-agents",
+      "relatedPaths": ["docs/CLAUDE_PROMPTS.md", "docs/ai/AGENT_ONBOARDING.md"],
+      "title": "Claude Execution Guide",
+      "category": "ai",
+      "ai_summary": "This guide provides comprehensive instructions for Claude Code (or other AI assistants) working on the VoiceAssist V2 project. It covers session startup, branching strategy, parallel session safety, quality checks, and phase completion criteria. For ready-to-use prompts, see CLAUDE_PROMPTS.md ---..."
     },
     "configuration-reference": {
       "slug": "configuration-reference",
@@ -386,6 +737,33 @@
       "category": "deployment",
       "ai_summary": "Version: 1.0 Last Updated: 2025-11-21 Phase: 13 - Production Ready --- 1. Prerequisites 2. Local Development Setup 3. Production Deployment 4. Configuration 5. Security Hardening 6. High Availability 7. Monitoring & Observability 8. Backup & Recovery 9. Troubleshooting --- Minimum (Development):..."
     },
+    "development-setup": {
+      "slug": "development-setup",
+      "path": "DEVELOPMENT_SETUP.md",
+      "component": "platform/development",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "pnpm-workspace.yaml",
+        "package.json",
+        ".env.example"
+      ],
+      "title": "Development Setup",
+      "category": "reference",
+      "ai_summary": "This guide walks you through setting up your local development environment for VoiceAssist. --- - Git 2.30+ - Docker 24.0+ and Docker Compose 2.20+ - Python 3.11+ (for backend development) - Node.js 18+ (for frontend development) - pnpm 8+ (package manager for frontend monorepo) - Visual Studio C..."
+    },
+    "disaster-recovery-runbook": {
+      "slug": "disaster-recovery-runbook",
+      "path": "DISASTER_RECOVERY_RUNBOOK.md",
+      "component": "infra/operations",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "services/api-gateway/app/core/database.py",
+        "Makefile"
+      ],
+      "title": "Disaster Recovery Runbook",
+      "category": "debugging",
+      "ai_summary": "Document Version: 1.0 Last Updated: 2025-11-21 Status: Production-Ready Phase: Phase 12 - High Availability & Disaster Recovery --- This runbook provides step-by-step procedures for recovering the VoiceAssist platform from various disaster scenarios. It covers database failures, complete system f..."
+    },
     "hipaa-compliance-matrix": {
       "slug": "hipaa-compliance-matrix",
       "path": "HIPAA_COMPLIANCE_MATRIX.md",
@@ -398,6 +776,42 @@
       "title": "Hipaa Compliance Matrix",
       "category": "security",
       "ai_summary": "Document Version: 1.0 Last Updated: 2025-11-21 Status: Production-Ready Scope: VoiceAssist HIPAA-Compliant Voice Assistant Platform --- This document provides a comprehensive mapping of HIPAA Security Rule requirements (45 CFR §164.308, §164.310, §164.312) to VoiceAssist platform implementations...."
+    },
+    "infrastructure-setup": {
+      "slug": "infrastructure-setup",
+      "path": "INFRASTRUCTURE_SETUP.md",
+      "component": "infra/deployment",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "services/api-gateway/Dockerfile",
+        "Makefile"
+      ],
+      "title": "Infrastructure Setup",
+      "category": "deployment",
+      "ai_summary": "This guide covers infrastructure setup for VoiceAssist V2 across two deployment strategies: - Phases 0-10: Docker Compose on Ubuntu Server (production-ready) - Phases 11-14: Kubernetes on Ubuntu Server (high availability) Both strategies deploy two separate stacks: - Nextcloud stack: Identity, fi..."
+    },
+    "load-testing-guide": {
+      "slug": "load-testing-guide",
+      "path": "LOAD_TESTING_GUIDE.md",
+      "component": "testing/load",
+      "relatedPaths": ["services/api-gateway/app/api/health.py", "Makefile"],
+      "title": "Load Testing Guide",
+      "category": "testing",
+      "ai_summary": "This comprehensive guide covers load testing for VoiceAssist, including when to run tests, how to interpret results, choosing between tools (k6 vs Locust), understanding test scenarios, troubleshooting issues, CI/CD integration, and best practices. --- Run comprehensive load tests before every pr..."
+    },
+    "local-development": {
+      "slug": "local-development",
+      "path": "LOCAL_DEVELOPMENT.md",
+      "component": "infra/development",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "Makefile",
+        "package.json",
+        "pnpm-workspace.yaml"
+      ],
+      "title": "Local Development",
+      "category": "reference",
+      "ai_summary": "VoiceAssist V2 uses a Compose-first development approach with two separate Docker Compose stacks: - Nextcloud stack (~/Nextcloud-Dev/) - Identity, files, calendar, email - VoiceAssist stack (~/VoiceAssist/) - Microservices architecture This allows for rapid iteration, testing, and debugging befor..."
     },
     "observability": {
       "slug": "observability",
@@ -424,6 +838,45 @@
       "title": "Orchestration Design",
       "category": "reference",
       "ai_summary": "Last Updated: 2025-11-20 Status: Canonical Reference Purpose: Define the Conductor/Orchestrator that routes and processes clinical queries --- The Query Orchestrator (also called \"Conductor\" or \"RAG Service\") is the central component that: 1. Receives user queries 2. Makes routing decisions (PHI..."
+    },
+    "performance-tuning-guide": {
+      "slug": "performance-tuning-guide",
+      "path": "PERFORMANCE_TUNING_GUIDE.md",
+      "component": "backend/performance",
+      "relatedPaths": [
+        "services/api-gateway/app/core/config.py",
+        "services/api-gateway/app/core/database.py",
+        "docker-compose.yml"
+      ],
+      "title": "Performance Tuning Guide",
+      "category": "operations",
+      "ai_summary": "This comprehensive guide provides strategies, techniques, and best practices for optimizing VoiceAssist performance. Use this guide to identify bottlenecks, implement optimizations, and maintain peak system performance. --- 1. Measure First, Optimize Second - Never optimize without data - Establi..."
+    },
+    "production-deployment-runbook": {
+      "slug": "production-deployment-runbook",
+      "path": "PRODUCTION_DEPLOYMENT_RUNBOOK.md",
+      "component": "infra/deployment",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "infrastructure/terraform/main.tf",
+        "infrastructure/ansible/playbooks/deploy.yml"
+      ],
+      "title": "Production Deployment Runbook",
+      "category": "debugging",
+      "ai_summary": "Version: 1.0 Last Updated: 2025-11-21 Owner: DevOps Team Phase: 14 - Production Deployment --- 1. Overview 2. Prerequisites 3. Pre-Deployment Checklist 4. Deployment Process 5. Post-Deployment Verification 6. Rollback Procedures 7. Monitoring and Alerts 8. Troubleshooting 9. Maintenance Windows 1..."
+    },
+    "production-readiness-checklist": {
+      "slug": "production-readiness-checklist",
+      "path": "PRODUCTION_READINESS_CHECKLIST.md",
+      "component": "infra/deployment",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "services/api-gateway/app/api/health.py",
+        "Makefile"
+      ],
+      "title": "Production Readiness Checklist",
+      "category": "reference",
+      "ai_summary": "Version: 1.0 Date: 2025-11-21 Phase: 14 - Production Deployment --- This comprehensive checklist ensures all requirements are met before deploying VoiceAssist to production. Review each section and mark items as complete. Deployment Date: \\\\\\_\\_\\_\\\\ Reviewed By: \\\\\\_\\_\\_\\\\ Approved By: \\\\\\_\\_\\_\\\\..."
     },
     "architecture/realtime": {
       "slug": "architecture/realtime",
@@ -481,6 +934,27 @@
       "category": "architecture",
       "ai_summary": "Last Updated: 2025-11-21 (Phase 6: Nextcloud App Integration & Unified Services) Status: Canonical Reference Purpose: Comprehensive catalog of all backend services with implementation details --- This document catalogs all backend services in VoiceAssist V2. These are logical services - clear bou..."
     },
+    "terraform-guide": {
+      "slug": "terraform-guide",
+      "path": "TERRAFORM_GUIDE.md",
+      "component": "infra/terraform",
+      "relatedPaths": ["terraform", "Makefile"],
+      "title": "Terraform Guide",
+      "category": "deployment",
+      "ai_summary": "1. Overview 2. Directory Structure 3. Module Documentation 4. Variables Reference 5. Outputs Reference 6. State Management 7. Multi-Environment Setup 8. Best Practices 9. Common Operations 10. Troubleshooting VoiceAssist uses Terraform to provision and manage all AWS infrastructure. The configura..."
+    },
+    "testing-contracts": {
+      "slug": "testing-contracts",
+      "path": "TESTING_CONTRACTS.md",
+      "component": "testing/contracts",
+      "relatedPaths": [
+        "packages/api-client/src/index.ts",
+        "services/api-gateway/app/api/__init__.py"
+      ],
+      "title": "Testing Contracts",
+      "category": "testing",
+      "ai_summary": "Last Updated: 2025-11-21 (Phase 7 - P3.4) Purpose: Guide for implementing and running contract tests with Pact --- VoiceAssist V2 uses Pact for consumer-driven contract testing. Contract tests ensure that the API Gateway meets the expectations of all consumers (frontend, mobile apps) without requ..."
+    },
     "testing-guide": {
       "slug": "testing-guide",
       "path": "TESTING_GUIDE.md",
@@ -507,6 +981,19 @@
       "title": "Tools And Integrations",
       "category": "reference",
       "ai_summary": "Last Updated: 2025-11-20 Status: Design Complete Version: V2.0 > Implementation Note: This document describes the V2 tools architecture design. The current production implementation lives in: > > - Tool Service: services/api-gateway/app/services/tools/tool_service.py > - Individual Tools: service..."
+    },
+    "user-guide": {
+      "slug": "user-guide",
+      "path": "USER_GUIDE.md",
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/components/Chat.tsx",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx",
+        "apps/web-app/src/components/Layout.tsx"
+      ],
+      "title": "User Guide",
+      "category": "operations",
+      "ai_summary": "Version: 1.0 Last Updated: 2025-11-21 --- VoiceAssist is an AI-powered medical assistant that helps healthcare professionals with voice-based queries, document management, and medical knowledge retrieval. --- 1. Getting Started 2. User Interface 3. Voice Interactions 4. Document Management 5. Med..."
     },
     "api-reference/websocket": {
       "slug": "api-reference/websocket",
@@ -548,13 +1035,143 @@
       "title": "REST API Reference",
       "category": "api",
       "ai_summary": "Version: 2.0 Base URL: https://assist.asimo.io/api (production) or http://localhost:8000/api (development) Last Updated: 2025-11-27 > See Also: Auto-generated API Routes - Complete route listing from OpenAPI spec --- The VoiceAssist API provides a comprehensive set of endpoints for building medic..."
+    },
+    "debugging/backend": {
+      "slug": "debugging/backend",
+      "path": "debugging/DEBUGGING_BACKEND.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "services/api-gateway/app/core/database.py",
+        "services/api-gateway/app/core/config.py",
+        "services/api-gateway/app/api/health.py"
+      ],
+      "title": "Backend Debugging Guide",
+      "category": "debugging",
+      "ai_summary": "Last Updated: 2025-11-27 Component: services/api-gateway/ --- Likely Causes: - Unhandled exception in request handler - Database connection timeout - Missing required environment variable - External service failure (OpenAI, Qdrant) Steps to Investigate: 1. Check API Gateway logs (Docker container..."
+    },
+    "debugging/frontend": {
+      "slug": "debugging/frontend",
+      "path": "debugging/DEBUGGING_FRONTEND.md",
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/App.tsx",
+        "apps/web-app/src/components/Layout.tsx",
+        "apps/admin-panel/src/App.tsx"
+      ],
+      "title": "Frontend Debugging Guide",
+      "category": "debugging",
+      "ai_summary": "Last Updated: 2025-11-27 Components: apps/web-app/, apps/admin-panel/ --- Likely Causes: - JavaScript syntax error - Missing environment variables - Failed API call blocking render - CORS issues Steps to Investigate: 1. Open Browser DevTools (F12) → Console tab 2. Look for red error messages 3. C..."
+    },
+    "debugging/overview": {
+      "slug": "debugging/overview",
+      "path": "debugging/DEBUGGING_OVERVIEW.md",
+      "component": "platform/debugging",
+      "relatedPaths": [
+        "services/api-gateway/app/api/health.py",
+        "services/api-gateway/app/core/logging.py",
+        "docker-compose.yml"
+      ],
+      "title": "Debugging Overview",
+      "category": "debugging",
+      "ai_summary": "Last Updated: 2025-11-27 Audience: Developers, SREs, AI Assistants This guide provides a high-level overview of debugging VoiceAssist components. For detailed component-specific debugging, see the linked documents. --- --- Location: docker logs voiceassist-server -f (VoiceAssist runs in Docker) K..."
+    },
+    "overview/architecture": {
+      "slug": "overview/architecture",
+      "path": "overview/ARCHITECTURE.md",
+      "component": "platform/architecture",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "apps/web-app/src/App.tsx",
+        "docker-compose.yml"
+      ],
+      "title": "Architecture",
+      "category": "overview",
+      "ai_summary": "Placeholder for a high-level architecture summary referenced by the client documentation."
     }
   },
   "by_path": {
+    "services/api-gateway/app/services/feature_flag_service.py": {
+      "path": "services/api-gateway/app/services/feature_flag_service.py",
+      "docs": [
+        "readme",
+        "advanced-types",
+        "best-practices",
+        "lifecycle",
+        "multi-environment",
+        "system-settings-vs-flags"
+      ],
+      "component": "backend/api-gateway"
+    },
     "services/api-gateway/app/api/admin_feature_flags.py": {
       "path": "services/api-gateway/app/api/admin_feature_flags.py",
-      "docs": ["feature-flags"],
-      "component": "backend/feature-flags"
+      "docs": ["readme", "admin-panel-guide", "cli-reference", "feature-flags"],
+      "components": [
+        "backend/api-gateway",
+        "frontend/admin-panel",
+        "backend/feature-flags"
+      ]
+    },
+    "packages/types/src/featureFlags.ts": {
+      "path": "packages/types/src/featureFlags.ts",
+      "docs": [
+        "readme",
+        "advanced-types",
+        "best-practices",
+        "lifecycle",
+        "naming-conventions"
+      ],
+      "component": "backend/api-gateway"
+    },
+    "apps/admin-panel/src/pages/FeatureFlags.tsx": {
+      "path": "apps/admin-panel/src/pages/FeatureFlags.tsx",
+      "docs": ["admin-panel-guide"],
+      "component": "frontend/admin-panel"
+    },
+    "services/api-gateway/scripts/init_feature_flags.py": {
+      "path": "services/api-gateway/scripts/init_feature_flags.py",
+      "docs": ["cli-reference"],
+      "component": "backend/api-gateway"
+    },
+    "services/api-gateway/app/core/config.py": {
+      "path": "services/api-gateway/app/core/config.py",
+      "docs": [
+        "multi-environment",
+        "system-settings-vs-flags",
+        "architecture/backend",
+        "configuration-reference",
+        "performance-tuning-guide",
+        "debugging/backend"
+      ],
+      "components": [
+        "backend/api-gateway",
+        "backend/config",
+        "backend/performance"
+      ]
+    },
+    "services/api-gateway/app/core/flag_definitions.py": {
+      "path": "services/api-gateway/app/core/flag_definitions.py",
+      "docs": ["naming-conventions"],
+      "component": "backend/api-gateway"
+    },
+    "apps/docs-site/scripts/validate-frontmatter.mjs": {
+      "path": "apps/docs-site/scripts/validate-frontmatter.mjs",
+      "docs": ["docs/metadata-standard", "internal-docs-system"],
+      "component": "frontend/docs-site"
+    },
+    "apps/docs-site/scripts/generate-agent-json.js": {
+      "path": "apps/docs-site/scripts/generate-agent-json.js",
+      "docs": [
+        "docs/metadata-standard",
+        "internal-docs-system",
+        "for-ai-agents",
+        "ai/agent-api-reference",
+        "ai/agent-onboarding",
+        "ai/agent-task-index",
+        "debugging/docs-site",
+        "start/ai-agents"
+      ],
+      "components": ["frontend/docs-site", "platform/ai-agents"]
     },
     "services/api-gateway/app/api/feature_flags_realtime.py": {
       "path": "services/api-gateway/app/api/feature_flags_realtime.py",
@@ -571,18 +1188,37 @@
       "docs": ["feature-flags"],
       "component": "backend/feature-flags"
     },
+    "apps/docs-site/scripts/generate-doc-code-map.mjs": {
+      "path": "apps/docs-site/scripts/generate-doc-code-map.mjs",
+      "docs": [
+        "internal-docs-system",
+        "ai/agent-api-reference",
+        "ai/agent-task-index",
+        "ai/repo-navigation-for-agents"
+      ],
+      "components": ["frontend/docs-site", "platform/ai-agents"]
+    },
     "apps/admin-panel/src/App.tsx": {
       "path": "apps/admin-panel/src/App.tsx",
       "docs": [
         "admin-panel-integration-guide",
+        "ai/agent-onboarding",
+        "overview/implementation-status",
         "architecture/frontend",
         "architecture/unified",
-        "admin/implementation-plan"
+        "admin/implementation-plan",
+        "debugging/index",
+        "start/admins",
+        "debugging/frontend"
       ],
       "components": [
         "frontend/admin-panel",
+        "platform/ai-agents",
+        "platform/status",
         "frontend/web-app",
-        "platform/architecture"
+        "platform/architecture",
+        "platform/debugging",
+        "platform/admin"
       ]
     },
     "apps/admin-panel/src/components/AdminLayout.tsx": {
@@ -614,25 +1250,65 @@
       "docs": ["realtime-events-guide"],
       "component": "backend/websocket"
     },
-    "apps/docs-site/scripts/generate-agent-json.js": {
-      "path": "apps/docs-site/scripts/generate-agent-json.js",
-      "docs": ["ai/agent-api-reference"],
+    "apps/docs-site/public/agent/index.json": {
+      "path": "apps/docs-site/public/agent/index.json",
+      "docs": ["for-ai-agents", "ai/agent-api-reference"],
       "component": "frontend/docs-site"
     },
     "apps/docs-site/scripts/generate-repo-index.mjs": {
       "path": "apps/docs-site/scripts/generate-repo-index.mjs",
-      "docs": ["ai/agent-api-reference"],
-      "component": "frontend/docs-site"
+      "docs": ["ai/agent-api-reference", "ai/repo-navigation-for-agents"],
+      "components": ["frontend/docs-site", "platform/ai-agents"]
     },
-    "apps/docs-site/scripts/generate-doc-code-map.mjs": {
-      "path": "apps/docs-site/scripts/generate-doc-code-map.mjs",
-      "docs": ["ai/agent-api-reference"],
-      "component": "frontend/docs-site"
+    "services/api-gateway/app/main.py": {
+      "path": "services/api-gateway/app/main.py",
+      "docs": [
+        "ai/agent-onboarding",
+        "ai/agent-task-index",
+        "overview/implementation-status",
+        "start-here",
+        "architecture/unified",
+        "start/admins",
+        "architecture/backend",
+        "api-reference/routes",
+        "debugging/backend",
+        "overview/architecture"
+      ],
+      "components": [
+        "platform/ai-agents",
+        "platform/status",
+        "docs/overview",
+        "platform/architecture",
+        "platform/admin",
+        "backend/api-gateway"
+      ]
     },
-    "apps/docs-site/public/agent/index.json": {
-      "path": "apps/docs-site/public/agent/index.json",
-      "docs": ["ai/agent-api-reference"],
-      "component": "frontend/docs-site"
+    "apps/web-app/src/App.tsx": {
+      "path": "apps/web-app/src/App.tsx",
+      "docs": [
+        "ai/agent-onboarding",
+        "overview/implementation-status",
+        "architecture/frontend",
+        "start-here",
+        "architecture/unified",
+        "debugging/index",
+        "start/users",
+        "debugging/frontend",
+        "overview/architecture"
+      ],
+      "components": [
+        "platform/ai-agents",
+        "platform/status",
+        "frontend/web-app",
+        "docs/overview",
+        "platform/architecture",
+        "platform/debugging"
+      ]
+    },
+    "apps/docs-site/src/app/page.tsx": {
+      "path": "apps/docs-site/src/app/page.tsx",
+      "docs": ["overview/implementation-status", "debugging/docs-site"],
+      "components": ["platform/status", "frontend/docs-site"]
     },
     "services/api-gateway/app/services/quality_service.py": {
       "path": "services/api-gateway/app/services/quality_service.py",
@@ -651,6 +1327,7 @@
         "voice/pipeline",
         "api-reference/overview",
         "thinker-talker-pipeline",
+        "debugging/voice-realtime",
         "architecture/realtime",
         "api-reference/websocket"
       ],
@@ -760,9 +1437,17 @@
       "docs": [
         "voice/streaming-text-display",
         "voice-mode-v4-overview",
-        "voice/pipeline"
+        "voice/pipeline",
+        "debugging/voice-realtime",
+        "start/users",
+        "user-guide"
       ],
-      "components": ["frontend/voice", "backend/api-gateway"]
+      "components": [
+        "frontend/voice",
+        "backend/api-gateway",
+        "backend/voice",
+        "frontend/web-app"
+      ]
     },
     "apps/web-app/src/components/voice/ThinkingVisualIndicator.tsx": {
       "path": "apps/web-app/src/components/voice/ThinkingVisualIndicator.tsx",
@@ -818,6 +1503,7 @@
         "voice-mode-v4-overview",
         "voice/pipeline",
         "thinker-talker-pipeline",
+        "debugging/voice-realtime",
         "architecture/realtime",
         "api-reference/websocket"
       ],
@@ -828,14 +1514,9 @@
         "backend/websocket"
       ]
     },
-    "apps/web-app/src/App.tsx": {
-      "path": "apps/web-app/src/App.tsx",
-      "docs": ["architecture/frontend", "architecture/unified"],
-      "components": ["frontend/web-app", "platform/architecture"]
-    },
     "apps/web-app/src/components/Layout.tsx": {
       "path": "apps/web-app/src/components/Layout.tsx",
-      "docs": ["architecture/frontend"],
+      "docs": ["architecture/frontend", "user-guide", "debugging/frontend"],
       "component": "frontend/web-app"
     },
     "packages/types/src/index.ts": {
@@ -848,20 +1529,41 @@
       "docs": ["architecture/frontend"],
       "component": "frontend/web-app"
     },
+    "docs/DEVELOPMENT_PHASES_V2.md": {
+      "path": "docs/DEVELOPMENT_PHASES_V2.md",
+      "docs": ["roadmap"],
+      "component": "platform/planning"
+    },
+    "docs/ALL_PHASES_SUMMARY.md": {
+      "path": "docs/ALL_PHASES_SUMMARY.md",
+      "docs": ["roadmap"],
+      "component": "platform/planning"
+    },
+    "docs/overview/IMPLEMENTATION_STATUS.md": {
+      "path": "docs/overview/IMPLEMENTATION_STATUS.md",
+      "docs": ["roadmap", "start-here"],
+      "components": ["platform/planning", "docs/overview"]
+    },
     "services/api-gateway/app/api/admin_voice.py": {
       "path": "services/api-gateway/app/api/admin_voice.py",
       "docs": ["voice/pipeline"],
       "component": "backend/api-gateway"
+    },
+    "apps/docs-site/src/app/layout.tsx": {
+      "path": "apps/docs-site/src/app/layout.tsx",
+      "docs": ["debugging/docs-site"],
+      "component": "frontend/docs-site"
     },
     "services/api-gateway/app/api/__init__.py": {
       "path": "services/api-gateway/app/api/__init__.py",
       "docs": [
         "api-reference/overview",
         "architecture/backend",
+        "testing-contracts",
         "api-reference/routes",
         "api-reference/rest-api"
       ],
-      "component": "backend/api-gateway"
+      "components": ["backend/api-gateway", "testing/contracts"]
     },
     "services/api-gateway/app/api/conversations.py": {
       "path": "services/api-gateway/app/api/conversations.py",
@@ -879,79 +1581,198 @@
     },
     "services/api-gateway/app/api/health.py": {
       "path": "services/api-gateway/app/api/health.py",
-      "docs": ["api-reference/overview", "observability"],
-      "components": ["backend/api-gateway", "backend/observability"]
+      "docs": [
+        "api-reference/overview",
+        "debugging/index",
+        "start/admins",
+        "chaos-engineering",
+        "load-testing-guide",
+        "observability",
+        "production-readiness-checklist",
+        "debugging/backend",
+        "debugging/overview"
+      ],
+      "components": [
+        "backend/api-gateway",
+        "platform/debugging",
+        "platform/admin",
+        "testing/chaos",
+        "testing/load",
+        "backend/observability",
+        "infra/deployment"
+      ]
     },
     "apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx": {
       "path": "apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx",
       "docs": ["thinker-talker-pipeline"],
       "component": "backend/voice"
     },
-    "services/api-gateway/app/main.py": {
-      "path": "services/api-gateway/app/main.py",
-      "docs": [
-        "architecture/unified",
-        "architecture/backend",
-        "api-reference/routes"
-      ],
-      "components": ["platform/architecture", "backend/api-gateway"]
-    },
     "docker-compose.yml": {
       "path": "docker-compose.yml",
       "docs": [
         "architecture/unified",
+        "start/admins",
+        "start/developers",
+        "chaos-engineering",
         "configuration-reference",
-        "deployment-guide"
+        "deployment-guide",
+        "development-setup",
+        "disaster-recovery-runbook",
+        "infrastructure-setup",
+        "local-development",
+        "performance-tuning-guide",
+        "production-deployment-runbook",
+        "production-readiness-checklist",
+        "debugging/overview",
+        "overview/architecture"
       ],
       "components": [
         "platform/architecture",
+        "platform/admin",
+        "platform/development",
+        "testing/chaos",
         "backend/config",
-        "infra/deployment"
+        "infra/deployment",
+        "infra/operations",
+        "infra/development",
+        "backend/performance",
+        "platform/debugging"
       ]
     },
     "package.json": {
       "path": "package.json",
-      "docs": ["architecture/unified"],
-      "component": "platform/architecture"
+      "docs": [
+        "architecture/unified",
+        "start/developers",
+        "cicd-guide",
+        "development-setup",
+        "local-development"
+      ],
+      "components": [
+        "platform/architecture",
+        "platform/development",
+        "infra/cicd",
+        "infra/development"
+      ]
     },
     "apps/admin-panel/src/components/Dashboard.tsx": {
       "path": "apps/admin-panel/src/components/Dashboard.tsx",
       "docs": ["admin/implementation-plan"],
       "component": "frontend/admin-panel"
     },
-    "services/api-gateway/app/core/config.py": {
-      "path": "services/api-gateway/app/core/config.py",
-      "docs": ["architecture/backend", "configuration-reference"],
-      "components": ["backend/api-gateway", "backend/config"]
+    ".env.example": {
+      "path": ".env.example",
+      "docs": [
+        "start/admins",
+        "start/developers",
+        "configuration-reference",
+        "deployment-guide",
+        "development-setup"
+      ],
+      "components": [
+        "platform/admin",
+        "platform/development",
+        "backend/config",
+        "infra/deployment"
+      ]
+    },
+    "services/api-gateway/app/services/thinker_service.py": {
+      "path": "services/api-gateway/app/services/thinker_service.py",
+      "docs": ["start/ai-agents"],
+      "component": "platform/ai-agents"
+    },
+    "services/api-gateway/app/services/talker_service.py": {
+      "path": "services/api-gateway/app/services/talker_service.py",
+      "docs": ["start/ai-agents"],
+      "component": "platform/ai-agents"
+    },
+    "services/api-gateway/app/services/thinker_talker_websocket_handler.py": {
+      "path": "services/api-gateway/app/services/thinker_talker_websocket_handler.py",
+      "docs": ["start/ai-agents"],
+      "component": "platform/ai-agents"
+    },
+    "apps/web-app/src/hooks/useThinkerTalkerSession.ts": {
+      "path": "apps/web-app/src/hooks/useThinkerTalkerSession.ts",
+      "docs": ["start/ai-agents"],
+      "component": "platform/ai-agents"
+    },
+    "pnpm-workspace.yaml": {
+      "path": "pnpm-workspace.yaml",
+      "docs": ["start/developers", "development-setup", "local-development"],
+      "components": ["platform/development", "infra/development"]
+    },
+    "Makefile": {
+      "path": "Makefile",
+      "docs": [
+        "start/developers",
+        "cicd-guide",
+        "deployment-guide",
+        "disaster-recovery-runbook",
+        "infrastructure-setup",
+        "load-testing-guide",
+        "local-development",
+        "production-readiness-checklist",
+        "terraform-guide"
+      ],
+      "components": [
+        "platform/development",
+        "infra/cicd",
+        "infra/deployment",
+        "infra/operations",
+        "testing/load",
+        "infra/development",
+        "infra/terraform"
+      ]
+    },
+    "apps/web-app/src/components/Chat.tsx": {
+      "path": "apps/web-app/src/components/Chat.tsx",
+      "docs": ["start/users", "user-guide"],
+      "component": "frontend/web-app"
     },
     "services/api-gateway/app/core/database.py": {
       "path": "services/api-gateway/app/core/database.py",
-      "docs": ["architecture/backend", "data-model"],
-      "components": ["backend/api-gateway", "backend/models"]
+      "docs": [
+        "architecture/backend",
+        "data-model",
+        "disaster-recovery-runbook",
+        "performance-tuning-guide",
+        "debugging/backend"
+      ],
+      "components": [
+        "backend/api-gateway",
+        "backend/models",
+        "infra/operations",
+        "backend/performance"
+      ]
     },
     "services/api-gateway/app/models/__init__.py": {
       "path": "services/api-gateway/app/models/__init__.py",
       "docs": ["architecture/backend", "data-model"],
       "components": ["backend/api-gateway", "backend/models"]
     },
-    ".env.example": {
-      "path": ".env.example",
-      "docs": ["configuration-reference", "deployment-guide"],
-      "components": ["backend/config", "infra/deployment"]
+    ".github/workflows": {
+      "path": ".github/workflows",
+      "docs": ["cicd-guide"],
+      "component": "infra/cicd"
+    },
+    "docs/CLAUDE_PROMPTS.md": {
+      "path": "docs/CLAUDE_PROMPTS.md",
+      "docs": ["ai/claude-execution-guide"],
+      "component": "platform/ai-agents"
+    },
+    "docs/ai/AGENT_ONBOARDING.md": {
+      "path": "docs/ai/AGENT_ONBOARDING.md",
+      "docs": ["ai/claude-execution-guide"],
+      "component": "platform/ai-agents"
     },
     "services/api-gateway/app/models/user.py": {
       "path": "services/api-gateway/app/models/user.py",
       "docs": ["data-model"],
       "component": "backend/models"
     },
-    "Makefile": {
-      "path": "Makefile",
-      "docs": ["deployment-guide"],
-      "component": "infra/deployment"
-    },
     "services/api-gateway/Dockerfile": {
       "path": "services/api-gateway/Dockerfile",
-      "docs": ["deployment-guide"],
+      "docs": ["deployment-guide", "infrastructure-setup"],
       "component": "infra/deployment"
     },
     "services/api-gateway/app/core/security.py": {
@@ -966,8 +1787,8 @@
     },
     "services/api-gateway/app/core/logging.py": {
       "path": "services/api-gateway/app/core/logging.py",
-      "docs": ["observability"],
-      "component": "backend/observability"
+      "docs": ["observability", "debugging/overview"],
+      "components": ["backend/observability", "platform/debugging"]
     },
     "services/api-gateway/app/core/metrics.py": {
       "path": "services/api-gateway/app/core/metrics.py",
@@ -978,6 +1799,16 @@
       "path": "services/api-gateway/app/services/ai_service.py",
       "docs": ["orchestration-design", "architecture/service-catalog"],
       "components": ["backend/orchestrator", "backend/services"]
+    },
+    "infrastructure/terraform/main.tf": {
+      "path": "infrastructure/terraform/main.tf",
+      "docs": ["production-deployment-runbook"],
+      "component": "infra/deployment"
+    },
+    "infrastructure/ansible/playbooks/deploy.yml": {
+      "path": "infrastructure/ansible/playbooks/deploy.yml",
+      "docs": ["production-deployment-runbook"],
+      "component": "infra/deployment"
     },
     "apps/web-app/src/hooks/useWebSocket.ts": {
       "path": "apps/web-app/src/hooks/useWebSocket.ts",
@@ -1019,6 +1850,16 @@
       "docs": ["architecture/service-catalog"],
       "component": "backend/services"
     },
+    "terraform": {
+      "path": "terraform",
+      "docs": ["terraform-guide"],
+      "component": "infra/terraform"
+    },
+    "packages/api-client/src/index.ts": {
+      "path": "packages/api-client/src/index.ts",
+      "docs": ["testing-contracts", "api-reference/rest-api"],
+      "components": ["testing/contracts", "backend/api-gateway"]
+    },
     "apps/web-app/playwright.config.ts": {
       "path": "apps/web-app/playwright.config.ts",
       "docs": ["testing-guide"],
@@ -1058,21 +1899,52 @@
       "path": "services/api-gateway/openapi.yaml",
       "docs": ["api-reference/routes"],
       "component": "backend/api-gateway"
-    },
-    "packages/api-client/src/index.ts": {
-      "path": "packages/api-client/src/index.ts",
-      "docs": ["api-reference/rest-api"],
-      "component": "backend/api-gateway"
     }
   },
   "meta": {
     "stats": {
-      "docs_with_links": 40,
-      "total_links": 141,
-      "unique_paths": 87,
-      "missing_paths": 28
+      "docs_with_links": 83,
+      "total_links": 265,
+      "unique_paths": 110,
+      "missing_paths": 43
     },
     "missing_paths": [
+      {
+        "docSlug": "readme",
+        "path": "services/api-gateway/app/services/feature_flag_service.py"
+      },
+      {
+        "docSlug": "admin-panel-guide",
+        "path": "apps/admin-panel/src/pages/FeatureFlags.tsx"
+      },
+      {
+        "docSlug": "advanced-types",
+        "path": "services/api-gateway/app/services/feature_flag_service.py"
+      },
+      {
+        "docSlug": "best-practices",
+        "path": "services/api-gateway/app/services/feature_flag_service.py"
+      },
+      {
+        "docSlug": "lifecycle",
+        "path": "services/api-gateway/app/services/feature_flag_service.py"
+      },
+      {
+        "docSlug": "multi-environment",
+        "path": "services/api-gateway/app/services/feature_flag_service.py"
+      },
+      {
+        "docSlug": "system-settings-vs-flags",
+        "path": "services/api-gateway/app/services/feature_flag_service.py"
+      },
+      {
+        "docSlug": "docs/metadata-standard",
+        "path": "apps/docs-site/scripts/validate-frontmatter.mjs"
+      },
+      {
+        "docSlug": "internal-docs-system",
+        "path": "apps/docs-site/scripts/validate-frontmatter.mjs"
+      },
       {
         "docSlug": "realtime-events-guide",
         "path": "services/api-gateway/app/api/websocket.py"
@@ -1118,6 +1990,18 @@
         "path": "services/api-gateway/app/services/thinker_talker_service.py"
       },
       {
+        "docSlug": "start/admins",
+        "path": ".env.example"
+      },
+      {
+        "docSlug": "start/developers",
+        "path": ".env.example"
+      },
+      {
+        "docSlug": "cicd-guide",
+        "path": ".github/workflows"
+      },
+      {
         "docSlug": "configuration-reference",
         "path": ".env.example"
       },
@@ -1130,12 +2014,20 @@
         "path": ".env.example"
       },
       {
+        "docSlug": "development-setup",
+        "path": ".env.example"
+      },
+      {
         "docSlug": "orchestration-design",
         "path": "services/api-gateway/app/services/ai_service.py"
       },
       {
         "docSlug": "orchestration-design",
         "path": "services/api-gateway/app/services/conversation_service.py"
+      },
+      {
+        "docSlug": "production-deployment-runbook",
+        "path": "infrastructure/ansible/playbooks/deploy.yml"
       },
       {
         "docSlug": "architecture/realtime",
@@ -1164,6 +2056,10 @@
       {
         "docSlug": "architecture/service-catalog",
         "path": "services/api-gateway/app/services/auth_service.py"
+      },
+      {
+        "docSlug": "terraform-guide",
+        "path": "terraform"
       },
       {
         "docSlug": "testing-guide",

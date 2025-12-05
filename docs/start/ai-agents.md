@@ -15,6 +15,13 @@ tags:
   - agent
   - automation
 category: getting-started
+component: "platform/ai-agents"
+relatedPaths:
+  - "services/api-gateway/app/services/thinker_service.py"
+  - "services/api-gateway/app/services/talker_service.py"
+  - "services/api-gateway/app/services/thinker_talker_websocket_handler.py"
+  - "apps/web-app/src/hooks/useThinkerTalkerSession.ts"
+  - "apps/docs-site/scripts/generate-agent-json.js"
 ai_summary: >-
   Last Updated: 2025-12-01 This guide helps AI coding assistants (Claude, GPT,
   Copilot, etc.) quickly understand and work on VoiceAssist. --- VoiceAssist is

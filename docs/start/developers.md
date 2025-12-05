@@ -18,6 +18,13 @@ tags:
   - setup
   - contributing
 category: getting-started
+component: "platform/development"
+relatedPaths:
+  - "docker-compose.yml"
+  - "pnpm-workspace.yaml"
+  - "package.json"
+  - "Makefile"
+  - ".env.example"
 ai_summary: >-
   Last Updated: 2025-12-01 Welcome to VoiceAssist development! This guide will
   get you up and running quickly. --- - Node.js 20+ and pnpm 8+ - Python 3.11+

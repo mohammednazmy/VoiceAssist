@@ -14,6 +14,11 @@ audience:
 tags:
   - architecture
 category: overview
+component: "platform/architecture"
+relatedPaths:
+  - "services/api-gateway/app/main.py"
+  - "apps/web-app/src/App.tsx"
+  - "docker-compose.yml"
 ai_summary: >-
   Placeholder for a high-level architecture summary referenced by the client
   documentation.

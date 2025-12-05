@@ -16,6 +16,11 @@ tags:
   - tuning
   - guide
 category: operations
+component: "backend/performance"
+relatedPaths:
+  - "services/api-gateway/app/core/config.py"
+  - "services/api-gateway/app/core/database.py"
+  - "docker-compose.yml"
 ai_summary: >-
   This comprehensive guide provides strategies, techniques, and best practices
   for optimizing VoiceAssist performance. Use this guide to identify

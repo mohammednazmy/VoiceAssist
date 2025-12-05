@@ -16,6 +16,11 @@ tags:
   - voice
   - chat
 category: getting-started
+component: "frontend/web-app"
+relatedPaths:
+  - "apps/web-app/src/App.tsx"
+  - "apps/web-app/src/components/Chat.tsx"
+  - "apps/web-app/src/components/voice/VoiceModePanel.tsx"
 ai_summary: >-
   Last Updated: 2025-12-01 Welcome to VoiceAssist! This guide will help you get
   started with voice and text interactions. --- VoiceAssist is a HIPAA-compliant

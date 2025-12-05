@@ -27,6 +27,12 @@ relatedServices:
   - admin-panel
   - docs-site
 category: overview
+component: "platform/status"
+relatedPaths:
+  - "services/api-gateway/app/main.py"
+  - "apps/web-app/src/App.tsx"
+  - "apps/admin-panel/src/App.tsx"
+  - "apps/docs-site/src/app/page.tsx"
 source_of_truth: true
 version: 2.3.0
 ai_summary: >-

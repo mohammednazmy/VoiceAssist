@@ -13,6 +13,10 @@ tags:
   - testing
   - contracts
 category: testing
+component: "testing/contracts"
+relatedPaths:
+  - "packages/api-client/src/index.ts"
+  - "services/api-gateway/app/api/__init__.py"
 ai_summary: >-
   Last Updated: 2025-11-21 (Phase 7 - P3.4) Purpose: Guide for implementing and
   running contract tests with Pact --- VoiceAssist V2 uses Pact for

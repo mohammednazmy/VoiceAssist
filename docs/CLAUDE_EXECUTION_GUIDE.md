@@ -19,6 +19,10 @@ tags:
   - ai-agent
 category: ai
 version: 1.0.0
+component: "platform/ai-agents"
+relatedPaths:
+  - "docs/CLAUDE_PROMPTS.md"
+  - "docs/ai/AGENT_ONBOARDING.md"
 ai_summary: >-
   This guide provides comprehensive instructions for Claude Code (or other AI
   assistants) working on the VoiceAssist V2 project. It covers session startup,

@@ -17,6 +17,10 @@ tags:
   - codebase
 category: ai
 version: 1.0.0
+component: "platform/ai-agents"
+relatedPaths:
+  - "apps/docs-site/scripts/generate-repo-index.mjs"
+  - "apps/docs-site/scripts/generate-doc-code-map.mjs"
 ai_summary: >-
   Guide for AI agents to navigate the VoiceAssist monorepo via JSON endpoints.
   Covers repo-index.json (25k+ entries with component/language metadata),

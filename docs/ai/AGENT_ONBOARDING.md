@@ -22,6 +22,12 @@ relatedServices:
   - docs-site
 category: ai
 version: 1.4.0
+component: "platform/ai-agents"
+relatedPaths:
+  - "services/api-gateway/app/main.py"
+  - "apps/web-app/src/App.tsx"
+  - "apps/admin-panel/src/App.tsx"
+  - "apps/docs-site/scripts/generate-agent-json.js"
 ai_summary: >-
   Start here for AI agents working on VoiceAssist. Key directories:
   services/api-gateway/ (canonical backend, FastAPI), apps/ (web-app, admin-panel,
