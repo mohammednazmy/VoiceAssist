@@ -4115,7 +4115,7 @@ To begin implementation:
 - [ONNX Runtime Web](https://onnxruntime.ai/docs/get-started/with-javascript.html)
 - [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
 - [AudioWorklet](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet)
-- [NLMS Algorithm](<https://en.wikipedia.org/wiki/Least_mean_squares_filter#Normalized_least_mean_squares_filter_(NLMS)>)
+- [NLMS Algorithm](https://en.wikipedia.org/wiki/Least_mean_squares_filter#Normalized_least_mean_squares_filter_%28NLMS%29)
 - [WebRTC VAD](https://webrtc.org/)
 - [GDPR Compliance](https://gdpr.eu/)
 - [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API)
