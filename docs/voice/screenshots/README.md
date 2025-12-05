@@ -2,6 +2,19 @@
 
 This directory contains annotated screenshots for the Voice Mode v4.1 documentation.
 
+> **Note**: Screenshots require manual capture from a running instance of the Voice Mode UI.
+> Use the browser at https://quran.asimo.io to capture each state.
+
+## Capture Status
+
+| Screenshot                 | Status     | Notes                            |
+| -------------------------- | ---------- | -------------------------------- |
+| voice-input-bar-states.png | ⏳ Pending | Requires UI interaction          |
+| streaming-text-rtl.png     | ⏳ Pending | Requires Arabic content response |
+| quality-badge-tiers.png    | ⏳ Pending | Requires network throttling      |
+| phi-indicator-states.png   | ⏳ Pending | Requires PHI-triggering input    |
+| vad-presets-panel.png      | ⏳ Pending | Settings panel screenshot        |
+
 ## Required Screenshots
 
 ### 1. voice-input-bar-states.png
