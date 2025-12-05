@@ -433,12 +433,26 @@ export function useChatSession(
       ws.onmessage = handleWebSocketMessage;
 
       ws.onerror = (error) => {
-        // Log error details for debugging
-        websocketLog.error("Error event received:", {
-          type: error.type,
-          readyState: ws.readyState,
-        });
         isConnectingRef.current = false;
+        // Only log as error if this wasn't an intentional disconnect or already closed
+        // Intentional disconnects and closed connections often trigger error events
+        // that are expected and don't indicate real problems
+        const isAlreadyClosed = ws.readyState === WebSocket.CLOSED;
+        if (intentionalDisconnectRef.current || isAlreadyClosed) {
+          websocketLog.debug(
+            "Error event (expected - intentional or already closed):",
+            {
+              type: error.type,
+              readyState: ws.readyState,
+              intentional: intentionalDisconnectRef.current,
+            },
+          );
+        } else {
+          websocketLog.warn("WebSocket error event:", {
+            type: error.type,
+            readyState: ws.readyState,
+          });
+        }
         // Note: WebSocket error events don't contain detailed error info
         // The actual reason will be in the subsequent close event
       };
