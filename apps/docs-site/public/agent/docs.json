@@ -1,9 +1,9 @@
 {
   "count": 285,
-  "generated_at": "2025-12-05T06:05:39.914Z",
+  "generated_at": "2025-12-05T06:28:11.311Z",
   "docs": [
     {
-      "slug": "style-guide",
+      "slug": "reference/style-guide",
       "path": "STYLE_GUIDE.md",
       "title": "VoiceAssist Documentation Style Guide",
       "summary": "Writing standards for VoiceAssist documentation",
@@ -17,7 +17,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "readme",
+      "slug": "admin-guide/feature-flags/overview",
       "path": "admin-guide/feature-flags/README.md",
       "title": "Feature Flags Overview",
       "summary": "Comprehensive guide to VoiceAssist feature flag system",
@@ -35,7 +35,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "admin-panel-guide",
+      "slug": "admin-guide/feature-flags/admin-panel-guide",
       "path": "admin-guide/feature-flags/admin-panel-guide.md",
       "title": "Feature Flags Admin Panel Guide",
       "summary": "Using the Admin Panel to manage feature flags and scheduled variant changes",
@@ -52,7 +52,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "advanced-types",
+      "slug": "admin-guide/feature-flags/advanced-types",
       "path": "admin-guide/feature-flags/advanced-types.md",
       "title": "Advanced Feature Flag Types",
       "summary": "Boolean, percentage, variant, and scheduled feature flag types",
@@ -69,7 +69,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "best-practices",
+      "slug": "admin-guide/feature-flags/best-practices",
       "path": "admin-guide/feature-flags/best-practices.md",
       "title": "Feature Flag Best Practices",
       "summary": "Guidelines for effective feature flag usage",
@@ -86,7 +86,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "lifecycle",
+      "slug": "admin-guide/feature-flags/lifecycle",
       "path": "admin-guide/feature-flags/lifecycle.md",
       "title": "Feature Flag Lifecycle",
       "summary": "Managing feature flags from creation to retirement",
@@ -103,7 +103,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "multi-environment",
+      "slug": "admin-guide/feature-flags/multi-environment",
       "path": "admin-guide/feature-flags/multi-environment.md",
       "title": "Multi-Environment Feature Flags",
       "summary": "Managing feature flags across dev, staging, and production environments",
@@ -120,7 +120,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "naming-conventions",
+      "slug": "admin-guide/feature-flags/naming-conventions",
       "path": "admin-guide/feature-flags/naming-conventions.md",
       "title": "Feature Flag Naming Conventions",
       "summary": "Standards for naming feature flags in VoiceAssist",
@@ -137,7 +137,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "system-settings-vs-flags",
+      "slug": "admin-guide/system-settings-vs-flags",
       "path": "admin-guide/system-settings-vs-flags.md",
       "title": "System Settings vs Feature Flags",
       "summary": "Understanding when to use configuration settings vs feature flags",
@@ -154,7 +154,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "phase-4-user-overrides-plan",
+      "slug": "feature-flags/phase-4-user-overrides-plan",
       "path": "feature-flags/PHASE_4_USER_OVERRIDES_PLAN.md",
       "title": "Feature Flags Phase 4 - User Overrides",
       "summary": "Implementation plan for user-specific feature flag overrides and admin UI enhancements",
@@ -166,7 +166,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "todo-docs-enhancement-phase2",
+      "slug": "planning/docs-enhancement-phase-2",
       "path": "planning/TODO_DOCS_ENHANCEMENT_PHASE2.md",
       "title": "TODO: Documentation Enhancement Phase 2",
       "ai_summary": "Actionable TODO for AI agents: Implement code_refs frontmatter linking docs to code excerpts, and versioning groundwork for version selectors and versioned API endpoints.",
@@ -254,7 +254,7 @@
       "path": "ai/AGENT_TASK_INDEX.md",
       "title": "Agent Task Index",
       "summary": "Common AI agent tasks with relevant documentation and machine-readable endpoints.",
-      "ai_summary": "Catalog of common AI agent tasks with relevant docs and commands. Tasks include: understand project status, debug backend/frontend/voice issues, update documentation, add API endpoints, work on admin panel, docs health audit, repository navigation tasks, and NEW doc-code crosswalk tasks (audit relatedPaths, explain files using docs, find feature implementations). Each task links to specific docs, code paths, API endpoints, and diagnostic commands. Use /agent/doc-code-map.json for bidirectional doc ↔ code navigation.",
+      "ai_summary": "Catalog of 20 common AI agent tasks with relevant docs and commands. Tasks include: understand project status, debug backend/frontend/voice issues, update documentation, add API endpoints, work on admin panel, docs health audit, repository navigation tasks, doc-code crosswalk tasks, and NEW Task 20: Voice Enhancement Implementation (Dec 2025) addressing 4 critical issues - dual thinking tones, missing intent classification, turn-taking integration, progressive response wiring. Each task links to specific docs, code paths, API endpoints, and diagnostic commands. Use /agent/doc-code-map.json for bidirectional doc ↔ code navigation.",
       "status": "stable",
       "stability": "production",
       "owner": "docs",
@@ -265,7 +265,12 @@
       "relatedPaths": [
         "services/api-gateway/app/main.py",
         "apps/docs-site/scripts/generate-agent-json.js",
-        "apps/docs-site/scripts/generate-doc-code-map.mjs"
+        "apps/docs-site/scripts/generate-doc-code-map.mjs",
+        "services/api-gateway/app/services/thinking_feedback_service.py",
+        "services/api-gateway/app/services/backchannel_service.py",
+        "services/api-gateway/app/services/thinker_talker_websocket_handler.py",
+        "services/api-gateway/app/core/event_bus.py",
+        "apps/web-app/src/hooks/useThinkerTalkerSession.ts"
       ],
       "lastUpdated": "2025-12-05"
     },
@@ -312,6 +317,28 @@
       "lastUpdated": "2025-12-05"
     },
     {
+      "slug": "start/ai-agents",
+      "path": "start/ai-agents.md",
+      "title": "AI Agent Quick Start",
+      "summary": "Quick start guide for AI coding assistants working on VoiceAssist.",
+      "ai_summary": "Quick start for AI coding assistants. VoiceAssist is a HIPAA-compliant medical AI assistant with Voice Mode (Thinker-Talker pipeline: Deepgram STT → GPT-4o → ElevenLabs TTS) and Text Mode. Key dirs: services/api-gateway (backend), apps/web-app (frontend). CURRENT WORK (Dec 2025): Voice enhancement addressing 4 issues - dual thinking tones, missing intent classification, frontend turn-taking, progressive response. See Task 20 in AGENT_TASK_INDEX.md for implementation details.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["agent", "ai-agents"],
+      "category": "getting-started",
+      "tags": ["quickstart", "ai", "agent", "automation"],
+      "component": "platform/ai-agents",
+      "relatedPaths": [
+        "services/api-gateway/app/services/thinker_service.py",
+        "services/api-gateway/app/services/talker_service.py",
+        "services/api-gateway/app/services/thinker_talker_websocket_handler.py",
+        "apps/web-app/src/hooks/useThinkerTalkerSession.ts",
+        "apps/docs-site/scripts/generate-agent-json.js"
+      ],
+      "lastUpdated": "2025-12-05"
+    },
+    {
       "slug": "voice/screenshots",
       "path": "voice/screenshots/README.md",
       "title": "Voice Mode Screenshots",
@@ -323,6 +350,42 @@
       "audience": ["human", "docs", "ai-agents"],
       "category": "voice",
       "tags": ["voice", "screenshots", "assets"],
+      "lastUpdated": "2025-12-05"
+    },
+    {
+      "slug": "voice/smart-conversational-voice-design",
+      "path": "voice/smart-conversational-voice-design.md",
+      "title": "Smart Conversational Voice Design",
+      "summary": "Technical design for intelligent voice mode enhancements, fully integrated with VoiceEventBus and existing services. Addresses dual system conflicts and missing integrations.",
+      "ai_summary": "Comprehensive design document for voice mode enhancements. Addresses critical issues: dual thinking tone systems, missing intent classification, frontend turn-taking integration gaps, and progressive response WebSocket wiring. All changes extend existing services via VoiceEventBus.",
+      "status": "draft",
+      "stability": "experimental",
+      "owner": "backend",
+      "audience": ["developers", "backend", "frontend", "agent", "ai-agents"],
+      "category": "voice",
+      "tags": [
+        "voice",
+        "barge-in",
+        "conversational-ai",
+        "tts",
+        "design",
+        "voiceeventbus",
+        "integration"
+      ],
+      "relatedPaths": [
+        "services/api-gateway/app/core/event_bus.py",
+        "services/api-gateway/app/services/voice_pipeline_service.py",
+        "services/api-gateway/app/services/backchannel_service.py",
+        "services/api-gateway/app/services/thinking_feedback_service.py",
+        "services/api-gateway/app/services/thinker_talker_websocket_handler.py",
+        "services/api-gateway/app/engines/conversation_engine/__init__.py",
+        "services/api-gateway/app/engines/conversation_engine/turn_taking.py",
+        "services/api-gateway/app/engines/voice_engine/unified_voice_service.py",
+        "apps/web-app/src/hooks/useThinkerTalkerVoiceMode.ts",
+        "apps/web-app/src/hooks/useThinkerTalkerSession.ts",
+        "apps/web-app/src/hooks/useThinkingTone.ts",
+        "apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx"
+      ],
       "lastUpdated": "2025-12-05"
     },
     {
@@ -454,7 +517,7 @@
       "lastUpdated": "2025-12-04"
     },
     {
-      "slug": "admin-panel-integration-guide",
+      "slug": "admin/admin-panel-integration-guide",
       "path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
       "title": "Admin Panel Integration Guide",
       "summary": "Comprehensive guide for the VoiceAssist admin panel with cross-app navigation, real-time events, and voice monitoring",
@@ -474,7 +537,7 @@
       "lastUpdated": "2025-12-04"
     },
     {
-      "slug": "realtime-events-guide",
+      "slug": "admin/realtime-events-guide",
       "path": "admin/REALTIME_EVENTS_GUIDE.md",
       "title": "Real-Time Events Guide",
       "summary": "Guide to the admin panel real-time event system using WebSocket and Redis pub/sub",
@@ -884,36 +947,6 @@
         "apps/web-app/src/components/voice/StreamingTextDisplay.tsx",
         "apps/web-app/src/components/chat/MessageBubble.tsx",
         "packages/config/i18n.ts"
-      ],
-      "lastUpdated": "2025-12-04"
-    },
-    {
-      "slug": "voice/smart-conversational-voice-design",
-      "path": "voice/smart-conversational-voice-design.md",
-      "title": "Smart Conversational Voice Design",
-      "summary": "Technical design for intelligent barge-in acknowledgments and natural conversational flow in voice mode, fully integrated with VoiceEventBus.",
-      "ai_summary": "Design document for Phase 2 (Smart Acknowledgments) and Phase 3 (Natural Conversational Flow) of voice mode enhancements. Fully integrated with VoiceEventBus for cross-engine communication, extending existing BackchannelService and PredictiveTurnTakingEngine.",
-      "status": "draft",
-      "stability": "experimental",
-      "owner": "backend",
-      "audience": ["developers", "backend", "frontend", "agent", "ai-agents"],
-      "category": "voice",
-      "tags": [
-        "voice",
-        "barge-in",
-        "conversational-ai",
-        "tts",
-        "design",
-        "voiceeventbus"
-      ],
-      "relatedPaths": [
-        "services/api-gateway/app/core/event_bus.py",
-        "services/api-gateway/app/services/voice_pipeline_service.py",
-        "services/api-gateway/app/services/backchannel_service.py",
-        "services/api-gateway/app/services/thinking_feedback_service.py",
-        "services/api-gateway/app/engines/conversation_engine/turn_taking.py",
-        "apps/web-app/src/hooks/useBargeInPromptAudio.ts",
-        "apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx"
       ],
       "lastUpdated": "2025-12-04"
     },
@@ -1518,28 +1551,6 @@
       "lastUpdated": "2025-12-02"
     },
     {
-      "slug": "start/ai-agents",
-      "path": "start/ai-agents.md",
-      "title": "AI Agent Quick Start",
-      "summary": "Quick start guide for AI coding assistants working on VoiceAssist.",
-      "ai_summary": "Last Updated: 2025-12-01 This guide helps AI coding assistants (Claude, GPT, Copilot, etc.) quickly understand and work on VoiceAssist. --- VoiceAssist is a HIPAA-compliant medical AI assistant platform with: - Voice Mode: Thinker-Talker pipeline (Deepgram STT → GPT-4o → ElevenLabs TTS) - Text Mo...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "mixed",
-      "audience": ["agent", "ai-agents"],
-      "category": "getting-started",
-      "tags": ["quickstart", "ai", "agent", "automation"],
-      "component": "platform/ai-agents",
-      "relatedPaths": [
-        "services/api-gateway/app/services/thinker_service.py",
-        "services/api-gateway/app/services/talker_service.py",
-        "services/api-gateway/app/services/thinker_talker_websocket_handler.py",
-        "apps/web-app/src/hooks/useThinkerTalkerSession.ts",
-        "apps/docs-site/scripts/generate-agent-json.js"
-      ],
-      "lastUpdated": "2025-12-02"
-    },
-    {
       "slug": "start/developers",
       "path": "start/developers.md",
       "title": "Developer Quick Start",
@@ -1895,7 +1906,7 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["compose", "first", "summary"],
-      "component": "infra",
+      "component": "infra/compose",
       "relatedPaths": ["docker-compose.yml", "docs/DEVELOPMENT_PHASES_V2.md"],
       "lastUpdated": "2025-11-27"
     },
@@ -2252,7 +2263,7 @@
       "audience": ["devops", "sre", "ai-agents"],
       "category": "deployment",
       "tags": ["infrastructure", "code"],
-      "component": "infra",
+      "component": "infra/terraform",
       "relatedPaths": [
         "infrastructure/terraform",
         "infrastructure/ansible",

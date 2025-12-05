@@ -2,12 +2,13 @@
 title: Smart Conversational Voice Design
 slug: voice/smart-conversational-voice-design
 summary: >-
-  Technical design for intelligent barge-in acknowledgments and natural
-  conversational flow in voice mode, fully integrated with VoiceEventBus.
+  Technical design for intelligent voice mode enhancements, fully integrated
+  with VoiceEventBus and existing services. Addresses dual system conflicts
+  and missing integrations.
 status: draft
 stability: experimental
 owner: backend
-lastUpdated: "2025-12-04"
+lastUpdated: "2025-12-05"
 audience:
   - developers
   - backend
@@ -21,229 +22,324 @@ tags:
   - tts
   - design
   - voiceeventbus
+  - integration
 category: voice
 relatedPaths:
   - services/api-gateway/app/core/event_bus.py
   - services/api-gateway/app/services/voice_pipeline_service.py
   - services/api-gateway/app/services/backchannel_service.py
   - services/api-gateway/app/services/thinking_feedback_service.py
+  - services/api-gateway/app/services/thinker_talker_websocket_handler.py
+  - services/api-gateway/app/engines/conversation_engine/__init__.py
   - services/api-gateway/app/engines/conversation_engine/turn_taking.py
-  - apps/web-app/src/hooks/useBargeInPromptAudio.ts
+  - services/api-gateway/app/engines/voice_engine/unified_voice_service.py
+  - apps/web-app/src/hooks/useThinkerTalkerVoiceMode.ts
+  - apps/web-app/src/hooks/useThinkerTalkerSession.ts
+  - apps/web-app/src/hooks/useThinkingTone.ts
   - apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx
 ai_summary: >-
-  Design document for Phase 2 (Smart Acknowledgments) and Phase 3 (Natural
-  Conversational Flow) of voice mode enhancements. Fully integrated with
-  VoiceEventBus for cross-engine communication, extending existing
-  BackchannelService and PredictiveTurnTakingEngine.
+  Comprehensive design document for voice mode enhancements. Addresses critical
+  issues: dual thinking tone systems, missing intent classification, frontend
+  turn-taking integration gaps, and progressive response WebSocket wiring.
+  All changes extend existing services via VoiceEventBus.
 ---
 
 # Smart Conversational Voice Design
 
-> **Status:** Design Document (Revised)
-> **Version:** 2.0
-> **Last Updated:** 2025-12-04
+> **Status:** Design Document (Comprehensive Revision)
+> **Version:** 3.0
+> **Last Updated:** 2025-12-05
 > **Authors:** AI Assistant, Development Team
 
 ## Executive Summary
 
-This document outlines the technical design for making VoiceAssist voice mode feel natural and conversational. It covers two phases:
+This document provides a **comprehensive integration plan** for making VoiceAssist voice mode feel natural and conversational. It addresses four critical issues discovered during architecture analysis:
 
-- **Phase 2: Smart Acknowledgments** - Context-aware barge-in responses via VoiceEventBus
-- **Phase 3: Natural Conversational Flow** - Human-like turn-taking and prosody
-
-**Key Design Principle:** All new functionality is implemented by **extending existing services** and using the **VoiceEventBus** for cross-engine coordination, not by creating duplicate services.
-
-## Existing Infrastructure (MUST USE)
-
-Before implementing any new features, understand what already exists:
-
-### VoiceEventBus (`app/core/event_bus.py`)
-
-Central pub/sub system for cross-engine communication:
-
-```python
-from app.core.event_bus import get_event_bus, VoiceEvent
-
-event_bus = get_event_bus()
-
-# Subscribe to events
-event_bus.subscribe(
-    "prosody.turn_signal",
-    handler=my_handler,
-    priority=10,
-    engine="smart_acknowledgment"
-)
-
-# Publish events
-await event_bus.publish_event(
-    event_type="acknowledgment.triggered",
-    data={"intent": "question", "phrase": "Yes?"},
-    session_id=session_id,
-    source_engine="smart_acknowledgment"
-)
-```
-
-**Existing Event Types:**
-
-- `emotion.updated` - Emotion detection result
-- `emotion.deviation` - Significant deviation from baseline
-- `prosody.turn_signal` - Turn-taking prediction from PredictiveTurnTakingEngine
-- `repair.started` - Repair attempt started
-- `query.classified` - Query type determined
-- `clinical.alert` - Critical clinical finding
-
-### BackchannelService (`app/services/backchannel_service.py`)
-
-**Already implements:**
-
-- `BackchannelType` enum (ACKNOWLEDGMENT, UNDERSTANDING, ENCOURAGEMENT, SURPRISE, EMPATHY)
-- `BACKCHANNEL_PHRASES` - Multilingual phrase library
-- `EMOTION_PHRASE_MAP` - Emotion-aware phrase selection
-- `BackchannelCalibrationService` - User preference learning
-- `BackchannelTimingEngine` - Timing decisions
-- Event bus integration (subscribes to `emotion.updated`, `context.emotion_alert`)
-- A/B testing support for emotion-aware backchannels
-- Pre-cached audio per voice
-
-### ThinkingFeedbackService (`app/services/thinking_feedback_service.py`)
-
-**Already implements:**
-
-- `ToneStyle` enum (SUBTLE, MODERN, CLASSIC, MINIMAL, AMBIENT, SILENT)
-- `ToneType` enum (THINKING_START, THINKING_LOOP, THINKING_END, PROGRESS, ERROR, READY)
-- Tone generation with harmonics and envelopes
-- Session-based thinking loops
-- Pre-generated tone caching
-
-### PredictiveTurnTakingEngine (`app/engines/conversation_engine/turn_taking.py`)
-
-**Already implements:**
-
-- Prosody analysis for turn-taking prediction
-- Publishes `prosody.turn_signal` events
-- Signal types: YIELD, HOLD, CONTINUE
-- Confidence scoring
-
-### Voice Pipeline Service (`app/services/voice_pipeline_service.py`)
-
-**Already implements:**
-
-- `classify_query_type()` function (URGENT, SIMPLE, COMPLEX, CLARIFICATION)
-- `RESPONSE_TIMING` config with filler phrases
-- Integration with all services above
+| Issue       | Problem                                                         | Solution                                                   |
+| ----------- | --------------------------------------------------------------- | ---------------------------------------------------------- |
+| **Issue 1** | Dual thinking tone systems (frontend + backend) not coordinated | Unify via VoiceEventBus, backend as source of truth        |
+| **Issue 2** | BackchannelService lacks intent classification                  | Add `IntentClassifier` module, extend existing service     |
+| **Issue 3** | Turn-taking events not reaching frontend                        | Wire `prosody.turn_signal` to WebSocket handler            |
+| **Issue 4** | Progressive response not in WebSocket flow                      | Wire `ConversationEngine.get_filler_response()` to handler |
 
 ---
 
-# Phase 2: Smart Acknowledgments (VoiceEventBus Integrated)
+# Part 1: Architecture Analysis
 
-## Overview
+## Existing Components Inventory
 
-Extend the existing `BackchannelService` with intent classification to provide context-aware acknowledgments. All coordination happens through VoiceEventBus.
+### Backend Services
 
-## Architecture
+| Service                         | Location                                       | Purpose                    | VoiceEventBus Integration |
+| ------------------------------- | ---------------------------------------------- | -------------------------- | ------------------------- |
+| `VoicePipelineService`          | `services/voice_pipeline_service.py`           | Main orchestrator          | ❌ Partial                |
+| `ThinkingFeedbackService`       | `services/thinking_feedback_service.py`        | Server-side thinking tones | ❌ None                   |
+| `BackchannelService`            | `services/backchannel_service.py`              | Emotion-aware phrases      | ✅ Yes                    |
+| `TalkerService`                 | `services/talker_service.py`                   | ElevenLabs TTS             | ❌ None                   |
+| `ThinkerTalkerWebSocketHandler` | `services/thinker_talker_websocket_handler.py` | WebSocket protocol         | ❌ None                   |
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    Smart Acknowledgment Architecture                         │
-│                    (VoiceEventBus Integrated)                                │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│   ┌─────────────────────┐        VoiceEventBus                              │
-│   │ PredictiveTurn      │ ─────────────────────────────────────────────┐    │
-│   │ TakingEngine        │    publishes: prosody.turn_signal            │    │
-│   └─────────────────────┘                                              │    │
-│                                                                        │    │
-│   ┌─────────────────────┐                                              ▼    │
-│   │ EmotionDetection    │    publishes: emotion.updated        ┌───────────┐│
-│   │ Service             │ ─────────────────────────────────────►│ SmartAck  ││
-│   └─────────────────────┘                                      │ Engine    ││
-│                                                                │ (NEW)     ││
-│   ┌─────────────────────┐                                      │           ││
-│   │ STT Service         │    publishes: transcript.partial     │ Subscribes││
-│   │ (partial transcript)│ ─────────────────────────────────────►│ to all    ││
-│   └─────────────────────┘                                      └─────┬─────┘│
-│                                                                      │      │
-│                                                                      │      │
-│                          publishes: acknowledgment.triggered         │      │
-│                                                                      ▼      │
-│                                                              ┌───────────┐  │
-│                                                              │ Backchan  │  │
-│                                                              │ nelService│  │
-│                                                              │ (extended)│  │
-│                                                              └───────────┘  │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+### Backend Engines
 
-## New Event Types (Add to VoiceEventBus)
+| Engine                       | Location                                        | Purpose                                    | VoiceEventBus Integration |
+| ---------------------------- | ----------------------------------------------- | ------------------------------------------ | ------------------------- |
+| `ConversationEngine`         | `engines/conversation_engine/__init__.py`       | Query classification, turn-taking, repairs | ✅ Yes                    |
+| `PredictiveTurnTakingEngine` | `engines/conversation_engine/turn_taking.py`    | Prosody-based turn prediction              | ✅ Yes                    |
+| `UnifiedVoiceService`        | `engines/voice_engine/unified_voice_service.py` | Full pipeline orchestrator                 | ❌ Partial                |
 
-Add these event types to `app/core/event_bus.py`:
+### Frontend Hooks
+
+| Hook                        | Location                             | Purpose                     | Backend Integration  |
+| --------------------------- | ------------------------------------ | --------------------------- | -------------------- |
+| `useThinkerTalkerVoiceMode` | `hooks/useThinkerTalkerVoiceMode.ts` | Main voice mode hook        | ✅ WebSocket         |
+| `useThinkerTalkerSession`   | `hooks/useThinkerTalkerSession.ts`   | Session management          | ✅ WebSocket         |
+| `useThinkingTone`           | `hooks/useThinkingTone.ts`           | Client-side tone generation | ❌ None (standalone) |
+| `useBackchannelAudio`       | `hooks/useBackchannelAudio.ts`       | Backchannel playback        | ✅ WebSocket         |
+| `useBargeInPromptAudio`     | `hooks/useBargeInPromptAudio.ts`     | Barge-in prompts            | ✅ REST API          |
+
+### VoiceEventBus Events (Existing)
 
 ```python
+# From app/core/event_bus.py
 EVENTS = [
-    # ... existing events ...
-
-    # Smart Acknowledgment Engine (Phase 2)
-    "transcript.partial",           # Partial STT transcript available
-    "acknowledgment.intent",        # Intent classified from partial transcript
-    "acknowledgment.triggered",     # Acknowledgment phrase selected and triggered
-    "acknowledgment.played",        # Acknowledgment audio finished playing
-    "acknowledgment.calibration",   # User calibration updated
-
-    # Natural Flow Engine (Phase 3)
-    "filler.triggered",             # Filler phrase about to play
-    "filler.played",                # Filler phrase finished
-    "thinking.started",             # Thinking feedback started
-    "thinking.stopped",             # Thinking feedback stopped
-    "turn.yielded",                 # AI yielding turn to user
-    "turn.taken",                   # AI taking turn from user
+    "emotion.updated",           # Emotion detection result
+    "emotion.deviation",         # Significant emotion change
+    "prosody.turn_signal",       # Turn-taking prediction
+    "repair.started",            # Repair attempt started
+    "query.classified",          # Query type determined
+    "clinical.alert",            # Critical clinical finding
+    "context.emotion_alert",     # Emotion-triggered context
 ]
 ```
 
-## Implementation: SmartAcknowledgmentEngine
+---
 
-Create a new engine (NOT a service) that coordinates intent classification with BackchannelService:
+# Part 2: Issue Resolution
 
-### File: `app/engines/smart_acknowledgment_engine.py`
+## Issue 1: Dual Thinking Tone Systems
+
+### Problem
+
+Two separate thinking tone implementations exist:
+
+1. **Frontend (`useThinkingTone.ts`)**: Generates tones client-side via Web Audio API
+2. **Backend (`ThinkingFeedbackService`)**: Generates PCM audio server-side
+
+These are NOT coordinated. `ThinkerTalkerVoicePanel` uses frontend tones while `UnifiedVoiceService` uses backend tones. This causes:
+
+- Potential double-tones if both activate
+- Inconsistent user experience
+- No event bus coordination
+
+### Solution: Backend as Source of Truth
+
+**Decision:** Use backend `ThinkingFeedbackService` as the single source of truth. Frontend becomes a passive receiver.
+
+#### Step 1: Add VoiceEventBus Integration to ThinkingFeedbackService
 
 ```python
+# services/api-gateway/app/services/thinking_feedback_service.py
+
+class ThinkingFeedbackService:
+    """
+    REVISED: Now publishes events to VoiceEventBus for coordination.
+    """
+
+    def __init__(self, event_bus=None):
+        self.event_bus = event_bus
+        # ... existing init ...
+
+    async def start_thinking_loop(
+        self,
+        session_id: str,
+        on_tone: Optional[Callable[[bytes], None]] = None,
+    ) -> None:
+        """Start thinking feedback with event bus notification."""
+        # Publish event BEFORE starting
+        if self.event_bus:
+            await self.event_bus.publish_event(
+                event_type="thinking.started",
+                data={
+                    "style": self._config.style.value,
+                    "source": "backend",
+                },
+                session_id=session_id,
+                source_engine="thinking_feedback",
+            )
+
+        # ... existing logic ...
+
+    async def stop_thinking_loop(
+        self,
+        session_id: str,
+        play_end_tone: bool = True,
+        on_tone: Optional[Callable[[bytes], None]] = None,
+    ) -> None:
+        """Stop thinking feedback with event bus notification."""
+        # ... existing logic ...
+
+        # Publish event AFTER stopping
+        if self.event_bus:
+            await self.event_bus.publish_event(
+                event_type="thinking.stopped",
+                data={"played_end_tone": play_end_tone},
+                session_id=session_id,
+                source_engine="thinking_feedback",
+            )
+```
+
+#### Step 2: Wire ThinkingFeedbackService to WebSocket Handler
+
+```python
+# services/api-gateway/app/services/thinker_talker_websocket_handler.py
+
+class ThinkerTalkerWebSocketHandler:
+    """
+    REVISED: Integrates ThinkingFeedbackService via event bus.
+    """
+
+    def __init__(self, ...):
+        # ... existing init ...
+        self._thinking_feedback = get_thinking_feedback_service()
+        self._event_bus = get_event_bus()
+
+        # Subscribe to thinking events
+        self._event_bus.subscribe(
+            "thinking.started",
+            self._handle_thinking_started,
+            engine="websocket_handler",
+        )
+        self._event_bus.subscribe(
+            "thinking.stopped",
+            self._handle_thinking_stopped,
+            engine="websocket_handler",
+        )
+
+    async def _handle_thinking_started(self, event: VoiceEvent) -> None:
+        """Forward thinking.started to frontend."""
+        if event.session_id == self.config.session_id:
+            await self._send_message({
+                "type": "thinking.started",
+                "style": event.data.get("style"),
+            })
+
+    async def _handle_thinking_stopped(self, event: VoiceEvent) -> None:
+        """Forward thinking.stopped to frontend."""
+        if event.session_id == self.config.session_id:
+            await self._send_message({
+                "type": "thinking.stopped",
+            })
+
+    async def _start_thinking_feedback(self) -> None:
+        """Start thinking tones when processing begins."""
+        await self._thinking_feedback.start_thinking_loop(
+            session_id=self.config.session_id,
+            on_tone=self._send_audio_chunk,
+        )
+
+    async def _stop_thinking_feedback(self) -> None:
+        """Stop thinking tones when response begins."""
+        await self._thinking_feedback.stop_thinking_loop(
+            session_id=self.config.session_id,
+            play_end_tone=True,
+            on_tone=self._send_audio_chunk,
+        )
+```
+
+#### Step 3: Update Frontend to Receive Backend Thinking Events
+
+```typescript
+// apps/web-app/src/hooks/useThinkerTalkerSession.ts
+
+// Add to message handling:
+case "thinking.started":
+  // Backend is handling thinking tones - disable frontend tones
+  setThinkingState({
+    isThinking: true,
+    source: "backend",  // Frontend won't generate tones
+  });
+  onThinkingStarted?.();
+  break;
+
+case "thinking.stopped":
+  setThinkingState({
+    isThinking: false,
+    source: null,
+  });
+  onThinkingStopped?.();
+  break;
+```
+
+#### Step 4: Update ThinkingFeedbackPanel to Respect Backend
+
+```typescript
+// apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx
+
+export function ThinkingFeedbackPanel({
+  isThinking,
+  thinkingSource = "frontend", // NEW: Track source
+  // ...
+}: ThinkingFeedbackPanelProps) {
+  const settings = useVoiceSettingsStore();
+
+  // Only play frontend tones if backend isn't handling it
+  const shouldPlayFrontendAudio =
+    settings.thinkingToneEnabled && !isTTSPlaying && isThinking && thinkingSource !== "backend"; // NEW: Skip if backend is handling
+
+  useThinkingTone(shouldPlayFrontendAudio, {
+    preset: settings.thinkingTonePreset,
+    volume: settings.thinkingToneVolume / 100,
+  });
+
+  // Visual indicator always shows (regardless of audio source)
+  // ...
+}
+```
+
+### New Event Types for Issue 1
+
+```python
+# Add to app/core/event_bus.py EVENTS list:
+"thinking.started",    # Backend started thinking feedback
+"thinking.stopped",    # Backend stopped thinking feedback
+```
+
+---
+
+## Issue 2: Missing Intent Classification
+
+### Problem
+
+`BackchannelService` has emotion-aware phrase selection but NO intent classification. When a user barges in, we don't know WHY they're interrupting:
+
+- Question? → "Yes?"
+- Correction? → "I understand, go ahead"
+- Agreement? → "Good"
+- Just listening? → (no response)
+
+### Solution: Add IntentClassifier Module to BackchannelService
+
+#### Step 1: Create IntentClassifier Module
+
+```python
+# services/api-gateway/app/services/intent_classifier.py
+
 """
-Smart Acknowledgment Engine - VoiceEventBus Integrated
+Intent Classifier for Barge-In Analysis
 
-Extends backchannel functionality with intent classification to provide
-context-aware acknowledgments during user speech.
-
-Subscribes to:
-- prosody.turn_signal (from PredictiveTurnTakingEngine)
-- emotion.updated (from EmotionDetectionService)
-- transcript.partial (from STT service)
-
-Publishes:
-- acknowledgment.intent (intent classification result)
-- acknowledgment.triggered (phrase selected and triggered)
+Classifies user intent from partial transcripts during barge-in.
+Designed for <50ms latency using keyword matching + simple ML.
 """
 
-import asyncio
 import logging
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional
-
-from app.core.event_bus import VoiceEvent, VoiceEventBus, get_event_bus
-from app.services.backchannel_service import (
-    BackchannelPhrase,
-    BackchannelService,
-    BackchannelSession,
-    BackchannelType,
-    backchannel_service,
-)
 
 logger = logging.getLogger(__name__)
 
 
 class BargeInIntent(str, Enum):
     """Classification of user's barge-in intent."""
-
     QUESTION = "question"           # User asking a question
     CORRECTION = "correction"       # User correcting AI
     AGREEMENT = "agreement"         # User agreeing
@@ -255,214 +351,103 @@ class BargeInIntent(str, Enum):
 
 
 @dataclass
-class IntentClassification:
+class IntentResult:
     """Result of intent classification."""
-
     intent: BargeInIntent
     confidence: float
     keywords_matched: List[str]
+    should_acknowledge: bool  # Should we play an acknowledgment?
     suggested_phrase: Optional[str] = None
 
 
-# Intent classification patterns
+# Intent patterns with phrases
 INTENT_PATTERNS: Dict[BargeInIntent, Dict[str, Any]] = {
     BargeInIntent.QUESTION: {
-        "keywords": ["what", "how", "why", "when", "where", "who", "which", "can you"],
+        "keywords": ["what", "how", "why", "when", "where", "who", "which", "can you", "could you", "is it", "are you"],
         "endings": ["?"],
-        "phrases": ["Yes?", "What is it?", "Go ahead"],
+        "should_acknowledge": True,
+        "phrases": {
+            "neutral": ["Yes?", "What is it?", "Go ahead"],
+            "frustrated": ["I'm listening", "Please, go ahead"],
+        },
     },
     BargeInIntent.CORRECTION: {
-        "keywords": ["no", "not", "wrong", "actually", "i said", "i meant", "that's not"],
-        "phrases": ["I understand", "Let me correct that", "Go ahead"],
+        "keywords": ["no", "not", "wrong", "actually", "i said", "i meant", "that's not", "incorrect"],
+        "should_acknowledge": True,
+        "phrases": {
+            "neutral": ["I understand", "Let me correct that", "Go ahead"],
+            "frustrated": ["I hear you", "Please clarify"],
+        },
     },
     BargeInIntent.AGREEMENT: {
-        "keywords": ["yes", "yeah", "right", "exactly", "correct", "true", "agree"],
-        "phrases": ["Good", "Great", "Understood"],
+        "keywords": ["yes", "yeah", "right", "exactly", "correct", "true", "agree", "that's right"],
+        "should_acknowledge": False,  # Don't interrupt for agreement
+        "phrases": {},
     },
     BargeInIntent.DISAGREEMENT: {
-        "keywords": ["no", "but", "however", "disagree", "don't think", "not sure"],
-        "phrases": ["I see", "Tell me more", "What do you think?"],
+        "keywords": ["no", "but", "however", "disagree", "don't think", "not sure", "i don't"],
+        "should_acknowledge": True,
+        "phrases": {
+            "neutral": ["I see", "Tell me more"],
+            "frustrated": ["I understand your concern"],
+        },
     },
     BargeInIntent.CONTINUATION: {
-        "keywords": ["continue", "go on", "keep going", "and then", "what else", "more"],
-        "phrases": ["Of course", "Continuing", "Sure"],
+        "keywords": ["continue", "go on", "keep going", "and then", "what else", "more", "next"],
+        "should_acknowledge": True,
+        "phrases": {
+            "neutral": ["Of course", "Continuing", "Sure"],
+        },
     },
     BargeInIntent.INTERRUPTION: {
-        "keywords": ["stop", "wait", "hold on", "pause", "enough", "okay okay"],
-        "phrases": ["I'm listening", "Yes?", "Go ahead"],
+        "keywords": ["stop", "wait", "hold on", "pause", "enough", "okay okay", "hang on"],
+        "should_acknowledge": True,
+        "phrases": {
+            "neutral": ["I'm listening", "Yes?", "Go ahead"],
+            "frustrated": ["I'm here", "Take your time"],
+        },
     },
     BargeInIntent.BACKCHANNEL: {
-        "keywords": ["uh huh", "mm hmm", "mhm", "okay", "ok", "right", "i see"],
-        "phrases": [],  # Don't respond to backchannels
+        "keywords": ["uh huh", "mm hmm", "mhm", "okay", "ok", "right", "i see", "hmm"],
+        "should_acknowledge": False,  # Don't respond to backchannels
+        "phrases": {},
     },
 }
 
 
-class SmartAcknowledgmentEngine:
+class IntentClassifier:
     """
-    Engine for context-aware acknowledgments during barge-in.
+    Fast intent classifier for barge-in analysis.
 
-    Uses VoiceEventBus for all cross-engine communication:
-    - Subscribes to prosody and transcript events
-    - Publishes acknowledgment events
-    - Coordinates with BackchannelService for phrase selection and audio
-
-    Initialization follows the engine pattern:
-        engine = SmartAcknowledgmentEngine(event_bus=get_event_bus())
-        await engine.initialize()
+    Designed for <50ms latency using keyword matching.
+    Can be extended with ML classifier for better accuracy.
     """
 
-    def __init__(
+    def __init__(self):
+        self._patterns = INTENT_PATTERNS
+
+    def classify(
         self,
-        event_bus: Optional[VoiceEventBus] = None,
-        backchannel_svc: Optional[BackchannelService] = None,
-    ):
-        self.event_bus = event_bus or get_event_bus()
-        self.backchannel_service = backchannel_svc or backchannel_service
-
-        # Session state
-        self._sessions: Dict[str, Dict[str, Any]] = {}
-        self._initialized = False
-
-    async def initialize(self) -> None:
-        """Initialize engine and subscribe to events."""
-        if self._initialized:
-            return
-
-        # Subscribe to relevant events
-        self.event_bus.subscribe(
-            "prosody.turn_signal",
-            self._handle_turn_signal,
-            priority=5,
-            engine="smart_acknowledgment",
-        )
-
-        self.event_bus.subscribe(
-            "emotion.updated",
-            self._handle_emotion_update,
-            priority=0,
-            engine="smart_acknowledgment",
-        )
-
-        self.event_bus.subscribe(
-            "transcript.partial",
-            self._handle_partial_transcript,
-            priority=10,
-            engine="smart_acknowledgment",
-        )
-
-        self._initialized = True
-        logger.info("SmartAcknowledgmentEngine initialized")
-
-    async def _handle_turn_signal(self, event: VoiceEvent) -> None:
+        transcript: str,
+        emotion: str = "neutral",
+    ) -> IntentResult:
         """
-        Handle turn-taking signals from PredictiveTurnTakingEngine.
+        Classify user intent from transcript.
 
-        When we detect user wants to speak (YIELD signal), prepare for
-        potential acknowledgment.
-        """
-        session_id = event.session_id
-        signal_type = event.data.get("signal_type")
-        confidence = event.data.get("confidence", 0.0)
+        Args:
+            transcript: User's speech (partial or full)
+            emotion: Current detected emotion
 
-        if session_id not in self._sessions:
-            self._sessions[session_id] = {
-                "current_emotion": "neutral",
-                "last_intent": None,
-                "pending_ack": False,
-            }
-
-        session = self._sessions[session_id]
-
-        if signal_type == "yield" and confidence > 0.7:
-            # User wants to speak - prepare for potential acknowledgment
-            session["pending_ack"] = True
-            logger.debug(f"Turn yield detected for {session_id}, ready for ack")
-
-    async def _handle_emotion_update(self, event: VoiceEvent) -> None:
-        """Update session emotion state from emotion detection."""
-        session_id = event.session_id
-        emotion_data = event.data.get("emotion", {})
-        dominant_emotion = emotion_data.get("dominant_emotion", "neutral")
-
-        if session_id in self._sessions:
-            self._sessions[session_id]["current_emotion"] = dominant_emotion
-
-    async def _handle_partial_transcript(self, event: VoiceEvent) -> None:
-        """
-        Handle partial STT transcripts to classify intent.
-
-        This is the main entry point for smart acknowledgment:
-        1. Classify intent from partial transcript
-        2. Select appropriate phrase based on intent + emotion
-        3. Trigger acknowledgment via BackchannelService
-        4. Publish acknowledgment.triggered event
-        """
-        session_id = event.session_id
-        transcript = event.data.get("text", "")
-        is_final = event.data.get("is_final", False)
-
-        if session_id not in self._sessions:
-            return
-
-        session = self._sessions[session_id]
-
-        # Only process if we're expecting user input
-        if not session.get("pending_ack"):
-            return
-
-        # Classify intent
-        classification = self.classify_intent(transcript)
-
-        # Publish intent classification
-        await self.event_bus.publish_event(
-            event_type="acknowledgment.intent",
-            data={
-                "intent": classification.intent.value,
-                "confidence": classification.confidence,
-                "keywords": classification.keywords_matched,
-                "transcript": transcript,
-            },
-            session_id=session_id,
-            source_engine="smart_acknowledgment",
-        )
-
-        # Skip if backchannel (user is just acknowledging us)
-        if classification.intent == BargeInIntent.BACKCHANNEL:
-            session["pending_ack"] = False
-            return
-
-        # Skip low confidence
-        if classification.confidence < 0.5:
-            return
-
-        # Select phrase based on intent and emotion
-        phrase = self._select_phrase(
-            classification,
-            session["current_emotion"],
-        )
-
-        if phrase:
-            # Trigger acknowledgment
-            await self._trigger_acknowledgment(session_id, phrase, classification)
-            session["pending_ack"] = False
-            session["last_intent"] = classification.intent
-
-    def classify_intent(self, transcript: str) -> IntentClassification:
-        """
-        Classify user's intent from partial transcript.
-
-        Uses keyword matching and pattern detection.
-        Designed for <50ms latency.
+        Returns:
+            IntentResult with classification and suggested phrase
         """
         text = transcript.lower().strip()
-        words = set(text.split())
 
         best_intent = BargeInIntent.UNKNOWN
         best_confidence = 0.0
         matched_keywords: List[str] = []
 
-        for intent, patterns in INTENT_PATTERNS.items():
+        for intent, patterns in self._patterns.items():
             keywords = patterns.get("keywords", [])
             endings = patterns.get("endings", [])
 
@@ -474,963 +459,825 @@ class SmartAcknowledgmentEngine:
 
             # Calculate confidence
             if matches:
-                confidence = len(matches) / len(keywords) * 0.8
+                confidence = min(len(matches) / max(len(keywords) * 0.3, 1), 1.0)
                 if ending_match:
-                    confidence += 0.2
-                confidence = min(confidence, 1.0)
+                    confidence = min(confidence + 0.2, 1.0)
 
                 if confidence > best_confidence:
                     best_intent = intent
                     best_confidence = confidence
                     matched_keywords = matches
 
-        # Get suggested phrase
-        suggested = None
-        if best_intent in INTENT_PATTERNS:
-            phrases = INTENT_PATTERNS[best_intent].get("phrases", [])
-            if phrases:
-                suggested = phrases[0]
+        # Get pattern config
+        pattern = self._patterns.get(best_intent, {})
+        should_ack = pattern.get("should_acknowledge", False)
 
-        return IntentClassification(
+        # Get suggested phrase based on emotion
+        phrases = pattern.get("phrases", {})
+        phrase_list = phrases.get(emotion, phrases.get("neutral", []))
+        suggested = phrase_list[0] if phrase_list else None
+
+        return IntentResult(
             intent=best_intent,
             confidence=best_confidence,
             keywords_matched=matched_keywords,
+            should_acknowledge=should_ack and best_confidence > 0.4,
             suggested_phrase=suggested,
         )
 
-    def _select_phrase(
+
+# Singleton
+_intent_classifier: Optional[IntentClassifier] = None
+
+
+def get_intent_classifier() -> IntentClassifier:
+    """Get singleton IntentClassifier."""
+    global _intent_classifier
+    if _intent_classifier is None:
+        _intent_classifier = IntentClassifier()
+    return _intent_classifier
+```
+
+#### Step 2: Extend BackchannelService with Intent Classification
+
+```python
+# services/api-gateway/app/services/backchannel_service.py
+
+# Add to imports:
+from app.services.intent_classifier import (
+    IntentClassifier,
+    IntentResult,
+    BargeInIntent,
+    get_intent_classifier,
+)
+
+class BackchannelService:
+    """
+    REVISED: Now includes intent classification for smart acknowledgments.
+    """
+
+    def __init__(self, event_bus=None):
+        # ... existing init ...
+        self._intent_classifier = get_intent_classifier()
+
+    async def get_smart_acknowledgment(
         self,
-        classification: IntentClassification,
-        emotion: str,
-    ) -> Optional[str]:
+        session_id: str,
+        transcript: str,
+        emotion: str = "neutral",
+        voice_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
         """
-        Select acknowledgment phrase based on intent and emotion.
+        NEW: Get context-aware acknowledgment based on user intent.
 
-        Combines intent-specific phrases with emotion context.
+        Args:
+            session_id: Session identifier
+            transcript: User's partial/full transcript
+            emotion: Current detected emotion
+            voice_id: Voice ID for pre-cached audio
+
+        Returns:
+            Dict with phrase, audio_url, intent, or None if no ack needed
         """
-        # Get intent-specific phrases
-        intent_phrases = INTENT_PATTERNS.get(
-            classification.intent, {}
-        ).get("phrases", [])
+        # Classify intent
+        intent_result = self._intent_classifier.classify(transcript, emotion)
 
-        if not intent_phrases:
+        # Publish intent classification event
+        if self.event_bus:
+            await self.event_bus.publish_event(
+                event_type="acknowledgment.intent",
+                data={
+                    "intent": intent_result.intent.value,
+                    "confidence": intent_result.confidence,
+                    "should_acknowledge": intent_result.should_acknowledge,
+                },
+                session_id=session_id,
+                source_engine="backchannel",
+            )
+
+        # Check if we should acknowledge
+        if not intent_result.should_acknowledge:
             return None
 
-        # Emotion-based selection
-        if emotion == "frustrated" or emotion == "anxious":
-            # Use calmer, more empathetic phrases
-            empathetic = ["I understand", "I hear you", "Go ahead"]
-            matching = [p for p in intent_phrases if p in empathetic]
-            if matching:
-                return matching[0]
+        # Get phrase (use suggested or fall back to emotion-based)
+        phrase = intent_result.suggested_phrase
+        if not phrase:
+            # Fall back to existing emotion-based selection
+            bc_session = self.get_session(session_id)
+            if bc_session:
+                phrase = bc_session._select_phrase_for_emotion(emotion)
 
-        # Use suggested phrase from classification
-        if classification.suggested_phrase:
-            return classification.suggested_phrase
+        if not phrase:
+            return None
 
-        # Default to first phrase
-        return intent_phrases[0] if intent_phrases else None
+        # Get pre-cached audio if available
+        audio_url = None
+        if voice_id:
+            audio_url = await self._get_cached_phrase_audio(phrase, voice_id)
 
-    async def _trigger_acknowledgment(
-        self,
-        session_id: str,
-        phrase: str,
-        classification: IntentClassification,
-    ) -> None:
-        """
-        Trigger acknowledgment via BackchannelService and publish event.
-        """
-        # Get backchannel session
-        bc_session = self.backchannel_service.get_session(session_id)
-
-        if bc_session:
-            # Create a BackchannelPhrase for the selected phrase
-            bc_phrase = BackchannelPhrase(
-                text=phrase,
-                type=BackchannelType.ACKNOWLEDGMENT,
+        # Publish acknowledgment event
+        if self.event_bus:
+            await self.event_bus.publish_event(
+                event_type="acknowledgment.triggered",
+                data={
+                    "phrase": phrase,
+                    "intent": intent_result.intent.value,
+                    "confidence": intent_result.confidence,
+                },
+                session_id=session_id,
+                source_engine="backchannel",
             )
 
-            # Emit via backchannel session (handles audio generation/caching)
-            await bc_session._emit_backchannel(bc_phrase)
-
-        # Publish event
-        await self.event_bus.publish_event(
-            event_type="acknowledgment.triggered",
-            data={
-                "phrase": phrase,
-                "intent": classification.intent.value,
-                "confidence": classification.confidence,
-            },
-            session_id=session_id,
-            source_engine="smart_acknowledgment",
-        )
-
-        logger.info(
-            f"Smart acknowledgment: '{phrase}' "
-            f"(intent={classification.intent.value}, "
-            f"confidence={classification.confidence:.2f})"
-        )
-
-    async def cleanup_session(self, session_id: str) -> None:
-        """Clean up session state."""
-        self._sessions.pop(session_id, None)
-
-    async def shutdown(self) -> None:
-        """Shutdown engine."""
-        self._sessions.clear()
-        self._initialized = False
-
-
-# Singleton instance
-_smart_ack_engine: Optional[SmartAcknowledgmentEngine] = None
-
-
-def get_smart_acknowledgment_engine() -> SmartAcknowledgmentEngine:
-    """Get or create singleton SmartAcknowledgmentEngine."""
-    global _smart_ack_engine
-    if _smart_ack_engine is None:
-        _smart_ack_engine = SmartAcknowledgmentEngine()
-    return _smart_ack_engine
+        return {
+            "phrase": phrase,
+            "audio_url": audio_url,
+            "intent": intent_result.intent.value,
+            "confidence": intent_result.confidence,
+        }
 ```
 
-## Integration: Voice Pipeline Service
-
-Update `voice_pipeline_service.py` to publish `transcript.partial` events:
+#### Step 3: Wire to WebSocket Handler
 
 ```python
-# In VoicePipelineSession._handle_stt_transcript()
+# services/api-gateway/app/services/thinker_talker_websocket_handler.py
 
-async def _handle_stt_transcript(
-    self,
-    text: str,
-    is_final: bool,
-    confidence: float,
-) -> None:
-    """Handle STT transcript with event bus integration."""
+class ThinkerTalkerWebSocketHandler:
 
-    # Existing logic...
+    async def _handle_barge_in(self, transcript: str) -> None:
+        """
+        REVISED: Handle barge-in with smart acknowledgment.
+        """
+        # Stop current playback
+        await self._stop_playback()
 
-    # NEW: Publish partial transcript event for SmartAcknowledgmentEngine
-    if self._event_bus:
-        await self._event_bus.publish_event(
-            event_type="transcript.partial",
-            data={
-                "text": text,
-                "is_final": is_final,
-                "confidence": confidence,
-            },
-            session_id=self.session_id,
-            source_engine="voice_pipeline",
+        # Get smart acknowledgment based on intent
+        ack = await self._backchannel_service.get_smart_acknowledgment(
+            session_id=self.config.session_id,
+            transcript=transcript,
+            emotion=self._current_emotion,
+            voice_id=self.config.voice_id,
         )
+
+        if ack:
+            # Send acknowledgment to frontend
+            await self._send_message({
+                "type": "acknowledgment",
+                "phrase": ack["phrase"],
+                "intent": ack["intent"],
+                "audio_url": ack.get("audio_url"),
+            })
+
+            # If we have pre-cached audio, send it
+            if ack.get("audio_url"):
+                await self._send_cached_audio(ack["audio_url"])
 ```
 
-## Integration: Session Initialization
-
-Update session initialization to include SmartAcknowledgmentEngine:
+### New Event Types for Issue 2
 
 ```python
-# In voice_pipeline_service.py or thinker_talker_ws.py
-
-from app.engines.smart_acknowledgment_engine import get_smart_acknowledgment_engine
-
-async def create_voice_session(...):
-    # ... existing setup ...
-
-    # Initialize smart acknowledgment engine (singleton, only once)
-    smart_ack = get_smart_acknowledgment_engine()
-    if not smart_ack._initialized:
-        await smart_ack.initialize()
-
-    # Backchannel session is created normally
-    # SmartAcknowledgmentEngine will coordinate via events
+# Add to app/core/event_bus.py EVENTS list:
+"acknowledgment.intent",      # Intent classified from transcript
+"acknowledgment.triggered",   # Acknowledgment phrase selected
+"acknowledgment.played",      # Acknowledgment audio finished
 ```
 
 ---
 
-# Phase 3: Natural Conversational Flow (VoiceEventBus Integrated)
+## Issue 3: Frontend Turn-Taking Integration Gap
 
-## Overview
+### Problem
 
-Enhance conversational naturalness through:
+`PredictiveTurnTakingEngine` publishes `prosody.turn_signal` events, but:
 
-1. Human-like response timing (extend existing `classify_query_type`)
-2. Thinking feedback coordination via event bus
-3. Turn-taking improvements (extend `PredictiveTurnTakingEngine`)
-4. Filler phrase integration
+1. WebSocket handler doesn't subscribe to these events
+2. Frontend doesn't receive turn-taking signals
+3. UI can't show "AI is yielding turn" or "AI is holding turn" states
 
-## Architecture
+### Solution: Wire Turn Signals Through WebSocket
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    Natural Flow Architecture                                 │
-│                    (VoiceEventBus Integrated)                                │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│                              VoiceEventBus                                   │
-│                                   │                                          │
-│   ┌───────────────────────────────┼───────────────────────────────────┐     │
-│   │                               │                                    │     │
-│   ▼                               ▼                                    ▼     │
-│  ┌─────────────┐          ┌─────────────┐                  ┌─────────────┐  │
-│  │ Predictive  │          │ Natural     │                  │ Thinking    │  │
-│  │ TurnTaking  │◄────────►│ Flow        │◄────────────────►│ Feedback    │  │
-│  │ Engine      │          │ Engine(NEW) │                  │ Service     │  │
-│  │ (extended)  │          │             │                  │ (existing)  │  │
-│  └─────────────┘          └─────────────┘                  └─────────────┘  │
-│        │                         │                                │          │
-│        │                         │                                │          │
-│        ▼                         ▼                                ▼          │
-│   prosody.turn_signal      filler.triggered              thinking.started   │
-│   turn.yielded             turn.taken                    thinking.stopped   │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-## Implementation: NaturalFlowEngine
-
-### File: `app/engines/natural_flow_engine.py`
+#### Step 1: Subscribe WebSocket Handler to Turn Signals
 
 ```python
-"""
-Natural Flow Engine - Human-like Conversational Timing
+# services/api-gateway/app/services/thinker_talker_websocket_handler.py
 
-Coordinates natural conversational flow through VoiceEventBus:
-- Response timing based on query complexity
-- Filler phrase injection for complex queries
-- Thinking feedback coordination
-- Turn-taking management
+class ThinkerTalkerWebSocketHandler:
 
-Subscribes to:
-- query.classified (from voice pipeline)
-- prosody.turn_signal (from PredictiveTurnTakingEngine)
-- acknowledgment.triggered (from SmartAcknowledgmentEngine)
+    def __init__(self, ...):
+        # ... existing init ...
 
-Publishes:
-- filler.triggered (before playing filler phrase)
-- filler.played (after filler completes)
-- thinking.started (thinking tones activated)
-- thinking.stopped (thinking tones stopped)
-- turn.yielded (AI yielding turn)
-- turn.taken (AI taking turn)
-"""
-
-import asyncio
-import logging
-import random
-from dataclasses import dataclass
-from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
-
-from app.core.event_bus import VoiceEvent, VoiceEventBus, get_event_bus
-from app.services.thinking_feedback_service import (
-    ThinkingFeedbackService,
-    ToneType,
-    get_thinking_feedback_service,
-)
-from app.services.voice_pipeline_service import (
-    QueryType,
-    RESPONSE_TIMING,
-    classify_query_type,
-)
-
-logger = logging.getLogger(__name__)
-
-
-class FlowState(str, Enum):
-    """State of conversational flow for a session."""
-
-    IDLE = "idle"                 # No active conversation
-    LISTENING = "listening"       # Listening to user
-    PROCESSING = "processing"     # Processing user input
-    FILLER = "filler"             # Playing filler phrase
-    THINKING = "thinking"         # Playing thinking tones
-    RESPONDING = "responding"     # AI is responding
-    YIELDING = "yielding"         # AI yielding turn to user
-
-
-@dataclass
-class FlowTimingConfig:
-    """Configuration for response timing."""
-
-    # Delays (ms)
-    min_response_delay_ms: int = 100     # Minimum delay before responding
-    max_filler_delay_ms: int = 800       # Max delay before filler plays
-
-    # Thresholds
-    filler_probability: float = 0.7      # Probability of using filler for complex
-    thinking_after_filler_ms: int = 500  # Delay before thinking tones after filler
-
-    # Human-like variations
-    timing_jitter_ms: int = 150          # Random jitter added to delays
-
-
-# Extended filler phrases by query complexity and emotion
-FILLER_PHRASES: Dict[QueryType, Dict[str, List[str]]] = {
-    QueryType.COMPLEX: {
-        "neutral": [
-            "Hmm, let me think about that...",
-            "That's a great question...",
-            "Let me consider this carefully...",
-            "Interesting question...",
-        ],
-        "frustrated": [
-            "I understand, let me help with that...",
-            "Let me address that for you...",
-        ],
-        "anxious": [
-            "Don't worry, let me explain...",
-            "Let me walk you through this...",
-        ],
-    },
-    QueryType.CLARIFICATION: {
-        "neutral": [
-            "Ah, I see what you mean...",
-            "Let me clarify...",
-        ],
-    },
-}
-
-
-class NaturalFlowEngine:
-    """
-    Engine for natural conversational flow timing.
-
-    Coordinates:
-    - Response delays based on query complexity
-    - Filler phrases for complex queries
-    - Thinking tones during processing
-    - Turn-taking transitions
-    """
-
-    def __init__(
-        self,
-        event_bus: Optional[VoiceEventBus] = None,
-        thinking_service: Optional[ThinkingFeedbackService] = None,
-        config: Optional[FlowTimingConfig] = None,
-    ):
-        self.event_bus = event_bus or get_event_bus()
-        self.thinking_service = thinking_service or get_thinking_feedback_service()
-        self.config = config or FlowTimingConfig()
-
-        # Session state
-        self._sessions: Dict[str, Dict[str, Any]] = {}
-        self._initialized = False
-
-        # Audio callback (set during session creation)
-        self._audio_callbacks: Dict[str, Callable] = {}
-
-    async def initialize(self) -> None:
-        """Initialize engine and subscribe to events."""
-        if self._initialized:
-            return
-
-        # Initialize thinking service
-        await self.thinking_service.initialize()
-
-        # Subscribe to events
-        self.event_bus.subscribe(
-            "query.classified",
-            self._handle_query_classified,
-            priority=10,
-            engine="natural_flow",
-        )
-
-        self.event_bus.subscribe(
+        # Subscribe to turn-taking events
+        self._event_bus.subscribe(
             "prosody.turn_signal",
             self._handle_turn_signal,
-            priority=5,
-            engine="natural_flow",
+            engine="websocket_handler",
         )
-
-        self.event_bus.subscribe(
-            "acknowledgment.triggered",
-            self._handle_acknowledgment,
-            priority=0,
-            engine="natural_flow",
-        )
-
-        self._initialized = True
-        logger.info("NaturalFlowEngine initialized")
-
-    def register_audio_callback(
-        self,
-        session_id: str,
-        callback: Callable[[bytes], Any],
-    ) -> None:
-        """Register audio callback for a session."""
-        self._audio_callbacks[session_id] = callback
-
-    async def start_session(
-        self,
-        session_id: str,
-        language: str = "en",
-    ) -> None:
-        """Start flow management for a session."""
-        self._sessions[session_id] = {
-            "state": FlowState.IDLE,
-            "language": language,
-            "current_emotion": "neutral",
-            "query_type": QueryType.UNKNOWN,
-            "thinking_active": False,
-        }
-        logger.debug(f"NaturalFlowEngine session started: {session_id}")
-
-    async def _handle_query_classified(self, event: VoiceEvent) -> None:
-        """
-        Handle query classification to determine response timing.
-
-        For complex queries:
-        1. Add appropriate delay
-        2. Optionally play filler phrase
-        3. Start thinking tones
-        """
-        session_id = event.session_id
-        query_type_str = event.data.get("query_type", "unknown")
-        transcript = event.data.get("transcript", "")
-
-        try:
-            query_type = QueryType(query_type_str)
-        except ValueError:
-            query_type = QueryType.UNKNOWN
-
-        if session_id not in self._sessions:
-            return
-
-        session = self._sessions[session_id]
-        session["query_type"] = query_type
-        session["state"] = FlowState.PROCESSING
-
-        # Get timing config for this query type
-        timing = RESPONSE_TIMING.get(query_type, RESPONSE_TIMING[QueryType.UNKNOWN])
-
-        # Apply response delay with jitter
-        if timing.delay_ms > 0:
-            jitter = random.randint(0, self.config.timing_jitter_ms)  # nosec B311
-            await asyncio.sleep((timing.delay_ms + jitter) / 1000)
-
-        # Decide on filler phrase
-        if timing.use_filler and random.random() < self.config.filler_probability:  # nosec B311
-            await self._play_filler(session_id, query_type)
-
-        # Start thinking tones
-        await self._start_thinking(session_id)
-
-    async def _play_filler(
-        self,
-        session_id: str,
-        query_type: QueryType,
-    ) -> None:
-        """Play a filler phrase before AI response."""
-        session = self._sessions.get(session_id)
-        if not session:
-            return
-
-        emotion = session.get("current_emotion", "neutral")
-
-        # Get filler phrases for query type and emotion
-        type_fillers = FILLER_PHRASES.get(query_type, {})
-        phrases = type_fillers.get(emotion, type_fillers.get("neutral", []))
-
-        if not phrases:
-            # Fall back to RESPONSE_TIMING fillers
-            timing = RESPONSE_TIMING.get(query_type)
-            if timing and timing.filler_phrases:
-                phrases = timing.filler_phrases
-
-        if not phrases:
-            return
-
-        # Select phrase (random for variety)
-        phrase = random.choice(phrases)  # nosec B311
-
-        session["state"] = FlowState.FILLER
-
-        # Publish filler event
-        await self.event_bus.publish_event(
-            event_type="filler.triggered",
-            data={
-                "phrase": phrase,
-                "query_type": query_type.value,
-            },
-            session_id=session_id,
-            source_engine="natural_flow",
-        )
-
-        # NOTE: Actual TTS synthesis and playback happens in voice pipeline
-        # The pipeline subscribes to filler.triggered and handles audio
-
-        logger.debug(f"Filler triggered for {session_id}: '{phrase}'")
-
-    async def _start_thinking(self, session_id: str) -> None:
-        """Start thinking feedback tones."""
-        session = self._sessions.get(session_id)
-        if not session:
-            return
-
-        if session.get("thinking_active"):
-            return
-
-        session["state"] = FlowState.THINKING
-        session["thinking_active"] = True
-
-        # Get audio callback
-        callback = self._audio_callbacks.get(session_id)
-        if not callback:
-            logger.warning(f"No audio callback for {session_id}")
-            return
-
-        # Start thinking loop
-        await self.thinking_service.start_thinking_loop(
-            session_id=session_id,
-            on_tone=callback,
-        )
-
-        # Publish event
-        await self.event_bus.publish_event(
-            event_type="thinking.started",
-            data={"session_id": session_id},
-            session_id=session_id,
-            source_engine="natural_flow",
-        )
-
-        logger.debug(f"Thinking tones started for {session_id}")
-
-    async def stop_thinking(self, session_id: str) -> None:
-        """Stop thinking feedback tones."""
-        session = self._sessions.get(session_id)
-        if not session:
-            return
-
-        if not session.get("thinking_active"):
-            return
-
-        session["thinking_active"] = False
-
-        # Get audio callback for end tone
-        callback = self._audio_callbacks.get(session_id)
-
-        # Stop thinking loop
-        await self.thinking_service.stop_thinking_loop(
-            session_id=session_id,
-            play_end_tone=True,
-            on_tone=callback,
-        )
-
-        # Publish event
-        await self.event_bus.publish_event(
-            event_type="thinking.stopped",
-            data={"session_id": session_id},
-            session_id=session_id,
-            source_engine="natural_flow",
-        )
-
-        logger.debug(f"Thinking tones stopped for {session_id}")
 
     async def _handle_turn_signal(self, event: VoiceEvent) -> None:
-        """Handle turn-taking signals."""
-        session_id = event.session_id
+        """Forward turn signals to frontend for UI updates."""
+        if event.session_id != self.config.session_id:
+            return
+
         signal_type = event.data.get("signal_type")
         confidence = event.data.get("confidence", 0.0)
+        should_respond = event.data.get("should_respond", False)
 
-        session = self._sessions.get(session_id)
-        if not session:
-            return
+        # Send to frontend
+        await self._send_message({
+            "type": "turn.signal",
+            "signal_type": signal_type,  # "yield", "hold", "continue"
+            "confidence": confidence,
+            "should_respond": should_respond,
+        })
 
+        # If yielding with high confidence, prepare for user input
         if signal_type == "yield" and confidence > 0.7:
-            # User wants to speak - yield turn
-            session["state"] = FlowState.YIELDING
-
-            # Stop thinking tones if active
-            await self.stop_thinking(session_id)
-
-            # Publish turn yield event
-            await self.event_bus.publish_event(
-                event_type="turn.yielded",
-                data={"confidence": confidence},
-                session_id=session_id,
-                source_engine="natural_flow",
-            )
-
-    async def _handle_acknowledgment(self, event: VoiceEvent) -> None:
-        """Handle acknowledgment events from SmartAcknowledgmentEngine."""
-        session_id = event.session_id
-
-        session = self._sessions.get(session_id)
-        if not session:
-            return
-
-        # If we acknowledged user, update state
-        session["state"] = FlowState.LISTENING
-
-    async def on_response_started(self, session_id: str) -> None:
-        """Called when AI response starts."""
-        session = self._sessions.get(session_id)
-        if session:
-            session["state"] = FlowState.RESPONDING
-            await self.stop_thinking(session_id)
-
-    async def on_response_complete(self, session_id: str) -> None:
-        """Called when AI response completes."""
-        session = self._sessions.get(session_id)
-        if session:
-            session["state"] = FlowState.IDLE
-
-    async def cleanup_session(self, session_id: str) -> None:
-        """Clean up session resources."""
-        await self.stop_thinking(session_id)
-        self._sessions.pop(session_id, None)
-        self._audio_callbacks.pop(session_id, None)
-
-    async def shutdown(self) -> None:
-        """Shutdown engine."""
-        for session_id in list(self._sessions.keys()):
-            await self.cleanup_session(session_id)
-        await self.thinking_service.cleanup()
-        self._initialized = False
-
-
-# Singleton instance
-_natural_flow_engine: Optional[NaturalFlowEngine] = None
-
-
-def get_natural_flow_engine() -> NaturalFlowEngine:
-    """Get or create singleton NaturalFlowEngine."""
-    global _natural_flow_engine
-    if _natural_flow_engine is None:
-        _natural_flow_engine = NaturalFlowEngine()
-    return _natural_flow_engine
+            await self._prepare_for_user_turn()
 ```
 
-## Integration: Extend Voice Pipeline
-
-Update `voice_pipeline_service.py` to integrate with NaturalFlowEngine:
-
-```python
-from app.engines.natural_flow_engine import get_natural_flow_engine
-
-class VoicePipelineSession:
-
-    async def _initialize_engines(self):
-        """Initialize all engines for this session."""
-        # ... existing initialization ...
-
-        # Natural flow engine
-        self._natural_flow = get_natural_flow_engine()
-        if not self._natural_flow._initialized:
-            await self._natural_flow.initialize()
-        await self._natural_flow.start_session(self.session_id, self.config.stt_language)
-
-        # Register audio callback
-        self._natural_flow.register_audio_callback(
-            self.session_id,
-            self._send_audio_chunk,
-        )
-
-    async def _handle_stt_final_transcript(self, text: str) -> None:
-        """Handle final STT transcript."""
-        # Classify query type
-        query_type = classify_query_type(text)
-
-        # Publish query classification event
-        if self._event_bus:
-            await self._event_bus.publish_event(
-                event_type="query.classified",
-                data={
-                    "query_type": query_type.value,
-                    "transcript": text,
-                },
-                session_id=self.session_id,
-                source_engine="voice_pipeline",
-            )
-
-        # Continue with LLM processing...
-
-    async def _start_response(self) -> None:
-        """Called when AI starts responding."""
-        await self._natural_flow.on_response_started(self.session_id)
-        # ... existing response logic ...
-
-    async def _complete_response(self) -> None:
-        """Called when AI response completes."""
-        await self._natural_flow.on_response_complete(self.session_id)
-        # ... existing completion logic ...
-
-    async def _handle_filler_triggered(self, event: VoiceEvent) -> None:
-        """Handle filler.triggered event - synthesize and play filler."""
-        phrase = event.data.get("phrase")
-        if phrase:
-            # Synthesize filler with ElevenLabs and send
-            await self._synthesize_and_send_phrase(phrase)
-
-            # Publish completion
-            await self._event_bus.publish_event(
-                event_type="filler.played",
-                data={"phrase": phrase},
-                session_id=self.session_id,
-                source_engine="voice_pipeline",
-            )
-```
-
-## Integration: Extend PredictiveTurnTakingEngine
-
-Add natural flow coordination to existing turn-taking:
-
-```python
-# In app/engines/conversation_engine/turn_taking.py
-
-class PredictiveTurnTakingEngine:
-
-    async def _on_yield_decision(
-        self,
-        session_id: str,
-        confidence: float,
-    ) -> None:
-        """Enhanced yield handling with natural flow coordination."""
-
-        # Publish turn signal (existing)
-        await self.event_bus.publish_event(
-            event_type="prosody.turn_signal",
-            data={
-                "signal_type": "yield",
-                "confidence": confidence,
-                "should_respond": False,
-            },
-            session_id=session_id,
-            source_engine="conversation",
-        )
-
-        # Natural flow engine will handle:
-        # - Stopping thinking tones
-        # - Publishing turn.yielded
-        # - Coordinating with SmartAcknowledgmentEngine
-```
-
----
-
-# Frontend Integration
-
-## Updated ThinkingFeedbackPanel
-
-The frontend `ThinkingFeedbackPanel` is already integrated. The backend now coordinates thinking tones via VoiceEventBus events, so the frontend receives properly timed audio chunks.
-
-## WebSocket Event Handling
-
-Add handlers for new event types in the frontend WebSocket connection:
+#### Step 2: Update Frontend Session Hook
 
 ```typescript
-// In useThinkerTalkerSession.ts or similar
+// apps/web-app/src/hooks/useThinkerTalkerSession.ts
 
-function handleWebSocketMessage(event: MessageEvent) {
-  const data = JSON.parse(event.data);
+// Add state:
+const [turnSignal, setTurnSignal] = useState<{
+  type: 'yield' | 'hold' | 'continue' | null;
+  confidence: number;
+  shouldRespond: boolean;
+}>({ type: null, confidence: 0, shouldRespond: false });
 
-  switch (data.type) {
-    case "filler.triggered":
-      // Visual indication that filler is playing
-      setFillerPlaying(true);
-      break;
+// Add to message handling:
+case "turn.signal":
+  setTurnSignal({
+    type: data.signal_type,
+    confidence: data.confidence,
+    shouldRespond: data.should_respond,
+  });
 
-    case "filler.played":
-      setFillerPlaying(false);
-      break;
+  // Call callback if provided
+  onTurnSignal?.({
+    type: data.signal_type,
+    confidence: data.confidence,
+    shouldRespond: data.should_respond,
+  });
+  break;
+```
 
-    case "thinking.started":
-      setThinkingActive(true);
-      break;
+#### Step 3: Expose Turn Signal in Voice Mode Hook
 
-    case "thinking.stopped":
-      setThinkingActive(false);
-      break;
+```typescript
+// apps/web-app/src/hooks/useThinkerTalkerVoiceMode.ts
 
-    case "turn.yielded":
-      // AI is yielding turn - update UI
-      setPipelineState("listening");
-      break;
+export interface TTVoiceModeReturn {
+  // ... existing fields ...
 
-    case "acknowledgment.triggered":
-      // Show what acknowledgment was used (for debugging/feedback)
-      console.log(`Acknowledgment: ${data.phrase} (intent: ${data.intent})`);
-      break;
-  }
+  // Turn-taking (NEW)
+  turnSignal: {
+    type: 'yield' | 'hold' | 'continue' | null;
+    confidence: number;
+    shouldRespond: boolean;
+  };
+  isAIYieldingTurn: boolean;  // Convenience flag
+}
+
+// In return:
+return useMemo(() => ({
+  // ... existing fields ...
+
+  // Turn-taking
+  turnSignal: session.turnSignal,
+  isAIYieldingTurn: session.turnSignal.type === 'yield' && session.turnSignal.confidence > 0.7,
+}), [...]);
+```
+
+#### Step 4: Update UI Components
+
+```typescript
+// apps/web-app/src/components/voice/CompactVoiceBar.tsx
+
+interface CompactVoiceBarProps {
+  // ... existing props ...
+  turnSignal?: {
+    type: 'yield' | 'hold' | 'continue' | null;
+    confidence: number;
+  };
+}
+
+export function CompactVoiceBar({
+  // ... existing props ...
+  turnSignal,
+}: CompactVoiceBarProps) {
+  // Show subtle indicator when AI is yielding turn
+  const showYieldIndicator = turnSignal?.type === 'yield' && turnSignal.confidence > 0.7;
+
+  return (
+    <div className="...">
+      {/* ... existing content ... */}
+
+      {/* Turn yield indicator */}
+      {showYieldIndicator && (
+        <span className="text-xs text-green-500 animate-pulse">
+          Your turn...
+        </span>
+      )}
+    </div>
+  );
 }
 ```
 
 ---
 
-# Testing Strategy
+## Issue 4: Progressive Response Not Wired to WebSocket
+
+### Problem
+
+`ConversationEngine` has:
+
+- `classify_query()` → Determines if query is simple/complex/urgent
+- `get_filler_response()` → Returns appropriate filler ("Hmm, let me think...")
+
+But these are NOT used in the WebSocket handler! The handler goes directly to LLM without:
+
+1. Classifying the query
+2. Adding appropriate delays for complex queries
+3. Playing filler phrases
+
+### Solution: Wire ConversationEngine to WebSocket Flow
+
+#### Step 1: Update WebSocket Handler to Use ConversationEngine
+
+```python
+# services/api-gateway/app/services/thinker_talker_websocket_handler.py
+
+from app.engines.conversation_engine import ConversationEngine, QueryClassification
+
+class ThinkerTalkerWebSocketHandler:
+
+    def __init__(self, ...):
+        # ... existing init ...
+        self._conversation_engine = ConversationEngine(
+            event_bus=self._event_bus,
+        )
+
+    async def start(self) -> bool:
+        """Start handler with ConversationEngine initialization."""
+        # ... existing start logic ...
+
+        # Initialize conversation engine
+        await self._conversation_engine.initialize()
+
+        # ... rest of start logic ...
+
+    async def _process_user_utterance(self, transcript: str) -> None:
+        """
+        REVISED: Process user utterance with ConversationEngine integration.
+        """
+        # 1. Classify the query
+        classification = await self._conversation_engine.classify_query(
+            text=transcript,
+            prosody_features=self._last_prosody_features,
+            emotion_state={"dominant_emotion": self._current_emotion},
+            session_id=self.config.session_id,
+        )
+
+        # 2. Send classification to frontend
+        await self._send_message({
+            "type": "query.classified",
+            "query_type": classification.query_type,
+            "estimated_response_length": classification.estimated_response_length,
+            "use_filler": classification.use_filler,
+        })
+
+        # 3. Apply recommended delay (human-like timing)
+        if classification.recommended_delay_ms > 0:
+            await asyncio.sleep(classification.recommended_delay_ms / 1000)
+
+        # 4. Play filler if recommended
+        if classification.use_filler:
+            filler = await self._conversation_engine.get_filler_response(
+                query_classification=classification,
+                emotion_state={"dominant_emotion": self._current_emotion},
+            )
+            if filler:
+                await self._play_filler_phrase(filler)
+
+        # 5. Start thinking feedback
+        await self._start_thinking_feedback()
+
+        # 6. Process with Thinker (existing logic)
+        await self._process_with_thinker(transcript)
+
+    async def _play_filler_phrase(self, filler: str) -> None:
+        """Play a filler phrase before LLM response."""
+        # Send filler event
+        await self._send_message({
+            "type": "filler.triggered",
+            "phrase": filler,
+        })
+
+        # Synthesize and send audio
+        audio_chunks = await self._talker_service.synthesize_text(
+            text=filler,
+            voice_config=VoiceConfig(voice_id=self.config.voice_id),
+        )
+
+        async for chunk in audio_chunks:
+            await self._send_audio_chunk(chunk)
+
+        # Send completion
+        await self._send_message({
+            "type": "filler.played",
+            "phrase": filler,
+        })
+```
+
+#### Step 2: Update Frontend to Handle Filler Events
+
+```typescript
+// apps/web-app/src/hooks/useThinkerTalkerSession.ts
+
+// Add state:
+const [fillerState, setFillerState] = useState<{
+  isPlaying: boolean;
+  phrase: string | null;
+}>({ isPlaying: false, phrase: null });
+
+// Add to message handling:
+case "filler.triggered":
+  setFillerState({ isPlaying: true, phrase: data.phrase });
+  onFillerStarted?.(data.phrase);
+  break;
+
+case "filler.played":
+  setFillerState({ isPlaying: false, phrase: null });
+  onFillerEnded?.(data.phrase);
+  break;
+
+case "query.classified":
+  onQueryClassified?.({
+    queryType: data.query_type,
+    estimatedResponseLength: data.estimated_response_length,
+    useFiller: data.use_filler,
+  });
+  break;
+```
+
+#### Step 3: Update Voice Mode Hook to Expose Filler State
+
+```typescript
+// apps/web-app/src/hooks/useThinkerTalkerVoiceMode.ts
+
+export interface TTVoiceModeReturn {
+  // ... existing fields ...
+
+  // Filler phrases (NEW)
+  isFillerPlaying: boolean;
+  currentFiller: string | null;
+
+  // Query classification (NEW)
+  queryClassification: {
+    type: string | null;
+    estimatedLength: string | null;
+  };
+}
+```
+
+### New Event Types for Issue 4
+
+```python
+# Add to app/core/event_bus.py EVENTS list:
+"filler.triggered",   # Filler phrase about to play
+"filler.played",      # Filler phrase finished
+```
+
+---
+
+# Part 3: Complete Integration Architecture
+
+## Event Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         COMPLETE EVENT FLOW                                      │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  USER SPEAKS                                                                     │
+│       │                                                                          │
+│       ▼                                                                          │
+│  ┌─────────────────┐     ┌─────────────────────────────────────────────────┐    │
+│  │ STT Service     │────►│ VoiceEventBus                                    │    │
+│  │ (transcript)    │     │                                                  │    │
+│  └─────────────────┘     │  Events:                                         │    │
+│                          │  - transcript.partial ─────────────────┐         │    │
+│                          │  - transcript.final ───────────────────┤         │    │
+│                          │                                        │         │    │
+│  ┌─────────────────┐     │                                        ▼         │    │
+│  │ PredictiveTurn  │────►│  - prosody.turn_signal ────────► WebSocket ──────┼───►│
+│  │ TakingEngine    │     │                                   Handler        │    │
+│  └─────────────────┘     │                                        │         │    │
+│                          │                                        │         │    │
+│  ┌─────────────────┐     │                                        │         │    │
+│  │ ConversationEng │────►│  - query.classified ──────────────────►│         │    │
+│  │ (classify_query)│     │                                        │         │    │
+│  └─────────────────┘     │                                        │         │    │
+│                          │                                        ▼         │    │
+│  ┌─────────────────┐     │                              ┌─────────────────┐ │    │
+│  │ BackchannelSvc  │────►│  - acknowledgment.intent ───►│ Frontend        │ │    │
+│  │ (+IntentClass)  │     │  - acknowledgment.triggered  │ (React)         │ │    │
+│  └─────────────────┘     │                              │                 │ │    │
+│                          │                              │ Updates:        │ │    │
+│  ┌─────────────────┐     │                              │ - turnSignal    │ │    │
+│  │ ThinkingFeedback│────►│  - thinking.started ────────►│ - isThinking    │ │    │
+│  │ Service         │     │  - thinking.stopped          │ - fillerState   │ │    │
+│  └─────────────────┘     │                              │ - ackPhrase     │ │    │
+│                          │                              └─────────────────┘ │    │
+│  ┌─────────────────┐     │                                                  │    │
+│  │ Progressive     │────►│  - filler.triggered ─────────────────────────────┘    │
+│  │ Response        │     │  - filler.played                                      │
+│  └─────────────────┘     │                                                       │
+│                          └───────────────────────────────────────────────────────┘│
+│                                                                                   │
+└───────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Complete Event Types List
+
+```python
+# app/core/event_bus.py - COMPLETE EVENTS LIST
+
+EVENTS = [
+    # === Existing Events ===
+    "emotion.updated",           # Emotion detection result
+    "emotion.deviation",         # Significant emotion change
+    "prosody.turn_signal",       # Turn-taking prediction (YIELD/HOLD/CONTINUE)
+    "repair.started",            # Repair attempt started
+    "query.classified",          # Query type (simple/complex/urgent/clarification)
+    "clinical.alert",            # Critical clinical finding
+    "context.emotion_alert",     # Emotion-triggered context
+
+    # === Issue 1: Unified Thinking Tones ===
+    "thinking.started",          # Backend started thinking feedback
+    "thinking.stopped",          # Backend stopped thinking feedback
+
+    # === Issue 2: Smart Acknowledgments ===
+    "transcript.partial",        # Partial STT transcript (for intent analysis)
+    "acknowledgment.intent",     # Intent classified from transcript
+    "acknowledgment.triggered",  # Acknowledgment phrase selected
+    "acknowledgment.played",     # Acknowledgment audio finished
+
+    # === Issue 4: Progressive Response ===
+    "filler.triggered",          # Filler phrase about to play
+    "filler.played",             # Filler phrase finished
+
+    # === Turn Management ===
+    "turn.yielded",              # AI yielded turn to user
+    "turn.taken",                # AI took turn from user
+]
+```
+
+## WebSocket Message Types (Server → Client)
+
+```typescript
+// Complete list of WebSocket message types
+
+type WebSocketMessageType =
+  // Existing
+  | "transcript.delta"
+  | "transcript.complete"
+  | "response.delta"
+  | "response.complete"
+  | "audio.output"
+  | "tool.call"
+  | "tool.result"
+  | "voice.state"
+  | "error"
+  | "backchannel" // Existing backchannel
+
+  // Issue 1: Thinking Tones
+  | "thinking.started"
+  | "thinking.stopped"
+
+  // Issue 2: Smart Acknowledgments
+  | "acknowledgment" // Smart acknowledgment with intent
+
+  // Issue 3: Turn-Taking
+  | "turn.signal" // Turn-taking signal from backend
+
+  // Issue 4: Progressive Response
+  | "query.classified" // Query classification result
+  | "filler.triggered" // Filler phrase starting
+  | "filler.played"; // Filler phrase finished
+```
+
+---
+
+# Part 4: Implementation Plan
+
+## Phase 1: Unified Thinking Tones (Issue 1)
+
+**Goal:** Backend `ThinkingFeedbackService` becomes single source of truth.
+
+| Task                                           | File                                  | Effort |
+| ---------------------------------------------- | ------------------------------------- | ------ |
+| Add event_bus to ThinkingFeedbackService       | `thinking_feedback_service.py`        | 1 hr   |
+| Publish thinking.started/stopped events        | `thinking_feedback_service.py`        | 1 hr   |
+| Subscribe WebSocket handler to events          | `thinker_talker_websocket_handler.py` | 1 hr   |
+| Forward events to frontend                     | `thinker_talker_websocket_handler.py` | 30 min |
+| Update session hook to receive events          | `useThinkerTalkerSession.ts`          | 1 hr   |
+| Update ThinkingFeedbackPanel to respect source | `ThinkingFeedbackPanel.tsx`           | 1 hr   |
+| Add tests                                      | `tests/`                              | 2 hr   |
+
+**Total:** ~8 hours
+
+## Phase 2: Smart Acknowledgments (Issue 2)
+
+**Goal:** Add intent classification to BackchannelService.
+
+| Task                                                 | File                                  | Effort |
+| ---------------------------------------------------- | ------------------------------------- | ------ |
+| Create IntentClassifier module                       | `intent_classifier.py` (NEW)          | 2 hr   |
+| Add get_smart_acknowledgment() to BackchannelService | `backchannel_service.py`              | 2 hr   |
+| Wire to WebSocket handler                            | `thinker_talker_websocket_handler.py` | 1 hr   |
+| Update frontend to handle acknowledgment messages    | `useThinkerTalkerSession.ts`          | 1 hr   |
+| Expose acknowledgment state in voice mode hook       | `useThinkerTalkerVoiceMode.ts`        | 30 min |
+| Add tests                                            | `tests/`                              | 2 hr   |
+
+**Total:** ~9 hours
+
+## Phase 3: Frontend Turn-Taking (Issue 3)
+
+**Goal:** Wire prosody.turn_signal events to frontend.
+
+| Task                                               | File                                  | Effort |
+| -------------------------------------------------- | ------------------------------------- | ------ |
+| Subscribe WebSocket handler to prosody.turn_signal | `thinker_talker_websocket_handler.py` | 1 hr   |
+| Forward turn signals to frontend                   | `thinker_talker_websocket_handler.py` | 30 min |
+| Add turnSignal state to session hook               | `useThinkerTalkerSession.ts`          | 1 hr   |
+| Expose in voice mode hook                          | `useThinkerTalkerVoiceMode.ts`        | 30 min |
+| Update UI components                               | `CompactVoiceBar.tsx`, etc.           | 1 hr   |
+| Add tests                                          | `tests/`                              | 1 hr   |
+
+**Total:** ~5 hours
+
+## Phase 4: Progressive Response (Issue 4)
+
+**Goal:** Wire ConversationEngine query classification and fillers to WebSocket.
+
+| Task                                     | File                                  | Effort |
+| ---------------------------------------- | ------------------------------------- | ------ |
+| Initialize ConversationEngine in handler | `thinker_talker_websocket_handler.py` | 1 hr   |
+| Call classify_query() before processing  | `thinker_talker_websocket_handler.py` | 1 hr   |
+| Apply recommended_delay_ms               | `thinker_talker_websocket_handler.py` | 30 min |
+| Call get_filler_response() and play      | `thinker_talker_websocket_handler.py` | 1 hr   |
+| Send classification/filler events        | `thinker_talker_websocket_handler.py` | 30 min |
+| Handle events in frontend                | `useThinkerTalkerSession.ts`          | 1 hr   |
+| Expose state in voice mode hook          | `useThinkerTalkerVoiceMode.ts`        | 30 min |
+| Add tests                                | `tests/`                              | 2 hr   |
+
+**Total:** ~8 hours
+
+## Total Implementation Estimate
+
+| Phase                           | Effort    |
+| ------------------------------- | --------- |
+| Phase 1: Unified Thinking Tones | 8 hr      |
+| Phase 2: Smart Acknowledgments  | 9 hr      |
+| Phase 3: Frontend Turn-Taking   | 5 hr      |
+| Phase 4: Progressive Response   | 8 hr      |
+| **Total**                       | **30 hr** |
+
+---
+
+# Part 5: Testing Strategy
 
 ## Unit Tests
 
 ```python
-# tests/test_smart_acknowledgment_engine.py
+# tests/test_intent_classifier.py
 
 import pytest
-from app.engines.smart_acknowledgment_engine import (
-    SmartAcknowledgmentEngine,
-    BargeInIntent,
-)
+from app.services.intent_classifier import IntentClassifier, BargeInIntent
 
-class TestIntentClassification:
+class TestIntentClassifier:
 
-    def test_question_intent(self):
-        engine = SmartAcknowledgmentEngine()
-        result = engine.classify_intent("What is the meaning of this?")
+    def test_question_detection(self):
+        classifier = IntentClassifier()
+        result = classifier.classify("What is the dosage?")
         assert result.intent == BargeInIntent.QUESTION
-        assert result.confidence > 0.5
+        assert result.should_acknowledge is True
 
-    def test_correction_intent(self):
-        engine = SmartAcknowledgmentEngine()
-        result = engine.classify_intent("No, that's not what I said")
+    def test_correction_detection(self):
+        classifier = IntentClassifier()
+        result = classifier.classify("No, that's not what I said")
         assert result.intent == BargeInIntent.CORRECTION
 
-    def test_backchannel_detection(self):
-        engine = SmartAcknowledgmentEngine()
-        result = engine.classify_intent("uh huh")
+    def test_backchannel_no_acknowledge(self):
+        classifier = IntentClassifier()
+        result = classifier.classify("uh huh")
         assert result.intent == BargeInIntent.BACKCHANNEL
+        assert result.should_acknowledge is False
+
+    def test_emotion_affects_phrase(self):
+        classifier = IntentClassifier()
+        neutral = classifier.classify("Wait, stop", emotion="neutral")
+        frustrated = classifier.classify("Wait, stop", emotion="frustrated")
+        assert neutral.suggested_phrase != frustrated.suggested_phrase
 ```
 
 ## Integration Tests
 
 ```python
-# tests/test_natural_flow_integration.py
+# tests/test_websocket_integration.py
 
 import pytest
-from app.core.event_bus import get_event_bus, reset_event_bus
-from app.engines.natural_flow_engine import get_natural_flow_engine
+from app.services.thinker_talker_websocket_handler import ThinkerTalkerWebSocketHandler
 
 @pytest.fixture
-def event_bus():
-    reset_event_bus()
-    return get_event_bus()
+async def handler():
+    # Create mock websocket and handler
+    ...
 
-@pytest.fixture
-async def natural_flow(event_bus):
-    engine = get_natural_flow_engine()
-    engine.event_bus = event_bus
-    await engine.initialize()
-    yield engine
-    await engine.shutdown()
+async def test_thinking_events_forwarded(handler):
+    """Test that thinking events are forwarded to frontend."""
+    messages = []
+    handler._send_message = lambda m: messages.append(m)
 
-async def test_thinking_tones_coordination(natural_flow, event_bus):
-    """Test that thinking tones start after query classification."""
-    session_id = "test-session"
+    # Trigger processing
+    await handler._process_user_utterance("What is aspirin?")
 
-    events_received = []
+    # Verify thinking.started was sent
+    assert any(m["type"] == "thinking.started" for m in messages)
 
-    async def capture_event(event):
-        events_received.append(event.event_type)
+async def test_turn_signal_forwarded(handler, event_bus):
+    """Test that turn signals are forwarded to frontend."""
+    messages = []
+    handler._send_message = lambda m: messages.append(m)
 
-    event_bus.subscribe("thinking.started", capture_event)
-
-    await natural_flow.start_session(session_id)
-    natural_flow.register_audio_callback(session_id, lambda x: None)
-
-    # Simulate query classification
+    # Publish turn signal event
     await event_bus.publish_event(
-        event_type="query.classified",
-        data={"query_type": "complex", "transcript": "Explain quantum physics"},
-        session_id=session_id,
+        event_type="prosody.turn_signal",
+        data={"signal_type": "yield", "confidence": 0.85},
+        session_id=handler.config.session_id,
         source_engine="test",
     )
 
-    # Wait for async processing
-    await asyncio.sleep(1)
-
-    assert "thinking.started" in events_received
+    # Verify turn.signal was sent
+    assert any(m["type"] == "turn.signal" for m in messages)
 ```
 
 ---
 
-# Migration Plan
+# Part 6: Rollout Strategy
 
-## Phase 2 Implementation Order
-
-1. **Week 1: Event Bus Updates**
-   - Add new event types to `event_bus.py`
-   - Update event bus tests
-
-2. **Week 2: SmartAcknowledgmentEngine**
-   - Create engine file
-   - Implement intent classification
-   - Add event subscriptions/publications
-
-3. **Week 3: Integration**
-   - Update voice pipeline to publish `transcript.partial`
-   - Test end-to-end flow
-   - A/B test configuration
-
-## Phase 3 Implementation Order
-
-1. **Week 4: NaturalFlowEngine**
-   - Create engine file
-   - Integrate with ThinkingFeedbackService
-   - Implement filler phrase logic
-
-2. **Week 5: Pipeline Integration**
-   - Update voice pipeline service
-   - Add filler handling
-   - Test timing behavior
-
-3. **Week 6: Frontend & Polish**
-   - Update WebSocket handlers
-   - Add visual feedback
-   - User testing
-
----
-
-# Monitoring & Metrics
-
-## Key Metrics to Track
+## Feature Flags
 
 ```python
-# Via event bus analytics
+# All new features should be behind feature flags
 
-metrics = {
-    # Phase 2
-    "acknowledgment_intent_distribution": {},  # Count by intent type
-    "acknowledgment_confidence_avg": 0.0,
-    "acknowledgment_phrases_used": {},
-
-    # Phase 3
-    "filler_usage_rate": 0.0,  # % of complex queries with fillers
-    "thinking_tone_duration_avg_ms": 0,
-    "response_timing_by_query_type": {},
-
-    # User satisfaction proxies
-    "barge_in_rate": 0.0,  # Lower = better flow
-    "correction_rate": 0.0,  # Lower = better understanding
+FEATURE_FLAGS = {
+    "unified_thinking_tones": True,     # Issue 1
+    "smart_acknowledgments": True,      # Issue 2
+    "frontend_turn_signals": True,      # Issue 3
+    "progressive_response": True,       # Issue 4
 }
 ```
 
-## Event Bus Analytics Subscription
+## Gradual Rollout
 
-```python
-# Subscribe to all acknowledgment and flow events for analytics
+1. **Week 1:** Deploy with all flags disabled, backend changes only
+2. **Week 2:** Enable `unified_thinking_tones` for 10% of users
+3. **Week 3:** Enable all flags for 10% of users
+4. **Week 4:** Gradual increase to 100%
 
-async def analytics_handler(event: VoiceEvent):
-    """Capture metrics from voice events."""
-    await session_analytics_service.record_event(
-        session_id=event.session_id,
-        event_type=event.event_type,
-        data=event.data,
-        correlation_id=event.correlation_id,
-    )
+## Monitoring
 
-event_bus.subscribe("*", analytics_handler, priority=-100, engine="analytics")
-```
+Track these metrics:
+
+- Thinking tone double-play rate (should go to 0)
+- Acknowledgment accuracy (intent vs user feedback)
+- Turn-taking interrupt rate (lower = better)
+- Time-to-first-response by query type
 
 ---
 
 # Summary
 
-This revised design:
+This comprehensive revision addresses all four identified issues:
 
-1. **Uses VoiceEventBus** for all cross-engine communication
-2. **Extends existing services** rather than duplicating:
-   - BackchannelService (unchanged, used via SmartAcknowledgmentEngine)
-   - ThinkingFeedbackService (unchanged, coordinated via NaturalFlowEngine)
-   - PredictiveTurnTakingEngine (events consumed by new engines)
-3. **Follows engine pattern** with proper initialization and event_bus injection
-4. **Minimizes new code** by leveraging existing infrastructure
-5. **Enables A/B testing** through event-based coordination
+| Issue                             | Solution                                              | Status          |
+| --------------------------------- | ----------------------------------------------------- | --------------- |
+| 1. Dual thinking tones            | Backend as source of truth, events via VoiceEventBus  | Design Complete |
+| 2. Missing intent classification  | Add `IntentClassifier` to `BackchannelService`        | Design Complete |
+| 3. Turn-taking not in frontend    | Wire `prosody.turn_signal` to WebSocket               | Design Complete |
+| 4. Progressive response not wired | Integrate `ConversationEngine` into WebSocket handler | Design Complete |
 
-The implementation is modular and can be rolled out incrementally with feature flags.
+All solutions:
+
+- ✅ Use VoiceEventBus for coordination
+- ✅ Extend existing services (no duplication)
+- ✅ Wire through WebSocket handler to frontend
+- ✅ Include frontend state management changes
+- ✅ Include UI component updates
+- ✅ Include testing strategy
+
+**Estimated total effort:** 30 hours

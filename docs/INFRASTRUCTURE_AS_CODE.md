@@ -14,7 +14,7 @@ tags:
   - infrastructure
   - code
 category: deployment
-component: "infra"
+component: "infra/terraform"
 relatedPaths:
   - "infrastructure/terraform"
   - "infrastructure/ansible"

@@ -1,5 +1,6 @@
 ---
 title: Feature Flags Phase 4 - User Overrides
+slug: feature-flags/phase-4-user-overrides-plan
 status: draft
 lastUpdated: 2025-12-04
 audience: [developers, admins]

@@ -16,19 +16,26 @@ tags:
   - index
   - reference
 category: ai
-version: 1.3.0
+version: 1.4.0
 component: "platform/ai-agents"
 relatedPaths:
   - "services/api-gateway/app/main.py"
   - "apps/docs-site/scripts/generate-agent-json.js"
   - "apps/docs-site/scripts/generate-doc-code-map.mjs"
+  - "services/api-gateway/app/services/thinking_feedback_service.py"
+  - "services/api-gateway/app/services/backchannel_service.py"
+  - "services/api-gateway/app/services/thinker_talker_websocket_handler.py"
+  - "services/api-gateway/app/core/event_bus.py"
+  - "apps/web-app/src/hooks/useThinkerTalkerSession.ts"
 ai_summary: >-
-  Catalog of common AI agent tasks with relevant docs and commands. Tasks include:
+  Catalog of 20 common AI agent tasks with relevant docs and commands. Tasks include:
   understand project status, debug backend/frontend/voice issues, update documentation,
   add API endpoints, work on admin panel, docs health audit, repository navigation tasks,
-  and NEW doc-code crosswalk tasks (audit relatedPaths, explain files using docs, find
-  feature implementations). Each task links to specific docs, code paths, API endpoints,
-  and diagnostic commands. Use /agent/doc-code-map.json for bidirectional doc ↔ code navigation.
+  doc-code crosswalk tasks, and NEW Task 20: Voice Enhancement Implementation (Dec 2025)
+  addressing 4 critical issues - dual thinking tones, missing intent classification,
+  turn-taking integration, progressive response wiring. Each task links to specific docs,
+  code paths, API endpoints, and diagnostic commands. Use /agent/doc-code-map.json for
+  bidirectional doc ↔ code navigation.
 ---
 
 # Agent Task Index
@@ -486,6 +493,84 @@ curl https://assistdocs.asimo.io/agent/repo/manifest.json | jq '[.files[] | sele
 | Web App       | next.config.js, page.tsx, layout.tsx         |
 | Admin Panel   | next.config.js, page.tsx, layout.tsx         |
 | Documentation | START_HERE.md, AGENT_ONBOARDING.md           |
+
+---
+
+## Voice Enhancement Tasks
+
+These tasks relate to the ongoing Smart Conversational Voice Enhancement work.
+
+### 20. Voice Enhancement Implementation
+
+**Goal**: Implement natural conversational voice mode with smart acknowledgments, unified thinking tones, and turn-taking
+
+**Key Documents:**
+
+- [Smart Conversational Voice Design](../voice/smart-conversational-voice-design.md) - **Comprehensive design document (v3.0)**
+- [Voice Configuration](../voice/voice-configuration.md) - Voice constants and TTS setup
+- [Talker Service](../services/talker-service.md) - TTS synthesis service
+- [Thinker Service](../services/thinker-service.md) - LLM orchestration
+
+**Critical Issues Being Addressed:**
+
+| Issue   | Description                                                     | Status          |
+| ------- | --------------------------------------------------------------- | --------------- |
+| Issue 1 | Dual thinking tone systems (frontend + backend) not coordinated | Design Complete |
+| Issue 2 | BackchannelService lacks intent classification                  | Design Complete |
+| Issue 3 | Turn-taking events not reaching frontend                        | Design Complete |
+| Issue 4 | Progressive response not wired to WebSocket                     | Design Complete |
+
+**Key Files to Modify:**
+
+Backend:
+
+- `services/api-gateway/app/services/thinking_feedback_service.py` - Add VoiceEventBus
+- `services/api-gateway/app/services/backchannel_service.py` - Add IntentClassifier
+- `services/api-gateway/app/services/thinker_talker_websocket_handler.py` - Wire all events
+- `services/api-gateway/app/services/intent_classifier.py` - NEW: Intent classification
+- `services/api-gateway/app/core/event_bus.py` - Add new event types
+
+Frontend:
+
+- `apps/web-app/src/hooks/useThinkerTalkerSession.ts` - Handle new message types
+- `apps/web-app/src/hooks/useThinkerTalkerVoiceMode.ts` - Expose new state
+- `apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx` - Respect backend source
+
+**New VoiceEventBus Events:**
+
+```python
+# Issue 1: Thinking Tones
+"thinking.started"      # Backend started thinking feedback
+"thinking.stopped"      # Backend stopped thinking feedback
+
+# Issue 2: Smart Acknowledgments
+"acknowledgment.intent"     # Intent classified from transcript
+"acknowledgment.triggered"  # Acknowledgment phrase selected
+
+# Issue 4: Progressive Response
+"filler.triggered"    # Filler phrase about to play
+"filler.played"       # Filler phrase finished
+```
+
+**Implementation Order:**
+
+1. Phase 1: Unified Thinking Tones (~8 hr)
+2. Phase 2: Smart Acknowledgments (~9 hr)
+3. Phase 3: Frontend Turn-Taking (~5 hr)
+4. Phase 4: Progressive Response (~8 hr)
+
+**Quick Commands:**
+
+```bash
+# Run backend tests
+cd services/api-gateway && pytest tests/ -v -k "voice or backchannel or thinking"
+
+# Check VoiceEventBus subscribers
+grep -r "subscribe" services/api-gateway/app/
+
+# Check WebSocket message types
+grep -r "type.*:" apps/web-app/src/hooks/useThinkerTalkerSession.ts
+```
 
 ---
 
