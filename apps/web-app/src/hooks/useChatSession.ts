@@ -448,17 +448,21 @@ export function useChatSession(
 
       ws.onerror = (error) => {
         isConnectingRef.current = false;
-        // Only log as error if this wasn't an intentional disconnect or already closed
-        // Intentional disconnects and closed connections often trigger error events
-        // that are expected and don't indicate real problems
+        // Only log as error if this wasn't an intentional disconnect, already closed,
+        // or from an aborted connection (one we abandoned while connecting).
+        // These cases often trigger error events that are expected and don't indicate real problems.
         const isAlreadyClosed = ws.readyState === WebSocket.CLOSED;
-        if (intentionalDisconnectRef.current || isAlreadyClosed) {
+        const isExpected =
+          intentionalDisconnectRef.current ||
+          isAlreadyClosed ||
+          abortOnOpenRef.current ||
+          wsRef.current !== ws; // This WS is no longer the active one
+        if (isExpected) {
           websocketLog.debug(
-            "Error event (expected - intentional or already closed):",
+            "Error event (expected - intentional, closed, or superseded):",
             {
               type: error.type,
               readyState: ws.readyState,
-              intentional: intentionalDisconnectRef.current,
             },
           );
         } else {
