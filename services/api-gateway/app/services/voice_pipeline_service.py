@@ -766,7 +766,8 @@ class VoicePipelineSession:
             )
             await self._stt_session.start()
 
-            await self._send_state_update()
+            # Send barge_in reason so frontend knows to stop audio playback
+            await self._send_state_update(reason="barge_in")
 
     async def stop(self) -> PipelineMetrics:
         """
@@ -1674,12 +1675,18 @@ class VoicePipelineSession:
             )
         )
 
-    async def _send_state_update(self) -> None:
-        """Send state update to client."""
+    async def _send_state_update(self, reason: str = "natural") -> None:
+        """Send state update to client.
+
+        Args:
+            reason: Reason for state change. "barge_in" indicates user interrupted,
+                    "natural" indicates normal completion. Frontend uses this to
+                    decide whether to stop audio playback.
+        """
         await self._on_message(
             PipelineMessage(
                 type="voice.state",
-                data={"state": self._state.value},
+                data={"state": self._state.value, "reason": reason},
             )
         )
 

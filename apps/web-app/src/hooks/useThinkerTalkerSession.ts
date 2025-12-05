@@ -1226,19 +1226,24 @@ export function useThinkerTalkerSession(
         case "voice.state": {
           // Pipeline state update
           const state = message.state as PipelineState;
+          const reason = message.reason as string | undefined;
           const prevState = pipelineState;
           setPipelineState(state);
           options.onPipelineStateChange?.(state);
 
           if (state === "listening") {
             setIsSpeaking(false);
-            // If we were speaking and now listening, this is a barge-in from the backend
-            // Stop audio playback to prevent continued TTS output
-            if (prevState === "speaking") {
+            // Only stop audio playback if this is an actual barge-in (user interrupted)
+            // Normal completion (reason !== "barge_in") should let audio finish playing
+            if (prevState === "speaking" && reason === "barge_in") {
               voiceLog.info(
-                "[ThinkerTalker] State changed from speaking to listening - stopping playback (barge-in)",
+                "[ThinkerTalker] Barge-in detected - stopping playback",
               );
               options.onStopPlayback?.();
+            } else if (prevState === "speaking") {
+              voiceLog.info(
+                "[ThinkerTalker] State changed to listening (natural completion) - audio continues playing",
+              );
             }
           } else if (state === "speaking") {
             setIsSpeaking(true);
