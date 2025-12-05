@@ -9,7 +9,13 @@ audience:
   - ai-agents
 tags: [voice, security, phi, stt, whisper, hipaa, v4]
 summary: Guide to PHI-aware speech-to-text routing for HIPAA compliance
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: voice
+ai_summary: >-
+  HIPAA-compliant STT routing based on PHI sensitivity scores. Routes to Cloud
+  STT (score <0.3), Hybrid mode with redaction (0.3-0.7), or local Whisper
+  (score ≥0.7). Integrates with PHI detector to keep sensitive audio on-premises.
+  See fhir-streaming-service.md for clinical context integration.
 ---
 
 # PHI-Aware STT Routing
@@ -279,17 +285,17 @@ The `PHITelemetryService` provides real-time PHI routing state to the frontend v
 #### Option 1: WebSocket Subscription
 
 ```tsx
-import { useEffect, useState } from 'react';
-import { useWebSocket } from '@/hooks/useWebSocket';
+import { useEffect, useState } from "react";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 interface PHIState {
   sessionId: string;
-  phiMode: 'local' | 'hybrid' | 'cloud';
+  phiMode: "local" | "hybrid" | "cloud";
   phiScore: number;
   isSecureMode: boolean;
   hasPriorPhi: boolean;
-  indicatorColor: 'green' | 'yellow' | 'blue';
-  indicatorIcon: 'shield' | 'lock' | 'cloud';
+  indicatorColor: "green" | "yellow" | "blue";
+  indicatorIcon: "shield" | "lock" | "cloud";
   tooltip: string;
 }
 
@@ -300,7 +306,7 @@ function usePHIRoutingState(sessionId: string) {
   useEffect(() => {
     // Subscribe to PHI telemetry events
     const handlePHIEvent = (event: { type: string; data: PHIState }) => {
-      if (event.type === 'phi.routing_decision' || event.type === 'phi.mode_change') {
+      if (event.type === "phi.routing_decision" || event.type === "phi.mode_change") {
         setPHIState(event.data);
       }
     };
@@ -369,13 +375,13 @@ async def get_phi_state(session_id: str):
 
 ### Telemetry Event Types
 
-| Event Type | Description | Payload |
-|------------|-------------|---------|
-| `phi.routing_decision` | New routing decision made | Full PHI state + previous mode |
-| `phi.mode_change` | PHI mode changed (e.g., cloud → local) | From/to modes, reason |
-| `phi.phi_detected` | PHI entities detected in audio | Score, entity types |
-| `phi.session_start` | New PHI session initialized | Initial state |
-| `phi.session_end` | PHI session ended | Final mode, had PHI flag |
+| Event Type             | Description                            | Payload                        |
+| ---------------------- | -------------------------------------- | ------------------------------ |
+| `phi.routing_decision` | New routing decision made              | Full PHI state + previous mode |
+| `phi.mode_change`      | PHI mode changed (e.g., cloud → local) | From/to modes, reason          |
+| `phi.phi_detected`     | PHI entities detected in audio         | Score, entity types            |
+| `phi.session_start`    | New PHI session initialized            | Initial state                  |
+| `phi.session_end`      | PHI session ended                      | Final mode, had PHI flag       |
 
 ## Audit Logging
 

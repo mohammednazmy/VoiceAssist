@@ -9,7 +9,13 @@ audience:
   - ai-agents
 tags: [voice, multilingual, rag, translation, v4]
 summary: Technical architecture for multilingual voice RAG with translation fallback
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: voice
+ai_summary: >-
+  Multilingual RAG architecture using translate-then-retrieve pattern. Queries
+  in any supported language are translated to English for RAG retrieval against
+  English embeddings, then responses translated back. Integrates with language
+  detection and graceful degradation.
 ---
 
 # Multilingual RAG Architecture

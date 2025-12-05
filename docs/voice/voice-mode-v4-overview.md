@@ -9,7 +9,13 @@ audience:
   - ai-agents
 tags: [voice, v4, multilingual, latency, thinking-feedback]
 summary: Overview of Voice Mode Enhancement Plan v4.1 features
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: voice
+ai_summary: >-
+  High-level overview of Voice Mode v4.1 features. Key capabilities: multilingual
+  RAG (15 languages), medical pronunciation lexicons (100+ drugs), latency-aware
+  orchestration (<700ms target), thinking feedback, adaptive VAD presets, and
+  PHI-aware STT routing. See individual docs for implementation details.
 ---
 
 # Voice Mode v4.1 Overview

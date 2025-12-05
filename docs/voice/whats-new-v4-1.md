@@ -9,7 +9,13 @@ audience:
   - ai-agents
 tags: [voice, release-notes, v4.1, features]
 summary: Complete feature summary for Voice Mode v4.1 release
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: releases
+ai_summary: >-
+  Release notes for Voice Mode v4.1. Highlights: voice-first input bar, streaming
+  text display, speaker diarization, FHIR R4 streaming, adaptive audio quality,
+  and Quranic lexicon (662 terms). See voice-mode-v4-overview.md for technical
+  architecture and individual feature docs for implementation details.
 ---
 
 # What's New in Voice Mode v4.1

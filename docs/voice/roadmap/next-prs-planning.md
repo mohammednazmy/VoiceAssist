@@ -8,7 +8,13 @@ audience:
   - ai-agents
 tags: [planning, security, lexicon, roadmap]
 summary: Planning document for lexicon expansion and security cleanup PRs
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: planning
+ai_summary: >-
+  Post-Phase 3 PR planning for security cleanup and lexicon expansion. Security
+  PR addresses Bandit issues: B324 (MD5), B608 (SQL injection), B615
+  (HuggingFace unpinned). See MODEL_VERSIONS.md for pinned revisions and
+  voice-mode-post-v41-roadmap.md for full roadmap.
 ---
 
 # Next PRs Planning - Post Voice Mode v4.1 Phase 3

@@ -9,7 +9,13 @@ audience:
   - ai-agents
 tags: [voice, tts, pronunciation, lexicon, medical, v4]
 summary: Guide to using the medical pronunciation lexicon service
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: voice
+ai_summary: >-
+  Medical pronunciation lexicon service for TTS. Supports 15 languages with
+  medical terminology and 100+ shared drug names. Includes G2P fallback via
+  espeak-ng. Key languages: English (146 terms + 280 Quranic), Arabic (155
+  terms + 364 Quranic). See g2p-alternatives-evaluation.md for G2P improvements.
 ---
 
 # Lexicon Service Guide

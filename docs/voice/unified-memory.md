@@ -9,7 +9,13 @@ audience:
   - ai-agents
 tags: [voice, memory, context, conversation, multimodal, v4]
 summary: Guide to unified conversation memory across voice and text modes
-lastUpdated: "2024-12-04"
+lastUpdated: "2025-12-04"
+category: voice
+ai_summary: >-
+  Unified conversation memory system for Voice Mode v4.1. Shares context between
+  voice and text modes, tracks language switching, handles mode transitions, and
+  persists across browser refreshes. Includes user-controlled privacy settings
+  for memory retention.
 ---
 
 # Unified Conversation Memory

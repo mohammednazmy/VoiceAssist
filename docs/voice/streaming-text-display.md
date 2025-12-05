@@ -1,3 +1,31 @@
+---
+title: StreamingTextDisplay Component
+slug: voice/streaming-text-display
+summary: >-
+  React component for streaming AI responses with RTL support and typewriter
+  effects.
+status: stable
+stability: production
+owner: frontend
+lastUpdated: "2025-12-04"
+audience:
+  - human
+  - ai-agents
+  - frontend
+tags:
+  - voice
+  - frontend
+  - streaming
+  - rtl
+  - components
+category: voice
+ai_summary: >-
+  Frontend component for character-by-character text rendering during AI
+  streaming responses. Features auto RTL detection (Arabic, Hebrew, Farsi, Urdu),
+  bidirectional text support, code block syntax highlighting, and auto-scroll.
+  Part of Voice Mode v4.1 UI.
+---
+
 # StreamingTextDisplay Component
 
 **Phase 3 - Voice Mode v4.1**

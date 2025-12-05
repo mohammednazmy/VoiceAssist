@@ -1,3 +1,30 @@
+---
+title: Model Version Pinning
+slug: voice/model-versions
+summary: >-
+  Tracks all HuggingFace model revisions used in VoiceAssist for supply chain
+  security compliance.
+status: stable
+stability: production
+owner: backend
+lastUpdated: "2025-12-04"
+audience:
+  - human
+  - ai-agents
+  - backend
+tags:
+  - voice
+  - models
+  - security
+  - supply-chain
+category: reference
+ai_summary: >-
+  Reference for HuggingFace model version pinning in VoiceAssist (Bandit B615
+  compliance). Lists pinned revisions for speaker diarization (pyannote), PHI
+  NER, ML classifier, and medical embeddings. See speaker-diarization-service.md
+  for diarization usage.
+---
+
 # Model Version Pinning
 
 This document tracks all HuggingFace model revisions used in the VoiceAssist platform.
