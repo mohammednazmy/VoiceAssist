@@ -27,6 +27,54 @@ Voice Mode v4.1 is a major release that introduces a voice-first interface, adva
 
 ---
 
+## Getting Started
+
+### Using the Voice-First Input Bar
+
+1. **Tap the microphone button** to start recording
+2. **Speak naturally** - the system detects when you stop speaking
+3. **Wait for transcription** - your speech appears as text
+4. **View the response** - streamed in real-time with Arabic support
+
+### Selecting a VAD Preset
+
+Choose the preset that matches your environment:
+
+| Environment  | Recommended Preset |
+| ------------ | ------------------ |
+| Quiet room   | Sensitive          |
+| Home/Office  | Balanced (default) |
+| Public/Noisy | Relaxed            |
+
+To change: **Settings (⚙️) → Voice Settings → VAD Preset**
+
+### Understanding the Indicators
+
+**Quality Badge (📶):**
+
+- 🟢 **High**: Excellent connection (128kbps)
+- 🟡 **Medium**: Acceptable quality (64kbps)
+- 🟠 **Low**: Degraded quality (32kbps)
+- 🔴 **Minimal**: Very poor connection (16kbps)
+
+**PHI Indicator (🛡️):**
+
+- 🟢 Green: No sensitive health info detected
+- 🟡 Yellow: Potential PHI - review recommended
+- 🔴 Red: PHI detected - secure handling active
+
+### Adjusting Thinking Feedback
+
+Control what happens while the AI processes your request:
+
+- **Tone**: Soft chime when processing starts/ends
+- **Haptic**: Gentle vibration feedback (mobile)
+- **Visual**: Pulsing indicator animation
+
+To configure: **Settings (⚙️) → Thinking Feedback**
+
+---
+
 ## New Features
 
 ### Voice-First Input Bar
@@ -77,17 +125,17 @@ Responses now stream in real-time with smooth character-by-character rendering:
 
 Voice Activity Detection now includes three presets for different environments:
 
-| Preset     | Sensitivity | Best For                                |
-| ---------- | ----------- | --------------------------------------- |
-| **Quiet**  | High        | Silent rooms, minimal background noise  |
-| **Normal** | Medium      | Typical home/office environments        |
-| **Noisy**  | Low         | Public spaces, background conversations |
+| Preset        | Sensitivity | Best For                                |
+| ------------- | ----------- | --------------------------------------- |
+| **Sensitive** | High        | Silent rooms, minimal background noise  |
+| **Balanced**  | Medium      | Typical home/office environments        |
+| **Relaxed**   | Low         | Public spaces, background conversations |
 
 **Settings Panel:**
 
 ```
 Voice Settings
-├── VAD Preset: [Quiet ▼]
+├── VAD Preset: [Balanced ▼]
 ├── Auto-stop delay: 1.5s
 └── Push-to-talk: [ ] Enable
 ```
@@ -282,7 +330,7 @@ Closest English phonemes for Arabic sounds:
 ```javascript
 // settings-panel.js configuration
 voiceSettings: {
-  vadPreset: 'normal',      // 'quiet' | 'normal' | 'noisy'
+  vadPreset: 'balanced',    // 'sensitive' | 'balanced' | 'relaxed'
   autoStopDelay: 1500,      // ms
   pushToTalk: false,
   language: 'ar',           // 'ar' | 'en' | 'auto'
@@ -417,7 +465,7 @@ The primary interface for voice interaction in v4.1:
 ```javascript
 <VoiceFirstInputBar
   onTranscript={(text) => handleSubmit(text)}
-  vadPreset="normal"
+  vadPreset="balanced"
   language="ar"
   placeholder="Ask about any Surah..."
   showKeyboardToggle={true}
