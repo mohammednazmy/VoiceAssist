@@ -11,6 +11,11 @@ tags: [voice, multilingual, rag, translation, v4]
 summary: Technical architecture for multilingual voice RAG with translation fallback
 lastUpdated: "2025-12-04"
 category: voice
+component: "backend/voice"
+relatedPaths:
+  - "services/api-gateway/app/services/rag_service.py"
+  - "services/api-gateway/app/services/translation_service.py"
+  - "services/api-gateway/app/api/voice.py"
 ai_summary: >-
   Multilingual RAG architecture using translate-then-retrieve pattern. Queries
   in any supported language are translated to English for RAG retrieval against

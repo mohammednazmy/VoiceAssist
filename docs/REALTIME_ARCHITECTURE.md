@@ -24,6 +24,12 @@ relatedServices:
   - api-gateway
   - web-app
 category: architecture
+component: "backend/websocket"
+relatedPaths:
+  - "services/api-gateway/app/api/websocket.py"
+  - "services/api-gateway/app/api/voice.py"
+  - "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
+  - "apps/web-app/src/hooks/useWebSocket.ts"
 source_of_truth: true
 version: 1.0.0
 ai_summary: >-

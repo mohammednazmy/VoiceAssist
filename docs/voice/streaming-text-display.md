@@ -19,6 +19,10 @@ tags:
   - rtl
   - components
 category: voice
+component: "frontend/voice"
+relatedPaths:
+  - "apps/web-app/src/components/voice/StreamingTextDisplay.tsx"
+  - "apps/web-app/src/components/voice/VoiceModePanel.tsx"
 ai_summary: >-
   Frontend component for character-by-character text rendering during AI
   streaming responses. Features auto RTL detection (Arabic, Hebrew, Farsi, Urdu),

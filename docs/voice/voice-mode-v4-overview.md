@@ -11,6 +11,12 @@ tags: [voice, v4, multilingual, latency, thinking-feedback]
 summary: Overview of Voice Mode Enhancement Plan v4.1 features
 lastUpdated: "2025-12-04"
 category: voice
+component: "frontend/voice"
+relatedPaths:
+  - "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+  - "apps/web-app/src/components/voice/VoiceInput.tsx"
+  - "services/api-gateway/app/api/voice.py"
+  - "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
 ai_summary: >-
   High-level overview of Voice Mode v4.1 features. Key capabilities: multilingual
   RAG (15 languages), medical pronunciation lexicons (100+ drugs), latency-aware

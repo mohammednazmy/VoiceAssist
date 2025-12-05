@@ -22,6 +22,12 @@ category: reference
 relatedServices:
   - api-gateway
   - web-app
+component: "backend/websocket"
+relatedPaths:
+  - "services/api-gateway/app/api/websocket.py"
+  - "services/api-gateway/app/api/voice.py"
+  - "apps/web-app/src/hooks/useWebSocket.ts"
+  - "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
 ai_summary: >-
   Version: 1.0 Last Updated: 2025-11-27 Status: Production Related
   Documentation: - Realtime Architecture - System architecture - Voice Mode

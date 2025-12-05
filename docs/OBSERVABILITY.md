@@ -14,6 +14,11 @@ audience:
 tags:
   - observability
 category: reference
+component: "backend/observability"
+relatedPaths:
+  - "services/api-gateway/app/core/logging.py"
+  - "services/api-gateway/app/core/metrics.py"
+  - "services/api-gateway/app/api/health.py"
 ai_summary: >-
   Purpose: This document defines observability patterns for monitoring, logging,
   and alerting across all VoiceAssist services. Last Updated: 2025-11-20 ---

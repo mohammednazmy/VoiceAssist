@@ -10,6 +10,12 @@ lastUpdated: "2025-12-04"
 audience: ["developers", "admin", "ai-agents"]
 tags: ["feature", "flags", "configuration", "runtime"]
 category: reference
+component: "backend/feature-flags"
+relatedPaths:
+  - "services/api-gateway/app/api/admin_feature_flags.py"
+  - "services/api-gateway/app/api/feature_flags_realtime.py"
+  - "apps/admin-panel/src/components/feature-flags/index.ts"
+  - "apps/web-app/src/components/admin/FeatureFlagsManager.tsx"
 ---
 
 # Feature Flags System

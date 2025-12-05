@@ -14,6 +14,11 @@ tags:
   - compliance
   - matrix
 category: security
+component: "backend/security"
+relatedPaths:
+  - "services/api-gateway/app/core/security.py"
+  - "services/api-gateway/app/services/phi_detector.py"
+  - "services/api-gateway/app/api/admin_phi.py"
 ai_summary: >-
   Document Version: 1.0 Last Updated: 2025-11-21 Status: Production-Ready Scope:
   VoiceAssist HIPAA-Compliant Voice Assistant Platform --- This document

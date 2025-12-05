@@ -11,6 +11,11 @@ tags: [voice, i18n, rtl, arabic, urdu, hebrew, accessibility, v4]
 summary: Guide to right-to-left language support in Voice Mode
 lastUpdated: "2025-12-04"
 category: voice
+component: "frontend/voice"
+relatedPaths:
+  - "apps/web-app/src/components/voice/StreamingTextDisplay.tsx"
+  - "apps/web-app/src/components/chat/MessageBubble.tsx"
+  - "packages/config/i18n.ts"
 ai_summary: >-
   RTL support implementation for Voice Mode v4.1. Covers Arabic, Urdu, Hebrew,
   Persian, and Pashto. Features auto dir="rtl", layout mirroring, mixed content

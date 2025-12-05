@@ -16,6 +16,11 @@ tags:
   - websocket
   - redis
   - events
+component: "backend/websocket"
+relatedPaths:
+  - "services/api-gateway/app/api/websocket.py"
+  - "services/api-gateway/app/api/feature_flags_realtime.py"
+  - "apps/admin-panel/src/hooks/useRealtimeEvents.ts"
 ---
 
 # Real-Time Events Guide

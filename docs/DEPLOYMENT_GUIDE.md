@@ -14,6 +14,12 @@ tags:
   - deployment
   - guide
 category: deployment
+component: "infra/deployment"
+relatedPaths:
+  - "docker-compose.yml"
+  - "Makefile"
+  - "services/api-gateway/Dockerfile"
+  - ".env.example"
 ai_summary: >-
   Version: 1.0 Last Updated: 2025-11-21 Phase: 13 - Production Ready --- 1.
   Prerequisites 2. Local Development Setup 3. Production Deployment 4.

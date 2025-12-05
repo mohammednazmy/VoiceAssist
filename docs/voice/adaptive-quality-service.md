@@ -18,6 +18,10 @@ tags:
   - network
   - latency
 category: voice
+component: "backend/voice"
+relatedPaths:
+  - "services/api-gateway/app/services/quality_service.py"
+  - "services/api-gateway/app/api/voice.py"
 ai_summary: >-
   Backend service for adaptive voice quality control. Manages 5 quality levels
   (ULTRA to MINIMAL) based on network metrics (RTT, bandwidth, packet loss).

@@ -21,6 +21,12 @@ tags:
 category: api
 relatedServices:
   - api-gateway
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/api/__init__.py"
+  - "services/api-gateway/app/api/conversations.py"
+  - "services/api-gateway/app/api/auth.py"
+  - "packages/api-client/src/index.ts"
 version: 2.0.0
 ai_summary: >-
   Version: 2.0 Base URL: https://assist.asimo.io/api (production) or

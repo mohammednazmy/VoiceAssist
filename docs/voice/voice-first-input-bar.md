@@ -18,6 +18,11 @@ tags:
   - vad
   - components
 category: voice
+component: "frontend/voice"
+relatedPaths:
+  - "apps/web-app/src/components/voice/VoiceFirstInputBar.tsx"
+  - "apps/web-app/src/components/voice/VoiceMicControl.tsx"
+  - "apps/web-app/src/components/voice/VoiceActivityIndicator.tsx"
 ai_summary: >-
   Primary input component for Voice Mode with voice-first design. Features VAD
   preset integration, PHI mode indicator, RTL support, and keyboard shortcuts

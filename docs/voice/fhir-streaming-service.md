@@ -19,6 +19,11 @@ tags:
   - streaming
   - ehr
 category: voice
+component: "backend/clinical"
+relatedPaths:
+  - "services/api-gateway/app/services/fhir_service.py"
+  - "services/api-gateway/app/api/external_medical.py"
+  - "apps/web-app/src/components/clinical/ClinicalContextPanel.tsx"
 ai_summary: >-
   FHIR subscription service for real-time clinical data streaming. Supports
   WebSocket subscriptions (FHIR R5) and polling fallback. Injects patient

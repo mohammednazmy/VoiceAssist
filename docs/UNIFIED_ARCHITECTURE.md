@@ -25,6 +25,13 @@ relatedServices:
   - admin-panel
   - docs-site
 category: architecture
+component: "platform/architecture"
+relatedPaths:
+  - "services/api-gateway/app/main.py"
+  - "apps/web-app/src/App.tsx"
+  - "apps/admin-panel/src/App.tsx"
+  - "docker-compose.yml"
+  - "package.json"
 source_of_truth: true
 version: 2.0.0
 ai_summary: >-

@@ -20,6 +20,12 @@ tags:
   - stt
   - tts
 category: architecture
+component: "backend/voice"
+relatedPaths:
+  - "services/api-gateway/app/api/voice.py"
+  - "services/api-gateway/app/services/thinker_talker_service.py"
+  - "apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx"
+  - "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
 ai_summary: >-
   > Status: Production Ready > Last Updated: 2025-12-01 > Phase: Voice Pipeline
   Migration (Complete) The Thinker-Talker (T/T) pipeline is VoiceAssist's voice

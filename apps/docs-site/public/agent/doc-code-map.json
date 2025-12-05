@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-12-05T04:20:30.674Z",
+  "generated_at": "2025-12-05T04:34:22.419Z",
   "description": "Bidirectional mapping between documentation and repository files for AI agent navigation",
   "usage": {
     "from_doc": "Use by_doc_slug[slug].relatedPaths to find implementation files for a doc",
@@ -8,6 +8,47 @@
     "fetch_doc": "Use slug to look up full doc in /agent/docs.json"
   },
   "by_doc_slug": {
+    "feature-flags": {
+      "slug": "feature-flags",
+      "path": "FEATURE_FLAGS.md",
+      "component": "backend/feature-flags",
+      "relatedPaths": [
+        "services/api-gateway/app/api/admin_feature_flags.py",
+        "services/api-gateway/app/api/feature_flags_realtime.py",
+        "apps/admin-panel/src/components/feature-flags/index.ts",
+        "apps/web-app/src/components/admin/FeatureFlagsManager.tsx"
+      ],
+      "title": "Feature Flags",
+      "category": "reference",
+      "ai_summary": "Feature flags enable runtime toggles without deployments. Use category.feature_name pattern (e.g., ui.dark_mode, backend.rag_strategy). Stored in PostgreSQL, cached in Redis (5min TTL). See admin-guide/feature-flags/ for detailed docs."
+    },
+    "admin-panel-integration-guide": {
+      "slug": "admin-panel-integration-guide",
+      "path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/App.tsx",
+        "apps/admin-panel/src/components/AdminLayout.tsx",
+        "services/api-gateway/app/api/admin_panel.py",
+        "apps/web-app/src/components/admin/VoiceAdminPanel.tsx"
+      ],
+      "title": "Admin Panel Integration Guide",
+      "category": "reference",
+      "ai_summary": "Admin panel integrates cross-app navigation, real-time event streaming via WebSocket/Redis, and voice session monitoring. Provides centralized control for feature flags, knowledge base, and system health."
+    },
+    "realtime-events-guide": {
+      "slug": "realtime-events-guide",
+      "path": "admin/REALTIME_EVENTS_GUIDE.md",
+      "component": "backend/websocket",
+      "relatedPaths": [
+        "services/api-gateway/app/api/websocket.py",
+        "services/api-gateway/app/api/feature_flags_realtime.py",
+        "apps/admin-panel/src/hooks/useRealtimeEvents.ts"
+      ],
+      "title": "Real-Time Events Guide",
+      "category": "reference",
+      "ai_summary": "Real-time events use WebSocket connections with Redis pub/sub for live updates. Supports feature flag changes, voice session events, and system health broadcasts. Auto-reconnects with exponential backoff."
+    },
     "ai/agent-api-reference": {
       "slug": "ai/agent-api-reference",
       "path": "ai/AGENT_API_REFERENCE.md",
@@ -22,6 +63,200 @@
       "category": "ai",
       "ai_summary": "Canonical reference for VoiceAssist documentation API endpoints. Base URL: https://assistdocs.asimo.io. Key endpoints: /agent/docs.json (full doc list with ai_summary), /agent/docs-summary.json (AI summaries by category), /agent/health.json (docs health metrics), /agent/tasks.json (common tasks), /search-index.json (Fuse.js search). All endpoints are static JSON generated at build time."
     },
+    "voice/adaptive-quality-service": {
+      "slug": "voice/adaptive-quality-service",
+      "path": "voice/adaptive-quality-service.md",
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/services/quality_service.py",
+        "services/api-gateway/app/api/voice.py"
+      ],
+      "title": "Adaptive Quality Service",
+      "category": "voice",
+      "ai_summary": "Backend service for adaptive voice quality control. Manages 5 quality levels (ULTRA to MINIMAL) based on network metrics (RTT, bandwidth, packet loss). Implements latency budgets per component and graceful degradation. See latency-budgets-guide.md for budget details."
+    },
+    "adaptive-vad-presets": {
+      "slug": "adaptive-vad-presets",
+      "path": "voice/adaptive-vad-presets.md",
+      "component": "frontend/voice",
+      "relatedPaths": [
+        "apps/web-app/src/components/voice/VoiceFirstInputBar.tsx",
+        "apps/web-app/src/components/voice/VoiceSettings.tsx",
+        "services/api-gateway/app/api/voice.py"
+      ],
+      "title": "Adaptive VAD Presets",
+      "category": "voice",
+      "ai_summary": "VAD preset configuration for Voice Mode v4.1. Defines three presets: Sensitive (quiet environments, -45dB), Balanced (default, -35dB), and Relaxed (noisy, -25dB). Integrates with Thinker-Talker pipeline for speech segment detection. See voice-first-input-bar.md for UI integration."
+    },
+    "voice/fhir-streaming-service": {
+      "slug": "voice/fhir-streaming-service",
+      "path": "voice/fhir-streaming-service.md",
+      "component": "backend/clinical",
+      "relatedPaths": [
+        "services/api-gateway/app/services/fhir_service.py",
+        "services/api-gateway/app/api/external_medical.py",
+        "apps/web-app/src/components/clinical/ClinicalContextPanel.tsx"
+      ],
+      "title": "FHIR Streaming Service",
+      "category": "voice",
+      "ai_summary": "FHIR subscription service for real-time clinical data streaming. Supports WebSocket subscriptions (FHIR R5) and polling fallback. Injects patient vitals/labs into Thinker context. Integrates with PHI routing via phi-aware-stt-routing.md."
+    },
+    "latency-budgets-guide": {
+      "slug": "latency-budgets-guide",
+      "path": "voice/latency-budgets-guide.md",
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "services/api-gateway/app/services/thinker_talker_service.py",
+        "apps/web-app/src/components/voice/LatencyIndicator.tsx"
+      ],
+      "title": "Latency Budgets Guide",
+      "category": "voice",
+      "ai_summary": "Latency budget configuration for Voice Mode v4.1 targeting sub-700ms E2E. Defines per-stage budgets: audio capture (50ms), STT (200ms), lang detect (50ms), translation (200ms), RAG (300ms), LLM first token (300ms), TTS (150ms). Implements graceful degradation when stages exceed budgets."
+    },
+    "lexicon-service-guide": {
+      "slug": "lexicon-service-guide",
+      "path": "voice/lexicon-service-guide.md",
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/services/lexicon_service.py",
+        "services/api-gateway/app/services/tts_service.py"
+      ],
+      "title": "Lexicon Service Guide",
+      "category": "voice",
+      "ai_summary": "Medical pronunciation lexicon service for TTS. Supports 15 languages with medical terminology and 100+ shared drug names. Includes G2P fallback via espeak-ng. Key languages: English (146 terms + 280 Quranic), Arabic (155 terms + 364 Quranic). See g2p-alternatives-evaluation.md for G2P improvements."
+    },
+    "multilingual-rag-architecture": {
+      "slug": "multilingual-rag-architecture",
+      "path": "voice/multilingual-rag-architecture.md",
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/services/rag_service.py",
+        "services/api-gateway/app/services/translation_service.py",
+        "services/api-gateway/app/api/voice.py"
+      ],
+      "title": "Multilingual RAG Architecture",
+      "category": "voice",
+      "ai_summary": "Multilingual RAG architecture using translate-then-retrieve pattern. Queries in any supported language are translated to English for RAG retrieval against English embeddings, then responses translated back. Integrates with language detection and graceful degradation."
+    },
+    "phi-aware-stt-routing": {
+      "slug": "phi-aware-stt-routing",
+      "path": "voice/phi-aware-stt-routing.md",
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/services/stt_service.py",
+        "services/api-gateway/app/services/phi_detector.py",
+        "services/api-gateway/app/api/voice.py"
+      ],
+      "title": "PHI-Aware STT Routing",
+      "category": "voice",
+      "ai_summary": "HIPAA-compliant STT routing based on PHI sensitivity scores. Routes to Cloud STT (score <0.3), Hybrid mode with redaction (0.3-0.7), or local Whisper (score ≥0.7). Integrates with PHI detector to keep sensitive audio on-premises. See fhir-streaming-service.md for clinical context integration."
+    },
+    "rtl-support-guide": {
+      "slug": "rtl-support-guide",
+      "path": "voice/rtl-support-guide.md",
+      "component": "frontend/voice",
+      "relatedPaths": [
+        "apps/web-app/src/components/voice/StreamingTextDisplay.tsx",
+        "apps/web-app/src/components/chat/MessageBubble.tsx",
+        "packages/config/i18n.ts"
+      ],
+      "title": "RTL Support Guide",
+      "category": "voice",
+      "ai_summary": "RTL support implementation for Voice Mode v4.1. Covers Arabic, Urdu, Hebrew, Persian, and Pashto. Features auto dir=\"rtl\", layout mirroring, mixed content handling, and RTL TTS integration. See streaming-text-display.md for text rendering component."
+    },
+    "voice/speaker-diarization-service": {
+      "slug": "voice/speaker-diarization-service",
+      "path": "voice/speaker-diarization-service.md",
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/services/diarization_service.py",
+        "apps/web-app/src/components/voice/SpeakerAttributedTranscript.tsx"
+      ],
+      "title": "Speaker Diarization Service",
+      "category": "voice",
+      "ai_summary": "Backend service for multi-speaker detection using pyannote.audio. Provides real-time speaker change detection, 512-dim voice embeddings, and speaker database for re-identification. Supports up to 4 concurrent speakers. See MODEL_VERSIONS.md for pinned model revisions."
+    },
+    "voice/streaming-text-display": {
+      "slug": "voice/streaming-text-display",
+      "path": "voice/streaming-text-display.md",
+      "component": "frontend/voice",
+      "relatedPaths": [
+        "apps/web-app/src/components/voice/StreamingTextDisplay.tsx",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+      ],
+      "title": "StreamingTextDisplay Component",
+      "category": "voice",
+      "ai_summary": "Frontend component for character-by-character text rendering during AI streaming responses. Features auto RTL detection (Arabic, Hebrew, Farsi, Urdu), bidirectional text support, code block syntax highlighting, and auto-scroll. Part of Voice Mode v4.1 UI."
+    },
+    "thinking-tone-settings": {
+      "slug": "thinking-tone-settings",
+      "path": "voice/thinking-tone-settings.md",
+      "component": "frontend/voice",
+      "relatedPaths": [
+        "apps/web-app/src/components/voice/ThinkingVisualIndicator.tsx",
+        "apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx",
+        "apps/web-app/src/components/voice/VoiceSettings.tsx"
+      ],
+      "title": "Thinking Tone Settings",
+      "category": "voice",
+      "ai_summary": "Multi-modal thinking feedback configuration for Voice Mode v4.1. Audio presets: gentle_beep (440Hz), soft_chime (chord), subtle_tick, or none. Also supports visual indicators and mobile haptic feedback. All modalities user-configurable via voiceSettingsStore."
+    },
+    "unified-memory": {
+      "slug": "unified-memory",
+      "path": "voice/unified-memory.md",
+      "component": "backend/conversation",
+      "relatedPaths": [
+        "services/api-gateway/app/services/conversation_service.py",
+        "services/api-gateway/app/models/conversation.py",
+        "apps/web-app/src/hooks/useConversation.ts"
+      ],
+      "title": "Unified Conversation Memory",
+      "category": "voice",
+      "ai_summary": "Unified conversation memory system for Voice Mode v4.1. Shares context between voice and text modes, tracks language switching, handles mode transitions, and persists across browser refreshes. Includes user-controlled privacy settings for memory retention."
+    },
+    "voice/voice-first-input-bar": {
+      "slug": "voice/voice-first-input-bar",
+      "path": "voice/voice-first-input-bar.md",
+      "component": "frontend/voice",
+      "relatedPaths": [
+        "apps/web-app/src/components/voice/VoiceFirstInputBar.tsx",
+        "apps/web-app/src/components/voice/VoiceMicControl.tsx",
+        "apps/web-app/src/components/voice/VoiceActivityIndicator.tsx"
+      ],
+      "title": "VoiceFirstInputBar Component",
+      "category": "voice",
+      "ai_summary": "Primary input component for Voice Mode with voice-first design. Features VAD preset integration, PHI mode indicator, RTL support, and keyboard shortcuts (Space to talk, Escape to cancel). See adaptive-vad-presets.md for VAD configuration."
+    },
+    "voice-mode-v4-overview": {
+      "slug": "voice-mode-v4-overview",
+      "path": "voice/voice-mode-v4-overview.md",
+      "component": "frontend/voice",
+      "relatedPaths": [
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx",
+        "apps/web-app/src/components/voice/VoiceInput.tsx",
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
+      ],
+      "title": "Voice Mode v4.1 Overview",
+      "category": "voice",
+      "ai_summary": "High-level overview of Voice Mode v4.1 features. Key capabilities: multilingual RAG (15 languages), medical pronunciation lexicons (100+ drugs), latency-aware orchestration (<700ms target), thinking feedback, adaptive VAD presets, and PHI-aware STT routing. See individual docs for implementation details."
+    },
+    "architecture/frontend": {
+      "slug": "architecture/frontend",
+      "path": "FRONTEND_ARCHITECTURE.md",
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/App.tsx",
+        "apps/web-app/src/components/Layout.tsx",
+        "apps/admin-panel/src/App.tsx",
+        "packages/types/src/index.ts",
+        "packages/ui/src/index.ts"
+      ],
+      "title": "Frontend Architecture",
+      "category": "architecture",
+      "ai_summary": "Last Updated: 2025-12-03 Status: Production Ready (Phases 0-3.5 Complete, Web App and Admin Panel stable) Detailed Spec: client-implementation/TECHNICAL_ARCHITECTURE.md --- VoiceAssist uses a pnpm monorepo with Turborepo for build orchestration. All frontend applications share common packages for..."
+    },
     "voice/pipeline": {
       "slug": "voice/pipeline",
       "path": "VOICE_MODE_PIPELINE.md",
@@ -35,9 +270,350 @@
       "title": "Voice Mode Pipeline",
       "category": "voice",
       "ai_summary": "> Status: Production-ready > Last Updated: 2025-12-03 This document describes the unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy. It serves as the canonical reference for developers working on real-time voice features. VoiceAssist supports two voice pipeline mo..."
+    },
+    "api-reference/overview": {
+      "slug": "api-reference/overview",
+      "path": "API_REFERENCE.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/__init__.py",
+        "services/api-gateway/app/api/conversations.py",
+        "services/api-gateway/app/api/auth.py",
+        "services/api-gateway/app/api/voice.py",
+        "services/api-gateway/app/api/health.py"
+      ],
+      "title": "API Reference",
+      "category": "api",
+      "ai_summary": "Last Updated: 2025-12-02 The VoiceAssist API provides comprehensive REST endpoints for building medical AI assistant applications. - Complete REST API Reference - Full endpoint documentation with examples - OpenAPI/Swagger UI - Interactive docs at http://localhost:8000/docs - ReDoc - Alternative..."
+    },
+    "thinker-talker-pipeline": {
+      "slug": "thinker-talker-pipeline",
+      "path": "THINKER_TALKER_PIPELINE.md",
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "services/api-gateway/app/services/thinker_talker_service.py",
+        "apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx",
+        "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
+      ],
+      "title": "Thinker-Talker Voice Pipeline",
+      "category": "architecture",
+      "ai_summary": "> Status: Production Ready > Last Updated: 2025-12-01 > Phase: Voice Pipeline Migration (Complete) The Thinker-Talker (T/T) pipeline is VoiceAssist's voice processing architecture that replaces the OpenAI Realtime API with a local orchestration approach. It provides unified conversation context,..."
+    },
+    "architecture/unified": {
+      "slug": "architecture/unified",
+      "path": "UNIFIED_ARCHITECTURE.md",
+      "component": "platform/architecture",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "apps/web-app/src/App.tsx",
+        "apps/admin-panel/src/App.tsx",
+        "docker-compose.yml",
+        "package.json"
+      ],
+      "title": "Unified Architecture Documentation",
+      "category": "architecture",
+      "ai_summary": "Last Updated: 2025-12-02 (All 16 Phases Complete) Status: Canonical Reference Purpose: Comprehensive system architecture covering all components, data flows, and integration points --- 1. Executive Summary 2. System Overview 3. Architecture Principles 4. Current Implementation Status 5. Component..."
+    },
+    "admin/implementation-plan": {
+      "slug": "admin/implementation-plan",
+      "path": "admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md",
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/App.tsx",
+        "apps/admin-panel/src/components/Dashboard.tsx",
+        "apps/admin-panel/src/components/AdminLayout.tsx",
+        "services/api-gateway/app/api/admin_panel.py"
+      ],
+      "title": "Admin Panel Implementation Plan",
+      "category": "admin",
+      "ai_summary": "Last Updated: 2025-12-02 Version: 2.8.0 Status: Canonical Implementation Guide Purpose: Transform admin.asimo.io into the definitive operational mission control for VoiceAssist --- 1. Executive Summary 2. Admin Panel Tech Stack (Ground Truth) 3. Phase 1: Backend-to-Admin Service Matrix 4. Phase 2..."
+    },
+    "architecture/backend": {
+      "slug": "architecture/backend",
+      "path": "BACKEND_ARCHITECTURE.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "services/api-gateway/app/api/__init__.py",
+        "services/api-gateway/app/core/config.py",
+        "services/api-gateway/app/core/database.py",
+        "services/api-gateway/app/models/__init__.py"
+      ],
+      "title": "Backend Architecture",
+      "category": "architecture",
+      "ai_summary": "Last Updated: 2025-11-27 (All 15 Phases Complete) Status: Canonical Reference Purpose: Clarify backend structure evolution from monorepo to microservices --- VoiceAssist V2 backend follows a progressive architecture strategy: - Phases 0-10: Monorepo structure with clear module boundaries (Docker..."
+    },
+    "configuration-reference": {
+      "slug": "configuration-reference",
+      "path": "CONFIGURATION_REFERENCE.md",
+      "component": "backend/config",
+      "relatedPaths": [
+        "services/api-gateway/app/core/config.py",
+        ".env.example",
+        "docker-compose.yml"
+      ],
+      "title": "Configuration Reference",
+      "category": "reference",
+      "ai_summary": "VoiceAssist V2 - Complete Configuration Guide This document provides comprehensive documentation for all configuration options available in VoiceAssist V2. Usage: ENVIRONMENT=production DEBUG=false LOG_LEVEL=INFO Validation Rules: - ENVIRONMENT must be one of: development, staging, production - D..."
+    },
+    "data-model": {
+      "slug": "data-model",
+      "path": "DATA_MODEL.md",
+      "component": "backend/models",
+      "relatedPaths": [
+        "services/api-gateway/app/models/__init__.py",
+        "services/api-gateway/app/models/user.py",
+        "services/api-gateway/app/models/conversation.py",
+        "services/api-gateway/app/core/database.py",
+        "packages/types/src/index.ts"
+      ],
+      "title": "Data Model",
+      "category": "reference",
+      "ai_summary": "Last Updated: 2025-11-20 Status: Canonical Reference Purpose: Single source of truth for all data entities across VoiceAssist V2 --- This document defines ALL data entities used in VoiceAssist V2. Each entity has: 1. Purpose - What the entity represents 2. Storage Location - Where data is persist..."
+    },
+    "deployment-guide": {
+      "slug": "deployment-guide",
+      "path": "DEPLOYMENT_GUIDE.md",
+      "component": "infra/deployment",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "Makefile",
+        "services/api-gateway/Dockerfile",
+        ".env.example"
+      ],
+      "title": "Deployment Guide",
+      "category": "deployment",
+      "ai_summary": "Version: 1.0 Last Updated: 2025-11-21 Phase: 13 - Production Ready --- 1. Prerequisites 2. Local Development Setup 3. Production Deployment 4. Configuration 5. Security Hardening 6. High Availability 7. Monitoring & Observability 8. Backup & Recovery 9. Troubleshooting --- Minimum (Development):..."
+    },
+    "hipaa-compliance-matrix": {
+      "slug": "hipaa-compliance-matrix",
+      "path": "HIPAA_COMPLIANCE_MATRIX.md",
+      "component": "backend/security",
+      "relatedPaths": [
+        "services/api-gateway/app/core/security.py",
+        "services/api-gateway/app/services/phi_detector.py",
+        "services/api-gateway/app/api/admin_phi.py"
+      ],
+      "title": "Hipaa Compliance Matrix",
+      "category": "security",
+      "ai_summary": "Document Version: 1.0 Last Updated: 2025-11-21 Status: Production-Ready Scope: VoiceAssist HIPAA-Compliant Voice Assistant Platform --- This document provides a comprehensive mapping of HIPAA Security Rule requirements (45 CFR §164.308, §164.310, §164.312) to VoiceAssist platform implementations...."
+    },
+    "observability": {
+      "slug": "observability",
+      "path": "OBSERVABILITY.md",
+      "component": "backend/observability",
+      "relatedPaths": [
+        "services/api-gateway/app/core/logging.py",
+        "services/api-gateway/app/core/metrics.py",
+        "services/api-gateway/app/api/health.py"
+      ],
+      "title": "Observability",
+      "category": "reference",
+      "ai_summary": "Purpose: This document defines observability patterns for monitoring, logging, and alerting across all VoiceAssist services. Last Updated: 2025-11-20 --- VoiceAssist V2 uses a three-pillar observability approach: 1. Metrics - Prometheus for time-series metrics 2. Logs - Structured logging with tr..."
+    },
+    "orchestration-design": {
+      "slug": "orchestration-design",
+      "path": "ORCHESTRATION_DESIGN.md",
+      "component": "backend/orchestrator",
+      "relatedPaths": [
+        "services/api-gateway/app/services/ai_service.py",
+        "services/api-gateway/app/services/rag_service.py",
+        "services/api-gateway/app/services/conversation_service.py"
+      ],
+      "title": "Orchestration Design",
+      "category": "reference",
+      "ai_summary": "Last Updated: 2025-11-20 Status: Canonical Reference Purpose: Define the Conductor/Orchestrator that routes and processes clinical queries --- The Query Orchestrator (also called \"Conductor\" or \"RAG Service\") is the central component that: 1. Receives user queries 2. Makes routing decisions (PHI..."
+    },
+    "architecture/realtime": {
+      "slug": "architecture/realtime",
+      "path": "REALTIME_ARCHITECTURE.md",
+      "component": "backend/websocket",
+      "relatedPaths": [
+        "services/api-gateway/app/api/websocket.py",
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/hooks/useRealtimeVoiceSession.ts",
+        "apps/web-app/src/hooks/useWebSocket.ts"
+      ],
+      "title": "Real-time Architecture",
+      "category": "architecture",
+      "ai_summary": "Last Updated: 2025-11-27 Status: Production Ready Related Documentation: - WebSocket Protocol - Wire protocol specification - Voice Mode Pipeline - Voice-specific implementation - Implementation Status - Component status --- VoiceAssist uses WebSocket connections for real-time bidirectional commu..."
+    },
+    "security/compliance": {
+      "slug": "security/compliance",
+      "path": "SECURITY_COMPLIANCE.md",
+      "component": "backend/security",
+      "relatedPaths": [
+        "services/api-gateway/app/core/security.py",
+        "services/api-gateway/app/api/auth.py",
+        "services/api-gateway/app/api/auth_2fa.py",
+        "services/api-gateway/app/middleware/auth_middleware.py"
+      ],
+      "title": "Security & Compliance Guide",
+      "category": "security",
+      "ai_summary": "VoiceAssist V2 is designed as a HIPAA-compliant, zero-trust medical AI assistant that handles Protected Health Information (PHI). This document outlines security requirements, implementation strategies, and compliance procedures. 1. HIPAA Compliance 2. Zero-Trust Architecture 3. Encryption 4. Aut..."
+    },
+    "semantic-search-design": {
+      "slug": "semantic-search-design",
+      "path": "SEMANTIC_SEARCH_DESIGN.md",
+      "component": "backend/search",
+      "relatedPaths": [
+        "services/api-gateway/app/services/rag_service.py",
+        "services/api-gateway/app/services/embedding_service.py",
+        "services/api-gateway/app/api/advanced_search.py",
+        "services/api-gateway/app/api/admin_kb.py"
+      ],
+      "title": "Semantic Search Design",
+      "category": "reference",
+      "ai_summary": "VoiceAssist uses a sophisticated semantic search system to retrieve relevant medical knowledge from textbooks, journals, and clinical guidelines. This document describes the complete ingestion and query pipeline. Note: For canonical entity definitions (KnowledgeDocument, KBChunk, IndexingJob), se..."
+    },
+    "architecture/service-catalog": {
+      "slug": "architecture/service-catalog",
+      "path": "SERVICE_CATALOG.md",
+      "component": "backend/services",
+      "relatedPaths": [
+        "services/api-gateway/app/services/__init__.py",
+        "services/api-gateway/app/services/conversation_service.py",
+        "services/api-gateway/app/services/ai_service.py",
+        "services/api-gateway/app/services/auth_service.py"
+      ],
+      "title": "Service Catalog",
+      "category": "architecture",
+      "ai_summary": "Last Updated: 2025-11-21 (Phase 6: Nextcloud App Integration & Unified Services) Status: Canonical Reference Purpose: Comprehensive catalog of all backend services with implementation details --- This document catalogs all backend services in VoiceAssist V2. These are logical services - clear bou..."
+    },
+    "testing-guide": {
+      "slug": "testing-guide",
+      "path": "TESTING_GUIDE.md",
+      "component": "testing/e2e",
+      "relatedPaths": [
+        "apps/web-app/playwright.config.ts",
+        "apps/web-app/e2e/example.spec.ts",
+        "apps/web-app/src/__tests__",
+        "packages/ui/vitest.config.ts"
+      ],
+      "title": "Testing Guide",
+      "category": "testing",
+      "ai_summary": "This guide describes how to run, write, and generate end-to-end (E2E) tests for the VoiceAssist web application using Playwright and Auto Playwright (AI-powered test generation). VoiceAssist uses a multi-layered testing approach: - Unit Tests: Component-level tests using Vitest (in apps/web-app/s..."
+    },
+    "tools-and-integrations": {
+      "slug": "tools-and-integrations",
+      "path": "TOOLS_AND_INTEGRATIONS.md",
+      "component": "backend/tools",
+      "relatedPaths": [
+        "services/api-gateway/app/services/tools/tool_service.py",
+        "services/api-gateway/app/api/admin_tools.py",
+        "services/api-gateway/app/api/admin_integrations.py"
+      ],
+      "title": "Tools And Integrations",
+      "category": "reference",
+      "ai_summary": "Last Updated: 2025-11-20 Status: Design Complete Version: V2.0 > Implementation Note: This document describes the V2 tools architecture design. The current production implementation lives in: > > - Tool Service: services/api-gateway/app/services/tools/tool_service.py > - Individual Tools: service..."
+    },
+    "api-reference/websocket": {
+      "slug": "api-reference/websocket",
+      "path": "WEBSOCKET_PROTOCOL.md",
+      "component": "backend/websocket",
+      "relatedPaths": [
+        "services/api-gateway/app/api/websocket.py",
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/hooks/useWebSocket.ts",
+        "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
+      ],
+      "title": "WebSocket Protocol Specification",
+      "category": "reference",
+      "ai_summary": "Version: 1.0 Last Updated: 2025-11-27 Status: Production Related Documentation: - Realtime Architecture - System architecture - Voice Mode Pipeline - Voice implementation - Thinker-Talker Pipeline - T/T voice architecture - Voice Pipeline WebSocket API - T/T WebSocket protocol - Implementation St..."
+    },
+    "api-reference/routes": {
+      "slug": "api-reference/routes",
+      "path": "api-reference/API_ROUTES.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/__init__.py",
+        "services/api-gateway/app/main.py",
+        "services/api-gateway/openapi.yaml"
+      ],
+      "title": "API Routes Reference",
+      "category": "api",
+      "ai_summary": "Generated: 2025-11-27 12:24:10 UTC App: VoiceAssist API Gateway Version: 0.1.0 --- - Total Routes: 98 - Total Tags/Modules: 9 --- --- Most endpoints require authentication via Bearer token: Authorization: Bearer <access_token> Obtain tokens via /api/auth/login or /api/auth/register. --- The compl..."
+    },
+    "api-reference/rest-api": {
+      "slug": "api-reference/rest-api",
+      "path": "api-reference/rest-api.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/__init__.py",
+        "services/api-gateway/app/api/conversations.py",
+        "services/api-gateway/app/api/auth.py",
+        "packages/api-client/src/index.ts"
+      ],
+      "title": "REST API Reference",
+      "category": "api",
+      "ai_summary": "Version: 2.0 Base URL: https://assist.asimo.io/api (production) or http://localhost:8000/api (development) Last Updated: 2025-11-27 > See Also: Auto-generated API Routes - Complete route listing from OpenAPI spec --- The VoiceAssist API provides a comprehensive set of endpoints for building medic..."
     }
   },
   "by_path": {
+    "services/api-gateway/app/api/admin_feature_flags.py": {
+      "path": "services/api-gateway/app/api/admin_feature_flags.py",
+      "docs": ["feature-flags"],
+      "component": "backend/feature-flags"
+    },
+    "services/api-gateway/app/api/feature_flags_realtime.py": {
+      "path": "services/api-gateway/app/api/feature_flags_realtime.py",
+      "docs": ["feature-flags", "realtime-events-guide"],
+      "components": ["backend/feature-flags", "backend/websocket"]
+    },
+    "apps/admin-panel/src/components/feature-flags/index.ts": {
+      "path": "apps/admin-panel/src/components/feature-flags/index.ts",
+      "docs": ["feature-flags"],
+      "component": "backend/feature-flags"
+    },
+    "apps/web-app/src/components/admin/FeatureFlagsManager.tsx": {
+      "path": "apps/web-app/src/components/admin/FeatureFlagsManager.tsx",
+      "docs": ["feature-flags"],
+      "component": "backend/feature-flags"
+    },
+    "apps/admin-panel/src/App.tsx": {
+      "path": "apps/admin-panel/src/App.tsx",
+      "docs": [
+        "admin-panel-integration-guide",
+        "architecture/frontend",
+        "architecture/unified",
+        "admin/implementation-plan"
+      ],
+      "components": [
+        "frontend/admin-panel",
+        "frontend/web-app",
+        "platform/architecture"
+      ]
+    },
+    "apps/admin-panel/src/components/AdminLayout.tsx": {
+      "path": "apps/admin-panel/src/components/AdminLayout.tsx",
+      "docs": ["admin-panel-integration-guide", "admin/implementation-plan"],
+      "component": "frontend/admin-panel"
+    },
+    "services/api-gateway/app/api/admin_panel.py": {
+      "path": "services/api-gateway/app/api/admin_panel.py",
+      "docs": ["admin-panel-integration-guide", "admin/implementation-plan"],
+      "component": "frontend/admin-panel"
+    },
+    "apps/web-app/src/components/admin/VoiceAdminPanel.tsx": {
+      "path": "apps/web-app/src/components/admin/VoiceAdminPanel.tsx",
+      "docs": ["admin-panel-integration-guide"],
+      "component": "frontend/admin-panel"
+    },
+    "services/api-gateway/app/api/websocket.py": {
+      "path": "services/api-gateway/app/api/websocket.py",
+      "docs": [
+        "realtime-events-guide",
+        "architecture/realtime",
+        "api-reference/websocket"
+      ],
+      "component": "backend/websocket"
+    },
+    "apps/admin-panel/src/hooks/useRealtimeEvents.ts": {
+      "path": "apps/admin-panel/src/hooks/useRealtimeEvents.ts",
+      "docs": ["realtime-events-guide"],
+      "component": "backend/websocket"
+    },
     "apps/docs-site/scripts/generate-agent-json.js": {
       "path": "apps/docs-site/scripts/generate-agent-json.js",
       "docs": ["ai/agent-api-reference"],
@@ -58,33 +634,557 @@
       "docs": ["ai/agent-api-reference"],
       "component": "frontend/docs-site"
     },
+    "services/api-gateway/app/services/quality_service.py": {
+      "path": "services/api-gateway/app/services/quality_service.py",
+      "docs": ["voice/adaptive-quality-service"],
+      "component": "backend/voice"
+    },
     "services/api-gateway/app/api/voice.py": {
       "path": "services/api-gateway/app/api/voice.py",
-      "docs": ["voice/pipeline"],
-      "component": "backend/api-gateway"
+      "docs": [
+        "voice/adaptive-quality-service",
+        "adaptive-vad-presets",
+        "latency-budgets-guide",
+        "multilingual-rag-architecture",
+        "phi-aware-stt-routing",
+        "voice-mode-v4-overview",
+        "voice/pipeline",
+        "api-reference/overview",
+        "thinker-talker-pipeline",
+        "architecture/realtime",
+        "api-reference/websocket"
+      ],
+      "components": [
+        "backend/voice",
+        "frontend/voice",
+        "backend/api-gateway",
+        "backend/websocket"
+      ]
+    },
+    "apps/web-app/src/components/voice/VoiceFirstInputBar.tsx": {
+      "path": "apps/web-app/src/components/voice/VoiceFirstInputBar.tsx",
+      "docs": ["adaptive-vad-presets", "voice/voice-first-input-bar"],
+      "component": "frontend/voice"
+    },
+    "apps/web-app/src/components/voice/VoiceSettings.tsx": {
+      "path": "apps/web-app/src/components/voice/VoiceSettings.tsx",
+      "docs": ["adaptive-vad-presets", "thinking-tone-settings"],
+      "component": "frontend/voice"
+    },
+    "services/api-gateway/app/services/fhir_service.py": {
+      "path": "services/api-gateway/app/services/fhir_service.py",
+      "docs": ["voice/fhir-streaming-service"],
+      "component": "backend/clinical"
+    },
+    "services/api-gateway/app/api/external_medical.py": {
+      "path": "services/api-gateway/app/api/external_medical.py",
+      "docs": ["voice/fhir-streaming-service"],
+      "component": "backend/clinical"
+    },
+    "apps/web-app/src/components/clinical/ClinicalContextPanel.tsx": {
+      "path": "apps/web-app/src/components/clinical/ClinicalContextPanel.tsx",
+      "docs": ["voice/fhir-streaming-service"],
+      "component": "backend/clinical"
+    },
+    "services/api-gateway/app/services/thinker_talker_service.py": {
+      "path": "services/api-gateway/app/services/thinker_talker_service.py",
+      "docs": ["latency-budgets-guide", "thinker-talker-pipeline"],
+      "component": "backend/voice"
+    },
+    "apps/web-app/src/components/voice/LatencyIndicator.tsx": {
+      "path": "apps/web-app/src/components/voice/LatencyIndicator.tsx",
+      "docs": ["latency-budgets-guide"],
+      "component": "backend/voice"
+    },
+    "services/api-gateway/app/services/lexicon_service.py": {
+      "path": "services/api-gateway/app/services/lexicon_service.py",
+      "docs": ["lexicon-service-guide"],
+      "component": "backend/voice"
+    },
+    "services/api-gateway/app/services/tts_service.py": {
+      "path": "services/api-gateway/app/services/tts_service.py",
+      "docs": ["lexicon-service-guide"],
+      "component": "backend/voice"
+    },
+    "services/api-gateway/app/services/rag_service.py": {
+      "path": "services/api-gateway/app/services/rag_service.py",
+      "docs": [
+        "multilingual-rag-architecture",
+        "orchestration-design",
+        "semantic-search-design"
+      ],
+      "components": ["backend/voice", "backend/orchestrator", "backend/search"]
+    },
+    "services/api-gateway/app/services/translation_service.py": {
+      "path": "services/api-gateway/app/services/translation_service.py",
+      "docs": ["multilingual-rag-architecture"],
+      "component": "backend/voice"
+    },
+    "services/api-gateway/app/services/stt_service.py": {
+      "path": "services/api-gateway/app/services/stt_service.py",
+      "docs": ["phi-aware-stt-routing"],
+      "component": "backend/voice"
+    },
+    "services/api-gateway/app/services/phi_detector.py": {
+      "path": "services/api-gateway/app/services/phi_detector.py",
+      "docs": ["phi-aware-stt-routing", "hipaa-compliance-matrix"],
+      "components": ["backend/voice", "backend/security"]
+    },
+    "apps/web-app/src/components/voice/StreamingTextDisplay.tsx": {
+      "path": "apps/web-app/src/components/voice/StreamingTextDisplay.tsx",
+      "docs": ["rtl-support-guide", "voice/streaming-text-display"],
+      "component": "frontend/voice"
+    },
+    "apps/web-app/src/components/chat/MessageBubble.tsx": {
+      "path": "apps/web-app/src/components/chat/MessageBubble.tsx",
+      "docs": ["rtl-support-guide"],
+      "component": "frontend/voice"
+    },
+    "packages/config/i18n.ts": {
+      "path": "packages/config/i18n.ts",
+      "docs": ["rtl-support-guide"],
+      "component": "frontend/voice"
+    },
+    "services/api-gateway/app/services/diarization_service.py": {
+      "path": "services/api-gateway/app/services/diarization_service.py",
+      "docs": ["voice/speaker-diarization-service"],
+      "component": "backend/voice"
+    },
+    "apps/web-app/src/components/voice/SpeakerAttributedTranscript.tsx": {
+      "path": "apps/web-app/src/components/voice/SpeakerAttributedTranscript.tsx",
+      "docs": ["voice/speaker-diarization-service"],
+      "component": "backend/voice"
+    },
+    "apps/web-app/src/components/voice/VoiceModePanel.tsx": {
+      "path": "apps/web-app/src/components/voice/VoiceModePanel.tsx",
+      "docs": [
+        "voice/streaming-text-display",
+        "voice-mode-v4-overview",
+        "voice/pipeline"
+      ],
+      "components": ["frontend/voice", "backend/api-gateway"]
+    },
+    "apps/web-app/src/components/voice/ThinkingVisualIndicator.tsx": {
+      "path": "apps/web-app/src/components/voice/ThinkingVisualIndicator.tsx",
+      "docs": ["thinking-tone-settings"],
+      "component": "frontend/voice"
+    },
+    "apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx": {
+      "path": "apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx",
+      "docs": ["thinking-tone-settings"],
+      "component": "frontend/voice"
+    },
+    "services/api-gateway/app/services/conversation_service.py": {
+      "path": "services/api-gateway/app/services/conversation_service.py",
+      "docs": [
+        "unified-memory",
+        "orchestration-design",
+        "architecture/service-catalog"
+      ],
+      "components": [
+        "backend/conversation",
+        "backend/orchestrator",
+        "backend/services"
+      ]
+    },
+    "services/api-gateway/app/models/conversation.py": {
+      "path": "services/api-gateway/app/models/conversation.py",
+      "docs": ["unified-memory", "data-model"],
+      "components": ["backend/conversation", "backend/models"]
+    },
+    "apps/web-app/src/hooks/useConversation.ts": {
+      "path": "apps/web-app/src/hooks/useConversation.ts",
+      "docs": ["unified-memory"],
+      "component": "backend/conversation"
+    },
+    "apps/web-app/src/components/voice/VoiceMicControl.tsx": {
+      "path": "apps/web-app/src/components/voice/VoiceMicControl.tsx",
+      "docs": ["voice/voice-first-input-bar"],
+      "component": "frontend/voice"
+    },
+    "apps/web-app/src/components/voice/VoiceActivityIndicator.tsx": {
+      "path": "apps/web-app/src/components/voice/VoiceActivityIndicator.tsx",
+      "docs": ["voice/voice-first-input-bar"],
+      "component": "frontend/voice"
+    },
+    "apps/web-app/src/components/voice/VoiceInput.tsx": {
+      "path": "apps/web-app/src/components/voice/VoiceInput.tsx",
+      "docs": ["voice-mode-v4-overview"],
+      "component": "frontend/voice"
+    },
+    "apps/web-app/src/hooks/useRealtimeVoiceSession.ts": {
+      "path": "apps/web-app/src/hooks/useRealtimeVoiceSession.ts",
+      "docs": [
+        "voice-mode-v4-overview",
+        "voice/pipeline",
+        "thinker-talker-pipeline",
+        "architecture/realtime",
+        "api-reference/websocket"
+      ],
+      "components": [
+        "frontend/voice",
+        "backend/api-gateway",
+        "backend/voice",
+        "backend/websocket"
+      ]
+    },
+    "apps/web-app/src/App.tsx": {
+      "path": "apps/web-app/src/App.tsx",
+      "docs": ["architecture/frontend", "architecture/unified"],
+      "components": ["frontend/web-app", "platform/architecture"]
+    },
+    "apps/web-app/src/components/Layout.tsx": {
+      "path": "apps/web-app/src/components/Layout.tsx",
+      "docs": ["architecture/frontend"],
+      "component": "frontend/web-app"
+    },
+    "packages/types/src/index.ts": {
+      "path": "packages/types/src/index.ts",
+      "docs": ["architecture/frontend", "data-model"],
+      "components": ["frontend/web-app", "backend/models"]
+    },
+    "packages/ui/src/index.ts": {
+      "path": "packages/ui/src/index.ts",
+      "docs": ["architecture/frontend"],
+      "component": "frontend/web-app"
     },
     "services/api-gateway/app/api/admin_voice.py": {
       "path": "services/api-gateway/app/api/admin_voice.py",
       "docs": ["voice/pipeline"],
       "component": "backend/api-gateway"
     },
-    "apps/web-app/src/components/voice/VoiceModePanel.tsx": {
-      "path": "apps/web-app/src/components/voice/VoiceModePanel.tsx",
-      "docs": ["voice/pipeline"],
+    "services/api-gateway/app/api/__init__.py": {
+      "path": "services/api-gateway/app/api/__init__.py",
+      "docs": [
+        "api-reference/overview",
+        "architecture/backend",
+        "api-reference/routes",
+        "api-reference/rest-api"
+      ],
       "component": "backend/api-gateway"
     },
-    "apps/web-app/src/hooks/useRealtimeVoiceSession.ts": {
-      "path": "apps/web-app/src/hooks/useRealtimeVoiceSession.ts",
-      "docs": ["voice/pipeline"],
+    "services/api-gateway/app/api/conversations.py": {
+      "path": "services/api-gateway/app/api/conversations.py",
+      "docs": ["api-reference/overview", "api-reference/rest-api"],
+      "component": "backend/api-gateway"
+    },
+    "services/api-gateway/app/api/auth.py": {
+      "path": "services/api-gateway/app/api/auth.py",
+      "docs": [
+        "api-reference/overview",
+        "security/compliance",
+        "api-reference/rest-api"
+      ],
+      "components": ["backend/api-gateway", "backend/security"]
+    },
+    "services/api-gateway/app/api/health.py": {
+      "path": "services/api-gateway/app/api/health.py",
+      "docs": ["api-reference/overview", "observability"],
+      "components": ["backend/api-gateway", "backend/observability"]
+    },
+    "apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx": {
+      "path": "apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx",
+      "docs": ["thinker-talker-pipeline"],
+      "component": "backend/voice"
+    },
+    "services/api-gateway/app/main.py": {
+      "path": "services/api-gateway/app/main.py",
+      "docs": [
+        "architecture/unified",
+        "architecture/backend",
+        "api-reference/routes"
+      ],
+      "components": ["platform/architecture", "backend/api-gateway"]
+    },
+    "docker-compose.yml": {
+      "path": "docker-compose.yml",
+      "docs": [
+        "architecture/unified",
+        "configuration-reference",
+        "deployment-guide"
+      ],
+      "components": [
+        "platform/architecture",
+        "backend/config",
+        "infra/deployment"
+      ]
+    },
+    "package.json": {
+      "path": "package.json",
+      "docs": ["architecture/unified"],
+      "component": "platform/architecture"
+    },
+    "apps/admin-panel/src/components/Dashboard.tsx": {
+      "path": "apps/admin-panel/src/components/Dashboard.tsx",
+      "docs": ["admin/implementation-plan"],
+      "component": "frontend/admin-panel"
+    },
+    "services/api-gateway/app/core/config.py": {
+      "path": "services/api-gateway/app/core/config.py",
+      "docs": ["architecture/backend", "configuration-reference"],
+      "components": ["backend/api-gateway", "backend/config"]
+    },
+    "services/api-gateway/app/core/database.py": {
+      "path": "services/api-gateway/app/core/database.py",
+      "docs": ["architecture/backend", "data-model"],
+      "components": ["backend/api-gateway", "backend/models"]
+    },
+    "services/api-gateway/app/models/__init__.py": {
+      "path": "services/api-gateway/app/models/__init__.py",
+      "docs": ["architecture/backend", "data-model"],
+      "components": ["backend/api-gateway", "backend/models"]
+    },
+    ".env.example": {
+      "path": ".env.example",
+      "docs": ["configuration-reference", "deployment-guide"],
+      "components": ["backend/config", "infra/deployment"]
+    },
+    "services/api-gateway/app/models/user.py": {
+      "path": "services/api-gateway/app/models/user.py",
+      "docs": ["data-model"],
+      "component": "backend/models"
+    },
+    "Makefile": {
+      "path": "Makefile",
+      "docs": ["deployment-guide"],
+      "component": "infra/deployment"
+    },
+    "services/api-gateway/Dockerfile": {
+      "path": "services/api-gateway/Dockerfile",
+      "docs": ["deployment-guide"],
+      "component": "infra/deployment"
+    },
+    "services/api-gateway/app/core/security.py": {
+      "path": "services/api-gateway/app/core/security.py",
+      "docs": ["hipaa-compliance-matrix", "security/compliance"],
+      "component": "backend/security"
+    },
+    "services/api-gateway/app/api/admin_phi.py": {
+      "path": "services/api-gateway/app/api/admin_phi.py",
+      "docs": ["hipaa-compliance-matrix"],
+      "component": "backend/security"
+    },
+    "services/api-gateway/app/core/logging.py": {
+      "path": "services/api-gateway/app/core/logging.py",
+      "docs": ["observability"],
+      "component": "backend/observability"
+    },
+    "services/api-gateway/app/core/metrics.py": {
+      "path": "services/api-gateway/app/core/metrics.py",
+      "docs": ["observability"],
+      "component": "backend/observability"
+    },
+    "services/api-gateway/app/services/ai_service.py": {
+      "path": "services/api-gateway/app/services/ai_service.py",
+      "docs": ["orchestration-design", "architecture/service-catalog"],
+      "components": ["backend/orchestrator", "backend/services"]
+    },
+    "apps/web-app/src/hooks/useWebSocket.ts": {
+      "path": "apps/web-app/src/hooks/useWebSocket.ts",
+      "docs": ["architecture/realtime", "api-reference/websocket"],
+      "component": "backend/websocket"
+    },
+    "services/api-gateway/app/api/auth_2fa.py": {
+      "path": "services/api-gateway/app/api/auth_2fa.py",
+      "docs": ["security/compliance"],
+      "component": "backend/security"
+    },
+    "services/api-gateway/app/middleware/auth_middleware.py": {
+      "path": "services/api-gateway/app/middleware/auth_middleware.py",
+      "docs": ["security/compliance"],
+      "component": "backend/security"
+    },
+    "services/api-gateway/app/services/embedding_service.py": {
+      "path": "services/api-gateway/app/services/embedding_service.py",
+      "docs": ["semantic-search-design"],
+      "component": "backend/search"
+    },
+    "services/api-gateway/app/api/advanced_search.py": {
+      "path": "services/api-gateway/app/api/advanced_search.py",
+      "docs": ["semantic-search-design"],
+      "component": "backend/search"
+    },
+    "services/api-gateway/app/api/admin_kb.py": {
+      "path": "services/api-gateway/app/api/admin_kb.py",
+      "docs": ["semantic-search-design"],
+      "component": "backend/search"
+    },
+    "services/api-gateway/app/services/__init__.py": {
+      "path": "services/api-gateway/app/services/__init__.py",
+      "docs": ["architecture/service-catalog"],
+      "component": "backend/services"
+    },
+    "services/api-gateway/app/services/auth_service.py": {
+      "path": "services/api-gateway/app/services/auth_service.py",
+      "docs": ["architecture/service-catalog"],
+      "component": "backend/services"
+    },
+    "apps/web-app/playwright.config.ts": {
+      "path": "apps/web-app/playwright.config.ts",
+      "docs": ["testing-guide"],
+      "component": "testing/e2e"
+    },
+    "apps/web-app/e2e/example.spec.ts": {
+      "path": "apps/web-app/e2e/example.spec.ts",
+      "docs": ["testing-guide"],
+      "component": "testing/e2e"
+    },
+    "apps/web-app/src/__tests__": {
+      "path": "apps/web-app/src/__tests__",
+      "docs": ["testing-guide"],
+      "component": "testing/e2e"
+    },
+    "packages/ui/vitest.config.ts": {
+      "path": "packages/ui/vitest.config.ts",
+      "docs": ["testing-guide"],
+      "component": "testing/e2e"
+    },
+    "services/api-gateway/app/services/tools/tool_service.py": {
+      "path": "services/api-gateway/app/services/tools/tool_service.py",
+      "docs": ["tools-and-integrations"],
+      "component": "backend/tools"
+    },
+    "services/api-gateway/app/api/admin_tools.py": {
+      "path": "services/api-gateway/app/api/admin_tools.py",
+      "docs": ["tools-and-integrations"],
+      "component": "backend/tools"
+    },
+    "services/api-gateway/app/api/admin_integrations.py": {
+      "path": "services/api-gateway/app/api/admin_integrations.py",
+      "docs": ["tools-and-integrations"],
+      "component": "backend/tools"
+    },
+    "services/api-gateway/openapi.yaml": {
+      "path": "services/api-gateway/openapi.yaml",
+      "docs": ["api-reference/routes"],
+      "component": "backend/api-gateway"
+    },
+    "packages/api-client/src/index.ts": {
+      "path": "packages/api-client/src/index.ts",
+      "docs": ["api-reference/rest-api"],
       "component": "backend/api-gateway"
     }
   },
   "meta": {
     "stats": {
-      "docs_with_links": 2,
-      "total_links": 8,
-      "unique_paths": 8,
-      "missing_paths": 0
-    }
+      "docs_with_links": 40,
+      "total_links": 141,
+      "unique_paths": 87,
+      "missing_paths": 28
+    },
+    "missing_paths": [
+      {
+        "docSlug": "realtime-events-guide",
+        "path": "services/api-gateway/app/api/websocket.py"
+      },
+      {
+        "docSlug": "voice/adaptive-quality-service",
+        "path": "services/api-gateway/app/services/quality_service.py"
+      },
+      {
+        "docSlug": "voice/fhir-streaming-service",
+        "path": "services/api-gateway/app/services/fhir_service.py"
+      },
+      {
+        "docSlug": "latency-budgets-guide",
+        "path": "services/api-gateway/app/services/thinker_talker_service.py"
+      },
+      {
+        "docSlug": "lexicon-service-guide",
+        "path": "services/api-gateway/app/services/tts_service.py"
+      },
+      {
+        "docSlug": "phi-aware-stt-routing",
+        "path": "services/api-gateway/app/services/stt_service.py"
+      },
+      {
+        "docSlug": "voice/speaker-diarization-service",
+        "path": "services/api-gateway/app/services/diarization_service.py"
+      },
+      {
+        "docSlug": "unified-memory",
+        "path": "services/api-gateway/app/services/conversation_service.py"
+      },
+      {
+        "docSlug": "unified-memory",
+        "path": "services/api-gateway/app/models/conversation.py"
+      },
+      {
+        "docSlug": "unified-memory",
+        "path": "apps/web-app/src/hooks/useConversation.ts"
+      },
+      {
+        "docSlug": "thinker-talker-pipeline",
+        "path": "services/api-gateway/app/services/thinker_talker_service.py"
+      },
+      {
+        "docSlug": "configuration-reference",
+        "path": ".env.example"
+      },
+      {
+        "docSlug": "data-model",
+        "path": "services/api-gateway/app/models/conversation.py"
+      },
+      {
+        "docSlug": "deployment-guide",
+        "path": ".env.example"
+      },
+      {
+        "docSlug": "orchestration-design",
+        "path": "services/api-gateway/app/services/ai_service.py"
+      },
+      {
+        "docSlug": "orchestration-design",
+        "path": "services/api-gateway/app/services/conversation_service.py"
+      },
+      {
+        "docSlug": "architecture/realtime",
+        "path": "services/api-gateway/app/api/websocket.py"
+      },
+      {
+        "docSlug": "architecture/realtime",
+        "path": "apps/web-app/src/hooks/useWebSocket.ts"
+      },
+      {
+        "docSlug": "security/compliance",
+        "path": "services/api-gateway/app/middleware/auth_middleware.py"
+      },
+      {
+        "docSlug": "semantic-search-design",
+        "path": "services/api-gateway/app/services/embedding_service.py"
+      },
+      {
+        "docSlug": "architecture/service-catalog",
+        "path": "services/api-gateway/app/services/conversation_service.py"
+      },
+      {
+        "docSlug": "architecture/service-catalog",
+        "path": "services/api-gateway/app/services/ai_service.py"
+      },
+      {
+        "docSlug": "architecture/service-catalog",
+        "path": "services/api-gateway/app/services/auth_service.py"
+      },
+      {
+        "docSlug": "testing-guide",
+        "path": "apps/web-app/e2e/example.spec.ts"
+      },
+      {
+        "docSlug": "testing-guide",
+        "path": "apps/web-app/src/__tests__"
+      },
+      {
+        "docSlug": "api-reference/websocket",
+        "path": "services/api-gateway/app/api/websocket.py"
+      },
+      {
+        "docSlug": "api-reference/websocket",
+        "path": "apps/web-app/src/hooks/useWebSocket.ts"
+      },
+      {
+        "docSlug": "api-reference/routes",
+        "path": "services/api-gateway/openapi.yaml"
+      }
+    ]
   }
 }

@@ -13,6 +13,11 @@ tags:
   - configuration
   - reference
 category: reference
+component: "backend/config"
+relatedPaths:
+  - "services/api-gateway/app/core/config.py"
+  - ".env.example"
+  - "docker-compose.yml"
 ai_summary: >-
   VoiceAssist V2 - Complete Configuration Guide This document provides
   comprehensive documentation for all configuration options available in

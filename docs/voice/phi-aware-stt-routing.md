@@ -11,6 +11,11 @@ tags: [voice, security, phi, stt, whisper, hipaa, v4]
 summary: Guide to PHI-aware speech-to-text routing for HIPAA compliance
 lastUpdated: "2025-12-04"
 category: voice
+component: "backend/voice"
+relatedPaths:
+  - "services/api-gateway/app/services/stt_service.py"
+  - "services/api-gateway/app/services/phi_detector.py"
+  - "services/api-gateway/app/api/voice.py"
 ai_summary: >-
   HIPAA-compliant STT routing based on PHI sensitivity scores. Routes to Cloud
   STT (score <0.3), Hybrid mode with redaction (0.3-0.7), or local Whisper

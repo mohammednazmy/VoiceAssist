@@ -17,6 +17,10 @@ tags:
   - speaker-detection
   - pyannote
 category: voice
+component: "backend/voice"
+relatedPaths:
+  - "services/api-gateway/app/services/diarization_service.py"
+  - "apps/web-app/src/components/voice/SpeakerAttributedTranscript.tsx"
 ai_summary: >-
   Backend service for multi-speaker detection using pyannote.audio. Provides
   real-time speaker change detection, 512-dim voice embeddings, and speaker

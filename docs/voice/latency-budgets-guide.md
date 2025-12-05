@@ -11,6 +11,11 @@ tags: [voice, performance, latency, degradation, v4]
 summary: Guide to latency-aware orchestration and graceful degradation
 lastUpdated: "2025-12-04"
 category: voice
+component: "backend/voice"
+relatedPaths:
+  - "services/api-gateway/app/api/voice.py"
+  - "services/api-gateway/app/services/thinker_talker_service.py"
+  - "apps/web-app/src/components/voice/LatencyIndicator.tsx"
 ai_summary: >-
   Latency budget configuration for Voice Mode v4.1 targeting sub-700ms E2E.
   Defines per-stage budgets: audio capture (50ms), STT (200ms), lang detect

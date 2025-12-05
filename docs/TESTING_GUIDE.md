@@ -15,6 +15,12 @@ tags:
   - testing
   - guide
 category: testing
+component: "testing/e2e"
+relatedPaths:
+  - "apps/web-app/playwright.config.ts"
+  - "apps/web-app/e2e/example.spec.ts"
+  - "apps/web-app/src/__tests__"
+  - "packages/ui/vitest.config.ts"
 ai_summary: >-
   This guide describes how to run, write, and generate end-to-end (E2E) tests
   for the VoiceAssist web application using Playwright and Auto Playwright

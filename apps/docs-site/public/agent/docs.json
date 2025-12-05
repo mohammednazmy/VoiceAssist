@@ -1,6 +1,6 @@
 {
   "count": 283,
-  "generated_at": "2025-12-05T04:20:40.651Z",
+  "generated_at": "2025-12-05T04:34:32.346Z",
   "docs": [
     {
       "slug": "style-guide",
@@ -206,6 +206,13 @@
       "audience": ["developers", "admin", "ai-agents"],
       "category": "reference",
       "tags": ["feature", "flags", "configuration", "runtime"],
+      "component": "backend/feature-flags",
+      "relatedPaths": [
+        "services/api-gateway/app/api/admin_feature_flags.py",
+        "services/api-gateway/app/api/feature_flags_realtime.py",
+        "apps/admin-panel/src/components/feature-flags/index.ts",
+        "apps/web-app/src/components/admin/FeatureFlagsManager.tsx"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -274,6 +281,13 @@
       "audience": ["admin", "developers", "ai-agents"],
       "category": "reference",
       "tags": ["admin", "integration", "voice-monitoring", "real-time"],
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/App.tsx",
+        "apps/admin-panel/src/components/AdminLayout.tsx",
+        "services/api-gateway/app/api/admin_panel.py",
+        "apps/web-app/src/components/admin/VoiceAdminPanel.tsx"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -287,6 +301,12 @@
       "audience": ["admin", "developers", "ai-agents"],
       "category": "reference",
       "tags": ["admin", "real-time", "websocket", "redis", "events"],
+      "component": "backend/websocket",
+      "relatedPaths": [
+        "services/api-gateway/app/api/websocket.py",
+        "services/api-gateway/app/api/feature_flags_realtime.py",
+        "apps/admin-panel/src/hooks/useRealtimeEvents.ts"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -495,6 +515,11 @@
       "audience": ["human", "ai-agents", "backend"],
       "category": "voice",
       "tags": ["voice", "quality", "network", "latency"],
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/services/quality_service.py",
+        "services/api-gateway/app/api/voice.py"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -515,6 +540,12 @@
         "speech-detection",
         "accessibility",
         "v4"
+      ],
+      "component": "frontend/voice",
+      "relatedPaths": [
+        "apps/web-app/src/components/voice/VoiceFirstInputBar.tsx",
+        "apps/web-app/src/components/voice/VoiceSettings.tsx",
+        "services/api-gateway/app/api/voice.py"
       ],
       "lastUpdated": "2025-12-04"
     },
@@ -544,6 +575,12 @@
       "audience": ["human", "ai-agents", "backend"],
       "category": "voice",
       "tags": ["voice", "fhir", "clinical", "streaming", "ehr"],
+      "component": "backend/clinical",
+      "relatedPaths": [
+        "services/api-gateway/app/services/fhir_service.py",
+        "services/api-gateway/app/api/external_medical.py",
+        "apps/web-app/src/components/clinical/ClinicalContextPanel.tsx"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -558,6 +595,12 @@
       "audience": ["human", "ai-agents"],
       "category": "voice",
       "tags": ["voice", "performance", "latency", "degradation", "v4"],
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "services/api-gateway/app/services/thinker_talker_service.py",
+        "apps/web-app/src/components/voice/LatencyIndicator.tsx"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -572,6 +615,11 @@
       "audience": ["human", "ai-agents"],
       "category": "voice",
       "tags": ["voice", "tts", "pronunciation", "lexicon", "medical", "v4"],
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/services/lexicon_service.py",
+        "services/api-gateway/app/services/tts_service.py"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -586,6 +634,12 @@
       "audience": ["human", "ai-agents"],
       "category": "voice",
       "tags": ["voice", "multilingual", "rag", "translation", "v4"],
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/services/rag_service.py",
+        "services/api-gateway/app/services/translation_service.py",
+        "services/api-gateway/app/api/voice.py"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -613,6 +667,12 @@
       "audience": ["human", "ai-agents"],
       "category": "voice",
       "tags": ["voice", "security", "phi", "stt", "whisper", "hipaa", "v4"],
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/services/stt_service.py",
+        "services/api-gateway/app/services/phi_detector.py",
+        "services/api-gateway/app/api/voice.py"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -662,6 +722,12 @@
         "accessibility",
         "v4"
       ],
+      "component": "frontend/voice",
+      "relatedPaths": [
+        "apps/web-app/src/components/voice/StreamingTextDisplay.tsx",
+        "apps/web-app/src/components/chat/MessageBubble.tsx",
+        "packages/config/i18n.ts"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -689,6 +755,11 @@
       "audience": ["human", "ai-agents", "backend"],
       "category": "voice",
       "tags": ["voice", "diarization", "speaker-detection", "pyannote"],
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/services/diarization_service.py",
+        "apps/web-app/src/components/voice/SpeakerAttributedTranscript.tsx"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -703,6 +774,11 @@
       "audience": ["human", "ai-agents", "frontend"],
       "category": "voice",
       "tags": ["voice", "frontend", "streaming", "rtl", "components"],
+      "component": "frontend/voice",
+      "relatedPaths": [
+        "apps/web-app/src/components/voice/StreamingTextDisplay.tsx",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -717,6 +793,12 @@
       "audience": ["human", "ai-agents"],
       "category": "voice",
       "tags": ["voice", "ux", "thinking-feedback", "audio", "haptic", "v4"],
+      "component": "frontend/voice",
+      "relatedPaths": [
+        "apps/web-app/src/components/voice/ThinkingVisualIndicator.tsx",
+        "apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx",
+        "apps/web-app/src/components/voice/VoiceSettings.tsx"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -738,6 +820,12 @@
         "multimodal",
         "v4"
       ],
+      "component": "backend/conversation",
+      "relatedPaths": [
+        "services/api-gateway/app/services/conversation_service.py",
+        "services/api-gateway/app/models/conversation.py",
+        "apps/web-app/src/hooks/useConversation.ts"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -752,6 +840,12 @@
       "audience": ["human", "ai-agents", "frontend"],
       "category": "voice",
       "tags": ["voice", "frontend", "input", "vad", "components"],
+      "component": "frontend/voice",
+      "relatedPaths": [
+        "apps/web-app/src/components/voice/VoiceFirstInputBar.tsx",
+        "apps/web-app/src/components/voice/VoiceMicControl.tsx",
+        "apps/web-app/src/components/voice/VoiceActivityIndicator.tsx"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -766,6 +860,13 @@
       "audience": ["human", "ai-agents"],
       "category": "voice",
       "tags": ["voice", "v4", "multilingual", "latency", "thinking-feedback"],
+      "component": "frontend/voice",
+      "relatedPaths": [
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx",
+        "apps/web-app/src/components/voice/VoiceInput.tsx",
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -795,6 +896,14 @@
       "category": "architecture",
       "tags": ["architecture", "frontend", "react", "typescript", "monorepo"],
       "relatedServices": ["web-app", "admin-panel", "docs-site"],
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src/App.tsx",
+        "apps/web-app/src/components/Layout.tsx",
+        "apps/admin-panel/src/App.tsx",
+        "packages/types/src/index.ts",
+        "packages/ui/src/index.ts"
+      ],
       "lastUpdated": "2025-12-03"
     },
     {
@@ -940,6 +1049,14 @@
       "category": "api",
       "tags": ["api", "rest", "reference", "endpoints"],
       "relatedServices": ["api-gateway"],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/__init__.py",
+        "services/api-gateway/app/api/conversations.py",
+        "services/api-gateway/app/api/auth.py",
+        "services/api-gateway/app/api/voice.py",
+        "services/api-gateway/app/api/health.py"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -982,6 +1099,13 @@
       "audience": ["developers", "backend", "agent", "ai-agents"],
       "category": "architecture",
       "tags": ["voice", "pipeline", "thinker-talker", "stt", "tts"],
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "services/api-gateway/app/services/thinker_talker_service.py",
+        "apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx",
+        "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -1004,6 +1128,14 @@
       "category": "architecture",
       "tags": ["architecture", "system-design", "overview"],
       "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "component": "platform/architecture",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "apps/web-app/src/App.tsx",
+        "apps/admin-panel/src/App.tsx",
+        "docker-compose.yml",
+        "package.json"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -1026,6 +1158,13 @@
       "category": "admin",
       "tags": ["admin", "implementation", "plan", "roadmap"],
       "relatedServices": ["api-gateway", "admin-panel"],
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/App.tsx",
+        "apps/admin-panel/src/components/Dashboard.tsx",
+        "apps/admin-panel/src/components/AdminLayout.tsx",
+        "services/api-gateway/app/api/admin_panel.py"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -1348,6 +1487,14 @@
       "category": "architecture",
       "tags": ["architecture", "backend", "fastapi", "microservices"],
       "relatedServices": ["api-gateway"],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "services/api-gateway/app/api/__init__.py",
+        "services/api-gateway/app/core/config.py",
+        "services/api-gateway/app/core/database.py",
+        "services/api-gateway/app/models/__init__.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1460,6 +1607,12 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["configuration", "reference"],
+      "component": "backend/config",
+      "relatedPaths": [
+        "services/api-gateway/app/core/config.py",
+        ".env.example",
+        "docker-compose.yml"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1508,6 +1661,14 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["data", "model"],
+      "component": "backend/models",
+      "relatedPaths": [
+        "services/api-gateway/app/models/__init__.py",
+        "services/api-gateway/app/models/user.py",
+        "services/api-gateway/app/models/conversation.py",
+        "services/api-gateway/app/core/database.py",
+        "packages/types/src/index.ts"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1536,6 +1697,13 @@
       "audience": ["devops", "sre", "ai-agents"],
       "category": "deployment",
       "tags": ["deployment", "guide"],
+      "component": "infra/deployment",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "Makefile",
+        "services/api-gateway/Dockerfile",
+        ".env.example"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1704,6 +1872,12 @@
       "audience": ["human", "ai-agents"],
       "category": "security",
       "tags": ["hipaa", "compliance", "matrix"],
+      "component": "backend/security",
+      "relatedPaths": [
+        "services/api-gateway/app/core/security.py",
+        "services/api-gateway/app/services/phi_detector.py",
+        "services/api-gateway/app/api/admin_phi.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1886,6 +2060,12 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["observability"],
+      "component": "backend/observability",
+      "relatedPaths": [
+        "services/api-gateway/app/core/logging.py",
+        "services/api-gateway/app/core/metrics.py",
+        "services/api-gateway/app/api/health.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1900,6 +2080,12 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["orchestration", "design"],
+      "component": "backend/orchestrator",
+      "relatedPaths": [
+        "services/api-gateway/app/services/ai_service.py",
+        "services/api-gateway/app/services/rag_service.py",
+        "services/api-gateway/app/services/conversation_service.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2237,6 +2423,13 @@
       "category": "architecture",
       "tags": ["architecture", "websocket", "realtime", "voice", "streaming"],
       "relatedServices": ["api-gateway", "web-app"],
+      "component": "backend/websocket",
+      "relatedPaths": [
+        "services/api-gateway/app/api/websocket.py",
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/hooks/useRealtimeVoiceSession.ts",
+        "apps/web-app/src/hooks/useWebSocket.ts"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2299,6 +2492,13 @@
       ],
       "category": "security",
       "tags": ["security", "hipaa", "compliance", "phi", "encryption"],
+      "component": "backend/security",
+      "relatedPaths": [
+        "services/api-gateway/app/core/security.py",
+        "services/api-gateway/app/api/auth.py",
+        "services/api-gateway/app/api/auth_2fa.py",
+        "services/api-gateway/app/middleware/auth_middleware.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2313,6 +2513,13 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["semantic", "search", "design"],
+      "component": "backend/search",
+      "relatedPaths": [
+        "services/api-gateway/app/services/rag_service.py",
+        "services/api-gateway/app/services/embedding_service.py",
+        "services/api-gateway/app/api/advanced_search.py",
+        "services/api-gateway/app/api/admin_kb.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2328,6 +2535,13 @@
       "category": "architecture",
       "tags": ["service", "catalog", "api", "architecture"],
       "relatedServices": ["api-gateway"],
+      "component": "backend/services",
+      "relatedPaths": [
+        "services/api-gateway/app/services/__init__.py",
+        "services/api-gateway/app/services/conversation_service.py",
+        "services/api-gateway/app/services/ai_service.py",
+        "services/api-gateway/app/services/auth_service.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2384,6 +2598,13 @@
       "audience": ["frontend", "ai-agents"],
       "category": "testing",
       "tags": ["testing", "guide"],
+      "component": "testing/e2e",
+      "relatedPaths": [
+        "apps/web-app/playwright.config.ts",
+        "apps/web-app/e2e/example.spec.ts",
+        "apps/web-app/src/__tests__",
+        "packages/ui/vitest.config.ts"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2412,6 +2633,12 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["tools", "and", "integrations"],
+      "component": "backend/tools",
+      "relatedPaths": [
+        "services/api-gateway/app/services/tools/tool_service.py",
+        "services/api-gateway/app/api/admin_tools.py",
+        "services/api-gateway/app/api/admin_integrations.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2483,6 +2710,13 @@
       "category": "reference",
       "tags": ["websocket", "protocol", "api", "realtime", "streaming"],
       "relatedServices": ["api-gateway", "web-app"],
+      "component": "backend/websocket",
+      "relatedPaths": [
+        "services/api-gateway/app/api/websocket.py",
+        "services/api-gateway/app/api/voice.py",
+        "apps/web-app/src/hooks/useWebSocket.ts",
+        "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2540,6 +2774,12 @@
       "category": "api",
       "tags": ["api", "routes", "auto-generated"],
       "relatedServices": ["api-gateway"],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/__init__.py",
+        "services/api-gateway/app/main.py",
+        "services/api-gateway/openapi.yaml"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2555,6 +2795,13 @@
       "category": "api",
       "tags": ["api", "rest", "reference", "endpoints", "examples"],
       "relatedServices": ["api-gateway"],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/__init__.py",
+        "services/api-gateway/app/api/conversations.py",
+        "services/api-gateway/app/api/auth.py",
+        "packages/api-client/src/index.ts"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {

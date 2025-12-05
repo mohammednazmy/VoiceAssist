@@ -16,6 +16,12 @@ tags:
   - search
   - design
 category: reference
+component: "backend/search"
+relatedPaths:
+  - "services/api-gateway/app/services/rag_service.py"
+  - "services/api-gateway/app/services/embedding_service.py"
+  - "services/api-gateway/app/api/advanced_search.py"
+  - "services/api-gateway/app/api/admin_kb.py"
 ai_summary: >-
   VoiceAssist uses a sophisticated semantic search system to retrieve relevant
   medical knowledge from textbooks, journals, and clinical guidelines. This

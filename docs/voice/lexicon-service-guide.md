@@ -11,6 +11,10 @@ tags: [voice, tts, pronunciation, lexicon, medical, v4]
 summary: Guide to using the medical pronunciation lexicon service
 lastUpdated: "2025-12-04"
 category: voice
+component: "backend/voice"
+relatedPaths:
+  - "services/api-gateway/app/services/lexicon_service.py"
+  - "services/api-gateway/app/services/tts_service.py"
 ai_summary: >-
   Medical pronunciation lexicon service for TTS. Supports 15 languages with
   medical terminology and 100+ shared drug names. Includes G2P fallback via

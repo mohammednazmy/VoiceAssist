@@ -21,6 +21,12 @@ tags:
   - phi
   - encryption
 category: security
+component: "backend/security"
+relatedPaths:
+  - "services/api-gateway/app/core/security.py"
+  - "services/api-gateway/app/api/auth.py"
+  - "services/api-gateway/app/api/auth_2fa.py"
+  - "services/api-gateway/app/middleware/auth_middleware.py"
 source_of_truth: true
 version: 2.0.0
 ai_summary: >-

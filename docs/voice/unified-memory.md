@@ -11,6 +11,11 @@ tags: [voice, memory, context, conversation, multimodal, v4]
 summary: Guide to unified conversation memory across voice and text modes
 lastUpdated: "2025-12-04"
 category: voice
+component: "backend/conversation"
+relatedPaths:
+  - "services/api-gateway/app/services/conversation_service.py"
+  - "services/api-gateway/app/models/conversation.py"
+  - "apps/web-app/src/hooks/useConversation.ts"
 ai_summary: >-
   Unified conversation memory system for Voice Mode v4.1. Shares context between
   voice and text modes, tracks language switching, handles mode transitions, and

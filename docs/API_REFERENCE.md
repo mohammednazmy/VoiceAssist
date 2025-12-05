@@ -22,6 +22,13 @@ tags:
 category: api
 relatedServices:
   - api-gateway
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/api/__init__.py"
+  - "services/api-gateway/app/api/conversations.py"
+  - "services/api-gateway/app/api/auth.py"
+  - "services/api-gateway/app/api/voice.py"
+  - "services/api-gateway/app/api/health.py"
 version: 2.0.0
 ai_summary: >-
   Last Updated: 2025-12-02 The VoiceAssist API provides comprehensive REST

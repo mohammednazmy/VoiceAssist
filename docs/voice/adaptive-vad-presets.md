@@ -11,6 +11,11 @@ tags: [voice, vad, audio, speech-detection, accessibility, v4]
 summary: Guide to user-tunable Voice Activity Detection presets
 lastUpdated: "2025-12-04"
 category: voice
+component: "frontend/voice"
+relatedPaths:
+  - "apps/web-app/src/components/voice/VoiceFirstInputBar.tsx"
+  - "apps/web-app/src/components/voice/VoiceSettings.tsx"
+  - "services/api-gateway/app/api/voice.py"
 ai_summary: >-
   VAD preset configuration for Voice Mode v4.1. Defines three presets: Sensitive
   (quiet environments, -45dB), Balanced (default, -35dB), and Relaxed (noisy,

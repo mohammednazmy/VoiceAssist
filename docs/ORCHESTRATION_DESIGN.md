@@ -13,6 +13,11 @@ tags:
   - orchestration
   - design
 category: reference
+component: "backend/orchestrator"
+relatedPaths:
+  - "services/api-gateway/app/services/ai_service.py"
+  - "services/api-gateway/app/services/rag_service.py"
+  - "services/api-gateway/app/services/conversation_service.py"
 ai_summary: >-
   Last Updated: 2025-11-20 Status: Canonical Reference Purpose: Define the
   Conductor/Orchestrator that routes and processes clinical queries --- The

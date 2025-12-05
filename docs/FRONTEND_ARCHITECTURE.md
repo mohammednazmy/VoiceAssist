@@ -24,6 +24,13 @@ relatedServices:
   - admin-panel
   - docs-site
 category: architecture
+component: "frontend/web-app"
+relatedPaths:
+  - "apps/web-app/src/App.tsx"
+  - "apps/web-app/src/components/Layout.tsx"
+  - "apps/admin-panel/src/App.tsx"
+  - "packages/types/src/index.ts"
+  - "packages/ui/src/index.ts"
 source_of_truth: true
 version: 1.1.0
 ai_summary: >-

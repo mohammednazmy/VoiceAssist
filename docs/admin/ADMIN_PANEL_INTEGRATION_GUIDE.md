@@ -15,6 +15,12 @@ tags:
   - integration
   - voice-monitoring
   - real-time
+component: "frontend/admin-panel"
+relatedPaths:
+  - "apps/admin-panel/src/App.tsx"
+  - "apps/admin-panel/src/components/AdminLayout.tsx"
+  - "services/api-gateway/app/api/admin_panel.py"
+  - "apps/web-app/src/components/admin/VoiceAdminPanel.tsx"
 ---
 
 # Admin Panel Integration Guide

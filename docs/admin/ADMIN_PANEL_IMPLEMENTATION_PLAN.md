@@ -24,6 +24,12 @@ relatedServices:
   - api-gateway
   - admin-panel
 category: admin
+component: "frontend/admin-panel"
+relatedPaths:
+  - "apps/admin-panel/src/App.tsx"
+  - "apps/admin-panel/src/components/Dashboard.tsx"
+  - "apps/admin-panel/src/components/AdminLayout.tsx"
+  - "services/api-gateway/app/api/admin_panel.py"
 source_of_truth: true
 version: 2.8.0
 ai_summary: >-

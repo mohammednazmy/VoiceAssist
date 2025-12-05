@@ -19,6 +19,11 @@ tags:
 category: api
 relatedServices:
   - api-gateway
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/api/__init__.py"
+  - "services/api-gateway/app/main.py"
+  - "services/api-gateway/openapi.yaml"
 version: 1.0.0
 ai_summary: >-
   Generated: 2025-11-27 12:24:10 UTC App: VoiceAssist API Gateway Version: 0.1.0

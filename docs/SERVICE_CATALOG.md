@@ -22,6 +22,12 @@ tags:
 relatedServices:
   - api-gateway
 category: architecture
+component: "backend/services"
+relatedPaths:
+  - "services/api-gateway/app/services/__init__.py"
+  - "services/api-gateway/app/services/conversation_service.py"
+  - "services/api-gateway/app/services/ai_service.py"
+  - "services/api-gateway/app/services/auth_service.py"
 source_of_truth: true
 version: 1.0.0
 ai_summary: >-

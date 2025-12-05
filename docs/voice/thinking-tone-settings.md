@@ -11,6 +11,11 @@ tags: [voice, ux, thinking-feedback, audio, haptic, v4]
 summary: Configuration guide for thinking feedback during AI processing
 lastUpdated: "2025-12-04"
 category: voice
+component: "frontend/voice"
+relatedPaths:
+  - "apps/web-app/src/components/voice/ThinkingVisualIndicator.tsx"
+  - "apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx"
+  - "apps/web-app/src/components/voice/VoiceSettings.tsx"
 ai_summary: >-
   Multi-modal thinking feedback configuration for Voice Mode v4.1. Audio presets:
   gentle_beep (440Hz), soft_chime (chord), subtle_tick, or none. Also supports

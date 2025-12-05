@@ -13,6 +13,13 @@ tags:
   - data
   - model
 category: reference
+component: "backend/models"
+relatedPaths:
+  - "services/api-gateway/app/models/__init__.py"
+  - "services/api-gateway/app/models/user.py"
+  - "services/api-gateway/app/models/conversation.py"
+  - "services/api-gateway/app/core/database.py"
+  - "packages/types/src/index.ts"
 ai_summary: >-
   Last Updated: 2025-11-20 Status: Canonical Reference Purpose: Single source of
   truth for all data entities across VoiceAssist V2 --- This document defines

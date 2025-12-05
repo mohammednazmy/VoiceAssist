@@ -14,6 +14,11 @@ tags:
   - and
   - integrations
 category: reference
+component: "backend/tools"
+relatedPaths:
+  - "services/api-gateway/app/services/tools/tool_service.py"
+  - "services/api-gateway/app/api/admin_tools.py"
+  - "services/api-gateway/app/api/admin_integrations.py"
 ai_summary: >-
   Last Updated: 2025-11-20 Status: Design Complete Version: V2.0 >
   Implementation Note: This document describes the V2 tools architecture design.
