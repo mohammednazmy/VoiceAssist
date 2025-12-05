@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-12-05T05:05:40.368Z",
+  "generated_at": "2025-12-05T05:25:49.305Z",
   "description": "Bidirectional mapping between documentation and repository files for AI agent navigation",
   "usage": {
     "from_doc": "Use by_doc_slug[slug].relatedPaths to find implementation files for a doc",

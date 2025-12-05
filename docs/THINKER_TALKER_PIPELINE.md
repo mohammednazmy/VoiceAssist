@@ -105,9 +105,10 @@ class PipelineConfig:
     stt_endpointing_ms: int = 800    # Wait for natural pauses
     stt_utterance_end_ms: int = 1500  # Finalize after 1.5s silence
 
-    # TTS Settings
-    voice_id: str = "TxGEqnHWrfWFTfGW9XjX"  # Josh (premium)
-    tts_model: str = "eleven_turbo_v2_5"
+    # TTS Settings - defaults from voice_constants.py (single source of truth)
+    # See docs/voice/voice-configuration.md for details
+    voice_id: str = DEFAULT_VOICE_ID  # Brian (from voice_constants.py)
+    tts_model: str = DEFAULT_TTS_MODEL  # eleven_flash_v2_5
 
     # Barge-in
     barge_in_enabled: bool = True

@@ -82,12 +82,12 @@ from app.services.talker_service import talker_service
 
 # Check if TTS is available
 if talker_service.is_enabled():
-    # Start a speaking session
+    # Start a speaking session (uses DEFAULT_VOICE_ID from voice_constants.py)
     session = await talker_service.start_session(
         on_audio_chunk=handle_audio,
         voice_config=VoiceConfig(
-            voice_id="TxGEqnHWrfWFTfGW9XjX",
-            stability=0.78,
+            # voice_id defaults to DEFAULT_VOICE_ID (Brian)
+            stability=0.65,
         ),
     )
 
@@ -184,15 +184,20 @@ class TTSProvider(str, Enum):
 
 ### VoiceConfig
 
+> **Note:** Default voice is configured in `app/core/voice_constants.py`.
+> See [Voice Configuration](/docs/voice/voice-configuration) for details.
+
 ```python
+from app.core.voice_constants import DEFAULT_VOICE_ID, DEFAULT_TTS_MODEL
+
 @dataclass
 class VoiceConfig:
     provider: TTSProvider = TTSProvider.ELEVENLABS
-    voice_id: str = "TxGEqnHWrfWFTfGW9XjX"  # Josh
-    model_id: str = "eleven_turbo_v2_5"
-    stability: float = 0.78         # 0.0-1.0, higher = consistent
-    similarity_boost: float = 0.85  # 0.0-1.0, higher = clearer
-    style: float = 0.08             # 0.0-1.0, lower = natural
+    voice_id: str = DEFAULT_VOICE_ID  # Brian (from voice_constants.py)
+    model_id: str = DEFAULT_TTS_MODEL  # eleven_flash_v2_5
+    stability: float = 0.65         # 0.0-1.0, higher = consistent
+    similarity_boost: float = 0.80  # 0.0-1.0, higher = clearer
+    style: float = 0.15             # 0.0-1.0, lower = natural
     use_speaker_boost: bool = True
     output_format: str = "pcm_24000"
 ```

@@ -1,6 +1,6 @@
 {
-  "count": 283,
-  "generated_at": "2025-12-05T05:05:49.471Z",
+  "count": 284,
+  "generated_at": "2025-12-05T05:26:19.793Z",
   "docs": [
     {
       "slug": "style-guide",
@@ -204,6 +204,20 @@
       "path": "releases/v4.1.2-release-announcement.md",
       "title": "Voice Mode v4.1.2 Release Announcement",
       "status": "released",
+      "lastUpdated": "2025-12-05"
+    },
+    {
+      "slug": "voice/voice-configuration",
+      "path": "voice/voice-configuration.md",
+      "title": "Voice Configuration",
+      "summary": "Centralized voice configuration system for consistent TTS voice selection across backend and frontend.",
+      "ai_summary": "The voice configuration system uses a single source of truth pattern to prevent voice ID inconsistencies between backend and frontend. All default voice settings are defined in voice_constants.py (backend) and voiceConstants.ts (frontend). To change the default voice, only these two files need to be modified.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["developers", "backend", "frontend", "agent", "ai-agents"],
+      "category": "reference",
+      "tags": ["voice", "configuration", "tts", "elevenlabs", "architecture"],
       "lastUpdated": "2025-12-05"
     },
     {
