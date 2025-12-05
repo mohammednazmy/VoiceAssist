@@ -7,9 +7,8 @@ summary: >-
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-12-02"
+lastUpdated: "2025-12-04"
 audience:
-  - agent
   - ai-agents
 tags:
   - onboarding
@@ -22,13 +21,13 @@ relatedServices:
   - admin-panel
   - docs-site
 category: ai
-version: 1.2.0
+version: 1.4.0
 ai_summary: >-
-  Version: 1.3.0 Last Updated: 2025-12-02 Audience: AI coding assistants
-  (Claude, GPT, Copilot, etc.) --- Start here. This section provides the fastest
-  path to context. Base URL: https://assistdocs.asimo.io ALWAYS use:
-  services/api-gateway/ (FastAPI, production-ready) NEVER use: server/
-  (deprecated...
+  Start here for AI agents working on VoiceAssist. Key directories:
+  services/api-gateway/ (canonical backend, FastAPI), apps/ (web-app, admin-panel,
+  docs-site). NEVER use server/ (deprecated). Machine-readable endpoints at
+  https://assistdocs.asimo.io/agent/*.json. Read IMPLEMENTATION_STATUS.md first
+  for component status. HIPAA-compliant platform - follow PHI handling rules.
 ---
 
 # AI Agent Onboarding Guide

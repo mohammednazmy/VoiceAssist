@@ -7,13 +7,13 @@ summary: >-
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-12-02"
+lastUpdated: "2025-12-04"
 audience:
   - human
+  - ai-agents
   - backend
   - frontend
   - devops
-  - ai-agents
 tags:
   - documentation
   - tooling
@@ -23,10 +23,11 @@ category: reference
 relatedServices:
   - docs-site
 ai_summary: >-
-  This document describes the documentation infrastructure for VoiceAssist,
-  including validation scripts, quality gates, and how to maintain documentation
-  quality. The VoiceAssist documentation system consists of: Static JSON
-  endpoints served at assistdocs.asimo.io: For detailed usage, see Agent AP...
+  Documentation infrastructure for VoiceAssist. Key validation commands:
+  pnpm validate:metadata (frontmatter), pnpm validate:all (all checks).
+  Agent endpoints at assistdocs.asimo.io/agent/*.json include docs.json
+  (with ai_summary), docs-summary.json, health.json, and code-examples.json.
+  See Agent API Reference for endpoint details.
 ---
 
 # Internal Documentation System
@@ -49,13 +50,16 @@ The VoiceAssist documentation system consists of:
 
 Static JSON endpoints served at `assistdocs.asimo.io`:
 
-| Endpoint             | Purpose                            |
-| -------------------- | ---------------------------------- |
-| `/agent/index.json`  | Documentation system metadata      |
-| `/agent/docs.json`   | Full document list with metadata   |
-| `/agent/tasks.json`  | Common agent tasks with commands   |
-| `/agent/schema.json` | JSON Schema for API response types |
-| `/search-index.json` | Full-text search index (Fuse.js)   |
+| Endpoint                    | Purpose                                            |
+| --------------------------- | -------------------------------------------------- |
+| `/agent/index.json`         | Documentation system metadata and discovery        |
+| `/agent/docs.json`          | Full document list with metadata (incl ai_summary) |
+| `/agent/docs-summary.json`  | AI-friendly summaries organized by category        |
+| `/agent/tasks.json`         | Common agent tasks with commands                   |
+| `/agent/code-examples.json` | Code examples extracted from documentation         |
+| `/agent/health.json`        | Docs health metrics: coverage, freshness, status   |
+| `/agent/schema.json`        | JSON Schema for API response types                 |
+| `/search-index.json`        | Full-text search index (Fuse.js)                   |
 
 For detailed usage, see [Agent API Reference](ai/AGENT_API_REFERENCE.md).
 

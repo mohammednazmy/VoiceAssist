@@ -18,7 +18,19 @@ const DOCS_DIR =
 const AGENT_DIR = path.join(__dirname, "..", "public", "agent");
 
 // Valid enum values (matching docs.ts)
-const VALID_STATUS = ["draft", "experimental", "stable", "deprecated"];
+const VALID_STATUS = [
+  "draft",
+  "experimental",
+  "stable",
+  "deprecated",
+  "active",
+  "production",
+  "in-progress",
+  "in-development",
+  "released",
+  "complete",
+  "planning",
+];
 const VALID_STABILITY = ["production", "beta", "experimental", "legacy"];
 const VALID_OWNER = [
   "backend",
@@ -27,6 +39,7 @@ const VALID_OWNER = [
   "sre",
   "docs",
   "product",
+  "platform",
   "security",
   "mixed",
 ];
@@ -37,6 +50,7 @@ const VALID_AUDIENCE = [
   "frontend",
   "devops",
   "admin",
+  "admins",
   "user",
   "docs",
   "sre",
@@ -52,17 +66,22 @@ const VALID_AUDIENCE = [
   "technical-writers",
 ];
 const VALID_CATEGORY = [
+  "admin",
   "ai",
   "api",
   "architecture",
   "debugging",
   "deployment",
+  "feature-flags",
+  "getting-started",
   "operations",
   "overview",
   "planning",
   "reference",
+  "releases",
   "security",
   "testing",
+  "voice",
 ];
 
 /**
@@ -71,6 +90,7 @@ const VALID_CATEGORY = [
 function parseMetadata(rawData, filePath) {
   const lastUpdated = rawData.lastUpdated || rawData.last_updated || "";
   const summary = rawData.summary || rawData.description || "";
+  const aiSummary = rawData.ai_summary || rawData.aiSummary || "";
 
   // Normalize status
   let status = "draft";
@@ -116,6 +136,7 @@ function parseMetadata(rawData, filePath) {
     status,
     lastUpdated: lastUpdated.toString(),
     summary: summary || undefined,
+    ai_summary: aiSummary || undefined,
     stability,
     owner,
     audience,
@@ -163,6 +184,7 @@ function scanDocsDir(dir, basePath = "") {
           path: relativePath.replace(/\\/g, "/"),
           title: metadata.title,
           summary: metadata.summary,
+          ai_summary: metadata.ai_summary,
           status: metadata.status,
           stability: metadata.stability,
           owner: metadata.owner,
@@ -223,12 +245,13 @@ function generateAgentIndex() {
         path: "string - Relative path to markdown file",
         title: "string - Document title",
         summary: "string? - Brief description",
+        ai_summary: "string? - AI-optimized summary (2-3 sentences)",
         status: "draft|experimental|stable|deprecated",
         stability: "production|beta|experimental|legacy",
         owner: "backend|frontend|infra|sre|docs|product|security|mixed",
-        audience: "string[] - Target readers",
+        audience: "string[] - Target readers (use 'ai-agents' for AI)",
         category:
-          "ai|api|architecture|debugging|deployment|operations|overview|planning|reference|security|testing",
+          "admin|ai|api|architecture|debugging|deployment|feature-flags|getting-started|operations|overview|planning|reference|releases|security|testing|voice",
         tags: "string[] - Categorization tags",
         relatedServices: "string[] - Related service names",
         lastUpdated: "string - ISO date",

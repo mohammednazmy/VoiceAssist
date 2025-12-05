@@ -7,12 +7,11 @@ summary: >-
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-04"
 audience:
   - human
-  - agent
-  - docs
   - ai-agents
+  - docs
 tags:
   - documentation
   - metadata
@@ -21,12 +20,13 @@ tags:
 category: reference
 relatedServices:
   - docs-site
-version: 1.0.0
+version: 2.0.0
 ai_summary: >-
-  This document defines the standard YAML frontmatter schema for all VoiceAssist
-  documentation. Following this standard ensures consistent metadata across docs
-  and enables machine-readable indexing for AI agents and search systems. Every
-  markdown document should include a YAML frontmatter block at...
+  Canonical reference for VoiceAssist documentation metadata schema. Defines required
+  fields (title, slug, status, lastUpdated), recommended fields (summary, stability,
+  owner, audience, tags), AI-specific fields (ai_summary, category), and their allowed
+  values. Use `ai-agents` as the canonical audience value for AI readers. Run
+  `pnpm validate:metadata` from apps/docs-site to validate frontmatter.
 ---
 
 # Documentation Metadata Standard
@@ -45,11 +45,15 @@ summary: "One-line description of what this document covers."
 status: "stable"
 stability: "production"
 owner: "backend"
-lastUpdated: "2025-11-27"
-audience: ["human", "agent", "backend"]
+lastUpdated: "2025-12-04"
+audience: ["human", "ai-agents", "backend"]
 tags: ["tag1", "tag2"]
+category: "reference"
 relatedServices: ["api-gateway", "web-app"]
 version: "1.0.0"
+ai_summary: >-
+  A 2-3 sentence summary optimized for AI context loading. Include key facts,
+  purpose, and cross-references to related docs when useful.
 ---
 ```
 
@@ -82,6 +86,33 @@ version: "1.0.0"
 | `version`         | string  | Semantic version of the document        |
 | `deprecated`      | boolean | If true, this doc is deprecated         |
 | `replacedBy`      | string  | Slug of replacement doc (if deprecated) |
+
+### AI-Specific Fields
+
+These fields optimize documentation for AI agent consumption:
+
+| Field        | Type   | Description                                                |
+| ------------ | ------ | ---------------------------------------------------------- |
+| `ai_summary` | string | 2-3 sentence summary optimized for AI context loading      |
+| `category`   | enum   | Document category for filtering (see allowed values below) |
+
+**`ai_summary` Guidelines:**
+
+- **Length**: 2-3 sentences, technical and concise
+- **Content**: Focus on what the doc covers, key facts, and when to use it
+- **Style**: Direct statements, no marketing language
+- **Cross-references**: Mention related docs when useful
+- **Requirement**: **Strongly recommended** when `audience` includes `ai-agents`
+
+**Example `ai_summary`:**
+
+```yaml
+ai_summary: >-
+  Defines the WebSocket protocol for voice streaming including message types,
+  connection lifecycle, and error handling. Key endpoints: /ws/voice for STT/TTS,
+  /ws/thinker-talker for real-time AI responses. See VOICE_MODE_PIPELINE.md for
+  full voice architecture.
+```
 
 ---
 
@@ -120,15 +151,38 @@ version: "1.0.0"
 
 ### `audience`
 
-| Value      | Description                                  |
-| ---------- | -------------------------------------------- |
-| `human`    | Human readers (developers, operators, users) |
-| `agent`    | AI coding assistants (Claude, GPT, Copilot)  |
-| `backend`  | Backend developers                           |
-| `frontend` | Frontend developers                          |
-| `devops`   | DevOps/SRE engineers                         |
-| `admin`    | System administrators                        |
-| `user`     | End users of VoiceAssist                     |
+| Value       | Description                                  |
+| ----------- | -------------------------------------------- |
+| `human`     | Human readers (developers, operators, users) |
+| `ai-agents` | **Canonical value** for AI coding assistants |
+| `backend`   | Backend developers                           |
+| `frontend`  | Frontend developers                          |
+| `devops`    | DevOps/SRE engineers                         |
+| `admin`     | System administrators                        |
+| `user`      | End users of VoiceAssist                     |
+
+**Note:** Use `ai-agents` (not `agent`) as the canonical value for AI readers. Legacy values `agent` and `ai-agent` are accepted for backwards compatibility but should be updated to `ai-agents` in new docs.
+
+### `category`
+
+| Value             | Description                                 |
+| ----------------- | ------------------------------------------- |
+| `admin`           | Admin panel docs, system administration     |
+| `ai`              | AI assistant guides, agent API, onboarding  |
+| `api`             | REST API, WebSocket API, OpenAPI            |
+| `architecture`    | System design, data flows, components       |
+| `debugging`       | Troubleshooting guides, diagnostic commands |
+| `deployment`      | Installation, deployment, production setup  |
+| `feature-flags`   | Feature flag documentation and guides       |
+| `getting-started` | Onboarding guides for specific audiences    |
+| `operations`      | Runbooks, monitoring, maintenance           |
+| `overview`        | Getting started, project status, summaries  |
+| `planning`        | Phase docs, roadmaps, implementation plans  |
+| `reference`       | Specifications, configuration, data models  |
+| `releases`        | Release notes and announcements             |
+| `security`        | HIPAA, compliance, authentication           |
+| `testing`         | Test guides, QA procedures                  |
+| `voice`           | Voice mode, STT/TTS, realtime audio         |
 
 ---
 
@@ -236,23 +290,36 @@ When updating existing documents:
 
 ## Validation
 
-The docs-site validates frontmatter at build time. Invalid or missing required fields will generate warnings. Use the validation script:
+The docs-site validates frontmatter at build time. Invalid or missing required fields will generate warnings. Use the validation scripts:
 
 ```bash
-pnpm docs:validate
+cd apps/docs-site
+
+# Validate frontmatter metadata
+pnpm validate:metadata
+
+# Run all validation checks
+pnpm validate:all
 ```
 
-This checks:
+**What `validate:metadata` checks:**
 
-- Presence of required fields
-- Valid enum values for `status`, `stability`, `owner`
+- Presence of required fields (`title`, `slug`, `status`, `lastUpdated`)
+- Valid enum values for `status`, `stability`, `owner`, `category`
+- Valid values in `audience` array (including `ai-agents`)
 - ISO date format for `lastUpdated`
 - Array types for `audience`, `tags`, `relatedServices`
+
+**AI-specific validation:**
+
+- Documents with `audience: ["ai-agents"]` should have an `ai_summary` field
+- Missing `ai_summary` on AI-targeted docs generates a warning
 
 ---
 
 ## Version History
 
-| Version | Date       | Changes                     |
-| ------- | ---------- | --------------------------- |
-| 1.0.0   | 2025-11-27 | Initial standard definition |
+| Version | Date       | Changes                                                                   |
+| ------- | ---------- | ------------------------------------------------------------------------- |
+| 2.0.0   | 2025-12-04 | Added AI-specific fields (ai_summary, category), canonical audience value |
+| 1.0.0   | 2025-11-27 | Initial standard definition                                               |

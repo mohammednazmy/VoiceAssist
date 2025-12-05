@@ -7,9 +7,8 @@ summary: >-
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-12-02"
+lastUpdated: "2025-12-04"
 audience:
-  - agent
   - ai-agents
 tags:
   - ai-agent
@@ -17,13 +16,12 @@ tags:
   - index
   - reference
 category: ai
-version: 1.0.0
+version: 1.1.0
 ai_summary: >-
-  This document lists common AI agent tasks with the relevant documentation and
-  endpoints needed to complete them. Machine-Readable Endpoints: -
-  https://assistdocs.asimo.io/agent/index.json - Documentation metadata -
-  https://assistdocs.asimo.io/agent/docs.json - Full document list with
-  filtering -...
+  Catalog of common AI agent tasks with relevant docs and commands. Tasks include:
+  understand project status (IMPLEMENTATION_STATUS.md), debug backend/frontend/voice
+  issues, update documentation, add API endpoints, work on admin panel. Each task
+  links to specific docs, code paths, and diagnostic commands.
 ---
 
 # Agent Task Index
@@ -158,10 +156,11 @@ pnpm dev
 **Workflow:**
 
 1. Edit markdown files in `docs/`
-2. Add proper frontmatter with metadata
-3. Rebuild: `cd apps/docs-site && pnpm build`
-4. Regenerate agent JSON: `node scripts/generate-agent-json.mjs`
-5. Deploy to `/var/www/assistdocs.asimo.io/`
+2. Add proper frontmatter with metadata (see [Metadata Standard](../DOCUMENTATION_METADATA_STANDARD.md))
+3. Validate: `cd apps/docs-site && pnpm validate:all`
+4. Regenerate search index and agent JSON: `pnpm generate-search-index && pnpm generate-agent-json`
+5. Build: `pnpm build`
+6. Deploy: Copy `out/` to `/var/www/assistdocs.asimo.io/`
 
 ---
 
@@ -252,6 +251,41 @@ pnpm dev
 
 ---
 
+### 11. Docs Health Audit
+
+**Goal**: Assess documentation quality and identify improvement areas
+
+**Key Documents:**
+
+- [Documentation Metadata Standard](../DOCUMENTATION_METADATA_STANDARD.md)
+- [Internal Docs System](../INTERNAL_DOCS_SYSTEM.md)
+- [Agent API Reference](./AGENT_API_REFERENCE.md)
+
+**Workflow:**
+
+1. Fetch health metrics: `curl https://assistdocs.asimo.io/agent/health.json`
+2. Run local validation: `cd apps/docs-site && pnpm validate:all`
+3. Check AI summary coverage: `curl https://assistdocs.asimo.io/agent/docs-summary.json | jq '.stats'`
+4. Identify stale docs from health.json `category_freshness` section
+5. Add missing `ai_summary` fields to docs targeting AI agents
+
+**Quick Commands:**
+
+```bash
+cd apps/docs-site
+
+# Run all validation checks
+pnpm validate:all
+
+# Check for docs missing ai_summary
+pnpm validate:metadata 2>&1 | grep "Missing ai_summary"
+
+# Regenerate agent JSON after fixes
+pnpm generate-agent-json
+```
+
+---
+
 ## Filtering Documents by Task
 
 Use the agent JSON API to filter documents:
@@ -259,16 +293,19 @@ Use the agent JSON API to filter documents:
 ```javascript
 // Fetch all docs
 const response = await fetch("https://assistdocs.asimo.io/agent/docs.json");
-const docs = await response.json();
+const data = await response.json();
 
 // Filter by category
-const debuggingDocs = docs.filter((d) => d.category === "debugging");
+const debuggingDocs = data.docs.filter((d) => d.category === "debugging");
 
-// Filter by audience
-const agentDocs = docs.filter((d) => d.audience && d.audience.includes("agent"));
+// Filter by audience (use canonical 'ai-agents' value)
+const agentDocs = data.docs.filter((d) => d.audience && d.audience.includes("ai-agents"));
 
 // Filter by tag
-const backendDocs = docs.filter((d) => d.tags && d.tags.includes("backend"));
+const backendDocs = data.docs.filter((d) => d.tags && d.tags.includes("backend"));
+
+// Find docs with ai_summary
+const docsWithSummary = data.docs.filter((d) => d.ai_summary);
 ```
 
 ---

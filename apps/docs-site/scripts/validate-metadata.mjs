@@ -21,8 +21,8 @@ const __dirname = path.dirname(__filename);
 const DOCS_DIR = path.join(__dirname, "..", "..", "..", "docs");
 
 // Valid enum values
-const VALID_STATUS = ["draft", "experimental", "stable", "deprecated", "active", "production", "in-progress", "in-development"];
-const VALID_STABILITY = ["production", "beta", "experimental", "legacy"];
+const VALID_STATUS = ["draft", "experimental", "stable", "deprecated", "active", "production", "in-progress", "in-development", "released", "complete", "planning"];
+const VALID_STABILITY = ["production", "beta", "experimental", "legacy", "stable", "draft"];
 const VALID_OWNER = [
   "backend",
   "frontend",
@@ -30,6 +30,7 @@ const VALID_OWNER = [
   "sre",
   "docs",
   "product",
+  "platform",
   "security",
   "mixed",
 ];
@@ -40,6 +41,7 @@ const VALID_AUDIENCE = [
   "frontend",
   "devops",
   "admin",
+  "admins",
   "user",
   "docs",
   "sre",
@@ -56,17 +58,22 @@ const VALID_AUDIENCE = [
   "technical-writers",
 ];
 const VALID_CATEGORY = [
+  "admin",
   "ai",
   "api",
   "architecture",
   "debugging",
   "deployment",
+  "feature-flags",
+  "getting-started",
   "operations",
   "overview",
   "planning",
   "reference",
+  "releases",
   "security",
   "testing",
+  "voice",
 ];
 
 function validateFile(filePath, relativePath) {
@@ -159,6 +166,22 @@ function validateFile(filePath, relativePath) {
     // Validate relatedServices is array
     if (data.relatedServices && !Array.isArray(data.relatedServices)) {
       result.errors.push("relatedServices must be an array");
+    }
+
+    // AI-specific validation: if audience includes AI agents, ai_summary should be present
+    const hasAIAudience = Array.isArray(data.audience) &&
+      data.audience.some(a => ["ai-agents", "ai-agent", "agent"].includes(a));
+    if (hasAIAudience && !data.ai_summary) {
+      result.warnings.push(
+        "Missing ai_summary: Docs targeting AI agents should include an ai_summary field"
+      );
+    }
+
+    // Validate category if present
+    if (data.category && !VALID_CATEGORY.includes(data.category)) {
+      result.errors.push(
+        `Invalid category: "${data.category}". Must be one of: ${VALID_CATEGORY.join(", ")}`
+      );
     }
   } catch (error) {
     result.errors.push(`Could not parse file: ${error}`);

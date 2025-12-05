@@ -7,9 +7,8 @@ summary: >-
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-12-03"
+lastUpdated: "2025-12-04"
 audience:
-  - agent
   - ai-agents
   - backend
 tags:
@@ -22,12 +21,14 @@ relatedServices:
   - docs-site
 category: ai
 source_of_truth: true
-version: 1.3.0
+version: 1.4.0
 ai_summary: >-
-  The VoiceAssist documentation site exposes machine-readable JSON endpoints
-  designed for AI agents to programmatically discover, filter, and search
-  documentation. Base URL: https://assistdocs.asimo.io --- Note: All endpoints
-  listed above are static JSON files generated at build time. For lexical s...
+  Canonical reference for VoiceAssist documentation API endpoints. Base URL:
+  https://assistdocs.asimo.io. Key endpoints: /agent/docs.json (full doc list
+  with ai_summary), /agent/docs-summary.json (AI summaries by category),
+  /agent/health.json (docs health metrics), /agent/tasks.json (common tasks),
+  /search-index.json (Fuse.js search). All endpoints are static JSON generated
+  at build time.
 ---
 
 # Agent API Reference
@@ -40,14 +41,17 @@ The VoiceAssist documentation site exposes machine-readable JSON endpoints desig
 
 ## Endpoints Overview
 
-| Endpoint             | Method | Purpose                                     |
-| -------------------- | ------ | ------------------------------------------- |
-| `/agent/index.json`  | GET    | Documentation system metadata and discovery |
-| `/agent/docs.json`   | GET    | Full document list with metadata            |
-| `/agent/tasks.json`  | GET    | Common agent tasks with commands and docs   |
-| `/agent/schema.json` | GET    | JSON Schema for API response types          |
-| `/search-index.json` | GET    | Full-text search index (Fuse.js format)     |
-| `/sitemap.xml`       | GET    | XML sitemap for crawlers                    |
+| Endpoint                    | Method | Purpose                                            |
+| --------------------------- | ------ | -------------------------------------------------- |
+| `/agent/index.json`         | GET    | Documentation system metadata and discovery        |
+| `/agent/docs.json`          | GET    | Full document list with metadata (incl ai_summary) |
+| `/agent/docs-summary.json`  | GET    | AI-friendly summaries organized by category        |
+| `/agent/tasks.json`         | GET    | Common agent tasks with commands and docs          |
+| `/agent/code-examples.json` | GET    | Code examples extracted from documentation         |
+| `/agent/health.json`        | GET    | Docs health metrics: coverage, freshness, status   |
+| `/agent/schema.json`        | GET    | JSON Schema for API response types                 |
+| `/search-index.json`        | GET    | Full-text search index (Fuse.js format)            |
+| `/sitemap.xml`              | GET    | XML sitemap for crawlers                           |
 
 **Note:** All endpoints listed above are static JSON files generated at build time. For lexical search, use `/search-index.json` with client-side Fuse.js. For semantic search, see the [AI-Docs section](#ai-docs-semantic-search) below.
 
@@ -133,31 +137,34 @@ Host: assistdocs.asimo.io
 
 ```json
 {
-  "count": 224,
-  "generated_at": "2025-11-27T21:21:55.185Z",
+  "count": 275,
+  "generated_at": "2025-12-04T23:00:04.333Z",
   "docs": [
     {
       "slug": "ai-agent-onboarding",
       "path": "ai/AGENT_ONBOARDING.md",
       "title": "AI Agent Onboarding Guide",
       "summary": "Quick context, repository structure, critical rules, and common tasks for AI coding assistants.",
+      "ai_summary": "Start here for AI agents. Key directories: services/api-gateway/ (canonical backend), apps/ (frontends). Never use server/ (deprecated). Machine-readable endpoints at /agent/*.json. Read IMPLEMENTATION_STATUS.md for component status.",
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["agent"],
+      "audience": ["ai-agents"],
+      "category": "ai",
       "tags": ["onboarding", "ai-agent", "getting-started"],
       "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
-      "lastUpdated": "2025-11-27"
+      "lastUpdated": "2025-12-04"
     },
     {
       "slug": "implementation-status",
       "path": "overview/IMPLEMENTATION_STATUS.md",
       "title": "Implementation Status",
       "summary": "Single source of truth for all component status...",
+      "ai_summary": "Authoritative source of truth for all VoiceAssist component status. Check here first to understand what's built vs. planned before making changes.",
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "agent", "backend", "frontend", "devops"],
+      "audience": ["human", "ai-agents", "backend", "frontend", "devops"],
       "tags": ["status", "overview", "components", "roadmap"],
       "lastUpdated": "2025-11-27"
     }
@@ -185,6 +192,167 @@ const apiDocs = data.docs.filter((doc) => doc.tags && doc.tags.includes("api"));
 
 // Filter by owner
 const backendDocs = data.docs.filter((doc) => doc.owner === "backend");
+```
+
+### Caching
+
+- `Cache-Control: max-age=3600, public`
+- Cached for 1 hour
+
+---
+
+## GET /agent/docs-summary.json
+
+Returns AI-friendly document summaries organized by category. Ideal for quick context loading.
+
+### Request
+
+```http
+GET /agent/docs-summary.json HTTP/1.1
+Host: assistdocs.asimo.io
+```
+
+### Response
+
+```json
+{
+  "version": "2.0.0",
+  "generated_at": "2025-12-04T10:37:09.670Z",
+  "description": "AI-friendly document summaries for quick context loading",
+  "stats": {
+    "total_docs": 254,
+    "with_ai_summary": 219,
+    "without_ai_summary": 35,
+    "ai_coverage_percentage": 86,
+    "categories": 13,
+    "audiences": 15,
+    "ai_agent_docs": 219
+  },
+  "by_category": {
+    "reference": {
+      "count": 91,
+      "docs": [
+        {
+          "path": "DOCUMENTATION_METADATA_STANDARD.md",
+          "title": "Documentation Metadata Standard",
+          "ai_summary": "Canonical reference for VoiceAssist documentation metadata schema...",
+          "status": "stable",
+          "owner": "docs",
+          "audience": ["human", "ai-agents"],
+          "last_updated": "2025-12-04"
+        }
+      ]
+    }
+  }
+}
+```
+
+### Caching
+
+- `Cache-Control: max-age=3600, public`
+- Cached for 1 hour
+
+---
+
+## GET /agent/health.json
+
+Returns documentation health metrics including coverage, freshness, and status by category.
+
+### Request
+
+```http
+GET /agent/health.json HTTP/1.1
+Host: assistdocs.asimo.io
+```
+
+### Response
+
+```json
+{
+  "version": "2.0.0",
+  "generated_at": "2025-12-04T10:37:10.137Z",
+  "health_status": "healthy",
+  "scores": {
+    "overall": 100,
+    "coverage": 100,
+    "freshness": 100
+  },
+  "summary": {
+    "total_docs": 254,
+    "stale_count": 0,
+    "missing_frontmatter_count": 0,
+    "coverage_percentage": 100
+  },
+  "category_freshness": {
+    "reference": {
+      "freshness_score": 100,
+      "total_docs": 91,
+      "fresh_docs": 91,
+      "stale_docs": 0,
+      "newest_update": "2025-12-04",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    }
+  }
+}
+```
+
+### Usage
+
+Use this endpoint to:
+
+1. **Assess documentation quality** before relying on specific docs
+2. **Find stale docs** that may need review
+3. **Identify missing metadata** that should be added
+4. **Monitor coverage** of `ai_summary` fields
+
+### Caching
+
+- `Cache-Control: max-age=3600, public`
+- Cached for 1 hour
+
+---
+
+## GET /agent/code-examples.json
+
+Returns code examples extracted from documentation, organized by language.
+
+### Request
+
+```http
+GET /agent/code-examples.json HTTP/1.1
+Host: assistdocs.asimo.io
+```
+
+### Response
+
+```json
+{
+  "version": "2.0.0",
+  "generated_at": "2025-12-04T10:37:09.725Z",
+  "description": "Code examples extracted from documentation",
+  "stats": {
+    "total_examples": 3294,
+    "languages": 26,
+    "top_languages": [
+      { "language": "bash", "count": 1097 },
+      { "language": "typescript", "count": 460 },
+      { "language": "python", "count": 456 },
+      { "language": "json", "count": 184 },
+      { "language": "yaml", "count": 175 }
+    ]
+  },
+  "by_language": {
+    "bash": [
+      {
+        "doc_path": "LOCAL_DEVELOPMENT.md",
+        "code": "docker compose up -d",
+        "section": "Quick Start"
+      }
+    ]
+  }
+}
 ```
 
 ### Caching
@@ -513,12 +681,14 @@ Based on the index, prioritize reading:
 
 ### Audience Field
 
-Documents with `audience: ["agent"]` are specifically designed for AI assistants and contain:
+Documents with `audience: ["ai-agents"]` are specifically designed for AI assistants and contain:
 
 - Structured quick references
 - Code examples
 - Machine-parseable tables
 - Explicit rules and constraints
+
+**Note:** The canonical value is `ai-agents`. Legacy values `agent` and `ai-agent` are accepted for backwards compatibility.
 
 ### Stability Field
 
@@ -537,6 +707,9 @@ Test the endpoints directly:
 
 - **Index:** https://assistdocs.asimo.io/agent/index.json
 - **Docs:** https://assistdocs.asimo.io/agent/docs.json
+- **Docs Summary:** https://assistdocs.asimo.io/agent/docs-summary.json
+- **Health:** https://assistdocs.asimo.io/agent/health.json
+- **Code Examples:** https://assistdocs.asimo.io/agent/code-examples.json
 - **Tasks:** https://assistdocs.asimo.io/agent/tasks.json
 - **Schema:** https://assistdocs.asimo.io/agent/schema.json
 - **Search Index:** https://assistdocs.asimo.io/search-index.json
@@ -554,9 +727,10 @@ Test the endpoints directly:
 
 ## Version History
 
-| Version | Date       | Changes                                        |
-| ------- | ---------- | ---------------------------------------------- |
-| 1.3.0   | 2025-12-03 | Added AI-Docs semantic search section          |
-| 1.2.0   | 2025-11-27 | Added /agent/tasks.json endpoint documentation |
-| 1.1.0   | 2025-11-27 | Updated to reflect static JSON endpoints       |
-| 1.0.0   | 2025-11-27 | Initial release                                |
+| Version | Date       | Changes                                                                      |
+| ------- | ---------- | ---------------------------------------------------------------------------- |
+| 1.4.0   | 2025-12-04 | Added docs-summary, health, code-examples endpoints; ai_summary in docs.json |
+| 1.3.0   | 2025-12-03 | Added AI-Docs semantic search section                                        |
+| 1.2.0   | 2025-11-27 | Added /agent/tasks.json endpoint documentation                               |
+| 1.1.0   | 2025-11-27 | Updated to reflect static JSON endpoints                                     |
+| 1.0.0   | 2025-11-27 | Initial release                                                              |
