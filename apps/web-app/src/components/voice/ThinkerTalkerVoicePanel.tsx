@@ -26,6 +26,7 @@ import { VoiceExpandedDrawer } from "./VoiceExpandedDrawer";
 import { VoiceModeSettings } from "./VoiceModeSettings";
 import { EmotionIndicator } from "./EmotionIndicator";
 import { useVoiceSettingsStore } from "../../stores/voiceSettingsStore";
+import { DEFAULT_VOICE_ID } from "../../lib/voiceConstants";
 
 // ============================================================================
 // Types
@@ -66,7 +67,7 @@ export function ThinkerTalkerVoicePanel({
   const voiceMode = useThinkerTalkerVoiceMode({
     conversation_id: conversationId,
     voiceSettings: {
-      voice_id: elevenlabsVoiceId || "nPczCjzI2devNBz1zQrb", // Brian as default
+      voice_id: elevenlabsVoiceId || DEFAULT_VOICE_ID, // From voiceConstants.ts
       language,
       barge_in_enabled: true,
       vad_sensitivity: vadSensitivity, // 0-100 from settings

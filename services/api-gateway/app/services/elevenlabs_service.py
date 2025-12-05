@@ -21,6 +21,7 @@ import httpx
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.core.resilience import elevenlabs_breaker
+from app.core.voice_constants import DEFAULT_VOICE_ID, DEFAULT_STABILITY, DEFAULT_SIMILARITY_BOOST, DEFAULT_STYLE
 from pybreaker import CircuitBreakerError
 
 logger = get_logger(__name__)
@@ -119,7 +120,8 @@ class ElevenLabsService:
         self.enabled = bool(self.api_key)
         # Use flash model for lowest latency (Phase: Talker Enhancement)
         self.default_model = self.MODEL_FLASH_V2_5
-        self.default_voice_id = "nPczCjzI2devNBz1zQrb"  # "Brian" voice (matches frontend default)
+        # Default voice from centralized voice_constants (single source of truth)
+        self.default_voice_id = DEFAULT_VOICE_ID
         self._connection_warmed = False
 
         # Voice cache (refreshed periodically)

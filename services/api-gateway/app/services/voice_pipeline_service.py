@@ -24,6 +24,7 @@ from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 from app.core.logging import get_logger
+from app.core.voice_constants import DEFAULT_VOICE_ID, DEFAULT_TTS_MODEL, DEFAULT_TTS_OUTPUT_FORMAT
 from app.services.backchannel_service import (
     BackchannelAudio,
     BackchannelService,
@@ -297,10 +298,10 @@ class PipelineConfig:
     max_response_tokens: int = 1024
     temperature: float = 0.7
 
-    # TTS settings
-    voice_id: str = "nPczCjzI2devNBz1zQrb"  # Brian (matches frontend default)
-    tts_model: str = "eleven_flash_v2_5"  # Better quality + low latency
-    tts_output_format: str = "pcm_24000"  # Raw PCM for low-latency streaming
+    # TTS settings - defaults from voice_constants.py (single source of truth)
+    voice_id: str = DEFAULT_VOICE_ID
+    tts_model: str = DEFAULT_TTS_MODEL
+    tts_output_format: str = DEFAULT_TTS_OUTPUT_FORMAT
 
     # Voice quality parameters
     stability: float = 0.65

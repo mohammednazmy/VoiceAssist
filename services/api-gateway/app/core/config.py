@@ -6,6 +6,9 @@ from typing import Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Import voice defaults from single source of truth
+from app.core.voice_constants import DEFAULT_VOICE_ID, DEFAULT_TTS_MODEL
+
 
 class Settings(BaseSettings):
     """Application settings"""
@@ -136,8 +139,9 @@ class Settings(BaseSettings):
     DEEPGRAM_ENDPOINTING_MS: int = 200  # Silence detection for speech end
 
     # ElevenLabs TTS settings
-    ELEVENLABS_MODEL: str = "eleven_turbo_v2"  # Low-latency model
-    ELEVENLABS_VOICE_ID: str = "nPczCjzI2devNBz1zQrb"  # Default voice (Brian)
+    # Default values imported from voice_constants.py (single source of truth)
+    ELEVENLABS_MODEL: str = DEFAULT_TTS_MODEL
+    ELEVENLABS_VOICE_ID: str = DEFAULT_VOICE_ID  # Can be overridden via env var
     ELEVENLABS_OUTPUT_FORMAT: str = "mp3_22050_32"  # Low bandwidth for streaming
 
     # Provider API Keys (for future STT/TTS integration)

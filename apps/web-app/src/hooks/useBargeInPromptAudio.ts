@@ -284,14 +284,9 @@ export function useBargeInPromptAudio(
           `[BargeInAudio] Failed to play prompt: "${promptText}"`,
           error,
         );
-
-        // Fallback to browser speech synthesis if ElevenLabs fails
-        voiceLog.warn("[BargeInAudio] Falling back to browser TTS");
-        if (typeof window !== "undefined" && window.speechSynthesis) {
-          const utterance = new SpeechSynthesisUtterance(promptText);
-          utterance.volume = volume;
-          window.speechSynthesis.speak(utterance);
-        }
+        // NOTE: Removed browser TTS fallback to prevent dual voice issues.
+        // If ElevenLabs fails, we silently skip the prompt rather than
+        // playing it in a different (browser) voice.
       }
     },
     [language, getCacheKey, stop, getAudioContext, fetchTTSAudio, volume],

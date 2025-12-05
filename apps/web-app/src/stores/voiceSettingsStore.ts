@@ -8,6 +8,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { DEFAULT_VOICE_ID } from "../lib/voiceConstants";
 
 export type VoiceOption =
   | "alloy"
@@ -470,7 +471,7 @@ const defaultSettings = {
   lastLearnedSilenceMs: null as number | null,
   // Phase 11: TTS Provider settings
   ttsProvider: "elevenlabs" as TTSProvider, // Default to ElevenLabs for natural voice
-  elevenlabsVoiceId: "TxGEqnHWrfWFTfGW9XjX" as string | null, // Josh (premium male voice)
+  elevenlabsVoiceId: DEFAULT_VOICE_ID as string | null, // From voiceConstants.ts (single source of truth)
   // Voice Mode Overhaul: Advanced TTS settings (tuned for naturalness)
   stability: 0.65, // Balanced stability for natural variation
   similarityBoost: 0.8, // High clarity and voice identity
