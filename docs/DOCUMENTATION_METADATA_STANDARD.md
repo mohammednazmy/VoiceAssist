@@ -20,13 +20,14 @@ tags:
 category: reference
 relatedServices:
   - docs-site
-version: 2.0.0
+version: 2.1.0
 ai_summary: >-
   Canonical reference for VoiceAssist documentation metadata schema. Defines required
   fields (title, slug, status, lastUpdated), recommended fields (summary, stability,
-  owner, audience, tags), AI-specific fields (ai_summary, category), and their allowed
-  values. Use `ai-agents` as the canonical audience value for AI readers. Run
-  `pnpm validate:metadata` from apps/docs-site to validate frontmatter.
+  owner, audience, tags), AI-specific fields (ai_summary, category, component, relatedPaths),
+  and their allowed values. Use `ai-agents` as the canonical audience value for AI readers.
+  The `component` and `relatedPaths` fields enable doc-code crosswalk via /agent/doc-code-map.json.
+  Run `pnpm validate:metadata` from apps/docs-site to validate frontmatter.
 ---
 
 # Documentation Metadata Standard
@@ -91,10 +92,12 @@ ai_summary: >-
 
 These fields optimize documentation for AI agent consumption:
 
-| Field        | Type   | Description                                                |
-| ------------ | ------ | ---------------------------------------------------------- |
-| `ai_summary` | string | 2-3 sentence summary optimized for AI context loading      |
-| `category`   | enum   | Document category for filtering (see allowed values below) |
+| Field          | Type   | Description                                                |
+| -------------- | ------ | ---------------------------------------------------------- |
+| `ai_summary`   | string | 2-3 sentence summary optimized for AI context loading      |
+| `category`     | enum   | Document category for filtering (see allowed values below) |
+| `component`    | string | Logical system/component identifier for doc-code mapping   |
+| `relatedPaths` | array  | Repo-relative paths to related code files                  |
 
 **`ai_summary` Guidelines:**
 
@@ -113,6 +116,63 @@ ai_summary: >-
   /ws/thinker-talker for real-time AI responses. See VOICE_MODE_PIPELINE.md for
   full voice architecture.
 ```
+
+**`component` Guidelines:**
+
+The `component` field identifies the logical system or component that a document primarily describes. This enables AI agents to pivot between documentation and code.
+
+- **Format**: `<layer>/<name>` (e.g., `backend/api-gateway`, `frontend/web-app`)
+- **Purpose**: Links docs to code for cross-referencing via `/agent/doc-code-map.json`
+- **Requirement**: **Strongly recommended** for architecture, voice, admin, api, and security/infra docs
+
+**Common `component` values:**
+
+| Component               | Description                          |
+| ----------------------- | ------------------------------------ |
+| `frontend/web-app`      | Main user-facing Next.js application |
+| `frontend/admin-panel`  | Admin dashboard Next.js application  |
+| `frontend/docs-site`    | Documentation site                   |
+| `backend/api-gateway`   | FastAPI backend server               |
+| `backend/voice-service` | Voice processing services            |
+| `shared/packages`       | Shared TypeScript packages           |
+| `infra/k8s`             | Kubernetes configuration             |
+| `infra/terraform`       | Infrastructure as code               |
+| `infra/docker`          | Docker configuration                 |
+
+**`relatedPaths` Guidelines:**
+
+The `relatedPaths` field lists repo-relative paths to code files directly related to the document. This creates a bidirectional mapping between docs and code.
+
+- **Format**: Array of POSIX-style paths relative to monorepo root
+- **Purpose**: Enables AI agents to find implementation files from docs, and docs from code
+- **Requirement**: **Strongly recommended** when `audience` includes `ai-agents` and `category` is one of: `architecture`, `voice`, `admin`, `api`, `security`, `infra`
+
+**Example with code linkage:**
+
+```yaml
+---
+title: Voice Mode Pipeline Architecture
+slug: voice/pipeline-architecture
+status: stable
+owner: backend
+lastUpdated: "2025-12-04"
+audience: ["human", "ai-agents", "backend"]
+category: voice
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/api/voice.py"
+  - "services/api-gateway/app/services/voice_pipeline.py"
+  - "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+ai_summary: >-
+  Describes the end-to-end voice pipeline from audio capture to TTS response.
+  Key files: voice.py (API routes), voice_pipeline.py (orchestration).
+---
+```
+
+**Validation notes:**
+
+- Paths should match entries in `/agent/repo-index.json` or `/agent/repo/manifest.json`
+- Missing or invalid paths will be flagged in `/agent/doc-code-map.json` under `meta.missing_paths`
 
 ---
 
@@ -199,10 +259,19 @@ status: stable
 stability: production
 owner: mixed
 lastUpdated: "2025-11-27"
-audience: ["human", "agent", "backend", "frontend", "devops"]
+audience: ["human", "ai-agents", "backend", "frontend", "devops"]
 tags: ["architecture", "system-design", "overview"]
+category: architecture
 relatedServices: ["api-gateway", "web-app", "admin-panel"]
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/main.py"
+  - "services/api-gateway/app/config.py"
+  - "apps/web-app/src/app/layout.tsx"
 version: "2.0.0"
+ai_summary: >-
+  System-wide architecture overview covering API Gateway, web apps, and data flows.
+  Key entry points: main.py (backend), layout.tsx (frontend).
 ---
 ```
 
@@ -321,5 +390,6 @@ pnpm validate:all
 
 | Version | Date       | Changes                                                                   |
 | ------- | ---------- | ------------------------------------------------------------------------- |
+| 2.1.0   | 2025-12-05 | Added component and relatedPaths fields for doc-code crosswalk            |
 | 2.0.0   | 2025-12-04 | Added AI-specific fields (ai_summary, category), canonical audience value |
 | 1.0.0   | 2025-11-27 | Initial standard definition                                               |
