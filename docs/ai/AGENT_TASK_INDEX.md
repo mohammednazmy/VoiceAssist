@@ -7,7 +7,7 @@ summary: >-
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-12-04"
+lastUpdated: "2025-12-05"
 audience:
   - ai-agents
 tags:

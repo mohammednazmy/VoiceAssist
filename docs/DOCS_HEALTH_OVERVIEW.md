@@ -7,7 +7,7 @@ summary: >-
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-12-04"
+lastUpdated: "2025-12-05"
 audience:
   - human
   - ai-agents
@@ -186,9 +186,9 @@ See [Agent API Reference](ai/AGENT_API_REFERENCE.md) for detailed endpoint docum
 
 ### Known TODOs
 
-- Some voice docs are missing frontmatter entirely
-- Several docs missing `ai_summary` (see validation output)
-- Consider automating `ai_summary` generation for bulk updates
+- ✅ All docs now have `ai_summary` (100% coverage as of 2025-12-05)
+- Consider automating `ai_summary` generation for new docs
+- Monitor freshness scores to catch stale docs early
 
 ---
 

@@ -20,7 +20,7 @@ tags:
   - conversational-ai
   - tts
   - design
-category: design
+category: voice
 relatedPaths:
   - services/api-gateway/app/services/voice_pipeline_service.py
   - services/api-gateway/app/services/barge_in_classifier.py

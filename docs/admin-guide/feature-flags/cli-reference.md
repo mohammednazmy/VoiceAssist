@@ -1,8 +1,14 @@
 ---
 title: Feature Flags CLI Reference
+slug: admin-guide/feature-flags/cli-reference
 status: stable
-lastUpdated: 2025-12-04
-audience: [admin, developers, devops]
+stability: production
+lastUpdated: "2025-12-05"
+audience:
+  - admin
+  - developers
+  - devops
+  - ai-agents
 category: feature-flags
 owner: backend
 summary: Command-line interface reference for managing feature flags
@@ -10,6 +16,11 @@ component: "backend/api-gateway"
 relatedPaths:
   - "services/api-gateway/scripts/init_feature_flags.py"
   - "services/api-gateway/app/api/admin_feature_flags.py"
+ai_summary: >-
+  CLI commands and Python scripts for feature flag management. Key script:
+  init_feature_flags.py (--dry-run to preview, --force to recreate, --migrate for
+  legacy names). Also covers curl-based API calls for listing, creating, updating,
+  and toggling feature flags via the admin API.
 ---
 
 # Feature Flags CLI Reference
