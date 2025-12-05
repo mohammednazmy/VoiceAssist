@@ -70,7 +70,7 @@ services:
 
   # Qdrant - Vector database for semantic search
   qdrant:
-    image: qdrant/qdrant:v1.7.4
+    image: qdrant/qdrant:v1.15.2
     container_name: voiceassist-qdrant
     volumes:
       - qdrant-data:/qdrant/storage
