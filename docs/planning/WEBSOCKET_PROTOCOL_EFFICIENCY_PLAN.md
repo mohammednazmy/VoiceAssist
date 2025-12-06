@@ -1,7 +1,8 @@
 ---
 title: WebSocket Protocol Efficiency Implementation Plan
-status: approved
-owner: backend + frontend
+status: planning
+owner: mixed
+slug: websocket-protocol-efficiency-plan
 lastUpdated: "2025-12-06"
 priority: high
 category: planning
