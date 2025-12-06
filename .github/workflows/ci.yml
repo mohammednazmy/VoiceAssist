@@ -279,18 +279,24 @@ jobs:
       pact-broker:
         image: pactfoundation/pact-broker:latest
         env:
-          PACT_BROKER_DATABASE_URL: postgresql://voiceassist:test_password@postgres/pact_broker
+          # Use explicit credentials instead of DATABASE_URL for better compatibility
+          PACT_BROKER_DATABASE_ADAPTER: postgres
+          PACT_BROKER_DATABASE_USERNAME: voiceassist
+          PACT_BROKER_DATABASE_PASSWORD: test_password
+          PACT_BROKER_DATABASE_HOST: postgres
+          PACT_BROKER_DATABASE_NAME: pact_broker
           PACT_BROKER_BASIC_AUTH_USERNAME: pact
           PACT_BROKER_BASIC_AUTH_PASSWORD: pact
           PACT_BROKER_PUBLIC_HEARTBEAT: "true"
+          PACT_BROKER_LOG_LEVEL: INFO
         ports:
           - 9292:9292
         options: >-
-          --health-cmd "wget -q --tries=1 --spider http://localhost:9292/diagnostic/status/heartbeat"
-          --health-interval 15s
-          --health-timeout 10s
-          --health-retries 10
-          --health-start-period 60s
+          --health-cmd "wget -q --tries=1 --spider http://localhost:9292/diagnostic/status/heartbeat || exit 1"
+          --health-interval 20s
+          --health-timeout 15s
+          --health-retries 15
+          --health-start-period 90s
 
     steps:
       - name: Checkout code
@@ -311,8 +317,9 @@ jobs:
 
       - name: Wait for Pact Broker
         run: |
-          echo "Waiting for Pact Broker..."
-          timeout 60 bash -c 'until curl -f http://localhost:9292/diagnostic/status/heartbeat; do sleep 5; done'
+          echo "Waiting for Pact Broker to be ready..."
+          timeout 120 bash -c 'until curl -sf http://localhost:9292/diagnostic/status/heartbeat; do echo "Waiting..."; sleep 10; done'
+          echo "Pact Broker is ready!"
 
       - name: Run contract tests
         working-directory: services/api-gateway
