@@ -198,7 +198,7 @@ function MicrophonePermissionRequest({
       stream.getTracks().forEach((track) => track.stop());
       setStatus("granted");
       onGranted();
-    } catch (error) {
+    } catch {
       setStatus("denied");
       onDenied();
     }
@@ -291,7 +291,7 @@ function VoiceTestPrompt() {
 export function VoiceOnboardingTutorial({
   onComplete,
   onSkip,
-  mode = "full",
+  mode: _mode = "full",
   startStep = 0,
 }: VoiceOnboardingTutorialProps) {
   const [currentStep, setCurrentStep] = useState(startStep);

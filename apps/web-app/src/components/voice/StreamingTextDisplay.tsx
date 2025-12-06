@@ -170,8 +170,8 @@ export function StreamingTextDisplay({
     return "ltr";
   }, [text, rtlEnabled, rtlAutoDetect, languageCode]);
 
-  // Segment text for bidirectional rendering
-  const segments = useMemo(() => segmentText(text), [text]);
+  // Segment text for bidirectional rendering (prepared for future bidi support)
+  const _segments = useMemo(() => segmentText(text), [text]);
 
   // Displayed text with typewriter effect
   const displayedText = useMemo(() => {

@@ -1,6 +1,6 @@
 {
-  "count": 285,
-  "generated_at": "2025-12-05T06:28:11.311Z",
+  "count": 288,
+  "generated_at": "2025-12-06T22:22:58.567Z",
   "docs": [
     {
       "slug": "reference/style-guide",
@@ -184,6 +184,16 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
+      "slug": "websocket-protocol-efficiency-plan",
+      "path": "planning/WEBSOCKET_PROTOCOL_EFFICIENCY_PLAN.md",
+      "title": "WebSocket Protocol Efficiency Implementation Plan",
+      "ai_summary": "Implementation plan for 3 WebSocket efficiency improvements: 1) Binary audio frames to eliminate JSON envelope overhead, 2) Message batching for high-frequency events, 3) Sequence numbers for message ordering guarantees. Extends the existing WEBSOCKET_RELIABILITY_PLAN.md with concrete implementation steps.",
+      "status": "planning",
+      "owner": "mixed",
+      "category": "planning",
+      "lastUpdated": "2025-12-06"
+    },
+    {
       "slug": "docs-health-overview",
       "path": "DOCS_HEALTH_OVERVIEW.md",
       "title": "Documentation Health Overview",
@@ -272,6 +282,16 @@
         "services/api-gateway/app/core/event_bus.py",
         "apps/web-app/src/hooks/useThinkerTalkerSession.ts"
       ],
+      "lastUpdated": "2025-12-05"
+    },
+    {
+      "slug": "websocket-reliability-plan",
+      "path": "planning/WEBSOCKET_RELIABILITY_PLAN.md",
+      "title": "WebSocket Connection Reliability Enhancement Plan",
+      "ai_summary": "Comprehensive plan to address three WebSocket reliability deficiencies: binary frame support, connection pooling/load balancing, and graceful degradation. Includes architecture changes, implementation steps, and testing strategy.",
+      "status": "draft",
+      "owner": "mixed",
+      "category": "planning",
       "lastUpdated": "2025-12-05"
     },
     {
@@ -4921,6 +4941,16 @@
       "category": "testing",
       "tags": ["e2e", "testing", "guide"],
       "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "websocket-latency-optimization",
+      "path": "voice/websocket-latency-optimization.md",
+      "title": "WebSocket Latency Optimization",
+      "ai_summary": "Comprehensive guide to WebSocket latency optimizations including audio pre-buffering, permessage-deflate compression, and adaptive chunk sizing. All features are controlled via feature flags.",
+      "status": "active",
+      "owner": "backend",
+      "category": "voice",
+      "lastUpdated": "2024-12-05"
     }
   ]
 }
