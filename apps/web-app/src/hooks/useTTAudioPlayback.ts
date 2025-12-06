@@ -2,21 +2,47 @@
  * Thinker/Talker Audio Playback Hook
  *
  * Handles streaming audio playback for the T/T voice pipeline.
- * Receives base64-encoded audio chunks from the WebSocket and plays
- * them as soon as they arrive for minimal latency.
+ * Receives audio chunks from the WebSocket and plays them with
+ * optional pre-buffering for smooth playback.
  *
  * Features:
  * - Web Audio API for low-latency playback
  * - Audio queue for smooth streaming
+ * - Pre-buffering support (configurable via feature flag)
  * - Barge-in support (stop playback immediately)
  * - Auto-resume after interruption
  * - Playback state tracking
+ *
+ * WebSocket Reliability Enhancement (Phase 1):
+ * - Supports both base64-encoded strings and binary Uint8Array
+ * - Binary audio support reduces bandwidth by ~25%
+ *
+ * WebSocket Latency Optimization:
+ * - Pre-buffering: Buffers chunks before playback to prevent jitter
+ * - Configurable buffer size via prebufferChunks option
  *
  * Phase: Thinker/Talker Voice Pipeline Migration
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { voiceLog } from "../lib/logger";
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+/**
+ * Default number of audio chunks to buffer before starting playback.
+ * At ~50ms per chunk (24kHz, typical ElevenLabs chunk size), 3 chunks = ~150ms buffer.
+ * This provides a balance between latency and smoothness.
+ */
+const DEFAULT_PREBUFFER_CHUNKS = 3;
+
+/**
+ * Maximum buffer size before we start playing anyway.
+ * Prevents infinite buffering if stream is very slow.
+ */
+const MAX_PREBUFFER_WAIT_MS = 500;
 
 // ============================================================================
 // Types
@@ -35,7 +61,34 @@ export interface TTAudioPlaybackOptions {
   onPlaybackInterrupted?: () => void;
   /** Called on playback error */
   onError?: (error: Error) => void;
+
+  // Pre-buffering options (WS Latency Optimization)
+  /**
+   * Enable pre-buffering before playback starts.
+   * When enabled, audio chunks are buffered until prebufferChunks
+   * threshold is reached before playback begins.
+   * Default: false (disabled, controlled by feature flag)
+   */
+  enablePrebuffering?: boolean;
+  /**
+   * Number of audio chunks to buffer before starting playback.
+   * Only used when enablePrebuffering is true.
+   * Default: 3 chunks (~150ms at typical chunk sizes)
+   */
+  prebufferChunks?: number;
+  /**
+   * Maximum time to wait for prebuffer to fill (ms).
+   * If prebuffer doesn't fill within this time, playback starts anyway.
+   * Default: 500ms
+   */
+  prebufferTimeoutMs?: number;
 }
+
+/**
+ * Type for audio chunk data - supports both base64 string and binary Uint8Array
+ * Binary format is used when WebSocket binary audio is enabled (Phase 1 WS Reliability)
+ */
+export type AudioChunkData = string | Uint8Array;
 
 export interface TTAudioPlaybackReturn {
   // State
@@ -47,9 +100,20 @@ export interface TTAudioPlaybackReturn {
   /** Total audio duration played (ms) */
   totalPlayedMs: number;
 
+  // Pre-buffering state (WS Latency Optimization)
+  /** Whether pre-buffering is currently active */
+  isPrebuffering: boolean;
+  /** Number of chunks currently in the pre-buffer */
+  prebufferCount: number;
+  /** Target pre-buffer size */
+  prebufferTarget: number;
+
   // Actions
-  /** Queue a base64 audio chunk for playback */
-  queueAudioChunk: (audioBase64: string) => void;
+  /**
+   * Queue an audio chunk for playback.
+   * Accepts either base64 string or binary Uint8Array (for WS binary audio).
+   */
+  queueAudioChunk: (audioData: AudioChunkData) => void;
   /** Signal end of audio stream (flush queue) */
   endStream: () => void;
   /** Stop playback immediately (barge-in) */
@@ -132,14 +196,26 @@ function createWavFromPcm(
 export function useTTAudioPlayback(
   options: TTAudioPlaybackOptions = {},
 ): TTAudioPlaybackReturn {
-  const { onPlaybackStart, onPlaybackEnd, onPlaybackInterrupted, onError } =
-    options;
+  const {
+    onPlaybackStart,
+    onPlaybackEnd,
+    onPlaybackInterrupted,
+    onError,
+    // Pre-buffering options (WS Latency Optimization)
+    enablePrebuffering = false,
+    prebufferChunks = DEFAULT_PREBUFFER_CHUNKS,
+    prebufferTimeoutMs = MAX_PREBUFFER_WAIT_MS,
+  } = options;
 
   // State
   const [playbackState, setPlaybackState] = useState<TTPlaybackState>("idle");
   const [volume, setVolumeState] = useState(options.volume ?? 1);
   const [ttfaMs, setTtfaMs] = useState<number | null>(null);
   const [totalPlayedMs, setTotalPlayedMs] = useState(0);
+
+  // Pre-buffering state (WS Latency Optimization)
+  const [isPrebuffering, setIsPrebuffering] = useState(false);
+  const [prebufferCount, setPrebufferCount] = useState(0);
 
   // Refs
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -155,6 +231,13 @@ export function useTTAudioPlayback(
   const nextScheduledTimeRef = useRef<number>(0);
   const activeSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const isProcessingRef = useRef(false);
+
+  // Pre-buffering refs (WS Latency Optimization)
+  const prebufferTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const prebufferStartTimeRef = useRef<number | null>(null);
+  const prebufferReadyRef = useRef(false);
 
   /**
    * Get or create AudioContext
@@ -350,15 +433,50 @@ export function useTTAudioPlayback(
   }, [processAudioQueue]);
 
   /**
-   * Queue a base64 audio chunk for playback
+   * Start playback after pre-buffering is complete.
+   * Called when prebuffer threshold is reached or timeout fires.
+   */
+  const startPlaybackFromPrebuffer = useCallback(() => {
+    if (prebufferTimeoutRef.current) {
+      clearTimeout(prebufferTimeoutRef.current);
+      prebufferTimeoutRef.current = null;
+    }
+
+    prebufferReadyRef.current = true;
+    setIsPrebuffering(false);
+
+    const prebufferDuration = prebufferStartTimeRef.current
+      ? Date.now() - prebufferStartTimeRef.current
+      : 0;
+
+    voiceLog.debug(
+      `[TTAudioPlayback] Pre-buffer complete: ${audioQueueRef.current.length} chunks in ${prebufferDuration}ms`,
+    );
+
+    // Start playback
+    if (!isPlayingRef.current && audioQueueRef.current.length > 0) {
+      isPlayingRef.current = true;
+      setPlaybackState("buffering");
+      playNextChunk();
+    }
+  }, [playNextChunk]);
+
+  /**
+   * Queue an audio chunk for playback.
+   * Supports both base64 string and binary Uint8Array (for WS binary audio).
+   * When pre-buffering is enabled, waits for threshold before starting playback.
    */
   const queueAudioChunk = useCallback(
-    (audioBase64: string) => {
+    (audioData: AudioChunkData) => {
+      const isBinary = audioData instanceof Uint8Array;
       console.log("[TTAudioPlayback] queueAudioChunk called", {
-        base64Length: audioBase64.length,
+        dataType: isBinary ? "binary" : "base64",
+        dataLength: isBinary ? audioData.byteLength : audioData.length,
         isPlaying: isPlayingRef.current,
         queueLength: audioQueueRef.current.length,
         streamStarted: !!streamStartTimeRef.current,
+        enablePrebuffering,
+        isPrebuffering: !prebufferReadyRef.current && enablePrebuffering,
       });
 
       // Start timing on first chunk
@@ -366,42 +484,98 @@ export function useTTAudioPlayback(
         streamStartTimeRef.current = Date.now();
         streamEndedRef.current = false;
         console.log("[TTAudioPlayback] Started new stream timing");
+
+        // Initialize pre-buffering if enabled
+        if (enablePrebuffering) {
+          prebufferStartTimeRef.current = Date.now();
+          prebufferReadyRef.current = false;
+          setIsPrebuffering(true);
+
+          // Set timeout to start playback even if prebuffer doesn't fill
+          prebufferTimeoutRef.current = setTimeout(() => {
+            if (!prebufferReadyRef.current) {
+              voiceLog.debug(
+                `[TTAudioPlayback] Pre-buffer timeout (${prebufferTimeoutMs}ms), starting with ${audioQueueRef.current.length} chunks`,
+              );
+              startPlaybackFromPrebuffer();
+            }
+          }, prebufferTimeoutMs);
+        }
       }
 
       try {
-        const audioData = base64ToArrayBuffer(audioBase64);
-        console.log("[TTAudioPlayback] Decoded base64 to ArrayBuffer", {
-          byteLength: audioData.byteLength,
-        });
-        audioQueueRef.current.push(audioData);
-
-        // Start playback if not already playing
-        if (!isPlayingRef.current) {
-          console.log(
-            "[TTAudioPlayback] Starting playback (isPlaying was false)",
+        // Convert to ArrayBuffer based on input type
+        let arrayBuffer: ArrayBuffer;
+        if (isBinary) {
+          // Binary Uint8Array - use buffer directly
+          arrayBuffer = audioData.buffer.slice(
+            audioData.byteOffset,
+            audioData.byteOffset + audioData.byteLength,
           );
-          isPlayingRef.current = true;
-          setPlaybackState("buffering");
-          playNextChunk();
         } else {
-          console.log(
-            "[TTAudioPlayback] Already playing, chunk queued for later processing",
-          );
-          // Ensure processing continues if it stopped
-          if (!isProcessingRef.current && audioQueueRef.current.length > 0) {
-            console.log(
-              "[TTAudioPlayback] Triggering processAudioQueue since not processing",
+          // Base64 string - decode
+          arrayBuffer = base64ToArrayBuffer(audioData);
+        }
+
+        console.log("[TTAudioPlayback] Converted to ArrayBuffer", {
+          byteLength: arrayBuffer.byteLength,
+        });
+        audioQueueRef.current.push(arrayBuffer);
+
+        // Update prebuffer count for UI feedback
+        if (enablePrebuffering && !prebufferReadyRef.current) {
+          setPrebufferCount(audioQueueRef.current.length);
+        }
+
+        // Check if we should start playback
+        if (enablePrebuffering && !prebufferReadyRef.current) {
+          // Pre-buffering mode: wait for threshold
+          if (audioQueueRef.current.length >= prebufferChunks) {
+            voiceLog.debug(
+              `[TTAudioPlayback] Pre-buffer threshold reached (${prebufferChunks} chunks)`,
             );
+            startPlaybackFromPrebuffer();
+          } else {
+            console.log(
+              `[TTAudioPlayback] Pre-buffering: ${audioQueueRef.current.length}/${prebufferChunks} chunks`,
+            );
+          }
+        } else {
+          // Normal mode or prebuffer already ready: start immediately
+          if (!isPlayingRef.current) {
+            console.log(
+              "[TTAudioPlayback] Starting playback (isPlaying was false)",
+            );
+            isPlayingRef.current = true;
+            setPlaybackState("buffering");
             playNextChunk();
+          } else {
+            console.log(
+              "[TTAudioPlayback] Already playing, chunk queued for later processing",
+            );
+            // Ensure processing continues if it stopped
+            if (!isProcessingRef.current && audioQueueRef.current.length > 0) {
+              console.log(
+                "[TTAudioPlayback] Triggering processAudioQueue since not processing",
+              );
+              playNextChunk();
+            }
           }
         }
       } catch (err) {
-        console.error("[TTAudioPlayback] Error decoding audio:", err);
-        voiceLog.error("[TTAudioPlayback] Error decoding audio:", err);
+        console.error("[TTAudioPlayback] Error processing audio:", err);
+        voiceLog.error("[TTAudioPlayback] Error processing audio:", err);
         onError?.(err instanceof Error ? err : new Error(String(err)));
       }
     },
-    [playNextChunk, onError],
+    [
+      playNextChunk,
+      onError,
+      enablePrebuffering,
+      prebufferChunks,
+      prebufferTimeoutMs,
+      startPlaybackFromPrebuffer,
+    ],
   );
 
   /**
@@ -485,6 +659,16 @@ export function useTTAudioPlayback(
     setTtfaMs(null);
     setTotalPlayedMs(0);
     setPlaybackState("idle");
+
+    // Reset pre-buffering state (WS Latency Optimization)
+    if (prebufferTimeoutRef.current) {
+      clearTimeout(prebufferTimeoutRef.current);
+      prebufferTimeoutRef.current = null;
+    }
+    prebufferStartTimeRef.current = null;
+    prebufferReadyRef.current = false;
+    setIsPrebuffering(false);
+    setPrebufferCount(0);
   }, [stop]);
 
   /**
@@ -588,6 +772,11 @@ export function useTTAudioPlayback(
     volume,
     ttfaMs,
     totalPlayedMs,
+
+    // Pre-buffering state (WS Latency Optimization)
+    isPrebuffering,
+    prebufferCount,
+    prebufferTarget: prebufferChunks,
 
     // Actions
     queueAudioChunk,

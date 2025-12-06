@@ -13,6 +13,7 @@ from typing import Dict
 
 class VoiceProvider(str, Enum):
     """Supported TTS providers."""
+
     ELEVENLABS = "elevenlabs"
     OPENAI = "openai"
 
@@ -21,6 +22,7 @@ class VoiceProvider(str, Enum):
 # ElevenLabs Voice IDs
 # =============================================================================
 
+
 class ElevenLabsVoice(str, Enum):
     """
     ElevenLabs voice IDs.
@@ -28,17 +30,18 @@ class ElevenLabsVoice(str, Enum):
     Add new voices here as they become available.
     The 'value' is the ElevenLabs voice ID.
     """
+
     # Premium voices
-    BRIAN = "nPczCjzI2devNBz1zQrb"      # Male, natural, warm
-    JOSH = "TxGEqnHWrfWFTfGW9XjX"       # Male, deep, authoritative
-    RACHEL = "21m00Tcm4TlvDq8ikWAM"     # Female, clear, professional
-    ADAM = "pNInz6obpgDQGcFmaJgB"       # Male, deep, narrator
-    BELLA = "EXAVITQu4vr4xnSDxMaL"      # Female, soft, storytelling
-    ELLI = "MF3mGyEYCl7XYWbV9V6O"       # Female, young, friendly
-    SAM = "yoZ06aMxZJJ28mfd3POQ"        # Male, young, casual
+    BRIAN = "nPczCjzI2devNBz1zQrb"  # Male, natural, warm
+    JOSH = "TxGEqnHWrfWFTfGW9XjX"  # Male, deep, authoritative
+    RACHEL = "21m00Tcm4TlvDq8ikWAM"  # Female, clear, professional
+    ADAM = "pNInz6obpgDQGcFmaJgB"  # Male, deep, narrator
+    BELLA = "EXAVITQu4vr4xnSDxMaL"  # Female, soft, storytelling
+    ELLI = "MF3mGyEYCl7XYWbV9V6O"  # Female, young, friendly
+    SAM = "yoZ06aMxZJJ28mfd3POQ"  # Male, young, casual
 
     # Arabic voices
-    LAYLA = "XB0fDUnXU5powFXDhCwa"      # Female, Arabic
+    LAYLA = "XB0fDUnXU5powFXDhCwa"  # Female, Arabic
 
     @classmethod
     def get_voice_info(cls) -> Dict[str, dict]:
@@ -75,17 +78,72 @@ DEFAULT_STYLE: float = 0.15
 
 
 # =============================================================================
+# Audio Chunk Configuration (WebSocket Latency Optimization)
+# =============================================================================
+
+
+class AudioChunkSize:
+    """
+    Audio chunk size configuration for adaptive streaming.
+
+    Smaller chunks = lower latency but more overhead
+    Larger chunks = higher latency but more efficient
+
+    These values are in samples (at 16kHz input / 24kHz output):
+    - 1024 samples at 16kHz = 64ms (input)
+    - 2048 samples at 16kHz = 128ms (input, default)
+    - 4096 samples at 16kHz = 256ms (input)
+    """
+
+    MIN_SAMPLES: int = 1024  # Fast networks: minimize latency
+    DEFAULT_SAMPLES: int = 2048  # Default: balanced
+    MAX_SAMPLES: int = 4096  # Slow networks: reduce overhead
+
+    # Sample rates
+    INPUT_SAMPLE_RATE: int = 16000  # Microphone input (16kHz PCM)
+    OUTPUT_SAMPLE_RATE: int = 24000  # TTS output (24kHz PCM)
+
+    @classmethod
+    def get_chunk_duration_ms(cls, samples: int, sample_rate: int = 16000) -> float:
+        """Calculate chunk duration in milliseconds."""
+        return (samples / sample_rate) * 1000
+
+    @classmethod
+    def get_recommended_chunk_size(cls, network_quality: str) -> int:
+        """
+        Get recommended chunk size based on network quality.
+
+        Args:
+            network_quality: "excellent", "good", "fair", "poor"
+
+        Returns:
+            Recommended chunk size in samples
+        """
+        quality_map = {
+            "excellent": cls.MIN_SAMPLES,  # 64ms latency
+            "good": cls.DEFAULT_SAMPLES,  # 128ms latency
+            "fair": cls.DEFAULT_SAMPLES,  # 128ms latency
+            "poor": cls.MAX_SAMPLES,  # 256ms latency
+        }
+        return quality_map.get(network_quality, cls.DEFAULT_SAMPLES)
+
+
+# Default audio chunk configuration
+DEFAULT_AUDIO_CHUNK_SAMPLES: int = AudioChunkSize.DEFAULT_SAMPLES
+
+
+# =============================================================================
 # OpenAI Voice Mapping (for fallback)
 # =============================================================================
 
 ELEVENLABS_TO_OPENAI_VOICE_MAP: Dict[str, str] = {
-    ElevenLabsVoice.BRIAN.value: "onyx",     # Male, deep
-    ElevenLabsVoice.JOSH.value: "onyx",      # Male, deep
-    ElevenLabsVoice.RACHEL.value: "nova",    # Female, warm
-    ElevenLabsVoice.ADAM.value: "echo",      # Male, neutral
+    ElevenLabsVoice.BRIAN.value: "onyx",  # Male, deep
+    ElevenLabsVoice.JOSH.value: "onyx",  # Male, deep
+    ElevenLabsVoice.RACHEL.value: "nova",  # Female, warm
+    ElevenLabsVoice.ADAM.value: "echo",  # Male, neutral
     ElevenLabsVoice.BELLA.value: "shimmer",  # Female, soft
-    ElevenLabsVoice.ELLI.value: "alloy",     # Female, neutral
-    ElevenLabsVoice.SAM.value: "fable",      # Male, casual
+    ElevenLabsVoice.ELLI.value: "alloy",  # Female, neutral
+    ElevenLabsVoice.SAM.value: "fable",  # Male, casual
 }
 
 # Default OpenAI voice when no mapping exists
