@@ -494,10 +494,28 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
         manager.disconnect(client_id)
         logger.info(f"Client disconnected: {client_id}", extra={"user_id": user_id})
 
+    except RuntimeError as e:
+        # Handle WebSocket-specific runtime errors (e.g., "Need to call accept first")
+        # These are expected when the connection drops mid-operation
+        error_msg = str(e).lower()
+        if "accept" in error_msg or "not connected" in error_msg or "close message" in error_msg:
+            logger.warning(
+                f"WebSocket connection lost: {str(e)}",
+                extra={"user_id": user_id, "client_id": client_id},
+            )
+        else:
+            logger.error(f"WebSocket RuntimeError: {str(e)}", exc_info=True, extra={"user_id": user_id})
+            # Only try to send error for non-connection-related RuntimeErrors
+            await manager.send_error(client_id, "INTERNAL_ERROR", str(e))
+        manager.disconnect(client_id)
+
     except Exception as e:
         logger.error(f"WebSocket error: {str(e)}", exc_info=True, extra={"user_id": user_id})
         # Try to send error, but don't fail if socket is already closed
-        await manager.send_error(client_id, "INTERNAL_ERROR", str(e))
+        # Don't send internal errors to client - just log them
+        error_msg = str(e).lower()
+        if "accept" not in error_msg and "not connected" not in error_msg:
+            await manager.send_error(client_id, "INTERNAL_ERROR", "An error occurred processing your request")
         manager.disconnect(client_id)
 
 
