@@ -7,6 +7,8 @@ Manages response timing for natural conversation flow.
 Issue 4: Wire progressive response to WebSocket via VoiceEventBus.
 """
 
+from __future__ import annotations
+
 import logging
 import random
 import time

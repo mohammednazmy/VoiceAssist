@@ -15,6 +15,8 @@ Phase 5 Enhancements:
 - Code validation against terminology services
 """
 
+from __future__ import annotations
+
 import logging
 import re
 from dataclasses import dataclass, field
