@@ -4,11 +4,11 @@ Revision ID: 035
 Revises: 034
 Create Date: 2025-12-06
 
-Fixes column name mismatch and adds missing columns from model:
+Fixes column name mismatch:
 1. Rename 'schedule' to 'scheduled_changes' (model expects scheduled_changes)
 2. Add 'default_variant' column for multivariate flags
-3. Add 'rollout_percentage' column for A/B testing
-4. Add 'rollout_salt' column for consistent user assignment
+
+Note: rollout_percentage and rollout_salt already exist from migration 004.
 """
 
 import sqlalchemy as sa
@@ -42,36 +42,11 @@ def upgrade() -> None:
         ),
     )
 
-    # Add rollout_percentage column for A/B testing (0-100)
-    op.add_column(
-        "feature_flags",
-        sa.Column(
-            "rollout_percentage",
-            sa.Integer,
-            nullable=True,
-            server_default="100",
-            comment="Percentage of users to include (0-100)",
-        ),
-    )
-
-    # Add rollout_salt column for consistent user assignment
-    op.add_column(
-        "feature_flags",
-        sa.Column(
-            "rollout_salt",
-            sa.String(50),
-            nullable=True,
-            comment="Salt for consistent user assignment",
-        ),
-    )
-
 
 def downgrade() -> None:
     """Revert column changes."""
 
     # Drop added columns
-    op.drop_column("feature_flags", "rollout_salt")
-    op.drop_column("feature_flags", "rollout_percentage")
     op.drop_column("feature_flags", "default_variant")
 
     # Rename back to 'schedule'
