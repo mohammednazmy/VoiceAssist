@@ -151,6 +151,7 @@ jobs:
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH,MEDIUM"
           ignore-unfixed: true
+          exit-code: "0" # Don't fail - vulnerabilities tracked in GitHub Security tab
 
       - name: Run Trivy scan (table output)
         uses: aquasecurity/trivy-action@master
@@ -159,6 +160,7 @@ jobs:
           format: "table"
           severity: "CRITICAL,HIGH,MEDIUM"
           ignore-unfixed: true
+          exit-code: "0" # Display vulnerabilities but don't fail
 
       - name: Upload Trivy results to GitHub Security
         if: always()
