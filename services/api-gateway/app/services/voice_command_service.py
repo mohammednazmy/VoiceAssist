@@ -208,7 +208,8 @@ class VoiceCommandService:
                 command_type=CommandType.GO_TO_SECTION,
                 category=CommandCategory.NAVIGATION,
                 patterns=[
-                    r"\b(?:go to|move to|jump to|switch to|navigate to)\s+(?:the\s+)?(?P<section>\w+(?:\s+\w+)?)\s*(?:section)?\b",
+                    r"\b(?:go to|move to|jump to|switch to|navigate to)\s+(?:the\s+)?"
+                    r"(?P<section>\w+(?:\s+\w+)?)\s*(?:section)?\b",
                     r"\b(?P<section>subjective|objective|assessment|plan)\s+section\b",
                 ],
                 description="Navigate to a specific section",

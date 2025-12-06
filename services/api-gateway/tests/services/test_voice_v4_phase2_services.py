@@ -11,10 +11,6 @@ Tests for:
 Reference: ~/.claude/plans/noble-bubbling-trinket.md (Phase 2-3)
 """
 
-import asyncio
-from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
-
 import pytest
 
 # =============================================================================
@@ -62,7 +58,7 @@ class TestPrivacyAwareSTTRouter:
         for text in ssn_texts:
             result = router._detect_phi_in_text(text)
             # Result could be bool or tuple - just verify it doesn't crash
-            assert result is not None or result == False or True
+            assert result is not None or result is False or True
 
     def test_phi_pattern_mrn(self, router):
         """Test MRN pattern detection."""
@@ -73,11 +69,11 @@ class TestPrivacyAwareSTTRouter:
         for text in mrn_texts:
             result = router._detect_phi_in_text(text)
             # Just verify it doesn't crash - implementation may vary
-            assert result is not None or result == False or True
+            assert result is not None or result is False or True
 
     def test_routing_policy_always_local(self, router_config):
         """Test ALWAYS_LOCAL routing policy."""
-        from app.services.privacy_aware_stt_router import PrivacyAwareSTTRouter, RoutingPolicy, STTProvider
+        from app.services.privacy_aware_stt_router import PrivacyAwareSTTRouter, RoutingPolicy
 
         router_config.policy = RoutingPolicy.ALWAYS_LOCAL
         router = PrivacyAwareSTTRouter(config=router_config)
@@ -339,23 +335,23 @@ class TestVoiceV4Integration:
 
     def test_service_imports(self):
         """Test all v4 services can be imported."""
-        # Phase 1 services
-        from app.engines.voice_engine.unified_voice_service import VoicePipelineState
-        from app.services.adaptive_quality_service import AdaptiveQualityService
-        from app.services.audio_processing_service import AudioProcessingService
-        from app.services.fhir_subscription_service import FHIRSubscriptionService
-        from app.services.language_detection_service import LanguageDetectionService
-        from app.services.local_whisper_service import LocalWhisperService
+        # Phase 1 services - verify imports work (noqa for intentional unused imports)
+        from app.engines.voice_engine.unified_voice_service import VoicePipelineState  # noqa: F401
+        from app.services.adaptive_quality_service import AdaptiveQualityService  # noqa: F401
+        from app.services.audio_processing_service import AudioProcessingService  # noqa: F401
+        from app.services.fhir_subscription_service import FHIRSubscriptionService  # noqa: F401
+        from app.services.language_detection_service import LanguageDetectionService  # noqa: F401
+        from app.services.local_whisper_service import LocalWhisperService  # noqa: F401
 
         # Phase 2 services
-        from app.services.parallel_stt_service import ParallelSTTService
-        from app.services.privacy_aware_stt_router import PrivacyAwareSTTRouter
+        from app.services.parallel_stt_service import ParallelSTTService  # noqa: F401
+        from app.services.privacy_aware_stt_router import PrivacyAwareSTTRouter  # noqa: F401
 
         # Phase 3 services
-        from app.services.qos_policies_service import QoSPoliciesService
-        from app.services.speaker_diarization_service import SpeakerDiarizationService
-        from app.services.tts_cache_service import TTSCacheService
-        from app.services.voice_fallback_orchestrator import VoiceFallbackOrchestrator
+        from app.services.qos_policies_service import QoSPoliciesService  # noqa: F401
+        from app.services.speaker_diarization_service import SpeakerDiarizationService  # noqa: F401
+        from app.services.tts_cache_service import TTSCacheService  # noqa: F401
+        from app.services.voice_fallback_orchestrator import VoiceFallbackOrchestrator  # noqa: F401
 
         # All imports successful
         assert True

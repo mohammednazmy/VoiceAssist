@@ -26,7 +26,6 @@ from app.services.latency_aware_orchestrator import (
     DegradationType,
     LatencyAwareVoiceOrchestrator,
     LatencyBudget,
-    TranslationFailedError,
     VoiceProcessingResult,
     get_latency_aware_orchestrator,
 )

@@ -12,14 +12,12 @@ Uses WebRTC Audio Processing or RNNoise for noise suppression,
 with browser-side processing where available.
 """
 
-import asyncio
 import logging
 import math
-import struct
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Callable, List, Optional
 
 import numpy as np
 
@@ -266,7 +264,7 @@ class AudioProcessingService:
         """
         # Compute RMS energy
         rms = np.sqrt(np.mean(samples**2) + 1e-10)
-        rms_db = 20 * math.log10(rms + 1e-10)
+        # rms_db useful for debugging: 20 * math.log10(rms + 1e-10)
 
         # Target level
         target_rms = 10 ** (self.config.agc_target_level_dbfs / 20)

@@ -10,13 +10,11 @@ Provides multi-level caching for TTS outputs:
 - Pronunciation-enhanced caching with lexicon integration
 """
 
-import asyncio
 import hashlib
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)

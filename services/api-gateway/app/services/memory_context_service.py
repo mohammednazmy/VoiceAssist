@@ -349,7 +349,7 @@ class UserContextManager:
                 and_(
                     UserContext.user_id == self.user_id,
                     UserContext.confidence >= min_confidence,
-                    UserContext.contradicted == False,
+                    UserContext.contradicted.is_(False),
                 )
             )
 

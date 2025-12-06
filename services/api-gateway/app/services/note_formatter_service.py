@@ -319,7 +319,7 @@ class NoteFormatterService:
         for pattern, replacement in self._vital_patterns:
             if pattern.search(text):
                 text = pattern.sub(replacement, text)
-                changes.append(f"Formatted vital sign")
+                changes.append("Formatted vital sign")
         return text, changes
 
     def _expand_abbreviations(self, text: str) -> Tuple[str, Dict[str, str]]:

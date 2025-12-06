@@ -16,9 +16,9 @@ on:
   workflow_dispatch:
     inputs:
       regenerate:
-        description: 'Force regenerate all flag docs'
+        description: "Force regenerate all flag docs"
         required: false
-        default: 'false'
+        default: "false"
         type: boolean
 
 env:

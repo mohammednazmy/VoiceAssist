@@ -409,7 +409,7 @@ Examples:
     if failed == 0:
         print(f"✅ Rollout complete: {success} flags updated")
     else:
-        print(f"⚠️  Rollout complete with errors:")
+        print("⚠️  Rollout complete with errors:")
         print(f"   Success: {success}")
         print(f"   Failed: {failed}")
 

@@ -346,22 +346,22 @@ class AdaptiveQualityService:
             QualityState for the session.
         """
         level = user_preference or initial_level
-        settings = QUALITY_PRESETS[level]
+        quality_settings = QUALITY_PRESETS[level]
 
         state = QualityState(
             session_id=session_id,
             current_level=level,
-            current_settings=settings,
+            current_settings=quality_settings,
             network_condition=NetworkCondition.GOOD,  # Assume good until measured
         )
 
         # Create latency budget
         budget = LatencyBudget(
-            total_budget_ms=settings.target_latency_ms,
-            stt_budget_ms=int(settings.target_latency_ms * 0.25),  # 25% for STT
-            llm_budget_ms=int(settings.target_latency_ms * 0.35),  # 35% for LLM
-            tts_budget_ms=int(settings.target_latency_ms * 0.25),  # 25% for TTS
-            network_budget_ms=int(settings.target_latency_ms * 0.15),  # 15% for network
+            total_budget_ms=quality_settings.target_latency_ms,
+            stt_budget_ms=int(quality_settings.target_latency_ms * 0.25),  # 25% for STT
+            llm_budget_ms=int(quality_settings.target_latency_ms * 0.35),  # 35% for LLM
+            tts_budget_ms=int(quality_settings.target_latency_ms * 0.25),  # 25% for TTS
+            network_budget_ms=int(quality_settings.target_latency_ms * 0.15),  # 15% for network
         )
 
         async with self._lock:
@@ -374,7 +374,7 @@ class AdaptiveQualityService:
             extra={
                 "session_id": session_id,
                 "level": level.value,
-                "target_latency_ms": settings.target_latency_ms,
+                "target_latency_ms": quality_settings.target_latency_ms,
             },
         )
 

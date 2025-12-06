@@ -191,7 +191,8 @@ PHI_PATTERNS = {
         (r"\b\d{1,2}/\d{1,2}/\d{2,4}\b", "date_slash", 0.7),
         (r"\b\d{1,2}-\d{1,2}-\d{2,4}\b", "date_dash", 0.7),
         (
-            r"\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b",
+            r"\b(?:January|February|March|April|May|June|July|August|September|October|November|December)"
+            r"\s+\d{1,2},?\s+\d{4}\b",
             "date_full",
             0.8,
         ),
@@ -199,7 +200,8 @@ PHI_PATTERNS = {
     # Address patterns
     PHIType.ADDRESS: [
         (
-            r"\b\d{1,5}\s+(?:[A-Za-z]+\s+){1,3}(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct)\b",
+            r"\b\d{1,5}\s+(?:[A-Za-z]+\s+){1,3}"
+            r"(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct)\b",
             "address_street",
             0.75,
         ),

@@ -90,9 +90,7 @@ export function getVoiceName(voiceId: string): string {
  * Check if a voice ID is valid
  */
 export function isValidVoiceId(voiceId: string): voiceId is ElevenLabsVoiceId {
-  return Object.values(ElevenLabsVoices).includes(
-    voiceId as ElevenLabsVoiceId,
-  );
+  return Object.values(ElevenLabsVoices).includes(voiceId as ElevenLabsVoiceId);
 }
 
 /**

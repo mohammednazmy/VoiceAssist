@@ -17,7 +17,10 @@
  */
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { useVoiceSettingsStore, VAD_PRESET_OPTIONS } from "../../stores/voiceSettingsStore";
+import {
+  useVoiceSettingsStore,
+  VAD_PRESET_OPTIONS,
+} from "../../stores/voiceSettingsStore";
 import { cn } from "@/lib/utils";
 
 // RTL language codes for auto-detection
@@ -46,12 +49,7 @@ interface VoiceFirstInputBarProps {
   className?: string;
 }
 
-type InputState =
-  | "idle"
-  | "listening"
-  | "processing"
-  | "text-input"
-  | "error";
+type InputState = "idle" | "listening" | "processing" | "text-input" | "error";
 
 interface VADParameters {
   energyThresholdDb: number;
@@ -197,7 +195,9 @@ export function VoiceFirstInputBar({
     }, 100);
 
     // Store interval ID for cleanup
-    (window as unknown as { __energyInterval: NodeJS.Timeout }).__energyInterval = energyInterval;
+    (
+      window as unknown as { __energyInterval: NodeJS.Timeout }
+    ).__energyInterval = energyInterval;
   }, [disabled, isAssistantSpeaking, onRecordingStart]);
 
   const handleStopRecording = useCallback(() => {
@@ -206,7 +206,9 @@ export function VoiceFirstInputBar({
     onRecordingStop?.();
 
     // Clear energy interval
-    const energyInterval = (window as unknown as { __energyInterval?: NodeJS.Timeout }).__energyInterval;
+    const energyInterval = (
+      window as unknown as { __energyInterval?: NodeJS.Timeout }
+    ).__energyInterval;
     if (energyInterval) {
       clearInterval(energyInterval);
     }
@@ -225,7 +227,9 @@ export function VoiceFirstInputBar({
     setEnergy(0);
     onRecordingStop?.();
 
-    const energyInterval = (window as unknown as { __energyInterval?: NodeJS.Timeout }).__energyInterval;
+    const energyInterval = (
+      window as unknown as { __energyInterval?: NodeJS.Timeout }
+    ).__energyInterval;
     if (energyInterval) {
       clearInterval(energyInterval);
     }
@@ -240,7 +244,7 @@ export function VoiceFirstInputBar({
         setInputState("idle");
       }
     },
-    [textValue, onSubmit]
+    [textValue, onSubmit],
   );
 
   const handleTextInputFocus = useCallback(() => {
@@ -276,7 +280,7 @@ export function VoiceFirstInputBar({
         inputState === "listening" && "ring-2 ring-blue-500 ring-opacity-50",
         inputState === "error" && "ring-2 ring-red-500 ring-opacity-50",
         disabled && "opacity-50 pointer-events-none",
-        className
+        className,
       )}
       dir={isRtl ? "rtl" : "ltr"}
       data-testid="voice-first-input-bar"
@@ -285,7 +289,7 @@ export function VoiceFirstInputBar({
       <div
         className={cn(
           "flex-shrink-0 w-2 h-2 rounded-full transition-colors",
-          phiIndicator.color
+          phiIndicator.color,
         )}
         title={`PHI Mode: ${phiMode} (score: ${Math.round(phiScore * 100)}%)`}
         aria-label={`PHI security mode: ${phiMode}`}
@@ -308,7 +312,7 @@ export function VoiceFirstInputBar({
                 "border border-neutral-200 dark:border-neutral-600 rounded-lg",
                 "text-sm text-neutral-900 dark:text-neutral-100",
                 "focus:outline-none focus:ring-2 focus:ring-blue-500",
-                isRtl && "text-right"
+                isRtl && "text-right",
               )}
               dir={isRtl ? "rtl" : "ltr"}
               autoFocus
@@ -321,7 +325,7 @@ export function VoiceFirstInputBar({
                 "text-sm font-medium",
                 "hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
-                "transition-colors"
+                "transition-colors",
               )}
             >
               Send
@@ -361,7 +365,7 @@ export function VoiceFirstInputBar({
                   key={i}
                   className={cn(
                     "flex-1 bg-blue-500 rounded-full transition-all duration-75",
-                    isRtl && "order-last"
+                    isRtl && "order-last",
                   )}
                   style={{
                     height: `${Math.max(4, energy * 100 * Math.sin((i / 12) * Math.PI) * (0.5 + Math.random() * 0.5))}%`,
@@ -385,7 +389,7 @@ export function VoiceFirstInputBar({
                 className={cn(
                   "px-3 py-1.5 bg-blue-500 text-white rounded-lg",
                   "text-sm font-medium hover:bg-blue-600",
-                  "focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  "focus:outline-none focus:ring-2 focus:ring-blue-500",
                 )}
               >
                 Done
@@ -443,7 +447,7 @@ export function VoiceFirstInputBar({
           <div
             className={cn(
               "flex-1 flex items-center gap-2",
-              "text-neutral-500 dark:text-neutral-400 text-sm cursor-pointer"
+              "text-neutral-500 dark:text-neutral-400 text-sm cursor-pointer",
             )}
             onClick={handleTextInputFocus}
             onKeyDown={(e) => {
@@ -490,7 +494,7 @@ export function VoiceFirstInputBar({
             ? "bg-red-500 text-white hover:bg-red-600 scale-110"
             : inputState === "processing"
               ? "bg-neutral-200 dark:bg-neutral-700 text-neutral-400 cursor-wait"
-              : "bg-blue-500 text-white hover:bg-blue-600 active:scale-95"
+              : "bg-blue-500 text-white hover:bg-blue-600 active:scale-95",
         )}
         aria-label={
           inputState === "listening"
@@ -564,7 +568,7 @@ export function VoiceFirstInputBar({
           className={cn(
             "flex-shrink-0 p-2 text-neutral-400 hover:text-neutral-600",
             "dark:hover:text-neutral-300 transition-colors",
-            "focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
+            "focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg",
           )}
           aria-label="Switch to text input"
         >
@@ -591,7 +595,7 @@ export function VoiceFirstInputBar({
           "absolute -top-2 -right-2 px-1.5 py-0.5 rounded-full text-xs",
           "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400",
           "border border-neutral-200 dark:border-neutral-700",
-          "opacity-0 group-hover:opacity-100 transition-opacity"
+          "opacity-0 group-hover:opacity-100 transition-opacity",
         )}
         title={`VAD: ${vadPreset} (${vadParams.energyThresholdDb}dB, ${vadParams.silenceDurationMs}ms)`}
       >
@@ -604,7 +608,7 @@ export function VoiceFirstInputBar({
           className={cn(
             "absolute top-full left-0 right-0 mt-2 p-2",
             "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800",
-            "rounded-lg text-sm text-red-600 dark:text-red-400"
+            "rounded-lg text-sm text-red-600 dark:text-red-400",
           )}
         >
           {errorMessage}

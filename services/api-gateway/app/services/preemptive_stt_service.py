@@ -273,7 +273,7 @@ class PreemptiveSTTSession:
         self._state.speech_detected_at = None
         self._state.speech_duration_ms = 0.0
 
-        logger.debug(f"[PreemptiveSTT] AI speaking started, mode=PREEMPTIVE")
+        logger.debug("[PreemptiveSTT] AI speaking started, mode=PREEMPTIVE")
 
     def notify_ai_speaking_stopped(self) -> None:
         """Notify that AI has stopped speaking."""
@@ -282,7 +282,7 @@ class PreemptiveSTTSession:
         # Schedule transition to active mode after echo settle time
         asyncio.create_task(self._transition_to_active_after_settle())
 
-        logger.debug(f"[PreemptiveSTT] AI speaking stopped, waiting for echo settle")
+        logger.debug("[PreemptiveSTT] AI speaking stopped, waiting for echo settle")
 
     async def _transition_to_active_after_settle(self) -> None:
         """Transition to active mode after echo settle time."""
@@ -291,7 +291,7 @@ class PreemptiveSTTSession:
         # Only transition if still in preemptive mode
         if self._state.mode == PreemptiveMode.PREEMPTIVE:
             self._state.mode = PreemptiveMode.ACTIVE
-            logger.debug(f"[PreemptiveSTT] Transitioned to ACTIVE mode")
+            logger.debug("[PreemptiveSTT] Transitioned to ACTIVE mode")
 
     def complete_barge_in(self) -> Optional[BargeInMetrics]:
         """
@@ -351,8 +351,6 @@ class PreemptiveSTTSession:
 
     async def _handle_partial(self, text: str, confidence: float) -> None:
         """Handle partial transcript from Deepgram."""
-        now = time.time()
-
         if self._state.mode == PreemptiveMode.PREEMPTIVE:
             # Track transcript accumulation
             self._state.preemptive_transcript = text
@@ -383,7 +381,7 @@ class PreemptiveSTTSession:
             # Track when speech was first detected during AI playback
             if self._state.speech_detected_at is None:
                 self._state.speech_detected_at = now
-                logger.debug(f"[PreemptiveSTT] Speech detected during AI playback")
+                logger.debug("[PreemptiveSTT] Speech detected during AI playback")
 
         if self._on_speech_start:
             await self._on_speech_start()

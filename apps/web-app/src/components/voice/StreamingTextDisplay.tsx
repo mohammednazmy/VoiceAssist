@@ -22,7 +22,8 @@ import { useVoiceSettingsStore } from "../../stores/voiceSettingsStore";
 
 // RTL language detection patterns
 const RTL_LANGUAGES = ["ar", "he", "fa", "ur", "yi", "ps", "sd"];
-const RTL_CHAR_REGEX = /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+const RTL_CHAR_REGEX =
+  /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
 
 interface StreamingTextDisplayProps {
   /** Text content to display (can be partial/streaming) */
@@ -154,7 +155,10 @@ export function StreamingTextDisplay({
     if (rtlEnabled) return "rtl";
 
     // Language code override
-    if (languageCode && RTL_LANGUAGES.includes(languageCode.slice(0, 2).toLowerCase())) {
+    if (
+      languageCode &&
+      RTL_LANGUAGES.includes(languageCode.slice(0, 2).toLowerCase())
+    ) {
       return "rtl";
     }
 
@@ -215,11 +219,22 @@ export function StreamingTextDisplay({
 
   // Notify when streaming completes
   useEffect(() => {
-    if (!isStreaming && displayedLength >= text.length && !hasCompletedOnce && text.length > 0) {
+    if (
+      !isStreaming &&
+      displayedLength >= text.length &&
+      !hasCompletedOnce &&
+      text.length > 0
+    ) {
       setHasCompletedOnce(true);
       onStreamComplete?.();
     }
-  }, [isStreaming, displayedLength, text.length, hasCompletedOnce, onStreamComplete]);
+  }, [
+    isStreaming,
+    displayedLength,
+    text.length,
+    hasCompletedOnce,
+    onStreamComplete,
+  ]);
 
   // Reset completion flag when new text starts
   useEffect(() => {
@@ -229,39 +244,36 @@ export function StreamingTextDisplay({
   }, [isStreaming]);
 
   // Render a single segment
-  const renderSegment = useCallback(
-    (segment: TextSegment, index: number) => {
-      if (segment.isCode) {
-        return (
-          <pre
-            key={index}
-            className={cn(
-              "my-2 p-3 bg-neutral-100 dark:bg-neutral-800 rounded-lg",
-              "overflow-x-auto font-mono text-sm",
-              "text-neutral-800 dark:text-neutral-200"
-            )}
-            dir="ltr"
-          >
-            <code>{segment.text}</code>
-          </pre>
-        );
-      }
-
+  const renderSegment = useCallback((segment: TextSegment, index: number) => {
+    if (segment.isCode) {
       return (
-        <p
+        <pre
           key={index}
           className={cn(
-            "leading-relaxed",
-            segment.direction === "rtl" && "text-right"
+            "my-2 p-3 bg-neutral-100 dark:bg-neutral-800 rounded-lg",
+            "overflow-x-auto font-mono text-sm",
+            "text-neutral-800 dark:text-neutral-200",
           )}
-          dir={segment.direction}
+          dir="ltr"
         >
-          {segment.text}
-        </p>
+          <code>{segment.text}</code>
+        </pre>
       );
-    },
-    []
-  );
+    }
+
+    return (
+      <p
+        key={index}
+        className={cn(
+          "leading-relaxed",
+          segment.direction === "rtl" && "text-right",
+        )}
+        dir={segment.direction}
+      >
+        {segment.text}
+      </p>
+    );
+  }, []);
 
   // If no text, show empty state
   if (!text && !isStreaming) {
@@ -275,7 +287,7 @@ export function StreamingTextDisplay({
         "streaming-text-display",
         "relative overflow-y-auto",
         "text-neutral-900 dark:text-neutral-100",
-        className
+        className,
       )}
       dir={overallDirection}
       data-testid={testId}
@@ -287,7 +299,7 @@ export function StreamingTextDisplay({
       {/* Displayed Text */}
       <div className="space-y-2">
         {segmentText(displayedText).map((segment, index) =>
-          renderSegment(segment, index)
+          renderSegment(segment, index),
         )}
       </div>
 
@@ -298,7 +310,7 @@ export function StreamingTextDisplay({
             "inline-block w-0.5 h-5 ml-0.5",
             "bg-blue-500 dark:bg-blue-400",
             "animate-pulse align-text-bottom",
-            overallDirection === "rtl" && "mr-0.5 ml-0"
+            overallDirection === "rtl" && "mr-0.5 ml-0",
           )}
           aria-hidden="true"
         />
@@ -312,7 +324,7 @@ export function StreamingTextDisplay({
             "bg-blue-100 dark:bg-blue-900/40",
             "text-xs text-blue-600 dark:text-blue-400",
             "flex items-center gap-1",
-            overallDirection === "rtl" ? "left-2" : "right-2"
+            overallDirection === "rtl" ? "left-2" : "right-2",
           )}
         >
           <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
@@ -343,7 +355,7 @@ export function StreamingTextLine({
     <div
       className={cn(
         "streaming-text-line inline-flex items-baseline",
-        className
+        className,
       )}
       dir={direction}
     >
@@ -353,7 +365,7 @@ export function StreamingTextLine({
           className={cn(
             "inline-block w-0.5 h-4 ml-0.5",
             "bg-current opacity-70 animate-pulse",
-            direction === "rtl" && "mr-0.5 ml-0"
+            direction === "rtl" && "mr-0.5 ml-0",
           )}
           aria-hidden="true"
         />

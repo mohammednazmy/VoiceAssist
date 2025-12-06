@@ -376,8 +376,6 @@ class PolicyService:
 
         Same user always gets same variant for a test.
         """
-        cache_key = f"{user_id}:{test_name}"
-
         # Check cached assignment
         if user_id in self._ab_assignments:
             if test_name in self._ab_assignments[user_id]:

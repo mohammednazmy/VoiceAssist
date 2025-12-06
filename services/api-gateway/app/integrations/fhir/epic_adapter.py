@@ -359,7 +359,7 @@ class EpicAdapter(FHIRClient):
             "conditions": ([c.to_dict() for c in conditions] if isinstance(conditions, list) else []),
             "allergies": ([a.to_dict() for a in allergies] if isinstance(allergies, list) else []),
             "vitals": [v.to_dict() for v in vitals] if isinstance(vitals, list) else [],
-            "labs": [l.to_dict() for l in labs] if isinstance(labs, list) else [],
+            "labs": [lab.to_dict() for lab in labs] if isinstance(labs, list) else [],
             "fetched_at": datetime.utcnow().isoformat(),
         }
 
