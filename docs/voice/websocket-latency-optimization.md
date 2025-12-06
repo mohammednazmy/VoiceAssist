@@ -1,3 +1,17 @@
+---
+title: WebSocket Latency Optimization
+slug: websocket-latency-optimization
+status: active
+owner: backend
+lastUpdated: "2024-12-05"
+priority: high
+category: voice
+ai_summary: >-
+  Comprehensive guide to WebSocket latency optimizations including audio
+  pre-buffering, permessage-deflate compression, and adaptive chunk sizing.
+  All features are controlled via feature flags.
+---
+
 # WebSocket Latency Optimization
 
 **Status:** Feature Flag Controlled
