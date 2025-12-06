@@ -154,6 +154,7 @@ class TestPipelineConfig:
 
     def test_config_defaults(self):
         """Test PipelineConfig default values."""
+        from app.core.voice_constants import DEFAULT_TTS_MODEL, DEFAULT_VOICE_ID
         from app.services.voice_pipeline_service import PipelineConfig
 
         config = PipelineConfig()
@@ -162,8 +163,8 @@ class TestPipelineConfig:
         assert config.stt_endpointing_ms == 800  # Updated for better transcription
         assert config.max_response_tokens == 1024
         assert config.temperature == 0.7
-        assert config.voice_id == "TxGEqnHWrfWFTfGW9XjX"  # Josh (premium male voice)
-        assert config.tts_model == "eleven_flash_v2_5"  # Better quality + low latency
+        assert config.voice_id == DEFAULT_VOICE_ID  # Uses voice_constants.py default
+        assert config.tts_model == DEFAULT_TTS_MODEL  # Uses voice_constants.py default
         assert config.barge_in_enabled is True
 
     def test_config_custom_values(self):

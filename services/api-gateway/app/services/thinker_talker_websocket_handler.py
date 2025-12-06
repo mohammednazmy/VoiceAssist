@@ -305,6 +305,8 @@ class ThinkerTalkerWebSocketHandler:
         except Exception as e:
             logger.error(f"Failed to start T/T handler: {e}")
             self._connection_state = TTConnectionState.ERROR
+            self._running = False
+            self._pipeline_session = None
             await self._send_error("connection_failed", str(e))
             return False
 
