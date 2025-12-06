@@ -312,6 +312,66 @@ export interface TTFeedbackRecordedEvent {
 }
 
 /**
+ * WebSocket Reliability Phase 3: Voice service mode
+ * Indicates overall voice capability level
+ */
+export type VoiceServiceMode =
+  | "full_voice" // All services operational
+  | "degraded_voice" // Using fallback providers
+  | "text_only" // Voice unavailable, text fallback
+  | "unknown"; // Status being determined
+
+/**
+ * WebSocket Reliability Phase 3: Service health status
+ */
+export type ServiceHealth = "healthy" | "degraded" | "unhealthy" | "unknown";
+
+/**
+ * WebSocket Reliability Phase 3: Service degradation event
+ */
+export interface TTServiceDegradationEvent {
+  service: "stt" | "tts" | "llm";
+  provider: string;
+  health: ServiceHealth;
+  previousHealth: ServiceHealth;
+  message: string;
+  timestamp: string;
+}
+
+/**
+ * WebSocket Reliability Phase 3: Service mode change event
+ */
+export interface TTServiceModeChangeEvent {
+  mode: VoiceServiceMode;
+  previousMode: VoiceServiceMode;
+  reason: string;
+  affectedServices: string[];
+  fallbackInfo: Record<string, string>;
+  capabilities: {
+    voice_input: boolean;
+    voice_output: boolean;
+    text_input: boolean;
+    text_output: boolean;
+    tools: boolean;
+    full_quality: boolean;
+  };
+  timestamp: string;
+}
+
+/**
+ * WebSocket Reliability Phase 3: Service status snapshot
+ */
+export interface TTServiceStatus {
+  mode: VoiceServiceMode;
+  services: {
+    stt: { health: ServiceHealth; fallback_provider?: string };
+    tts: { health: ServiceHealth; fallback_provider?: string };
+    llm: { health: ServiceHealth; fallback_provider?: string };
+  };
+  timestamp: string;
+}
+
+/**
  * Voice metrics for performance monitoring
  */
 export interface TTVoiceMetrics {
@@ -437,6 +497,14 @@ export interface UseThinkerTalkerSessionOptions {
   onFeedbackPrompts?: (event: TTFeedbackPromptsEvent) => void;
   /** Callback when feedback is recorded (Phase 10) */
   onFeedbackRecorded?: (event: TTFeedbackRecordedEvent) => void;
+
+  // WebSocket Reliability Phase 3: Graceful degradation callbacks
+  /** Callback when service status is received (initial or update) */
+  onServiceStatus?: (status: TTServiceStatus) => void;
+  /** Callback when a service degrades or recovers */
+  onServiceDegradation?: (event: TTServiceDegradationEvent) => void;
+  /** Callback when overall voice mode changes */
+  onServiceModeChange?: (event: TTServiceModeChangeEvent) => void;
 }
 
 // ============================================================================
@@ -578,6 +646,13 @@ export function useThinkerTalkerSession(
   const [pipelineState, setPipelineState] = useState<PipelineState>("idle");
   const [currentToolCalls, setCurrentToolCalls] = useState<TTToolCall[]>([]);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
+
+  // WebSocket Reliability Phase 3: Service status state
+  const [serviceMode, setServiceMode] = useState<VoiceServiceMode>("unknown");
+  const [serviceStatus, setServiceStatus] = useState<TTServiceStatus | null>(
+    null,
+  );
+  const gracefulDegradationEnabledRef = useRef(false);
 
   // Metrics state
   const [metrics, setMetrics] = useState<TTVoiceMetrics>({
@@ -856,17 +931,99 @@ export function useThinkerTalkerSession(
           const recoveryEnabled = message.session_recovery_enabled as boolean;
           const isRecovered = message.is_recovered_session as boolean;
 
+          // Phase 3: Store graceful degradation status
+          const degradationEnabled =
+            message.graceful_degradation_enabled as boolean;
+          gracefulDegradationEnabledRef.current = degradationEnabled;
+
           sessionIdRef.current = readySessionId;
           sessionRecoveryEnabledRef.current = recoveryEnabled;
 
           voiceLog.debug(
             `[ThinkerTalker] Session ready: ${readySessionId}, ` +
-              `recovery=${recoveryEnabled}, recovered=${isRecovered}`,
+              `recovery=${recoveryEnabled}, recovered=${isRecovered}, ` +
+              `graceful_degradation=${degradationEnabled}`,
           );
 
           updateStatus("ready");
           // Start heartbeat monitoring for zombie connection detection
           startHeartbeat();
+          break;
+        }
+
+        // ================================================================
+        // WebSocket Reliability Phase 3: Service Health Messages
+        // ================================================================
+
+        case "service.status": {
+          // Initial or updated service status snapshot
+          const statusData: TTServiceStatus = {
+            mode: message.mode as VoiceServiceMode,
+            services: message.services as TTServiceStatus["services"],
+            timestamp: message.timestamp as string,
+          };
+
+          setServiceMode(statusData.mode);
+          setServiceStatus(statusData);
+
+          voiceLog.debug(
+            `[ThinkerTalker] Service status: mode=${statusData.mode}`,
+          );
+
+          options.onServiceStatus?.(statusData);
+          break;
+        }
+
+        case "service.degraded":
+        case "service.recovered": {
+          // Service degradation or recovery event
+          const degradationEvent: TTServiceDegradationEvent = {
+            service: message.service as "stt" | "tts" | "llm",
+            provider: message.provider as string,
+            health: message.health as ServiceHealth,
+            previousHealth: message.previous_health as ServiceHealth,
+            message: message.message as string,
+            timestamp: message.timestamp as string,
+          };
+
+          voiceLog.info(
+            `[ThinkerTalker] Service ${msgType === "service.recovered" ? "recovered" : "degraded"}: ` +
+              `${degradationEvent.service} (${degradationEvent.previousHealth} -> ${degradationEvent.health})`,
+          );
+
+          options.onServiceDegradation?.(degradationEvent);
+          break;
+        }
+
+        case "service.mode_change": {
+          // Overall voice mode change (full_voice <-> degraded_voice <-> text_only)
+          const modeChangeEvent: TTServiceModeChangeEvent = {
+            mode: message.mode as VoiceServiceMode,
+            previousMode: message.previous_mode as VoiceServiceMode,
+            reason: message.reason as string,
+            affectedServices: message.affected_services as string[],
+            fallbackInfo: message.fallback_info as Record<string, string>,
+            capabilities:
+              message.capabilities as TTServiceModeChangeEvent["capabilities"],
+            timestamp: message.timestamp as string,
+          };
+
+          setServiceMode(modeChangeEvent.mode);
+
+          // Log with appropriate severity based on mode
+          if (modeChangeEvent.mode === "text_only") {
+            voiceLog.warn(
+              `[ThinkerTalker] Voice mode degraded to text_only: ${modeChangeEvent.reason}`,
+            );
+          } else if (modeChangeEvent.mode === "full_voice") {
+            voiceLog.info(`[ThinkerTalker] Voice mode recovered to full_voice`);
+          } else {
+            voiceLog.info(
+              `[ThinkerTalker] Voice mode changed: ${modeChangeEvent.previousMode} -> ${modeChangeEvent.mode}`,
+            );
+          }
+
+          options.onServiceModeChange?.(modeChangeEvent);
           break;
         }
 
@@ -2180,6 +2337,16 @@ export function useThinkerTalkerSession(
       activeToolCalls: conversationManager.activeToolCalls,
       registerToolCall: conversationManager.registerToolCall,
       updateToolCallStatus: conversationManager.updateToolCallStatus,
+    },
+
+    // WebSocket Reliability Phase 3: Service health status
+    serviceHealth: {
+      mode: serviceMode,
+      status: serviceStatus,
+      isFullVoice: serviceMode === "full_voice",
+      isDegraded: serviceMode === "degraded_voice",
+      isTextOnly: serviceMode === "text_only",
+      gracefulDegradationEnabled: gracefulDegradationEnabledRef.current,
     },
   };
 }

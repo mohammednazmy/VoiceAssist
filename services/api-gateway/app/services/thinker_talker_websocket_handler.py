@@ -22,6 +22,11 @@ WebSocket Reliability Enhancement (Phase 2):
 - Redis session state persistence (feature flag: backend.voice_ws_session_persistence)
 - Session recovery after disconnects
 - Horizontal scaling support across server instances
+
+WebSocket Reliability Enhancement (Phase 3):
+- Graceful degradation (feature flag: backend.voice_ws_graceful_degradation)
+- Client notifications when services degrade or recover
+- Fallback levels: full_voice -> degraded_voice -> text_only
 """
 
 import asyncio
@@ -206,6 +211,11 @@ class ThinkerTalkerWebSocketHandler:
         self._session_persistence_enabled: bool = False
         self._is_recovered_session: bool = False
 
+        # Phase 3: Graceful degradation tracking
+        self._graceful_degradation_feature_flag_checked: bool = False
+        self._graceful_degradation_enabled: bool = False
+        self._registered_for_health_notifications: bool = False
+
     @property
     def connection_state(self) -> TTConnectionState:
         """Get current connection state."""
@@ -258,6 +268,9 @@ class ThinkerTalkerWebSocketHandler:
             # Check if session persistence is enabled
             session_persistence_enabled = await self._is_session_persistence_enabled()
 
+            # Phase 3: Check if graceful degradation is enabled
+            graceful_degradation_enabled = await self._is_graceful_degradation_enabled()
+
             # Send ready message to client
             await self._send_message(
                 {
@@ -266,6 +279,7 @@ class ThinkerTalkerWebSocketHandler:
                     "pipeline_mode": "thinker_talker",
                     "session_recovery_enabled": session_persistence_enabled,
                     "is_recovered_session": self._is_recovered_session,
+                    "graceful_degradation_enabled": graceful_degradation_enabled,
                 }
             )
 
@@ -273,6 +287,10 @@ class ThinkerTalkerWebSocketHandler:
             if session_persistence_enabled:
                 await self._save_session_state()
                 logger.debug(f"Saved initial session state: {self.config.session_id}")
+
+            # Phase 3: Register for health notifications
+            if graceful_degradation_enabled:
+                await self._register_for_health_notifications()
 
             # Start receive loop
             self._receive_task = asyncio.create_task(self._receive_loop())
@@ -309,6 +327,9 @@ class ThinkerTalkerWebSocketHandler:
             return self._metrics
 
         self._running = False
+
+        # Phase 3: Unregister from health notifications
+        self._unregister_from_health_notifications()
 
         # Cancel tasks
         if self._receive_task:
@@ -482,6 +503,72 @@ class ThinkerTalkerWebSocketHandler:
                 self._session_persistence_enabled = False
 
         return self._session_persistence_enabled
+
+    async def _is_graceful_degradation_enabled(self) -> bool:
+        """Check if graceful degradation is enabled via feature flag.
+
+        Caches the result to avoid repeated feature flag checks.
+        """
+        if not self._graceful_degradation_feature_flag_checked:
+            self._graceful_degradation_feature_flag_checked = True
+            try:
+                from app.services.feature_flags import feature_flag_service
+
+                self._graceful_degradation_enabled = await feature_flag_service.is_enabled(
+                    "backend.voice_ws_graceful_degradation"
+                )
+                logger.debug(f"Graceful degradation feature flag: {self._graceful_degradation_enabled}")
+            except Exception as e:
+                logger.warning(f"Failed to check graceful degradation feature flag: {e}")
+                self._graceful_degradation_enabled = False
+
+        return self._graceful_degradation_enabled
+
+    async def _register_for_health_notifications(self) -> bool:
+        """Register this session for health notifications (Phase 3).
+
+        Returns:
+            True if registered successfully, False otherwise
+        """
+        if not await self._is_graceful_degradation_enabled():
+            return False
+
+        if self._registered_for_health_notifications:
+            return True
+
+        try:
+            from app.services.voice_service_health_notifier import voice_service_health_notifier
+
+            # Create a callback that sends health messages to this client
+            async def send_health_message(message: dict) -> None:
+                await self._send_message(message)
+
+            voice_service_health_notifier.register_session(
+                self.config.session_id,
+                send_health_message,
+            )
+            self._registered_for_health_notifications = True
+            logger.debug(f"Registered for health notifications: {self.config.session_id}")
+            return True
+
+        except Exception as e:
+            logger.warning(f"Failed to register for health notifications: {e}")
+            return False
+
+    def _unregister_from_health_notifications(self) -> None:
+        """Unregister this session from health notifications (Phase 3)."""
+        if not self._registered_for_health_notifications:
+            return
+
+        try:
+            from app.services.voice_service_health_notifier import voice_service_health_notifier
+
+            voice_service_health_notifier.unregister_session(self.config.session_id)
+            self._registered_for_health_notifications = False
+            logger.debug(f"Unregistered from health notifications: {self.config.session_id}")
+
+        except Exception as e:
+            logger.warning(f"Failed to unregister from health notifications: {e}")
 
     async def _save_session_state(self) -> bool:
         """Save current session state to Redis for recovery.
