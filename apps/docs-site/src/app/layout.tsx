@@ -69,7 +69,12 @@ export default function RootLayout({
         <HeadingProvider>
           <Header />
           <Sidebar />
-          <main id="main-content" className="lg:pl-64" role="main" aria-label="Documentation content">
+          <main
+            id="main-content"
+            className="lg:pl-64"
+            role="main"
+            aria-label="Documentation content"
+          >
             <PageFrame>{children}</PageFrame>
           </main>
         </HeadingProvider>

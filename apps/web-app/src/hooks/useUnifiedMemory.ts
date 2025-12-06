@@ -6,7 +6,7 @@
  * Reference: docs/voice/unified-memory.md
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLanguage } from "./useLanguage";
 
 // ============================================================================
@@ -107,7 +107,7 @@ function getSessionId(): string {
 
 export function useUnifiedMemory(): UseUnifiedMemoryReturn {
   const { currentLanguage } = useLanguage();
-  const sessionId = useRef(getSessionId());
+  const _sessionId = useRef(getSessionId());
 
   // State
   const [messages, setMessages] = useState<MemoryEntry[]>([]);

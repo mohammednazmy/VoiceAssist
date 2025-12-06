@@ -358,7 +358,7 @@ export function VitalsPanel({
  */
 export function useFHIRObservations(
   patientId: string,
-  options?: {
+  _options?: {
     includeVitals?: boolean;
     includeLabs?: boolean;
     maxResults?: number;
@@ -366,7 +366,7 @@ export function useFHIRObservations(
 ) {
   const [observations, setObservations] = useState<FHIRObservation[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, _setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!patientId) return;

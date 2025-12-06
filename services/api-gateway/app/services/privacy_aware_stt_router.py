@@ -11,7 +11,6 @@ Routes audio transcription requests to appropriate STT providers:
 Ensures HIPAA compliance by keeping PHI data on-premise.
 """
 
-import asyncio
 import logging
 import re
 from dataclasses import dataclass, field
@@ -24,8 +23,6 @@ from app.services.local_whisper_service import (
     LocalWhisperService,
     TranscriptionLanguage,
     TranscriptionResult,
-    WhisperConfig,
-    WhisperModelSize,
     get_local_whisper_service,
 )
 

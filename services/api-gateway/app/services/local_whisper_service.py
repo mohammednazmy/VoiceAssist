@@ -15,10 +15,8 @@ Targets <500ms latency with GPU acceleration.
 import asyncio
 import logging
 import os
-import tempfile
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -565,7 +563,6 @@ class LocalWhisperService:
         Returns:
             Final TranscriptionResult
         """
-        buffer = []
         chunk_duration_s = 0.5  # Process every 0.5s of audio
         sample_rate = 16000
         samples_per_chunk = int(sample_rate * chunk_duration_s)

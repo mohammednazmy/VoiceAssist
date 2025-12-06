@@ -349,7 +349,7 @@ export function useVoiceAccessibility(
       try {
         const vibrationPattern = HAPTIC_PATTERNS[pattern];
         navigator.vibrate(vibrationPattern);
-      } catch (error) {
+      } catch {
         // Ignore haptic errors
       }
     },
