@@ -1756,12 +1756,14 @@ async def voice_pipeline_websocket(
     - conversation_id: Optional conversation ID
     - voice_id: Optional ElevenLabs voice ID
     - language: Optional language code (default: en)
+    - recover_session_id: Optional session ID to recover (Phase 2)
     """
     # Get query parameters
     token = websocket.query_params.get("token")
     conversation_id = websocket.query_params.get("conversation_id")
     voice_id = websocket.query_params.get("voice_id", settings.ELEVENLABS_VOICE_ID)
     language = websocket.query_params.get("language", "en")
+    recover_session_id = websocket.query_params.get("recover_session_id")
 
     # Validate token
     if not token:
@@ -1796,28 +1798,49 @@ async def voice_pipeline_websocket(
         await websocket.close(code=1011)
         return
 
-    # Create session config
-    session_id = str(uuid.uuid4())
-    config = TTSessionConfig(
-        user_id=user_id,
-        session_id=session_id,
-        conversation_id=conversation_id,
-        voice_id=voice_id,
-        language=language,
-        barge_in_enabled=settings.BARGE_IN_ENABLED,
-    )
+    handler = None
 
-    # Create handler
-    try:
-        handler = await thinker_talker_session_manager.create_session(
+    # Phase 2: Try to recover session if requested
+    if recover_session_id:
+        handler = await thinker_talker_session_manager.recover_session(
             websocket=websocket,
-            config=config,
+            recover_session_id=recover_session_id,
+            user_id=user_id,
         )
-    except ValueError as e:
-        await websocket.accept()
-        await websocket.send_json({"type": "error", "code": "session_limit", "message": str(e)})
-        await websocket.close(code=1013)
-        return
+        if handler:
+            logger.info(
+                f"Recovered session: {recover_session_id}",
+                extra={"user_id": user_id},
+            )
+            session_id = recover_session_id
+        else:
+            logger.info(
+                f"Session recovery failed, creating new session: {recover_session_id}",
+                extra={"user_id": user_id},
+            )
+
+    # Create new session if not recovered
+    if not handler:
+        session_id = str(uuid.uuid4())
+        config = TTSessionConfig(
+            user_id=user_id,
+            session_id=session_id,
+            conversation_id=conversation_id,
+            voice_id=voice_id,
+            language=language,
+            barge_in_enabled=settings.BARGE_IN_ENABLED,
+        )
+
+        try:
+            handler = await thinker_talker_session_manager.create_session(
+                websocket=websocket,
+                config=config,
+            )
+        except ValueError as e:
+            await websocket.accept()
+            await websocket.send_json({"type": "error", "code": "session_limit", "message": str(e)})
+            await websocket.close(code=1013)
+            return
 
     # Track metrics
     voice_sessions_total.labels(status="started").inc()

@@ -612,6 +612,10 @@ export function useThinkerTalkerSession(
   const binaryAudioEnabledRef = useRef(false);
   const audioInputSequenceRef = useRef(0);
 
+  // WebSocket Reliability Enhancement Phase 2: Session persistence
+  const sessionIdRef = useRef<string | null>(null);
+  const sessionRecoveryEnabledRef = useRef(false);
+
   // Binary frame constants
   const BINARY_FRAME_AUDIO_INPUT = 0x01;
   const BINARY_FRAME_AUDIO_OUTPUT = 0x02;
@@ -846,12 +850,25 @@ export function useThinkerTalkerSession(
           break;
         }
 
-        case "session.ready":
-          voiceLog.debug("[ThinkerTalker] Session ready");
+        case "session.ready": {
+          // Phase 2: Store session ID for potential recovery
+          const readySessionId = message.session_id as string;
+          const recoveryEnabled = message.session_recovery_enabled as boolean;
+          const isRecovered = message.is_recovered_session as boolean;
+
+          sessionIdRef.current = readySessionId;
+          sessionRecoveryEnabledRef.current = recoveryEnabled;
+
+          voiceLog.debug(
+            `[ThinkerTalker] Session ready: ${readySessionId}, ` +
+              `recovery=${recoveryEnabled}, recovered=${isRecovered}`,
+          );
+
           updateStatus("ready");
           // Start heartbeat monitoring for zombie connection detection
           startHeartbeat();
           break;
+        }
 
         case "transcript.delta": {
           // Partial transcript from STT
@@ -1344,6 +1361,18 @@ export function useThinkerTalkerSession(
           break;
         }
 
+        case "session.end.ack": {
+          // Phase 2: Server acknowledged clean session end
+          const endedSessionId = message.session_id as string;
+          voiceLog.debug(
+            `[ThinkerTalker] Session end acknowledged: ${endedSessionId}`,
+          );
+          // Clear stored session ID since it's cleanly ended
+          sessionIdRef.current = null;
+          sessionRecoveryEnabledRef.current = false;
+          break;
+        }
+
         case "error": {
           const errorCode = message.code as string;
           const errorMessage = message.message as string;
@@ -1459,9 +1488,14 @@ export function useThinkerTalkerSession(
 
   /**
    * Initialize WebSocket connection to T/T pipeline
+   *
+   * Phase 2: Supports session recovery via recoverSessionId parameter.
    */
   const initializeWebSocket = useCallback(
-    (conversationId?: string): Promise<WebSocket> => {
+    (
+      conversationId?: string,
+      recoverSessionId?: string,
+    ): Promise<WebSocket> => {
       return new Promise((resolve, reject) => {
         // Check for auth token
         const accessToken = tokens?.accessToken;
@@ -1476,7 +1510,15 @@ export function useThinkerTalkerSession(
         const apiBase = import.meta.env.VITE_API_URL || "";
         const wsProtocol = apiBase.startsWith("https") ? "wss" : "ws";
         const wsHost = apiBase.replace(/^https?:\/\//, "");
-        const wsUrl = `${wsProtocol}://${wsHost}/api/voice/pipeline-ws?token=${encodeURIComponent(accessToken)}`;
+        let wsUrl = `${wsProtocol}://${wsHost}/api/voice/pipeline-ws?token=${encodeURIComponent(accessToken)}`;
+
+        // Phase 2: Add session recovery parameter if available
+        if (recoverSessionId) {
+          wsUrl += `&recover_session_id=${encodeURIComponent(recoverSessionId)}`;
+          voiceLog.debug(
+            `[ThinkerTalker] Attempting session recovery: ${recoverSessionId}`,
+          );
+        }
 
         voiceLog.debug(
           `[ThinkerTalker] Connecting to WebSocket (token present)`,
@@ -1748,8 +1790,17 @@ export function useThinkerTalkerSession(
         sessionStartedAt: null,
       });
 
-      // Initialize WebSocket
-      const ws = await initializeWebSocket(options.conversation_id);
+      // Phase 2: Try to recover session during reconnection
+      const recoverSessionId =
+        status === "reconnecting" && sessionRecoveryEnabledRef.current
+          ? sessionIdRef.current || undefined
+          : undefined;
+
+      // Initialize WebSocket (with session recovery if reconnecting)
+      const ws = await initializeWebSocket(
+        options.conversation_id,
+        recoverSessionId,
+      );
       wsRef.current = ws;
 
       // Initialize audio streaming
@@ -1821,18 +1872,30 @@ export function useThinkerTalkerSession(
     stopHeartbeat();
     cleanedResources.push("heartbeat");
 
-    // 2. Close WebSocket - remove handlers first to prevent callbacks
+    // 2. Close WebSocket - send session.end first for clean close
     if (wsRef.current) {
+      if (wsRef.current.readyState === WebSocket.OPEN) {
+        // Phase 2: Send session.end for clean close (deletes from Redis)
+        try {
+          wsRef.current.send(JSON.stringify({ type: "session.end" }));
+          voiceLog.debug("[ThinkerTalker] Sent session.end for clean close");
+        } catch {
+          // Ignore send errors on closing
+        }
+        wsRef.current.close(1000, "Intentional disconnect");
+      }
+      // Remove handlers to prevent callbacks
       wsRef.current.onclose = null;
       wsRef.current.onerror = null;
       wsRef.current.onmessage = null;
       wsRef.current.onopen = null;
-      if (wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.close(1000, "Intentional disconnect");
-      }
       wsRef.current = null;
       cleanedResources.push("websocket");
     }
+
+    // Clear session recovery state on intentional disconnect
+    sessionIdRef.current = null;
+    sessionRecoveryEnabledRef.current = false;
 
     // 3. Stop microphone tracks
     if (mediaStreamRef.current) {

@@ -50,6 +50,7 @@ ai_summary: >-
 - [Voice Pipeline WebSocket API](api-reference/voice-pipeline-ws.md) - T/T WebSocket protocol
 - [Implementation Status](overview/IMPLEMENTATION_STATUS.md) - Component status
 - [WebSocket Binary Audio](voice/websocket-binary-audio.md) - Binary audio frame support (Phase 1)
+- [WebSocket Session Persistence](voice/websocket-session-persistence.md) - Redis session state persistence (Phase 2)
 
 ---
 

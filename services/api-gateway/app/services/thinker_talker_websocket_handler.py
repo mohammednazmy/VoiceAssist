@@ -17,6 +17,11 @@ WebSocket Reliability Enhancement (Phase 1):
 - Binary audio frame support (feature flag: backend.voice_ws_binary_audio)
 - Reduces bandwidth by ~25% by eliminating base64 encoding
 - Protocol version negotiation via session.init message
+
+WebSocket Reliability Enhancement (Phase 2):
+- Redis session state persistence (feature flag: backend.voice_ws_session_persistence)
+- Session recovery after disconnects
+- Horizontal scaling support across server instances
 """
 
 import asyncio
@@ -69,6 +74,7 @@ class TTConnectionState(str, Enum):
     CONNECTING = "connecting"
     CONNECTED = "connected"
     READY = "ready"
+    RECONNECTING = "reconnecting"  # Phase 2: Session recovery in progress
     ERROR = "error"
 
 
@@ -195,6 +201,11 @@ class ThinkerTalkerWebSocketHandler:
         self._binary_audio_feature_flag_checked: bool = False
         self._binary_audio_feature_flag_enabled: bool = False
 
+        # Phase 2: Session persistence tracking
+        self._session_persistence_feature_flag_checked: bool = False
+        self._session_persistence_enabled: bool = False
+        self._is_recovered_session: bool = False
+
     @property
     def connection_state(self) -> TTConnectionState:
         """Get current connection state."""
@@ -244,14 +255,24 @@ class ThinkerTalkerWebSocketHandler:
 
             self._connection_state = TTConnectionState.READY
 
+            # Check if session persistence is enabled
+            session_persistence_enabled = await self._is_session_persistence_enabled()
+
             # Send ready message to client
             await self._send_message(
                 {
                     "type": "session.ready",
                     "session_id": self.config.session_id,
                     "pipeline_mode": "thinker_talker",
+                    "session_recovery_enabled": session_persistence_enabled,
+                    "is_recovered_session": self._is_recovered_session,
                 }
             )
+
+            # Phase 2: Save session state to Redis for recovery
+            if session_persistence_enabled:
+                await self._save_session_state()
+                logger.debug(f"Saved initial session state: {self.config.session_id}")
 
             # Start receive loop
             self._receive_task = asyncio.create_task(self._receive_loop())
@@ -259,7 +280,11 @@ class ThinkerTalkerWebSocketHandler:
 
             logger.info(
                 f"T/T WebSocket handler started: {self.config.session_id}",
-                extra={"user_id": self.config.user_id},
+                extra={
+                    "user_id": self.config.user_id,
+                    "session_recovery_enabled": session_persistence_enabled,
+                    "is_recovered": self._is_recovered_session,
+                },
             )
             return True
 
@@ -269,9 +294,13 @@ class ThinkerTalkerWebSocketHandler:
             await self._send_error("connection_failed", str(e))
             return False
 
-    async def stop(self) -> TTSessionMetrics:
+    async def stop(self, clean_close: bool = False) -> TTSessionMetrics:
         """
         Stop the handler and cleanup.
+
+        Args:
+            clean_close: If True, delete session from Redis (normal end).
+                        If False, mark as disconnected (allows recovery).
 
         Returns:
             Session metrics
@@ -308,9 +337,22 @@ class ThinkerTalkerWebSocketHandler:
 
         self._connection_state = TTConnectionState.DISCONNECTED
 
+        # Phase 2: Handle session state in Redis
+        if clean_close:
+            # Normal close - delete session state
+            await self._delete_session_state()
+            logger.debug(f"Deleted session state (clean close): {self.config.session_id}")
+        else:
+            # Unexpected disconnect - mark as recoverable
+            await self._mark_session_disconnected()
+            logger.debug(f"Marked session disconnected (recoverable): {self.config.session_id}")
+
         logger.info(
             f"T/T WebSocket handler stopped: {self.config.session_id}",
-            extra={"metrics": self._get_metrics_dict()},
+            extra={
+                "metrics": self._get_metrics_dict(),
+                "clean_close": clean_close,
+            },
         )
 
         return self._metrics
@@ -420,6 +462,175 @@ class ThinkerTalkerWebSocketHandler:
                 self._binary_audio_feature_flag_enabled = False
 
         return self._binary_audio_feature_flag_enabled
+
+    async def _is_session_persistence_enabled(self) -> bool:
+        """Check if session persistence is enabled via feature flag.
+
+        Caches the result to avoid repeated feature flag checks.
+        """
+        if not self._session_persistence_feature_flag_checked:
+            self._session_persistence_feature_flag_checked = True
+            try:
+                from app.services.feature_flags import feature_flag_service
+
+                self._session_persistence_enabled = await feature_flag_service.is_enabled(
+                    "backend.voice_ws_session_persistence"
+                )
+                logger.debug(f"Session persistence feature flag: {self._session_persistence_enabled}")
+            except Exception as e:
+                logger.warning(f"Failed to check session persistence feature flag: {e}")
+                self._session_persistence_enabled = False
+
+        return self._session_persistence_enabled
+
+    async def _save_session_state(self) -> bool:
+        """Save current session state to Redis for recovery.
+
+        Returns:
+            True if saved successfully, False otherwise
+        """
+        if not await self._is_session_persistence_enabled():
+            return False
+
+        try:
+            from app.services.redis_voice_session_store import VoiceSessionState, redis_voice_session_store
+
+            # Build session state
+            config_dict = {
+                "voice_id": self.config.voice_id,
+                "tts_model": self.config.tts_model,
+                "language": self.config.language,
+                "stt_sample_rate": self.config.stt_sample_rate,
+                "stt_endpointing_ms": self.config.stt_endpointing_ms,
+                "stt_utterance_end_ms": self.config.stt_utterance_end_ms,
+                "barge_in_enabled": self.config.barge_in_enabled,
+                "protocol_version": self.config.protocol_version,
+                "supported_features": self.config.supported_features,
+            }
+
+            state = VoiceSessionState(
+                session_id=self.config.session_id,
+                user_id=self.config.user_id,
+                conversation_id=self.config.conversation_id,
+                connection_state=self._connection_state.value,
+                config=config_dict,
+                metrics=self._get_metrics_dict(),
+                binary_audio_enabled=self.config.binary_audio_enabled,
+                audio_output_sequence=self._audio_output_sequence,
+                protocol_version=self.config.protocol_version,
+            )
+
+            return await redis_voice_session_store.save_session(state)
+
+        except Exception as e:
+            logger.warning(f"Failed to save session state: {e}")
+            return False
+
+    async def _mark_session_disconnected(self) -> bool:
+        """Mark session as disconnected in Redis (allows recovery).
+
+        Returns:
+            True if marked successfully, False otherwise
+        """
+        if not await self._is_session_persistence_enabled():
+            return False
+
+        try:
+            from app.services.redis_voice_session_store import redis_voice_session_store
+
+            # Update metrics before marking disconnected
+            await redis_voice_session_store.update_metrics(
+                self.config.session_id,
+                self._get_metrics_dict(),
+            )
+
+            # Update audio sequence
+            await redis_voice_session_store.update_audio_sequence(
+                self.config.session_id,
+                self._audio_output_sequence,
+            )
+
+            # Mark as disconnected (recoverable state)
+            return await redis_voice_session_store.set_connection_state(
+                self.config.session_id,
+                TTConnectionState.DISCONNECTED.value,
+            )
+
+        except Exception as e:
+            logger.warning(f"Failed to mark session disconnected: {e}")
+            return False
+
+    async def _delete_session_state(self) -> bool:
+        """Delete session state from Redis (cleanup after normal close).
+
+        Returns:
+            True if deleted successfully, False otherwise
+        """
+        if not await self._is_session_persistence_enabled():
+            return False
+
+        try:
+            from app.services.redis_voice_session_store import redis_voice_session_store
+
+            return await redis_voice_session_store.delete_session(
+                self.config.session_id,
+                self.config.user_id,
+            )
+
+        except Exception as e:
+            logger.warning(f"Failed to delete session state: {e}")
+            return False
+
+    def restore_from_state(
+        self,
+        config: Dict[str, Any],
+        metrics: Dict[str, Any],
+        audio_sequence: int,
+    ) -> None:
+        """Restore handler state from Redis session data.
+
+        Args:
+            config: Saved configuration dictionary
+            metrics: Saved metrics dictionary
+            audio_sequence: Last audio output sequence number
+        """
+        # Restore config
+        if "voice_id" in config:
+            self.config.voice_id = config["voice_id"]
+        if "tts_model" in config:
+            self.config.tts_model = config["tts_model"]
+        if "language" in config:
+            self.config.language = config["language"]
+        if "protocol_version" in config:
+            self.config.protocol_version = config["protocol_version"]
+        if "supported_features" in config:
+            self.config.supported_features = config["supported_features"]
+        if config.get("binary_audio_enabled"):
+            self.config.binary_audio_enabled = True
+
+        # Restore metrics
+        if "user_utterance_count" in metrics:
+            self._metrics.user_utterance_count = metrics["user_utterance_count"]
+        if "ai_response_count" in metrics:
+            self._metrics.ai_response_count = metrics["ai_response_count"]
+        if "barge_in_count" in metrics:
+            self._metrics.barge_in_count = metrics["barge_in_count"]
+        if "messages_sent" in metrics:
+            self._metrics.messages_sent = metrics["messages_sent"]
+        if "messages_received" in metrics:
+            self._metrics.messages_received = metrics["messages_received"]
+
+        # Restore audio sequence
+        self._audio_output_sequence = audio_sequence
+        self._is_recovered_session = True
+
+        logger.info(
+            f"Restored session state: {self.config.session_id}",
+            extra={
+                "audio_sequence": audio_sequence,
+                "utterance_count": self._metrics.user_utterance_count,
+            },
+        )
 
     async def _handle_client_message(self, message: Dict[str, Any]) -> None:
         """Handle a message from the client."""
@@ -567,6 +778,18 @@ class ThinkerTalkerWebSocketHandler:
             # Heartbeat response
             await self._send_message({"type": "pong"})
 
+        elif msg_type == "session.end":
+            # Phase 2: Client requesting clean session close (no recovery needed)
+            logger.info(f"Client requested session end: {self.config.session_id}")
+            await self._send_message(
+                {
+                    "type": "session.end.ack",
+                    "session_id": self.config.session_id,
+                }
+            )
+            # Mark for clean close (will delete from Redis)
+            self._running = False
+
         else:
             logger.warning(f"Unknown message type: {msg_type}")
 
@@ -676,12 +899,21 @@ class ThinkerTalkerWebSocketHandler:
             self._metrics.error_count += 1
 
     async def _heartbeat_loop(self) -> None:
-        """Send periodic heartbeats."""
+        """Send periodic heartbeats and update session activity."""
         try:
             while self._running:
                 await asyncio.sleep(30)  # Every 30 seconds
                 if self._running:
                     await self._send_message({"type": "heartbeat"})
+
+                    # Phase 2: Update session activity in Redis
+                    if await self._is_session_persistence_enabled():
+                        try:
+                            from app.services.redis_voice_session_store import redis_voice_session_store
+
+                            await redis_voice_session_store.update_activity(self.config.session_id)
+                        except Exception as e:
+                            logger.debug(f"Failed to update session activity: {e}")
         except asyncio.CancelledError:
             pass
 
@@ -732,6 +964,7 @@ class ThinkerTalkerSessionManager:
     Manager for Thinker/Talker WebSocket sessions.
 
     Handles session lifecycle and provides both T/T and Realtime API modes.
+    Phase 2: Supports session recovery from Redis for reconnection scenarios.
     """
 
     def __init__(self, max_sessions: int = 100):
@@ -769,16 +1002,102 @@ class ThinkerTalkerSessionManager:
             self._sessions[config.session_id] = handler
             return handler
 
+    async def recover_session(
+        self,
+        websocket: WebSocket,
+        recover_session_id: str,
+        user_id: str,
+    ) -> Optional[ThinkerTalkerWebSocketHandler]:
+        """
+        Recover a session from Redis (Phase 2).
+
+        Attempts to recover a disconnected session for the same user.
+        The session must exist in Redis and belong to the requesting user.
+
+        Args:
+            websocket: New WebSocket connection
+            recover_session_id: Session ID to recover
+            user_id: User requesting recovery
+
+        Returns:
+            ThinkerTalkerWebSocketHandler if recovery successful, None otherwise
+        """
+        try:
+            from app.services.feature_flags import feature_flag_service
+            from app.services.redis_voice_session_store import redis_voice_session_store
+
+            # Check if session persistence is enabled
+            if not await feature_flag_service.is_enabled("backend.voice_ws_session_persistence"):
+                logger.debug("Session persistence not enabled, cannot recover")
+                return None
+
+            # Get recoverable session from Redis
+            state = await redis_voice_session_store.get_recoverable_session(
+                recover_session_id,
+                user_id,
+            )
+
+            if not state:
+                logger.info(f"Session not recoverable: {recover_session_id}")
+                return None
+
+            # Create new handler with recovered session ID
+            config = TTSessionConfig(
+                user_id=user_id,
+                session_id=recover_session_id,
+                conversation_id=state.conversation_id,
+            )
+
+            async with self._lock:
+                if len(self._sessions) >= self.max_sessions:
+                    # Release lock before cleaning up
+                    await redis_voice_session_store.release_recovery_lock(recover_session_id)
+                    raise ValueError("Maximum concurrent sessions reached")
+
+                handler = ThinkerTalkerWebSocketHandler(
+                    websocket=websocket,
+                    config=config,
+                )
+
+                # Restore state from Redis
+                handler.restore_from_state(
+                    config=state.config,
+                    metrics=state.metrics,
+                    audio_sequence=state.audio_output_sequence,
+                )
+
+                self._sessions[recover_session_id] = handler
+
+                # Release recovery lock
+                await redis_voice_session_store.release_recovery_lock(recover_session_id)
+
+                logger.info(
+                    f"Recovered session: {recover_session_id}",
+                    extra={"user_id": user_id},
+                )
+
+                return handler
+
+        except Exception as e:
+            logger.error(f"Failed to recover session: {e}")
+            return None
+
     async def get_session(self, session_id: str) -> Optional[ThinkerTalkerWebSocketHandler]:
         """Get a session by ID."""
         return self._sessions.get(session_id)
 
-    async def remove_session(self, session_id: str) -> None:
-        """Remove a session."""
+    async def remove_session(self, session_id: str, clean_close: bool = False) -> None:
+        """Remove a session.
+
+        Args:
+            session_id: Session ID to remove
+            clean_close: If True, delete from Redis (no recovery).
+                        If False, mark as disconnected (allows recovery).
+        """
         async with self._lock:
             if session_id in self._sessions:
                 handler = self._sessions.pop(session_id)
-                await handler.stop()
+                await handler.stop(clean_close=clean_close)
 
     def get_active_session_count(self) -> int:
         """Get count of active sessions."""
