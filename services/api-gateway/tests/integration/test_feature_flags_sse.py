@@ -34,6 +34,7 @@ from fastapi.testclient import TestClient
 class TestSSEEndpoints:
     """Test suite for SSE feature flags endpoints."""
 
+    @pytest.mark.timeout(30)
     def test_sse_stream_connects_successfully(self):
         """Test that SSE stream endpoint can be connected to."""
         client = TestClient(app)
@@ -51,6 +52,7 @@ class TestSSEEndpoints:
                     assert "connected" in line
                     break
 
+    @pytest.mark.timeout(30)
     def test_sse_stream_with_flag_filter(self):
         """Test SSE stream with specific flag filter."""
         client = TestClient(app)
@@ -382,6 +384,7 @@ class TestVersionTracking:
 class TestLastEventIDReconnection:
     """Test suite for Last-Event-ID reconnection pattern."""
 
+    @pytest.mark.timeout(30)
     def test_sse_stream_with_last_event_id_header(self):
         """Test SSE stream reconnection with Last-Event-ID header."""
         client = TestClient(app)
@@ -401,6 +404,7 @@ class TestLastEventIDReconnection:
                     assert "reconnected" in line or "connected" in line
                     break
 
+    @pytest.mark.timeout(30)
     def test_invalid_last_event_id_handled_gracefully(self):
         """Test that invalid Last-Event-ID is handled gracefully."""
         client = TestClient(app)
@@ -555,6 +559,7 @@ class TestReconnectionWithPartialHistory:
         assert history_complete is True
         assert len(events) == 3
 
+    @pytest.mark.timeout(30)
     def test_reconnection_with_stale_last_event_id(self):
         """Test SSE reconnection when Last-Event-ID is too old (history pruned)."""
         client = TestClient(app)
@@ -661,6 +666,7 @@ class TestSSERateLimiting:
             mock.release = MagicMock()
             yield mock
 
+    @pytest.mark.timeout(30)
     def test_rate_limit_allows_connection(self, mock_rate_limiter):
         """Test that connections within rate limit are allowed."""
         mock_rate_limiter.check_rate_limit.return_value = (True, 1)
@@ -686,6 +692,7 @@ class TestSSERateLimiting:
 class TestSSERBAC:
     """Test suite for SSE endpoint RBAC (Role-Based Access Control)."""
 
+    @pytest.mark.timeout(30)
     def test_unauthenticated_receives_public_flags(self):
         """Test that unauthenticated users receive only public flags."""
         client = TestClient(app)
@@ -694,6 +701,7 @@ class TestSSERBAC:
             assert response.status_code == 200
             # Should successfully connect (public flags are allowed)
 
+    @pytest.mark.timeout(30)
     def test_requesting_admin_flag_without_auth_denied(self):
         """Test that requesting admin-only flags without auth is denied."""
         # This test depends on having a flag with visibility=admin
