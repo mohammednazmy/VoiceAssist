@@ -433,16 +433,21 @@ class TestConcurrentOperations:
     @pytest.mark.asyncio
     async def test_double_start(self, handler, mock_websocket, mock_pipeline_service):
         """Test starting handler twice."""
-        # First start
-        await handler.start()
-        assert handler._running is True
+        try:
+            # First start
+            await handler.start()
+            assert handler._running is True
 
-        # Second start should return True but not re-initialize
-        result = await handler.start()
-        assert result is True
+            # Second start should return True but not re-initialize
+            result = await handler.start()
+            assert result is True
 
-        # Pipeline session should only be created once
-        assert mock_pipeline_service.create_session.call_count == 1
+            # Pipeline session should only be created once
+            assert mock_pipeline_service.create_session.call_count == 1
+        finally:
+            # Cleanup: stop handler to cancel background tasks
+            # This prevents pytest-xdist worker crashes from dangling tasks
+            await handler.stop()
 
     @pytest.mark.asyncio
     async def test_double_stop(self, handler, mock_websocket):
