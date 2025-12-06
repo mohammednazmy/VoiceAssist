@@ -623,6 +623,10 @@ export function useThinkerTalkerSession(
   const intentionalDisconnectRef = useRef(false);
   const fatalErrorRef = useRef(false);
 
+  // Binary protocol state (negotiated with server)
+  const binaryProtocolEnabledRef = useRef(false);
+  const audioSequenceRef = useRef(0);
+
   // Timing refs for latency tracking
   const connectStartTimeRef = useRef<number | null>(null);
   const sessionStartTimeRef = useRef<number | null>(null);
@@ -835,6 +839,53 @@ export function useThinkerTalkerSession(
           // Start heartbeat monitoring for zombie connection detection
           startHeartbeat();
           break;
+
+        case "session.init.ack": {
+          // Protocol negotiation response from server
+          const negotiatedFeatures = (message.features as string[]) || [];
+          const protocolVersion = message.protocol_version as string;
+
+          voiceLog.debug(
+            `[ThinkerTalker] Protocol negotiated: version=${protocolVersion}, features=${negotiatedFeatures.join(", ")}`,
+          );
+
+          // Enable binary protocol if negotiated
+          if (negotiatedFeatures.includes("binary_audio")) {
+            binaryProtocolEnabledRef.current = true;
+            audioSequenceRef.current = 0;
+            voiceLog.info("[ThinkerTalker] Binary audio protocol enabled");
+          }
+          break;
+        }
+
+        case "batch": {
+          // Message batching: server sent multiple messages in one frame
+          const batchedMessages =
+            (message.messages as Array<Record<string, unknown>>) || [];
+          const batchCount = message.count as number;
+
+          voiceLog.debug(
+            `[ThinkerTalker] Received batch of ${batchCount} messages`,
+          );
+
+          // Process each message in the batch
+          for (const batchedMsg of batchedMessages) {
+            handleMessageRef.current(batchedMsg);
+          }
+          break;
+        }
+
+        case "audio.output.meta": {
+          // Metadata for binary audio frames
+          const format = message.format as string;
+          const isFinal = message.is_final as boolean;
+          const sequence = message.sequence as number;
+
+          voiceLog.debug(
+            `[ThinkerTalker] Audio meta: seq=${sequence}, format=${format}, final=${isFinal}`,
+          );
+          break;
+        }
 
         case "transcript.delta": {
           // Partial transcript from STT
@@ -1588,11 +1639,18 @@ export function useThinkerTalkerSession(
         ws.onopen = () => {
           voiceLog.debug("[ThinkerTalker] WebSocket connected");
 
-          // Send session initialization message
+          // Reset binary protocol state
+          binaryProtocolEnabledRef.current = false;
+          audioSequenceRef.current = 0;
+
+          // Send session initialization message with feature negotiation
           const initMessage = {
             type: "session.init",
+            protocol_version: "2.0",
             conversation_id: conversationId || null,
             voice_settings: options.voiceSettings || {},
+            // Request binary audio and message batching (server will confirm if enabled)
+            features: ["binary_audio", "message_batching"],
           };
           ws.send(JSON.stringify(initMessage));
 
@@ -1636,6 +1694,33 @@ export function useThinkerTalkerSession(
         };
 
         ws.onmessage = (event) => {
+          // Handle binary frames (audio data with 5-byte header)
+          if (event.data instanceof Blob) {
+            event.data.arrayBuffer().then((buffer) => {
+              const data = new Uint8Array(buffer);
+              if (data.length >= 5) {
+                const frameType = data[0];
+                const sequence = new DataView(data.buffer).getUint32(1, false);
+                const audioData = data.slice(5);
+
+                if (frameType === 0x02) {
+                  // AUDIO_OUTPUT binary frame
+                  voiceLog.debug(
+                    `[ThinkerTalker] Binary audio: seq=${sequence}, ${audioData.length} bytes`,
+                  );
+
+                  // Convert to base64 for existing audio handling
+                  const base64 = btoa(
+                    String.fromCharCode.apply(null, Array.from(audioData)),
+                  );
+                  options.onAudioChunk?.(base64);
+                }
+              }
+            });
+            return;
+          }
+
+          // Handle text frames (JSON messages)
           try {
             const message = JSON.parse(event.data);
             handleMessageRef.current(message);
@@ -1716,21 +1801,44 @@ export function useThinkerTalkerSession(
           pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
         }
 
-        // Base64 encode
-        const uint8 = new Uint8Array(pcm16.buffer);
-        const base64 = btoa(String.fromCharCode(...uint8));
+        if (binaryProtocolEnabledRef.current) {
+          // Binary protocol: send raw PCM with 5-byte header
+          // Header: [type:1][sequence:4] + audio data
+          const sequence = audioSequenceRef.current++;
+          const header = new Uint8Array(5);
+          header[0] = 0x01; // AUDIO_INPUT frame type
+          new DataView(header.buffer).setUint32(1, sequence, false); // big-endian
 
-        // Send audio chunk
-        ws.send(
-          JSON.stringify({
-            type: "audio.input",
-            audio: base64,
-          }),
-        );
+          // Combine header and audio
+          const pcmBytes = new Uint8Array(pcm16.buffer);
+          const frame = new Uint8Array(5 + pcmBytes.length);
+          frame.set(header, 0);
+          frame.set(pcmBytes, 5);
 
-        audioChunkCount++;
-        if (audioChunkCount % 500 === 0) {
-          voiceLog.debug(`[ThinkerTalker] Audio chunk #${audioChunkCount}`);
+          ws.send(frame.buffer);
+
+          audioChunkCount++;
+          if (audioChunkCount % 500 === 0) {
+            voiceLog.debug(
+              `[ThinkerTalker] Binary audio chunk #${audioChunkCount}, seq=${sequence}`,
+            );
+          }
+        } else {
+          // Legacy JSON protocol: base64 encode and send
+          const uint8 = new Uint8Array(pcm16.buffer);
+          const base64 = btoa(String.fromCharCode(...uint8));
+
+          ws.send(
+            JSON.stringify({
+              type: "audio.input",
+              audio: base64,
+            }),
+          );
+
+          audioChunkCount++;
+          if (audioChunkCount % 500 === 0) {
+            voiceLog.debug(`[ThinkerTalker] Audio chunk #${audioChunkCount}`);
+          }
         }
       };
 
