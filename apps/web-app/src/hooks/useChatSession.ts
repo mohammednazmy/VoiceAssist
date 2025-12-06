@@ -94,6 +94,8 @@ export function useChatSession(
   const intentionalDisconnectRef = useRef(false);
   // Track connection state to prevent duplicate connect attempts
   const isConnectingRef = useRef(false);
+  // Track if a connecting WebSocket should be aborted when it opens
+  const abortOnOpenRef = useRef(false);
   // Track pending file uploads waiting for server message ID
   const pendingFileUploadsRef = useRef<
     Map<
@@ -408,8 +410,9 @@ export function useChatSession(
       return;
     }
 
-    // Clear intentional disconnect flag when starting new connection
+    // Clear flags when starting new connection
     intentionalDisconnectRef.current = false;
+    abortOnOpenRef.current = false;
     isConnectingRef.current = true;
 
     updateConnectionStatus("connecting");
@@ -423,8 +426,19 @@ export function useChatSession(
       const ws = new WebSocket(url.toString());
 
       ws.onopen = () => {
-        websocketLog.debug("Connected");
         isConnectingRef.current = false;
+
+        // Check if this connection was aborted while connecting
+        if (abortOnOpenRef.current) {
+          websocketLog.debug(
+            "Connection opened but was aborted - closing cleanly",
+          );
+          abortOnOpenRef.current = false;
+          ws.close(1000, "Aborted");
+          return;
+        }
+
+        websocketLog.debug("Connected");
         updateConnectionStatus("connected");
         reconnectAttemptsRef.current = 0;
         startHeartbeat();
@@ -433,12 +447,30 @@ export function useChatSession(
       ws.onmessage = handleWebSocketMessage;
 
       ws.onerror = (error) => {
-        // Log error details for debugging
-        websocketLog.error("Error event received:", {
-          type: error.type,
-          readyState: ws.readyState,
-        });
         isConnectingRef.current = false;
+        // Only log as error if this wasn't an intentional disconnect, already closed,
+        // or from an aborted connection (one we abandoned while connecting).
+        // These cases often trigger error events that are expected and don't indicate real problems.
+        const isAlreadyClosed = ws.readyState === WebSocket.CLOSED;
+        const isExpected =
+          intentionalDisconnectRef.current ||
+          isAlreadyClosed ||
+          abortOnOpenRef.current ||
+          wsRef.current !== ws; // This WS is no longer the active one
+        if (isExpected) {
+          websocketLog.debug(
+            "Error event (expected - intentional, closed, or superseded):",
+            {
+              type: error.type,
+              readyState: ws.readyState,
+            },
+          );
+        } else {
+          websocketLog.warn("WebSocket error event:", {
+            type: error.type,
+            readyState: ws.readyState,
+          });
+        }
         // Note: WebSocket error events don't contain detailed error info
         // The actual reason will be in the subsequent close event
       };
@@ -536,8 +568,20 @@ export function useChatSession(
     stopHeartbeat();
 
     if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
+      // If WebSocket is still connecting, don't close it immediately
+      // (this would cause "closed before established" browser error)
+      // Instead, mark it for abort when it opens
+      if (wsRef.current.readyState === WebSocket.CONNECTING) {
+        websocketLog.debug(
+          "WebSocket still connecting - marking for abort on open",
+        );
+        abortOnOpenRef.current = true;
+        // Still null the ref so a new connection can be started
+        wsRef.current = null;
+      } else {
+        wsRef.current.close(1000, "Intentional disconnect");
+        wsRef.current = null;
+      }
     }
 
     updateConnectionStatus("disconnected");
@@ -552,9 +596,66 @@ export function useChatSession(
 
   const sendMessage = useCallback(
     async (content: string, files?: File[]) => {
+      // If not connected, try to reconnect and wait briefly
       if (wsRef.current?.readyState !== WebSocket.OPEN) {
-        handleError("CONNECTION_DROPPED", "Cannot send message: not connected");
-        return;
+        // Check prerequisites before attempting reconnect
+        const hasToken = !!tokens?.accessToken;
+        if (!conversationId) {
+          websocketLog.warn("Cannot send message: no conversation selected");
+          handleError(
+            "CONNECTION_DROPPED",
+            "Cannot send message: no conversation selected",
+          );
+          return;
+        }
+        if (!hasToken) {
+          websocketLog.warn("Cannot send message: not authenticated");
+          handleError(
+            "AUTH_FAILED",
+            "Cannot send message: please log in again",
+          );
+          return;
+        }
+
+        websocketLog.debug(
+          "WebSocket not open, attempting reconnect before send",
+          { connectionStatus, hasWs: !!wsRef.current },
+        );
+
+        // Trigger reconnect if not already reconnecting
+        if (connectionStatus !== "reconnecting" && !isConnectingRef.current) {
+          reconnectAttemptsRef.current = 0;
+          connect();
+        }
+
+        // Wait up to 3 seconds for connection to open
+        const maxWait = 3000;
+        const checkInterval = 100;
+        let waited = 0;
+
+        while (waited < maxWait) {
+          await new Promise((resolve) => setTimeout(resolve, checkInterval));
+          waited += checkInterval;
+
+          if (wsRef.current?.readyState === WebSocket.OPEN) {
+            websocketLog.debug("WebSocket reconnected, proceeding with send");
+            break;
+          }
+        }
+
+        // If still not connected after waiting, show error
+        if (wsRef.current?.readyState !== WebSocket.OPEN) {
+          websocketLog.warn("Reconnection failed after waiting", {
+            waited,
+            connectionStatus,
+            isConnecting: isConnectingRef.current,
+          });
+          handleError(
+            "CONNECTION_DROPPED",
+            "Cannot send message: connection unavailable. Please try again.",
+          );
+          return;
+        }
       }
 
       // Generate unique client message ID
@@ -606,7 +707,7 @@ export function useChatSession(
         }),
       );
     },
-    [handleError, conversationId],
+    [handleError, conversationId, connectionStatus, connect, tokens],
   );
 
   const editMessage = useCallback(

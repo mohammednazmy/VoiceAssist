@@ -5,6 +5,8 @@ Adapts LLM responses based on detected user emotion.
 Provides guidance on tone, pacing, and content structure.
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, Optional

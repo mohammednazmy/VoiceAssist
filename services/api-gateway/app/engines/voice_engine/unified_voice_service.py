@@ -16,7 +16,8 @@ Orchestrates all voice mode components into a unified pipeline:
 This is the main entry point for voice interactions.
 """
 
-import asyncio
+from __future__ import annotations
+
 import logging
 import time
 from dataclasses import dataclass, field
@@ -25,12 +26,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from app.services.audio_processing_service import AudioContext, AudioProcessingService, get_audio_processing_service
-from app.services.language_detection_service import (
-    LanguageDetectionResult,
-    LanguageDetectionService,
-    SupportedLanguage,
-    get_language_detection_service,
-)
+from app.services.language_detection_service import LanguageDetectionService, get_language_detection_service
 from app.services.local_whisper_service import (
     LocalWhisperService,
     TranscriptionLanguage,
@@ -43,14 +39,9 @@ from app.services.privacy_aware_stt_router import (
     STTProvider,
     get_privacy_aware_stt_router,
 )
-from app.services.thinking_feedback_service import ThinkingFeedbackService, ToneType, get_thinking_feedback_service
+from app.services.thinking_feedback_service import ThinkingFeedbackService, get_thinking_feedback_service
 from app.services.tts_cache_service import TTSCacheService, get_tts_cache_service
-from app.services.voice_fallback_orchestrator import (
-    FallbackResult,
-    ServiceType,
-    VoiceFallbackOrchestrator,
-    get_voice_fallback_orchestrator,
-)
+from app.services.voice_fallback_orchestrator import VoiceFallbackOrchestrator, get_voice_fallback_orchestrator
 
 logger = logging.getLogger(__name__)
 
@@ -516,9 +507,9 @@ class UnifiedVoiceService:
             self._on_state_change(state)
 
     def _update_latency_metrics(self, stt: float, llm: float, tts: float, total: float) -> None:
-        """Update rolling average latency metrics."""
-        n = self._metrics.successful_interactions
-        alpha = 0.1  # Smoothing factor
+        """Update rolling average latency metrics using exponential smoothing."""
+        # Note: Could switch to cumulative average using n = self._metrics.successful_interactions
+        alpha = 0.1  # Smoothing factor for exponential moving average
 
         self._metrics.avg_stt_latency_ms = self._metrics.avg_stt_latency_ms * (1 - alpha) + stt * alpha
         self._metrics.avg_llm_latency_ms = self._metrics.avg_llm_latency_ms * (1 - alpha) + llm * alpha

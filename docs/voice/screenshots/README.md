@@ -5,15 +5,20 @@ summary: Screenshot assets and capture instructions for Voice Mode v4.1 document
 status: draft
 stability: experimental
 owner: docs
-lastUpdated: "2025-12-04"
+lastUpdated: "2025-12-05"
 audience:
   - human
   - docs
+  - ai-agents
 tags:
   - voice
   - screenshots
   - assets
 category: voice
+ai_summary: >-
+  Asset directory for Voice Mode UI screenshots. Contains capture instructions for
+  voice-input-bar-states, streaming-text-rtl, quality-badge-tiers, phi-indicator-states,
+  and vad-presets-panel. Screenshots require manual capture from https://quran.asimo.io.
 ---
 
 # Voice Mode v4.1 Screenshots

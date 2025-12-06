@@ -7,7 +7,7 @@ summary: >-
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-12-04"
+lastUpdated: "2025-12-05"
 audience:
   - ai-agents
   - backend
@@ -105,10 +105,14 @@ Host: assistdocs.asimo.io
       "path": "string - Relative path to markdown file",
       "title": "string - Document title",
       "summary": "string? - Brief description",
+      "ai_summary": "string? - AI-optimized 2-3 sentence summary",
       "status": "draft|experimental|stable|deprecated",
       "stability": "production|beta|experimental|legacy",
       "owner": "backend|frontend|infra|sre|docs|product|security|mixed",
-      "audience": "string[] - Target readers",
+      "audience": "string[] - Target readers (use 'ai-agents' for AI)",
+      "category": "string? - Logical grouping (ai|api|architecture|voice|...)",
+      "component": "string? - System component (backend/api-gateway, ...)",
+      "relatedPaths": "string[]? - Related code files for doc-code crosswalk",
       "tags": "string[] - Categorization tags",
       "relatedServices": "string[] - Related service names",
       "lastUpdated": "string - ISO date"
@@ -191,8 +195,8 @@ Since filtering is done client-side, here are JavaScript examples:
 const response = await fetch("https://assistdocs.asimo.io/agent/docs.json");
 const data = await response.json();
 
-// Filter for agent-targeted docs
-const agentDocs = data.docs.filter((doc) => doc.audience && doc.audience.includes("agent"));
+// Filter for agent-targeted docs (canonical value is "ai-agents")
+const agentDocs = data.docs.filter((doc) => doc.audience && doc.audience.includes("ai-agents"));
 
 // Filter for stable production docs
 const stableDocs = data.docs.filter((doc) => doc.status === "stable" && doc.stability === "production");

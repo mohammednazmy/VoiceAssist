@@ -1,9 +1,9 @@
 {
-  "count": 284,
-  "generated_at": "2025-12-05T05:26:19.793Z",
+  "count": 285,
+  "generated_at": "2025-12-05T06:28:11.311Z",
   "docs": [
     {
-      "slug": "style-guide",
+      "slug": "reference/style-guide",
       "path": "STYLE_GUIDE.md",
       "title": "VoiceAssist Documentation Style Guide",
       "summary": "Writing standards for VoiceAssist documentation",
@@ -17,7 +17,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "readme",
+      "slug": "admin-guide/feature-flags/overview",
       "path": "admin-guide/feature-flags/README.md",
       "title": "Feature Flags Overview",
       "summary": "Comprehensive guide to VoiceAssist feature flag system",
@@ -35,7 +35,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "admin-panel-guide",
+      "slug": "admin-guide/feature-flags/admin-panel-guide",
       "path": "admin-guide/feature-flags/admin-panel-guide.md",
       "title": "Feature Flags Admin Panel Guide",
       "summary": "Using the Admin Panel to manage feature flags and scheduled variant changes",
@@ -52,7 +52,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "advanced-types",
+      "slug": "admin-guide/feature-flags/advanced-types",
       "path": "admin-guide/feature-flags/advanced-types.md",
       "title": "Advanced Feature Flag Types",
       "summary": "Boolean, percentage, variant, and scheduled feature flag types",
@@ -69,7 +69,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "best-practices",
+      "slug": "admin-guide/feature-flags/best-practices",
       "path": "admin-guide/feature-flags/best-practices.md",
       "title": "Feature Flag Best Practices",
       "summary": "Guidelines for effective feature flag usage",
@@ -86,23 +86,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "cli-reference",
-      "path": "admin-guide/feature-flags/cli-reference.md",
-      "title": "Feature Flags CLI Reference",
-      "summary": "Command-line interface reference for managing feature flags",
-      "status": "stable",
-      "owner": "backend",
-      "audience": ["admin", "developers", "devops"],
-      "category": "feature-flags",
-      "component": "backend/api-gateway",
-      "relatedPaths": [
-        "services/api-gateway/scripts/init_feature_flags.py",
-        "services/api-gateway/app/api/admin_feature_flags.py"
-      ],
-      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
-    },
-    {
-      "slug": "lifecycle",
+      "slug": "admin-guide/feature-flags/lifecycle",
       "path": "admin-guide/feature-flags/lifecycle.md",
       "title": "Feature Flag Lifecycle",
       "summary": "Managing feature flags from creation to retirement",
@@ -119,7 +103,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "multi-environment",
+      "slug": "admin-guide/feature-flags/multi-environment",
       "path": "admin-guide/feature-flags/multi-environment.md",
       "title": "Multi-Environment Feature Flags",
       "summary": "Managing feature flags across dev, staging, and production environments",
@@ -136,7 +120,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "naming-conventions",
+      "slug": "admin-guide/feature-flags/naming-conventions",
       "path": "admin-guide/feature-flags/naming-conventions.md",
       "title": "Feature Flag Naming Conventions",
       "summary": "Standards for naming feature flags in VoiceAssist",
@@ -153,7 +137,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "system-settings-vs-flags",
+      "slug": "admin-guide/system-settings-vs-flags",
       "path": "admin-guide/system-settings-vs-flags.md",
       "title": "System Settings vs Feature Flags",
       "summary": "Understanding when to use configuration settings vs feature flags",
@@ -170,7 +154,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "phase-4-user-overrides-plan",
+      "slug": "feature-flags/phase-4-user-overrides-plan",
       "path": "feature-flags/PHASE_4_USER_OVERRIDES_PLAN.md",
       "title": "Feature Flags Phase 4 - User Overrides",
       "summary": "Implementation plan for user-specific feature flag overrides and admin UI enhancements",
@@ -182,7 +166,7 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
-      "slug": "todo-docs-enhancement-phase2",
+      "slug": "planning/docs-enhancement-phase-2",
       "path": "planning/TODO_DOCS_ENHANCEMENT_PHASE2.md",
       "title": "TODO: Documentation Enhancement Phase 2",
       "ai_summary": "Actionable TODO for AI agents: Implement code_refs frontmatter linking docs to code excerpts, and versioning groundwork for version selectors and versioned API endpoints.",
@@ -198,27 +182,6 @@
         "versioning"
       ],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
-    },
-    {
-      "slug": "v4-1-2-release-announcement",
-      "path": "releases/v4.1.2-release-announcement.md",
-      "title": "Voice Mode v4.1.2 Release Announcement",
-      "status": "released",
-      "lastUpdated": "2025-12-05"
-    },
-    {
-      "slug": "voice/voice-configuration",
-      "path": "voice/voice-configuration.md",
-      "title": "Voice Configuration",
-      "summary": "Centralized voice configuration system for consistent TTS voice selection across backend and frontend.",
-      "ai_summary": "The voice configuration system uses a single source of truth pattern to prevent voice ID inconsistencies between backend and frontend. All default voice settings are defined in voice_constants.py (backend) and voiceConstants.ts (frontend). To change the default voice, only these two files need to be modified.",
-      "status": "stable",
-      "stability": "production",
-      "owner": "backend",
-      "audience": ["developers", "backend", "frontend", "agent", "ai-agents"],
-      "category": "reference",
-      "tags": ["voice", "configuration", "tts", "elevenlabs", "architecture"],
-      "lastUpdated": "2025-12-05"
     },
     {
       "slug": "docs-health-overview",
@@ -244,7 +207,200 @@
         "apps/docs-site/scripts/validate-frontmatter.mjs",
         "apps/docs-site/scripts/generate-agent-json.js"
       ],
-      "lastUpdated": "2025-12-04"
+      "lastUpdated": "2025-12-05"
+    },
+    {
+      "slug": "admin-guide/feature-flags/cli-reference",
+      "path": "admin-guide/feature-flags/cli-reference.md",
+      "title": "Feature Flags CLI Reference",
+      "summary": "Command-line interface reference for managing feature flags",
+      "ai_summary": "CLI commands and Python scripts for feature flag management. Key script: init_feature_flags.py (--dry-run to preview, --force to recreate, --migrate for legacy names). Also covers curl-based API calls for listing, creating, updating, and toggling feature flags via the admin API.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["admin", "developers", "devops", "ai-agents"],
+      "category": "feature-flags",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/scripts/init_feature_flags.py",
+        "services/api-gateway/app/api/admin_feature_flags.py"
+      ],
+      "lastUpdated": "2025-12-05"
+    },
+    {
+      "slug": "ai/agent-api-reference",
+      "path": "ai/AGENT_API_REFERENCE.md",
+      "title": "Agent API Reference",
+      "summary": "Machine-readable JSON API endpoints for AI agents to discover and search documentation.",
+      "ai_summary": "Canonical reference for VoiceAssist documentation API endpoints. Base URL: https://assistdocs.asimo.io. Key endpoints: /agent/docs.json (full doc list with ai_summary), /agent/docs-summary.json (AI summaries by category), /agent/health.json (docs health metrics), /agent/tasks.json (common tasks), /search-index.json (Fuse.js search). All endpoints are static JSON generated at build time.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["ai-agents", "backend"],
+      "category": "ai",
+      "tags": ["api", "ai-agent", "json", "documentation", "endpoints"],
+      "relatedServices": ["docs-site"],
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/scripts/generate-agent-json.js",
+        "apps/docs-site/scripts/generate-repo-index.mjs",
+        "apps/docs-site/scripts/generate-doc-code-map.mjs",
+        "apps/docs-site/public/agent/index.json"
+      ],
+      "lastUpdated": "2025-12-05"
+    },
+    {
+      "slug": "ai/agent-task-index",
+      "path": "ai/AGENT_TASK_INDEX.md",
+      "title": "Agent Task Index",
+      "summary": "Common AI agent tasks with relevant documentation and machine-readable endpoints.",
+      "ai_summary": "Catalog of 20 common AI agent tasks with relevant docs and commands. Tasks include: understand project status, debug backend/frontend/voice issues, update documentation, add API endpoints, work on admin panel, docs health audit, repository navigation tasks, doc-code crosswalk tasks, and NEW Task 20: Voice Enhancement Implementation (Dec 2025) addressing 4 critical issues - dual thinking tones, missing intent classification, turn-taking integration, progressive response wiring. Each task links to specific docs, code paths, API endpoints, and diagnostic commands. Use /agent/doc-code-map.json for bidirectional doc ↔ code navigation.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": ["ai-agents"],
+      "category": "ai",
+      "tags": ["ai-agent", "tasks", "index", "reference"],
+      "component": "platform/ai-agents",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "apps/docs-site/scripts/generate-agent-json.js",
+        "apps/docs-site/scripts/generate-doc-code-map.mjs",
+        "services/api-gateway/app/services/thinking_feedback_service.py",
+        "services/api-gateway/app/services/backchannel_service.py",
+        "services/api-gateway/app/services/thinker_talker_websocket_handler.py",
+        "services/api-gateway/app/core/event_bus.py",
+        "apps/web-app/src/hooks/useThinkerTalkerSession.ts"
+      ],
+      "lastUpdated": "2025-12-05"
+    },
+    {
+      "slug": "releases/v4.1.0",
+      "path": "releases/v4.1.0-release-announcement.md",
+      "title": "Voice Mode v4.1.0 Release Announcement",
+      "summary": "Major release bringing voice-first interaction, advanced speech processing, and Arabic/Quranic language support.",
+      "ai_summary": "Voice Mode v4.1.0 release notes. Key features: voice-first input bar, streaming text display with RTL support, speaker diarization (up to 4 speakers), FHIR R4 streaming, adaptive audio quality (16-128kbps), and Quranic lexicon (662 terms). Performance: 320ms voice-to-transcription, 180ms speaker detection, 250ms first token.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "product",
+      "audience": ["human", "ai-agents", "stakeholders"],
+      "category": "releases",
+      "tags": ["release", "voice", "v4.1.0"],
+      "lastUpdated": "2025-12-05"
+    },
+    {
+      "slug": "releases/v4.1.1",
+      "path": "releases/v4.1.1-release-announcement.md",
+      "title": "Voice Mode v4.1.1 Release Announcement",
+      "summary": "Patch release with test suite stability fixes and HuggingFace security hardening.",
+      "ai_summary": "Voice Mode v4.1.1 patch release. Bug fixes: resolved 8 failing tests (41/41 passing). Security: HuggingFace model revision pinning (Bandit B615) for PHI NER, diarization, and medical embedding models. Medium-severity issues reduced from 16 to 6.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "product",
+      "audience": ["human", "ai-agents", "stakeholders"],
+      "category": "releases",
+      "tags": ["release", "voice", "v4.1.1", "security"],
+      "lastUpdated": "2025-12-05"
+    },
+    {
+      "slug": "releases/v4.1.2",
+      "path": "releases/v4.1.2-release-announcement.md",
+      "title": "Voice Mode v4.1.2 Release Announcement",
+      "summary": "Feature release with EnhancedG2PService and expanded multi-language lexicon (1,384 entries).",
+      "ai_summary": "Voice Mode v4.1.2 feature release. New EnhancedG2PService with 5-source fallback chain: medical cache (50+ terms), CMUdict (134k words), gruut (multi-language), espeak-ng, and raw fallback. Lexicon expanded to 1,384 pronunciation entries. Supports English, German, French, Spanish, Russian, Polish, Arabic, and CJK.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "product",
+      "audience": ["human", "ai-agents", "stakeholders"],
+      "category": "releases",
+      "tags": ["release", "voice", "v4.1.2", "g2p", "lexicon"],
+      "lastUpdated": "2025-12-05"
+    },
+    {
+      "slug": "start/ai-agents",
+      "path": "start/ai-agents.md",
+      "title": "AI Agent Quick Start",
+      "summary": "Quick start guide for AI coding assistants working on VoiceAssist.",
+      "ai_summary": "Quick start for AI coding assistants. VoiceAssist is a HIPAA-compliant medical AI assistant with Voice Mode (Thinker-Talker pipeline: Deepgram STT → GPT-4o → ElevenLabs TTS) and Text Mode. Key dirs: services/api-gateway (backend), apps/web-app (frontend). CURRENT WORK (Dec 2025): Voice enhancement addressing 4 issues - dual thinking tones, missing intent classification, frontend turn-taking, progressive response. See Task 20 in AGENT_TASK_INDEX.md for implementation details.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": ["agent", "ai-agents"],
+      "category": "getting-started",
+      "tags": ["quickstart", "ai", "agent", "automation"],
+      "component": "platform/ai-agents",
+      "relatedPaths": [
+        "services/api-gateway/app/services/thinker_service.py",
+        "services/api-gateway/app/services/talker_service.py",
+        "services/api-gateway/app/services/thinker_talker_websocket_handler.py",
+        "apps/web-app/src/hooks/useThinkerTalkerSession.ts",
+        "apps/docs-site/scripts/generate-agent-json.js"
+      ],
+      "lastUpdated": "2025-12-05"
+    },
+    {
+      "slug": "voice/screenshots",
+      "path": "voice/screenshots/README.md",
+      "title": "Voice Mode Screenshots",
+      "summary": "Screenshot assets and capture instructions for Voice Mode v4.1 documentation.",
+      "ai_summary": "Asset directory for Voice Mode UI screenshots. Contains capture instructions for voice-input-bar-states, streaming-text-rtl, quality-badge-tiers, phi-indicator-states, and vad-presets-panel. Screenshots require manual capture from https://quran.asimo.io.",
+      "status": "draft",
+      "stability": "experimental",
+      "owner": "docs",
+      "audience": ["human", "docs", "ai-agents"],
+      "category": "voice",
+      "tags": ["voice", "screenshots", "assets"],
+      "lastUpdated": "2025-12-05"
+    },
+    {
+      "slug": "voice/smart-conversational-voice-design",
+      "path": "voice/smart-conversational-voice-design.md",
+      "title": "Smart Conversational Voice Design",
+      "summary": "Technical design for intelligent voice mode enhancements, fully integrated with VoiceEventBus and existing services. Addresses dual system conflicts and missing integrations.",
+      "ai_summary": "Comprehensive design document for voice mode enhancements. Addresses critical issues: dual thinking tone systems, missing intent classification, frontend turn-taking integration gaps, and progressive response WebSocket wiring. All changes extend existing services via VoiceEventBus.",
+      "status": "draft",
+      "stability": "experimental",
+      "owner": "backend",
+      "audience": ["developers", "backend", "frontend", "agent", "ai-agents"],
+      "category": "voice",
+      "tags": [
+        "voice",
+        "barge-in",
+        "conversational-ai",
+        "tts",
+        "design",
+        "voiceeventbus",
+        "integration"
+      ],
+      "relatedPaths": [
+        "services/api-gateway/app/core/event_bus.py",
+        "services/api-gateway/app/services/voice_pipeline_service.py",
+        "services/api-gateway/app/services/backchannel_service.py",
+        "services/api-gateway/app/services/thinking_feedback_service.py",
+        "services/api-gateway/app/services/thinker_talker_websocket_handler.py",
+        "services/api-gateway/app/engines/conversation_engine/__init__.py",
+        "services/api-gateway/app/engines/conversation_engine/turn_taking.py",
+        "services/api-gateway/app/engines/voice_engine/unified_voice_service.py",
+        "apps/web-app/src/hooks/useThinkerTalkerVoiceMode.ts",
+        "apps/web-app/src/hooks/useThinkerTalkerSession.ts",
+        "apps/web-app/src/hooks/useThinkingTone.ts",
+        "apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx"
+      ],
+      "lastUpdated": "2025-12-05"
+    },
+    {
+      "slug": "voice/voice-configuration",
+      "path": "voice/voice-configuration.md",
+      "title": "Voice Configuration",
+      "summary": "Centralized voice configuration system for consistent TTS voice selection across backend and frontend.",
+      "ai_summary": "The voice configuration system uses a single source of truth pattern to prevent voice ID inconsistencies between backend and frontend. All default voice settings are defined in voice_constants.py (backend) and voiceConstants.ts (frontend). To change the default voice, only these two files need to be modified.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": ["developers", "backend", "frontend", "agent", "ai-agents"],
+      "category": "reference",
+      "tags": ["voice", "configuration", "tts", "elevenlabs", "architecture"],
+      "lastUpdated": "2025-12-05"
     },
     {
       "slug": "docs/metadata-standard",
@@ -361,7 +517,7 @@
       "lastUpdated": "2025-12-04"
     },
     {
-      "slug": "admin-panel-integration-guide",
+      "slug": "admin/admin-panel-integration-guide",
       "path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
       "title": "Admin Panel Integration Guide",
       "summary": "Comprehensive guide for the VoiceAssist admin panel with cross-app navigation, real-time events, and voice monitoring",
@@ -381,7 +537,7 @@
       "lastUpdated": "2025-12-04"
     },
     {
-      "slug": "realtime-events-guide",
+      "slug": "admin/realtime-events-guide",
       "path": "admin/REALTIME_EVENTS_GUIDE.md",
       "title": "Real-Time Events Guide",
       "summary": "Guide to the admin panel real-time event system using WebSocket and Redis pub/sub",
@@ -418,28 +574,6 @@
       "lastUpdated": "2025-12-04"
     },
     {
-      "slug": "ai/agent-api-reference",
-      "path": "ai/AGENT_API_REFERENCE.md",
-      "title": "Agent API Reference",
-      "summary": "Machine-readable JSON API endpoints for AI agents to discover and search documentation.",
-      "ai_summary": "Canonical reference for VoiceAssist documentation API endpoints. Base URL: https://assistdocs.asimo.io. Key endpoints: /agent/docs.json (full doc list with ai_summary), /agent/docs-summary.json (AI summaries by category), /agent/health.json (docs health metrics), /agent/tasks.json (common tasks), /search-index.json (Fuse.js search). All endpoints are static JSON generated at build time.",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["ai-agents", "backend"],
-      "category": "ai",
-      "tags": ["api", "ai-agent", "json", "documentation", "endpoints"],
-      "relatedServices": ["docs-site"],
-      "component": "frontend/docs-site",
-      "relatedPaths": [
-        "apps/docs-site/scripts/generate-agent-json.js",
-        "apps/docs-site/scripts/generate-repo-index.mjs",
-        "apps/docs-site/scripts/generate-doc-code-map.mjs",
-        "apps/docs-site/public/agent/index.json"
-      ],
-      "lastUpdated": "2025-12-04"
-    },
-    {
       "slug": "ai/agent-onboarding",
       "path": "ai/AGENT_ONBOARDING.md",
       "title": "AI Agent Onboarding Guide",
@@ -458,26 +592,6 @@
         "apps/web-app/src/App.tsx",
         "apps/admin-panel/src/App.tsx",
         "apps/docs-site/scripts/generate-agent-json.js"
-      ],
-      "lastUpdated": "2025-12-04"
-    },
-    {
-      "slug": "ai/agent-task-index",
-      "path": "ai/AGENT_TASK_INDEX.md",
-      "title": "Agent Task Index",
-      "summary": "Common AI agent tasks with relevant documentation and machine-readable endpoints.",
-      "ai_summary": "Catalog of common AI agent tasks with relevant docs and commands. Tasks include: understand project status, debug backend/frontend/voice issues, update documentation, add API endpoints, work on admin panel, docs health audit, repository navigation tasks, and NEW doc-code crosswalk tasks (audit relatedPaths, explain files using docs, find feature implementations). Each task links to specific docs, code paths, API endpoints, and diagnostic commands. Use /agent/doc-code-map.json for bidirectional doc ↔ code navigation.",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["ai-agents"],
-      "category": "ai",
-      "tags": ["ai-agent", "tasks", "index", "reference"],
-      "component": "platform/ai-agents",
-      "relatedPaths": [
-        "services/api-gateway/app/main.py",
-        "apps/docs-site/scripts/generate-agent-json.js",
-        "apps/docs-site/scripts/generate-doc-code-map.mjs"
       ],
       "lastUpdated": "2025-12-04"
     },
@@ -593,20 +707,6 @@
       "audience": ["human", "stakeholders", "backend", "frontend", "ai-agents"],
       "category": "planning",
       "tags": ["roadmap", "strategy", "planning", "future", "enhancement"],
-      "lastUpdated": "2025-12-04"
-    },
-    {
-      "slug": "v4-1-0-release-announcement",
-      "path": "releases/v4.1.0-release-announcement.md",
-      "title": "Voice Mode v4.1.0 Release Announcement",
-      "status": "released",
-      "lastUpdated": "2025-12-04"
-    },
-    {
-      "slug": "v4-1-1-release-announcement",
-      "path": "releases/v4.1.1-release-announcement.md",
-      "title": "Voice Mode v4.1.1 Release Announcement",
-      "status": "released",
       "lastUpdated": "2025-12-04"
     },
     {
@@ -848,19 +948,6 @@
         "apps/web-app/src/components/chat/MessageBubble.tsx",
         "packages/config/i18n.ts"
       ],
-      "lastUpdated": "2025-12-04"
-    },
-    {
-      "slug": "voice/screenshots",
-      "path": "voice/screenshots/README.md",
-      "title": "Voice Mode Screenshots",
-      "summary": "Screenshot assets and capture instructions for Voice Mode v4.1 documentation.",
-      "status": "draft",
-      "stability": "experimental",
-      "owner": "docs",
-      "audience": ["human", "docs"],
-      "category": "voice",
-      "tags": ["voice", "screenshots", "assets"],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -1464,28 +1551,6 @@
       "lastUpdated": "2025-12-02"
     },
     {
-      "slug": "start/ai-agents",
-      "path": "start/ai-agents.md",
-      "title": "AI Agent Quick Start",
-      "summary": "Quick start guide for AI coding assistants working on VoiceAssist.",
-      "ai_summary": "Last Updated: 2025-12-01 This guide helps AI coding assistants (Claude, GPT, Copilot, etc.) quickly understand and work on VoiceAssist. --- VoiceAssist is a HIPAA-compliant medical AI assistant platform with: - Voice Mode: Thinker-Talker pipeline (Deepgram STT → GPT-4o → ElevenLabs TTS) - Text Mo...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "mixed",
-      "audience": ["agent", "ai-agents"],
-      "category": "getting-started",
-      "tags": ["quickstart", "ai", "agent", "automation"],
-      "component": "platform/ai-agents",
-      "relatedPaths": [
-        "services/api-gateway/app/services/thinker_service.py",
-        "services/api-gateway/app/services/talker_service.py",
-        "services/api-gateway/app/services/thinker_talker_websocket_handler.py",
-        "apps/web-app/src/hooks/useThinkerTalkerSession.ts",
-        "apps/docs-site/scripts/generate-agent-json.js"
-      ],
-      "lastUpdated": "2025-12-02"
-    },
-    {
       "slug": "start/developers",
       "path": "start/developers.md",
       "title": "Developer Quick Start",
@@ -1841,7 +1906,7 @@
       "audience": ["human", "ai-agents"],
       "category": "reference",
       "tags": ["compose", "first", "summary"],
-      "component": "infra",
+      "component": "infra/compose",
       "relatedPaths": ["docker-compose.yml", "docs/DEVELOPMENT_PHASES_V2.md"],
       "lastUpdated": "2025-11-27"
     },
@@ -2198,7 +2263,7 @@
       "audience": ["devops", "sre", "ai-agents"],
       "category": "deployment",
       "tags": ["infrastructure", "code"],
-      "component": "infra",
+      "component": "infra/terraform",
       "relatedPaths": [
         "infrastructure/terraform",
         "infrastructure/ansible",

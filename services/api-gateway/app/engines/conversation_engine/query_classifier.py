@@ -7,6 +7,8 @@ Uses lightweight ONNX model (fine-tuned DistilBERT) or heuristics fallback.
 Supports A/B testing between ML and heuristic approaches.
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime

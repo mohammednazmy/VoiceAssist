@@ -131,17 +131,25 @@ export function useBargeInPromptAudio(
 
   /**
    * Fetch TTS audio from backend
+   * Returns null if not authenticated (401) to allow graceful fallback
    */
   const fetchTTSAudio = useCallback(
-    async (text: string): Promise<ArrayBuffer> => {
+    async (text: string): Promise<ArrayBuffer | null> => {
       const token = getAccessToken?.();
+
+      // Skip if no token - user not authenticated
+      if (!token) {
+        voiceLog.debug("[BargeInAudio] Skipping TTS fetch - no auth token");
+        return null;
+      }
+
       const url = `${apiBaseUrl}/api/voice/synthesize`;
 
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           text,
@@ -149,6 +157,12 @@ export function useBargeInPromptAudio(
           provider,
         }),
       });
+
+      if (response.status === 401) {
+        // Token expired or invalid - don't throw, just return null
+        voiceLog.debug("[BargeInAudio] TTS request unauthorized - skipping");
+        return null;
+      }
 
       if (!response.ok) {
         throw new Error(
@@ -175,6 +189,12 @@ export function useBargeInPromptAudio(
 
       try {
         const audioData = await fetchTTSAudio(text);
+
+        // Skip if no audio data (e.g., not authenticated)
+        if (!audioData) {
+          return;
+        }
+
         const ctx = getAudioContext();
         const audioBuffer = await ctx.decodeAudioData(audioData);
         audioCacheRef.current.set(cacheKey, audioBuffer);
@@ -251,6 +271,15 @@ export function useBargeInPromptAudio(
             `[BargeInAudio] Cache miss, fetching: "${promptText}"`,
           );
           const audioData = await fetchTTSAudio(promptText);
+
+          // Skip if no audio data (e.g., not authenticated)
+          if (!audioData) {
+            voiceLog.debug(
+              `[BargeInAudio] No audio data available for: "${promptText}"`,
+            );
+            return;
+          }
+
           audioBuffer = await ctx.decodeAudioData(audioData);
           audioCacheRef.current.set(cacheKey, audioBuffer);
         }
@@ -302,11 +331,17 @@ export function useBargeInPromptAudio(
   }, []);
 
   // Auto-preload on mount or when voice changes
+  // Only preload if user is authenticated (has access token)
   useEffect(() => {
-    if (autoPreload && voiceId) {
+    const token = getAccessToken?.();
+    if (autoPreload && voiceId && token) {
       preloadPrompts();
+    } else if (autoPreload && voiceId && !token) {
+      voiceLog.debug(
+        "[BargeInAudio] Skipping preload - user not authenticated",
+      );
     }
-  }, [autoPreload, voiceId, language, preloadPrompts]);
+  }, [autoPreload, voiceId, language, preloadPrompts, getAccessToken]);
 
   // Cleanup on unmount
   useEffect(() => {

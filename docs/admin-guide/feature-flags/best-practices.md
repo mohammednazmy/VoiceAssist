@@ -1,5 +1,6 @@
 ---
 title: Feature Flag Best Practices
+slug: admin-guide/feature-flags/best-practices
 status: stable
 lastUpdated: 2025-12-04
 audience: [developers, ai-agents]

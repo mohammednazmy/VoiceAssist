@@ -1,6 +1,6 @@
 {
-  "version": "1.0",
-  "generated_at": "2025-11-27T23:30:00.000Z",
+  "version": "2.0",
+  "generated_at": "2025-12-05T00:00:00.000Z",
   "description": "Common tasks AI agents can perform on VoiceAssist documentation and systems",
   "tasks": [
     {
@@ -121,12 +121,68 @@
         "docker logs voiceassist-server --tail 100"
       ],
       "prerequisites": ["Docker access"]
+    },
+    {
+      "id": "docs-health-audit",
+      "name": "Documentation Health Audit",
+      "description": "Run full validation, inspect health.json, and produce a summary of problem areas",
+      "category": "docs-maintenance",
+      "docs": ["/docs-health-overview", "/ai/agent-api-reference"],
+      "commands": [
+        "cd apps/docs-site && pnpm validate:all",
+        "curl https://assistdocs.asimo.io/agent/health.json | jq '.health_status, .scores'",
+        "curl https://assistdocs.asimo.io/agent/docs-summary.json | jq '.stats'"
+      ],
+      "prerequisites": ["pnpm", "curl", "jq"]
+    },
+    {
+      "id": "docs-ai-summary-pass",
+      "name": "Add Missing AI Summaries",
+      "description": "Identify docs lacking ai_summary and add them",
+      "category": "docs-maintenance",
+      "docs": ["/docs/metadata-standard", "/docs-health-overview"],
+      "commands": [
+        "cd apps/docs-site && pnpm validate:metadata 2>&1 | grep 'Missing ai_summary'",
+        "grep -rL 'ai_summary:' docs/*.md docs/**/*.md"
+      ],
+      "prerequisites": ["pnpm", "grep"]
+    },
+    {
+      "id": "docs-link-audit",
+      "name": "Documentation Link Audit",
+      "description": "Run check:links and fix broken internal links",
+      "category": "docs-maintenance",
+      "docs": ["/docs-health-overview"],
+      "commands": ["cd apps/docs-site && pnpm check:links"],
+      "prerequisites": ["pnpm"]
+    },
+    {
+      "id": "docs-api-sync",
+      "name": "API Documentation Sync",
+      "description": "Verify API docs match OpenAPI spec and fix mismatches",
+      "category": "docs-maintenance",
+      "docs": ["/ai/agent-api-reference", "/api-reference"],
+      "commands": ["cd apps/docs-site && pnpm validate:api-sync --strict"],
+      "prerequisites": ["pnpm"]
+    },
+    {
+      "id": "docs-code-map-audit",
+      "name": "Doc-Code Crosswalk Audit",
+      "description": "Check relatedPaths validity and coverage in doc-code-map.json",
+      "category": "docs-maintenance",
+      "docs": ["/ai/agent-task-index", "/ai/agent-api-reference"],
+      "commands": [
+        "curl https://assistdocs.asimo.io/agent/doc-code-map.json | jq '.meta.stats'",
+        "curl https://assistdocs.asimo.io/agent/doc-code-map.json | jq '.meta.missing_paths'"
+      ],
+      "prerequisites": ["curl", "jq"]
     }
   ],
   "categories": {
     "debugging": "Investigate and resolve issues",
     "operations": "Monitor and maintain systems",
     "deployment": "Deploy and update services",
-    "reference": "Look up documentation and information"
+    "reference": "Look up documentation and information",
+    "docs-maintenance": "Documentation health, validation, and improvement tasks"
   }
 }

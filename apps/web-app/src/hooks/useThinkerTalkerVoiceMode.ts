@@ -26,6 +26,7 @@ import {
   type TTVoiceSettings,
   type TTEmotionResult,
   type TTBackchannelEvent,
+  type TTThinkingStateEvent,
 } from "./useThinkerTalkerSession";
 import { useTTAudioPlayback, type TTPlaybackState } from "./useTTAudioPlayback";
 import { useBackchannelAudio } from "./useBackchannelAudio";
@@ -102,6 +103,10 @@ export interface TTVoiceModeReturn {
   backchannelPhrase: string | null;
   isBackchanneling: boolean;
 
+  // Issue 1: Unified thinking feedback
+  /** Source of thinking feedback ("backend" when server is handling tones) */
+  thinkingSource: "backend" | "frontend";
+
   // Actions
   connect: () => Promise<void>;
   disconnect: () => void;
@@ -145,6 +150,11 @@ export function useThinkerTalkerVoiceMode(
   // Phase 1: Emotion state
   const [currentEmotion, setCurrentEmotion] = useState<TTEmotionResult | null>(
     null,
+  );
+
+  // Issue 1: Unified thinking feedback - track source
+  const [thinkingSource, setThinkingSource] = useState<"backend" | "frontend">(
+    "frontend",
   );
 
   // Get store actions
@@ -364,6 +374,20 @@ export function useThinkerTalkerVoiceMode(
       voiceLog.debug(`[TTVoiceMode] Backchannel received: "${event.phrase}"`);
       backchannelAudio.playBackchannel(event);
     },
+
+    // Issue 1: Handle unified thinking feedback state from backend
+    onThinkingStateChange: (event: TTThinkingStateEvent) => {
+      voiceLog.debug(
+        `[TTVoiceMode] Thinking state: isThinking=${event.isThinking}, source=${event.source}`,
+      );
+      if (event.isThinking && event.source === "backend") {
+        // Backend is handling thinking feedback - disable frontend audio
+        setThinkingSource("backend");
+      } else if (!event.isThinking) {
+        // Thinking stopped - revert to frontend control
+        setThinkingSource("frontend");
+      }
+    },
   });
 
   // Barge-in handler - combines session signal with audio stop
@@ -442,6 +466,9 @@ export function useThinkerTalkerVoiceMode(
       backchannelPhrase: backchannelAudio.currentPhrase,
       isBackchanneling: backchannelAudio.isPlaying,
 
+      // Issue 1: Unified thinking feedback
+      thinkingSource,
+
       // Actions
       connect,
       disconnect,
@@ -460,6 +487,7 @@ export function useThinkerTalkerVoiceMode(
       backchannelAudio,
       bargeInPromptAudio,
       currentEmotion,
+      thinkingSource,
       connect,
       disconnect,
       bargeIn,

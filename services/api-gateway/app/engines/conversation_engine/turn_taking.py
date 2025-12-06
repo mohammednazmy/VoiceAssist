@@ -10,6 +10,8 @@ Predicts when user has finished speaking using:
 Emits prosody.turn_signal events for cross-engine coordination.
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime

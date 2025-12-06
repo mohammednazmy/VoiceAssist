@@ -14,7 +14,7 @@ tags:
   - first
   - summary
 category: reference
-component: "infra"
+component: "infra/compose"
 relatedPaths:
   - "docker-compose.yml"
   - "docs/DEVELOPMENT_PHASES_V2.md"

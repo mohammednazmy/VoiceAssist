@@ -1,5 +1,6 @@
 ---
 title: Multi-Environment Feature Flags
+slug: admin-guide/feature-flags/multi-environment
 status: stable
 lastUpdated: 2025-12-04
 audience: [developers, devops, ai-agents]

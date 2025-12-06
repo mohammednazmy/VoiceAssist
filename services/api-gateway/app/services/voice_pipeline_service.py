@@ -23,8 +23,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
+from app.core.event_bus import VoiceEventBus, get_event_bus
 from app.core.logging import get_logger
-from app.core.voice_constants import DEFAULT_VOICE_ID, DEFAULT_TTS_MODEL, DEFAULT_TTS_OUTPUT_FORMAT
+from app.core.voice_constants import DEFAULT_TTS_MODEL, DEFAULT_TTS_OUTPUT_FORMAT, DEFAULT_VOICE_ID
 from app.services.backchannel_service import (
     BackchannelAudio,
     BackchannelService,
@@ -453,6 +454,9 @@ class VoicePipelineSession:
         # Locks for thread safety
         self._state_lock = asyncio.Lock()
 
+        # Event bus for cross-engine communication (Issue 3: Turn management)
+        self._event_bus: VoiceEventBus = get_event_bus()
+
     @property
     def state(self) -> PipelineState:
         """Get current pipeline state."""
@@ -769,6 +773,8 @@ class VoicePipelineSession:
 
             # Send barge_in reason so frontend knows to stop audio playback
             await self._send_state_update(reason="barge_in")
+            # Issue 3: Publish turn.yielded when user interrupts
+            await self._publish_turn_yielded("user_barge_in")
 
     async def stop(self) -> PipelineMetrics:
         """
@@ -1096,14 +1102,16 @@ class VoicePipelineSession:
             if confidence >= threshold:
                 logger.info(
                     f"[Pipeline] Triggering barge-in (substantial transcript while AI speaking): "
-                    f"'{text}' (conf={confidence:.2f} >= threshold={threshold:.2f}, vad_sensitivity={self.config.vad_sensitivity})"
+                    f"'{text}' (conf={confidence:.2f} >= threshold={threshold:.2f}, "
+                    f"vad_sensitivity={self.config.vad_sensitivity})"
                 )
                 await self.barge_in()
                 return  # Don't send transcript delta after barge-in
             else:
                 logger.info(
                     f"[Pipeline] Skipping barge-in (confidence too low): '{text}' "
-                    f"(conf={confidence:.2f} < threshold={threshold:.2f}, vad_sensitivity={self.config.vad_sensitivity})"
+                    f"(conf={confidence:.2f} < threshold={threshold:.2f}, "
+                    f"vad_sensitivity={self.config.vad_sensitivity})"
                 )
 
         await self._on_message(
@@ -1290,7 +1298,8 @@ class VoicePipelineSession:
         query_type = classify_query_type(transcript)
         timing_config = RESPONSE_TIMING.get(query_type, RESPONSE_TIMING[QueryType.UNKNOWN])
         logger.debug(
-            f"Query type: {query_type.value}, timing: delay={timing_config.delay_ms}ms, filler={timing_config.use_filler}"
+            f"Query type: {query_type.value}, timing: delay={timing_config.delay_ms}ms, "
+            f"filler={timing_config.use_filler}"
         )
 
         # Phase 3, 5 & 6: Apply combined response delay
@@ -1456,6 +1465,8 @@ class VoicePipelineSession:
             await self._stt_session.start()
 
             await self._send_state_update()
+            # Issue 3: Publish turn.yielded when AI finishes speaking
+            await self._publish_turn_yielded("ai_finished")
 
     async def _handle_llm_token(self, token: str) -> None:
         """Handle token from Thinker, feed to Talker."""
@@ -1574,7 +1585,7 @@ class VoicePipelineSession:
 
                 # If critical PHI detected outside patient context, use sanitized text
                 if phi_result.has_critical_phi:
-                    logger.warning(f"[Pipeline] Critical PHI detected - using sanitized text")
+                    logger.warning("[Pipeline] Critical PHI detected - using sanitized text")
                     text = phi_result.sanitized_text
 
         # Apply formatting if configured
@@ -1636,6 +1647,8 @@ class VoicePipelineSession:
             async with self._state_lock:
                 self._state = PipelineState.SPEAKING
                 await self._send_state_update()
+                # Issue 3: Publish turn.taken when AI starts speaking
+                await self._publish_turn_taken("ai_speaking")
 
         # Send audio to client
         await self._on_message(
@@ -1690,6 +1703,46 @@ class VoicePipelineSession:
                 data={"state": self._state.value, "reason": reason},
             )
         )
+
+    async def _publish_turn_taken(self, reason: str = "ai_speaking") -> None:
+        """
+        Issue 3: Publish turn.taken event when AI takes the turn.
+
+        This is called when the AI starts speaking. The frontend uses this
+        to update UI state and potentially pause listening.
+        """
+        await self._event_bus.publish_event(
+            event_type="turn.taken",
+            data={
+                "reason": reason,
+                "state": self._state.value,
+                "timestamp": time.time(),
+            },
+            session_id=self.session_id,
+            source_engine="voice_pipeline",
+            priority=5,
+        )
+        logger.debug(f"[Pipeline] Published turn.taken: {reason}")
+
+    async def _publish_turn_yielded(self, reason: str = "ai_finished") -> None:
+        """
+        Issue 3: Publish turn.yielded event when AI yields the turn.
+
+        This is called when the AI finishes speaking and is ready to listen.
+        The frontend uses this to re-enable listening UI.
+        """
+        await self._event_bus.publish_event(
+            event_type="turn.yielded",
+            data={
+                "reason": reason,
+                "state": self._state.value,
+                "timestamp": time.time(),
+            },
+            session_id=self.session_id,
+            source_engine="voice_pipeline",
+            priority=5,
+        )
+        logger.debug(f"[Pipeline] Published turn.yielded: {reason}")
 
     # ==========================================================================
     # Phase 10: Analytics Methods

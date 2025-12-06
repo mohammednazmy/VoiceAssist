@@ -5,6 +5,8 @@ Learns user-specific emotional baselines using exponential moving average.
 Detects significant deviations from baseline for adaptive responses.
 """
 
+from __future__ import annotations
+
 import logging
 import math
 from dataclasses import dataclass

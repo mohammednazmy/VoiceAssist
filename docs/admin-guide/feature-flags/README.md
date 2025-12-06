@@ -1,5 +1,6 @@
 ---
 title: Feature Flags Overview
+slug: admin-guide/feature-flags/overview
 status: stable
 lastUpdated: 2025-12-04
 audience: [developers, admin, ai-agents]

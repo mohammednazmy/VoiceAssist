@@ -12,6 +12,12 @@ Benefits over Realtime API:
 - Lower cost per interaction
 
 Phase: Thinker/Talker Voice Pipeline Migration
+
+Integrates with VoiceEventBus for:
+- thinking.started/stopped: Coordinates frontend/backend thinking feedback
+- turn.yielded/taken: Turn management events
+- filler.triggered/played: Progressive response events
+- acknowledgment.*: Smart acknowledgment events
 """
 
 import asyncio
@@ -19,8 +25,9 @@ import json
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional
 
+from app.core.event_bus import VoiceEvent, get_event_bus
 from app.core.logging import get_logger
 from app.services.voice_pipeline_service import (
     PipelineConfig,
@@ -33,6 +40,19 @@ from app.services.voice_pipeline_service import (
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 logger = get_logger(__name__)
+
+# Event types to forward to the client
+FORWARDED_EVENT_TYPES = [
+    "thinking.started",
+    "thinking.stopped",
+    "turn.yielded",
+    "turn.taken",
+    "filler.triggered",
+    "filler.played",
+    "acknowledgment.intent",
+    "acknowledgment.triggered",
+    "acknowledgment.played",
+]
 
 
 # ==============================================================================
@@ -162,10 +182,59 @@ class ThinkerTalkerWebSocketHandler:
         self._receive_task: Optional[asyncio.Task] = None
         self._heartbeat_task: Optional[asyncio.Task] = None
 
+        # Event bus integration for cross-engine coordination
+        self._event_bus = get_event_bus()
+        self._subscribed_handlers: List[Callable] = []
+
     @property
     def connection_state(self) -> TTConnectionState:
         """Get current connection state."""
         return self._connection_state
+
+    async def _handle_event_bus_event(self, event: VoiceEvent) -> None:
+        """
+        Handle events from VoiceEventBus and forward to client.
+
+        Only forwards events for this session.
+        """
+        # Only forward events for this session
+        if event.session_id != self.config.session_id:
+            return
+
+        # Only forward whitelisted event types
+        if event.event_type not in FORWARDED_EVENT_TYPES:
+            return
+
+        logger.debug(f"[WS] Forwarding event {event.event_type} to client " f"(session={self.config.session_id[:8]})")
+
+        # Forward event to client
+        await self._send_message(
+            {
+                "type": event.event_type,
+                "source": event.source_engine,
+                **event.data,
+            }
+        )
+
+    def _subscribe_to_event_bus(self) -> None:
+        """Subscribe to relevant event bus events."""
+        for event_type in FORWARDED_EVENT_TYPES:
+            handler = self._handle_event_bus_event
+            self._event_bus.subscribe(
+                event_type=event_type,
+                handler=handler,
+                priority=0,
+                engine=f"websocket:{self.config.session_id[:8]}",
+            )
+            self._subscribed_handlers.append((event_type, handler))
+        logger.debug(f"[WS] Subscribed to {len(FORWARDED_EVENT_TYPES)} event types")
+
+    def _unsubscribe_from_event_bus(self) -> None:
+        """Unsubscribe from all event bus events."""
+        for event_type, handler in self._subscribed_handlers:
+            self._event_bus.unsubscribe(event_type, handler)
+        self._subscribed_handlers.clear()
+        logger.debug("[WS] Unsubscribed from all event bus events")
 
     async def start(self) -> bool:
         """
@@ -210,6 +279,9 @@ class ThinkerTalkerWebSocketHandler:
                 raise RuntimeError("Failed to start pipeline session")
 
             self._connection_state = TTConnectionState.READY
+
+            # Subscribe to event bus events (for thinking feedback, turn management, etc.)
+            self._subscribe_to_event_bus()
 
             # Send ready message to client
             await self._send_message(
@@ -262,6 +334,9 @@ class ThinkerTalkerWebSocketHandler:
                 await self._heartbeat_task
             except asyncio.CancelledError:
                 pass
+
+        # Unsubscribe from event bus events
+        self._unsubscribe_from_event_bus()
 
         # Stop pipeline session
         if self._pipeline_session:
