@@ -214,7 +214,7 @@ class DictationContext:
             "allergies": [a.to_dict() for a in self.allergies],
             "conditions": [c.to_dict() for c in self.conditions],
             "recent_vitals": [v.to_dict() for v in self.recent_vitals],
-            "recent_labs": [l.to_dict() for l in self.recent_labs],
+            "recent_labs": [lab.to_dict() for lab in self.recent_labs],
             "medication_summary": self.medication_summary,
             "allergy_summary": self.allergy_summary,
             "condition_summary": self.condition_summary,
@@ -467,7 +467,7 @@ class PatientContextService:
                     category=PatientDataCategory.LABS,
                     message=f"I see {lab_count} abnormal lab result(s). Would you like me to summarize them?",
                     priority=50,
-                    data_reference={"labs": [l.to_dict() for l in abnormal_labs]},
+                    data_reference={"labs": [lab.to_dict() for lab in abnormal_labs]},
                 )
             )
 

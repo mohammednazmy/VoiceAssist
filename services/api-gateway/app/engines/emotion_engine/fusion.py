@@ -7,6 +7,8 @@ Combines emotion signals from multiple sources:
 - Text sentiment: 10% weight
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from typing import Dict, Optional
@@ -132,7 +134,7 @@ class EmotionFusion:
         """Extract emotion signals from prosody features"""
         speech_rate = features.get("speech_rate", 1.0)
         pitch_variance = features.get("pitch_variance", 0.5)
-        pause_ratio = features.get("pause_ratio", 0.2)
+        _pause_ratio = features.get("pause_ratio", 0.2)  # Reserved for future use  # noqa: F841
 
         # Map prosody pattern to emotion
         is_fast = speech_rate > self.SPEECH_RATE_FAST

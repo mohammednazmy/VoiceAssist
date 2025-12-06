@@ -4,6 +4,8 @@ Anomaly Detector - Real-Time Anomaly Detection
 Detects anomalies in metrics using statistical methods.
 """
 
+from __future__ import annotations
+
 import logging
 import math
 from collections import deque

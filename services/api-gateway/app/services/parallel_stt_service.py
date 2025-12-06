@@ -16,7 +16,7 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime  # noqa: F401
 from enum import Enum
 from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Tuple
 
@@ -567,7 +567,7 @@ class ParallelSTTService:
                 "usage": self._metrics.provider_usage.get(provider.value, 0),
                 "success_rate": self._metrics.provider_success_rate.get(provider.value, 1.0),
                 "capabilities": {
-                    "languages": [l.value for l in PROVIDER_CAPABILITIES[provider].supported_languages],
+                    "languages": [lang.value for lang in PROVIDER_CAPABILITIES[provider].supported_languages],
                     "streaming": PROVIDER_CAPABILITIES[provider].supports_streaming,
                     "code_switching": PROVIDER_CAPABILITIES[provider].supports_code_switching,
                     "latency_ms": PROVIDER_CAPABILITIES[provider].avg_latency_ms,

@@ -265,7 +265,10 @@ class ThinkerTalkerWebSocketHandler:
 
         # Stop pipeline session
         if self._pipeline_session:
-            await self._pipeline_session.stop()
+            try:
+                await self._pipeline_session.stop()
+            except Exception as e:
+                logger.warning(f"Error stopping pipeline session: {e}")
 
         # Close WebSocket
         try:

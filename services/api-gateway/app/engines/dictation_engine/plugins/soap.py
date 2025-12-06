@@ -9,6 +9,8 @@ Phase 4 Enhancements:
 - Custom validation for clinical completeness
 """
 
+from __future__ import annotations
+
 from typing import Any, Dict, Optional
 
 from .base import BaseDictationPlugin, SectionConstraint, ValidationResult, ValidationSeverity

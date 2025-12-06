@@ -14,6 +14,8 @@ Phase 5 Enhancements:
 - Event publishing for clinical alerts
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
