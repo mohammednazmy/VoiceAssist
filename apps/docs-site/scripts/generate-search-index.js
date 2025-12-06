@@ -138,9 +138,10 @@ function buildIndex() {
       "Untitled";
     // Handle Date objects from gray-matter or string dates
     const rawDate = data.lastUpdated || data.last_updated || stat.mtime;
-    const lastUpdated = rawDate instanceof Date
-      ? rawDate.toISOString().split("T")[0]
-      : String(rawDate).split("T")[0];
+    const lastUpdated =
+      rawDate instanceof Date
+        ? rawDate.toISOString().split("T")[0]
+        : String(rawDate).split("T")[0];
     const summary = data.summary || data.description || "";
     const status = data.status || "draft";
     const tags = Array.isArray(data.tags) ? data.tags : [];
