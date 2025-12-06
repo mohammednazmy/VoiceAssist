@@ -552,7 +552,18 @@ export function useChatSession(
 
   const sendMessage = useCallback(
     async (content: string, files?: File[]) => {
+      // Check if conversation is ready before sending
+      if (!conversationId) {
+        // No conversation selected yet - this is expected during initialization
+        // Just log at debug level and return silently (don't show error to user)
+        websocketLog.debug(
+          "Skipping send - no conversation selected (initialization in progress)",
+        );
+        return;
+      }
+
       if (wsRef.current?.readyState !== WebSocket.OPEN) {
+        websocketLog.debug("WebSocket not open, cannot send message");
         handleError("CONNECTION_DROPPED", "Cannot send message: not connected");
         return;
       }
