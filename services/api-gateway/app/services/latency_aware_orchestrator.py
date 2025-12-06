@@ -223,9 +223,7 @@ class LatencyAwareVoiceOrchestrator:
                         english_query = transcript  # Fallback to original query
                         degradation_applied.append(DegradationType.TRANSLATION_FAILED)
                         warnings.append(f"Translation failed (graceful degradation): {str(e)}")
-                        logger.warning(
-                            f"Translation degradation applied for {detected_lang}->en: {e}"
-                        )
+                        logger.warning(f"Translation degradation applied for {detected_lang}->en: {e}")
                     except Exception as e:
                         # Unexpected error - still degrade gracefully
                         english_query = transcript

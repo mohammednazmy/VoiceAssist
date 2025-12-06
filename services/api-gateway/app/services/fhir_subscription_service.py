@@ -17,7 +17,6 @@ Feature Flag: backend.voice_v4_fhir_streaming
 
 import asyncio
 import logging
-import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -85,9 +84,7 @@ class FHIRObservation:
             "value": self.value,
             "valueQuantity": self.value_quantity,
             "valueUnit": self.value_unit,
-            "effectiveDatetime": (
-                self.effective_datetime.isoformat() if self.effective_datetime else None
-            ),
+            "effectiveDatetime": (self.effective_datetime.isoformat() if self.effective_datetime else None),
             "status": self.status,
             "interpretation": self.interpretation,
             "referenceRange": self.reference_range,
@@ -236,9 +233,7 @@ class FHIRSubscriptionService:
 
             try:
                 # Check feature flag
-                if not await feature_flag_service.is_enabled(
-                    "backend.voice_v4_fhir_streaming"
-                ):
+                if not await feature_flag_service.is_enabled("backend.voice_v4_fhir_streaming"):
                     logger.info("FHIR streaming feature flag is disabled")
                     return False
 
@@ -300,11 +295,13 @@ class FHIRSubscriptionService:
     def _json_dumps(self, data: Dict[str, Any]) -> str:
         """Serialize dict to JSON string."""
         import json
+
         return json.dumps(data)
 
     def _json_loads(self, data: str) -> Dict[str, Any]:
         """Deserialize JSON string to dict."""
         import json
+
         return json.loads(data)
 
     async def subscribe_to_patient(
@@ -362,9 +359,7 @@ class FHIRSubscriptionService:
 
             # Start streaming based on channel type
             if self.config.subscription_channel == "websocket":
-                asyncio.create_task(
-                    self._start_websocket_subscription(subscription)
-                )
+                asyncio.create_task(self._start_websocket_subscription(subscription))
             elif self.config.subscription_channel == "polling":
                 asyncio.create_task(self._start_polling_subscription(subscription))
 
@@ -576,10 +571,7 @@ class FHIRSubscriptionService:
                 if "interpretation" in resource:
                     interp = resource["interpretation"]
                     if isinstance(interp, list) and interp:
-                        interpretation = (
-                            interp[0].get("text")
-                            or interp[0].get("coding", [{}])[0].get("display")
-                        )
+                        interpretation = interp[0].get("text") or interp[0].get("coding", [{}])[0].get("display")
 
                 # Extract reference range
                 reference_range = None
@@ -852,9 +844,7 @@ class FHIRSubscriptionService:
 
                         # Parse and emit new observations
                         bundle = response.json()
-                        observations = self._parse_observation_bundle(
-                            bundle, subscription.patient_id
-                        )
+                        observations = self._parse_observation_bundle(bundle, subscription.patient_id)
 
                         for obs in observations:
                             # Check if we've seen this observation
