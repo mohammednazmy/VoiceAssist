@@ -598,12 +598,32 @@ export function useChatSession(
     async (content: string, files?: File[]) => {
       // If not connected, try to reconnect and wait briefly
       if (wsRef.current?.readyState !== WebSocket.OPEN) {
+        // Check prerequisites before attempting reconnect
+        const hasToken = !!tokens?.accessToken;
+        if (!conversationId) {
+          websocketLog.warn("Cannot send message: no conversation selected");
+          handleError(
+            "CONNECTION_DROPPED",
+            "Cannot send message: no conversation selected",
+          );
+          return;
+        }
+        if (!hasToken) {
+          websocketLog.warn("Cannot send message: not authenticated");
+          handleError(
+            "AUTH_FAILED",
+            "Cannot send message: please log in again",
+          );
+          return;
+        }
+
         websocketLog.debug(
           "WebSocket not open, attempting reconnect before send",
+          { connectionStatus, hasWs: !!wsRef.current },
         );
 
         // Trigger reconnect if not already reconnecting
-        if (connectionStatus !== "reconnecting") {
+        if (connectionStatus !== "reconnecting" && !isConnectingRef.current) {
           reconnectAttemptsRef.current = 0;
           connect();
         }
@@ -625,9 +645,14 @@ export function useChatSession(
 
         // If still not connected after waiting, show error
         if (wsRef.current?.readyState !== WebSocket.OPEN) {
+          websocketLog.warn("Reconnection failed after waiting", {
+            waited,
+            connectionStatus,
+            isConnecting: isConnectingRef.current,
+          });
           handleError(
             "CONNECTION_DROPPED",
-            "Cannot send message: reconnection failed",
+            "Cannot send message: connection unavailable. Please try again.",
           );
           return;
         }
@@ -682,7 +707,7 @@ export function useChatSession(
         }),
       );
     },
-    [handleError, conversationId, connectionStatus, connect],
+    [handleError, conversationId, connectionStatus, connect, tokens],
   );
 
   const editMessage = useCallback(
