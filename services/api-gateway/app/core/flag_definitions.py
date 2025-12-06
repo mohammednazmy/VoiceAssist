@@ -639,6 +639,67 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 other_flags=["backend.voice_v4_language_detection"],
             ),
         ),
+        #
+        # WebSocket Reliability Enhancement Flags
+        # ---------------------------------------------------------------------
+        "voice_ws_binary_audio": FeatureFlagDefinition(
+            name="backend.voice_ws_binary_audio",
+            description=(
+                "[WS Reliability Phase 1] Enable WebSocket binary audio frames "
+                "instead of base64-encoded JSON. Reduces bandwidth by ~25%."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-binary-audio",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["useThinkerTalkerSession", "VoicePipelineSession"],
+            ),
+        ),
+        "voice_ws_session_persistence": FeatureFlagDefinition(
+            name="backend.voice_ws_session_persistence",
+            description=(
+                "[WS Reliability Phase 2] Enable Redis-based session state persistence "
+                "for WebSocket sessions. Allows session recovery and horizontal scaling."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="high",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-session-persistence",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["ThinkerTalkerSessionManager", "RedisVoiceSessionStore"],
+            ),
+        ),
+        "voice_ws_graceful_degradation": FeatureFlagDefinition(
+            name="backend.voice_ws_graceful_degradation",
+            description=(
+                "[WS Reliability Phase 3] Enable graceful degradation with client "
+                "notifications when services fail. Provides fallback to text-only."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="high",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-graceful-degradation",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["VoiceFallbackOrchestrator", "WebSocketHealthMonitor", "VoiceModeStatus"],
+                other_flags=["backend.voice_v4_fallback_orchestration"],
+            ),
+        ),
     },
     # -------------------------------------------------------------------------
     # Admin Flags - Admin panel features

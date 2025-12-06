@@ -361,7 +361,11 @@ export interface UseThinkerTalkerSessionOptions {
   onTranscript?: (transcript: TTTranscript) => void;
   onResponseDelta?: (delta: string, messageId: string) => void;
   onResponseComplete?: (content: string, messageId: string) => void;
-  onAudioChunk?: (audioBase64: string) => void;
+  /**
+   * Called for each audio chunk received.
+   * Receives either base64 string (legacy) or Uint8Array (binary WS).
+   */
+  onAudioChunk?: (audioData: string | Uint8Array) => void;
   onToolCall?: (toolCall: TTToolCall) => void;
   onToolResult?: (toolCall: TTToolCall) => void;
   onError?: (error: Error) => void;
@@ -604,6 +608,16 @@ export function useThinkerTalkerSession(
   const intentionalDisconnectRef = useRef(false);
   const fatalErrorRef = useRef(false);
 
+  // WebSocket Reliability Enhancement: Binary audio frame support
+  const binaryAudioEnabledRef = useRef(false);
+  const audioInputSequenceRef = useRef(0);
+
+  // Binary frame constants
+  const BINARY_FRAME_AUDIO_INPUT = 0x01;
+  const BINARY_FRAME_AUDIO_OUTPUT = 0x02;
+  const BINARY_FRAME_HEADER_SIZE = 5;
+  const PROTOCOL_VERSION = "2.0";
+
   // Timing refs for latency tracking
   const connectStartTimeRef = useRef<number | null>(null);
   const sessionStartTimeRef = useRef<number | null>(null);
@@ -810,6 +824,28 @@ export function useThinkerTalkerSession(
       const msgType = message.type as string;
 
       switch (msgType) {
+        case "session.init.ack": {
+          // Server acknowledged session init with negotiated features
+          const protocolVersion = message.protocol_version as string;
+          const features = message.features as string[] | undefined;
+          const binaryAudioEnabled = message.binary_audio_enabled as boolean;
+
+          voiceLog.debug(
+            `[ThinkerTalker] Session init ack: protocol=${protocolVersion}, ` +
+              `features=${features?.join(",") || "none"}, binary_audio=${binaryAudioEnabled}`,
+          );
+
+          // Store binary audio enabled state
+          binaryAudioEnabledRef.current = binaryAudioEnabled;
+
+          if (binaryAudioEnabled) {
+            voiceLog.info(
+              "[ThinkerTalker] Binary audio enabled for this session",
+            );
+          }
+          break;
+        }
+
         case "session.ready":
           voiceLog.debug("[ThinkerTalker] Session ready");
           updateStatus("ready");
@@ -1451,11 +1487,18 @@ export function useThinkerTalkerSession(
         ws.onopen = () => {
           voiceLog.debug("[ThinkerTalker] WebSocket connected");
 
-          // Send session initialization message
+          // Reset binary audio state for new connection
+          binaryAudioEnabledRef.current = false;
+          audioInputSequenceRef.current = 0;
+
+          // Send session initialization message with protocol negotiation
           const initMessage = {
             type: "session.init",
             conversation_id: conversationId || null,
             voice_settings: options.voiceSettings || {},
+            // WebSocket Reliability: Request binary audio support
+            protocol_version: PROTOCOL_VERSION,
+            features: ["binary_audio"],
           };
           ws.send(JSON.stringify(initMessage));
 
@@ -1500,8 +1543,37 @@ export function useThinkerTalkerSession(
 
         ws.onmessage = (event) => {
           try {
-            const message = JSON.parse(event.data);
-            handleMessageRef.current(message);
+            if (event.data instanceof ArrayBuffer) {
+              // Binary frame - audio output
+              const data = new Uint8Array(event.data);
+              if (data.length < BINARY_FRAME_HEADER_SIZE) {
+                voiceLog.warn(
+                  `[ThinkerTalker] Binary frame too small: ${data.length} bytes`,
+                );
+                return;
+              }
+
+              const frameType = data[0];
+              const view = new DataView(event.data);
+              const sequence = view.getUint32(1, false); // Big-endian
+              const audioData = data.slice(BINARY_FRAME_HEADER_SIZE);
+
+              if (frameType === BINARY_FRAME_AUDIO_OUTPUT) {
+                // Binary audio output - pass raw bytes to callback
+                voiceLog.debug(
+                  `[ThinkerTalker] Binary audio output #${sequence}, ${audioData.length} bytes`,
+                );
+                options.onAudioChunk?.(audioData);
+              } else {
+                voiceLog.warn(
+                  `[ThinkerTalker] Unknown binary frame type: ${frameType}`,
+                );
+              }
+            } else {
+              // Text frame - JSON message
+              const message = JSON.parse(event.data);
+              handleMessageRef.current(message);
+            }
           } catch (err) {
             voiceLog.error("[ThinkerTalker] Failed to parse message:", err);
           }
@@ -1579,21 +1651,45 @@ export function useThinkerTalkerSession(
           pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
         }
 
-        // Base64 encode
-        const uint8 = new Uint8Array(pcm16.buffer);
-        const base64 = btoa(String.fromCharCode(...uint8));
+        // WebSocket Reliability: Send as binary or base64 based on negotiation
+        if (binaryAudioEnabledRef.current) {
+          // Binary frame: 1 byte type + 4 bytes sequence + audio data
+          const uint8Audio = new Uint8Array(pcm16.buffer);
+          const frame = new ArrayBuffer(
+            BINARY_FRAME_HEADER_SIZE + uint8Audio.length,
+          );
+          const frameView = new DataView(frame);
+          const frameBytes = new Uint8Array(frame);
 
-        // Send audio chunk
-        ws.send(
-          JSON.stringify({
-            type: "audio.input",
-            audio: base64,
-          }),
-        );
+          // Write header
+          frameView.setUint8(0, BINARY_FRAME_AUDIO_INPUT); // Type
+          frameView.setUint32(1, audioInputSequenceRef.current, false); // Sequence (big-endian)
+          audioInputSequenceRef.current++;
+
+          // Write audio data
+          frameBytes.set(uint8Audio, BINARY_FRAME_HEADER_SIZE);
+
+          // Send binary frame
+          ws.send(frame);
+        } else {
+          // Legacy: Base64 encode and send as JSON
+          const uint8 = new Uint8Array(pcm16.buffer);
+          const base64 = btoa(String.fromCharCode(...uint8));
+
+          ws.send(
+            JSON.stringify({
+              type: "audio.input",
+              audio: base64,
+            }),
+          );
+        }
 
         audioChunkCount++;
         if (audioChunkCount % 500 === 0) {
-          voiceLog.debug(`[ThinkerTalker] Audio chunk #${audioChunkCount}`);
+          const mode = binaryAudioEnabledRef.current ? "binary" : "base64";
+          voiceLog.debug(
+            `[ThinkerTalker] Audio chunk #${audioChunkCount} (${mode})`,
+          );
         }
       };
 

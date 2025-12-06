@@ -2,8 +2,8 @@
  * Thinker/Talker Audio Playback Hook
  *
  * Handles streaming audio playback for the T/T voice pipeline.
- * Receives base64-encoded audio chunks from the WebSocket and plays
- * them as soon as they arrive for minimal latency.
+ * Receives audio chunks from the WebSocket and plays them as soon as
+ * they arrive for minimal latency.
  *
  * Features:
  * - Web Audio API for low-latency playback
@@ -11,6 +11,10 @@
  * - Barge-in support (stop playback immediately)
  * - Auto-resume after interruption
  * - Playback state tracking
+ *
+ * WebSocket Reliability Enhancement (Phase 1):
+ * - Supports both base64-encoded strings and binary Uint8Array
+ * - Binary audio support reduces bandwidth by ~25%
  *
  * Phase: Thinker/Talker Voice Pipeline Migration
  */
@@ -37,6 +41,12 @@ export interface TTAudioPlaybackOptions {
   onError?: (error: Error) => void;
 }
 
+/**
+ * Type for audio chunk data - supports both base64 string and binary Uint8Array
+ * Binary format is used when WebSocket binary audio is enabled (Phase 1 WS Reliability)
+ */
+export type AudioChunkData = string | Uint8Array;
+
 export interface TTAudioPlaybackReturn {
   // State
   playbackState: TTPlaybackState;
@@ -48,8 +58,11 @@ export interface TTAudioPlaybackReturn {
   totalPlayedMs: number;
 
   // Actions
-  /** Queue a base64 audio chunk for playback */
-  queueAudioChunk: (audioBase64: string) => void;
+  /**
+   * Queue an audio chunk for playback.
+   * Accepts either base64 string or binary Uint8Array (for WS binary audio).
+   */
+  queueAudioChunk: (audioData: AudioChunkData) => void;
   /** Signal end of audio stream (flush queue) */
   endStream: () => void;
   /** Stop playback immediately (barge-in) */
@@ -350,12 +363,15 @@ export function useTTAudioPlayback(
   }, [processAudioQueue]);
 
   /**
-   * Queue a base64 audio chunk for playback
+   * Queue an audio chunk for playback.
+   * Supports both base64 string (legacy) and Uint8Array (binary WS).
    */
   const queueAudioChunk = useCallback(
-    (audioBase64: string) => {
+    (audioData: AudioChunkData) => {
+      const isBinary = audioData instanceof Uint8Array;
       console.log("[TTAudioPlayback] queueAudioChunk called", {
-        base64Length: audioBase64.length,
+        isBinary,
+        dataLength: isBinary ? audioData.length : (audioData as string).length,
         isPlaying: isPlayingRef.current,
         queueLength: audioQueueRef.current.length,
         streamStarted: !!streamStartTimeRef.current,
@@ -369,11 +385,27 @@ export function useTTAudioPlayback(
       }
 
       try {
-        const audioData = base64ToArrayBuffer(audioBase64);
-        console.log("[TTAudioPlayback] Decoded base64 to ArrayBuffer", {
-          byteLength: audioData.byteLength,
-        });
-        audioQueueRef.current.push(audioData);
+        // Convert to ArrayBuffer based on input type
+        let arrayBuffer: ArrayBuffer;
+
+        if (isBinary) {
+          // Binary Uint8Array - use buffer directly (WS binary audio)
+          arrayBuffer = audioData.buffer.slice(
+            audioData.byteOffset,
+            audioData.byteOffset + audioData.byteLength,
+          );
+          console.log("[TTAudioPlayback] Using binary audio directly", {
+            byteLength: arrayBuffer.byteLength,
+          });
+        } else {
+          // Base64 string - decode (legacy)
+          arrayBuffer = base64ToArrayBuffer(audioData as string);
+          console.log("[TTAudioPlayback] Decoded base64 to ArrayBuffer", {
+            byteLength: arrayBuffer.byteLength,
+          });
+        }
+
+        audioQueueRef.current.push(arrayBuffer);
 
         // Start playback if not already playing
         if (!isPlayingRef.current) {
@@ -396,8 +428,8 @@ export function useTTAudioPlayback(
           }
         }
       } catch (err) {
-        console.error("[TTAudioPlayback] Error decoding audio:", err);
-        voiceLog.error("[TTAudioPlayback] Error decoding audio:", err);
+        console.error("[TTAudioPlayback] Error processing audio:", err);
+        voiceLog.error("[TTAudioPlayback] Error processing audio:", err);
         onError?.(err instanceof Error ? err : new Error(String(err)));
       }
     },

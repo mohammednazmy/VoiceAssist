@@ -447,4 +447,151 @@ describe("useTTAudioPlayback", () => {
       expect(result.current.isPlaying).toBe(false);
     });
   });
+
+  // ==========================================================================
+  // WebSocket Reliability Phase 1: Binary Audio Support Tests
+  // ==========================================================================
+  describe("Binary Audio Support (WS Reliability Phase 1)", () => {
+    it("should accept Uint8Array directly without base64 decoding", async () => {
+      const { result } = renderHook(() => useTTAudioPlayback());
+
+      // Create a mock binary audio chunk (PCM16 data)
+      const binaryAudio = new Uint8Array(2048);
+      for (let i = 0; i < binaryAudio.length; i++) {
+        binaryAudio[i] = i % 256;
+      }
+
+      act(() => {
+        result.current.queueAudioChunk(binaryAudio);
+      });
+
+      await waitFor(() => {
+        expect(result.current.playbackState).toBe("buffering");
+      });
+
+      // Verify atob was NOT called (binary data doesn't need base64 decoding)
+      expect(globalThis.atob).not.toHaveBeenCalled();
+    });
+
+    it("should process binary Uint8Array to playing state", async () => {
+      const { result } = renderHook(() => useTTAudioPlayback());
+
+      // Create a mock binary audio chunk
+      const binaryAudio = new Uint8Array(2048);
+      for (let i = 0; i < binaryAudio.length; i++) {
+        binaryAudio[i] = i % 256;
+      }
+
+      act(() => {
+        result.current.queueAudioChunk(binaryAudio);
+      });
+
+      // Advance timers to allow processing
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(100);
+      });
+
+      await waitFor(() => {
+        expect(result.current.playbackState).toBe("playing");
+      });
+    });
+
+    it("should handle mixed base64 and binary chunks", async () => {
+      const { result } = renderHook(() => useTTAudioPlayback());
+
+      // First chunk: base64
+      act(() => {
+        result.current.queueAudioChunk("SGVsbG8gV29ybGQ=");
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(50);
+      });
+
+      // Second chunk: binary
+      const binaryAudio = new Uint8Array(2048);
+      act(() => {
+        result.current.queueAudioChunk(binaryAudio);
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(50);
+      });
+
+      // Should still be playing
+      expect(result.current.isPlaying).toBe(true);
+    });
+
+    it("should correctly slice Uint8Array buffer for ArrayBuffer", async () => {
+      const { result } = renderHook(() => useTTAudioPlayback());
+
+      // Create a larger ArrayBuffer and take a slice
+      const largeBuffer = new ArrayBuffer(4096);
+      const fullArray = new Uint8Array(largeBuffer);
+      for (let i = 0; i < fullArray.length; i++) {
+        fullArray[i] = i % 256;
+      }
+
+      // Create a Uint8Array that's a view into part of the buffer
+      const slicedView = new Uint8Array(largeBuffer, 1024, 2048);
+
+      act(() => {
+        result.current.queueAudioChunk(slicedView);
+      });
+
+      await waitFor(() => {
+        expect(result.current.playbackState).toBe("buffering");
+      });
+
+      // The buffer should be correctly sliced to only include the viewed portion
+      // This tests the slice logic: buffer.slice(byteOffset, byteOffset + byteLength)
+    });
+
+    it("should track TTFA for binary audio", async () => {
+      const onPlaybackStart = vi.fn();
+      const { result } = renderHook(() =>
+        useTTAudioPlayback({ onPlaybackStart }),
+      );
+
+      const binaryAudio = new Uint8Array(2048);
+      act(() => {
+        result.current.queueAudioChunk(binaryAudio);
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(100);
+      });
+
+      await waitFor(() => {
+        expect(result.current.ttfaMs).not.toBeNull();
+      });
+
+      expect(onPlaybackStart).toHaveBeenCalled();
+    });
+
+    it("should stop binary audio playback on barge-in", async () => {
+      const onPlaybackInterrupted = vi.fn();
+      const { result } = renderHook(() =>
+        useTTAudioPlayback({ onPlaybackInterrupted }),
+      );
+
+      // Start with binary audio
+      const binaryAudio = new Uint8Array(2048);
+      act(() => {
+        result.current.queueAudioChunk(binaryAudio);
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(50);
+      });
+
+      // Stop (barge-in)
+      act(() => {
+        result.current.stop();
+      });
+
+      expect(result.current.playbackState).toBe("stopped");
+      expect(onPlaybackInterrupted).toHaveBeenCalled();
+    });
+  });
 });

@@ -27,7 +27,11 @@ import {
   type TTEmotionResult,
   type TTBackchannelEvent,
 } from "./useThinkerTalkerSession";
-import { useTTAudioPlayback, type TTPlaybackState } from "./useTTAudioPlayback";
+import {
+  useTTAudioPlayback,
+  type TTPlaybackState,
+  type AudioChunkData,
+} from "./useTTAudioPlayback";
 import { useBackchannelAudio } from "./useBackchannelAudio";
 import { useBargeInPromptAudio } from "./useBargeInPromptAudio";
 import {
@@ -272,12 +276,14 @@ export function useThinkerTalkerVoiceMode(
       onAIResponse?.(content, true);
     },
 
-    // Handle audio chunks
-    onAudioChunk: (audioBase64: string) => {
+    // Handle audio chunks (supports both base64 string and binary Uint8Array)
+    onAudioChunk: (audioData: AudioChunkData) => {
+      const isBinary = audioData instanceof Uint8Array;
       console.log("[TTVoiceMode] onAudioChunk called", {
-        audioLength: audioBase64.length,
+        isBinary,
+        audioLength: isBinary ? audioData.length : (audioData as string).length,
       });
-      audioPlayback.queueAudioChunk(audioBase64);
+      audioPlayback.queueAudioChunk(audioData);
     },
 
     // Handle tool calls

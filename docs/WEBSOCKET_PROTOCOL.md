@@ -49,6 +49,7 @@ ai_summary: >-
 - [Thinker-Talker Pipeline](THINKER_TALKER_PIPELINE.md) - T/T voice architecture
 - [Voice Pipeline WebSocket API](api-reference/voice-pipeline-ws.md) - T/T WebSocket protocol
 - [Implementation Status](overview/IMPLEMENTATION_STATUS.md) - Component status
+- [WebSocket Binary Audio](voice/websocket-binary-audio.md) - Binary audio frame support (Phase 1)
 
 ---
 

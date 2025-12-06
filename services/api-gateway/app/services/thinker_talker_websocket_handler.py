@@ -12,14 +12,21 @@ Benefits over Realtime API:
 - Lower cost per interaction
 
 Phase: Thinker/Talker Voice Pipeline Migration
+
+WebSocket Reliability Enhancement (Phase 1):
+- Binary audio frame support (feature flag: backend.voice_ws_binary_audio)
+- Reduces bandwidth by ~25% by eliminating base64 encoding
+- Protocol version negotiation via session.init message
 """
 
 import asyncio
+import base64
 import json
+import struct
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from app.core.logging import get_logger
 from app.services.voice_pipeline_service import (
@@ -33,6 +40,21 @@ from app.services.voice_pipeline_service import (
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 logger = get_logger(__name__)
+
+
+# ==============================================================================
+# Binary Audio Frame Protocol Constants
+# ==============================================================================
+
+# Binary frame type identifiers
+BINARY_FRAME_AUDIO_INPUT = 0x01  # Client → Server: Audio input
+BINARY_FRAME_AUDIO_OUTPUT = 0x02  # Server → Client: Audio output
+
+# Minimum binary frame size (1 byte type + 4 bytes sequence)
+BINARY_FRAME_HEADER_SIZE = 5
+
+# Protocol version for feature negotiation
+PROTOCOL_VERSION = "2.0"
 
 
 # ==============================================================================
@@ -93,6 +115,12 @@ class TTSessionConfig:
     enable_sentiment_tracking: bool = True
     enable_discourse_analysis: bool = True
     enable_response_recommendations: bool = True
+
+    # WebSocket Reliability Enhancement: Protocol features
+    # These are negotiated during session.init and depend on feature flags
+    protocol_version: str = "1.0"  # Default to 1.0 (base64 only)
+    binary_audio_enabled: bool = False  # Set via feature flag + client negotiation
+    supported_features: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -161,6 +189,11 @@ class ThinkerTalkerWebSocketHandler:
         # Tasks
         self._receive_task: Optional[asyncio.Task] = None
         self._heartbeat_task: Optional[asyncio.Task] = None
+
+        # Binary audio frame tracking
+        self._audio_output_sequence: int = 0  # Sequence counter for binary output frames
+        self._binary_audio_feature_flag_checked: bool = False
+        self._binary_audio_feature_flag_enabled: bool = False
 
     @property
     def connection_state(self) -> TTConnectionState:
@@ -283,20 +316,38 @@ class ThinkerTalkerWebSocketHandler:
         return self._metrics
 
     async def _receive_loop(self) -> None:
-        """Receive and process messages from client."""
+        """Receive and process messages from client.
+
+        Supports both text (JSON) and binary (audio) frames.
+        Binary frame support is enabled via feature flag and client negotiation.
+        """
         logger.debug(f"[WS] Starting receive loop for {self.config.session_id}")
         try:
             while self._running:
                 try:
-                    message = await self.websocket.receive_json()
-                    self._metrics.messages_received += 1
-                    await self._handle_client_message(message)
+                    # Use low-level receive to handle both text and binary
+                    message = await self.websocket.receive()
+
+                    if message["type"] == "websocket.receive":
+                        if "bytes" in message and message["bytes"] is not None:
+                            # Binary frame - audio data
+                            await self._handle_binary_frame(message["bytes"])
+                        elif "text" in message and message["text"] is not None:
+                            # Text frame - JSON message
+                            try:
+                                json_message = json.loads(message["text"])
+                                self._metrics.messages_received += 1
+                                await self._handle_client_message(json_message)
+                            except json.JSONDecodeError as e:
+                                logger.warning(f"Invalid JSON in message: {e}")
+                                await self._send_error("invalid_json", "Invalid JSON message")
+                    elif message["type"] == "websocket.disconnect":
+                        logger.info(f"WebSocket disconnected: {self.config.session_id}")
+                        break
+
                 except WebSocketDisconnect:
                     logger.info(f"WebSocket disconnected: {self.config.session_id}")
                     break
-                except json.JSONDecodeError as e:
-                    logger.warning(f"Invalid JSON in message: {e}")
-                    await self._send_error("invalid_json", "Invalid JSON message")
                 except Exception as e:
                     logger.error(f"Error receiving message: {e}", exc_info=True)
                     self._metrics.error_count += 1
@@ -311,6 +362,65 @@ class ThinkerTalkerWebSocketHandler:
             )
             self._running = False
 
+    async def _handle_binary_frame(self, data: bytes) -> None:
+        """Handle a binary WebSocket frame.
+
+        Binary Frame Format:
+        - Byte 0: Frame type (0x01 = audio input, 0x02 = audio output)
+        - Bytes 1-4: Sequence number (big-endian uint32)
+        - Bytes 5+: Payload (raw PCM16 audio data)
+
+        Args:
+            data: Raw binary frame data
+        """
+        if len(data) < BINARY_FRAME_HEADER_SIZE:
+            logger.warning(f"Binary frame too small: {len(data)} bytes")
+            return
+
+        # Parse header
+        frame_type = data[0]
+        sequence = struct.unpack(">I", data[1:5])[0]  # Big-endian uint32
+        audio_data = data[5:]
+
+        if frame_type == BINARY_FRAME_AUDIO_INPUT:
+            # Audio input from client
+            self._metrics.messages_received += 1
+
+            # Log every 100th chunk for debugging
+            if self._metrics.messages_received % 100 == 0:
+                logger.debug(
+                    f"[WS] Binary audio chunk #{self._metrics.messages_received}, "
+                    f"seq={sequence}, {len(audio_data)} bytes raw"
+                )
+
+            # Send directly to pipeline (no base64 decode needed!)
+            if self._pipeline_session:
+                await self._pipeline_session.send_audio(audio_data)
+            else:
+                logger.warning("Received binary audio but no pipeline session")
+        else:
+            logger.warning(f"Unknown binary frame type: {frame_type}")
+
+    async def _is_binary_audio_enabled(self) -> bool:
+        """Check if binary audio is enabled via feature flag.
+
+        Caches the result to avoid repeated feature flag checks.
+        """
+        if not self._binary_audio_feature_flag_checked:
+            self._binary_audio_feature_flag_checked = True
+            try:
+                from app.services.feature_flags import feature_flag_service
+
+                self._binary_audio_feature_flag_enabled = await feature_flag_service.is_enabled(
+                    "backend.voice_ws_binary_audio"
+                )
+                logger.debug(f"Binary audio feature flag: {self._binary_audio_feature_flag_enabled}")
+            except Exception as e:
+                logger.warning(f"Failed to check binary audio feature flag: {e}")
+                self._binary_audio_feature_flag_enabled = False
+
+        return self._binary_audio_feature_flag_enabled
+
     async def _handle_client_message(self, message: Dict[str, Any]) -> None:
         """Handle a message from the client."""
         msg_type = message.get("type", "")
@@ -324,10 +434,35 @@ class ThinkerTalkerWebSocketHandler:
             voice_settings = message.get("voice_settings", {})
             conversation_id = message.get("conversation_id")
             advanced_settings = message.get("advanced_settings", {})
+
+            # WebSocket Reliability: Protocol negotiation
+            client_protocol_version = message.get("protocol_version", "1.0")
+            client_features = message.get("features", [])
+
             logger.info(
                 f"Session init received: conv_id={conversation_id}, "
-                f"settings={voice_settings}, advanced={advanced_settings}"
+                f"settings={voice_settings}, advanced={advanced_settings}, "
+                f"protocol_version={client_protocol_version}, features={client_features}"
             )
+
+            # Negotiate binary audio support
+            # Binary audio is enabled if:
+            # 1. Feature flag is enabled AND
+            # 2. Client requests "binary_audio" feature
+            binary_audio_requested = "binary_audio" in client_features
+            binary_audio_enabled = False
+
+            if binary_audio_requested:
+                binary_audio_enabled = await self._is_binary_audio_enabled()
+                if binary_audio_enabled:
+                    self.config.binary_audio_enabled = True
+                    self.config.protocol_version = PROTOCOL_VERSION
+                    self.config.supported_features = ["binary_audio"]
+                    logger.info(f"Binary audio enabled for session {self.config.session_id}")
+                else:
+                    logger.info(
+                        f"Binary audio requested but feature flag disabled for session {self.config.session_id}"
+                    )
 
             # Apply voice settings to the pipeline config
             if self._pipeline_session and voice_settings:
@@ -378,8 +513,15 @@ class ThinkerTalkerWebSocketHandler:
 
                 logger.info(f"Applied advanced settings: {advanced_settings}")
 
-            # Acknowledge the init
-            await self._send_message({"type": "session.init.ack"})
+            # Acknowledge the init with negotiated features
+            await self._send_message(
+                {
+                    "type": "session.init.ack",
+                    "protocol_version": self.config.protocol_version,
+                    "features": self.config.supported_features,
+                    "binary_audio_enabled": self.config.binary_audio_enabled,
+                }
+            )
 
         elif msg_type == "audio.input":
             # Audio chunk from client
@@ -465,24 +607,73 @@ class ThinkerTalkerWebSocketHandler:
         )
 
     async def _handle_pipeline_message(self, message: PipelineMessage) -> None:
-        """Handle a message from the voice pipeline."""
-        # Forward pipeline messages to client
-        await self._send_message(
-            {
-                "type": message.type,
-                **message.data,
-            }
-        )
+        """Handle a message from the voice pipeline.
+
+        For audio.output messages, sends binary frames if binary audio is enabled,
+        otherwise falls back to base64-encoded JSON.
+        """
+        # Special handling for audio output
+        if message.type == "audio.output" and message.data.get("audio"):
+            audio_data = message.data.get("audio")
+
+            # Track first audio latency
+            if self._metrics.first_audio_latency_ms == 0:
+                self._metrics.first_audio_latency_ms = (time.time() - self._metrics.connection_start_time) * 1000
+
+            # Send as binary if enabled, otherwise use base64 JSON
+            if self.config.binary_audio_enabled:
+                # Decode base64 audio from pipeline and send as binary
+                try:
+                    raw_audio = base64.b64decode(audio_data)
+                    await self._send_binary_audio(raw_audio)
+                except Exception as e:
+                    logger.warning(f"Failed to send binary audio: {e}, falling back to base64")
+                    await self._send_message({"type": message.type, **message.data})
+            else:
+                # Send as base64 JSON (legacy)
+                await self._send_message({"type": message.type, **message.data})
+        else:
+            # Forward other pipeline messages to client as JSON
+            await self._send_message({"type": message.type, **message.data})
 
         # Track metrics
         if message.type == "transcript.complete":
             self._metrics.user_utterance_count += 1
         elif message.type == "response.complete":
             self._metrics.ai_response_count += 1
-        elif message.type == "audio.output" and message.data.get("audio"):
-            # Track first audio latency
-            if self._metrics.first_audio_latency_ms == 0:
-                self._metrics.first_audio_latency_ms = (time.time() - self._metrics.connection_start_time) * 1000
+
+    async def _send_binary_audio(self, audio_data: bytes) -> None:
+        """Send audio data as a binary WebSocket frame.
+
+        Binary Frame Format:
+        - Byte 0: Frame type (0x02 = audio output)
+        - Bytes 1-4: Sequence number (big-endian uint32)
+        - Bytes 5+: Raw PCM audio data
+
+        Args:
+            audio_data: Raw PCM audio bytes
+        """
+        try:
+            # Build binary frame header
+            header = struct.pack(
+                ">BI",  # Big-endian: 1 byte type + 4 byte uint32
+                BINARY_FRAME_AUDIO_OUTPUT,
+                self._audio_output_sequence,
+            )
+            self._audio_output_sequence += 1
+
+            # Send binary frame
+            await self.websocket.send_bytes(header + audio_data)
+            self._metrics.messages_sent += 1
+
+            # Log every 100th frame
+            if self._audio_output_sequence % 100 == 0:
+                logger.debug(
+                    f"[WS] Sent binary audio frame #{self._audio_output_sequence}, " f"{len(audio_data)} bytes"
+                )
+        except Exception as e:
+            logger.error(f"Error sending binary audio: {e}")
+            self._metrics.error_count += 1
 
     async def _heartbeat_loop(self) -> None:
         """Send periodic heartbeats."""

@@ -482,6 +482,70 @@ export const FEATURE_FLAGS = {
         otherFlags: [],
       },
     },
+
+    // -------------------------------------------------------------------------
+    // WebSocket Reliability Enhancement Flags
+    // -------------------------------------------------------------------------
+    voice_ws_binary_audio: {
+      name: "backend.voice_ws_binary_audio",
+      description:
+        "[WS Reliability Phase 1] Enable WebSocket binary audio frames instead of base64-encoded JSON. Reduces bandwidth by ~25% and CPU overhead.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/websocket-binary-audio",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["useThinkerTalkerSession", "VoicePipelineSession"],
+        otherFlags: [],
+      },
+    },
+    voice_ws_session_persistence: {
+      name: "backend.voice_ws_session_persistence",
+      description:
+        "[WS Reliability Phase 2] Enable Redis-based session state persistence for WebSocket sessions. Allows session recovery after disconnects and horizontal scaling.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "high" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-session-persistence",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["ThinkerTalkerSessionManager", "RedisVoiceSessionStore"],
+        otherFlags: [],
+      },
+    },
+    voice_ws_graceful_degradation: {
+      name: "backend.voice_ws_graceful_degradation",
+      description:
+        "[WS Reliability Phase 3] Enable graceful degradation with client notifications when voice services fail. Provides fallback levels from full voice to text-only mode.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "high" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-graceful-degradation",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "VoiceFallbackOrchestrator",
+          "WebSocketHealthMonitor",
+          "VoiceModeStatus",
+        ],
+        otherFlags: ["backend.voice_v4_fallback_orchestration"],
+      },
+    },
   },
 
   // -------------------------------------------------------------------------
