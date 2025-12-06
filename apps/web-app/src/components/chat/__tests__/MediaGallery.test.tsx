@@ -74,7 +74,8 @@ describe("MediaGallery", () => {
     url: "https://example.com/files/document.pdf",
   };
 
-  const mockAudioAttachment: Attachment = {
+  // Reserved for future audio tests
+  const _mockAudioAttachment: Attachment = {
     id: "audio-1",
     filename: "recording.mp3",
     content_type: "audio/mpeg",

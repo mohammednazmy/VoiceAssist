@@ -869,7 +869,7 @@ class FHIRClient:
                         try:
                             error_data = await response.json()
                             issues = error_data.get("issue", [])
-                        except:
+                        except Exception:
                             issues = [{"diagnostics": text}]
                         raise FHIRValidationError(
                             f"Validation failed: {text[:200]}",

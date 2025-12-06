@@ -1,7 +1,8 @@
 ---
 title: WebSocket Connection Reliability Enhancement Plan
+slug: websocket-reliability-plan
 status: draft
-owner: backend + frontend
+owner: mixed
 lastUpdated: "2025-12-05"
 priority: high
 category: planning

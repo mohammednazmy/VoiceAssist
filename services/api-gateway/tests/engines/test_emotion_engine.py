@@ -17,11 +17,11 @@ import pytest
 
 sys.path.insert(0, "/home/asimo/VoiceAssist/services/api-gateway/app")
 
-from app.core.event_bus import VoiceEvent, VoiceEventBus
-from app.engines.emotion_engine import EmotionEngine, EmotionState, UserEmotionBaseline
-from app.engines.emotion_engine.fusion import EmotionFusion, FusionWeights
-from app.engines.emotion_engine.personalization import EmotionPersonalization
-from app.engines.emotion_engine.response_adaptation import ResponseAdaptation
+from app.core.event_bus import VoiceEvent, VoiceEventBus  # noqa: E402
+from app.engines.emotion_engine import EmotionEngine, EmotionState, UserEmotionBaseline  # noqa: E402
+from app.engines.emotion_engine.fusion import EmotionFusion, FusionWeights  # noqa: E402
+from app.engines.emotion_engine.personalization import EmotionPersonalization  # noqa: E402
+from app.engines.emotion_engine.response_adaptation import ResponseAdaptation  # noqa: E402
 
 
 class TestEmotionState:
@@ -345,7 +345,7 @@ class TestEmotionEngine:
             )
         )
 
-        result = await engine.detect_emotion(
+        await engine.detect_emotion(
             audio_data=b"fake_audio",
             session_id="test-session",
         )

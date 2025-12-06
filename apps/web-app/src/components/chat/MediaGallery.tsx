@@ -488,7 +488,7 @@ function Lightbox({
  */
 export function MediaGallery({
   attachments,
-  layout = "masonry",
+  layout: _layout = "masonry",
   enableLightbox = true,
   maxPreviewHeight = 300,
   className,

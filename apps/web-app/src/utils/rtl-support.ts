@@ -276,8 +276,8 @@ export function formatBidiText(
   const LRE = "\u202A"; // Left-to-Right Embedding
   const RLE = "\u202B"; // Right-to-Left Embedding
   const PDF = "\u202C"; // Pop Directional Formatting
-  const LRM = "\u200E"; // Left-to-Right Mark
-  const RLM = "\u200F"; // Right-to-Left Mark
+  const _LRM = "\u200E"; // Left-to-Right Mark (reserved for future use)
+  const _RLM = "\u200F"; // Right-to-Left Mark (reserved for future use)
 
   const detectedDirection = detectTextDirection(text);
 
