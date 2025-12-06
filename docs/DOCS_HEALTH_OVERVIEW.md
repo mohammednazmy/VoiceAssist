@@ -7,7 +7,7 @@ summary: >-
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-12-04"
+lastUpdated: "2025-12-05"
 audience:
   - human
   - ai-agents
@@ -168,6 +168,28 @@ Machine-readable documentation available at `https://assistdocs.asimo.io`:
 
 See [Agent API Reference](ai/AGENT_API_REFERENCE.md) for detailed endpoint documentation.
 
+### health.json vs docs-summary.json
+
+These two endpoints serve different purposes:
+
+| Endpoint              | Purpose                     | Use Case                            |
+| --------------------- | --------------------------- | ----------------------------------- |
+| **health.json**       | System health and freshness | CI/CD checks, monitoring dashboards |
+| **docs-summary.json** | AI summaries by category    | AI agents loading context           |
+
+**health.json** provides:
+
+- `health_status`: Overall system status (healthy/warning/unhealthy)
+- `scores`: Composite scores for coverage, freshness, quality
+- `stale_docs`: List of docs needing updates
+- `freshness_by_category`: Per-category freshness metrics
+
+**docs-summary.json** provides:
+
+- `stats`: AI summary coverage statistics
+- `categories`: Docs grouped by category with summaries
+- `ai_agent_docs`: Count of docs targeting AI agents
+
 ---
 
 ## Continuous Improvement
@@ -186,9 +208,20 @@ See [Agent API Reference](ai/AGENT_API_REFERENCE.md) for detailed endpoint docum
 
 ### Known TODOs
 
-- Some voice docs are missing frontmatter entirely
-- Several docs missing `ai_summary` (see validation output)
-- Consider automating `ai_summary` generation for bulk updates
+- ✅ All AI-targeted docs have `ai_summary` (100% of docs with `audience: ai-agents`)
+- 35 docs without `ai_summary` are human-only docs not targeting AI agents
+- Consider automating `ai_summary` generation for new docs
+- Monitor freshness scores to catch stale docs early
+
+### Coverage Notes
+
+The `docs-summary.json` stats show:
+
+- **Total indexed docs**: 254
+- **With ai_summary**: 219 (86% overall)
+- **Without ai_summary**: 35 (human-only docs)
+
+All docs that include `ai-agents` in their `audience` field have `ai_summary`. Docs without summaries are legacy/reference docs targeting human readers only.
 
 ---
 
@@ -203,6 +236,7 @@ See [Agent API Reference](ai/AGENT_API_REFERENCE.md) for detailed endpoint docum
 
 ## Version History
 
-| Version | Date       | Changes         |
-| ------- | ---------- | --------------- |
-| 1.0.0   | 2025-12-04 | Initial release |
+| Version | Date       | Changes                                                        |
+| ------- | ---------- | -------------------------------------------------------------- |
+| 1.1.0   | 2025-12-05 | Added health.json vs docs-summary.json section, coverage notes |
+| 1.0.0   | 2025-12-04 | Initial release                                                |

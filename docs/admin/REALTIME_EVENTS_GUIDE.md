@@ -1,5 +1,6 @@
 ---
 title: Real-Time Events Guide
+slug: admin/realtime-events-guide
 summary: Guide to the admin panel real-time event system using WebSocket and Redis pub/sub
 ai_summary: Real-time events use WebSocket connections with Redis pub/sub for live updates. Supports feature flag changes, voice session events, and system health broadcasts. Auto-reconnects with exponential backoff.
 status: stable

@@ -24,7 +24,6 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
-from app.core.config import settings as app_settings  # noqa: F401
 from app.core.feature_flags import feature_flag_service
 
 logger = logging.getLogger(__name__)

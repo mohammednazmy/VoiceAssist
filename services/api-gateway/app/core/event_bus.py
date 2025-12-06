@@ -102,6 +102,19 @@ class VoiceEventBus:
         "provider.status",  # Provider health change
         "degradation.activated",  # Fallback mode engaged
         "degradation.recovered",  # Normal mode restored
+        # Thinking Feedback (Issue 1: Unified thinking tones)
+        "thinking.started",  # Backend started thinking feedback
+        "thinking.stopped",  # Backend stopped thinking feedback
+        # Smart Acknowledgments (Issue 2: Intent classification)
+        "acknowledgment.intent",  # Intent classified from transcript
+        "acknowledgment.triggered",  # Acknowledgment phrase selected
+        "acknowledgment.played",  # Acknowledgment audio finished
+        # Progressive Response (Issue 4: Filler phrases)
+        "filler.triggered",  # Filler phrase about to play
+        "filler.played",  # Filler phrase finished
+        # Turn Management (Issue 3: Turn-taking)
+        "turn.yielded",  # AI yielded turn to user
+        "turn.taken",  # AI took turn from user
     ]
 
     def __init__(self, max_history: int = 1000):

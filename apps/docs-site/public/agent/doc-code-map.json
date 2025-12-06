@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-12-05T05:25:49.305Z",
+  "generated_at": "2025-12-05T05:47:38.257Z",
   "description": "Bidirectional mapping between documentation and repository files for AI agent navigation",
   "usage": {
     "from_doc": "Use by_doc_slug[slug].relatedPaths to find implementation files for a doc",
@@ -65,17 +65,6 @@
       "category": "feature-flags",
       "ai_summary": "Keep flags temporary (remove after stable rollout). Use descriptive names. Start with 10% rollouts. Always have rollback plan. Review flags quarterly. Document in code and commit messages."
     },
-    "cli-reference": {
-      "slug": "cli-reference",
-      "path": "admin-guide/feature-flags/cli-reference.md",
-      "component": "backend/api-gateway",
-      "relatedPaths": [
-        "services/api-gateway/scripts/init_feature_flags.py",
-        "services/api-gateway/app/api/admin_feature_flags.py"
-      ],
-      "title": "Feature Flags CLI Reference",
-      "category": "feature-flags"
-    },
     "lifecycle": {
       "slug": "lifecycle",
       "path": "admin-guide/feature-flags/lifecycle.md",
@@ -135,6 +124,45 @@
       "title": "Documentation Health Overview",
       "category": "reference",
       "ai_summary": "Single-page overview of VoiceAssist documentation health. Key metrics available at /agent/health.json: total docs, ai_summary coverage, freshness scores by category. Validation commands: pnpm validate:metadata, pnpm validate:all. AI agents should check health.json before relying on specific docs. Links to Documentation System, Agent API Reference, and Metadata Standard."
+    },
+    "admin-guide/feature-flags/cli-reference": {
+      "slug": "admin-guide/feature-flags/cli-reference",
+      "path": "admin-guide/feature-flags/cli-reference.md",
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/scripts/init_feature_flags.py",
+        "services/api-gateway/app/api/admin_feature_flags.py"
+      ],
+      "title": "Feature Flags CLI Reference",
+      "category": "feature-flags",
+      "ai_summary": "CLI commands and Python scripts for feature flag management. Key script: init_feature_flags.py (--dry-run to preview, --force to recreate, --migrate for legacy names). Also covers curl-based API calls for listing, creating, updating, and toggling feature flags via the admin API."
+    },
+    "ai/agent-api-reference": {
+      "slug": "ai/agent-api-reference",
+      "path": "ai/AGENT_API_REFERENCE.md",
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/scripts/generate-agent-json.js",
+        "apps/docs-site/scripts/generate-repo-index.mjs",
+        "apps/docs-site/scripts/generate-doc-code-map.mjs",
+        "apps/docs-site/public/agent/index.json"
+      ],
+      "title": "Agent API Reference",
+      "category": "ai",
+      "ai_summary": "Canonical reference for VoiceAssist documentation API endpoints. Base URL: https://assistdocs.asimo.io. Key endpoints: /agent/docs.json (full doc list with ai_summary), /agent/docs-summary.json (AI summaries by category), /agent/health.json (docs health metrics), /agent/tasks.json (common tasks), /search-index.json (Fuse.js search). All endpoints are static JSON generated at build time."
+    },
+    "ai/agent-task-index": {
+      "slug": "ai/agent-task-index",
+      "path": "ai/AGENT_TASK_INDEX.md",
+      "component": "platform/ai-agents",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "apps/docs-site/scripts/generate-agent-json.js",
+        "apps/docs-site/scripts/generate-doc-code-map.mjs"
+      ],
+      "title": "Agent Task Index",
+      "category": "ai",
+      "ai_summary": "Catalog of common AI agent tasks with relevant docs and commands. Tasks include: understand project status, debug backend/frontend/voice issues, update documentation, add API endpoints, work on admin panel, docs health audit, repository navigation tasks, and NEW doc-code crosswalk tasks (audit relatedPaths, explain files using docs, find feature implementations). Each task links to specific docs, code paths, API endpoints, and diagnostic commands. Use /agent/doc-code-map.json for bidirectional doc ↔ code navigation."
     },
     "docs/metadata-standard": {
       "slug": "docs/metadata-standard",
@@ -247,20 +275,6 @@
       "category": "reference",
       "ai_summary": "AI agents should use /agent/*.json endpoints for structured data. Start with index.json for available endpoints, docs-summary.json for quick context, health.json for documentation status. Use ai_summary fields in frontmatter for quick understanding."
     },
-    "ai/agent-api-reference": {
-      "slug": "ai/agent-api-reference",
-      "path": "ai/AGENT_API_REFERENCE.md",
-      "component": "frontend/docs-site",
-      "relatedPaths": [
-        "apps/docs-site/scripts/generate-agent-json.js",
-        "apps/docs-site/scripts/generate-repo-index.mjs",
-        "apps/docs-site/scripts/generate-doc-code-map.mjs",
-        "apps/docs-site/public/agent/index.json"
-      ],
-      "title": "Agent API Reference",
-      "category": "ai",
-      "ai_summary": "Canonical reference for VoiceAssist documentation API endpoints. Base URL: https://assistdocs.asimo.io. Key endpoints: /agent/docs.json (full doc list with ai_summary), /agent/docs-summary.json (AI summaries by category), /agent/health.json (docs health metrics), /agent/tasks.json (common tasks), /search-index.json (Fuse.js search). All endpoints are static JSON generated at build time."
-    },
     "ai/agent-onboarding": {
       "slug": "ai/agent-onboarding",
       "path": "ai/AGENT_ONBOARDING.md",
@@ -274,19 +288,6 @@
       "title": "AI Agent Onboarding Guide",
       "category": "ai",
       "ai_summary": "Start here for AI agents working on VoiceAssist. Key directories: services/api-gateway/ (canonical backend, FastAPI), apps/ (web-app, admin-panel, docs-site). NEVER use server/ (deprecated). Machine-readable endpoints at https://assistdocs.asimo.io/agent/*.json. Read IMPLEMENTATION_STATUS.md first for component status. HIPAA-compliant platform - follow PHI handling rules."
-    },
-    "ai/agent-task-index": {
-      "slug": "ai/agent-task-index",
-      "path": "ai/AGENT_TASK_INDEX.md",
-      "component": "platform/ai-agents",
-      "relatedPaths": [
-        "services/api-gateway/app/main.py",
-        "apps/docs-site/scripts/generate-agent-json.js",
-        "apps/docs-site/scripts/generate-doc-code-map.mjs"
-      ],
-      "title": "Agent Task Index",
-      "category": "ai",
-      "ai_summary": "Catalog of common AI agent tasks with relevant docs and commands. Tasks include: understand project status, debug backend/frontend/voice issues, update documentation, add API endpoints, work on admin panel, docs health audit, repository navigation tasks, and NEW doc-code crosswalk tasks (audit relatedPaths, explain files using docs, find feature implementations). Each task links to specific docs, code paths, API endpoints, and diagnostic commands. Use /agent/doc-code-map.json for bidirectional doc ↔ code navigation."
     },
     "ai/repo-navigation-for-agents": {
       "slug": "ai/repo-navigation-for-agents",
@@ -415,6 +416,20 @@
       "title": "RTL Support Guide",
       "category": "voice",
       "ai_summary": "RTL support implementation for Voice Mode v4.1. Covers Arabic, Urdu, Hebrew, Persian, and Pashto. Features auto dir=\"rtl\", layout mirroring, mixed content handling, and RTL TTS integration. See streaming-text-display.md for text rendering component."
+    },
+    "voice/smart-conversational-voice-design": {
+      "slug": "voice/smart-conversational-voice-design",
+      "path": "voice/smart-conversational-voice-design.md",
+      "relatedPaths": [
+        "services/api-gateway/app/services/voice_pipeline_service.py",
+        "services/api-gateway/app/services/barge_in_classifier.py",
+        "apps/web-app/src/hooks/useBargeInPromptAudio.ts",
+        "apps/web-app/src/hooks/useBackchannelAudio.ts",
+        "apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx"
+      ],
+      "title": "Smart Conversational Voice Design",
+      "category": "voice",
+      "ai_summary": "Design document for Phase 2 (Smart Acknowledgments) and Phase 3 (Natural Conversational Flow) of voice mode enhancements. Covers contextual barge-in responses, intelligent timing, and human-like conversational patterns."
     },
     "voice/speaker-diarization-service": {
       "slug": "voice/speaker-diarization-service",
@@ -1859,7 +1874,12 @@
     },
     "services/api-gateway/app/api/admin_feature_flags.py": {
       "path": "services/api-gateway/app/api/admin_feature_flags.py",
-      "docs": ["readme", "admin-panel-guide", "cli-reference", "feature-flags"],
+      "docs": [
+        "readme",
+        "admin-panel-guide",
+        "admin-guide/feature-flags/cli-reference",
+        "feature-flags"
+      ],
       "components": [
         "backend/api-gateway",
         "frontend/admin-panel",
@@ -1881,11 +1901,6 @@
       "path": "apps/admin-panel/src/pages/FeatureFlags.tsx",
       "docs": ["admin-panel-guide"],
       "component": "frontend/admin-panel"
-    },
-    "services/api-gateway/scripts/init_feature_flags.py": {
-      "path": "services/api-gateway/scripts/init_feature_flags.py",
-      "docs": ["cli-reference"],
-      "component": "backend/api-gateway"
     },
     "services/api-gateway/app/core/config.py": {
       "path": "services/api-gateway/app/core/config.py",
@@ -1921,17 +1936,71 @@
       "path": "apps/docs-site/scripts/generate-agent-json.js",
       "docs": [
         "docs-health-overview",
+        "ai/agent-api-reference",
+        "ai/agent-task-index",
         "docs/metadata-standard",
         "internal-docs-system",
         "for-ai-agents",
-        "ai/agent-api-reference",
         "ai/agent-onboarding",
-        "ai/agent-task-index",
         "debugging/docs-site",
         "documentation-site-specs",
         "start/ai-agents"
       ],
       "components": ["frontend/docs-site", "platform/ai-agents"]
+    },
+    "services/api-gateway/scripts/init_feature_flags.py": {
+      "path": "services/api-gateway/scripts/init_feature_flags.py",
+      "docs": ["admin-guide/feature-flags/cli-reference"],
+      "component": "backend/api-gateway"
+    },
+    "apps/docs-site/scripts/generate-repo-index.mjs": {
+      "path": "apps/docs-site/scripts/generate-repo-index.mjs",
+      "docs": ["ai/agent-api-reference", "ai/repo-navigation-for-agents"],
+      "components": ["frontend/docs-site", "platform/ai-agents"]
+    },
+    "apps/docs-site/scripts/generate-doc-code-map.mjs": {
+      "path": "apps/docs-site/scripts/generate-doc-code-map.mjs",
+      "docs": [
+        "ai/agent-api-reference",
+        "ai/agent-task-index",
+        "internal-docs-system",
+        "ai/repo-navigation-for-agents"
+      ],
+      "components": ["frontend/docs-site", "platform/ai-agents"]
+    },
+    "apps/docs-site/public/agent/index.json": {
+      "path": "apps/docs-site/public/agent/index.json",
+      "docs": ["ai/agent-api-reference", "for-ai-agents"],
+      "component": "frontend/docs-site"
+    },
+    "services/api-gateway/app/main.py": {
+      "path": "services/api-gateway/app/main.py",
+      "docs": [
+        "ai/agent-task-index",
+        "ai/agent-onboarding",
+        "overview/implementation-status",
+        "start-here",
+        "architecture/unified",
+        "start/admins",
+        "architecture-v2",
+        "architecture",
+        "architecture/backend",
+        "backend-skeleton-verification",
+        "integration-handoff",
+        "part2-deferred-backend-features-plan",
+        "api-reference/routes",
+        "debugging/backend",
+        "overview/architecture"
+      ],
+      "components": [
+        "platform/ai-agents",
+        "platform/status",
+        "docs/overview",
+        "platform/architecture",
+        "platform/admin",
+        "backend/api-gateway",
+        "platform/integration"
+      ]
     },
     "services/api-gateway/app/api/feature_flags_realtime.py": {
       "path": "services/api-gateway/app/api/feature_flags_realtime.py",
@@ -1947,16 +2016,6 @@
       "path": "apps/web-app/src/components/admin/FeatureFlagsManager.tsx",
       "docs": ["feature-flags"],
       "component": "backend/feature-flags"
-    },
-    "apps/docs-site/scripts/generate-doc-code-map.mjs": {
-      "path": "apps/docs-site/scripts/generate-doc-code-map.mjs",
-      "docs": [
-        "internal-docs-system",
-        "ai/agent-api-reference",
-        "ai/agent-task-index",
-        "ai/repo-navigation-for-agents"
-      ],
-      "components": ["frontend/docs-site", "platform/ai-agents"]
     },
     "docs": {
       "path": "docs",
@@ -2079,45 +2138,6 @@
       "path": "apps/admin-panel/src/hooks/useRealtimeEvents.ts",
       "docs": ["realtime-events-guide"],
       "component": "backend/websocket"
-    },
-    "apps/docs-site/public/agent/index.json": {
-      "path": "apps/docs-site/public/agent/index.json",
-      "docs": ["for-ai-agents", "ai/agent-api-reference"],
-      "component": "frontend/docs-site"
-    },
-    "apps/docs-site/scripts/generate-repo-index.mjs": {
-      "path": "apps/docs-site/scripts/generate-repo-index.mjs",
-      "docs": ["ai/agent-api-reference", "ai/repo-navigation-for-agents"],
-      "components": ["frontend/docs-site", "platform/ai-agents"]
-    },
-    "services/api-gateway/app/main.py": {
-      "path": "services/api-gateway/app/main.py",
-      "docs": [
-        "ai/agent-onboarding",
-        "ai/agent-task-index",
-        "overview/implementation-status",
-        "start-here",
-        "architecture/unified",
-        "start/admins",
-        "architecture-v2",
-        "architecture",
-        "architecture/backend",
-        "backend-skeleton-verification",
-        "integration-handoff",
-        "part2-deferred-backend-features-plan",
-        "api-reference/routes",
-        "debugging/backend",
-        "overview/architecture"
-      ],
-      "components": [
-        "platform/ai-agents",
-        "platform/status",
-        "docs/overview",
-        "platform/architecture",
-        "platform/admin",
-        "backend/api-gateway",
-        "platform/integration"
-      ]
     },
     "apps/web-app/src/App.tsx": {
       "path": "apps/web-app/src/App.tsx",
@@ -2253,6 +2273,30 @@
       "docs": ["rtl-support-guide"],
       "component": "frontend/voice"
     },
+    "services/api-gateway/app/services/voice_pipeline_service.py": {
+      "path": "services/api-gateway/app/services/voice_pipeline_service.py",
+      "docs": ["voice/smart-conversational-voice-design"]
+    },
+    "services/api-gateway/app/services/barge_in_classifier.py": {
+      "path": "services/api-gateway/app/services/barge_in_classifier.py",
+      "docs": ["voice/smart-conversational-voice-design"]
+    },
+    "apps/web-app/src/hooks/useBargeInPromptAudio.ts": {
+      "path": "apps/web-app/src/hooks/useBargeInPromptAudio.ts",
+      "docs": ["voice/smart-conversational-voice-design"]
+    },
+    "apps/web-app/src/hooks/useBackchannelAudio.ts": {
+      "path": "apps/web-app/src/hooks/useBackchannelAudio.ts",
+      "docs": ["voice/smart-conversational-voice-design"]
+    },
+    "apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx": {
+      "path": "apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx",
+      "docs": [
+        "voice/smart-conversational-voice-design",
+        "thinking-tone-settings"
+      ],
+      "component": "frontend/voice"
+    },
     "services/api-gateway/app/services/diarization_service.py": {
       "path": "services/api-gateway/app/services/diarization_service.py",
       "docs": ["voice/speaker-diarization-service"],
@@ -2265,11 +2309,6 @@
     },
     "apps/web-app/src/components/voice/ThinkingVisualIndicator.tsx": {
       "path": "apps/web-app/src/components/voice/ThinkingVisualIndicator.tsx",
-      "docs": ["thinking-tone-settings"],
-      "component": "frontend/voice"
-    },
-    "apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx": {
-      "path": "apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx",
       "docs": ["thinking-tone-settings"],
       "component": "frontend/voice"
     },
@@ -2933,9 +2972,9 @@
   },
   "meta": {
     "stats": {
-      "docs_with_links": 158,
-      "total_links": 381,
-      "unique_paths": 143,
+      "docs_with_links": 159,
+      "total_links": 386,
+      "unique_paths": 147,
       "missing_paths": 96
     },
     "missing_paths": [

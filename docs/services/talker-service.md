@@ -185,7 +185,7 @@ class TTSProvider(str, Enum):
 ### VoiceConfig
 
 > **Note:** Default voice is configured in `app/core/voice_constants.py`.
-> See [Voice Configuration](/docs/voice/voice-configuration) for details.
+> See [Voice Configuration](../voice/voice-configuration.md) for details.
 
 ```python
 from app.core.voice_constants import DEFAULT_VOICE_ID, DEFAULT_TTS_MODEL

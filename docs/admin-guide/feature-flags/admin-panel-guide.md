@@ -1,5 +1,6 @@
 ---
 title: Feature Flags Admin Panel Guide
+slug: admin-guide/feature-flags/admin-panel-guide
 status: stable
 lastUpdated: 2025-12-04
 audience: [admin, developers, ai-agents]

@@ -64,43 +64,62 @@
             "enum": [
               "human",
               "agent",
-              "backend",
-              "frontend",
-              "devops",
-              "admin",
-              "user",
-              "docs",
-              "sre",
-              "developers",
-              "ai-agents",
               "ai-agent",
-              "security-engineers",
+              "ai-agents",
+              "admin",
+              "admins",
               "architects",
+              "backend",
               "compliance-officers",
-              "stakeholders",
-              "project-managers",
+              "developers",
+              "devops",
+              "docs",
+              "frontend",
               "frontend-developers",
-              "technical-writers"
+              "project-managers",
+              "security-engineers",
+              "sre",
+              "stakeholders",
+              "technical-writers",
+              "user"
             ]
           },
-          "description": "Target readers for this document"
+          "description": "Target readers for this document. Use 'ai-agents' as canonical value for AI readers."
         },
         "category": {
           "type": "string",
           "enum": [
+            "admin",
             "ai",
             "api",
             "architecture",
             "debugging",
             "deployment",
+            "feature-flags",
+            "getting-started",
             "operations",
             "overview",
             "planning",
             "reference",
+            "releases",
             "security",
-            "testing"
+            "testing",
+            "voice"
           ],
           "description": "Document category for filtering"
+        },
+        "ai_summary": {
+          "type": "string",
+          "description": "AI-optimized 2-3 sentence summary for context loading"
+        },
+        "component": {
+          "type": "string",
+          "description": "System component identifier for doc-code crosswalk (e.g., backend/api-gateway)"
+        },
+        "relatedPaths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Repo-relative paths to related code files for doc-code crosswalk"
         },
         "tags": {
           "type": "array",

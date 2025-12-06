@@ -1,5 +1,6 @@
 ---
 title: Feature Flag Lifecycle
+slug: admin-guide/feature-flags/lifecycle
 status: stable
 lastUpdated: 2025-12-04
 audience: [developers, ai-agents]

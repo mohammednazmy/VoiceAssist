@@ -5,7 +5,7 @@ summary: Quick start guide for AI coding assistants working on VoiceAssist.
 status: stable
 stability: production
 owner: mixed
-lastUpdated: "2025-12-02"
+lastUpdated: "2025-12-05"
 audience:
   - agent
   - ai-agents
@@ -23,10 +23,12 @@ relatedPaths:
   - "apps/web-app/src/hooks/useThinkerTalkerSession.ts"
   - "apps/docs-site/scripts/generate-agent-json.js"
 ai_summary: >-
-  Last Updated: 2025-12-01 This guide helps AI coding assistants (Claude, GPT,
-  Copilot, etc.) quickly understand and work on VoiceAssist. --- VoiceAssist is
-  a HIPAA-compliant medical AI assistant platform with: - Voice Mode:
-  Thinker-Talker pipeline (Deepgram STT → GPT-4o → ElevenLabs TTS) - Text Mo...
+  Quick start for AI coding assistants. VoiceAssist is a HIPAA-compliant medical
+  AI assistant with Voice Mode (Thinker-Talker pipeline: Deepgram STT → GPT-4o →
+  ElevenLabs TTS) and Text Mode. Key dirs: services/api-gateway (backend),
+  apps/web-app (frontend). CURRENT WORK (Dec 2025): Voice enhancement addressing
+  4 issues - dual thinking tones, missing intent classification, frontend turn-taking,
+  progressive response. See Task 20 in AGENT_TASK_INDEX.md for implementation details.
 ---
 
 # AI Agent Quick Start
@@ -170,6 +172,30 @@ See [Agent API Reference](../ai/AGENT_API_REFERENCE.md) for details.
 2. TalkerService changes: `talker_service.py`
 3. WebSocket protocol: `thinker_talker_websocket_handler.py`
 4. Frontend hooks: `useThinkerTalkerSession.ts`
+
+### Voice Enhancement (Current Work - Dec 2025)
+
+The voice mode is undergoing enhancements to feel more natural and conversational:
+
+**Design Document:** [Smart Conversational Voice Design](../voice/smart-conversational-voice-design.md)
+
+**Four Critical Issues Being Addressed:**
+
+| Issue | Problem                        | Solution                                       |
+| ----- | ------------------------------ | ---------------------------------------------- |
+| 1     | Dual thinking tone systems     | Unify via VoiceEventBus, backend as source     |
+| 2     | No intent classification       | Add `IntentClassifier` to `BackchannelService` |
+| 3     | Turn-taking not in frontend    | Wire `prosody.turn_signal` to WebSocket        |
+| 4     | Progressive response not wired | Integrate `ConversationEngine` into handler    |
+
+**Key Integration Points:**
+
+- `VoiceEventBus` (`app/core/event_bus.py`) - Central pub/sub for voice events
+- `ThinkingFeedbackService` - Backend thinking tones (to replace frontend)
+- `BackchannelService` - Emotion-aware acknowledgments (to add intent classification)
+- `ConversationEngine` - Query classification and fillers (to wire to WebSocket)
+
+See [Agent Task Index - Task 20](../ai/AGENT_TASK_INDEX.md#20-voice-enhancement-implementation) for implementation details.
 
 ---
 

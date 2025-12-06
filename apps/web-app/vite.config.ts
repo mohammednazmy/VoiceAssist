@@ -41,7 +41,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: "prompt",
+      // Use autoUpdate to immediately activate new service workers
+      // This prevents stale SW issues by ensuring users always get the latest version
+      registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "favicon.svg"],
       manifest: {
         name: "VoiceAssist",
@@ -115,7 +117,18 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Immediately claim clients and skip waiting
+        // This ensures new SW takes over immediately on update
+        skipWaiting: true,
+        clientsClaim: true,
+        // Clean up outdated caches from previous versions
+        cleanupOutdatedCaches: true,
+        // Add a unique identifier to help track versions
+        additionalManifestEntries: [],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        // Navigation fallback for SPA
+        navigateFallback: "index.html",
+        navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\./,
@@ -152,7 +165,7 @@ export default defineConfig({
         ],
       },
       devOptions: {
-        enabled: true,
+        enabled: false, // Disabled to prevent stale dev SW issues in production
         type: "module",
       },
     }),

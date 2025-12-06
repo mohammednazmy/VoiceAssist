@@ -1,5 +1,6 @@
 ---
 title: "TODO: Documentation Enhancement Phase 2"
+slug: planning/docs-enhancement-phase-2
 status: draft
 lastUpdated: 2025-12-04
 owner: docs

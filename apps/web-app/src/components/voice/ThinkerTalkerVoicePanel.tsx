@@ -25,6 +25,7 @@ import { CompactVoiceBar } from "./CompactVoiceBar";
 import { VoiceExpandedDrawer } from "./VoiceExpandedDrawer";
 import { VoiceModeSettings } from "./VoiceModeSettings";
 import { EmotionIndicator } from "./EmotionIndicator";
+import { ThinkingFeedbackPanel } from "./ThinkingFeedbackPanel";
 import { useVoiceSettingsStore } from "../../stores/voiceSettingsStore";
 import { DEFAULT_VOICE_ID } from "../../lib/voiceConstants";
 
@@ -146,6 +147,27 @@ export function ThinkerTalkerVoicePanel({
             emotion={voiceMode.currentEmotion}
             size="sm"
             showDetails={false}
+          />
+        </div>
+      )}
+
+      {/* Thinking feedback: audio tones + visual indicator during processing */}
+      {voiceMode.isConnected && (
+        <div className="absolute bottom-24 left-4 z-10">
+          <ThinkingFeedbackPanel
+            isThinking={
+              voiceMode.pipelineState === "processing" ||
+              voiceMode.currentToolCalls.length > 0
+            }
+            isTTSPlaying={voiceMode.isPlaying}
+            size="sm"
+            showLabel={true}
+            label={
+              voiceMode.currentToolCalls.length > 0
+                ? `Running ${voiceMode.currentToolCalls[0]?.name || "tool"}...`
+                : "Thinking..."
+            }
+            thinkingSource={voiceMode.thinkingSource}
           />
         </div>
       )}

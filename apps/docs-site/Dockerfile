@@ -7,6 +7,7 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps ./apps
 COPY packages ./packages
+COPY docs ./docs
 RUN pnpm install --frozen-lockfile && pnpm --filter docs-site build
 
 FROM node:20-alpine

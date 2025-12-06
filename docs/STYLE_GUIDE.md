@@ -1,5 +1,6 @@
 ---
 title: VoiceAssist Documentation Style Guide
+slug: reference/style-guide
 status: stable
 lastUpdated: 2025-12-04T00:00:00.000Z
 audience:
