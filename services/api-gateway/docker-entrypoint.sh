@@ -12,7 +12,7 @@ UVICORN_CMD="uvicorn app.main:app --host 0.0.0.0 --port 8000"
 # which corresponds to the backend.voice_ws_compression feature flag
 if [ "${WS_COMPRESSION_ENABLED}" = "true" ] || [ "${WS_COMPRESSION_ENABLED}" = "True" ] || [ "${WS_COMPRESSION_ENABLED}" = "1" ]; then
     echo "[Entrypoint] WebSocket compression (permessage-deflate) ENABLED"
-    UVICORN_CMD="${UVICORN_CMD} --ws-per-message-deflate"
+    UVICORN_CMD="${UVICORN_CMD} --ws-per-message-deflate true"
 else
     echo "[Entrypoint] WebSocket compression DISABLED (default)"
 fi
