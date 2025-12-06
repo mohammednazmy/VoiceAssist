@@ -639,6 +639,69 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 other_flags=["backend.voice_v4_language_detection"],
             ),
         ),
+        #
+        # WebSocket Latency Optimization Flags
+        # ---------------------------------------------------------------------
+        "voice_ws_audio_prebuffering": FeatureFlagDefinition(
+            name="backend.voice_ws_audio_prebuffering",
+            description=(
+                "[WS Latency] Enable audio pre-buffering before playback starts. "
+                "Buffers a minimum number of audio chunks to prevent choppy playback "
+                "on networks with jitter. Default buffer: 3 chunks (~150ms)."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-latency-optimization",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["useTTAudioPlayback", "VoicePipelineSession"],
+            ),
+        ),
+        "voice_ws_compression": FeatureFlagDefinition(
+            name="backend.voice_ws_compression",
+            description=(
+                "[WS Latency] Enable WebSocket permessage-deflate compression. "
+                "Reduces bandwidth for text messages (transcripts, events) by 15-30%. "
+                "Note: Binary audio frames are not compressed as they are already efficient."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-latency-optimization",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["useThinkerTalkerSession", "VoicePipelineSession"],
+            ),
+        ),
+        "voice_ws_adaptive_chunking": FeatureFlagDefinition(
+            name="backend.voice_ws_adaptive_chunking",
+            description=(
+                "[WS Latency] Enable adaptive audio chunk sizing based on network metrics. "
+                "Adjusts chunk size dynamically: smaller chunks (1024 samples) for good networks "
+                "to reduce latency, larger chunks (4096 samples) for poor networks to reduce overhead."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-latency-optimization",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["useThinkerTalkerSession", "VoicePipelineSession"],
+            ),
+        ),
     },
     # -------------------------------------------------------------------------
     # Admin Flags - Admin panel features

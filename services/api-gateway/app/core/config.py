@@ -4,10 +4,9 @@ Application configuration
 
 from typing import Optional
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
 # Import voice defaults from single source of truth
-from app.core.voice_constants import DEFAULT_VOICE_ID, DEFAULT_TTS_MODEL
+from app.core.voice_constants import DEFAULT_TTS_MODEL, DEFAULT_VOICE_ID
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -133,6 +132,17 @@ class Settings(BaseSettings):
     BARGE_IN_ENABLED: bool = True  # Allow user to interrupt AI
     BARGE_IN_ENERGY_THRESHOLD: float = 0.05  # Audio energy threshold (0-1)
     BARGE_IN_SUSTAINED_FRAMES: int = 5  # Frames required for barge-in
+
+    # WebSocket Latency Optimization Settings
+    # These settings are controlled by feature flags in admin.asimo.io
+    # See: backend.voice_ws_audio_prebuffering, backend.voice_ws_compression,
+    #      backend.voice_ws_adaptive_chunking
+    WS_COMPRESSION_ENABLED: bool = False  # Enable permessage-deflate compression
+    WS_AUDIO_PREBUFFER_CHUNKS: int = 3  # Number of chunks to buffer before playback
+    WS_AUDIO_PREBUFFER_TIMEOUT_MS: int = 500  # Max time to wait for prebuffer
+    WS_ADAPTIVE_CHUNK_MIN: int = 1024  # Min chunk size (samples) for good networks
+    WS_ADAPTIVE_CHUNK_MAX: int = 4096  # Max chunk size (samples) for poor networks
+    WS_ADAPTIVE_CHUNK_DEFAULT: int = 2048  # Default chunk size (samples)
 
     # Deepgram STT settings
     DEEPGRAM_MODEL: str = "nova-2"  # Deepgram model
