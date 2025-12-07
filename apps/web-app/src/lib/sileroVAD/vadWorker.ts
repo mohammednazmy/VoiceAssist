@@ -55,7 +55,7 @@ async function initializeModel(modelPath: string): Promise<void> {
     const response: VADWorkerResponse = { type: "ready" };
     self.postMessage(response);
 
-    console.log("[VADWorker] Initialized with model:", modelPath);
+    console.warn("[VADWorker] Initialized with model:", modelPath);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     const response: VADWorkerResponse = { type: "error", message };

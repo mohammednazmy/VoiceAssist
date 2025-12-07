@@ -25,6 +25,9 @@ import {
   INITIAL_SILERO_STATE,
   LANGUAGE_VAD_CONFIGS,
 } from "./types";
+import { createLogger } from "../logger";
+
+const sileroLog = createLogger("SileroVAD");
 
 // ============================================================================
 // SileroVAD Class
@@ -79,7 +82,7 @@ export class SileroVAD {
    */
   async initialize(): Promise<void> {
     if (this.state.isLoaded) {
-      console.warn("[SileroVAD] Already initialized");
+      sileroLog.warn("Already initialized");
       return;
     }
 
@@ -111,9 +114,9 @@ export class SileroVAD {
       await this.waitForWorkerReady();
 
       this.state.isLoaded = true;
-      console.log("[SileroVAD] Initialized successfully");
+      sileroLog.info("Initialized successfully");
     } catch (error) {
-      console.error("[SileroVAD] Initialization failed:", error);
+      sileroLog.error("Initialization failed:", error);
       throw error;
     }
   }
@@ -172,7 +175,7 @@ export class SileroVAD {
     // Connect the audio graph
     this.sourceNode.connect(this.processorNode);
 
-    console.log("[SileroVAD] Started audio processing");
+    sileroLog.info("Started audio processing");
   }
 
   /**
@@ -200,7 +203,7 @@ export class SileroVAD {
     this.state.consecutiveSpeechWindows = 0;
     this.state.consecutiveSilenceWindows = 0;
 
-    console.log("[SileroVAD] Stopped audio processing");
+    sileroLog.info("Stopped audio processing");
   }
 
   /**
@@ -221,7 +224,7 @@ export class SileroVAD {
     }
 
     this.state = { ...INITIAL_SILERO_STATE };
-    console.log("[SileroVAD] Destroyed");
+    sileroLog.info("Destroyed");
   }
 
   // ============================================================================
@@ -240,7 +243,7 @@ export class SileroVAD {
     this.state.isCalibrating = true;
     this.calibrationSamples = [];
 
-    console.log("[SileroVAD] Starting calibration...");
+    sileroLog.info("Starting calibration...");
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
@@ -344,9 +347,8 @@ export class SileroVAD {
       recommendedVadThreshold - 0.15,
     );
 
-    console.log(
-      `[SileroVAD] Calibration complete: ${environmentType} environment, ` +
-        `threshold: ${recommendedVadThreshold.toFixed(2)}`,
+    sileroLog.info(
+      `Calibration complete: ${environmentType} environment, threshold: ${recommendedVadThreshold.toFixed(2)}`,
     );
 
     return {
@@ -499,10 +501,10 @@ export class SileroVAD {
         this.config.onCalibrationComplete?.(data);
         break;
       case "error":
-        console.error("[SileroVAD] Worker error:", message);
+        sileroLog.error("Worker error:", message);
         break;
       case "destroyed":
-        console.log("[SileroVAD] Worker destroyed");
+        sileroLog.info("Worker destroyed");
         break;
     }
   }
@@ -511,7 +513,7 @@ export class SileroVAD {
    * Handle worker errors
    */
   private handleWorkerError(error: ErrorEvent): void {
-    console.error("[SileroVAD] Worker error:", error);
+    sileroLog.error("Worker error:", error);
   }
 
   // ============================================================================

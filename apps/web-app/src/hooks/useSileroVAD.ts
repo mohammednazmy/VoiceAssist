@@ -782,15 +782,9 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
     };
   }, []);
 
-  // If VAD is disabled via feature flag, return the disabled/no-op state
-  // This allows complete disabling of VAD when backend.voice_silero_vad_enabled = false
-  if (!enabled) {
-    return disabledReturn;
-  }
-
   // Memoize return value to prevent object reference changes on every render
   // This prevents useEffect dependencies from re-triggering unnecessarily
-  return useMemo(
+  const memoizedReturn = useMemo(
     () => ({
       isListening,
       isSpeaking,
@@ -841,6 +835,14 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
       adaptiveThreshold,
     ],
   );
+
+  // If VAD is disabled via feature flag, return the disabled/no-op state
+  // This allows complete disabling of VAD when backend.voice_silero_vad_enabled = false
+  if (!enabled) {
+    return disabledReturn;
+  }
+
+  return memoizedReturn;
 }
 
 export default useSileroVAD;

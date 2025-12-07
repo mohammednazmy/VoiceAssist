@@ -364,28 +364,28 @@ export function useTTAudioPlayback(
    * Process and schedule audio chunks for gapless playback
    */
   const processAudioQueue = useCallback(async () => {
-    console.log("[TTAudioPlayback] processAudioQueue called", {
+    voiceLog.debug("[TTAudioPlayback] processAudioQueue called", {
       isProcessing: isProcessingRef.current,
       queueLength: audioQueueRef.current.length,
       isPlaying: isPlayingRef.current,
     });
 
     if (isProcessingRef.current) {
-      console.log("[TTAudioPlayback] Already processing, skipping");
+      voiceLog.debug("[TTAudioPlayback] Already processing, skipping");
       return;
     }
     if (audioQueueRef.current.length === 0) {
-      console.log("[TTAudioPlayback] Queue empty, skipping");
+      voiceLog.debug("[TTAudioPlayback] Queue empty, skipping");
       return;
     }
 
     isProcessingRef.current = true;
-    console.log("[TTAudioPlayback] Starting to process queue");
+    voiceLog.debug("[TTAudioPlayback] Starting to process queue");
 
     try {
-      console.log("[TTAudioPlayback] Getting AudioContext...");
+      voiceLog.debug("[TTAudioPlayback] Getting AudioContext...");
       const audioContext = await getAudioContext();
-      console.log("[TTAudioPlayback] AudioContext obtained", {
+      voiceLog.debug("[TTAudioPlayback] AudioContext obtained", {
         state: audioContext.state,
         sampleRate: audioContext.sampleRate,
       });
@@ -398,7 +398,7 @@ export function useTTAudioPlayback(
         const now = audioContext.currentTime;
         const scheduledAhead = nextScheduledTimeRef.current - now;
         if (scheduledAhead > MAX_SCHEDULE_LOOKAHEAD_S) {
-          console.log(
+          voiceLog.debug(
             `[TTAudioPlayback] Pausing scheduling - ${scheduledAhead.toFixed(2)}s ahead, waiting for playback to catch up`,
           );
           // Schedule a retry after some of the audio has played
@@ -412,7 +412,7 @@ export function useTTAudioPlayback(
 
         const audioData = audioQueueRef.current.shift()!;
         chunkIndex++;
-        console.log(`[TTAudioPlayback] Processing chunk ${chunkIndex}`, {
+        voiceLog.debug(`[TTAudioPlayback] Processing chunk ${chunkIndex}`, {
           byteLength: audioData.byteLength,
           queueRemaining: audioQueueRef.current.length,
         });
@@ -424,7 +424,7 @@ export function useTTAudioPlayback(
             const ttfa = firstChunkTimeRef.current - streamStartTimeRef.current;
             setTtfaMs(ttfa);
             playbackStartTimeRef.current = Date.now();
-            console.log(`[TTAudioPlayback] TTFA: ${ttfa}ms`);
+            voiceLog.debug(`[TTAudioPlayback] TTFA: ${ttfa}ms`);
             voiceLog.debug(`[TTAudioPlayback] TTFA: ${ttfa}ms`);
             onPlaybackStart?.();
           }
@@ -442,7 +442,7 @@ export function useTTAudioPlayback(
             applyCrossfade(float32, crossfadeSamples);
           }
 
-          console.log(`[TTAudioPlayback] Converted to Float32`, {
+          voiceLog.debug(`[TTAudioPlayback] Converted to Float32`, {
             pcm16Length: pcm16.length,
             float32Length: float32.length,
             crossfadeApplied: enableCrossfade,
@@ -457,7 +457,7 @@ export function useTTAudioPlayback(
             24000,
           );
           audioBuffer.getChannelData(0).set(float32);
-          console.log(`[TTAudioPlayback] Created AudioBuffer`, {
+          voiceLog.debug(`[TTAudioPlayback] Created AudioBuffer`, {
             duration: audioBuffer.duration,
             length: audioBuffer.length,
             sampleRate: audioBuffer.sampleRate,
@@ -467,7 +467,7 @@ export function useTTAudioPlayback(
           const source = audioContext.createBufferSource();
           source.buffer = audioBuffer;
           source.connect(gainNodeRef.current!);
-          console.log(`[TTAudioPlayback] Created and connected source`, {
+          voiceLog.debug(`[TTAudioPlayback] Created and connected source`, {
             gainValue: gainNodeRef.current?.gain.value,
           });
 
@@ -484,7 +484,7 @@ export function useTTAudioPlayback(
             const remainingCount = activeSourcesRef.current.size;
             // Only log when the source was tracked (reduces spam after barge-in)
             if (wasInSet) {
-              console.log(`[TTAudioPlayback] Source ended`, {
+              voiceLog.debug(`[TTAudioPlayback] Source ended`, {
                 activeSourcesCount: remainingCount,
                 streamEnded: streamEndedRef.current,
                 queueLength: audioQueueRef.current.length,
@@ -500,7 +500,7 @@ export function useTTAudioPlayback(
               streamEndedRef.current &&
               audioQueueRef.current.length === 0
             ) {
-              console.log("[TTAudioPlayback] All audio finished");
+              voiceLog.debug("[TTAudioPlayback] All audio finished");
               voiceLog.debug("[TTAudioPlayback] All audio finished");
               isPlayingRef.current = false;
               setPlaybackState("idle");
@@ -524,7 +524,7 @@ export function useTTAudioPlayback(
           // Start at the scheduled time
           const startTime = nextScheduledTimeRef.current;
           source.start(startTime);
-          console.log(`[TTAudioPlayback] Scheduled source to start`, {
+          voiceLog.debug(`[TTAudioPlayback] Scheduled source to start`, {
             startTime: startTime.toFixed(3),
             currentTime: now.toFixed(3),
             bufferDuration: audioBuffer.duration.toFixed(3),
@@ -540,7 +540,7 @@ export function useTTAudioPlayback(
           // Continue with next chunk
         }
       }
-      console.log(`[TTAudioPlayback] Finished processing loop`, {
+      voiceLog.debug(`[TTAudioPlayback] Finished processing loop`, {
         chunksProcessed: chunkIndex,
         queueRemaining: audioQueueRef.current.length,
       });
@@ -548,14 +548,14 @@ export function useTTAudioPlayback(
       console.error("[TTAudioPlayback] Error in processAudioQueue:", err);
     } finally {
       isProcessingRef.current = false;
-      console.log(
+      voiceLog.debug(
         "[TTAudioPlayback] Processing complete, isProcessing reset to false",
       );
     }
 
     // If more chunks arrived while processing, process them too
     if (audioQueueRef.current.length > 0 && isPlayingRef.current) {
-      console.log("[TTAudioPlayback] More chunks arrived, processing again");
+      voiceLog.debug("[TTAudioPlayback] More chunks arrived, processing again");
       processAudioQueue();
     }
   }, [
@@ -619,7 +619,7 @@ export function useTTAudioPlayback(
       }
 
       const isBinary = audioData instanceof Uint8Array;
-      console.log("[TTAudioPlayback] queueAudioChunk called", {
+      voiceLog.debug("[TTAudioPlayback] queueAudioChunk called", {
         dataType: isBinary ? "binary" : "base64",
         dataLength: isBinary ? audioData.byteLength : audioData.length,
         isPlaying: isPlayingRef.current,
@@ -636,7 +636,7 @@ export function useTTAudioPlayback(
         // Reset scheduling time for new stream to prevent stale future scheduling
         // This ensures audio plays immediately rather than minutes in the future
         nextScheduledTimeRef.current = 0;
-        console.log("[TTAudioPlayback] Started new stream timing");
+        voiceLog.debug("[TTAudioPlayback] Started new stream timing");
 
         // Initialize pre-buffering if enabled
         if (enablePrebuffering) {
@@ -670,7 +670,7 @@ export function useTTAudioPlayback(
           arrayBuffer = base64ToArrayBuffer(audioData);
         }
 
-        console.log("[TTAudioPlayback] Converted to ArrayBuffer", {
+        voiceLog.debug("[TTAudioPlayback] Converted to ArrayBuffer", {
           byteLength: arrayBuffer.byteLength,
         });
         audioQueueRef.current.push(arrayBuffer);
@@ -689,26 +689,26 @@ export function useTTAudioPlayback(
             );
             startPlaybackFromPrebuffer();
           } else {
-            console.log(
+            voiceLog.debug(
               `[TTAudioPlayback] Pre-buffering: ${audioQueueRef.current.length}/${prebufferChunks} chunks`,
             );
           }
         } else {
           // Normal mode or prebuffer already ready: start immediately
           if (!isPlayingRef.current) {
-            console.log(
+            voiceLog.debug(
               "[TTAudioPlayback] Starting playback (isPlaying was false)",
             );
             isPlayingRef.current = true;
             setPlaybackState("buffering");
             playNextChunk();
           } else {
-            console.log(
+            voiceLog.debug(
               "[TTAudioPlayback] Already playing, chunk queued for later processing",
             );
             // Ensure processing continues if it stopped
             if (!isProcessingRef.current && audioQueueRef.current.length > 0) {
-              console.log(
+              voiceLog.debug(
                 "[TTAudioPlayback] Triggering processAudioQueue since not processing",
               );
               playNextChunk();
@@ -838,7 +838,9 @@ export function useTTAudioPlayback(
 
       // Cancel any scheduled gain changes and reset
       gainNode.gain.cancelScheduledValues(currentTime);
-      gainNode.gain.setValueAtTime(0, currentTime); // Immediate mute
+      const currentGain = gainNode.gain.value;
+      gainNode.gain.setValueAtTime(currentGain, currentTime);
+      gainNode.gain.linearRampToValueAtTime(0, fadeEndTime);
 
       // Notify of interruption
       onPlaybackInterrupted?.();
@@ -851,7 +853,7 @@ export function useTTAudioPlayback(
         }
       }, durationMs);
     },
-    [volume, onPlaybackInterrupted],
+    [volume, onPlaybackInterrupted, stop],
   );
 
   /**
@@ -915,10 +917,15 @@ export function useTTAudioPlayback(
   useEffect(() => {
     return () => {
       const cleanedResources: string[] = [];
+      const activeSources = Array.from(activeSourcesRef.current);
+      activeSourcesRef.current = new Set();
+      const currentSource = currentSourceRef.current;
+      const gainNode = gainNodeRef.current;
+      const audioContext = audioContextRef.current;
 
       // 1. Stop all active audio sources
-      const activeCount = activeSourcesRef.current.size;
-      for (const source of activeSourcesRef.current) {
+      const activeCount = activeSources.length;
+      for (const source of activeSources) {
         try {
           source.stop();
           source.disconnect();
@@ -926,16 +933,15 @@ export function useTTAudioPlayback(
           // Already stopped
         }
       }
-      activeSourcesRef.current.clear();
       if (activeCount > 0) {
         cleanedResources.push(`activeSources(${activeCount})`);
       }
 
       // 2. Stop legacy current source
-      if (currentSourceRef.current) {
+      if (currentSource) {
         try {
-          currentSourceRef.current.stop();
-          currentSourceRef.current.disconnect();
+          currentSource.stop();
+          currentSource.disconnect();
         } catch {
           // Already stopped
         }
@@ -944,9 +950,9 @@ export function useTTAudioPlayback(
       }
 
       // 3. Disconnect gain node
-      if (gainNodeRef.current) {
+      if (gainNode) {
         try {
-          gainNodeRef.current.disconnect();
+          gainNode.disconnect();
         } catch {
           // Already disconnected
         }
@@ -955,8 +961,8 @@ export function useTTAudioPlayback(
       }
 
       // 4. Close AudioContext
-      if (audioContextRef.current) {
-        audioContextRef.current.close().catch(() => {
+      if (audioContext) {
+        audioContext.close().catch(() => {
           // Ignore close errors
         });
         audioContextRef.current = null;

@@ -8,6 +8,10 @@
  * - Browser performance metrics
  */
 
+import { createLogger } from "./logger";
+
+const telemetryLog = createLogger("VoiceTelemetry");
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -345,7 +349,7 @@ export class VoiceTelemetryService {
     this.events.push(event);
 
     if (this.config.debug) {
-      console.log("[VoiceTelemetry] Event:", event);
+      telemetryLog.debug("Event:", event);
     }
 
     // Flush if batch is full
@@ -441,7 +445,7 @@ export class VoiceTelemetryService {
     this.batchStartTime = Date.now();
 
     if (this.config.debug) {
-      console.log("[VoiceTelemetry] Flushing batch:", batch);
+      telemetryLog.debug("Flushing batch:", batch);
     }
 
     // Send batch
@@ -449,7 +453,7 @@ export class VoiceTelemetryService {
       await this.sendBatch(batch);
     } catch (error) {
       if (this.config.debug) {
-        console.error("[VoiceTelemetry] Failed to send batch:", error);
+        telemetryLog.error("Failed to send batch:", error);
       }
     }
   }
