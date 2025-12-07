@@ -551,6 +551,83 @@ export const FEATURE_FLAGS = {
     },
 
     // -------------------------------------------------------------------------
+    // WebSocket Reliability Flags - Phase 1-3
+    // -------------------------------------------------------------------------
+    voice_ws_binary_audio: {
+      name: "backend.voice_ws_binary_audio",
+      description:
+        "[WS Reliability Phase 1] Enable binary WebSocket frames for audio transmission. " +
+        "Sends audio as raw binary instead of base64-encoded JSON, reducing bandwidth by ~33% " +
+        "and CPU overhead from encoding/decoding. Includes sequence numbers for ordering.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/websocket-binary-audio",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useThinkerTalkerSession",
+          "ThinkerTalkerWebSocketHandler",
+        ],
+        otherFlags: [],
+      },
+    },
+    voice_ws_session_persistence: {
+      name: "backend.voice_ws_session_persistence",
+      description:
+        "[WS Reliability Phase 2] Enable Redis-backed session persistence for voice WebSocket sessions. " +
+        "Allows session state to survive brief disconnections and enables session recovery. " +
+        "Stores conversation context, audio buffer state, and pipeline configuration in Redis.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-session-persistence",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useThinkerTalkerSession",
+          "ThinkerTalkerWebSocketHandler",
+          "RedisSessionStore",
+        ],
+        otherFlags: [],
+      },
+    },
+    voice_ws_graceful_degradation: {
+      name: "backend.voice_ws_graceful_degradation",
+      description:
+        "[WS Reliability Phase 3] Enable graceful degradation for voice WebSocket connections. " +
+        "Automatically reduces audio quality, increases buffering, or falls back to polling " +
+        "when network conditions degrade. Provides seamless experience during connectivity issues.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-graceful-degradation",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useThinkerTalkerSession",
+          "useNetworkQuality",
+          "VoicePipelineSession",
+        ],
+        otherFlags: ["backend.voice_ws_adaptive_chunking"],
+      },
+    },
+
+    // -------------------------------------------------------------------------
     // WebSocket Error Recovery Flags
     // -------------------------------------------------------------------------
     ws_session_recovery: {
@@ -617,6 +694,130 @@ export const FEATURE_FLAGS = {
         services: ["api-gateway", "web-app"],
         components: ["useTTAudioPlayback", "ThinkerTalkerWebSocketHandler"],
         otherFlags: ["backend.ws_session_recovery"],
+      },
+    },
+
+    // -------------------------------------------------------------------------
+    // WebSocket Advanced Features - Phase: WebSocket Advanced Features
+    // -------------------------------------------------------------------------
+    ws_webrtc_fallback: {
+      name: "backend.ws_webrtc_fallback",
+      description:
+        "Enable WebRTC data channel as fallback transport for voice streaming. " +
+        "Provides 20-50ms lower latency than WebSocket for supported browsers.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["TransportManager", "WebRTCTransport"],
+        otherFlags: [],
+      },
+    },
+    ws_webrtc_prefer: {
+      name: "backend.ws_webrtc_prefer",
+      description:
+        "Prefer WebRTC over WebSocket when both are available. " +
+        "Only applies when ws_webrtc_fallback is enabled.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["TransportManager"],
+        otherFlags: ["backend.ws_webrtc_fallback"],
+      },
+    },
+    ws_adaptive_bitrate: {
+      name: "backend.ws_adaptive_bitrate",
+      description:
+        "Enable adaptive bitrate control based on network conditions. " +
+        "Automatically adjusts audio codec/bitrate (PCM16 → Opus 24k → Opus 12k).",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["AdaptiveBitrateController", "VoicePipelineSession"],
+        otherFlags: [],
+      },
+    },
+    ws_adaptive_bitrate_aggressive: {
+      name: "backend.ws_adaptive_bitrate_aggressive",
+      description:
+        "Use aggressive bitrate switching with shorter hysteresis window. " +
+        "May cause more frequent quality changes but faster adaptation.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["AdaptiveBitrateController"],
+        otherFlags: ["backend.ws_adaptive_bitrate"],
+      },
+    },
+    ws_aec_feedback: {
+      name: "backend.ws_aec_feedback",
+      description:
+        "Enable AEC (Acoustic Echo Cancellation) metrics feedback from client to server. " +
+        "Allows intelligent VAD sensitivity adjustment during TTS playback.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["AECMonitor", "VoicePipelineSession"],
+        otherFlags: [],
+      },
+    },
+    ws_aec_barge_gate: {
+      name: "backend.ws_aec_barge_gate",
+      description:
+        "Enable barge-in gating based on AEC convergence state. " +
+        "Prevents false speech detection from echo during TTS playback.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["AECMonitor"],
+        otherFlags: ["backend.ws_aec_feedback"],
       },
     },
   },

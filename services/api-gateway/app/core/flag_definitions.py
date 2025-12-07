@@ -703,6 +703,70 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
             ),
         ),
         #
+        # WebSocket Reliability Flags - Phase 1-3
+        # ---------------------------------------------------------------------
+        "voice_ws_binary_audio": FeatureFlagDefinition(
+            name="backend.voice_ws_binary_audio",
+            description=(
+                "[WS Reliability Phase 1] Enable binary WebSocket frames for audio transmission. "
+                "Sends audio as raw binary instead of base64-encoded JSON, reducing bandwidth by ~33% "
+                "and CPU overhead from encoding/decoding. Includes sequence numbers for ordering."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-binary-audio",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["useThinkerTalkerSession", "ThinkerTalkerWebSocketHandler"],
+            ),
+        ),
+        "voice_ws_session_persistence": FeatureFlagDefinition(
+            name="backend.voice_ws_session_persistence",
+            description=(
+                "[WS Reliability Phase 2] Enable Redis-backed session persistence for voice WebSocket sessions. "
+                "Allows session state to survive brief disconnections and enables session recovery. "
+                "Stores conversation context, audio buffer state, and pipeline configuration in Redis."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-session-persistence",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["useThinkerTalkerSession", "ThinkerTalkerWebSocketHandler", "RedisSessionStore"],
+            ),
+        ),
+        "voice_ws_graceful_degradation": FeatureFlagDefinition(
+            name="backend.voice_ws_graceful_degradation",
+            description=(
+                "[WS Reliability Phase 3] Enable graceful degradation for voice WebSocket connections. "
+                "Automatically reduces audio quality, increases buffering, or falls back to polling "
+                "when network conditions degrade. Provides seamless experience during connectivity issues."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-graceful-degradation",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["useThinkerTalkerSession", "useNetworkQuality", "VoicePipelineSession"],
+                other_flags=["backend.voice_ws_adaptive_chunking"],
+            ),
+        ),
+        #
         # WebSocket Error Recovery Flags
         # ---------------------------------------------------------------------
         "ws_session_recovery": FeatureFlagDefinition(
@@ -765,6 +829,132 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 services=["api-gateway", "web-app"],
                 components=["useTTAudioPlayback", "ThinkerTalkerWebSocketHandler"],
                 other_flags=["backend.ws_session_recovery"],
+            ),
+        ),
+        #
+        # WebSocket Advanced Features Flags
+        # ---------------------------------------------------------------------
+        "ws_webrtc_fallback": FeatureFlagDefinition(
+            name="backend.ws_webrtc_fallback",
+            description=(
+                "[WS Advanced] Enable WebRTC data channel as transport fallback. "
+                "WebRTC provides 20-50ms lower latency than WebSocket due to UDP "
+                "transport. Falls back to WebSocket if WebRTC negotiation fails."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["TransportManager", "WebRTCTransport", "ThinkerTalkerWebSocketHandler"],
+            ),
+        ),
+        "ws_webrtc_prefer": FeatureFlagDefinition(
+            name="backend.ws_webrtc_prefer",
+            description=(
+                "[WS Advanced] Prefer WebRTC transport over WebSocket when available. "
+                "When enabled, the client will attempt WebRTC first and only fall back "
+                "to WebSocket if WebRTC is not supported or negotiation fails."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["TransportManager", "WebRTCTransport"],
+                other_flags=["backend.ws_webrtc_fallback"],
+            ),
+        ),
+        "ws_adaptive_bitrate": FeatureFlagDefinition(
+            name="backend.ws_adaptive_bitrate",
+            description=(
+                "[WS Advanced] Enable adaptive audio bitrate based on network quality. "
+                "Dynamically adjusts audio codec and bitrate: PCM16 (256kbps) for excellent "
+                "networks, Opus 24k for good networks, Opus 12k for poor networks."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["AdaptiveBitrateController", "AudioEncoder", "AudioDecoder"],
+            ),
+        ),
+        "ws_adaptive_bitrate_aggressive": FeatureFlagDefinition(
+            name="backend.ws_adaptive_bitrate_aggressive",
+            description=(
+                "[WS Advanced] Enable aggressive adaptive bitrate switching. "
+                "Reduces hysteresis for quality changes, allowing faster adaptation "
+                "to network conditions at the cost of more frequent codec switches."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["AdaptiveBitrateController"],
+                other_flags=["backend.ws_adaptive_bitrate"],
+            ),
+        ),
+        "ws_aec_feedback": FeatureFlagDefinition(
+            name="backend.ws_aec_feedback",
+            description=(
+                "[WS Advanced] Enable echo cancellation feedback loop from client to server. "
+                "Client reports AEC metrics (residual echo level, AEC state, output energy) "
+                "to server for intelligent VAD sensitivity adjustment during TTS playback."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["AECMonitor", "AECFeedbackProcessor", "useTTAudioPlayback"],
+            ),
+        ),
+        "ws_aec_barge_gate": FeatureFlagDefinition(
+            name="backend.ws_aec_barge_gate",
+            description=(
+                "[WS Advanced] Gate barge-in based on AEC state. "
+                "Temporarily disables barge-in during TTS playback when echo is detected, "
+                "preventing the AI from 'hearing' its own output as user speech."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["AECFeedbackProcessor", "VoicePipelineSession"],
+                other_flags=["backend.ws_aec_feedback"],
             ),
         ),
     },

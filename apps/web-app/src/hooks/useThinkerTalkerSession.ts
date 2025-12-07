@@ -671,6 +671,10 @@ export function useThinkerTalkerSession(
   const binaryProtocolEnabledRef = useRef(false);
   const audioSequenceRef = useRef(0);
 
+  // Negotiated feature flags (confirmed by server)
+  const negotiatedFeaturesRef = useRef<Set<string>>(new Set());
+  const [negotiatedFeatures, setNegotiatedFeatures] = useState<string[]>([]);
+
   // Sequence validation state (for message ordering guarantees)
   const expectedSequenceRef = useRef(0);
   const reorderBufferRef = useRef<Map<number, Record<string, unknown>>>(
@@ -1088,18 +1092,36 @@ export function useThinkerTalkerSession(
 
         case "session.init.ack": {
           // Protocol negotiation response from server
-          const negotiatedFeatures = (message.features as string[]) || [];
+          const features = (message.features as string[]) || [];
           const protocolVersion = message.protocol_version as string;
 
           voiceLog.debug(
-            `[ThinkerTalker] Protocol negotiated: version=${protocolVersion}, features=${negotiatedFeatures.join(", ")}`,
+            `[ThinkerTalker] Protocol negotiated: version=${protocolVersion}, features=${features.join(", ")}`,
           );
 
+          // Store negotiated features
+          negotiatedFeaturesRef.current = new Set(features);
+          setNegotiatedFeatures(features);
+
           // Enable binary protocol if negotiated
-          if (negotiatedFeatures.includes("binary_audio")) {
+          if (features.includes("binary_audio")) {
             binaryProtocolEnabledRef.current = true;
             audioSequenceRef.current = 0;
             voiceLog.info("[ThinkerTalker] Binary audio protocol enabled");
+          }
+
+          // Log other enabled features
+          if (features.includes("audio_prebuffering")) {
+            voiceLog.info("[ThinkerTalker] Audio prebuffering enabled");
+          }
+          if (features.includes("adaptive_chunking")) {
+            voiceLog.info("[ThinkerTalker] Adaptive chunking enabled");
+          }
+          if (features.includes("session_persistence")) {
+            voiceLog.info("[ThinkerTalker] Session persistence enabled");
+          }
+          if (features.includes("graceful_degradation")) {
+            voiceLog.info("[ThinkerTalker] Graceful degradation enabled");
           }
           break;
         }
@@ -2042,8 +2064,16 @@ export function useThinkerTalkerSession(
             protocol_version: "2.0",
             conversation_id: conversationId || null,
             voice_settings: options.voiceSettings || {},
-            // Request binary audio and message batching (server will confirm if enabled)
-            features: ["binary_audio", "message_batching"],
+            // Request all WebSocket optimization and reliability features
+            // Server will confirm which ones are enabled via feature flags
+            features: [
+              "binary_audio", // Phase 1 WS Reliability: Binary frames
+              "message_batching", // Message batching for efficiency
+              "audio_prebuffering", // WS Latency: Jitter buffer
+              "adaptive_chunking", // WS Latency: Network-aware chunks
+              "session_persistence", // Phase 2 WS Reliability: Redis sessions
+              "graceful_degradation", // Phase 3 WS Reliability: Fallback handling
+            ],
           };
           ws.send(JSON.stringify(initMessage));
 
@@ -2670,6 +2700,23 @@ export function useThinkerTalkerSession(
       activeToolCalls: conversationManager.activeToolCalls,
       registerToolCall: conversationManager.registerToolCall,
       updateToolCallStatus: conversationManager.updateToolCallStatus,
+    },
+
+    // WebSocket Feature Flags (negotiated with server)
+    negotiatedFeatures,
+    hasFeature: (feature: string) => negotiatedFeaturesRef.current.has(feature),
+    featureFlags: {
+      binaryAudio: negotiatedFeaturesRef.current.has("binary_audio"),
+      messageBatching: negotiatedFeaturesRef.current.has("message_batching"),
+      audioPrebuffering:
+        negotiatedFeaturesRef.current.has("audio_prebuffering"),
+      adaptiveChunking: negotiatedFeaturesRef.current.has("adaptive_chunking"),
+      sessionPersistence: negotiatedFeaturesRef.current.has(
+        "session_persistence",
+      ),
+      gracefulDegradation: negotiatedFeaturesRef.current.has(
+        "graceful_degradation",
+      ),
     },
   };
 }
