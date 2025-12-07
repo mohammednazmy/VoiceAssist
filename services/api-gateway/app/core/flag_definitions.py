@@ -703,6 +703,70 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
             ),
         ),
         #
+        # WebSocket Reliability Flags - Phase 1-3
+        # ---------------------------------------------------------------------
+        "voice_ws_binary_audio": FeatureFlagDefinition(
+            name="backend.voice_ws_binary_audio",
+            description=(
+                "[WS Reliability Phase 1] Enable binary WebSocket frames for audio transmission. "
+                "Sends audio as raw binary instead of base64-encoded JSON, reducing bandwidth by ~33% "
+                "and CPU overhead from encoding/decoding. Includes sequence numbers for ordering."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-binary-audio",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["useThinkerTalkerSession", "ThinkerTalkerWebSocketHandler"],
+            ),
+        ),
+        "voice_ws_session_persistence": FeatureFlagDefinition(
+            name="backend.voice_ws_session_persistence",
+            description=(
+                "[WS Reliability Phase 2] Enable Redis-backed session persistence for voice WebSocket sessions. "
+                "Allows session state to survive brief disconnections and enables session recovery. "
+                "Stores conversation context, audio buffer state, and pipeline configuration in Redis."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-session-persistence",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["useThinkerTalkerSession", "ThinkerTalkerWebSocketHandler", "RedisSessionStore"],
+            ),
+        ),
+        "voice_ws_graceful_degradation": FeatureFlagDefinition(
+            name="backend.voice_ws_graceful_degradation",
+            description=(
+                "[WS Reliability Phase 3] Enable graceful degradation for voice WebSocket connections. "
+                "Automatically reduces audio quality, increases buffering, or falls back to polling "
+                "when network conditions degrade. Provides seamless experience during connectivity issues."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-graceful-degradation",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["useThinkerTalkerSession", "useNetworkQuality", "VoicePipelineSession"],
+                other_flags=["backend.voice_ws_adaptive_chunking"],
+            ),
+        ),
+        #
         # WebSocket Advanced Features Flags
         # ---------------------------------------------------------------------
         "ws_webrtc_fallback": FeatureFlagDefinition(

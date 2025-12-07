@@ -550,6 +550,83 @@ export const FEATURE_FLAGS = {
       },
     },
 
+    // -------------------------------------------------------------------------
+    // WebSocket Reliability Flags - Phase 1-3
+    // -------------------------------------------------------------------------
+    voice_ws_binary_audio: {
+      name: "backend.voice_ws_binary_audio",
+      description:
+        "[WS Reliability Phase 1] Enable binary WebSocket frames for audio transmission. " +
+        "Sends audio as raw binary instead of base64-encoded JSON, reducing bandwidth by ~33% " +
+        "and CPU overhead from encoding/decoding. Includes sequence numbers for ordering.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/websocket-binary-audio",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useThinkerTalkerSession",
+          "ThinkerTalkerWebSocketHandler",
+        ],
+        otherFlags: [],
+      },
+    },
+    voice_ws_session_persistence: {
+      name: "backend.voice_ws_session_persistence",
+      description:
+        "[WS Reliability Phase 2] Enable Redis-backed session persistence for voice WebSocket sessions. " +
+        "Allows session state to survive brief disconnections and enables session recovery. " +
+        "Stores conversation context, audio buffer state, and pipeline configuration in Redis.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-session-persistence",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useThinkerTalkerSession",
+          "ThinkerTalkerWebSocketHandler",
+          "RedisSessionStore",
+        ],
+        otherFlags: [],
+      },
+    },
+    voice_ws_graceful_degradation: {
+      name: "backend.voice_ws_graceful_degradation",
+      description:
+        "[WS Reliability Phase 3] Enable graceful degradation for voice WebSocket connections. " +
+        "Automatically reduces audio quality, increases buffering, or falls back to polling " +
+        "when network conditions degrade. Provides seamless experience during connectivity issues.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-graceful-degradation",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useThinkerTalkerSession",
+          "useNetworkQuality",
+          "VoicePipelineSession",
+        ],
+        otherFlags: ["backend.voice_ws_adaptive_chunking"],
+      },
+    },
+
     // WebSocket Advanced Features - Phase: WebSocket Advanced Features
     ws_webrtc_fallback: {
       name: "backend.ws_webrtc_fallback",

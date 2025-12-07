@@ -132,3 +132,81 @@ export const UI_FLAG_DESCRIPTIONS: Record<UIFlagKey, string> = {
     "Tabbed profile/settings with security and preferences",
   [UI_FLAGS.CONTEXT_PANE]: "Collapsible right pane for citations and context",
 };
+
+// ============================================================================
+// WebSocket Advanced Features Flags
+// ============================================================================
+
+/**
+ * WebSocket Advanced Features Flag Keys
+ *
+ * Feature flags for WebSocket transport enhancements including
+ * WebRTC fallback, adaptive bitrate, and AEC feedback.
+ */
+export const WS_ADVANCED_FLAGS = {
+  /**
+   * WebRTC Fallback
+   *
+   * Enable WebRTC data channel as fallback transport for voice streaming.
+   * Provides 20-50ms lower latency than WebSocket for supported browsers.
+   */
+  WEBRTC_FALLBACK: "backend.ws_webrtc_fallback",
+
+  /**
+   * WebRTC Prefer
+   *
+   * Prefer WebRTC over WebSocket when both are available.
+   * Only applies when WEBRTC_FALLBACK is enabled.
+   */
+  WEBRTC_PREFER: "backend.ws_webrtc_prefer",
+
+  /**
+   * Adaptive Bitrate
+   *
+   * Enable adaptive bitrate control based on network conditions.
+   * Automatically adjusts audio codec/bitrate (PCM16 → Opus 24k → Opus 12k).
+   */
+  ADAPTIVE_BITRATE: "backend.ws_adaptive_bitrate",
+
+  /**
+   * Adaptive Bitrate Aggressive
+   *
+   * Use aggressive bitrate switching with shorter hysteresis window.
+   * May cause more frequent quality changes but faster adaptation.
+   */
+  ADAPTIVE_BITRATE_AGGRESSIVE: "backend.ws_adaptive_bitrate_aggressive",
+
+  /**
+   * AEC Feedback
+   *
+   * Enable AEC (Acoustic Echo Cancellation) metrics feedback from client to server.
+   * Allows intelligent VAD sensitivity adjustment during TTS playback.
+   */
+  AEC_FEEDBACK: "backend.ws_aec_feedback",
+
+  /**
+   * AEC Barge Gate
+   *
+   * Enable barge-in gating based on AEC convergence state.
+   * Prevents false speech detection from echo during TTS playback.
+   */
+  AEC_BARGE_GATE: "backend.ws_aec_barge_gate",
+} as const;
+
+/**
+ * Type for WS Advanced flag keys
+ */
+export type WSAdvancedFlagKey =
+  (typeof WS_ADVANCED_FLAGS)[keyof typeof WS_ADVANCED_FLAGS];
+
+/**
+ * Default values for WS Advanced flags when backend is unavailable
+ */
+export const WS_ADVANCED_FLAG_DEFAULTS: Record<WSAdvancedFlagKey, boolean> = {
+  [WS_ADVANCED_FLAGS.WEBRTC_FALLBACK]: false,
+  [WS_ADVANCED_FLAGS.WEBRTC_PREFER]: false,
+  [WS_ADVANCED_FLAGS.ADAPTIVE_BITRATE]: false,
+  [WS_ADVANCED_FLAGS.ADAPTIVE_BITRATE_AGGRESSIVE]: false,
+  [WS_ADVANCED_FLAGS.AEC_FEEDBACK]: false,
+  [WS_ADVANCED_FLAGS.AEC_BARGE_GATE]: false,
+};

@@ -1901,3 +1901,239 @@ async def get_pipeline_status(
         },
         "active_sessions": thinker_talker_session_manager.get_active_session_count(),
     }
+
+
+# ==============================================================================
+# WebRTC Signaling Endpoints
+# ==============================================================================
+
+
+@router.post(
+    "/webrtc/session",
+    summary="Create WebRTC signaling session",
+    description="Initialize a WebRTC signaling session for voice transport",
+)
+async def create_webrtc_session(
+    voice_session_id: str | None = None,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Create a new WebRTC signaling session.
+
+    This endpoint initializes signaling for a WebRTC voice connection.
+    WebRTC provides lower latency than WebSocket for audio streaming.
+
+    Args:
+        voice_session_id: Optional voice session ID to link
+        current_user: Authenticated user
+
+    Returns:
+        Session info with ICE server configuration
+    """
+    from app.services.webrtc_signaling_service import webrtc_signaling_service
+
+    if not webrtc_signaling_service.is_enabled():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="WebRTC transport is not enabled",
+        )
+
+    session = webrtc_signaling_service.create_session(
+        user_id=str(current_user.id),
+        voice_session_id=voice_session_id,
+    )
+
+    return {
+        "session_id": session.session_id,
+        "state": session.state.value,
+        "ice_servers": webrtc_signaling_service.get_ice_servers(),
+        "data_channel_label": session.data_channel_label,
+    }
+
+
+@router.post(
+    "/webrtc/session/{session_id}/offer",
+    summary="Submit SDP offer",
+    description="Submit client's SDP offer for WebRTC negotiation",
+)
+async def submit_webrtc_offer(
+    session_id: str,
+    offer_sdp: str,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Submit the client's SDP offer.
+
+    Args:
+        session_id: WebRTC session ID
+        offer_sdp: SDP offer from client
+        current_user: Authenticated user
+
+    Returns:
+        SDP answer from server
+    """
+    from app.services.webrtc_signaling_service import webrtc_signaling_service
+
+    session = webrtc_signaling_service.get_session(session_id)
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="WebRTC session not found",
+        )
+
+    if session.user_id != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized for this session",
+        )
+
+    if not webrtc_signaling_service.set_offer(session_id, offer_sdp):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to set offer",
+        )
+
+    answer_sdp = webrtc_signaling_service.create_answer(session_id)
+    if not answer_sdp:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create answer",
+        )
+
+    return {
+        "session_id": session_id,
+        "answer_sdp": answer_sdp,
+        "state": webrtc_signaling_service.get_session(session_id).state.value,
+    }
+
+
+@router.post(
+    "/webrtc/session/{session_id}/ice-candidate",
+    summary="Add ICE candidate",
+    description="Add an ICE candidate from the client",
+)
+async def add_ice_candidate(
+    session_id: str,
+    candidate: str,
+    sdp_mid: str | None = None,
+    sdp_m_line_index: int | None = None,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Add an ICE candidate to the session.
+
+    Args:
+        session_id: WebRTC session ID
+        candidate: ICE candidate string
+        sdp_mid: SDP media ID
+        sdp_m_line_index: SDP m-line index
+        current_user: Authenticated user
+
+    Returns:
+        Success status
+    """
+    from app.services.webrtc_signaling_service import ICECandidate, webrtc_signaling_service
+
+    session = webrtc_signaling_service.get_session(session_id)
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="WebRTC session not found",
+        )
+
+    if session.user_id != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized for this session",
+        )
+
+    ice_candidate = ICECandidate(
+        candidate=candidate,
+        sdpMid=sdp_mid,
+        sdpMLineIndex=sdp_m_line_index,
+    )
+
+    if not webrtc_signaling_service.add_ice_candidate(session_id, ice_candidate, from_remote=True):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to add ICE candidate",
+        )
+
+    return {"success": True, "candidates_count": len(session.remote_candidates)}
+
+
+@router.get(
+    "/webrtc/session/{session_id}",
+    summary="Get WebRTC session info",
+    description="Get current state of a WebRTC signaling session",
+)
+async def get_webrtc_session(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get WebRTC session information.
+
+    Args:
+        session_id: WebRTC session ID
+        current_user: Authenticated user
+
+    Returns:
+        Session info
+    """
+    from app.services.webrtc_signaling_service import webrtc_signaling_service
+
+    session_info = webrtc_signaling_service.get_session_info(session_id)
+    if not session_info:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="WebRTC session not found",
+        )
+
+    session = webrtc_signaling_service.get_session(session_id)
+    if session.user_id != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized for this session",
+        )
+
+    return session_info
+
+
+@router.delete(
+    "/webrtc/session/{session_id}",
+    summary="Close WebRTC session",
+    description="Close and cleanup a WebRTC signaling session",
+)
+async def close_webrtc_session(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Close a WebRTC session.
+
+    Args:
+        session_id: WebRTC session ID
+        current_user: Authenticated user
+
+    Returns:
+        Success status
+    """
+    from app.services.webrtc_signaling_service import webrtc_signaling_service
+
+    session = webrtc_signaling_service.get_session(session_id)
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="WebRTC session not found",
+        )
+
+    if session.user_id != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized for this session",
+        )
+
+    webrtc_signaling_service.close_session(session_id)
+
+    return {"success": True, "session_id": session_id}
