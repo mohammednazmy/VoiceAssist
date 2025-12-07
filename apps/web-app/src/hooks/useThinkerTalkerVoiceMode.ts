@@ -63,6 +63,51 @@ export interface TTVoiceModeOptions {
   enableBackchannel?: boolean;
   /** Callback when backchannel plays (Phase 2) */
   onBackchannelPlay?: (phrase: string) => void;
+
+  // Silero VAD Feature Flag Options
+  // These are controlled via admin panel feature flags (backend.voice_silero_*)
+
+  /**
+   * Enable/disable Silero VAD entirely
+   * Feature flag: backend.voice_silero_vad_enabled
+   * Default: true
+   */
+  sileroVADEnabled?: boolean;
+
+  /**
+   * Echo suppression mode during AI playback
+   * Feature flag: backend.voice_silero_echo_suppression_mode
+   * Default: "threshold_boost"
+   */
+  sileroEchoSuppressionMode?: "none" | "pause" | "threshold_boost";
+
+  /**
+   * Base speech detection threshold (0-1)
+   * Feature flag: backend.voice_silero_positive_threshold
+   * Default: 0.5
+   */
+  sileroPositiveThreshold?: number;
+
+  /**
+   * Threshold boost added during AI playback
+   * Feature flag: backend.voice_silero_playback_threshold_boost
+   * Default: 0.2
+   */
+  sileroPlaybackThresholdBoost?: number;
+
+  /**
+   * Minimum speech duration in ms
+   * Feature flag: backend.voice_silero_min_speech_ms
+   * Default: 150
+   */
+  sileroMinSpeechMs?: number;
+
+  /**
+   * Minimum speech duration during AI playback in ms
+   * Feature flag: backend.voice_silero_playback_min_speech_ms
+   * Default: 200
+   */
+  sileroPlaybackMinSpeechMs?: number;
 }
 
 export interface TTVoiceModeReturn {
@@ -161,6 +206,13 @@ export function useThinkerTalkerVoiceMode(
     onEmotionDetected,
     enableBackchannel = true,
     onBackchannelPlay,
+    // Silero VAD Feature Flag Options (with defaults matching documentation)
+    sileroVADEnabled = true,
+    sileroEchoSuppressionMode = "threshold_boost",
+    sileroPositiveThreshold = 0.5,
+    sileroPlaybackThresholdBoost = 0.2,
+    sileroMinSpeechMs = 150,
+    sileroPlaybackMinSpeechMs = 200,
   } = options;
 
   // Phase 1: Emotion state
@@ -503,7 +555,12 @@ export function useThinkerTalkerVoiceMode(
   // Silero VAD for reliable local voice activity detection
   // Uses neural network model (much more accurate than RMS threshold)
   // Phase 1: Echo-aware mode keeps VAD active during AI playback with elevated threshold
+  // All parameters are now configurable via feature flags (backend.voice_silero_*)
   const sileroVAD = useSileroVAD({
+    // Master enable/disable via feature flag (backend.voice_silero_vad_enabled)
+    // When false, VAD will not initialize - provides rollback lever if issues occur
+    enabled: sileroVADEnabled,
+
     onSpeechStart: () => {
       voiceLog.debug("[TTVoiceMode] Silero VAD: Speech started");
 
@@ -537,22 +594,22 @@ export function useThinkerTalkerVoiceMode(
     },
     // Don't auto-start - we'll start when connected
     autoStart: false,
-    // Use moderate sensitivity for barge-in detection
-    positiveSpeechThreshold: 0.5,
-    negativeSpeechThreshold: 0.35,
-    // Require ~150ms of speech to avoid false triggers
-    minSpeechMs: 150,
 
-    // Phase 1: Echo Cancellation - use threshold_boost mode instead of pausing VAD
-    // This keeps VAD active during playback with a higher threshold to filter echo
-    // while still allowing real user speech to trigger barge-in
-    echoSuppressionMode: "threshold_boost",
-    // Raise threshold by 0.2 during playback (0.5 + 0.2 = 0.7)
-    // This requires stronger speech signal to overcome echo
-    playbackThresholdBoost: 0.2,
-    // Require at least 200ms of speech during playback to be considered real
-    // This filters out short echo bursts from TTS
-    playbackMinSpeechMs: 200,
+    // Speech detection thresholds (configurable via feature flags)
+    // backend.voice_silero_positive_threshold (default: 0.5)
+    positiveSpeechThreshold: sileroPositiveThreshold,
+    // Negative threshold is typically 70% of positive threshold
+    negativeSpeechThreshold: sileroPositiveThreshold * 0.7,
+    // backend.voice_silero_min_speech_ms (default: 150)
+    minSpeechMs: sileroMinSpeechMs,
+
+    // Echo Cancellation settings (configurable via feature flags)
+    // backend.voice_silero_echo_suppression_mode (default: "threshold_boost")
+    echoSuppressionMode: sileroEchoSuppressionMode,
+    // backend.voice_silero_playback_threshold_boost (default: 0.2)
+    playbackThresholdBoost: sileroPlaybackThresholdBoost,
+    // backend.voice_silero_playback_min_speech_ms (default: 200)
+    playbackMinSpeechMs: sileroPlaybackMinSpeechMs,
   });
 
   // Keep sileroVAD ref updated for use in effects

@@ -44,6 +44,14 @@ import { voiceLog } from "../lib/logger";
 export type EchoSuppressionMode = "pause" | "threshold_boost" | "none";
 
 export interface SileroVADOptions {
+  /**
+   * Master enable/disable for Silero VAD.
+   * When false, VAD will not initialize and all operations become no-ops.
+   * This is controlled by feature flag: backend.voice_silero_vad_enabled
+   * Default: true
+   */
+  enabled?: boolean;
+
   /** Called when speech starts (user begins talking) */
   onSpeechStart?: () => void;
   /** Called when speech ends, with audio data */
@@ -250,6 +258,8 @@ export interface VADStateMessage {
 
 export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
   const {
+    // Master enable flag (feature flag: backend.voice_silero_vad_enabled)
+    enabled = true,
     onSpeechStart,
     onSpeechEnd,
     onVADMisfire,
@@ -271,6 +281,53 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
     minAdaptiveThreshold = 0.3,
     maxAdaptiveThreshold = 0.8,
   } = options;
+
+  // If VAD is disabled via feature flag, return a disabled/no-op state
+  // This allows the feature to be completely rolled back without code changes
+  const disabledReturn = useMemo(
+    (): SileroVADReturn => ({
+      isListening: false,
+      isSpeaking: false,
+      isLoading: false,
+      error: null,
+      start: async () => {
+        voiceLog.debug(
+          "[SileroVAD] VAD disabled via feature flag - start() is no-op",
+        );
+      },
+      pause: () => {},
+      stop: () => {},
+      isReady: false,
+      setPlaybackActive: () => {},
+      isPlaybackActive: false,
+      effectiveThreshold: positiveSpeechThreshold,
+      lastSpeechProbability: 0,
+      speechDurationMs: 0,
+      getVADState: () => ({
+        type: "vad.state" as const,
+        silero_confidence: 0,
+        is_speaking: false,
+        speech_duration_ms: 0,
+        is_playback_active: false,
+        effective_threshold: positiveSpeechThreshold,
+      }),
+      isCalibrating: false,
+      isCalibrated: false,
+      noiseFloor: 0,
+      calibrateNoise: async () => {},
+      adaptiveThreshold: positiveSpeechThreshold,
+    }),
+    [positiveSpeechThreshold],
+  );
+
+  // Log when VAD is disabled
+  useEffect(() => {
+    if (!enabled) {
+      voiceLog.info(
+        "[SileroVAD] VAD disabled via feature flag (backend.voice_silero_vad_enabled = false)",
+      );
+    }
+  }, [enabled]);
 
   // State
   const [isListening, setIsListening] = useState(false);
@@ -724,6 +781,12 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
       }
     };
   }, []);
+
+  // If VAD is disabled via feature flag, return the disabled/no-op state
+  // This allows complete disabling of VAD when backend.voice_silero_vad_enabled = false
+  if (!enabled) {
+    return disabledReturn;
+  }
 
   // Memoize return value to prevent object reference changes on every render
   // This prevents useEffect dependencies from re-triggering unnecessarily
