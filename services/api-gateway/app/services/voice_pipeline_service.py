@@ -361,6 +361,10 @@ class PipelineConfig:
     # Maximum segments to aggregate before forcing processing
     utterance_max_segments: int = 5
 
+    # Natural Conversation Flow: Pre-emptive Listening
+    # When enabled, keeps STT active during AI speech for faster barge-in
+    enable_preemptive_listening: bool = True
+
 
 @dataclass
 class PipelineMessage:
@@ -508,6 +512,11 @@ class VoicePipelineSession:
                 config=aggregator_config,
                 on_utterance_ready=self._handle_aggregated_utterance,
             )
+
+        # Natural Conversation Flow: Phase 4 - Pre-emptive Listening
+        # Buffer transcripts captured during AI speech for immediate use on barge-in
+        self._preemptive_transcript_buffer: str = ""
+        self._preemptive_listening_active: bool = False
 
     @property
     def state(self) -> PipelineState:
@@ -709,31 +718,45 @@ class VoicePipelineSession:
         Args:
             audio_data: Raw PCM16 audio bytes
         """
-        if self._cancelled or self._state not in (
-            PipelineState.LISTENING,
-            PipelineState.IDLE,
-        ):
+        # Natural Conversation Flow: Phase 4 - Pre-emptive Listening
+        # When enabled, continue sending audio to STT during SPEAKING state
+        # This allows faster barge-in detection with ready transcript
+        is_preemptive = self.config.enable_preemptive_listening and self._state == PipelineState.SPEAKING
+
+        if self._cancelled:
             if self._metrics.audio_chunks_received == 0:
-                logger.warning(f"Dropping audio - state: {self._state}, cancelled: {self._cancelled}")
+                logger.warning(f"Dropping audio - cancelled: {self._cancelled}")
             return
+
+        if self._state not in (PipelineState.LISTENING, PipelineState.IDLE):
+            if not is_preemptive:
+                if self._metrics.audio_chunks_received == 0:
+                    logger.warning(f"Dropping audio - state: {self._state}")
+                return
+            # Pre-emptive listening: mark that we're actively listening during speech
+            if not self._preemptive_listening_active:
+                self._preemptive_listening_active = True
+                self._preemptive_transcript_buffer = ""
+                logger.debug("[Pipeline] Pre-emptive listening activated during AI speech")
 
         self._metrics.audio_chunks_received += 1
 
         # Log every 100 chunks to confirm audio flow
         if self._metrics.audio_chunks_received % 100 == 0:
-            logger.debug(f"Audio chunk #{self._metrics.audio_chunks_received}, {len(audio_data)} bytes")
+            mode = "preemptive" if is_preemptive else "normal"
+            logger.debug(f"Audio chunk #{self._metrics.audio_chunks_received}, {len(audio_data)} bytes ({mode})")
 
         # Send to STT
         if self._stt_session:
             await self._stt_session.send_audio(audio_data)
 
-        # Send to emotion detection (parallel, non-blocking)
-        if self._emotion_session:
+        # Send to emotion detection (parallel, non-blocking) - only during normal listening
+        if self._emotion_session and not is_preemptive:
             await self._emotion_session.add_audio(audio_data, sample_rate=self.config.stt_sample_rate)
 
-        # Track speech duration for backchanneling
+        # Track speech duration for backchanneling - only during normal listening
         current_time = time.time()
-        if self._backchannel_session and self._speech_start_time:
+        if self._backchannel_session and self._speech_start_time and not is_preemptive:
             speech_duration_ms = int((current_time - self._speech_start_time) * 1000)
             await self._backchannel_session.on_speech_continue(speech_duration_ms)
 
@@ -805,9 +828,18 @@ class VoicePipelineSession:
             if self._thinker_session:
                 await self._thinker_session.cancel()
 
+            # Natural Conversation Flow: Phase 4 - Pre-emptive Listening
+            # Use the pre-emptive transcript buffer if available
+            preemptive_transcript = ""
+            if self._preemptive_listening_active and self._preemptive_transcript_buffer:
+                preemptive_transcript = self._preemptive_transcript_buffer
+                logger.info(f"[Pipeline] Using pre-emptive buffer for barge-in: '{preemptive_transcript}'")
+            self._preemptive_listening_active = False
+            self._preemptive_transcript_buffer = ""
+
             # Reset to listening state
             self._state = PipelineState.LISTENING
-            self._partial_transcript = ""
+            self._partial_transcript = preemptive_transcript  # Start with buffered text
             self._final_transcript = ""
             self._transcript_confidence = 1.0  # Phase 7: Reset confidence
 
@@ -1152,6 +1184,12 @@ class VoicePipelineSession:
         self._partial_transcript = text
         self._transcript_confidence = confidence  # Phase 7: Track for repair strategies
         self._last_transcript_time = time.time()  # Track for pause detection
+
+        # Natural Conversation Flow: Phase 4 - Pre-emptive Listening
+        # Buffer transcripts during AI speech for instant availability on barge-in
+        if self._preemptive_listening_active and self._state == PipelineState.SPEAKING:
+            self._preemptive_transcript_buffer = text
+            logger.debug(f"[Pipeline] Pre-emptive buffer updated: '{text}'")
 
         # Trigger barge-in if AI is speaking and we got substantial speech
         # Requires multiple words or a command word to avoid false positives from noise
