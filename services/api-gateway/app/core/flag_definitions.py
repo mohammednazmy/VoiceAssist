@@ -852,6 +852,49 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
             ),
         ),
         #
+        # WebSocket Protocol Optimization Flags
+        # ---------------------------------------------------------------------
+        "ws_binary_protocol": FeatureFlagDefinition(
+            name="backend.ws_binary_protocol",
+            description=(
+                "[WS Protocol] Enable binary WebSocket protocol for all message types. "
+                "Uses binary framing with MessagePack serialization instead of JSON. "
+                "Reduces message size by 20-40% and improves parsing performance."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["ThinkerTalkerWebSocketHandler", "useThinkerTalkerSession"],
+            ),
+        ),
+        "ws_message_batching": FeatureFlagDefinition(
+            name="backend.ws_message_batching",
+            description=(
+                "[WS Protocol] Enable message batching for WebSocket communication. "
+                "Groups multiple small messages into batched frames to reduce overhead. "
+                "Configurable batch window (default 50ms) and max batch size (default 10)."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["ThinkerTalkerWebSocketHandler", "WebSocketMessageBatcher"],
+            ),
+        ),
+        #
         # WebSocket Advanced Features Flags
         # ---------------------------------------------------------------------
         "ws_webrtc_fallback": FeatureFlagDefinition(
@@ -975,6 +1018,137 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 services=["api-gateway", "web-app"],
                 components=["AECFeedbackProcessor", "VoicePipelineSession"],
                 other_flags=["backend.ws_aec_feedback"],
+            ),
+        ),
+        #
+        # Natural Conversation Flow Flags
+        # ---------------------------------------------------------------------
+        "voice_instant_barge_in": FeatureFlagDefinition(
+            name="backend.voice_instant_barge_in",
+            description=(
+                "[Natural Conversation] Enable instant barge-in using Deepgram SpeechStarted event. "
+                "Immediately stops AI audio on any detected speech, reducing barge-in latency from "
+                "200-300ms to <50ms. Uses rapid audio fade-out (50ms) for smooth transition."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/natural-conversation-flow",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["useThinkerTalkerSession", "useTTAudioPlayback", "ThinkerTalkerWebSocketHandler"],
+            ),
+        ),
+        "voice_continuation_detection": FeatureFlagDefinition(
+            name="backend.voice_continuation_detection",
+            description=(
+                "[Natural Conversation] Enable continuation detection for natural pauses. "
+                "Analyzes speech patterns (trailing words, filler words, prosody) to predict when "
+                "user intends to continue speaking. Dynamically extends silence threshold."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/natural-conversation-flow",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["SilencePredictor", "ContinuationDetector"],
+            ),
+        ),
+        "voice_utterance_aggregation": FeatureFlagDefinition(
+            name="backend.voice_utterance_aggregation",
+            description=(
+                "[Natural Conversation] Enable multi-segment utterance aggregation. "
+                "Accumulates speech segments within a time window and merges them into coherent "
+                "queries before sending to Thinker. Prevents loss of context when user speaks in fragments."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/natural-conversation-flow",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["UtteranceAggregator", "UtteranceWindowManager", "ThinkerTalkerWebSocketHandler"],
+                other_flags=["backend.voice_continuation_detection"],
+            ),
+        ),
+        "voice_preemptive_listening": FeatureFlagDefinition(
+            name="backend.voice_preemptive_listening",
+            description=(
+                "[Natural Conversation] Keep STT active during AI speech for faster barge-in. "
+                "Buffers incoming transcripts during AI playback so transcript is immediately "
+                "available when barge-in is confirmed. Reduces response delay after interruption."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/natural-conversation-flow",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["useThinkerTalkerSession", "VoicePipelineSession"],
+                other_flags=["backend.voice_instant_barge_in"],
+            ),
+        ),
+        "voice_aggregation_window_ms": FeatureFlagDefinition(
+            name="backend.voice_aggregation_window_ms",
+            description=(
+                "[Natural Conversation] Maximum time (ms) to wait for speech continuation. "
+                "After silence is detected, waits this long for user to resume before processing. "
+                "Longer values allow more natural pauses but increase response latency."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.NUMBER,
+            default_value=3000,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="low",
+                min_value=1000,
+                max_value=10000,
+                docs_url="https://assistdocs.asimo.io/voice/natural-conversation-flow",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["UtteranceAggregator"],
+                other_flags=["backend.voice_utterance_aggregation"],
+            ),
+        ),
+        "voice_min_barge_in_confidence": FeatureFlagDefinition(
+            name="backend.voice_min_barge_in_confidence",
+            description=(
+                "[Natural Conversation] Minimum VAD confidence (0-1) to trigger barge-in. "
+                "Lower values make barge-in more sensitive (may cause false triggers). "
+                "Higher values require stronger speech signal (may miss quiet interruptions)."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.NUMBER,
+            default_value=0.3,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="low",
+                min_value=0.0,
+                max_value=1.0,
+                docs_url="https://assistdocs.asimo.io/voice/natural-conversation-flow",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["OverlapHandler", "BargeInClassifier"],
+                other_flags=["backend.voice_instant_barge_in"],
             ),
         ),
     },
