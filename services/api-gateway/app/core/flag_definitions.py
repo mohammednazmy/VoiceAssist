@@ -1151,6 +1151,111 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 other_flags=["backend.voice_instant_barge_in"],
             ),
         ),
+        #
+        # Audio Quality Enhancement Flags
+        # ---------------------------------------------------------------------
+        "voice_crisp_quality_preset": FeatureFlagDefinition(
+            name="backend.voice_crisp_quality_preset",
+            description=(
+                "[Audio Quality] Enable CRISP quality preset for highest audio quality. "
+                "Uses larger text chunks, higher TTS stability, and optimized SSML pauses. "
+                "Slightly higher latency (~350-450ms TTFA) but eliminates choppiness."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/audio-quality-presets",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["TalkerService", "useTTAudioPlayback", "VoiceSettings"],
+            ),
+        ),
+        "voice_high_quality_tts_model": FeatureFlagDefinition(
+            name="backend.voice_high_quality_tts_model",
+            description=(
+                "[Audio Quality] Use eleven_turbo_v2_5 instead of eleven_flash_v2_5. "
+                "Turbo model provides better prosody and voice quality at ~50ms higher latency. "
+                "Recommended for CRISP preset."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/audio-quality-presets",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                components=["ElevenLabsService", "TalkerService"],
+            ),
+        ),
+        "voice_audio_crossfade": FeatureFlagDefinition(
+            name="backend.voice_audio_crossfade",
+            description=(
+                "[Audio Quality] Enable crossfade between audio chunks for seamless playback. "
+                "Applies a 5-10ms crossfade at chunk boundaries to eliminate pops/clicks. "
+                "Works best with CRISP preset and larger audio chunks."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/audio-quality-presets",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["useTTAudioPlayback", "AudioWorkletProcessor"],
+            ),
+        ),
+        "voice_enhanced_prebuffering": FeatureFlagDefinition(
+            name="backend.voice_enhanced_prebuffering",
+            description=(
+                "[Audio Quality] Increase pre-buffer from 3 to 5 audio chunks (~250ms). "
+                "Provides more buffer against network jitter at cost of slightly higher "
+                "initial latency. Recommended for CRISP preset."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/audio-quality-presets",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["useTTAudioPlayback"],
+                other_flags=["backend.voice_ws_audio_prebuffering"],
+            ),
+        ),
+        "voice_default_quality_preset": FeatureFlagDefinition(
+            name="backend.voice_default_quality_preset",
+            description=(
+                "[Audio Quality] Default quality preset for voice mode. "
+                "Options: 'speed', 'balanced', 'natural', 'crisp'. "
+                "Determines chunk sizes, TTS parameters, and audio processing."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.STRING,
+            default_value="balanced",
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="medium",
+                allowed_values=["speed", "balanced", "natural", "crisp"],
+                docs_url="https://assistdocs.asimo.io/voice/audio-quality-presets",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["TalkerService", "VoiceSettings"],
+            ),
+        ),
     },
     # -------------------------------------------------------------------------
     # Admin Flags - Admin panel features

@@ -28,6 +28,7 @@ class VoiceStyle(str, Enum):
     CONVERSATIONAL = "conversational"  # Default - natural speech
     NARRATION = "narration"  # Longer pauses, more dramatic
     QUICK = "quick"  # Shorter pauses for fast responses
+    CRISP = "crisp"  # Optimized for audio clarity - balanced pauses, clear articulation
 
 
 @dataclass
@@ -86,6 +87,16 @@ STYLE_PRESETS = {
         paragraph_pause_ms=300,
         question_pause_ms=180,
         exclamation_pause_ms=140,
+    ),
+    VoiceStyle.CRISP: SSMLConfig(
+        # Optimized for clear, high-quality audio output
+        # Slightly longer pauses than conversational for better prosody
+        sentence_pause_ms=350,  # Clear sentence boundaries
+        clause_pause_ms=220,  # Natural breathing points
+        list_item_pause_ms=420,  # Distinct list items
+        paragraph_pause_ms=650,  # Clear topic transitions
+        question_pause_ms=380,  # Emphasize questions
+        exclamation_pause_ms=300,  # Clear emphasis
     ),
 }
 

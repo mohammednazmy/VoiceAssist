@@ -39,10 +39,28 @@ import { voiceLog } from "../lib/logger";
 const DEFAULT_PREBUFFER_CHUNKS = 3;
 
 /**
+ * Enhanced pre-buffer size for CRISP quality preset.
+ * 5 chunks = ~250ms buffer, provides more headroom against network jitter.
+ */
+const ENHANCED_PREBUFFER_CHUNKS = 5;
+
+/**
  * Maximum buffer size before we start playing anyway.
  * Prevents infinite buffering if stream is very slow.
  */
 const MAX_PREBUFFER_WAIT_MS = 500;
+
+/**
+ * Crossfade duration in samples for smooth chunk transitions.
+ * At 24kHz, 120 samples = 5ms crossfade (eliminates pops/clicks)
+ */
+const CROSSFADE_SAMPLES = 120;
+
+/**
+ * Crossfade duration in samples for enhanced mode.
+ * At 24kHz, 240 samples = 10ms crossfade (smoother transitions)
+ */
+const ENHANCED_CROSSFADE_SAMPLES = 240;
 
 // ============================================================================
 // Types
@@ -82,6 +100,23 @@ export interface TTAudioPlaybackOptions {
    * Default: 500ms
    */
   prebufferTimeoutMs?: number;
+
+  // Audio Quality Enhancement Options
+  /**
+   * Enable crossfade between audio chunks for seamless playback.
+   * Applies a fade-in/fade-out at chunk boundaries to eliminate pops/clicks.
+   * Default: false (disabled, controlled by feature flag)
+   */
+  enableCrossfade?: boolean;
+  /**
+   * Use enhanced settings for higher audio quality.
+   * When enabled:
+   * - Uses 5-chunk prebuffer instead of 3 (~250ms vs ~150ms)
+   * - Uses 10ms crossfade instead of 5ms
+   * Designed for CRISP quality preset.
+   * Default: false
+   */
+  enhancedQuality?: boolean;
 }
 
 /**
@@ -200,6 +235,33 @@ function createWavFromPcm(
 // Hook Implementation
 // ============================================================================
 
+/**
+ * Apply crossfade to audio samples for smooth chunk transitions.
+ * Modifies the Float32Array in-place with fade-in at start and fade-out at end.
+ *
+ * @param samples - Audio samples to modify (Float32Array)
+ * @param crossfadeSamples - Number of samples for fade duration
+ */
+function applyCrossfade(samples: Float32Array, crossfadeSamples: number): void {
+  const length = samples.length;
+  if (length < crossfadeSamples * 2) {
+    // Audio too short for crossfade, skip
+    return;
+  }
+
+  // Apply fade-in at the start
+  for (let i = 0; i < crossfadeSamples; i++) {
+    const fadeIn = i / crossfadeSamples;
+    samples[i] *= fadeIn;
+  }
+
+  // Apply fade-out at the end
+  for (let i = 0; i < crossfadeSamples; i++) {
+    const fadeOut = 1 - i / crossfadeSamples;
+    samples[length - 1 - i] *= fadeOut;
+  }
+}
+
 export function useTTAudioPlayback(
   options: TTAudioPlaybackOptions = {},
 ): TTAudioPlaybackReturn {
@@ -210,9 +272,22 @@ export function useTTAudioPlayback(
     onError,
     // Pre-buffering options (WS Latency Optimization)
     enablePrebuffering = false,
-    prebufferChunks = DEFAULT_PREBUFFER_CHUNKS,
+    prebufferChunks: prebufferChunksOption,
     prebufferTimeoutMs = MAX_PREBUFFER_WAIT_MS,
+    // Audio Quality Enhancement options
+    enableCrossfade = false,
+    enhancedQuality = false,
   } = options;
+
+  // Determine effective prebuffer size based on enhanced quality mode
+  const prebufferChunks =
+    prebufferChunksOption ??
+    (enhancedQuality ? ENHANCED_PREBUFFER_CHUNKS : DEFAULT_PREBUFFER_CHUNKS);
+
+  // Determine crossfade samples based on enhanced quality mode
+  const crossfadeSamples = enhancedQuality
+    ? ENHANCED_CROSSFADE_SAMPLES
+    : CROSSFADE_SAMPLES;
 
   // State
   const [playbackState, setPlaybackState] = useState<TTPlaybackState>("idle");
@@ -329,9 +404,16 @@ export function useTTAudioPlayback(
           for (let i = 0; i < pcm16.length; i++) {
             float32[i] = pcm16[i] / 32768; // Normalize to -1 to 1
           }
+
+          // Apply crossfade for seamless chunk transitions (Audio Quality Enhancement)
+          if (enableCrossfade) {
+            applyCrossfade(float32, crossfadeSamples);
+          }
+
           console.log(`[TTAudioPlayback] Converted to Float32`, {
             pcm16Length: pcm16.length,
             float32Length: float32.length,
+            crossfadeApplied: enableCrossfade,
             sampleValues: [float32[0], float32[100], float32[1000]],
           });
 
@@ -430,7 +512,13 @@ export function useTTAudioPlayback(
       console.log("[TTAudioPlayback] More chunks arrived, processing again");
       processAudioQueue();
     }
-  }, [getAudioContext, onPlaybackStart, onPlaybackEnd]);
+  }, [
+    getAudioContext,
+    onPlaybackStart,
+    onPlaybackEnd,
+    enableCrossfade,
+    crossfadeSamples,
+  ]);
 
   /**
    * Legacy function name for compatibility
