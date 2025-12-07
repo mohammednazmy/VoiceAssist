@@ -119,15 +119,14 @@ describe("useThinkerTalkerSession - Message Handling", () => {
   });
 
   describe("transcript events", () => {
-    it("should update partialTranscript on transcript.partial message", async () => {
+    it("should update partialTranscript on transcript.delta message", async () => {
       const { result } = renderHook(() => useThinkerTalkerSession());
       const ws = await connectHook(result);
 
       await act(async () => {
         ws.receiveMessage({
-          type: "transcript.partial",
+          type: "transcript.delta",
           text: "Hello, how are",
-          is_final: false,
         });
       });
 
@@ -136,15 +135,14 @@ describe("useThinkerTalkerSession - Message Handling", () => {
       });
     });
 
-    it("should update transcript on transcript.final message", async () => {
+    it("should update transcript on transcript.complete message", async () => {
       const { result } = renderHook(() => useThinkerTalkerSession());
       const ws = await connectHook(result);
 
       await act(async () => {
         ws.receiveMessage({
-          type: "transcript.final",
+          type: "transcript.complete",
           text: "Hello, how are you?",
-          is_final: true,
         });
       });
 
@@ -162,10 +160,8 @@ describe("useThinkerTalkerSession - Message Handling", () => {
 
       await act(async () => {
         ws.receiveMessage({
-          type: "transcript.final",
+          type: "transcript.complete",
           text: "Test transcript",
-          is_final: true,
-          timestamp: Date.now(),
         });
       });
 
@@ -187,9 +183,8 @@ describe("useThinkerTalkerSession - Message Handling", () => {
 
       await act(async () => {
         ws.receiveMessage({
-          type: "transcript.final",
+          type: "transcript.complete",
           text: "Hello",
-          is_final: true,
         });
       });
 
@@ -266,7 +261,7 @@ describe("useThinkerTalkerSession - Message Handling", () => {
   });
 
   describe("audio events", () => {
-    it("should call onAudioChunk callback on audio.chunk message", async () => {
+    it("should call onAudioChunk callback on audio.output message", async () => {
       const onAudioChunk = vi.fn();
       const { result } = renderHook(() =>
         useThinkerTalkerSession({ onAudioChunk }),
@@ -275,7 +270,7 @@ describe("useThinkerTalkerSession - Message Handling", () => {
 
       await act(async () => {
         ws.receiveMessage({
-          type: "audio.chunk",
+          type: "audio.output",
           audio: "base64encodedaudiodata",
         });
       });
@@ -291,7 +286,7 @@ describe("useThinkerTalkerSession - Message Handling", () => {
 
       await act(async () => {
         ws.receiveMessage({
-          type: "pipeline.state",
+          type: "voice.state",
           state: "speaking",
         });
       });
@@ -302,14 +297,14 @@ describe("useThinkerTalkerSession - Message Handling", () => {
     });
   });
 
-  describe("pipeline.state events", () => {
-    it("should update pipelineState on pipeline.state message", async () => {
+  describe("voice.state events", () => {
+    it("should update pipelineState on voice.state message", async () => {
       const { result } = renderHook(() => useThinkerTalkerSession());
       const ws = await connectHook(result);
 
       await act(async () => {
         ws.receiveMessage({
-          type: "pipeline.state",
+          type: "voice.state",
           state: "listening",
         });
       });
@@ -329,7 +324,7 @@ describe("useThinkerTalkerSession - Message Handling", () => {
 
       await act(async () => {
         ws.receiveMessage({
-          type: "pipeline.state",
+          type: "voice.state",
           state: "processing",
         });
       });
@@ -345,7 +340,7 @@ describe("useThinkerTalkerSession - Message Handling", () => {
 
       await act(async () => {
         ws.receiveMessage({
-          type: "pipeline.state",
+          type: "voice.state",
           state: "processing",
         });
       });
@@ -375,10 +370,9 @@ describe("useThinkerTalkerSession - Message Handling", () => {
       await act(async () => {
         ws.receiveMessage({
           type: "tool.call",
-          id: "tool-123",
-          name: "search",
+          tool_id: "tool-123",
+          tool_name: "search",
           arguments: { query: "test" },
-          status: "running",
         });
       });
 
@@ -402,10 +396,9 @@ describe("useThinkerTalkerSession - Message Handling", () => {
       await act(async () => {
         ws.receiveMessage({
           type: "tool.call",
-          id: "tool-123",
-          name: "search",
+          tool_id: "tool-123",
+          tool_name: "search",
           arguments: { query: "test" },
-          status: "running",
         });
       });
 
@@ -427,10 +420,9 @@ describe("useThinkerTalkerSession - Message Handling", () => {
       await act(async () => {
         ws.receiveMessage({
           type: "tool.call",
-          id: "tool-123",
-          name: "search",
+          tool_id: "tool-123",
+          tool_name: "search",
           arguments: { query: "test" },
-          status: "running",
         });
       });
 
@@ -438,8 +430,7 @@ describe("useThinkerTalkerSession - Message Handling", () => {
       await act(async () => {
         ws.receiveMessage({
           type: "tool.result",
-          id: "tool-123",
-          status: "completed",
+          tool_call_id: "tool-123",
           result: { results: ["item1", "item2"] },
         });
       });
@@ -463,18 +454,16 @@ describe("useThinkerTalkerSession - Message Handling", () => {
       await act(async () => {
         ws.receiveMessage({
           type: "tool.call",
-          id: "tool-123",
-          name: "search",
+          tool_id: "tool-123",
+          tool_name: "search",
           arguments: {},
-          status: "running",
         });
       });
 
       await act(async () => {
         ws.receiveMessage({
           type: "tool.result",
-          id: "tool-123",
-          status: "completed",
+          tool_call_id: "tool-123",
           result: { data: "test" },
         });
       });
@@ -493,10 +482,9 @@ describe("useThinkerTalkerSession - Message Handling", () => {
       await act(async () => {
         ws.receiveMessage({
           type: "tool.call",
-          id: "tool-123",
-          name: "search",
+          tool_id: "tool-123",
+          tool_name: "search",
           arguments: {},
-          status: "running",
         });
       });
 
