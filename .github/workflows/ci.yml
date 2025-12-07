@@ -295,7 +295,7 @@ jobs:
         ports:
           - 9292:9292
         options: >-
-          --health-cmd "wget -q -O /dev/null http://localhost:9292/diagnostic/status/heartbeat || exit 1"
+          --health-cmd "ruby -e \"require 'net/http'; exit(Net::HTTP.get_response(URI('http://localhost:9292/diagnostic/status/heartbeat')).is_a?(Net::HTTPSuccess) ? 0 : 1)\""
           --health-interval 15s
           --health-timeout 10s
           --health-retries 25
