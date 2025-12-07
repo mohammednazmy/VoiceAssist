@@ -380,6 +380,7 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
   const noiseSamplesRef = useRef<number[] | null>(null);
   const isCalibratingRef = useRef(false);
   const noiseCalibrationResolveRef = useRef<(() => void) | null>(null);
+  const lastEngineThresholdRef = useRef(positiveSpeechThreshold);
 
   // Keep callback refs updated to avoid stale closures
   const onSpeechStartRef = useRef(onSpeechStart);
@@ -434,6 +435,63 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
   const effectiveNegativeThreshold = useMemo(() => {
     return Math.min(0.9, Math.max(0.05, effectiveThreshold * negativeRatio));
   }, [effectiveThreshold, negativeRatio]);
+
+  // If adaptive threshold changes after calibration, reinitialize VAD to apply it.
+  useEffect(() => {
+    if (!enableAdaptiveThreshold) {
+      lastEngineThresholdRef.current = baseAdaptiveThreshold;
+      return;
+    }
+
+    const delta = Math.abs(
+      baseAdaptiveThreshold - lastEngineThresholdRef.current,
+    );
+    if (delta < 0.01) {
+      return;
+    }
+
+    lastEngineThresholdRef.current = baseAdaptiveThreshold;
+
+    // If VAD hasn't been created yet, just store the new threshold for first init.
+    if (!vadRef.current) {
+      return;
+    }
+
+    const wasListening = isListening;
+
+    const reinitialize = async () => {
+      try {
+        vadRef.current?.pause();
+        vadRef.current?.destroy();
+      } catch (err) {
+        voiceLog.warn("[SileroVAD] Failed to destroy VAD during reinit", err);
+      }
+
+      vadRef.current = null;
+      setIsReady(false);
+      setIsSpeaking(false);
+      setIsListening(false);
+
+      try {
+        await initialize();
+        if (wasListening && vadRef.current && !cleanupRef.current) {
+          vadRef.current.start();
+          setIsListening(true);
+        }
+        voiceLog.info(
+          `[SileroVAD] Reinitialized with adaptive threshold ${baseAdaptiveThreshold.toFixed(3)}`,
+        );
+      } catch (err) {
+        voiceLog.warn(
+          "[SileroVAD] Reinitialization failed after calibration",
+          err,
+        );
+      }
+    };
+
+    reinitialize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baseAdaptiveThreshold, enableAdaptiveThreshold, initialize, isListening]);
 
   /**
    * Initialize the VAD
