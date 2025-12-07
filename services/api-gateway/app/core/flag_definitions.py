@@ -702,6 +702,132 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 components=["useThinkerTalkerSession", "VoicePipelineSession"],
             ),
         ),
+        #
+        # WebSocket Advanced Features Flags
+        # ---------------------------------------------------------------------
+        "ws_webrtc_fallback": FeatureFlagDefinition(
+            name="backend.ws_webrtc_fallback",
+            description=(
+                "[WS Advanced] Enable WebRTC data channel as transport fallback. "
+                "WebRTC provides 20-50ms lower latency than WebSocket due to UDP "
+                "transport. Falls back to WebSocket if WebRTC negotiation fails."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["TransportManager", "WebRTCTransport", "ThinkerTalkerWebSocketHandler"],
+            ),
+        ),
+        "ws_webrtc_prefer": FeatureFlagDefinition(
+            name="backend.ws_webrtc_prefer",
+            description=(
+                "[WS Advanced] Prefer WebRTC transport over WebSocket when available. "
+                "When enabled, the client will attempt WebRTC first and only fall back "
+                "to WebSocket if WebRTC is not supported or negotiation fails."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["TransportManager", "WebRTCTransport"],
+                other_flags=["backend.ws_webrtc_fallback"],
+            ),
+        ),
+        "ws_adaptive_bitrate": FeatureFlagDefinition(
+            name="backend.ws_adaptive_bitrate",
+            description=(
+                "[WS Advanced] Enable adaptive audio bitrate based on network quality. "
+                "Dynamically adjusts audio codec and bitrate: PCM16 (256kbps) for excellent "
+                "networks, Opus 24k for good networks, Opus 12k for poor networks."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["AdaptiveBitrateController", "AudioEncoder", "AudioDecoder"],
+            ),
+        ),
+        "ws_adaptive_bitrate_aggressive": FeatureFlagDefinition(
+            name="backend.ws_adaptive_bitrate_aggressive",
+            description=(
+                "[WS Advanced] Enable aggressive adaptive bitrate switching. "
+                "Reduces hysteresis for quality changes, allowing faster adaptation "
+                "to network conditions at the cost of more frequent codec switches."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["AdaptiveBitrateController"],
+                other_flags=["backend.ws_adaptive_bitrate"],
+            ),
+        ),
+        "ws_aec_feedback": FeatureFlagDefinition(
+            name="backend.ws_aec_feedback",
+            description=(
+                "[WS Advanced] Enable echo cancellation feedback loop from client to server. "
+                "Client reports AEC metrics (residual echo level, AEC state, output energy) "
+                "to server for intelligent VAD sensitivity adjustment during TTS playback."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["AECMonitor", "AECFeedbackProcessor", "useTTAudioPlayback"],
+            ),
+        ),
+        "ws_aec_barge_gate": FeatureFlagDefinition(
+            name="backend.ws_aec_barge_gate",
+            description=(
+                "[WS Advanced] Gate barge-in based on AEC state. "
+                "Temporarily disables barge-in during TTS playback when echo is detected, "
+                "preventing the AI from 'hearing' its own output as user speech."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["AECFeedbackProcessor", "VoicePipelineSession"],
+                other_flags=["backend.ws_aec_feedback"],
+            ),
+        ),
     },
     # -------------------------------------------------------------------------
     # Admin Flags - Admin panel features

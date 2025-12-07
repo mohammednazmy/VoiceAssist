@@ -549,6 +549,128 @@ export const FEATURE_FLAGS = {
         otherFlags: [],
       },
     },
+
+    // WebSocket Advanced Features - Phase: WebSocket Advanced Features
+    ws_webrtc_fallback: {
+      name: "backend.ws_webrtc_fallback",
+      description:
+        "Enable WebRTC data channel as fallback transport for voice streaming. " +
+        "Provides 20-50ms lower latency than WebSocket for supported browsers.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["TransportManager", "WebRTCTransport"],
+        otherFlags: [],
+      },
+    },
+    ws_webrtc_prefer: {
+      name: "backend.ws_webrtc_prefer",
+      description:
+        "Prefer WebRTC over WebSocket when both are available. " +
+        "Only applies when ws_webrtc_fallback is enabled.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["TransportManager"],
+        otherFlags: ["backend.ws_webrtc_fallback"],
+      },
+    },
+    ws_adaptive_bitrate: {
+      name: "backend.ws_adaptive_bitrate",
+      description:
+        "Enable adaptive bitrate control based on network conditions. " +
+        "Automatically adjusts audio codec/bitrate (PCM16 → Opus 24k → Opus 12k).",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["AdaptiveBitrateController", "VoicePipelineSession"],
+        otherFlags: [],
+      },
+    },
+    ws_adaptive_bitrate_aggressive: {
+      name: "backend.ws_adaptive_bitrate_aggressive",
+      description:
+        "Use aggressive bitrate switching with shorter hysteresis window. " +
+        "May cause more frequent quality changes but faster adaptation.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["AdaptiveBitrateController"],
+        otherFlags: ["backend.ws_adaptive_bitrate"],
+      },
+    },
+    ws_aec_feedback: {
+      name: "backend.ws_aec_feedback",
+      description:
+        "Enable AEC (Acoustic Echo Cancellation) metrics feedback from client to server. " +
+        "Allows intelligent VAD sensitivity adjustment during TTS playback.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["AECMonitor", "VoicePipelineSession"],
+        otherFlags: [],
+      },
+    },
+    ws_aec_barge_gate: {
+      name: "backend.ws_aec_barge_gate",
+      description:
+        "Enable barge-in gating based on AEC convergence state. " +
+        "Prevents false speech detection from echo during TTS playback.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["AECMonitor"],
+        otherFlags: ["backend.ws_aec_feedback"],
+      },
+    },
   },
 
   // -------------------------------------------------------------------------
