@@ -9,7 +9,7 @@
  * @module sw
  */
 
-const CACHE_NAME = "voiceassist-v1";
+const CACHE_NAME = "voiceassist-v3";
 const OFFLINE_URL = "/offline.html";
 
 // Static assets to cache

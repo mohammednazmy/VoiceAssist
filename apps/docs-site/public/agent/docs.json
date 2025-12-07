@@ -1,6 +1,6 @@
 {
-  "count": 288,
-  "generated_at": "2025-12-06T22:22:58.567Z",
+  "count": 294,
+  "generated_at": "2025-12-07T21:28:40.309Z",
   "docs": [
     {
       "slug": "reference/style-guide",
@@ -182,6 +182,27 @@
         "versioning"
       ],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "websocket-binary-protocol",
+      "path": "features/websocket-binary-protocol.md",
+      "title": "websocket-binary-protocol",
+      "status": "draft",
+      "lastUpdated": "2025-12-07"
+    },
+    {
+      "slug": "audio-quality-presets",
+      "path": "voice/audio-quality-presets.md",
+      "title": "audio-quality-presets",
+      "status": "draft",
+      "lastUpdated": "2025-12-07"
+    },
+    {
+      "slug": "websocket-advanced-features",
+      "path": "voice/websocket-advanced-features.md",
+      "title": "websocket-advanced-features",
+      "status": "draft",
+      "lastUpdated": "2025-12-07"
     },
     {
       "slug": "websocket-protocol-efficiency-plan",
@@ -4941,6 +4962,36 @@
       "category": "testing",
       "tags": ["e2e", "testing", "guide"],
       "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "websocket-binary-audio",
+      "path": "voice/websocket-binary-audio.md",
+      "title": "WebSocket Binary Audio",
+      "ai_summary": "Phase 1 WebSocket Reliability feature enabling binary WebSocket frames for audio transmission, reducing bandwidth by ~33% and eliminating base64 encoding overhead.",
+      "status": "active",
+      "owner": "backend",
+      "category": "voice",
+      "lastUpdated": "2024-12-06"
+    },
+    {
+      "slug": "websocket-graceful-degradation",
+      "path": "voice/websocket-graceful-degradation.md",
+      "title": "WebSocket Graceful Degradation",
+      "ai_summary": "Phase 3 WebSocket Reliability feature enabling automatic quality reduction and fallback handling when network conditions degrade.",
+      "status": "active",
+      "owner": "backend",
+      "category": "voice",
+      "lastUpdated": "2024-12-06"
+    },
+    {
+      "slug": "websocket-session-persistence",
+      "path": "voice/websocket-session-persistence.md",
+      "title": "WebSocket Session Persistence",
+      "ai_summary": "Phase 2 WebSocket Reliability feature enabling Redis-backed session persistence for voice WebSocket sessions, allowing recovery from brief disconnections.",
+      "status": "active",
+      "owner": "backend",
+      "category": "voice",
+      "lastUpdated": "2024-12-06"
     },
     {
       "slug": "websocket-latency-optimization",

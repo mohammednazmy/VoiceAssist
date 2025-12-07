@@ -138,6 +138,9 @@ export interface FeatureFlag {
   rollout_percentage?: number;
   user_groups?: string[];
   metadata?: Record<string, unknown>;
+  flag_type?: string;
+  value?: unknown;
+  default_value?: unknown;
 }
 
 export interface CreateFeatureFlagRequest {

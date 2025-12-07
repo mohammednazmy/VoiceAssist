@@ -228,12 +228,13 @@ class SearchAggregator:
                     search_filter = Filter(must=filter_must)
 
                 # Perform vector search in Qdrant off the event loop
+                # Note: qdrant-client v1.6+ uses query_points instead of search
                 search_start = time.time()
-                search_results = await asyncio.wait_for(
+                query_response = await asyncio.wait_for(
                     asyncio.to_thread(
-                        self.qdrant_client.search,
+                        self.qdrant_client.query_points,
                         collection_name=self.collection_name,
-                        query_vector=query_embedding,
+                        query=query_embedding,
                         limit=top_k,
                         score_threshold=score_threshold,
                         query_filter=search_filter,
@@ -241,6 +242,9 @@ class SearchAggregator:
                     timeout=5,
                 )
                 rag_query_duration_seconds.labels(stage="search").observe(time.time() - search_start)
+
+                # Extract points from QueryResponse
+                search_results = query_response.points if hasattr(query_response, "points") else []
 
                 # Format results
                 results = []

@@ -852,6 +852,11 @@ export function useTTAudioPlayback(
           gainNodeRef.current.gain.value = volume;
         }
       }, durationMs);
+
+      // Finalize cleanup using the normal stop() path after the fade completes
+      setTimeout(() => {
+        stop();
+      }, durationMs);
     },
     [volume, onPlaybackInterrupted, stop],
   );

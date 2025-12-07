@@ -205,7 +205,7 @@ describe("CompactVoiceBar", () => {
         {
           id: "1",
           name: "kb_search",
-          arguments: "{}",
+          arguments: {},
           status: "running",
         },
       ];
@@ -216,8 +216,8 @@ describe("CompactVoiceBar", () => {
 
     it("should show multiple tool chips", () => {
       const toolCalls: TTToolCall[] = [
-        { id: "1", name: "kb_search", arguments: "{}", status: "running" },
-        { id: "2", name: "web_search", arguments: "{}", status: "pending" },
+        { id: "1", name: "kb_search", arguments: {}, status: "running" },
+        { id: "2", name: "web_search", arguments: {}, status: "pending" },
       ];
       renderCompactVoiceBar({ currentToolCalls: toolCalls });
 
@@ -227,10 +227,10 @@ describe("CompactVoiceBar", () => {
 
     it("should show +N indicator for more than 2 tool calls", () => {
       const toolCalls: TTToolCall[] = [
-        { id: "1", name: "tool1", arguments: "{}", status: "running" },
-        { id: "2", name: "tool2", arguments: "{}", status: "running" },
-        { id: "3", name: "tool3", arguments: "{}", status: "pending" },
-        { id: "4", name: "tool4", arguments: "{}", status: "pending" },
+        { id: "1", name: "tool1", arguments: {}, status: "running" },
+        { id: "2", name: "tool2", arguments: {}, status: "running" },
+        { id: "3", name: "tool3", arguments: {}, status: "pending" },
+        { id: "4", name: "tool4", arguments: {}, status: "pending" },
       ];
       renderCompactVoiceBar({ currentToolCalls: toolCalls });
 

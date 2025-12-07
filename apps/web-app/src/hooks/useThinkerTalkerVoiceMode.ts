@@ -34,6 +34,8 @@ import { useBargeInPromptAudio } from "./useBargeInPromptAudio";
 import { useSileroVAD } from "./useSileroVAD";
 import { useUnifiedConversationStore } from "../stores/unifiedConversationStore";
 import { useAuthStore } from "../stores/authStore";
+import { useAuth } from "./useAuth";
+import { useFeatureFlag } from "./useExperiment";
 import { voiceLog } from "../lib/logger";
 
 // ============================================================================
@@ -108,6 +110,16 @@ export interface TTVoiceModeOptions {
    * Default: 200
    */
   sileroPlaybackMinSpeechMs?: number;
+}
+
+interface SileroFlagConfig {
+  enabled: boolean;
+  echoSuppressionMode: "none" | "pause" | "threshold_boost";
+  positiveThreshold: number;
+  playbackThresholdBoost: number;
+  minSpeechMs: number;
+  playbackMinSpeechMs: number;
+  confidenceSharing: boolean;
 }
 
 export interface TTVoiceModeReturn {
@@ -215,6 +227,32 @@ export function useThinkerTalkerVoiceMode(
     sileroPlaybackMinSpeechMs = 200,
   } = options;
 
+  const { apiClient } = useAuth();
+
+  const defaultSileroConfig: SileroFlagConfig = useMemo(
+    () => ({
+      enabled: sileroVADEnabled,
+      echoSuppressionMode: sileroEchoSuppressionMode,
+      positiveThreshold: sileroPositiveThreshold,
+      playbackThresholdBoost: sileroPlaybackThresholdBoost,
+      minSpeechMs: sileroMinSpeechMs,
+      playbackMinSpeechMs: sileroPlaybackMinSpeechMs,
+      confidenceSharing: true,
+    }),
+    [
+      sileroEchoSuppressionMode,
+      sileroMinSpeechMs,
+      sileroPlaybackMinSpeechMs,
+      sileroPlaybackThresholdBoost,
+      sileroPositiveThreshold,
+      sileroVADEnabled,
+    ],
+  );
+
+  const [sileroFlags, setSileroFlags] =
+    useState<SileroFlagConfig>(defaultSileroConfig);
+  const [sileroFlagsLoaded, setSileroFlagsLoaded] = useState(false);
+
   // Phase 1: Emotion state
   const [currentEmotion, setCurrentEmotion] = useState<TTEmotionResult | null>(
     null,
@@ -232,8 +270,15 @@ export function useThinkerTalkerVoiceMode(
   // Ref for sileroVAD to avoid including entire object in effect dependencies
   // Declared early so it can be used in audioPlayback callbacks
   const sileroVADRef = useRef<ReturnType<typeof useSileroVAD> | null>(null);
+  const sileroRollbackTimeoutRef = useRef<number | null>(null);
   // Track if we've started VAD to avoid multiple starts
   const vadStartedRef = useRef(false);
+  const clearSileroRollbackTimeout = useCallback(() => {
+    if (sileroRollbackTimeoutRef.current) {
+      clearTimeout(sileroRollbackTimeoutRef.current);
+      sileroRollbackTimeoutRef.current = null;
+    }
+  }, []);
 
   // Get store actions
   const {
@@ -247,11 +292,144 @@ export function useThinkerTalkerVoiceMode(
   } = useUnifiedConversationStore();
 
   // Get auth token for API calls
+  const { apiClient } = useAuth();
   const tokens = useAuthStore((state) => state.tokens);
   const getAccessToken = useCallback(
     () => tokens?.accessToken || null,
     [tokens],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    const parseNumberFlag = (
+      flag: { value?: unknown; default_value?: unknown } | null,
+      fallback: number,
+    ): number => {
+      const raw =
+        typeof flag?.value === "number"
+          ? flag.value
+          : typeof flag?.value === "string"
+            ? Number.parseFloat(flag.value)
+            : undefined;
+      const defaultRaw =
+        typeof flag?.default_value === "number"
+          ? flag.default_value
+          : typeof flag?.default_value === "string"
+            ? Number.parseFloat(flag.default_value)
+            : undefined;
+      if (Number.isFinite(raw)) return raw as number;
+      if (Number.isFinite(defaultRaw)) return defaultRaw as number;
+      return fallback;
+    };
+
+    const parseBooleanFlag = (
+      flag: { enabled?: boolean; value?: unknown } | null,
+      fallback: boolean,
+    ): boolean => {
+      if (typeof flag?.enabled === "boolean") return flag.enabled;
+      if (typeof flag?.value === "boolean") return flag.value;
+      if (typeof flag?.value === "string") return flag.value === "true";
+      return fallback;
+    };
+
+    const loadSileroFlags = async () => {
+      if (!apiClient) {
+        setSileroFlags(defaultSileroConfig);
+        setSileroFlagsLoaded(true);
+        return;
+      }
+
+      try {
+        const flagNames = [
+          "backend.voice_silero_vad_enabled",
+          "backend.voice_silero_echo_suppression_mode",
+          "backend.voice_silero_positive_threshold",
+          "backend.voice_silero_playback_threshold_boost",
+          "backend.voice_silero_min_speech_ms",
+          "backend.voice_silero_playback_min_speech_ms",
+          "backend.voice_silero_vad_confidence_sharing",
+        ];
+
+        const responses = await Promise.all(
+          flagNames.map(async (name) => {
+            try {
+              return await apiClient.getFeatureFlag(name);
+            } catch (err) {
+              voiceLog.debug(
+                `[TTVoiceMode] Failed to fetch feature flag ${name}:`,
+                err,
+              );
+              return null;
+            }
+          }),
+        );
+
+        if (cancelled) return;
+
+        const byName = Object.fromEntries(
+          responses
+            .filter((f): f is { name: string } & Record<string, unknown> => !!f)
+            .map((flag) => [flag.name, flag]),
+        );
+
+        const echoModeRaw =
+          byName["backend.voice_silero_echo_suppression_mode"];
+        const echoMode =
+          typeof echoModeRaw?.value === "string" &&
+          ["pause", "threshold_boost", "none"].includes(
+            echoModeRaw.value as string,
+          )
+            ? (echoModeRaw.value as SileroFlagConfig["echoSuppressionMode"])
+            : defaultSileroConfig.echoSuppressionMode;
+
+        setSileroFlags({
+          enabled: parseBooleanFlag(
+            byName["backend.voice_silero_vad_enabled"] ?? null,
+            defaultSileroConfig.enabled,
+          ),
+          echoSuppressionMode: echoMode,
+          positiveThreshold: parseNumberFlag(
+            byName["backend.voice_silero_positive_threshold"] ?? null,
+            defaultSileroConfig.positiveThreshold,
+          ),
+          playbackThresholdBoost: parseNumberFlag(
+            byName["backend.voice_silero_playback_threshold_boost"] ?? null,
+            defaultSileroConfig.playbackThresholdBoost,
+          ),
+          minSpeechMs: parseNumberFlag(
+            byName["backend.voice_silero_min_speech_ms"] ?? null,
+            defaultSileroConfig.minSpeechMs,
+          ),
+          playbackMinSpeechMs: parseNumberFlag(
+            byName["backend.voice_silero_playback_min_speech_ms"] ?? null,
+            defaultSileroConfig.playbackMinSpeechMs,
+          ),
+          confidenceSharing: parseBooleanFlag(
+            byName["backend.voice_silero_vad_confidence_sharing"] ?? null,
+            defaultSileroConfig.confidenceSharing,
+          ),
+        });
+      } catch (err) {
+        if (!cancelled) {
+          voiceLog.warn(
+            "[TTVoiceMode] Failed to load Silero VAD flags, using defaults",
+            err,
+          );
+          setSileroFlags(defaultSileroConfig);
+        }
+      } finally {
+        if (!cancelled) {
+          setSileroFlagsLoaded(true);
+        }
+      }
+    };
+
+    loadSileroFlags();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiClient, defaultSileroConfig]);
 
   // Track current response for streaming
   let currentResponseId: string | null = null;
@@ -338,6 +516,38 @@ export function useThinkerTalkerVoiceMode(
     },
   });
 
+  const { isEnabled: confidenceFlagEnabled } = useFeatureFlag(
+    "backend.voice_silero_vad_confidence_sharing",
+    {
+      skip: !sileroFlagsLoaded,
+    },
+  );
+
+  const resolvedSileroConfig = useMemo(
+    () => ({
+      enabled: sileroFlags.enabled,
+      echoSuppressionMode: sileroFlags.echoSuppressionMode,
+      positiveThreshold: sileroFlags.positiveThreshold,
+      playbackThresholdBoost: sileroFlags.playbackThresholdBoost,
+      minSpeechMs: sileroFlags.minSpeechMs,
+      playbackMinSpeechMs: sileroFlags.playbackMinSpeechMs,
+      confidenceSharing:
+        sileroFlags.confidenceSharing &&
+        (sileroFlagsLoaded ? confidenceFlagEnabled : true),
+    }),
+    [
+      confidenceFlagEnabled,
+      sileroFlags.confidenceSharing,
+      sileroFlags.echoSuppressionMode,
+      sileroFlags.enabled,
+      sileroFlags.minSpeechMs,
+      sileroFlags.playbackMinSpeechMs,
+      sileroFlags.playbackThresholdBoost,
+      sileroFlags.positiveThreshold,
+      sileroFlagsLoaded,
+    ],
+  );
+
   // T/T session hook
   const session = useThinkerTalkerSession({
     conversation_id,
@@ -422,6 +632,7 @@ export function useThinkerTalkerVoiceMode(
         case "listening":
           setVoiceState("listening");
           startListening();
+          clearSileroRollbackTimeout();
           // Signal end of audio stream when backend transitions to listening
           // This allows isPlaying to reset when all queued audio finishes
           // Note: Don't call reset() here - that would cut off audio mid-playback
@@ -431,6 +642,7 @@ export function useThinkerTalkerVoiceMode(
         case "processing":
           setVoiceState("processing");
           stopListening();
+          clearSileroRollbackTimeout();
           // Reset audio when starting to process new utterance
           // This prevents audio overlap from stale responses
           audioPlayback.reset();
@@ -441,6 +653,7 @@ export function useThinkerTalkerVoiceMode(
         case "cancelled":
         case "idle":
           setVoiceState("idle");
+          clearSileroRollbackTimeout();
           // Signal end of stream in terminal states
           // Let any playing audio finish naturally
           audioPlayback.endStream();
@@ -559,7 +772,7 @@ export function useThinkerTalkerVoiceMode(
   const sileroVAD = useSileroVAD({
     // Master enable/disable via feature flag (backend.voice_silero_vad_enabled)
     // When false, VAD will not initialize - provides rollback lever if issues occur
-    enabled: sileroVADEnabled,
+    enabled: resolvedSileroConfig.enabled,
 
     onSpeechStart: () => {
       voiceLog.debug("[TTVoiceMode] Silero VAD: Speech started");
@@ -582,6 +795,20 @@ export function useThinkerTalkerVoiceMode(
         audioPlaybackRef.current.fadeOut(30);
         // Notify backend to cancel response generation
         sessionRef.current.bargeIn();
+        // Rollback guard: if no transcript or pipeline transition in 500ms, resume
+        clearSileroRollbackTimeout();
+        sileroRollbackTimeoutRef.current = window.setTimeout(() => {
+          const sessionSnapshot = sessionRef.current;
+          if (
+            sessionSnapshot?.pipelineState === "speaking" &&
+            !sessionSnapshot.partialTranscript
+          ) {
+            voiceLog.warn(
+              "[TTVoiceMode] Silero VAD barge-in rollback (no transcript within 500ms)",
+            );
+            audioPlaybackRef.current.reset();
+          }
+        }, 500);
       }
     },
     onSpeechEnd: (audio) => {
@@ -597,19 +824,20 @@ export function useThinkerTalkerVoiceMode(
 
     // Speech detection thresholds (configurable via feature flags)
     // backend.voice_silero_positive_threshold (default: 0.5)
-    positiveSpeechThreshold: sileroPositiveThreshold,
+    positiveSpeechThreshold: resolvedSileroConfig.positiveThreshold,
     // Negative threshold is typically 70% of positive threshold
-    negativeSpeechThreshold: sileroPositiveThreshold * 0.7,
+    negativeSpeechThreshold: resolvedSileroConfig.positiveThreshold * 0.7,
     // backend.voice_silero_min_speech_ms (default: 150)
-    minSpeechMs: sileroMinSpeechMs,
+    minSpeechMs: resolvedSileroConfig.minSpeechMs,
 
     // Echo Cancellation settings (configurable via feature flags)
     // backend.voice_silero_echo_suppression_mode (default: "threshold_boost")
-    echoSuppressionMode: sileroEchoSuppressionMode,
+    echoSuppressionMode: resolvedSileroConfig.echoSuppressionMode,
     // backend.voice_silero_playback_threshold_boost (default: 0.2)
-    playbackThresholdBoost: sileroPlaybackThresholdBoost,
+    playbackThresholdBoost: resolvedSileroConfig.playbackThresholdBoost,
     // backend.voice_silero_playback_min_speech_ms (default: 200)
-    playbackMinSpeechMs: sileroPlaybackMinSpeechMs,
+    playbackMinSpeechMs: resolvedSileroConfig.playbackMinSpeechMs,
+    enableConfidenceStreaming: resolvedSileroConfig.confidenceSharing,
   });
 
   // Keep sileroVAD ref updated for use in effects
@@ -620,19 +848,25 @@ export function useThinkerTalkerVoiceMode(
   // frontend Silero VAD and backend Deepgram VAD
   useEffect(() => {
     // Only stream when connected and user is speaking
-    if (!session.isConnected || !sileroVAD.isSpeaking) {
+    if (
+      !session.isConnected ||
+      !sileroVAD.isSpeaking ||
+      !resolvedSileroConfig.confidenceSharing
+    ) {
       return;
     }
 
     // Send VAD state immediately when speech starts
-    const vadState = sileroVAD.getVADState();
-    session.sendVADState(vadState);
+    const vad = sileroVADRef.current;
+    if (vad) {
+      session.sendVADState(vad.getVADState());
+    }
 
     // Continue streaming at 100ms intervals during speech
-    const intervalId = setInterval(() => {
-      if (sileroVAD.isSpeaking) {
-        const state = sileroVAD.getVADState();
-        session.sendVADState(state);
+    const intervalId = window.setInterval(() => {
+      const vadState = sileroVADRef.current?.getVADState();
+      if (sileroVADRef.current?.isSpeaking && vadState) {
+        sessionRef.current?.sendVADState(vadState);
       }
     }, 100);
 
@@ -640,7 +874,11 @@ export function useThinkerTalkerVoiceMode(
     return () => {
       clearInterval(intervalId);
     };
-  }, [session.isConnected, sileroVAD.isSpeaking, sileroVAD, session]);
+  }, [
+    session.isConnected,
+    sileroVAD.isSpeaking,
+    resolvedSileroConfig.confidenceSharing,
+  ]);
 
   // Start/stop Silero VAD based on connection status
   // IMPORTANT: Only depend on session.isConnected - do NOT depend on sileroVAD state
@@ -695,9 +933,10 @@ export function useThinkerTalkerVoiceMode(
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      clearSileroRollbackTimeout();
       audioPlayback.reset();
     };
-  }, []);
+  }, [audioPlayback, clearSileroRollbackTimeout]);
 
   // Memoized return value
   return useMemo(

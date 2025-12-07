@@ -25,11 +25,11 @@
   </head>
   <body>
     <div id="root"></div>
-    <!-- Service Worker cleanup for stale dev workers - v2025.12.05 -->
+    <!-- Service Worker cleanup for stale dev workers - v2025.12.07b -->
     <script>
       (function() {
         // One-time cleanup for stale dev service workers causing module load errors
-        var CLEANUP_VERSION = '20251205';
+        var CLEANUP_VERSION = '20251207i';
         var lastCleanup = localStorage.getItem('sw-cleanup-version');
 
         if ('serviceWorker' in navigator && lastCleanup !== CLEANUP_VERSION) {

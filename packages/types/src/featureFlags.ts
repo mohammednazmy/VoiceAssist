@@ -1208,8 +1208,8 @@ export const FEATURE_FLAGS = {
       defaultEnabled: true,
       metadata: {
         criticality: "low" as const,
-        minValue: 500,
-        maxValue: 3000,
+        min: 500,
+        max: 3000,
         docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
       },
       dependencies: {
@@ -1232,8 +1232,8 @@ export const FEATURE_FLAGS = {
       defaultEnabled: true,
       metadata: {
         criticality: "low" as const,
-        minValue: 0.0,
-        maxValue: 0.3,
+        min: 0.0,
+        max: 0.3,
         docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
       },
       dependencies: {

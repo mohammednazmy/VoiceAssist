@@ -54,6 +54,7 @@ from app.services.emotion_detection_service import (
     EmotionResult,
     emotion_detection_service,
 )
+from app.services.feature_flags import feature_flag_service
 from app.services.feedback_service import FeedbackService, feedback_service
 from app.services.medical_vocabulary_service import MedicalSpecialty
 from app.services.memory_context_service import ConversationMemoryManager, MemoryType, memory_context_service
@@ -468,6 +469,7 @@ class VoicePipelineSession:
         # State
         self._state = PipelineState.IDLE
         self._cancelled = False
+        self._deepgram_vad_active: bool = False
 
         # Transcript accumulation
         self._partial_transcript = ""
@@ -914,6 +916,13 @@ class VoicePipelineSession:
             speech_duration_ms: Duration of current speech in milliseconds
             is_playback_active: Whether AI audio playback is active
         """
+        share_enabled = await feature_flag_service.is_enabled(
+            "backend.voice_silero_vad_confidence_sharing",
+            default=True,
+        )
+        if not share_enabled:
+            return
+
         self._frontend_vad_state = {
             "silero_confidence": silero_confidence,
             "is_speaking": is_speaking,
@@ -926,16 +935,27 @@ class VoicePipelineSession:
         # If frontend VAD detects speech with high confidence during AI playback,
         # this is likely real user speech (barge-in) not echo.
         # The threshold is raised during playback (by frontend) to filter echo.
-        if (
-            is_playback_active
-            and is_speaking
-            and silero_confidence >= 0.7  # High confidence during playback
-            and speech_duration_ms >= 200  # Sustained speech
-            and self._state == PipelineState.SPEAKING
-        ):
+        hybrid_should_barge = False
+        if self._state == PipelineState.SPEAKING and is_speaking:
+            # If Deepgram and Silero agree, act immediately
+            if self._deepgram_vad_active and silero_confidence >= 0.55:
+                hybrid_should_barge = True
+            else:
+                # Weighted score gives Deepgram credit when active
+                deepgram_weight = 0.4 if self._deepgram_vad_active else 0.0
+                hybrid_score = silero_confidence * 0.6 + deepgram_weight
+
+                # Require stronger evidence when Deepgram is not detecting speech yet
+                if silero_confidence >= 0.8 and speech_duration_ms >= 200:
+                    hybrid_should_barge = True
+                elif hybrid_score >= 0.75 and speech_duration_ms >= 150:
+                    hybrid_should_barge = True
+
+        if hybrid_should_barge:
             logger.info(
                 f"[Pipeline] Hybrid VAD: Triggering barge-in from frontend VAD "
-                f"(conf={silero_confidence:.2f}, duration={speech_duration_ms}ms)"
+                f"(conf={silero_confidence:.2f}, duration={speech_duration_ms}ms, "
+                f"deepgram_active={self._deepgram_vad_active})"
             )
             # Don't await - let it run async to avoid blocking VAD stream
             asyncio.create_task(self.barge_in())
@@ -1350,6 +1370,7 @@ class VoicePipelineSession:
         the AI is speaking. See _handle_partial_transcript() and _handle_final_transcript().
         """
         logger.info(f"[Pipeline] Speech start detected: {self.session_id}, current_state={self._state}")
+        self._deepgram_vad_active = True
 
         # Natural Conversation Flow: Phase 2 - Continuation Detection
         # If we're waiting for continuation and user starts speaking again, cancel the wait
@@ -1392,6 +1413,7 @@ class VoicePipelineSession:
     async def _handle_speech_end(self) -> None:
         """Handle speech endpoint detection from STT."""
         logger.info(f"[Pipeline] Speech end detected: {self.session_id}, accumulated='{self._final_transcript}'")
+        self._deepgram_vad_active = False
 
         # Notify backchannel session of speech end
         if self._backchannel_session:

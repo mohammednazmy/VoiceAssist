@@ -486,7 +486,7 @@ describe("ThinkerTalkerVoicePanel", () => {
       callArgs?.onToolCall?.({
         id: "1",
         name: "kb_search",
-        arguments: "{}",
+        arguments: {},
         status: "running",
       });
 
