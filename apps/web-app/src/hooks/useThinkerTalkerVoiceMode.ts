@@ -111,6 +111,12 @@ export interface TTVoiceModeReturn {
   /** Whether Silero VAD is loading/initializing */
   isSileroVADLoading: boolean;
 
+  // Phase 1: Echo-Aware VAD
+  /** Whether AI playback is active (echo suppression may be engaged) */
+  isSileroVADEchoSuppressed: boolean;
+  /** Current effective VAD threshold (may be boosted during playback) */
+  sileroVADEffectiveThreshold: number;
+
   // Actions
   connect: () => Promise<void>;
   disconnect: () => void;
@@ -232,45 +238,42 @@ export function useThinkerTalkerVoiceMode(
   const audioPlayback = useTTAudioPlayback({
     volume,
     onPlaybackStart: () => {
-      voiceLog.info("[TTVoiceMode] Playback started - pausing Silero VAD");
+      voiceLog.info(
+        "[TTVoiceMode] Playback started - enabling echo suppression",
+      );
       startSpeaking();
-      // CRITICAL: Pause Silero VAD during AI playback
-      // When AI audio plays through speakers, the microphone picks it up.
-      // Silero VAD interprets this as ongoing speech and gets stuck in "speaking" state.
-      // This prevents it from detecting actual user speech for barge-in.
-      // Solution: Pause VAD during playback, rely on backend Deepgram VAD for barge-in.
+      // Phase 1: Use echo-aware VAD API instead of pausing entirely
+      // The setPlaybackActive method applies echo suppression based on echoSuppressionMode:
+      // - "threshold_boost": VAD stays active with higher threshold (default, recommended)
+      // - "pause": VAD pauses entirely (original behavior)
+      // - "none": No suppression
       const vad = sileroVADRef.current;
-      if (vad && vad.isListening) {
-        voiceLog.info("[TTVoiceMode] Pausing Silero VAD during playback");
-        vad.pause();
+      if (vad) {
+        vad.setPlaybackActive(true);
       }
     },
     onPlaybackEnd: () => {
-      voiceLog.info("[TTVoiceMode] Playback ended - restarting Silero VAD");
+      voiceLog.info(
+        "[TTVoiceMode] Playback ended - disabling echo suppression",
+      );
       stopSpeaking();
-      // Restart Silero VAD after AI finishes speaking
-      // Small delay to ensure audio has fully stopped before reactivating VAD
-      setTimeout(() => {
-        const vad = sileroVADRef.current;
-        if (vad && vadStartedRef.current && !vad.isListening) {
-          voiceLog.info("[TTVoiceMode] Restarting Silero VAD after playback");
-          vad.start();
-        }
-      }, 100);
+      // Phase 1: Notify VAD that playback ended
+      // VAD will handle the mode-specific logic (resume if paused, restore threshold, etc.)
+      const vad = sileroVADRef.current;
+      if (vad) {
+        vad.setPlaybackActive(false);
+      }
     },
     onPlaybackInterrupted: () => {
       voiceLog.info(
-        "[TTVoiceMode] Playback interrupted (barge-in) - restarting Silero VAD",
+        "[TTVoiceMode] Playback interrupted (barge-in) - disabling echo suppression",
       );
       stopSpeaking();
-      // Restart VAD after barge-in with slightly longer delay to avoid echo
-      setTimeout(() => {
-        const vad = sileroVADRef.current;
-        if (vad && vadStartedRef.current && !vad.isListening) {
-          voiceLog.info("[TTVoiceMode] Restarting Silero VAD after barge-in");
-          vad.start();
-        }
-      }, 150);
+      // Phase 1: Notify VAD that playback ended due to barge-in
+      const vad = sileroVADRef.current;
+      if (vad) {
+        vad.setPlaybackActive(false);
+      }
     },
     onError: (err) => {
       voiceLog.error("[TTVoiceMode] Audio playback error:", err);
@@ -493,6 +496,7 @@ export function useThinkerTalkerVoiceMode(
 
   // Silero VAD for reliable local voice activity detection
   // Uses neural network model (much more accurate than RMS threshold)
+  // Phase 1: Echo-aware mode keeps VAD active during AI playback with elevated threshold
   const sileroVAD = useSileroVAD({
     onSpeechStart: () => {
       voiceLog.debug("[TTVoiceMode] Silero VAD: Speech started");
@@ -510,8 +514,9 @@ export function useThinkerTalkerVoiceMode(
           "[TTVoiceMode] Silero VAD barge-in: user speaking while AI playing",
         );
         lastBargeInTimeRef.current = now;
-        // Fade out audio immediately for smooth transition
-        audioPlaybackRef.current.fadeOut(50);
+        // Phase 4: Start fade immediately (don't wait for speech confirmation)
+        // 30ms fade is nearly instant but avoids audio pop
+        audioPlaybackRef.current.fadeOut(30);
         // Notify backend to cancel response generation
         sessionRef.current.bargeIn();
       }
@@ -530,7 +535,18 @@ export function useThinkerTalkerVoiceMode(
     positiveSpeechThreshold: 0.5,
     negativeSpeechThreshold: 0.35,
     // Require ~150ms of speech to avoid false triggers
-    minSpeechFrames: 150,
+    minSpeechMs: 150,
+
+    // Phase 1: Echo Cancellation - use threshold_boost mode instead of pausing VAD
+    // This keeps VAD active during playback with a higher threshold to filter echo
+    // while still allowing real user speech to trigger barge-in
+    echoSuppressionMode: "threshold_boost",
+    // Raise threshold by 0.2 during playback (0.5 + 0.2 = 0.7)
+    // This requires stronger speech signal to overcome echo
+    playbackThresholdBoost: 0.2,
+    // Require at least 200ms of speech during playback to be considered real
+    // This filters out short echo bursts from TTS
+    playbackMinSpeechMs: 200,
   });
 
   // Keep sileroVAD ref updated for use in effects
@@ -637,6 +653,10 @@ export function useThinkerTalkerVoiceMode(
       // Local VAD (Silero)
       isSileroVADActive: sileroVAD.isListening,
       isSileroVADLoading: sileroVAD.isLoading,
+
+      // Phase 1: Echo-Aware VAD
+      isSileroVADEchoSuppressed: sileroVAD.isPlaybackActive,
+      sileroVADEffectiveThreshold: sileroVAD.effectiveThreshold,
 
       // Actions
       connect,
