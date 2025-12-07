@@ -277,7 +277,7 @@ jobs:
           --health-retries 5
 
       pact-broker:
-        image: pactfoundation/pact-broker:2.117.1
+        image: pactfoundation/pact-broker:2.135.0-pactbroker2.117.1
         env:
           # Use explicit credentials instead of DATABASE_URL for better compatibility
           PACT_BROKER_DATABASE_ADAPTER: postgres
