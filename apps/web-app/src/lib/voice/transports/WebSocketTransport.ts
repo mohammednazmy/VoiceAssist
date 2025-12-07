@@ -21,7 +21,6 @@ import type {
   TransportType,
   WebSocketTransportConfig,
 } from "./types";
-import { BINARY_FRAME_TYPE } from "./types";
 
 // ============================================================================
 // Constants
@@ -137,7 +136,7 @@ export class WebSocketTransport implements ITransport {
           this.handleClose(event);
         };
 
-        this.ws.onerror = (event) => {
+        this.ws.onerror = (_event) => {
           clearTimeout(timeoutId);
           const error = new Error("WebSocket error");
           this.handleError(error);
