@@ -425,10 +425,14 @@ describe("ThinkerTalkerVoicePanel", () => {
       const testMetrics = {
         connectionTimeMs: 100,
         sttLatencyMs: 50,
+        llmFirstTokenMs: null,
+        ttsFirstAudioMs: null,
         totalLatencyMs: 200,
         sessionDurationMs: 5000,
         userUtteranceCount: 2,
         aiResponseCount: 2,
+        toolCallCount: 0,
+        bargeInCount: 0,
         reconnectCount: 0,
         sessionStartedAt: Date.now(),
       };

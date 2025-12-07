@@ -71,7 +71,7 @@ export interface Citation {
   id: string;
 
   // Legacy fields (maintained for backward compatibility)
-  source?: "kb" | "url" | "pubmed" | "doi";
+  source?: "kb" | "url" | "pubmed" | "doi" | "openevidence";
   reference?: string;
 
   // Structured fields (Phase 8)

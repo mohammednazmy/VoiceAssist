@@ -460,7 +460,7 @@ export function useFHIRObservations(
     };
   }, [patientId]);
 
-  return { observations, isStreaming, error };
+  return { observations, isStreaming, error: _error };
 }
 
 export default VitalsPanel;

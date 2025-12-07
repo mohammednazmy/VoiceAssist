@@ -104,6 +104,7 @@ const createMockHookReturn = (
   connect: vi.fn(),
   disconnect: vi.fn(),
   sendMessage: vi.fn(),
+  prewarmSession: vi.fn().mockResolvedValue(undefined),
   isConnected: false,
   isConnecting: false,
   canSend: false,

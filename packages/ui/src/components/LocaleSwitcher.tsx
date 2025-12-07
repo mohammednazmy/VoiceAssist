@@ -8,7 +8,7 @@ export interface LocaleOption {
 }
 
 export interface LocaleSwitcherProps {
-  languages: LocaleOption[];
+  languages: readonly LocaleOption[];
   className?: string;
 }
 

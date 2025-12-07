@@ -16,10 +16,10 @@ interface VoiceInfo {
   voice_id: string;
   name: string;
   provider: string; // "openai" | "elevenlabs" or other providers
-  category?: string;
-  preview_url?: string;
-  description?: string;
-  labels?: Record<string, string>;
+  category?: string | null;
+  preview_url?: string | null;
+  description?: string | null;
+  labels?: Record<string, string> | null;
 }
 
 interface _VoiceListResponse {

@@ -29,9 +29,11 @@ vi.mock("../../../hooks/useIsMobile", () => ({
 describe("UnifiedHeader", () => {
   const mockConversation: Conversation = {
     id: "conv-1",
+    userId: "user-1",
     title: "Test Conversation",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    messageCount: 0,
   };
 
   const defaultProps = {
