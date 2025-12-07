@@ -117,6 +117,12 @@ export interface TTVoiceModeReturn {
   /** Current effective VAD threshold (may be boosted during playback) */
   sileroVADEffectiveThreshold: number;
 
+  // Phase 2: VAD Confidence Sharing
+  /** Current speech probability from Silero VAD (0-1) */
+  sileroVADConfidence: number;
+  /** Current speech duration in milliseconds */
+  sileroVADSpeechDurationMs: number;
+
   // Actions
   connect: () => Promise<void>;
   disconnect: () => void;
@@ -552,6 +558,33 @@ export function useThinkerTalkerVoiceMode(
   // Keep sileroVAD ref updated for use in effects
   sileroVADRef.current = sileroVAD;
 
+  // Phase 2: VAD Confidence Sharing - Stream VAD state to backend
+  // This allows the backend to make hybrid VAD decisions using both
+  // frontend Silero VAD and backend Deepgram VAD
+  useEffect(() => {
+    // Only stream when connected and user is speaking
+    if (!session.isConnected || !sileroVAD.isSpeaking) {
+      return;
+    }
+
+    // Send VAD state immediately when speech starts
+    const vadState = sileroVAD.getVADState();
+    session.sendVADState(vadState);
+
+    // Continue streaming at 100ms intervals during speech
+    const intervalId = setInterval(() => {
+      if (sileroVAD.isSpeaking) {
+        const state = sileroVAD.getVADState();
+        session.sendVADState(state);
+      }
+    }, 100);
+
+    // Cleanup interval when speech ends or disconnected
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [session.isConnected, sileroVAD.isSpeaking, sileroVAD, session]);
+
   // Start/stop Silero VAD based on connection status
   // IMPORTANT: Only depend on session.isConnected - do NOT depend on sileroVAD state
   // as that causes the effect to re-run when VAD state changes, potentially destroying
@@ -657,6 +690,10 @@ export function useThinkerTalkerVoiceMode(
       // Phase 1: Echo-Aware VAD
       isSileroVADEchoSuppressed: sileroVAD.isPlaybackActive,
       sileroVADEffectiveThreshold: sileroVAD.effectiveThreshold,
+
+      // Phase 2: VAD Confidence Sharing
+      sileroVADConfidence: sileroVAD.lastSpeechProbability,
+      sileroVADSpeechDurationMs: sileroVAD.speechDurationMs,
 
       // Actions
       connect,

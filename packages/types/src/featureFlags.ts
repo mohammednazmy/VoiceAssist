@@ -1176,6 +1176,98 @@ export const FEATURE_FLAGS = {
         ],
       },
     },
+    // Phase 3: Adaptive VAD Flags
+    voice_silero_adaptive_threshold: {
+      name: "backend.voice_silero_adaptive_threshold",
+      description:
+        "[Silero VAD Phase 3] Enable adaptive VAD threshold based on ambient noise. " +
+        "When enabled, VAD monitors background noise during silence and adjusts " +
+        "the speech detection threshold dynamically for better accuracy.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD"],
+        otherFlags: ["backend.voice_silero_vad_enabled"],
+      },
+    },
+    voice_silero_noise_calibration_ms: {
+      name: "backend.voice_silero_noise_calibration_ms",
+      description:
+        "[Silero VAD Phase 3] Duration (ms) to measure ambient noise at startup. " +
+        "Longer calibration provides more accurate noise profile but delays voice mode activation.",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 1000,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        minValue: 500,
+        maxValue: 3000,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD"],
+        otherFlags: [
+          "backend.voice_silero_vad_enabled",
+          "backend.voice_silero_adaptive_threshold",
+        ],
+      },
+    },
+    voice_silero_noise_adaptation_factor: {
+      name: "backend.voice_silero_noise_adaptation_factor",
+      description:
+        "[Silero VAD Phase 3] How much to adjust threshold per unit of noise (0-0.3). " +
+        "Higher values make threshold adjustment more aggressive in noisy environments.",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 0.1,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        minValue: 0.0,
+        maxValue: 0.3,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD"],
+        otherFlags: [
+          "backend.voice_silero_vad_enabled",
+          "backend.voice_silero_adaptive_threshold",
+        ],
+      },
+    },
+    voice_silero_vad_confidence_sharing: {
+      name: "backend.voice_silero_vad_confidence_sharing",
+      description:
+        "[Silero VAD Phase 2] Enable frontend-to-backend VAD confidence sharing. " +
+        "When enabled, frontend streams VAD state to backend for hybrid decision making.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app", "api-gateway"],
+        components: [
+          "useSileroVAD",
+          "useThinkerTalkerSession",
+          "voice_pipeline_service",
+        ],
+        otherFlags: ["backend.voice_silero_vad_enabled"],
+      },
+    },
   },
 
   // -------------------------------------------------------------------------

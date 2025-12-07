@@ -242,6 +242,9 @@ class ThinkerTalkerWebSocketHandler:
         self._partial_response: str = ""  # Accumulator for response deltas
         self._is_resumed_session: bool = False  # True if this is a recovered session
 
+        # Phase 2: VAD Confidence Sharing - store latest frontend VAD state
+        self._last_vad_state: Optional[Dict[str, Any]] = None
+
     @property
     def connection_state(self) -> TTConnectionState:
         """Get current connection state."""
@@ -315,6 +318,16 @@ class ThinkerTalkerWebSocketHandler:
             # Initialize session recovery features (feature flag controlled)
             await self._init_session_recovery()
 
+            # Get utterance aggregation window from feature flag
+            from app.services.feature_flags import feature_flag_service
+
+            aggregation_window_ms = await feature_flag_service.get_value(
+                "backend.voice_aggregation_window_ms", default=3000
+            )
+            # Ensure it's an integer
+            aggregation_window_ms = int(aggregation_window_ms) if aggregation_window_ms else 3000
+            logger.info(f"Voice pipeline using aggregation window: {aggregation_window_ms}ms")
+
             # Create pipeline session
             pipeline_config = PipelineConfig(
                 stt_language=self.config.language,
@@ -324,6 +337,7 @@ class ThinkerTalkerWebSocketHandler:
                 voice_id=self.config.voice_id,
                 tts_model=self.config.tts_model,
                 barge_in_enabled=self.config.barge_in_enabled,
+                utterance_aggregation_window_ms=int(aggregation_window_ms),
             )
 
             self._pipeline_session = await self._pipeline_service.create_session(
@@ -849,6 +863,10 @@ class ThinkerTalkerWebSocketHandler:
             # Audio acknowledgment for checkpointing
             await self._handle_audio_ack(message)
 
+        elif msg_type == "vad.state":
+            # Phase 2: VAD Confidence Sharing - receive frontend Silero VAD state
+            await self._handle_vad_state(message)
+
         else:
             logger.warning(f"Unknown message type: {msg_type}")
 
@@ -980,6 +998,58 @@ class ThinkerTalkerWebSocketHandler:
             await self._session_state_service.update_audio_confirmed(self.config.session_id, confirmed_seq)
         except Exception as e:
             logger.warning(f"Failed to update audio checkpoint: {e}")
+
+    async def _handle_vad_state(self, message: Dict[str, Any]) -> None:
+        """
+        Handle VAD state from frontend Silero VAD.
+
+        Phase 2: VAD Confidence Sharing - Frontend sends periodic VAD state
+        during user speech to enable hybrid VAD decisions combining:
+        - Frontend Silero VAD (neural network, instant, affected by echo)
+        - Backend Deepgram VAD (server-side, reliable, slight delay)
+
+        Message format:
+        {
+            "type": "vad.state",
+            "silero_confidence": 0.85,      # Speech probability (0-1)
+            "is_speaking": true,             # Frontend VAD speaking state
+            "speech_duration_ms": 250,       # Duration of current speech
+            "is_playback_active": false,     # Whether AI is speaking
+            "effective_threshold": 0.5       # Current VAD threshold (may be boosted)
+        }
+        """
+        silero_confidence = message.get("silero_confidence", 0.0)
+        is_speaking = message.get("is_speaking", False)
+        speech_duration_ms = message.get("speech_duration_ms", 0)
+        is_playback_active = message.get("is_playback_active", False)
+        effective_threshold = message.get("effective_threshold", 0.5)
+
+        # Store latest VAD state for hybrid decision making
+        self._last_vad_state = {
+            "silero_confidence": silero_confidence,
+            "is_speaking": is_speaking,
+            "speech_duration_ms": speech_duration_ms,
+            "is_playback_active": is_playback_active,
+            "effective_threshold": effective_threshold,
+            "timestamp": time.time(),
+        }
+
+        # Forward to pipeline for hybrid VAD decision
+        if self._pipeline_session:
+            await self._pipeline_session.update_frontend_vad_state(
+                silero_confidence=silero_confidence,
+                is_speaking=is_speaking,
+                speech_duration_ms=speech_duration_ms,
+                is_playback_active=is_playback_active,
+            )
+
+        # Log at debug level (these messages are frequent)
+        if speech_duration_ms > 0 and speech_duration_ms % 500 < 100:
+            logger.debug(
+                f"[WS] VAD state: conf={silero_confidence:.2f}, "
+                f"speaking={is_speaking}, duration={speech_duration_ms}ms, "
+                f"playback={is_playback_active}"
+            )
 
     async def _handle_text_input(self, text: str) -> None:
         """Handle text input (fallback when not using voice)."""
@@ -1170,6 +1240,11 @@ class ThinkerTalkerWebSocketHandler:
         # Add sequence number to all messages
         message["seq"] = self.config._message_sequence
         self.config._message_sequence += 1
+
+        # DEBUG: Log important message types for barge-in tracing
+        msg_type = message.get("type", "")
+        if msg_type in ("voice.state", "input_audio_buffer.speech_started", "input_audio_buffer.speech_stopped"):
+            logger.info(f"[WS] SENDING message: type={msg_type}, seq={message.get('seq')}, data={message}")
 
         try:
             # Buffer message for potential recovery (if enabled)

@@ -1300,6 +1300,100 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
             ),
         ),
         #
+        # Phase 3: Adaptive VAD Flags
+        # ---------------------------------------------------------------------
+        "voice_silero_adaptive_threshold": FeatureFlagDefinition(
+            name="backend.voice_silero_adaptive_threshold",
+            description=(
+                "[Silero VAD Phase 3] Enable adaptive VAD threshold based on ambient noise. "
+                "When enabled, VAD monitors background noise during silence and adjusts "
+                "the speech detection threshold dynamically for better accuracy."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/silero-vad",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["useSileroVAD"],
+                other_flags=["backend.voice_silero_vad_enabled"],
+            ),
+        ),
+        "voice_silero_noise_calibration_ms": FeatureFlagDefinition(
+            name="backend.voice_silero_noise_calibration_ms",
+            description=(
+                "[Silero VAD Phase 3] Duration (ms) to measure ambient noise at startup. "
+                "Longer calibration provides more accurate noise profile but delays voice mode activation."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.NUMBER,
+            default_value=1000,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="low",
+                min_value=500,
+                max_value=3000,
+                docs_url="https://assistdocs.asimo.io/voice/silero-vad",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["useSileroVAD"],
+                other_flags=[
+                    "backend.voice_silero_vad_enabled",
+                    "backend.voice_silero_adaptive_threshold",
+                ],
+            ),
+        ),
+        "voice_silero_noise_adaptation_factor": FeatureFlagDefinition(
+            name="backend.voice_silero_noise_adaptation_factor",
+            description=(
+                "[Silero VAD Phase 3] How much to adjust threshold per unit of noise (0-0.3). "
+                "Higher values make threshold adjustment more aggressive in noisy environments."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.NUMBER,
+            default_value=0.1,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="low",
+                min_value=0.0,
+                max_value=0.3,
+                docs_url="https://assistdocs.asimo.io/voice/silero-vad",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["useSileroVAD"],
+                other_flags=[
+                    "backend.voice_silero_vad_enabled",
+                    "backend.voice_silero_adaptive_threshold",
+                ],
+            ),
+        ),
+        "voice_silero_vad_confidence_sharing": FeatureFlagDefinition(
+            name="backend.voice_silero_vad_confidence_sharing",
+            description=(
+                "[Silero VAD Phase 2] Enable frontend-to-backend VAD confidence sharing. "
+                "When enabled, frontend streams VAD state to backend for hybrid decision making."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/silero-vad",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app", "api-gateway"],
+                components=["useSileroVAD", "useThinkerTalkerSession", "voice_pipeline_service"],
+                other_flags=["backend.voice_silero_vad_enabled"],
+            ),
+        ),
+        #
         # Audio Quality Enhancement Flags
         # ---------------------------------------------------------------------
         "voice_crisp_quality_preset": FeatureFlagDefinition(

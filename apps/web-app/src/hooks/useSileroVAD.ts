@@ -110,6 +110,38 @@ export interface SileroVADOptions {
    * Default: 200
    */
   playbackMinSpeechMs?: number;
+
+  // =========================================================================
+  // Adaptive VAD Options (Phase 3)
+  // =========================================================================
+
+  /**
+   * Enable adaptive VAD threshold based on ambient noise level.
+   * When enabled, VAD monitors background noise and adjusts threshold dynamically.
+   * Default: true
+   */
+  enableAdaptiveThreshold?: boolean;
+  /**
+   * Duration (ms) to measure ambient noise at startup for calibration.
+   * Default: 1000
+   */
+  noiseCalibrationMs?: number;
+  /**
+   * How much to adjust threshold per unit of noise (0-0.3).
+   * Higher = more aggressive adjustment.
+   * Default: 0.1
+   */
+  noiseAdaptationFactor?: number;
+  /**
+   * Minimum threshold even in quiet environments (0.3-0.5).
+   * Default: 0.3
+   */
+  minAdaptiveThreshold?: number;
+  /**
+   * Maximum threshold even in noisy environments (0.7-0.9).
+   * Default: 0.8
+   */
+  maxAdaptiveThreshold?: number;
 }
 
 export interface SileroVADReturn {
@@ -151,6 +183,65 @@ export interface SileroVADReturn {
    * Useful for confidence sharing with backend.
    */
   lastSpeechProbability: number;
+
+  // =========================================================================
+  // Phase 2: Confidence Sharing
+  // =========================================================================
+
+  /**
+   * Current speech duration in milliseconds (updated during speech).
+   * Useful for confidence sharing with backend.
+   */
+  speechDurationMs: number;
+
+  /**
+   * Get current VAD state for sharing with backend.
+   * Returns an object suitable for sending via WebSocket.
+   */
+  getVADState: () => VADStateMessage;
+
+  // =========================================================================
+  // Phase 3: Adaptive VAD
+  // =========================================================================
+
+  /**
+   * Whether noise calibration is in progress.
+   */
+  isCalibrating: boolean;
+
+  /**
+   * Whether noise calibration has completed.
+   */
+  isCalibrated: boolean;
+
+  /**
+   * Current estimated ambient noise level (0-1).
+   * Updated continuously during silence periods.
+   */
+  noiseFloor: number;
+
+  /**
+   * Run noise calibration to measure ambient noise level.
+   * This takes ~1 second and updates the threshold accordingly.
+   */
+  calibrateNoise: () => Promise<void>;
+
+  /**
+   * Current adaptive threshold (combines base threshold + noise adjustment).
+   */
+  adaptiveThreshold: number;
+}
+
+/**
+ * VAD state message for WebSocket sharing (Phase 2).
+ */
+export interface VADStateMessage {
+  type: "vad.state";
+  silero_confidence: number;
+  is_speaking: boolean;
+  speech_duration_ms: number;
+  is_playback_active: boolean;
+  effective_threshold: number;
 }
 
 // ============================================================================
@@ -173,6 +264,12 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
     echoSuppressionMode = "threshold_boost",
     playbackThresholdBoost = 0.2,
     playbackMinSpeechMs = 200,
+    // Adaptive VAD options (Phase 3)
+    enableAdaptiveThreshold = true,
+    noiseCalibrationMs = 1000,
+    noiseAdaptationFactor = 0.1,
+    minAdaptiveThreshold = 0.3,
+    maxAdaptiveThreshold = 0.8,
   } = options;
 
   // State
@@ -186,6 +283,17 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
   const [isPlaybackActive, setIsPlaybackActive] = useState(false);
   const [lastSpeechProbability, setLastSpeechProbability] = useState(0);
 
+  // Phase 2: Confidence sharing state
+  const [speechDurationMs, setSpeechDurationMs] = useState(0);
+
+  // Phase 3: Adaptive VAD state
+  const [isCalibrating, setIsCalibrating] = useState(false);
+  const [isCalibrated, setIsCalibrated] = useState(false);
+  const [noiseFloor, setNoiseFloor] = useState(0);
+  const [adaptiveThreshold, setAdaptiveThreshold] = useState(
+    positiveSpeechThreshold,
+  );
+
   // Refs
   const vadRef = useRef<MicVAD | null>(null);
   const cleanupRef = useRef(false);
@@ -194,6 +302,14 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
   // Echo-aware refs (Phase 1)
   const isPlaybackActiveRef = useRef(false);
   const speechStartTimeRef = useRef<number | null>(null);
+
+  // Phase 2: Confidence sharing refs
+  const lastProbabilityRef = useRef(0);
+  const confidenceStreamIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Phase 3: Adaptive VAD refs
+  const noiseSamplesRef = useRef<number[]>([]);
+  const noiseCalibrationResolveRef = useRef<(() => void) | null>(null);
 
   // Keep callback refs updated to avoid stale closures
   const onSpeechStartRef = useRef(onSpeechStart);
@@ -273,28 +389,50 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
           }
 
           setIsSpeaking(true);
+          setSpeechDurationMs(0);
+
+          // Phase 2: Start streaming confidence at 100ms intervals
+          if (confidenceStreamIntervalRef.current) {
+            clearInterval(confidenceStreamIntervalRef.current);
+          }
+          confidenceStreamIntervalRef.current = setInterval(() => {
+            const duration = speechStartTimeRef.current
+              ? Date.now() - speechStartTimeRef.current
+              : 0;
+            setSpeechDurationMs(duration);
+            // Call the probability callback with the last known probability
+            onSpeechProbabilityRef.current?.(lastProbabilityRef.current);
+          }, 100);
+
           onSpeechStartRef.current?.();
         },
 
         onSpeechEnd: (audio: Float32Array) => {
-          const speechDurationMs = speechStartTimeRef.current
+          const duration = speechStartTimeRef.current
             ? Date.now() - speechStartTimeRef.current
             : 0;
           speechStartTimeRef.current = null;
 
+          // Phase 2: Stop confidence streaming
+          if (confidenceStreamIntervalRef.current) {
+            clearInterval(confidenceStreamIntervalRef.current);
+            confidenceStreamIntervalRef.current = null;
+          }
+
           // During playback, enforce minimum speech duration to filter echo
           if (isPlaybackActiveRef.current) {
-            if (speechDurationMs < playbackMinSpeechMs) {
+            if (duration < playbackMinSpeechMs) {
               voiceLog.debug(
-                `[SileroVAD] Speech during playback too short (${speechDurationMs}ms < ${playbackMinSpeechMs}ms), likely echo - ignoring`,
+                `[SileroVAD] Speech during playback too short (${duration}ms < ${playbackMinSpeechMs}ms), likely echo - ignoring`,
               );
               setIsSpeaking(false);
+              setSpeechDurationMs(0);
               // Treat as misfire, not real speech
               onVADMisfireRef.current?.();
               return;
             }
             voiceLog.debug(
-              `[SileroVAD] Valid speech during playback (${speechDurationMs}ms), triggering barge-in`,
+              `[SileroVAD] Valid speech during playback (${duration}ms), triggering barge-in`,
             );
           } else {
             voiceLog.debug(
@@ -303,14 +441,35 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
           }
 
           setIsSpeaking(false);
+          setSpeechDurationMs(duration);
           onSpeechEndRef.current?.(audio);
         },
 
         onVADMisfire: () => {
           speechStartTimeRef.current = null;
+          // Phase 2: Stop confidence streaming
+          if (confidenceStreamIntervalRef.current) {
+            clearInterval(confidenceStreamIntervalRef.current);
+            confidenceStreamIntervalRef.current = null;
+          }
           voiceLog.debug("[SileroVAD] VAD misfire (speech too short)");
           setIsSpeaking(false);
+          setSpeechDurationMs(0);
           onVADMisfireRef.current?.();
+        },
+
+        // Phase 2: Track frame-level probabilities for confidence sharing
+        // Phase 3: Collect noise samples during calibration
+        onFrameProcessed: (probabilities) => {
+          const speechProb = probabilities.isSpeech;
+          lastProbabilityRef.current = speechProb;
+          setLastSpeechProbability(speechProb);
+
+          // Phase 3: Collect noise samples during calibration
+          // Only sample low-probability frames (likely noise, not speech)
+          if (noiseSamplesRef.current !== null && speechProb < 0.3) {
+            noiseSamplesRef.current.push(speechProb);
+          }
         },
 
         // Note: The VAD library processes frames internally and uses these thresholds.
@@ -449,6 +608,87 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
     [echoSuppressionMode],
   );
 
+  /**
+   * Phase 3: Calibrate noise level for adaptive threshold.
+   *
+   * Measures ambient noise for noiseCalibrationMs and calculates
+   * an adaptive threshold that filters out background noise while
+   * remaining sensitive to actual speech.
+   */
+  const calibrateNoise = useCallback(async (): Promise<void> => {
+    if (!vadRef.current || !enableAdaptiveThreshold) {
+      voiceLog.debug(
+        "[SileroVAD] Skipping calibration (VAD not ready or adaptive disabled)",
+      );
+      return;
+    }
+
+    if (isCalibrating) {
+      voiceLog.debug("[SileroVAD] Calibration already in progress");
+      return;
+    }
+
+    voiceLog.info("[SileroVAD] Starting noise calibration...");
+    setIsCalibrating(true);
+    noiseSamplesRef.current = [];
+
+    return new Promise<void>((resolve) => {
+      noiseCalibrationResolveRef.current = resolve;
+
+      // Collect noise samples for the calibration duration
+      setTimeout(() => {
+        const samples = noiseSamplesRef.current;
+        if (samples.length > 0) {
+          // Calculate noise floor as average of lowest 50% of samples
+          // This filters out any speech that occurred during calibration
+          const sortedSamples = [...samples].sort((a, b) => a - b);
+          const lowerHalf = sortedSamples.slice(
+            0,
+            Math.ceil(sortedSamples.length / 2),
+          );
+          const avgNoise =
+            lowerHalf.reduce((sum, s) => sum + s, 0) / lowerHalf.length;
+
+          setNoiseFloor(avgNoise);
+
+          // Calculate adaptive threshold
+          // Higher noise = higher threshold, but clamped to min/max
+          const adjustedThreshold = Math.min(
+            maxAdaptiveThreshold,
+            Math.max(
+              minAdaptiveThreshold,
+              positiveSpeechThreshold + avgNoise * noiseAdaptationFactor,
+            ),
+          );
+
+          setAdaptiveThreshold(adjustedThreshold);
+          setIsCalibrated(true);
+
+          voiceLog.info(
+            `[SileroVAD] Calibration complete: noise floor=${avgNoise.toFixed(3)}, ` +
+              `adaptive threshold=${adjustedThreshold.toFixed(3)} (samples=${samples.length})`,
+          );
+        } else {
+          voiceLog.warn("[SileroVAD] Calibration failed: no samples collected");
+          setAdaptiveThreshold(positiveSpeechThreshold);
+        }
+
+        setIsCalibrating(false);
+        noiseSamplesRef.current = [];
+        noiseCalibrationResolveRef.current = null;
+        resolve();
+      }, noiseCalibrationMs);
+    });
+  }, [
+    enableAdaptiveThreshold,
+    isCalibrating,
+    noiseCalibrationMs,
+    noiseAdaptationFactor,
+    positiveSpeechThreshold,
+    minAdaptiveThreshold,
+    maxAdaptiveThreshold,
+  ]);
+
   // Auto-start if requested
   useEffect(() => {
     if (autoStart) {
@@ -456,10 +696,27 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
     }
   }, [autoStart, start]);
 
+  // Phase 2: Get current VAD state for WebSocket sharing
+  const getVADState = useCallback((): VADStateMessage => {
+    return {
+      type: "vad.state",
+      silero_confidence: lastProbabilityRef.current,
+      is_speaking: isSpeaking,
+      speech_duration_ms: speechDurationMs,
+      is_playback_active: isPlaybackActive,
+      effective_threshold: effectiveThreshold,
+    };
+  }, [isSpeaking, speechDurationMs, isPlaybackActive, effectiveThreshold]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       cleanupRef.current = true;
+      // Phase 2: Clean up confidence streaming interval
+      if (confidenceStreamIntervalRef.current) {
+        clearInterval(confidenceStreamIntervalRef.current);
+        confidenceStreamIntervalRef.current = null;
+      }
       if (vadRef.current) {
         vadRef.current.pause();
         vadRef.current.destroy();
@@ -486,6 +743,17 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
       isPlaybackActive,
       effectiveThreshold,
       lastSpeechProbability,
+
+      // Phase 2: Confidence sharing
+      speechDurationMs,
+      getVADState,
+
+      // Phase 3: Adaptive VAD
+      isCalibrating,
+      isCalibrated,
+      noiseFloor,
+      calibrateNoise,
+      adaptiveThreshold,
     }),
     [
       isListening,
@@ -500,6 +768,14 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
       isPlaybackActive,
       effectiveThreshold,
       lastSpeechProbability,
+      speechDurationMs,
+      getVADState,
+      // Phase 3
+      isCalibrating,
+      isCalibrated,
+      noiseFloor,
+      calibrateNoise,
+      adaptiveThreshold,
     ],
   );
 }

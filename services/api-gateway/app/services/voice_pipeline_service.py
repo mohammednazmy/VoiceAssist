@@ -518,6 +518,10 @@ class VoicePipelineSession:
         self._preemptive_transcript_buffer: str = ""
         self._preemptive_listening_active: bool = False
 
+        # Phase 2: VAD Confidence Sharing - Store frontend Silero VAD state
+        self._frontend_vad_state: Optional[Dict[str, Any]] = None
+        self._frontend_vad_update_time: float = 0.0
+
     @property
     def state(self) -> PipelineState:
         """Get current pipeline state."""
@@ -811,11 +815,28 @@ class VoicePipelineSession:
         Handle barge-in (user interrupts AI).
 
         Cancels current TTS and prepares for new input.
+
+        Phase 4: Barge-in Latency Optimization
+        - Sends immediate `barge_in_initiated` signal before any async operations
+        - This allows frontend to optimistically transition to listening state
+        - Target: <50ms from frontend trigger to audio stop
         """
         if not self.config.barge_in_enabled:
             return
 
         logger.info(f"Barge-in triggered: {self.session_id}")
+
+        # Phase 4: Send immediate confirmation before any async operations
+        # This allows frontend to optimistically stop audio playback
+        await self._on_message(
+            PipelineMessage(
+                type="barge_in.initiated",
+                data={
+                    "timestamp": time.time(),
+                    "session_id": self.session_id,
+                },
+            )
+        )
 
         async with self._state_lock:
             self._metrics.cancelled = True
@@ -824,9 +845,19 @@ class VoicePipelineSession:
             if self._talker_session:
                 await self._talker_session.cancel()
 
-            # Cancel Thinker if processing
+            # Cancel Thinker if processing and recreate for new utterance
+            # CRITICAL: Must recreate the session because the cancelled session
+            # cannot be reused for think() calls
             if self._thinker_session:
                 await self._thinker_session.cancel()
+                self._thinker_session = self._thinker_service.create_session(
+                    conversation_id=self.conversation_id,
+                    on_token=self._handle_llm_token,
+                    on_tool_call=self._handle_tool_call,
+                    on_tool_result=self._handle_tool_result,
+                    user_id=self.user_id,
+                )
+                logger.debug("[Pipeline] Recreated Thinker session for new input after barge-in")
 
             # Natural Conversation Flow: Phase 4 - Pre-emptive Listening
             # Use the pre-emptive transcript buffer if available
@@ -859,6 +890,55 @@ class VoicePipelineSession:
             await self._send_state_update(reason="barge_in")
             # Issue 3: Publish turn.yielded when user interrupts
             await self._publish_turn_yielded("user_barge_in")
+
+    async def update_frontend_vad_state(
+        self,
+        silero_confidence: float,
+        is_speaking: bool,
+        speech_duration_ms: int,
+        is_playback_active: bool,
+    ) -> None:
+        """
+        Phase 2: VAD Confidence Sharing - Update frontend Silero VAD state.
+
+        This method receives periodic VAD state updates from the frontend
+        Silero VAD and stores them for hybrid VAD decision making.
+
+        The hybrid VAD decision logic combines:
+        - Frontend Silero VAD: Neural network, instant, but affected by echo
+        - Backend Deepgram VAD: Server-side, reliable, slight delay
+
+        Args:
+            silero_confidence: Speech probability from Silero VAD (0-1)
+            is_speaking: Whether frontend VAD thinks user is speaking
+            speech_duration_ms: Duration of current speech in milliseconds
+            is_playback_active: Whether AI audio playback is active
+        """
+        self._frontend_vad_state = {
+            "silero_confidence": silero_confidence,
+            "is_speaking": is_speaking,
+            "speech_duration_ms": speech_duration_ms,
+            "is_playback_active": is_playback_active,
+        }
+        self._frontend_vad_update_time = time.time()
+
+        # Hybrid VAD Logic:
+        # If frontend VAD detects speech with high confidence during AI playback,
+        # this is likely real user speech (barge-in) not echo.
+        # The threshold is raised during playback (by frontend) to filter echo.
+        if (
+            is_playback_active
+            and is_speaking
+            and silero_confidence >= 0.7  # High confidence during playback
+            and speech_duration_ms >= 200  # Sustained speech
+            and self._state == PipelineState.SPEAKING
+        ):
+            logger.info(
+                f"[Pipeline] Hybrid VAD: Triggering barge-in from frontend VAD "
+                f"(conf={silero_confidence:.2f}, duration={speech_duration_ms}ms)"
+            )
+            # Don't await - let it run async to avoid blocking VAD stream
+            asyncio.create_task(self.barge_in())
 
     async def stop(self) -> PipelineMetrics:
         """
@@ -1292,12 +1372,14 @@ class VoicePipelineSession:
             await self._backchannel_session.on_speech_start()
 
         # Notify frontend of speech start (for UI feedback only)
+        logger.info(f"[Pipeline] SENDING input_audio_buffer.speech_started to frontend (state={self._state})")
         await self._on_message(
             PipelineMessage(
                 type="input_audio_buffer.speech_started",
                 data={
                     "timestamp": time.time(),
                     "vad_confidence": 0.9,  # Deepgram VAD is high confidence
+                    "pipeline_state": self._state.value,  # Include state for debugging
                 },
             )
         )
@@ -1414,10 +1496,20 @@ class VoicePipelineSession:
         self._pending_continuation = False
 
         # Get final transcript from STT
-        if self._stt_session:
+        # Note: With pre-emptive listening enabled, we DON'T stop the STT session
+        # here because we need it to keep running during TTS playback for barge-in
+        # detection. The session will be recreated in _process_transcript() before
+        # TTS starts.
+        if self._stt_session and not self.config.enable_preemptive_listening:
             final = await self._stt_session.stop()
             if final and final != self._final_transcript:
                 self._final_transcript = final
+        elif self._stt_session and self.config.enable_preemptive_listening:
+            # For pre-emptive listening, stop the current session but the new one
+            # will be created in _process_transcript() before TTS starts
+            logger.debug("[Pipeline] Stopping STT session (will restart for pre-emptive listening)")
+            await self._stt_session.stop()
+            self._stt_session = None
 
         await self._process_transcript()
 
@@ -1491,6 +1583,30 @@ class VoicePipelineSession:
             on_audio_chunk=self._handle_audio_chunk,
             voice_config=voice_config,
         )
+
+        # CRITICAL FIX: Create STT session BEFORE TTS starts playing so that
+        # pre-emptive listening has a valid session during SPEAKING state.
+        # Without this, pre-emptive listening sends audio to a stopped session,
+        # causing "Dropping audio: running=False, ws=None" errors and barge-in failure.
+        if self.config.enable_preemptive_listening:
+            logger.info("[Pipeline] Creating STT session for pre-emptive listening")
+            self._stt_session = await self._stt_service.create_session(
+                on_partial=self._handle_partial_transcript,
+                on_final=self._handle_final_transcript,
+                on_endpoint=self._handle_speech_end,
+                on_speech_start=self._handle_speech_start,
+                on_words=self._handle_word_data,
+                config=STTSessionConfig(
+                    language=self.config.stt_language,
+                    sample_rate=self.config.stt_sample_rate,
+                    endpointing_ms=self.config.stt_endpointing_ms,
+                    utterance_end_ms=self.config.stt_utterance_end_ms,
+                ),
+            )
+            if not await self._stt_session.start():
+                logger.error("[Pipeline] Failed to start STT session for pre-emptive listening")
+            else:
+                logger.info("[Pipeline] STT session ready for pre-emptive listening")
 
         # Build emotion context for response adaptation
         emotion_context = None
@@ -1693,15 +1809,28 @@ class VoicePipelineSession:
         async with self._state_lock:
             self._state = PipelineState.LISTENING
 
-            # Restart STT for next input, preserving on_words callback for prosody/backchannel
-            self._stt_session = await self._stt_service.create_session(
-                on_partial=self._handle_partial_transcript,
-                on_final=self._handle_final_transcript,
-                on_endpoint=self._handle_speech_end,
-                on_speech_start=self._handle_speech_start,
-                on_words=self._handle_word_data,
-            )
-            await self._stt_session.start()
+            # If pre-emptive listening was enabled, the STT session was created
+            # before TTS started and is already running. Only create a new session
+            # if pre-emptive listening was disabled.
+            if not self.config.enable_preemptive_listening:
+                # Restart STT for next input, preserving on_words callback for prosody/backchannel
+                self._stt_session = await self._stt_service.create_session(
+                    on_partial=self._handle_partial_transcript,
+                    on_final=self._handle_final_transcript,
+                    on_endpoint=self._handle_speech_end,
+                    on_speech_start=self._handle_speech_start,
+                    on_words=self._handle_word_data,
+                    config=STTSessionConfig(
+                        language=self.config.stt_language,
+                        sample_rate=self.config.stt_sample_rate,
+                        endpointing_ms=self.config.stt_endpointing_ms,
+                        utterance_end_ms=self.config.stt_utterance_end_ms,
+                    ),
+                )
+                await self._stt_session.start()
+            else:
+                # STT session already running from pre-emptive listening
+                logger.debug("[Pipeline] Keeping existing STT session from pre-emptive listening")
 
             await self._send_state_update()
             # Issue 3: Publish turn.yielded when AI finishes speaking

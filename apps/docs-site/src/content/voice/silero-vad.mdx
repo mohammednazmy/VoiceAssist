@@ -3,7 +3,7 @@ title: "Silero VAD Integration"
 description: "Neural network-based Voice Activity Detection running in the browser for accurate speech detection and barge-in during AI playback."
 ---
 
-<Badge tone="success">Feature: Silero VAD v1.0</Badge>
+<Badge tone="success">Feature: Silero VAD v2.0</Badge>
 
 ## Overview
 
@@ -110,9 +110,97 @@ const sileroVAD = useSileroVAD({
 
 VAD runs without any echo suppression. **Not recommended for production.**
 
+## VAD Confidence Sharing (Phase 2)
+
+The frontend streams VAD state to the backend via WebSocket, enabling hybrid VAD decisions that combine:
+- **Frontend Silero VAD**: Neural network, instant (~10-30ms), but affected by echo
+- **Backend Deepgram VAD**: Server-side, reliable, slight delay (~100-200ms)
+
+### How It Works
+
+```typescript
+// Frontend sends VAD state every 100ms during speech
+{
+  "type": "vad.state",
+  "silero_confidence": 0.85,      // Speech probability (0-1)
+  "is_speaking": true,             // Frontend VAD speaking state
+  "speech_duration_ms": 250,       // Duration of current speech
+  "is_playback_active": false,     // Whether AI is speaking
+  "effective_threshold": 0.5       // Current VAD threshold
+}
+```
+
+The backend uses this to make smarter barge-in decisions, especially during AI playback where the frontend VAD has better echo awareness.
+
+## Adaptive VAD (Phase 3)
+
+Silero VAD can automatically adjust its threshold based on ambient noise levels.
+
+### Noise Calibration
+
+When voice mode starts, the hook measures ambient noise for ~1 second:
+
+```typescript
+const sileroVAD = useSileroVAD({
+  enableAdaptiveThreshold: true,
+  noiseCalibrationMs: 1000,        // Calibration duration
+  noiseAdaptationFactor: 0.1,      // Adjustment sensitivity
+  minAdaptiveThreshold: 0.3,       // Floor threshold
+  maxAdaptiveThreshold: 0.8,       // Ceiling threshold
+});
+
+// Manual calibration
+await sileroVAD.calibrateNoise();
+
+// Access noise data
+console.log(sileroVAD.noiseFloor);       // 0.12
+console.log(sileroVAD.adaptiveThreshold); // 0.51
+```
+
+### Benefits
+
+- **Noisy environments**: Threshold increases to reduce false triggers
+- **Quiet environments**: Threshold decreases for better sensitivity
+- **Dynamic adjustment**: Continuously adapts to changing conditions
+
+## Barge-in Latency Optimization (Phase 4)
+
+Optimized for <50ms barge-in latency from user speech to AI audio stop.
+
+### Immediate Backend Signal
+
+When barge-in is triggered, the backend sends an immediate `barge_in.initiated` signal **before** any async cancellation operations complete:
+
+```typescript
+// Backend sends immediately
+{
+  "type": "barge_in.initiated",
+  "timestamp": 1701987654.123,
+  "session_id": "abc-123"
+}
+
+// Frontend handles optimistically
+case "barge_in.initiated":
+  // Immediately fade out audio (30ms fade)
+  audioPlayback.fadeOut(30);
+  break;
+```
+
+### Latency Breakdown
+
+| Stage | Target | Actual |
+|-------|--------|--------|
+| Silero VAD detection | 10-30ms | ~15ms |
+| WebSocket message to backend | 5-20ms | ~10ms |
+| Backend acknowledgment | <5ms | ~2ms |
+| Frontend audio fadeout | 30ms | 30ms |
+| **Total** | **<100ms** | **~57ms** |
+
 ## Feature Flags
 
 All Silero VAD parameters can be controlled via the admin panel:
+
+### Core Flags
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
@@ -122,6 +210,20 @@ All Silero VAD parameters can be controlled via the admin panel:
 | `backend.voice_silero_playback_threshold_boost` | number | `0.2` | Threshold boost during playback |
 | `backend.voice_silero_min_speech_ms` | number | `150` | Min speech duration (ms) |
 | `backend.voice_silero_playback_min_speech_ms` | number | `200` | Min speech during playback (ms) |
+
+### Adaptive VAD Flags (Phase 3)
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `backend.voice_silero_adaptive_threshold` | boolean | `true` | Enable adaptive threshold |
+| `backend.voice_silero_noise_calibration_ms` | number | `1000` | Calibration duration (ms) |
+| `backend.voice_silero_noise_adaptation_factor` | number | `0.1` | Adjustment sensitivity |
+
+### Confidence Sharing Flags (Phase 2)
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `backend.voice_silero_vad_confidence_sharing` | boolean | `true` | Enable frontend-to-backend VAD sharing |
 
 ## Usage
 

@@ -1880,6 +1880,38 @@ export function useThinkerTalkerSession(
         }
 
         // ================================================================
+        // Phase 4: Barge-in Latency Optimization
+        // ================================================================
+
+        case "barge_in.initiated": {
+          // Phase 4: Immediate acknowledgment that backend received barge-in
+          // This is sent BEFORE any async cancellation operations complete
+          // Allows frontend to optimistically transition to listening state
+          const backendTimestamp = message.timestamp as number;
+          const latencyMs = Date.now() - backendTimestamp * 1000;
+
+          voiceLog.info(
+            `[ThinkerTalker] Barge-in initiated by backend (latency: ${latencyMs.toFixed(0)}ms)`,
+          );
+
+          // Immediately stop audio playback (optimistic transition)
+          // This happens before the full barge-in flow completes
+          if (options.onFadeOutPlayback) {
+            // Use fast 30ms fade for smooth but instant stop
+            options.onFadeOutPlayback(30);
+          } else {
+            options.onStopPlayback?.();
+          }
+
+          // Track barge-in latency in metrics
+          updateMetrics({
+            bargeInCount: metrics.bargeInCount + 1,
+          });
+
+          break;
+        }
+
+        // ================================================================
         // Phase 1-4: Conversational Intelligence Message Handlers
         // ================================================================
 
@@ -2681,6 +2713,33 @@ export function useThinkerTalkerSession(
   }, []);
 
   /**
+   * Phase 2: Send VAD state to backend for hybrid decision-making
+   * This allows the backend to combine Silero VAD confidence with Deepgram events
+   * for more accurate barge-in and speech detection.
+   */
+  const sendVADState = useCallback(
+    (vadState: {
+      silero_confidence: number;
+      is_speaking: boolean;
+      speech_duration_ms: number;
+      is_playback_active: boolean;
+      effective_threshold: number;
+    }) => {
+      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      wsRef.current.send(
+        JSON.stringify({
+          type: "vad.state",
+          ...vadState,
+        }),
+      );
+    },
+    [],
+  );
+
+  /**
    * Reset fatal error state
    */
   const resetFatalError = useCallback(() => {
@@ -2777,6 +2836,7 @@ export function useThinkerTalkerSession(
     sendMessage,
     commitAudio,
     resetFatalError,
+    sendVADState, // Phase 2: VAD Confidence Sharing
 
     // Derived state
     isConnected: status === "connected" || status === "ready",
