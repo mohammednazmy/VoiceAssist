@@ -34,6 +34,7 @@ class QualityPreset(str, Enum):
     SPEED = "speed"  # ~100-150ms TTFA, may sound slightly choppy
     BALANCED = "balanced"  # ~200-250ms TTFA, natural after first chunk (DEFAULT)
     NATURAL = "natural"  # ~300-400ms TTFA, full sentences always
+    CRISP = "crisp"  # ~350-450ms TTFA, highest quality audio, no choppiness
 
 
 @dataclass
@@ -132,6 +133,29 @@ PRESET_CONFIGS: Dict[QualityPreset, PresetConfig] = {
         audio_chunk_size=8192,
         label="Natural",
         description="Most natural sounding speech. Slightly slower response.",
+    ),
+    QualityPreset.CRISP: PresetConfig(
+        adaptive_chunking=AdaptiveChunkerConfig(
+            # Larger first chunk to avoid choppy opening audio
+            first_chunk_min=50,  # Never send tiny fragments
+            first_chunk_optimal=100,  # Wait for full phrase
+            first_chunk_max=150,  # Allow complete thoughts
+            # Full sentences for seamless prosody
+            subsequent_min=80,  # Minimum meaningful phrase
+            subsequent_optimal=180,  # Full sentences preferred
+            subsequent_max=300,  # Allow long complete thoughts
+            chunks_before_natural=1,
+            enabled=True,
+        ),
+        enable_ssml=True,
+        voice_style=VoiceStyle.CRISP,
+        # Higher quality TTS parameters for crisp, clear audio
+        stability=0.80,  # Higher stability = more consistent voice, less artifacts
+        similarity_boost=0.90,  # Maximum voice clarity
+        style_exaggeration=0.05,  # Minimal style variance = cleaner output
+        audio_chunk_size=16384,  # Larger chunks = fewer gaps between playback
+        label="Crisp",
+        description="Highest quality audio. Clear, smooth speech with no choppiness.",
     ),
 }
 
