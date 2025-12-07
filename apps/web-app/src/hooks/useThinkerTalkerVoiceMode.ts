@@ -15,7 +15,7 @@
  * Phase: Thinker/Talker Voice Pipeline Migration
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   useThinkerTalkerSession,
   type TTConnectionStatus,
@@ -31,10 +31,8 @@ import {
 import { useTTAudioPlayback, type TTPlaybackState } from "./useTTAudioPlayback";
 import { useBackchannelAudio } from "./useBackchannelAudio";
 import { useBargeInPromptAudio } from "./useBargeInPromptAudio";
-import {
-  useUnifiedConversationStore,
-  type MessageSource,
-} from "../stores/unifiedConversationStore";
+import { useSileroVAD } from "./useSileroVAD";
+import { useUnifiedConversationStore } from "../stores/unifiedConversationStore";
 import { useAuthStore } from "../stores/authStore";
 import { voiceLog } from "../lib/logger";
 
@@ -107,6 +105,12 @@ export interface TTVoiceModeReturn {
   /** Source of thinking feedback ("backend" when server is handling tones) */
   thinkingSource: "backend" | "frontend";
 
+  // Local VAD (Silero)
+  /** Whether Silero VAD is actively listening for speech */
+  isSileroVADActive: boolean;
+  /** Whether Silero VAD is loading/initializing */
+  isSileroVADLoading: boolean;
+
   // Actions
   connect: () => Promise<void>;
   disconnect: () => void;
@@ -157,6 +161,16 @@ export function useThinkerTalkerVoiceMode(
     "frontend",
   );
 
+  // Refs for Silero VAD barge-in (avoid stale closures and debouncing)
+  const lastBargeInTimeRef = useRef<number>(0);
+  const BARGE_IN_DEBOUNCE_MS = 500; // Prevent multiple rapid barge-ins
+
+  // Ref for sileroVAD to avoid including entire object in effect dependencies
+  // Declared early so it can be used in audioPlayback callbacks
+  const sileroVADRef = useRef<ReturnType<typeof useSileroVAD> | null>(null);
+  // Track if we've started VAD to avoid multiple starts
+  const vadStartedRef = useRef(false);
+
   // Get store actions
   const {
     setVoiceConnectionStatus,
@@ -166,7 +180,6 @@ export function useThinkerTalkerVoiceMode(
     stopListening,
     startSpeaking,
     stopSpeaking,
-    addMessage,
   } = useUnifiedConversationStore();
 
   // Get auth token for API calls
@@ -219,16 +232,45 @@ export function useThinkerTalkerVoiceMode(
   const audioPlayback = useTTAudioPlayback({
     volume,
     onPlaybackStart: () => {
-      voiceLog.debug("[TTVoiceMode] Playback started");
+      voiceLog.info("[TTVoiceMode] Playback started - pausing Silero VAD");
       startSpeaking();
+      // CRITICAL: Pause Silero VAD during AI playback
+      // When AI audio plays through speakers, the microphone picks it up.
+      // Silero VAD interprets this as ongoing speech and gets stuck in "speaking" state.
+      // This prevents it from detecting actual user speech for barge-in.
+      // Solution: Pause VAD during playback, rely on backend Deepgram VAD for barge-in.
+      const vad = sileroVADRef.current;
+      if (vad && vad.isListening) {
+        voiceLog.info("[TTVoiceMode] Pausing Silero VAD during playback");
+        vad.pause();
+      }
     },
     onPlaybackEnd: () => {
-      voiceLog.debug("[TTVoiceMode] Playback ended");
+      voiceLog.info("[TTVoiceMode] Playback ended - restarting Silero VAD");
       stopSpeaking();
+      // Restart Silero VAD after AI finishes speaking
+      // Small delay to ensure audio has fully stopped before reactivating VAD
+      setTimeout(() => {
+        const vad = sileroVADRef.current;
+        if (vad && vadStartedRef.current && !vad.isListening) {
+          voiceLog.info("[TTVoiceMode] Restarting Silero VAD after playback");
+          vad.start();
+        }
+      }, 100);
     },
     onPlaybackInterrupted: () => {
-      voiceLog.debug("[TTVoiceMode] Playback interrupted (barge-in)");
+      voiceLog.info(
+        "[TTVoiceMode] Playback interrupted (barge-in) - restarting Silero VAD",
+      );
       stopSpeaking();
+      // Restart VAD after barge-in with slightly longer delay to avoid echo
+      setTimeout(() => {
+        const vad = sileroVADRef.current;
+        if (vad && vadStartedRef.current && !vad.isListening) {
+          voiceLog.info("[TTVoiceMode] Restarting Silero VAD after barge-in");
+          vad.start();
+        }
+      }, 150);
     },
     onError: (err) => {
       voiceLog.error("[TTVoiceMode] Audio playback error:", err);
@@ -242,14 +284,11 @@ export function useThinkerTalkerVoiceMode(
     autoConnect,
 
     // Handle transcripts
+    // NOTE: Message addition is handled by parent component via onUserTranscript callback
+    // to avoid duplicate messages in the chat
     onTranscript: (transcript: TTTranscript) => {
       if (transcript.is_final) {
-        // Final transcript - add to conversation
-        addMessage({
-          role: "user",
-          content: transcript.text,
-          source: "voice" as MessageSource,
-        });
+        // Final transcript - notify parent (which handles message addition)
         setPartialTranscript("");
         onUserTranscript?.(transcript.text, true);
       } else {
@@ -272,12 +311,9 @@ export function useThinkerTalkerVoiceMode(
     },
 
     // Handle complete response
+    // NOTE: Message addition is handled by parent component via onAIResponse callback
+    // to avoid duplicate messages in the chat
     onResponseComplete: (content: string, _messageId: string) => {
-      addMessage({
-        role: "assistant",
-        content,
-        source: "voice" as MessageSource,
-      });
       currentResponseId = null;
       onAIResponse?.(content, true);
     },
@@ -325,6 +361,11 @@ export function useThinkerTalkerVoiceMode(
         case "listening":
           setVoiceState("listening");
           startListening();
+          // Signal end of audio stream when backend transitions to listening
+          // This allows isPlaying to reset when all queued audio finishes
+          // Note: Don't call reset() here - that would cut off audio mid-playback
+          // during natural completion. reset() is called in "processing" state instead.
+          audioPlayback.endStream();
           break;
         case "processing":
           setVoiceState("processing");
@@ -339,20 +380,70 @@ export function useThinkerTalkerVoiceMode(
         case "cancelled":
         case "idle":
           setVoiceState("idle");
+          // Signal end of stream in terminal states
+          // Let any playing audio finish naturally
+          audioPlayback.endStream();
           break;
       }
     },
 
     // Handle speech events for barge-in
+    // This is triggered by backend Deepgram VAD when it detects user speech
     onSpeechStarted: () => {
-      voiceLog.debug("[TTVoiceMode] User speech detected");
+      voiceLog.info("[TTVoiceMode] Backend VAD: User speech detected");
       startListening();
+
+      // CRITICAL: Trigger barge-in if AI is currently speaking
+      // Backend Deepgram VAD is more reliable than local Silero VAD during playback
+      // because it's server-side and not affected by speaker echo
+      if (audioPlayback.isPlaying) {
+        // Debounce to prevent multiple rapid barge-ins
+        const now = Date.now();
+        if (now - lastBargeInTimeRef.current < BARGE_IN_DEBOUNCE_MS) {
+          voiceLog.info("[TTVoiceMode] Backend VAD barge-in debounced");
+          return;
+        }
+        lastBargeInTimeRef.current = now;
+
+        voiceLog.info(
+          "[TTVoiceMode] Backend VAD barge-in: user speaking while AI playing",
+        );
+        // Fade out audio immediately for smooth transition
+        audioPlayback.fadeOut(50);
+        // Notify backend to cancel response generation
+        session.bargeIn();
+      }
     },
 
     onStopPlayback: () => {
       // Stop audio playback on barge-in
       audioPlayback.stop();
     },
+
+    // Natural Conversation Flow: Instant barge-in with smooth fade
+    onFadeOutPlayback: (durationMs?: number) => {
+      // Fade out audio for smooth barge-in transition (default 50ms)
+      audioPlayback.fadeOut(durationMs);
+    },
+
+    // Local VAD-based barge-in detection
+    // This provides instant barge-in when the backend's Deepgram VAD doesn't fire
+    // (e.g., due to TTS echo or continuous speech mode)
+    onLocalVoiceActivity: (rmsLevel: number) => {
+      // Only trigger barge-in if audio is currently playing
+      if (audioPlayback.isPlaying) {
+        voiceLog.info(
+          `[TTVoiceMode] Local VAD barge-in: rms=${rmsLevel.toFixed(3)}, stopping playback`,
+        );
+        // Fade out audio immediately
+        audioPlayback.fadeOut(50);
+        // Notify backend to cancel response generation
+        session.bargeIn();
+      }
+    },
+
+    // Enable instant barge-in for reduced latency
+    enableInstantBargeIn: true,
 
     // Handle metrics
     onMetricsUpdate: (metrics: TTVoiceMetrics) => {
@@ -389,6 +480,80 @@ export function useThinkerTalkerVoiceMode(
       }
     },
   });
+
+  // Refs for Silero VAD callbacks (avoid stale closures)
+  const audioPlaybackRef = useRef(audioPlayback);
+  const sessionRef = useRef(session);
+
+  // Keep refs updated
+  useEffect(() => {
+    audioPlaybackRef.current = audioPlayback;
+    sessionRef.current = session;
+  });
+
+  // Silero VAD for reliable local voice activity detection
+  // Uses neural network model (much more accurate than RMS threshold)
+  const sileroVAD = useSileroVAD({
+    onSpeechStart: () => {
+      voiceLog.debug("[TTVoiceMode] Silero VAD: Speech started");
+
+      // Debounce to prevent multiple rapid barge-ins
+      const now = Date.now();
+      if (now - lastBargeInTimeRef.current < BARGE_IN_DEBOUNCE_MS) {
+        voiceLog.debug("[TTVoiceMode] Silero VAD: Barge-in debounced");
+        return;
+      }
+
+      // Trigger barge-in if AI is currently speaking (audio playing)
+      if (audioPlaybackRef.current.isPlaying) {
+        voiceLog.info(
+          "[TTVoiceMode] Silero VAD barge-in: user speaking while AI playing",
+        );
+        lastBargeInTimeRef.current = now;
+        // Fade out audio immediately for smooth transition
+        audioPlaybackRef.current.fadeOut(50);
+        // Notify backend to cancel response generation
+        sessionRef.current.bargeIn();
+      }
+    },
+    onSpeechEnd: (audio) => {
+      voiceLog.debug(
+        `[TTVoiceMode] Silero VAD: Speech ended, audio length: ${audio.length}`,
+      );
+    },
+    onVADMisfire: () => {
+      voiceLog.debug("[TTVoiceMode] Silero VAD: Misfire (speech too short)");
+    },
+    // Don't auto-start - we'll start when connected
+    autoStart: false,
+    // Use moderate sensitivity for barge-in detection
+    positiveSpeechThreshold: 0.5,
+    negativeSpeechThreshold: 0.35,
+    // Require ~150ms of speech to avoid false triggers
+    minSpeechFrames: 150,
+  });
+
+  // Keep sileroVAD ref updated for use in effects
+  sileroVADRef.current = sileroVAD;
+
+  // Start/stop Silero VAD based on connection status
+  // IMPORTANT: Only depend on session.isConnected - do NOT depend on sileroVAD state
+  // as that causes the effect to re-run when VAD state changes, potentially destroying
+  // the VAD during barge-in or speech detection.
+  useEffect(() => {
+    const vad = sileroVADRef.current;
+    if (!vad) return;
+
+    if (session.isConnected && !vadStartedRef.current) {
+      voiceLog.debug("[TTVoiceMode] Starting Silero VAD (connected)");
+      vadStartedRef.current = true;
+      vad.start();
+    } else if (!session.isConnected && vadStartedRef.current) {
+      voiceLog.debug("[TTVoiceMode] Stopping Silero VAD (disconnected)");
+      vadStartedRef.current = false;
+      vad.stop();
+    }
+  }, [session.isConnected]);
 
   // Barge-in handler - combines session signal with audio stop
   // Optionally plays "I'm listening" prompt using ElevenLabs for consistent voice
@@ -469,6 +634,10 @@ export function useThinkerTalkerVoiceMode(
       // Issue 1: Unified thinking feedback
       thinkingSource,
 
+      // Local VAD (Silero)
+      isSileroVADActive: sileroVAD.isListening,
+      isSileroVADLoading: sileroVAD.isLoading,
+
       // Actions
       connect,
       disconnect,
@@ -486,6 +655,7 @@ export function useThinkerTalkerVoiceMode(
       audioPlayback,
       backchannelAudio,
       bargeInPromptAudio,
+      sileroVAD,
       currentEmotion,
       thinkingSource,
       connect,

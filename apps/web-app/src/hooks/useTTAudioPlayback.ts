@@ -51,6 +51,17 @@ const ENHANCED_PREBUFFER_CHUNKS = 5;
 const MAX_PREBUFFER_WAIT_MS = 500;
 
 /**
+ * Maximum scheduling lookahead in seconds.
+ * Don't schedule audio more than this far in the future.
+ * Prevents massive source accumulation when chunks arrive faster than playback.
+ *
+ * Set to 3 seconds to allow for initial buffering when AudioContext is fresh
+ * (currentTime starts at 0 and advances slowly). This prevents the scheduling
+ * loop from getting stuck waiting for currentTime to catch up.
+ */
+const MAX_SCHEDULE_LOOKAHEAD_S = 3.0; // 3 second max lookahead
+
+/**
  * Crossfade duration in samples for smooth chunk transitions.
  * At 24kHz, 120 samples = 5ms crossfade (eliminates pops/clicks)
  */
@@ -321,6 +332,10 @@ export function useTTAudioPlayback(
   const prebufferStartTimeRef = useRef<number | null>(null);
   const prebufferReadyRef = useRef(false);
 
+  // Barge-in: When true, drop incoming audio chunks until reset() is called
+  // This prevents stale audio from the cancelled response from playing
+  const bargeInActiveRef = useRef(false);
+
   /**
    * Get or create AudioContext
    */
@@ -378,6 +393,23 @@ export function useTTAudioPlayback(
       // Process all available chunks
       let chunkIndex = 0;
       while (audioQueueRef.current.length > 0 && isPlayingRef.current) {
+        // Check if we're too far ahead in scheduling
+        // If so, break out and let playback catch up before scheduling more
+        const now = audioContext.currentTime;
+        const scheduledAhead = nextScheduledTimeRef.current - now;
+        if (scheduledAhead > MAX_SCHEDULE_LOOKAHEAD_S) {
+          console.log(
+            `[TTAudioPlayback] Pausing scheduling - ${scheduledAhead.toFixed(2)}s ahead, waiting for playback to catch up`,
+          );
+          // Schedule a retry after some of the audio has played
+          setTimeout(() => {
+            if (isPlayingRef.current && audioQueueRef.current.length > 0) {
+              processAudioQueue();
+            }
+          }, 200); // Check again in 200ms
+          break;
+        }
+
         const audioData = audioQueueRef.current.shift()!;
         chunkIndex++;
         console.log(`[TTAudioPlayback] Processing chunk ${chunkIndex}`, {
@@ -442,15 +474,29 @@ export function useTTAudioPlayback(
           // Track active sources for cleanup
           activeSourcesRef.current.add(source);
           source.onended = () => {
-            console.log(`[TTAudioPlayback] Source ended`, {
-              activeSourcesCount: activeSourcesRef.current.size - 1,
-              streamEnded: streamEndedRef.current,
-              queueLength: audioQueueRef.current.length,
-            });
-            activeSourcesRef.current.delete(source);
+            // Check if source is still in set before deleting
+            // (it may have been cleared by stop() or fadeOut())
+            const wasInSet = activeSourcesRef.current.has(source);
+            if (wasInSet) {
+              activeSourcesRef.current.delete(source);
+            }
+
+            const remainingCount = activeSourcesRef.current.size;
+            // Only log when the source was tracked (reduces spam after barge-in)
+            if (wasInSet) {
+              console.log(`[TTAudioPlayback] Source ended`, {
+                activeSourcesCount: remainingCount,
+                streamEnded: streamEndedRef.current,
+                queueLength: audioQueueRef.current.length,
+              });
+            }
+
             // Check if all sources finished and stream ended
+            // Only trigger onPlaybackEnd if this source was naturally ending
+            // (not if it was stopped by barge-in which clears the set)
             if (
-              activeSourcesRef.current.size === 0 &&
+              wasInSet &&
+              remainingCount === 0 &&
               streamEndedRef.current &&
               audioQueueRef.current.length === 0
             ) {
@@ -563,6 +609,15 @@ export function useTTAudioPlayback(
    */
   const queueAudioChunk = useCallback(
     (audioData: AudioChunkData) => {
+      // Drop audio chunks if barge-in is active
+      // This prevents stale audio from cancelled responses from playing
+      if (bargeInActiveRef.current) {
+        voiceLog.debug(
+          "[TTAudioPlayback] Dropping audio chunk - barge-in active",
+        );
+        return;
+      }
+
       const isBinary = audioData instanceof Uint8Array;
       console.log("[TTAudioPlayback] queueAudioChunk called", {
         dataType: isBinary ? "binary" : "base64",
@@ -578,6 +633,9 @@ export function useTTAudioPlayback(
       if (!streamStartTimeRef.current) {
         streamStartTimeRef.current = Date.now();
         streamEndedRef.current = false;
+        // Reset scheduling time for new stream to prevent stale future scheduling
+        // This ensures audio plays immediately rather than minutes in the future
+        nextScheduledTimeRef.current = 0;
         console.log("[TTAudioPlayback] Started new stream timing");
 
         // Initialize pre-buffering if enabled
@@ -687,6 +745,10 @@ export function useTTAudioPlayback(
   const stop = useCallback(() => {
     voiceLog.debug("[TTAudioPlayback] Stopping playback (barge-in)");
 
+    // Set barge-in flag to drop any incoming audio chunks
+    // This prevents stale audio from the cancelled response from playing
+    bargeInActiveRef.current = true;
+
     // Stop all active audio sources
     for (const source of activeSourcesRef.current) {
       try {
@@ -737,6 +799,10 @@ export function useTTAudioPlayback(
    */
   const fadeOut = useCallback(
     (durationMs: number = 50) => {
+      // IMMEDIATELY set barge-in flag to drop any new incoming audio chunks
+      // This prevents audio from being queued during the fade
+      bargeInActiveRef.current = true;
+
       if (!gainNodeRef.current || !audioContextRef.current) {
         // No active audio context, just stop immediately
         stop();
@@ -752,23 +818,40 @@ export function useTTAudioPlayback(
       const currentTime = audioContext.currentTime;
       const fadeEndTime = currentTime + durationMs / 1000;
 
-      // Cancel any scheduled gain changes
+      // IMMEDIATELY stop all scheduled audio sources to prevent new chunks from playing
+      // This stops any audio that was scheduled to play but hasn't started yet
+      for (const source of activeSourcesRef.current) {
+        try {
+          source.stop();
+          source.disconnect();
+        } catch {
+          // Ignore errors from already-stopped sources
+        }
+      }
+      activeSourcesRef.current.clear();
+
+      // Clear the queue immediately - no more audio will be processed
+      audioQueueRef.current = [];
+      isPlayingRef.current = false;
+      isProcessingRef.current = false;
+      nextScheduledTimeRef.current = 0;
+
+      // Cancel any scheduled gain changes and reset
       gainNode.gain.cancelScheduledValues(currentTime);
+      gainNode.gain.setValueAtTime(0, currentTime); // Immediate mute
 
-      // Set current value and ramp to zero
-      gainNode.gain.setValueAtTime(gainNode.gain.value, currentTime);
-      gainNode.gain.linearRampToValueAtTime(0, fadeEndTime);
+      // Notify of interruption
+      onPlaybackInterrupted?.();
+      setPlaybackState("stopped");
 
-      // Schedule stop() after fade completes
+      // Restore gain value for next playback after a brief delay
       setTimeout(() => {
-        stop();
-        // Restore gain value for next playback
         if (gainNodeRef.current) {
           gainNodeRef.current.gain.value = volume;
         }
       }, durationMs);
     },
-    [stop, volume],
+    [volume, onPlaybackInterrupted],
   );
 
   /**
@@ -788,6 +871,11 @@ export function useTTAudioPlayback(
    */
   const reset = useCallback(() => {
     stop();
+
+    // Clear barge-in flag AFTER stop() - we're starting a new response
+    // This allows new audio chunks to be queued for the new response
+    bargeInActiveRef.current = false;
+
     streamStartTimeRef.current = null;
     firstChunkTimeRef.current = null;
     playbackStartTimeRef.current = null;

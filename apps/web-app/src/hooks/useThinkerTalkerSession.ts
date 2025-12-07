@@ -429,6 +429,14 @@ export interface UseThinkerTalkerSessionOptions {
    * @param durationMs - Fade duration (default: 50ms)
    */
   onFadeOutPlayback?: (durationMs?: number) => void;
+  /**
+   * Called when local voice activity is detected (frontend VAD).
+   * This is triggered by analyzing microphone audio levels locally,
+   * without waiting for backend speech detection.
+   * Used as a fallback for barge-in when backend VAD doesn't work.
+   * @param rmsLevel - RMS audio level (0-1)
+   */
+  onLocalVoiceActivity?: (rmsLevel: number) => void;
   autoConnect?: boolean;
 
   // Natural Conversation Flow options
@@ -650,6 +658,8 @@ export function useThinkerTalkerSession(
   const [partialTranscript, setPartialTranscript] = useState<string>("");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [pipelineState, setPipelineState] = useState<PipelineState>("idle");
+  // Ref to track pipeline state for use in closures (avoids stale closure bug)
+  const pipelineStateRef = useRef<PipelineState>("idle");
   const [currentToolCalls, setCurrentToolCalls] = useState<TTToolCall[]>([]);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
@@ -703,6 +713,14 @@ export function useThinkerTalkerSession(
   const speechEndTimeRef = useRef<number | null>(null);
   const firstTranscriptTimeRef = useRef<number | null>(null);
   const firstLLMTokenTimeRef = useRef<number | null>(null);
+  // Track when last audio chunk was received (for barge-in detection)
+  // If audio was received recently (<3s), we might still be "speaking" from user's perspective
+  const lastAudioChunkTimeRef = useRef<number | null>(null);
+
+  // Ref for local voice activity callback (used in audio processor closure)
+  const onLocalVoiceActivityRef = useRef<
+    ((rmsLevel: number) => void) | undefined
+  >(undefined);
 
   // Session recovery state (WebSocket Error Recovery)
   const sessionIdRef = useRef<string | null>(null);
@@ -1083,6 +1101,11 @@ export function useThinkerTalkerSession(
     (message: Record<string, unknown>) => {
       const msgType = message.type as string;
 
+      // Debug: Log ALL incoming messages to trace speech_started
+      if (msgType.includes("speech") || msgType.includes("state")) {
+        console.log(`[ThinkerTalker] RECEIVED message: ${msgType}`, message);
+      }
+
       switch (msgType) {
         case "session.ready": {
           voiceLog.debug("[ThinkerTalker] Session ready");
@@ -1258,6 +1281,8 @@ export function useThinkerTalkerSession(
 
         case "transcript.delta": {
           // Partial transcript from STT
+          // NOTE: Each partial is the FULL current hypothesis, not an incremental delta
+          // So we REPLACE the partial transcript, not accumulate
           const text = message.text as string;
           const seq = message.seq as number | undefined;
 
@@ -1267,9 +1292,10 @@ export function useThinkerTalkerSession(
           }
 
           if (text) {
-            setPartialTranscript((prev) => prev + text);
-            // Track accumulated transcript for recovery
-            partialTranscriptAccumRef.current += text;
+            // Replace, don't accumulate - each partial is the full hypothesis
+            setPartialTranscript(text);
+            // Track for recovery
+            partialTranscriptAccumRef.current = text;
 
             options.onTranscript?.({
               text,
@@ -1650,6 +1676,8 @@ export function useThinkerTalkerSession(
 
           if (audioBase64) {
             console.log("[ThinkerTalkerSession] Calling onAudioChunk callback");
+            // Track when audio was received (for barge-in detection fallback)
+            lastAudioChunkTimeRef.current = Date.now();
             options.onAudioChunk?.(audioBase64);
           } else {
             console.log(
@@ -1704,8 +1732,9 @@ export function useThinkerTalkerSession(
           // Pipeline state update
           const state = message.state as PipelineState;
           const reason = message.reason as string | undefined;
-          const prevState = pipelineState;
+          const prevState = pipelineStateRef.current;
           setPipelineState(state);
+          pipelineStateRef.current = state; // Update ref for closure access
           options.onPipelineStateChange?.(state);
 
           if (state === "listening") {
@@ -1734,12 +1763,14 @@ export function useThinkerTalkerSession(
 
           // Phase 8: Record barge-in event
           const vadConfidence = (message.vad_confidence as number) || 0.8;
+          // Use ref to get current state (avoids stale closure bug)
+          const currentPipelineState = pipelineStateRef.current;
           if (enablePersonalization) {
             personalization.recordBargeIn(
               "hard_barge", // Will be determined by duration
               0, // Duration not known yet
               vadConfidence,
-              { aiWasSpeaking: pipelineState === "speaking" },
+              { aiWasSpeaking: currentPipelineState === "speaking" },
             );
           }
 
@@ -1747,18 +1778,50 @@ export function useThinkerTalkerSession(
           // When enabled, immediately fade out AI audio on speech detection.
           // This reduces barge-in latency from 200-300ms to <50ms.
           // Feature flag: backend.voice_instant_barge_in
-          if (options.enableInstantBargeIn && pipelineState === "speaking") {
+          //
+          // IMPORTANT: Backend state can be "listening" even when frontend is still
+          // playing audio from buffer. We use two conditions:
+          // 1. Backend reports "speaking" state (primary)
+          // 2. Audio was received recently (<3s ago) as fallback
+          const now = Date.now();
+          const recentAudioMs = lastAudioChunkTimeRef.current
+            ? now - lastAudioChunkTimeRef.current
+            : Infinity;
+          const audioRecentlyReceived = recentAudioMs < 3000; // 3 second window
+
+          voiceLog.debug(
+            `[ThinkerTalker] Speech detected - pipelineState=${currentPipelineState}, ` +
+              `enableInstantBargeIn=${options.enableInstantBargeIn}, ` +
+              `recentAudioMs=${recentAudioMs}`,
+          );
+
+          // Trigger barge-in if backend says "speaking" OR we received audio recently
+          const shouldBargeIn =
+            options.enableInstantBargeIn &&
+            (currentPipelineState === "speaking" || audioRecentlyReceived);
+
+          if (shouldBargeIn) {
             voiceLog.info(
-              "[ThinkerTalker] Instant barge-in: fading out AI audio",
+              `[ThinkerTalker] Instant barge-in: fading out AI audio ` +
+                `(state=${currentPipelineState}, recentAudioMs=${recentAudioMs})`,
             );
-            // Use fadeOut for smooth transition (50ms default)
-            // This provides immediate feedback while avoiding jarring audio cuts
+
+            // 1. Fade out audio locally for immediate feedback
             if (options.onFadeOutPlayback) {
               options.onFadeOutPlayback(50);
             } else {
-              // Fallback to hard stop if fadeOut not available
               options.onStopPlayback?.();
             }
+
+            // 2. Send barge_in signal to backend to cancel response generation
+            // This stops the backend from sending more audio chunks
+            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+              wsRef.current.send(JSON.stringify({ type: "barge_in" }));
+            }
+
+            // Clear the audio timestamp to prevent repeated barge-ins
+            lastAudioChunkTimeRef.current = null;
+
             // Update barge-in metrics
             updateMetrics({ bargeInCount: metrics.bargeInCount + 1 });
           }
@@ -2033,6 +2096,7 @@ export function useThinkerTalkerSession(
   // Keep refs updated
   handleMessageRef.current = handleMessage;
   handleMessageWithSequenceRef.current = handleMessageWithSequence;
+  onLocalVoiceActivityRef.current = options.onLocalVoiceActivity;
 
   /**
    * Initialize WebSocket connection to T/T pipeline
@@ -2177,6 +2241,19 @@ export function useThinkerTalkerSession(
           // Handle text frames (JSON messages) with sequence validation
           try {
             const message = JSON.parse(event.data);
+            // DEBUG: Log ALL incoming WebSocket messages to trace message delivery
+            const msgType = message.type as string;
+            if (
+              msgType &&
+              (msgType.includes("speech") ||
+                msgType.includes("state") ||
+                msgType.includes("voice"))
+            ) {
+              console.log(
+                `[ThinkerTalker] WS RAW message: ${msgType}`,
+                message,
+              );
+            }
             handleMessageWithSequenceRef.current(message);
           } catch (err) {
             voiceLog.error("[ThinkerTalker] Failed to parse message:", err);
@@ -2249,10 +2326,37 @@ export function useThinkerTalkerSession(
 
       let audioChunkCount = 0;
 
+      // Local VAD state for barge-in detection
+      let lastVoiceActivityTime = 0;
+      const VOICE_ACTIVITY_DEBOUNCE_MS = 100; // Debounce to avoid rapid-fire callbacks
+      const VOICE_ACTIVITY_THRESHOLD = 0.02; // RMS threshold for voice detection (adjusted for echo cancellation)
+
       scriptProcessor.onaudioprocess = (event) => {
         if (ws.readyState !== WebSocket.OPEN) return;
 
         const inputData = event.inputBuffer.getChannelData(0);
+
+        // Calculate RMS for local voice activity detection
+        let sumSquares = 0;
+        for (let i = 0; i < inputData.length; i++) {
+          sumSquares += inputData[i] * inputData[i];
+        }
+        const rms = Math.sqrt(sumSquares / inputData.length);
+
+        // NOTE: RMS-based local VAD disabled - replaced by Silero VAD in useThinkerTalkerVoiceMode
+        // Silero VAD uses a neural network model which is much more accurate than RMS threshold
+        // The code below is kept for reference/debugging but the callback is disabled
+        const now = Date.now();
+        if (
+          rms > VOICE_ACTIVITY_THRESHOLD &&
+          now - lastVoiceActivityTime > VOICE_ACTIVITY_DEBOUNCE_MS
+        ) {
+          lastVoiceActivityTime = now;
+          // Debug: Log when RMS threshold exceeded (Silero VAD handles actual barge-in)
+          // console.log(`[ThinkerTalker] RMS threshold exceeded: rms=${rms.toFixed(4)}`);
+          // DISABLED: Silero VAD now handles local voice activity detection
+          // onLocalVoiceActivityRef.current?.(rms);
+        }
 
         // Convert float32 to PCM16
         const pcm16 = new Int16Array(inputData.length);
@@ -2500,6 +2604,7 @@ export function useThinkerTalkerSession(
     speechEndTimeRef.current = null;
     firstTranscriptTimeRef.current = null;
     firstLLMTokenTimeRef.current = null;
+    lastAudioChunkTimeRef.current = null;
 
     setReconnectAttempts(0);
     updateStatus("disconnected");
@@ -2507,6 +2612,7 @@ export function useThinkerTalkerSession(
     setPartialTranscript("");
     setIsSpeaking(false);
     setPipelineState("idle");
+    pipelineStateRef.current = "idle"; // Update ref for closure access
     setCurrentToolCalls([]);
   }, [updateStatus, updateMetrics, stopHeartbeat, saveRecoveryState]);
 
