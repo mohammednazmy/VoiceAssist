@@ -14,7 +14,6 @@ Part of WebSocket Reliability Enhancement testing.
 """
 
 import asyncio
-import json
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -317,27 +316,27 @@ class TestWebSocketFailures:
     @pytest.mark.asyncio
     async def test_receive_json_decode_error(self, handler, mock_websocket):
         """Test handling JSON decode error in receive loop."""
-        mock_websocket.receive_json.side_effect = [
-            json.JSONDecodeError("Invalid JSON", "", 0),
-            asyncio.CancelledError(),
+        # The handler uses websocket.receive() which returns raw message dicts
+        messages = [
+            {"type": "websocket.receive", "text": "not valid json{{{"},
+            {"type": "websocket.disconnect"},
         ]
+        mock_websocket.receive = AsyncMock(side_effect=messages)
         handler._running = True
 
-        try:
-            await handler._receive_loop()
-        except asyncio.CancelledError:
-            pass
+        await handler._receive_loop()
 
         # Should have sent error
         mock_websocket.send_json.assert_called()
         error_call = [c for c in mock_websocket.send_json.call_args_list if c[0][0].get("type") == "error"]
         assert len(error_call) == 1
         assert error_call[0][0][0]["code"] == "invalid_json"
+        assert handler._running is False
 
     @pytest.mark.asyncio
     async def test_receive_loop_websocket_disconnect(self, handler, mock_websocket):
         """Test handling WebSocket disconnect in receive loop."""
-        mock_websocket.receive_json.side_effect = WebSocketDisconnect()
+        mock_websocket.receive = AsyncMock(side_effect=WebSocketDisconnect())
         handler._running = True
 
         await handler._receive_loop()
@@ -347,19 +346,19 @@ class TestWebSocketFailures:
     @pytest.mark.asyncio
     async def test_receive_loop_generic_error(self, handler, mock_websocket):
         """Test handling generic error in receive loop."""
-        mock_websocket.receive_json.side_effect = [
+        # First call raises generic error, second call disconnects cleanly
+        messages = [
             Exception("Random error"),
-            asyncio.CancelledError(),
+            {"type": "websocket.disconnect"},
         ]
+        mock_websocket.receive = AsyncMock(side_effect=messages)
         handler._running = True
         handler._metrics.error_count = 0
 
-        try:
-            await handler._receive_loop()
-        except asyncio.CancelledError:
-            pass
+        await handler._receive_loop()
 
         assert handler._metrics.error_count == 1
+        assert handler._running is False
 
 
 # =============================================================================
