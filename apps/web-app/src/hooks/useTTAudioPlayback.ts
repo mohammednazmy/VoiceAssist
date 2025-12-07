@@ -118,6 +118,13 @@ export interface TTAudioPlaybackReturn {
   endStream: () => void;
   /** Stop playback immediately (barge-in) */
   stop: () => void;
+  /**
+   * Fade out audio quickly for instant barge-in.
+   * Natural Conversation Flow: Uses rapid fade (default 50ms) instead of hard stop
+   * for smoother user experience. After fade completes, calls stop().
+   * @param durationMs - Fade duration in milliseconds (default: 50)
+   */
+  fadeOut: (durationMs?: number) => void;
   /** Set volume (0-1) */
   setVolume: (volume: number) => void;
   /** Reset state for new stream */
@@ -634,6 +641,49 @@ export function useTTAudioPlayback(
   }, [onPlaybackInterrupted]);
 
   /**
+   * Fade out audio quickly for instant barge-in (Natural Conversation Flow).
+   * Uses Web Audio API's linearRampToValueAtTime for smooth, precise fade.
+   * After fade completes, calls stop() to clean up resources.
+   *
+   * @param durationMs - Fade duration in milliseconds (default: 50ms for instant barge-in)
+   */
+  const fadeOut = useCallback(
+    (durationMs: number = 50) => {
+      if (!gainNodeRef.current || !audioContextRef.current) {
+        // No active audio context, just stop immediately
+        stop();
+        return;
+      }
+
+      voiceLog.debug(
+        `[TTAudioPlayback] Fading out audio (${durationMs}ms) for instant barge-in`,
+      );
+
+      const audioContext = audioContextRef.current;
+      const gainNode = gainNodeRef.current;
+      const currentTime = audioContext.currentTime;
+      const fadeEndTime = currentTime + durationMs / 1000;
+
+      // Cancel any scheduled gain changes
+      gainNode.gain.cancelScheduledValues(currentTime);
+
+      // Set current value and ramp to zero
+      gainNode.gain.setValueAtTime(gainNode.gain.value, currentTime);
+      gainNode.gain.linearRampToValueAtTime(0, fadeEndTime);
+
+      // Schedule stop() after fade completes
+      setTimeout(() => {
+        stop();
+        // Restore gain value for next playback
+        if (gainNodeRef.current) {
+          gainNodeRef.current.gain.value = volume;
+        }
+      }, durationMs);
+    },
+    [stop, volume],
+  );
+
+  /**
    * Set volume
    */
   const setVolume = useCallback((newVolume: number) => {
@@ -782,6 +832,7 @@ export function useTTAudioPlayback(
     queueAudioChunk,
     endStream,
     stop,
+    fadeOut,
     setVolume,
     reset,
     warmup,

@@ -423,7 +423,22 @@ export interface UseThinkerTalkerSessionOptions {
   onSpeechStarted?: () => void;
   /** Called when AI audio playback should stop */
   onStopPlayback?: () => void;
+  /**
+   * Called when AI audio should fade out quickly (Natural Conversation Flow).
+   * Used for instant barge-in with smooth audio transition.
+   * @param durationMs - Fade duration (default: 50ms)
+   */
+  onFadeOutPlayback?: (durationMs?: number) => void;
   autoConnect?: boolean;
+
+  // Natural Conversation Flow options
+  /**
+   * Enable instant barge-in using speech_started event.
+   * When true, AI audio fades out immediately on any speech detection,
+   * reducing barge-in latency from 200-300ms to <50ms.
+   * Controlled by feature flag: backend.voice_instant_barge_in
+   */
+  enableInstantBargeIn?: boolean;
 
   // Phase 7-10: Advanced options
   /** Enable multilingual detection and switching */
@@ -1728,15 +1743,31 @@ export function useThinkerTalkerSession(
             );
           }
 
-          // Notify for barge-in handling - but ONLY stop playback if:
-          // 1. AI is actually speaking (not just listening)
-          // 2. This is handled by actual transcript content, not just speech_started event
-          // The speech_started event from Deepgram fires too eagerly on background noise
-          // Real barge-in is now triggered by the backend when it receives actual transcript
-          // content during SPEAKING state (with confidence threshold based on vad_sensitivity)
+          // Natural Conversation Flow: Instant Barge-In
+          // When enabled, immediately fade out AI audio on speech detection.
+          // This reduces barge-in latency from 200-300ms to <50ms.
+          // Feature flag: backend.voice_instant_barge_in
+          if (options.enableInstantBargeIn && pipelineState === "speaking") {
+            voiceLog.info(
+              "[ThinkerTalker] Instant barge-in: fading out AI audio",
+            );
+            // Use fadeOut for smooth transition (50ms default)
+            // This provides immediate feedback while avoiding jarring audio cuts
+            if (options.onFadeOutPlayback) {
+              options.onFadeOutPlayback(50);
+            } else {
+              // Fallback to hard stop if fadeOut not available
+              options.onStopPlayback?.();
+            }
+            // Update barge-in metrics
+            updateMetrics({ bargeInCount: metrics.bargeInCount + 1 });
+          }
+
+          // Always notify for barge-in handling (for other components)
           options.onSpeechStarted?.();
-          // NOTE: Removed automatic onStopPlayback() call here - barge-in is now
-          // handled by the backend based on actual transcript content, not VAD events.
+
+          // NOTE: When instant barge-in is disabled, barge-in is handled by
+          // the backend based on actual transcript content, not VAD events.
           // This prevents false interruptions from background noise/TTS echo.
           break;
         }
