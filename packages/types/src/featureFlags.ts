@@ -698,6 +698,58 @@ export const FEATURE_FLAGS = {
     },
 
     // -------------------------------------------------------------------------
+    // WebSocket Protocol Optimization Flags
+    // -------------------------------------------------------------------------
+    ws_binary_protocol: {
+      name: "backend.ws_binary_protocol",
+      description:
+        "[WS Protocol] Enable binary WebSocket protocol for all message types. " +
+        "Uses binary framing with MessagePack serialization instead of JSON. " +
+        "Reduces message size by 20-40% and improves parsing performance.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "ThinkerTalkerWebSocketHandler",
+          "useThinkerTalkerSession",
+        ],
+        otherFlags: [],
+      },
+    },
+    ws_message_batching: {
+      name: "backend.ws_message_batching",
+      description:
+        "[WS Protocol] Enable message batching for WebSocket communication. " +
+        "Groups multiple small messages into batched frames to reduce overhead. " +
+        "Configurable batch window (default 50ms) and max batch size (default 10).",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "ThinkerTalkerWebSocketHandler",
+          "WebSocketMessageBatcher",
+        ],
+        otherFlags: [],
+      },
+    },
+
+    // -------------------------------------------------------------------------
     // WebSocket Advanced Features - Phase: WebSocket Advanced Features
     // -------------------------------------------------------------------------
     ws_webrtc_fallback: {

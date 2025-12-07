@@ -832,6 +832,49 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
             ),
         ),
         #
+        # WebSocket Protocol Optimization Flags
+        # ---------------------------------------------------------------------
+        "ws_binary_protocol": FeatureFlagDefinition(
+            name="backend.ws_binary_protocol",
+            description=(
+                "[WS Protocol] Enable binary WebSocket protocol for all message types. "
+                "Uses binary framing with MessagePack serialization instead of JSON. "
+                "Reduces message size by 20-40% and improves parsing performance."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["ThinkerTalkerWebSocketHandler", "useThinkerTalkerSession"],
+            ),
+        ),
+        "ws_message_batching": FeatureFlagDefinition(
+            name="backend.ws_message_batching",
+            description=(
+                "[WS Protocol] Enable message batching for WebSocket communication. "
+                "Groups multiple small messages into batched frames to reduce overhead. "
+                "Configurable batch window (default 50ms) and max batch size (default 10)."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-advanced-features",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["ThinkerTalkerWebSocketHandler", "WebSocketMessageBatcher"],
+            ),
+        ),
+        #
         # WebSocket Advanced Features Flags
         # ---------------------------------------------------------------------
         "ws_webrtc_fallback": FeatureFlagDefinition(
