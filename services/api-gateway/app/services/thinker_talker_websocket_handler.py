@@ -53,8 +53,13 @@ BINARY_FRAME_TYPE_AUDIO_OUTPUT = 0x02  # Audio from server to client
 BINARY_HEADER_SIZE = 5  # 1 byte type + 4 bytes sequence number
 
 # Feature flag names for protocol features
-FEATURE_FLAG_BINARY_PROTOCOL = "backend.ws_binary_protocol"
+FEATURE_FLAG_BINARY_AUDIO = "backend.voice_ws_binary_audio"
 FEATURE_FLAG_MESSAGE_BATCHING = "backend.ws_message_batching"
+FEATURE_FLAG_AUDIO_PREBUFFERING = "backend.voice_ws_audio_prebuffering"
+FEATURE_FLAG_WS_COMPRESSION = "backend.voice_ws_compression"
+FEATURE_FLAG_ADAPTIVE_CHUNKING = "backend.voice_ws_adaptive_chunking"
+FEATURE_FLAG_SESSION_PERSISTENCE = "backend.voice_ws_session_persistence"
+FEATURE_FLAG_GRACEFUL_DEGRADATION = "backend.voice_ws_graceful_degradation"
 
 # Event types to forward to the client
 FORWARDED_EVENT_TYPES = [
@@ -530,13 +535,13 @@ class ThinkerTalkerWebSocketHandler:
                 try:
                     from app.services.feature_flags import feature_flag_service
 
-                    binary_enabled = await feature_flag_service.is_enabled(FEATURE_FLAG_BINARY_PROTOCOL, default=False)
+                    binary_enabled = await feature_flag_service.is_enabled(FEATURE_FLAG_BINARY_AUDIO, default=False)
                     if binary_enabled:
                         self.config.binary_protocol_enabled = True
                         negotiated_features.append("binary_audio")
                         logger.info(f"[WS] Binary audio enabled for {self.config.session_id}")
                 except Exception as e:
-                    logger.warning(f"Failed to check binary protocol flag: {e}")
+                    logger.warning(f"Failed to check binary audio flag: {e}")
 
             # Negotiate message batching (feature flag controlled)
             if "message_batching" in client_features:
@@ -558,6 +563,63 @@ class ThinkerTalkerWebSocketHandler:
                         logger.info(f"[WS] Message batching enabled for {self.config.session_id}")
                 except Exception as e:
                     logger.warning(f"Failed to check message batching flag: {e}")
+
+            # Negotiate audio prebuffering (feature flag controlled)
+            if "audio_prebuffering" in client_features:
+                try:
+                    from app.services.feature_flags import feature_flag_service
+
+                    prebuffering_enabled = await feature_flag_service.is_enabled(
+                        FEATURE_FLAG_AUDIO_PREBUFFERING, default=False
+                    )
+                    if prebuffering_enabled:
+                        negotiated_features.append("audio_prebuffering")
+                        logger.info(f"[WS] Audio prebuffering enabled for {self.config.session_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to check audio prebuffering flag: {e}")
+
+            # Negotiate adaptive chunking (feature flag controlled)
+            if "adaptive_chunking" in client_features:
+                try:
+                    from app.services.feature_flags import feature_flag_service
+
+                    chunking_enabled = await feature_flag_service.is_enabled(
+                        FEATURE_FLAG_ADAPTIVE_CHUNKING, default=False
+                    )
+                    if chunking_enabled:
+                        negotiated_features.append("adaptive_chunking")
+                        logger.info(f"[WS] Adaptive chunking enabled for {self.config.session_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to check adaptive chunking flag: {e}")
+
+            # Negotiate session persistence (feature flag controlled)
+            if "session_persistence" in client_features:
+                try:
+                    from app.services.feature_flags import feature_flag_service
+
+                    persistence_enabled = await feature_flag_service.is_enabled(
+                        FEATURE_FLAG_SESSION_PERSISTENCE, default=False
+                    )
+                    if persistence_enabled:
+                        negotiated_features.append("session_persistence")
+                        logger.info(f"[WS] Session persistence enabled for {self.config.session_id}")
+                        # Session persistence is handled by the session manager
+                except Exception as e:
+                    logger.warning(f"Failed to check session persistence flag: {e}")
+
+            # Negotiate graceful degradation (feature flag controlled)
+            if "graceful_degradation" in client_features:
+                try:
+                    from app.services.feature_flags import feature_flag_service
+
+                    degradation_enabled = await feature_flag_service.is_enabled(
+                        FEATURE_FLAG_GRACEFUL_DEGRADATION, default=False
+                    )
+                    if degradation_enabled:
+                        negotiated_features.append("graceful_degradation")
+                        logger.info(f"[WS] Graceful degradation enabled for {self.config.session_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to check graceful degradation flag: {e}")
 
             # Apply voice settings to the pipeline config
             if self._pipeline_session and voice_settings:
