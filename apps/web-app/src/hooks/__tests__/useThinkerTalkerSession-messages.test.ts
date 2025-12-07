@@ -547,4 +547,204 @@ describe("useThinkerTalkerSession - Message Handling", () => {
       expect(result.current.status).toBe("ready");
     });
   });
+
+  describe("sequence validation", () => {
+    it("should process in-order messages immediately", async () => {
+      const onResponseDelta = vi.fn();
+      const { result } = renderHook(() =>
+        useThinkerTalkerSession({ onResponseDelta }),
+      );
+      const ws = await connectHook(result);
+
+      // Send messages with sequential sequence numbers
+      await act(async () => {
+        ws.receiveMessage({
+          type: "response.delta",
+          delta: "First",
+          message_id: "msg-1",
+          seq: 0,
+        });
+      });
+
+      await act(async () => {
+        ws.receiveMessage({
+          type: "response.delta",
+          delta: "Second",
+          message_id: "msg-2",
+          seq: 1,
+        });
+      });
+
+      await waitFor(() => {
+        expect(onResponseDelta).toHaveBeenCalledTimes(2);
+        expect(onResponseDelta).toHaveBeenNthCalledWith(1, "First", "msg-1");
+        expect(onResponseDelta).toHaveBeenNthCalledWith(2, "Second", "msg-2");
+      });
+    });
+
+    it("should buffer out-of-order messages and process when gap fills", async () => {
+      const onResponseDelta = vi.fn();
+      const { result } = renderHook(() =>
+        useThinkerTalkerSession({ onResponseDelta }),
+      );
+      const ws = await connectHook(result);
+
+      // Send message seq=1 before seq=0 (out of order)
+      await act(async () => {
+        ws.receiveMessage({
+          type: "response.delta",
+          delta: "Second",
+          message_id: "msg-2",
+          seq: 1,
+        });
+      });
+
+      // Second message should be buffered, not processed yet
+      await waitFor(() => {
+        expect(onResponseDelta).not.toHaveBeenCalled();
+      });
+
+      // Now send seq=0 to fill the gap
+      await act(async () => {
+        ws.receiveMessage({
+          type: "response.delta",
+          delta: "First",
+          message_id: "msg-1",
+          seq: 0,
+        });
+      });
+
+      // Both messages should now be processed in order
+      await waitFor(() => {
+        expect(onResponseDelta).toHaveBeenCalledTimes(2);
+        expect(onResponseDelta).toHaveBeenNthCalledWith(1, "First", "msg-1");
+        expect(onResponseDelta).toHaveBeenNthCalledWith(2, "Second", "msg-2");
+      });
+    });
+
+    it("should ignore old/duplicate messages", async () => {
+      const onResponseDelta = vi.fn();
+      const { result } = renderHook(() =>
+        useThinkerTalkerSession({ onResponseDelta }),
+      );
+      const ws = await connectHook(result);
+
+      // Process message seq=0
+      await act(async () => {
+        ws.receiveMessage({
+          type: "response.delta",
+          delta: "First",
+          message_id: "msg-1",
+          seq: 0,
+        });
+      });
+
+      // Process message seq=1
+      await act(async () => {
+        ws.receiveMessage({
+          type: "response.delta",
+          delta: "Second",
+          message_id: "msg-2",
+          seq: 1,
+        });
+      });
+
+      // Send duplicate message with seq=0 (already processed)
+      await act(async () => {
+        ws.receiveMessage({
+          type: "response.delta",
+          delta: "Duplicate",
+          message_id: "msg-1",
+          seq: 0,
+        });
+      });
+
+      // Only 2 messages should be processed (duplicate ignored)
+      await waitFor(() => {
+        expect(onResponseDelta).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    it("should process messages without sequence number immediately (legacy)", async () => {
+      const onResponseDelta = vi.fn();
+      const { result } = renderHook(() =>
+        useThinkerTalkerSession({ onResponseDelta }),
+      );
+      const ws = await connectHook(result);
+
+      // Send message without sequence number
+      await act(async () => {
+        ws.receiveMessage({
+          type: "response.delta",
+          delta: "Legacy",
+          message_id: "msg-legacy",
+          // No seq field
+        });
+      });
+
+      await waitFor(() => {
+        expect(onResponseDelta).toHaveBeenCalledWith("Legacy", "msg-legacy");
+      });
+    });
+
+    it("should handle batch messages and update sequence correctly", async () => {
+      const onResponseDelta = vi.fn();
+      const { result } = renderHook(() =>
+        useThinkerTalkerSession({ onResponseDelta }),
+      );
+      const ws = await connectHook(result);
+
+      // Send a batch of messages
+      await act(async () => {
+        ws.receiveMessage({
+          type: "batch",
+          count: 3,
+          seq: 0,
+          messages: [
+            {
+              type: "response.delta",
+              delta: "Batch1",
+              message_id: "b1",
+              seq: 0,
+            },
+            {
+              type: "response.delta",
+              delta: "Batch2",
+              message_id: "b2",
+              seq: 1,
+            },
+            {
+              type: "response.delta",
+              delta: "Batch3",
+              message_id: "b3",
+              seq: 2,
+            },
+          ],
+        });
+      });
+
+      // All batch messages should be processed
+      await waitFor(() => {
+        expect(onResponseDelta).toHaveBeenCalledTimes(3);
+      });
+
+      // Send next message with seq=3 (should work since batch updated expected seq)
+      await act(async () => {
+        ws.receiveMessage({
+          type: "response.delta",
+          delta: "AfterBatch",
+          message_id: "msg-after",
+          seq: 3,
+        });
+      });
+
+      await waitFor(() => {
+        expect(onResponseDelta).toHaveBeenCalledTimes(4);
+        expect(onResponseDelta).toHaveBeenLastCalledWith(
+          "AfterBatch",
+          "msg-after",
+        );
+      });
+    });
+  });
 });

@@ -627,6 +627,13 @@ export function useThinkerTalkerSession(
   const binaryProtocolEnabledRef = useRef(false);
   const audioSequenceRef = useRef(0);
 
+  // Sequence validation state (for message ordering guarantees)
+  const expectedSequenceRef = useRef(0);
+  const reorderBufferRef = useRef<Map<number, Record<string, unknown>>>(
+    new Map(),
+  );
+  const MAX_REORDER_BUFFER = 50; // Max messages to buffer for reordering
+
   // Timing refs for latency tracking
   const connectStartTimeRef = useRef<number | null>(null);
   const sessionStartTimeRef = useRef<number | null>(null);
@@ -643,6 +650,9 @@ export function useThinkerTalkerSession(
   const handleMessageRef = useRef<(message: Record<string, unknown>) => void>(
     () => {},
   );
+  const handleMessageWithSequenceRef = useRef<
+    (message: Record<string, unknown>) => void
+  >(() => {});
   const statusRef = useRef<TTConnectionStatus>(status);
 
   // Constants for reconnection
@@ -826,6 +836,95 @@ export function useThinkerTalkerSession(
   );
 
   /**
+   * Drain the reorder buffer, processing messages in sequence order.
+   * Called after processing an in-order message to check if buffered
+   * messages can now be processed.
+   */
+  const drainReorderBuffer = useCallback(() => {
+    const buffer = reorderBufferRef.current;
+    let drained = 0;
+
+    while (buffer.has(expectedSequenceRef.current)) {
+      const msg = buffer.get(expectedSequenceRef.current)!;
+      buffer.delete(expectedSequenceRef.current);
+      expectedSequenceRef.current++;
+      drained++;
+
+      // Process the buffered message (call handleMessage directly)
+      handleMessageRef.current(msg);
+    }
+
+    if (drained > 0) {
+      voiceLog.debug(
+        `[ThinkerTalker] Drained ${drained} messages from reorder buffer`,
+      );
+    }
+  }, []);
+
+  /**
+   * Handle incoming WebSocket messages with sequence validation.
+   * Ensures messages are processed in order, buffering out-of-order
+   * messages for later processing.
+   *
+   * Sequence validation provides:
+   * - Guaranteed message ordering
+   * - Dropped message detection
+   * - Out-of-order message buffering
+   */
+  const handleMessageWithSequence = useCallback(
+    (message: Record<string, unknown>) => {
+      const seq = message.seq as number | undefined;
+
+      // If no sequence number, process immediately (legacy/control messages)
+      if (seq === undefined) {
+        handleMessageRef.current(message);
+        return;
+      }
+
+      const expected = expectedSequenceRef.current;
+      const msgType = message.type as string;
+
+      if (seq === expected) {
+        // In order - process immediately and drain buffer
+        handleMessageRef.current(message);
+
+        // For batch messages, the batch handler already updates expectedSequenceRef
+        // to account for all messages in the batch. For regular messages, increment by 1.
+        if (msgType !== "batch") {
+          expectedSequenceRef.current = seq + 1;
+        }
+        drainReorderBuffer();
+      } else if (seq > expected) {
+        // Out of order - buffer for later
+        if (reorderBufferRef.current.size < MAX_REORDER_BUFFER) {
+          reorderBufferRef.current.set(seq, message);
+          voiceLog.debug(
+            `[ThinkerTalker] Buffered out-of-order message seq=${seq}, expected=${expected}`,
+          );
+        } else {
+          voiceLog.warn(
+            `[ThinkerTalker] Reorder buffer full (${MAX_REORDER_BUFFER}), dropping message seq=${seq}`,
+          );
+        }
+
+        // Check for large gaps which might indicate dropped messages
+        const gap = seq - expected;
+        if (gap > 10) {
+          voiceLog.warn(
+            `[ThinkerTalker] Large sequence gap detected: expected=${expected}, got=${seq}, gap=${gap}`,
+          );
+        }
+      } else {
+        // Old message (seq < expected) - already processed, ignore
+        voiceLog.debug(
+          `[ThinkerTalker] Ignoring old message seq=${seq}, expected=${expected}`,
+        );
+      }
+    },
+    [drainReorderBuffer],
+  );
+
+  /**
    * Handle incoming WebSocket messages from T/T pipeline
    */
   const handleMessage = useCallback(
@@ -868,9 +967,20 @@ export function useThinkerTalkerSession(
             `[ThinkerTalker] Received batch of ${batchCount} messages`,
           );
 
-          // Process each message in the batch
+          // Process each message in the batch (bypassing sequence validation
+          // since batch wrapper's seq was already validated, and individual
+          // messages within a batch are guaranteed to be in order)
           for (const batchedMsg of batchedMessages) {
             handleMessageRef.current(batchedMsg);
+          }
+
+          // Update expected sequence based on last message in batch
+          if (batchedMessages.length > 0) {
+            const lastMsg = batchedMessages[batchedMessages.length - 1];
+            const lastSeq = lastMsg.seq as number | undefined;
+            if (lastSeq !== undefined) {
+              expectedSequenceRef.current = lastSeq + 1;
+            }
           }
           break;
         }
@@ -1606,8 +1716,9 @@ export function useThinkerTalkerSession(
     ],
   );
 
-  // Keep ref updated
+  // Keep refs updated
   handleMessageRef.current = handleMessage;
+  handleMessageWithSequenceRef.current = handleMessageWithSequence;
 
   /**
    * Initialize WebSocket connection to T/T pipeline
@@ -1642,6 +1753,10 @@ export function useThinkerTalkerSession(
           // Reset binary protocol state
           binaryProtocolEnabledRef.current = false;
           audioSequenceRef.current = 0;
+
+          // Reset sequence validation state
+          expectedSequenceRef.current = 0;
+          reorderBufferRef.current.clear();
 
           // Send session initialization message with feature negotiation
           const initMessage = {
@@ -1720,10 +1835,10 @@ export function useThinkerTalkerSession(
             return;
           }
 
-          // Handle text frames (JSON messages)
+          // Handle text frames (JSON messages) with sequence validation
           try {
             const message = JSON.parse(event.data);
-            handleMessageRef.current(message);
+            handleMessageWithSequenceRef.current(message);
           } catch (err) {
             voiceLog.error("[ThinkerTalker] Failed to parse message:", err);
           }

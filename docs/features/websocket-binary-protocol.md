@@ -145,6 +145,7 @@ binary_enabled = await feature_flag_service.is_enabled(
   - Updated audio streaming to send binary frames
   - Added batch message handling
   - Added `session.init.ack` handling for negotiated features
+  - Added sequence validation with reorder buffer
 
 ### Binary Frame Sending
 
@@ -183,6 +184,47 @@ ws.onmessage = (event) => {
 };
 ```
 
+### Sequence Validation
+
+The frontend implements sequence validation to ensure messages are processed in order:
+
+```typescript
+// State tracking
+const expectedSequenceRef = useRef(0);
+const reorderBufferRef = useRef<Map<number, Record<string, unknown>>>(new Map());
+const MAX_REORDER_BUFFER = 50;
+
+// Sequence validation logic
+const handleMessageWithSequence = useCallback((message) => {
+  const seq = message.seq;
+
+  // No sequence number = legacy message, process immediately
+  if (seq === undefined) {
+    handleMessage(message);
+    return;
+  }
+
+  if (seq === expectedSequenceRef.current) {
+    // In order - process immediately
+    handleMessage(message);
+    expectedSequenceRef.current = seq + 1;
+    drainReorderBuffer(); // Process any buffered messages
+  } else if (seq > expectedSequenceRef.current) {
+    // Out of order - buffer for later
+    reorderBufferRef.current.set(seq, message);
+  }
+  // seq < expected = old/duplicate, ignore
+}, []);
+```
+
+**Key behaviors:**
+
+- In-order messages are processed immediately
+- Out-of-order messages are buffered (up to 50 messages)
+- When gaps are filled, buffered messages are drained in order
+- Duplicate/old messages are ignored
+- Batch messages update expected sequence based on last message in batch
+
 ## Admin Panel Integration
 
 Feature flags can be managed at `admin.asimo.io` under Feature Flags:
@@ -202,6 +244,8 @@ Feature flags can be managed at `admin.asimo.io` under Feature Flags:
 
 ## Testing
 
+### Backend Tests
+
 Unit tests are located in:
 
 - `services/api-gateway/tests/unit/test_websocket_binary_protocol.py`
@@ -212,6 +256,27 @@ Run tests with:
 ```bash
 cd services/api-gateway
 pytest tests/unit/test_websocket_binary_protocol.py tests/unit/test_websocket_message_batcher.py -v
+```
+
+### Frontend Tests
+
+Sequence validation tests are in:
+
+- `apps/web-app/src/hooks/__tests__/useThinkerTalkerSession-messages.test.ts`
+
+Tests cover:
+
+- In-order message processing
+- Out-of-order message buffering and reordering
+- Duplicate/old message rejection
+- Legacy messages (no sequence number)
+- Batch message sequence handling
+
+Run tests with:
+
+```bash
+cd apps/web-app
+pnpm exec vitest run src/hooks/__tests__/useThinkerTalkerSession-messages.test.ts
 ```
 
 ## Rollout Strategy
