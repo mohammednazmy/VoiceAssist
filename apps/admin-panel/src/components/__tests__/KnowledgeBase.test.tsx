@@ -5,8 +5,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { KnowledgeBase } from "../KnowledgeBase";
-import { useKnowledgeDocuments } from "../../hooks/useKnowledgeDocuments";
-import { useIndexingJobs } from "../../hooks/useIndexingJobs";
+import {
+  useKnowledgeDocuments,
+  type KnowledgeDocument,
+} from "../../hooks/useKnowledgeDocuments";
+import { useIndexingJobs, type IndexingJob } from "../../hooks/useIndexingJobs";
 
 // Mock the hooks
 vi.mock("../../hooks/useKnowledgeDocuments", () => ({
@@ -17,75 +20,81 @@ vi.mock("../../hooks/useIndexingJobs", () => ({
   useIndexingJobs: vi.fn(),
 }));
 
-const mockDocs = [
+const mockDocs: KnowledgeDocument[] = [
   {
     id: "doc-1",
     name: "Medical Guidelines 2024",
-    type: "pdf",
+    type: "guideline",
     version: "1.0",
     indexed: true,
   },
   {
     id: "doc-2",
     name: "Clinical Notes Template",
-    type: "txt",
+    type: "note",
     version: "2.1",
     indexed: false,
   },
 ];
 
-const mockJobs = [
+const mockJobs: IndexingJob[] = [
   {
     id: "job-1",
     documentId: "doc-2",
-    state: "running" as const,
+    state: "running",
     attempts: 1,
   },
   {
     id: "job-2",
     documentId: "doc-3",
-    state: "pending" as const,
+    state: "pending",
     attempts: 0,
   },
 ];
 
 // Helper to create complete mock return values
-const createDocsHookReturn = (overrides = {}) => ({
-  docs: mockDocs,
-  loading: false,
-  error: null,
-  refetch: vi.fn(),
-  deleteDocument: vi.fn().mockResolvedValue({ success: true }),
-  deleteDocuments: vi.fn().mockResolvedValue({ success: true }),
-  deleteError: null,
-  clearDeleteError: vi.fn(),
-  isDeleting: false,
-  deletingCount: 0,
-  ...overrides,
-});
+const createDocsHookReturn = (
+  overrides: Partial<ReturnType<typeof useKnowledgeDocuments>> = {},
+) =>
+  ({
+    docs: mockDocs,
+    loading: false,
+    error: null,
+    refetch: vi.fn(),
+    deleteDocument: vi.fn().mockResolvedValue({ success: true }),
+    deleteDocuments: vi.fn().mockResolvedValue({ success: true }),
+    deleteError: null,
+    clearDeleteError: vi.fn(),
+    isDeleting: false,
+    deletingCount: 0,
+    ...overrides,
+  }) as ReturnType<typeof useKnowledgeDocuments>;
 
-const createJobsHookReturn = (overrides = {}) => ({
-  jobs: mockJobs,
-  loading: false,
-  error: null,
-  refetch: vi.fn().mockResolvedValue(undefined),
-  silentRefresh: vi.fn().mockResolvedValue(undefined),
-  lastFetched: new Date(),
-  hasActiveJobs: false,
-  isPolling: false,
-  cancelJob: vi.fn().mockResolvedValue(undefined),
-  retryJob: vi.fn().mockResolvedValue(undefined),
-  actionError: null,
-  clearActionError: vi.fn(),
-  isActionLoading: vi.fn().mockReturnValue(false),
-  getJob: vi.fn().mockReturnValue(null),
-  getJobsByDocument: vi.fn().mockReturnValue([]),
-  activeJobs: [],
-  completedJobs: [],
-  failedJobs: [],
-  stats: { total: 0, active: 0, completed: 0, failed: 0 },
-  ...overrides,
-});
+const createJobsHookReturn = (
+  overrides: Partial<ReturnType<typeof useIndexingJobs>> = {},
+) =>
+  ({
+    jobs: mockJobs,
+    loading: false,
+    error: null,
+    refetch: vi.fn().mockResolvedValue(undefined),
+    silentRefresh: vi.fn().mockResolvedValue(undefined),
+    lastFetched: new Date(),
+    hasActiveJobs: false,
+    isPolling: false,
+    cancelJob: vi.fn().mockResolvedValue(undefined),
+    retryJob: vi.fn().mockResolvedValue(undefined),
+    actionError: null,
+    clearActionError: vi.fn(),
+    isActionLoading: vi.fn().mockReturnValue(false),
+    getJob: vi.fn().mockReturnValue(null),
+    getJobsByDocument: vi.fn().mockReturnValue([]),
+    activeJobs: [],
+    completedJobs: [],
+    failedJobs: [],
+    stats: { total: 0, active: 0, completed: 0, failed: 0 },
+    ...overrides,
+  }) as ReturnType<typeof useIndexingJobs>;
 
 describe("KnowledgeBase", () => {
   beforeEach(() => {
