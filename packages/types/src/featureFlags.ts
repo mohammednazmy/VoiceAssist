@@ -820,6 +820,142 @@ export const FEATURE_FLAGS = {
         otherFlags: ["backend.ws_aec_feedback"],
       },
     },
+
+    // -------------------------------------------------------------------------
+    // Natural Conversation Flow Flags - Phase: Natural Conversation
+    // -------------------------------------------------------------------------
+    voice_instant_barge_in: {
+      name: "backend.voice_instant_barge_in",
+      description:
+        "[Natural Conversation] Enable instant barge-in using Deepgram SpeechStarted event. " +
+        "Immediately stops AI audio on any detected speech, reducing barge-in latency from 200-300ms to <50ms. " +
+        "Uses rapid audio fade-out (50ms) for smooth transition.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useThinkerTalkerSession",
+          "useTTAudioPlayback",
+          "ThinkerTalkerWebSocketHandler",
+        ],
+        otherFlags: [],
+      },
+    },
+    voice_continuation_detection: {
+      name: "backend.voice_continuation_detection",
+      description:
+        "[Natural Conversation] Enable continuation detection for natural pauses. " +
+        "Analyzes speech patterns (trailing words, filler words, prosody) to predict when " +
+        "user intends to continue speaking. Dynamically extends silence threshold for incomplete utterances.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["SilencePredictor", "ContinuationDetector"],
+        otherFlags: [],
+      },
+    },
+    voice_utterance_aggregation: {
+      name: "backend.voice_utterance_aggregation",
+      description:
+        "[Natural Conversation] Enable multi-segment utterance aggregation. " +
+        "Accumulates speech segments within a time window and merges them into coherent queries " +
+        "before sending to Thinker. Prevents loss of context when user speaks in fragments.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "UtteranceAggregator",
+          "UtteranceWindowManager",
+          "ThinkerTalkerWebSocketHandler",
+        ],
+        otherFlags: ["backend.voice_continuation_detection"],
+      },
+    },
+    voice_preemptive_listening: {
+      name: "backend.voice_preemptive_listening",
+      description:
+        "[Natural Conversation] Keep STT active during AI speech for faster barge-in. " +
+        "Buffers incoming transcripts during AI playback so transcript is immediately " +
+        "available when barge-in is confirmed. Reduces response delay after interruption.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["useThinkerTalkerSession", "VoicePipelineSession"],
+        otherFlags: ["backend.voice_instant_barge_in"],
+      },
+    },
+    voice_aggregation_window_ms: {
+      name: "backend.voice_aggregation_window_ms",
+      description:
+        "[Natural Conversation] Maximum time (ms) to wait for speech continuation. " +
+        "After silence is detected, waits this long for user to resume before processing. " +
+        "Longer values allow more natural pauses but increase response latency.",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 3000,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        min: 1000,
+        max: 10000,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["UtteranceAggregator"],
+        otherFlags: ["backend.voice_utterance_aggregation"],
+      },
+    },
+    voice_min_barge_in_confidence: {
+      name: "backend.voice_min_barge_in_confidence",
+      description:
+        "[Natural Conversation] Minimum VAD confidence (0-1) to trigger barge-in. " +
+        "Lower values make barge-in more sensitive (may cause false triggers). " +
+        "Higher values require stronger speech signal (may miss quiet interruptions).",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 0.3,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        min: 0.0,
+        max: 1.0,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["OverlapHandler", "BargeInClassifier"],
+        otherFlags: ["backend.voice_instant_barge_in"],
+      },
+    },
   },
 
   // -------------------------------------------------------------------------
