@@ -1032,6 +1032,150 @@ export const FEATURE_FLAGS = {
         otherFlags: ["backend.voice_instant_barge_in"],
       },
     },
+
+    // =========================================================================
+    // Silero VAD Enhancement Flags (Local Browser-Side VAD)
+    // =========================================================================
+    voice_silero_vad_enabled: {
+      name: "backend.voice_silero_vad_enabled",
+      description:
+        "[Silero VAD] Master toggle for local Silero VAD in browser. " +
+        "Silero VAD is a neural network-based voice activity detector that runs " +
+        "in the browser via ONNX Runtime. Provides more accurate speech detection " +
+        "than simple RMS thresholds, enabling reliable barge-in during AI speech.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD", "useThinkerTalkerVoiceMode"],
+        otherFlags: [],
+      },
+    },
+    voice_silero_echo_suppression_mode: {
+      name: "backend.voice_silero_echo_suppression_mode",
+      description:
+        "[Silero VAD] Echo suppression mode during AI playback. " +
+        "Options: 'threshold_boost' (keep VAD active with higher threshold), " +
+        "'pause' (pause VAD entirely during playback), 'none' (no suppression). " +
+        "Default: threshold_boost - keeps VAD active but requires stronger speech signal.",
+      category: "backend" as const,
+      type: "string" as const,
+      defaultValue: "threshold_boost",
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        allowedValues: ["threshold_boost", "pause", "none"],
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD", "useThinkerTalkerVoiceMode"],
+        otherFlags: ["backend.voice_silero_vad_enabled"],
+      },
+    },
+    voice_silero_positive_threshold: {
+      name: "backend.voice_silero_positive_threshold",
+      description:
+        "[Silero VAD] Base probability threshold (0-1) for speech detection. " +
+        "Higher = less sensitive (fewer false positives). " +
+        "Lower = more sensitive (may detect noise as speech). " +
+        "Default: 0.5",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 0.5,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        min: 0.1,
+        max: 0.9,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD"],
+        otherFlags: ["backend.voice_silero_vad_enabled"],
+      },
+    },
+    voice_silero_playback_threshold_boost: {
+      name: "backend.voice_silero_playback_threshold_boost",
+      description:
+        "[Silero VAD] Amount to boost speech threshold during AI playback (0-0.5). " +
+        "Applied when echo suppression mode is 'threshold_boost'. " +
+        "Higher = more aggressive echo filtering (may miss quiet barge-ins). " +
+        "Default: 0.2 (threshold becomes 0.5 + 0.2 = 0.7 during playback)",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 0.2,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        min: 0.0,
+        max: 0.5,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD"],
+        otherFlags: [
+          "backend.voice_silero_vad_enabled",
+          "backend.voice_silero_echo_suppression_mode",
+        ],
+      },
+    },
+    voice_silero_min_speech_ms: {
+      name: "backend.voice_silero_min_speech_ms",
+      description:
+        "[Silero VAD] Minimum speech duration (ms) before triggering onSpeechStart. " +
+        "Helps filter out short noise bursts. " +
+        "Higher = fewer false positives but slower detection. " +
+        "Default: 150",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 150,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        min: 50,
+        max: 500,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD"],
+        otherFlags: ["backend.voice_silero_vad_enabled"],
+      },
+    },
+    voice_silero_playback_min_speech_ms: {
+      name: "backend.voice_silero_playback_min_speech_ms",
+      description:
+        "[Silero VAD] Minimum speech duration (ms) during AI playback to trigger barge-in. " +
+        "Longer duration helps filter out TTS echo bursts. " +
+        "Default: 200 (speech during playback must be at least 200ms to count)",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 200,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        min: 100,
+        max: 500,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD"],
+        otherFlags: [
+          "backend.voice_silero_vad_enabled",
+          "backend.voice_silero_echo_suppression_mode",
+        ],
+      },
+    },
   },
 
   // -------------------------------------------------------------------------

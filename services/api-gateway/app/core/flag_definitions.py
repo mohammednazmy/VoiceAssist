@@ -1152,6 +1152,154 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
             ),
         ),
         #
+        # Silero VAD Enhancement Flags (Local Browser-Side VAD)
+        # ---------------------------------------------------------------------
+        "voice_silero_vad_enabled": FeatureFlagDefinition(
+            name="backend.voice_silero_vad_enabled",
+            description=(
+                "[Silero VAD] Master toggle for local Silero VAD in browser. "
+                "Silero VAD is a neural network-based voice activity detector that runs "
+                "in the browser via ONNX Runtime. Provides more accurate speech detection "
+                "than simple RMS thresholds, enabling reliable barge-in during AI speech."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/silero-vad",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["useSileroVAD", "useThinkerTalkerVoiceMode"],
+            ),
+        ),
+        "voice_silero_echo_suppression_mode": FeatureFlagDefinition(
+            name="backend.voice_silero_echo_suppression_mode",
+            description=(
+                "[Silero VAD] Echo suppression mode during AI playback. "
+                "Options: 'threshold_boost' (keep VAD active with higher threshold), "
+                "'pause' (pause VAD entirely during playback), 'none' (no suppression). "
+                "Default: threshold_boost - keeps VAD active but requires stronger speech signal."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.STRING,
+            default_value="threshold_boost",
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="medium",
+                allowed_values=["threshold_boost", "pause", "none"],
+                docs_url="https://assistdocs.asimo.io/voice/silero-vad",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["useSileroVAD", "useThinkerTalkerVoiceMode"],
+                other_flags=["backend.voice_silero_vad_enabled"],
+            ),
+        ),
+        "voice_silero_positive_threshold": FeatureFlagDefinition(
+            name="backend.voice_silero_positive_threshold",
+            description=(
+                "[Silero VAD] Base probability threshold (0-1) for speech detection. "
+                "Higher = less sensitive (fewer false positives). "
+                "Lower = more sensitive (may detect noise as speech). "
+                "Default: 0.5"
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.NUMBER,
+            default_value=0.5,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="low",
+                min_value=0.1,
+                max_value=0.9,
+                docs_url="https://assistdocs.asimo.io/voice/silero-vad",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["useSileroVAD"],
+                other_flags=["backend.voice_silero_vad_enabled"],
+            ),
+        ),
+        "voice_silero_playback_threshold_boost": FeatureFlagDefinition(
+            name="backend.voice_silero_playback_threshold_boost",
+            description=(
+                "[Silero VAD] Amount to boost speech threshold during AI playback (0-0.5). "
+                "Applied when echo suppression mode is 'threshold_boost'. "
+                "Higher = more aggressive echo filtering (may miss quiet barge-ins). "
+                "Default: 0.2 (threshold becomes 0.5 + 0.2 = 0.7 during playback)"
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.NUMBER,
+            default_value=0.2,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="low",
+                min_value=0.0,
+                max_value=0.5,
+                docs_url="https://assistdocs.asimo.io/voice/silero-vad",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["useSileroVAD"],
+                other_flags=[
+                    "backend.voice_silero_vad_enabled",
+                    "backend.voice_silero_echo_suppression_mode",
+                ],
+            ),
+        ),
+        "voice_silero_min_speech_ms": FeatureFlagDefinition(
+            name="backend.voice_silero_min_speech_ms",
+            description=(
+                "[Silero VAD] Minimum speech duration (ms) before triggering onSpeechStart. "
+                "Helps filter out short noise bursts. "
+                "Higher = fewer false positives but slower detection. "
+                "Default: 150"
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.NUMBER,
+            default_value=150,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="low",
+                min_value=50,
+                max_value=500,
+                docs_url="https://assistdocs.asimo.io/voice/silero-vad",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["useSileroVAD"],
+                other_flags=["backend.voice_silero_vad_enabled"],
+            ),
+        ),
+        "voice_silero_playback_min_speech_ms": FeatureFlagDefinition(
+            name="backend.voice_silero_playback_min_speech_ms",
+            description=(
+                "[Silero VAD] Minimum speech duration (ms) during AI playback to trigger barge-in. "
+                "Longer duration helps filter out TTS echo bursts. "
+                "Default: 200 (speech during playback must be at least 200ms to count)"
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.NUMBER,
+            default_value=200,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="low",
+                min_value=100,
+                max_value=500,
+                docs_url="https://assistdocs.asimo.io/voice/silero-vad",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["useSileroVAD"],
+                other_flags=[
+                    "backend.voice_silero_vad_enabled",
+                    "backend.voice_silero_echo_suppression_mode",
+                ],
+            ),
+        ),
+        #
         # Audio Quality Enhancement Flags
         # ---------------------------------------------------------------------
         "voice_crisp_quality_preset": FeatureFlagDefinition(
