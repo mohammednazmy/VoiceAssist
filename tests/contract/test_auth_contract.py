@@ -5,12 +5,15 @@ Tests the contract between:
 - Provider: VoiceAssist API Gateway (/api/auth/*)
 
 Run with: pytest tests/contract/test_auth_contract.py
+
+Note: pact-python 3.x moved the v2 API under pact.v2 module.
+See: https://pact-foundation.github.io/pact-python/blog/2025/12/04/announcing-pact-python-v3/
 """
 import os
 
 import pytest
 import requests
-from pact import Consumer, Like, Provider, Term
+from pact.v2 import Consumer, Like, Provider, Term
 
 # Pact broker configuration - use environment variables with defaults
 PACT_BROKER_URL = os.environ.get("PACT_BROKER_URL", "http://localhost:9292")
@@ -179,7 +182,7 @@ def test_verify_pact_with_provider():
 
     Run separately with: pytest tests/contract/test_auth_contract.py::test_verify_pact_with_provider
     """
-    from pact import Verifier
+    from pact.v2 import Verifier
 
     verifier = Verifier(
         provider="VoiceAssistAPI",
