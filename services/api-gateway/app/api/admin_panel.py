@@ -567,9 +567,39 @@ async def permanent_delete_user(
 
 
 def generate_temporary_password(length: int = 16) -> str:
-    """Generate a secure temporary password with mixed characters."""
-    alphabet = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%^&*"
-    return "".join(secrets.choice(alphabet) for _ in range(length))
+    """Generate a secure temporary password with mixed characters.
+
+    Guarantees at least one character from each category:
+    - lowercase letters
+    - uppercase letters
+    - digits
+    - special characters
+    """
+    if length < 4:
+        length = 4  # Minimum to include all character types
+
+    lowercase = "abcdefghijkmnopqrstuvwxyz"
+    uppercase = "ABCDEFGHJKLMNPQRSTUVWXYZ"
+    digits = "23456789"
+    special = "!@#$%^&*"
+    all_chars = lowercase + uppercase + digits + special
+
+    # Ensure at least one from each category
+    password_chars = [
+        secrets.choice(lowercase),
+        secrets.choice(uppercase),
+        secrets.choice(digits),
+        secrets.choice(special),
+    ]
+
+    # Fill remaining length with random characters from all categories
+    password_chars.extend(secrets.choice(all_chars) for _ in range(length - 4))
+
+    # Shuffle to avoid predictable positions
+    password_list = list(password_chars)
+    secrets.SystemRandom().shuffle(password_list)
+
+    return "".join(password_list)
 
 
 def generate_secure_token(length: int = 32) -> str:

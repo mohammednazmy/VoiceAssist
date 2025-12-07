@@ -627,7 +627,79 @@ export const FEATURE_FLAGS = {
       },
     },
 
+    // -------------------------------------------------------------------------
+    // WebSocket Error Recovery Flags
+    // -------------------------------------------------------------------------
+    ws_session_recovery: {
+      name: "backend.ws_session_recovery",
+      description:
+        "[WS Recovery] Enable WebSocket session state persistence for reconnection. " +
+        "Stores session state in Redis including pipeline state, conversation context, " +
+        "and voice settings. Allows seamless recovery after brief disconnections.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/websocket-error-recovery",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useThinkerTalkerSession",
+          "ThinkerTalkerWebSocketHandler",
+        ],
+        otherFlags: [],
+      },
+    },
+    ws_message_recovery: {
+      name: "backend.ws_message_recovery",
+      description:
+        "[WS Recovery] Enable partial message recovery after disconnects. " +
+        "Buffers recent messages on the server and replays missed messages " +
+        "to clients upon reconnection. Prevents loss of transcript/response deltas.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/websocket-error-recovery",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useThinkerTalkerSession",
+          "ThinkerTalkerWebSocketHandler",
+        ],
+        otherFlags: ["backend.ws_session_recovery"],
+      },
+    },
+    ws_audio_checkpointing: {
+      name: "backend.ws_audio_checkpointing",
+      description:
+        "[WS Recovery] Enable audio buffer checkpointing for playback resume. " +
+        "Tracks confirmed audio sequence numbers and buffers unconfirmed chunks. " +
+        "Allows resuming audio playback from last confirmed position after reconnect.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/websocket-error-recovery",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["useTTAudioPlayback", "ThinkerTalkerWebSocketHandler"],
+        otherFlags: ["backend.ws_session_recovery"],
+      },
+    },
+
+    // -------------------------------------------------------------------------
     // WebSocket Advanced Features - Phase: WebSocket Advanced Features
+    // -------------------------------------------------------------------------
     ws_webrtc_fallback: {
       name: "backend.ws_webrtc_fallback",
       description:

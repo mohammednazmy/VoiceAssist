@@ -695,29 +695,29 @@ class TestReceiveLoop:
     @pytest.mark.asyncio
     async def test_receive_loop_processes_messages(self, handler, mock_websocket):
         """Test receive loop processes messages correctly."""
+        # The handler uses websocket.receive() which returns raw message dicts
         messages = [
-            {"type": "ping"},
-            {"type": "ping"},
+            {"type": "websocket.receive", "text": json.dumps({"type": "ping"})},
+            {"type": "websocket.receive", "text": json.dumps({"type": "ping"})},
+            {"type": "websocket.disconnect"},  # Clean exit
         ]
-        mock_websocket.receive_json.side_effect = messages + [asyncio.CancelledError()]
+        mock_websocket.receive = AsyncMock(side_effect=messages)
 
         handler._running = True
 
-        # Run receive loop (will exit on CancelledError)
-        try:
-            await handler._receive_loop()
-        except asyncio.CancelledError:
-            pass
+        # Run receive loop (will exit on disconnect)
+        await handler._receive_loop()
 
-        # Should have processed 2 messages before cancellation
+        # Should have processed 2 messages before disconnection
         assert handler._metrics.messages_received == 2
+        assert handler._running is False
 
     @pytest.mark.asyncio
     async def test_receive_loop_handles_disconnect(self, handler, mock_websocket):
         """Test receive loop handles WebSocket disconnect."""
         from starlette.websockets import WebSocketDisconnect
 
-        mock_websocket.receive_json.side_effect = WebSocketDisconnect()
+        mock_websocket.receive = AsyncMock(side_effect=WebSocketDisconnect())
 
         handler._running = True
 
@@ -728,23 +728,24 @@ class TestReceiveLoop:
     @pytest.mark.asyncio
     async def test_receive_loop_handles_json_error(self, handler, mock_websocket):
         """Test receive loop handles JSON decode errors."""
-        mock_websocket.receive_json.side_effect = [
-            json.JSONDecodeError("Invalid", "", 0),
-            asyncio.CancelledError(),
+        # Send invalid JSON text, then disconnect
+        messages = [
+            {"type": "websocket.receive", "text": "not valid json{{{"},
+            {"type": "websocket.disconnect"},
         ]
+        mock_websocket.receive = AsyncMock(side_effect=messages)
 
         handler._running = True
 
-        try:
-            await handler._receive_loop()
-        except asyncio.CancelledError:
-            pass
+        await handler._receive_loop()
 
         # Should have sent error message
         mock_websocket.send_json.assert_called()
-        call_arg = mock_websocket.send_json.call_args[0][0]
-        assert call_arg["type"] == "error"
-        assert call_arg["code"] == "invalid_json"
+        # Find the error call
+        error_calls = [c for c in mock_websocket.send_json.call_args_list if c[0][0].get("type") == "error"]
+        assert len(error_calls) == 1
+        assert error_calls[0][0][0]["code"] == "invalid_json"
+        assert handler._running is False
 
 
 # =============================================================================

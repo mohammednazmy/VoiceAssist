@@ -79,7 +79,7 @@ class TestPasswordGeneration:
         assert len(password) >= 16
 
     def test_generate_temporary_password_complexity(self):
-        """Verify generated password has letters and special chars."""
+        """Verify generated password has all required character types."""
         from app.api.admin_panel import generate_temporary_password
 
         # Generate multiple passwords to ensure complexity is consistent
@@ -87,9 +87,13 @@ class TestPasswordGeneration:
             password = generate_temporary_password(16)
             has_upper = any(c.isupper() for c in password)
             has_lower = any(c.islower() for c in password)
+            has_digit = any(c.isdigit() for c in password)
+            has_special = any(c in "!@#$%^&*" for c in password)
 
             assert has_upper, f"Password {password} should have uppercase"
             assert has_lower, f"Password {password} should have lowercase"
+            assert has_digit, f"Password {password} should have digit"
+            assert has_special, f"Password {password} should have special char"
 
     def test_generate_temporary_password_uniqueness(self):
         """Verify generated passwords are unique."""

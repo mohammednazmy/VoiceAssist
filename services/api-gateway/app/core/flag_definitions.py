@@ -767,6 +767,71 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
             ),
         ),
         #
+        # WebSocket Error Recovery Flags
+        # ---------------------------------------------------------------------
+        "ws_session_recovery": FeatureFlagDefinition(
+            name="backend.ws_session_recovery",
+            description=(
+                "[WS Recovery] Enable WebSocket session state persistence for reconnection. "
+                "Stores session state in Redis including pipeline state, conversation context, "
+                "and voice settings. Allows seamless recovery after brief disconnections."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-error-recovery",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["useThinkerTalkerSession", "ThinkerTalkerWebSocketHandler"],
+            ),
+        ),
+        "ws_message_recovery": FeatureFlagDefinition(
+            name="backend.ws_message_recovery",
+            description=(
+                "[WS Recovery] Enable partial message recovery after disconnects. "
+                "Buffers recent messages on the server and replays missed messages "
+                "to clients upon reconnection. Prevents loss of transcript/response deltas."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-error-recovery",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["useThinkerTalkerSession", "ThinkerTalkerWebSocketHandler"],
+                other_flags=["backend.ws_session_recovery"],
+            ),
+        ),
+        "ws_audio_checkpointing": FeatureFlagDefinition(
+            name="backend.ws_audio_checkpointing",
+            description=(
+                "[WS Recovery] Enable audio buffer checkpointing for playback resume. "
+                "Tracks confirmed audio sequence numbers and buffers unconfirmed chunks. "
+                "Allows resuming audio playback from last confirmed position after reconnect."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/websocket-error-recovery",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["useTTAudioPlayback", "ThinkerTalkerWebSocketHandler"],
+                other_flags=["backend.ws_session_recovery"],
+            ),
+        ),
+        #
         # WebSocket Advanced Features Flags
         # ---------------------------------------------------------------------
         "ws_webrtc_fallback": FeatureFlagDefinition(
