@@ -316,7 +316,8 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r services/api-gateway/requirements.txt
-          pip install pact-python
+          # pact-python 3.x requires compat-v2 extra for v2 API compatibility
+          pip install 'pact-python[compat-v2]'
 
       - name: Wait for Pact Broker
         run: |
