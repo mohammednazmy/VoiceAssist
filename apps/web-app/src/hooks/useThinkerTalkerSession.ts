@@ -327,6 +327,42 @@ export interface TTFeedbackRecordedEvent {
 }
 
 /**
+ * Session recovery state for reconnection
+ */
+export interface TTSessionRecoveryState {
+  /** Session ID for recovery */
+  sessionId: string;
+  /** Conversation ID */
+  conversationId?: string;
+  /** Last message sequence received */
+  lastMessageSeq: number;
+  /** Last audio sequence confirmed */
+  lastAudioSeq: number;
+  /** Partial transcript in progress */
+  partialTranscript: string;
+  /** Partial response in progress */
+  partialResponse: string;
+  /** Timestamp when state was saved */
+  savedAt: number;
+}
+
+/**
+ * Session recovery result from server
+ */
+export interface TTSessionRecoveryResult {
+  /** Recovery state: none, partial, or full */
+  recoveryState: "none" | "partial" | "full";
+  /** Conversation ID restored */
+  conversationId?: string;
+  /** Partial transcript restored */
+  partialTranscript: string;
+  /** Partial response restored */
+  partialResponse: string;
+  /** Number of missed messages to replay */
+  missedMessageCount: number;
+}
+
+/**
  * Voice metrics for performance monitoring
  */
 export interface TTVoiceMetrics {
@@ -452,6 +488,14 @@ export interface UseThinkerTalkerSessionOptions {
   onFeedbackPrompts?: (event: TTFeedbackPromptsEvent) => void;
   /** Callback when feedback is recorded (Phase 10) */
   onFeedbackRecorded?: (event: TTFeedbackRecordedEvent) => void;
+
+  // WebSocket Error Recovery callbacks
+  /** Callback when session is recovered after reconnection */
+  onSessionRecovered?: (result: TTSessionRecoveryResult) => void;
+  /** Callback when session recovery fails */
+  onSessionRecoveryFailed?: (reason: string) => void;
+  /** Callback when a missed message is replayed during recovery */
+  onMessageReplayed?: (message: Record<string, unknown>) => void;
 }
 
 // ============================================================================
@@ -640,6 +684,95 @@ export function useThinkerTalkerSession(
   const speechEndTimeRef = useRef<number | null>(null);
   const firstTranscriptTimeRef = useRef<number | null>(null);
   const firstLLMTokenTimeRef = useRef<number | null>(null);
+
+  // Session recovery state (WebSocket Error Recovery)
+  const sessionIdRef = useRef<string | null>(null);
+  const recoveryEnabledRef = useRef<boolean>(false);
+  const isRecoveredSessionRef = useRef<boolean>(false);
+  const lastMessageSeqRef = useRef<number>(0);
+  const lastAudioSeqRef = useRef<number>(0);
+  const partialTranscriptAccumRef = useRef<string>("");
+  const partialResponseAccumRef = useRef<string>("");
+
+  // LocalStorage key for session recovery
+  const RECOVERY_STORAGE_KEY = "voiceassist_ws_recovery_state";
+  const RECOVERY_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+  /**
+   * Save session recovery state to localStorage
+   */
+  const saveRecoveryState = useCallback(() => {
+    if (!sessionIdRef.current || !recoveryEnabledRef.current) return;
+
+    const state: TTSessionRecoveryState = {
+      sessionId: sessionIdRef.current,
+      conversationId: options.conversation_id,
+      lastMessageSeq: lastMessageSeqRef.current,
+      lastAudioSeq: lastAudioSeqRef.current,
+      partialTranscript: partialTranscriptAccumRef.current,
+      partialResponse: partialResponseAccumRef.current,
+      savedAt: Date.now(),
+    };
+
+    try {
+      localStorage.setItem(RECOVERY_STORAGE_KEY, JSON.stringify(state));
+      voiceLog.debug(
+        `[ThinkerTalker] Recovery state saved: seq=${state.lastMessageSeq}`,
+      );
+    } catch (err) {
+      voiceLog.warn("[ThinkerTalker] Failed to save recovery state:", err);
+    }
+  }, [options.conversation_id]);
+
+  /**
+   * Load session recovery state from localStorage
+   */
+  const loadRecoveryState = useCallback((): TTSessionRecoveryState | null => {
+    try {
+      const stored = localStorage.getItem(RECOVERY_STORAGE_KEY);
+      if (!stored) return null;
+
+      const state: TTSessionRecoveryState = JSON.parse(stored);
+
+      // Check if state is expired
+      const age = Date.now() - state.savedAt;
+      if (age > RECOVERY_TTL_MS) {
+        voiceLog.debug("[ThinkerTalker] Recovery state expired");
+        localStorage.removeItem(RECOVERY_STORAGE_KEY);
+        return null;
+      }
+
+      // Check if conversation ID matches (if provided)
+      if (
+        options.conversation_id &&
+        state.conversationId !== options.conversation_id
+      ) {
+        voiceLog.debug("[ThinkerTalker] Recovery state conversation mismatch");
+        localStorage.removeItem(RECOVERY_STORAGE_KEY);
+        return null;
+      }
+
+      voiceLog.debug(
+        `[ThinkerTalker] Recovery state loaded: session=${state.sessionId}, seq=${state.lastMessageSeq}`,
+      );
+      return state;
+    } catch (err) {
+      voiceLog.warn("[ThinkerTalker] Failed to load recovery state:", err);
+      return null;
+    }
+  }, [options.conversation_id]);
+
+  /**
+   * Clear session recovery state from localStorage
+   */
+  const clearRecoveryState = useCallback(() => {
+    try {
+      localStorage.removeItem(RECOVERY_STORAGE_KEY);
+      voiceLog.debug("[ThinkerTalker] Recovery state cleared");
+    } catch (err) {
+      voiceLog.warn("[ThinkerTalker] Failed to clear recovery state:", err);
+    }
+  }, []);
 
   // Refs for callback functions (avoid circular dependencies)
   const connectRef = useRef<() => Promise<void>>(() => Promise.resolve());
@@ -932,12 +1065,26 @@ export function useThinkerTalkerSession(
       const msgType = message.type as string;
 
       switch (msgType) {
-        case "session.ready":
+        case "session.ready": {
           voiceLog.debug("[ThinkerTalker] Session ready");
           updateStatus("ready");
+
+          // Capture session ID and recovery state
+          const sessionId = message.session_id as string;
+          const recoveryEnabled = message.recovery_enabled as boolean;
+          sessionIdRef.current = sessionId;
+          recoveryEnabledRef.current = recoveryEnabled || false;
+
+          if (recoveryEnabled) {
+            voiceLog.info(
+              `[ThinkerTalker] Session recovery enabled: ${sessionId}`,
+            );
+          }
+
           // Start heartbeat monitoring for zombie connection detection
           startHeartbeat();
           break;
+        }
 
         case "session.init.ack": {
           // Protocol negotiation response from server
@@ -954,6 +1101,81 @@ export function useThinkerTalkerSession(
             audioSequenceRef.current = 0;
             voiceLog.info("[ThinkerTalker] Binary audio protocol enabled");
           }
+          break;
+        }
+
+        // ================================================================
+        // WebSocket Error Recovery Message Handlers
+        // ================================================================
+
+        case "session.resume.ack": {
+          // Session recovery succeeded
+          const recoveryResult: TTSessionRecoveryResult = {
+            recoveryState: message.recovery_state as
+              | "none"
+              | "partial"
+              | "full",
+            conversationId: message.conversation_id as string | undefined,
+            partialTranscript: (message.partial_transcript as string) || "",
+            partialResponse: (message.partial_response as string) || "",
+            missedMessageCount: (message.missed_message_count as number) || 0,
+          };
+
+          voiceLog.info(
+            `[ThinkerTalker] Session recovered: state=${recoveryResult.recoveryState}, ` +
+              `missed=${recoveryResult.missedMessageCount}`,
+          );
+
+          // Restore partial state
+          if (recoveryResult.partialTranscript) {
+            setPartialTranscript(recoveryResult.partialTranscript);
+            partialTranscriptAccumRef.current =
+              recoveryResult.partialTranscript;
+          }
+          if (recoveryResult.partialResponse) {
+            partialResponseAccumRef.current = recoveryResult.partialResponse;
+          }
+
+          isRecoveredSessionRef.current = true;
+          options.onSessionRecovered?.(recoveryResult);
+          break;
+        }
+
+        case "session.resume.nak": {
+          // Session recovery failed
+          const reason = message.reason as string;
+          voiceLog.warn(`[ThinkerTalker] Session recovery failed: ${reason}`);
+
+          // Clear stale recovery state
+          clearRecoveryState();
+          isRecoveredSessionRef.current = false;
+
+          options.onSessionRecoveryFailed?.(reason);
+          break;
+        }
+
+        case "message.replay": {
+          // Replayed message from recovery
+          const originalMessage = message.original as Record<string, unknown>;
+          voiceLog.debug(
+            `[ThinkerTalker] Message replay: type=${originalMessage.type}`,
+          );
+
+          // Process the replayed message
+          handleMessageRef.current(originalMessage);
+          options.onMessageReplayed?.(originalMessage);
+          break;
+        }
+
+        case "audio.resume": {
+          // Audio resume info for checkpointing
+          const resumeFromSeq = message.resume_from_seq as number;
+          voiceLog.debug(
+            `[ThinkerTalker] Audio resume from seq=${resumeFromSeq}`,
+          );
+
+          // Update last confirmed audio sequence
+          lastAudioSeqRef.current = resumeFromSeq;
           break;
         }
 
@@ -1000,8 +1222,18 @@ export function useThinkerTalkerSession(
         case "transcript.delta": {
           // Partial transcript from STT
           const text = message.text as string;
+          const seq = message.seq as number | undefined;
+
+          // Track sequence number for recovery
+          if (seq !== undefined) {
+            lastMessageSeqRef.current = seq;
+          }
+
           if (text) {
             setPartialTranscript((prev) => prev + text);
+            // Track accumulated transcript for recovery
+            partialTranscriptAccumRef.current += text;
+
             options.onTranscript?.({
               text,
               is_final: false,
@@ -1015,9 +1247,17 @@ export function useThinkerTalkerSession(
           // Final transcript from STT
           const text = message.text as string;
           const messageId = message.message_id as string | undefined;
+          const seq = message.seq as number | undefined;
+
+          // Track sequence number for recovery
+          if (seq !== undefined) {
+            lastMessageSeqRef.current = seq;
+          }
 
           setTranscript(text);
           setPartialTranscript("");
+          // Clear transcript accumulator on completion
+          partialTranscriptAccumRef.current = "";
 
           // Track STT latency
           const now = Date.now();
@@ -1057,6 +1297,17 @@ export function useThinkerTalkerSession(
           // Streaming LLM response token
           const delta = message.delta as string;
           const messageId = message.message_id as string;
+          const seq = message.seq as number | undefined;
+
+          // Track sequence number for recovery
+          if (seq !== undefined) {
+            lastMessageSeqRef.current = seq;
+          }
+
+          // Track accumulated response for recovery
+          if (delta) {
+            partialResponseAccumRef.current += delta;
+          }
 
           // Track time to first LLM token
           if (!firstLLMTokenTimeRef.current && firstTranscriptTimeRef.current) {
@@ -1076,6 +1327,15 @@ export function useThinkerTalkerSession(
           // Backend sends "text", not "content"
           const content = (message.text || message.content || "") as string;
           const messageId = message.message_id as string;
+          const seq = message.seq as number | undefined;
+
+          // Track sequence number for recovery
+          if (seq !== undefined) {
+            lastMessageSeqRef.current = seq;
+          }
+
+          // Clear response accumulator on completion
+          partialResponseAccumRef.current = "";
 
           updateMetrics({ aiResponseCount: metrics.aiResponseCount + 1 });
           options.onResponseComplete?.(content, messageId);
@@ -1713,6 +1973,7 @@ export function useThinkerTalkerSession(
       enableConversationManagement,
       conversationManager,
       pipelineState,
+      clearRecoveryState,
     ],
   );
 
@@ -1757,6 +2018,23 @@ export function useThinkerTalkerSession(
           // Reset sequence validation state
           expectedSequenceRef.current = 0;
           reorderBufferRef.current.clear();
+
+          // Check for recovery state
+          const recoveryState = loadRecoveryState();
+
+          if (recoveryState) {
+            // Attempt session resume
+            voiceLog.info(
+              `[ThinkerTalker] Attempting session resume: ${recoveryState.sessionId}`,
+            );
+            const resumeMessage = {
+              type: "session.resume",
+              session_id: recoveryState.sessionId,
+              last_message_seq: recoveryState.lastMessageSeq,
+              last_audio_seq: recoveryState.lastAudioSeq,
+            };
+            ws.send(JSON.stringify(resumeMessage));
+          }
 
           // Send session initialization message with feature negotiation
           const initMessage = {
@@ -1852,7 +2130,13 @@ export function useThinkerTalkerSession(
         }, 10000);
       });
     },
-    [tokens, options.voiceSettings, updateStatus, scheduleReconnect],
+    [
+      tokens,
+      options.voiceSettings,
+      updateStatus,
+      scheduleReconnect,
+      loadRecoveryState,
+    ],
   );
 
   /**
@@ -2078,6 +2362,11 @@ export function useThinkerTalkerSession(
     voiceLog.debug("[ThinkerTalker] Disconnecting...");
     intentionalDisconnectRef.current = true;
 
+    // Save recovery state for potential reconnection (if not intentional)
+    if (recoveryEnabledRef.current) {
+      saveRecoveryState();
+    }
+
     // Track cleaned resources for debugging
     const cleanedResources: string[] = [];
 
@@ -2158,7 +2447,7 @@ export function useThinkerTalkerSession(
     setIsSpeaking(false);
     setPipelineState("idle");
     setCurrentToolCalls([]);
-  }, [updateStatus, updateMetrics, stopHeartbeat]);
+  }, [updateStatus, updateMetrics, stopHeartbeat, saveRecoveryState]);
 
   // Keep ref updated
   disconnectRef.current = disconnect;

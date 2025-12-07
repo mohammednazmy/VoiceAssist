@@ -18,6 +18,12 @@ Integrates with VoiceEventBus for:
 - turn.yielded/taken: Turn management events
 - filler.triggered/played: Progressive response events
 - acknowledgment.*: Smart acknowledgment events
+
+WebSocket Error Recovery (Phase WS-Recovery):
+- Session state persistence via Redis for seamless reconnection
+- Message buffering for partial message recovery
+- Audio checkpoint tracking for playback resume
+- Feature flags: backend.ws_session_recovery, backend.ws_message_recovery, backend.ws_audio_checkpointing
 """
 
 import asyncio
@@ -39,6 +45,7 @@ from app.services.voice_pipeline_service import (
     voice_pipeline_service,
 )
 from app.services.websocket_message_batcher import BatcherConfig, WebSocketMessageBatcher
+from app.services.websocket_session_state import ActiveToolCall, WebSocketSessionState, websocket_session_state_service
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 logger = get_logger(__name__)
@@ -55,6 +62,11 @@ BINARY_HEADER_SIZE = 5  # 1 byte type + 4 bytes sequence number
 # Feature flag names for protocol features
 FEATURE_FLAG_BINARY_PROTOCOL = "backend.ws_binary_protocol"
 FEATURE_FLAG_MESSAGE_BATCHING = "backend.ws_message_batching"
+
+# Feature flag names for error recovery (Phase WS-Recovery)
+FEATURE_FLAG_SESSION_RECOVERY = "backend.ws_session_recovery"
+FEATURE_FLAG_MESSAGE_RECOVERY = "backend.ws_message_recovery"
+FEATURE_FLAG_AUDIO_CHECKPOINTING = "backend.ws_audio_checkpointing"
 
 # Event types to forward to the client
 FORWARDED_EVENT_TYPES = [
@@ -132,6 +144,11 @@ class TTSessionConfig:
     # Binary Protocol (WebSocket Efficiency - Feature Flag Controlled)
     binary_protocol_enabled: bool = False  # Set via feature flag negotiation
     message_batching_enabled: bool = False  # Set via feature flag negotiation
+
+    # Session Recovery (Phase WS-Recovery - Feature Flag Controlled)
+    session_recovery_enabled: bool = False
+    message_recovery_enabled: bool = False
+    audio_checkpointing_enabled: bool = False
 
     # Sequence tracking for binary protocol (internal, not part of init)
     _audio_sequence_in: int = field(default=0, init=False, repr=False)
@@ -213,6 +230,13 @@ class ThinkerTalkerWebSocketHandler:
         # Message batcher for high-frequency messages (initialized in session.init)
         self._batcher: Optional[WebSocketMessageBatcher] = None
 
+        # Session recovery state (Phase WS-Recovery)
+        self._session_state_service = websocket_session_state_service
+        self._session_state: Optional[WebSocketSessionState] = None
+        self._partial_transcript: str = ""  # Accumulator for transcript deltas
+        self._partial_response: str = ""  # Accumulator for response deltas
+        self._is_resumed_session: bool = False  # True if this is a recovered session
+
     @property
     def connection_state(self) -> TTConnectionState:
         """Get current connection state."""
@@ -283,6 +307,9 @@ class ThinkerTalkerWebSocketHandler:
             await self.websocket.accept()
             self._connection_state = TTConnectionState.CONNECTED
 
+            # Initialize session recovery features (feature flag controlled)
+            await self._init_session_recovery()
+
             # Create pipeline session
             pipeline_config = PipelineConfig(
                 stt_language=self.config.language,
@@ -310,12 +337,17 @@ class ThinkerTalkerWebSocketHandler:
             # Subscribe to event bus events (for thinking feedback, turn management, etc.)
             self._subscribe_to_event_bus()
 
+            # Create session state for recovery (if enabled)
+            if self.config.session_recovery_enabled:
+                await self._create_session_state()
+
             # Send ready message to client
             await self._send_message(
                 {
                     "type": "session.ready",
                     "session_id": self.config.session_id,
                     "pipeline_mode": "thinker_talker",
+                    "recovery_enabled": self.config.session_recovery_enabled,
                 }
             )
 
@@ -325,7 +357,10 @@ class ThinkerTalkerWebSocketHandler:
 
             logger.info(
                 f"T/T WebSocket handler started: {self.config.session_id}",
-                extra={"user_id": self.config.user_id},
+                extra={
+                    "user_id": self.config.user_id,
+                    "recovery_enabled": self.config.session_recovery_enabled,
+                },
             )
             return True
 
@@ -337,9 +372,67 @@ class ThinkerTalkerWebSocketHandler:
             await self._send_error("connection_failed", str(e))
             return False
 
-    async def stop(self) -> TTSessionMetrics:
+    async def _init_session_recovery(self) -> None:
+        """Initialize session recovery features based on feature flags."""
+        try:
+            from app.services.feature_flags import feature_flag_service
+
+            # Check feature flags
+            self.config.session_recovery_enabled = await feature_flag_service.is_enabled(
+                FEATURE_FLAG_SESSION_RECOVERY, default=False
+            )
+            if self.config.session_recovery_enabled:
+                self.config.message_recovery_enabled = await feature_flag_service.is_enabled(
+                    FEATURE_FLAG_MESSAGE_RECOVERY, default=False
+                )
+                self.config.audio_checkpointing_enabled = await feature_flag_service.is_enabled(
+                    FEATURE_FLAG_AUDIO_CHECKPOINTING, default=False
+                )
+
+                # Ensure session state service is connected
+                if not self._session_state_service._connected:
+                    await self._session_state_service.connect()
+
+                logger.info(
+                    f"[WS Recovery] Enabled for {self.config.session_id}: "
+                    f"message_recovery={self.config.message_recovery_enabled}, "
+                    f"audio_checkpointing={self.config.audio_checkpointing_enabled}"
+                )
+        except Exception as e:
+            logger.warning(f"Failed to check session recovery flags: {e}")
+            self.config.session_recovery_enabled = False
+
+    async def _create_session_state(self) -> None:
+        """Create initial session state for recovery."""
+        try:
+            self._session_state = await self._session_state_service.create_session(
+                session_id=self.config.session_id,
+                user_id=self.config.user_id,
+                conversation_id=self.config.conversation_id,
+                voice_id=self.config.voice_id,
+                language=self.config.language,
+            )
+            logger.debug(f"[WS Recovery] Created session state: {self.config.session_id}")
+        except Exception as e:
+            logger.error(f"Failed to create session state: {e}")
+
+    async def _update_session_state(self, **updates) -> None:
+        """Update session state with given fields."""
+        if not self.config.session_recovery_enabled or not self._session_state:
+            return
+
+        try:
+            await self._session_state_service.update_session_state(self.config.session_id, updates)
+        except Exception as e:
+            logger.warning(f"Failed to update session state: {e}")
+
+    async def stop(self, preserve_for_recovery: bool = True) -> TTSessionMetrics:
         """
         Stop the handler and cleanup.
+
+        Args:
+            preserve_for_recovery: If True and recovery is enabled, preserve
+                session state for potential reconnection
 
         Returns:
             Session metrics
@@ -348,6 +441,10 @@ class ThinkerTalkerWebSocketHandler:
             return self._metrics
 
         self._running = False
+
+        # Mark session as disconnected for potential recovery
+        if self.config.session_recovery_enabled and preserve_for_recovery:
+            await self._save_disconnection_state()
 
         # Cancel tasks
         if self._receive_task:
@@ -395,6 +492,27 @@ class ThinkerTalkerWebSocketHandler:
         )
 
         return self._metrics
+
+    async def _save_disconnection_state(self) -> None:
+        """Save session state before disconnection for potential recovery."""
+        try:
+            # Update session state with final values
+            await self._session_state_service.update_session_state(
+                self.config.session_id,
+                {
+                    "connection_state": "disconnected",
+                    "pipeline_state": (self._pipeline_session.state.value if self._pipeline_session else "idle"),
+                    "last_message_seq": self.config._message_sequence,
+                    "last_audio_seq_in": self.config._audio_sequence_in,
+                    "last_audio_seq_out": self.config._audio_sequence_out,
+                    "partial_transcript": self._partial_transcript,
+                    "partial_response": self._partial_response,
+                },
+            )
+            await self._session_state_service.mark_disconnected(self.config.session_id)
+            logger.debug(f"[WS Recovery] Saved disconnection state: {self.config.session_id}")
+        except Exception as e:
+            logger.warning(f"Failed to save disconnection state: {e}")
 
     async def _receive_loop(self) -> None:
         """Receive and process messages from client.
@@ -661,8 +779,145 @@ class ThinkerTalkerWebSocketHandler:
             # Heartbeat response
             await self._send_message({"type": "pong"})
 
+        elif msg_type == "session.resume":
+            # Session recovery request
+            await self._handle_session_resume(message)
+
+        elif msg_type == "audio.ack":
+            # Audio acknowledgment for checkpointing
+            await self._handle_audio_ack(message)
+
         else:
             logger.warning(f"Unknown message type: {msg_type}")
+
+    async def _handle_session_resume(self, message: Dict[str, Any]) -> None:
+        """
+        Handle session resume request from client.
+
+        The client sends this after reconnecting to recover the session state.
+
+        Message format:
+        {
+            "type": "session.resume",
+            "session_id": "...",
+            "last_message_seq": 123,
+            "last_audio_seq": 45
+        }
+        """
+        if not self.config.session_recovery_enabled:
+            await self._send_message(
+                {
+                    "type": "session.resume.nak",
+                    "reason": "recovery_disabled",
+                }
+            )
+            return
+
+        session_id = message.get("session_id", self.config.session_id)
+        last_message_seq = message.get("last_message_seq", 0)
+        last_audio_seq = message.get("last_audio_seq", 0)
+
+        logger.info(
+            f"[WS Recovery] Resume request: session={session_id}, "
+            f"last_msg_seq={last_message_seq}, last_audio_seq={last_audio_seq}"
+        )
+
+        try:
+            # Attempt recovery
+            result = await self._session_state_service.attempt_recovery(
+                session_id=session_id,
+                user_id=self.config.user_id,
+                last_known_seq=last_message_seq,
+            )
+
+            if not result.success:
+                await self._send_message(
+                    {
+                        "type": "session.resume.nak",
+                        "reason": result.error or "recovery_failed",
+                    }
+                )
+                return
+
+            # Mark this as a resumed session
+            self._is_resumed_session = True
+
+            # Restore state from recovered session
+            if result.session_state:
+                self._session_state = result.session_state
+                self._partial_transcript = result.session_state.partial_transcript
+                self._partial_response = result.session_state.partial_response
+
+                # Restore sequence numbers
+                self.config._message_sequence = result.session_state.last_message_seq
+                self.config._audio_sequence_in = result.session_state.last_audio_seq_in
+                self.config._audio_sequence_out = result.session_state.last_audio_seq_out
+
+            # Send resume acknowledgment
+            resume_ack = {
+                "type": "session.resume.ack",
+                "recovery_state": result.state.value,
+                "conversation_id": (result.session_state.conversation_id if result.session_state else None),
+                "partial_transcript": self._partial_transcript,
+                "partial_response": self._partial_response,
+                "missed_message_count": len(result.missed_messages),
+            }
+
+            await self._send_message(resume_ack)
+
+            # Replay missed messages if message recovery is enabled
+            if self.config.message_recovery_enabled and result.missed_messages:
+                for missed_msg in result.missed_messages:
+                    await self._send_message(
+                        {
+                            "type": "message.replay",
+                            "original": missed_msg,
+                        }
+                    )
+
+            # Send audio resume info if audio checkpointing is enabled
+            if self.config.audio_checkpointing_enabled and result.audio_resume_seq is not None:
+                await self._send_message(
+                    {
+                        "type": "audio.resume",
+                        "resume_from_seq": result.audio_resume_seq,
+                    }
+                )
+
+            logger.info(
+                f"[WS Recovery] Session resumed: {session_id}, "
+                f"state={result.state.value}, missed_msgs={len(result.missed_messages)}"
+            )
+
+        except Exception as e:
+            logger.error(f"[WS Recovery] Resume failed: {e}", exc_info=True)
+            await self._send_message(
+                {
+                    "type": "session.resume.nak",
+                    "reason": str(e),
+                }
+            )
+
+    async def _handle_audio_ack(self, message: Dict[str, Any]) -> None:
+        """
+        Handle audio acknowledgment from client.
+
+        The client sends this to confirm receipt of audio chunks.
+
+        Message format:
+        {
+            "type": "audio.ack",
+            "seq": 123
+        }
+        """
+        if not self.config.audio_checkpointing_enabled:
+            return
+
+        confirmed_seq = message.get("seq", 0)
+        try:
+            await self._session_state_service.update_audio_confirmed(self.config.session_id, confirmed_seq)
+        except Exception as e:
+            logger.warning(f"Failed to update audio checkpoint: {e}")
 
     async def _handle_text_input(self, text: str) -> None:
         """Handle text input (fallback when not using voice)."""
@@ -704,7 +959,11 @@ class ThinkerTalkerWebSocketHandler:
         """Handle a message from the voice pipeline.
 
         For audio.output messages, uses binary protocol if enabled.
+        Tracks partial messages for recovery.
         """
+        # Track partial messages for recovery
+        await self._track_partial_messages(message)
+
         # Handle audio output with binary protocol if enabled
         if message.type == "audio.output" and self.config.binary_protocol_enabled:
             audio_b64 = message.data.get("audio", "")
@@ -721,6 +980,10 @@ class ThinkerTalkerWebSocketHandler:
                             "sequence": self.config._audio_sequence_out - 1,
                         }
                     )
+
+                    # Buffer audio for checkpointing if enabled
+                    if self.config.audio_checkpointing_enabled:
+                        await self._buffer_audio_chunk(self.config._audio_sequence_out - 1, audio_b64)
                 except Exception as e:
                     logger.error(f"Error sending binary audio: {e}")
                     # Fallback to JSON
@@ -734,6 +997,10 @@ class ThinkerTalkerWebSocketHandler:
                 }
             )
 
+            # Buffer audio for checkpointing if enabled (JSON mode)
+            if message.type == "audio.output" and self.config.audio_checkpointing_enabled and message.data.get("audio"):
+                await self._buffer_audio_chunk(self.config._message_sequence - 1, message.data.get("audio", ""))
+
         # Track metrics
         if message.type == "transcript.complete":
             self._metrics.user_utterance_count += 1
@@ -743,6 +1010,84 @@ class ThinkerTalkerWebSocketHandler:
             # Track first audio latency
             if self._metrics.first_audio_latency_ms == 0:
                 self._metrics.first_audio_latency_ms = (time.time() - self._metrics.connection_start_time) * 1000
+
+    async def _track_partial_messages(self, message: PipelineMessage) -> None:
+        """Track partial transcript and response messages for recovery."""
+        if not self.config.session_recovery_enabled:
+            return
+
+        msg_type = message.type
+
+        try:
+            if msg_type == "transcript.delta":
+                # Accumulate transcript delta
+                delta_text = message.data.get("text", "")
+                self._partial_transcript += delta_text
+
+                # Update session state periodically (every 5 characters)
+                if len(self._partial_transcript) % 5 == 0:
+                    await self._session_state_service.update_partial_transcript(
+                        self.config.session_id,
+                        self._partial_transcript,
+                        message.data.get("message_id"),
+                    )
+
+            elif msg_type == "transcript.complete":
+                # Clear partial transcript on completion
+                self._partial_transcript = ""
+                await self._session_state_service.clear_partial_messages(self.config.session_id)
+
+            elif msg_type == "response.delta":
+                # Accumulate response delta
+                delta_text = message.data.get("text", "")
+                self._partial_response += delta_text
+
+                # Update session state periodically (every 10 characters)
+                if len(self._partial_response) % 10 == 0:
+                    await self._session_state_service.update_partial_response(
+                        self.config.session_id,
+                        self._partial_response,
+                        message.data.get("message_id"),
+                    )
+
+            elif msg_type == "response.complete":
+                # Clear partial response on completion
+                self._partial_response = ""
+                await self._session_state_service.clear_partial_messages(self.config.session_id)
+
+            elif msg_type == "tool.call":
+                # Track tool call in progress
+                tool_call = ActiveToolCall(
+                    tool_id=message.data.get("tool_call_id", ""),
+                    tool_name=message.data.get("name", ""),
+                    arguments=message.data.get("arguments", {}),
+                    status="running",
+                )
+                await self._session_state_service.add_tool_call(self.config.session_id, tool_call)
+
+            elif msg_type == "tool.result":
+                # Update tool call status
+                await self._session_state_service.update_tool_call(
+                    self.config.session_id,
+                    message.data.get("tool_call_id", ""),
+                    "completed",
+                    message.data.get("result"),
+                )
+
+        except Exception as e:
+            logger.warning(f"Failed to track partial message: {e}")
+
+    async def _buffer_audio_chunk(self, seq: int, audio_data: str) -> None:
+        """Buffer audio chunk for checkpointing."""
+        try:
+            chunk = {
+                "seq": seq,
+                "audio": audio_data,
+                "timestamp": time.time(),
+            }
+            await self._session_state_service.add_pending_audio_chunk(self.config.session_id, chunk)
+        except Exception as e:
+            logger.warning(f"Failed to buffer audio chunk: {e}")
 
     async def _heartbeat_loop(self) -> None:
         """Send periodic heartbeats."""
@@ -758,12 +1103,17 @@ class ThinkerTalkerWebSocketHandler:
         """Send a message to the client with sequence number.
 
         Uses message batcher if enabled for high-frequency messages.
+        Buffers messages for recovery if message recovery is enabled.
         """
         # Add sequence number to all messages
         message["seq"] = self.config._message_sequence
         self.config._message_sequence += 1
 
         try:
+            # Buffer message for potential recovery (if enabled)
+            if self.config.message_recovery_enabled:
+                await self._buffer_message_for_recovery(message)
+
             # Use batcher if available and enabled
             if self._batcher and self.config.message_batching_enabled:
                 await self._batcher.queue_message(message)
@@ -773,6 +1123,26 @@ class ThinkerTalkerWebSocketHandler:
         except Exception as e:
             logger.error(f"Error sending message: {e}")
             self._metrics.error_count += 1
+
+    async def _buffer_message_for_recovery(self, message: Dict[str, Any]) -> None:
+        """Buffer a message for potential recovery after disconnect."""
+        try:
+            # Only buffer certain message types that are important for recovery
+            msg_type = message.get("type", "")
+            bufferable_types = {
+                "transcript.delta",
+                "transcript.complete",
+                "response.delta",
+                "response.complete",
+                "tool.call",
+                "tool.result",
+                "voice.state",
+            }
+
+            if msg_type in bufferable_types:
+                await self._session_state_service.buffer_message(self.config.session_id, message)
+        except Exception as e:
+            logger.warning(f"Failed to buffer message for recovery: {e}")
 
     async def _send_error(self, code: str, message: str, recoverable: bool = True) -> None:
         """Send an error message to the client."""
