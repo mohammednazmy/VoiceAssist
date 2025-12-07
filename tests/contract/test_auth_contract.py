@@ -6,19 +6,20 @@ Tests the contract between:
 
 Run with: pytest tests/contract/test_auth_contract.py
 """
-import pytest
-import oso
-from pact import Consumer, Provider, Like, EachLike, Term
-import requests
+import os
 
-# Pact broker configuration
-PACT_BROKER_URL = "http://localhost:9292"
-PACT_BROKER_USERNAME = "pact"
-PACT_BROKER_PASSWORD = "pact"
+import pytest
+import requests
+from pact import Consumer, Like, Provider, Term
+
+# Pact broker configuration - use environment variables with defaults
+PACT_BROKER_URL = os.environ.get("PACT_BROKER_URL", "http://localhost:9292")
+PACT_BROKER_USERNAME = os.environ.get("PACT_BROKER_USERNAME", "pact")
+PACT_BROKER_PASSWORD = os.environ.get("PACT_BROKER_PASSWORD", "pact")
 
 # Provider configuration
-PROVIDER_HOST = "localhost"
-PROVIDER_PORT = 8000
+PROVIDER_HOST = os.environ.get("PROVIDER_HOST", "localhost")
+PROVIDER_PORT = int(os.environ.get("PROVIDER_PORT", "8000"))
 PROVIDER_BASE_URL = f"http://{PROVIDER_HOST}:{PROVIDER_PORT}"
 
 

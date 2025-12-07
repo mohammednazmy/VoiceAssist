@@ -277,26 +277,29 @@ jobs:
           --health-retries 5
 
       pact-broker:
-        image: pactfoundation/pact-broker:latest
+        image: pactfoundation/pact-broker:2.117.1
         env:
           # Use explicit credentials instead of DATABASE_URL for better compatibility
           PACT_BROKER_DATABASE_ADAPTER: postgres
           PACT_BROKER_DATABASE_USERNAME: voiceassist
           PACT_BROKER_DATABASE_PASSWORD: test_password
           PACT_BROKER_DATABASE_HOST: postgres
+          PACT_BROKER_DATABASE_PORT: 5432
           PACT_BROKER_DATABASE_NAME: pact_broker
           PACT_BROKER_BASIC_AUTH_USERNAME: pact
           PACT_BROKER_BASIC_AUTH_PASSWORD: pact
           PACT_BROKER_PUBLIC_HEARTBEAT: "true"
           PACT_BROKER_LOG_LEVEL: INFO
+          # Disable seed data to speed up startup
+          PACT_BROKER_SEED_EXAMPLE_DATA: "false"
         ports:
           - 9292:9292
         options: >-
-          --health-cmd "wget -q --tries=1 --spider http://localhost:9292/diagnostic/status/heartbeat || exit 1"
-          --health-interval 20s
-          --health-timeout 15s
-          --health-retries 15
-          --health-start-period 90s
+          --health-cmd "curl -sf http://localhost:9292/diagnostic/status/heartbeat || exit 1"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 20
+          --health-start-period 120s
 
     steps:
       - name: Checkout code
@@ -322,10 +325,14 @@ jobs:
           echo "Pact Broker is ready!"
 
       - name: Run contract tests
-        working-directory: services/api-gateway
         run: |
+          # Contract tests can be in either location
           if [ -d "tests/contract" ]; then
-            pytest tests/contract/ -v
+            echo "Running contract tests from tests/contract/"
+            pytest tests/contract/ -v --tb=short
+          elif [ -d "services/api-gateway/tests/contract" ]; then
+            echo "Running contract tests from services/api-gateway/tests/contract/"
+            pytest services/api-gateway/tests/contract/ -v --tb=short
           else
             echo "No contract tests found, skipping..."
           fi
@@ -344,12 +351,12 @@ jobs:
 
       - name: Publish pacts to broker
         if: github.event_name == 'push'
-        working-directory: services/api-gateway
         run: |
+          # Check for pacts in both possible locations
           if [ -d "pacts" ]; then
-            echo "Publishing pacts to broker..."
-            # Pact files are automatically published during test run
-            echo "Pacts published successfully"
+            echo "Publishing pacts from ./pacts to broker..."
+          elif [ -d "services/api-gateway/pacts" ]; then
+            echo "Publishing pacts from services/api-gateway/pacts to broker..."
           else
             echo "No pacts to publish"
           fi
