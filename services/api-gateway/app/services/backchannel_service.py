@@ -1225,11 +1225,13 @@ class BackchannelService:
         self._elevenlabs: Optional[ElevenLabsService] = None
         self._event_bus = event_bus
         self._policy_service = policy_service
-        self._enabled = bool(settings.ELEVENLABS_API_KEY)
+        self._has_api_key = bool(settings.ELEVENLABS_API_KEY)
+        self._feature_flag_checked = False
+        self._feature_flag_enabled = False
 
-        if self._enabled:
+        if self._has_api_key:
             self._elevenlabs = ElevenLabsService()
-            logger.info("Backchannel service initialized")
+            logger.info("Backchannel service initialized (pending feature flag check)")
         else:
             logger.info("Backchannel service disabled (no ELEVENLABS_API_KEY)")
 
@@ -1238,9 +1240,36 @@ class BackchannelService:
         self._event_bus = event_bus
         logger.debug("Backchannel service event bus updated")
 
-    def is_enabled(self) -> bool:
-        """Check if backchanneling is available."""
-        return self._enabled
+    async def is_enabled(self) -> bool:
+        """
+        Check if backchanneling is available.
+
+        Requires both:
+        1. ELEVENLABS_API_KEY to be configured
+        2. backend.voice_backchanneling feature flag to be enabled
+        """
+        if not self._has_api_key:
+            return False
+
+        # Check feature flag (cached after first check)
+        if not self._feature_flag_checked:
+            try:
+                from app.services.feature_flags import feature_flag_service
+
+                self._feature_flag_enabled = await feature_flag_service.is_enabled(
+                    "backend.voice_backchanneling", default=False
+                )
+                self._feature_flag_checked = True
+                if self._feature_flag_enabled:
+                    logger.info("Backchanneling feature flag is enabled")
+                else:
+                    logger.info("Backchanneling feature flag is disabled")
+            except Exception as e:
+                logger.warning(f"Failed to check backchanneling feature flag: {e}")
+                self._feature_flag_enabled = False
+                self._feature_flag_checked = True
+
+        return self._feature_flag_enabled
 
     def set_policy_service(self, policy_service: Any) -> None:
         """Set or update the policy service for A/B testing"""
