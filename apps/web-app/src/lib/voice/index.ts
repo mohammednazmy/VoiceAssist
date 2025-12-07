@@ -41,3 +41,13 @@ export {
   type AECEvent,
   type AECEventHandler,
 } from "./AECMonitor";
+
+// Transport session hook
+export {
+  useTransportSession,
+  createTransportSessionConfig,
+  type TransportSessionConfig,
+  type TransportSessionState,
+  type TransportSessionCallbacks,
+  type UseTransportSessionOptions,
+} from "./useTransportSession";
