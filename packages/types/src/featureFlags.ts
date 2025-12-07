@@ -484,6 +484,30 @@ export const FEATURE_FLAGS = {
     },
 
     // -------------------------------------------------------------------------
+    // Voice Conversation Features
+    // -------------------------------------------------------------------------
+    voice_backchanneling: {
+      name: "backend.voice_backchanneling",
+      description:
+        "[Voice] Enable backchanneling/filler phrases during voice conversations. " +
+        "When enabled, the assistant will use natural verbal cues like 'Yes', 'Uh-huh', " +
+        "'I see', etc. to indicate active listening. Disable to remove filler phrases.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/backchanneling",
+      },
+      dependencies: {
+        services: ["api-gateway"],
+        components: ["BackchannelService", "VoicePipelineService"],
+        otherFlags: [],
+      },
+    },
+
+    // -------------------------------------------------------------------------
     // WebSocket Latency Optimization Flags
     // -------------------------------------------------------------------------
     voice_ws_audio_prebuffering: {

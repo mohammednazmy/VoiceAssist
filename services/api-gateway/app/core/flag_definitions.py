@@ -354,6 +354,26 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
         #
         # Workstream 2: Audio & Speech Processing
         # ---------------------------------------------------------------------
+        "voice_backchanneling": FeatureFlagDefinition(
+            name="backend.voice_backchanneling",
+            description=(
+                "[Voice] Enable backchanneling/filler phrases during voice conversations. "
+                "When enabled, the assistant will use natural verbal cues like 'Yes', 'Uh-huh', "
+                "'I see', etc. to indicate active listening. Disable to remove filler phrases."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/backchanneling",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                components=["BackchannelService", "VoicePipelineService"],
+            ),
+        ),
         "voice_v4_lexicon_service": FeatureFlagDefinition(
             name="backend.voice_v4_lexicon_service",
             description="[Workstream 2] Medical pronunciation lexicons for 15 languages with espeak-ng G2P fallback.",

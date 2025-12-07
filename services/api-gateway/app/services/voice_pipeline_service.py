@@ -74,6 +74,15 @@ from app.services.streaming_stt_service import (
 )
 from app.services.talker_service import AudioChunk, TalkerService, TalkerSession, VoiceConfig, talker_service
 from app.services.thinker_service import ThinkerService, ThinkerSession, ToolCallEvent, ToolResultEvent, thinker_service
+
+# Natural Conversation Flow: Phase 3 - Utterance Aggregation
+from app.services.utterance_aggregator import (
+    AggregatedUtterance,
+    AggregatorConfig,
+    UtteranceAggregator,
+    get_utterance_aggregator,
+    remove_utterance_aggregator,
+)
 from app.services.voice_command_service import voice_command_service
 
 logger = get_logger(__name__)
@@ -344,6 +353,14 @@ class PipelineConfig:
     # Minimum confidence threshold to trigger continuation wait
     continuation_confidence_threshold: float = 0.4
 
+    # Natural Conversation Flow: Utterance Aggregation
+    # When enabled, merges speech segments within a time window
+    enable_utterance_aggregation: bool = True
+    # Maximum time to wait for additional segments (ms)
+    utterance_aggregation_window_ms: int = 3000
+    # Maximum segments to aggregate before forcing processing
+    utterance_max_segments: int = 5
+
 
 @dataclass
 class PipelineMessage:
@@ -479,6 +496,19 @@ class VoicePipelineSession:
         self._pending_continuation: bool = False
         self._continuation_analysis: Optional[ContinuationAnalysis] = None
 
+        # Natural Conversation Flow: Phase 3 - Utterance Aggregation
+        self._utterance_aggregator: Optional[UtteranceAggregator] = None
+        if self.config.enable_utterance_aggregation:
+            aggregator_config = AggregatorConfig(
+                window_duration_ms=self.config.utterance_aggregation_window_ms,
+                max_segments_per_window=self.config.utterance_max_segments,
+            )
+            self._utterance_aggregator = get_utterance_aggregator(
+                session_id=session_id,
+                config=aggregator_config,
+                on_utterance_ready=self._handle_aggregated_utterance,
+            )
+
     @property
     def state(self) -> PipelineState:
         """Get current pipeline state."""
@@ -531,7 +561,7 @@ class VoicePipelineSession:
                     logger.info(f"Emotion detection enabled for session: {self.session_id}")
 
                 # Create backchannel session for natural verbal cues
-                if self._backchannel_service and self._backchannel_service.is_enabled():
+                if self._backchannel_service and await self._backchannel_service.is_enabled():
                     self._backchannel_session = await self._backchannel_service.create_session(
                         session_id=self.session_id,
                         voice_id=self.config.voice_id,
@@ -853,6 +883,13 @@ class VoicePipelineSession:
             self._phi_monitor.clear_patient_context()
             logger.debug(f"PHI monitor context cleared for session: {self.session_id}")
 
+        # Natural Conversation Flow: Phase 3 - Clean up utterance aggregator
+        if self._utterance_aggregator:
+            await self._utterance_aggregator.cancel()
+            remove_utterance_aggregator(self.session_id)
+            self._utterance_aggregator = None
+            logger.debug(f"Utterance aggregator cleaned up for session: {self.session_id}")
+
         # Phase 8: Clean up dictation session
         if self._dictation_session:
             self._dictation_session = None
@@ -1159,6 +1196,23 @@ class VoicePipelineSession:
             self._final_transcript = text
             return
 
+        # Natural Conversation Flow: Phase 3 - Utterance Aggregation
+        # If aggregation is enabled, add segment to aggregator instead of
+        # directly accumulating. The aggregator will merge segments and
+        # call _handle_aggregated_utterance when ready.
+        if self._utterance_aggregator and self.config.enable_utterance_aggregation:
+            result = await self._utterance_aggregator.add_final(
+                text=text,
+                confidence=self._transcript_confidence,
+                language=self.config.stt_language,
+            )
+            # If aggregator returned a result, it was forcefully finalized
+            # (e.g., max segments reached). The callback handles processing.
+            if result:
+                await self._handle_aggregated_utterance(result)
+            return
+
+        # Standard accumulation (aggregation disabled)
         if self._final_transcript:
             self._final_transcript += " " + text
         else:
@@ -1186,6 +1240,11 @@ class VoicePipelineSession:
             self._continuation_wait_task.cancel()
             self._pending_continuation = False
             # Note: The transcript will be accumulated and speech_end will be called again
+
+        # Natural Conversation Flow: Phase 3 - Utterance Aggregation
+        # Notify aggregator that speech started (cancels its timeout)
+        if self._utterance_aggregator:
+            await self._utterance_aggregator.on_speech_start()
 
         # Track speech timing for backchannels
         self._speech_start_time = time.time()
@@ -1308,6 +1367,30 @@ class VoicePipelineSession:
             if final and final != self._final_transcript:
                 self._final_transcript = final
 
+        await self._process_transcript()
+
+    async def _handle_aggregated_utterance(self, utterance: AggregatedUtterance) -> None:
+        """
+        Handle an aggregated utterance from the UtteranceAggregator.
+
+        Called when the aggregator has collected and merged multiple speech segments
+        into a complete utterance ready for processing.
+        """
+        logger.info(
+            f"[Pipeline] Aggregated utterance ready: segments={utterance.segment_count}, "
+            f"merged={utterance.was_merged}, duration={utterance.total_duration_ms}ms"
+        )
+
+        # Use the merged text as the final transcript
+        self._final_transcript = utterance.text
+
+        # Log segment details for debugging
+        if utterance.was_merged and len(utterance.segments) > 1:
+            segment_texts = [f"'{s.text}'" for s in utterance.segments]
+            logger.debug(f"[Pipeline] Merged segments: {' + '.join(segment_texts)}")
+            logger.debug(f"[Pipeline] Result: '{utterance.text}'")
+
+        # Process the aggregated transcript
         await self._process_transcript()
 
     async def _process_transcript(self) -> None:
