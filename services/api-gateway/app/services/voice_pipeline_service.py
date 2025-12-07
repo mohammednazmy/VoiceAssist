@@ -32,6 +32,14 @@ from app.services.backchannel_service import (
     BackchannelSession,
     backchannel_service,
 )
+
+# Natural Conversation Flow: Phase 2 - Continuation Detection
+from app.services.continuation_detector import (
+    ContinuationAnalysis,
+    ContinuationDetector,
+    ProsodyHints,
+    get_continuation_detector,
+)
 from app.services.dictation_phi_monitor import DictationPHIMonitor, PatientPHIContext, dictation_phi_monitor
 from app.services.dictation_service import (
     DictationEvent,
@@ -328,6 +336,14 @@ class PipelineConfig:
     enable_phi_monitoring: bool = True  # Enable real-time PHI detection
     enable_patient_context: bool = True  # Enable patient context retrieval
 
+    # Natural Conversation Flow: Continuation Detection
+    # When enabled, analyzes transcripts for continuation signals before processing
+    enable_continuation_detection: bool = True
+    # Maximum additional wait time (ms) when continuation is detected
+    continuation_max_wait_ms: int = 3000
+    # Minimum confidence threshold to trigger continuation wait
+    continuation_confidence_threshold: float = 0.4
+
 
 @dataclass
 class PipelineMessage:
@@ -456,6 +472,12 @@ class VoicePipelineSession:
 
         # Event bus for cross-engine communication (Issue 3: Turn management)
         self._event_bus: VoiceEventBus = get_event_bus()
+
+        # Natural Conversation Flow: Phase 2 - Continuation Detection
+        self._continuation_detector: ContinuationDetector = get_continuation_detector()
+        self._continuation_wait_task: Optional[asyncio.Task] = None
+        self._pending_continuation: bool = False
+        self._continuation_analysis: Optional[ContinuationAnalysis] = None
 
     @property
     def state(self) -> PipelineState:
@@ -1157,6 +1179,14 @@ class VoicePipelineSession:
         """
         logger.info(f"[Pipeline] Speech start detected: {self.session_id}, current_state={self._state}")
 
+        # Natural Conversation Flow: Phase 2 - Continuation Detection
+        # If we're waiting for continuation and user starts speaking again, cancel the wait
+        if self._pending_continuation and self._continuation_wait_task:
+            logger.info("[Pipeline] User continued speaking - cancelling continuation wait")
+            self._continuation_wait_task.cancel()
+            self._pending_continuation = False
+            # Note: The transcript will be accumulated and speech_end will be called again
+
         # Track speech timing for backchannels
         self._speech_start_time = time.time()
 
@@ -1197,6 +1227,80 @@ class VoicePipelineSession:
                 f"[Pipeline] Prosody analysis: WPM={prosody_snapshot.words_per_minute:.0f}, "
                 f"pace={prosody_snapshot.pace.value}, finished={prosody_snapshot.likely_finished}"
             )
+
+        # Natural Conversation Flow: Phase 2 - Continuation Detection
+        # Check if user might continue speaking before processing
+        if self.config.enable_continuation_detection and self._final_transcript:
+            # Build prosody hints from current analysis
+            prosody_hints: Optional[ProsodyHints] = None
+            if self._current_prosody:
+                # Map WPM to speaking rate category
+                wpm = self._current_prosody.words_per_minute
+                speaking_rate = "normal"
+                if wpm < 100:
+                    speaking_rate = "slower"
+                elif wpm > 160:
+                    speaking_rate = "faster"
+
+                prosody_hints = ProsodyHints(
+                    pitch_trend="rising" if not self._current_prosody.likely_finished else "falling",
+                    speaking_rate=speaking_rate,
+                    energy_trend="stable",  # Could be enhanced with actual energy analysis
+                    preceding_pause_ms=int((time.time() - self._last_transcript_time) * 1000),
+                )
+
+            # Analyze for continuation signals
+            self._continuation_analysis = self._continuation_detector.analyze(
+                transcript=self._final_transcript,
+                language=self.config.stt_language.split("-")[0],  # Extract base language
+                prosody=prosody_hints,
+            )
+
+            analysis = self._continuation_analysis
+            logger.info(
+                f"[Pipeline] Continuation analysis: prob={analysis.continuation_probability:.2f}, "
+                f"wait={analysis.should_wait}, reason='{analysis.reason}'"
+            )
+
+            # If continuation is likely, wait for more speech instead of processing immediately
+            if (
+                self._continuation_analysis.should_wait
+                and self._continuation_analysis.continuation_probability
+                >= self.config.continuation_confidence_threshold
+            ):
+                self._pending_continuation = True
+                wait_ms = min(
+                    self._continuation_analysis.recommended_wait_ms,
+                    self.config.continuation_max_wait_ms,
+                )
+                logger.info(f"[Pipeline] Waiting {wait_ms}ms for potential continuation...")
+
+                # Cancel any existing wait task
+                if self._continuation_wait_task and not self._continuation_wait_task.done():
+                    self._continuation_wait_task.cancel()
+
+                # Schedule delayed processing
+                self._continuation_wait_task = asyncio.create_task(self._continuation_timeout_handler(wait_ms))
+                return  # Don't process yet, wait for timeout or more speech
+
+        # No continuation expected, process immediately
+        await self._finalize_and_process()
+
+    async def _continuation_timeout_handler(self, wait_ms: int) -> None:
+        """Handle timeout for continuation waiting."""
+        try:
+            await asyncio.sleep(wait_ms / 1000.0)
+            # Timeout expired, no more speech detected
+            logger.info(f"[Pipeline] Continuation wait expired after {wait_ms}ms, processing transcript")
+            self._pending_continuation = False
+            await self._finalize_and_process()
+        except asyncio.CancelledError:
+            # More speech detected, wait was cancelled
+            logger.debug("[Pipeline] Continuation wait cancelled (more speech detected)")
+
+    async def _finalize_and_process(self) -> None:
+        """Finalize STT session and process the transcript."""
+        self._pending_continuation = False
 
         # Get final transcript from STT
         if self._stt_session:
