@@ -442,6 +442,20 @@ export const navigation: NavSection[] = [
           "Comprehensive Voice Mode architecture: STT, LLM, TTS pipeline",
         docPaths: [],
       },
+      {
+        title: "Natural Conversation Flow",
+        href: "/voice/natural-conversation-flow",
+        description:
+          "Interrupted speech handling, hesitations, and barge-in detection",
+        docPaths: [],
+      },
+      {
+        title: "Silero VAD Integration",
+        href: "/voice/silero-vad",
+        description:
+          "Neural network VAD for accurate speech detection and echo cancellation",
+        docPaths: [],
+      },
     ],
   },
   {

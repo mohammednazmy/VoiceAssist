@@ -1,0 +1,265 @@
+---
+title: "Silero VAD Integration"
+description: "Neural network-based Voice Activity Detection running in the browser for accurate speech detection and barge-in during AI playback."
+---
+
+<Badge tone="success">Feature: Silero VAD v1.0</Badge>
+
+## Overview
+
+Silero VAD is a neural network-based Voice Activity Detector that runs entirely in the browser using ONNX Runtime Web. It provides significantly more accurate speech detection compared to simple RMS (energy-based) threshold methods.
+
+### Key Benefits
+
+| Feature | Silero VAD | Traditional RMS VAD |
+|---------|------------|---------------------|
+| Accuracy | High (neural network) | Low (simple threshold) |
+| Noise Filtering | Excellent | Poor |
+| Latency | ~10-30ms | ~5ms |
+| Echo Rejection | Good with threshold boost | Poor |
+| Resource Usage | Higher (ONNX model) | Minimal |
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Browser (Frontend)                        │
+│  ┌───────────────┐    ┌──────────────┐    ┌──────────────────┐ │
+│  │  Microphone   │───>│ Silero VAD   │───>│ useThinkerTalker │ │
+│  │  Audio Stream │    │ (ONNX Model) │    │   VoiceMode      │ │
+│  └───────────────┘    └──────────────┘    └──────────────────┘ │
+│                              │                       │          │
+│                       ┌──────┴──────┐               │          │
+│                       │ onSpeechStart│               │          │
+│                       │ onSpeechEnd  │               ▼          │
+│                       └─────────────┘         ┌──────────────┐ │
+│                                               │  Audio       │ │
+│                                               │  Playback    │ │
+│                                               └──────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+              ┌───────────────────────────────┐
+              │        Backend (API Gateway)   │
+              │  ┌─────────────────────────┐  │
+              │  │ Deepgram STT (primary)  │  │
+              │  │ VAD Events:             │  │
+              │  │ - SpeechStarted         │  │
+              │  │ - SpeechEnded           │  │
+              │  └─────────────────────────┘  │
+              └───────────────────────────────┘
+```
+
+## Echo Cancellation Strategy
+
+### The Problem
+
+When the AI speaks through the speakers, the microphone picks up the audio. Without echo handling:
+1. Silero VAD detects the AI's voice as "speech"
+2. VAD gets stuck in "speaking" state
+3. Real user speech doesn't trigger barge-in
+
+### Echo Suppression Modes
+
+The `useSileroVAD` hook supports three echo suppression modes:
+
+#### 1. `threshold_boost` (Default, Recommended)
+
+**How it works:**
+- VAD stays **active** during AI playback
+- Speech detection threshold is **raised** (e.g., 0.5 → 0.7)
+- Minimum speech duration is **increased** (e.g., 150ms → 200ms)
+- Short echo bursts are filtered out
+
+**Benefits:**
+- Barge-in detection works during AI speech
+- Real user speech (louder, longer) still triggers
+- Minimal latency for barge-in
+
+```typescript
+const sileroVAD = useSileroVAD({
+  echoSuppressionMode: "threshold_boost",
+  positiveSpeechThreshold: 0.5,      // Base threshold
+  playbackThresholdBoost: 0.2,       // Boost during playback (0.5 + 0.2 = 0.7)
+  playbackMinSpeechMs: 200,          // Min speech during playback
+});
+```
+
+#### 2. `pause` (Original Behavior)
+
+**How it works:**
+- VAD is **paused** entirely during AI playback
+- Relies on backend Deepgram VAD for barge-in detection
+- VAD resumes after playback ends
+
+**Benefits:**
+- No false triggers from echo
+- Simpler logic
+
+**Drawbacks:**
+- Slower barge-in (must wait for Deepgram)
+- May miss quick interruptions
+
+```typescript
+const sileroVAD = useSileroVAD({
+  echoSuppressionMode: "pause",
+});
+```
+
+#### 3. `none` (Testing Only)
+
+VAD runs without any echo suppression. **Not recommended for production.**
+
+## Feature Flags
+
+All Silero VAD parameters can be controlled via the admin panel:
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `backend.voice_silero_vad_enabled` | boolean | `true` | Master toggle |
+| `backend.voice_silero_echo_suppression_mode` | string | `"threshold_boost"` | Echo handling mode |
+| `backend.voice_silero_positive_threshold` | number | `0.5` | Base speech threshold (0-1) |
+| `backend.voice_silero_playback_threshold_boost` | number | `0.2` | Threshold boost during playback |
+| `backend.voice_silero_min_speech_ms` | number | `150` | Min speech duration (ms) |
+| `backend.voice_silero_playback_min_speech_ms` | number | `200` | Min speech during playback (ms) |
+
+## Usage
+
+### Basic Usage
+
+```typescript
+import { useSileroVAD } from '../hooks/useSileroVAD';
+
+function VoiceComponent() {
+  const {
+    isListening,
+    isSpeaking,
+    start,
+    pause,
+    setPlaybackActive,
+  } = useSileroVAD({
+    onSpeechStart: () => {
+      console.log('User started speaking');
+    },
+    onSpeechEnd: (audio) => {
+      console.log('User stopped speaking', audio.length);
+    },
+  });
+
+  // When AI playback starts
+  const handleAIPlaybackStart = () => {
+    setPlaybackActive(true);
+  };
+
+  // When AI playback ends
+  const handleAIPlaybackEnd = () => {
+    setPlaybackActive(false);
+  };
+
+  return (
+    <div>
+      <p>Listening: {isListening ? 'Yes' : 'No'}</p>
+      <p>Speaking: {isSpeaking ? 'Yes' : 'No'}</p>
+    </div>
+  );
+}
+```
+
+### Integration with Thinker/Talker Pipeline
+
+The `useThinkerTalkerVoiceMode` hook automatically integrates Silero VAD:
+
+```typescript
+// In useThinkerTalkerVoiceMode.ts
+const sileroVAD = useSileroVAD({
+  onSpeechStart: () => {
+    // Trigger barge-in if AI is playing
+    if (audioPlayback.isPlaying) {
+      audioPlayback.fadeOut(30);  // Quick fade
+      session.bargeIn();          // Notify backend
+    }
+  },
+  echoSuppressionMode: "threshold_boost",
+  playbackThresholdBoost: 0.2,
+  playbackMinSpeechMs: 200,
+});
+
+// In audio playback callbacks
+onPlaybackStart: () => {
+  sileroVAD.setPlaybackActive(true);
+};
+
+onPlaybackEnd: () => {
+  sileroVAD.setPlaybackActive(false);
+};
+```
+
+## Performance Considerations
+
+### Model Loading
+
+- Silero VAD model (~1.5MB) is loaded from CDN on first use
+- ONNX Runtime WASM files (~2MB) are also loaded from CDN
+- Total initial load: ~3.5MB (cached after first load)
+
+### CPU Usage
+
+- Processing: ~2-5ms per 96ms audio frame
+- Runs on main thread via WebAudio ScriptProcessor or AudioWorklet
+- Minimal impact on modern devices
+
+### Best Practices
+
+1. **Initialize early**: Start VAD initialization on component mount
+2. **Don't destroy on pause**: Keep VAD initialized between uses
+3. **Use AudioWorklet**: Preferred over ScriptProcessor for lower latency
+
+## Troubleshooting
+
+### VAD Not Detecting Speech
+
+**Symptoms:** `isSpeaking` never becomes `true`
+
+**Possible causes:**
+1. Microphone permission denied
+2. Threshold too high
+3. Minimum speech duration too long
+
+**Solutions:**
+- Check browser permissions
+- Lower `positiveSpeechThreshold` (e.g., 0.4)
+- Reduce `minSpeechMs` (e.g., 100)
+
+### False Triggers During AI Playback
+
+**Symptoms:** VAD triggers barge-in from AI's own voice
+
+**Possible causes:**
+1. Echo suppression mode set to "none"
+2. Threshold boost too low
+3. Minimum speech duration too short
+
+**Solutions:**
+- Ensure `echoSuppressionMode: "threshold_boost"`
+- Increase `playbackThresholdBoost` (e.g., 0.3)
+- Increase `playbackMinSpeechMs` (e.g., 300)
+
+### High Latency Barge-In
+
+**Symptoms:** AI takes >100ms to stop when user interrupts
+
+**Possible causes:**
+1. Using "pause" mode (relies on Deepgram)
+2. Fade duration too long
+3. Debounce settings too conservative
+
+**Solutions:**
+- Switch to "threshold_boost" mode
+- Reduce fade duration to 30ms
+- Reduce barge-in debounce time
+
+## Related Documentation
+
+- [Natural Conversation Flow](/voice/natural-conversation-flow) - Overall conversation handling
+- [Voice Architecture](/voice/architecture) - Thinker/Talker pipeline overview
+- [Audio Processing Pipeline](/voice/audio-processing-pipeline) - Audio stream handling
