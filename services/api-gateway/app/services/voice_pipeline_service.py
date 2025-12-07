@@ -1380,7 +1380,15 @@ class VoicePipelineSession:
                 self._continuation_wait_task = asyncio.create_task(self._continuation_timeout_handler(wait_ms))
                 return  # Don't process yet, wait for timeout or more speech
 
-        # No continuation expected, process immediately
+        # Natural Conversation Flow: Phase 3 - Utterance Aggregation
+        # If aggregation is enabled, let the aggregator callback (_handle_aggregated_utterance)
+        # handle processing instead of calling _finalize_and_process() here.
+        # This prevents duplicate LLM/TTS turns when aggregation is active.
+        if self._utterance_aggregator and self.config.enable_utterance_aggregation:
+            logger.debug("[Pipeline] Deferring processing to utterance aggregator callback")
+            return
+
+        # No continuation expected and no aggregation, process immediately
         await self._finalize_and_process()
 
     async def _continuation_timeout_handler(self, wait_ms: int) -> None:
@@ -1390,6 +1398,12 @@ class VoicePipelineSession:
             # Timeout expired, no more speech detected
             logger.info(f"[Pipeline] Continuation wait expired after {wait_ms}ms, processing transcript")
             self._pending_continuation = False
+
+            # If aggregation is enabled, let the aggregator callback handle processing
+            if self._utterance_aggregator and self.config.enable_utterance_aggregation:
+                logger.debug("[Pipeline] Continuation timeout: deferring to utterance aggregator")
+                return
+
             await self._finalize_and_process()
         except asyncio.CancelledError:
             # More speech detected, wait was cancelled
