@@ -309,7 +309,6 @@ export class AdaptiveBitrateController {
   private handleNetworkChange(status: NetworkStatus): void {
     if (!this.config.enabled) return;
 
-    const targetLevel = this.getQualityForNetwork(status.quality);
     this.setQualityForNetwork(status.quality, "network_change");
   }
 

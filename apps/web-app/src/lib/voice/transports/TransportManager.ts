@@ -15,7 +15,6 @@ import type {
   ITransport,
   TransportConfig,
   TransportEvent,
-  TransportEventHandler,
   TransportEventType,
   TransportManagerConfig,
   TransportManagerEvent,

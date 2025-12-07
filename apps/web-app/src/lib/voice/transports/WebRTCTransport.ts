@@ -38,9 +38,6 @@ import type {
 
 const BINARY_HEADER_SIZE = 5; // 1 byte type + 4 bytes sequence
 
-/** Data channel states */
-type DataChannelState = "connecting" | "open" | "closing" | "closed";
-
 // ============================================================================
 // WebRTC Transport
 // ============================================================================
@@ -169,7 +166,7 @@ export class WebRTCTransport implements ITransport {
     }
   }
 
-  async disconnect(preserveState = false): Promise<void> {
+  async disconnect(_preserveState = false): Promise<void> {
     this.stopStatsCollection();
 
     if (this.dataChannel) {
@@ -399,7 +396,7 @@ export class WebRTCTransport implements ITransport {
         resolve();
       };
 
-      this.signalingWs.onerror = (event) => {
+      this.signalingWs.onerror = (_event) => {
         reject(new Error("Signaling connection failed"));
       };
 
@@ -574,13 +571,6 @@ export class WebRTCTransport implements ITransport {
       const timeout = setTimeout(() => {
         reject(new Error("Data channel open timeout"));
       }, this.config.connectionTimeoutMs);
-
-      const checkState = () => {
-        if (this.dataChannel?.readyState === "open") {
-          clearTimeout(timeout);
-          resolve();
-        }
-      };
 
       if (this.dataChannel) {
         this.dataChannel.onopen = () => {

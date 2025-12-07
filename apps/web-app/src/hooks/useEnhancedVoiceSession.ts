@@ -37,9 +37,6 @@ import { WS_ADVANCED_FLAGS } from "../lib/featureFlags";
 import {
   useThinkerTalkerSession,
   type UseThinkerTalkerSessionOptions,
-  type TTConnectionStatus,
-  type PipelineState,
-  type TTVoiceMetrics,
 } from "./useThinkerTalkerSession";
 import {
   AECMonitor,
