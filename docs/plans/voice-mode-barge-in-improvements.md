@@ -3,7 +3,7 @@
 > **Version:** 5.0 - Speculative TTS, Semantic Endpointing, Canary Deployment, and Production Hardening
 > **Last Updated:** December 2025
 > **Branch:** `feat/silero-vad-improvements`
-> **Status:** Planning
+> **Status:** In Progress - Core Phases Complete (Phase 1-7.3, 8.1)
 > **Revision (Dec 2025 v5):** Added speculative TTS (PredGen), End-of-Utterance transformer model, canary deployment strategy, error budgets, WebRTC native AEC, device-specific presets with values, active session handling during rollback, expanded testing matrix, and privacy opt-in flows
 
 ---
