@@ -36,6 +36,14 @@ from typing import Any, Callable, Dict, List, Optional
 
 from app.core.event_bus import VoiceEvent, get_event_bus
 from app.core.logging import get_logger
+from app.core.metrics import (
+    voice_backchannel_total,
+    voice_barge_in_classification_total,
+    voice_barge_in_mute_latency_seconds,
+    voice_barge_in_total,
+    voice_hard_barge_total,
+    voice_soft_barge_total,
+)
 from app.services.voice_pipeline_service import (
     PipelineConfig,
     PipelineMessage,
@@ -840,8 +848,47 @@ class ThinkerTalkerWebSocketHandler:
         elif msg_type == "barge_in":
             # User wants to interrupt AI
             if self._pipeline_session:
+                barge_in_start = time.time()
+
+                # Extract classification from frontend (Phase 2.2)
+                classification = message.get("classification", "hard_barge")
+                language = message.get("language", "en")
+                confidence = message.get("confidence", 0.0)
+                matched_phrase = message.get("matched_phrase")
+                speech_duration_ms = message.get("speech_duration_ms", 0)
+
                 await self._pipeline_session.barge_in()
                 self._metrics.barge_in_count += 1
+
+                # Record barge-in metrics
+                barge_in_latency = time.time() - barge_in_start
+                voice_barge_in_total.labels(outcome="successful").inc()
+                voice_barge_in_classification_total.labels(classification=classification, language=language).inc()
+                voice_barge_in_mute_latency_seconds.labels(source="frontend").observe(barge_in_latency)
+
+                # Classification-specific metrics
+                if classification == "backchannel":
+                    phrase_type = "matched" if matched_phrase else "fuzzy_matched"
+                    voice_backchannel_total.labels(language=language, phrase_type=phrase_type).inc()
+                elif classification == "soft_barge":
+                    voice_soft_barge_total.labels(outcome="started").inc()
+                elif classification == "hard_barge":
+                    # Categorize by interruption point
+                    interrupted_at = message.get("completion_percentage", 50)
+                    if interrupted_at < 25:
+                        interrupted_cat = "early"
+                    elif interrupted_at < 75:
+                        interrupted_cat = "mid"
+                    else:
+                        interrupted_cat = "late"
+                    voice_hard_barge_total.labels(interrupted_at=interrupted_cat).inc()
+
+                logger.info(
+                    f"[WS] Barge-in: classification={classification}, "
+                    f"language={language}, confidence={confidence:.2f}, "
+                    f"speech_duration={speech_duration_ms}ms, "
+                    f"latency={barge_in_latency*1000:.1f}ms"
+                )
 
         elif msg_type == "voice.mode":
             # Voice mode control
