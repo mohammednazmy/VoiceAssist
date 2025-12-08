@@ -305,7 +305,7 @@ test.describe("Voice Core Flow - Connection States", () => {
     await waitForVoicePanel(page);
 
     // Check initial state - should be disconnected
-    const initialStatus = page.locator(VOICE_SELECTORS.connectionStatus);
+    const initialStatus = page.locator(VOICE_SELECTORS.connectionStatus).first();
     const initialText = await initialStatus.first().textContent().catch(() => "");
     console.log(`Initial state: ${initialText}`);
 
@@ -324,7 +324,7 @@ test.describe("Voice Core Flow - Connection States", () => {
     // Wait for final state
     await page.waitForTimeout(WAIT_TIMES.CONNECTION);
 
-    const finalStatus = page.locator(VOICE_SELECTORS.connectionStatus);
+    const finalStatus = page.locator(VOICE_SELECTORS.connectionStatus).first();
     const finalText = await finalStatus.first().textContent().catch(() => "");
     console.log(`Final state: ${finalText}`);
 

@@ -40,7 +40,7 @@ test.describe("Voice Keyboard Shortcuts", () => {
     await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
 
     // Check initial state - voice panel may or may not be visible
-    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
     const initialPanelVisible = await voicePanel.count() > 0;
     console.log(`Initial panel visible: ${initialPanelVisible}`);
 
@@ -60,7 +60,7 @@ test.describe("Voice Keyboard Shortcuts", () => {
       console.log("Voice mode toggled with Ctrl+Shift+V");
     } else {
       // Shortcut might start/stop session instead of showing/hiding panel
-      const sessionIndicator = page.locator(VOICE_SELECTORS.connectionStatus);
+      const sessionIndicator = page.locator(VOICE_SELECTORS.connectionStatus).first();
       const hasSessionChange = await sessionIndicator.count() > 0;
       console.log(`Session state indicator visible: ${hasSessionChange}`);
     }
@@ -224,7 +224,7 @@ test.describe("Voice Keyboard Shortcuts", () => {
     await waitForVoicePanel(page);
 
     // Start from a known element
-    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
     await voicePanel.focus();
 
     // Get all focusable elements in voice panel

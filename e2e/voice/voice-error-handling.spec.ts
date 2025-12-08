@@ -96,7 +96,7 @@ test.describe("Voice Error Handling - Mic Permission", () => {
     await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
 
     // Look for Voice Mode panel
-    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
     const voiceButton = page.locator(VOICE_SELECTORS.toggleButton);
 
     let panelVisible = await voicePanel.count() > 0;
@@ -142,7 +142,7 @@ test.describe("Voice Error Handling - Mic Permission", () => {
     await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
 
     // Look for Voice Mode panel
-    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
     const voiceButton = page.locator(VOICE_SELECTORS.toggleButton);
 
     if (await voiceButton.count() > 0) {
@@ -319,7 +319,7 @@ test.describe("Voice Error Handling - Connection", () => {
     await page.waitForTimeout(WAIT_TIMES.CONNECTION);
 
     // Check if connection recovered or shows reconnecting
-    const connectionStatus = page.locator(VOICE_SELECTORS.connectionStatus);
+    const connectionStatus = page.locator(VOICE_SELECTORS.connectionStatus).first();
     const statusText = await connectionStatus.first().textContent().catch(() => "");
 
     console.log(`Connection status after recovery: ${statusText}`);

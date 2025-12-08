@@ -33,15 +33,15 @@ export const VOICE_CONFIG = {
  * Voice panel selectors
  */
 export const VOICE_SELECTORS = {
-  // Panel and buttons
-  panel: '[data-testid="voice-mode-panel"]',
-  toggleButton: '[data-testid="realtime-voice-mode-button"]',
+  // Panel and buttons - support multiple possible testids for resilience
+  panel: '[data-testid="voice-mode-panel"], [data-testid="thinker-talker-voice-panel"], [data-testid="compact-voice-bar"], [data-testid="voice-expanded-drawer"]',
+  toggleButton: '[data-testid="voice-mode-toggle"], [data-testid="realtime-voice-mode-button"]',
   startButton: 'button:has-text("Start Voice Session"), button:has-text("Start Session"), [data-testid="start-voice-session"]',
-  stopButton: 'button:has-text("End Session"), button:has-text("Stop"), button:has-text("Disconnect"), [data-testid="end-voice-session"], [data-testid="stop-voice-session"]',
+  stopButton: 'button:has-text("End Session"), button:has-text("Stop"), button:has-text("Disconnect"), [data-testid="end-voice-session"], [data-testid="stop-voice-session"], [data-testid="close-voice-mode"]',
   settingsButton: '[data-testid="voice-settings-button"], button[aria-label*="settings" i]',
 
-  // Status indicators
-  connectionStatus: '[data-testid="connection-status"], text=/connecting|connected|disconnected|error/i',
+  // Status indicators - use only CSS selectors (not Playwright-specific text=)
+  connectionStatus: '[data-testid="connection-status"]',
   metricsDisplay: '[data-testid="voice-metrics-display"]',
 
   // Transcript elements
@@ -100,17 +100,38 @@ export async function waitForVoicePanel(page: Page): Promise<void> {
   // Dismiss any blocking popups first
   await dismissBlockingPopups(page);
 
-  const voicePanel = page.locator(VOICE_SELECTORS.panel);
-  const voiceButton = page.locator(VOICE_SELECTORS.toggleButton);
+  const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
+  const voiceButton = page.locator(VOICE_SELECTORS.toggleButton).first();
 
   // Check if panel is already visible
-  let panelVisible = await voicePanel.count() > 0;
+  let panelVisible = await voicePanel.isVisible().catch(() => false);
 
   if (!panelVisible) {
-    // Click voice button to open panel
-    await voiceButton.waitFor({ timeout: 5000 });
+    // Wait for voice button to be visible and enabled
+    try {
+      await voiceButton.waitFor({ timeout: 10000 });
+    } catch {
+      // If voice button not found, try waiting for page to fully load
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(2000);
+      await voiceButton.waitFor({ timeout: 5000 });
+    }
+
+    // Click to open the panel
     await voiceButton.click();
-    await voicePanel.waitFor({ timeout: 5000 });
+
+    // Wait for any voice panel variant to appear
+    await page.waitForFunction(
+      () => {
+        return (
+          document.querySelector('[data-testid="voice-mode-panel"]') ||
+          document.querySelector('[data-testid="thinker-talker-voice-panel"]') ||
+          document.querySelector('[data-testid="compact-voice-bar"]') ||
+          document.querySelector('[data-testid="voice-expanded-drawer"]')
+        );
+      },
+      { timeout: 10000 }
+    );
   }
 
   await expect(voicePanel).toBeVisible();
@@ -318,23 +339,45 @@ export async function getVoiceMetrics(page: Page): Promise<{
  * Helper to navigate to chat with voice mode
  */
 export async function navigateToVoiceChat(page: Page): Promise<void> {
-  await page.goto("/chat?mode=voice");
+  await page.goto("/chat");
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
+
+  // Wait for the voice button to be ready (indicates chat page is fully loaded)
+  try {
+    const voiceButton = page.locator(VOICE_SELECTORS.toggleButton).first();
+    await voiceButton.waitFor({ timeout: 15000 });
+  } catch {
+    console.log("[Voice] Voice button not found after navigation - page may not have voice enabled");
+  }
 }
 
 /**
  * Extended test fixture with voice-enabled page
  * Uses fake media stream for testing without real microphone
+ * Uses auth state from global-setup.ts for live backend tests
  */
 export const test = base.extend<{
   voicePage: Page;
   voiceContext: BrowserContext;
 }>({
   voiceContext: async ({ browser }, use) => {
-    // Create context with microphone permissions
+    // Try to load auth state from file (created by global-setup.ts)
+    const authFile = require("path").join(__dirname, "../.auth/user.json");
+    let storageState: Record<string, unknown> | undefined;
+
+    try {
+      if (require("fs").existsSync(authFile)) {
+        storageState = JSON.parse(require("fs").readFileSync(authFile, "utf-8"));
+      }
+    } catch (e) {
+      console.log("[Voice Fixture] Could not load auth state, will use mock");
+    }
+
+    // Create context with microphone permissions and auth state
     const context = await browser.newContext({
       permissions: ["microphone"],
+      storageState: storageState || undefined,
     });
     await use(context);
     await context.close();
@@ -343,173 +386,180 @@ export const test = base.extend<{
   voicePage: async ({ voiceContext }, use) => {
     const page = await voiceContext.newPage();
 
-    // Set up authenticated state BEFORE any navigation
-    await page.addInitScript((authState) => {
-      window.localStorage.setItem("voiceassist-auth", JSON.stringify(authState));
-    }, mockAuthState);
+    // Only set up API mocking for non-live tests
+    const isLiveMode = VOICE_CONFIG.LIVE_REALTIME;
 
-    // Track created conversation ID for consistent responses
-    let createdConversationId = `e2e-conv-${Date.now()}`;
+    if (!isLiveMode) {
+      // Set up mock auth state for non-live tests
+      await page.addInitScript((authState) => {
+        if (!window.localStorage.getItem("voiceassist-auth")) {
+          window.localStorage.setItem("voiceassist-auth", JSON.stringify(authState));
+        }
+      }, mockAuthState);
 
-    // Comprehensive API mocking to prevent 401 errors
-    await page.route("**/*", async (route) => {
-      const url = route.request().url();
-      const method = route.request().method();
+      // Track created conversation ID for consistent responses
+      let createdConversationId = `e2e-conv-${Date.now()}`;
 
-      // Only intercept API calls (not Vite module requests)
-      if (!url.includes("/api/") || url.includes("localhost:5173")) {
-        await route.continue();
-        return;
-      }
+      // API mocking only for non-live mode
+      await page.route("**/*", async (route) => {
+        const url = route.request().url();
+        const method = route.request().method();
 
-      // Skip WebSocket upgrade requests
-      if (route.request().headers()["upgrade"] === "websocket") {
-        await route.continue();
-        return;
-      }
+        // Only intercept API calls (not Vite module requests)
+        if (!url.includes("/api/") || url.includes("localhost:5173")) {
+          await route.continue();
+          return;
+        }
 
-      // Parse the URL to get the pathname
-      const parsedUrl = new URL(url);
-      const pathname = parsedUrl.pathname;
+        // Skip WebSocket upgrade requests
+        if (route.request().headers()["upgrade"] === "websocket") {
+          await route.continue();
+          return;
+        }
 
-      // Route: GET /api/auth/me (user profile)
-      if (pathname === "/api/auth/me" && method === "GET") {
+        // Parse the URL to get the pathname
+        const parsedUrl = new URL(url);
+        const pathname = parsedUrl.pathname;
+
+        // Route: GET /api/auth/me (user profile)
+        if (pathname === "/api/auth/me" && method === "GET") {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              data: {
+                id: "e2e-test-user",
+                email: "test@example.com",
+                name: "E2E Test User",
+                role: "user",
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              },
+            }),
+          });
+          return;
+        }
+
+        // Route: POST /api/auth/refresh
+        if (pathname === "/api/auth/refresh" && method === "POST") {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              data: {
+                accessToken: "e2e-mock-refreshed-token",
+                refreshToken: "e2e-mock-refresh-token",
+                expiresIn: 3600,
+              },
+            }),
+          });
+          return;
+        }
+
+        // Route: POST /api/conversations (create new conversation)
+        if (pathname === "/api/conversations" && method === "POST") {
+          await route.fulfill({
+            status: 201,
+            contentType: "application/json",
+            body: JSON.stringify({
+              data: {
+                id: createdConversationId,
+                title: "Voice Test Conversation",
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                user_id: "e2e-test-user",
+              },
+            }),
+          });
+          return;
+        }
+
+        // Route: GET /api/conversations (list conversations)
+        if (pathname === "/api/conversations" && method === "GET") {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              data: [],
+              total: 0,
+              page: 1,
+              limit: 50,
+            }),
+          });
+          return;
+        }
+
+        // Route: GET /api/conversations/:id (get single conversation)
+        const conversationMatch = pathname.match(/^\/api\/conversations\/([^/]+)$/);
+        if (conversationMatch && method === "GET") {
+          const convId = conversationMatch[1];
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              data: {
+                id: convId,
+                title: "Test Conversation",
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                user_id: "e2e-test-user",
+              },
+            }),
+          });
+          return;
+        }
+
+        // Route: GET /api/conversations/:id/messages
+        const messagesMatch = pathname.match(/^\/api\/conversations\/([^/]+)\/messages$/);
+        if (messagesMatch && method === "GET") {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              data: [],
+              total: 0,
+              page: 1,
+              limit: 50,
+            }),
+          });
+          return;
+        }
+
+        // Route: GET /api/conversations/:id/branches
+        const branchesMatch = pathname.match(/^\/api\/conversations\/([^/]+)\/branches$/);
+        if (branchesMatch && method === "GET") {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ data: [] }),
+          });
+          return;
+        }
+
+        // Route: GET /api/clinical-contexts/*
+        if (pathname.startsWith("/api/clinical-contexts")) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ data: null }),
+          });
+          return;
+        }
+
+        // Route: Voice session endpoint - let it pass through to real backend
+        if (pathname.includes("/api/voice/")) {
+          await route.continue();
+          return;
+        }
+
+        // Default: Return success for any other API endpoint
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify({
-            data: {
-              id: "e2e-test-user",
-              email: "test@example.com",
-              name: "E2E Test User",
-              role: "user",
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-          }),
+          body: JSON.stringify({ data: null, success: true }),
         });
-        return;
-      }
-
-      // Route: POST /api/auth/refresh
-      if (pathname === "/api/auth/refresh" && method === "POST") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            data: {
-              accessToken: "e2e-mock-refreshed-token",
-              refreshToken: "e2e-mock-refresh-token",
-              expiresIn: 3600,
-            },
-          }),
-        });
-        return;
-      }
-
-      // Route: POST /api/conversations (create new conversation)
-      if (pathname === "/api/conversations" && method === "POST") {
-        await route.fulfill({
-          status: 201,
-          contentType: "application/json",
-          body: JSON.stringify({
-            data: {
-              id: createdConversationId,
-              title: "Voice Test Conversation",
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              user_id: "e2e-test-user",
-            },
-          }),
-        });
-        return;
-      }
-
-      // Route: GET /api/conversations (list conversations)
-      if (pathname === "/api/conversations" && method === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            data: [],
-            total: 0,
-            page: 1,
-            limit: 50,
-          }),
-        });
-        return;
-      }
-
-      // Route: GET /api/conversations/:id (get single conversation)
-      const conversationMatch = pathname.match(/^\/api\/conversations\/([^/]+)$/);
-      if (conversationMatch && method === "GET") {
-        const convId = conversationMatch[1];
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            data: {
-              id: convId,
-              title: "Test Conversation",
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              user_id: "e2e-test-user",
-            },
-          }),
-        });
-        return;
-      }
-
-      // Route: GET /api/conversations/:id/messages
-      const messagesMatch = pathname.match(/^\/api\/conversations\/([^/]+)\/messages$/);
-      if (messagesMatch && method === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            data: [],
-            total: 0,
-            page: 1,
-            limit: 50,
-          }),
-        });
-        return;
-      }
-
-      // Route: GET /api/conversations/:id/branches
-      const branchesMatch = pathname.match(/^\/api\/conversations\/([^/]+)\/branches$/);
-      if (branchesMatch && method === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({ data: [] }),
-        });
-        return;
-      }
-
-      // Route: GET /api/clinical-contexts/*
-      if (pathname.startsWith("/api/clinical-contexts")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({ data: null }),
-        });
-        return;
-      }
-
-      // Route: Voice session endpoint - let it pass through to real backend
-      if (pathname.includes("/api/voice/")) {
-        await route.continue();
-        return;
-      }
-
-      // Default: Return success for any other API endpoint
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ data: null, success: true }),
       });
-    });
+    }
 
     await use(page);
   },
