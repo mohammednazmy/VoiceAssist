@@ -190,6 +190,15 @@ export default defineConfig({
             clientPort: 5173, // Use Vite's direct port for local development/E2E
             protocol: "ws", // Use plain WebSocket (no SSL needed for localhost)
           },
+    // Proxy API requests to backend during development
+    // This ensures /api/* requests go to the backend even if VITE_API_URL isn't set
+    proxy: {
+      "/api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   resolve: {
     alias: {
