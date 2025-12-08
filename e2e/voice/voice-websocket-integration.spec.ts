@@ -559,7 +559,9 @@ test.describe("Barge-In Functionality", () => {
           1,
         )}, avg=${avg.toFixed(1)}, max=${max.toFixed(1)}`,
       );
-      expect(max).toBeLessThan(12000);
+      // Thresholds: regress if any sample exceeds 10s or average drifts above 8s
+      expect(max).toBeLessThan(10000);
+      expect(avg).toBeLessThan(8000);
     } else {
       console.warn("[Test] No barge-in latency samples recorded");
     }
@@ -681,6 +683,10 @@ test.describe("Voice Performance Metrics", () => {
     }
     if (firstTranscript !== null) {
       expect(firstTranscript).toBeLessThan(12000);
+    }
+    if (firstResponse !== null) {
+      // Fail if the WS response stream takes longer than 10s from session start
+      expect(firstResponse).toBeLessThan(10000);
     }
     if (firstAudio !== null) {
       expect(firstAudio).toBeLessThan(5000);
