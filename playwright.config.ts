@@ -120,6 +120,7 @@ export default defineConfig({
           args: [
             '--use-fake-ui-for-media-stream',
             '--use-fake-device-for-media-stream',
+            `--use-file-for-fake-audio-capture=${getAudioFile()}`,
           ],
         },
         storageState: 'e2e/.auth/user.json',
@@ -139,6 +140,7 @@ export default defineConfig({
           args: [
             '--use-fake-ui-for-media-stream',
             '--use-fake-device-for-media-stream',
+            `--use-file-for-fake-audio-capture=${getAudioFile()}`,
           ],
         },
       },
@@ -225,6 +227,7 @@ export default defineConfig({
           args: [
             '--use-fake-ui-for-media-stream',
             '--use-fake-device-for-media-stream',
+            `--use-file-for-fake-audio-capture=${getAudioFile()}`,
           ],
         },
         storageState: 'e2e/.auth/user.json',
@@ -246,6 +249,7 @@ export default defineConfig({
           args: [
             '--use-fake-ui-for-media-stream',
             '--use-fake-device-for-media-stream',
+            `--use-file-for-fake-audio-capture=${getAudioFile()}`,
           ],
         },
         storageState: 'e2e/.auth/user.json',
@@ -293,6 +297,7 @@ export default defineConfig({
           args: [
             '--use-fake-ui-for-media-stream',
             '--use-fake-device-for-media-stream',
+            `--use-file-for-fake-audio-capture=${getAudioFile()}`,
           ],
         },
         storageState: 'e2e/.auth/user.json',
@@ -310,6 +315,8 @@ export default defineConfig({
       ? 'pnpm --filter voiceassist-web preview --port 5173'
       : 'pnpm dev',
     url: 'http://localhost:5173',
+    // Reuse existing server locally (CI always starts fresh)
+    // .env.local ensures localhost URLs are used for E2E tests
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },
