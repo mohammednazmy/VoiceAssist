@@ -17,10 +17,15 @@
  * Or with specific audio: LIVE_REALTIME_E2E=1 VOICE_AUDIO_TYPE=conversationStart npx playwright test --project=voice-real-audio
  */
 
-import { test, expect, type Page } from "@playwright/test";
-
-// Skip if not running in live mode
-const isLiveMode = process.env.LIVE_REALTIME_E2E === "1";
+import { type Page } from "@playwright/test";
+import {
+  test,
+  expect,
+  isLiveMode,
+  QUALITY_THRESHOLDS,
+  assertQualityThresholds,
+} from "./utils/test-setup";
+import { createMetricsCollector, VoiceMetricsCollector } from "./utils/voice-test-metrics";
 
 // Conversation state tracking
 interface ConversationState {

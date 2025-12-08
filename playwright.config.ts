@@ -209,6 +209,98 @@ export default defineConfig({
       },
       timeout: 90 * 1000,
     },
+
+    /* Voice Smoke Tests - Fast critical path tests for PR validation (~5 min) */
+    /* Run with: npx playwright test --project=voice-smoke */
+    {
+      name: 'voice-smoke',
+      testDir: './e2e/voice',
+      testMatch: /voice-flag-matrix\.spec\.ts/,
+      timeout: 180 * 1000, // 3 minutes per test
+      retries: 1,
+      use: {
+        ...devices['Desktop Chrome'],
+        permissions: ['microphone'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+          ],
+        },
+        storageState: 'e2e/.auth/user.json',
+      },
+    },
+
+    /* Voice Nightly Tests - Comprehensive flag matrix (~30 min) */
+    /* Run with: VOICE_MATRIX_NIGHTLY=1 npx playwright test --project=voice-nightly */
+    {
+      name: 'voice-nightly',
+      testDir: './e2e/voice',
+      testMatch: /voice-flag-matrix\.spec\.ts/,
+      timeout: 300 * 1000, // 5 minutes per test
+      retries: 2,
+      use: {
+        ...devices['Desktop Chrome'],
+        permissions: ['microphone'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+          ],
+        },
+        storageState: 'e2e/.auth/user.json',
+        contextOptions: {
+          recordVideo: { dir: 'test-results/videos' },
+        },
+      },
+    },
+
+    /* Voice Scenario Tests - Natural conversation scenarios with real audio */
+    /* Run with: LIVE_REALTIME_E2E=1 npx playwright test --project=voice-scenarios */
+    {
+      name: 'voice-scenarios',
+      testDir: './e2e/voice',
+      testMatch: /voice-scenarios\.spec\.ts/,
+      timeout: 300 * 1000, // 5 minutes for full conversation tests
+      use: {
+        ...devices['Desktop Chrome'],
+        permissions: ['microphone'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+            `--use-file-for-fake-audio-capture=${getAudioFile()}`,
+          ],
+        },
+        storageState: 'e2e/.auth/user.json',
+        contextOptions: {
+          recordVideo: { dir: 'test-results/videos' },
+        },
+      },
+    },
+
+    /* Voice Debug Tests - Investigation tests for audio/barge-in issues */
+    /* Run with: LIVE_REALTIME_E2E=1 npx playwright test --project=voice-debug */
+    {
+      name: 'voice-debug',
+      testDir: './e2e/voice',
+      testMatch: /voice-debug\.spec\.ts/,
+      timeout: 180 * 1000,
+      use: {
+        ...devices['Desktop Chrome'],
+        permissions: ['microphone'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+          ],
+        },
+        storageState: 'e2e/.auth/user.json',
+        contextOptions: {
+          recordVideo: { dir: 'test-results/videos' },
+        },
+      },
+    },
   ],
 
   /* Run your local dev server before starting the tests */
