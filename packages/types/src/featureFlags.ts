@@ -1032,6 +1032,76 @@ export const FEATURE_FLAGS = {
         otherFlags: ["backend.voice_instant_barge_in"],
       },
     },
+    voice_barge_in_classifier_enabled: {
+      name: "backend.voice_barge_in_classifier_enabled",
+      description:
+        "[Natural Conversation] Enable intelligent barge-in classification. " +
+        "Classifies user interruptions as backchannel (continue AI), soft_barge (pause AI), " +
+        "or hard_barge (stop AI). Supports 12 languages with multilingual backchannel detection. " +
+        "When disabled, all barge-ins are treated as hard interruptions.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/barge-in-classification",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "BargeInClassifier",
+          "VoicePipelineService",
+          "useThinkerTalkerVoiceMode",
+        ],
+        otherFlags: ["backend.voice_instant_barge_in"],
+      },
+    },
+    voice_barge_in_killswitch: {
+      name: "backend.voice_barge_in_killswitch",
+      description:
+        "[Natural Conversation] MASTER KILL SWITCH for barge-in enhancements. " +
+        "When enabled, instantly reverts to legacy simple barge-in behavior. " +
+        "Use this flag to quickly disable all barge-in classification if issues arise.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "high" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/barge-in-classification",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["VoicePipelineService", "useThinkerTalkerVoiceMode"],
+        otherFlags: [],
+      },
+    },
+    voice_hybrid_vad_fusion: {
+      name: "backend.voice_hybrid_vad_fusion",
+      description:
+        "[Natural Conversation] Enable hybrid VAD fusion combining frontend Silero VAD " +
+        "with backend Deepgram VAD using weighted voting. Improves barge-in accuracy " +
+        "during AI playback by adjusting weights: Silero 0.3/Deepgram 0.7 during playback, " +
+        "Silero 0.6/Deepgram 0.4 when idle. Includes 500ms misfire rollback timer.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/hybrid-vad-fusion",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "HybridVADDecider",
+          "VoicePipelineService",
+          "useSileroVAD",
+        ],
+        otherFlags: ["backend.voice_silero_vad_enabled"],
+      },
+    },
 
     // =========================================================================
     // Silero VAD Enhancement Flags (Local Browser-Side VAD)
