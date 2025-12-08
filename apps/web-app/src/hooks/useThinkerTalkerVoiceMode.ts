@@ -310,6 +310,12 @@ export function useThinkerTalkerVoiceMode(
   const lastBargeInTimeRef = useRef<number>(0);
   const BARGE_IN_DEBOUNCE_MS = 500; // Prevent multiple rapid barge-ins
 
+  // Ref to track "natural completion" mode - when backend has finished TTS generation
+  // but local audio buffer is still draining. In this state, any speech_started events
+  // from backend VAD are likely speaker echo (the AI's own audio being picked up by mic)
+  // and should NOT trigger barge-in.
+  const naturalCompletionModeRef = useRef<boolean>(false);
+
   // Ref for sileroVAD to avoid including entire object in effect dependencies
   // Declared early so it can be used in audioPlayback callbacks
   const sileroVADRef = useRef<ReturnType<typeof useSileroVAD> | null>(null);
@@ -621,6 +627,9 @@ export function useThinkerTalkerVoiceMode(
         "[TTVoiceMode] Playback ended - disabling echo suppression",
       );
       stopSpeaking();
+      // Clear natural completion mode - audio has finished draining
+      // Now real user speech can trigger barge-in again
+      naturalCompletionModeRef.current = false;
       // Phase 1: Notify VAD that playback ended
       // VAD will handle the mode-specific logic (resume if paused, restore threshold, etc.)
       const vad = sileroVADRef.current;
@@ -633,6 +642,8 @@ export function useThinkerTalkerVoiceMode(
         "[TTVoiceMode] Playback interrupted (barge-in) - disabling echo suppression",
       );
       stopSpeaking();
+      // Clear natural completion mode on barge-in
+      naturalCompletionModeRef.current = false;
       // Phase 1: Notify VAD that playback ended due to barge-in
       const vad = sileroVADRef.current;
       if (vad) {
@@ -766,17 +777,34 @@ export function useThinkerTalkerVoiceMode(
           // Note: Don't call reset() here - that would cut off audio mid-playback
           // during natural completion. reset() is called in "processing" state instead.
           audioPlayback.endStream();
+
+          // CRITICAL: Enter natural completion mode if audio is still playing
+          // When backend transitions to "listening" naturally (TTS generation done)
+          // but local audio buffer is still draining, any speech_started events
+          // from backend VAD are likely speaker echo (the AI's TTS being picked up
+          // by the mic) and should NOT trigger barge-in.
+          if (audioPlayback.isPlaying) {
+            voiceLog.info(
+              "[TTVoiceMode] Natural completion mode: backend listening but audio still draining",
+            );
+            naturalCompletionModeRef.current = true;
+          }
           break;
         case "processing":
           setVoiceState("processing");
           stopListening();
           clearSileroRollbackTimeout();
+          // Clear natural completion mode - new utterance being processed
+          naturalCompletionModeRef.current = false;
           // Reset audio when starting to process new utterance
           // This prevents audio overlap from stale responses
           audioPlayback.reset();
           break;
         case "speaking":
           setVoiceState("responding");
+          // Clear natural completion mode - backend is actively generating TTS
+          // Barge-in during speaking state should work normally
+          naturalCompletionModeRef.current = false;
           break;
         case "cancelled":
         case "idle":
@@ -795,9 +823,20 @@ export function useThinkerTalkerVoiceMode(
       voiceLog.info("[TTVoiceMode] Backend VAD: User speech detected");
       startListening();
 
+      // CRITICAL: Skip barge-in if in natural completion mode
+      // During natural completion (backend finished TTS, local audio draining),
+      // speech_started events are likely speaker echo (AI's TTS picked up by mic)
+      // NOT real user speech. Wait until audio fully drains before allowing barge-in.
+      if (naturalCompletionModeRef.current) {
+        voiceLog.info(
+          "[TTVoiceMode] Backend VAD ignored: in natural completion mode (likely speaker echo)",
+        );
+        return;
+      }
+
       // CRITICAL: Trigger barge-in if AI is currently speaking
-      // Backend Deepgram VAD is more reliable than local Silero VAD during playback
-      // because it's server-side and not affected by speaker echo
+      // This applies when backend is still generating TTS (speaking state)
+      // not during natural audio drain
       if (audioPlayback.isPlaying) {
         // Debounce to prevent multiple rapid barge-ins
         const now = Date.now();
