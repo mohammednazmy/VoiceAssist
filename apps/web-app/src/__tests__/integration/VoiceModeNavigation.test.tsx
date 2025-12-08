@@ -160,7 +160,9 @@ class MockAudioContext {
     return Promise.resolve();
   }
 }
-(global as any).AudioContext = MockAudioContext;
+(
+  globalThis as typeof globalThis & { AudioContext: typeof MockAudioContext }
+).AudioContext = MockAudioContext;
 
 // Mock WebSocket
 class MockWebSocket {
@@ -178,7 +180,9 @@ class MockWebSocket {
   send() {}
   close() {}
 }
-(global as any).WebSocket = MockWebSocket;
+(
+  globalThis as typeof globalThis & { WebSocket: typeof MockWebSocket }
+).WebSocket = MockWebSocket;
 
 describe("Voice Mode Navigation", () => {
   beforeEach(() => {

@@ -127,18 +127,10 @@ describe("ProtectedRoute Integration", () => {
   });
 
   it("should preserve original route in location state", () => {
-    let _locationState: any = null;
-
-    function LoginPageWithState() {
-      const location = window.location;
-      _locationState = location;
-      return <div>Login Page</div>;
-    }
-
     render(
       <MemoryRouter initialEntries={["/protected"]}>
         <Routes>
-          <Route path="/login" element={<LoginPageWithState />} />
+          <Route path="/login" element={<div>Login Page</div>} />
           <Route
             path="/protected"
             element={
