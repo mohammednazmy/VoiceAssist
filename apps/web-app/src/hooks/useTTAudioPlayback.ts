@@ -59,7 +59,7 @@ const MAX_PREBUFFER_WAIT_MS = 500;
  * (currentTime starts at 0 and advances slowly). This prevents the scheduling
  * loop from getting stuck waiting for currentTime to catch up.
  */
-const MAX_SCHEDULE_LOOKAHEAD_S = 3.0; // 3 second max lookahead
+const MAX_SCHEDULE_LOOKAHEAD_S = 1.5; // tighten lookahead to reduce perceived lag
 
 /**
  * Crossfade duration in samples for smooth chunk transitions.
@@ -365,6 +365,13 @@ export function useTTAudioPlayback(
    * Process and schedule audio chunks for gapless playback
    */
   const processAudioQueue = useCallback(async () => {
+    // Bail out immediately if a barge-in just occurred
+    if (bargeInActiveRef.current) {
+      audioQueueRef.current = [];
+      isProcessingRef.current = false;
+      return;
+    }
+
     voiceLog.debug("[TTAudioPlayback] processAudioQueue called", {
       isProcessing: isProcessingRef.current,
       queueLength: audioQueueRef.current.length,
@@ -399,16 +406,11 @@ export function useTTAudioPlayback(
         const now = audioContext.currentTime;
         const scheduledAhead = nextScheduledTimeRef.current - now;
         if (scheduledAhead > MAX_SCHEDULE_LOOKAHEAD_S) {
-          voiceLog.debug(
-            `[TTAudioPlayback] Pausing scheduling - ${scheduledAhead.toFixed(2)}s ahead, waiting for playback to catch up`,
+          // Clamp the schedule to keep latency low instead of spinning
+          voiceLog.warn(
+            `[TTAudioPlayback] Clamping schedule ahead (${scheduledAhead.toFixed(2)}s) to reduce latency`,
           );
-          // Schedule a retry after some of the audio has played
-          setTimeout(() => {
-            if (isPlayingRef.current && audioQueueRef.current.length > 0) {
-              processAudioQueue();
-            }
-          }, 200); // Check again in 200ms
-          break;
+          nextScheduledTimeRef.current = now + 0.01; // schedule near-future
         }
 
         const audioData = audioQueueRef.current.shift()!;
