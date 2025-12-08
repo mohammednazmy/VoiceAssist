@@ -1,6 +1,6 @@
 {
-  "count": 296,
-  "generated_at": "2025-12-08T03:41:57.771Z",
+  "count": 299,
+  "generated_at": "2025-12-08T06:17:25.974Z",
   "docs": [
     {
       "slug": "reference/style-guide",
@@ -224,6 +224,35 @@
       "lastUpdated": "Thu Dec 04 2025 00:00:00 GMT+0000 (Coordinated Universal Time)"
     },
     {
+      "slug": "extension-guide",
+      "path": "EXTENSION_GUIDE.md",
+      "title": "Extension Guide",
+      "summary": "Practical patterns for extending VoiceAssist: adding endpoints, services, integrations, and frontend components.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": [
+        "human",
+        "ai-agents",
+        "backend",
+        "frontend"
+      ],
+      "tags": [
+        "development",
+        "patterns",
+        "extension",
+        "how-to"
+      ],
+      "component": "platform/development",
+      "relatedPaths": [
+        "services/api-gateway/app/api/",
+        "services/api-gateway/app/services/",
+        "apps/web-app/src/components/",
+        "apps/web-app/src/hooks/"
+      ],
+      "lastUpdated": "2025-12-08"
+    },
+    {
       "slug": "start-here",
       "path": "START_HERE.md",
       "title": "Start Here",
@@ -269,6 +298,21 @@
       "lastUpdated": "2025-12-08"
     },
     {
+      "slug": "archive/legacy-v1",
+      "path": "archive/legacy-v1/README.md",
+      "title": "Legacy V1 Documentation",
+      "status": "deprecated",
+      "audience": [
+        "human"
+      ],
+      "tags": [
+        "archive",
+        "legacy",
+        "v1"
+      ],
+      "lastUpdated": "2025-12-08"
+    },
+    {
       "slug": "archive/phases",
       "path": "archive/phases/README.md",
       "title": "Phase Completion Reports Archive",
@@ -280,6 +324,20 @@
       "tags": [
         "archive",
         "phases",
+        "historical"
+      ],
+      "lastUpdated": "2025-12-08"
+    },
+    {
+      "slug": "archive/summaries",
+      "path": "archive/summaries/README.md",
+      "title": "Archived Summaries",
+      "status": "deprecated",
+      "audience": [
+        "human"
+      ],
+      "tags": [
+        "archive",
         "historical"
       ],
       "lastUpdated": "2025-12-08"
@@ -2330,7 +2388,7 @@
     },
     {
       "slug": "architecture-v2",
-      "path": "ARCHITECTURE_V2.md",
+      "path": "archive/legacy-v1/ARCHITECTURE_V2.md",
       "title": "Architecture V2",
       "summary": "VoiceAssist V2 is an **enterprise-grade, HIPAA-compliant, multi-user medical AI assistant** designed to support hundreds of concurrent users with high...",
       "ai_summary": "VoiceAssist V2 is an enterprise-grade, HIPAA-compliant, multi-user medical AI assistant designed to support hundreds of concurrent users with high availability, security, and performance. Key Architectural Decision: Nextcloud is a separate stack, not part of VoiceAssist deployment. ┌─────────────...",
@@ -2465,61 +2523,6 @@
       "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "admin-panel-implementation-summary",
-      "path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
-      "title": "Admin Panel Implementation Summary",
-      "summary": "**Project**: VoiceAssist Admin Panel Enhancement",
-      "ai_summary": "Project: VoiceAssist Admin Panel Enhancement Date: 2025-11-22 Status: ✅ COMPLETED Branch: fix/system-review-and-testing Commit: 3654fa5 --- Build a production-ready admin panel with the following requirements: - Secure Authentication: JWT-based login with admin role verification - User Management...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "devops",
-        "sre",
-        "ai-agents"
-      ],
-      "category": "operations",
-      "tags": [
-        "admin",
-        "panel",
-        "implementation",
-        "summary"
-      ],
-      "component": "frontend/admin-panel",
-      "relatedPaths": [
-        "apps/admin-panel/src/App.tsx",
-        "apps/admin-panel/src/pages/Login.tsx",
-        "services/api-gateway/app/api/admin.py"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "all-phases-summary",
-      "path": "ALL_PHASES_SUMMARY.md",
-      "title": "All Phases Summary",
-      "summary": "This is the V2 15-phase implementation plan for VoiceAssist. Each phase is a focused unit of work designed for completion in one session (4-10 hours).",
-      "ai_summary": "This is the V2 16-phase implementation plan for VoiceAssist. Each phase is a focused unit of work designed for completion in one session (4-10 hours). For detailed phase documentation, see docs/phases/ directory. For timeline and milestones, see ROADMAP.md. --- - Total Phases: 16 (Phase 0 through...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "human",
-        "ai-agents"
-      ],
-      "category": "planning",
-      "tags": [
-        "all",
-        "phases",
-        "summary"
-      ],
-      "component": "platform/planning",
-      "relatedPaths": [
-        "docs/phases",
-        "docs/ROADMAP.md"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
       "slug": "ansible-guide",
       "path": "ANSIBLE_GUIDE.md",
       "title": "Ansible Guide",
@@ -2541,30 +2544,6 @@
       "relatedPaths": [
         "infrastructure/ansible/playbooks",
         "infrastructure/ansible/roles"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "architecture",
-      "path": "ARCHITECTURE.md",
-      "title": "Architecture",
-      "summary": "> **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**",
-      "ai_summary": "> ⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2 > This describes the original 20-phase plan. > For the current architecture and phases, see: > > - ARCHITECTURE_V2.md > - DEVELOPMENT_PHASES_V2.md > - START_HERE.md > - Implementation Status VoiceAssist uses a distributed architecture with components...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "human",
-        "ai-agents"
-      ],
-      "category": "architecture",
-      "tags": [
-        "architecture"
-      ],
-      "component": "platform/architecture",
-      "relatedPaths": [
-        "docker-compose.yml",
-        "services/api-gateway/app/main.py"
       ],
       "lastUpdated": "2025-11-27"
     },
@@ -2737,32 +2716,6 @@
       "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "compose-first-summary",
-      "path": "COMPOSE_FIRST_SUMMARY.md",
-      "title": "Compose First Summary",
-      "summary": "1. **Updated DEVELOPMENT_PHASES_V2.md**",
-      "ai_summary": "1. Updated DEVELOPMENT_PHASES_V2.md - Restructured for Compose-first approach - Phases 0-10 use Docker Compose exclusively - Phases 11-14 handle Kubernetes migration - Clear migration timeline documented 2. Created PHASE_00_INITIALIZATION.md (Detailed) - Comprehensive 4-6 hour phase - Section A:...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "human",
-        "ai-agents"
-      ],
-      "category": "reference",
-      "tags": [
-        "compose",
-        "first",
-        "summary"
-      ],
-      "component": "infra/compose",
-      "relatedPaths": [
-        "docker-compose.yml",
-        "docs/DEVELOPMENT_PHASES_V2.md"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
       "slug": "compose-to-k8s-migration",
       "path": "COMPOSE_TO_K8S_MIGRATION.md",
       "title": "Compose To K8s Migration",
@@ -2816,60 +2769,6 @@
       "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "overview/continuous-improvement-plan",
-      "path": "CONTINUOUS_IMPROVEMENT_PLAN.md",
-      "title": "Continuous Improvement Plan",
-      "summary": "Post-launch roadmap for enhancements, deferred features, and new capabilities",
-      "ai_summary": "Version: 1.0 Date: 2025-11-27 Status: Active - Post Phase 15 Project: VoiceAssist Enterprise Medical AI Assistant --- This document outlines the continuous improvement roadmap for VoiceAssist following the successful completion of all 15 initial development phases. The system is production-ready...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "product",
-      "audience": [
-        "human",
-        "agent",
-        "ai-agents",
-        "developers",
-        "project-managers"
-      ],
-      "category": "planning",
-      "tags": [
-        "roadmap",
-        "planning",
-        "improvements",
-        "future"
-      ],
-      "component": "platform/planning",
-      "relatedPaths": [
-        "docs/ROADMAP.md"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "continuous-improvement-summary",
-      "path": "CONTINUOUS_IMPROVEMENT_SUMMARY.md",
-      "title": "Continuous Improvement Summary",
-      "summary": "**Date:** 2025-11-21",
-      "ai_summary": "Date: 2025-11-21 Branch: continuous-improvement-plan Status: Ready for Review --- This document summarizes the continuous improvement planning effort initiated after completion of Phase 15. The comprehensive plan is available in CONTINUOUS_IMPROVEMENT_PLAN.md. --- Status: ✅ PRODUCTION READY All 1...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "human",
-        "ai-agents"
-      ],
-      "category": "reference",
-      "tags": [
-        "continuous",
-        "improvement",
-        "summary"
-      ],
-      "component": "platform/planning",
-      "relatedPaths": [
-        "docs/CONTINUOUS_IMPROVEMENT_PLAN.md"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
       "slug": "data-model",
       "path": "DATA_MODEL.md",
       "title": "Data Model",
@@ -2898,31 +2797,6 @@
       "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "deep-verification-qa-summary",
-      "path": "DEEP_VERIFICATION_QA_SUMMARY.md",
-      "title": "Deep Verification Qa Summary",
-      "summary": "**Date**: 2025-11-20",
-      "ai_summary": "Date: 2025-11-20 Status: ✅ Complete Task: Deep verification pass for new LLM abstraction, admin API, realtime API, and phase documents --- Performed comprehensive verification and refinement of new backend services and phase documentation. Found and fixed 3 critical bugs that would have prevented...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "human",
-        "ai-agents"
-      ],
-      "category": "reference",
-      "tags": [
-        "deep",
-        "verification",
-        "summary"
-      ],
-      "component": "platform/qa",
-      "relatedPaths": [
-        "services/api-gateway/app"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
       "slug": "deployment-guide",
       "path": "DEPLOYMENT_GUIDE.md",
       "title": "Deployment Guide",
@@ -2947,56 +2821,6 @@
         "Makefile",
         "services/api-gateway/Dockerfile",
         ".env.example"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "deployment-summary-asimo",
-      "path": "DEPLOYMENT_SUMMARY_ASIMO.md",
-      "title": "Deployment Summary Asimo",
-      "summary": "**Deployment Date:** 2025-11-22 (Initial) / 2025-11-23 (Final Configuration)",
-      "ai_summary": "Deployment Date: 2025-11-22 (Initial) / 2025-11-23 (Final Configuration) Environment: Production (Ubuntu 24.04 LTS) Server: asimo.io (107.204.29.210) Status: ✅ FULLY CONFIGURED & OPERATIONAL --- VoiceAssist has been successfully deployed to production on the asimo.io server with full monitoring,...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "devops",
-        "sre",
-        "ai-agents"
-      ],
-      "category": "deployment",
-      "tags": [
-        "deployment",
-        "summary",
-        "asimo"
-      ],
-      "component": "infra/deployment",
-      "relatedPaths": [
-        "docker-compose.yml"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "development-phases",
-      "path": "DEVELOPMENT_PHASES.md",
-      "title": "Development Phases",
-      "summary": "> **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**",
-      "ai_summary": "> ⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2 > This describes the original 20-phase plan. > For the current architecture and phases, see: > > - ARCHITECTURE_V2.md > - DEVELOPMENT_PHASES_V2.md > - START_HERE.md > - Implementation Status This document breaks down VoiceAssist development into self...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "human",
-        "ai-agents"
-      ],
-      "category": "planning",
-      "tags": [
-        "development",
-        "phases"
-      ],
-      "component": "platform/planning",
-      "relatedPaths": [
-        "docs/DEVELOPMENT_PHASES_V2.md"
       ],
       "lastUpdated": "2025-11-27"
     },
@@ -3083,55 +2907,6 @@
       "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "documentation-completion-summary",
-      "path": "DOCUMENTATION_COMPLETION_SUMMARY.md",
-      "title": "Documentation Completion Summary",
-      "summary": "**Date:** November 19, 2024",
-      "ai_summary": "Date: November 19, 2024 Task: Complete VoiceAssist V2 planning documentation with Compose-first, Kubernetes-later approach and separate Nextcloud stack architecture --- All documentation has been updated/created to reflect the Compose-first, Kubernetes-later development strategy with separate Nex...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "human",
-        "ai-agents"
-      ],
-      "category": "reference",
-      "tags": [
-        "documentation",
-        "completion",
-        "summary"
-      ],
-      "component": "docs/summary",
-      "relatedPaths": [
-        "docs"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "enhancement-summary",
-      "path": "ENHANCEMENT_SUMMARY.md",
-      "title": "Enhancement Summary",
-      "summary": "This document summarizes the comprehensive documentation enhancements made to VoiceAssist V2, transforming it from a basic project concept into a full...",
-      "ai_summary": "This document summarizes the comprehensive documentation enhancements made to VoiceAssist V2, transforming it from a basic project concept into a fully-specified, production-ready HIPAA-compliant clinical decision support system. Date: November 2025 Version: 2.0 Status: Documentation Complete, Re...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "human",
-        "ai-agents"
-      ],
-      "category": "reference",
-      "tags": [
-        "enhancement",
-        "summary"
-      ],
-      "component": "docs/summary",
-      "relatedPaths": [
-        "docs"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
       "slug": "file",
       "path": "FILE.md",
       "title": "File",
@@ -3149,31 +2924,6 @@
         "file"
       ],
       "component": "docs/placeholder",
-      "relatedPaths": [
-        "docs"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "final-documentation-summary",
-      "path": "FINAL_DOCUMENTATION_SUMMARY.md",
-      "title": "Final Documentation Summary",
-      "summary": "**Date**: 2025-11-20",
-      "ai_summary": "Date: 2025-11-20 Purpose: Comprehensive summary of the final documentation enhancement pass Status: Complete > Note: This is a historical summary from the 2025-11-20 documentation pass. For current documentation architecture and status: > > - Current Status: IMPLEMENTATION_STATUS.md > - Docs Syst...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "human",
-        "ai-agents"
-      ],
-      "category": "reference",
-      "tags": [
-        "final",
-        "documentation",
-        "summary"
-      ],
-      "component": "docs/summary",
       "relatedPaths": [
         "docs"
       ],
@@ -3202,32 +2952,6 @@
       "relatedPaths": [
         "apps/web-app/src/App.tsx",
         "apps/web-app/src/components"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "frontend-verification-summary",
-      "path": "FRONTEND_VERIFICATION_SUMMARY.md",
-      "title": "Frontend Verification Summary",
-      "summary": "**Date**: 2025-11-20",
-      "ai_summary": "Date: 2025-11-20 Status: ✅ Complete Task: Frontend verification pass for VoiceAssist V2 web-app and admin-panel --- This document summarizes the frontend verification and refinement work completed for both the clinician web app (web-app/) and the Admin Center (admin-panel/). This was treated as a...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "frontend",
-        "ai-agents"
-      ],
-      "category": "reference",
-      "tags": [
-        "frontend",
-        "verification",
-        "summary"
-      ],
-      "component": "frontend/web-app",
-      "relatedPaths": [
-        "apps/web-app/src",
-        "apps/admin-panel/src"
       ],
       "lastUpdated": "2025-11-27"
     },
@@ -4181,56 +3905,6 @@
         "services/api-gateway/app/services/tools/tool_service.py",
         "services/api-gateway/app/api/admin_tools.py",
         "services/api-gateway/app/api/admin_integrations.py"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "tools-completion-summary",
-      "path": "TOOLS_COMPLETION_SUMMARY.md",
-      "title": "Tools Completion Summary",
-      "summary": "**Date**: 2025-11-20",
-      "ai_summary": "Date: 2025-11-20 Session: Tools Integration Pass (Continued) Status: ✅ COMPLETE Duration: Comprehensive enhancement pass --- Successfully completed the remaining tools integration work for VoiceAssist V2, building upon the existing tools layer foundation. This session focused on: 1. Frontend Inte...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "human",
-        "ai-agents"
-      ],
-      "category": "reference",
-      "tags": [
-        "tools",
-        "completion",
-        "summary"
-      ],
-      "component": "docs/summary",
-      "relatedPaths": [
-        "docs"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "tools-integration-summary",
-      "path": "TOOLS_INTEGRATION_SUMMARY.md",
-      "title": "Tools Integration Summary",
-      "summary": "**Date**: 2025-11-20",
-      "ai_summary": "Date: 2025-11-20 Task: FINAL deep integration pass for tools and integrations Status: COMPLETE Duration: ~3 hours of comprehensive work --- Successfully completed a comprehensive tools integration pass for VoiceAssist V2. This pass added: - 1 comprehensive documentation file (TOOLS_AND_INTEGRATIO...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "human",
-        "ai-agents"
-      ],
-      "category": "reference",
-      "tags": [
-        "tools",
-        "integration",
-        "summary"
-      ],
-      "component": "backend/api-gateway",
-      "relatedPaths": [
-        "docs/TOOLS_AND_INTEGRATIONS.md"
       ],
       "lastUpdated": "2025-11-27"
     },
@@ -5218,6 +4892,54 @@
       "lastUpdated": "2025-11-27"
     },
     {
+      "slug": "architecture",
+      "path": "archive/legacy-v1/ARCHITECTURE.md",
+      "title": "Architecture",
+      "summary": "> **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**",
+      "ai_summary": "> ⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2 > This describes the original 20-phase plan. > For the current architecture and phases, see: > > - ARCHITECTURE_V2.md > - DEVELOPMENT_PHASES_V2.md > - START_HERE.md > - Implementation Status VoiceAssist uses a distributed architecture with components...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "architecture",
+      "tags": [
+        "architecture"
+      ],
+      "component": "platform/architecture",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "services/api-gateway/app/main.py"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "development-phases",
+      "path": "archive/legacy-v1/DEVELOPMENT_PHASES.md",
+      "title": "Development Phases",
+      "summary": "> **⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2**",
+      "ai_summary": "> ⚠️ LEGACY V1 DOCUMENT – NOT CANONICAL FOR V2 > This describes the original 20-phase plan. > For the current architecture and phases, see: > > - ARCHITECTURE_V2.md > - DEVELOPMENT_PHASES_V2.md > - START_HERE.md > - Implementation Status This document breaks down VoiceAssist development into self...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "planning",
+      "tags": [
+        "development",
+        "phases"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/DEVELOPMENT_PHASES_V2.md"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
       "slug": "admin-panel-login-fix",
       "path": "archive/phases/ADMIN_PANEL_LOGIN_FIX.md",
       "title": "Admin Panel Login Fix",
@@ -5646,6 +5368,342 @@
       "component": "platform/testing",
       "relatedPaths": [
         "apps/web-app/src"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "admin-panel-implementation-summary",
+      "path": "archive/summaries/ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
+      "title": "Admin Panel Implementation Summary",
+      "summary": "**Project**: VoiceAssist Admin Panel Enhancement",
+      "ai_summary": "Project: VoiceAssist Admin Panel Enhancement Date: 2025-11-22 Status: ✅ COMPLETED Branch: fix/system-review-and-testing Commit: 3654fa5 --- Build a production-ready admin panel with the following requirements: - Secure Authentication: JWT-based login with admin role verification - User Management...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
+      "category": "operations",
+      "tags": [
+        "admin",
+        "panel",
+        "implementation",
+        "summary"
+      ],
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/App.tsx",
+        "apps/admin-panel/src/pages/Login.tsx",
+        "services/api-gateway/app/api/admin.py"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "all-phases-summary",
+      "path": "archive/summaries/ALL_PHASES_SUMMARY.md",
+      "title": "All Phases Summary",
+      "summary": "This is the V2 15-phase implementation plan for VoiceAssist. Each phase is a focused unit of work designed for completion in one session (4-10 hours).",
+      "ai_summary": "This is the V2 16-phase implementation plan for VoiceAssist. Each phase is a focused unit of work designed for completion in one session (4-10 hours). For detailed phase documentation, see docs/phases/ directory. For timeline and milestones, see ROADMAP.md. --- - Total Phases: 16 (Phase 0 through...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "planning",
+      "tags": [
+        "all",
+        "phases",
+        "summary"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/phases",
+        "docs/ROADMAP.md"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "compose-first-summary",
+      "path": "archive/summaries/COMPOSE_FIRST_SUMMARY.md",
+      "title": "Compose First Summary",
+      "summary": "1. **Updated DEVELOPMENT_PHASES_V2.md**",
+      "ai_summary": "1. Updated DEVELOPMENT_PHASES_V2.md - Restructured for Compose-first approach - Phases 0-10 use Docker Compose exclusively - Phases 11-14 handle Kubernetes migration - Clear migration timeline documented 2. Created PHASE_00_INITIALIZATION.md (Detailed) - Comprehensive 4-6 hour phase - Section A:...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "reference",
+      "tags": [
+        "compose",
+        "first",
+        "summary"
+      ],
+      "component": "infra/compose",
+      "relatedPaths": [
+        "docker-compose.yml",
+        "docs/DEVELOPMENT_PHASES_V2.md"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "overview/continuous-improvement-plan",
+      "path": "archive/summaries/CONTINUOUS_IMPROVEMENT_PLAN.md",
+      "title": "Continuous Improvement Plan",
+      "summary": "Post-launch roadmap for enhancements, deferred features, and new capabilities",
+      "ai_summary": "Version: 1.0 Date: 2025-11-27 Status: Active - Post Phase 15 Project: VoiceAssist Enterprise Medical AI Assistant --- This document outlines the continuous improvement roadmap for VoiceAssist following the successful completion of all 15 initial development phases. The system is production-ready...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "product",
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "developers",
+        "project-managers"
+      ],
+      "category": "planning",
+      "tags": [
+        "roadmap",
+        "planning",
+        "improvements",
+        "future"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/ROADMAP.md"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "continuous-improvement-summary",
+      "path": "archive/summaries/CONTINUOUS_IMPROVEMENT_SUMMARY.md",
+      "title": "Continuous Improvement Summary",
+      "summary": "**Date:** 2025-11-21",
+      "ai_summary": "Date: 2025-11-21 Branch: continuous-improvement-plan Status: Ready for Review --- This document summarizes the continuous improvement planning effort initiated after completion of Phase 15. The comprehensive plan is available in CONTINUOUS_IMPROVEMENT_PLAN.md. --- Status: ✅ PRODUCTION READY All 1...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "reference",
+      "tags": [
+        "continuous",
+        "improvement",
+        "summary"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/CONTINUOUS_IMPROVEMENT_PLAN.md"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "deep-verification-qa-summary",
+      "path": "archive/summaries/DEEP_VERIFICATION_QA_SUMMARY.md",
+      "title": "Deep Verification Qa Summary",
+      "summary": "**Date**: 2025-11-20",
+      "ai_summary": "Date: 2025-11-20 Status: ✅ Complete Task: Deep verification pass for new LLM abstraction, admin API, realtime API, and phase documents --- Performed comprehensive verification and refinement of new backend services and phase documentation. Found and fixed 3 critical bugs that would have prevented...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "reference",
+      "tags": [
+        "deep",
+        "verification",
+        "summary"
+      ],
+      "component": "platform/qa",
+      "relatedPaths": [
+        "services/api-gateway/app"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "deployment-summary-asimo",
+      "path": "archive/summaries/DEPLOYMENT_SUMMARY_ASIMO.md",
+      "title": "Deployment Summary Asimo",
+      "summary": "**Deployment Date:** 2025-11-22 (Initial) / 2025-11-23 (Final Configuration)",
+      "ai_summary": "Deployment Date: 2025-11-22 (Initial) / 2025-11-23 (Final Configuration) Environment: Production (Ubuntu 24.04 LTS) Server: asimo.io (107.204.29.210) Status: ✅ FULLY CONFIGURED & OPERATIONAL --- VoiceAssist has been successfully deployed to production on the asimo.io server with full monitoring,...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
+      "category": "deployment",
+      "tags": [
+        "deployment",
+        "summary",
+        "asimo"
+      ],
+      "component": "infra/deployment",
+      "relatedPaths": [
+        "docker-compose.yml"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "documentation-completion-summary",
+      "path": "archive/summaries/DOCUMENTATION_COMPLETION_SUMMARY.md",
+      "title": "Documentation Completion Summary",
+      "summary": "**Date:** November 19, 2024",
+      "ai_summary": "Date: November 19, 2024 Task: Complete VoiceAssist V2 planning documentation with Compose-first, Kubernetes-later approach and separate Nextcloud stack architecture --- All documentation has been updated/created to reflect the Compose-first, Kubernetes-later development strategy with separate Nex...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "reference",
+      "tags": [
+        "documentation",
+        "completion",
+        "summary"
+      ],
+      "component": "docs/summary",
+      "relatedPaths": [
+        "docs"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "enhancement-summary",
+      "path": "archive/summaries/ENHANCEMENT_SUMMARY.md",
+      "title": "Enhancement Summary",
+      "summary": "This document summarizes the comprehensive documentation enhancements made to VoiceAssist V2, transforming it from a basic project concept into a full...",
+      "ai_summary": "This document summarizes the comprehensive documentation enhancements made to VoiceAssist V2, transforming it from a basic project concept into a fully-specified, production-ready HIPAA-compliant clinical decision support system. Date: November 2025 Version: 2.0 Status: Documentation Complete, Re...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "reference",
+      "tags": [
+        "enhancement",
+        "summary"
+      ],
+      "component": "docs/summary",
+      "relatedPaths": [
+        "docs"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "final-documentation-summary",
+      "path": "archive/summaries/FINAL_DOCUMENTATION_SUMMARY.md",
+      "title": "Final Documentation Summary",
+      "summary": "**Date**: 2025-11-20",
+      "ai_summary": "Date: 2025-11-20 Purpose: Comprehensive summary of the final documentation enhancement pass Status: Complete > Note: This is a historical summary from the 2025-11-20 documentation pass. For current documentation architecture and status: > > - Current Status: IMPLEMENTATION_STATUS.md > - Docs Syst...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "reference",
+      "tags": [
+        "final",
+        "documentation",
+        "summary"
+      ],
+      "component": "docs/summary",
+      "relatedPaths": [
+        "docs"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "frontend-verification-summary",
+      "path": "archive/summaries/FRONTEND_VERIFICATION_SUMMARY.md",
+      "title": "Frontend Verification Summary",
+      "summary": "**Date**: 2025-11-20",
+      "ai_summary": "Date: 2025-11-20 Status: ✅ Complete Task: Frontend verification pass for VoiceAssist V2 web-app and admin-panel --- This document summarizes the frontend verification and refinement work completed for both the clinician web app (web-app/) and the Admin Center (admin-panel/). This was treated as a...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
+      "category": "reference",
+      "tags": [
+        "frontend",
+        "verification",
+        "summary"
+      ],
+      "component": "frontend/web-app",
+      "relatedPaths": [
+        "apps/web-app/src",
+        "apps/admin-panel/src"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "tools-completion-summary",
+      "path": "archive/summaries/TOOLS_COMPLETION_SUMMARY.md",
+      "title": "Tools Completion Summary",
+      "summary": "**Date**: 2025-11-20",
+      "ai_summary": "Date: 2025-11-20 Session: Tools Integration Pass (Continued) Status: ✅ COMPLETE Duration: Comprehensive enhancement pass --- Successfully completed the remaining tools integration work for VoiceAssist V2, building upon the existing tools layer foundation. This session focused on: 1. Frontend Inte...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "reference",
+      "tags": [
+        "tools",
+        "completion",
+        "summary"
+      ],
+      "component": "docs/summary",
+      "relatedPaths": [
+        "docs"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "tools-integration-summary",
+      "path": "archive/summaries/TOOLS_INTEGRATION_SUMMARY.md",
+      "title": "Tools Integration Summary",
+      "summary": "**Date**: 2025-11-20",
+      "ai_summary": "Date: 2025-11-20 Task: FINAL deep integration pass for tools and integrations Status: COMPLETE Duration: ~3 hours of comprehensive work --- Successfully completed a comprehensive tools integration pass for VoiceAssist V2. This pass added: - 1 comprehensive documentation file (TOOLS_AND_INTEGRATIO...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "reference",
+      "tags": [
+        "tools",
+        "integration",
+        "summary"
+      ],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "docs/TOOLS_AND_INTEGRATIONS.md"
       ],
       "lastUpdated": "2025-11-27"
     },

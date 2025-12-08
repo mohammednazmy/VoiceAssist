@@ -530,24 +530,25 @@ See the [Agent API Reference](ai/AGENT_API_REFERENCE.md) for complete details.
 
 ---
 
-## 🎉 Let's Build!
+## Next Steps
 
-You now have a comprehensive understanding of VoiceAssist V2. The project is structured to be built phase-by-phase, with clear specifications and requirements at every step.
-
-**Ready to start?** Open [PHASE_00_INITIALIZATION.md](phases/PHASE_00_INITIALIZATION.md) and begin your journey.
-
-Good luck! 🚀
+For development work:
+- **New feature?** See [EXTENSION_GUIDE.md](EXTENSION_GUIDE.md) for patterns
+- **Backend work?** Start at [services/api-gateway/README.md](../services/api-gateway/README.md)
+- **Frontend work?** See [apps/web-app/README.md](../apps/web-app/README.md)
+- **Debugging?** Check [debugging/DEBUGGING_INDEX.md](debugging/DEBUGGING_INDEX.md)
 
 ---
 
-## 📜 Legacy V1 Materials
+## 📜 Legacy & Archived Materials
 
-The following documents describe the original 20-phase V1 plan. They are preserved **for historical reference only** and are not canonical for V2 development:
+Historical documents have been moved to the [archive/](archive/) directory:
 
-- [DEVELOPMENT_PHASES.md](DEVELOPMENT_PHASES.md) - Original 20-phase plan (V1)
-- [ALL_PHASES_SUMMARY.md](ALL_PHASES_SUMMARY.md) - Original phase summaries (V1)
-- [ROADMAP.md](ROADMAP.md) - Original roadmap (V1)
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Original architecture (V1)
-- [../PHASE_STATUS.md](../PHASE_STATUS.md) - Original phase tracking (V1)
+- [archive/legacy-v1/](archive/legacy-v1/) - V1 architecture and phase documents
+- [archive/summaries/](archive/summaries/) - Historical completion summaries
+- [archive/phases/](archive/phases/) - Phase completion reports
 
-**Note**: All V1 documents have been marked with a legacy banner directing readers to the current V2 documentation.
+**Current canonical documents:**
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - Architecture reference
+- [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - V2 phase documentation
+- [overview/IMPLEMENTATION_STATUS.md](overview/IMPLEMENTATION_STATUS.md) - Living status

@@ -28,6 +28,8 @@ This directory contains archived documentation from completed development phases
 | Directory | Description |
 |-----------|-------------|
 | [phases/](./phases/) | Phase completion reports and dated fix documentation |
+| [summaries/](./summaries/) | Celebration/completion summary documents |
+| [legacy-v1/](./legacy-v1/) | Original V1 architecture documentation |
 
 ## Phase Completion Reports (Legacy)
 
