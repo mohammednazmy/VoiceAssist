@@ -367,6 +367,36 @@ export async function waitForAIComplete(
 }
 
 /**
+ * Wait for user speech to be recognized
+ */
+export async function waitForUserSpeechRecognized(
+  page: Page,
+  timeout = 30000
+): Promise<boolean> {
+  try {
+    await page.waitForFunction(
+      () => {
+        // Check for user transcript content
+        const userTranscript = document.querySelector('[data-testid="user-transcript"]');
+        if (userTranscript?.textContent && userTranscript.textContent.length > 0) {
+          return true;
+        }
+
+        // Check for speech recognized indicator
+        const speechIndicator = document.querySelector(
+          '[data-testid="user-speaking"], [data-state="user-speaking"]'
+        );
+        return !!speechIndicator;
+      },
+      { timeout }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Assert quality thresholds on collected metrics
  */
 export function assertQualityThresholds(
@@ -480,4 +510,178 @@ export async function runBasicConversationTest(page: Page): Promise<void> {
 
   // Close voice mode
   await closeVoiceMode(page);
+}
+
+// ============================================================================
+// Backend Log Correlation
+// ============================================================================
+
+/**
+ * Backend log correlation helper for debugging
+ * Fetches recent backend logs and correlates with frontend events
+ */
+export interface BackendLogEntry {
+  timestamp: string;
+  level: string;
+  message: string;
+  context?: Record<string, unknown>;
+}
+
+/**
+ * Fetch recent backend logs for voice pipeline
+ * Note: This requires backend API endpoint for log retrieval
+ */
+export async function fetchBackendLogs(
+  page: Page,
+  since: Date,
+  limit = 200
+): Promise<BackendLogEntry[]> {
+  const apiBase = process.env.CLIENT_GATEWAY_URL || "http://localhost:8000";
+
+  try {
+    const response = await page.request.get(
+      `${apiBase}/api/v1/debug/voice-logs`,
+      {
+        params: {
+          since: since.toISOString(),
+          limit: String(limit),
+        },
+      }
+    );
+
+    if (response.ok()) {
+      const data = await response.json();
+      return data.logs || [];
+    }
+  } catch (error) {
+    console.log("[Backend Logs] Failed to fetch:", error);
+  }
+
+  return [];
+}
+
+/**
+ * Correlate frontend events with backend logs by timestamp
+ */
+export interface CorrelatedEvent {
+  frontendTime: number;
+  frontendEvent: string;
+  backendLogs: BackendLogEntry[];
+  timeDelta: number;
+}
+
+export function correlateEvents(
+  frontendEvents: { timestamp: number; event: string }[],
+  backendLogs: BackendLogEntry[],
+  toleranceMs = 500
+): CorrelatedEvent[] {
+  const correlated: CorrelatedEvent[] = [];
+
+  for (const fe of frontendEvents) {
+    const feTime = new Date(fe.timestamp).getTime();
+    const matchingLogs = backendLogs.filter((log) => {
+      const logTime = new Date(log.timestamp).getTime();
+      return Math.abs(logTime - feTime) <= toleranceMs;
+    });
+
+    if (matchingLogs.length > 0) {
+      correlated.push({
+        frontendTime: fe.timestamp,
+        frontendEvent: fe.event,
+        backendLogs: matchingLogs,
+        timeDelta:
+          new Date(matchingLogs[0].timestamp).getTime() - feTime,
+      });
+    }
+  }
+
+  return correlated;
+}
+
+/**
+ * Generate a debug report with correlated frontend/backend events
+ */
+export function generateDebugReport(
+  testTitle: string,
+  frontendEvents: { timestamp: number; event: string }[],
+  backendLogs: BackendLogEntry[],
+  metrics: ReturnType<VoiceMetricsCollector["getConversationMetrics"]>
+): string {
+  const lines: string[] = [
+    `# Voice Debug Report: ${testTitle}`,
+    `Generated: ${new Date().toISOString()}`,
+    "",
+    "## Summary Metrics",
+    `- Queue Overflows: ${metrics.queueOverflows}`,
+    `- Schedule Resets: ${metrics.scheduleResets}`,
+    `- Barge-in Attempts: ${metrics.bargeInAttempts}`,
+    `- False Barge-ins: ${metrics.falseBargeIns}`,
+    `- Avg Response Latency: ${metrics.averageResponseLatencyMs.toFixed(0)}ms`,
+    `- Errors: ${metrics.errors}`,
+    "",
+    "## Frontend Events Timeline",
+    "",
+  ];
+
+  // Add frontend events (first 50)
+  frontendEvents.slice(0, 50).forEach((e) => {
+    const time = new Date(e.timestamp).toISOString();
+    lines.push(`- [${time}] ${e.event}`);
+  });
+
+  if (frontendEvents.length > 50) {
+    lines.push(`  ... (${frontendEvents.length - 50} more events)`);
+  }
+
+  lines.push("");
+  lines.push("## Backend Logs");
+  lines.push("");
+
+  // Add backend logs (first 50)
+  backendLogs.slice(0, 50).forEach((log) => {
+    lines.push(`- [${log.timestamp}] [${log.level}] ${log.message}`);
+  });
+
+  if (backendLogs.length > 50) {
+    lines.push(`  ... (${backendLogs.length - 50} more logs)`);
+  }
+
+  // Correlate events
+  const correlated = correlateEvents(frontendEvents, backendLogs);
+  if (correlated.length > 0) {
+    lines.push("");
+    lines.push("## Correlated Events");
+    lines.push("");
+
+    correlated.forEach((ce) => {
+      lines.push(`### ${new Date(ce.frontendTime).toISOString()}`);
+      lines.push(`Frontend: ${ce.frontendEvent}`);
+      lines.push(`Time Delta: ${ce.timeDelta}ms`);
+      lines.push("Backend:");
+      ce.backendLogs.forEach((log) => {
+        lines.push(`  - [${log.level}] ${log.message}`);
+      });
+      lines.push("");
+    });
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * Attach debug report to test info for Playwright
+ */
+export async function attachDebugReport(
+  testInfo: TestInfo,
+  testTitle: string,
+  frontendEvents: { timestamp: number; event: string }[],
+  backendLogs: BackendLogEntry[],
+  metrics: ReturnType<VoiceMetricsCollector["getConversationMetrics"]>
+): Promise<void> {
+  const report = generateDebugReport(testTitle, frontendEvents, backendLogs, metrics);
+
+  await testInfo.attach("voice-debug-report", {
+    body: report,
+    contentType: "text/markdown",
+  });
 }
