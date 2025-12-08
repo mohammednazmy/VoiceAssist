@@ -15,7 +15,6 @@ import { useThinkerTalkerVoiceMode } from "../useThinkerTalkerVoiceMode";
 import { useVoiceKeyboardShortcuts } from "../useVoiceKeyboardShortcuts";
 import { voiceLog } from "../../lib/logger";
 import {
-  BargeInClassification,
   BargeInConfig,
   BargeInEvent,
   BargeInMetrics,
@@ -57,7 +56,6 @@ function mapPipelineStateToBargeInState(
   isConnecting: boolean,
   isSileroVADActive: boolean,
   isPlaying: boolean,
-  isSpeaking: boolean,
 ): BargeInState {
   if (isConnecting) return "connecting";
 
@@ -149,14 +147,12 @@ export function useIntelligentBargeIn(
       voiceMode.isConnecting,
       voiceMode.isSileroVADActive,
       voiceMode.isPlaying,
-      voiceMode.isSpeaking,
     );
   }, [
     voiceMode.pipelineState,
     voiceMode.isConnecting,
     voiceMode.isSileroVADActive,
     voiceMode.isPlaying,
-    voiceMode.isSpeaking,
   ]);
 
   // Derived state flags
@@ -166,8 +162,7 @@ export function useIntelligentBargeIn(
   const currentConfidence = voiceMode.sileroVADConfidence;
 
   // Detected language (placeholder - would come from STT service)
-  const [detectedLanguage, setDetectedLanguage] =
-    useState<SupportedLanguage | null>(null);
+  const [detectedLanguage] = useState<SupportedLanguage | null>(null);
 
   // ============================================================================
   // Actions

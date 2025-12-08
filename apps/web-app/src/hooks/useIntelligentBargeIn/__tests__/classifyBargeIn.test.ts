@@ -19,7 +19,7 @@ import {
   getSoftBargeKeywords,
   type ClassificationInput,
 } from "../classifyBargeIn";
-import { DEFAULT_BARGE_IN_CONFIG, type BargeInConfig } from "../types";
+import { DEFAULT_BARGE_IN_CONFIG } from "../types";
 
 // Mock voiceLog to avoid console output during tests
 vi.mock("../../../lib/logger", () => ({

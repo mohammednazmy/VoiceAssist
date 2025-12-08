@@ -59,7 +59,12 @@ jobs:
   # ======================================
   voice-smoke:
     name: Voice Smoke Tests
-    if: github.event_name == 'pull_request' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'smoke')
+    if: |
+      (github.event_name == 'pull_request' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'smoke'))
+      && secrets.DEEPGRAM_API_KEY != ''
+      && secrets.ELEVENLABS_API_KEY != ''
+      && secrets.OPENAI_API_KEY != ''
+      && secrets.E2E_API_URL != ''
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -145,7 +150,12 @@ jobs:
   # ======================================
   voice-barge-in:
     name: Voice Barge-in Tests
-    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    if: |
+      (github.event_name == 'pull_request' || github.event_name == 'push')
+      && secrets.DEEPGRAM_API_KEY != ''
+      && secrets.ELEVENLABS_API_KEY != ''
+      && secrets.OPENAI_API_KEY != ''
+      && secrets.E2E_API_URL != ''
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -210,7 +220,12 @@ jobs:
   # ======================================
   voice-nightly:
     name: Voice Nightly Matrix
-    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'nightly')
+    if: |
+      (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'nightly'))
+      && secrets.DEEPGRAM_API_KEY != ''
+      && secrets.ELEVENLABS_API_KEY != ''
+      && secrets.OPENAI_API_KEY != ''
+      && secrets.E2E_API_URL != ''
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
