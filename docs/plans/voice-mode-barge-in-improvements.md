@@ -1,16 +1,18 @@
 # Voice Mode Barge-In & Natural Conversation Enhancements
 
-> **Version:** 4.0 - Full-Duplex Foundations, Semantic VAD, Emotional Awareness, and Moshi-Inspired 200ms Target
+> **Version:** 5.0 - Speculative TTS, Semantic Endpointing, Canary Deployment, and Production Hardening
 > **Last Updated:** December 2025
 > **Branch:** `feat/silero-vad-improvements`
 > **Status:** Planning
-> **Revision (Dec 2025 v4):** Added full-duplex foundations, semantic VAD, emotional awareness, transcript-audio sync for clean truncation, mute/force-reply UI controls, accessibility, browser compatibility, conversation context preservation, and Moshi-inspired latency targets
+> **Revision (Dec 2025 v5):** Added speculative TTS (PredGen), End-of-Utterance transformer model, canary deployment strategy, error budgets, WebRTC native AEC, device-specific presets with values, active session handling during rollback, expanded testing matrix, and privacy opt-in flows
 
 ---
 
 ## Executive Summary
 
 This plan enhances VoiceAssist's voice mode to achieve **human-like conversation fluency** through:
+
+**Core Capabilities (v1-v4):**
 
 - **Sub-200ms perceived response latency** - Approaching Moshi's 200ms benchmark (vs 230ms human-to-human)
 - **Full-duplex foundations** - Listen and speak concurrently, handle overlapping speech gracefully
@@ -26,6 +28,17 @@ This plan enhances VoiceAssist's voice mode to achieve **human-like conversation
 - **Manual override controls** - Mute and force-reply buttons for imperfect environments
 - **AEC feedback loop** for smarter echo cancellation during barge-in
 - **Comprehensive observability** with tightened SLOs (P95 mute <50ms, misfire <2%)
+
+**v5 Production Hardening:**
+
+- **Speculative TTS (PredGen)** - Generate candidate responses while user speaks for near-zero latency
+- **End-of-Utterance (EOU) transformer** - Semantic turn completion prediction, dynamic silence timeout
+- **WebRTC native AEC** - Leverage browser-native echo cancellation via ElevenLabs WebRTC endpoint
+- **Device-specific presets** - Pre-configured thresholds for AirPods, USB mics, speakerphones, etc.
+- **Canary deployment** - Structured rollout (1% → 10% → 50% → 100%) with automatic rollback
+- **Error budgets** - Monthly quotas for misfires, queue overflows, latency violations
+- **Privacy opt-in flow** - Consent-based feature gating for emotion/semantic detection
+- **Master kill switch** - `backend.voice_barge_in_killswitch` for instant rollback to legacy behavior
 
 ---
 
@@ -412,7 +425,7 @@ def decide_barge_in(self, silero_state: VADState, deepgram_event: SpeechEvent) -
 - **Consent & privacy:** Emotion/semantic classification must never log raw audio or PII; only derived labels/metrics. Disable emotion detection if the user has not opted in; tag events with `privacy_opt_out` when applicable.
 - **Device/browser compatibility:** Detect lack of `AudioWorklet`/`SharedArrayBuffer` (Safari/Firefox/mobile) and fall back to low-power mode with Deepgram-first barge-in. Skip AEC feedback polling when WebRTC stats are unavailable.
 - **Acoustic robustness:** Maintain per-device presets (laptop mic, AirPods, wired headset) with default thresholds; expose a quick selector in voice settings.
-- **A/B + ramp plan:** Default new classifiers off; run 10% → 50% → 100% experiments with guardrail alerts (misfire >2%, mute latency >75ms, queue overflows >1%). Roll back automatically on alert breach.
+- **A/B + ramp plan:** Default new classifiers off; run 10% → 50% → 100% experiments with guardrail alerts (misfire >5%, mute latency P95 >100ms, queue overflows >2%). Roll back automatically on alert breach.
 - **Data minimization:** Sample VAD/confidence events (e.g., 10%) in production; redact transcripts/user IDs from structured events; clamp metric cardinality.
 
 ### Naturalness, Fallbacks, and Safety Optimizations
@@ -424,6 +437,438 @@ def decide_barge_in(self, silero_state: VADState, deepgram_event: SpeechEvent) -
 - **Safety/PII:** Redact transcripts and user identifiers from telemetry events; sample VAD events (e.g., 10%) in production to reduce volume.
 - **Cross-language tuning:** Maintain per-language backchannel lists and soft-barge keywords; include language tag in barge-in classification to avoid English bias.
 - **Low-resource devices:** Auto-disable prosody extraction and reduce Silero frame rate on devices with `hardwareConcurrency <= 2` or high CPU usage, and fall back to Deepgram-only barge-in if CPU spikes persist.
+
+---
+
+## December 2025 Revisions (v5 - Production Hardening & Advanced Techniques)
+
+### Speculative TTS (PredGen-Inspired)
+
+**Concept:** Generate candidate TTS responses while user is still speaking to achieve near-zero perceived latency.
+
+**Research Background:** PredGen (2025) demonstrates 2x latency reduction by speculatively decoding LLM responses during user input time.
+
+**Implementation:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    SPECULATIVE TTS PIPELINE                      │
+├─────────────────────────────────────────────────────────────────┤
+│  User Speaking ──▶ Partial Transcript ──▶ Intent Prediction     │
+│                              │                                   │
+│                              ▼                                   │
+│                    Speculative LLM Call                          │
+│                    (top-3 likely responses)                      │
+│                              │                                   │
+│                              ▼                                   │
+│                    Pre-generate TTS (first sentence only)        │
+│                              │                                   │
+│  User Finishes ──▶ Match speculation? ──▶ Yes: Play immediately  │
+│                              │                                   │
+│                              └──▶ No: Discard, generate fresh    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Speculation Triggers:**
+
+| Trigger          | Example                    | Speculation Strategy                    |
+| ---------------- | -------------------------- | --------------------------------------- |
+| Greeting pattern | "Hi", "Hello"              | Pre-generate greeting response          |
+| Question word    | "What", "How", "Why"       | Pre-fetch relevant context              |
+| Command pattern  | "Tell me about", "Explain" | Start knowledge retrieval               |
+| Confirmation     | "Yes", "Correct", "Okay"   | Pre-generate acknowledgment + next step |
+
+**Resource Management:**
+
+- Maximum 3 speculative candidates in flight
+- Discard oldest speculation on new intent detection
+- GPU memory cap: 512MB for speculative TTS buffers
+- Feature flag: `backend.voice_speculative_tts` (default: FALSE)
+
+### End-of-Utterance (EOU) Transformer Model
+
+**Concept:** Use semantic content to predict turn completion, not just silence duration.
+
+**Research Background:** LiveKit's 135M parameter SmolLM v2-based EOU model predicts end of speech using content analysis, reducing cut-ins and sluggish responses.
+
+**Dynamic Silence Timeout:**
+
+```python
+def calculate_silence_timeout(transcript: str, eou_confidence: float) -> int:
+    """
+    Adjust silence timeout based on semantic completion prediction.
+
+    Returns timeout in milliseconds.
+    """
+    base_timeout = 500  # Default 500ms
+
+    # High confidence user is done → shorter timeout
+    if eou_confidence > 0.85:
+        return max(200, base_timeout - 200)  # 300ms minimum
+
+    # Mid-sentence indicators → extend timeout
+    if eou_confidence < 0.3:
+        return min(1500, base_timeout + 500)  # 1000ms, max 1.5s
+
+    # Trailing indicators extend further
+    trailing_words = ["um", "uh", "so", "and", "but", "like"]
+    if transcript.strip().split()[-1].lower() in trailing_words:
+        return min(1800, base_timeout + 800)  # 1300ms, max 1.8s
+
+    return base_timeout
+```
+
+**EOU Model Integration:**
+
+- Deploy lightweight transformer (135M params) as sidecar or within backend
+- Feed Deepgram interim transcripts to EOU model every 100ms
+- EOU returns `eou_confidence: 0.0-1.0`
+- Combine with TRP detection for best accuracy
+- Feature flag: `backend.voice_eou_model` (default: FALSE)
+
+**Comparison to Current Approach:**
+
+| Approach              | Cut-in Rate | Sluggish Rate | Latency            |
+| --------------------- | ----------- | ------------- | ------------------ |
+| Fixed 500ms timeout   | 15%         | 10%           | 500ms              |
+| VAD-only              | 20%         | 5%            | 300ms              |
+| EOU + dynamic timeout | 5%          | 3%            | 200-600ms adaptive |
+
+### WebRTC Native AEC Integration
+
+**Concept:** Leverage ElevenLabs WebRTC endpoint for browser-native echo cancellation.
+
+**Background:** ElevenLabs now supports WebRTC with best-in-class AEC and background noise removal built-in.
+
+**Architecture Change:**
+
+```
+Current:  Browser → WebSocket → Backend → ElevenLabs → WebSocket → Browser
+                     (manual AEC)
+
+Proposed: Browser → WebRTC → ElevenLabs (native AEC) → WebRTC → Browser
+                     ↓
+          Backend ← Signaling only (SDP exchange)
+```
+
+**Benefits:**
+
+- Native browser AEC (Chrome, Firefox, Edge all implement adaptive AEC)
+- Lower latency (direct peer connection vs WebSocket relay)
+- Reduced backend load (audio doesn't traverse our servers)
+- Better echo rejection during barge-in
+
+**Hybrid Mode:**
+
+- Use WebRTC for audio transport (best AEC)
+- Use WebSocket for control messages (barge-in signals, transcripts)
+- Fallback to full WebSocket if WebRTC connection fails
+
+**Implementation:**
+
+- Add `useWebRTCAudio` hook for RTC connection management
+- Keep existing WebSocket for control plane
+- Feature flag: `backend.voice_webrtc_audio` (default: FALSE)
+
+### Device-Specific Audio Presets
+
+**Concept:** Pre-configured thresholds for common audio hardware to avoid re-calibration.
+
+**Preset Definitions:**
+
+| Preset           | Noise Floor | VAD Threshold | Playback Boost | Echo Window | AEC Mode   |
+| ---------------- | ----------- | ------------- | -------------- | ----------- | ---------- |
+| `laptop_builtin` | -35 dB      | 0.55          | 0.25           | 100ms       | aggressive |
+| `airpods_pro`    | -45 dB      | 0.45          | 0.15           | 50ms        | light      |
+| `wired_headset`  | -50 dB      | 0.40          | 0.10           | 30ms        | minimal    |
+| `usb_microphone` | -55 dB      | 0.35          | 0.10           | 40ms        | minimal    |
+| `speakerphone`   | -25 dB      | 0.70          | 0.35           | 150ms       | aggressive |
+| `mobile_builtin` | -30 dB      | 0.60          | 0.30           | 120ms       | aggressive |
+
+**Auto-Detection:**
+
+```typescript
+async function detectAudioDevice(): Promise<DevicePreset> {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const audioInput = devices.find((d) => d.kind === "audioinput" && d.deviceId === "default");
+
+  const label = audioInput?.label.toLowerCase() || "";
+
+  if (label.includes("airpods")) return "airpods_pro";
+  if (label.includes("usb") || label.includes("blue yeti")) return "usb_microphone";
+  if (label.includes("headset") || label.includes("headphone")) return "wired_headset";
+  if (label.includes("speakerphone") || label.includes("jabra")) return "speakerphone";
+  if (/android|iphone|ipad/i.test(navigator.userAgent)) return "mobile_builtin";
+
+  return "laptop_builtin"; // Default
+}
+```
+
+**UI Selector:**
+
+- Add dropdown in voice settings: "Audio Device Type"
+- Options: Auto-detect, Laptop/Desktop, AirPods/Wireless Earbuds, Wired Headset, USB Microphone, Speakerphone
+- Store preference in user settings, apply on session start
+- Feature flag: `backend.voice_device_presets` (default: TRUE)
+
+### Canary Deployment Strategy
+
+**Concept:** Structured rollout with automatic rollback for voice-critical changes.
+
+**Deployment Tiers:**
+
+| Tier   | Traffic | Duration | Success Criteria                 |
+| ------ | ------- | -------- | -------------------------------- |
+| Canary | 1%      | 1 hour   | All metrics within 2x baseline   |
+| Beta   | 10%     | 24 hours | All metrics within 1.5x baseline |
+| Staged | 50%     | 48 hours | All metrics within 1.2x baseline |
+| GA     | 100%    | -        | Metrics match or beat baseline   |
+
+**Automatic Rollback Triggers:**
+
+```yaml
+rollback_triggers:
+  - metric: barge_in_mute_latency_p95
+    threshold: ">100ms"
+    window: 5m
+
+  - metric: misfire_rate
+    threshold: ">5%"
+    window: 15m
+
+  - metric: queue_overflow_rate
+    threshold: ">2%"
+    window: 10m
+
+  - metric: error_rate
+    threshold: ">1%"
+    window: 5m
+
+  - metric: websocket_disconnect_rate
+    threshold: ">0.5%"
+    window: 5m
+```
+
+**Active Session Handling:**
+
+When kill switch activated or rollback triggered:
+
+1. **New sessions:** Route to stable version immediately
+2. **Active sessions:** Complete current turn, then gracefully migrate
+3. **Grace period:** 30 seconds for in-flight audio to complete
+4. **Fallback behavior:** Revert to simple VAD (no classification) if classifier fails
+
+**Implementation:**
+
+- Use feature flag percentage (`backend.voice_barge_in_v5_percentage: 0-100`)
+- Argo Rollouts for Kubernetes orchestration
+- Prometheus alerts → webhook → Argo rollback
+- Feature flag: `backend.voice_canary_enabled` (default: TRUE in staging, FALSE in prod)
+
+### Error Budget Concept
+
+**Concept:** Define acceptable error rates to balance reliability with velocity.
+
+**Monthly Error Budgets:**
+
+| Metric                 | Budget (monthly) | Calculation                            |
+| ---------------------- | ---------------- | -------------------------------------- |
+| Barge-in misfires      | 2% of turns      | `misfire_count / total_turns`          |
+| Queue overflows        | 0.5% of sessions | `overflow_sessions / total_sessions`   |
+| P95 latency violations | 5% of responses  | `slow_responses / total_responses`     |
+| WebSocket disconnects  | 0.1% of sessions | `disconnect_sessions / total_sessions` |
+
+**Budget Consumption Alerts:**
+
+```yaml
+alerts:
+  - name: error_budget_50_percent
+    condition: "budget_consumed > 50%"
+    action: "Notify team, pause non-critical deploys"
+
+  - name: error_budget_80_percent
+    condition: "budget_consumed > 80%"
+    action: "Halt all deploys, investigate"
+
+  - name: error_budget_exhausted
+    condition: "budget_consumed >= 100%"
+    action: "Auto-rollback to last known good, page on-call"
+```
+
+**Burn Rate Calculation:**
+
+```python
+def calculate_burn_rate(current_errors: int, budget: int, elapsed_hours: int) -> float:
+    """
+    Calculate error budget burn rate.
+
+    burn_rate = 1.0 means consuming budget at exactly sustainable pace
+    burn_rate > 1.0 means burning faster than sustainable
+    """
+    hours_in_month = 720
+    expected_errors_by_now = (budget * elapsed_hours) / hours_in_month
+
+    if expected_errors_by_now == 0:
+        return float('inf') if current_errors > 0 else 0.0
+
+    return current_errors / expected_errors_by_now
+```
+
+### Privacy Opt-In Flow
+
+**Concept:** Clear user consent for emotion detection and semantic analysis features.
+
+**Consent Levels:**
+
+| Level           | Features Enabled                | Data Collected             |
+| --------------- | ------------------------------- | -------------------------- |
+| Basic (default) | VAD, barge-in, transcript       | Aggregated metrics only    |
+| Enhanced        | + Emotion detection             | Emotion labels (no audio)  |
+| Full            | + Semantic VAD, personalization | Intent labels, preferences |
+
+**Opt-In UI:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  🎤 Voice Mode Settings                                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Voice Analysis Level:                                           │
+│                                                                  │
+│  ○ Basic                                                         │
+│    Standard voice detection and transcription                    │
+│                                                                  │
+│  ○ Enhanced                                                      │
+│    + Emotion-aware responses (detects frustration, urgency)      │
+│    ℹ️ No audio stored, only emotion labels                       │
+│                                                                  │
+│  ○ Full                                                          │
+│    + Personalized voice patterns (learns your speech style)      │
+│    ℹ️ Preferences stored locally, synced encrypted               │
+│                                                                  │
+│  [Learn more about voice data privacy]                           │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Backend Enforcement:**
+
+```python
+def get_enabled_features(user_consent_level: str) -> dict:
+    features = {
+        "vad": True,
+        "barge_in": True,
+        "transcript": True,
+        "emotion_detection": False,
+        "semantic_vad": False,
+        "personalization": False,
+    }
+
+    if user_consent_level in ["enhanced", "full"]:
+        features["emotion_detection"] = True
+
+    if user_consent_level == "full":
+        features["semantic_vad"] = True
+        features["personalization"] = True
+
+    return features
+```
+
+**Telemetry Redaction:**
+
+- All events include `consent_level` field
+- Events for non-consented features are dropped at collection
+- Transcript redaction: Replace actual text with `[REDACTED]` in telemetry
+- Feature flag: `backend.voice_privacy_enforcement` (default: TRUE)
+
+### Updated Browser Compatibility Matrix
+
+| Browser          | Audio Worklet | SharedArrayBuffer | Silero VAD | WebRTC AEC | WebRTC Audio | Status                        |
+| ---------------- | ------------- | ----------------- | ---------- | ---------- | ------------ | ----------------------------- |
+| Chrome 90+       | ✅            | ✅                | ✅         | ✅         | ✅           | Full support                  |
+| Firefox 79+      | ✅            | ✅ (COOP/COEP)    | ✅         | ✅         | ✅           | Full support                  |
+| Safari 15.2+     | ✅            | ✅ (COOP/COEP)    | ✅         | ⚠️ Limited | ⚠️ Limited   | Threshold boost fallback      |
+| Edge 90+         | ✅            | ✅                | ✅         | ✅         | ✅           | Full support                  |
+| Chrome Android   | ✅            | ✅                | ✅         | ⚠️ Varies  | ✅           | Device-dependent              |
+| Safari iOS 15.4+ | ⚠️            | ⚠️                | ⚠️         | ❌         | ❌           | ScriptProcessor + WS fallback |
+| Firefox Android  | ✅            | ⚠️                | ✅         | ⚠️ Varies  | ⚠️ Varies    | Device-dependent              |
+
+**Required Headers for SharedArrayBuffer:**
+
+```
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+```
+
+**Fallback Chain:**
+
+1. Full: AudioWorklet + SharedArrayBuffer + WebRTC
+2. Reduced: AudioWorklet + WebSocket audio
+3. Legacy: ScriptProcessor + WebSocket audio + Deepgram-only VAD
+
+### Expanded Testing Matrix
+
+**Kill Switch Tests:**
+
+```typescript
+describe("Kill Switch Behavior", () => {
+  it("should route new sessions to stable on killswitch activation");
+  it("should complete active turn before migrating session");
+  it("should respect 30-second grace period for in-flight audio");
+  it("should revert to simple VAD when classifier fails");
+  it("should log killswitch activation with reason");
+});
+```
+
+**Device Preset Tests:**
+
+```typescript
+describe("Device Presets", () => {
+  it("should auto-detect AirPods and apply preset");
+  it("should persist user override across sessions");
+  it("should apply correct thresholds for each preset");
+  it("should fallback to laptop_builtin for unknown devices");
+});
+```
+
+**Privacy Redaction Tests:**
+
+```python
+class TestPrivacyRedaction:
+    def test_redact_transcript_in_telemetry(self):
+        # Assert actual words replaced with [REDACTED]
+
+    def test_drop_emotion_events_without_consent(self):
+        # Assert events filtered at collection
+
+    def test_consent_level_included_in_all_events(self):
+        # Assert consent_level field present
+```
+
+**Canary Rollback Tests:**
+
+```typescript
+describe("Canary Rollback", () => {
+  it("should trigger rollback when p95 latency exceeds 100ms for 5min");
+  it("should trigger rollback when misfire rate exceeds 5% for 15min");
+  it("should preserve active sessions during rollback");
+  it("should log rollback reason and metrics snapshot");
+});
+```
+
+**EOU Model Tests:**
+
+```python
+class TestEOUModel:
+    def test_extend_timeout_for_trailing_words(self):
+        # "I was thinking about, um..." → 1300ms timeout
+
+    def test_shorten_timeout_for_complete_sentence(self):
+        # "What time is it?" → 300ms timeout
+
+    def test_default_timeout_for_ambiguous(self):
+        # "The weather is" → 500ms timeout
+```
 
 ### Flag Alignment & Rollout
 
@@ -447,6 +892,7 @@ def decide_barge_in(self, silero_state: VADState, deepgram_event: SpeechEvent) -
 
 **New Flags to Add:**
 
+- `backend.voice_barge_in_killswitch` (default: FALSE) - **MASTER KILL SWITCH** - Instantly revert to legacy barge-in
 - `backend.voice_backchanneling_enabled` (default: FALSE → ramp to TRUE)
 - `backend.voice_trp_detection` (default: FALSE)
 - `backend.voice_mobile_low_power_preset` (default: FALSE, auto-enable on mobile)
@@ -458,6 +904,16 @@ def decide_barge_in(self, silero_state: VADState, deepgram_event: SpeechEvent) -
 - `backend.voice_word_timestamps` (default: FALSE) - Word-level audio alignment
 - `backend.voice_manual_controls` (default: TRUE) - Mute/Force Reply/Stop buttons
 - `backend.voice_context_preservation` (default: TRUE) - Store interrupted responses
+
+**v5 Flags (Production Hardening):**
+
+- `backend.voice_speculative_tts` (default: FALSE) - PredGen-inspired speculative generation
+- `backend.voice_eou_model` (default: FALSE) - End-of-Utterance transformer model
+- `backend.voice_webrtc_audio` (default: FALSE) - WebRTC native AEC transport
+- `backend.voice_device_presets` (default: TRUE) - Device-specific threshold presets
+- `backend.voice_canary_enabled` (default: FALSE) - Canary deployment with auto-rollback
+- `backend.voice_barge_in_v5_percentage` (default: 0) - Percentage traffic for v5 features (0-100)
+- `backend.voice_privacy_enforcement` (default: TRUE) - Enforce consent-based feature gating
 
 **Rollout Strategy:**
 
@@ -1441,3 +1897,14 @@ All changes are guarded by feature flags for gradual rollout:
 - [Moshi: Full-Duplex Real-Time Dialogue - MarkTechPost](https://www.marktechpost.com/2024/09/18/kyutai-open-sources-moshi-a-breakthrough-full-duplex-real-time-dialogue-system-that-revolutionizes-human-like-conversations-with-unmatched-latency-and-speech-quality/) - 160ms latency benchmark
 - [Full-Duplex-Bench - arXiv](https://arxiv.org/html/2503.04721v1) - Evaluation suite for turn-taking capabilities
 - [Speech-Language Models Deep Dive - Hume AI](https://www.hume.ai/blog/speech-language-models-a-deeper-dive-into-voice-ai) - Emotional awareness in voice AI
+
+### v5 Research Additions (December 2025)
+
+- [PredGen: Accelerated LLM Inference via Speculation - arXiv](https://arxiv.org/abs/2506.15556) - 2x latency reduction through input-time speculation
+- [Improving Turn Detection with Transformers - LiveKit](https://blog.livekit.io/using-a-transformer-to-improve-end-of-turn-detection/) - End-of-Utterance model, dynamic silence timeout
+- [ElevenLabs Conversational AI WebRTC - ElevenLabs](https://elevenlabs.io/blog/conversational-ai-webrtc) - Native browser AEC for voice AI
+- [Voice Bot GPT-4o Realtime Best Practices - Microsoft](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/voice-bot-gpt-4o-realtime-best-practices---a-learning-from-customer-journey/4373584) - Configurable VAD settings
+- [Intelligent Turn Detection (Endpointing) - AssemblyAI](https://www.assemblyai.com/blog/turn-detection-endpointing-voice-agent) - Semantic endpointing, content-aware detection
+- [Canary Rollback for AI Workflows - UIX Store](https://uixstore.com/minimizing-risk-in-cloud-deployments-canary-rollback-for-ai-driven-workflows/) - Auto-rollback strategies
+- [TTS Benchmark 2025 - Smallest.ai](https://smallest.ai/blog/-tts-benchmark-2025-smallestai-vs-cartesia-report) - Sub-100ms TTS latency benchmarks
+- [AI Assistant Turn-Taking Fixes - Speechmatics](https://www.speechmatics.com/company/articles-and-news/your-ai-assistant-keeps-cutting-you-off-im-fixing-that) - Cut-in prevention strategies
