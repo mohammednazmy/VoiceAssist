@@ -1,10 +1,10 @@
 # Voice Mode Barge-In & Natural Conversation Enhancements
 
-> **Version:** 3.0 - Enhanced with TRP Detection, Hybrid VAD Fusion, Backchanneling, and Sub-250ms Perception Target
+> **Version:** 4.0 - Full-Duplex Foundations, Semantic VAD, Emotional Awareness, and Moshi-Inspired 200ms Target
 > **Last Updated:** December 2025
 > **Branch:** `feat/silero-vad-improvements`
 > **Status:** Planning
-> **Revision (Dec 2025 v3):** Added TRP detection, hybrid VAD fusion algorithm, backchanneling integration, mobile presets, perception latency targets, UI/UX feedback, and critical bug fixes for classifier/detector wiring
+> **Revision (Dec 2025 v4):** Added full-duplex foundations, semantic VAD, emotional awareness, transcript-audio sync for clean truncation, mute/force-reply UI controls, accessibility, browser compatibility, conversation context preservation, and Moshi-inspired latency targets
 
 ---
 
@@ -12,13 +12,18 @@
 
 This plan enhances VoiceAssist's voice mode to achieve **human-like conversation fluency** through:
 
-- **Sub-250ms perceived response latency** - Users perceive interaction as instantaneous
+- **Sub-200ms perceived response latency** - Approaching Moshi's 200ms benchmark (vs 230ms human-to-human)
+- **Full-duplex foundations** - Listen and speak concurrently, handle overlapping speech gracefully
 - **Intelligent barge-in classification** (backchannel, soft_barge, hard_barge) with **classifier wired to T/T handler**
+- **Semantic VAD** - Understand intent behind interruptions, not just acoustic activity
 - **Transition-Relevant Point (TRP) detection** - Predict turn changes before they happen
 - **Hybrid VAD fusion algorithm** - Combine frontend Silero + backend Deepgram with weighted voting
+- **Emotional awareness** - Detect user frustration/urgency to adjust response timing
 - **Active backchanneling** - Natural cues ("uh-huh", "got it") during processing
+- **Transcript-audio sync** - Clean text truncation on interruption (word-accurate)
 - **Prosody-aware turn-taking** with **continuation detector results actively used**
 - **Network-adaptive behavior** with mobile/low-power presets
+- **Manual override controls** - Mute and force-reply buttons for imperfect environments
 - **AEC feedback loop** for smarter echo cancellation during barge-in
 - **Comprehensive observability** with tightened SLOs (P95 mute <50ms, misfire <2%)
 
@@ -28,22 +33,224 @@ This plan enhances VoiceAssist's voice mode to achieve **human-like conversation
 
 ### Primary Goals (User-Facing)
 
-1. **Sub-250ms perceived response latency** - Research shows users perceive <250ms as instantaneous; target total pipeline under this threshold
+1. **Sub-200ms perceived response latency** - Target Moshi-level latency (200ms) approaching human-to-human (230ms); users perceive as instantaneous
 2. **Immediate audio stop on barge-in** - Playback mutes within 50ms of speech detection (P95)
 3. **No lost speech tokens** - Microphone starts streaming before TTS fade completes
 4. **Intelligent interruption handling** - Distinguish backchannels ("uh huh") from true interruptions with >90% accuracy
 5. **Graceful false-positive recovery** - Resume playback if barge-in was triggered by echo/noise (<2% misfire rate)
 6. **Natural conversation rhythm** - Active backchanneling during processing ("got it", "one moment")
+7. **Clean transcript truncation** - Word-accurate text cutoff when audio is interrupted (no dangling partial words)
 
 ### Secondary Goals (Technical)
 
-7. **Transition-Relevant Point (TRP) detection** - Predict turn changes using tone, pauses, and sentence completion
-8. **Hybrid VAD fusion** - Weighted combination of frontend Silero + backend Deepgram with staleness detection
-9. **Prosody-aware turn-taking** - Use pitch, duration, and trailing patterns with continuation detector actively adjusting silence thresholds
-10. **Network resilience** - Adaptive buffering and quality adjustment with mobile/low-power presets
-11. **Multilingual support** - Backchannel detection in 12 languages
-12. **User personalization** - Learn individual speech patterns over sessions
-13. **Safe fallback** - Predictable behavior if one VAD source is missing or stale
+8. **Full-duplex foundations** - Process user and AI speech streams concurrently; handle natural overlaps
+9. **Semantic VAD** - Go beyond acoustic detection to understand intent (question, command, backchannel)
+10. **Emotional awareness** - Detect frustration/urgency via tone; adjust response priority
+11. **Transition-Relevant Point (TRP) detection** - Predict turn changes using tone, pauses, and sentence completion
+12. **Hybrid VAD fusion** - Weighted combination of frontend Silero + backend Deepgram with staleness detection
+13. **Prosody-aware turn-taking** - Use pitch, duration, and trailing patterns with continuation detector actively adjusting silence thresholds
+14. **Network resilience** - Adaptive buffering and quality adjustment with mobile/low-power presets
+15. **Multilingual support** - Backchannel detection in 12 languages
+16. **User personalization** - Learn individual speech patterns over sessions
+17. **Safe fallback** - Predictable behavior if one VAD source is missing or stale
+18. **Accessibility** - Full keyboard control, screen reader support, visual alternatives to audio cues
+
+---
+
+## December 2025 Revisions (v4 - Full-Duplex & Advanced Naturalness)
+
+### Full-Duplex Foundations
+
+**Concept**: Move from strict turn-taking to concurrent speech processing, inspired by Kyutai's Moshi (200ms latency).
+
+**Multi-Stream Architecture:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    AUDIO STREAMS                             │
+├─────────────────────────────────────────────────────────────┤
+│  User Stream ──────┐                                        │
+│                    ├──▶ Joint Processor ──▶ Decision Engine │
+│  AI Stream ────────┘    (overlap detection)   (who speaks?) │
+│                                                              │
+│  States: USER_ONLY | AI_ONLY | OVERLAP | SILENCE            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Overlap Handling Strategies:**
+
+1. **Backchannel overlap** - User says "uh huh" during AI speech → AI continues (don't stop)
+2. **Question overlap** - User starts question during AI → Soft pause, prioritize user
+3. **Correction overlap** - User says "no, wait" → Hard stop, process correction
+4. **Accidental overlap** - User starts speaking at same time as AI → First speaker priority with 100ms grace
+
+**Implementation:**
+
+- Add `OverlapDetector` service that monitors both streams concurrently
+- Classify overlap type using first 200ms of overlapping audio
+- Emit `overlap.detected` event with classification
+- Feature flag: `backend.voice_full_duplex_overlap` (default: FALSE)
+
+### Semantic VAD (Intent-Aware Detection)
+
+**Concept**: Beyond acoustic "is someone speaking?", understand "what are they trying to do?"
+
+**Semantic Categories:**
+| Category | Examples | Action |
+|----------|----------|--------|
+| `backchannel` | "uh huh", "yeah", "mmm" | Continue AI, no interruption |
+| `question` | "what?", "how?", rising intonation | Soft pause, process question |
+| `command` | "stop", "wait", "hold on" | Hard stop immediately |
+| `correction` | "no", "actually", "I meant" | Hard stop, add context |
+| `continuation` | "and", "also", "but" | Extend listening window |
+| `affirmation` | "yes", "correct", "exactly" | Continue AI, acknowledge |
+
+**Implementation:**
+
+- Lightweight classifier on first 300ms of speech + transcript
+- Run in parallel with acoustic VAD (doesn't add latency)
+- Use Deepgram's interim transcripts for real-time classification
+- Feature flag: `backend.voice_semantic_vad` (default: FALSE)
+
+### Emotional Awareness
+
+**Concept**: Detect user emotional state to adjust conversation dynamics.
+
+**Detectable States:**
+| State | Indicators | Response Adjustment |
+|-------|------------|---------------------|
+| `frustrated` | Raised voice, short utterances, repeated questions | Faster response, apologetic tone |
+| `confused` | Hesitation, "um", question intonation | Slower, clearer response |
+| `urgent` | Fast speech, interruptions | Prioritize, skip pleasantries |
+| `relaxed` | Normal pace, full sentences | Standard pacing |
+| `disengaged` | Long pauses, short responses | Engage with question |
+
+**Implementation:**
+
+- Use Hume AI integration (already exists: `emotion_detection_service.py`)
+- Feed emotion state to Thinker for response adaptation
+- Adjust barge-in sensitivity: frustrated users get faster response
+- Feature flag: `backend.voice_emotional_awareness` (default: FALSE)
+
+### Transcript-Audio Synchronization
+
+**Problem**: When user interrupts, we need to truncate the transcript at the exact word where audio stopped. Currently, OpenAI Realtime API also struggles with this.
+
+**Solution: Word-Level Timestamps**
+
+```json
+// Audio chunk with word alignment
+{
+  "type": "audio.chunk",
+  "chunk_index": 5,
+  "start_offset_ms": 1250,
+  "end_offset_ms": 1500,
+  "words": [
+    { "word": "The", "start_ms": 1250, "end_ms": 1300 },
+    { "word": "answer", "start_ms": 1300, "end_ms": 1450 },
+    { "word": "is", "start_ms": 1450, "end_ms": 1500 }
+  ]
+}
+```
+
+**On Barge-In:**
+
+1. Record `interrupted_at_ms` (playback position when muted)
+2. Find last complete word before `interrupted_at_ms`
+3. Truncate transcript at that word boundary
+4. Mark remaining text as `[interrupted]` in conversation history
+5. Send `transcript.truncated` event with clean text
+
+**Implementation:**
+
+- ElevenLabs provides word timestamps via `alignment` parameter
+- Store word boundaries in `useTTAudioPlayback`
+- On barge-in: calculate truncation point, emit event
+- Feature flag: `backend.voice_word_timestamps` (default: FALSE)
+
+### Manual Override Controls (Mute & Force-Reply)
+
+**Rationale**: Per OpenAI Realtime API recommendations, VAD is imperfect in noisy environments. Always provide manual controls.
+
+**UI Controls:**
+
+```
+┌─────────────────────────────────────────────────────┐
+│                                                     │
+│  [🎤 Mute]  [▶️ Force Reply]  [⏹️ Stop AI]          │
+│                                                     │
+│  Keyboard: M = Mute, Space = Force Reply, Esc = Stop│
+└─────────────────────────────────────────────────────┘
+```
+
+**Behaviors:**
+
+- **Mute**: Disable mic, VAD pauses, AI continues speaking
+- **Force Reply**: Immediately end user turn, trigger AI response (useful when VAD misses turn end)
+- **Stop AI**: Immediately stop AI speech, return to listening
+
+**Implementation:**
+
+- Add buttons to `VoiceModePanel.tsx`
+- Add keyboard shortcuts with `useHotkeys`
+- Emit `manual_control.used` metric to track adoption
+- Feature flag: `backend.voice_manual_controls` (default: TRUE)
+
+### Conversation Context Preservation
+
+**Problem**: On hard barge-in, what happens to the AI's interrupted response?
+
+**Strategy:**
+
+```
+User: "What's the capital of France?"
+AI: "The capital of France is Par—" [interrupted]
+User: "Actually, what about Germany?"
+AI: "The capital of Germany is Berlin. [Regarding your earlier question, the capital of France is Paris.]"
+```
+
+**Implementation:**
+
+- Store interrupted response in `_interrupted_context`
+- Include `interrupted_response_summary` in next LLM prompt
+- Allow LLM to naturally reference unfinished thought if relevant
+- Clear context after 2 successful turns
+- Feature flag: `backend.voice_context_preservation` (default: TRUE)
+
+### Accessibility Considerations
+
+**Requirements:**
+
+1. **Keyboard navigation**: All controls accessible via Tab, Enter, Space
+2. **Screen reader**: ARIA labels for all voice states ("AI is speaking", "Listening for speech")
+3. **Visual alternatives**: Text transcripts always visible, visual waveform for audio activity
+4. **Reduced motion**: Disable animations if `prefers-reduced-motion` is set
+5. **High contrast**: Ensure state indicators visible in high contrast mode
+
+**Implementation:**
+
+- Add `aria-live="polite"` regions for state changes
+- Add `role="status"` to voice mode panel
+- Add keyboard shortcuts with visible hints
+- Test with VoiceOver, NVDA, JAWS
+
+### Browser Compatibility Matrix
+
+| Browser          | Audio Worklet | Silero VAD | WebRTC AEC | Status                      |
+| ---------------- | ------------- | ---------- | ---------- | --------------------------- |
+| Chrome 90+       | ✅            | ✅         | ✅         | Full support                |
+| Firefox 76+      | ✅            | ✅         | ✅         | Full support                |
+| Safari 14.1+     | ✅            | ✅         | ⚠️ Limited | Fallback to threshold boost |
+| Edge 90+         | ✅            | ✅         | ✅         | Full support                |
+| Chrome Android   | ✅            | ✅         | ⚠️ Varies  | Device-dependent            |
+| Safari iOS 14.5+ | ⚠️            | ⚠️         | ❌         | ScriptProcessor fallback    |
+| Firefox Android  | ✅            | ✅         | ⚠️ Varies  | Device-dependent            |
+
+**Fallback Strategy:**
+
+- If AudioWorklet unavailable → ScriptProcessor with reduced frame rate
+- If Silero VAD fails → RMS threshold detection
+- If WebRTC AEC unavailable → Increased playback threshold boost (0.3 instead of 0.2)
 
 ---
 
@@ -202,7 +409,7 @@ def decide_barge_in(self, silero_state: VADState, deepgram_event: SpeechEvent) -
 
 - **Perceived latency measurement:** Capture t0 (user speech start), t1 (barge-in mute), t2 (first token), t3 (first audio chunk played) to compute perceived latency client-side and stream to metrics for P50/P95 tracking.
 - **Audio worklet fallback:** If `AudioWorklet` or `SharedArrayBuffer` is unavailable, fall back to a light ScriptProcessor VAD path with reduced frame rate and disable prosody extraction; log `vad_fallback_used`.
-- **Double-barge guard:** Suppress duplicate barge-in triggers within 300ms; coalesce multiple VAD triggers into one barge event.
+- **Double-barge guard:** Suppress duplicate barge-in triggers within 500ms (aligned with debounce timer); coalesce multiple VAD triggers into one barge event.
 - **User personalization store:** Persist per-user noise floor and preferred thresholds (bounded by feature flag min/max) to avoid re-calibration every session; expose reset in settings.
 - **Safety/PII:** Redact transcripts and user identifiers from telemetry events; sample VAD events (e.g., 10%) in production to reduce volume.
 - **Cross-language tuning:** Maintain per-language backchannel lists and soft-barge keywords; include language tag in barge-in classification to avoid English bias.
@@ -235,6 +442,12 @@ def decide_barge_in(self, silero_state: VADState, deepgram_event: SpeechEvent) -
 - `backend.voice_mobile_low_power_preset` (default: FALSE, auto-enable on mobile)
 - `backend.voice_hybrid_vad_fusion` (default: FALSE → TRUE after testing)
 - `backend.voice_barge_in_classifier_enabled` (default: FALSE → TRUE)
+- `backend.voice_full_duplex_overlap` (default: FALSE) - Multi-stream overlap detection
+- `backend.voice_semantic_vad` (default: FALSE) - Intent-aware VAD classification
+- `backend.voice_emotional_awareness` (default: FALSE) - Emotion-based response adjustment
+- `backend.voice_word_timestamps` (default: FALSE) - Word-level audio alignment
+- `backend.voice_manual_controls` (default: TRUE) - Mute/Force Reply/Stop buttons
+- `backend.voice_context_preservation` (default: TRUE) - Store interrupted responses
 
 **Rollout Strategy:**
 
@@ -324,42 +537,59 @@ def decide_barge_in(self, silero_state: VADState, deepgram_event: SpeechEvent) -
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          FRONTEND (Browser)                                  │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────────┐    ┌──────────────────────┐    ┌───────────────────┐  │
-│  │  useSileroVAD   │───▶│ useIntelligentBargeIn│───▶│ useTTAudioPlayback│  │
-│  │ (Neural VAD)    │    │ (Classification FSM) │    │ (Queue Control)   │  │
-│  └────────┬────────┘    └──────────┬───────────┘    └─────────┬─────────┘  │
-│           │                        │                          │             │
-│           │ VAD confidence         │ barge-in type            │ fade/stop   │
-│           ▼                        ▼                          ▼             │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │              useThinkerTalkerVoiceMode (Orchestrator)               │   │
-│  │  - State machine: listening → speaking → barge_in → classifying    │   │
-│  │  - Coordinates VAD, playback, WebSocket transport                   │   │
-│  └─────────────────────────────────┬───────────────────────────────────┘   │
-│                                    │                                        │
-│                                    │ WebSocket messages                     │
-└────────────────────────────────────┼────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                          FRONTEND (Browser)                                      │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌─────────────────┐    ┌──────────────────────┐    ┌───────────────────────┐  │
+│  │  useSileroVAD   │───▶│ useIntelligentBargeIn│───▶│ useTTAudioPlayback    │  │
+│  │ (Neural VAD)    │    │ (Classification FSM) │    │ (Queue + Word Sync)   │  │
+│  └────────┬────────┘    └──────────┬───────────┘    └─────────┬─────────────┘  │
+│           │                        │                          │                 │
+│           │ VAD confidence         │ barge-in type            │ fade/stop +     │
+│           │                        │                          │ truncation point│
+│           ▼                        ▼                          ▼                 │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │              useThinkerTalkerVoiceMode (Orchestrator)                   │   │
+│  │  - State machine: listening → speaking → barge_in → classifying        │   │
+│  │  - Coordinates VAD, playback, WebSocket transport                       │   │
+│  │  - Manual controls: Mute, Force Reply, Stop AI                          │   │
+│  └─────────────────────────────────┬───────────────────────────────────────┘   │
+│                                    │                                            │
+│                                    │ WebSocket messages (vad.state, barge_in)   │
+└────────────────────────────────────┼────────────────────────────────────────────┘
                                      │
                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           BACKEND (FastAPI)                                  │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌────────────────┐   ┌────────────────────┐   ┌─────────────────────────┐ │
-│  │ Deepgram STT   │──▶│ ContinuationDetector│──▶│ ThinkerTalkerHandler   │ │
-│  │(SpeechStarted) │   │ (Prosody Analysis)  │   │ (WebSocket Protocol)   │ │
-│  └────────────────┘   └────────────────────┘   └───────────┬─────────────┘ │
-│                                                             │               │
-│  ┌────────────────┐   ┌────────────────────┐               │               │
-│  │ UtteranceAggr. │──▶│ BargeInClassifier  │◀──────────────┘               │
-│  │ (Multi-segment)│   │ (Backchannel/Soft) │                               │
-│  └────────────────┘   └────────────────────┘                               │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           BACKEND (FastAPI)                                      │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌────────────────┐   ┌────────────────────┐   ┌─────────────────────────────┐ │
+│  │ Deepgram STT   │──▶│ HybridVADDecider   │──▶│ ThinkerTalkerHandler       │ │
+│  │(SpeechStarted) │   │ (Fusion Algorithm) │   │ (WebSocket Protocol)       │ │
+│  └────────────────┘   └────────────────────┘   └───────────┬─────────────────┘ │
+│                              │                             │                    │
+│  ┌────────────────┐          │                             │                    │
+│  │ SemanticVAD    │◀─────────┘                             │                    │
+│  │ (Intent Class) │                                        │                    │
+│  └────────────────┘                                        │                    │
+│                                                            │                    │
+│  ┌────────────────┐   ┌────────────────────┐              │                    │
+│  │ UtteranceAggr. │──▶│ BargeInClassifier  │◀─────────────┘                    │
+│  │ (Multi-segment)│   │ (Backchannel/Soft) │                                   │
+│  └────────────────┘   └────────────────────┘                                   │
+│                              │                                                  │
+│  ┌────────────────┐          │                                                  │
+│  │ TRPDetector    │◀─────────┘                                                  │
+│  │ (Turn Predict) │                                                             │
+│  └────────────────┘                                                             │
+│                                                                                  │
+│  ┌────────────────┐   ┌────────────────────┐   ┌───────────────────────────┐   │
+│  │ Continuation   │──▶│ EmotionDetector    │──▶│ OverlapDetector           │   │
+│  │ Detector       │   │ (Hume AI)          │   │ (Full-Duplex)             │   │
+│  └────────────────┘   └────────────────────┘   └───────────────────────────┘   │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -1061,7 +1291,7 @@ All changes are guarded by feature flags for gradual rollout:
 
 | Metric                               | Target                 | Alert Threshold | Current |
 | ------------------------------------ | ---------------------- | --------------- | ------- |
-| **Perceived response latency (P95)** | <250ms                 | >400ms          | TBD     |
+| **Perceived response latency (P95)** | <200ms                 | >300ms          | TBD     |
 | **Barge-in mute latency (P95)**      | <50ms                  | >100ms          | TBD     |
 | **Barge-in mute latency (P99)**      | <100ms                 | >200ms          | TBD     |
 | **Misfire rate (false barge-ins)**   | <2%                    | >5%             | TBD     |
@@ -1072,15 +1302,24 @@ All changes are guarded by feature flags for gradual rollout:
 | **User interruption success rate**   | >95%                   | <90%            | TBD     |
 | **Backchannel trigger rate**         | 20-40% of long queries | <10% or >60%    | TBD     |
 
-**Latency Budget Breakdown (Target: <250ms perceived):**
+**Latency Budget Breakdown (Target: <200ms perceived, Moshi-inspired):**
 
-| Stage                      | Target    | Notes                           |
-| -------------------------- | --------- | ------------------------------- |
-| Speech onset detection     | 10-30ms   | Silero VAD local detection      |
-| Barge-in decision          | 20-50ms   | Hybrid VAD fusion               |
-| Audio mute                 | 50ms      | Fade + suspend                  |
-| STT first token            | 100-150ms | Deepgram streaming              |
-| Total to "listening" state | <250ms    | User perceives instant response |
+| Stage                      | Target   | Notes                                    |
+| -------------------------- | -------- | ---------------------------------------- |
+| Speech onset detection     | 10-20ms  | Silero VAD local detection (optimized)   |
+| Barge-in decision          | 10-30ms  | Hybrid VAD fusion (parallel processing)  |
+| Audio mute                 | 30-50ms  | Fast fade (30ms) + suspend               |
+| STT first token            | 80-100ms | Deepgram streaming (optimize connection) |
+| Total to "listening" state | <200ms   | Approaching human-to-human (230ms)       |
+
+**Comparison to Industry:**
+
+| System                 | Response Latency | Notes                            |
+| ---------------------- | ---------------- | -------------------------------- |
+| Human-to-human         | ~230ms           | Natural conversation baseline    |
+| Moshi (Kyutai)         | 160-200ms        | State-of-the-art full-duplex     |
+| OpenAI Realtime        | 500-2000ms       | High variance, network-dependent |
+| **VoiceAssist Target** | **<200ms**       | Matching Moshi benchmark         |
 
 ---
 
@@ -1187,3 +1426,8 @@ All changes are guarded by feature flags for gradual rollout:
 - [Voice AI's Missing Piece - Fast Company](https://www.fastcompany.com/91448246/voice-ais-missing-piece-the-ability-to-listen-while-it-talks) - Full-duplex challenges
 - [AI Voice Agents in 2025 - Retell AI](https://www.retellai.com/blog/ai-voice-agents-in-2025) - <250ms perception threshold
 - [Conversational AI Design 2025 - Botpress](https://botpress.com/blog/conversation-design) - Backchanneling, rhythm design
+- [OpenAI Realtime API: The Missing Manual - Latent Space](https://www.latent.space/p/realtime-api) - VAD challenges, manual controls recommendation
+- [How OpenAI handles Interruptions - Medium](https://medium.com/@alozie_igbokwe/building-an-ai-caller-with-openai-realtime-api-part-5-how-openai-handles-interruptions-9050a453d28e) - Interruption recovery patterns
+- [Moshi: Full-Duplex Real-Time Dialogue - MarkTechPost](https://www.marktechpost.com/2024/09/18/kyutai-open-sources-moshi-a-breakthrough-full-duplex-real-time-dialogue-system-that-revolutionizes-human-like-conversations-with-unmatched-latency-and-speech-quality/) - 160ms latency benchmark
+- [Full-Duplex-Bench - arXiv](https://arxiv.org/html/2503.04721v1) - Evaluation suite for turn-taking capabilities
+- [Speech-Language Models Deep Dive - Hume AI](https://www.hume.ai/blog/speech-language-models-a-deeper-dive-into-voice-ai) - Emotional awareness in voice AI
