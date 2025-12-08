@@ -42,8 +42,11 @@ from app.core.metrics import (
     voice_barge_in_mute_latency_seconds,
     voice_barge_in_total,
     voice_hard_barge_total,
+    voice_hybrid_vad_decision_total,
     voice_soft_barge_total,
 )
+from app.services.barge_in_classifier import BargeInClassifier
+from app.services.hybrid_vad_decider import HybridVADDecider, VADState
 from app.services.voice_pipeline_service import (
     PipelineConfig,
     PipelineMessage,
@@ -252,6 +255,10 @@ class ThinkerTalkerWebSocketHandler:
 
         # Phase 2: VAD Confidence Sharing - store latest frontend VAD state
         self._last_vad_state: Optional[Dict[str, Any]] = None
+
+        # Phase 3: Intelligent Barge-In Classification & Hybrid VAD
+        self._barge_in_classifier = BargeInClassifier(language=config.language or "en")
+        self._hybrid_vad_decider = HybridVADDecider()
 
     @property
     def connection_state(self) -> TTConnectionState:
@@ -851,11 +858,35 @@ class ThinkerTalkerWebSocketHandler:
                 barge_in_start = time.time()
 
                 # Extract classification from frontend (Phase 2.2)
-                classification = message.get("classification", "hard_barge")
+                frontend_classification = message.get("classification", "hard_barge")
                 language = message.get("language", "en")
-                confidence = message.get("confidence", 0.0)
+                frontend_confidence = message.get("confidence", 0.0)
                 matched_phrase = message.get("matched_phrase")
                 speech_duration_ms = message.get("speech_duration_ms", 0)
+                transcript = message.get("transcript", "")
+                defer_to_backend = message.get("defer_to_backend", False)
+
+                # Phase 3: Backend classification (for deferred or analytics)
+                backend_result = None
+                if defer_to_backend or frontend_classification == "unclear":
+                    # Update classifier language
+                    self._barge_in_classifier.set_language(language)
+                    backend_result = self._barge_in_classifier.classify(
+                        transcript=transcript,
+                        duration_ms=speech_duration_ms,
+                        vad_probability=frontend_confidence,
+                        during_ai_speech=True,
+                    )
+                    # Use backend classification when deferred
+                    classification = backend_result.classification
+                    confidence = backend_result.confidence
+                    logger.debug(
+                        f"[WS] Backend classification: {classification}, "
+                        f"intent={backend_result.intent}, action={backend_result.action.type}"
+                    )
+                else:
+                    classification = frontend_classification
+                    confidence = frontend_confidence
 
                 await self._pipeline_session.barge_in()
                 self._metrics.barge_in_count += 1
@@ -882,6 +913,18 @@ class ThinkerTalkerWebSocketHandler:
                     else:
                         interrupted_cat = "late"
                     voice_hard_barge_total.labels(interrupted_at=interrupted_cat).inc()
+
+                # Send classification result back to frontend
+                await self._send_message(
+                    {
+                        "type": "barge_in.classified",
+                        "classification": classification,
+                        "confidence": confidence,
+                        "language": language,
+                        "action": backend_result.action.type if backend_result else "continue",
+                        "should_acknowledge": backend_result.action.should_acknowledge if backend_result else False,
+                    }
+                )
 
                 logger.info(
                     f"[WS] Barge-in: classification={classification}, "
@@ -1081,6 +1124,31 @@ class ThinkerTalkerWebSocketHandler:
             "timestamp": time.time(),
         }
 
+        # Phase 3: Hybrid VAD Decision - combine Silero with Deepgram
+        self._hybrid_vad_decider.set_tts_playing(is_playback_active)
+        silero_state = VADState(
+            confidence=silero_confidence,
+            is_speaking=is_speaking,
+            speech_duration_ms=speech_duration_ms,
+        )
+        self._hybrid_vad_decider.update_silero_state(silero_state)
+
+        # Make hybrid decision and record metrics
+        hybrid_decision = self._hybrid_vad_decider.decide_barge_in(silero_state=silero_state)
+        voice_hybrid_vad_decision_total.labels(source=hybrid_decision.source).inc()
+
+        # Send hybrid decision to frontend if trigger recommended
+        if hybrid_decision.trigger:
+            await self._send_message(
+                {
+                    "type": "vad.hybrid_decision",
+                    "trigger": hybrid_decision.trigger,
+                    "source": hybrid_decision.source,
+                    "confidence": hybrid_decision.confidence,
+                    "reason": hybrid_decision.reason,
+                }
+            )
+
         # Forward to pipeline for hybrid VAD decision
         if self._pipeline_session:
             await self._pipeline_session.update_frontend_vad_state(
@@ -1095,7 +1163,7 @@ class ThinkerTalkerWebSocketHandler:
             logger.debug(
                 f"[WS] VAD state: conf={silero_confidence:.2f}, "
                 f"speaking={is_speaking}, duration={speech_duration_ms}ms, "
-                f"playback={is_playback_active}"
+                f"playback={is_playback_active}, hybrid_source={hybrid_decision.source}"
             )
 
     async def _handle_text_input(self, text: str) -> None:

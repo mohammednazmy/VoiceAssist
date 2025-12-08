@@ -82,6 +82,19 @@ const MAX_PREBUFFER_WAIT_MS = 500;
 const MAX_SCHEDULE_LOOKAHEAD_S = 1.0; // tighten lookahead to reduce perceived lag
 
 /**
+ * Maximum queue duration in milliseconds (Phase 1: Queue Duration Enforcement).
+ * Natural Conversation Flow: Prevent runaway queue accumulation.
+ * At ~50ms per chunk (24kHz), 1000ms ≈ 20 chunks.
+ */
+const MAX_QUEUE_DURATION_MS = 1000;
+
+/**
+ * Scheduling watchdog interval in milliseconds.
+ * Natural Conversation Flow: Phase 1.3 - Periodic check for stuck schedules.
+ */
+const WATCHDOG_INTERVAL_MS = 500;
+
+/**
  * Crossfade duration in samples for smooth chunk transitions.
  * At 24kHz, 120 samples = 5ms crossfade (eliminates pops/clicks)
  */
@@ -110,6 +123,15 @@ export interface TTAudioPlaybackOptions {
   onPlaybackInterrupted?: () => void;
   /** Called on playback error */
   onError?: (error: Error) => void;
+  /**
+   * Called when queue overflow occurs (Natural Conversation Flow: Phase 1).
+   * Provides details about the overflow for metrics/logging.
+   */
+  onQueueOverflow?: (details: {
+    droppedChunks: number;
+    queueDurationMs: number;
+    source: "duration" | "lookahead" | "watchdog";
+  }) => void;
 
   // Pre-buffering options (WS Latency Optimization)
   /**
@@ -187,6 +209,14 @@ export interface TTAudioPlaybackReturn {
   prebufferCount: number;
   /** Target pre-buffer size */
   prebufferTarget: number;
+
+  // Queue overflow stats (Natural Conversation Flow: Phase 1)
+  /** Current queue length in chunks */
+  queueLength: number;
+  /** Estimated queue duration in ms */
+  queueDurationMs: number;
+  /** Total overflow events since reset */
+  overflowCount: number;
 
   // Actions
   /**
@@ -315,6 +345,7 @@ export function useTTAudioPlayback(
     onPlaybackEnd,
     onPlaybackInterrupted,
     onError,
+    onQueueOverflow,
     // Pre-buffering options (WS Latency Optimization)
     enablePrebuffering = false,
     prebufferChunks: prebufferChunksOption,
@@ -368,6 +399,11 @@ export function useTTAudioPlayback(
   const [isPrebuffering, setIsPrebuffering] = useState(false);
   const [prebufferCount, setPrebufferCount] = useState(0);
 
+  // Queue overflow stats (Natural Conversation Flow: Phase 1)
+  const [queueLength, setQueueLength] = useState(0);
+  const [queueDurationMs, setQueueDurationMs] = useState(0);
+  const [overflowCount, setOverflowCount] = useState(0);
+
   // Refs
   const audioContextRef = useRef<AudioContext | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
@@ -394,6 +430,60 @@ export function useTTAudioPlayback(
   // Barge-in: When true, drop incoming audio chunks until reset() is called
   // This prevents stale audio from the cancelled response from playing
   const bargeInActiveRef = useRef(false);
+
+  // Scheduling watchdog ref (Natural Conversation Flow: Phase 1.3)
+  const watchdogIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
+
+  /**
+   * Estimate queue duration in milliseconds.
+   * Assumes ~50ms per chunk (24kHz, typical ElevenLabs chunk size).
+   */
+  const estimateQueueDurationMs = useCallback(() => {
+    // Each chunk is approximately 50ms at 24kHz
+    const CHUNK_DURATION_MS = 50;
+    return audioQueueRef.current.length * CHUNK_DURATION_MS;
+  }, []);
+
+  /**
+   * Handle queue overflow by trimming old chunks.
+   * Natural Conversation Flow: Phase 1.1 - Queue Duration Enforcement
+   */
+  const handleQueueOverflow = useCallback(
+    (source: "duration" | "lookahead" | "watchdog") => {
+      const currentLength = audioQueueRef.current.length;
+      const currentDurationMs = estimateQueueDurationMs();
+
+      if (currentLength <= prebufferChunks) {
+        return; // Don't trim below prebuffer threshold
+      }
+
+      // Keep only the most recent chunks
+      const maxChunks = Math.ceil(MAX_QUEUE_DURATION_MS / 50);
+      const droppedChunks = currentLength - Math.min(currentLength, maxChunks);
+
+      if (droppedChunks > 0) {
+        audioQueueRef.current = audioQueueRef.current.slice(-maxChunks);
+
+        voiceLog.warn(
+          `[TTAudioPlayback] Queue overflow (${source}): dropped ${droppedChunks} chunks, ` +
+            `duration was ${currentDurationMs}ms`,
+        );
+
+        setOverflowCount((prev) => prev + 1);
+        setQueueLength(audioQueueRef.current.length);
+        setQueueDurationMs(estimateQueueDurationMs());
+
+        onQueueOverflow?.({
+          droppedChunks,
+          queueDurationMs: currentDurationMs,
+          source,
+        });
+      }
+    },
+    [estimateQueueDurationMs, onQueueOverflow, prebufferChunks],
+  );
 
   /**
    * Get or create AudioContext
@@ -749,11 +839,11 @@ export function useTTAudioPlayback(
         // Convert to ArrayBuffer based on input type
         let arrayBuffer: ArrayBuffer;
         if (isBinary) {
-          // Binary Uint8Array - use buffer directly
+          // Binary Uint8Array - use buffer directly (slice returns ArrayBuffer | SharedArrayBuffer, we assert ArrayBuffer)
           arrayBuffer = audioData.buffer.slice(
             audioData.byteOffset,
             audioData.byteOffset + audioData.byteLength,
-          );
+          ) as ArrayBuffer;
         } else {
           // Base64 string - decode
           arrayBuffer = base64ToArrayBuffer(audioData);
@@ -1006,6 +1096,11 @@ export function useTTAudioPlayback(
     prebufferReadyRef.current = false;
     setIsPrebuffering(false);
     setPrebufferCount(0);
+
+    // Reset queue overflow stats (Natural Conversation Flow: Phase 1)
+    setQueueLength(0);
+    setQueueDurationMs(0);
+    setOverflowCount(0);
   }, [stop]);
 
   /**
@@ -1085,7 +1180,14 @@ export function useTTAudioPlayback(
         cleanedResources.push(`audioQueue(${queueLength})`);
       }
 
-      // 6. Reset refs
+      // 6. Clear watchdog interval
+      if (watchdogIntervalRef.current) {
+        clearInterval(watchdogIntervalRef.current);
+        watchdogIntervalRef.current = null;
+        cleanedResources.push("watchdog");
+      }
+
+      // 7. Reset refs
       isPlayingRef.current = false;
       isProcessingRef.current = false;
       streamEndedRef.current = false;
@@ -1106,6 +1208,43 @@ export function useTTAudioPlayback(
     }
   }, [volume]);
 
+  // Scheduling watchdog (Natural Conversation Flow: Phase 1.3)
+  // Periodically checks for stuck schedules and queue overflow
+  useEffect(() => {
+    watchdogIntervalRef.current = setInterval(() => {
+      if (!isPlayingRef.current) return;
+
+      // Update queue stats
+      setQueueLength(audioQueueRef.current.length);
+      setQueueDurationMs(estimateQueueDurationMs());
+
+      // Check for queue overflow
+      const currentDurationMs = estimateQueueDurationMs();
+      if (currentDurationMs > MAX_QUEUE_DURATION_MS) {
+        handleQueueOverflow("watchdog");
+      }
+
+      // Check for stuck schedule
+      if (audioContextRef.current) {
+        const now = audioContextRef.current.currentTime;
+        const scheduledAhead = nextScheduledTimeRef.current - now;
+        if (scheduledAhead > MAX_SCHEDULE_LOOKAHEAD_S * 2) {
+          voiceLog.warn(
+            `[TTAudioPlayback] Watchdog: schedule stuck ${scheduledAhead.toFixed(2)}s ahead, resetting`,
+          );
+          nextScheduledTimeRef.current = now + 0.01;
+        }
+      }
+    }, WATCHDOG_INTERVAL_MS);
+
+    return () => {
+      if (watchdogIntervalRef.current) {
+        clearInterval(watchdogIntervalRef.current);
+        watchdogIntervalRef.current = null;
+      }
+    };
+  }, [estimateQueueDurationMs, handleQueueOverflow]);
+
   return {
     // State
     playbackState,
@@ -1118,6 +1257,11 @@ export function useTTAudioPlayback(
     isPrebuffering,
     prebufferCount,
     prebufferTarget: prebufferChunks,
+
+    // Queue overflow stats (Natural Conversation Flow: Phase 1)
+    queueLength,
+    queueDurationMs,
+    overflowCount,
 
     // Actions
     queueAudioChunk,
