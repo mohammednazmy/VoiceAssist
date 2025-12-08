@@ -98,7 +98,22 @@ test.describe("Voice Keyboard Shortcuts", () => {
     }
 
     await page.keyboard.press("Escape");
+    // Wait for modal to fully close
+    await page.waitForFunction(
+      () => !document.querySelector('[data-testid="voice-settings-modal"]'),
+      { timeout: 5000 }
+    ).catch(() => {
+      // If still visible, try clicking outside
+      console.log("Modal still visible after Escape, clicking outside");
+    });
     await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
+
+    // Ensure any blocking modals are dismissed
+    const settingsModal = page.locator('[data-testid="voice-settings-modal"]');
+    if (await settingsModal.count() > 0 && await settingsModal.isVisible()) {
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(500);
+    }
 
     // Start voice session
     await startVoiceSession(page);
@@ -154,6 +169,19 @@ test.describe("Voice Keyboard Shortcuts", () => {
       }
     }
     await page.keyboard.press("Escape");
+    // Wait for modal to fully close
+    await page.waitForFunction(
+      () => !document.querySelector('[data-testid="voice-settings-modal"]'),
+      { timeout: 5000 }
+    ).catch(() => {});
+    await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
+
+    // Ensure any blocking modals are dismissed
+    const settingsModal = page.locator('[data-testid="voice-settings-modal"]');
+    if (await settingsModal.count() > 0 && await settingsModal.isVisible()) {
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(500);
+    }
 
     // Start session
     await startVoiceSession(page);

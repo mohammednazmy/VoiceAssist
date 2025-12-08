@@ -229,9 +229,38 @@ export async function waitForVoiceModeReady(
 }
 
 /**
+ * Dismiss any blocking popups before interacting with voice UI
+ */
+async function dismissBlockingPopups(page: Page): Promise<void> {
+  // First check for voice settings modal (has highest z-index and blocks everything)
+  const voiceSettingsModal = page.locator('[data-testid="voice-settings-modal"]');
+  if (await voiceSettingsModal.count() > 0 && await voiceSettingsModal.isVisible()) {
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+  }
+
+  // Dismiss any other modal dialogs
+  const modalBackdrops = page.locator('[role="dialog"]');
+  if (await modalBackdrops.count() > 0) {
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+  }
+
+  // Dismiss analytics consent popup
+  const noThanksButton = page.locator('button:has-text("No thanks")');
+  if (await noThanksButton.count() > 0) {
+    await noThanksButton.click().catch(() => {});
+    await page.waitForTimeout(500);
+  }
+}
+
+/**
  * Open voice mode by clicking the toggle button
  */
 export async function openVoiceMode(page: Page): Promise<boolean> {
+  // First dismiss any blocking popups
+  await dismissBlockingPopups(page);
+
   const voiceButton = page
     .locator(
       '[data-testid="voice-mode-toggle"], [data-testid="realtime-voice-mode-button"]'

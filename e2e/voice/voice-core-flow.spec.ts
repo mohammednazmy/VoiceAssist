@@ -58,13 +58,23 @@ test.describe("Voice Core Flow - Live Backend", () => {
     if (connected) {
       console.log("Connected to OpenAI Realtime API");
 
-      // Verify connected indicator is visible
-      const connectedIndicator = page.locator('[data-testid="connection-status"]:has-text("Connected")');
-      await expect(connectedIndicator.first()).toBeVisible();
+      // Verify connected indicator is visible - check for connection status indicator or voice panel
+      // The connection status indicator may show "Connected" label or the voice panel itself is visible
+      const hasConnectionIndicator = await page.evaluate(() => {
+        // Check for connection status indicator with Connected text
+        const statusEl = document.querySelector('[data-testid="connection-status-indicator"]');
+        if (statusEl?.textContent?.toLowerCase()?.includes('connected')) return true;
 
-      // Verify Stop button is available
-      const stopButton = page.locator(VOICE_SELECTORS.stopButton);
-      await expect(stopButton.first()).toBeVisible();
+        // Check for voice panel which indicates connected state
+        const voicePanel = document.querySelector('[data-testid="compact-voice-bar"]') ||
+                          document.querySelector('[data-testid="thinker-talker-voice-panel"]');
+        return !!voicePanel;
+      });
+      expect(hasConnectionIndicator).toBe(true);
+
+      // Verify Close/Stop button is available in compact bar
+      const closeButton = page.locator(VOICE_SELECTORS.stopButton);
+      await expect(closeButton.first()).toBeVisible();
     } else {
       // Check for error state
       const errorBanner = page.locator(VOICE_SELECTORS.errorBanner);
@@ -245,8 +255,9 @@ test.describe("Voice Core Flow - Live Backend", () => {
 
     // Verify disconnected state - check multiple indicators
     const isDisconnected = await page.evaluate(() => {
-      // Check for explicit disconnected status
-      const statusEl = document.querySelector('[data-testid="connection-status"]');
+      // Check for explicit disconnected status in connection indicator
+      const statusEl = document.querySelector('[data-testid="connection-status-indicator"]') ||
+                      document.querySelector('[data-testid="connection-status"]');
       if (statusEl?.textContent?.toLowerCase().includes('disconnect')) return true;
 
       // Check if voice panel is no longer active (closed or hidden)

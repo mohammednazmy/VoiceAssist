@@ -31,17 +31,20 @@ export const VOICE_CONFIG = {
 
 /**
  * Voice panel selectors
+ * Updated to match actual component data-testid attributes
  */
 export const VOICE_SELECTORS = {
   // Panel and buttons - support multiple possible testids for resilience
   panel: '[data-testid="voice-mode-panel"], [data-testid="thinker-talker-voice-panel"], [data-testid="compact-voice-bar"], [data-testid="voice-expanded-drawer"]',
   toggleButton: '[data-testid="voice-mode-toggle"], [data-testid="realtime-voice-mode-button"]',
-  startButton: 'button:has-text("Start Voice Session"), button:has-text("Start Session"), [data-testid="start-voice-session"]',
-  stopButton: 'button:has-text("End Session"), button:has-text("Stop"), button:has-text("Disconnect"), [data-testid="end-voice-session"], [data-testid="stop-voice-session"], [data-testid="close-voice-mode"]',
-  settingsButton: '[data-testid="voice-settings-button"], button[aria-label*="settings" i]',
+  // Voice mode auto-starts, so start button may not exist - also try compact mic button
+  startButton: 'button:has-text("Start Voice Session"), button:has-text("Start Session"), [data-testid="start-voice-session"], [data-testid="compact-mic-button"]',
+  // Close/stop buttons - include compact bar close button
+  stopButton: 'button:has-text("End Session"), button:has-text("Stop"), button:has-text("Disconnect"), [data-testid="end-voice-session"], [data-testid="stop-voice-session"], [data-testid="close-voice-mode"], [data-testid="compact-close-btn"]',
+  settingsButton: '[data-testid="voice-settings-button"], [data-testid="compact-settings-btn"], button[aria-label*="settings" i]',
 
-  // Status indicators - use only CSS selectors (not Playwright-specific text=)
-  connectionStatus: '[data-testid="connection-status"]',
+  // Status indicators - use actual testids from ConnectionStatusIndicator
+  connectionStatus: '[data-testid="connection-status-indicator"], [data-testid="connection-status"]',
   metricsDisplay: '[data-testid="voice-metrics-display"]',
 
   // Transcript elements
@@ -52,13 +55,16 @@ export const VOICE_SELECTORS = {
   waveform: '[data-testid="waveform"], [class*="waveform"]',
   frequencySpectrum: '[data-testid="frequency-spectrum"]',
 
-  // Settings modal
+  // Settings modal - use actual testids from VoiceModeSettings.tsx
   settingsModal: '[data-testid="voice-settings-modal"], [role="dialog"]',
   voiceSelect: '[data-testid="voice-select"], select[name="voice"]',
   languageSelect: '[data-testid="language-select"], select[name="language"]',
   playbackSpeedSlider: '[data-testid="playback-speed"], input[name="playbackSpeed"]',
-  vadSensitivitySlider: '[data-testid="vad-sensitivity"], input[name="vadSensitivity"]',
+  vadSensitivitySlider: '[data-testid="vad-sensitivity-slider"], [data-testid="vad-sensitivity"], input[name="vadSensitivity"]',
   pushToTalkToggle: '[data-testid="push-to-talk-toggle"]',
+  closeSettingsButton: '[data-testid="close-settings"], [data-testid="done-button"]',
+  autoStartCheckbox: '[data-testid="auto-start-checkbox"]',
+  keyboardShortcutsCheckbox: '[data-testid="keyboard-shortcuts-checkbox"]',
 
   // Chat integration
   chatTimeline: '[data-testid="chat-timeline"], [data-testid="message-list"]',
@@ -73,9 +79,29 @@ export const VOICE_SELECTORS = {
 };
 
 /**
- * Helper to dismiss any blocking popups (analytics consent, onboarding, etc.)
+ * Helper to dismiss any blocking popups (analytics consent, onboarding, modals, etc.)
  */
 export async function dismissBlockingPopups(page: Page): Promise<void> {
+  // First check for voice settings modal (has highest z-index and blocks everything)
+  const voiceSettingsModal = page.locator('[data-testid="voice-settings-modal"]');
+  if (await voiceSettingsModal.count() > 0 && await voiceSettingsModal.isVisible()) {
+    // Close with Escape key
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+    // If still there, click outside
+    if (await voiceSettingsModal.isVisible()) {
+      await page.locator('body').click({ position: { x: 10, y: 10 }, force: true }).catch(() => {});
+      await page.waitForTimeout(300);
+    }
+  }
+
+  // Dismiss any other modal dialogs
+  const modalBackdrops = page.locator('[role="dialog"]');
+  if (await modalBackdrops.count() > 0) {
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+  }
+
   // Dismiss analytics consent popup
   const noThanksButton = page.locator('button:has-text("No thanks")');
   if (await noThanksButton.count() > 0) {

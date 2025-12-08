@@ -462,8 +462,14 @@ test.describe("Voice Error Handling - Error Messages", () => {
     await navigateToVoiceChat(page);
     await waitForVoicePanel(page);
 
+    // Voice mode auto-starts when panel opens, but try clicking start if available
     const startButton = page.locator(VOICE_SELECTORS.startButton);
-    await startButton.first().click();
+    if (await startButton.count() > 0 && await startButton.first().isVisible()) {
+      await startButton.first().click().catch(() => {
+        // Button may not be clickable if voice mode already started
+      });
+    }
+    // Wait for connection attempt (which will fail due to our route mock)
     await page.waitForTimeout(WAIT_TIMES.CONNECTION);
 
     const errorBanner = page.locator(VOICE_SELECTORS.errorBanner);
