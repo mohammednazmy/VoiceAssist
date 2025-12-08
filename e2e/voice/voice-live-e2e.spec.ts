@@ -257,9 +257,11 @@ test.describe("Voice Mode Live E2E", () => {
     // Wait for audio capture to start
     await page.waitForTimeout(5000);
 
-    // Check for audio activity indicators
+    // Check for audio activity indicators (supports unified and legacy UI)
+    // Unified UI: voice-input-area, voice-status-area
+    // Legacy UI: compact-voice-bar, compact-mic-button
     const audioIndicator = page.locator(
-      "[data-testid*='audio'], [class*='visualizer'], [class*='waveform']"
+      "[data-testid='voice-input-area'], [data-testid='voice-status-area'], [data-testid='compact-voice-bar'], [data-testid='compact-mic-button'], [data-testid*='audio'], [class*='visualizer'], [class*='waveform']"
     );
     const hasAudioUI = (await audioIndicator.count()) > 0;
 
@@ -282,24 +284,30 @@ test.describe("Voice Mode Live E2E", () => {
       return;
     }
 
-    // Find and click close button
+    // Method 1: Try clicking voice toggle button again (toggle off)
+    const voiceToggleButton = page.locator('[data-testid="voice-mode-toggle"], [data-testid="realtime-voice-mode-button"]').first();
+
+    // Method 2: Close buttons (supports unified and legacy UI)
+    // Unified UI: end-voice-mode
+    // Legacy UI: compact-close-btn, close-voice-mode
     const closeButton = page.locator(
-      "[data-testid='close-voice-mode'], [data-testid='tt-close-voice-mode'], button[aria-label*='close' i]"
+      "[data-testid='compact-close-btn'], [data-testid='end-voice-mode'], [data-testid='close-voice-mode'], [data-testid='tt-close-voice-mode'], button[aria-label*='close' i], button[aria-label*='end' i]"
     ).first();
 
-    if (await closeButton.isVisible()) {
+    // Try toggle button first (most reliable way to close)
+    if (await voiceToggleButton.isVisible()) {
+      await voiceToggleButton.click();
+      console.log("[Test] Clicked voice toggle button to close");
+    } else if (await closeButton.isVisible()) {
       await closeButton.click();
-      await page.waitForTimeout(1000);
-
-      // Voice panel should be closed (supports multiple panel types)
-      const voicePanel = page.locator('[data-testid="voice-mode-panel"], [data-testid="thinker-talker-voice-panel"], [data-testid="compact-voice-bar"]').first();
-      await expect(voicePanel).not.toBeVisible({ timeout: 5000 });
-    } else {
-      // Try clicking voice button again to toggle (supports unified and legacy UI)
-      const voiceButton = page.locator('[data-testid="voice-mode-toggle"], [data-testid="realtime-voice-mode-button"]').first();
-      await voiceButton.click();
-      await page.waitForTimeout(1000);
+      console.log("[Test] Clicked close button to close");
     }
+
+    await page.waitForTimeout(2000);
+
+    // Voice panel/input should be closed (supports unified and legacy UI)
+    const voicePanel = page.locator('[data-testid="voice-mode-panel"], [data-testid="thinker-talker-voice-panel"], [data-testid="compact-voice-bar"], [data-testid="voice-input-area"]').first();
+    await expect(voicePanel).not.toBeVisible({ timeout: 10000 });
 
     console.log("[Test] Voice mode closed successfully");
   });
