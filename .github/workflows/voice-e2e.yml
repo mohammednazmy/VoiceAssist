@@ -59,7 +59,7 @@ jobs:
   # ======================================
   voice-smoke:
     name: Voice Smoke Tests
-    if: ${{ (github.event_name == 'pull_request' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'smoke')) && secrets.DEEPGRAM_API_KEY != '' && secrets.ELEVENLABS_API_KEY != '' && secrets.OPENAI_API_KEY != '' && secrets.E2E_API_URL != '' }}
+    if: github.event_name == 'pull_request' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'smoke')
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -67,27 +67,58 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check required voice E2E secrets
+        id: check-secrets
+        env:
+          DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          E2E_API_URL: ${{ secrets.E2E_API_URL }}
+        run: |
+          missing=0
+          for var in DEEPGRAM_API_KEY ELEVENLABS_API_KEY OPENAI_API_KEY E2E_API_URL; do
+            if [ -z "${!var}" ]; then
+              echo "Missing $var" >> $GITHUB_STEP_SUMMARY
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "Skipping voice smoke - required secrets missing" >> $GITHUB_STEP_SUMMARY
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip voice smoke (missing secrets)
+        if: steps.check-secrets.outputs.skip == 'true'
+        run: echo "Skipping voice smoke - required secrets missing"
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: ${{ env.PNPM_VERSION }}
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Install audio tools
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Validate audio fixtures
         run: |
@@ -95,6 +126,7 @@ jobs:
             chmod +x e2e/fixtures/audio/validate-fixtures.sh
             bash e2e/fixtures/audio/validate-fixtures.sh --generate || true
           fi
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Build shared packages
         run: |
@@ -102,11 +134,13 @@ jobs:
           pnpm --filter @voiceassist/api-client build
           pnpm --filter @voiceassist/utils build
           pnpm --filter @voiceassist/telemetry build
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Build frontend
         run: pnpm --filter voiceassist-web build
         env:
           VITE_API_URL: ${{ secrets.E2E_API_URL || 'http://localhost:8000' }}
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Run voice smoke tests
         run: |
@@ -121,9 +155,10 @@ jobs:
           DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Upload test results
-        if: always()
+        if: always() && steps.check-secrets.outputs.skip != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: voice-smoke-results-${{ github.run_number }}
@@ -133,7 +168,7 @@ jobs:
           retention-days: 14
 
       - name: Upload voice metrics
-        if: always()
+        if: always() && steps.check-secrets.outputs.skip != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: voice-smoke-metrics-${{ github.run_number }}
@@ -145,7 +180,7 @@ jobs:
   # ======================================
   voice-barge-in:
     name: Voice Barge-in Tests
-    if: ${{ (github.event_name == 'pull_request' || github.event_name == 'push') && secrets.DEEPGRAM_API_KEY != '' && secrets.ELEVENLABS_API_KEY != '' && secrets.OPENAI_API_KEY != '' && secrets.E2E_API_URL != '' }}
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -153,22 +188,52 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check required voice E2E secrets
+        id: check-secrets
+        env:
+          DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          E2E_API_URL: ${{ secrets.E2E_API_URL }}
+        run: |
+          missing=0
+          for var in DEEPGRAM_API_KEY ELEVENLABS_API_KEY OPENAI_API_KEY E2E_API_URL; do
+            if [ -z "${!var}" ]; then
+              echo "Missing $var" >> $GITHUB_STEP_SUMMARY
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "Skipping voice barge-in - required secrets missing" >> $GITHUB_STEP_SUMMARY
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip voice barge-in (missing secrets)
+        if: steps.check-secrets.outputs.skip == 'true'
+        run: echo "Skipping voice barge-in - required secrets missing"
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: ${{ env.PNPM_VERSION }}
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Build shared packages
         run: |
@@ -176,11 +241,13 @@ jobs:
           pnpm --filter @voiceassist/api-client build
           pnpm --filter @voiceassist/utils build
           pnpm --filter @voiceassist/telemetry build
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Build frontend
         run: pnpm --filter voiceassist-web build
         env:
           VITE_API_URL: ${{ secrets.E2E_API_URL || 'http://localhost:8000' }}
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Run barge-in tests
         run: |
@@ -194,9 +261,10 @@ jobs:
           DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Upload test results
-        if: always()
+        if: always() && steps.check-secrets.outputs.skip != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: voice-barge-in-results-${{ github.run_number }}
@@ -210,7 +278,7 @@ jobs:
   # ======================================
   voice-nightly:
     name: Voice Nightly Matrix
-    if: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'nightly')) && secrets.DEEPGRAM_API_KEY != '' && secrets.ELEVENLABS_API_KEY != '' && secrets.OPENAI_API_KEY != '' && secrets.E2E_API_URL != '' }}
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'nightly')
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -218,27 +286,58 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check required voice E2E secrets
+        id: check-secrets
+        env:
+          DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          E2E_API_URL: ${{ secrets.E2E_API_URL }}
+        run: |
+          missing=0
+          for var in DEEPGRAM_API_KEY ELEVENLABS_API_KEY OPENAI_API_KEY E2E_API_URL; do
+            if [ -z "${!var}" ]; then
+              echo "Missing $var" >> $GITHUB_STEP_SUMMARY
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "Skipping voice nightly - required secrets missing" >> $GITHUB_STEP_SUMMARY
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip voice nightly (missing secrets)
+        if: steps.check-secrets.outputs.skip == 'true'
+        run: echo "Skipping voice nightly - required secrets missing"
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: ${{ env.PNPM_VERSION }}
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Install audio tools
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Validate and generate audio fixtures
         run: |
@@ -246,6 +345,7 @@ jobs:
             chmod +x e2e/fixtures/audio/validate-fixtures.sh
             bash e2e/fixtures/audio/validate-fixtures.sh --generate || true
           fi
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Build shared packages
         run: |
@@ -253,11 +353,13 @@ jobs:
           pnpm --filter @voiceassist/api-client build
           pnpm --filter @voiceassist/utils build
           pnpm --filter @voiceassist/telemetry build
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Build frontend
         run: pnpm --filter voiceassist-web build
         env:
           VITE_API_URL: ${{ secrets.E2E_API_URL || 'http://localhost:8000' }}
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Run nightly flag matrix tests
         run: |
@@ -272,6 +374,7 @@ jobs:
           DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Run scenario tests
         run: |
@@ -285,6 +388,7 @@ jobs:
           DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Run real audio tests
         run: |
@@ -298,9 +402,10 @@ jobs:
           DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        if: steps.check-secrets.outputs.skip != 'true'
 
       - name: Generate matrix report
-        if: always()
+        if: always() && steps.check-secrets.outputs.skip != 'true'
         run: |
           echo "# Voice Mode Nightly Test Report" > voice-matrix-report.md
           echo "" >> voice-matrix-report.md
@@ -339,7 +444,7 @@ jobs:
           fi
 
       - name: Upload test results
-        if: always()
+        if: always() && steps.check-secrets.outputs.skip != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: voice-nightly-results-${{ github.run_number }}
@@ -350,7 +455,7 @@ jobs:
           retention-days: 30
 
       - name: Upload voice metrics
-        if: always()
+        if: always() && steps.check-secrets.outputs.skip != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: voice-nightly-metrics-${{ github.run_number }}
