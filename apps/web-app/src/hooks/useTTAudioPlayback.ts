@@ -430,6 +430,7 @@ export function useTTAudioPlayback(
   // Barge-in: When true, drop incoming audio chunks until reset() is called
   // This prevents stale audio from the cancelled response from playing
   const bargeInActiveRef = useRef(false);
+  const bargeInStopLoggedRef = useRef(false);
 
   // Guard to prevent onPlaybackInterrupted from being called multiple times
   // during a single barge-in sequence (e.g., fadeOut calls it, then stop() calls it again)
@@ -963,7 +964,10 @@ export function useTTAudioPlayback(
       return;
     }
 
-    voiceLog.debug("[TTAudioPlayback] Stopping playback (barge-in)");
+    if (!bargeInStopLoggedRef.current) {
+      voiceLog.debug("[TTAudioPlayback] Stopping playback (barge-in)");
+      bargeInStopLoggedRef.current = true;
+    }
 
     // Set barge-in flag to drop any incoming audio chunks
     // This prevents stale audio from the cancelled response from playing
@@ -1119,6 +1123,7 @@ export function useTTAudioPlayback(
     // Clear barge-in flag AFTER stop() - we're starting a new response
     // This allows new audio chunks to be queued for the new response
     bargeInActiveRef.current = false;
+    bargeInStopLoggedRef.current = false;
     // NOTE: interruptCallbackFiredRef is NOT reset here - it's reset when the first
     // audio chunk of a new stream arrives in queueAudioChunk(). This prevents
     // infinite loops where reset() -> stop() -> callback -> re-render -> reset().
