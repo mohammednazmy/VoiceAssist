@@ -262,9 +262,15 @@ export function useThinkerTalkerVoiceMode(
     sileroVADEnabled = true,
     sileroEchoSuppressionMode = "threshold_boost",
     sileroPositiveThreshold = 0.5,
-    sileroPlaybackThresholdBoost = 0.2,
+    // Lower playback threshold boost for more responsive barge-in
+    // Previous: 0.2 (effective 0.7 during playback) - too conservative
+    // New: 0.1 (effective 0.6 during playback) - better balance
+    sileroPlaybackThresholdBoost = 0.1,
     sileroMinSpeechMs = 150,
-    sileroPlaybackMinSpeechMs = 200,
+    // Lower playback min speech duration for faster barge-in detection
+    // Previous: 200ms - too slow for natural interruption
+    // New: 150ms - same as normal mode for faster response
+    sileroPlaybackMinSpeechMs = 150,
   } = options;
 
   const { apiClient } = useAuth();
