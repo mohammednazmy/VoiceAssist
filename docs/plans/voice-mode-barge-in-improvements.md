@@ -405,6 +405,16 @@ def decide_barge_in(self, silero_state: VADState, deepgram_event: SpeechEvent) -
 - Brief text bubble with backchannel phrase ("Got it...")
 - Subtle audio indicator (soft chime) when processing long query
 
+### Delivery Priorities, Safety, and Compatibility
+
+- **MVP first, stretch later:** Ship (1) hybrid VAD fusion + 500ms rollback, (2) queue/scheduling guardrails, (3) clean transcript truncation, (4) manual overrides. Treat semantic VAD, emotional awareness, TRP detection, full-duplex overlap, and active backchanneling as stretch behind flags until validated.
+- **Kill switches:** One master `backend.voice_barge_in_killswitch` plus per-feature flags (semantic, emotional, TRP, backchanneling) to instantly revert to the current barge-in path.
+- **Consent & privacy:** Emotion/semantic classification must never log raw audio or PII; only derived labels/metrics. Disable emotion detection if the user has not opted in; tag events with `privacy_opt_out` when applicable.
+- **Device/browser compatibility:** Detect lack of `AudioWorklet`/`SharedArrayBuffer` (Safari/Firefox/mobile) and fall back to low-power mode with Deepgram-first barge-in. Skip AEC feedback polling when WebRTC stats are unavailable.
+- **Acoustic robustness:** Maintain per-device presets (laptop mic, AirPods, wired headset) with default thresholds; expose a quick selector in voice settings.
+- **A/B + ramp plan:** Default new classifiers off; run 10% → 50% → 100% experiments with guardrail alerts (misfire >2%, mute latency >75ms, queue overflows >1%). Roll back automatically on alert breach.
+- **Data minimization:** Sample VAD/confidence events (e.g., 10%) in production; redact transcripts/user IDs from structured events; clamp metric cardinality.
+
 ### Naturalness, Fallbacks, and Safety Optimizations
 
 - **Perceived latency measurement:** Capture t0 (user speech start), t1 (barge-in mute), t2 (first token), t3 (first audio chunk played) to compute perceived latency client-side and stream to metrics for P50/P95 tracking.
