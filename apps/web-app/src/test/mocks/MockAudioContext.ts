@@ -438,6 +438,36 @@ export class MockAudioContext {
     return node;
   }
 
+  // Legacy ScriptProcessorNode (used by tests to avoid real AudioWorklet)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  createScriptProcessor(
+    bufferSize = 0,
+    numberOfInputChannels = 1,
+    numberOfOutputChannels = 1,
+  ): any {
+    const inputBuffer = {
+      numberOfChannels: numberOfInputChannels,
+      getChannelData: vi.fn(() => new Float32Array(bufferSize || 1024).fill(0)),
+    };
+
+    const node: any = {
+      context: this as unknown as AudioContext,
+      bufferSize,
+      numberOfInputs: numberOfInputChannels,
+      numberOfOutputs: numberOfOutputChannels,
+      inputBuffer,
+      onaudioprocess: null,
+      connect: vi.fn(() => node),
+      disconnect: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    };
+
+    this._createdNodes.push(node);
+    return node;
+  }
+
   createBuffer(
     numberOfChannels: number,
     length: number,

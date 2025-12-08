@@ -44,10 +44,16 @@ export function VoiceActivityIndicator({
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      animationRef.current = requestAnimationFrame(draw);
+      return;
+    }
 
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) {
+      animationRef.current = requestAnimationFrame(draw);
+      return;
+    }
 
     const width = canvas.width;
     const height = canvas.height;

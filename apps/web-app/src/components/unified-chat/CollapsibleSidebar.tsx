@@ -58,22 +58,23 @@ export function CollapsibleSidebar({
 
   // Use conversations hook
   const {
-    conversations,
-    allConversations,
-    isLoading,
-    isLoadingMore,
-    error,
-    searchQuery,
-    setSearchQuery,
-    hasMore,
-    loadMore,
-    deleteConversation,
-    deleteAllConversations,
-    archiveConversation,
-    reload,
+    conversations = [],
+    allConversations: rawAllConversations,
+    isLoading = false,
+    isLoadingMore = false,
+    error = null,
+    searchQuery = "",
+    setSearchQuery = () => {},
+    hasMore = false,
+    loadMore = () => Promise.resolve(),
+    deleteConversation = () => {},
+    deleteAllConversations = async () => ({ deleted_count: 0 }),
+    archiveConversation = () => {},
+    reload = () => Promise.resolve(),
   } = useConversations({
     onError: (message, description) => toast.error(message, description),
   });
+  const allConversations = rawAllConversations ?? conversations;
 
   // Delete All state
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);

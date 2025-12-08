@@ -148,8 +148,8 @@ export function detectTextDirection(
     }
   }
 
-  // Return RTL if more RTL chars than LTR, otherwise default
-  if (rtlCount > ltrCount) {
+  // Return RTL if RTL chars are equal to or outnumber LTR (bias toward RTL when mixed)
+  if (rtlCount >= ltrCount && rtlCount > 0) {
     return "rtl";
   }
 
@@ -207,21 +207,27 @@ export function convertClassesForDirection(
   classes: string,
   direction: TextDirection,
 ): string {
-  if (direction === "ltr") {
+  if (direction === "ltr" || !classes.trim()) {
     return classes;
   }
 
-  let converted = classes;
+  const tokens = classes.split(/\s+/).filter(Boolean);
 
-  for (const [ltr, rtl] of Object.entries(RTL_CLASS_MAP)) {
-    // Create regex that matches the class with optional value (e.g., pl-4)
-    const regex = new RegExp(`\\b${ltr.replace("-", "-")}(\\d+)?\\b`, "g");
-    converted = converted.replace(regex, (match, value) => {
-      return value !== undefined ? `${rtl}${value}` : rtl.replace(/-$/, "");
-    });
-  }
+  const convertToken = (token: string): string => {
+    for (const [ltr, rtl] of Object.entries(RTL_CLASS_MAP)) {
+      if (ltr.endsWith("-")) {
+        if (token.startsWith(ltr)) {
+          const suffix = token.slice(ltr.length);
+          return `${rtl}${suffix}`;
+        }
+      } else if (token === ltr) {
+        return rtl;
+      }
+    }
+    return token;
+  };
 
-  return converted;
+  return tokens.map(convertToken).join(" ");
 }
 
 /**

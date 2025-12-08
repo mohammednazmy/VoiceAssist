@@ -292,7 +292,6 @@ export function useThinkerTalkerVoiceMode(
   } = useUnifiedConversationStore();
 
   // Get auth token for API calls
-  const { apiClient } = useAuth();
   const tokens = useAuthStore((state) => state.tokens);
   const getAccessToken = useCallback(
     () => tokens?.accessToken || null,
@@ -591,7 +590,7 @@ export function useThinkerTalkerVoiceMode(
 
     // Handle audio chunks
     onAudioChunk: (audioBase64: string) => {
-      console.log("[TTVoiceMode] onAudioChunk called", {
+      voiceLog.debug("[TTVoiceMode] Audio chunk received", {
         audioLength: audioBase64.length,
       });
       audioPlayback.queueAudioChunk(audioBase64);

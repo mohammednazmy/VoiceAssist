@@ -330,11 +330,13 @@ export function UnifiedInputArea({
           onClick={handleModeToggle}
           disabled={disabled}
           className={`flex items-center gap-2 px-3 py-2.5 rounded-lg font-medium transition-colors ${getModeToggleColor()}`}
-          aria-label={isVoiceActive ? "Close voice mode" : "Open voice mode"}
+          aria-label={
+            isVoiceActive ? "Close voice mode" : "Switch to voice mode"
+          }
           title={
             isVoiceActive
               ? "Click to close voice mode"
-              : "Click to open voice mode"
+              : "Click to switch to voice mode"
           }
           data-testid="voice-mode-toggle"
         >

@@ -382,7 +382,7 @@ describe("MediaGallery", () => {
       );
 
       const button = screen.getByRole("button");
-      expect(button).toHaveStyle({ maxHeight: 200 });
+      expect(button).toHaveStyle({ maxHeight: "200px" });
     });
   });
 

@@ -319,6 +319,7 @@ export function useTTAudioPlayback(
   const firstChunkTimeRef = useRef<number | null>(null);
   const playbackStartTimeRef = useRef<number | null>(null);
   const streamEndedRef = useRef(false);
+  const playbackCompletedRef = useRef(false);
   const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
   // For gapless scheduled playback
   const nextScheduledTimeRef = useRef<number>(0);
@@ -502,6 +503,10 @@ export function useTTAudioPlayback(
             ) {
               voiceLog.debug("[TTAudioPlayback] All audio finished");
               voiceLog.debug("[TTAudioPlayback] All audio finished");
+              if (bargeInActiveRef.current || playbackCompletedRef.current) {
+                return;
+              }
+              playbackCompletedRef.current = true;
               isPlayingRef.current = false;
               setPlaybackState("idle");
               if (playbackStartTimeRef.current) {
@@ -633,6 +638,7 @@ export function useTTAudioPlayback(
       if (!streamStartTimeRef.current) {
         streamStartTimeRef.current = Date.now();
         streamEndedRef.current = false;
+        playbackCompletedRef.current = false;
         // Reset scheduling time for new stream to prevent stale future scheduling
         // This ensures audio plays immediately rather than minutes in the future
         nextScheduledTimeRef.current = 0;
@@ -737,7 +743,21 @@ export function useTTAudioPlayback(
   const endStream = useCallback(() => {
     voiceLog.debug("[TTAudioPlayback] Stream ended signal received");
     streamEndedRef.current = true;
-  }, []);
+    if (
+      !bargeInActiveRef.current &&
+      audioQueueRef.current.length === 0 &&
+      activeSourcesRef.current.size === 0 &&
+      !playbackCompletedRef.current
+    ) {
+      playbackCompletedRef.current = true;
+      isPlayingRef.current = false;
+      setPlaybackState("idle");
+      if (playbackStartTimeRef.current) {
+        setTotalPlayedMs(Date.now() - playbackStartTimeRef.current);
+      }
+      onPlaybackEnd?.();
+    }
+  }, [onPlaybackEnd]);
 
   /**
    * Stop playback immediately (barge-in)
@@ -887,6 +907,7 @@ export function useTTAudioPlayback(
     firstChunkTimeRef.current = null;
     playbackStartTimeRef.current = null;
     streamEndedRef.current = false;
+    playbackCompletedRef.current = false;
     nextScheduledTimeRef.current = 0;
     isProcessingRef.current = false;
     setTtfaMs(null);

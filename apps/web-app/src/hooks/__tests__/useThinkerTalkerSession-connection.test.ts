@@ -166,6 +166,12 @@ describe("useThinkerTalkerSession - Connection Lifecycle", () => {
 
       const ws = MockWebSocket.getLastInstance();
       await act(async () => {
+        if (ws) {
+          ws.forceOpen?.();
+          if (ws.readyState !== MockWebSocket.OPEN) {
+            ws.readyState = MockWebSocket.OPEN;
+          }
+        }
         ws?.receiveMessage({
           type: "session.ready",
           session_id: "test-session-123",
@@ -327,6 +333,12 @@ describe("useThinkerTalkerSession - Connection Lifecycle", () => {
 
       const ws = MockWebSocket.getLastInstance();
       await act(async () => {
+        if (ws) {
+          ws.forceOpen?.();
+          if (ws.readyState !== MockWebSocket.OPEN) {
+            ws.readyState = MockWebSocket.OPEN;
+          }
+        }
         ws?.receiveMessage({
           type: "session.ready",
           session_id: "test-session-123",
@@ -350,6 +362,12 @@ describe("useThinkerTalkerSession - Connection Lifecycle", () => {
 
       const ws = MockWebSocket.getLastInstance();
       await act(async () => {
+        if (ws) {
+          ws.forceOpen?.();
+          if (ws.readyState !== MockWebSocket.OPEN) {
+            ws.readyState = MockWebSocket.OPEN;
+          }
+        }
         ws?.receiveMessage({
           type: "session.ready",
           session_id: "test-session-123",

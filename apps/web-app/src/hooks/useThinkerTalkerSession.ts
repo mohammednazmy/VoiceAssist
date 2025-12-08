@@ -1327,13 +1327,15 @@ export function useThinkerTalkerSession(
           const duration = speechEndTimeRef.current
             ? now - speechEndTimeRef.current
             : 0;
-          if (speechEndTimeRef.current) {
-            const sttLatency = now - speechEndTimeRef.current;
-            firstTranscriptTimeRef.current = now;
-            updateMetrics({
-              sttLatencyMs: sttLatency,
-              userUtteranceCount: metrics.userUtteranceCount + 1,
-            });
+          const sttLatency = speechEndTimeRef.current
+            ? now - speechEndTimeRef.current
+            : null;
+          firstTranscriptTimeRef.current = now;
+          updateMetrics({
+            sttLatencyMs: sttLatency,
+            userUtteranceCount: metrics.userUtteranceCount + 1,
+          });
+          if (sttLatency !== null) {
             voiceLog.debug(`[ThinkerTalker] STT latency: ${sttLatency}ms`);
           }
 
@@ -1753,6 +1755,20 @@ export function useThinkerTalkerSession(
             }
           } else if (state === "speaking") {
             setIsSpeaking(true);
+          }
+          break;
+        }
+
+        case "pipeline.state": {
+          const state = message.state as PipelineState;
+          pipelineStateRef.current = state;
+          setPipelineState(state);
+          options.onPipelineStateChange?.(state);
+          // Keep speaking flag aligned for UI/tests
+          if (state === "speaking") {
+            setIsSpeaking(true);
+          } else if (state === "listening") {
+            setIsSpeaking(false);
           }
           break;
         }
@@ -2843,9 +2859,7 @@ export function useThinkerTalkerSession(
     isConnecting: status === "connecting",
     isReady: status === "ready",
     isMicPermissionDenied: status === "mic_permission_denied",
-    canSend:
-      (status === "connected" || status === "ready") &&
-      wsRef.current?.readyState === WebSocket.OPEN,
+    canSend: status === "connected" || status === "ready",
     isProcessing: pipelineState === "processing",
     isListening: pipelineState === "listening",
 

@@ -206,6 +206,16 @@ export class MockWebSocket {
   }
 
   /**
+   * Force-open the socket immediately (bypasses autoConnect delay)
+   */
+  forceOpen(): void {
+    if (this.readyState !== MockWebSocket.OPEN) {
+      this.readyState = MockWebSocket.OPEN;
+      this._dispatchEvent("open", new Event("open"));
+    }
+  }
+
+  /**
    * Simulate session.ready event
    */
   sendSessionReady(sessionId?: string): void {
