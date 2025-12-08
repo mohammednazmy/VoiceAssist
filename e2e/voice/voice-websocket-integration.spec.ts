@@ -500,25 +500,69 @@ test.describe("Barge-In Functionality", () => {
     await page.waitForTimeout(8000);
 
     const events = await waitForCapturedEvents(page);
-    const speechEvent = events.find(
-      (e: any) =>
-        typeof e?.type === "string" && e.type.includes("speech_started"),
+    const sorted = [...events].sort(
+      (a: any, b: any) => (a?.timestamp ?? 0) - (b?.timestamp ?? 0),
     );
-    const listeningEvent = events.find(
+    const speechEvent = sorted.find(
+      (e: any) =>
+        typeof e?.type === "string" &&
+        (e.type.includes("speech_started") || e.type.includes("speech")),
+    );
+    const listeningEvent = sorted.find(
       (e: any) =>
         typeof e?.type === "string" &&
         e.type.includes("voice.state") &&
-        (e.data as any)?.state === "listening",
+        (e.data as any)?.state === "listening" &&
+        (e?.timestamp ?? 0) >= (speechEvent?.timestamp ?? 0),
     );
 
     const latency =
       speechEvent && listeningEvent
-        ? (listeningEvent as any).timestamp - (speechEvent as any).timestamp
+        ? Math.max(
+            0,
+            (listeningEvent as any).timestamp - (speechEvent as any).timestamp,
+          )
         : null;
 
     console.log(`[Test] Barge-in latency: ${latency ?? "n/a"}ms`);
     console.log(`[Test] WS events captured: ${events.length}`);
     expect(events.length).toBeGreaterThan(0);
+
+    // Capture distribution across all detected speech -> listening transitions
+    const bargeLatencies: number[] = [];
+    sorted.forEach((event: any, idx: number) => {
+      if (
+        typeof event?.type === "string" &&
+        event.type.includes("speech_started")
+      ) {
+        const nextListening = sorted.slice(idx + 1).find((e: any) => {
+          return (
+            typeof e?.type === "string" &&
+            e.type.includes("voice.state") &&
+            (e.data as any)?.state === "listening"
+          );
+        });
+        if (nextListening?.timestamp != null && event?.timestamp != null) {
+          bargeLatencies.push(
+            Math.max(0, nextListening.timestamp - event.timestamp),
+          );
+        }
+      }
+    });
+    if (bargeLatencies.length) {
+      const avg =
+        bargeLatencies.reduce((a, b) => a + b, 0) / bargeLatencies.length;
+      const max = Math.max(...bargeLatencies);
+      const min = Math.min(...bargeLatencies);
+      console.log(
+        `[Test] Barge-in latency distribution (ms): count=${bargeLatencies.length}, min=${min.toFixed(
+          1,
+        )}, avg=${avg.toFixed(1)}, max=${max.toFixed(1)}`,
+      );
+      expect(max).toBeLessThan(12000);
+    } else {
+      console.warn("[Test] No barge-in latency samples recorded");
+    }
   });
 
   test("verifies audio stops after barge-in", async ({ page }) => {
@@ -597,14 +641,27 @@ test.describe("Voice Performance Metrics", () => {
     await page.waitForTimeout(8000);
 
     const events = await waitForCapturedEvents(page);
+    const sorted = [...events].sort(
+      (a: any, b: any) => (a?.timestamp ?? 0) - (b?.timestamp ?? 0),
+    );
+    const baseTs = sorted[0]?.timestamp ?? null;
+    const rel = (predicate: (t: string) => boolean) => {
+      const ts =
+        sorted.find(
+          (e: any) => typeof e?.type === "string" && predicate(e.type),
+        )?.timestamp ?? null;
+      return ts !== null && baseTs !== null ? ts - baseTs : null;
+    };
+
     const ts = (predicate: (t: string) => boolean) =>
       events.find((e: any) => typeof e?.type === "string" && predicate(e.type))
         ?.timestamp ?? null;
     const connectionTime =
-      ts((t) => t === "session.ready") || ts((t) => t.includes("voice.state"));
-    const firstTranscript = ts((t) => t.startsWith("transcript"));
-    const firstResponse = ts((t) => t.startsWith("response"));
-    const firstAudio = ts((t) => t.includes("audio"));
+      rel((t) => t === "session.ready") ||
+      rel((t) => t.includes("voice.state"));
+    const firstTranscript = rel((t) => t.startsWith("transcript"));
+    const firstResponse = rel((t) => t.startsWith("response"));
+    const firstAudio = rel((t) => t.includes("audio"));
 
     console.log("\n=== Voice Mode Performance Metrics ===");
     console.log(`Connection time: ${connectionTime ?? "n/a"}ms`);
@@ -616,6 +673,18 @@ test.describe("Voice Performance Metrics", () => {
     console.log("=====================================\n");
     console.log(`[Test] WS events captured: ${events.length}`);
     expect(events.length).toBeGreaterThan(0);
+
+    // Assert reasonable relative timings
+    expect(connectionTime).not.toBeNull();
+    if (connectionTime !== null) {
+      expect(connectionTime).toBeLessThan(5000);
+    }
+    if (firstTranscript !== null) {
+      expect(firstTranscript).toBeLessThan(12000);
+    }
+    if (firstAudio !== null) {
+      expect(firstAudio).toBeLessThan(5000);
+    }
   });
 });
 
@@ -630,10 +699,25 @@ test.describe("Voice Error Handling", () => {
 
     // Check for error UI or reconnect attempt
     const errorElement = page.locator(
-      "[data-testid*='error'], [class*='error'], [role='alert']",
+      "[data-testid*='error']:not(.sr-only), [class*='error']:not(.sr-only), [role='alert']:not(.sr-only)",
     );
-    const errorVisible = (await errorElement.count()) > 0;
+    const errorVisible =
+      (await errorElement.count()) > 0 &&
+      ((await errorElement.first().isVisible()) ||
+        ((await errorElement.first().textContent()) ?? "").trim().length > 0);
+    const errorText = errorVisible
+      ? await errorElement.first().textContent()
+      : "";
+    const errorHtml = errorVisible
+      ? await errorElement.first().evaluate((el) => el.outerHTML)
+      : "";
     console.log(`[Test] Error UI visible: ${errorVisible}`);
+    if (errorText) {
+      console.log(`[Test] Error text: ${errorText}`);
+    }
+    if (errorHtml) {
+      console.log(`[Test] Error html: ${errorHtml}`);
+    }
     console.log(`[Test] WS events captured: ${capturedEvents.length}`);
     expect(capturedEvents.length).toBeGreaterThan(0);
   });
@@ -643,10 +727,25 @@ test.describe("Voice Error Handling", () => {
     const capturedEvents = await waitForCapturedEvents(page, 1);
 
     const errorElement = page.locator(
-      "[data-testid*='error'], [class*='error'], [role='alert']",
+      "[data-testid*='error']:not(.sr-only), [class*='error']:not(.sr-only), [role='alert']:not(.sr-only)",
     );
-    const errorVisible = (await errorElement.count()) > 0;
+    const errorVisible =
+      (await errorElement.count()) > 0 &&
+      ((await errorElement.first().isVisible()) ||
+        ((await errorElement.first().textContent()) ?? "").trim().length > 0);
+    const errorText = errorVisible
+      ? await errorElement.first().textContent()
+      : "";
+    const errorHtml = errorVisible
+      ? await errorElement.first().evaluate((el) => el.outerHTML)
+      : "";
     console.log(`[Test] Error UI visible: ${errorVisible}`);
+    if (errorText) {
+      console.log(`[Test] Error text: ${errorText}`);
+    }
+    if (errorHtml) {
+      console.log(`[Test] Error html: ${errorHtml}`);
+    }
     console.log(`[Test] WS events captured: ${capturedEvents.length}`);
     expect(capturedEvents.length).toBeGreaterThan(0);
   });
