@@ -900,6 +900,71 @@ export const FEATURE_FLAGS = {
     // -------------------------------------------------------------------------
     // Natural Conversation Flow Flags - Phase: Natural Conversation
     // -------------------------------------------------------------------------
+    voice_queue_overflow_protection: {
+      name: "backend.voice_queue_overflow_protection",
+      description:
+        "[Natural Conversation Phase 1] Enable audio queue overflow protection. " +
+        "Enforces MAX_QUEUE_DURATION_MS (1000ms) limit on audio queue to prevent " +
+        "runaway accumulation. Automatically trims old chunks when queue exceeds limit.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useTTAudioPlayback"],
+        otherFlags: [],
+      },
+    },
+    voice_schedule_watchdog: {
+      name: "backend.voice_schedule_watchdog",
+      description:
+        "[Natural Conversation Phase 1] Enable scheduling watchdog for audio playback. " +
+        "Runs every 500ms to detect stuck schedules and queue overflow. " +
+        "Automatically resets schedule if stuck more than 2x lookahead ahead.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useTTAudioPlayback"],
+        otherFlags: ["backend.voice_queue_overflow_protection"],
+      },
+    },
+    voice_intelligent_barge_in: {
+      name: "backend.voice_intelligent_barge_in",
+      description:
+        "[Natural Conversation Phase 2] Enable intelligent barge-in classification. " +
+        "Classifies user interruptions as backchannel, soft_barge, hard_barge, or unclear. " +
+        "Supports 12 languages with fuzzy matching for STT error tolerance.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useIntelligentBargeIn",
+          "classifyBargeIn",
+          "BargeInClassifier",
+          "ThinkerTalkerWebSocketHandler",
+        ],
+        otherFlags: [],
+      },
+    },
     voice_instant_barge_in: {
       name: "backend.voice_instant_barge_in",
       description:
