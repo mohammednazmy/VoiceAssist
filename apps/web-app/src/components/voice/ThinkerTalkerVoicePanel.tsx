@@ -105,6 +105,10 @@ export function ThinkerTalkerVoicePanel({
   };
 
   // Auto-connect when panel opens (single-click voice activation)
+  // Store connect function in ref to avoid triggering effect on every render
+  const connectRef = useRef(voiceMode.connect);
+  connectRef.current = voiceMode.connect;
+
   const hasAutoConnected = useRef(false);
   useEffect(() => {
     // Only auto-connect once when panel mounts
@@ -114,9 +118,13 @@ export function ThinkerTalkerVoicePanel({
       !voiceMode.isConnecting
     ) {
       hasAutoConnected.current = true;
-      voiceMode.connect();
+      connectRef.current();
     }
-  }, [voiceMode.isConnected, voiceMode.isConnecting, voiceMode.connect]);
+    // Note: We intentionally exclude voiceMode.connect from dependencies
+    // because the ref ensures we always use the latest function,
+    // and we only want this effect to run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voiceMode.isConnected, voiceMode.isConnecting]);
 
   // Handle close - disconnect if connected
   const handleClose = useCallback(() => {

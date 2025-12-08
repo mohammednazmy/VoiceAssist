@@ -35,10 +35,23 @@ import {
 } from "./types";
 
 /**
+ * Get the API base URL from environment, with fallback to relative path
+ * This ensures the ExperimentService uses the correct backend URL in all environments
+ */
+const getApiBaseUrl = (): string => {
+  // In browser environment, check for VITE_API_URL
+  if (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  // Fallback to relative path for production builds served from same domain
+  return "";
+};
+
+/**
  * Default configuration
  */
 const DEFAULT_CONFIG: ExperimentConfig = {
-  apiEndpoint: "/api/experiments",
+  apiEndpoint: `${getApiBaseUrl()}/api/experiments`,
   cacheDuration: 300000, // 5 minutes
   enableOffline: true,
   defaultStrategy: "deterministic",

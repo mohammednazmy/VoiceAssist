@@ -5,8 +5,12 @@
  * For live backend tests, this fetches real JWT tokens.
  */
 
+import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
+
+// Load E2E environment variables from e2e/.env.e2e
+dotenv.config({ path: path.join(__dirname, ".env.e2e") });
 
 const AUTH_FILE = path.join(__dirname, ".auth/user.json");
 const ADMIN_AUTH_FILE = path.join(__dirname, ".auth/admin.json");
