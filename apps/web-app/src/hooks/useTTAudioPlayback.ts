@@ -59,7 +59,7 @@ const MAX_PREBUFFER_WAIT_MS = 500;
  * (currentTime starts at 0 and advances slowly). This prevents the scheduling
  * loop from getting stuck waiting for currentTime to catch up.
  */
-const MAX_SCHEDULE_LOOKAHEAD_S = 1.5; // tighten lookahead to reduce perceived lag
+const MAX_SCHEDULE_LOOKAHEAD_S = 1.0; // tighten lookahead to reduce perceived lag
 
 /**
  * Crossfade duration in samples for smooth chunk transitions.
@@ -369,6 +369,7 @@ export function useTTAudioPlayback(
     if (bargeInActiveRef.current) {
       audioQueueRef.current = [];
       isProcessingRef.current = false;
+      nextScheduledTimeRef.current = 0;
       return;
     }
 
@@ -406,11 +407,32 @@ export function useTTAudioPlayback(
         const now = audioContext.currentTime;
         const scheduledAhead = nextScheduledTimeRef.current - now;
         if (scheduledAhead > MAX_SCHEDULE_LOOKAHEAD_S) {
-          // Clamp the schedule to keep latency low instead of spinning
+          // Hard reset the schedule to avoid runaway lookahead and drop stale audio
           voiceLog.warn(
-            `[TTAudioPlayback] Clamping schedule ahead (${scheduledAhead.toFixed(2)}s) to reduce latency`,
+            `[TTAudioPlayback] Overscheduled by ${scheduledAhead.toFixed(2)}s; resetting schedule and trimming queue`,
           );
           nextScheduledTimeRef.current = now + 0.01; // schedule near-future
+
+          // Stop any already scheduled sources so barge-in or new audio is not delayed
+          for (const source of activeSourcesRef.current) {
+            try {
+              source.stop();
+              source.disconnect();
+            } catch {
+              // Ignore
+            }
+          }
+          activeSourcesRef.current.clear();
+
+          // Keep only the most recent chunks to prevent long backlogs (preserve minimal buffer)
+          const maxBufferedChunks = Math.max(
+            prebufferChunks,
+            DEFAULT_PREBUFFER_CHUNKS,
+          );
+          if (audioQueueRef.current.length > maxBufferedChunks) {
+            audioQueueRef.current =
+              audioQueueRef.current.slice(-maxBufferedChunks);
+          }
         }
 
         const audioData = audioQueueRef.current.shift()!;
@@ -571,6 +593,7 @@ export function useTTAudioPlayback(
     onPlaybackEnd,
     enableCrossfade,
     crossfadeSamples,
+    prebufferChunks,
   ]);
 
   /**
