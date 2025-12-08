@@ -1,6 +1,6 @@
 {
-  "count": 295,
-  "generated_at": "2025-12-08T00:37:21.866Z",
+  "count": 296,
+  "generated_at": "2025-12-08T03:41:57.771Z",
   "docs": [
     {
       "slug": "reference/style-guide",
@@ -10,11 +10,17 @@
       "ai_summary": "This guide establishes consistent writing standards for all VoiceAssist documentation, ensuring clarity for both human readers and AI agents. Every markdown document MUST include frontmatter: --- title: Document Title (required) status: draft|experimental|stable|deprecated (required) lastUpdated:...",
       "status": "stable",
       "owner": "docs",
-      "audience": ["developers", "technical-writers", "ai-agents"],
+      "audience": [
+        "developers",
+        "technical-writers",
+        "ai-agents"
+      ],
       "category": "reference",
       "component": "docs/standards",
-      "relatedPaths": ["docs/DOCUMENTATION_METADATA_STANDARD.md"],
-      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+      "relatedPaths": [
+        "docs/DOCUMENTATION_METADATA_STANDARD.md"
+      ],
+      "lastUpdated": "Thu Dec 04 2025 00:00:00 GMT+0000 (Coordinated Universal Time)"
     },
     {
       "slug": "admin-guide/feature-flags/overview",
@@ -24,7 +30,11 @@
       "ai_summary": "Feature flags enable runtime feature toggling without deployments. Use category.feature_name pattern (e.g., ui.dark_mode, backend.rag_strategy). Flags stored in PostgreSQL, cached in Redis (5min TTL).",
       "status": "stable",
       "owner": "backend",
-      "audience": ["developers", "admin", "ai-agents"],
+      "audience": [
+        "developers",
+        "admin",
+        "ai-agents"
+      ],
       "category": "feature-flags",
       "component": "backend/api-gateway",
       "relatedPaths": [
@@ -32,7 +42,7 @@
         "services/api-gateway/app/api/admin_feature_flags.py",
         "packages/types/src/featureFlags.ts"
       ],
-      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+      "lastUpdated": "Thu Dec 04 2025 00:00:00 GMT+0000 (Coordinated Universal Time)"
     },
     {
       "slug": "admin-guide/feature-flags/admin-panel-guide",
@@ -42,14 +52,18 @@
       "ai_summary": "Admin Panel at admin.asimo.io provides UI for flag management. Navigate to Settings > Feature Flags. Toggle, edit percentage, filter by category. Real-time updates via SSE. Scheduled Changes tab for time-based variant weight modifications with timezone support. RBAC enforced (admin for write, viewer for read). Prometheus metrics track scheduled changes. Requires admin JWT.",
       "status": "stable",
       "owner": "frontend",
-      "audience": ["admin", "developers", "ai-agents"],
+      "audience": [
+        "admin",
+        "developers",
+        "ai-agents"
+      ],
       "category": "feature-flags",
       "component": "frontend/admin-panel",
       "relatedPaths": [
         "apps/admin-panel/src/pages/FeatureFlags.tsx",
         "services/api-gateway/app/api/admin_feature_flags.py"
       ],
-      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+      "lastUpdated": "Thu Dec 04 2025 00:00:00 GMT+0000 (Coordinated Universal Time)"
     },
     {
       "slug": "admin-guide/feature-flags/advanced-types",
@@ -59,14 +73,17 @@
       "ai_summary": "Four flag types available - boolean (on/off), percentage (gradual rollout 0-100%), variant (A/B/C testing), scheduled (time-based activation). Use percentage for safe rollouts, variant for A/B tests.",
       "status": "stable",
       "owner": "backend",
-      "audience": ["developers", "ai-agents"],
+      "audience": [
+        "developers",
+        "ai-agents"
+      ],
       "category": "feature-flags",
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/services/feature_flag_service.py",
         "packages/types/src/featureFlags.ts"
       ],
-      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+      "lastUpdated": "Thu Dec 04 2025 00:00:00 GMT+0000 (Coordinated Universal Time)"
     },
     {
       "slug": "admin-guide/feature-flags/best-practices",
@@ -76,14 +93,17 @@
       "ai_summary": "Keep flags temporary (remove after stable rollout). Use descriptive names. Start with 10% rollouts. Always have rollback plan. Review flags quarterly. Document in code and commit messages.",
       "status": "stable",
       "owner": "backend",
-      "audience": ["developers", "ai-agents"],
+      "audience": [
+        "developers",
+        "ai-agents"
+      ],
       "category": "feature-flags",
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/services/feature_flag_service.py",
         "packages/types/src/featureFlags.ts"
       ],
-      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+      "lastUpdated": "Thu Dec 04 2025 00:00:00 GMT+0000 (Coordinated Universal Time)"
     },
     {
       "slug": "admin-guide/feature-flags/lifecycle",
@@ -93,14 +113,17 @@
       "ai_summary": "Flags go through 4 stages - creation (disabled), testing (dev/staging), rollout (gradual %), retirement (cleanup). Always start disabled, test in non-prod, use percentage rollouts, clean up after 100% stable.",
       "status": "stable",
       "owner": "backend",
-      "audience": ["developers", "ai-agents"],
+      "audience": [
+        "developers",
+        "ai-agents"
+      ],
       "category": "feature-flags",
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/services/feature_flag_service.py",
         "packages/types/src/featureFlags.ts"
       ],
-      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+      "lastUpdated": "Thu Dec 04 2025 00:00:00 GMT+0000 (Coordinated Universal Time)"
     },
     {
       "slug": "admin-guide/feature-flags/multi-environment",
@@ -110,14 +133,18 @@
       "ai_summary": "Flags have per-environment states. Dev flags auto-enable, staging mirrors prod with overrides, prod requires explicit enablement. Use Redis namespaced keys (flags:dev:name, flags:prod:name).",
       "status": "stable",
       "owner": "backend",
-      "audience": ["developers", "devops", "ai-agents"],
+      "audience": [
+        "developers",
+        "devops",
+        "ai-agents"
+      ],
       "category": "feature-flags",
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/core/config.py",
         "services/api-gateway/app/services/feature_flag_service.py"
       ],
-      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+      "lastUpdated": "Thu Dec 04 2025 00:00:00 GMT+0000 (Coordinated Universal Time)"
     },
     {
       "slug": "admin-guide/feature-flags/naming-conventions",
@@ -127,14 +154,17 @@
       "ai_summary": "Use category.feature_name pattern. Categories are ui, backend, admin, integration, experiment, ops. Use snake_case for feature names. Never use hyphens or the deprecated ff_ prefix.",
       "status": "stable",
       "owner": "backend",
-      "audience": ["developers", "ai-agents"],
+      "audience": [
+        "developers",
+        "ai-agents"
+      ],
       "category": "feature-flags",
       "component": "backend/api-gateway",
       "relatedPaths": [
         "packages/types/src/featureFlags.ts",
         "services/api-gateway/app/core/flag_definitions.py"
       ],
-      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+      "lastUpdated": "Thu Dec 04 2025 00:00:00 GMT+0000 (Coordinated Universal Time)"
     },
     {
       "slug": "admin-guide/system-settings-vs-flags",
@@ -144,14 +174,18 @@
       "ai_summary": "Use system settings for permanent config (API_TIMEOUT, DATABASE_URL). Use feature flags for temporary toggles (new features, A/B tests, gradual rollouts). Settings need deployment to change; flags change at runtime.",
       "status": "stable",
       "owner": "backend",
-      "audience": ["developers", "admin", "ai-agents"],
+      "audience": [
+        "developers",
+        "admin",
+        "ai-agents"
+      ],
       "category": "reference",
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/core/config.py",
         "services/api-gateway/app/services/feature_flag_service.py"
       ],
-      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+      "lastUpdated": "Thu Dec 04 2025 00:00:00 GMT+0000 (Coordinated Universal Time)"
     },
     {
       "slug": "feature-flags/phase-4-user-overrides-plan",
@@ -161,9 +195,12 @@
       "ai_summary": "Phase 4 adds per-user flag overrides via user_flag_overrides table, admin UI for managing overrides, API endpoints for CRUD operations, and SDK client methods. Distinguishes between scheduled variant changes and user-specific overrides in the UI.",
       "status": "draft",
       "owner": "backend",
-      "audience": ["developers", "admins"],
+      "audience": [
+        "developers",
+        "admins"
+      ],
       "category": "feature-flags",
-      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+      "lastUpdated": "Thu Dec 04 2025 00:00:00 GMT+0000 (Coordinated Universal Time)"
     },
     {
       "slug": "planning/docs-enhancement-phase-2",
@@ -172,7 +209,10 @@
       "ai_summary": "Actionable TODO for AI agents: Implement code_refs frontmatter linking docs to code excerpts, and versioning groundwork for version selectors and versioned API endpoints.",
       "status": "draft",
       "owner": "docs",
-      "audience": ["ai-agent", "developers"],
+      "audience": [
+        "ai-agent",
+        "developers"
+      ],
       "category": "planning",
       "tags": [
         "todo",
@@ -181,7 +221,95 @@
         "code-excerpts",
         "versioning"
       ],
-      "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+      "lastUpdated": "Thu Dec 04 2025 00:00:00 GMT+0000 (Coordinated Universal Time)"
+    },
+    {
+      "slug": "start-here",
+      "path": "START_HERE.md",
+      "title": "Start Here",
+      "summary": "**Welcome to VoiceAssist V2** - A HIPAA-compliant voice-enabled clinical decision support system.",
+      "ai_summary": "Welcome to VoiceAssist V2 - A HIPAA-compliant voice-enabled clinical decision support system. This document is your entry point to the project. Choose your path below based on your role and experience level. Status update: All 16 project phases (0-15) are complete. Backend, infrastructure, admin...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "overview",
+      "tags": [
+        "start",
+        "here"
+      ],
+      "component": "docs/overview",
+      "relatedPaths": [
+        "docs/overview/IMPLEMENTATION_STATUS.md",
+        "apps/web-app/src/App.tsx",
+        "services/api-gateway/app/main.py"
+      ],
+      "lastUpdated": "2025-12-08"
+    },
+    {
+      "slug": "archive/readme",
+      "path": "archive/README.md",
+      "title": "Readme",
+      "summary": "This directory contains archived documentation from completed development phases. These files are preserved for historical reference.",
+      "ai_summary": "This directory contains archived documentation from completed development phases. These files are preserved for historical reference.",
+      "status": "deprecated",
+      "stability": "legacy",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "reference",
+      "tags": [
+        "readme"
+      ],
+      "lastUpdated": "2025-12-08"
+    },
+    {
+      "slug": "archive/phases",
+      "path": "archive/phases/README.md",
+      "title": "Phase Completion Reports Archive",
+      "status": "stable",
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "tags": [
+        "archive",
+        "phases",
+        "historical"
+      ],
+      "lastUpdated": "2025-12-08"
+    },
+    {
+      "slug": "client-implementation/integration-guide",
+      "path": "client-implementation/INTEGRATION_GUIDE.md",
+      "title": "Integration Guide",
+      "summary": "**Date:** 2025-11-21",
+      "ai_summary": "Version: 1.0 Date: 2025-11-21 Status: Draft - Awaiting Team Review --- This guide provides step-by-step instructions for integrating the VoiceAssist client applications with the existing backend infrastructure. Backend Status: ✅ Complete (15/15 phases, HIPAA-compliant, production-ready) Backend L...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "frontend",
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
+      "category": "planning",
+      "tags": [
+        "integration",
+        "guide"
+      ],
+      "lastUpdated": "2025-12-08"
+    },
+    {
+      "slug": "websocket-binary-protocol",
+      "path": "features/websocket-binary-protocol.md",
+      "title": "websocket-binary-protocol",
+      "status": "draft",
+      "lastUpdated": "2025-12-08"
     },
     {
       "slug": "pr-176-description",
@@ -191,25 +319,18 @@
       "lastUpdated": "2025-12-08"
     },
     {
-      "slug": "websocket-binary-protocol",
-      "path": "features/websocket-binary-protocol.md",
-      "title": "websocket-binary-protocol",
-      "status": "draft",
-      "lastUpdated": "2025-12-07"
-    },
-    {
       "slug": "audio-quality-presets",
       "path": "voice/audio-quality-presets.md",
       "title": "audio-quality-presets",
       "status": "draft",
-      "lastUpdated": "2025-12-07"
+      "lastUpdated": "2025-12-08"
     },
     {
       "slug": "websocket-advanced-features",
       "path": "voice/websocket-advanced-features.md",
       "title": "websocket-advanced-features",
       "status": "draft",
-      "lastUpdated": "2025-12-07"
+      "lastUpdated": "2025-12-08"
     },
     {
       "slug": "websocket-protocol-efficiency-plan",
@@ -230,7 +351,11 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents", "docs"],
+      "audience": [
+        "human",
+        "ai-agents",
+        "docs"
+      ],
       "category": "reference",
       "tags": [
         "documentation",
@@ -239,7 +364,9 @@
         "quality",
         "continuous-improvement"
       ],
-      "relatedServices": ["docs-site"],
+      "relatedServices": [
+        "docs-site"
+      ],
       "component": "frontend/docs-site",
       "relatedPaths": [
         "apps/docs-site/scripts/validate-frontmatter.mjs",
@@ -256,7 +383,12 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["admin", "developers", "devops", "ai-agents"],
+      "audience": [
+        "admin",
+        "developers",
+        "devops",
+        "ai-agents"
+      ],
       "category": "feature-flags",
       "component": "backend/api-gateway",
       "relatedPaths": [
@@ -274,10 +406,21 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["ai-agents", "backend"],
+      "audience": [
+        "ai-agents",
+        "backend"
+      ],
       "category": "ai",
-      "tags": ["api", "ai-agent", "json", "documentation", "endpoints"],
-      "relatedServices": ["docs-site"],
+      "tags": [
+        "api",
+        "ai-agent",
+        "json",
+        "documentation",
+        "endpoints"
+      ],
+      "relatedServices": [
+        "docs-site"
+      ],
       "component": "frontend/docs-site",
       "relatedPaths": [
         "apps/docs-site/scripts/generate-agent-json.js",
@@ -296,9 +439,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["ai-agents"],
+      "audience": [
+        "ai-agents"
+      ],
       "category": "ai",
-      "tags": ["ai-agent", "tasks", "index", "reference"],
+      "tags": [
+        "ai-agent",
+        "tasks",
+        "index",
+        "reference"
+      ],
       "component": "platform/ai-agents",
       "relatedPaths": [
         "services/api-gateway/app/main.py",
@@ -331,9 +481,17 @@
       "status": "stable",
       "stability": "production",
       "owner": "product",
-      "audience": ["human", "ai-agents", "stakeholders"],
+      "audience": [
+        "human",
+        "ai-agents",
+        "stakeholders"
+      ],
       "category": "releases",
-      "tags": ["release", "voice", "v4.1.0"],
+      "tags": [
+        "release",
+        "voice",
+        "v4.1.0"
+      ],
       "lastUpdated": "2025-12-05"
     },
     {
@@ -345,9 +503,18 @@
       "status": "stable",
       "stability": "production",
       "owner": "product",
-      "audience": ["human", "ai-agents", "stakeholders"],
+      "audience": [
+        "human",
+        "ai-agents",
+        "stakeholders"
+      ],
       "category": "releases",
-      "tags": ["release", "voice", "v4.1.1", "security"],
+      "tags": [
+        "release",
+        "voice",
+        "v4.1.1",
+        "security"
+      ],
       "lastUpdated": "2025-12-05"
     },
     {
@@ -359,9 +526,19 @@
       "status": "stable",
       "stability": "production",
       "owner": "product",
-      "audience": ["human", "ai-agents", "stakeholders"],
+      "audience": [
+        "human",
+        "ai-agents",
+        "stakeholders"
+      ],
       "category": "releases",
-      "tags": ["release", "voice", "v4.1.2", "g2p", "lexicon"],
+      "tags": [
+        "release",
+        "voice",
+        "v4.1.2",
+        "g2p",
+        "lexicon"
+      ],
       "lastUpdated": "2025-12-05"
     },
     {
@@ -373,9 +550,17 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["agent", "ai-agents"],
+      "audience": [
+        "agent",
+        "ai-agents"
+      ],
       "category": "getting-started",
-      "tags": ["quickstart", "ai", "agent", "automation"],
+      "tags": [
+        "quickstart",
+        "ai",
+        "agent",
+        "automation"
+      ],
       "component": "platform/ai-agents",
       "relatedPaths": [
         "services/api-gateway/app/services/thinker_service.py",
@@ -395,9 +580,17 @@
       "status": "draft",
       "stability": "experimental",
       "owner": "docs",
-      "audience": ["human", "docs", "ai-agents"],
+      "audience": [
+        "human",
+        "docs",
+        "ai-agents"
+      ],
       "category": "voice",
-      "tags": ["voice", "screenshots", "assets"],
+      "tags": [
+        "voice",
+        "screenshots",
+        "assets"
+      ],
       "lastUpdated": "2025-12-05"
     },
     {
@@ -409,7 +602,13 @@
       "status": "draft",
       "stability": "experimental",
       "owner": "backend",
-      "audience": ["developers", "backend", "frontend", "agent", "ai-agents"],
+      "audience": [
+        "developers",
+        "backend",
+        "frontend",
+        "agent",
+        "ai-agents"
+      ],
       "category": "voice",
       "tags": [
         "voice",
@@ -445,9 +644,21 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["developers", "backend", "frontend", "agent", "ai-agents"],
+      "audience": [
+        "developers",
+        "backend",
+        "frontend",
+        "agent",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["voice", "configuration", "tts", "elevenlabs", "architecture"],
+      "tags": [
+        "voice",
+        "configuration",
+        "tts",
+        "elevenlabs",
+        "architecture"
+      ],
       "lastUpdated": "2025-12-05"
     },
     {
@@ -459,10 +670,21 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents", "docs"],
+      "audience": [
+        "human",
+        "ai-agents",
+        "docs"
+      ],
       "category": "reference",
-      "tags": ["documentation", "metadata", "standards", "frontmatter"],
-      "relatedServices": ["docs-site"],
+      "tags": [
+        "documentation",
+        "metadata",
+        "standards",
+        "frontmatter"
+      ],
+      "relatedServices": [
+        "docs-site"
+      ],
       "component": "frontend/docs-site",
       "relatedPaths": [
         "apps/docs-site/scripts/validate-frontmatter.mjs",
@@ -479,9 +701,18 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["developers", "admin", "ai-agents"],
+      "audience": [
+        "developers",
+        "admin",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["feature", "flags", "configuration", "runtime"],
+      "tags": [
+        "feature",
+        "flags",
+        "configuration",
+        "runtime"
+      ],
       "component": "backend/feature-flags",
       "relatedPaths": [
         "services/api-gateway/app/api/admin_feature_flags.py",
@@ -500,10 +731,23 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents", "backend", "frontend", "devops"],
+      "audience": [
+        "human",
+        "ai-agents",
+        "backend",
+        "frontend",
+        "devops"
+      ],
       "category": "reference",
-      "tags": ["documentation", "tooling", "ci-cd", "quality"],
-      "relatedServices": ["docs-site"],
+      "tags": [
+        "documentation",
+        "tooling",
+        "ci-cd",
+        "quality"
+      ],
+      "relatedServices": [
+        "docs-site"
+      ],
       "component": "frontend/docs-site",
       "relatedPaths": [
         "apps/docs-site/scripts/generate-agent-json.js",
@@ -520,11 +764,21 @@
       "ai_summary": "Tracks documentation improvements across sprints. Sprint 1-2 complete, Sprint 3 (versioning, CODEOWNERS, i18n) 25% done. AI summary coverage at 86% (219/254 docs). Code examples have 18 semantic tags. CODEOWNERS file created. Next priorities are CI integration and documentation versioning.",
       "status": "stable",
       "owner": "docs",
-      "audience": ["developers", "docs", "ai-agents"],
+      "audience": [
+        "developers",
+        "docs",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["roadmap", "improvements", "documentation"],
+      "tags": [
+        "roadmap",
+        "improvements",
+        "documentation"
+      ],
       "component": "docs/planning",
-      "relatedPaths": ["docs"],
+      "relatedPaths": [
+        "docs"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -536,9 +790,19 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["developers", "frontend", "ai-agents"],
+      "audience": [
+        "developers",
+        "frontend",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["voice", "ui", "chat", "frontend", "unified"],
+      "tags": [
+        "voice",
+        "ui",
+        "chat",
+        "frontend",
+        "unified"
+      ],
       "component": "frontend/web-app",
       "relatedPaths": [
         "apps/web-app/src/components/Chat.tsx",
@@ -554,9 +818,17 @@
       "ai_summary": "Voice barge-in system enables human-like interruption handling. Features neural VAD (<30ms detection), context-aware interruptions, full duplex audio, and adaptive personalization. Implementation complete across 10 phases.",
       "status": "stable",
       "owner": "backend",
-      "audience": ["developers", "ai-agents"],
+      "audience": [
+        "developers",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["voice", "barge-in", "vad", "real-time"],
+      "tags": [
+        "voice",
+        "barge-in",
+        "vad",
+        "real-time"
+      ],
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/api/voice.py",
@@ -572,9 +844,18 @@
       "ai_summary": "Admin panel integrates cross-app navigation, real-time event streaming via WebSocket/Redis, and voice session monitoring. Provides centralized control for feature flags, knowledge base, and system health.",
       "status": "stable",
       "owner": "frontend",
-      "audience": ["admin", "developers", "ai-agents"],
+      "audience": [
+        "admin",
+        "developers",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["admin", "integration", "voice-monitoring", "real-time"],
+      "tags": [
+        "admin",
+        "integration",
+        "voice-monitoring",
+        "real-time"
+      ],
       "component": "frontend/admin-panel",
       "relatedPaths": [
         "apps/admin-panel/src/App.tsx",
@@ -592,9 +873,19 @@
       "ai_summary": "Real-time events use WebSocket connections with Redis pub/sub for live updates. Supports feature flag changes, voice session events, and system health broadcasts. Auto-reconnects with exponential backoff.",
       "status": "stable",
       "owner": "backend",
-      "audience": ["admin", "developers", "ai-agents"],
+      "audience": [
+        "admin",
+        "developers",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["admin", "real-time", "websocket", "redis", "events"],
+      "tags": [
+        "admin",
+        "real-time",
+        "websocket",
+        "redis",
+        "events"
+      ],
       "component": "backend/websocket",
       "relatedPaths": [
         "services/api-gateway/app/api/websocket.py",
@@ -611,9 +902,16 @@
       "ai_summary": "AI agents should use /agent/*.json endpoints for structured data. Start with index.json for available endpoints, docs-summary.json for quick context, health.json for documentation status. Use ai_summary fields in frontmatter for quick understanding.",
       "status": "stable",
       "owner": "docs",
-      "audience": ["ai-agents"],
+      "audience": [
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["ai", "navigation", "meta", "documentation"],
+      "tags": [
+        "ai",
+        "navigation",
+        "meta",
+        "documentation"
+      ],
       "component": "frontend/docs-site",
       "relatedPaths": [
         "apps/docs-site/scripts/generate-agent-json.js",
@@ -630,10 +928,22 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["ai-agents"],
+      "audience": [
+        "ai-agents"
+      ],
       "category": "ai",
-      "tags": ["onboarding", "ai-agent", "getting-started", "workflows"],
-      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "tags": [
+        "onboarding",
+        "ai-agent",
+        "getting-started",
+        "workflows"
+      ],
+      "relatedServices": [
+        "api-gateway",
+        "web-app",
+        "admin-panel",
+        "docs-site"
+      ],
       "component": "platform/ai-agents",
       "relatedPaths": [
         "services/api-gateway/app/main.py",
@@ -652,9 +962,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["ai-agents"],
+      "audience": [
+        "ai-agents"
+      ],
       "category": "ai",
-      "tags": ["ai-agent", "repository", "navigation", "codebase"],
+      "tags": [
+        "ai-agent",
+        "repository",
+        "navigation",
+        "codebase"
+      ],
       "component": "platform/ai-agents",
       "relatedPaths": [
         "apps/docs-site/scripts/generate-repo-index.mjs",
@@ -671,10 +988,24 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["human", "agent", "sre", "backend", "ai-agents"],
+      "audience": [
+        "human",
+        "agent",
+        "sre",
+        "backend",
+        "ai-agents"
+      ],
       "category": "operations",
-      "tags": ["monitoring", "post-launch", "operations", "fhir", "voice-mode"],
-      "relatedServices": ["api-gateway"],
+      "tags": [
+        "monitoring",
+        "post-launch",
+        "operations",
+        "fhir",
+        "voice-mode"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -686,7 +1017,13 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "backend", "sre", "ai-agents"],
+      "audience": [
+        "human",
+        "agent",
+        "backend",
+        "sre",
+        "ai-agents"
+      ],
       "category": "operations",
       "tags": [
         "epic",
@@ -698,7 +1035,9 @@
         "audit",
         "chaos-engineering"
       ],
-      "relatedServices": ["api-gateway"],
+      "relatedServices": [
+        "api-gateway"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -719,8 +1058,19 @@
         "devops"
       ],
       "category": "overview",
-      "tags": ["status", "overview", "components", "roadmap", "architecture"],
-      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "tags": [
+        "status",
+        "overview",
+        "components",
+        "roadmap",
+        "architecture"
+      ],
+      "relatedServices": [
+        "api-gateway",
+        "web-app",
+        "admin-panel",
+        "docs-site"
+      ],
       "component": "platform/status",
       "relatedPaths": [
         "services/api-gateway/app/main.py",
@@ -738,9 +1088,18 @@
       "ai_summary": "Sprint 3 covers three features - documentation versioning (git tags + version selector), CODEOWNERS for cross-team ownership, and i18n structure for multi-language support with RTL. Estimated 3-4 weeks total implementation.",
       "status": "draft",
       "owner": "docs",
-      "audience": ["developers", "docs", "ai-agents"],
+      "audience": [
+        "developers",
+        "docs",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["versioning", "codeowners", "i18n", "sprint-3"],
+      "tags": [
+        "versioning",
+        "codeowners",
+        "i18n",
+        "sprint-3"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -752,9 +1111,21 @@
       "status": "draft",
       "stability": "experimental",
       "owner": "product",
-      "audience": ["human", "stakeholders", "backend", "frontend", "ai-agents"],
+      "audience": [
+        "human",
+        "stakeholders",
+        "backend",
+        "frontend",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["roadmap", "strategy", "planning", "future", "enhancement"],
+      "tags": [
+        "roadmap",
+        "strategy",
+        "planning",
+        "future",
+        "enhancement"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -766,9 +1137,18 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "ai-agents", "backend"],
+      "audience": [
+        "human",
+        "ai-agents",
+        "backend"
+      ],
       "category": "reference",
-      "tags": ["voice", "models", "security", "supply-chain"],
+      "tags": [
+        "voice",
+        "models",
+        "security",
+        "supply-chain"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -780,9 +1160,18 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "ai-agents", "backend"],
+      "audience": [
+        "human",
+        "ai-agents",
+        "backend"
+      ],
       "category": "voice",
-      "tags": ["voice", "quality", "network", "latency"],
+      "tags": [
+        "voice",
+        "quality",
+        "network",
+        "latency"
+      ],
       "component": "backend/voice",
       "relatedPaths": [
         "services/api-gateway/app/services/quality_service.py",
@@ -799,7 +1188,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "voice",
       "tags": [
         "voice",
@@ -826,9 +1218,18 @@
       "status": "draft",
       "stability": "experimental",
       "owner": "backend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "voice",
-      "tags": ["voice", "g2p", "pronunciation", "tts", "design"],
+      "tags": [
+        "voice",
+        "g2p",
+        "pronunciation",
+        "tts",
+        "design"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -840,9 +1241,19 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "ai-agents", "backend"],
+      "audience": [
+        "human",
+        "ai-agents",
+        "backend"
+      ],
       "category": "voice",
-      "tags": ["voice", "fhir", "clinical", "streaming", "ehr"],
+      "tags": [
+        "voice",
+        "fhir",
+        "clinical",
+        "streaming",
+        "ehr"
+      ],
       "component": "backend/clinical",
       "relatedPaths": [
         "services/api-gateway/app/services/fhir_service.py",
@@ -860,9 +1271,18 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "voice",
-      "tags": ["voice", "performance", "latency", "degradation", "v4"],
+      "tags": [
+        "voice",
+        "performance",
+        "latency",
+        "degradation",
+        "v4"
+      ],
       "component": "backend/voice",
       "relatedPaths": [
         "services/api-gateway/app/api/voice.py",
@@ -880,9 +1300,19 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "voice",
-      "tags": ["voice", "tts", "pronunciation", "lexicon", "medical", "v4"],
+      "tags": [
+        "voice",
+        "tts",
+        "pronunciation",
+        "lexicon",
+        "medical",
+        "v4"
+      ],
       "component": "backend/voice",
       "relatedPaths": [
         "services/api-gateway/app/services/lexicon_service.py",
@@ -899,9 +1329,18 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "voice",
-      "tags": ["voice", "multilingual", "rag", "translation", "v4"],
+      "tags": [
+        "voice",
+        "multilingual",
+        "rag",
+        "translation",
+        "v4"
+      ],
       "component": "backend/voice",
       "relatedPaths": [
         "services/api-gateway/app/services/rag_service.py",
@@ -918,9 +1357,18 @@
       "ai_summary": "Completed Phase 3 implementation plan for Voice Mode v4.1 (PR #155). Covers three workstreams: UI integration (voice-first input, streaming text, latency indicator), advanced services (FHIR streaming, speaker diarization), and performance tuning. See voice-mode-v4-overview.md for full feature list.",
       "status": "complete",
       "owner": "backend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["voice", "planning", "phase3", "roadmap", "v4"],
+      "tags": [
+        "voice",
+        "planning",
+        "phase3",
+        "roadmap",
+        "v4"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -932,9 +1380,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "voice",
-      "tags": ["voice", "security", "phi", "stt", "whisper", "hipaa", "v4"],
+      "tags": [
+        "voice",
+        "security",
+        "phi",
+        "stt",
+        "whisper",
+        "hipaa",
+        "v4"
+      ],
       "component": "backend/voice",
       "relatedPaths": [
         "services/api-gateway/app/services/stt_service.py",
@@ -951,9 +1410,17 @@
       "ai_summary": "Post-Phase 3 PR planning for security cleanup and lexicon expansion. Security PR addresses Bandit issues: B324 (MD5), B608 (SQL injection), B615 (HuggingFace unpinned). See MODEL_VERSIONS.md for pinned revisions and voice-mode-post-v41-roadmap.md for full roadmap.",
       "status": "draft",
       "owner": "backend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["planning", "security", "lexicon", "roadmap"],
+      "tags": [
+        "planning",
+        "security",
+        "lexicon",
+        "roadmap"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -964,9 +1431,17 @@
       "ai_summary": "Post-v4.1 roadmap for Voice Mode. Priorities: security hardening (18 Bandit issues), lexicon expansion, performance optimizations. Includes HuggingFace model pinning (B615) and SQL expression cleanup (B608). See next-prs-planning.md for detailed PR plans.",
       "status": "planning",
       "owner": "platform",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["voice", "roadmap", "v4.2", "planning"],
+      "tags": [
+        "voice",
+        "roadmap",
+        "v4.2",
+        "planning"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -978,7 +1453,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "voice",
       "tags": [
         "voice",
@@ -1007,9 +1485,18 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "ai-agents", "backend"],
+      "audience": [
+        "human",
+        "ai-agents",
+        "backend"
+      ],
       "category": "voice",
-      "tags": ["voice", "diarization", "speaker-detection", "pyannote"],
+      "tags": [
+        "voice",
+        "diarization",
+        "speaker-detection",
+        "pyannote"
+      ],
       "component": "backend/voice",
       "relatedPaths": [
         "services/api-gateway/app/services/diarization_service.py",
@@ -1026,9 +1513,19 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents", "frontend"],
+      "audience": [
+        "human",
+        "ai-agents",
+        "frontend"
+      ],
       "category": "voice",
-      "tags": ["voice", "frontend", "streaming", "rtl", "components"],
+      "tags": [
+        "voice",
+        "frontend",
+        "streaming",
+        "rtl",
+        "components"
+      ],
       "component": "frontend/voice",
       "relatedPaths": [
         "apps/web-app/src/components/voice/StreamingTextDisplay.tsx",
@@ -1045,9 +1542,19 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "voice",
-      "tags": ["voice", "ux", "thinking-feedback", "audio", "haptic", "v4"],
+      "tags": [
+        "voice",
+        "ux",
+        "thinking-feedback",
+        "audio",
+        "haptic",
+        "v4"
+      ],
       "component": "frontend/voice",
       "relatedPaths": [
         "apps/web-app/src/components/voice/ThinkingVisualIndicator.tsx",
@@ -1065,7 +1572,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "voice",
       "tags": [
         "voice",
@@ -1092,9 +1602,19 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents", "frontend"],
+      "audience": [
+        "human",
+        "ai-agents",
+        "frontend"
+      ],
       "category": "voice",
-      "tags": ["voice", "frontend", "input", "vad", "components"],
+      "tags": [
+        "voice",
+        "frontend",
+        "input",
+        "vad",
+        "components"
+      ],
       "component": "frontend/voice",
       "relatedPaths": [
         "apps/web-app/src/components/voice/VoiceFirstInputBar.tsx",
@@ -1112,9 +1632,18 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "voice",
-      "tags": ["voice", "v4", "multilingual", "latency", "thinking-feedback"],
+      "tags": [
+        "voice",
+        "v4",
+        "multilingual",
+        "latency",
+        "thinking-feedback"
+      ],
       "component": "frontend/voice",
       "relatedPaths": [
         "apps/web-app/src/components/voice/VoiceModePanel.tsx",
@@ -1133,9 +1662,17 @@
       "status": "stable",
       "stability": "production",
       "owner": "platform",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "releases",
-      "tags": ["voice", "release-notes", "v4.1", "features"],
+      "tags": [
+        "voice",
+        "release-notes",
+        "v4.1",
+        "features"
+      ],
       "lastUpdated": "2025-12-04"
     },
     {
@@ -1147,10 +1684,25 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "agent", "ai-agents", "frontend"],
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "frontend"
+      ],
       "category": "architecture",
-      "tags": ["architecture", "frontend", "react", "typescript", "monorepo"],
-      "relatedServices": ["web-app", "admin-panel", "docs-site"],
+      "tags": [
+        "architecture",
+        "frontend",
+        "react",
+        "typescript",
+        "monorepo"
+      ],
+      "relatedServices": [
+        "web-app",
+        "admin-panel",
+        "docs-site"
+      ],
       "component": "frontend/web-app",
       "relatedPaths": [
         "apps/web-app/src/App.tsx",
@@ -1170,9 +1722,14 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["roadmap"],
+      "tags": [
+        "roadmap"
+      ],
       "component": "platform/planning",
       "relatedPaths": [
         "docs/DEVELOPMENT_PHASES_V2.md",
@@ -1190,10 +1747,24 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "backend", "frontend", "ai-agents"],
+      "audience": [
+        "human",
+        "agent",
+        "backend",
+        "frontend",
+        "ai-agents"
+      ],
       "category": "voice",
-      "tags": ["voice", "enhancement", "emotion", "dictation"],
-      "relatedServices": ["api-gateway", "web-app"],
+      "tags": [
+        "voice",
+        "enhancement",
+        "emotion",
+        "dictation"
+      ],
+      "relatedServices": [
+        "api-gateway",
+        "web-app"
+      ],
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/api/voice.py",
@@ -1210,7 +1781,13 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "backend", "frontend", "ai-agents"],
+      "audience": [
+        "human",
+        "agent",
+        "backend",
+        "frontend",
+        "ai-agents"
+      ],
       "category": "voice",
       "tags": [
         "voice",
@@ -1223,7 +1800,10 @@
         "offline",
         "multilingual"
       ],
-      "relatedServices": ["api-gateway", "web-app"],
+      "relatedServices": [
+        "api-gateway",
+        "web-app"
+      ],
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/api/voice.py",
@@ -1242,7 +1822,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "operations",
       "tags": [
         "voice",
@@ -1271,7 +1854,13 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "agent", "ai-agents", "frontend", "sre"],
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "frontend",
+        "sre"
+      ],
       "category": "debugging",
       "tags": [
         "debugging",
@@ -1281,7 +1870,9 @@
         "apache",
         "troubleshooting"
       ],
-      "relatedServices": ["docs-site"],
+      "relatedServices": [
+        "docs-site"
+      ],
       "component": "frontend/docs-site",
       "relatedPaths": [
         "apps/docs-site/src/app/layout.tsx",
@@ -1299,9 +1890,17 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops", "sre", "ai-agents"],
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
       "category": "operations",
-      "tags": ["admin", "panel", "specs"],
+      "tags": [
+        "admin",
+        "panel",
+        "specs"
+      ],
       "component": "frontend/admin-panel",
       "relatedPaths": [
         "apps/admin-panel/src/App.tsx",
@@ -1319,10 +1918,23 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "backend", "frontend", "ai-agents"],
+      "audience": [
+        "human",
+        "agent",
+        "backend",
+        "frontend",
+        "ai-agents"
+      ],
       "category": "api",
-      "tags": ["api", "rest", "reference", "endpoints"],
-      "relatedServices": ["api-gateway"],
+      "tags": [
+        "api",
+        "rest",
+        "reference",
+        "endpoints"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/api/__init__.py",
@@ -1342,34 +1954,24 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "agent", "ai-agents"],
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["documentation", "site", "specs", "automation", "ai"],
+      "tags": [
+        "documentation",
+        "site",
+        "specs",
+        "automation",
+        "ai"
+      ],
       "component": "frontend/docs-site",
       "relatedPaths": [
         "apps/docs-site/src/app/layout.tsx",
         "apps/docs-site/src/lib/docs.ts",
         "apps/docs-site/scripts/generate-agent-json.js"
-      ],
-      "lastUpdated": "2025-12-02"
-    },
-    {
-      "slug": "start-here",
-      "path": "START_HERE.md",
-      "title": "Start Here",
-      "summary": "**Welcome to VoiceAssist V2** - A HIPAA-compliant voice-enabled clinical decision support system.",
-      "ai_summary": "Welcome to VoiceAssist V2 - A HIPAA-compliant voice-enabled clinical decision support system. This document is your entry point to the project. Choose your path below based on your role and experience level. Status update: All 16 project phases (0-15) are complete. Backend, infrastructure, admin...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "overview",
-      "tags": ["start", "here"],
-      "component": "docs/overview",
-      "relatedPaths": [
-        "docs/overview/IMPLEMENTATION_STATUS.md",
-        "apps/web-app/src/App.tsx",
-        "services/api-gateway/app/main.py"
       ],
       "lastUpdated": "2025-12-02"
     },
@@ -1382,9 +1984,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["developers", "backend", "agent", "ai-agents"],
+      "audience": [
+        "developers",
+        "backend",
+        "agent",
+        "ai-agents"
+      ],
       "category": "architecture",
-      "tags": ["voice", "pipeline", "thinker-talker", "stt", "tts"],
+      "tags": [
+        "voice",
+        "pipeline",
+        "thinker-talker",
+        "stt",
+        "tts"
+      ],
       "component": "backend/voice",
       "relatedPaths": [
         "services/api-gateway/app/api/voice.py",
@@ -1412,8 +2025,17 @@
         "devops"
       ],
       "category": "architecture",
-      "tags": ["architecture", "system-design", "overview"],
-      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "tags": [
+        "architecture",
+        "system-design",
+        "overview"
+      ],
+      "relatedServices": [
+        "api-gateway",
+        "web-app",
+        "admin-panel",
+        "docs-site"
+      ],
       "component": "platform/architecture",
       "relatedPaths": [
         "services/api-gateway/app/main.py",
@@ -1442,8 +2064,16 @@
         "devops"
       ],
       "category": "admin",
-      "tags": ["admin", "implementation", "plan", "roadmap"],
-      "relatedServices": ["api-gateway", "admin-panel"],
+      "tags": [
+        "admin",
+        "implementation",
+        "plan",
+        "roadmap"
+      ],
+      "relatedServices": [
+        "api-gateway",
+        "admin-panel"
+      ],
       "component": "frontend/admin-panel",
       "relatedPaths": [
         "apps/admin-panel/src/App.tsx",
@@ -1462,9 +2092,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["developers", "backend", "frontend", "agent", "ai-agents"],
+      "audience": [
+        "developers",
+        "backend",
+        "frontend",
+        "agent",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["api", "websocket", "voice", "streaming"],
+      "tags": [
+        "api",
+        "websocket",
+        "voice",
+        "streaming"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -1494,7 +2135,12 @@
         "metrics",
         "index"
       ],
-      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "relatedServices": [
+        "api-gateway",
+        "web-app",
+        "admin-panel",
+        "docs-site"
+      ],
       "component": "platform/debugging",
       "relatedPaths": [
         "services/api-gateway/app/api/health.py",
@@ -1512,7 +2158,14 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "ai-agents", "backend", "frontend", "sre"],
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "backend",
+        "frontend",
+        "sre"
+      ],
       "category": "debugging",
       "tags": [
         "debugging",
@@ -1525,7 +2178,10 @@
         "troubleshooting",
         "thinker-talker"
       ],
-      "relatedServices": ["api-gateway", "web-app"],
+      "relatedServices": [
+        "api-gateway",
+        "web-app"
+      ],
       "component": "backend/voice",
       "relatedPaths": [
         "services/api-gateway/app/api/voice.py",
@@ -1543,9 +2199,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["developers", "frontend", "agent", "ai-agents"],
+      "audience": [
+        "developers",
+        "frontend",
+        "agent",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["hooks", "react", "voice", "frontend", "websocket"],
+      "tags": [
+        "hooks",
+        "react",
+        "voice",
+        "frontend",
+        "websocket"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -1557,9 +2224,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["developers", "backend", "agent", "ai-agents"],
+      "audience": [
+        "developers",
+        "backend",
+        "agent",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["service", "tts", "elevenlabs", "voice", "backend"],
+      "tags": [
+        "service",
+        "tts",
+        "elevenlabs",
+        "voice",
+        "backend"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -1571,9 +2249,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["developers", "backend", "agent", "ai-agents"],
+      "audience": [
+        "developers",
+        "backend",
+        "agent",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["service", "llm", "reasoning", "voice", "backend"],
+      "tags": [
+        "service",
+        "llm",
+        "reasoning",
+        "voice",
+        "backend"
+      ],
       "lastUpdated": "2025-12-02"
     },
     {
@@ -1585,9 +2274,19 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["admin", "devops", "agent", "ai-agents"],
+      "audience": [
+        "admin",
+        "devops",
+        "agent",
+        "ai-agents"
+      ],
       "category": "getting-started",
-      "tags": ["quickstart", "admin", "deployment", "configuration"],
+      "tags": [
+        "quickstart",
+        "admin",
+        "deployment",
+        "configuration"
+      ],
       "component": "platform/admin",
       "relatedPaths": [
         "docker-compose.yml",
@@ -1607,9 +2306,18 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["developers", "agent", "ai-agents"],
+      "audience": [
+        "developers",
+        "agent",
+        "ai-agents"
+      ],
       "category": "getting-started",
-      "tags": ["quickstart", "development", "setup", "contributing"],
+      "tags": [
+        "quickstart",
+        "development",
+        "setup",
+        "contributing"
+      ],
       "component": "platform/development",
       "relatedPaths": [
         "docker-compose.yml",
@@ -1629,9 +2337,14 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "architecture",
-      "tags": ["architecture"],
+      "tags": [
+        "architecture"
+      ],
       "component": "platform/architecture",
       "relatedPaths": [
         "docker-compose.yml",
@@ -1650,9 +2363,18 @@
       "status": "stable",
       "stability": "production",
       "owner": "product",
-      "audience": ["user", "human", "ai-agents"],
+      "audience": [
+        "user",
+        "human",
+        "ai-agents"
+      ],
       "category": "getting-started",
-      "tags": ["quickstart", "user-guide", "voice", "chat"],
+      "tags": [
+        "quickstart",
+        "user-guide",
+        "voice",
+        "chat"
+      ],
       "component": "frontend/web-app",
       "relatedPaths": [
         "apps/web-app/src/App.tsx",
@@ -1670,9 +2392,19 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "agent", "ai-agents"],
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["voice", "barge-in", "audio", "state", "2025"],
+      "tags": [
+        "voice",
+        "barge-in",
+        "audio",
+        "state",
+        "2025"
+      ],
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/api/voice.py",
@@ -1689,9 +2421,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["accessibility", "audit"],
+      "tags": [
+        "accessibility",
+        "audit"
+      ],
       "component": "frontend/web-app",
       "relatedPaths": [
         "apps/web-app/src/App.tsx",
@@ -1708,9 +2446,17 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops", "sre", "ai-agents"],
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
       "category": "deployment",
-      "tags": ["admin", "panel", "deployment"],
+      "tags": [
+        "admin",
+        "panel",
+        "deployment"
+      ],
       "component": "frontend/admin-panel",
       "relatedPaths": [
         "apps/admin-panel/vite.config.ts",
@@ -1727,52 +2473,23 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops", "sre", "ai-agents"],
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
       "category": "operations",
-      "tags": ["admin", "panel", "implementation", "summary"],
+      "tags": [
+        "admin",
+        "panel",
+        "implementation",
+        "summary"
+      ],
       "component": "frontend/admin-panel",
       "relatedPaths": [
         "apps/admin-panel/src/App.tsx",
         "apps/admin-panel/src/pages/Login.tsx",
         "services/api-gateway/app/api/admin.py"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "admin-panel-login-fix",
-      "path": "ADMIN_PANEL_LOGIN_FIX.md",
-      "title": "Admin Panel Login Fix",
-      "summary": "**Date**: 2025-11-22",
-      "ai_summary": "Date: 2025-11-22 Issue: Login failed with CORS errors and Firebase errors Status: ✅ RESOLVED --- When attempting to log in to https://admin.asimo.io, the following errors occurred: Firebase: Error (auth/network-request-failed) - The admin panel was loading Firebase authentication code - This indi...",
-      "status": "experimental",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["devops", "sre", "ai-agents"],
-      "category": "operations",
-      "tags": ["admin", "panel", "login", "fix"],
-      "component": "frontend/admin-panel",
-      "relatedPaths": [
-        "apps/admin-panel/src/pages/Login.tsx",
-        "services/api-gateway/app/api/auth.py"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "admin-panel-login-fix-complete",
-      "path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md",
-      "title": "Admin Panel Login Fix Complete",
-      "summary": "**Date:** 2025-11-22",
-      "ai_summary": "Date: 2025-11-22 Issue: Admin panel login at https://admin.asimo.io was failing with \"Unexpected token '<', '<!DOCTYPE ' is not valid JSON\" Status: ✅ RESOLVED The admin panel login was failing due to multiple compounding issues: 1. Frontend receiving HTML error pages instead of JSON responses 2....",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["devops", "sre", "ai-agents"],
-      "category": "operations",
-      "tags": ["admin", "panel", "login", "fix"],
-      "component": "frontend/admin-panel",
-      "relatedPaths": [
-        "apps/admin-panel/src/pages/Login.tsx",
-        "services/api-gateway/app/api/auth.py"
       ],
       "lastUpdated": "2025-11-27"
     },
@@ -1785,11 +2502,21 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["all", "phases", "summary"],
+      "tags": [
+        "all",
+        "phases",
+        "summary"
+      ],
       "component": "platform/planning",
-      "relatedPaths": ["docs/phases", "docs/ROADMAP.md"],
+      "relatedPaths": [
+        "docs/phases",
+        "docs/ROADMAP.md"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1801,9 +2528,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "operations",
-      "tags": ["ansible", "guide"],
+      "tags": [
+        "ansible",
+        "guide"
+      ],
       "component": "infra/ansible",
       "relatedPaths": [
         "infrastructure/ansible/playbooks",
@@ -1820,9 +2553,14 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "architecture",
-      "tags": ["architecture"],
+      "tags": [
+        "architecture"
+      ],
       "component": "platform/architecture",
       "relatedPaths": [
         "docker-compose.yml",
@@ -1839,10 +2577,22 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "ai-agents", "backend"],
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "backend"
+      ],
       "category": "architecture",
-      "tags": ["architecture", "backend", "fastapi", "microservices"],
-      "relatedServices": ["api-gateway"],
+      "tags": [
+        "architecture",
+        "backend",
+        "fastapi",
+        "microservices"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/main.py",
@@ -1862,9 +2612,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["backend", "ai-agents"],
+      "audience": [
+        "backend",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["backend", "skeleton", "verification"],
+      "tags": [
+        "backend",
+        "skeleton",
+        "verification"
+      ],
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/main.py",
@@ -1881,9 +2638,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "testing",
-      "tags": ["chaos", "engineering"],
+      "tags": [
+        "chaos",
+        "engineering"
+      ],
       "component": "testing/chaos",
       "relatedPaths": [
         "services/api-gateway/app/api/health.py",
@@ -1900,11 +2663,21 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "operations",
-      "tags": ["cicd", "guide"],
+      "tags": [
+        "cicd",
+        "guide"
+      ],
       "component": "infra/cicd",
-      "relatedPaths": [".github/workflows", "Makefile", "package.json"],
+      "relatedPaths": [
+        ".github/workflows",
+        "Makefile",
+        "package.json"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1916,11 +2689,23 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["agent", "ai-agents", "human"],
+      "audience": [
+        "agent",
+        "ai-agents",
+        "human"
+      ],
       "category": "ai",
-      "tags": ["claude", "execution", "guide", "ai-agent"],
+      "tags": [
+        "claude",
+        "execution",
+        "guide",
+        "ai-agent"
+      ],
       "component": "platform/ai-agents",
-      "relatedPaths": ["docs/CLAUDE_PROMPTS.md", "docs/ai/AGENT_ONBOARDING.md"],
+      "relatedPaths": [
+        "docs/CLAUDE_PROMPTS.md",
+        "docs/ai/AGENT_ONBOARDING.md"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1932,9 +2717,18 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["agent", "ai-agents", "human"],
+      "audience": [
+        "agent",
+        "ai-agents",
+        "human"
+      ],
       "category": "ai",
-      "tags": ["claude", "prompts", "ai-agent", "templates"],
+      "tags": [
+        "claude",
+        "prompts",
+        "ai-agent",
+        "templates"
+      ],
       "component": "platform/ai-agents",
       "relatedPaths": [
         "docs/CLAUDE_EXECUTION_GUIDE.md",
@@ -1951,11 +2745,21 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["compose", "first", "summary"],
+      "tags": [
+        "compose",
+        "first",
+        "summary"
+      ],
       "component": "infra/compose",
-      "relatedPaths": ["docker-compose.yml", "docs/DEVELOPMENT_PHASES_V2.md"],
+      "relatedPaths": [
+        "docker-compose.yml",
+        "docs/DEVELOPMENT_PHASES_V2.md"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1967,11 +2771,22 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["compose", "k8s", "migration"],
+      "tags": [
+        "compose",
+        "k8s",
+        "migration"
+      ],
       "component": "infra/k8s",
-      "relatedPaths": ["docker-compose.yml", "k8s", "ha-dr"],
+      "relatedPaths": [
+        "docker-compose.yml",
+        "k8s",
+        "ha-dr"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -1983,9 +2798,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["configuration", "reference"],
+      "tags": [
+        "configuration",
+        "reference"
+      ],
       "component": "backend/config",
       "relatedPaths": [
         "services/api-gateway/app/core/config.py",
@@ -2011,9 +2832,16 @@
         "project-managers"
       ],
       "category": "planning",
-      "tags": ["roadmap", "planning", "improvements", "future"],
+      "tags": [
+        "roadmap",
+        "planning",
+        "improvements",
+        "future"
+      ],
       "component": "platform/planning",
-      "relatedPaths": ["docs/ROADMAP.md"],
+      "relatedPaths": [
+        "docs/ROADMAP.md"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2025,11 +2853,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["continuous", "improvement", "summary"],
+      "tags": [
+        "continuous",
+        "improvement",
+        "summary"
+      ],
       "component": "platform/planning",
-      "relatedPaths": ["docs/CONTINUOUS_IMPROVEMENT_PLAN.md"],
+      "relatedPaths": [
+        "docs/CONTINUOUS_IMPROVEMENT_PLAN.md"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2041,9 +2878,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["data", "model"],
+      "tags": [
+        "data",
+        "model"
+      ],
       "component": "backend/models",
       "relatedPaths": [
         "services/api-gateway/app/models/__init__.py",
@@ -2063,11 +2906,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["deep", "verification", "summary"],
+      "tags": [
+        "deep",
+        "verification",
+        "summary"
+      ],
       "component": "platform/qa",
-      "relatedPaths": ["services/api-gateway/app"],
+      "relatedPaths": [
+        "services/api-gateway/app"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2079,9 +2931,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops", "sre", "ai-agents"],
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
       "category": "deployment",
-      "tags": ["deployment", "guide"],
+      "tags": [
+        "deployment",
+        "guide"
+      ],
       "component": "infra/deployment",
       "relatedPaths": [
         "docker-compose.yml",
@@ -2100,11 +2959,21 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops", "sre", "ai-agents"],
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
       "category": "deployment",
-      "tags": ["deployment", "summary", "asimo"],
+      "tags": [
+        "deployment",
+        "summary",
+        "asimo"
+      ],
       "component": "infra/deployment",
-      "relatedPaths": ["docker-compose.yml"],
+      "relatedPaths": [
+        "docker-compose.yml"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2116,11 +2985,19 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["development", "phases"],
+      "tags": [
+        "development",
+        "phases"
+      ],
       "component": "platform/planning",
-      "relatedPaths": ["docs/DEVELOPMENT_PHASES_V2.md"],
+      "relatedPaths": [
+        "docs/DEVELOPMENT_PHASES_V2.md"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2132,11 +3009,21 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["development", "phases"],
+      "tags": [
+        "development",
+        "phases"
+      ],
       "component": "platform/planning",
-      "relatedPaths": ["docs/phases", "docs/ROADMAP.md", "docker-compose.yml"],
+      "relatedPaths": [
+        "docs/phases",
+        "docs/ROADMAP.md",
+        "docker-compose.yml"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2148,9 +3035,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["development", "setup"],
+      "tags": [
+        "development",
+        "setup"
+      ],
       "component": "platform/development",
       "relatedPaths": [
         "docker-compose.yml",
@@ -2169,9 +3062,18 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["sre", "backend", "frontend", "ai-agents"],
+      "audience": [
+        "sre",
+        "backend",
+        "frontend",
+        "ai-agents"
+      ],
       "category": "debugging",
-      "tags": ["disaster", "recovery", "runbook"],
+      "tags": [
+        "disaster",
+        "recovery",
+        "runbook"
+      ],
       "component": "infra/operations",
       "relatedPaths": [
         "docker-compose.yml",
@@ -2189,11 +3091,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["documentation", "completion", "summary"],
+      "tags": [
+        "documentation",
+        "completion",
+        "summary"
+      ],
       "component": "docs/summary",
-      "relatedPaths": ["docs"],
+      "relatedPaths": [
+        "docs"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2205,11 +3116,19 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["enhancement", "summary"],
+      "tags": [
+        "enhancement",
+        "summary"
+      ],
       "component": "docs/summary",
-      "relatedPaths": ["docs"],
+      "relatedPaths": [
+        "docs"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2221,11 +3140,18 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["file"],
+      "tags": [
+        "file"
+      ],
       "component": "docs/placeholder",
-      "relatedPaths": ["docs"],
+      "relatedPaths": [
+        "docs"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2237,11 +3163,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["final", "documentation", "summary"],
+      "tags": [
+        "final",
+        "documentation",
+        "summary"
+      ],
       "component": "docs/summary",
-      "relatedPaths": ["docs"],
+      "relatedPaths": [
+        "docs"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2253,9 +3188,16 @@
       "status": "stable",
       "stability": "beta",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["frontend", "completion", "plan"],
+      "tags": [
+        "frontend",
+        "completion",
+        "plan"
+      ],
       "component": "frontend/web-app",
       "relatedPaths": [
         "apps/web-app/src/App.tsx",
@@ -2272,11 +3214,21 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["frontend", "verification", "summary"],
+      "tags": [
+        "frontend",
+        "verification",
+        "summary"
+      ],
       "component": "frontend/web-app",
-      "relatedPaths": ["apps/web-app/src", "apps/admin-panel/src"],
+      "relatedPaths": [
+        "apps/web-app/src",
+        "apps/admin-panel/src"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2288,9 +3240,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "security",
-      "tags": ["hipaa", "compliance", "matrix"],
+      "tags": [
+        "hipaa",
+        "compliance",
+        "matrix"
+      ],
       "component": "backend/security",
       "relatedPaths": [
         "services/api-gateway/app/core/security.py",
@@ -2308,9 +3267,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops", "sre", "ai-agents"],
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
       "category": "deployment",
-      "tags": ["infrastructure", "code"],
+      "tags": [
+        "infrastructure",
+        "code"
+      ],
       "component": "infra/terraform",
       "relatedPaths": [
         "infrastructure/terraform",
@@ -2328,9 +3294,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops", "sre", "ai-agents"],
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
       "category": "deployment",
-      "tags": ["infrastructure", "setup"],
+      "tags": [
+        "infrastructure",
+        "setup"
+      ],
       "component": "infra/deployment",
       "relatedPaths": [
         "docker-compose.yml",
@@ -2348,11 +3321,19 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["integration", "handoff"],
+      "tags": [
+        "integration",
+        "handoff"
+      ],
       "component": "platform/integration",
-      "relatedPaths": ["services/api-gateway/app/main.py"],
+      "relatedPaths": [
+        "services/api-gateway/app/main.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2364,11 +3345,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["integration", "improvements", "phase"],
+      "tags": [
+        "integration",
+        "improvements",
+        "phase"
+      ],
       "component": "platform/planning",
-      "relatedPaths": ["docs/phases"],
+      "relatedPaths": [
+        "docs/phases"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2380,11 +3370,21 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "testing",
-      "tags": ["load", "testing", "guide"],
+      "tags": [
+        "load",
+        "testing",
+        "guide"
+      ],
       "component": "testing/load",
-      "relatedPaths": ["services/api-gateway/app/api/health.py", "Makefile"],
+      "relatedPaths": [
+        "services/api-gateway/app/api/health.py",
+        "Makefile"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2396,9 +3396,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["local", "development"],
+      "tags": [
+        "local",
+        "development"
+      ],
       "component": "infra/development",
       "relatedPaths": [
         "docker-compose.yml",
@@ -2406,22 +3412,6 @@
         "package.json",
         "pnpm-workspace.yaml"
       ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "login-500-fix-2025-11-25",
-      "path": "LOGIN_500_FIX_2025-11-25.md",
-      "title": "Login 500 Fix 2025 11 25",
-      "summary": "Users were experiencing HTTP 500 errors when attempting to login at dev.asimo.io.",
-      "ai_summary": "Users were experiencing HTTP 500 errors when attempting to login at dev.asimo.io. - Browser console showed: Login failed: AxiosError 500 (Request failed with status code 500) - Backend logs showed stack trace with: - AttributeError: module 'bcrypt' has no attribute '__about__' - ValueError: passw...",
-      "status": "experimental",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "reference",
-      "tags": ["login", "500", "fix", "2025"],
-      "component": "backend/api-gateway",
-      "relatedPaths": ["services/api-gateway/app/api/auth.py"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2433,9 +3423,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["medical", "features"],
+      "tags": [
+        "medical",
+        "features"
+      ],
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/services/rag_service.py",
@@ -2452,11 +3448,20 @@
       "status": "experimental",
       "stability": "experimental",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["message", "edit", "progress"],
+      "tags": [
+        "message",
+        "edit",
+        "progress"
+      ],
       "component": "frontend/web-app",
-      "relatedPaths": ["apps/web-app/src/components/chat/MessageBubble.tsx"],
+      "relatedPaths": [
+        "apps/web-app/src/components/chat/MessageBubble.tsx"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2468,11 +3473,20 @@
       "status": "stable",
       "stability": "beta",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["nextcloud", "apps", "design"],
+      "tags": [
+        "nextcloud",
+        "apps",
+        "design"
+      ],
       "component": "integration/nextcloud",
-      "relatedPaths": ["nextcloud-apps"],
+      "relatedPaths": [
+        "nextcloud-apps"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2484,9 +3498,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["nextcloud", "integration"],
+      "tags": [
+        "nextcloud",
+        "integration"
+      ],
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/services/nextcloud_service.py"
@@ -2502,9 +3522,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["oauth", "login", "config"],
+      "tags": [
+        "oauth",
+        "login",
+        "config"
+      ],
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/api/auth.py",
@@ -2521,9 +3548,14 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["observability"],
+      "tags": [
+        "observability"
+      ],
       "component": "backend/observability",
       "relatedPaths": [
         "services/api-gateway/app/core/logging.py",
@@ -2541,9 +3573,15 @@
       "status": "stable",
       "stability": "beta",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["orchestration", "design"],
+      "tags": [
+        "orchestration",
+        "design"
+      ],
       "component": "backend/orchestrator",
       "relatedPaths": [
         "services/api-gateway/app/services/ai_service.py",
@@ -2561,11 +3599,21 @@
       "status": "stable",
       "stability": "beta",
       "owner": "docs",
-      "audience": ["backend", "ai-agents"],
+      "audience": [
+        "backend",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["part2", "deferred", "backend", "features"],
+      "tags": [
+        "part2",
+        "deferred",
+        "backend",
+        "features"
+      ],
       "component": "backend/api-gateway",
-      "relatedPaths": ["services/api-gateway/app/main.py"],
+      "relatedPaths": [
+        "services/api-gateway/app/main.py"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2577,11 +3625,21 @@
       "status": "stable",
       "stability": "beta",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["part3", "platform", "enhancements", "plan"],
+      "tags": [
+        "part3",
+        "platform",
+        "enhancements",
+        "plan"
+      ],
       "component": "platform/planning",
-      "relatedPaths": ["docs/ROADMAP.md"],
+      "relatedPaths": [
+        "docs/ROADMAP.md"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2593,11 +3651,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["performance", "benchmarks"],
+      "tags": [
+        "performance",
+        "benchmarks"
+      ],
       "component": "platform/testing",
-      "relatedPaths": ["tests/performance", "docs/LOAD_TESTING_GUIDE.md"],
+      "relatedPaths": [
+        "tests/performance",
+        "docs/LOAD_TESTING_GUIDE.md"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2609,127 +3676,22 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "operations",
-      "tags": ["performance", "tuning", "guide"],
+      "tags": [
+        "performance",
+        "tuning",
+        "guide"
+      ],
       "component": "backend/performance",
       "relatedPaths": [
         "services/api-gateway/app/core/config.py",
         "services/api-gateway/app/core/database.py",
         "docker-compose.yml"
       ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "phase-02-completion-report",
-      "path": "PHASE_02_COMPLETION_REPORT.md",
-      "title": "Phase 02 Completion Report",
-      "summary": "**Date Completed**: 2025-11-21 00:20",
-      "ai_summary": "Date Completed: 2025-11-21 00:20 Duration: ~2.5 hours (started 2025-11-20 22:00) Status: ✅ Successfully Completed --- Phase 2 has been successfully completed, implementing a comprehensive JWT-based authentication system, user management API, and Nextcloud integration foundation. All core delivera...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "planning",
-      "tags": ["phase", "completion", "report"],
-      "component": "platform/planning",
-      "relatedPaths": ["docs/phases"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "phase-02-enhancements-report",
-      "path": "PHASE_02_ENHANCEMENTS_REPORT.md",
-      "title": "Phase 02 Enhancements Report",
-      "summary": "**Date**: 2025-11-21",
-      "ai_summary": "Date: 2025-11-21 Scope: Post-Phase 2 Security & Observability Enhancements Status: ✅ Completed --- Following the successful completion of Phase 2 (Security Foundation & Nextcloud Integration), a comprehensive enhancement initiative was undertaken to strengthen security, improve observability, and...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "planning",
-      "tags": ["phase", "enhancements", "report"],
-      "component": "platform/planning",
-      "relatedPaths": ["docs/phases"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "phase-03-completion-report",
-      "path": "PHASE_03_COMPLETION_REPORT.md",
-      "title": "Phase 03 Completion Report",
-      "summary": "**Date Completed**: 2025-11-21 03:00",
-      "ai_summary": "Date Completed: 2025-11-21 03:00 Duration: ~1 hour Status: ✅ Successfully Completed --- Phase 3 established the API Gateway and core service boundaries on top of the infrastructure and security foundation built in Phases 0–2. The current system operates as a FastAPI monolith that cleanly separate...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "planning",
-      "tags": ["phase", "completion", "report"],
-      "component": "platform/planning",
-      "relatedPaths": ["docs/phases"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "phase-04-completion-report",
-      "path": "PHASE_04_COMPLETION_REPORT.md",
-      "title": "Phase 04 Completion Report",
-      "summary": "**Date Completed**: 2025-11-21 03:45",
-      "ai_summary": "Date Completed: 2025-11-21 03:45 Duration: ~2 hours Status: ✅ Successfully Completed (MVP Scope) --- Phase 4 established the realtime communication foundation for VoiceAssist by implementing a WebSocket-based streaming chat endpoint integrated with the QueryOrchestrator. The system now supports b...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "planning",
-      "tags": ["phase", "completion", "report"],
-      "component": "platform/planning",
-      "relatedPaths": ["docs/phases"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "phase-05-completion-report",
-      "path": "PHASE_05_COMPLETION_REPORT.md",
-      "title": "Phase 05 Completion Report",
-      "summary": "**Date Completed**: 2025-11-21 05:00",
-      "ai_summary": "Date Completed: 2025-11-21 05:00 Duration: ~1 hour (MVP scope) Status: ✅ Successfully Completed --- Phase 5 established a complete Retrieval-Augmented Generation (RAG) system for VoiceAssist, enabling the system to search and retrieve relevant medical knowledge to enhance AI responses with eviden...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "planning",
-      "tags": ["phase", "completion", "report"],
-      "component": "platform/planning",
-      "relatedPaths": ["docs/phases"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "phase-06-completion-report",
-      "path": "PHASE_06_COMPLETION_REPORT.md",
-      "title": "Phase 06 Completion Report",
-      "summary": "**Project:** VoiceAssist V2 - Enterprise Medical AI Assistant",
-      "ai_summary": "Project: VoiceAssist V2 - Enterprise Medical AI Assistant Phase: 6 - Nextcloud App Integration & Unified Services (MVP) Started: 2025-11-21 05:30 Completed: 2025-11-21 07:00 Duration: 1.5 hours Status: ✅ COMPLETED (MVP Scope) --- Phase 6 successfully implements backend integration services for Ne...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "planning",
-      "tags": ["phase", "completion", "report"],
-      "component": "platform/planning",
-      "relatedPaths": ["docs/phases"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "phase-07-completion-report",
-      "path": "PHASE_07_COMPLETION_REPORT.md",
-      "title": "Phase 07 Completion Report",
-      "summary": "**Date Completed**: 2025-11-21",
-      "ai_summary": "Date Completed: 2025-11-21 Duration: ~1 hour Status: ✅ Successfully Completed (MVP scope) --- Phase 7 focused on making the Admin Panel and related backend endpoints RBAC-aware and wiring the dashboard to real backend data. The goal was to ensure that all admin-only operations are properly protec...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "planning",
-      "tags": ["phase", "completion", "report"],
-      "component": "platform/planning",
-      "relatedPaths": ["docs/phases"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2741,91 +3703,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["backend", "ai-agents"],
+      "audience": [
+        "backend",
+        "ai-agents"
+      ],
       "category": "api",
-      "tags": ["phase", "api", "contracts"],
+      "tags": [
+        "phase",
+        "api",
+        "contracts"
+      ],
       "component": "backend/api-gateway",
-      "relatedPaths": ["services/api-gateway/app/api"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "phase-08-completion-report",
-      "path": "PHASE_08_COMPLETION_REPORT.md",
-      "title": "Phase 08 Completion Report",
-      "summary": "**Date:** 2025-11-21",
-      "ai_summary": "Date: 2025-11-21 Phase: 8 - Distributed Tracing & Advanced Observability Status: ✅ COMPLETED Duration: ~6 hours Successfully implemented comprehensive observability stack for VoiceAssist with Prometheus metrics, OpenTelemetry distributed tracing, centralized logging with Loki, and HIPAA-compliant...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "planning",
-      "tags": ["phase", "completion", "report"],
-      "component": "platform/planning",
-      "relatedPaths": ["docs/phases"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "phase-09-completion-report",
-      "path": "PHASE_09_COMPLETION_REPORT.md",
-      "title": "Phase 09 Completion Report",
-      "summary": "**Status**: ✅ COMPLETE",
-      "ai_summary": "Status: ✅ COMPLETE Completion Date: 2025-11-21 Phase Duration: 8 hours (estimated), Actual: 6-8 hours Total Deliverables: 100+ files, ~25,000 lines of code and documentation --- Phase 9 successfully delivers a complete Infrastructure as Code (IaC) and CI/CD solution for VoiceAssist V2. The implem...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "planning",
-      "tags": ["phase", "completion", "report"],
-      "component": "platform/planning",
-      "relatedPaths": ["docs/phases"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "phase-0-1-completion-report",
-      "path": "PHASE_0_1_COMPLETION_REPORT.md",
-      "title": "Phase 0 1 Completion Report",
-      "summary": "**Date:** 2025-11-20",
-      "ai_summary": "Date: 2025-11-20 Status: ✅ 100% COMPLETE Progress: 2/15 phases (13%) --- Phases 0 and 1 are fully complete and operational. All infrastructure services are running, healthy, and verified. The foundation for the VoiceAssist enterprise medical AI assistant is solid and ready for Phase 2 (Security &...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "planning",
-      "tags": ["phase", "completion", "report"],
-      "component": "platform/planning",
-      "relatedPaths": ["docs/phases"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "phase-0-1-optimization-recommendations",
-      "path": "PHASE_0_1_OPTIMIZATION_RECOMMENDATIONS.md",
-      "title": "Phase 0 1 Optimization Recommendations",
-      "summary": "**Date:** 2025-11-20",
-      "ai_summary": "Date: 2025-11-20 Focus: Hardening, Integration, and Performance Optimization --- While Phases 0 and 1 are fully functional, there are several strategic optimizations that will improve security, performance, reliability, and maintainability before proceeding to Phase 2. --- Current State: Plain te...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "planning",
-      "tags": ["phase", "optimization", "recommendations"],
-      "component": "platform/planning",
-      "relatedPaths": ["docs/phases"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "phase-10-completion-report",
-      "path": "PHASE_10_COMPLETION_REPORT.md",
-      "title": "Phase 10 Completion Report",
-      "summary": "**Status**: ✅ COMPLETE",
-      "ai_summary": "Status: ✅ COMPLETE Completion Date: 2025-11-21 Phase Duration: 6-8 hours (estimated), Actual: 6-8 hours Total Deliverables: 80+ files, ~15,000 lines of code and documentation --- Phase 10 successfully delivers a comprehensive load testing and performance optimization solution for VoiceAssist V2....",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "planning",
-      "tags": ["phase", "completion", "report"],
-      "component": "platform/planning",
-      "relatedPaths": ["docs/phases"],
+      "relatedPaths": [
+        "services/api-gateway/app/api"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2837,11 +3728,20 @@
       "status": "stable",
       "stability": "beta",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "optimized", "plan"],
+      "tags": [
+        "phase",
+        "optimized",
+        "plan"
+      ],
       "component": "platform/planning",
-      "relatedPaths": ["docs/phases"],
+      "relatedPaths": [
+        "docs/phases"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2853,11 +3753,19 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "template"],
+      "tags": [
+        "phase",
+        "template"
+      ],
       "component": "platform/planning",
-      "relatedPaths": ["docs/phases"],
+      "relatedPaths": [
+        "docs/phases"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2869,9 +3777,17 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["devops", "sre", "ai-agents"],
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
       "category": "debugging",
-      "tags": ["production", "deployment", "runbook"],
+      "tags": [
+        "production",
+        "deployment",
+        "runbook"
+      ],
       "component": "infra/deployment",
       "relatedPaths": [
         "docker-compose.yml",
@@ -2889,9 +3805,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["production", "readiness", "checklist"],
+      "tags": [
+        "production",
+        "readiness",
+        "checklist"
+      ],
       "component": "infra/deployment",
       "relatedPaths": [
         "docker-compose.yml",
@@ -2909,11 +3832,19 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["project", "summary"],
+      "tags": [
+        "project",
+        "summary"
+      ],
       "component": "docs/overview",
-      "relatedPaths": ["docs/START_HERE.md"],
+      "relatedPaths": [
+        "docs/START_HERE.md"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -2925,9 +3856,14 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["readme"],
+      "tags": [
+        "readme"
+      ],
       "component": "docs/overview",
       "relatedPaths": [
         "docs/ai/AGENT_ONBOARDING.md",
@@ -2944,10 +3880,25 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "ai-agents", "backend", "frontend"],
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "backend",
+        "frontend"
+      ],
       "category": "architecture",
-      "tags": ["architecture", "websocket", "realtime", "voice", "streaming"],
-      "relatedServices": ["api-gateway", "web-app"],
+      "tags": [
+        "architecture",
+        "websocket",
+        "realtime",
+        "voice",
+        "streaming"
+      ],
+      "relatedServices": [
+        "api-gateway",
+        "web-app"
+      ],
       "component": "backend/websocket",
       "relatedPaths": [
         "services/api-gateway/app/api/websocket.py",
@@ -2966,9 +3917,17 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["remaining", "message", "edit", "work"],
+      "tags": [
+        "remaining",
+        "message",
+        "edit",
+        "work"
+      ],
       "component": "frontend/web-app",
       "relatedPaths": [
         "packages/api-client/src/index.ts",
@@ -2986,11 +3945,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["rto", "rpo", "documentation"],
+      "tags": [
+        "rto",
+        "rpo",
+        "documentation"
+      ],
       "component": "infra/ha-dr",
-      "relatedPaths": ["ha-dr"],
+      "relatedPaths": [
+        "ha-dr"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3002,11 +3970,18 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "security",
-      "tags": ["security"],
+      "tags": [
+        "security"
+      ],
       "component": "platform/security",
-      "relatedPaths": ["docs/SECURITY_COMPLIANCE.md"],
+      "relatedPaths": [
+        "docs/SECURITY_COMPLIANCE.md"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3026,7 +4001,13 @@
         "architects"
       ],
       "category": "security",
-      "tags": ["security", "hipaa", "compliance", "phi", "encryption"],
+      "tags": [
+        "security",
+        "hipaa",
+        "compliance",
+        "phi",
+        "encryption"
+      ],
       "component": "backend/security",
       "relatedPaths": [
         "services/api-gateway/app/core/security.py",
@@ -3045,9 +4026,16 @@
       "status": "stable",
       "stability": "beta",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["semantic", "search", "design"],
+      "tags": [
+        "semantic",
+        "search",
+        "design"
+      ],
       "component": "backend/search",
       "relatedPaths": [
         "services/api-gateway/app/services/rag_service.py",
@@ -3066,10 +4054,23 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "ai-agents", "backend", "devops"],
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "backend",
+        "devops"
+      ],
       "category": "architecture",
-      "tags": ["service", "catalog", "api", "architecture"],
-      "relatedServices": ["api-gateway"],
+      "tags": [
+        "service",
+        "catalog",
+        "api",
+        "architecture"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
       "component": "backend/services",
       "relatedPaths": [
         "services/api-gateway/app/services/__init__.py",
@@ -3077,22 +4078,6 @@
         "services/api-gateway/app/services/ai_service.py",
         "services/api-gateway/app/services/auth_service.py"
       ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "system-review-2025-11-22",
-      "path": "SYSTEM_REVIEW_2025-11-22.md",
-      "title": "System Review 2025 11 22",
-      "summary": "**Reviewer:** Claude (AI Assistant)",
-      "ai_summary": "Reviewer: Claude (AI Assistant) Date: November 22, 2025 Branch: fix/system-review-and-testing Scope: Chat interface, conversation management, WebSocket integration --- This document provides a comprehensive review of the VoiceAssist web application's current implementation, focusing on the chat i...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "reference",
-      "tags": ["system", "review", "2025"],
-      "component": "platform/review",
-      "relatedPaths": ["apps/web-app/src"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3104,11 +4089,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "deployment",
-      "tags": ["terraform", "guide"],
+      "tags": [
+        "terraform",
+        "guide"
+      ],
       "component": "infra/terraform",
-      "relatedPaths": ["terraform", "Makefile"],
+      "relatedPaths": [
+        "terraform",
+        "Makefile"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3120,9 +4114,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "testing",
-      "tags": ["testing", "contracts"],
+      "tags": [
+        "testing",
+        "contracts"
+      ],
       "component": "testing/contracts",
       "relatedPaths": [
         "packages/api-client/src/index.ts",
@@ -3139,9 +4139,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "testing",
-      "tags": ["testing", "guide"],
+      "tags": [
+        "testing",
+        "guide"
+      ],
       "component": "testing/e2e",
       "relatedPaths": [
         "apps/web-app/playwright.config.ts",
@@ -3149,22 +4155,6 @@
         "apps/web-app/src/__tests__",
         "packages/ui/vitest.config.ts"
       ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "testing-results-2025-11-22",
-      "path": "TESTING_RESULTS_2025-11-22.md",
-      "title": "Testing Results 2025 11 22",
-      "summary": "**Date:** 2025-11-22",
-      "ai_summary": "Date: 2025-11-22 Branch: fix/system-review-and-testing Tester: Claude (AI Assistant) Status: Code Review Complete, Manual Testing Required --- This document outlines the testing that has been performed and provides a manual testing checklist for validating the WebSocket protocol fixes and convers...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "testing",
-      "tags": ["testing", "results", "2025"],
-      "component": "platform/testing",
-      "relatedPaths": ["apps/web-app/src"],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3176,9 +4166,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["tools", "and", "integrations"],
+      "tags": [
+        "tools",
+        "and",
+        "integrations"
+      ],
       "component": "backend/tools",
       "relatedPaths": [
         "services/api-gateway/app/services/tools/tool_service.py",
@@ -3196,11 +4193,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["tools", "completion", "summary"],
+      "tags": [
+        "tools",
+        "completion",
+        "summary"
+      ],
       "component": "docs/summary",
-      "relatedPaths": ["docs"],
+      "relatedPaths": [
+        "docs"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3212,11 +4218,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["tools", "integration", "summary"],
+      "tags": [
+        "tools",
+        "integration",
+        "summary"
+      ],
       "component": "backend/api-gateway",
-      "relatedPaths": ["docs/TOOLS_AND_INTEGRATIONS.md"],
+      "relatedPaths": [
+        "docs/TOOLS_AND_INTEGRATIONS.md"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3228,9 +4243,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "operations",
-      "tags": ["user", "guide"],
+      "tags": [
+        "user",
+        "guide"
+      ],
       "component": "frontend/web-app",
       "relatedPaths": [
         "apps/web-app/src/components/Chat.tsx",
@@ -3248,9 +4269,17 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["voice", "ready", "state", "2025"],
+      "tags": [
+        "voice",
+        "ready",
+        "state",
+        "2025"
+      ],
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/api/voice.py",
@@ -3267,10 +4296,25 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "backend", "frontend", "ai-agents"],
+      "audience": [
+        "human",
+        "agent",
+        "backend",
+        "frontend",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["websocket", "protocol", "api", "realtime", "streaming"],
-      "relatedServices": ["api-gateway", "web-app"],
+      "tags": [
+        "websocket",
+        "protocol",
+        "api",
+        "realtime",
+        "streaming"
+      ],
+      "relatedServices": [
+        "api-gateway",
+        "web-app"
+      ],
       "component": "backend/websocket",
       "relatedPaths": [
         "services/api-gateway/app/api/websocket.py",
@@ -3289,9 +4333,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["web", "app", "specs"],
+      "tags": [
+        "web",
+        "app",
+        "specs"
+      ],
       "component": "frontend/web-app",
       "relatedPaths": [
         "apps/web-app/src/App.tsx",
@@ -3308,11 +4359,20 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["web", "app", "wireframes"],
+      "tags": [
+        "web",
+        "app",
+        "wireframes"
+      ],
       "component": "frontend/web-app",
-      "relatedPaths": ["apps/web-app/src/components"],
+      "relatedPaths": [
+        "apps/web-app/src/components"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3324,9 +4384,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "operations",
-      "tags": ["feature", "parity"],
+      "tags": [
+        "feature",
+        "parity"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3338,10 +4404,22 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "backend", "frontend", "ai-agents"],
+      "audience": [
+        "human",
+        "agent",
+        "backend",
+        "frontend",
+        "ai-agents"
+      ],
       "category": "api",
-      "tags": ["api", "routes", "auto-generated"],
-      "relatedServices": ["api-gateway"],
+      "tags": [
+        "api",
+        "routes",
+        "auto-generated"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/api/__init__.py",
@@ -3359,10 +4437,24 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "backend", "frontend", "ai-agents"],
+      "audience": [
+        "human",
+        "agent",
+        "backend",
+        "frontend",
+        "ai-agents"
+      ],
       "category": "api",
-      "tags": ["api", "rest", "reference", "endpoints", "examples"],
-      "relatedServices": ["api-gateway"],
+      "tags": [
+        "api",
+        "rest",
+        "reference",
+        "endpoints",
+        "examples"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/api/__init__.py",
@@ -3381,9 +4473,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "architecture",
-      "tags": ["architecture", "diagrams"],
+      "tags": [
+        "architecture",
+        "diagrams"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3395,9 +4493,14 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "architecture",
-      "tags": ["readme"],
+      "tags": [
+        "readme"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3409,9 +4512,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["backend", "ai-agents"],
+      "audience": [
+        "backend",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["backend", "implementation", "plan"],
+      "tags": [
+        "backend",
+        "implementation",
+        "plan"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3423,9 +4533,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["backend", "ai-agents"],
+      "audience": [
+        "backend",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["backend", "implementation", "summary"],
+      "tags": [
+        "backend",
+        "implementation",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3437,9 +4554,17 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["branching", "and", "shortcuts", "implementation"],
+      "tags": [
+        "branching",
+        "and",
+        "shortcuts",
+        "implementation"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3451,9 +4576,15 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["changes", "summary"],
+      "tags": [
+        "changes",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3465,9 +4596,15 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["current", "phase"],
+      "tags": [
+        "current",
+        "phase"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3479,9 +4616,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["devops", "sre", "ai-agents"],
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["deployment", "complete"],
+      "tags": [
+        "deployment",
+        "complete"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3493,9 +4637,17 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["design", "system", "implementation", "plan"],
+      "tags": [
+        "design",
+        "system",
+        "implementation",
+        "plan"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3507,9 +4659,15 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["development", "log"],
+      "tags": [
+        "development",
+        "log"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3521,9 +4679,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["development", "session", "summary"],
+      "tags": [
+        "development",
+        "session",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3535,9 +4700,17 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["dev", "cors", "fix", "summary"],
+      "tags": [
+        "dev",
+        "cors",
+        "fix",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3549,9 +4722,15 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["documentation", "created"],
+      "tags": [
+        "documentation",
+        "created"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3563,9 +4742,17 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["frontend", "phase1", "phase2", "summary"],
+      "tags": [
+        "frontend",
+        "phase1",
+        "phase2",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3577,9 +4764,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["frontend", "phase8", "tests"],
+      "tags": [
+        "frontend",
+        "phase8",
+        "tests"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3591,9 +4785,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["phase", "complete", "summary"],
+      "tags": [
+        "phase",
+        "complete",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3605,9 +4806,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["phase", "complete", "summary"],
+      "tags": [
+        "phase",
+        "complete",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3619,9 +4827,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["phase", "locust", "summary"],
+      "tags": [
+        "phase",
+        "locust",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3633,9 +4848,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["phase", "optimization", "summary"],
+      "tags": [
+        "phase",
+        "optimization",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3647,9 +4869,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["phase", "voice", "complete"],
+      "tags": [
+        "phase",
+        "voice",
+        "complete"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3661,9 +4890,15 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["phase", "complete"],
+      "tags": [
+        "phase",
+        "complete"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3675,9 +4910,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["phase", "citations", "complete"],
+      "tags": [
+        "phase",
+        "citations",
+        "complete"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3689,9 +4931,15 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["phase", "complete"],
+      "tags": [
+        "phase",
+        "complete"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3703,9 +4951,17 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["phase", "conversation", "management", "progress"],
+      "tags": [
+        "phase",
+        "conversation",
+        "management",
+        "progress"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3717,9 +4973,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["phase", "export", "complete"],
+      "tags": [
+        "phase",
+        "export",
+        "complete"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3731,9 +4994,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["phase", "accessibility", "complete"],
+      "tags": [
+        "phase",
+        "accessibility",
+        "complete"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3745,9 +5015,14 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["plan"],
+      "tags": [
+        "plan"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3759,23 +5034,15 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["pull", "request"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "archive/readme",
-      "path": "archive/README.md",
-      "title": "Readme",
-      "summary": "This directory contains archived documentation from completed development phases. These files are preserved for historical reference.",
-      "ai_summary": "This directory contains archived documentation from completed development phases. These files are preserved for historical reference.",
-      "status": "deprecated",
-      "stability": "legacy",
-      "owner": "docs",
-      "audience": ["human", "ai-agents"],
-      "category": "reference",
-      "tags": ["readme"],
+      "tags": [
+        "pull",
+        "request"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3787,9 +5054,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["realtime", "sanity", "check"],
+      "tags": [
+        "realtime",
+        "sanity",
+        "check"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3801,9 +5075,17 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["session", "summary", "2025", "phase"],
+      "tags": [
+        "session",
+        "summary",
+        "2025",
+        "phase"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3815,9 +5097,17 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["session", "summary", "2025", "phase"],
+      "tags": [
+        "session",
+        "summary",
+        "2025",
+        "phase"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3829,9 +5119,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["voice", "endpoint", "fix"],
+      "tags": [
+        "voice",
+        "endpoint",
+        "fix"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3843,9 +5140,17 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["voice", "mode", "enhancement", "summary"],
+      "tags": [
+        "voice",
+        "mode",
+        "enhancement",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3857,9 +5162,16 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["voice", "realtime", "integration"],
+      "tags": [
+        "voice",
+        "realtime",
+        "integration"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3871,9 +5183,17 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["web", "app", "development", "summary"],
+      "tags": [
+        "web",
+        "app",
+        "development",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3885,9 +5205,448 @@
       "status": "deprecated",
       "stability": "legacy",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "reference",
-      "tags": ["work", "completed", "2025"],
+      "tags": [
+        "work",
+        "completed",
+        "2025"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "admin-panel-login-fix",
+      "path": "archive/phases/ADMIN_PANEL_LOGIN_FIX.md",
+      "title": "Admin Panel Login Fix",
+      "summary": "**Date**: 2025-11-22",
+      "ai_summary": "Date: 2025-11-22 Issue: Login failed with CORS errors and Firebase errors Status: ✅ RESOLVED --- When attempting to log in to https://admin.asimo.io, the following errors occurred: Firebase: Error (auth/network-request-failed) - The admin panel was loading Firebase authentication code - This indi...",
+      "status": "experimental",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
+      "category": "operations",
+      "tags": [
+        "admin",
+        "panel",
+        "login",
+        "fix"
+      ],
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/pages/Login.tsx",
+        "services/api-gateway/app/api/auth.py"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "admin-panel-login-fix-complete",
+      "path": "archive/phases/ADMIN_PANEL_LOGIN_FIX_COMPLETE.md",
+      "title": "Admin Panel Login Fix Complete",
+      "summary": "**Date:** 2025-11-22",
+      "ai_summary": "Date: 2025-11-22 Issue: Admin panel login at https://admin.asimo.io was failing with \"Unexpected token '<', '<!DOCTYPE ' is not valid JSON\" Status: ✅ RESOLVED The admin panel login was failing due to multiple compounding issues: 1. Frontend receiving HTML error pages instead of JSON responses 2....",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
+      "category": "operations",
+      "tags": [
+        "admin",
+        "panel",
+        "login",
+        "fix"
+      ],
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/pages/Login.tsx",
+        "services/api-gateway/app/api/auth.py"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "login-500-fix-2025-11-25",
+      "path": "archive/phases/LOGIN_500_FIX_2025-11-25.md",
+      "title": "Login 500 Fix 2025 11 25",
+      "summary": "Users were experiencing HTTP 500 errors when attempting to login at dev.asimo.io.",
+      "ai_summary": "Users were experiencing HTTP 500 errors when attempting to login at dev.asimo.io. - Browser console showed: Login failed: AxiosError 500 (Request failed with status code 500) - Backend logs showed stack trace with: - AttributeError: module 'bcrypt' has no attribute '__about__' - ValueError: passw...",
+      "status": "experimental",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "reference",
+      "tags": [
+        "login",
+        "500",
+        "fix",
+        "2025"
+      ],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/auth.py"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-02-completion-report",
+      "path": "archive/phases/PHASE_02_COMPLETION_REPORT.md",
+      "title": "Phase 02 Completion Report",
+      "summary": "**Date Completed**: 2025-11-21 00:20",
+      "ai_summary": "Date Completed: 2025-11-21 00:20 Duration: ~2.5 hours (started 2025-11-20 22:00) Status: ✅ Successfully Completed --- Phase 2 has been successfully completed, implementing a comprehensive JWT-based authentication system, user management API, and Nextcloud integration foundation. All core delivera...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "planning",
+      "tags": [
+        "phase",
+        "completion",
+        "report"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/phases"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-02-enhancements-report",
+      "path": "archive/phases/PHASE_02_ENHANCEMENTS_REPORT.md",
+      "title": "Phase 02 Enhancements Report",
+      "summary": "**Date**: 2025-11-21",
+      "ai_summary": "Date: 2025-11-21 Scope: Post-Phase 2 Security & Observability Enhancements Status: ✅ Completed --- Following the successful completion of Phase 2 (Security Foundation & Nextcloud Integration), a comprehensive enhancement initiative was undertaken to strengthen security, improve observability, and...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "planning",
+      "tags": [
+        "phase",
+        "enhancements",
+        "report"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/phases"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-03-completion-report",
+      "path": "archive/phases/PHASE_03_COMPLETION_REPORT.md",
+      "title": "Phase 03 Completion Report",
+      "summary": "**Date Completed**: 2025-11-21 03:00",
+      "ai_summary": "Date Completed: 2025-11-21 03:00 Duration: ~1 hour Status: ✅ Successfully Completed --- Phase 3 established the API Gateway and core service boundaries on top of the infrastructure and security foundation built in Phases 0–2. The current system operates as a FastAPI monolith that cleanly separate...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "planning",
+      "tags": [
+        "phase",
+        "completion",
+        "report"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/phases"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-04-completion-report",
+      "path": "archive/phases/PHASE_04_COMPLETION_REPORT.md",
+      "title": "Phase 04 Completion Report",
+      "summary": "**Date Completed**: 2025-11-21 03:45",
+      "ai_summary": "Date Completed: 2025-11-21 03:45 Duration: ~2 hours Status: ✅ Successfully Completed (MVP Scope) --- Phase 4 established the realtime communication foundation for VoiceAssist by implementing a WebSocket-based streaming chat endpoint integrated with the QueryOrchestrator. The system now supports b...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "planning",
+      "tags": [
+        "phase",
+        "completion",
+        "report"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/phases"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-05-completion-report",
+      "path": "archive/phases/PHASE_05_COMPLETION_REPORT.md",
+      "title": "Phase 05 Completion Report",
+      "summary": "**Date Completed**: 2025-11-21 05:00",
+      "ai_summary": "Date Completed: 2025-11-21 05:00 Duration: ~1 hour (MVP scope) Status: ✅ Successfully Completed --- Phase 5 established a complete Retrieval-Augmented Generation (RAG) system for VoiceAssist, enabling the system to search and retrieve relevant medical knowledge to enhance AI responses with eviden...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "planning",
+      "tags": [
+        "phase",
+        "completion",
+        "report"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/phases"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-06-completion-report",
+      "path": "archive/phases/PHASE_06_COMPLETION_REPORT.md",
+      "title": "Phase 06 Completion Report",
+      "summary": "**Project:** VoiceAssist V2 - Enterprise Medical AI Assistant",
+      "ai_summary": "Project: VoiceAssist V2 - Enterprise Medical AI Assistant Phase: 6 - Nextcloud App Integration & Unified Services (MVP) Started: 2025-11-21 05:30 Completed: 2025-11-21 07:00 Duration: 1.5 hours Status: ✅ COMPLETED (MVP Scope) --- Phase 6 successfully implements backend integration services for Ne...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "planning",
+      "tags": [
+        "phase",
+        "completion",
+        "report"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/phases"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-07-completion-report",
+      "path": "archive/phases/PHASE_07_COMPLETION_REPORT.md",
+      "title": "Phase 07 Completion Report",
+      "summary": "**Date Completed**: 2025-11-21",
+      "ai_summary": "Date Completed: 2025-11-21 Duration: ~1 hour Status: ✅ Successfully Completed (MVP scope) --- Phase 7 focused on making the Admin Panel and related backend endpoints RBAC-aware and wiring the dashboard to real backend data. The goal was to ensure that all admin-only operations are properly protec...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "planning",
+      "tags": [
+        "phase",
+        "completion",
+        "report"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/phases"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-08-completion-report",
+      "path": "archive/phases/PHASE_08_COMPLETION_REPORT.md",
+      "title": "Phase 08 Completion Report",
+      "summary": "**Date:** 2025-11-21",
+      "ai_summary": "Date: 2025-11-21 Phase: 8 - Distributed Tracing & Advanced Observability Status: ✅ COMPLETED Duration: ~6 hours Successfully implemented comprehensive observability stack for VoiceAssist with Prometheus metrics, OpenTelemetry distributed tracing, centralized logging with Loki, and HIPAA-compliant...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "planning",
+      "tags": [
+        "phase",
+        "completion",
+        "report"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/phases"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-09-completion-report",
+      "path": "archive/phases/PHASE_09_COMPLETION_REPORT.md",
+      "title": "Phase 09 Completion Report",
+      "summary": "**Status**: ✅ COMPLETE",
+      "ai_summary": "Status: ✅ COMPLETE Completion Date: 2025-11-21 Phase Duration: 8 hours (estimated), Actual: 6-8 hours Total Deliverables: 100+ files, ~25,000 lines of code and documentation --- Phase 9 successfully delivers a complete Infrastructure as Code (IaC) and CI/CD solution for VoiceAssist V2. The implem...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "planning",
+      "tags": [
+        "phase",
+        "completion",
+        "report"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/phases"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-0-1-completion-report",
+      "path": "archive/phases/PHASE_0_1_COMPLETION_REPORT.md",
+      "title": "Phase 0 1 Completion Report",
+      "summary": "**Date:** 2025-11-20",
+      "ai_summary": "Date: 2025-11-20 Status: ✅ 100% COMPLETE Progress: 2/15 phases (13%) --- Phases 0 and 1 are fully complete and operational. All infrastructure services are running, healthy, and verified. The foundation for the VoiceAssist enterprise medical AI assistant is solid and ready for Phase 2 (Security &...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "planning",
+      "tags": [
+        "phase",
+        "completion",
+        "report"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/phases"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-0-1-optimization-recommendations",
+      "path": "archive/phases/PHASE_0_1_OPTIMIZATION_RECOMMENDATIONS.md",
+      "title": "Phase 0 1 Optimization Recommendations",
+      "summary": "**Date:** 2025-11-20",
+      "ai_summary": "Date: 2025-11-20 Focus: Hardening, Integration, and Performance Optimization --- While Phases 0 and 1 are fully functional, there are several strategic optimizations that will improve security, performance, reliability, and maintainability before proceeding to Phase 2. --- Current State: Plain te...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "planning",
+      "tags": [
+        "phase",
+        "optimization",
+        "recommendations"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/phases"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "phase-10-completion-report",
+      "path": "archive/phases/PHASE_10_COMPLETION_REPORT.md",
+      "title": "Phase 10 Completion Report",
+      "summary": "**Status**: ✅ COMPLETE",
+      "ai_summary": "Status: ✅ COMPLETE Completion Date: 2025-11-21 Phase Duration: 6-8 hours (estimated), Actual: 6-8 hours Total Deliverables: 80+ files, ~15,000 lines of code and documentation --- Phase 10 successfully delivers a comprehensive load testing and performance optimization solution for VoiceAssist V2....",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "planning",
+      "tags": [
+        "phase",
+        "completion",
+        "report"
+      ],
+      "component": "platform/planning",
+      "relatedPaths": [
+        "docs/phases"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "system-review-2025-11-22",
+      "path": "archive/phases/SYSTEM_REVIEW_2025-11-22.md",
+      "title": "System Review 2025 11 22",
+      "summary": "**Reviewer:** Claude (AI Assistant)",
+      "ai_summary": "Reviewer: Claude (AI Assistant) Date: November 22, 2025 Branch: fix/system-review-and-testing Scope: Chat interface, conversation management, WebSocket integration --- This document provides a comprehensive review of the VoiceAssist web application's current implementation, focusing on the chat i...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "reference",
+      "tags": [
+        "system",
+        "review",
+        "2025"
+      ],
+      "component": "platform/review",
+      "relatedPaths": [
+        "apps/web-app/src"
+      ],
+      "lastUpdated": "2025-11-27"
+    },
+    {
+      "slug": "testing-results-2025-11-22",
+      "path": "archive/phases/TESTING_RESULTS_2025-11-22.md",
+      "title": "Testing Results 2025 11 22",
+      "summary": "**Date:** 2025-11-22",
+      "ai_summary": "Date: 2025-11-22 Branch: fix/system-review-and-testing Tester: Claude (AI Assistant) Status: Code Review Complete, Manual Testing Required --- This document outlines the testing that has been performed and provides a manual testing checklist for validating the WebSocket protocol fixes and convers...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "testing",
+      "tags": [
+        "testing",
+        "results",
+        "2025"
+      ],
+      "component": "platform/testing",
+      "relatedPaths": [
+        "apps/web-app/src"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3899,9 +5658,18 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["devops", "sre", "ai-agents"],
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["admin", "panel", "feature", "specs"],
+      "tags": [
+        "admin",
+        "panel",
+        "feature",
+        "specs"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3913,9 +5681,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["backend", "ai-agents"],
+      "audience": [
+        "backend",
+        "ai-agents"
+      ],
       "category": "api",
-      "tags": ["api", "reference"],
+      "tags": [
+        "api",
+        "reference"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3927,9 +5701,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["architecture", "overview"],
+      "tags": [
+        "architecture",
+        "overview"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3941,9 +5721,14 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["buttongroup"],
+      "tags": [
+        "buttongroup"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3955,9 +5740,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["client", "dev", "roadmap"],
+      "tags": [
+        "client",
+        "dev",
+        "roadmap"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3969,9 +5761,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["client", "folder", "structure"],
+      "tags": [
+        "client",
+        "folder",
+        "structure"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3983,9 +5782,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["code", "examples"],
+      "tags": [
+        "code",
+        "examples"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -3997,9 +5802,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["component", "library"],
+      "tags": [
+        "component",
+        "library"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4011,9 +5822,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["conversations", "and", "routing"],
+      "tags": [
+        "conversations",
+        "and",
+        "routing"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4025,9 +5843,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["development", "workflow"],
+      "tags": [
+        "development",
+        "workflow"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4039,8 +5863,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
-      "tags": ["docs", "site", "feature", "specs"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "tags": [
+        "docs",
+        "site",
+        "feature",
+        "specs"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4052,23 +5884,16 @@
       "status": "stable",
       "stability": "beta",
       "owner": "frontend",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["frontend", "phase3", "plan"],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "client-implementation/integration-guide",
-      "path": "client-implementation/INTEGRATION_GUIDE.md",
-      "title": "Integration Guide",
-      "summary": "**Date:** 2025-11-21",
-      "ai_summary": "Version: 1.0 Date: 2025-11-21 Status: Draft - Awaiting Team Review --- This guide provides step-by-step instructions for integrating the VoiceAssist client applications with the existing backend infrastructure. Backend Status: ✅ Complete (15/15 phases, HIPAA-compliant, production-ready) Backend L...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "frontend",
-      "audience": ["frontend", "ai-agents"],
-      "category": "planning",
-      "tags": ["integration", "guide"],
+      "tags": [
+        "frontend",
+        "phase3",
+        "plan"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4080,9 +5905,14 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["iconbutton"],
+      "tags": [
+        "iconbutton"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4094,9 +5924,16 @@
       "status": "stable",
       "stability": "beta",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["master", "implementation", "plan"],
+      "tags": [
+        "master",
+        "implementation",
+        "plan"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4108,9 +5945,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["open", "questions"],
+      "tags": [
+        "open",
+        "questions"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4122,9 +5965,14 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["readme"],
+      "tags": [
+        "readme"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4136,9 +5984,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["realtime", "proxy", "spec"],
+      "tags": [
+        "realtime",
+        "proxy",
+        "spec"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4150,9 +6005,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["technical", "architecture"],
+      "tags": [
+        "technical",
+        "architecture"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4164,9 +6025,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["testing", "guide"],
+      "tags": [
+        "testing",
+        "guide"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4178,9 +6045,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["testing", "phase2"],
+      "tags": [
+        "testing",
+        "phase2"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4192,9 +6065,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["testing", "phase3"],
+      "tags": [
+        "testing",
+        "phase3"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4206,9 +6085,17 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["web", "app", "feature", "specs"],
+      "tags": [
+        "web",
+        "app",
+        "feature",
+        "specs"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4220,9 +6107,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["backend", "ai-agents"],
+      "audience": [
+        "backend",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["rest", "api"],
+      "tags": [
+        "rest",
+        "api"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4234,9 +6127,14 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "overview",
-      "tags": ["architecture"],
+      "tags": [
+        "architecture"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4248,9 +6146,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["proxy", "spec"],
+      "tags": [
+        "proxy",
+        "spec"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4262,7 +6166,13 @@
       "status": "stable",
       "stability": "production",
       "owner": "backend",
-      "audience": ["human", "agent", "ai-agents", "backend", "sre"],
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "backend",
+        "sre"
+      ],
       "category": "debugging",
       "tags": [
         "debugging",
@@ -4272,7 +6182,9 @@
         "database",
         "troubleshooting"
       ],
-      "relatedServices": ["api-gateway"],
+      "relatedServices": [
+        "api-gateway"
+      ],
       "component": "backend/api-gateway",
       "relatedPaths": [
         "services/api-gateway/app/main.py",
@@ -4291,7 +6203,12 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "agent", "ai-agents", "frontend"],
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "frontend"
+      ],
       "category": "debugging",
       "tags": [
         "debugging",
@@ -4301,7 +6218,10 @@
         "web-app",
         "troubleshooting"
       ],
-      "relatedServices": ["web-app", "admin-panel"],
+      "relatedServices": [
+        "web-app",
+        "admin-panel"
+      ],
       "component": "frontend/web-app",
       "relatedPaths": [
         "apps/web-app/src/App.tsx",
@@ -4319,7 +6239,14 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["human", "agent", "ai-agents", "sre", "backend", "frontend"],
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "sre",
+        "backend",
+        "frontend"
+      ],
       "category": "debugging",
       "tags": [
         "debugging",
@@ -4329,7 +6256,12 @@
         "metrics",
         "troubleshooting"
       ],
-      "relatedServices": ["api-gateway", "web-app", "admin-panel", "docs-site"],
+      "relatedServices": [
+        "api-gateway",
+        "web-app",
+        "admin-panel",
+        "docs-site"
+      ],
       "component": "platform/debugging",
       "relatedPaths": [
         "services/api-gateway/app/api/health.py",
@@ -4347,9 +6279,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "infra",
-      "audience": ["devops", "sre", "ai-agents"],
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
       "category": "deployment",
-      "tags": ["deployment", "summary"],
+      "tags": [
+        "deployment",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4361,9 +6300,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "frontend",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "breakdown"],
+      "tags": [
+        "phase",
+        "breakdown"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4375,9 +6320,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "infra",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "operations",
-      "tags": ["docs", "domain"],
+      "tags": [
+        "docs",
+        "domain"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4389,9 +6340,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "operations",
-      "tags": ["business", "metrics"],
+      "tags": [
+        "business",
+        "metrics"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4403,9 +6360,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "operations",
-      "tags": ["connection", "pool", "optimization"],
+      "tags": [
+        "connection",
+        "pool",
+        "optimization"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4417,10 +6381,24 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["devops", "backend", "admin", "ai-agents"],
+      "audience": [
+        "devops",
+        "backend",
+        "admin",
+        "ai-agents"
+      ],
       "category": "operations",
-      "tags": ["operations", "overview", "runbooks", "sre"],
-      "relatedServices": ["api-gateway", "web-app", "admin-panel"],
+      "tags": [
+        "operations",
+        "overview",
+        "runbooks",
+        "sre"
+      ],
+      "relatedServices": [
+        "api-gateway",
+        "web-app",
+        "admin-panel"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4432,10 +6410,22 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["devops", "backend", "admin", "ai-agents"],
+      "audience": [
+        "devops",
+        "backend",
+        "admin",
+        "ai-agents"
+      ],
       "category": "operations",
-      "tags": ["slo", "reliability", "metrics", "operations"],
-      "relatedServices": ["api-gateway"],
+      "tags": [
+        "slo",
+        "reliability",
+        "metrics",
+        "operations"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4447,9 +6437,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "security",
-      "tags": ["analytics", "data", "policy"],
+      "tags": [
+        "analytics",
+        "data",
+        "policy"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4461,7 +6458,10 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["devops", "ai-agents"],
+      "audience": [
+        "devops",
+        "ai-agents"
+      ],
       "category": "debugging",
       "tags": [
         "runbook",
@@ -4470,7 +6470,9 @@
         "disaster-recovery",
         "operations"
       ],
-      "relatedServices": ["api-gateway"],
+      "relatedServices": [
+        "api-gateway"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4482,10 +6484,23 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["devops", "backend", "ai-agents"],
+      "audience": [
+        "devops",
+        "backend",
+        "ai-agents"
+      ],
       "category": "debugging",
-      "tags": ["runbook", "deployment", "operations", "production"],
-      "relatedServices": ["api-gateway", "web-app", "admin-panel"],
+      "tags": [
+        "runbook",
+        "deployment",
+        "operations",
+        "production"
+      ],
+      "relatedServices": [
+        "api-gateway",
+        "web-app",
+        "admin-panel"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4497,7 +6512,13 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["human", "agent", "sre", "devops", "ai-agents"],
+      "audience": [
+        "human",
+        "agent",
+        "sre",
+        "devops",
+        "ai-agents"
+      ],
       "category": "operations",
       "tags": [
         "deployment",
@@ -4507,7 +6528,9 @@
         "apache",
         "certbot"
       ],
-      "relatedServices": ["docs-site"],
+      "relatedServices": [
+        "docs-site"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4519,10 +6542,22 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["devops", "backend", "admin", "ai-agents"],
+      "audience": [
+        "devops",
+        "backend",
+        "admin",
+        "ai-agents"
+      ],
       "category": "debugging",
-      "tags": ["runbook", "incident", "operations", "on-call"],
-      "relatedServices": ["api-gateway"],
+      "tags": [
+        "runbook",
+        "incident",
+        "operations",
+        "on-call"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4534,10 +6569,22 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["devops", "backend", "ai-agents"],
+      "audience": [
+        "devops",
+        "backend",
+        "ai-agents"
+      ],
       "category": "debugging",
-      "tags": ["runbook", "monitoring", "observability", "metrics", "alerting"],
-      "relatedServices": ["api-gateway"],
+      "tags": [
+        "runbook",
+        "monitoring",
+        "observability",
+        "metrics",
+        "alerting"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4549,10 +6596,21 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["devops", "backend", "ai-agents"],
+      "audience": [
+        "devops",
+        "backend",
+        "ai-agents"
+      ],
       "category": "debugging",
-      "tags": ["runbook", "scaling", "performance", "infrastructure"],
-      "relatedServices": ["api-gateway"],
+      "tags": [
+        "runbook",
+        "scaling",
+        "performance",
+        "infrastructure"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4564,10 +6622,21 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["devops", "backend", "ai-agents"],
+      "audience": [
+        "devops",
+        "backend",
+        "ai-agents"
+      ],
       "category": "debugging",
-      "tags": ["runbook", "troubleshooting", "operations", "debugging"],
-      "relatedServices": ["api-gateway"],
+      "tags": [
+        "runbook",
+        "troubleshooting",
+        "operations",
+        "debugging"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4579,9 +6648,14 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "overview",
-      "tags": ["architecture"],
+      "tags": [
+        "architecture"
+      ],
       "component": "platform/architecture",
       "relatedPaths": [
         "services/api-gateway/app/main.py",
@@ -4599,9 +6673,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["final", "code", "review"],
+      "tags": [
+        "final",
+        "code",
+        "review"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4613,9 +6694,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["project", "handoff", "package"],
+      "tags": [
+        "project",
+        "handoff",
+        "package"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4627,11 +6715,21 @@
       "status": "stable",
       "stability": "production",
       "owner": "docs",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "testing",
-      "tags": ["phase8", "folders", "testing", "guide"],
+      "tags": [
+        "phase8",
+        "folders",
+        "testing",
+        "guide"
+      ],
       "component": "frontend/web-app",
-      "relatedPaths": ["apps/web-app/src/components/folders"],
+      "relatedPaths": [
+        "apps/web-app/src/components/folders"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4643,9 +6741,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "initialization"],
+      "tags": [
+        "phase",
+        "initialization"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4657,9 +6761,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["devops", "sre", "ai-agents"],
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "infrastructure"],
+      "tags": [
+        "phase",
+        "infrastructure"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4671,9 +6782,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "local", "environment"],
+      "tags": [
+        "phase",
+        "local",
+        "environment"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4685,9 +6803,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["backend", "ai-agents"],
+      "audience": [
+        "backend",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "database", "schema"],
+      "tags": [
+        "phase",
+        "database",
+        "schema"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4699,9 +6824,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "security", "nextcloud"],
+      "tags": [
+        "phase",
+        "security",
+        "nextcloud"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4713,9 +6845,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "microservices"],
+      "tags": [
+        "phase",
+        "microservices"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4727,9 +6865,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "voice", "pipeline"],
+      "tags": [
+        "phase",
+        "voice",
+        "pipeline"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4741,9 +6886,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "medical"],
+      "tags": [
+        "phase",
+        "medical"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4755,9 +6906,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "nextcloud", "apps"],
+      "tags": [
+        "phase",
+        "nextcloud",
+        "apps"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4769,9 +6927,17 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["devops", "sre", "ai-agents"],
+      "audience": [
+        "devops",
+        "sre",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "admin", "panel"],
+      "tags": [
+        "phase",
+        "admin",
+        "panel"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4783,9 +6949,15 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "observability"],
+      "tags": [
+        "phase",
+        "observability"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4797,9 +6969,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "iac", "cicd"],
+      "tags": [
+        "phase",
+        "iac",
+        "cicd"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4811,9 +6990,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "load", "testing"],
+      "tags": [
+        "phase",
+        "load",
+        "testing"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4825,9 +7011,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "complete", "summary"],
+      "tags": [
+        "phase",
+        "complete",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4839,9 +7032,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "security", "hipaa"],
+      "tags": [
+        "phase",
+        "security",
+        "hipaa"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4853,9 +7053,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "complete", "summary"],
+      "tags": [
+        "phase",
+        "complete",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4867,9 +7074,14 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase"],
+      "tags": [
+        "phase"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4881,9 +7093,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "complete", "summary"],
+      "tags": [
+        "phase",
+        "complete",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4895,9 +7114,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "testing", "docs"],
+      "tags": [
+        "phase",
+        "testing",
+        "docs"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4909,9 +7135,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "complete", "summary"],
+      "tags": [
+        "phase",
+        "complete",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4923,9 +7156,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "production", "deploy"],
+      "tags": [
+        "phase",
+        "production",
+        "deploy"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4937,9 +7177,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["phase", "complete", "summary"],
+      "tags": [
+        "phase",
+        "complete",
+        "summary"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4951,9 +7198,17 @@
       "status": "stable",
       "stability": "beta",
       "owner": "mixed",
-      "audience": ["human", "ai-agents"],
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
       "category": "planning",
-      "tags": ["docs", "site", "path", "resolution"],
+      "tags": [
+        "docs",
+        "site",
+        "path",
+        "resolution"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {
@@ -4965,9 +7220,16 @@
       "status": "stable",
       "stability": "production",
       "owner": "sre",
-      "audience": ["frontend", "ai-agents"],
+      "audience": [
+        "frontend",
+        "ai-agents"
+      ],
       "category": "testing",
-      "tags": ["e2e", "testing", "guide"],
+      "tags": [
+        "e2e",
+        "testing",
+        "guide"
+      ],
       "lastUpdated": "2025-11-27"
     },
     {

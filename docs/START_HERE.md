@@ -7,7 +7,7 @@ summary: >-
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-12-02"
+lastUpdated: "2025-12-08"
 audience:
   - human
   - ai-agents
@@ -160,7 +160,6 @@ All documentation is in the `docs/` directory. Here's the complete index:
 | **[api-reference/rest-api.md](api-reference/rest-api.md)**                 | Endpoint-by-endpoint REST reference                  | Backend devs               |
 | **[API_REFERENCE.md](API_REFERENCE.md)**                                   | High-level API overview and endpoint groups          | Backend devs, stakeholders |
 | **[../services/api-gateway/README.md](../services/api-gateway/README.md)** | Canonical API Gateway service guide                  | Backend devs               |
-| **[server/README.md](../server/README.md)**                                | ⚠️ **DEPRECATED** - Legacy backend (use api-gateway) | Reference only             |
 | **[apps/web-app/README.md](../apps/web-app/README.md)**                    | Web app implementation details                       | Frontend devs              |
 | **[apps/admin-panel/README.md](../apps/admin-panel/README.md)**            | Admin panel implementation details                   | Frontend devs              |
 | **[apps/docs-site/README.md](../apps/docs-site/README.md)**                | Documentation site implementation                    | Frontend devs              |
@@ -482,7 +481,6 @@ I want to work on Phase [N]. Please:
 - **Phase docs**: `docs/phases/`
 - **Applications**: `apps/{web-app,admin-panel,docs-site}/`
 - **Services**: `services/api-gateway/`
-- **Server**: `server/`
 
 ### Key Technologies
 
