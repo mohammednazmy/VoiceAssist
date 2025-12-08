@@ -370,6 +370,26 @@ export interface TTSessionRecoveryResult {
 }
 
 /**
+ * Phase 5.2: Transcript truncation result for audio-transcript sync
+ */
+export interface TTTranscriptTruncation {
+  /** Text that was spoken before interruption */
+  truncatedText: string;
+  /** Text that was cut off */
+  remainingText: string;
+  /** Milliseconds into audio when interruption occurred */
+  truncationPointMs: number;
+  /** Last complete word before interruption */
+  lastCompleteWord: string;
+  /** Number of words spoken */
+  wordsSpoken: number;
+  /** Number of words remaining (cut off) */
+  wordsRemaining: number;
+  /** Timestamp when truncation occurred */
+  timestamp: number;
+}
+
+/**
  * Voice metrics for performance monitoring
  */
 export interface TTVoiceMetrics {
@@ -397,6 +417,22 @@ export interface TTVoiceMetrics {
   reconnectCount: number;
   /** Session start timestamp */
   sessionStartedAt: number | null;
+
+  // Phase 7.1: Enhanced metrics for comprehensive voice observability
+  /** Time from barge-in trigger to audio mute (ms) - SLO target: P95 < 50ms */
+  bargeInMuteLatencyMs: number | null;
+  /** Average barge-in mute latency across session (ms) */
+  avgBargeInMuteLatencyMs: number | null;
+  /** Count of successful barge-ins (audio was playing) */
+  successfulBargeInCount: number;
+  /** Count of misfire barge-ins (no audio playing or echo triggered) */
+  misfireBargeInCount: number;
+  /** Time from user speech detected to first AI audio played (ms) - perceived latency */
+  perceivedLatencyMs: number | null;
+  /** Count of VAD events (speech segments detected) */
+  vadEventCount: number;
+  /** Count of truncated responses (barge-in during speech) */
+  truncatedResponseCount: number;
 }
 
 /**
@@ -417,6 +453,8 @@ export interface UseThinkerTalkerSessionOptions {
   conversation_id?: string;
   voiceSettings?: TTVoiceSettings;
   onTranscript?: (transcript: TTTranscript) => void;
+  /** Phase 5.2: Called when AI response is truncated during barge-in */
+  onTranscriptTruncated?: (truncation: TTTranscriptTruncation) => void;
   onResponseDelta?: (delta: string, messageId: string) => void;
   onResponseComplete?: (content: string, messageId: string) => void;
   onAudioChunk?: (audioBase64: string) => void;
@@ -682,6 +720,11 @@ export function useThinkerTalkerSession(
   const [error, setError] = useState<Error | null>(null);
   const [transcript, setTranscript] = useState<string>("");
   const [partialTranscript, setPartialTranscript] = useState<string>("");
+  // Phase 5.1: Streaming AI response text for progressive display
+  const [partialAIResponse, setPartialAIResponse] = useState<string>("");
+  // Phase 5.2: Transcript truncation result from barge-in
+  const [lastTruncation, setLastTruncation] =
+    useState<TTTranscriptTruncation | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [pipelineState, setPipelineState] = useState<PipelineState>("idle");
   // Ref to track pipeline state for use in closures (avoids stale closure bug)
@@ -709,6 +752,14 @@ export function useThinkerTalkerSession(
     bargeInCount: 0,
     reconnectCount: 0,
     sessionStartedAt: null,
+    // Phase 7.1: Enhanced metrics
+    bargeInMuteLatencyMs: null,
+    avgBargeInMuteLatencyMs: null,
+    successfulBargeInCount: 0,
+    misfireBargeInCount: 0,
+    perceivedLatencyMs: null,
+    vadEventCount: 0,
+    truncatedResponseCount: 0,
   });
 
   // Refs
@@ -748,6 +799,11 @@ export function useThinkerTalkerSession(
   // Track when last audio chunk was received (for barge-in detection)
   // If audio was received recently (<3s), we might still be "speaking" from user's perspective
   const lastAudioChunkTimeRef = useRef<number | null>(null);
+
+  // Phase 7.1: Barge-in metrics tracking
+  const bargeInStartTimeRef = useRef<number | null>(null);
+  const bargeInMuteLatenciesRef = useRef<number[]>([]);
+  const userSpeechStartTimeRef = useRef<number | null>(null);
 
   // Ref for local voice activity callback (used in audio processor closure)
   const onLocalVoiceActivityRef = useRef<
@@ -1356,6 +1412,8 @@ export function useThinkerTalkerSession(
 
           setTranscript(text);
           setPartialTranscript("");
+          // Phase 5.1: Clear partial AI response as new response will start
+          setPartialAIResponse("");
           // Clear transcript accumulator on completion
           partialTranscriptAccumRef.current = "";
 
@@ -1395,6 +1453,69 @@ export function useThinkerTalkerSession(
           break;
         }
 
+        case "transcript.truncated": {
+          // Phase 5.2: Audio-transcript synchronization
+          // When user barges in, backend sends truncation info for clean text cutoff
+          const truncatedText = message.truncated_text as string;
+          const remainingText = message.remaining_text as string;
+          const truncationPointMs = message.truncation_point_ms as number;
+          const lastCompleteWord = message.last_complete_word as string;
+          const wordsSpoken = message.words_spoken as number;
+          const wordsRemaining = message.words_remaining as number;
+          const timestamp = message.timestamp as number;
+
+          voiceLog.debug(
+            `[ThinkerTalker] Transcript truncated: "${truncatedText.slice(0, 30)}..." at ${truncationPointMs}ms`,
+            { wordsSpoken, wordsRemaining, lastCompleteWord },
+          );
+
+          setLastTruncation({
+            truncatedText,
+            remainingText,
+            truncationPointMs,
+            lastCompleteWord,
+            wordsSpoken,
+            wordsRemaining,
+            timestamp,
+          });
+
+          // Also update the partial AI response to show only what was spoken
+          setPartialAIResponse(truncatedText);
+
+          // Phase 7.1: Track barge-in mute latency
+          if (bargeInStartTimeRef.current) {
+            const muteLatency = Date.now() - bargeInStartTimeRef.current;
+            bargeInMuteLatenciesRef.current.push(muteLatency);
+
+            // Calculate average
+            const avgLatency =
+              bargeInMuteLatenciesRef.current.reduce((a, b) => a + b, 0) /
+              bargeInMuteLatenciesRef.current.length;
+
+            updateMetrics({
+              bargeInMuteLatencyMs: muteLatency,
+              avgBargeInMuteLatencyMs: avgLatency,
+              truncatedResponseCount: metrics.truncatedResponseCount + 1,
+            });
+
+            voiceLog.debug(
+              `[ThinkerTalker] Barge-in mute latency: ${muteLatency}ms (avg: ${avgLatency.toFixed(1)}ms)`,
+            );
+            bargeInStartTimeRef.current = null;
+          }
+
+          options.onTranscriptTruncated?.({
+            truncatedText,
+            remainingText,
+            truncationPointMs,
+            lastCompleteWord,
+            wordsSpoken,
+            wordsRemaining,
+            timestamp,
+          });
+          break;
+        }
+
         case "response.delta": {
           // Streaming LLM response token
           const delta = message.delta as string;
@@ -1409,6 +1530,8 @@ export function useThinkerTalkerSession(
           // Track accumulated response for recovery
           if (delta) {
             partialResponseAccumRef.current += delta;
+            // Phase 5.1: Update state for progressive UI display
+            setPartialAIResponse((prev) => prev + delta);
           }
 
           // Track time to first LLM token
@@ -1438,6 +1561,8 @@ export function useThinkerTalkerSession(
 
           // Clear response accumulator on completion
           partialResponseAccumRef.current = "";
+          // Phase 5.1: Clear partial AI response state
+          setPartialAIResponse("");
 
           updateMetrics({ aiResponseCount: metrics.aiResponseCount + 1 });
           options.onResponseComplete?.(content, messageId);
@@ -2784,13 +2909,35 @@ export function useThinkerTalkerSession(
       }
 
       voiceLog.debug("[ThinkerTalker] Sending barge-in signal");
+
+      // Phase 7.1: Track barge-in metrics
+      const bargeInTime = Date.now();
+      bargeInStartTimeRef.current = bargeInTime;
+      const isSuccessful = pipelineState === "speaking";
+
       wsRef.current.send(JSON.stringify({ type: "barge_in" }));
-      updateMetrics({ bargeInCount: metrics.bargeInCount + 1 });
+
+      // Update barge-in metrics
+      const metricsUpdate: Partial<TTVoiceMetrics> = {
+        bargeInCount: metrics.bargeInCount + 1,
+      };
+
+      if (isSuccessful) {
+        metricsUpdate.successfulBargeInCount =
+          metrics.successfulBargeInCount + 1;
+      } else {
+        // Misfire: barge-in triggered when AI wasn't speaking (possible echo or false positive)
+        metricsUpdate.misfireBargeInCount = metrics.misfireBargeInCount + 1;
+      }
+
+      updateMetrics(metricsUpdate);
       return { shouldInterrupt: true };
     },
     [
       updateMetrics,
       metrics.bargeInCount,
+      metrics.successfulBargeInCount,
+      metrics.misfireBargeInCount,
       enableConversationManagement,
       conversationManager,
       pipelineState,
@@ -2953,6 +3100,8 @@ export function useThinkerTalkerSession(
     error,
     transcript,
     partialTranscript,
+    partialAIResponse, // Phase 5.1: Streaming AI response for progressive display
+    lastTruncation, // Phase 5.2: Last truncation result from barge-in
     isSpeaking,
     pipelineState,
     currentToolCalls,

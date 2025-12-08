@@ -994,7 +994,7 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
 
       // Phase 4.3: AEC Feedback (Natural Conversation Flow)
       isAECConverged,
-      setAECConverged,
+      setAECConverged: setIsAECConverged,
     }),
     [
       isListening,
@@ -1020,7 +1020,7 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
       adaptiveThreshold,
       // Phase 4.3
       isAECConverged,
-      setAECConverged,
+      setIsAECConverged,
     ],
   );
 

@@ -27,6 +27,7 @@ import {
   type TTEmotionResult,
   type TTBackchannelEvent,
   type TTThinkingStateEvent,
+  type TTTranscriptTruncation,
 } from "./useThinkerTalkerSession";
 import { useTTAudioPlayback, type TTPlaybackState } from "./useTTAudioPlayback";
 import { useBackchannelAudio } from "./useBackchannelAudio";
@@ -67,6 +68,17 @@ export interface TTVoiceModeOptions {
   enableBackchannel?: boolean;
   /** Callback when backchannel plays (Phase 2) */
   onBackchannelPlay?: (phrase: string) => void;
+  /** Phase 6.3: Callback when network quality degrades to poor */
+  onNetworkDegraded?: (info: {
+    quality: string;
+    rttMs: number | null;
+    recommendation: string;
+  }) => void;
+  /** Phase 6.3: Callback when network quality recovers from poor */
+  onNetworkRecovered?: (info: {
+    quality: string;
+    rttMs: number | null;
+  }) => void;
 
   // Silero VAD Feature Flag Options
   // These are controlled via admin panel feature flags (backend.voice_silero_*)
@@ -142,6 +154,10 @@ export interface TTVoiceModeReturn {
   // Transcription
   partialTranscript: string;
   finalTranscript: string;
+  /** Phase 5.1: Streaming AI response text for progressive display */
+  partialAIResponse: string;
+  /** Phase 5.2: Last truncation result from barge-in */
+  lastTruncation: TTTranscriptTruncation | null;
 
   // Tool Calls
   currentToolCalls: TTToolCall[];
@@ -219,6 +235,8 @@ export interface TTVoiceModeReturn {
   networkQuality: "excellent" | "good" | "fair" | "poor" | "unknown";
   /** RTT latency in milliseconds (null if unknown) */
   networkRttMs: number | null;
+  /** Phase 6.3: Whether network is in degraded state (poor quality) */
+  isNetworkDegraded: boolean;
 }
 
 // ============================================================================
@@ -497,7 +515,7 @@ export function useThinkerTalkerVoiceMode(
   // Natural Conversation Flow: Phase 4.3 - AEC Feedback Loop
   // Monitors AEC convergence state and adjusts VAD threshold accordingly
   const aecFeedback = useAECFeedback({
-    enabled: resolvedSileroConfig.enabled, // Only enable when VAD is enabled
+    enabled: sileroFlags.enabled, // Only enable when VAD is enabled
     pollingIntervalMs: 500, // Poll every 500ms
     convergenceThresholdDb: 10, // ERLE > 10dB indicates good AEC convergence
     onAECStateChange: (state) => {
@@ -520,6 +538,57 @@ export function useThinkerTalkerVoiceMode(
     updateInterval: 10000, // Poll every 10 seconds
     enablePing: true,
   });
+
+  // Phase 6.3: Graceful degradation state
+  const [isNetworkDegraded, setIsNetworkDegraded] = useState(false);
+  const previousNetworkQualityRef = useRef<string>(
+    networkQuality.metrics.quality,
+  );
+
+  // Phase 6.3: Monitor network quality changes for degradation
+  useEffect(() => {
+    const quality = networkQuality.metrics.quality;
+    const previousQuality = previousNetworkQualityRef.current;
+
+    // Detect degradation: transition to "poor" or sustained poor quality
+    if (quality === "poor" && !isNetworkDegraded) {
+      setIsNetworkDegraded(true);
+      voiceLog.warn(
+        `[TTVoiceMode] Network degraded to poor (RTT: ${networkQuality.metrics.rttMs}ms)`,
+      );
+      // Notify options callback if provided
+      options.onNetworkDegraded?.({
+        quality,
+        rttMs: networkQuality.metrics.rttMs,
+        recommendation:
+          "Consider using headphones or moving to a better network",
+      });
+    }
+
+    // Detect recovery: transition from "poor" to better quality
+    if (
+      isNetworkDegraded &&
+      quality !== "poor" &&
+      quality !== "unknown" &&
+      previousQuality === "poor"
+    ) {
+      setIsNetworkDegraded(false);
+      voiceLog.info(
+        `[TTVoiceMode] Network recovered to ${quality} (RTT: ${networkQuality.metrics.rttMs}ms)`,
+      );
+      options.onNetworkRecovered?.({
+        quality,
+        rttMs: networkQuality.metrics.rttMs,
+      });
+    }
+
+    previousNetworkQualityRef.current = quality;
+  }, [
+    networkQuality.metrics.quality,
+    networkQuality.metrics.rttMs,
+    isNetworkDegraded,
+    options,
+  ]);
 
   // Feature flag for adaptive prebuffering
   const { isEnabled: adaptivePrebufferEnabled } = useFeatureFlag(
@@ -1071,6 +1140,8 @@ export function useThinkerTalkerVoiceMode(
       // Transcription
       partialTranscript: session.partialTranscript,
       finalTranscript: session.transcript,
+      partialAIResponse: session.partialAIResponse, // Phase 5.1
+      lastTruncation: session.lastTruncation, // Phase 5.2
 
       // Tool Calls
       currentToolCalls: session.currentToolCalls,
@@ -1128,6 +1199,7 @@ export function useThinkerTalkerVoiceMode(
       // Natural Conversation Flow: Phase 6 - Network-Adaptive Behavior
       networkQuality: networkQuality.metrics.quality,
       networkRttMs: networkQuality.metrics.rttMs,
+      isNetworkDegraded, // Phase 6.3
     }),
     [
       session,
@@ -1146,6 +1218,7 @@ export function useThinkerTalkerVoiceMode(
       stopAI,
       networkQuality.metrics.quality,
       networkQuality.metrics.rttMs,
+      isNetworkDegraded,
     ],
   );
 }
