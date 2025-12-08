@@ -38,9 +38,78 @@ ai_summary: >-
 
 # AI Agent Onboarding Guide
 
-**Version:** 1.3.0
-**Last Updated:** 2025-12-02
+**Version:** 1.5.0
+**Last Updated:** 2025-12-08
 **Audience:** AI coding assistants (Claude, GPT, Copilot, etc.)
+
+---
+
+## 5-Minute Context
+
+**What is VoiceAssist?** A HIPAA-compliant medical AI assistant with voice and text interfaces. Clinicians use it to query medical knowledge bases, manage calendars, and get AI-assisted responses.
+
+**Tech Stack at a Glance:**
+```
+Backend:   FastAPI (Python 3.11) → services/api-gateway/
+Frontend:  React 18 + TypeScript → apps/web-app/
+Database:  PostgreSQL + Qdrant (vectors) + Redis (cache)
+Voice:     Deepgram (STT) → GPT-4o → ElevenLabs (TTS)
+Auth:      JWT with access/refresh tokens
+Deploy:    Docker Compose (prod-ready)
+```
+
+**The One Rule:** Use `services/api-gateway/` for backend. Never use `server/` (deprecated).
+
+**Quick Links:**
+- Status check: [IMPLEMENTATION_STATUS.md](../overview/IMPLEMENTATION_STATUS.md)
+- Add features: [EXTENSION_GUIDE.md](../EXTENSION_GUIDE.md)
+- Debug issues: [DEBUGGING_INDEX.md](../debugging/DEBUGGING_INDEX.md)
+- Commands cheatsheet: [QUICK_REFERENCE.md](../QUICK_REFERENCE.md)
+
+---
+
+## Decision Trees
+
+### Where Do I Find...?
+
+```
+Need to modify something? Start here:
+│
+├─ API endpoint? → services/api-gateway/app/api/
+├─ Business logic? → services/api-gateway/app/services/
+├─ Database model? → services/api-gateway/app/models/
+├─ Frontend component? → apps/web-app/src/components/
+├─ React hook? → apps/web-app/src/hooks/
+├─ Shared types? → packages/types/src/
+├─ UI components? → packages/ui/src/
+└─ Documentation? → docs/
+```
+
+### What Task Am I Doing?
+
+```
+What's your task?
+│
+├─ Adding a new API endpoint?
+│   └─ See: EXTENSION_GUIDE.md → "Adding API Endpoints"
+│
+├─ Adding a frontend feature?
+│   └─ See: EXTENSION_GUIDE.md → "Adding Frontend Components"
+│
+├─ Fixing a bug?
+│   └─ See: debugging/DEBUGGING_INDEX.md → Find the relevant guide
+│
+├─ Modifying the database?
+│   └─ 1. Update model in app/models/
+│   └─ 2. Create migration: alembic revision --autogenerate -m "desc"
+│   └─ 3. Apply: alembic upgrade head
+│
+├─ Working on voice features?
+│   └─ See: VOICE_MODE_PIPELINE.md, THINKER_TALKER_PIPELINE.md
+│
+└─ Updating documentation?
+    └─ Edit markdown in docs/, then regenerate search index
+```
 
 ---
 

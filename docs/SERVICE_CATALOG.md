@@ -121,18 +121,18 @@ The canonical backend implementation lives under:
 
 **Language/Runtime**:
 
-- Phases 0-10: N/A (FastAPI handles routing)
-- Phases 11-14: Kong Gateway (Lua/Nginx) or Nginx with OpenResty
+- Current (Monorepo): N/A (FastAPI handles routing)
+- Future (Microservices): Kong Gateway (Lua/Nginx) or Nginx with OpenResty
 
 **Main Ports**:
 
-- Dev (Phases 0-10): 8000/HTTP (shared with main FastAPI app)
-- Prod (Phases 11-14): 8000/HTTP, 8443/HTTPS - External-facing gateway
+- Current: 8000/HTTP (shared with main FastAPI app)
+- Future: 8000/HTTP, 8443/HTTPS - External-facing gateway
 
 **Dependencies**:
 
-- Phases 0-10: None (part of core app)
-- Phases 11-14: PostgreSQL (Kong config), Redis (rate limiting), all downstream services
+- Current: None (part of core app)
+- Future: PostgreSQL (Kong config), Redis (rate limiting), all downstream services
 
 **Key Endpoints**:
 
@@ -275,13 +275,13 @@ plugins:
 
 **Implementation**:
 
-- **Phases 0-10 (Monorepo)**:
+- **Current (Monorepo)**:
   - Admin KB API Router: `services/api-gateway/app/api/admin_kb.py`
   - RAG pipeline: `services/api-gateway/app/services/rag_service.py` (QueryOrchestrator)
   - Document ingestion: `services/api-gateway/app/services/kb_indexer.py` (KBIndexer)
   - Semantic search: `services/api-gateway/app/services/search_aggregator.py` (SearchAggregator)
   - LLM interface: `services/api-gateway/app/services/llm_client.py` (LLMClient)
-- **Phases 11-14 (Microservices)**: Extract to `services/kb-service/`
+- **Future (Microservices)**: Extract to `services/kb-service/`
 
 **Purpose**: The Medical Knowledge Base (KB) Service implements a sophisticated Retrieval-Augmented Generation (RAG) system for medical information. It performs semantic search across indexed medical literature (textbooks, journals, guidelines), generates context-aware responses using retrieved knowledge, integrates with external medical APIs (PubMed, UpToDate), manages document embeddings in Qdrant vector database, and orchestrates multi-hop reasoning for complex medical queries. This service ensures evidence-based responses with proper citations.
 
@@ -299,8 +299,8 @@ The orchestrator (`app/services/ai/orchestrator.py` or `app/services/rag_service
 
 **Main Ports**:
 
-- Dev (Phases 0-10): 8000/HTTP (shared with main FastAPI app)
-- Prod (Phases 11-14): 8002/HTTP - Internal service mesh
+- Current: 8000/HTTP (shared with main FastAPI app)
+- Future: 8002/HTTP - Internal service mesh
 
 **Dependencies**:
 
@@ -379,8 +379,8 @@ User Query → QueryOrchestrator →
 
 **Implementation Status**:
 
-- Phases 0-10: Core component in monorepo, central to all queries
-- Phases 11-14: Critical service, may need independent scaling for high query load
+- Current: Core component in monorepo, central to all queries
+- Future: Critical service, may need independent scaling for high query load
 
 ---
 
@@ -573,12 +573,12 @@ Metadata Indexing (PostgreSQL) → Completion
 
 **Implementation**:
 
-- **Phases 0-10 (Monorepo)**:
+- **Current (Monorepo)**:
   - Integration API Router: `services/api-gateway/app/api/integrations.py`
   - CalDAV Service: `services/api-gateway/app/services/caldav_service.py`
   - File Indexer: `services/api-gateway/app/services/nextcloud_file_indexer.py`
   - Email Service: `services/api-gateway/app/services/email_service.py` (skeleton)
-- **Phases 11-14 (Microservices)**: Extract to `services/integrations-service/`
+- **Future (Microservices)**: Extract to `services/integrations-service/`
 
 **Purpose**: The Calendar/Email Integration Service provides unified access to calendar and email functionality through multiple protocols. It integrates with Nextcloud Calendar via CalDAV, supports external calendar sync (Google Calendar, Outlook), connects to Nextcloud Mail or external IMAP/SMTP servers, enables voice commands for scheduling and email management, and maintains calendar event context for clinical workflows. This service allows clinicians to manage appointments and communications without leaving the VoiceAssist interface.
 
@@ -586,8 +586,8 @@ Metadata Indexing (PostgreSQL) → Completion
 
 **Main Ports**:
 
-- Dev (Phases 0-10): 8000/HTTP (shared with main FastAPI app)
-- Prod (Phases 11-14): 8006/HTTP - Internal service mesh
+- Current: 8000/HTTP (shared with main FastAPI app)
+- Future: 8006/HTTP - Internal service mesh
 
 **Dependencies**:
 

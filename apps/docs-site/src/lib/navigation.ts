@@ -62,6 +62,12 @@ export const navigation: NavSection[] = [
         description: "Quick reference for AI coding assistants",
         docPaths: ["admin-guide/for-ai-agents.md"],
       },
+      {
+        title: "Quick Reference",
+        href: "/quick-reference",
+        description: "Commands, ports, file locations cheatsheet",
+        docPaths: ["QUICK_REFERENCE.md"],
+      },
     ],
   },
   {

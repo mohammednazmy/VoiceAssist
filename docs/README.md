@@ -17,7 +17,7 @@ relatedPaths:
   - "docs/ai/AGENT_ONBOARDING.md"
   - "docs/overview/IMPLEMENTATION_STATUS.md"
 ai_summary: >-
-  Last Updated: 2025-11-27 Project Status: ✅ All 15 Phases Complete - Production
+  Last Updated: 2025-12-08 Project Status: ✅ All 15 Phases Complete - Production
   Ready (100%) --- If you're an AI coding assistant (Claude, GPT, Copilot,
   etc.): - ai/AGENT_ONBOARDING.md - Start here for quick context, repository
   structure, critical rules, and common tasks - overview/IMPLEMENTATION_...
@@ -43,6 +43,7 @@ If you're an AI coding assistant (Claude, GPT, Copilot, etc.):
 ### 🚀 Start Here
 
 - **[START_HERE.md](START_HERE.md)** - Project overview and getting started
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Commands, ports, file locations cheatsheet
 - **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** - Executive summary
 - **[LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md)** - Development environment setup
 - **[API_REFERENCE.md](API_REFERENCE.md)** - High-level API overview and endpoint groups
@@ -228,7 +229,7 @@ For current status, see **[overview/IMPLEMENTATION_STATUS.md](overview/IMPLEMENT
 
 ---
 
-## 🎯 Current Status (2025-11-27)
+## 🎯 Current Status (2025-12-08)
 
 ### ✅ All 15 Phases Complete - 100% Production Ready
 
