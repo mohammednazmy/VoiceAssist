@@ -15,6 +15,7 @@ import { useThinkerTalkerVoiceMode } from "../useThinkerTalkerVoiceMode";
 import { useVoiceKeyboardShortcuts } from "../useVoiceKeyboardShortcuts";
 import { voiceLog } from "../../lib/logger";
 import {
+  BargeInClassification,
   BargeInConfig,
   BargeInEvent,
   BargeInMetrics,
@@ -24,6 +25,7 @@ import {
   SupportedLanguage,
   UseIntelligentBargeInReturn,
 } from "./types";
+import { classifyBargeIn, type ClassificationResult } from "./classifyBargeIn";
 
 // ============================================================================
 // Options Interface
@@ -259,51 +261,127 @@ export function useIntelligentBargeIn(
   // Barge-In Event Tracking
   // ============================================================================
 
-  // Track barge-in events from the underlying voice mode
+  // Phase 2.2/2.3: Track and classify barge-in events
+  const lastClassificationRef = useRef<ClassificationResult | null>(null);
+  const falsePositiveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
   useEffect(() => {
-    // When AI is speaking and we detect speech, it's a potential barge-in
+    // When AI is speaking and we detect speech, classify the barge-in
     if (state === "ai_speaking" && voiceMode.isSileroVADActive) {
       const speechDuration = voiceMode.sileroVADSpeechDurationMs;
+
       if (speechDuration > config.speechConfirmMs) {
+        // Get transcript from partial transcript state
+        const transcript = voiceMode.partialTranscript || "";
+
+        // Use proper classification
+        const classificationResult = classifyBargeIn(
+          {
+            transcript,
+            durationMs: speechDuration,
+            language: detectedLanguage || config.language,
+            aiWasPlaying: voiceMode.isPlaying,
+            vadConfidence: voiceMode.sileroVADConfidence,
+          },
+          config,
+        );
+
+        lastClassificationRef.current = classificationResult;
+
+        voiceLog.debug(
+          `[IntelligentBargeIn] Classification: ${classificationResult.classification} ` +
+            `(confidence=${classificationResult.confidence.toFixed(2)}, reason="${classificationResult.reason}")`,
+        );
+
+        // Handle backchannel - don't interrupt AI
+        if (classificationResult.classification === "backchannel") {
+          voiceLog.info(
+            `[IntelligentBargeIn] Backchannel detected: "${classificationResult.matchedPhrase}" - AI continues`,
+          );
+          // Update metrics for backchannel
+          setMetrics((prev) => ({
+            ...prev,
+            totalBargeIns: prev.totalBargeIns + 1,
+            backchannelCount: prev.backchannelCount + 1,
+          }));
+          return; // Don't create barge-in event, let AI continue
+        }
+
+        // Handle unclear - wait for more audio
+        if (classificationResult.classification === "unclear") {
+          voiceLog.debug(
+            `[IntelligentBargeIn] Classification unclear, waiting for more audio`,
+          );
+          return;
+        }
+
+        // Create barge-in event for soft_barge or hard_barge
         const event: BargeInEvent = {
           id: `barge-${Date.now()}`,
-          type:
-            speechDuration > config.hardBargeMinDuration
-              ? "hard_barge"
-              : "soft_barge",
+          type: classificationResult.classification as
+            | "soft_barge"
+            | "hard_barge",
           timestamp: Date.now(),
-          interruptedContent: "",
+          interruptedContent: voiceMode.partialAIResponse || "",
           interruptedAtWord: 0,
           totalWords: 0,
           completionPercentage: 0,
-          resumable: true,
+          resumable: classificationResult.classification === "soft_barge",
           language: detectedLanguage || config.language,
+          confidence: classificationResult.confidence,
+          matchedPhrase: classificationResult.matchedPhrase,
         };
 
         setLastBargeInEvent(event);
-        setBargeInHistory((prev) => [...prev.slice(-9), event]); // Keep last 10
+        setBargeInHistory((prev) => [...prev.slice(-9), event]);
 
-        // Update metrics
+        // Update metrics based on classification
         setMetrics((prev) => ({
           ...prev,
           totalBargeIns: prev.totalBargeIns + 1,
-          [event.type === "hard_barge"
-            ? "hardBargeCount"
-            : event.type === "soft_barge"
-              ? "softBargeCount"
-              : "backchannelCount"]: prev.totalBargeIns + 1,
+          [event.type === "hard_barge" ? "hardBargeCount" : "softBargeCount"]:
+            (prev[
+              event.type === "hard_barge" ? "hardBargeCount" : "softBargeCount"
+            ] || 0) + 1,
         }));
+
+        // Phase 2.4: Start false-positive recovery timer
+        if (falsePositiveTimerRef.current) {
+          clearTimeout(falsePositiveTimerRef.current);
+        }
+        falsePositiveTimerRef.current = setTimeout(() => {
+          // If still no confirmed speech after 500ms, might be false positive
+          if (!voiceMode.partialTranscript && voiceMode.isPlaying) {
+            voiceLog.warn(
+              `[IntelligentBargeIn] Possible false positive - no transcript after 500ms`,
+            );
+            setMetrics((prev) => ({
+              ...prev,
+              falsePositives: (prev.falsePositives || 0) + 1,
+            }));
+          }
+        }, 500);
 
         onBargeIn?.(event);
       }
     }
+
+    return () => {
+      if (falsePositiveTimerRef.current) {
+        clearTimeout(falsePositiveTimerRef.current);
+      }
+    };
   }, [
     state,
     voiceMode.isSileroVADActive,
     voiceMode.sileroVADSpeechDurationMs,
-    config.speechConfirmMs,
-    config.hardBargeMinDuration,
-    config.language,
+    voiceMode.partialTranscript,
+    voiceMode.partialAIResponse,
+    voiceMode.isPlaying,
+    voiceMode.sileroVADConfidence,
+    config,
     detectedLanguage,
     onBargeIn,
   ]);

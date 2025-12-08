@@ -23,3 +23,13 @@ export {
   type UseIntelligentBargeInOptions,
 } from "./useIntelligentBargeIn";
 export { useIntelligentBargeIn as default } from "./useIntelligentBargeIn";
+
+// Export classification functions (Phase 2.2)
+export {
+  classifyBargeIn,
+  isLikelyBackchannel,
+  getBackchannelPhrases,
+  getSoftBargeKeywords,
+  type ClassificationInput,
+  type ClassificationResult,
+} from "./classifyBargeIn";
