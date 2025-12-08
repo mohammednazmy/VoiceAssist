@@ -991,6 +991,9 @@ class VoicePipelineSession:
 
         async with self._state_lock:
             self._metrics.cancelled = True
+            # CRITICAL FIX: Set _cancelled to stop _handle_audio_chunk from sending
+            # stale audio chunks that were already generated before barge-in
+            self._cancelled = True
 
             # Cancel Talker if speaking
             if self._talker_session:
@@ -2056,6 +2059,10 @@ class VoicePipelineSession:
         if self.config.mode == PipelineMode.DICTATION and self._dictation_session:
             await self._process_dictation_transcript(transcript, message_id)
             return
+
+        # Reset cancelled flag before creating new Talker session
+        # This allows audio from the NEW response to flow after a barge-in
+        self._cancelled = False
 
         # Create Talker session for TTS
         voice_config = VoiceConfig(
