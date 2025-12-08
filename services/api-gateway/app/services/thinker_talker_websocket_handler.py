@@ -1352,6 +1352,10 @@ class ThinkerTalkerWebSocketHandler:
         Uses message batcher if enabled for high-frequency messages.
         Buffers messages for recovery if message recovery is enabled.
         """
+        # Check if connection is still running before attempting to send
+        if not self._running:
+            return
+
         # Add sequence number to all messages
         message["seq"] = self.config._message_sequence
         self.config._message_sequence += 1
@@ -1373,8 +1377,14 @@ class ThinkerTalkerWebSocketHandler:
                 await self.websocket.send_json(message)
             self._metrics.messages_sent += 1
         except Exception as e:
-            logger.error(f"Error sending message: {e}")
+            # Log exception type for debugging empty exception messages
+            exc_type = type(e).__name__
+            exc_msg = str(e) if str(e) else "(no message)"
+            logger.error(f"Error sending message ({exc_type}): {exc_msg}")
             self._metrics.error_count += 1
+            # Stop trying to send after connection closed
+            if "close" in exc_msg.lower() or "disconnect" in exc_msg.lower():
+                self._running = False
 
     async def _buffer_message_for_recovery(self, message: Dict[str, Any]) -> None:
         """Buffer a message for potential recovery after disconnect."""
