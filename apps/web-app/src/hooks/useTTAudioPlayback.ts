@@ -45,6 +45,26 @@ const DEFAULT_PREBUFFER_CHUNKS = 3;
 const ENHANCED_PREBUFFER_CHUNKS = 5;
 
 /**
+ * Network-adaptive prebuffer sizes.
+ * Natural Conversation Flow: Phase 6 - Network-Adaptive Behavior
+ *
+ * - Excellent/Good: 2-3 chunks (~100-150ms buffer) - minimize latency
+ * - Fair/Moderate: 4-5 chunks (~200-250ms buffer) - balance latency/smoothness
+ * - Poor: 6-8 chunks (~300-400ms buffer) - prioritize smoothness
+ * - Unknown: Fall back to default (3 chunks)
+ */
+const NETWORK_PREBUFFER_MAP: Record<
+  "excellent" | "good" | "fair" | "poor" | "unknown",
+  number
+> = {
+  excellent: 2,
+  good: 3,
+  fair: 5,
+  poor: 7,
+  unknown: DEFAULT_PREBUFFER_CHUNKS,
+};
+
+/**
  * Maximum buffer size before we start playing anyway.
  * Prevents infinite buffering if stream is very slow.
  */
@@ -128,6 +148,20 @@ export interface TTAudioPlaybackOptions {
    * Default: false
    */
   enhancedQuality?: boolean;
+
+  // Network-Adaptive Options (Natural Conversation Flow: Phase 6)
+  /**
+   * Enable network-adaptive prebuffering.
+   * When enabled, prebuffer size is adjusted based on network quality.
+   * Default: false (controlled by feature flag: backend.voice_adaptive_prebuffer)
+   */
+  enableAdaptivePrebuffer?: boolean;
+  /**
+   * Current network quality level.
+   * Used to determine optimal prebuffer size when enableAdaptivePrebuffer is true.
+   * Default: "unknown"
+   */
+  networkQuality?: "excellent" | "good" | "fair" | "poor" | "unknown";
 }
 
 /**
@@ -288,12 +322,36 @@ export function useTTAudioPlayback(
     // Audio Quality Enhancement options
     enableCrossfade = false,
     enhancedQuality = false,
+    // Network-adaptive options (Natural Conversation Flow: Phase 6)
+    enableAdaptivePrebuffer = false,
+    networkQuality = "unknown",
   } = options;
 
-  // Determine effective prebuffer size based on enhanced quality mode
-  const prebufferChunks =
-    prebufferChunksOption ??
-    (enhancedQuality ? ENHANCED_PREBUFFER_CHUNKS : DEFAULT_PREBUFFER_CHUNKS);
+  // Determine effective prebuffer size based on:
+  // 1. Explicit prebufferChunks option (highest priority)
+  // 2. Network-adaptive prebuffer (if enabled)
+  // 3. Enhanced quality mode
+  // 4. Default
+  const prebufferChunks = (() => {
+    // Explicit option takes precedence
+    if (prebufferChunksOption !== undefined) {
+      return prebufferChunksOption;
+    }
+    // Network-adaptive prebuffering (Natural Conversation Flow: Phase 6)
+    if (enableAdaptivePrebuffer) {
+      const networkPrebuffer = NETWORK_PREBUFFER_MAP[networkQuality];
+      voiceLog.debug(
+        `[TTAudioPlayback] Network-adaptive prebuffer: quality=${networkQuality}, chunks=${networkPrebuffer}`,
+      );
+      return networkPrebuffer;
+    }
+    // Enhanced quality mode
+    if (enhancedQuality) {
+      return ENHANCED_PREBUFFER_CHUNKS;
+    }
+    // Default
+    return DEFAULT_PREBUFFER_CHUNKS;
+  })();
 
   // Determine crossfade samples based on enhanced quality mode
   const crossfadeSamples = enhancedQuality

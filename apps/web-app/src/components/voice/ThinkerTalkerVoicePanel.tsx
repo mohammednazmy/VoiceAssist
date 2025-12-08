@@ -195,6 +195,7 @@ export function ThinkerTalkerVoicePanel({
           setShowSettings(true);
         }}
         isContinuationExpected={voiceMode.isContinuationExpected}
+        networkQuality={voiceMode.networkQuality}
       />
 
       {/* Settings Modal */}

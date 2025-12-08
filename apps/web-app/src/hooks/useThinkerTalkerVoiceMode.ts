@@ -33,6 +33,7 @@ import { useBackchannelAudio } from "./useBackchannelAudio";
 import { useBargeInPromptAudio } from "./useBargeInPromptAudio";
 import { useSileroVAD } from "./useSileroVAD";
 import { useAECFeedback } from "./useAECFeedback";
+import { useNetworkQuality } from "./useNetworkQuality";
 import { useUnifiedConversationStore } from "../stores/unifiedConversationStore";
 import { useAuthStore } from "../stores/authStore";
 import { useAuth } from "./useAuth";
@@ -212,6 +213,12 @@ export interface TTVoiceModeReturn {
   // Natural Conversation Flow: Phase 3.2 - Continuation Detection
   /** Whether the system expects the user to continue speaking */
   isContinuationExpected: boolean;
+
+  // Natural Conversation Flow: Phase 6 - Network-Adaptive Behavior
+  /** Current network quality level */
+  networkQuality: "excellent" | "good" | "fair" | "poor" | "unknown";
+  /** RTT latency in milliseconds (null if unknown) */
+  networkRttMs: number | null;
 }
 
 // ============================================================================
@@ -506,9 +513,25 @@ export function useThinkerTalkerVoiceMode(
     },
   });
 
+  // Natural Conversation Flow: Phase 6 - Network-Adaptive Behavior
+  // Monitors network quality and adjusts prebuffer size accordingly
+  const networkQuality = useNetworkQuality({
+    enabled: true,
+    updateInterval: 10000, // Poll every 10 seconds
+    enablePing: true,
+  });
+
+  // Feature flag for adaptive prebuffering
+  const { isEnabled: adaptivePrebufferEnabled } = useFeatureFlag(
+    "backend.voice_adaptive_prebuffer",
+  );
+
   // Audio playback hook
   const audioPlayback = useTTAudioPlayback({
     volume,
+    // Natural Conversation Flow: Phase 6 - Network-Adaptive Prebuffering
+    enableAdaptivePrebuffer: adaptivePrebufferEnabled,
+    networkQuality: networkQuality.metrics.quality,
     onPlaybackStart: () => {
       voiceLog.info(
         "[TTVoiceMode] Playback started - enabling echo suppression",
@@ -1101,6 +1124,10 @@ export function useThinkerTalkerVoiceMode(
 
       // Natural Conversation Flow: Phase 3.2 - Continuation Detection
       isContinuationExpected: session.isContinuationExpected,
+
+      // Natural Conversation Flow: Phase 6 - Network-Adaptive Behavior
+      networkQuality: networkQuality.metrics.quality,
+      networkRttMs: networkQuality.metrics.rttMs,
     }),
     [
       session,
@@ -1117,6 +1144,8 @@ export function useThinkerTalkerVoiceMode(
       toggleMute,
       forceReply,
       stopAI,
+      networkQuality.metrics.quality,
+      networkQuality.metrics.rttMs,
     ],
   );
 }

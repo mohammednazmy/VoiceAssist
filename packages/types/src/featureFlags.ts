@@ -1148,6 +1148,33 @@ export const FEATURE_FLAGS = {
         otherFlags: ["backend.voice_continuation_detection"],
       },
     },
+    voice_adaptive_prebuffer: {
+      name: "backend.voice_adaptive_prebuffer",
+      description:
+        "[Natural Conversation] Enable network-adaptive audio prebuffering. " +
+        "Dynamically adjusts the audio prebuffer size based on network quality. " +
+        "Good connections (RTT < 100ms): 2-3 chunks (~150ms). " +
+        "Poor connections (RTT > 300ms): 6-8 chunks (~400ms). " +
+        "Reduces jitter and audio glitches on poor networks while minimizing " +
+        "latency on good networks.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/network-adaptive",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: [
+          "useTTAudioPlayback",
+          "useNetworkQuality",
+          "useThinkerTalkerVoiceMode",
+        ],
+        otherFlags: ["backend.voice_ws_prebuffering"],
+      },
+    },
 
     // =========================================================================
     // Silero VAD Enhancement Flags (Local Browser-Side VAD)
