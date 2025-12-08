@@ -431,6 +431,10 @@ export function useTTAudioPlayback(
   // This prevents stale audio from the cancelled response from playing
   const bargeInActiveRef = useRef(false);
 
+  // Guard to prevent onPlaybackInterrupted from being called multiple times
+  // during a single barge-in sequence (e.g., fadeOut calls it, then stop() calls it again)
+  const interruptCallbackFiredRef = useRef(false);
+
   // Scheduling watchdog ref (Natural Conversation Flow: Phase 1.3)
   const watchdogIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null,
@@ -812,6 +816,8 @@ export function useTTAudioPlayback(
         streamStartTimeRef.current = Date.now();
         streamEndedRef.current = false;
         playbackCompletedRef.current = false;
+        // Reset interrupt callback guard for new stream
+        interruptCallbackFiredRef.current = false;
         // Reset scheduling time for new stream to prevent stale future scheduling
         // This ensures audio plays immediately rather than minutes in the future
         nextScheduledTimeRef.current = 0;
@@ -936,6 +942,15 @@ export function useTTAudioPlayback(
    * Stop playback immediately (barge-in)
    */
   const stop = useCallback(() => {
+    // Guard: If barge-in is already active, skip redundant stop calls
+    // This prevents infinite loops where stop() -> setState -> re-render -> stop()
+    if (bargeInActiveRef.current) {
+      voiceLog.debug(
+        "[TTAudioPlayback] Stop called but barge-in already active, skipping",
+      );
+      return;
+    }
+
     voiceLog.debug("[TTAudioPlayback] Stopping playback (barge-in)");
 
     // Set barge-in flag to drop any incoming audio chunks
@@ -980,7 +995,12 @@ export function useTTAudioPlayback(
       setTotalPlayedMs(totalPlayed);
     }
 
-    onPlaybackInterrupted?.();
+    // Only fire callback once per barge-in sequence
+    // (prevents infinite loop when fadeOut calls this, then stop() is called again)
+    if (!interruptCallbackFiredRef.current) {
+      interruptCallbackFiredRef.current = true;
+      onPlaybackInterrupted?.();
+    }
   }, [onPlaybackInterrupted]);
 
   /**
@@ -992,6 +1012,15 @@ export function useTTAudioPlayback(
    */
   const fadeOut = useCallback(
     (durationMs: number = 50) => {
+      // Guard: If barge-in is already active, skip redundant fadeOut calls
+      // This prevents infinite loops where fadeOut() -> setState -> re-render -> fadeOut()
+      if (bargeInActiveRef.current) {
+        voiceLog.debug(
+          "[TTAudioPlayback] FadeOut called but barge-in already active, skipping",
+        );
+        return;
+      }
+
       // IMMEDIATELY set barge-in flag to drop any new incoming audio chunks
       // This prevents audio from being queued during the fade
       bargeInActiveRef.current = true;
@@ -1035,8 +1064,11 @@ export function useTTAudioPlayback(
       gainNode.gain.setValueAtTime(currentGain, currentTime);
       gainNode.gain.linearRampToValueAtTime(0, fadeEndTime);
 
-      // Notify of interruption
-      onPlaybackInterrupted?.();
+      // Notify of interruption (only once per barge-in sequence)
+      if (!interruptCallbackFiredRef.current) {
+        interruptCallbackFiredRef.current = true;
+        onPlaybackInterrupted?.();
+      }
       setPlaybackState("stopped");
 
       // Restore gain value for next playback after a brief delay
@@ -1075,6 +1107,9 @@ export function useTTAudioPlayback(
     // Clear barge-in flag AFTER stop() - we're starting a new response
     // This allows new audio chunks to be queued for the new response
     bargeInActiveRef.current = false;
+    // NOTE: interruptCallbackFiredRef is NOT reset here - it's reset when the first
+    // audio chunk of a new stream arrives in queueAudioChunk(). This prevents
+    // infinite loops where reset() -> stop() -> callback -> re-render -> reset().
 
     streamStartTimeRef.current = null;
     firstChunkTimeRef.current = null;
