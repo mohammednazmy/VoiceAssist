@@ -207,6 +207,10 @@ export interface TTVoiceModeReturn {
   forceReply: () => void;
   /** Immediately stop AI speech (without voice prompt) */
   stopAI: () => void;
+
+  // Natural Conversation Flow: Phase 3.2 - Continuation Detection
+  /** Whether the system expects the user to continue speaking */
+  isContinuationExpected: boolean;
 }
 
 // ============================================================================
@@ -1061,6 +1065,9 @@ export function useThinkerTalkerVoiceMode(
       toggleMute,
       forceReply,
       stopAI,
+
+      // Natural Conversation Flow: Phase 3.2 - Continuation Detection
+      isContinuationExpected: session.isContinuationExpected,
     }),
     [
       session,

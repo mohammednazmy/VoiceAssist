@@ -404,6 +404,10 @@ class PipelineMetrics:
     tokens_generated: int = 0
     tool_calls_count: int = 0
 
+    # Natural Conversation Flow: Phase 2.4 - Barge-in metrics
+    barge_in_count: int = 0
+    barge_in_misfires: int = 0
+
     # State
     cancelled: bool = False
     error: Optional[str] = None
@@ -555,6 +559,12 @@ class VoicePipelineSession:
         self._word_timestamps_enabled: bool = False  # Set based on feature flag at start
         self._tts_playback_start_time: Optional[float] = None
         self._last_truncation_result: Optional[TruncationResult] = None
+
+        # Natural Conversation Flow: Phase 2.4 - Misfire Rollback
+        # Stores state for potential rollback if barge-in is a false positive
+        self._barge_in_interrupted_response: str = ""
+        self._barge_in_playback_position_ms: int = 0
+        self._misfire_check_task: Optional[asyncio.Task] = None
 
     @property
     def state(self) -> PipelineState:
@@ -966,6 +976,19 @@ class VoicePipelineSession:
             )
         )
 
+        # Natural Conversation Flow: Phase 2.4 - Start misfire rollback timer
+        # If no valid transcript within 500ms, this was a false positive
+        if self._hybrid_vad_enabled:
+            self._hybrid_vad_decider.start_misfire_timer()
+            self._barge_in_interrupted_response = self._current_response_text
+            self._barge_in_playback_position_ms = (
+                int((time.time() - self._tts_playback_start_time) * 1000) if self._tts_playback_start_time else 0
+            )
+            # Start background task to check for misfire after 500ms
+            if self._misfire_check_task:
+                self._misfire_check_task.cancel()
+            self._misfire_check_task = asyncio.create_task(self._start_misfire_check())
+
         async with self._state_lock:
             self._metrics.cancelled = True
 
@@ -1099,6 +1122,83 @@ class VoicePipelineSession:
         # Reset for next response
         self._current_response_text = ""
         self._tts_playback_start_time = None
+
+    async def _start_misfire_check(self) -> None:
+        """
+        Start a background task to check for misfire after 500ms.
+
+        Natural Conversation Flow: Phase 2.4 - Misfire Rollback
+        If no valid transcript is received within 500ms, rollback the barge-in.
+        """
+        try:
+            # Wait for the misfire timeout
+            await asyncio.sleep(0.5)  # 500ms
+
+            # Check if we should rollback
+            if self._hybrid_vad_decider.check_misfire_rollback(""):
+                await self._handle_misfire_rollback()
+        except asyncio.CancelledError:
+            # Timer was cancelled (valid transcript received)
+            pass
+
+    async def _handle_misfire_rollback(self) -> None:
+        """
+        Handle misfire rollback: Resume previous playback state.
+
+        Called when barge-in triggered but no valid speech was detected.
+        """
+        logger.info(
+            "[Pipeline] Misfire rollback triggered - no valid transcript",
+            extra={
+                "session_id": self.session_id,
+                "interrupted_response_length": len(self._barge_in_interrupted_response),
+                "playback_position_ms": self._barge_in_playback_position_ms,
+            },
+        )
+
+        # Send rollback event to frontend
+        await self._on_message(
+            PipelineMessage(
+                type="barge_in.rollback",
+                data={
+                    "reason": "no_transcript",
+                    "playback_position_ms": self._barge_in_playback_position_ms,
+                    "can_resume": bool(self._barge_in_interrupted_response),
+                    "timestamp": time.time(),
+                },
+            )
+        )
+
+        # If there's interrupted response, tell frontend to resume audio
+        # The frontend can resume from the buffered position
+        if self._barge_in_interrupted_response:
+            await self._on_message(
+                PipelineMessage(
+                    type="audio.resume",
+                    data={
+                        "resume_from_ms": self._barge_in_playback_position_ms,
+                        "timestamp": time.time(),
+                    },
+                )
+            )
+
+        # Reset misfire state
+        self._barge_in_interrupted_response = ""
+        self._barge_in_playback_position_ms = 0
+
+        # Update metrics
+        self._metrics.barge_in_misfires = getattr(self._metrics, "barge_in_misfires", 0) + 1
+
+    def _cancel_misfire_timer(self) -> None:
+        """Cancel the misfire rollback timer when valid transcript is received."""
+        if self._misfire_check_task and not self._misfire_check_task.done():
+            self._misfire_check_task.cancel()
+            self._misfire_check_task = None
+        if hasattr(self, "_hybrid_vad_decider"):
+            self._hybrid_vad_decider.cancel_misfire_timer()
+        # Clear the interrupted response since barge-in is confirmed
+        self._barge_in_interrupted_response = ""
+        self._barge_in_playback_position_ms = 0
 
     async def _handle_soft_barge(
         self,
@@ -1598,6 +1698,11 @@ class VoicePipelineSession:
         self._transcript_confidence = confidence  # Phase 7: Track for repair strategies
         self._last_transcript_time = time.time()  # Track for pause detection
 
+        # Natural Conversation Flow: Phase 2.4 - Cancel misfire timer on valid transcript
+        # If we received a substantial transcript, the barge-in is confirmed
+        if text.strip() and len(text.strip()) > 2:
+            self._cancel_misfire_timer()
+
         # Natural Conversation Flow: Phase 4 - Pre-emptive Listening
         # Buffer transcripts during AI speech for instant availability on barge-in
         if self._preemptive_listening_active and self._state == PipelineState.SPEAKING:
@@ -1638,6 +1743,10 @@ class VoicePipelineSession:
     async def _handle_final_transcript(self, text: str) -> None:
         """Handle final transcript segment from STT."""
         logger.info(f"[Pipeline] Final transcript received: '{text}'")
+
+        # Natural Conversation Flow: Phase 2.4 - Cancel misfire timer on final transcript
+        if text.strip():
+            self._cancel_misfire_timer()
 
         # Trigger barge-in if AI is speaking and we got substantial speech
         if self._state == PipelineState.SPEAKING and self._is_substantial_transcript(text):

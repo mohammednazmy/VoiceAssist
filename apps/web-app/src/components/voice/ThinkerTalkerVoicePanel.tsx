@@ -194,6 +194,7 @@ export function ThinkerTalkerVoicePanel({
           );
           setShowSettings(true);
         }}
+        isContinuationExpected={voiceMode.isContinuationExpected}
       />
 
       {/* Settings Modal */}

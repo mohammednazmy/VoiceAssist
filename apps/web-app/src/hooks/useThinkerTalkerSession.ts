@@ -24,6 +24,13 @@ import { captureVoiceError } from "../lib/sentry";
 import { useAuth } from "./useAuth";
 import { voiceLog } from "../lib/logger";
 
+// Natural Conversation Flow: Phase 3.1 - Prosody Feature Extraction
+import {
+  ProsodyExtractor,
+  createProsodyExtractor,
+  type ProsodyWebSocketMessage,
+} from "../lib/prosodyExtractor";
+
 // Phase 7-10: Advanced voice barge-in hooks
 import { useMultilingual } from "./useMultilingual";
 import { usePersonalization } from "./usePersonalization";
@@ -448,6 +455,15 @@ export interface UseThinkerTalkerSessionOptions {
    */
   enableInstantBargeIn?: boolean;
 
+  /**
+   * Enable prosody feature extraction for turn-taking.
+   * When true, extracts pitch, energy, and speech rate from audio
+   * and sends features with audio.input.complete messages.
+   * Controlled by feature flag: backend.voice_prosody_extraction
+   * Natural Conversation Flow: Phase 3.1
+   */
+  enableProsodyExtraction?: boolean;
+
   // Phase 7-10: Advanced options
   /** Enable multilingual detection and switching */
   enableMultilingual?: boolean;
@@ -586,7 +602,17 @@ export function useThinkerTalkerSession(
     onLanguageDetected,
     onSentimentChange,
     onCalibrationComplete,
+    // Natural Conversation Flow: Phase 3.1 - Prosody extraction
+    enableProsodyExtraction = false,
   } = options;
+
+  // Natural Conversation Flow: Phase 3.1 - Initialize prosody ref from option
+  useEffect(() => {
+    prosodyEnabledRef.current = enableProsodyExtraction;
+    voiceLog.debug(
+      `[ThinkerTalker] Prosody extraction ${enableProsodyExtraction ? "enabled" : "disabled"}`,
+    );
+  }, [enableProsodyExtraction]);
 
   // Phase 7: Multilingual support
   const multilingual = useMultilingual({
@@ -663,6 +689,12 @@ export function useThinkerTalkerSession(
   const [currentToolCalls, setCurrentToolCalls] = useState<TTToolCall[]>([]);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
+  // Natural Conversation Flow: Phase 3.2 - Continuation detection state
+  const [isContinuationExpected, setIsContinuationExpected] = useState(false);
+  const continuationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
   // Metrics state
   const [metrics, setMetrics] = useState<TTVoiceMetrics>({
     connectionTimeMs: null,
@@ -725,6 +757,11 @@ export function useThinkerTalkerSession(
   // Session recovery state (WebSocket Error Recovery)
   const sessionIdRef = useRef<string | null>(null);
   const recoveryEnabledRef = useRef<boolean>(false);
+
+  // Natural Conversation Flow: Phase 3.1 - Prosody Extraction
+  const prosodyExtractorRef = useRef<ProsodyExtractor | null>(null);
+  const prosodyEnabledRef = useRef<boolean>(false);
+  const lastProsodyFeaturesRef = useRef<ProsodyWebSocketMessage | null>(null);
   const isRecoveredSessionRef = useRef<boolean>(false);
   const lastMessageSeqRef = useRef<number>(0);
   const lastAudioSeqRef = useRef<number>(0);
@@ -2052,6 +2089,38 @@ export function useThinkerTalkerSession(
         }
 
         // ================================================================
+        // Natural Conversation Flow: Phase 3.2 - Continuation Detection
+        // ================================================================
+
+        case "turn.continuation_expected": {
+          // Backend detected that user is likely to continue speaking
+          // Show visual indicator and extend silence threshold
+          const probability = message.probability as number;
+          const reason = message.reason as string;
+          const waitMs = message.wait_ms as number;
+
+          voiceLog.debug(
+            `[ThinkerTalker] Continuation expected: probability=${probability.toFixed(2)}, reason=${reason}, wait=${waitMs}ms`,
+          );
+
+          // Set continuation state to true
+          setIsContinuationExpected(true);
+
+          // Clear any existing timeout
+          if (continuationTimeoutRef.current) {
+            clearTimeout(continuationTimeoutRef.current);
+          }
+
+          // Auto-clear after the wait period + buffer
+          continuationTimeoutRef.current = setTimeout(() => {
+            setIsContinuationExpected(false);
+            voiceLog.debug("[ThinkerTalker] Continuation indicator cleared");
+          }, waitMs + 500);
+
+          break;
+        }
+
+        // ================================================================
         // Issue 4: Progressive Response / Filler Events (via Event Bus)
         // ================================================================
 
@@ -2372,6 +2441,15 @@ export function useThinkerTalkerSession(
       );
       processorNodeRef.current = scriptProcessor;
 
+      // Natural Conversation Flow: Phase 3.1 - Initialize prosody extractor
+      if (prosodyEnabledRef.current && !prosodyExtractorRef.current) {
+        prosodyExtractorRef.current = createProsodyExtractor({
+          sampleRate: 16000,
+          minVoiceActivity: 0.3,
+        });
+        voiceLog.debug("[ThinkerTalker] Prosody extractor initialized");
+      }
+
       let audioChunkCount = 0;
 
       // Local VAD state for barge-in detection
@@ -2404,6 +2482,15 @@ export function useThinkerTalkerSession(
           // console.log(`[ThinkerTalker] RMS threshold exceeded: rms=${rms.toFixed(4)}`);
           // DISABLED: Silero VAD now handles local voice activity detection
           // onLocalVoiceActivityRef.current?.(rms);
+        }
+
+        // Natural Conversation Flow: Phase 3.1 - Extract prosody features
+        if (prosodyEnabledRef.current && prosodyExtractorRef.current) {
+          const prosodyFeatures =
+            prosodyExtractorRef.current.process(inputData);
+          if (prosodyFeatures) {
+            lastProsodyFeaturesRef.current = prosodyFeatures;
+          }
         }
 
         // Convert float32 to PCM16
@@ -2769,13 +2856,39 @@ export function useThinkerTalkerSession(
 
   /**
    * Commit audio buffer (manual end of speech)
+   * Natural Conversation Flow: Phase 3.1 - Include prosody features
    */
   const commitAudio = useCallback(() => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
       return;
     }
 
-    wsRef.current.send(JSON.stringify({ type: "audio.input.complete" }));
+    // Build message with optional prosody features
+    const message: {
+      type: string;
+      prosody_features?: ProsodyWebSocketMessage;
+    } = { type: "audio.input.complete" };
+
+    // Include prosody features if enabled and available
+    if (prosodyEnabledRef.current && lastProsodyFeaturesRef.current) {
+      message.prosody_features = lastProsodyFeaturesRef.current;
+      voiceLog.debug(
+        "[ThinkerTalker] Sending prosody features with audio.input.complete:",
+        lastProsodyFeaturesRef.current.pitch_contour,
+        "pitch:",
+        lastProsodyFeaturesRef.current.pitch,
+        "energy_decay:",
+        lastProsodyFeaturesRef.current.energy_decay,
+      );
+    }
+
+    wsRef.current.send(JSON.stringify(message));
+
+    // Reset prosody features for next utterance
+    if (prosodyExtractorRef.current) {
+      prosodyExtractorRef.current.reset();
+    }
+    lastProsodyFeaturesRef.current = null;
   }, []);
 
   // Auto-connect on mount if enabled
@@ -2862,6 +2975,9 @@ export function useThinkerTalkerSession(
     canSend: status === "connected" || status === "ready",
     isProcessing: pipelineState === "processing",
     isListening: pipelineState === "listening",
+
+    // Natural Conversation Flow: Phase 3.2 - Continuation Detection
+    isContinuationExpected,
 
     // Phase 7: Multilingual
     multilingual: {

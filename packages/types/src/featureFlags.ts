@@ -1123,6 +1123,31 @@ export const FEATURE_FLAGS = {
         otherFlags: [],
       },
     },
+    voice_prosody_extraction: {
+      name: "backend.voice_prosody_extraction",
+      description:
+        "[Natural Conversation] Enable frontend prosody feature extraction for turn-taking. " +
+        "Extracts pitch, energy, and speech rate from audio frames using Web Audio API. " +
+        "Features are sent to backend with audio.input.complete messages for holistic " +
+        "turn-prediction combining transcript patterns with prosodic cues.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/prosody-turn-taking",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "ProsodyExtractor",
+          "useThinkerTalkerSession",
+          "ContinuationDetector",
+        ],
+        otherFlags: ["backend.voice_continuation_detection"],
+      },
+    },
 
     // =========================================================================
     // Silero VAD Enhancement Flags (Local Browser-Side VAD)

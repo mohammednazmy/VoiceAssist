@@ -49,6 +49,8 @@ export interface CompactVoiceBarProps {
   onClose: () => void;
   /** Called when user wants to open settings */
   onOpenSettings: () => void;
+  /** Whether continuation is expected (user pausing but will continue) */
+  isContinuationExpected?: boolean;
 }
 
 // ============================================================================
@@ -452,10 +454,17 @@ export function CompactVoiceBar({
   onExpand,
   onClose,
   onOpenSettings,
+  isContinuationExpected = false,
 }: CompactVoiceBarProps) {
+  // Natural Conversation Flow: Phase 3.2 - Continuation indicator styles
+  // Pulsing border when system expects user to continue speaking
+  const borderClass = isContinuationExpected
+    ? "border-2 border-amber-400 animate-pulse"
+    : "border-2 border-primary-500";
+
   return (
     <div
-      className="flex items-center gap-3 h-16 px-4 bg-white border-2 border-primary-500 rounded-lg shadow-lg"
+      className={`flex items-center gap-3 h-16 px-4 bg-white rounded-lg shadow-lg ${borderClass}`}
       data-testid="compact-voice-bar"
     >
       {/* Compact mic button (48x48) */}
