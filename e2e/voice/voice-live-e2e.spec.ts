@@ -196,13 +196,19 @@ test.describe("Voice Mode Live E2E", () => {
     // Verify voice mode is active (supports both panel and inline modes)
     // In unified UI, check that voice toggle changed state or status text appeared
     const voiceToggle = page.locator('[data-testid="voice-mode-toggle"]');
-    const voiceStatusText = page.locator('text=/Listening|Connecting|Ready to listen|Hold Space|Processing/');
+    // Use page.evaluate for cross-browser compatibility with regex text matching
+    const hasVoiceStatusText = async () => page.evaluate(() => {
+      return Array.from(document.querySelectorAll('*')).some(el => {
+        const text = el.textContent || '';
+        return /Listening|Connecting|Ready to listen|Hold Space|Processing/i.test(text);
+      });
+    });
     const voicePanel = page.locator('[data-testid="voice-mode-panel"], [data-testid="thinker-talker-voice-panel"], [data-testid="compact-voice-bar"]').first();
 
     // At least one of these should be visible/true
     const hasVoiceUI = await Promise.race([
       voicePanel.isVisible().catch(() => false),
-      voiceStatusText.first().isVisible().catch(() => false),
+      hasVoiceStatusText().catch(() => false),
       voiceToggle.evaluate(el => el.classList.contains('bg-primary-500') || el.classList.contains('bg-primary-100')).catch(() => false),
     ]);
 

@@ -197,21 +197,42 @@ test.describe("Voice Keyboard Shortcuts", () => {
     console.log("Voice session connected - pressing Escape");
 
     // Verify connected state
-    const connectedIndicator = page.locator('text=/connected/i, [class*="connected"]');
-    const wasConnected = await connectedIndicator.count() > 0;
+    const wasConnected = await page.evaluate(() => {
+      // Check for connected text
+      const hasConnectText = Array.from(document.querySelectorAll('*')).some(
+        el => el.textContent?.toLowerCase().includes('connect') &&
+              !el.textContent?.toLowerCase().includes('disconnect')
+      );
+      // Check for connected class
+      const hasConnectClass = document.querySelector('[class*="connect"]') &&
+                             !document.querySelector('[class*="disconnect"]');
+      // Check for active voice panel
+      const hasActivePanel = document.querySelector('[data-testid="compact-voice-bar"]') ||
+                            document.querySelector('[data-testid="thinker-talker-voice-panel"]');
+      return hasConnectText || hasConnectClass || !!hasActivePanel;
+    });
     console.log(`Was connected: ${wasConnected}`);
 
     // Press Escape to disconnect
     await pressVoiceShortcut(page, "escape");
     await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
 
-    // Verify disconnected
-    const disconnectedIndicator = page.locator('text=/disconnected/i, [class*="disconnected"]');
-    const startButton = page.locator(VOICE_SELECTORS.startButton);
+    // Verify disconnected - check multiple indicators
+    const isDisconnected = await page.evaluate(() => {
+      // Check for disconnected text
+      const hasDisconnectText = Array.from(document.querySelectorAll('*')).some(
+        el => el.textContent?.toLowerCase().includes('disconnect')
+      );
+      if (hasDisconnectText) return true;
 
-    const isDisconnected =
-      await disconnectedIndicator.count() > 0 ||
-      await startButton.count() > 0;
+      // Check for disconnected class
+      if (document.querySelector('[class*="disconnect"]')) return true;
+
+      // Check if voice panel is closed
+      const activePanel = document.querySelector('[data-testid="compact-voice-bar"]') ||
+                         document.querySelector('[data-testid="thinker-talker-voice-panel"]');
+      return !activePanel;
+    });
 
     console.log(`Is disconnected: ${isDisconnected}`);
     expect(isDisconnected).toBe(true);

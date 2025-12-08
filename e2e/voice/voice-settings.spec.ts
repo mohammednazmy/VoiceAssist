@@ -234,7 +234,7 @@ test.describe("Voice Settings Modal", () => {
       await pttToggle.click();
     } else {
       // Check for labeled toggle
-      const pttLabel = page.locator('text=/push.to.talk/i, label:has-text("Push to Talk")');
+      const pttLabel = page.locator('label:has-text("Push to Talk"), [aria-label*="push" i][aria-label*="talk" i]');
       const labelExists = await pttLabel.count() > 0;
 
       if (labelExists) {
@@ -276,7 +276,7 @@ test.describe("Voice Settings Modal", () => {
       console.log(`Always-on mode toggled to: ${newState}`);
     } else {
       // May be part of voice mode type selector
-      const modeSelector = page.locator('text=/always.on/i, [data-value="always-on"]');
+      const modeSelector = page.locator('[data-value="always-on"], [aria-label*="always" i], label:has-text("Always")');
       const selectorExists = await modeSelector.count() > 0;
 
       if (selectorExists) {

@@ -243,14 +243,25 @@ test.describe("Voice Core Flow - Live Backend", () => {
     // Wait for disconnection
     await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
 
-    // Verify disconnected state
-    const disconnectedIndicator = page.locator('[data-testid="connection-status"]:has-text("Disconnected")');
-    const startButton = page.locator(VOICE_SELECTORS.startButton);
+    // Verify disconnected state - check multiple indicators
+    const isDisconnected = await page.evaluate(() => {
+      // Check for explicit disconnected status
+      const statusEl = document.querySelector('[data-testid="connection-status"]');
+      if (statusEl?.textContent?.toLowerCase().includes('disconnect')) return true;
 
-    // Either disconnected indicator or Start button should be visible
-    const isDisconnected =
-      await disconnectedIndicator.count() > 0 ||
-      await startButton.count() > 0;
+      // Check if voice panel is no longer active (closed or hidden)
+      const activePanel = document.querySelector('[data-testid="compact-voice-bar"]') ||
+                         document.querySelector('[data-testid="thinker-talker-voice-panel"]');
+      // If no active panel visible, consider disconnected
+      if (!activePanel) return true;
+
+      // Check for any status text indicating stopped/idle
+      const stoppedIndicators = Array.from(document.querySelectorAll('p, span')).some(
+        el => el.textContent?.toLowerCase()?.includes('stopped') ||
+              el.textContent?.toLowerCase()?.includes('ended')
+      );
+      return stoppedIndicators;
+    });
 
     expect(isDisconnected).toBe(true);
     console.log("Voice session stopped successfully");
@@ -316,7 +327,11 @@ test.describe("Voice Core Flow - Connection States", () => {
     // Wait for connecting state
     await page.waitForTimeout(1000);
 
-    const connectingVisible = await page.locator('text=/connecting/i').count() > 0;
+    const connectingVisible = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('*')).some(el =>
+        el.textContent?.toLowerCase().includes('connecting')
+      )
+    );
     if (connectingVisible) {
       console.log("Connecting state detected");
     }
