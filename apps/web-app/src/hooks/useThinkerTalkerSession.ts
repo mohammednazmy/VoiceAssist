@@ -462,7 +462,8 @@ export interface UseThinkerTalkerSessionOptions {
   onToolResult?: (toolCall: TTToolCall) => void;
   onError?: (error: Error) => void;
   onConnectionChange?: (status: TTConnectionStatus) => void;
-  onPipelineStateChange?: (state: PipelineState) => void;
+  /** Called when pipeline state changes. Reason is provided for listening state transitions. */
+  onPipelineStateChange?: (state: PipelineState, reason?: string) => void;
   onMetricsUpdate?: (metrics: TTVoiceMetrics) => void;
   /** Called when user starts speaking (for barge-in) */
   onSpeechStarted?: () => void;
@@ -1899,7 +1900,7 @@ export function useThinkerTalkerSession(
           const prevState = pipelineStateRef.current;
           setPipelineState(state);
           pipelineStateRef.current = state; // Update ref for closure access
-          options.onPipelineStateChange?.(state);
+          options.onPipelineStateChange?.(state, reason);
 
           if (state === "listening") {
             setIsSpeaking(false);

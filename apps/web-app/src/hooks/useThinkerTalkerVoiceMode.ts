@@ -764,8 +764,10 @@ export function useThinkerTalkerVoiceMode(
     },
 
     // Handle pipeline state changes
-    onPipelineStateChange: (state: PipelineState) => {
-      voiceLog.debug(`[TTVoiceMode] Pipeline state: ${state}`);
+    onPipelineStateChange: (state: PipelineState, reason?: string) => {
+      voiceLog.debug(
+        `[TTVoiceMode] Pipeline state: ${state}, reason: ${reason}`,
+      );
 
       switch (state) {
         case "listening":
@@ -778,14 +780,16 @@ export function useThinkerTalkerVoiceMode(
           // during natural completion. reset() is called in "processing" state instead.
           audioPlayback.endStream();
 
-          // CRITICAL: Enter natural completion mode if audio is still playing
-          // When backend transitions to "listening" naturally (TTS generation done)
-          // but local audio buffer is still draining, any speech_started events
+          // CRITICAL: Enter natural completion mode if this is a natural transition
+          // When backend finishes TTS generation (reason: 'natural'), local audio
+          // buffer may still be draining. During this window, speech_started events
           // from backend VAD are likely speaker echo (the AI's TTS being picked up
           // by the mic) and should NOT trigger barge-in.
-          if (audioPlayback.isPlaying) {
+          // We use the reason parameter instead of checking audioPlayback.isPlaying
+          // because the reason is sent by the backend and is always reliable.
+          if (reason === "natural") {
             voiceLog.info(
-              "[TTVoiceMode] Natural completion mode: backend listening but audio still draining",
+              "[TTVoiceMode] Natural completion mode: backend finished TTS, allowing audio to drain",
             );
             naturalCompletionModeRef.current = true;
           }
