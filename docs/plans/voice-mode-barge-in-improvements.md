@@ -2,7 +2,7 @@
 
 > **Version:** 3.0 - Enhanced with TRP Detection, Hybrid VAD Fusion, Backchanneling, and Sub-250ms Perception Target
 > **Last Updated:** December 2025
-> **Branch:** `feat/intelligent-barge-in`
+> **Branch:** `feat/silero-vad-improvements`
 > **Status:** Planning
 > **Revision (Dec 2025 v3):** Added TRP detection, hybrid VAD fusion algorithm, backchanneling integration, mobile presets, perception latency targets, UI/UX feedback, and critical bug fixes for classifier/detector wiring
 
@@ -197,6 +197,16 @@ def decide_barge_in(self, silero_state: VADState, deepgram_event: SpeechEvent) -
 
 - Brief text bubble with backchannel phrase ("Got it...")
 - Subtle audio indicator (soft chime) when processing long query
+
+### Naturalness, Fallbacks, and Safety Optimizations
+
+- **Perceived latency measurement:** Capture t0 (user speech start), t1 (barge-in mute), t2 (first token), t3 (first audio chunk played) to compute perceived latency client-side and stream to metrics for P50/P95 tracking.
+- **Audio worklet fallback:** If `AudioWorklet` or `SharedArrayBuffer` is unavailable, fall back to a light ScriptProcessor VAD path with reduced frame rate and disable prosody extraction; log `vad_fallback_used`.
+- **Double-barge guard:** Suppress duplicate barge-in triggers within 300ms; coalesce multiple VAD triggers into one barge event.
+- **User personalization store:** Persist per-user noise floor and preferred thresholds (bounded by feature flag min/max) to avoid re-calibration every session; expose reset in settings.
+- **Safety/PII:** Redact transcripts and user identifiers from telemetry events; sample VAD events (e.g., 10%) in production to reduce volume.
+- **Cross-language tuning:** Maintain per-language backchannel lists and soft-barge keywords; include language tag in barge-in classification to avoid English bias.
+- **Low-resource devices:** Auto-disable prosody extraction and reduce Silero frame rate on devices with `hardwareConcurrency <= 2` or high CPU usage, and fall back to Deepgram-only barge-in if CPU spikes persist.
 
 ### Flag Alignment & Rollout
 
