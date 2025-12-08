@@ -716,10 +716,10 @@ For microservices deployment, add distributed tracing:
 
 ## Related Documentation
 
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - System architecture
 - [SECURITY_COMPLIANCE.md](SECURITY_COMPLIANCE.md) - HIPAA logging requirements
 - [ADMIN_PANEL_SPECS.md](ADMIN_PANEL_SPECS.md) - Admin metrics dashboard
-- [server/README.md](../server/README.md) - API implementation
+- [../services/api-gateway/README.md](../services/api-gateway/README.md) - API implementation
 
 ---
 

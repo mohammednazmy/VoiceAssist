@@ -625,9 +625,8 @@ Phase 11 (Security)   Phase 12 (HA/DR)
 ## Related Documentation
 
 - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Detailed phase descriptions
-- [ALL_PHASES_SUMMARY.md](ALL_PHASES_SUMMARY.md) - Quick phase reference
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture
-- [CURRENT_PHASE.md](archive/CURRENT_PHASE.md) - Current implementation status
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - System architecture
+- [overview/IMPLEMENTATION_STATUS.md](overview/IMPLEMENTATION_STATUS.md) - Current implementation status
 - [START_HERE.md](START_HERE.md) - Project orientation
 
 ---

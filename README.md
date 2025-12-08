@@ -375,7 +375,7 @@ pnpm test           # Run all tests
 
 ### Architecture & Design
 
-- [System Architecture](docs/ARCHITECTURE_V2.md)
+- [System Architecture](docs/UNIFIED_ARCHITECTURE.md)
 - [Security & Compliance](docs/SECURITY_COMPLIANCE.md)
 - [HIPAA Compliance Matrix](docs/HIPAA_COMPLIANCE_MATRIX.md)
 

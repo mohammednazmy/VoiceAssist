@@ -52,34 +52,31 @@ This document catalogs all backend services in VoiceAssist V2. These are **logic
 ### Important Notes
 
 1. **Logical Services**: These represent service boundaries for code organization, not necessarily separate containers
-2. **Phases 0-10 (Monorepo)**: All services run in single FastAPI app (`server/`) as routers/modules
-3. **Phases 11-14 (Microservices)**: Services can be extracted to separate containers if scaling requires
+2. **Current Architecture**: All services run in single FastAPI app (`services/api-gateway/`) as routers/modules
+3. **Future Microservices**: Services can be extracted to separate containers if scaling requires
 4. **Service Boundaries**: Enforced through clear module structure even in monorepo
 5. **Independent Development**: Each service has its own tests, can be developed independently
 
 ### Implementation Strategy
 
-### Implementation Note: API Gateway Location (Phases 0–1)
+### Implementation Note: API Gateway Location
 
-For Phases 0–1, the API Gateway implementation used by Docker Compose
-lives under:
+The canonical backend implementation lives under:
 
 - `services/api-gateway/app/` – containerized FastAPI application
   built as `voiceassist-server` in `docker-compose.yml`.
 
-The `server/app/` directory hosts the logical monorepo design for
-future phases; many service modules there are stubs awaiting
-implementation and integration as the system evolves.
+> **Note:** The `server/` directory is **deprecated** and kept only for historical reference. All new development should use `services/api-gateway/`.
 
-**Phases 0-10: Monorepo (Docker Compose Development)**
+**Current: Docker Compose Development**
 
-- All services live in `server/` directory
+- All services live in `services/api-gateway/` directory
 - Single FastAPI application with multiple routers
 - Services are **logical boundaries** enforced through module structure
 - Runs in single container for rapid development
 - See [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md) for structure
 
-**Phases 11-14: Microservices (Kubernetes Migration)**
+**Future: Kubernetes Migration**
 
 - Services can be extracted to separate containers
 - Each service becomes independent deployment
@@ -88,10 +85,10 @@ implementation and integration as the system evolves.
 
 **Related Documentation:**
 
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - Overall system architecture
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - Overall system architecture
 - [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md) - Monorepo to microservices evolution
 - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Implementation roadmap
-- [server/README.md](../server/README.md) - Backend API details
+- [../services/api-gateway/README.md](../services/api-gateway/README.md) - Backend API details
 - [DATA_MODEL.md](DATA_MODEL.md) - Canonical data entities
 
 ---
@@ -117,8 +114,8 @@ implementation and integration as the system evolves.
 
 **Implementation**:
 
-- **Phases 0-10 (Monorepo)**: Not needed - single FastAPI app (`server/app/main.py`) handles all routing
-- **Phases 11-14 (Microservices)**: Extract to Kong or Nginx as separate container
+- **Current (Monorepo)**: Not needed - single FastAPI app (`services/api-gateway/app/main.py`) handles all routing
+- **Future (Microservices)**: Extract to Kong or Nginx as separate container
 
 **Purpose**: The API Gateway serves as the single entry point for all external requests to the VoiceAssist system. It handles routing, rate limiting, authentication verification, request/response transformation, and provides a unified API surface for frontend clients. Built with Kong or Nginx, it acts as a reverse proxy that shields internal microservices from direct exposure while providing cross-cutting concerns like logging, monitoring, and security enforcement.
 
@@ -1019,11 +1016,11 @@ spec:
 
 ## Related Documentation
 
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture overview
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - System architecture overview
 - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Implementation phases
 - [SECURITY_COMPLIANCE.md](SECURITY_COMPLIANCE.md) - HIPAA compliance details
 - [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) - Local development setup
-- [server/README.md](../server/README.md) - Backend API documentation
+- [../services/api-gateway/README.md](../services/api-gateway/README.md) - Backend API documentation
 
 ---
 

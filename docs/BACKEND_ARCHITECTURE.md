@@ -811,7 +811,7 @@ pip install voiceassist-shared==1.0.0
 
 - [DATA_MODEL.md](DATA_MODEL.md) - Canonical data entities
 - [SERVICE_CATALOG.md](SERVICE_CATALOG.md) - Complete service descriptions
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture overview
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - System architecture overview
 - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Phase-by-phase plan
 - [COMPOSE_TO_K8S_MIGRATION.md](COMPOSE_TO_K8S_MIGRATION.md) - K8s migration guide
-- [server/README.md](../server/README.md) - Backend implementation guide
+- [EXTENSION_GUIDE.md](EXTENSION_GUIDE.md) - Patterns for extending VoiceAssist

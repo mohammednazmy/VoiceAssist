@@ -1706,4 +1706,4 @@ When adding or modifying entities:
 - [ADMIN_PANEL_SPECS.md](ADMIN_PANEL_SPECS.md) - System settings, admin features
 - [SEMANTIC_SEARCH_DESIGN.md](SEMANTIC_SEARCH_DESIGN.md) - Knowledge base entities
 - [SECURITY_COMPLIANCE.md](SECURITY_COMPLIANCE.md) - Audit logging requirements
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - System architecture

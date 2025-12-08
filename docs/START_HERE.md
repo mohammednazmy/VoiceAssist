@@ -130,10 +130,9 @@ All documentation is in the `docs/` directory. Here's the complete index:
 | **[START_HERE.md](START_HERE.md)** ⭐                                                         | This file - project orientation                                | Everyone                           |
 | **[UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md)** ⭐                                     | **Canonical architecture reference**                           | **Developers, Architects, DevOps** |
 | **[architecture/ARCHITECTURE_DIAGRAMS.md](architecture/ARCHITECTURE_DIAGRAMS.md)** ⭐ **NEW** | **Visual architecture diagrams (Mermaid)**                     | **Developers, Architects**         |
-| **[ARCHITECTURE_V2.md](ARCHITECTURE_V2.md)**                                                  | System architecture, Docker Compose-first approach (reference) | Developers, DevOps                 |
+| **[EXTENSION_GUIDE.md](EXTENSION_GUIDE.md)**                                                  | Practical patterns for extending VoiceAssist                   | All developers                     |
 | **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)**                                                  | High-level overview, tech stack, cost estimates                | Stakeholders, PMs                  |
 | **[ROADMAP.md](ROADMAP.md)**                                                                  | Product roadmap and feature timeline                           | Product, Management                |
-| **[ENHANCEMENT_SUMMARY.md](ENHANCEMENT_SUMMARY.md)**                                          | Summary of documentation enhancements                          | Contributors                       |
 
 ### 🛠️ Getting Started
 
@@ -365,7 +364,7 @@ cat docs/LOCAL_DEVELOPMENT.md
 
 ```bash
 # Read architecture document
-cat docs/ARCHITECTURE_V2.md
+cat docs/UNIFIED_ARCHITECTURE.md
 
 # Review key specifications
 cat docs/WEB_APP_SPECS.md

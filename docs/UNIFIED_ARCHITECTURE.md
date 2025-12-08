@@ -1347,7 +1347,7 @@ logger.info("user_login_success", extra={
 
 - [SERVICE_CATALOG.md](SERVICE_CATALOG.md) - Detailed service descriptions
 - [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md) - Backend structure evolution
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - Original V2 architecture (reference)
+- [EXTENSION_GUIDE.md](EXTENSION_GUIDE.md) - Patterns for extending VoiceAssist
 - [DATA_MODEL.md](DATA_MODEL.md) - Canonical data entities
 
 **Design Documents:**

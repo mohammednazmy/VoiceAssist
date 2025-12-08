@@ -1992,7 +1992,7 @@ export function Chat({ sessionId, clinicalContext, mode }: ChatProps) {
 
 ### Standard API Envelope
 
-All API calls return a standard envelope for consistent error handling. See [server/README.md](../server/README.md#standard-api-response-envelope) for complete specification.
+All API calls return a standard envelope for consistent error handling. See [services/api-gateway/README.md](../services/api-gateway/README.md#standard-api-response-envelope) for complete specification.
 
 #### TypeScript Types
 
@@ -3117,5 +3117,5 @@ CMD ["nginx", "-g", "daemon off;"]
 **End of Web Application Specifications**
 
 For wireframes and additional UX details, see: [WEB_APP_WIREFRAMES.md](./WEB_APP_WIREFRAMES.md)
-For backend API contracts, see: [../server/README.md](../server/README.md)
+For backend API contracts, see: [../services/api-gateway/README.md](../services/api-gateway/README.md)
 For admin panel specs, see: [ADMIN_PANEL_SPECS.md](./ADMIN_PANEL_SPECS.md)

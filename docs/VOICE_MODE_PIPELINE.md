@@ -663,8 +663,8 @@ logger.info(
 #### Testing
 
 ```bash
-# Backend
-cd /home/asimo/VoiceAssist/services/api-gateway
+# Backend (from project root)
+cd services/api-gateway
 source venv/bin/activate && export PYTHONPATH=.
 python -m pytest tests/integration/test_voice_metrics.py -v
 ```
@@ -692,14 +692,16 @@ The hook monitors `session.expires_at` and can trigger refresh before expiry. If
 Run these commands to validate the voice pipeline:
 
 ```bash
+# Run from VoiceAssist project root
+
 # 1. Backend tests (CI-safe, mocked)
-cd /home/asimo/VoiceAssist/services/api-gateway
+cd services/api-gateway
 source venv/bin/activate
 export PYTHONPATH=.
 python -m pytest tests/integration/test_openai_config.py -v
 
 # 2. Frontend unit tests (run individually to avoid OOM)
-cd /home/asimo/VoiceAssist/apps/web-app
+cd apps/web-app
 export NODE_OPTIONS="--max-old-space-size=768"
 
 npx vitest run src/hooks/__tests__/useRealtimeVoiceSession.test.ts --reporter=dot
@@ -709,7 +711,7 @@ npx vitest run src/components/voice/__tests__/VoiceModeSettings.test.tsx --repor
 npx vitest run src/components/chat/__tests__/MessageInput-voice-settings.test.tsx --reporter=dot
 
 # 3. E2E tests (Chromium, mocked backend)
-cd /home/asimo/VoiceAssist
+# From project root
 npx playwright test \
   e2e/voice-mode-navigation.spec.ts \
   e2e/voice-mode-session-smoke.spec.ts \

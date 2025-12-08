@@ -7,7 +7,7 @@
  *
  * Examples:
  *   docPaths: [
- *     "ARCHITECTURE.md",                      // → docs/ARCHITECTURE.md
+ *     "UNIFIED_ARCHITECTURE.md",              // → docs/UNIFIED_ARCHITECTURE.md
  *     "api-reference/rest-api.md",            // → docs/api-reference/rest-api.md
  *     "@root/services/api-gateway/README.md", // → services/api-gateway/README.md
  *     "@root/packages/ui/README.md",          // → packages/ui/README.md

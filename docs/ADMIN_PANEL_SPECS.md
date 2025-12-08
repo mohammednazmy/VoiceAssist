@@ -56,7 +56,7 @@ The VoiceAssist Admin Panel provides a centralized web interface for system conf
 
 ### Standard API Envelope
 
-All admin API calls return a standard envelope. See [server/README.md](../server/README.md#standard-api-response-envelope) for complete specification.
+All admin API calls return a standard envelope. See [services/api-gateway/README.md](../services/api-gateway/README.md#standard-api-response-envelope) for complete specification.
 
 Use the same TypeScript types and fetch helper from WEB_APP_SPECS.md (can be shared package or duplicated).
 
@@ -1180,7 +1180,7 @@ When settings change:
 
 ### Knowledge Base Management Endpoints
 
-All KB management endpoints use the standard API envelope pattern. See [server/README.md](../server/README.md#standard-api-response-envelope) for complete specification.
+All KB management endpoints use the standard API envelope pattern. See [services/api-gateway/README.md](../services/api-gateway/README.md#standard-api-response-envelope) for complete specification.
 
 | Endpoint                        | Method | Purpose              | Request                     | Response                           |
 | ------------------------------- | ------ | -------------------- | --------------------------- | ---------------------------------- |
@@ -1194,7 +1194,7 @@ All KB management endpoints use the standard API envelope pattern. See [server/R
 | `/api/admin/kb/reindex`         | POST   | Bulk reindex         | `{document_ids: string[]}`  | `APIEnvelope<{job_count: number}>` |
 | `/api/admin/kb/search`          | POST   | Test search          | `{query, filters}`          | `APIEnvelope<SearchResult[]>`      |
 
-All endpoints return standard `APIEnvelope` as defined in [server/README.md](../server/README.md#standard-api-response-envelope).
+All endpoints return standard `APIEnvelope` as defined in [services/api-gateway/README.md](../services/api-gateway/README.md#standard-api-response-envelope).
 All entity types reference [DATA_MODEL.md](DATA_MODEL.md).
 
 ---
