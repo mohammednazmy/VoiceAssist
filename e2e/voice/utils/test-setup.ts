@@ -424,6 +424,7 @@ export function assertQualityThresholds(
 
 /**
  * Set a feature flag via admin API
+ * Uses PATCH to update the flag value
  */
 export async function setFeatureFlag(
   page: Page,
@@ -431,8 +432,10 @@ export async function setFeatureFlag(
   value: unknown
 ): Promise<void> {
   const apiBase = process.env.CLIENT_GATEWAY_URL || "http://localhost:8000";
-  const response = await page.request.post(
-    `${apiBase}/api/v1/admin/feature-flags/${flagName}`,
+
+  // Use PATCH to update existing feature flag
+  const response = await page.request.patch(
+    `${apiBase}/api/admin/feature-flags/${flagName}`,
     {
       data: {
         value,
@@ -442,9 +445,13 @@ export async function setFeatureFlag(
   );
 
   if (!response.ok()) {
+    // Log warning but don't fail - flag may not exist in DB yet
     console.warn(
-      `[Feature Flag] Failed to set ${flagName}=${value}: ${response.status()}`
+      `[Feature Flag] Failed to set ${flagName}=${value}: ${response.status()} - ` +
+      `Flag may not exist or require admin auth. Tests will use default values.`
     );
+  } else {
+    console.log(`[Feature Flag] Set ${flagName}=${value}`);
   }
 }
 
@@ -457,22 +464,46 @@ export async function getFeatureFlag(
 ): Promise<unknown> {
   const apiBase = process.env.CLIENT_GATEWAY_URL || "http://localhost:8000";
   const response = await page.request.get(
-    `${apiBase}/api/v1/admin/feature-flags/${flagName}`
+    `${apiBase}/api/admin/feature-flags/${flagName}`
   );
 
   if (response.ok()) {
     const data = await response.json();
-    return data.value;
+    // Handle envelope format: { status: "success", data: { value: ... } }
+    return data.data?.value ?? data.value;
   }
   return undefined;
 }
 
 /**
  * Reset feature flags to defaults
+ * Note: This endpoint may not exist yet - uses best-effort reset
  */
 export async function resetFeatureFlags(page: Page): Promise<void> {
   const apiBase = process.env.CLIENT_GATEWAY_URL || "http://localhost:8000";
-  await page.request.post(`${apiBase}/api/v1/admin/feature-flags/reset`);
+
+  // Try the reset endpoint first
+  const response = await page.request.post(`${apiBase}/api/admin/feature-flags/reset`);
+
+  if (!response.ok()) {
+    // Reset endpoint doesn't exist - manually reset key voice flags
+    console.log("[Feature Flag] Reset endpoint not available, using manual reset");
+
+    // Reset key VAD-related flags to defaults
+    const defaultFlags = {
+      "backend.voice_silero_vad_enabled": true,
+      "backend.voice_silero_positive_threshold": 0.5,
+      "backend.voice_silero_playback_threshold_boost": 0.2,
+      "backend.voice_queue_overflow_protection": true,
+    };
+
+    for (const [flagName, value] of Object.entries(defaultFlags)) {
+      await page.request.patch(
+        `${apiBase}/api/admin/feature-flags/${flagName}`,
+        { data: { value, enabled: true } }
+      );
+    }
+  }
 }
 
 // ============================================================================
@@ -483,8 +514,8 @@ export async function resetFeatureFlags(page: Page): Promise<void> {
  * Run a basic conversation flow for testing flag combinations
  */
 export async function runBasicConversationTest(page: Page): Promise<void> {
-  // Navigate to app
-  await page.goto("/");
+  // Navigate to chat page (where voice mode toggle is located)
+  await page.goto("/chat");
   await page.waitForLoadState("networkidle");
 
   // Wait for voice mode to be ready

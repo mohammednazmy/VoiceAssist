@@ -53,7 +53,7 @@ test.describe("Simple Q&A Scenarios", () => {
     console.log("\n[Scenario] Starting simple Q&A test");
 
     // Navigate and open voice mode
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -96,7 +96,7 @@ test.describe("Simple Q&A Scenarios", () => {
 
     console.log("\n[Scenario] Testing AI response completion");
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -157,7 +157,7 @@ test.describe("Multi-turn Conversation Scenarios", () => {
 
     console.log("\n[Scenario] Starting 3-turn conversation test");
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -238,7 +238,7 @@ test.describe("Barge-in Scenarios", () => {
 
     console.log("\n[Scenario] Testing intentional barge-in");
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -301,7 +301,7 @@ test.describe("Barge-in Scenarios", () => {
 
     console.log("\n[Scenario] Testing audio quality after barge-in");
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -356,7 +356,7 @@ test.describe("Long Response Scenarios", () => {
 
     console.log("\n[Scenario] Testing long AI response handling");
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -426,7 +426,7 @@ test.describe("Audio Queue Health Scenarios", () => {
 
     console.log("\n[Scenario] Testing audio queue health");
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -480,7 +480,7 @@ test.describe("Audio Queue Health Scenarios", () => {
 
     console.log("\n[Scenario] Testing schedule recovery after barge-in");
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -538,7 +538,7 @@ test.describe("Latency Scenarios", () => {
 
     console.log("\n[Scenario] Testing response latency");
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -579,7 +579,7 @@ test.describe("Latency Scenarios", () => {
 
     console.log("\n[Scenario] Testing barge-in latency");
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);

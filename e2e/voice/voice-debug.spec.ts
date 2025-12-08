@@ -166,7 +166,7 @@ test.describe("Choppy Audio Debug Tests", () => {
 
     const debugCapture = createDebugCapture(page);
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -235,7 +235,7 @@ test.describe("Choppy Audio Debug Tests", () => {
 
     const debugCapture = createDebugCapture(page);
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -315,7 +315,7 @@ test.describe("Choppy Audio Debug Tests", () => {
       }
     });
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -369,7 +369,7 @@ test.describe("Self-Interruption Debug Tests", () => {
 
     const debugCapture = createDebugCapture(page);
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -604,7 +604,7 @@ test.describe("Schedule Reset Debug Tests", () => {
       }
     });
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -637,7 +637,7 @@ test.describe("Schedule Reset Debug Tests", () => {
 
     console.log("\n[Debug] Testing schedule recovery after interruption");
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -702,7 +702,7 @@ test.describe("Backend Correlation Debug Tests", () => {
       await route.continue();
     });
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -761,7 +761,7 @@ test.describe("Backend Correlation Debug Tests", () => {
       }
     });
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);

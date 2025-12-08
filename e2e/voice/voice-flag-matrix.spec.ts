@@ -101,8 +101,8 @@ test.describe(`Voice Flag Matrix: ${matrix.name}`, () => {
       // Brief wait for flags to propagate
       await page.waitForTimeout(500);
 
-      // Navigate to app
-      await page.goto("/");
+      // Navigate to chat page (where voice mode toggle is)
+      await page.goto("/chat");
       await page.waitForLoadState("networkidle");
 
       // Wait for voice mode to be ready
@@ -168,7 +168,7 @@ test.describe("Individual Flag Tests", () => {
 
     await setFeatureFlag(page, "backend.voice_silero_vad_enabled", false);
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -195,7 +195,7 @@ test.describe("Individual Flag Tests", () => {
     await setFeatureFlag(page, "backend.voice_silero_positive_threshold", 0.8);
     await setFeatureFlag(page, "backend.voice_silero_playback_threshold_boost", 0.15);
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -224,7 +224,7 @@ test.describe("Individual Flag Tests", () => {
 
     await setFeatureFlag(page, "backend.voice_queue_overflow_protection", true);
 
-    await page.goto("/");
+    await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
     const ready = await waitForVoiceModeReady(page);
@@ -260,7 +260,7 @@ test.describe("VAD Threshold Sweep", () => {
 
       await setFeatureFlag(page, "backend.voice_silero_positive_threshold", threshold);
 
-      await page.goto("/");
+      await page.goto("/chat");
       await page.waitForLoadState("networkidle");
 
       const ready = await waitForVoiceModeReady(page);
