@@ -1102,6 +1102,27 @@ export const FEATURE_FLAGS = {
         otherFlags: ["backend.voice_silero_vad_enabled"],
       },
     },
+    voice_word_timestamps: {
+      name: "backend.voice_word_timestamps",
+      description:
+        "[Natural Conversation] Enable word-level transcript tracking for clean truncation " +
+        "during barge-in. Tracks AI response text and estimates word boundaries to provide " +
+        "accurate text cutoff when audio is interrupted. Sends transcript.truncated events " +
+        "to frontend with truncated_text, remaining_text, and word counts.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/word-timestamps",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["TranscriptSyncService", "VoicePipelineService"],
+        otherFlags: [],
+      },
+    },
 
     // =========================================================================
     // Silero VAD Enhancement Flags (Local Browser-Side VAD)

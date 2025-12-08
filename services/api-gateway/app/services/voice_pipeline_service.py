@@ -82,6 +82,9 @@ from app.services.streaming_stt_service import (
 from app.services.talker_service import AudioChunk, TalkerService, TalkerSession, VoiceConfig, talker_service
 from app.services.thinker_service import ThinkerService, ThinkerSession, ToolCallEvent, ToolResultEvent, thinker_service
 
+# Natural Conversation Flow: Phase 1 - Clean Transcript Truncation
+from app.services.transcript_sync_service import TranscriptSyncService, TruncationResult, get_transcript_sync_service
+
 # Natural Conversation Flow: Phase 3 - Utterance Aggregation
 from app.services.utterance_aggregator import (
     AggregatedUtterance,
@@ -543,6 +546,16 @@ class VoicePipelineSession:
         self._frontend_vad_state: Optional[Dict[str, Any]] = None
         self._frontend_vad_update_time: float = 0.0
 
+        # Natural Conversation Flow: Phase 1 - Clean Transcript Truncation
+        # Tracks AI response text for word-accurate truncation during barge-in
+        self._transcript_sync: TranscriptSyncService = get_transcript_sync_service()
+        self._transcript_sync.create_session(session_id)
+        self._current_response_text: str = ""
+        self._current_response_chunk_idx: int = 0
+        self._word_timestamps_enabled: bool = False  # Set based on feature flag at start
+        self._tts_playback_start_time: Optional[float] = None
+        self._last_truncation_result: Optional[TruncationResult] = None
+
     @property
     def state(self) -> PipelineState:
         """Get current pipeline state."""
@@ -721,6 +734,14 @@ class VoicePipelineSession:
                 )
                 self._analytics_service.set_session_active(self.session_id)
                 logger.info(f"Analytics session created: {self.session_id}, mode={pipeline_mode}")
+
+                # Natural Conversation Flow: Phase 1 - Check word timestamps feature flag
+                self._word_timestamps_enabled = await feature_flag_service.is_enabled(
+                    "backend.voice_word_timestamps",
+                    default=False,
+                )
+                if self._word_timestamps_enabled:
+                    logger.info(f"Word timestamps enabled for session: {self.session_id}")
 
                 self._state = PipelineState.LISTENING
 
@@ -1015,6 +1036,70 @@ class VoicePipelineSession:
                     )
                 )
 
+            # Natural Conversation Flow: Phase 1 - Clean Transcript Truncation
+            # Truncate the AI response at the word boundary where playback stopped
+            if self._word_timestamps_enabled and self._current_response_text:
+                await self._perform_transcript_truncation()
+
+    async def _perform_transcript_truncation(self) -> None:
+        """
+        Truncate the AI response transcript at the current playback position.
+
+        Uses word-boundary estimation to find the last complete word spoken
+        before the barge-in, and sends a truncation event to the frontend.
+        """
+        # Calculate playback position (time since TTS started)
+        if self._tts_playback_start_time:
+            playback_position_ms = int((time.time() - self._tts_playback_start_time) * 1000)
+        else:
+            playback_position_ms = 0
+
+        # Add the current response as a chunk for truncation calculation
+        # Estimate duration: 150 WPM average = 2.5 words/second
+        # Average 5 chars per word = ~40ms per character (rough estimate)
+        estimated_duration_ms = len(self._current_response_text) * 40
+
+        self._transcript_sync.add_chunk(
+            session_id=self.session_id,
+            text=self._current_response_text,
+            chunk_index=0,
+            duration_ms=estimated_duration_ms,
+        )
+
+        # Truncate at playback position
+        truncation_result = self._transcript_sync.truncate_at_position(
+            session_id=self.session_id,
+            interrupted_at_ms=playback_position_ms,
+        )
+
+        if truncation_result:
+            self._last_truncation_result = truncation_result
+
+            # Send truncation event to frontend
+            truncation_event = self._transcript_sync.get_truncation_event_data(self.session_id)
+            if truncation_event:
+                await self._on_message(
+                    PipelineMessage(
+                        type="transcript.truncated",
+                        data=truncation_event,
+                    )
+                )
+
+            logger.info(
+                "[Pipeline] Transcript truncated at word boundary",
+                extra={
+                    "session_id": self.session_id,
+                    "playback_position_ms": playback_position_ms,
+                    "words_spoken": truncation_result.words_spoken,
+                    "words_remaining": truncation_result.words_remaining,
+                    "last_word": truncation_result.last_complete_word,
+                },
+            )
+
+        # Reset for next response
+        self._current_response_text = ""
+        self._tts_playback_start_time = None
+
     async def _handle_soft_barge(
         self,
         classification: ClassificationResult,
@@ -1245,6 +1330,10 @@ class VoicePipelineSession:
             remove_utterance_aggregator(self.session_id)
             self._utterance_aggregator = None
             logger.debug(f"Utterance aggregator cleaned up for session: {self.session_id}")
+
+        # Natural Conversation Flow: Phase 1 - Clean up transcript sync session
+        self._transcript_sync.remove_session(self.session_id)
+        logger.debug(f"Transcript sync session cleaned up for session: {self.session_id}")
 
         # Phase 8: Clean up dictation session
         if self._dictation_session:
@@ -2133,6 +2222,10 @@ class VoicePipelineSession:
             self._metrics.first_token_latency_ms = int((time.time() - self._metrics.start_time) * 1000)
             logger.info(f"First token latency: {self._metrics.first_token_latency_ms}ms")
 
+        # Natural Conversation Flow: Phase 1 - Track response text for truncation
+        # Accumulate tokens for word-accurate transcript truncation during barge-in
+        self._current_response_text += token
+
         # Send token to client for display
         await self._on_message(
             PipelineMessage(
@@ -2296,6 +2389,15 @@ class VoicePipelineSession:
         # Track TTS latency (first audio)
         if self._metrics.tts_latency_ms == 0 and chunk.data:
             self._metrics.tts_latency_ms = int((time.time() - self._metrics.start_time) * 1000)
+            # Natural Conversation Flow: Phase 1 - Initialize playback tracking
+            self._tts_playback_start_time = time.time()
+
+        # Natural Conversation Flow: Phase 1 - Track playback position for transcript sync
+        if chunk.data and self._word_timestamps_enabled:
+            self._transcript_sync.update_playback_position(
+                self.session_id,
+                int((time.time() - getattr(self, "_tts_playback_start_time", time.time())) * 1000),
+            )
 
         # Update state to speaking
         if self._state != PipelineState.SPEAKING and chunk.data:

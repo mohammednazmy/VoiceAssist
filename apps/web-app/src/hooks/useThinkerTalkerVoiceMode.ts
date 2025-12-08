@@ -197,6 +197,16 @@ export interface TTVoiceModeReturn {
 
   /** Whether barge-in prompts are ready (pre-cached) */
   isBargeInPromptReady: boolean;
+
+  // Natural Conversation Flow: Phase 1 - Manual Override Controls
+  /** Whether microphone is muted */
+  isMuted: boolean;
+  /** Toggle microphone mute state */
+  toggleMute: () => void;
+  /** Force AI to respond immediately (ends user turn) */
+  forceReply: () => void;
+  /** Immediately stop AI speech (without voice prompt) */
+  stopAI: () => void;
 }
 
 // ============================================================================
@@ -262,6 +272,9 @@ export function useThinkerTalkerVoiceMode(
   const [thinkingSource, setThinkingSource] = useState<"backend" | "frontend">(
     "frontend",
   );
+
+  // Natural Conversation Flow: Phase 1 - Manual Override Controls
+  const [isMuted, setIsMuted] = useState(false);
 
   // Refs for Silero VAD barge-in (avoid stale closures and debouncing)
   const lastBargeInTimeRef = useRef<number>(0);
@@ -921,6 +934,47 @@ export function useThinkerTalkerVoiceMode(
     session.disconnect();
   }, [audioPlayback, session]);
 
+  // Natural Conversation Flow: Phase 1 - Manual Override Controls
+  /**
+   * Toggle microphone mute state.
+   * When muted, VAD stops listening but connection remains active.
+   */
+  const toggleMute = useCallback(() => {
+    const vad = sileroVADRef.current;
+    if (!vad) return;
+
+    if (isMuted) {
+      // Unmute: resume VAD
+      voiceLog.debug("[TTVoiceMode] Unmuting microphone");
+      vad.start();
+      setIsMuted(false);
+    } else {
+      // Mute: pause VAD
+      voiceLog.debug("[TTVoiceMode] Muting microphone");
+      vad.pause();
+      setIsMuted(true);
+    }
+  }, [isMuted]);
+
+  /**
+   * Force AI to respond immediately by ending user turn.
+   * Commits current audio buffer and triggers AI processing.
+   */
+  const forceReply = useCallback(() => {
+    voiceLog.debug("[TTVoiceMode] Force reply triggered");
+    session.commitAudio();
+  }, [session]);
+
+  /**
+   * Immediately stop AI speech without playing a voice prompt.
+   * More aggressive than bargeIn with playVoicePrompt=false.
+   */
+  const stopAI = useCallback(() => {
+    voiceLog.debug("[TTVoiceMode] Stop AI triggered");
+    audioPlayback.stop();
+    session.bargeIn();
+  }, [audioPlayback, session]);
+
   // Enhanced connect that pre-warms audio
   const connect = useCallback(async () => {
     voiceLog.debug("[TTVoiceMode] Connecting with audio pre-warm");
@@ -1001,6 +1055,12 @@ export function useThinkerTalkerVoiceMode(
       // Barge-in prompt audio (uses ElevenLabs for consistent voice)
       playBargeInPrompt: bargeInPromptAudio.playPrompt,
       isBargeInPromptReady: bargeInPromptAudio.isReady,
+
+      // Natural Conversation Flow: Phase 1 - Manual Override Controls
+      isMuted,
+      toggleMute,
+      forceReply,
+      stopAI,
     }),
     [
       session,
@@ -1010,9 +1070,13 @@ export function useThinkerTalkerVoiceMode(
       sileroVAD,
       currentEmotion,
       thinkingSource,
+      isMuted,
       connect,
       disconnect,
       bargeIn,
+      toggleMute,
+      forceReply,
+      stopAI,
     ],
   );
 }
