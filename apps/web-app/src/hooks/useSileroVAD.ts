@@ -156,6 +156,19 @@ export interface SileroVADOptions {
    * Default: true
    */
   enableConfidenceStreaming?: boolean;
+
+  // =========================================================================
+  // AEC Feedback Options (Phase 4.3)
+  // =========================================================================
+
+  /**
+   * Additional threshold boost when AEC is not converged.
+   * Applied when browser reports AEC is still learning the echo path.
+   * Helps prevent echo-triggered speech detection during AEC convergence.
+   * Default: 0.1
+   * Natural Conversation Flow: Phase 4.3 - AEC Feedback Loop
+   */
+  aecNotConvergedBoost?: number;
 }
 
 export interface SileroVADReturn {
@@ -248,6 +261,22 @@ export interface SileroVADReturn {
    * Current adaptive threshold (combines base threshold + noise adjustment).
    */
   adaptiveThreshold: number;
+
+  // =========================================================================
+  // Phase 4.3: AEC Feedback (Natural Conversation Flow)
+  // =========================================================================
+
+  /**
+   * Whether AEC (Acoustic Echo Cancellation) is converged.
+   * When false, VAD threshold is boosted to prevent echo triggers.
+   */
+  isAECConverged: boolean;
+
+  /**
+   * Set AEC convergence state (called from useAECFeedback hook).
+   * When AEC is not converged, VAD threshold is boosted.
+   */
+  setAECConverged: (converged: boolean) => void;
 }
 
 /**
@@ -291,6 +320,8 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
     minAdaptiveThreshold = 0.3,
     maxAdaptiveThreshold = 0.8,
     enableConfidenceStreaming = true,
+    // AEC Feedback options (Phase 4.3)
+    aecNotConvergedBoost = 0.1,
   } = options;
 
   // If VAD is disabled via feature flag, return a disabled/no-op state
@@ -328,6 +359,9 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
       noiseFloor: 0,
       calibrateNoise: async () => {},
       adaptiveThreshold: positiveSpeechThreshold,
+      // Phase 4.3: AEC Feedback (Natural Conversation Flow)
+      isAECConverged: true,
+      setAECConverged: () => {},
     }),
     [positiveSpeechThreshold],
   );
@@ -362,6 +396,9 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
   const [adaptiveThreshold, setAdaptiveThreshold] = useState(
     positiveSpeechThreshold,
   );
+
+  // Phase 4.3: AEC Feedback state (Natural Conversation Flow)
+  const [isAECConverged, setIsAECConverged] = useState(true);
 
   // Refs
   const vadRef = useRef<MicVAD | null>(null);
@@ -417,19 +454,24 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
   ]);
 
   const effectiveThreshold = useMemo(() => {
+    // Phase 1: Playback echo suppression boost
     const playbackBoost =
       isPlaybackActive && echoSuppressionMode === "threshold_boost"
         ? playbackThresholdBoost
         : 0;
+    // Phase 4.3: AEC not converged boost (Natural Conversation Flow)
+    const aecBoost = !isAECConverged ? aecNotConvergedBoost : 0;
     return Math.min(
       0.95,
-      Math.max(0.05, baseAdaptiveThreshold + playbackBoost),
+      Math.max(0.05, baseAdaptiveThreshold + playbackBoost + aecBoost),
     );
   }, [
     baseAdaptiveThreshold,
     echoSuppressionMode,
     isPlaybackActive,
     playbackThresholdBoost,
+    isAECConverged,
+    aecNotConvergedBoost,
   ]);
 
   const effectiveNegativeThreshold = useMemo(() => {
@@ -949,6 +991,10 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
       noiseFloor,
       calibrateNoise,
       adaptiveThreshold,
+
+      // Phase 4.3: AEC Feedback (Natural Conversation Flow)
+      isAECConverged,
+      setAECConverged,
     }),
     [
       isListening,
@@ -972,6 +1018,9 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
       noiseFloor,
       calibrateNoise,
       adaptiveThreshold,
+      // Phase 4.3
+      isAECConverged,
+      setAECConverged,
     ],
   );
 

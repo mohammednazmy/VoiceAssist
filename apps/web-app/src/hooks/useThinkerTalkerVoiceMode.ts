@@ -32,6 +32,7 @@ import { useTTAudioPlayback, type TTPlaybackState } from "./useTTAudioPlayback";
 import { useBackchannelAudio } from "./useBackchannelAudio";
 import { useBargeInPromptAudio } from "./useBargeInPromptAudio";
 import { useSileroVAD } from "./useSileroVAD";
+import { useAECFeedback } from "./useAECFeedback";
 import { useUnifiedConversationStore } from "../stores/unifiedConversationStore";
 import { useAuthStore } from "../stores/authStore";
 import { useAuth } from "./useAuth";
@@ -486,6 +487,25 @@ export function useThinkerTalkerVoiceMode(
     getAccessToken,
   });
 
+  // Natural Conversation Flow: Phase 4.3 - AEC Feedback Loop
+  // Monitors AEC convergence state and adjusts VAD threshold accordingly
+  const aecFeedback = useAECFeedback({
+    enabled: resolvedSileroConfig.enabled, // Only enable when VAD is enabled
+    pollingIntervalMs: 500, // Poll every 500ms
+    convergenceThresholdDb: 10, // ERLE > 10dB indicates good AEC convergence
+    onAECStateChange: (state) => {
+      voiceLog.debug(
+        `[TTVoiceMode] AEC state changed: converged=${state.isConverged}, ` +
+          `erle=${state.erleDb?.toFixed(1) ?? "N/A"}dB`,
+      );
+      // Update Silero VAD's AEC state
+      const vad = sileroVADRef.current;
+      if (vad) {
+        vad.setAECConverged(state.isConverged);
+      }
+    },
+  });
+
   // Audio playback hook
   const audioPlayback = useTTAudioPlayback({
     volume,
@@ -914,6 +934,19 @@ export function useThinkerTalkerVoiceMode(
       vad.stop();
     }
   }, [session.isConnected]);
+
+  // Natural Conversation Flow: Phase 4.3 - Start/stop AEC monitoring based on connection
+  // AEC monitoring helps detect when echo cancellation is still learning the acoustic path
+  // During convergence, VAD threshold is boosted to prevent echo-triggered false positives
+  useEffect(() => {
+    if (session.isConnected) {
+      voiceLog.debug("[TTVoiceMode] Starting AEC monitoring (connected)");
+      aecFeedback.startMonitoring();
+    } else {
+      voiceLog.debug("[TTVoiceMode] Stopping AEC monitoring (disconnected)");
+      aecFeedback.stopMonitoring();
+    }
+  }, [session.isConnected, aecFeedback]);
 
   // Barge-in handler - combines session signal with audio stop
   // Optionally plays "I'm listening" prompt using ElevenLabs for consistent voice
