@@ -1,6 +1,6 @@
 {
-  "count": 294,
-  "generated_at": "2025-12-07T21:28:40.309Z",
+  "count": 295,
+  "generated_at": "2025-12-08T00:37:21.866Z",
   "docs": [
     {
       "slug": "reference/style-guide",
@@ -182,6 +182,13 @@
         "versioning"
       ],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "pr-176-description",
+      "path": "pr-176-description.md",
+      "title": "pr-176-description",
+      "status": "draft",
+      "lastUpdated": "2025-12-08"
     },
     {
       "slug": "websocket-binary-protocol",
