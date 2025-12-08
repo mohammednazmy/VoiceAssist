@@ -316,6 +316,9 @@ export function useThinkerTalkerVoiceMode(
   // and should NOT trigger barge-in.
   const naturalCompletionModeRef = useRef<boolean>(false);
 
+  // Ref to track previous pipeline state for detecting speaking -> listening transitions
+  const previousPipelineStateRef = useRef<PipelineState | null>(null);
+
   // Ref for sileroVAD to avoid including entire object in effect dependencies
   // Declared early so it can be used in audioPlayback callbacks
   const sileroVADRef = useRef<ReturnType<typeof useSileroVAD> | null>(null);
@@ -765,8 +768,9 @@ export function useThinkerTalkerVoiceMode(
 
     // Handle pipeline state changes
     onPipelineStateChange: (state: PipelineState, reason?: string) => {
+      const prevState = previousPipelineStateRef.current;
       voiceLog.debug(
-        `[TTVoiceMode] Pipeline state: ${state}, reason: ${reason}`,
+        `[TTVoiceMode] Pipeline state: ${prevState} -> ${state}, reason: ${reason}`,
       );
 
       switch (state) {
@@ -780,16 +784,18 @@ export function useThinkerTalkerVoiceMode(
           // during natural completion. reset() is called in "processing" state instead.
           audioPlayback.endStream();
 
-          // CRITICAL: Enter natural completion mode if this is a natural transition
-          // When backend finishes TTS generation (reason: 'natural'), local audio
-          // buffer may still be draining. During this window, speech_started events
+          // CRITICAL: Enter natural completion mode ONLY when transitioning
+          // from "speaking" to "listening" with reason "natural".
+          // This means backend finished TTS generation and local audio buffer
+          // may still be draining. During this window, speech_started events
           // from backend VAD are likely speaker echo (the AI's TTS being picked up
           // by the mic) and should NOT trigger barge-in.
-          // We use the reason parameter instead of checking audioPlayback.isPlaying
-          // because the reason is sent by the backend and is always reliable.
-          if (reason === "natural") {
+          // We check prevState === "speaking" to avoid triggering on:
+          // - Initial connection state (prevState is null)
+          // - Other transitions like processing -> listening
+          if (prevState === "speaking" && reason === "natural") {
             voiceLog.info(
-              "[TTVoiceMode] Natural completion mode: backend finished TTS, allowing audio to drain",
+              "[TTVoiceMode] Natural completion mode: speaking -> listening, allowing audio to drain",
             );
             naturalCompletionModeRef.current = true;
           }
@@ -819,6 +825,9 @@ export function useThinkerTalkerVoiceMode(
           audioPlayback.endStream();
           break;
       }
+
+      // Update previous state ref for next transition
+      previousPipelineStateRef.current = state;
     },
 
     // Handle speech events for barge-in
