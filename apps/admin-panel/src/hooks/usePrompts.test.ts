@@ -225,7 +225,10 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const prompt = await result.current.getPrompt("prompt-1");
+      let prompt: (typeof mockPrompts)[0] | null = null;
+      await act(async () => {
+        prompt = await result.current.getPrompt("prompt-1");
+      });
 
       expect(fetchAPI).toHaveBeenCalledWith("/api/admin/prompts/prompt-1");
       expect(prompt).toEqual(mockPrompts[0]);
@@ -242,10 +245,15 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const prompt = await result.current.getPrompt("invalid-id");
+      let prompt: (typeof mockPrompts)[0] | null = null;
+      await act(async () => {
+        prompt = await result.current.getPrompt("invalid-id");
+      });
 
       expect(prompt).toBeNull();
-      expect(result.current.error).toBe("Not found");
+      await waitFor(() => {
+        expect(result.current.error).toBe("Not found");
+      });
     });
   });
 
@@ -269,7 +277,10 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const created = await result.current.createPrompt(newPrompt);
+      let created: Record<string, unknown> | null = null;
+      await act(async () => {
+        created = await result.current.createPrompt(newPrompt);
+      });
 
       expect(fetchAPI).toHaveBeenCalledWith("/api/admin/prompts", {
         method: "POST",
@@ -289,15 +300,20 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const created = await result.current.createPrompt({
-        name: "",
-        prompt_type: "system",
-        content: "",
-        description: "",
+      let created: Record<string, unknown> | null = null;
+      await act(async () => {
+        created = await result.current.createPrompt({
+          name: "",
+          prompt_type: "system",
+          content: "",
+          description: "",
+        });
       });
 
       expect(created).toBeNull();
-      expect(result.current.error).toBe("Validation error");
+      await waitFor(() => {
+        expect(result.current.error).toBe("Validation error");
+      });
     });
   });
 
@@ -316,7 +332,10 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const updated = await result.current.updatePrompt("prompt-1", updates);
+      let updated: Record<string, unknown> | null = null;
+      await act(async () => {
+        updated = await result.current.updatePrompt("prompt-1", updates);
+      });
 
       expect(fetchAPI).toHaveBeenCalledWith("/api/admin/prompts/prompt-1", {
         method: "PATCH",
@@ -339,7 +358,10 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const deleted = await result.current.deletePrompt("prompt-1");
+      let deleted: boolean | null = null;
+      await act(async () => {
+        deleted = await result.current.deletePrompt("prompt-1");
+      });
 
       expect(fetchAPI).toHaveBeenCalledWith("/api/admin/prompts/prompt-1", {
         method: "DELETE",
@@ -358,10 +380,15 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const deleted = await result.current.deletePrompt("prompt-1");
+      let deleted: boolean | null = null;
+      await act(async () => {
+        deleted = await result.current.deletePrompt("prompt-1");
+      });
 
       expect(deleted).toBe(false);
-      expect(result.current.error).toBe("Delete failed");
+      await waitFor(() => {
+        expect(result.current.error).toBe("Delete failed");
+      });
     });
   });
 
@@ -378,8 +405,11 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const published = await result.current.publishPrompt("prompt-2", {
-        release_notes: "First release",
+      let published: Record<string, unknown> | null = null;
+      await act(async () => {
+        published = await result.current.publishPrompt("prompt-2", {
+          release_notes: "First release",
+        });
       });
 
       expect(fetchAPI).toHaveBeenCalledWith(
@@ -405,8 +435,11 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const rolledBack = await result.current.rollbackPrompt("prompt-1", {
-        target_version: 1,
+      let rolledBack: Record<string, unknown> | null = null;
+      await act(async () => {
+        rolledBack = await result.current.rollbackPrompt("prompt-1", {
+          target_version: 1,
+        });
       });
 
       expect(fetchAPI).toHaveBeenCalledWith(
@@ -432,7 +465,10 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const versions = await result.current.getVersions("prompt-1");
+      let versions: typeof mockVersionsResponse | null = null;
+      await act(async () => {
+        versions = await result.current.getVersions("prompt-1");
+      });
 
       expect(fetchAPI).toHaveBeenCalledWith(
         expect.stringContaining("/api/admin/prompts/prompt-1/versions"),
@@ -453,7 +489,10 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const diff = await result.current.getDiff("prompt-1", 1, 2);
+      let diff: typeof mockDiffResponse | null = null;
+      await act(async () => {
+        diff = await result.current.getDiff("prompt-1", 1, 2);
+      });
 
       expect(fetchAPI).toHaveBeenCalledWith(
         "/api/admin/prompts/prompt-1/diff?version_a=1&version_b=2",
@@ -474,8 +513,11 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const testResult = await result.current.testPrompt("prompt-2", {
-        variables: { name: "John" },
+      let testResult: typeof mockTestResponse | null = null;
+      await act(async () => {
+        testResult = await result.current.testPrompt("prompt-2", {
+          variables: { name: "John" },
+        });
       });
 
       expect(fetchAPI).toHaveBeenCalledWith(
@@ -504,8 +546,11 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const duplicated = await result.current.duplicatePrompt("prompt-1", {
-        new_name: "system_prompt_copy",
+      let duplicated: Record<string, unknown> | null = null;
+      await act(async () => {
+        duplicated = await result.current.duplicatePrompt("prompt-1", {
+          new_name: "system_prompt_copy",
+        });
       });
 
       expect(fetchAPI).toHaveBeenCalledWith(
@@ -531,7 +576,10 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const toggled = await result.current.toggleActive("prompt-1");
+      let toggled: Record<string, unknown> | null = null;
+      await act(async () => {
+        toggled = await result.current.toggleActive("prompt-1");
+      });
 
       expect(fetchAPI).toHaveBeenCalledWith(
         "/api/admin/prompts/prompt-1",
@@ -552,10 +600,15 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const toggled = await result.current.toggleActive("nonexistent");
+      let toggled: Record<string, unknown> | null = null;
+      await act(async () => {
+        toggled = await result.current.toggleActive("nonexistent");
+      });
 
       expect(toggled).toBeNull();
-      expect(result.current.error).toBe("Prompt not found");
+      await waitFor(() => {
+        expect(result.current.error).toBe("Prompt not found");
+      });
     });
   });
 
@@ -572,7 +625,10 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const archived = await result.current.archivePrompt("prompt-1");
+      let archived: boolean | null = null;
+      await act(async () => {
+        archived = await result.current.archivePrompt("prompt-1");
+      });
 
       expect(fetchAPI).toHaveBeenCalledWith(
         "/api/admin/prompts/prompt-1/archive",
@@ -594,7 +650,10 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const stats = await result.current.getStats();
+      let stats: typeof mockStats | null = null;
+      await act(async () => {
+        stats = await result.current.getStats();
+      });
 
       expect(fetchAPI).toHaveBeenCalledWith("/api/admin/prompts/stats");
       expect(stats?.total_prompts).toBe(10);
@@ -613,7 +672,10 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const cacheStats = await result.current.getCacheStats();
+      let cacheStats: typeof mockCacheStats | null = null;
+      await act(async () => {
+        cacheStats = await result.current.getCacheStats();
+      });
 
       expect(fetchAPI).toHaveBeenCalledWith("/api/admin/prompts/cache/stats");
       expect(cacheStats?.hit_rate).toBe(0.95);
@@ -632,7 +694,10 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const invalidated = await result.current.invalidateCache();
+      let invalidated: boolean | null = null;
+      await act(async () => {
+        invalidated = await result.current.invalidateCache();
+      });
 
       expect(fetchAPI).toHaveBeenCalledWith(
         "/api/admin/prompts/cache/invalidate",
@@ -652,7 +717,10 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const invalidated = await result.current.invalidateCache("prompt-1");
+      let invalidated: boolean | null = null;
+      await act(async () => {
+        invalidated = await result.current.invalidateCache("prompt-1");
+      });
 
       expect(fetchAPI).toHaveBeenCalledWith(
         "/api/admin/prompts/prompt-1/cache/invalidate",

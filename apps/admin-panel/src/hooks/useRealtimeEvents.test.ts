@@ -26,11 +26,11 @@ class MockWebSocket {
     this.url = url;
     // Store reference so tests can access it
     mockWebSocketInstance = this;
-    // Simulate async connection
-    setTimeout(() => {
+    // Simulate async connection (microtask to avoid timer reliance)
+    queueMicrotask(() => {
       this.readyState = MockWebSocket.OPEN;
       this.onopen?.(new Event("open"));
-    }, 0);
+    });
   }
 
   send(data: string) {
@@ -61,6 +61,12 @@ class MockWebSocket {
     this.readyState = MockWebSocket.CLOSED;
     this.onclose?.(new CloseEvent("close", { code: 1006, wasClean: false }));
   }
+
+  // Helper to force open connection synchronously
+  simulateOpen() {
+    this.readyState = MockWebSocket.OPEN;
+    this.onopen?.(new Event("open"));
+  }
 }
 
 let mockWebSocketInstance: MockWebSocket | null = null;
@@ -68,21 +74,35 @@ let mockWebSocketInstance: MockWebSocket | null = null;
 // Store the original WebSocket
 const originalWebSocket = global.WebSocket;
 
+const openConnection = () => {
+  act(() => {
+    mockWebSocketInstance?.simulateOpen();
+  });
+};
+
+let failConnections = 0;
+const failNextConnections = (count: number) => {
+  failConnections = count;
+};
+
 // Create a WebSocket mock spy that can be checked for calls
 let mockWebSocketSpy: ReturnType<typeof vi.fn>;
 
 function createWebSocketMock() {
   // Create a class that extends the mock and can be spied on
-  const MockWebSocketClass = class extends MockWebSocket {
-    constructor(url: string) {
-      super(url);
+  const MockWebSocketClass = class extends MockWebSocket {};
+
+  // Use a constructable function (not arrow) so `new WebSocket()` works
+  const ctor = function (this: unknown, url: string) {
+    if (failConnections > 0) {
+      failConnections -= 1;
+      throw new Error("WebSocket connection failed (simulated)");
     }
+    return new MockWebSocketClass(url) as unknown as WebSocket;
   };
 
-  // Create the spy
-  mockWebSocketSpy = vi.fn().mockImplementation((url: string) => {
-    return new MockWebSocketClass(url);
-  });
+  // Create the spy wrapper
+  mockWebSocketSpy = vi.fn(ctor);
 
   // Add static properties to the mock
   Object.assign(mockWebSocketSpy, {
@@ -127,14 +147,9 @@ describe("useRealtimeEvents", () => {
 
       expect(result.current.status).toBe("connecting");
 
-      // Advance timer to allow connection
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
-      await waitFor(() => {
-        expect(result.current.status).toBe("connected");
-      });
+      expect(result.current.status).toBe("connected");
     });
 
     it("should not auto-connect when autoConnect is false", () => {
@@ -159,13 +174,7 @@ describe("useRealtimeEvents", () => {
     it("should disconnect when disconnect is called", async () => {
       const { result } = renderHook(() => useRealtimeEvents());
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
-
-      await waitFor(() => {
-        expect(result.current.status).toBe("connected");
-      });
+      openConnection();
 
       act(() => {
         result.current.disconnect();
@@ -177,13 +186,7 @@ describe("useRealtimeEvents", () => {
     it("should cleanup on unmount", async () => {
       const { result, unmount } = renderHook(() => useRealtimeEvents());
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
-
-      await waitFor(() => {
-        expect(result.current.status).toBe("connected");
-      });
+      openConnection();
 
       unmount();
 
@@ -196,9 +199,7 @@ describe("useRealtimeEvents", () => {
     it("should receive and store admin events", async () => {
       const { result } = renderHook(() => useRealtimeEvents());
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
       const mockEvent = {
         type: "admin_event",
@@ -214,19 +215,15 @@ describe("useRealtimeEvents", () => {
         mockWebSocketInstance?.simulateMessage(mockEvent);
       });
 
-      await waitFor(() => {
-        expect(result.current.events).toHaveLength(1);
-        expect(result.current.events[0].type).toBe("session.connected");
-      });
+      expect(result.current.events).toHaveLength(1);
+      expect(result.current.events[0].type).toBe("session.connected");
     });
 
     it("should call onEvent callback when event received", async () => {
       const onEvent = vi.fn();
       renderHook(() => useRealtimeEvents({ onEvent }));
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
       const mockEvent = {
         type: "admin_event",
@@ -240,11 +237,9 @@ describe("useRealtimeEvents", () => {
         mockWebSocketInstance?.simulateMessage(mockEvent);
       });
 
-      await waitFor(() => {
-        expect(onEvent).toHaveBeenCalledWith(
-          expect.objectContaining({ type: "conversation.created" }),
-        );
-      });
+      expect(onEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "conversation.created" }),
+      );
     });
 
     it("should filter events when eventFilter is provided", async () => {
@@ -254,9 +249,7 @@ describe("useRealtimeEvents", () => {
         }),
       );
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
       // Send matching event
       act(() => {
@@ -280,18 +273,14 @@ describe("useRealtimeEvents", () => {
         });
       });
 
-      await waitFor(() => {
-        expect(result.current.events).toHaveLength(1);
-        expect(result.current.events[0].type).toBe("session.connected");
-      });
+      expect(result.current.events).toHaveLength(1);
+      expect(result.current.events[0].type).toBe("session.connected");
     });
 
     it("should limit events buffer to MAX_EVENTS_BUFFER", async () => {
       const { result } = renderHook(() => useRealtimeEvents());
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
       // Send more than 100 events
       for (let i = 0; i < 110; i++) {
@@ -307,17 +296,13 @@ describe("useRealtimeEvents", () => {
         });
       }
 
-      await waitFor(() => {
-        expect(result.current.events.length).toBeLessThanOrEqual(100);
-      });
+      expect(result.current.events.length).toBeLessThanOrEqual(100);
     });
 
     it("should update lastEventTime when event received", async () => {
       const { result } = renderHook(() => useRealtimeEvents());
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
       expect(result.current.lastEventTime).toBeNull();
 
@@ -331,9 +316,7 @@ describe("useRealtimeEvents", () => {
         });
       });
 
-      await waitFor(() => {
-        expect(result.current.lastEventTime).toBe("2024-01-15T12:00:00Z");
-      });
+      expect(result.current.lastEventTime).toBe("2024-01-15T12:00:00Z");
     });
   });
 
@@ -341,9 +324,7 @@ describe("useRealtimeEvents", () => {
     it("should receive and store metrics updates", async () => {
       const { result } = renderHook(() => useRealtimeEvents());
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
       const mockMetrics = {
         type: "metrics_update",
@@ -366,19 +347,15 @@ describe("useRealtimeEvents", () => {
         mockWebSocketInstance?.simulateMessage(mockMetrics);
       });
 
-      await waitFor(() => {
-        expect(result.current.metrics).not.toBeNull();
-        expect(result.current.metrics?.active_websocket_sessions).toBe(10);
-      });
+      expect(result.current.metrics).not.toBeNull();
+      expect(result.current.metrics?.active_websocket_sessions).toBe(10);
     });
 
     it("should call onMetrics callback when metrics received", async () => {
       const onMetrics = vi.fn();
       renderHook(() => useRealtimeEvents({ onMetrics }));
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
       act(() => {
         mockWebSocketInstance?.simulateMessage({
@@ -392,11 +369,9 @@ describe("useRealtimeEvents", () => {
         });
       });
 
-      await waitFor(() => {
-        expect(onMetrics).toHaveBeenCalledWith(
-          expect.objectContaining({ active_websocket_sessions: 5 }),
-        );
-      });
+      expect(onMetrics).toHaveBeenCalledWith(
+        expect.objectContaining({ active_websocket_sessions: 5 }),
+      );
     });
   });
 
@@ -407,18 +382,14 @@ describe("useRealtimeEvents", () => {
         useRealtimeEvents({ onConnectionChange, reconnectInterval: 1000 }),
       );
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
       // Simulate unclean close
       act(() => {
         mockWebSocketInstance?.simulateUncleanClose();
       });
 
-      await waitFor(() => {
-        expect(onConnectionChange).toHaveBeenCalledWith("reconnecting");
-      });
+      expect(onConnectionChange).toHaveBeenCalledWith("reconnecting");
 
       // Advance past reconnect interval
       await act(async () => {
@@ -434,9 +405,7 @@ describe("useRealtimeEvents", () => {
         useRealtimeEvents({ reconnectInterval: 100 }),
       );
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
       expect(result.current.reconnectAttempts).toBe(0);
 
@@ -445,9 +414,7 @@ describe("useRealtimeEvents", () => {
         mockWebSocketInstance?.simulateUncleanClose();
       });
 
-      await waitFor(() => {
-        expect(result.current.reconnectAttempts).toBe(1);
-      });
+      expect(result.current.reconnectAttempts).toBe(1);
     });
 
     it("should set status to failed after max reconnect attempts", async () => {
@@ -460,9 +427,10 @@ describe("useRealtimeEvents", () => {
         }),
       );
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
+
+      // Force next connections to fail to hit the failure path
+      failNextConnections(3);
 
       // Simulate multiple unclean closes
       for (let i = 0; i < 3; i++) {
@@ -475,9 +443,7 @@ describe("useRealtimeEvents", () => {
         });
       }
 
-      await waitFor(() => {
-        expect(result.current.status).toBe("failed");
-      });
+      expect(result.current.status).toBe("failed");
     });
 
     it("should reset reconnectAttempts on successful connection", async () => {
@@ -485,18 +451,14 @@ describe("useRealtimeEvents", () => {
         useRealtimeEvents({ reconnectInterval: 100 }),
       );
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
       // Simulate unclean close
       act(() => {
         mockWebSocketInstance?.simulateUncleanClose();
       });
 
-      await waitFor(() => {
-        expect(result.current.reconnectAttempts).toBe(1);
-      });
+      expect(result.current.reconnectAttempts).toBe(1);
 
       // Advance past reconnect interval to trigger reconnection
       await act(async () => {
@@ -504,9 +466,7 @@ describe("useRealtimeEvents", () => {
       });
 
       // New connection should reset attempts
-      await waitFor(() => {
-        expect(result.current.reconnectAttempts).toBe(0);
-      });
+      expect(result.current.reconnectAttempts).toBe(0);
     });
   });
 
@@ -514,9 +474,7 @@ describe("useRealtimeEvents", () => {
     it("should send subscribe message to server", async () => {
       const { result } = renderHook(() => useRealtimeEvents());
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
       act(() => {
         result.current.subscribe(["session.connected", "session.disconnected"]);
@@ -532,9 +490,7 @@ describe("useRealtimeEvents", () => {
     it("should clear all events and reset lastEventTime", async () => {
       const { result } = renderHook(() => useRealtimeEvents());
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
       // Add some events
       act(() => {
@@ -547,9 +503,7 @@ describe("useRealtimeEvents", () => {
         });
       });
 
-      await waitFor(() => {
-        expect(result.current.events).toHaveLength(1);
-      });
+      expect(result.current.events).toHaveLength(1);
 
       act(() => {
         result.current.clearEvents();
@@ -564,9 +518,7 @@ describe("useRealtimeEvents", () => {
     it("should send ping messages periodically", async () => {
       renderHook(() => useRealtimeEvents());
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
       // Advance past ping interval (30 seconds)
       await act(async () => {
@@ -582,9 +534,7 @@ describe("useRealtimeEvents", () => {
       const onEvent = vi.fn();
       renderHook(() => useRealtimeEvents({ onEvent }));
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
       act(() => {
         mockWebSocketInstance?.simulateMessage({ type: "pong" });
@@ -603,13 +553,9 @@ describe("useRealtimeEvents", () => {
 
       expect(onConnectionChange).toHaveBeenCalledWith("connecting");
 
-      await act(async () => {
-        vi.advanceTimersByTime(10);
-      });
+      openConnection();
 
-      await waitFor(() => {
-        expect(onConnectionChange).toHaveBeenCalledWith("connected");
-      });
+      expect(onConnectionChange).toHaveBeenCalledWith("connected");
     });
   });
 });
@@ -646,9 +592,7 @@ describe("useAdminEventListener", () => {
       useAdminEventListener("session.connected", callback),
     );
 
-    await act(async () => {
-      vi.advanceTimersByTime(10);
-    });
+    openConnection();
 
     // Send matching event
     act(() => {
@@ -661,10 +605,8 @@ describe("useAdminEventListener", () => {
       });
     });
 
-    await waitFor(() => {
-      expect(callback).toHaveBeenCalled();
-      expect(result.current).toHaveLength(1);
-    });
+    expect(callback).toHaveBeenCalled();
+    expect(result.current).toHaveLength(1);
   });
 
   it("should accept array of event types", async () => {
@@ -676,9 +618,7 @@ describe("useAdminEventListener", () => {
       ),
     );
 
-    await act(async () => {
-      vi.advanceTimersByTime(10);
-    });
+    openConnection();
 
     act(() => {
       mockWebSocketInstance?.simulateMessage({
@@ -700,9 +640,7 @@ describe("useAdminEventListener", () => {
       });
     });
 
-    await waitFor(() => {
-      expect(callback).toHaveBeenCalledTimes(2);
-      expect(result.current).toHaveLength(2);
-    });
+    expect(callback).toHaveBeenCalledTimes(2);
+    expect(result.current).toHaveLength(2);
   });
 });

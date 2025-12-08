@@ -343,9 +343,17 @@ describe("ConversationsPage", () => {
       global.URL.revokeObjectURL = mockRevokeObjectURL;
 
       const mockLink = { href: "", download: "", click: vi.fn() };
-      vi.spyOn(document, "createElement").mockReturnValue(
-        mockLink as unknown as HTMLElement,
-      );
+      const originalCreateElement = document.createElement;
+      const createElementSpy = vi
+        .spyOn(document, "createElement")
+        .mockImplementation(
+          (tagName: string, options?: ElementCreationOptions) => {
+            if (tagName.toLowerCase() === "a") {
+              return mockLink as unknown as HTMLElement;
+            }
+            return originalCreateElement.call(document, tagName, options);
+          },
+        );
 
       renderPage();
 
@@ -365,6 +373,8 @@ describe("ConversationsPage", () => {
           }),
         );
       });
+
+      createElementSpy.mockRestore();
     });
   });
 

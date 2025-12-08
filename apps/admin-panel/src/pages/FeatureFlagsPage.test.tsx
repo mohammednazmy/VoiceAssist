@@ -3,19 +3,30 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+  within,
+} from "@testing-library/react";
 import { FeatureFlagsPage } from "./FeatureFlagsPage";
 
 // Mock hooks
-vi.mock("../hooks/useFeatureFlags", () => ({
-  useFeatureFlags: vi.fn(),
+vi.mock("../hooks/useFeatureFlagsRealtime", () => ({
+  useFeatureFlagsRealtime: vi.fn(),
+}));
+
+vi.mock("../hooks/useScheduledChanges", () => ({
+  useScheduledChanges: vi.fn(),
 }));
 
 vi.mock("../contexts/AuthContext", () => ({
   useAuth: vi.fn(),
 }));
 
-import { useFeatureFlags } from "../hooks/useFeatureFlags";
+import { useFeatureFlagsRealtime } from "../hooks/useFeatureFlagsRealtime";
+import { useScheduledChanges } from "../hooks/useScheduledChanges";
 import { useAuth } from "../contexts/AuthContext";
 
 const mockFlags = [
@@ -65,12 +76,18 @@ const defaultFeatureFlagsReturn = {
   flags: mockFlags,
   loading: false,
   error: null,
-  lastUpdated: new Date(),
+  lastUpdated: new Date().toISOString(),
+  version: 1,
+  connected: true,
+  connectionMode: "sse" as const,
+  reconnectCount: 0,
+  eventsReplayed: 0,
   refreshFlags: vi.fn(),
   createFlag: vi.fn().mockResolvedValue(true),
   updateFlag: vi.fn().mockResolvedValue(true),
   deleteFlag: vi.fn().mockResolvedValue(true),
   toggleFlag: vi.fn().mockResolvedValue(true),
+  reconnect: vi.fn(),
 };
 
 const defaultAuthReturn = {
@@ -79,10 +96,22 @@ const defaultAuthReturn = {
   user: { email: "admin@example.com" },
 };
 
+const defaultScheduledChangesReturn = {
+  scheduledChanges: [],
+  loading: false,
+  error: null,
+  refreshChanges: vi.fn(),
+};
+
 describe("FeatureFlagsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useFeatureFlags).mockReturnValue(defaultFeatureFlagsReturn);
+    vi.mocked(useFeatureFlagsRealtime).mockReturnValue(
+      defaultFeatureFlagsReturn,
+    );
+    vi.mocked(useScheduledChanges).mockReturnValue(
+      defaultScheduledChangesReturn,
+    );
     vi.mocked(useAuth).mockReturnValue(
       defaultAuthReturn as ReturnType<typeof useAuth>,
     );
@@ -92,7 +121,9 @@ describe("FeatureFlagsPage", () => {
     it("should render page title", () => {
       render(<FeatureFlagsPage />);
 
-      expect(screen.getByText("Feature Flags")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Feature Flags" }),
+      ).toBeInTheDocument();
       expect(
         screen.getByText("Manage feature flags and rollout configuration"),
       ).toBeInTheDocument();
@@ -130,7 +161,7 @@ describe("FeatureFlagsPage", () => {
 
   describe("loading state", () => {
     it("should show loading state when loading without data", () => {
-      vi.mocked(useFeatureFlags).mockReturnValue({
+      vi.mocked(useFeatureFlagsRealtime).mockReturnValue({
         ...defaultFeatureFlagsReturn,
         loading: true,
         flags: [],
@@ -145,7 +176,7 @@ describe("FeatureFlagsPage", () => {
 
   describe("error state", () => {
     it("should show error message when error occurs", () => {
-      vi.mocked(useFeatureFlags).mockReturnValue({
+      vi.mocked(useFeatureFlagsRealtime).mockReturnValue({
         ...defaultFeatureFlagsReturn,
         error: "Failed to load feature flags",
       });
@@ -162,18 +193,20 @@ describe("FeatureFlagsPage", () => {
     it("should display total flags count", () => {
       render(<FeatureFlagsPage />);
 
-      expect(screen.getByText("Total Flags")).toBeInTheDocument();
-      expect(screen.getByText("5")).toBeInTheDocument();
+      const totalCard = screen.getByText("Total Flags").parentElement
+        ?.parentElement as HTMLElement;
+      expect(totalCard).toBeTruthy();
+      expect(within(totalCard).getByText("5")).toBeInTheDocument();
     });
 
     it("should display enabled flags count", () => {
       render(<FeatureFlagsPage />);
 
-      expect(screen.getByText("Enabled")).toBeInTheDocument();
-      // 4 flags are enabled in mock data - check the stat card exists
-      // The value "4" appears somewhere in the rendered output
-      const allFours = screen.queryAllByText("4");
-      expect(allFours.length).toBeGreaterThanOrEqual(1);
+      const enabledLabel = screen.getAllByText("Enabled")[0];
+      const enabledCard = enabledLabel.parentElement
+        ?.parentElement as HTMLElement;
+      expect(enabledCard).toBeTruthy();
+      expect(within(enabledCard).getByText("4")).toBeInTheDocument();
     });
 
     it("should display disabled flags count", () => {
@@ -233,7 +266,7 @@ describe("FeatureFlagsPage", () => {
     });
 
     it("should show empty state when no flags", () => {
-      vi.mocked(useFeatureFlags).mockReturnValue({
+      vi.mocked(useFeatureFlagsRealtime).mockReturnValue({
         ...defaultFeatureFlagsReturn,
         flags: [],
       });
@@ -259,7 +292,7 @@ describe("FeatureFlagsPage", () => {
 
     it("should call toggleFlag when toggle is clicked", async () => {
       const mockToggle = vi.fn().mockResolvedValue(true);
-      vi.mocked(useFeatureFlags).mockReturnValue({
+      vi.mocked(useFeatureFlagsRealtime).mockReturnValue({
         ...defaultFeatureFlagsReturn,
         toggleFlag: mockToggle,
       });
@@ -311,17 +344,20 @@ describe("FeatureFlagsPage", () => {
       fireEvent.click(screen.getByRole("button", { name: /create flag/i }));
 
       await waitFor(() => {
-        // Check for form field labels (labels aren't associated with htmlFor)
-        expect(screen.getByText("Name")).toBeInTheDocument();
-        expect(screen.getByText("Description")).toBeInTheDocument();
-        expect(screen.getByText("Type")).toBeInTheDocument();
-        expect(screen.getByText("Enabled")).toBeInTheDocument();
+        const modal = screen
+          .getByText("Create Feature Flag")
+          .closest("div") as HTMLElement;
+
+        expect(within(modal).getByText("Name")).toBeInTheDocument();
+        expect(within(modal).getByText("Description")).toBeInTheDocument();
+        expect(within(modal).getByText("Type")).toBeInTheDocument();
+        expect(within(modal).getByText("Enabled")).toBeInTheDocument();
       });
     });
 
     it("should call createFlag when form submitted", async () => {
       const mockCreate = vi.fn().mockResolvedValue(true);
-      vi.mocked(useFeatureFlags).mockReturnValue({
+      vi.mocked(useFeatureFlagsRealtime).mockReturnValue({
         ...defaultFeatureFlagsReturn,
         createFlag: mockCreate,
       });
@@ -422,7 +458,7 @@ describe("FeatureFlagsPage", () => {
 
     it("should call updateFlag when form submitted", async () => {
       const mockUpdate = vi.fn().mockResolvedValue(true);
-      vi.mocked(useFeatureFlags).mockReturnValue({
+      vi.mocked(useFeatureFlagsRealtime).mockReturnValue({
         ...defaultFeatureFlagsReturn,
         updateFlag: mockUpdate,
       });
@@ -492,7 +528,7 @@ describe("FeatureFlagsPage", () => {
 
     it("should call deleteFlag when confirmed", async () => {
       const mockDelete = vi.fn().mockResolvedValue(true);
-      vi.mocked(useFeatureFlags).mockReturnValue({
+      vi.mocked(useFeatureFlagsRealtime).mockReturnValue({
         ...defaultFeatureFlagsReturn,
         deleteFlag: mockDelete,
       });
@@ -542,7 +578,7 @@ describe("FeatureFlagsPage", () => {
   describe("refresh functionality", () => {
     it("should call refreshFlags when refresh clicked", () => {
       const mockRefresh = vi.fn();
-      vi.mocked(useFeatureFlags).mockReturnValue({
+      vi.mocked(useFeatureFlagsRealtime).mockReturnValue({
         ...defaultFeatureFlagsReturn,
         refreshFlags: mockRefresh,
       });
