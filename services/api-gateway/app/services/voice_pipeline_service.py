@@ -905,7 +905,7 @@ class VoicePipelineSession:
             effective_vad_prob = self._frontend_vad_state.get("silero_confidence", vad_probability)
 
         # Check if barge-in classification is enabled via feature flag
-        classifier_enabled = await feature_flag_service.get_flag_value(
+        classifier_enabled = await feature_flag_service.is_enabled(
             "backend.voice_barge_in_classifier_enabled", default=False
         )
 
