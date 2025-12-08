@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import * as path from 'path';
 
 /**
  * Playwright Configuration for VoiceAssist E2E Tests
@@ -6,6 +7,22 @@ import { defineConfig, devices } from '@playwright/test';
  * Based on DEVELOPMENT_WORKFLOW.md specifications
  * @see https://playwright.dev/docs/test-configuration
  */
+
+// Audio fixture paths for real voice testing
+const AUDIO_FIXTURES = {
+  hello: path.resolve(__dirname, 'e2e/fixtures/audio/hello.wav'),
+  bargeIn: path.resolve(__dirname, 'e2e/fixtures/audio/barge-in.wav'),
+  conversationStart: path.resolve(__dirname, 'e2e/fixtures/audio/conversation-start.wav'),
+  followUp: path.resolve(__dirname, 'e2e/fixtures/audio/follow-up.wav'),
+  yes: path.resolve(__dirname, 'e2e/fixtures/audio/yes.wav'),
+};
+
+// Get audio file from environment variable or default to hello
+const getAudioFile = () => {
+  const audioType = process.env.VOICE_AUDIO_TYPE || 'hello';
+  return AUDIO_FIXTURES[audioType as keyof typeof AUDIO_FIXTURES] || AUDIO_FIXTURES.hello;
+};
+
 export default defineConfig({
   testDir: './e2e',
 
@@ -142,6 +159,55 @@ export default defineConfig({
         },
       },
       timeout: 60 * 1000,
+    },
+
+    /* Voice E2E tests with REAL audio injection */
+    /* These tests use actual speech audio files to simulate real user voice */
+    /* Run with: LIVE_REALTIME_E2E=1 npx playwright test --project=voice-real-audio */
+    {
+      name: 'voice-real-audio',
+      testDir: './e2e/voice',
+      testMatch: /voice-real-audio\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        permissions: ['microphone'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+            `--use-file-for-fake-audio-capture=${getAudioFile()}`,
+          ],
+        },
+        storageState: 'e2e/.auth/user.json',
+        // Capture all console logs for debugging VAD thresholds
+        contextOptions: {
+          recordVideo: { dir: 'test-results/videos' },
+        },
+      },
+      timeout: 120 * 1000, // 2 minutes for real conversation flow
+    },
+
+    /* Barge-in specific tests with loud interruption audio */
+    {
+      name: 'voice-barge-in',
+      testDir: './e2e/voice',
+      testMatch: /voice-barge-in\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        permissions: ['microphone'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+            `--use-file-for-fake-audio-capture=${AUDIO_FIXTURES.bargeIn}`,
+          ],
+        },
+        storageState: 'e2e/.auth/user.json',
+        contextOptions: {
+          recordVideo: { dir: 'test-results/videos' },
+        },
+      },
+      timeout: 90 * 1000,
     },
   ],
 
