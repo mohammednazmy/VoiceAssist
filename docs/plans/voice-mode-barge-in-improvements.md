@@ -4,6 +4,7 @@
 > **Last Updated:** December 2025
 > **Branch:** `feat/intelligent-barge-in`
 > **Status:** Planning
+> **Revision (Dec 2025):** Updated with flag alignment, hybrid VAD arbitration, misfire rollback, network/mobile degradation, and test/telemetry SLOs
 
 ---
 
@@ -17,6 +18,7 @@ This plan enhances VoiceAssist's voice mode to deliver truly natural conversatio
 - **Network-adaptive behavior** that gracefully degrades on poor connections
 - **AEC feedback loop** for smarter echo cancellation during barge-in
 - **Comprehensive observability** for production monitoring and tuning
+- **Clear flag alignment & rollout** so admin-panel can manage all toggles
 
 ---
 
@@ -36,8 +38,42 @@ This plan enhances VoiceAssist's voice mode to deliver truly natural conversatio
 7. **Network resilience** - Adaptive buffering and quality adjustment based on connection quality
 8. **Multilingual support** - Backchannel detection in 12 languages
 9. **User personalization** - Learn individual speech patterns over sessions
+10. **Safe fallback** - Predictable behavior if one VAD source (frontend or backend) is missing or stale
 
 ---
+
+## December 2025 Revisions (alignment & completeness)
+
+**Flag alignment & rollout**
+
+- Use backend-facing flag names that the admin panel already surfaces: `backend.voice_silero_vad_enabled`, `backend.voice_silero_vad_confidence_sharing`, `backend.voice_silero_echo_suppression_mode`, `backend.voice_silero_positive_threshold`, `backend.voice_silero_playback_threshold_boost`, `backend.voice_silero_min_speech_ms`, `backend.voice_silero_playback_min_speech_ms`, `backend.voice_silero_adaptive_threshold`, `backend.voice_silero_noise_calibration_ms`, `backend.voice_silero_noise_adaptation_factor`, `backend.voice_hybrid_vad`, `backend.voice_queue_overflow_protection`, `backend.voice_schedule_watchdog`, `backend.voice_intelligent_barge_in`, `backend.voice_backchannel_max_duration_ms`. Default to “on” only for non-risky telemetry/observability; ship barge-in changes dark and ramp.
+
+**Hybrid VAD arbitration (frontend Silero + backend Deepgram)**
+
+- Protocol: stream `vad.state` every 100ms during speaking with `{type:"vad.state", source:"silero", silero_confidence, is_speaking, speech_duration_ms, noise_floor_db}`; backend maintains last-seen timestamp. Consider message stale if >300ms old.
+- Decision rules: if both agree on speech → immediate barge-in; if disagree, weight Deepgram higher during TTS playback and Silero higher when idle; if one side stale → use the fresh side but gate with higher threshold. Record `vad_decision_source` (“frontend”, “backend”, “hybrid”) for telemetry.
+- Misfire safety: require either (a) both signals within 150ms, or (b) one signal plus transcript token within 500ms. Otherwise roll back.
+
+**Echo suppression & misfire rollback**
+
+- During AI playback, boost positive threshold by `voice_silero_playback_threshold_boost` and optionally feed TTS reference into the Silero pipeline when available (AEC-lite).
+- Add hard rollback timer: if barge-in fires but no transcript frames within 500ms, resume playback, drop barge-in gate, and restore volume; emit `barge_in_rollback` metric.
+
+**Network & mobile degradation**
+
+- Track RTT/jitter from WebSocket heartbeat; classify `good(<100ms) / moderate(100–300ms) / poor(>300ms)`. On moderate/poor: reduce chunk size, slow confidence streaming (e.g., 250ms), and raise barge-in confirmation window (e.g., require both VADs or transcript token). Provide a low-power/mobile preset that reduces worklet CPU use and disables optional prosody extraction.
+
+**Observability & SLOs**
+
+- Metrics/SLOs: P95 barge-in mute latency <50ms; misfire rate <2%; echo-triggered false VAD <1%; queue overflow resets <0.5% of turns; disagreement resolution time <200ms.
+- Structured events: `barge_in_detected` (source, latency_ms, thresholds), `barge_in_classified` (type, confidence), `barge_in_rollback`, `queue_overflow_reset` (queued_ms_before/after), `schedule_drift_reset`, `vad_disagreement` (silero_conf, deepgram_conf, stale_flags).
+
+**Testing matrix**
+
+- Unit: VAD state machine, queue trim/backpressure, fade/stop ordering, rollback timer, FSM transitions (backchannel/soft/hard).
+- Integration: WebSocket hybrid VAD arbitration, misfire rollback, AEC-threshold interaction, concurrent playback+mic.
+- E2E: scripted barge-in during TTS (good network, high RTT, packet loss), echo scenarios, noisy environments, mobile/low-power browsers.
+- Load/soak: sustained conversations with backchannels; assert no memory growth in VAD buffers and stable queue metrics.
 
 ## Architecture Overview
 
