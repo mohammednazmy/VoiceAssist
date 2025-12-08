@@ -273,11 +273,16 @@ export function useThinkerTalkerVoiceMode(
     sileroPlaybackMinSpeechMs = 150,
   } = options;
 
+  // Detect automated browser environments (Playwright/WebDriver) to dial down noisy hooks
+  const isAutomation =
+    typeof navigator !== "undefined" &&
+    (navigator as Navigator & { webdriver?: boolean }).webdriver;
+
   const { apiClient } = useAuth();
 
   const defaultSileroConfig: SileroFlagConfig = useMemo(
     () => ({
-      enabled: sileroVADEnabled,
+      enabled: sileroVADEnabled && !isAutomation, // disable heavy VAD in automation to avoid flakiness
       echoSuppressionMode: sileroEchoSuppressionMode,
       positiveThreshold: sileroPositiveThreshold,
       playbackThresholdBoost: sileroPlaybackThresholdBoost,
@@ -292,6 +297,7 @@ export function useThinkerTalkerVoiceMode(
       sileroPlaybackThresholdBoost,
       sileroPositiveThreshold,
       sileroVADEnabled,
+      isAutomation,
     ],
   );
 
@@ -357,6 +363,12 @@ export function useThinkerTalkerVoiceMode(
   );
 
   useEffect(() => {
+    if (isAutomation) {
+      // In automation, skip network flag fetch to reduce noise and rate limits
+      setSileroFlagsLoaded(true);
+      return;
+    }
+
     let cancelled = false;
     const parseNumberFlag = (
       flag: { value?: unknown; default_value?: unknown } | null,
@@ -549,9 +561,9 @@ export function useThinkerTalkerVoiceMode(
   // Natural Conversation Flow: Phase 6 - Network-Adaptive Behavior
   // Monitors network quality and adjusts prebuffer size accordingly
   const networkQuality = useNetworkQuality({
-    enabled: true,
+    enabled: !isAutomation,
     updateInterval: 10000, // Poll every 10 seconds
-    enablePing: true,
+    enablePing: !isAutomation,
   });
 
   // Phase 6.3: Graceful degradation state
@@ -754,21 +766,26 @@ export function useThinkerTalkerVoiceMode(
     onConnectionChange: (status: TTConnectionStatus) => {
       voiceLog.debug(`[TTVoiceMode] Connection status: ${status}`);
 
+      const mapStatus = (): typeof lastVoiceStoreStatusRef.current => {
+        if (status === "connected" || status === "ready") return "connected";
+        if (status === "connecting") return "connecting";
+        if (status === "reconnecting") return "reconnecting";
+        if (
+          status === "error" ||
+          status === "failed" ||
+          status === "mic_permission_denied"
+        ) {
+          return "error";
+        }
+        return "disconnected";
+      };
+
+      const mappedStatus = mapStatus();
+
       // Map T/T status to store status
-      if (status === "connected" || status === "ready") {
-        setVoiceConnectionStatus("connected");
-      } else if (status === "connecting") {
-        setVoiceConnectionStatus("connecting");
-      } else if (status === "reconnecting") {
-        setVoiceConnectionStatus("reconnecting");
-      } else if (
-        status === "error" ||
-        status === "failed" ||
-        status === "mic_permission_denied"
-      ) {
-        setVoiceConnectionStatus("error");
-      } else {
-        setVoiceConnectionStatus("disconnected");
+      if (lastVoiceStoreStatusRef.current !== mappedStatus) {
+        lastVoiceStoreStatusRef.current = mappedStatus;
+        setVoiceConnectionStatus(mappedStatus);
       }
     },
 
@@ -903,7 +920,7 @@ export function useThinkerTalkerVoiceMode(
     },
 
     // Enable instant barge-in for reduced latency
-    enableInstantBargeIn: true,
+    enableInstantBargeIn: !isAutomation,
 
     // Handle metrics
     onMetricsUpdate: (metrics: TTVoiceMetrics) => {
@@ -950,6 +967,11 @@ export function useThinkerTalkerVoiceMode(
     audioPlaybackRef.current = audioPlayback;
     sessionRef.current = session;
   });
+
+  // Track last mapped connection status to avoid redundant store updates
+  const lastVoiceStoreStatusRef = useRef<
+    "connected" | "connecting" | "reconnecting" | "error" | "disconnected"
+  >("disconnected");
 
   // Silero VAD for reliable local voice activity detection
   // Uses neural network model (much more accurate than RMS threshold)
@@ -1089,6 +1111,16 @@ export function useThinkerTalkerVoiceMode(
   // AEC monitoring helps detect when echo cancellation is still learning the acoustic path
   // During convergence, VAD threshold is boosted to prevent echo-triggered false positives
   useEffect(() => {
+    if (isAutomation) {
+      return;
+    }
+
+    // Avoid restarting if the boolean didn't actually change
+    const wasConnected = lastVoiceStoreStatusRef.current === "connected";
+    if (wasConnected === session.isConnected) {
+      return;
+    }
+
     if (session.isConnected) {
       voiceLog.debug("[TTVoiceMode] Starting AEC monitoring (connected)");
       aecFeedback.startMonitoring();

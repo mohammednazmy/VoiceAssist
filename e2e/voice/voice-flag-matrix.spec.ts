@@ -10,7 +10,7 @@
  * Run nightly tests: VOICE_MATRIX_NIGHTLY=1 npx playwright test --project=voice-nightly
  */
 
-import { expect } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
 import {
@@ -26,6 +26,7 @@ import {
   assertQualityThresholds,
   isLiveMode,
 } from "./utils/test-setup";
+import type { VoiceMetricsCollector } from "./utils/voice-test-metrics";
 
 // ============================================================================
 // Matrix Loading
@@ -61,6 +62,21 @@ try {
     timeout: 180000,
     combinations: [{ name: "baseline", flags: {} }],
   };
+}
+
+async function waitForAIResponse(
+  metricsCollector: VoiceMetricsCollector,
+  page: Page,
+  timeoutMs = 15000,
+): Promise<boolean> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (metricsCollector.getConversationMetrics().aiResponses > 0) {
+      return true;
+    }
+    await page.waitForTimeout(500);
+  }
+  return false;
 }
 
 // ============================================================================
@@ -123,6 +139,14 @@ test.describe(`Voice Flag Matrix: ${matrix.name}`, () => {
         if (complete) {
           console.log("[Flag Matrix] AI response completed");
         }
+      } else {
+        // Give backend time to process even if UI indicator didn't fire
+        await page.waitForTimeout(5000);
+      }
+
+      const gotResponse = await waitForAIResponse(metricsCollector, page);
+      if (!gotResponse) {
+        console.warn("[Flag Matrix] No AI response observed within timeout");
       }
 
       // Brief pause to collect final metrics
@@ -130,6 +154,10 @@ test.describe(`Voice Flag Matrix: ${matrix.name}`, () => {
 
       // Close voice mode
       await closeVoiceMode(page);
+
+      const convMetrics = metricsCollector.getConversationMetrics();
+      expect(convMetrics.userUtterances).toBeGreaterThan(0);
+      expect(convMetrics.aiResponses).toBeGreaterThan(0);
 
       // Assert quality thresholds
       try {
@@ -141,7 +169,6 @@ test.describe(`Voice Flag Matrix: ${matrix.name}`, () => {
       }
 
       // Log conversation metrics
-      const convMetrics = metricsCollector.getConversationMetrics();
       console.log(`[Flag Matrix] Results for ${combo.name}:`);
       console.log(`  - Barge-in attempts: ${convMetrics.bargeInAttempts}`);
       console.log(`  - False barge-ins: ${convMetrics.falseBargeIns}`);
@@ -179,10 +206,13 @@ test.describe("Individual Flag Tests", () => {
 
     await waitForAISpeaking(page, 30000);
     await waitForAIComplete(page, 60000);
+    await waitForAIResponse(metricsCollector, page);
     await page.waitForTimeout(2000);
     await closeVoiceMode(page);
 
     const metrics = metricsCollector.getConversationMetrics();
+    expect(metrics.userUtterances).toBeGreaterThan(0);
+    expect(metrics.aiResponses).toBeGreaterThan(0);
     expect(metrics.errors).toBe(0);
   });
 
@@ -208,10 +238,13 @@ test.describe("Individual Flag Tests", () => {
     await waitForAISpeaking(page, 30000);
     await page.waitForTimeout(15000); // Wait 15 seconds during speech
     await waitForAIComplete(page, 60000);
+    await waitForAIResponse(metricsCollector, page);
     await page.waitForTimeout(2000);
     await closeVoiceMode(page);
 
     const metrics = metricsCollector.getConversationMetrics();
+    expect(metrics.userUtterances).toBeGreaterThan(0);
+    expect(metrics.aiResponses).toBeGreaterThan(0);
     // High threshold should have very few false barge-ins
     expect(metrics.falseBargeIns).toBeLessThanOrEqual(1);
   });
@@ -235,10 +268,13 @@ test.describe("Individual Flag Tests", () => {
 
     await waitForAISpeaking(page, 30000);
     await waitForAIComplete(page, 60000);
+    await waitForAIResponse(metricsCollector, page, 12000);
     await page.waitForTimeout(2000);
     await closeVoiceMode(page);
 
     const metrics = metricsCollector.getConversationMetrics();
+    expect(metrics.userUtterances).toBeGreaterThan(0);
+    expect(metrics.aiResponses).toBeGreaterThan(0);
     // With protection enabled, should have no overflows
     expect(metrics.queueOverflows).toBe(0);
   });
@@ -271,6 +307,7 @@ test.describe("VAD Threshold Sweep", () => {
 
       await waitForAISpeaking(page, 30000);
       await waitForAIComplete(page, 60000);
+      await waitForAIResponse(metricsCollector, page);
       await page.waitForTimeout(2000);
       await closeVoiceMode(page);
 
@@ -278,6 +315,8 @@ test.describe("VAD Threshold Sweep", () => {
 
       // All thresholds should work without critical errors
       expect(metrics.errors).toBe(0);
+      expect(metrics.userUtterances).toBeGreaterThan(0);
+      expect(metrics.aiResponses).toBeGreaterThan(0);
 
       // Log threshold-specific metrics for analysis
       console.log(`[Threshold ${threshold}] False barge-ins: ${metrics.falseBargeIns}`);

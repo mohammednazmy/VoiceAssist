@@ -14,10 +14,8 @@
  */
 
 import { test, expect, type Page, type WebSocket } from "@playwright/test";
-
-// Configuration
-const API_BASE_URL = process.env.E2E_API_URL || "http://localhost:8200";
-const WS_BASE_URL = API_BASE_URL.replace(/^http/, "ws");
+import { VOICE_SELECTORS } from "../fixtures/voice";
+import { openVoiceMode, waitForVoiceModeReady } from "./utils/test-setup";
 
 // Voice mode feature flags to test
 const VOICE_FEATURE_FLAGS = [
@@ -309,16 +307,75 @@ function generateSyntheticAudio(durationMs: number, sampleRate: number = 16000):
   return buffer;
 }
 
+/**
+ * Open voice mode and wait for the UI to be ready before collecting WebSocket events.
+ * Relies on the automation-only WS event hook in useThinkerTalkerSession.
+ */
+async function openVoiceSession(page: Page): Promise<void> {
+  await page.context().grantPermissions(["microphone"]);
+  await page.addInitScript(() => {
+    (window as any).__tt_ws_events = [];
+  });
+
+  await page.goto("/chat");
+  await page.waitForLoadState("networkidle");
+
+  const ready = await waitForVoiceModeReady(page, 20000);
+  expect(ready).toBeTruthy();
+
+  const opened = await openVoiceMode(page);
+  expect(opened).toBeTruthy();
+
+  // Start the voice session if a start button is present
+  const startButton = page.locator(VOICE_SELECTORS.startButton);
+  if ((await startButton.count()) > 0) {
+    const firstStart = startButton.first();
+    if (await firstStart.isEnabled()) {
+      await firstStart.click({ delay: 20 });
+    }
+  }
+
+  // Allow initial WS handshake/messages to flow
+  await page.waitForTimeout(2500);
+}
+
+/**
+ * Wait until the automation WS event buffer has events and return them.
+ */
+async function waitForCapturedEvents(page: Page, minimum: number = 1) {
+  try {
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() => {
+            const events = (window as any).__tt_ws_events;
+            return Array.isArray(events) ? events.length : 0;
+          }),
+        { timeout: 15000 },
+      )
+      .toBeGreaterThanOrEqual(minimum);
+  } catch (err) {
+    console.warn(
+      `[Test] WS events did not reach minimum ${minimum} within timeout`,
+      err,
+    );
+  }
+
+  return page.evaluate(() => (window as any).__tt_ws_events || []);
+}
+
+// Ensure the WS event buffer is reset for every test
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    (window as any).__tt_ws_events = [];
+  });
+});
+
 // ============================================================================
 // Test Suite: WebSocket Connection
 // ============================================================================
 
 test.describe("Voice WebSocket Connection", () => {
-  test.beforeEach(async ({ page }) => {
-    await injectMockAuth(page);
-    await setupApiMocks(page);
-  });
-
   test("can establish WebSocket connection to voice pipeline", async ({ page }) => {
     const tracker = new WSMessageTracker();
     let wsConnected = false;
@@ -350,24 +407,14 @@ test.describe("Voice WebSocket Connection", () => {
       });
     });
 
-    // Navigate and open voice mode
-    await page.goto("/chat");
-    await page.waitForLoadState("networkidle");
+    await openVoiceSession(page);
+    const events = await waitForCapturedEvents(page);
 
-    // Click voice mode button
-    const voiceButton = page.getByTestId("realtime-voice-mode-button");
-    if (await voiceButton.isVisible()) {
-      await voiceButton.evaluate((el: HTMLButtonElement) => {
-        el.disabled = false;
-        el.click();
-      });
-      await page.waitForTimeout(2000);
-    }
-
-    // Verify WebSocket was intercepted
-    expect(tracker.messages.length).toBeGreaterThanOrEqual(0);
+    // Verify WebSocket was intercepted and events flowed
+    expect(tracker.messages.length).toBeGreaterThan(0);
     console.log(`[Test] WebSocket connected: ${wsConnected}`);
     console.log(`[Test] Messages tracked: ${tracker.messages.length}`);
+    console.log(`[Test] WS events captured: ${events.length}`);
   });
 
   test("receives session.init confirmation from server", async ({ page }) => {
@@ -395,24 +442,14 @@ test.describe("Voice WebSocket Connection", () => {
       });
     });
 
-    await page.goto("/chat");
-    await page.waitForLoadState("networkidle");
-
-    const voiceButton = page.getByTestId("realtime-voice-mode-button");
-    if (await voiceButton.isVisible()) {
-      await voiceButton.evaluate((el: HTMLButtonElement) => {
-        el.disabled = false;
-        el.click();
-      });
-      await page.waitForTimeout(3000);
-    }
+    await openVoiceSession(page);
 
     // Check for session.init or voice.state messages
     const stateMessages = tracker.getMessagesByType("voice.state", "received");
+    const capturedEvents = await waitForCapturedEvents(page);
     console.log(`[Test] Voice state messages: ${stateMessages.length}`);
-    stateMessages.forEach((m) => {
-      console.log(`  - ${m.timestamp}ms: ${JSON.stringify(m.data)}`);
-    });
+    console.log(`[Test] WS events captured: ${capturedEvents.length}`);
+    expect(stateMessages.length + capturedEvents.length).toBeGreaterThan(0);
   });
 });
 
@@ -421,11 +458,6 @@ test.describe("Voice WebSocket Connection", () => {
 // ============================================================================
 
 test.describe("Voice Audio Streaming", () => {
-  test.beforeEach(async ({ page }) => {
-    await injectMockAuth(page);
-    await setupApiMocks(page);
-  });
-
   test("can send audio chunks through WebSocket", async ({ page }) => {
     const tracker = new WSMessageTracker();
     let audioChunksSent = 0;
@@ -451,21 +483,18 @@ test.describe("Voice Audio Streaming", () => {
       });
     });
 
-    await page.goto("/chat");
-    await page.waitForLoadState("networkidle");
-
-    // Activate voice mode
-    const voiceButton = page.getByTestId("realtime-voice-mode-button");
-    if (await voiceButton.isVisible()) {
-      await voiceButton.evaluate((el: HTMLButtonElement) => {
-        el.disabled = false;
-        el.click();
-      });
-      await page.waitForTimeout(5000); // Wait for audio streaming
-    }
+    await openVoiceSession(page);
+    const events = await waitForCapturedEvents(page, 2);
+    await page.waitForTimeout(8000);
 
     console.log(`[Test] Audio chunks sent: ${audioChunksSent}`);
     console.log(`[Test] Total messages: ${tracker.messages.length}`);
+    console.log(`[Test] WS events captured: ${events.length}`);
+    const messageTypes = Array.from(
+      new Set(tracker.messages.map((m) => m.type)),
+    ).join(", ");
+    console.log(`[Test] Tracker message types: ${messageTypes}`);
+    expect(tracker.messages.length + events.length).toBeGreaterThan(0);
   });
 });
 
@@ -474,11 +503,6 @@ test.describe("Voice Audio Streaming", () => {
 // ============================================================================
 
 test.describe("Transcript Synchronization", () => {
-  test.beforeEach(async ({ page }) => {
-    await injectMockAuth(page);
-    await setupApiMocks(page);
-  });
-
   test("receives and displays transcripts in real-time", async ({ page }) => {
     const tracker = new WSMessageTracker();
 
@@ -509,32 +533,42 @@ test.describe("Transcript Synchronization", () => {
       });
     });
 
-    await page.goto("/chat");
-    await page.waitForLoadState("networkidle");
-
-    const voiceButton = page.getByTestId("realtime-voice-mode-button");
-    if (await voiceButton.isVisible()) {
-      await voiceButton.evaluate((el: HTMLButtonElement) => {
-        el.disabled = false;
-        el.click();
-      });
-      await page.waitForTimeout(10000); // Wait for potential transcripts
-    }
+    await openVoiceSession(page);
+    await waitForCapturedEvents(page, 2);
+    await page.waitForTimeout(8000);
 
     const transcriptMessages = [
       ...tracker.getMessagesByType("transcript.delta", "received"),
       ...tracker.getMessagesByType("transcript.complete", "received"),
     ];
 
+    const capturedEvents = await waitForCapturedEvents(page);
     console.log(`[Test] Transcript messages received: ${transcriptMessages.length}`);
+    console.log(`[Test] WS events captured: ${capturedEvents.length}`);
+    const messageTypes = Array.from(
+      new Set(tracker.messages.map((m) => m.type)),
+    ).join(", ");
+    console.log(`[Test] Tracker message types: ${messageTypes}`);
+    const transcriptCount =
+      transcriptMessages.length +
+      capturedEvents.filter(
+        (e: any) =>
+          typeof e?.type === "string" && e.type.startsWith("transcript"),
+      ).length;
+    if (transcriptCount === 0) {
+      console.warn(
+        "[Test] No transcript events captured - follow up: audio path may be filtered in WS interception",
+      );
+    }
+    expect(tracker.messages.length + capturedEvents.length).toBeGreaterThan(0);
     transcriptMessages.forEach((m) => {
       console.log(`  - ${m.timestamp}ms: ${JSON.stringify(m.data)}`);
     });
   });
 
   test("verifies transcript appears in chat UI", async ({ page }) => {
-    await page.goto("/chat");
-    await page.waitForLoadState("networkidle");
+    await openVoiceSession(page);
+    await waitForCapturedEvents(page);
 
     // Look for any message elements in the chat
     const messageElements = page.locator(
@@ -554,11 +588,6 @@ test.describe("Transcript Synchronization", () => {
 // ============================================================================
 
 test.describe("Barge-In Functionality", () => {
-  test.beforeEach(async ({ page }) => {
-    await injectMockAuth(page);
-    await setupApiMocks(page);
-  });
-
   test("sends barge_in message when user interrupts", async ({ page }) => {
     const tracker = new WSMessageTracker();
 
@@ -588,22 +617,14 @@ test.describe("Barge-In Functionality", () => {
       });
     });
 
-    await page.goto("/chat");
-    await page.waitForLoadState("networkidle");
-
-    // Open voice mode
-    const voiceButton = page.getByTestId("realtime-voice-mode-button");
-    if (await voiceButton.isVisible()) {
-      await voiceButton.evaluate((el: HTMLButtonElement) => {
-        el.disabled = false;
-        el.click();
-      });
-      await page.waitForTimeout(5000);
-    }
+    await openVoiceSession(page);
+    const capturedEvents = await waitForCapturedEvents(page);
 
     // Check for barge_in messages
     const bargeInMessages = tracker.getMessagesByType("barge_in", "sent");
     console.log(`[Test] Barge-in messages sent: ${bargeInMessages.length}`);
+    console.log(`[Test] WS events captured: ${capturedEvents.length}`);
+    expect(bargeInMessages.length + capturedEvents.length).toBeGreaterThan(0);
   });
 
   test("measures barge-in response latency", async ({ page }) => {
@@ -647,20 +668,12 @@ test.describe("Barge-In Functionality", () => {
       });
     });
 
-    await page.goto("/chat");
-    await page.waitForLoadState("networkidle");
-
-    const voiceButton = page.getByTestId("realtime-voice-mode-button");
-    if (await voiceButton.isVisible()) {
-      await voiceButton.evaluate((el: HTMLButtonElement) => {
-        el.disabled = false;
-        el.click();
-      });
-      await page.waitForTimeout(10000);
-    }
+    await openVoiceSession(page);
+    const capturedEvents = await waitForCapturedEvents(page);
 
     const metrics = tracker.getMetrics();
     console.log(`[Test] Barge-in latency: ${metrics.bargeInResponseMs}ms`);
+    console.log(`[Test] WS events captured: ${capturedEvents.length}`);
   });
 
   test("verifies audio stops after barge-in", async ({ page }) => {
@@ -694,21 +707,13 @@ test.describe("Barge-In Functionality", () => {
       });
     });
 
-    await page.goto("/chat");
-    await page.waitForLoadState("networkidle");
-
-    const voiceButton = page.getByTestId("realtime-voice-mode-button");
-    if (await voiceButton.isVisible()) {
-      await voiceButton.evaluate((el: HTMLButtonElement) => {
-        el.disabled = false;
-        el.click();
-      });
-      await page.waitForTimeout(10000);
-    }
+    await openVoiceSession(page);
+    const capturedEvents = await waitForCapturedEvents(page);
 
     console.log(`[Test] Audio chunks after barge-in: ${audioAfterBargeIn}`);
     // Ideally should be 0 or very few
     expect(audioAfterBargeIn).toBeLessThan(50);
+    console.log(`[Test] WS events captured: ${capturedEvents.length}`);
   });
 });
 
@@ -717,30 +722,43 @@ test.describe("Barge-In Functionality", () => {
 // ============================================================================
 
 test.describe("Voice Feature Flags", () => {
-  test.beforeEach(async ({ page }) => {
-    await injectMockAuth(page);
-    await setupApiMocks(page);
-  });
-
   for (const flag of VOICE_FEATURE_FLAGS.slice(0, 3)) {
     // Test first 3 flags
     test(`verifies ${flag} can be queried`, async ({ page }) => {
-      let flagQueried = false;
+      const apiBase =
+        process.env.CLIENT_GATEWAY_URL ||
+        process.env.E2E_API_URL ||
+        "http://localhost:8000";
 
-      await page.route(`**/api/experiments/${flag}**`, async (route) => {
-        flagQueried = true;
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({ enabled: true, variant: "treatment" }),
-        });
+      await openVoiceSession(page);
+      await waitForCapturedEvents(page);
+
+      const authToken = await page.evaluate(() => {
+        const raw = localStorage.getItem("voiceassist-auth");
+        if (!raw) return null;
+        try {
+          const parsed = JSON.parse(raw);
+          return parsed?.state?.tokens?.accessToken ?? null;
+        } catch {
+          return null;
+        }
       });
 
-      await page.goto("/chat");
-      await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(2000);
+      const response = await page.request.get(
+        `${apiBase}/api/experiments/flags/${flag}`,
+        {
+          headers: authToken
+            ? {
+                Authorization: `Bearer ${authToken}`,
+              }
+            : undefined,
+        },
+      );
+      const json = await response.json().catch(() => ({}));
+      const flagQueried = response.ok() && json?.data?.name === flag;
 
       console.log(`[Test] Flag ${flag} queried: ${flagQueried}`);
+      expect(flagQueried).toBeTruthy();
     });
   }
 });
@@ -750,11 +768,6 @@ test.describe("Voice Feature Flags", () => {
 // ============================================================================
 
 test.describe("Voice Performance Metrics", () => {
-  test.beforeEach(async ({ page }) => {
-    await injectMockAuth(page);
-    await setupApiMocks(page);
-  });
-
   test("measures end-to-end latency metrics", async ({ page }) => {
     const tracker = new WSMessageTracker();
     const startTime = Date.now();
@@ -783,17 +796,8 @@ test.describe("Voice Performance Metrics", () => {
       });
     });
 
-    await page.goto("/chat");
-    await page.waitForLoadState("networkidle");
-
-    const voiceButton = page.getByTestId("realtime-voice-mode-button");
-    if (await voiceButton.isVisible()) {
-      await voiceButton.evaluate((el: HTMLButtonElement) => {
-        el.disabled = false;
-        el.click();
-      });
-      await page.waitForTimeout(15000);
-    }
+    await openVoiceSession(page);
+    const capturedEvents = await waitForCapturedEvents(page);
 
     const metrics = tracker.getMetrics();
     console.log("\n=== Voice Mode Performance Metrics ===");
@@ -805,6 +809,8 @@ test.describe("Voice Performance Metrics", () => {
     console.log(`Total messages: ${metrics.messageCount}`);
     console.log(`Audio chunks: ${metrics.audioChunkCount}`);
     console.log("=====================================\n");
+    console.log(`[Test] WS events captured: ${capturedEvents.length}`);
+    expect(metrics.messageCount + capturedEvents.length).toBeGreaterThan(0);
   });
 });
 
@@ -813,11 +819,6 @@ test.describe("Voice Performance Metrics", () => {
 // ============================================================================
 
 test.describe("Voice Error Handling", () => {
-  test.beforeEach(async ({ page }) => {
-    await injectMockAuth(page);
-    await setupApiMocks(page);
-  });
-
   test("handles WebSocket disconnect gracefully", async ({ page }) => {
     let disconnectHandled = false;
 
@@ -833,17 +834,8 @@ test.describe("Voice Error Handling", () => {
       });
     });
 
-    await page.goto("/chat");
-    await page.waitForLoadState("networkidle");
-
-    const voiceButton = page.getByTestId("realtime-voice-mode-button");
-    if (await voiceButton.isVisible()) {
-      await voiceButton.evaluate((el: HTMLButtonElement) => {
-        el.disabled = false;
-        el.click();
-      });
-      await page.waitForTimeout(5000);
-    }
+    await openVoiceSession(page);
+    const capturedEvents = await waitForCapturedEvents(page);
 
     console.log(`[Test] Disconnect handled: ${disconnectHandled}`);
 
@@ -853,6 +845,7 @@ test.describe("Voice Error Handling", () => {
     );
     const errorVisible = await errorElement.count() > 0;
     console.log(`[Test] Error UI visible: ${errorVisible}`);
+    console.log(`[Test] WS events captured: ${capturedEvents.length}`);
   });
 
   test("handles server errors gracefully", async ({ page }) => {
@@ -877,17 +870,8 @@ test.describe("Voice Error Handling", () => {
       });
     });
 
-    await page.goto("/chat");
-    await page.waitForLoadState("networkidle");
-
-    const voiceButton = page.getByTestId("realtime-voice-mode-button");
-    if (await voiceButton.isVisible()) {
-      await voiceButton.evaluate((el: HTMLButtonElement) => {
-        el.disabled = false;
-        el.click();
-      });
-      await page.waitForTimeout(3000);
-    }
+    await openVoiceSession(page);
+    const capturedEvents = await waitForCapturedEvents(page);
 
     // Verify error handling
     const connectionStatus = page.locator("[role='status']").first();
@@ -895,5 +879,6 @@ test.describe("Voice Error Handling", () => {
       const statusText = await connectionStatus.textContent();
       console.log(`[Test] Connection status after error: ${statusText}`);
     }
+    console.log(`[Test] WS events captured: ${capturedEvents.length}`);
   });
 });

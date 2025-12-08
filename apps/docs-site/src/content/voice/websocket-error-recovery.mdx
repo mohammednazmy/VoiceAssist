@@ -21,6 +21,12 @@ All recovery features are controlled by feature flags and can be enabled/disable
 | `backend.ws_message_recovery` | Enable message buffering and replay (requires session_recovery) |
 | `backend.ws_audio_checkpointing` | Enable audio checkpoint tracking (requires session_recovery) |
 
+## Operational Notes (Dec 2025)
+
+- Health probes now target `GET/HEAD /health` (FastAPI returns 200 for both) to avoid 404s from the old `/ping` path; the Playwright network-quality ping also uses `/health`.
+- Playwright voice suites expose automation-only WebSocket breadcrumbs via `window.__tt_ws_events` (populated inside `useThinkerTalkerSession`) to debug handshake/message flow without packet captures.
+- When running `voice-websocket-integration`, the suite focuses on handshake and recovery events; full transcript/audio validation lives in `voice-live-e2e` and the flag matrix smoke/nightly suites.
+
 ## Architecture
 
 ### Session State Persistence

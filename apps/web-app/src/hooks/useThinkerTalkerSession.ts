@@ -631,6 +631,10 @@ export function useThinkerTalkerSession(
 ) {
   const { tokens } = useAuth();
 
+  const isAutomation =
+    typeof navigator !== "undefined" &&
+    (navigator as Navigator & { webdriver?: boolean }).webdriver;
+
   // Extract Phase 7-10 options
   const {
     enableMultilingual = true,
@@ -804,7 +808,6 @@ export function useThinkerTalkerSession(
   // Phase 7.1: Barge-in metrics tracking
   const bargeInStartTimeRef = useRef<number | null>(null);
   const bargeInMuteLatenciesRef = useRef<number[]>([]);
-  const userSpeechStartTimeRef = useRef<number | null>(null);
 
   // Ref for local voice activity callback (used in audio processor closure)
   const onLocalVoiceActivityRef = useRef<
@@ -1390,6 +1393,11 @@ export function useThinkerTalkerSession(
             setPartialTranscript(text);
             // Track for recovery
             partialTranscriptAccumRef.current = text;
+            const preview =
+              text.length > 200 ? `${text.slice(0, 200)}...` : text;
+            voiceLog.info(
+              `[ThinkerTalker] User transcript (partial): "${preview}"`,
+            );
 
             options.onTranscript?.({
               text,
@@ -1444,6 +1452,11 @@ export function useThinkerTalkerSession(
           if (enableConversationManagement && text) {
             conversationManager.processUtterance(text, duration);
           }
+
+          const preview = text.length > 200 ? `${text.slice(0, 200)}...` : text;
+          voiceLog.info(
+            `[ThinkerTalker] User transcript (final): "${preview}"`,
+          );
 
           options.onTranscript?.({
             text,
@@ -1533,6 +1546,9 @@ export function useThinkerTalkerSession(
             partialResponseAccumRef.current += delta;
             // Phase 5.1: Update state for progressive UI display
             setPartialAIResponse((prev) => prev + delta);
+            const preview =
+              delta.length > 200 ? `${delta.slice(0, 200)}...` : delta;
+            voiceLog.info(`[ThinkerTalker] AI response delta: "${preview}"`);
           }
 
           // Track time to first LLM token
@@ -1564,6 +1580,10 @@ export function useThinkerTalkerSession(
           partialResponseAccumRef.current = "";
           // Phase 5.1: Clear partial AI response state
           setPartialAIResponse("");
+
+          const preview =
+            content.length > 200 ? `${content.slice(0, 200)}...` : content;
+          voiceLog.info(`[ThinkerTalker] AI response complete: "${preview}"`);
 
           updateMetrics({ aiResponseCount: metrics.aiResponseCount + 1 });
           options.onResponseComplete?.(content, messageId);
@@ -2497,6 +2517,29 @@ export function useThinkerTalkerSession(
                 message,
               );
             }
+
+            // Expose WS events to automation for Playwright integration tests
+            if (isAutomation && typeof window !== "undefined") {
+              const globalWindow = window as typeof window & {
+                __tt_ws_events?: Array<{
+                  direction: "received";
+                  type: string;
+                  timestamp: number;
+                  data: unknown;
+                }>;
+              };
+              if (!globalWindow.__tt_ws_events) {
+                globalWindow.__tt_ws_events = [];
+              }
+              if (globalWindow.__tt_ws_events.length < 500) {
+                globalWindow.__tt_ws_events.push({
+                  direction: "received",
+                  type: msgType || "unknown",
+                  timestamp: Date.now(),
+                  data: message,
+                });
+              }
+            }
             handleMessageWithSequenceRef.current(message);
           } catch (err) {
             voiceLog.error("[ThinkerTalker] Failed to parse message:", err);
@@ -2585,6 +2628,10 @@ export function useThinkerTalkerSession(
 
       scriptProcessor.onaudioprocess = (event) => {
         if (ws.readyState !== WebSocket.OPEN) return;
+
+        if (isAutomation && pipelineStateRef.current !== "listening") {
+          return;
+        }
 
         const inputData = event.inputBuffer.getChannelData(0);
 

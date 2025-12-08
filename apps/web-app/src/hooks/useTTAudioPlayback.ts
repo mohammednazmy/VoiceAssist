@@ -951,6 +951,18 @@ export function useTTAudioPlayback(
       return;
     }
 
+    const hasActiveAudio =
+      isPlayingRef.current ||
+      isProcessingRef.current ||
+      audioQueueRef.current.length > 0 ||
+      activeSourcesRef.current.size > 0;
+    if (!hasActiveAudio) {
+      voiceLog.debug(
+        "[TTAudioPlayback] Stop called with no active audio, skipping",
+      );
+      return;
+    }
+
     voiceLog.debug("[TTAudioPlayback] Stopping playback (barge-in)");
 
     // Set barge-in flag to drop any incoming audio chunks

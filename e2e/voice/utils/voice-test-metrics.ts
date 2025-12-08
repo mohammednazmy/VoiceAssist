@@ -357,9 +357,10 @@ export class VoiceMetricsCollector {
   }
 
   private parseTranscriptEvents(text: string, time: number): void {
-    if (text.includes("transcript") || text.includes("Transcript")) {
+    const lowerText = text.toLowerCase();
+    if (lowerText.includes("transcript") || lowerText.includes("response")) {
       // User transcripts
-      if (text.includes("user") || text.includes("User")) {
+      if (lowerText.includes("user")) {
         const isFinal = text.includes("final") || text.includes("Final");
         const textMatch = text.match(/['"](.*?)['"]/);
         this.metrics.transcriptEvents.push({
@@ -371,7 +372,11 @@ export class VoiceMetricsCollector {
       }
 
       // AI transcripts
-      if (text.includes("ai") || text.includes("AI") || text.includes("assistant") || text.includes("response")) {
+      if (
+        lowerText.includes("ai") ||
+        lowerText.includes("assistant") ||
+        lowerText.includes("response")
+      ) {
         const isFinal = text.includes("final") || text.includes("complete");
         const isTruncated = text.includes("truncat");
         const textMatch = text.match(/['"](.*?)['"]/);
