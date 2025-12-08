@@ -9,6 +9,7 @@ import fs from "fs";
 import path from "path";
 
 const AUTH_FILE = path.join(__dirname, ".auth/user.json");
+const ADMIN_AUTH_FILE = path.join(__dirname, ".auth/admin.json");
 const API_BASE_URL = process.env.API_URL || "http://localhost:8000";
 
 // Test user credentials
@@ -16,6 +17,12 @@ const E2E_USER = {
   email: process.env.E2E_EMAIL || "e2e-test@voiceassist.io",
   password: process.env.E2E_PASSWORD || "E2eTestPassword123!",
   fullName: "E2E Test User",
+};
+
+// Admin user credentials (for feature flag operations)
+const E2E_ADMIN = {
+  email: process.env.E2E_ADMIN_EMAIL || "mo@asimo.io",
+  password: process.env.E2E_ADMIN_PASSWORD || "",
 };
 
 interface TokenResponse {
@@ -86,6 +93,38 @@ async function loginTestUser(): Promise<{
     return { tokens, user: null };
   } catch (e) {
     console.error(`[E2E Setup] Login error:`, e);
+    return null;
+  }
+}
+
+async function loginAdminUser(): Promise<TokenResponse | null> {
+  // Skip if no admin password provided
+  if (!E2E_ADMIN.password) {
+    console.log("[E2E Setup] No admin password provided - skipping admin auth");
+    return null;
+  }
+
+  try {
+    const loginRes = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: E2E_ADMIN.email,
+        password: E2E_ADMIN.password,
+      }),
+    });
+
+    if (!loginRes.ok) {
+      const error = await loginRes.text();
+      console.error(`[E2E Setup] Admin login failed: ${error}`);
+      return null;
+    }
+
+    const tokens = (await loginRes.json()) as TokenResponse;
+    console.log(`[E2E Setup] Got admin tokens for: ${E2E_ADMIN.email}`);
+    return tokens;
+  } catch (e) {
+    console.error(`[E2E Setup] Admin login error:`, e);
     return null;
   }
 }
@@ -235,6 +274,18 @@ async function globalSetup() {
   const exp = payload.exp as number;
   const expiresAt = new Date(exp * 1000);
   console.log(`[E2E Setup] Token expires at: ${expiresAt.toISOString()}`);
+
+  // Also get admin tokens for feature flag operations
+  const adminTokens = await loginAdminUser();
+  if (adminTokens) {
+    const adminAuthData = {
+      accessToken: adminTokens.access_token,
+      refreshToken: adminTokens.refresh_token,
+      email: E2E_ADMIN.email,
+    };
+    fs.writeFileSync(ADMIN_AUTH_FILE, JSON.stringify(adminAuthData, null, 2));
+    console.log(`[E2E Setup] Wrote admin auth state to ${ADMIN_AUTH_FILE}`);
+  }
 }
 
 export default globalSetup;

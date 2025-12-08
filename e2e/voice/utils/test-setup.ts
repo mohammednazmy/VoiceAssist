@@ -423,6 +423,25 @@ export function assertQualityThresholds(
 // ============================================================================
 
 /**
+ * Get admin token from auth file (set by global-setup.ts)
+ */
+function getAdminToken(): string | null {
+  try {
+    const fs = require("fs");
+    const path = require("path");
+    const adminAuthFile = path.join(__dirname, "../../.auth/admin.json");
+
+    if (fs.existsSync(adminAuthFile)) {
+      const data = JSON.parse(fs.readFileSync(adminAuthFile, "utf-8"));
+      return data.accessToken || null;
+    }
+  } catch (e) {
+    // Admin auth file not available
+  }
+  return null;
+}
+
+/**
  * Set a feature flag via admin API
  * Uses PATCH to update the flag value
  */
@@ -432,11 +451,21 @@ export async function setFeatureFlag(
   value: unknown
 ): Promise<void> {
   const apiBase = process.env.CLIENT_GATEWAY_URL || "http://localhost:8000";
+  const adminToken = getAdminToken();
+
+  // Build headers with admin auth if available
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (adminToken) {
+    headers["Authorization"] = `Bearer ${adminToken}`;
+  }
 
   // Use PATCH to update existing feature flag
   const response = await page.request.patch(
     `${apiBase}/api/admin/feature-flags/${flagName}`,
     {
+      headers,
       data: {
         value,
         enabled: value !== false && value !== null,
@@ -463,8 +492,16 @@ export async function getFeatureFlag(
   flagName: string
 ): Promise<unknown> {
   const apiBase = process.env.CLIENT_GATEWAY_URL || "http://localhost:8000";
+  const adminToken = getAdminToken();
+
+  const headers: Record<string, string> = {};
+  if (adminToken) {
+    headers["Authorization"] = `Bearer ${adminToken}`;
+  }
+
   const response = await page.request.get(
-    `${apiBase}/api/admin/feature-flags/${flagName}`
+    `${apiBase}/api/admin/feature-flags/${flagName}`,
+    { headers }
   );
 
   if (response.ok()) {
@@ -481,9 +518,20 @@ export async function getFeatureFlag(
  */
 export async function resetFeatureFlags(page: Page): Promise<void> {
   const apiBase = process.env.CLIENT_GATEWAY_URL || "http://localhost:8000";
+  const adminToken = getAdminToken();
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (adminToken) {
+    headers["Authorization"] = `Bearer ${adminToken}`;
+  }
 
   // Try the reset endpoint first
-  const response = await page.request.post(`${apiBase}/api/admin/feature-flags/reset`);
+  const response = await page.request.post(
+    `${apiBase}/api/admin/feature-flags/reset`,
+    { headers }
+  );
 
   if (!response.ok()) {
     // Reset endpoint doesn't exist - manually reset key voice flags
@@ -500,7 +548,7 @@ export async function resetFeatureFlags(page: Page): Promise<void> {
     for (const [flagName, value] of Object.entries(defaultFlags)) {
       await page.request.patch(
         `${apiBase}/api/admin/feature-flags/${flagName}`,
-        { data: { value, enabled: true } }
+        { headers, data: { value, enabled: true } }
       );
     }
   }
