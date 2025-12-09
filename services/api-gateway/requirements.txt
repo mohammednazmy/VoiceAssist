@@ -66,7 +66,7 @@ aiosmtplib==5.0.0  # Async SMTP for email sending
 webdavclient3==3.14.6
 dateparser~=1.1.1  # Natural language date parsing (gruut compatibility)
 google-auth==2.43.0  # Google OAuth2 authentication
-google-auth-oauthlib==1.2.0  # OAuth2 flow for Google APIs
+google-auth-oauthlib==1.2.3  # OAuth2 flow for Google APIs
 google-api-python-client==2.187.0  # Google Calendar API client
 
 # G2P (Grapheme-to-Phoneme) - Voice Mode v4.1.2
