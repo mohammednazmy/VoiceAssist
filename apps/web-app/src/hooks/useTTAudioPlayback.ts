@@ -24,7 +24,7 @@
  * Phase: Thinker/Talker Voice Pipeline Migration
  */
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { voiceLog } from "../lib/logger";
 
 // ============================================================================
@@ -1062,6 +1062,12 @@ export function useTTAudioPlayback(
     if (!bargeInStopLoggedRef.current) {
       voiceLog.debug("[TTAudioPlayback] Stopping playback (barge-in)");
       bargeInStopLoggedRef.current = true;
+      // Track stop calls for E2E debugging (store in window for test inspection)
+      if (typeof window !== "undefined") {
+        const win = window as Window & { __audioStopStacks?: string[] };
+        if (!win.__audioStopStacks) win.__audioStopStacks = [];
+        win.__audioStopStacks.push(`${Date.now()}: barge-in stop`);
+      }
     }
 
     // Set barge-in flag to drop any incoming audio chunks
@@ -1404,34 +1410,58 @@ export function useTTAudioPlayback(
     [],
   );
 
-  return {
-    // State
-    playbackState,
-    isPlaying: playbackState === "playing" || playbackState === "buffering",
-    volume,
-    ttfaMs,
-    totalPlayedMs,
+  // Memoize return object to prevent unnecessary re-renders and useEffect cleanups
+  // Without this, any useEffect depending on audioPlayback would cleanup on every render
+  return useMemo(
+    () => ({
+      // State
+      playbackState,
+      isPlaying: playbackState === "playing" || playbackState === "buffering",
+      volume,
+      ttfaMs,
+      totalPlayedMs,
 
-    // Pre-buffering state (WS Latency Optimization)
-    isPrebuffering,
-    prebufferCount,
-    prebufferTarget: prebufferChunks,
+      // Pre-buffering state (WS Latency Optimization)
+      isPrebuffering,
+      prebufferCount,
+      prebufferTarget: prebufferChunks,
 
-    // Queue overflow stats (Natural Conversation Flow: Phase 1)
-    queueLength,
-    queueDurationMs,
-    overflowCount,
+      // Queue overflow stats (Natural Conversation Flow: Phase 1)
+      queueLength,
+      queueDurationMs,
+      overflowCount,
 
-    // Actions
-    queueAudioChunk,
-    endStream,
-    stop,
-    fadeOut,
-    setVolume,
-    reset,
-    warmup,
-    getDebugState,
-  };
+      // Actions
+      queueAudioChunk,
+      endStream,
+      stop,
+      fadeOut,
+      setVolume,
+      reset,
+      warmup,
+      getDebugState,
+    }),
+    [
+      playbackState,
+      volume,
+      ttfaMs,
+      totalPlayedMs,
+      isPrebuffering,
+      prebufferCount,
+      prebufferChunks,
+      queueLength,
+      queueDurationMs,
+      overflowCount,
+      queueAudioChunk,
+      endStream,
+      stop,
+      fadeOut,
+      setVolume,
+      reset,
+      warmup,
+      getDebugState,
+    ],
+  );
 }
 
 export default useTTAudioPlayback;

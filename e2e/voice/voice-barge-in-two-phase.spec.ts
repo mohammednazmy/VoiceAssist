@@ -252,12 +252,68 @@ test.describe("Voice Mode Two-Phase Barge-In", () => {
       firstPlaying && firstPlaying.timestamp > PHASE_1_END && firstPlaying.timestamp < PHASE_2_START;
     const bargeInDuringPhase2 = firstBargeIn && firstBargeIn.timestamp >= PHASE_2_START - 1000;
 
+    // === NEW: Check WebSocket message tracking arrays ===
+    const wsDebugState = await page.evaluate(() => {
+      const win = window as typeof window & {
+        __wsMessageLog?: Array<{
+          timestamp: number;
+          dataType: string;
+          size: number;
+          preview?: string;
+        }>;
+        __wsMessageCount?: number;
+        __wsLastMessageTime?: number;
+        __tt_ws_events?: Array<{
+          direction: string;
+          type: string;
+          timestamp: number;
+        }>;
+      };
+      return {
+        messageCount: win.__wsMessageCount || 0,
+        lastMessageTime: win.__wsLastMessageTime || 0,
+        messageLog: win.__wsMessageLog?.slice(-50) || [], // Last 50 messages
+        ttWsEventsCount: win.__tt_ws_events?.length || 0,
+        ttWsEventTypes: win.__tt_ws_events?.map((e) => e.type).slice(-30) || [],
+      };
+    });
+
+    console.log("\n=== WEBSOCKET MESSAGE DELIVERY DEBUG ===");
+    console.log(`Total WS messages received (onmessage calls): ${wsDebugState.messageCount}`);
+    console.log(`Last message time: ${wsDebugState.lastMessageTime}`);
+    console.log(`__tt_ws_events count: ${wsDebugState.ttWsEventsCount}`);
+    console.log(`__tt_ws_events types: ${wsDebugState.ttWsEventTypes.join(", ")}`);
+    console.log("\n=== WS MESSAGE LOG (last 50) ===");
+    for (const msg of wsDebugState.messageLog) {
+      console.log(
+        `  ${msg.timestamp}: ${msg.dataType} (${msg.size} bytes) ${msg.preview || ""}`
+      );
+    }
+
+    // === NEW: Get audio stop stack traces ===
+    const audioStopStacks = await page.evaluate(() => {
+      const win = window as Window & { __audioStopStacks?: string[] };
+      return win.__audioStopStacks || [];
+    });
+
+    console.log("\n=== AUDIO STOP STACK TRACES ===");
+    if (audioStopStacks.length === 0) {
+      console.log("  (no stop() calls recorded)");
+    } else {
+      for (const stack of audioStopStacks) {
+        console.log(`  ${stack}`);
+      }
+    }
+
     console.log("\n=== DIAGNOSTIC SUMMARY ===");
     console.log(`AI started playing during silence phase: ${aiPlayedDuringSilence ? "YES" : "NO"}`);
     console.log(`Barge-in triggered during Phase 2: ${bargeInDuringPhase2 ? "YES" : "NO"}`);
     console.log(
       `Audio playback duration: ${firstPlaying && lastPlaying ? lastPlaying.timestamp - firstPlaying.timestamp : 0}ms`
     );
+    console.log(`WS messages received: ${wsDebugState.messageCount}`);
+    console.log(`WS event types logged: ${wsDebugState.ttWsEventsCount}`);
+    console.log(`Audio stop() calls: ${audioStopStacks.length}`);
 
     // This test always passes - it's for diagnostics
     expect(true).toBe(true);

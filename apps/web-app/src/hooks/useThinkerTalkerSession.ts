@@ -1141,6 +1141,14 @@ export function useThinkerTalkerSession(
   const handleMessageWithSequence = useCallback(
     (message: Record<string, unknown>) => {
       const seq = message.seq as number | undefined;
+      const msgType = message.type as string;
+
+      // DEBUG: Log ALL audio-related messages before sequence processing
+      if (msgType?.includes("audio")) {
+        console.log(
+          `[SEQ-DEBUG] audio message: type=${msgType}, seq=${seq}, expected=${expectedSequenceRef.current}`,
+        );
+      }
 
       // If no sequence number, process immediately (legacy/control messages)
       if (seq === undefined) {
@@ -1149,7 +1157,6 @@ export function useThinkerTalkerSession(
       }
 
       const expected = expectedSequenceRef.current;
-      const msgType = message.type as string;
 
       if (seq === expected) {
         // In order - process immediately and drain buffer
@@ -1198,8 +1205,15 @@ export function useThinkerTalkerSession(
     (message: Record<string, unknown>) => {
       const msgType = message.type as string;
 
-      // Debug: Log speech and state messages for tracing
-      if (msgType.includes("speech") || msgType.includes("state")) {
+      // Debug: Log ALL message types to trace audio delivery issue
+      console.log(`[ThinkerTalker] RECEIVED type: ${msgType}`);
+
+      // Extra debug: Log speech and state messages with full data
+      if (
+        msgType.includes("speech") ||
+        msgType.includes("state") ||
+        msgType.includes("audio")
+      ) {
         console.log(`[ThinkerTalker] RECEIVED message: ${msgType}`, message);
       }
 
@@ -2500,6 +2514,26 @@ export function useThinkerTalkerSession(
         };
 
         ws.onmessage = (event) => {
+          // === DIAGNOSTIC: Track ALL WebSocket messages in window arrays ===
+          // This helps diagnose message delivery issues in both browser and Playwright
+          const globalWindow = window as typeof window & {
+            __wsMessageLog?: Array<{
+              timestamp: number;
+              dataType: string;
+              size: number;
+              preview?: string;
+            }>;
+            __wsMessageCount?: number;
+            __wsLastMessageTime?: number;
+          };
+          if (!globalWindow.__wsMessageLog) {
+            globalWindow.__wsMessageLog = [];
+            globalWindow.__wsMessageCount = 0;
+          }
+          globalWindow.__wsMessageCount =
+            (globalWindow.__wsMessageCount || 0) + 1;
+          globalWindow.__wsLastMessageTime = Date.now();
+
           // Debug: Log all incoming message types
           const isBlob = event.data instanceof Blob;
           const isArrayBuffer = event.data instanceof ArrayBuffer;
@@ -2508,45 +2542,82 @@ export function useThinkerTalkerSession(
             : isArrayBuffer
               ? "ArrayBuffer"
               : typeof event.data;
-          if (isBlob || isArrayBuffer) {
-            console.log(
-              `[ThinkerTalker] Binary WS message received: type=${dataType}, size=${event.data instanceof Blob ? event.data.size : (event.data as ArrayBuffer).byteLength}`,
-            );
+
+          // Add to tracking array (limit to 1000 entries to prevent memory issues)
+          if (globalWindow.__wsMessageLog.length < 1000) {
+            const entry: (typeof globalWindow.__wsMessageLog)[0] = {
+              timestamp: Date.now(),
+              dataType,
+              size: isBlob
+                ? event.data.size
+                : isArrayBuffer
+                  ? (event.data as ArrayBuffer).byteLength
+                  : event.data?.length || 0,
+            };
+            // For text messages, add a preview of the type
+            if (!isBlob && !isArrayBuffer && typeof event.data === "string") {
+              try {
+                const parsed = JSON.parse(event.data);
+                entry.preview = `type=${parsed.type}, seq=${parsed.seq}`;
+              } catch {
+                entry.preview = event.data.slice(0, 50);
+              }
+            }
+            globalWindow.__wsMessageLog.push(entry);
           }
+
+          // Debug: Track message counts (detailed logging removed to reduce noise)
 
           // Handle binary frames (audio data with 5-byte header)
           if (event.data instanceof Blob) {
-            event.data.arrayBuffer().then((buffer) => {
-              const data = new Uint8Array(buffer);
-              console.log(
-                `[ThinkerTalker] Binary frame parsed: length=${data.length}, frameType=${data[0]}`,
-              );
-              if (data.length >= 5) {
-                const frameType = data[0];
-                const sequence = new DataView(data.buffer).getUint32(1, false);
-                const audioData = data.slice(5);
+            event.data
+              .arrayBuffer()
+              .then((buffer) => {
+                const data = new Uint8Array(buffer);
+                if (data.length >= 5) {
+                  const frameType = data[0];
+                  const sequence = new DataView(data.buffer).getUint32(
+                    1,
+                    false,
+                  );
+                  const audioData = data.slice(5);
 
-                if (frameType === 0x02) {
-                  // AUDIO_OUTPUT binary frame
-                  console.log(
-                    `[ThinkerTalker] AUDIO_OUTPUT frame: seq=${sequence}, audioBytes=${audioData.length}`,
-                  );
-                  voiceLog.debug(
-                    `[ThinkerTalker] Binary audio: seq=${sequence}, ${audioData.length} bytes`,
-                  );
+                  if (frameType === 0x02) {
+                    // AUDIO_OUTPUT binary frame
+                    voiceLog.debug(
+                      `[ThinkerTalker] Binary audio: seq=${sequence}, ${audioData.length} bytes`,
+                    );
 
-                  // Convert to base64 for existing audio handling
-                  const base64 = btoa(
-                    String.fromCharCode.apply(null, Array.from(audioData)),
-                  );
-                  options.onAudioChunk?.(base64);
+                    // Convert to base64 using chunked approach to avoid call stack overflow
+                    // String.fromCharCode.apply() can fail on large arrays (>~8KB)
+                    let binaryStr = "";
+                    const chunkSize = 8192;
+                    for (let i = 0; i < audioData.length; i += chunkSize) {
+                      const chunk = audioData.subarray(i, i + chunkSize);
+                      binaryStr += String.fromCharCode.apply(
+                        null,
+                        Array.from(chunk),
+                      );
+                    }
+                    const base64 = btoa(binaryStr);
+                    options.onAudioChunk?.(base64);
+                  } else {
+                    voiceLog.warn(
+                      `[ThinkerTalker] Unknown binary frameType: ${frameType}`,
+                    );
+                  }
                 } else {
-                  console.log(
-                    `[ThinkerTalker] Unknown binary frameType: ${frameType}`,
+                  voiceLog.warn(
+                    `[ThinkerTalker] Binary frame too short: ${data.length} bytes`,
                   );
                 }
-              }
-            });
+              })
+              .catch((err) => {
+                voiceLog.error(
+                  `[ThinkerTalker] Binary frame processing error:`,
+                  err,
+                );
+              });
             return;
           }
 
@@ -2555,14 +2626,17 @@ export function useThinkerTalkerSession(
             const message = JSON.parse(event.data);
             // DEBUG: Log ALL incoming WebSocket messages to trace message delivery
             const msgType = message.type as string;
+            // Log ALL messages for debugging audio delivery
+            console.log(`[ThinkerTalker] WS RAW message: ${msgType}`);
             if (
               msgType &&
               (msgType.includes("speech") ||
                 msgType.includes("state") ||
-                msgType.includes("voice"))
+                msgType.includes("voice") ||
+                msgType.includes("audio"))
             ) {
               console.log(
-                `[ThinkerTalker] WS RAW message: ${msgType}`,
+                `[ThinkerTalker] WS RAW message DETAIL: ${msgType}`,
                 message,
               );
             }

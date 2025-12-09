@@ -657,18 +657,18 @@ class ThinkerTalkerWebSocketHandler:
         frame = header + audio_data
 
         try:
-            logger.debug(
-                f"[WS] Sending binary audio frame: seq={sequence}, "
+            logger.info(
+                f"[WS] SENDING binary audio frame: seq={sequence}, "
                 f"frame_size={len(frame)}, audio_size={len(audio_data)}"
             )
             await self.websocket.send_bytes(frame)
             self._metrics.messages_sent += 1
-            logger.debug(f"[WS] Binary audio frame sent successfully: seq={sequence}")
+            logger.info(f"[WS] Binary audio frame SENT successfully: seq={sequence}")
             return True
         except Exception as e:
             # Only log as error if we thought the connection was active
             if "close" in str(e).lower() or "completed" in str(e).lower():
-                logger.debug(f"[WS] Audio send skipped - connection closed: {e}")
+                logger.info(f"[WS] Audio send skipped - connection closed: {e}")
             else:
                 logger.error(f"Error sending binary audio: {e}")
             self._metrics.error_count += 1
@@ -1384,8 +1384,16 @@ class ThinkerTalkerWebSocketHandler:
         Uses message batcher if enabled for high-frequency messages.
         Buffers messages for recovery if message recovery is enabled.
         """
+        # DEBUG: Log audio.output BEFORE running check to catch blocked sends
+        msg_type = message.get("type", "")
+        if msg_type == "audio.output":
+            audio_len = len(message.get("audio", "")) if message.get("audio") else 0
+            logger.info(f"[WS] _send_message called with audio.output: running={self._running}, audio_len={audio_len}")
+
         # Check if connection is still running before attempting to send
         if not self._running:
+            if msg_type == "audio.output":
+                logger.info("[WS] BLOCKING audio.output - running=False!")
             return
 
         # Add sequence number to all messages
@@ -1396,6 +1404,10 @@ class ThinkerTalkerWebSocketHandler:
         msg_type = message.get("type", "")
         if msg_type in ("voice.state", "input_audio_buffer.speech_started", "input_audio_buffer.speech_stopped"):
             logger.info(f"[WS] SENDING message: type={msg_type}, seq={message.get('seq')}, data={message}")
+        # Also log audio.output for debugging (without the full data to avoid spam)
+        if msg_type == "audio.output":
+            audio_len = len(message.get("audio", "")) if message.get("audio") else 0
+            logger.info(f"[WS] SENDING audio.output: seq={message.get('seq')}, audio_len={audio_len}")
 
         try:
             # Buffer message for potential recovery (if enabled)

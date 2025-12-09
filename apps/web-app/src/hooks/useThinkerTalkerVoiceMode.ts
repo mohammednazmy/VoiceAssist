@@ -1249,13 +1249,15 @@ export function useThinkerTalkerVoiceMode(
     return session.connect();
   }, [audioPlayback, session]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount only - use ref to avoid re-running on audioPlayback object changes
   useEffect(() => {
     return () => {
       clearSileroRollbackTimeout();
-      audioPlayback.reset();
+      // Use ref to get latest audioPlayback without triggering effect re-runs
+      audioPlaybackRef.current.reset();
     };
-  }, [audioPlayback, clearSileroRollbackTimeout]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clearSileroRollbackTimeout]); // audioPlayback excluded - use ref instead
 
   // E2E Test Debug Exposure - Exposes combined voice mode state for Playwright tests
   // This extends window.__voiceDebug with audio playback state that's only available here
