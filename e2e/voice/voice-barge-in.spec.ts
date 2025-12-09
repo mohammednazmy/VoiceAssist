@@ -21,6 +21,7 @@ import {
   QUALITY_THRESHOLDS,
   assertQualityThresholds,
   enableSileroVAD,
+  waitForFakeMicDevice,
 } from "./utils/test-setup";
 import { createMetricsCollector, VoiceMetricsCollector } from "./utils/voice-test-metrics";
 
@@ -223,7 +224,15 @@ test.describe("Voice Barge-In with Real Audio", () => {
     await enableSileroVAD(page);
     await page.goto("/chat");
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+
+    // Wait for Chrome's fake mic device to be available before continuing
+    // This prevents "NotFoundError: Requested device not found" in Silero VAD
+    const micReady = await waitForFakeMicDevice(page);
+    if (!micReady) {
+      console.log("[Test] Warning: Fake mic device not ready, VAD may fail to initialize");
+    }
+
+    await page.waitForTimeout(1000);
   });
 
   /**
@@ -530,7 +539,14 @@ test.describe("VAD Threshold Calibration", () => {
     await enableSileroVAD(page);
     await page.goto("/chat");
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+
+    // Wait for Chrome's fake mic device to be available before continuing
+    const micReady = await waitForFakeMicDevice(page);
+    if (!micReady) {
+      console.log("[Test] Warning: Fake mic device not ready, VAD may fail to initialize");
+    }
+
+    await page.waitForTimeout(1000);
   });
 
   /**

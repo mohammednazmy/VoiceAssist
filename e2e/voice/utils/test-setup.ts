@@ -255,6 +255,52 @@ export async function enableSileroVAD(page: Page): Promise<void> {
 }
 
 /**
+ * Wait for Chrome's fake microphone device to be available.
+ * This helps avoid race conditions where Silero VAD tries to access the mic
+ * before Chrome's --use-fake-device-for-media-stream flag is fully set up.
+ *
+ * Call this AFTER page.goto() but BEFORE opening voice mode.
+ *
+ * @param page - The Playwright page instance
+ * @param timeout - Maximum time to wait for the device (default: 10000ms)
+ * @returns True if fake mic device is available, false if timeout or error
+ */
+export async function waitForFakeMicDevice(page: Page, timeout = 10000): Promise<boolean> {
+  try {
+    const result = await page.evaluate(async (timeoutMs: number) => {
+      // Try to acquire mic stream with retries
+      const maxRetries = Math.ceil(timeoutMs / 500);
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          // Successfully acquired stream - device is ready
+          // Clean up the stream
+          stream.getTracks().forEach(track => track.stop());
+          return { success: true, attempt: i + 1 };
+        } catch (e) {
+          // Device not ready yet, wait and retry
+          if (i < maxRetries - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+      }
+      return { success: false, error: "Timeout waiting for fake mic device" };
+    }, timeout);
+
+    if (result.success) {
+      console.log(`[Test] Fake mic device ready after ${result.attempt} attempt(s)`);
+      return true;
+    } else {
+      console.log(`[Test] ${result.error}`);
+      return false;
+    }
+  } catch (error) {
+    console.log("[Test] Error waiting for fake mic device:", error);
+    return false;
+  }
+}
+
+/**
  * Disable Silero VAD override (restore default automation behavior).
  */
 export async function disableSileroVADOverride(page: Page): Promise<void> {
