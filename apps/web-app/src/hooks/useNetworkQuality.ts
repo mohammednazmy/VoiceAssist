@@ -200,11 +200,18 @@ export function useNetworkQuality(
     if (!enablePing) return null;
 
     try {
-      const apiBase = import.meta.env.VITE_API_URL || "";
+      // Prefer explicit API base; fall back to gateway when running from Vite dev server
+      const apiBase =
+        import.meta.env.VITE_API_URL ||
+        (typeof window !== "undefined" &&
+        window.location.origin.includes("localhost:5173")
+          ? "http://localhost:8000"
+          : window.location.origin || "");
       const start = performance.now();
 
       const response = await fetch(`${apiBase}${pingEndpoint}`, {
-        method: "HEAD",
+        // Use GET to align with API gateway health endpoint and avoid HEAD 405s
+        method: "GET",
         cache: "no-store",
       });
 

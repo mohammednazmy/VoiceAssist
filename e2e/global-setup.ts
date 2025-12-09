@@ -3,19 +3,38 @@
  *
  * Runs before all tests to set up authentication state.
  * For live backend tests, this fetches real JWT tokens.
+ *
+ * Features:
+ * - Token caching: Reuses valid cached tokens to avoid rate limits
+ * - Retry logic: Handles rate limiting with exponential backoff
+ * - Graceful degradation: Falls back to mock auth if backend unavailable
  */
 
+import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 
+// Load E2E environment variables from e2e/.env.e2e
+dotenv.config({ path: path.join(__dirname, ".env.e2e") });
+
 const AUTH_FILE = path.join(__dirname, ".auth/user.json");
+const ADMIN_AUTH_FILE = path.join(__dirname, ".auth/admin.json");
 const API_BASE_URL = process.env.API_URL || "http://localhost:8000";
+
+// Token validity buffer - refresh if token expires within this many seconds
+const TOKEN_REFRESH_BUFFER_SECONDS = 60;
 
 // Test user credentials
 const E2E_USER = {
   email: process.env.E2E_EMAIL || "e2e-test@voiceassist.io",
   password: process.env.E2E_PASSWORD || "E2eTestPassword123!",
   fullName: "E2E Test User",
+};
+
+// Admin user credentials (for feature flag operations)
+const E2E_ADMIN = {
+  email: process.env.E2E_ADMIN_EMAIL || "mo@asimo.io",
+  password: process.env.E2E_ADMIN_PASSWORD || "",
 };
 
 interface TokenResponse {
@@ -90,6 +109,48 @@ async function loginTestUser(): Promise<{
   }
 }
 
+async function loginAdminUser(): Promise<TokenResponse | null> {
+  // Skip if no admin password provided
+  if (!E2E_ADMIN.password) {
+    console.log("[E2E Setup] No admin password provided - skipping admin auth");
+    return null;
+  }
+
+  // Use retry logic for admin login too
+  return loginWithRetry(E2E_ADMIN.email, E2E_ADMIN.password);
+}
+
+/**
+ * Check if admin tokens are still valid and refresh if needed
+ */
+async function refreshAdminTokensIfNeeded(): Promise<void> {
+  if (!E2E_ADMIN.password) return;
+
+  try {
+    if (fs.existsSync(ADMIN_AUTH_FILE)) {
+      const adminData = JSON.parse(fs.readFileSync(ADMIN_AUTH_FILE, "utf-8"));
+      if (adminData.accessToken && isTokenValid(adminData.accessToken)) {
+        console.log("[E2E Setup] Admin tokens still valid - skipping refresh");
+        return;
+      }
+    }
+  } catch {
+    // Fall through to refresh
+  }
+
+  console.log("[E2E Setup] Refreshing admin tokens...");
+  const adminTokens = await loginAdminUser();
+  if (adminTokens) {
+    const adminAuthData = {
+      accessToken: adminTokens.access_token,
+      refreshToken: adminTokens.refresh_token,
+      email: E2E_ADMIN.email,
+    };
+    fs.writeFileSync(ADMIN_AUTH_FILE, JSON.stringify(adminAuthData, null, 2));
+    console.log(`[E2E Setup] Wrote admin auth state to ${ADMIN_AUTH_FILE}`);
+  }
+}
+
 async function decodeJwtPayload(token: string): Promise<Record<string, unknown>> {
   const parts = token.split(".");
   if (parts.length !== 3) return {};
@@ -100,6 +161,115 @@ async function decodeJwtPayload(token: string): Promise<Record<string, unknown>>
   } catch {
     return {};
   }
+}
+
+/**
+ * Check if a cached token is still valid (not expired or about to expire)
+ */
+function isTokenValid(token: string): boolean {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return false;
+
+    const payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8"));
+    const exp = payload.exp as number;
+
+    if (!exp) return false;
+
+    // Token is valid if it expires more than TOKEN_REFRESH_BUFFER_SECONDS in the future
+    const expiresAt = exp * 1000;
+    const now = Date.now();
+    const bufferMs = TOKEN_REFRESH_BUFFER_SECONDS * 1000;
+
+    return expiresAt > (now + bufferMs);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Try to get cached tokens from storage state file
+ */
+function getCachedTokens(): { accessToken: string; refreshToken: string } | null {
+  try {
+    if (!fs.existsSync(AUTH_FILE)) return null;
+
+    const storageState = JSON.parse(fs.readFileSync(AUTH_FILE, "utf-8"));
+    const authStorage = storageState.origins?.[0]?.localStorage?.find(
+      (item: { name: string }) => item.name === "voiceassist-auth"
+    );
+
+    if (!authStorage) return null;
+
+    const authState = JSON.parse(authStorage.value);
+    const accessToken = authState.state?.tokens?.accessToken;
+    const refreshToken = authState.state?.tokens?.refreshToken;
+
+    if (!accessToken || !refreshToken) return null;
+
+    // Check if access token is still valid
+    if (!isTokenValid(accessToken)) {
+      console.log("[E2E Setup] Cached token expired or about to expire");
+      return null;
+    }
+
+    return { accessToken, refreshToken };
+  } catch (e) {
+    console.log("[E2E Setup] Failed to read cached tokens:", e);
+    return null;
+  }
+}
+
+/**
+ * Sleep for a given number of milliseconds
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Login with retry logic for rate limiting
+ */
+async function loginWithRetry(
+  email: string,
+  password: string,
+  maxRetries = 3
+): Promise<TokenResponse | null> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const loginRes = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (loginRes.ok) {
+        return (await loginRes.json()) as TokenResponse;
+      }
+
+      const errorText = await loginRes.text();
+
+      // Check for rate limiting
+      if (loginRes.status === 429 || errorText.includes("Rate limit")) {
+        // Extract wait time from error message if available, otherwise use exponential backoff
+        const waitMs = Math.min(1000 * Math.pow(2, attempt), 60000); // Max 60 seconds
+        console.log(`[E2E Setup] Rate limited (attempt ${attempt}/${maxRetries}), waiting ${waitMs}ms...`);
+        await sleep(waitMs);
+        continue;
+      }
+
+      console.error(`[E2E Setup] Login failed (${loginRes.status}): ${errorText}`);
+      return null;
+    } catch (e) {
+      console.error(`[E2E Setup] Login error (attempt ${attempt}/${maxRetries}):`, e);
+      if (attempt < maxRetries) {
+        const waitMs = 1000 * attempt;
+        await sleep(waitMs);
+      }
+    }
+  }
+
+  return null;
 }
 
 async function globalSetup() {
@@ -164,17 +334,30 @@ async function globalSetup() {
 
   console.log(`[E2E Setup] Live mode - fetching tokens from ${API_BASE_URL}`);
 
-  // Ensure test user exists
-  await getOrCreateTestUser();
-
-  // Login to get fresh tokens
-  const result = await loginTestUser();
-  if (!result) {
-    console.error("[E2E Setup] Failed to get tokens - tests may fail");
+  // First, check if we have valid cached tokens
+  const cachedTokens = getCachedTokens();
+  if (cachedTokens) {
+    console.log("[E2E Setup] Using cached valid tokens - skipping login");
+    // Also check and refresh admin tokens if needed
+    await refreshAdminTokensIfNeeded();
     return;
   }
 
-  const { tokens } = result;
+  console.log("[E2E Setup] No valid cached tokens - performing login...");
+
+  // Ensure test user exists
+  await getOrCreateTestUser();
+
+  // Login to get fresh tokens with retry logic
+  const tokens = await loginWithRetry(E2E_USER.email, E2E_USER.password);
+  if (!tokens) {
+    console.error("[E2E Setup] Failed to get tokens after retries - tests may fail");
+    // Check if we have any existing auth file to use as fallback
+    if (fs.existsSync(AUTH_FILE)) {
+      console.log("[E2E Setup] Using existing auth file as fallback");
+    }
+    return;
+  }
 
   // Decode token to get user info
   const payload = await decodeJwtPayload(tokens.access_token);
@@ -235,6 +418,9 @@ async function globalSetup() {
   const exp = payload.exp as number;
   const expiresAt = new Date(exp * 1000);
   console.log(`[E2E Setup] Token expires at: ${expiresAt.toISOString()}`);
+
+  // Also get admin tokens for feature flag operations
+  await refreshAdminTokensIfNeeded();
 }
 
 export default globalSetup;

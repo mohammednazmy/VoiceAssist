@@ -3,6 +3,9 @@ import react from "@vitejs/plugin-react-swc";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 
+// HMR uses plain WebSocket by default for localhost development/E2E testing.
+// Set VITE_PROXY_HOST=1 when running behind Apache proxy (dev.asimo.io) to use wss://
+
 export default defineConfig({
   build: {
     rollupOptions: {
@@ -174,9 +177,27 @@ export default defineConfig({
     port: 5173,
     host: "0.0.0.0", // Allow external connections
     allowedHosts: ["dev.asimo.io"], // Allow dev.asimo.io domain
-    hmr: {
-      clientPort: 443, // Use HTTPS port for HMR through Apache proxy
-      protocol: "wss", // Use secure WebSocket
+    // HMR configuration:
+    // - Use wss:// on port 443 ONLY when accessed through Apache proxy (VITE_PROXY_HOST=1)
+    // - Otherwise use ws:// on port 5173 for direct localhost access (default for dev/E2E)
+    hmr:
+      process.env.VITE_PROXY_HOST === "1"
+        ? {
+            clientPort: 443, // Use HTTPS port for HMR through Apache proxy
+            protocol: "wss", // Use secure WebSocket
+          }
+        : {
+            clientPort: 5173, // Use Vite's direct port for local development/E2E
+            protocol: "ws", // Use plain WebSocket (no SSL needed for localhost)
+          },
+    // Proxy API requests to backend during development
+    // This ensures /api/* requests go to the backend even if VITE_API_URL isn't set
+    proxy: {
+      "/api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   resolve: {
