@@ -7,6 +7,10 @@
  * 3. Audio queue overflow issues
  * 4. VAD threshold sensitivity problems
  *
+ * IMPORTANT: These tests ONLY work on Chromium-based browsers because they rely on
+ * Chrome-specific flags (--use-fake-device-for-media-stream, --use-file-for-fake-audio-capture).
+ * Firefox, WebKit, and Safari do not support these fake audio injection features.
+ *
  * Run with: LIVE_REALTIME_E2E=1 npx playwright test --project=voice-debug
  */
 
@@ -24,6 +28,14 @@ import {
   isLiveMode,
   enableSileroVAD,
 } from "./utils/test-setup";
+
+/**
+ * Check if the browser supports fake audio capture (Chrome/Chromium only)
+ */
+function isFakeAudioSupported(browserName: string | undefined): boolean {
+  // Only Chromium-based browsers support --use-fake-device-for-media-stream
+  return browserName === "chromium";
+}
 
 // ============================================================================
 // Debug Utilities
@@ -159,7 +171,12 @@ function createDebugCapture(page: import("@playwright/test").Page) {
 test.describe("Choppy Audio Debug Tests", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    // Skip on non-Chromium browsers - fake audio capture is Chrome-only
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
     // Enable Silero VAD for debug tests
     await enableSileroVAD(page);
   });

@@ -6,10 +6,14 @@
  *
  * The barge-in.wav file contains "Stop! Wait a moment please." spoken clearly.
  *
+ * IMPORTANT: These tests ONLY work on Chromium-based browsers because they rely on
+ * Chrome-specific flags (--use-fake-device-for-media-stream, --use-file-for-fake-audio-capture).
+ * Firefox, WebKit, and Safari do not support these fake audio injection features.
+ *
  * Run with: LIVE_REALTIME_E2E=1 npx playwright test --project=voice-barge-in
  */
 
-import { type Page } from "@playwright/test";
+import { type Page, type BrowserContext } from "@playwright/test";
 import {
   test,
   expect,
@@ -19,6 +23,14 @@ import {
   enableSileroVAD,
 } from "./utils/test-setup";
 import { createMetricsCollector, VoiceMetricsCollector } from "./utils/voice-test-metrics";
+
+/**
+ * Check if the browser supports fake audio capture (Chrome/Chromium only)
+ */
+function isFakeAudioSupported(browserName: string | undefined): boolean {
+  // Only Chromium-based browsers support --use-fake-device-for-media-stream
+  return browserName === "chromium";
+}
 
 // VAD detection state tracking
 interface VADState {
@@ -196,9 +208,16 @@ function setupVADCapture(page: Page): VADState {
 // ============================================================================
 
 test.describe("Voice Barge-In with Real Audio", () => {
+  // Skip non-live mode tests
   test.skip(!isLiveMode, "Skipping live tests - set LIVE_REALTIME_E2E=1 to run");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    // Skip on non-Chromium browsers - fake audio capture is Chrome-only
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
+
     await page.context().grantPermissions(["microphone"]);
     // Enable Silero VAD for barge-in tests (disabled by default in Playwright)
     await enableSileroVAD(page);
@@ -496,9 +515,16 @@ test.describe("Voice Barge-In with Real Audio", () => {
 // ============================================================================
 
 test.describe("VAD Threshold Calibration", () => {
+  // Skip non-live mode tests
   test.skip(!isLiveMode, "Skipping live tests - set LIVE_REALTIME_E2E=1 to run");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    // Skip on non-Chromium browsers - fake audio capture is Chrome-only
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
+
     await page.context().grantPermissions(["microphone"]);
     // Enable Silero VAD for threshold calibration tests
     await enableSileroVAD(page);

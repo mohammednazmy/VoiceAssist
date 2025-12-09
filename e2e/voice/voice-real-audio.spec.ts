@@ -4,6 +4,10 @@
  * These tests use actual speech audio files injected via Chrome's fake audio capture
  * to test natural conversation flow with voice mode.
  *
+ * IMPORTANT: These tests ONLY work on Chromium-based browsers because they rely on
+ * Chrome-specific flags (--use-fake-device-for-media-stream, --use-file-for-fake-audio-capture).
+ * Firefox, WebKit, and Safari do not support these fake audio injection features.
+ *
  * Available audio files:
  * - hello.wav: "Hello, can you hear me?"
  * - conversation-start.wav: "I would like to ask you a question about voice assistants."
@@ -27,6 +31,14 @@ import {
   enableSileroVAD,
 } from "./utils/test-setup";
 import { createMetricsCollector, VoiceMetricsCollector } from "./utils/voice-test-metrics";
+
+/**
+ * Check if the browser supports fake audio capture (Chrome/Chromium only)
+ */
+function isFakeAudioSupported(browserName: string | undefined): boolean {
+  // Only Chromium-based browsers support --use-fake-device-for-media-stream
+  return browserName === "chromium";
+}
 
 // Conversation state tracking
 interface ConversationState {
@@ -192,9 +204,16 @@ function setupConversationCapture(page: Page): ConversationState {
 // ============================================================================
 
 test.describe("Voice Conversation with Real Audio", () => {
+  // Skip non-live mode tests
   test.skip(!isLiveMode, "Skipping live tests - set LIVE_REALTIME_E2E=1 to run");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    // Skip on non-Chromium browsers - fake audio capture is Chrome-only
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
+
     await page.context().grantPermissions(["microphone"]);
     // Enable Silero VAD for real audio conversation tests
     await enableSileroVAD(page);
@@ -587,9 +606,16 @@ test.describe("Voice Conversation with Real Audio", () => {
 // ============================================================================
 
 test.describe("Conversation Flow Analysis", () => {
+  // Skip non-live mode tests
   test.skip(!isLiveMode, "Skipping live tests - set LIVE_REALTIME_E2E=1 to run");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    // Skip on non-Chromium browsers - fake audio capture is Chrome-only
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
+
     await page.context().grantPermissions(["microphone"]);
     // Enable Silero VAD for conversation flow analysis tests
     await enableSileroVAD(page);
@@ -717,9 +743,16 @@ test.describe("Conversation Flow Analysis", () => {
 // ============================================================================
 
 test.describe("Natural Conversation Quality", () => {
+  // Skip non-live mode tests
   test.skip(!isLiveMode, "Skipping live tests - set LIVE_REALTIME_E2E=1 to run");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    // Skip on non-Chromium browsers - fake audio capture is Chrome-only
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
+
     await page.context().grantPermissions(["microphone"]);
     await page.goto("/chat");
     await page.waitForLoadState("networkidle");

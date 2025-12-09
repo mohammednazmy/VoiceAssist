@@ -9,6 +9,10 @@
  * - Backchannel handling
  * - Long AI responses
  *
+ * IMPORTANT: These tests ONLY work on Chromium-based browsers because they rely on
+ * Chrome-specific flags (--use-fake-device-for-media-stream, --use-file-for-fake-audio-capture).
+ * Firefox, WebKit, and Safari do not support these fake audio injection features.
+ *
  * Run with: LIVE_REALTIME_E2E=1 npx playwright test --project=voice-scenarios
  */
 
@@ -26,6 +30,14 @@ import {
   isLiveMode,
   enableSileroVAD,
 } from "./utils/test-setup";
+
+/**
+ * Check if the browser supports fake audio capture (Chrome/Chromium only)
+ */
+function isFakeAudioSupported(browserName: string | undefined): boolean {
+  // Only Chromium-based browsers support --use-fake-device-for-media-stream
+  return browserName === "chromium";
+}
 
 // ============================================================================
 // Test Configuration
@@ -46,7 +58,12 @@ const SCENARIO_TIMEOUTS = {
 test.describe("Simple Q&A Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    // Skip on non-Chromium browsers - fake audio capture is Chrome-only
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
     // Enable Silero VAD for real audio scenario tests
     await enableSileroVAD(page);
   });
@@ -156,7 +173,11 @@ test.describe("Simple Q&A Scenarios", () => {
 test.describe("Multi-turn Conversation Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
     await enableSileroVAD(page);
   });
 
@@ -241,7 +262,11 @@ test.describe("Multi-turn Conversation Scenarios", () => {
 test.describe("Barge-in Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
     await enableSileroVAD(page);
   });
 
@@ -363,7 +388,11 @@ test.describe("Barge-in Scenarios", () => {
 test.describe("Long Response Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
     await enableSileroVAD(page);
   });
 
@@ -437,7 +466,11 @@ test.describe("Long Response Scenarios", () => {
 test.describe("Audio Queue Health Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
     await enableSileroVAD(page);
   });
 
@@ -553,7 +586,11 @@ test.describe("Audio Queue Health Scenarios", () => {
 test.describe("Latency Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
     await enableSileroVAD(page);
   });
 
@@ -682,7 +719,11 @@ test.describe("Latency Scenarios", () => {
 test.describe("Backchannel Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
     await enableSileroVAD(page);
   });
 
@@ -753,7 +794,11 @@ test.describe("Backchannel Scenarios", () => {
 test.describe("Continuation Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
     await enableSileroVAD(page);
   });
 
@@ -817,7 +862,11 @@ test.describe("Continuation Scenarios", () => {
 test.describe("Rapid Exchange Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
     await enableSileroVAD(page);
   });
 
@@ -888,7 +937,11 @@ test.describe("Rapid Exchange Scenarios", () => {
 test.describe("Environmental Noise Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
     await enableSileroVAD(page);
   });
 
@@ -958,7 +1011,11 @@ test.describe("Environmental Noise Scenarios", () => {
 test.describe("Low Volume Speech Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
     await enableSileroVAD(page);
   });
 
