@@ -333,7 +333,8 @@ test.describe("Voice Mode Barge-In - Failure Diagnostics", () => {
     const voiceReadyResult = await waitForVoiceModeReady(page, 30000);
     console.log("[DIAGNOSTIC] Voice ready result:", voiceReadyResult);
 
-    // Log state every 500ms for 30 seconds
+    // Log state every 100ms for 30 seconds (faster sampling to catch brief playback windows)
+    // Audio buffers are ~171ms, so 100ms sampling should catch isPlaying=true
     const stateLog: Array<{
       timestamp: number;
       state: Awaited<ReturnType<typeof getVoiceModeDebugState>>;
@@ -346,30 +347,43 @@ test.describe("Voice Mode Barge-In - Failure Diagnostics", () => {
         timestamp: Date.now() - startTime,
         state,
       });
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(100); // Reduced from 500ms to 100ms
     }
 
     // Analyze the state log
     console.log("\n=== DIAGNOSTIC STATE LOG ===");
-    console.log("Time(ms) | Pipeline | isPlaying | queueLen | bargeInCount");
-    console.log("-".repeat(60));
+    console.log(
+      "Time(ms) | Pipeline | isPlaying | isActually | activeSrc | queueLen | bargeIn"
+    );
+    console.log("-".repeat(90));
     for (const entry of stateLog) {
       const s = entry.state;
+      const refState = s?.playbackDebugState;
       console.log(
-        `${entry.timestamp.toString().padStart(6)} | ${(s?.pipelineState || "N/A").padEnd(10)} | ${String(s?.isPlaying).padEnd(9)} | ${String(s?.queueLength ?? "N/A").padEnd(8)} | ${s?.bargeInCount ?? "N/A"}`
+        `${entry.timestamp.toString().padStart(6)} | ${(s?.pipelineState || "N/A").padEnd(10)} | ${String(s?.isPlaying).padEnd(9)} | ${String(s?.isActuallyPlaying ?? "N/A").padEnd(10)} | ${String(refState?.activeSourcesCount ?? "N/A").padEnd(9)} | ${String(s?.queueLength ?? "N/A").padEnd(8)} | ${s?.bargeInCount ?? "N/A"}`
       );
     }
 
-    // Check if we ever entered speaking state
-    const everSpeaking = stateLog.some((e) => e.state?.pipelineState === "speaking");
+    // Check if we ever entered speaking state - use both state and ref-based detection
+    const everSpeaking = stateLog.some(
+      (e) => e.state?.pipelineState === "speaking"
+    );
     const everPlaying = stateLog.some((e) => e.state?.isPlaying === true);
+    const everActuallyPlaying = stateLog.some(
+      (e) => e.state?.isActuallyPlaying === true
+    );
+    const everHadActiveSources = stateLog.some(
+      (e) => (e.state?.playbackDebugState?.activeSourcesCount ?? 0) > 0
+    );
     const bargeInTriggered = stateLog.some(
       (e) => (e.state?.bargeInCount ?? 0) > 0
     );
 
     console.log("\n=== DIAGNOSTIC SUMMARY ===");
     console.log(`Ever entered speaking state: ${everSpeaking}`);
-    console.log(`Ever had isPlaying=true: ${everPlaying}`);
+    console.log(`Ever had isPlaying=true (state): ${everPlaying}`);
+    console.log(`Ever had isActuallyPlaying=true (ref): ${everActuallyPlaying}`);
+    console.log(`Ever had activeSources>0 (ref): ${everHadActiveSources}`);
     console.log(`Barge-in ever triggered: ${bargeInTriggered}`);
 
     console.log("\n=== TTAudioPlayback LOGS (processAudioQueue/queueAudioChunk) ===");
