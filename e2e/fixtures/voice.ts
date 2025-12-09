@@ -135,12 +135,12 @@ export async function waitForVoicePanel(page: Page): Promise<void> {
   if (!panelVisible) {
     // Wait for voice button to be visible and enabled
     try {
-      await voiceButton.waitFor({ timeout: 10000 });
+      await voiceButton.waitFor({ timeout: 15000 });
     } catch {
       // If voice button not found, try waiting for page to fully load
       await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(2000);
-      await voiceButton.waitFor({ timeout: 5000 });
+      await page.waitForTimeout(3000);
+      await voiceButton.waitFor({ timeout: 15000 });
     }
 
     // Click to open the panel

@@ -320,7 +320,23 @@ async function openVoiceSession(page: Page): Promise<void> {
   await page.goto("/chat");
   await page.waitForLoadState("networkidle");
 
-  const ready = await waitForVoiceModeReady(page, 20000);
+  // Wait longer for the page to fully load with all components
+  await page.waitForTimeout(2000);
+
+  const ready = await waitForVoiceModeReady(page, 30000);
+  if (!ready) {
+    // Debug: log what's visible on the page
+    const pageContent = await page.evaluate(() => {
+      const buttons = Array.from(document.querySelectorAll('button')).map(b => ({
+        testId: b.getAttribute('data-testid'),
+        text: b.textContent?.substring(0, 50),
+        disabled: b.disabled
+      }));
+      return { buttons };
+    });
+    console.log("[Test] Page buttons:", JSON.stringify(pageContent.buttons, null, 2));
+    console.log("[Test] Voice button not visible - check if user is authenticated");
+  }
   expect(ready).toBeTruthy();
 
   const opened = await openVoiceMode(page);

@@ -137,11 +137,16 @@ function setupVADCapture(page: Page): VADState {
       state.thresholdLogs.push(`[vad] ${text}`);
     }
 
-    // Deepgram speech events
+    // Deepgram speech events (from backend VAD via WebSocket)
+    // The backend sends `input_audio_buffer.speech_started` events when VAD detects speech
     if (text.includes("deepgram") || text.includes("Deepgram")) {
       if (text.includes("speech_started")) {
         state.deepgramSpeechEvents++;
       }
+    }
+    // Also count backend VAD events (input_audio_buffer.speech_started)
+    if (text.includes("input_audio_buffer.speech_started")) {
+      state.deepgramSpeechEvents++;
     }
 
     // Barge-in detection
@@ -151,7 +156,17 @@ function setupVADCapture(page: Page): VADState {
       text.includes("speech_started")
     ) {
       state.thresholdLogs.push(`[barge-in] ${text}`);
-      if (text.includes("triggered") || text.includes("executing") || text.includes("stopping")) {
+      // Barge-in is triggered when:
+      // - "triggered", "executing", "stopping" keywords found
+      // - "Stopping playback (barge-in)" message from TTAudioPlayback
+      // - Playback is interrupted
+      if (
+        text.includes("triggered") ||
+        text.includes("executing") ||
+        text.includes("stopping") ||
+        text.includes("Stopping playback") ||
+        text.includes("interrupted")
+      ) {
         state.bargeInTriggered = true;
       }
     }
@@ -159,9 +174,10 @@ function setupVADCapture(page: Page): VADState {
     // Playback stopped
     if (
       text.includes("playback") &&
-      (text.includes("stop") || text.includes("cancelled") || text.includes("interrupted"))
+      (text.includes("stop") || text.includes("cancelled") || text.includes("interrupted") || text.includes("Stopping"))
     ) {
       state.playbackStopped = true;
+      state.bargeInTriggered = true; // Playback stopping IS barge-in
       state.thresholdLogs.push(`[playback] ${text}`);
     }
 

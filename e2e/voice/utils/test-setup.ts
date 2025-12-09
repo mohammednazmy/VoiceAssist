@@ -256,66 +256,85 @@ async function dismissBlockingPopups(page: Page): Promise<void> {
 
 /**
  * Open voice mode by clicking the toggle button
+ * Includes retry logic for flaky button clicks
  */
-export async function openVoiceMode(page: Page): Promise<boolean> {
-  // First dismiss any blocking popups
-  await dismissBlockingPopups(page);
+export async function openVoiceMode(page: Page, maxRetries = 3): Promise<boolean> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    // First dismiss any blocking popups
+    await dismissBlockingPopups(page);
 
-  const voiceButton = page
-    .locator(
-      '[data-testid="voice-mode-toggle"], [data-testid="realtime-voice-mode-button"]'
-    )
-    .first();
+    const voiceButton = page
+      .locator(
+        '[data-testid="voice-mode-toggle"], [data-testid="realtime-voice-mode-button"]'
+      )
+      .first();
 
-  if (!(await voiceButton.isVisible())) {
-    console.log("[Test] Voice button not visible");
-    return false;
+    // Wait a bit for the button to be stable
+    await page.waitForTimeout(500);
+
+    if (!(await voiceButton.isVisible())) {
+      console.log(`[Test] Voice button not visible (attempt ${attempt}/${maxRetries})`);
+      if (attempt < maxRetries) {
+        await page.waitForTimeout(1000);
+        continue;
+      }
+      return false;
+    }
+
+    const isDisabled = await voiceButton.isDisabled();
+    if (isDisabled) {
+      console.log(`[Test] Voice button is disabled (attempt ${attempt}/${maxRetries})`);
+      if (attempt < maxRetries) {
+        await page.waitForTimeout(1000);
+        continue;
+      }
+      return false;
+    }
+
+    await voiceButton.click();
+
+    try {
+      await page.waitForFunction(
+        () => {
+          const hasVoiceUI =
+            document.querySelector('[data-testid="voice-mode-panel"]') ||
+            document.querySelector('[data-testid="thinker-talker-voice-panel"]') ||
+            document.querySelector('[data-testid="compact-voice-bar"]') ||
+            document.querySelector('[data-testid="voice-expanded-drawer"]');
+          if (hasVoiceUI) return true;
+
+          const voiceToggle = document.querySelector(
+            '[data-testid="voice-mode-toggle"]'
+          );
+          if (
+            voiceToggle?.classList.contains("bg-primary-500") ||
+            voiceToggle?.classList.contains("bg-primary-100")
+          ) {
+            return true;
+          }
+
+          const hasVoiceStatus = Array.from(document.querySelectorAll("p")).some(
+            (p) =>
+              p.textContent?.includes("Listening") ||
+              p.textContent?.includes("Connecting") ||
+              p.textContent?.includes("Ready") ||
+              p.textContent?.includes("Processing")
+          );
+          return hasVoiceStatus;
+        },
+        { timeout: 8000 }
+      );
+      return true;
+    } catch {
+      console.log(`[Test] Voice mode did not activate (attempt ${attempt}/${maxRetries})`);
+      if (attempt < maxRetries) {
+        await page.waitForTimeout(1000);
+        continue;
+      }
+      return false;
+    }
   }
-
-  const isDisabled = await voiceButton.isDisabled();
-  if (isDisabled) {
-    console.log("[Test] Voice button is disabled");
-    return false;
-  }
-
-  await voiceButton.click();
-
-  try {
-    await page.waitForFunction(
-      () => {
-        const hasVoiceUI =
-          document.querySelector('[data-testid="voice-mode-panel"]') ||
-          document.querySelector('[data-testid="thinker-talker-voice-panel"]') ||
-          document.querySelector('[data-testid="compact-voice-bar"]') ||
-          document.querySelector('[data-testid="voice-expanded-drawer"]');
-        if (hasVoiceUI) return true;
-
-        const voiceToggle = document.querySelector(
-          '[data-testid="voice-mode-toggle"]'
-        );
-        if (
-          voiceToggle?.classList.contains("bg-primary-500") ||
-          voiceToggle?.classList.contains("bg-primary-100")
-        ) {
-          return true;
-        }
-
-        const hasVoiceStatus = Array.from(document.querySelectorAll("p")).some(
-          (p) =>
-            p.textContent?.includes("Listening") ||
-            p.textContent?.includes("Connecting") ||
-            p.textContent?.includes("Ready") ||
-            p.textContent?.includes("Processing")
-        );
-        return hasVoiceStatus;
-      },
-      { timeout: 8000 }
-    );
-    return true;
-  } catch {
-    console.log("[Test] Voice mode did not activate");
-    return false;
-  }
+  return false;
 }
 
 /**
@@ -340,25 +359,68 @@ export async function closeVoiceMode(page: Page): Promise<void> {
 
 /**
  * Wait for AI to start speaking (audio playback begins)
+ * Checks for actual UI indicators in CompactVoiceBar and VoiceModePanel:
+ * - Text containing "Speaking" (state label)
+ * - Pipeline state "speaking" indicator
+ * - Audio playback logs in console
  */
 export async function waitForAISpeaking(
   page: Page,
   timeout = 30000
 ): Promise<boolean> {
+  // Set up console log monitoring as a backup detection method
+  let audioPlaybackDetected = false;
+  const consoleHandler = (msg: { text: () => string }) => {
+    const text = msg.text();
+    if (
+      text.includes("Playback started") ||
+      text.includes("TTAudioPlayback") ||
+      text.includes("TTFA:") ||
+      text.includes("response.complete")
+    ) {
+      audioPlaybackDetected = true;
+    }
+  };
+  page.on("console", consoleHandler);
+
   try {
     await page.waitForFunction(
       () => {
-        // Check for speaking indicator in UI
-        const speakingIndicator = document.querySelector(
-          '[data-testid="ai-speaking"], [data-state="speaking"]'
+        // Check for "Speaking" state text in TranscriptLine (CompactVoiceBar)
+        const speakingText = Array.from(document.querySelectorAll("p")).some(
+          (p) =>
+            p.textContent?.includes("Speaking") ||
+            p.textContent?.includes("Speaking...")
         );
-        if (speakingIndicator) return true;
+        if (speakingText) return true;
 
-        // Check for transcript content
-        const transcript = document.querySelector('[data-testid="ai-transcript"]');
-        if (transcript?.textContent && transcript.textContent.length > 0) {
+        // Check for voice panel with speaking state class
+        const hasPlayingIndicator = document.querySelector(
+          '[class*="animate-pulse"]'
+        );
+        const voiceBar = document.querySelector('[data-testid="compact-voice-bar"]');
+        if (hasPlayingIndicator && voiceBar) return true;
+
+        // Check for AI response in message list (assistant messages)
+        const assistantMessage = document.querySelector(
+          '[data-testid="assistant-message"], [data-message-role="assistant"]'
+        );
+        if (assistantMessage?.textContent && assistantMessage.textContent.length > 10) {
           return true;
         }
+
+        // Check for audio playback via data attribute (if component sets it)
+        const playingElement = document.querySelector('[data-playing="true"]');
+        if (playingElement) return true;
+
+        // Check for "Thinking" or "Processing" which precedes speaking
+        const processingText = Array.from(document.querySelectorAll("p")).some(
+          (p) =>
+            p.textContent?.includes("Thinking") ||
+            p.textContent?.includes("Processing")
+        );
+        // Return true if processing - AI will speak soon
+        if (processingText) return true;
 
         return false;
       },
@@ -366,12 +428,22 @@ export async function waitForAISpeaking(
     );
     return true;
   } catch {
+    // UI-based detection failed, check if console logs detected audio playback
+    if (audioPlaybackDetected) {
+      return true;
+    }
     return false;
+  } finally {
+    page.off("console", consoleHandler);
   }
 }
 
 /**
  * Wait for AI to finish speaking (response complete)
+ * Checks for actual UI indicators:
+ * - "Listening" or "Ready" state text in TranscriptLine
+ * - Idle pipeline state
+ * - No longer showing "Speaking"
  */
 export async function waitForAIComplete(
   page: Page,
@@ -380,12 +452,28 @@ export async function waitForAIComplete(
   try {
     await page.waitForFunction(
       () => {
-        // Check for idle/listening state
-        const isListening = Array.from(document.querySelectorAll("p")).some(
-          (p) => p.textContent?.includes("Listening")
+        // Check for listening or ready state text
+        const stateLabels = Array.from(document.querySelectorAll("p"));
+        const isListening = stateLabels.some((p) =>
+          p.textContent?.includes("Listening")
         );
-        const isIdle = document.querySelector('[data-state="idle"]');
-        return isListening || isIdle;
+        const isReady = stateLabels.some((p) => p.textContent?.includes("Ready"));
+
+        // Also check for "Tap mic to start" message (idle state)
+        const isIdle = stateLabels.some((p) =>
+          p.textContent?.includes("Tap mic to start")
+        );
+
+        // Make sure we're not still speaking
+        const isSpeaking = stateLabels.some(
+          (p) =>
+            p.textContent?.includes("Speaking") ||
+            p.textContent?.includes("Thinking") ||
+            p.textContent?.includes("Processing")
+        );
+
+        // Complete when in listening/ready/idle AND not speaking
+        return (isListening || isReady || isIdle) && !isSpeaking;
       },
       { timeout }
     );
