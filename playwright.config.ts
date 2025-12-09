@@ -216,6 +216,34 @@ export default defineConfig({
       timeout: 90 * 1000,
     },
 
+    /* Realistic Barge-in Tests - Tests that FAIL when barge-in doesn't work in production */
+    /* These tests verify:
+     * 1. AI must actually be PLAYING audio (isPlaying=true) before testing barge-in
+     * 2. Audio must IMMEDIATELY stop when user speaks
+     * 3. Pipeline must transition to listening state
+     * If barge-in works in tests but not production, these tests should expose the issue. */
+    {
+      name: 'voice-barge-in-realistic',
+      testDir: './e2e/voice',
+      testMatch: /voice-barge-in-realistic\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        permissions: ['microphone'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+            `--use-file-for-fake-audio-capture=${AUDIO_FIXTURES.conversationStart}`,
+          ],
+        },
+        storageState: 'e2e/.auth/user.json',
+        contextOptions: {
+          recordVideo: { dir: 'test-results/videos' },
+        },
+      },
+      timeout: 120 * 1000, // 2 minutes for comprehensive barge-in tests
+    },
+
     /* Voice Smoke Tests - Fast critical path tests for PR validation (~5 min) */
     /* Run with: npx playwright test --project=voice-smoke */
     {

@@ -636,8 +636,21 @@ class ThinkerTalkerWebSocketHandler:
         else:
             logger.warning(f"Unknown binary frame type: 0x{frame_type:02x}")
 
-    async def _send_audio_binary(self, audio_data: bytes) -> None:
-        """Send audio output as binary WebSocket frame."""
+    async def _send_audio_binary(self, audio_data: bytes) -> bool:
+        """Send audio output as binary WebSocket frame.
+
+        Returns:
+            True if audio was sent successfully, False otherwise.
+        """
+        # Check if connection is still active before sending
+        if self._connection_state != TTConnectionState.READY:
+            logger.debug(f"[WS] Skipping audio send - connection state: {self._connection_state.value}")
+            return False
+
+        if not self._running:
+            logger.debug("[WS] Skipping audio send - handler not running")
+            return False
+
         sequence = self.config._audio_sequence_out
         self.config._audio_sequence_out += 1
 
@@ -648,9 +661,15 @@ class ThinkerTalkerWebSocketHandler:
         try:
             await self.websocket.send_bytes(frame)
             self._metrics.messages_sent += 1
+            return True
         except Exception as e:
-            logger.error(f"Error sending binary audio: {e}")
+            # Only log as error if we thought the connection was active
+            if "close" in str(e).lower() or "completed" in str(e).lower():
+                logger.debug(f"[WS] Audio send skipped - connection closed: {e}")
+            else:
+                logger.error(f"Error sending binary audio: {e}")
             self._metrics.error_count += 1
+            return False
 
     async def _handle_client_message(self, message: Dict[str, Any]) -> None:
         """Handle a message from the client."""

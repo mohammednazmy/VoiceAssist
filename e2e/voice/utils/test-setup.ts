@@ -1015,7 +1015,7 @@ export function generateDebugReport(
 // ============================================================================
 
 /**
- * Voice debug state interface matching window.__voiceDebug
+ * Voice debug state interface matching window.__voiceDebug (from useThinkerTalkerSession)
  */
 export interface VoiceDebugState {
   pipelineState: string;
@@ -1028,6 +1028,40 @@ export interface VoiceDebugState {
   status: string;
   stateTransitions: string[];
   isConnected: boolean;
+}
+
+/**
+ * Voice mode debug state interface matching window.__voiceModeDebug (from useThinkerTalkerVoiceMode)
+ * This includes audio playback state that's not available in window.__voiceDebug
+ */
+export interface VoiceModeDebugState {
+  // Audio playback state
+  isPlaying: boolean;
+  playbackState: string;
+  ttfaMs: number | null;
+  queueLength: number;
+  queueDurationMs: number;
+
+  // Combined state
+  pipelineState: string;
+  isConnected: boolean;
+  isSpeaking: boolean;
+  isListening: boolean;
+
+  // Barge-in related
+  bargeInCount: number;
+  successfulBargeInCount: number;
+
+  // Silero VAD state
+  isSileroVADActive: boolean;
+  sileroVADConfidence: number;
+
+  // Transcripts
+  partialTranscript: string;
+  partialAIResponse: string;
+
+  // Computed helper
+  isAIPlayingAudio: boolean;
 }
 
 /**
@@ -1232,4 +1266,212 @@ export async function attachDebugReport(
     body: report,
     contentType: "text/markdown",
   });
+}
+
+// ============================================================================
+// Voice Mode Debug State Helpers (uses window.__voiceModeDebug from useThinkerTalkerVoiceMode)
+// ============================================================================
+
+/**
+ * Get the voice mode debug state from window.__voiceModeDebug
+ * This includes audio playback state (isPlaying) that's not available in window.__voiceDebug
+ */
+export async function getVoiceModeDebugState(page: Page): Promise<VoiceModeDebugState | null> {
+  return page.evaluate(() => {
+    const debug = (window as unknown as { __voiceModeDebug?: VoiceModeDebugState }).__voiceModeDebug;
+    if (!debug) return null;
+
+    // Create a snapshot (getters won't serialize properly)
+    return {
+      isPlaying: debug.isPlaying,
+      playbackState: debug.playbackState,
+      ttfaMs: debug.ttfaMs,
+      queueLength: debug.queueLength,
+      queueDurationMs: debug.queueDurationMs,
+      pipelineState: debug.pipelineState,
+      isConnected: debug.isConnected,
+      isSpeaking: debug.isSpeaking,
+      isListening: debug.isListening,
+      bargeInCount: debug.bargeInCount,
+      successfulBargeInCount: debug.successfulBargeInCount,
+      isSileroVADActive: debug.isSileroVADActive,
+      sileroVADConfidence: debug.sileroVADConfidence,
+      partialTranscript: debug.partialTranscript,
+      partialAIResponse: debug.partialAIResponse,
+      isAIPlayingAudio: debug.isAIPlayingAudio,
+    };
+  });
+}
+
+/**
+ * Wait for AI to be actively playing audio (not just in speaking state)
+ * This is the KEY condition for testing barge-in - we need actual audio playback
+ *
+ * @param page - The Playwright page instance
+ * @param timeout - Maximum time to wait (default: 30000ms)
+ * @returns Object with playback status and debug info
+ */
+export async function waitForAIPlayingAudio(
+  page: Page,
+  timeout = 30000
+): Promise<{
+  success: boolean;
+  isPlaying: boolean;
+  pipelineState: string;
+  debugState: VoiceModeDebugState | null;
+  attempts: number;
+}> {
+  const startTime = Date.now();
+  let attempts = 0;
+
+  while (Date.now() - startTime < timeout) {
+    attempts++;
+    const debugState = await getVoiceModeDebugState(page);
+
+    if (debugState) {
+      console.log(
+        `[BARGE-IN-TEST] Attempt ${attempts}: isPlaying=${debugState.isPlaying}, ` +
+          `playbackState=${debugState.playbackState}, pipelineState=${debugState.pipelineState}, ` +
+          `isAIPlayingAudio=${debugState.isAIPlayingAudio}, queueLength=${debugState.queueLength}`
+      );
+
+      // AI is playing audio when:
+      // 1. isPlaying is true (audio is being played through Web Audio API)
+      // 2. AND pipeline state is "speaking" (backend is generating audio)
+      if (debugState.isPlaying && debugState.pipelineState === "speaking") {
+        console.log(`[BARGE-IN-TEST] SUCCESS: AI is playing audio after ${attempts} attempts`);
+        return {
+          success: true,
+          isPlaying: debugState.isPlaying,
+          pipelineState: debugState.pipelineState,
+          debugState,
+          attempts,
+        };
+      }
+    } else {
+      console.log(`[BARGE-IN-TEST] Attempt ${attempts}: __voiceModeDebug not available yet`);
+    }
+
+    await page.waitForTimeout(200);
+  }
+
+  const finalState = await getVoiceModeDebugState(page);
+  console.log(
+    `[BARGE-IN-TEST] TIMEOUT waiting for AI to play audio after ${attempts} attempts. ` +
+      `Final state: isPlaying=${finalState?.isPlaying}, pipelineState=${finalState?.pipelineState}`
+  );
+  return {
+    success: false,
+    isPlaying: finalState?.isPlaying || false,
+    pipelineState: finalState?.pipelineState || "unknown",
+    debugState: finalState,
+    attempts,
+  };
+}
+
+/**
+ * Wait for AI to stop playing audio after barge-in
+ * This verifies that barge-in actually caused audio to stop
+ *
+ * @param page - The Playwright page instance
+ * @param timeout - Maximum time to wait (default: 5000ms)
+ */
+export async function waitForAudioToStop(
+  page: Page,
+  timeout = 5000
+): Promise<{
+  success: boolean;
+  debugState: VoiceModeDebugState | null;
+}> {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeout) {
+    const debugState = await getVoiceModeDebugState(page);
+
+    if (debugState) {
+      console.log(
+        `[BARGE-IN-TEST] Checking audio stopped: isPlaying=${debugState.isPlaying}, ` +
+          `playbackState=${debugState.playbackState}, pipelineState=${debugState.pipelineState}`
+      );
+
+      // Audio has stopped when isPlaying is false
+      if (!debugState.isPlaying) {
+        return {
+          success: true,
+          debugState,
+        };
+      }
+    }
+
+    await page.waitForTimeout(100);
+  }
+
+  const finalState = await getVoiceModeDebugState(page);
+  return {
+    success: false,
+    debugState: finalState,
+  };
+}
+
+/**
+ * Verify barge-in occurred using the more complete voiceModeDebug state
+ *
+ * @param page - The Playwright page instance
+ * @param initialBargeInCount - The barge-in count before the test action
+ * @param timeout - Maximum time to wait for barge-in to complete
+ */
+export async function verifyBargeInWithVoiceModeDebug(
+  page: Page,
+  initialBargeInCount: number,
+  timeout = 10000
+): Promise<{
+  triggered: boolean;
+  bargeInCountIncreased: boolean;
+  audioStopped: boolean;
+  pipelineTransitioned: boolean;
+  finalState: VoiceModeDebugState | null;
+}> {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeout) {
+    const debugState = await getVoiceModeDebugState(page);
+
+    if (debugState) {
+      const bargeInCountIncreased = debugState.bargeInCount > initialBargeInCount;
+      const audioStopped = !debugState.isPlaying;
+      // Transitioned to listening means barge-in was successful and we're ready for user input
+      const pipelineTransitioned =
+        debugState.pipelineState === "listening" || debugState.pipelineState === "processing";
+
+      console.log(
+        `[BARGE-IN-TEST] Verifying barge-in: bargeInCount=${debugState.bargeInCount} ` +
+          `(was ${initialBargeInCount}), isPlaying=${debugState.isPlaying}, ` +
+          `pipelineState=${debugState.pipelineState}`
+      );
+
+      // Barge-in is verified when:
+      // 1. Audio has stopped playing
+      // 2. Either barge-in count increased OR pipeline transitioned to listening
+      if (audioStopped && (bargeInCountIncreased || pipelineTransitioned)) {
+        return {
+          triggered: true,
+          bargeInCountIncreased,
+          audioStopped,
+          pipelineTransitioned,
+          finalState: debugState,
+        };
+      }
+    }
+
+    await page.waitForTimeout(200);
+  }
+
+  const finalState = await getVoiceModeDebugState(page);
+  return {
+    triggered: false,
+    bargeInCountIncreased: false,
+    audioStopped: finalState ? !finalState.isPlaying : false,
+    pipelineTransitioned: false,
+    finalState,
+  };
 }

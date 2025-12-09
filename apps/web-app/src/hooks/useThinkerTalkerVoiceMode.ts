@@ -1230,6 +1230,82 @@ export function useThinkerTalkerVoiceMode(
     };
   }, [audioPlayback, clearSileroRollbackTimeout]);
 
+  // E2E Test Debug Exposure - Exposes combined voice mode state for Playwright tests
+  // This extends window.__voiceDebug with audio playback state that's only available here
+  // (useThinkerTalkerSession doesn't have access to audioPlayback hook)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Create or extend the voiceModeDebug object with audio playback state
+    const voiceModeDebug = {
+      // Audio playback state (not available in useThinkerTalkerSession's __voiceDebug)
+      isPlaying: audioPlayback.isPlaying,
+      playbackState: audioPlayback.playbackState,
+      ttfaMs: audioPlayback.ttfaMs,
+      queueLength: audioPlayback.queueLength,
+      queueDurationMs: audioPlayback.queueDurationMs,
+
+      // Combined state useful for tests
+      pipelineState: session.pipelineState,
+      isConnected: session.isConnected,
+      isSpeaking: session.isSpeaking,
+      isListening: session.isListening,
+
+      // Barge-in related
+      bargeInCount: session.metrics.bargeInCount,
+      successfulBargeInCount: session.metrics.successfulBargeInCount,
+
+      // Silero VAD state
+      isSileroVADActive: sileroVAD.isListening,
+      sileroVADConfidence: sileroVAD.lastSpeechProbability,
+
+      // Transcripts
+      partialTranscript: session.partialTranscript,
+      partialAIResponse: session.partialAIResponse,
+
+      // Helper to check if AI is actively playing audio (key for barge-in tests)
+      get isAIPlayingAudio() {
+        return audioPlayback.isPlaying && session.pipelineState === "speaking";
+      },
+    };
+
+    // Expose for E2E tests
+    (
+      window as unknown as { __voiceModeDebug?: typeof voiceModeDebug }
+    ).__voiceModeDebug = voiceModeDebug;
+
+    // Log for debugging
+    voiceLog.debug("[TTVoiceMode] Debug state exposed", {
+      isPlaying: voiceModeDebug.isPlaying,
+      pipelineState: voiceModeDebug.pipelineState,
+      isAIPlayingAudio: voiceModeDebug.isAIPlayingAudio,
+    });
+
+    return () => {
+      if (typeof window !== "undefined") {
+        delete (
+          window as unknown as { __voiceModeDebug?: typeof voiceModeDebug }
+        ).__voiceModeDebug;
+      }
+    };
+  }, [
+    audioPlayback.isPlaying,
+    audioPlayback.playbackState,
+    audioPlayback.ttfaMs,
+    audioPlayback.queueLength,
+    audioPlayback.queueDurationMs,
+    session.pipelineState,
+    session.isConnected,
+    session.isSpeaking,
+    session.isListening,
+    session.metrics.bargeInCount,
+    session.metrics.successfulBargeInCount,
+    session.partialTranscript,
+    session.partialAIResponse,
+    sileroVAD.isListening,
+    sileroVAD.lastSpeechProbability,
+  ]);
+
   // Memoized return value
   return useMemo(
     () => ({
