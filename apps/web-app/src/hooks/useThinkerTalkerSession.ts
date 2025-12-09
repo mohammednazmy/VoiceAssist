@@ -1198,7 +1198,7 @@ export function useThinkerTalkerSession(
     (message: Record<string, unknown>) => {
       const msgType = message.type as string;
 
-      // Debug: Log ALL incoming messages to trace speech_started
+      // Debug: Log speech and state messages for tracing
       if (msgType.includes("speech") || msgType.includes("state")) {
         console.log(`[ThinkerTalker] RECEIVED message: ${msgType}`, message);
       }

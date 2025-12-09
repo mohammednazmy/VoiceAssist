@@ -657,8 +657,13 @@ class ThinkerTalkerWebSocketHandler:
         frame = header + audio_data
 
         try:
+            logger.debug(
+                f"[WS] Sending binary audio frame: seq={sequence}, "
+                f"frame_size={len(frame)}, audio_size={len(audio_data)}"
+            )
             await self.websocket.send_bytes(frame)
             self._metrics.messages_sent += 1
+            logger.debug(f"[WS] Binary audio frame sent successfully: seq={sequence}")
             return True
         except Exception as e:
             # Only log as error if we thought the connection was active
