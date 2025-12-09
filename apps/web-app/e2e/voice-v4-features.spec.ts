@@ -573,10 +573,10 @@ test.describe("Voice Mode v4 - Performance", () => {
 
     // Get initial heap size
     const initialMetrics = await page.evaluate(() => {
-      if ((performance as any).memory) {
-        return (performance as any).memory.usedJSHeapSize;
-      }
-      return 0;
+      const perf = performance as Performance & {
+        memory?: { usedJSHeapSize: number };
+      };
+      return perf.memory?.usedJSHeapSize ?? 0;
     });
 
     // Navigate away and back multiple times
@@ -589,10 +589,10 @@ test.describe("Voice Mode v4 - Performance", () => {
 
     // Get final heap size
     const finalMetrics = await page.evaluate(() => {
-      if ((performance as any).memory) {
-        return (performance as any).memory.usedJSHeapSize;
-      }
-      return 0;
+      const perf = performance as Performance & {
+        memory?: { usedJSHeapSize: number };
+      };
+      return perf.memory?.usedJSHeapSize ?? 0;
     });
 
     // Memory should not grow significantly (allow 50% growth)

@@ -1023,6 +1023,72 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
         #
         # Natural Conversation Flow Flags
         # ---------------------------------------------------------------------
+        "voice_queue_overflow_protection": FeatureFlagDefinition(
+            name="backend.voice_queue_overflow_protection",
+            description=(
+                "[Natural Conversation Phase 1] Enable audio queue overflow protection. "
+                "Enforces MAX_QUEUE_DURATION_MS (1000ms) limit on audio queue to prevent "
+                "runaway accumulation. Automatically trims old chunks when queue exceeds limit."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/natural-conversation-flow",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["useTTAudioPlayback"],
+            ),
+        ),
+        "voice_schedule_watchdog": FeatureFlagDefinition(
+            name="backend.voice_schedule_watchdog",
+            description=(
+                "[Natural Conversation Phase 1] Enable scheduling watchdog for audio playback. "
+                "Runs every 500ms to detect stuck schedules and queue overflow. "
+                "Automatically resets schedule if stuck more than 2x lookahead ahead."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/natural-conversation-flow",
+            ),
+            dependencies=FlagDependencies(
+                services=["web-app"],
+                components=["useTTAudioPlayback"],
+                other_flags=["backend.voice_queue_overflow_protection"],
+            ),
+        ),
+        "voice_intelligent_barge_in": FeatureFlagDefinition(
+            name="backend.voice_intelligent_barge_in",
+            description=(
+                "[Natural Conversation Phase 2] Enable intelligent barge-in classification. "
+                "Classifies user interruptions as backchannel, soft_barge, hard_barge, or unclear. "
+                "Supports 12 languages with fuzzy matching for STT error tolerance."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=True,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/natural-conversation-flow",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=[
+                    "useIntelligentBargeIn",
+                    "classifyBargeIn",
+                    "BargeInClassifier",
+                    "ThinkerTalkerWebSocketHandler",
+                ],
+            ),
+        ),
         "voice_instant_barge_in": FeatureFlagDefinition(
             name="backend.voice_instant_barge_in",
             description=(

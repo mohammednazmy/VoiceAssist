@@ -58,9 +58,15 @@ function getOAuthErrorMessage(provider: string, err: unknown): string {
 }
 
 // Initialize API client
+const resolvedApiBase =
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== "undefined"
+    ? window.location.origin
+    : "https://api.voiceassist.example.com");
+
 const apiClient = new VoiceAssistApiClient({
-  baseURL:
-    import.meta.env.VITE_API_URL || "https://api.voiceassist.example.com",
+  // Fallback to current origin so dev/e2e proxied /api requests work without VITE_API_URL
+  baseURL: resolvedApiBase,
   getAccessToken: () => {
     const state = useAuthStore.getState();
     return state.tokens?.accessToken || null;

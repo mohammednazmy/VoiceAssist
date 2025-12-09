@@ -27,11 +27,14 @@ import {
   type TTEmotionResult,
   type TTBackchannelEvent,
   type TTThinkingStateEvent,
+  type TTTranscriptTruncation,
 } from "./useThinkerTalkerSession";
 import { useTTAudioPlayback, type TTPlaybackState } from "./useTTAudioPlayback";
 import { useBackchannelAudio } from "./useBackchannelAudio";
 import { useBargeInPromptAudio } from "./useBargeInPromptAudio";
 import { useSileroVAD } from "./useSileroVAD";
+import { useAECFeedback } from "./useAECFeedback";
+import { useNetworkQuality } from "./useNetworkQuality";
 import { useUnifiedConversationStore } from "../stores/unifiedConversationStore";
 import { useAuthStore } from "../stores/authStore";
 import { useAuth } from "./useAuth";
@@ -65,6 +68,17 @@ export interface TTVoiceModeOptions {
   enableBackchannel?: boolean;
   /** Callback when backchannel plays (Phase 2) */
   onBackchannelPlay?: (phrase: string) => void;
+  /** Phase 6.3: Callback when network quality degrades to poor */
+  onNetworkDegraded?: (info: {
+    quality: string;
+    rttMs: number | null;
+    recommendation: string;
+  }) => void;
+  /** Phase 6.3: Callback when network quality recovers from poor */
+  onNetworkRecovered?: (info: {
+    quality: string;
+    rttMs: number | null;
+  }) => void;
 
   // Silero VAD Feature Flag Options
   // These are controlled via admin panel feature flags (backend.voice_silero_*)
@@ -140,6 +154,10 @@ export interface TTVoiceModeReturn {
   // Transcription
   partialTranscript: string;
   finalTranscript: string;
+  /** Phase 5.1: Streaming AI response text for progressive display */
+  partialAIResponse: string;
+  /** Phase 5.2: Last truncation result from barge-in */
+  lastTruncation: TTTranscriptTruncation | null;
 
   // Tool Calls
   currentToolCalls: TTToolCall[];
@@ -197,6 +215,28 @@ export interface TTVoiceModeReturn {
 
   /** Whether barge-in prompts are ready (pre-cached) */
   isBargeInPromptReady: boolean;
+
+  // Natural Conversation Flow: Phase 1 - Manual Override Controls
+  /** Whether microphone is muted */
+  isMuted: boolean;
+  /** Toggle microphone mute state */
+  toggleMute: () => void;
+  /** Force AI to respond immediately (ends user turn) */
+  forceReply: () => void;
+  /** Immediately stop AI speech (without voice prompt) */
+  stopAI: () => void;
+
+  // Natural Conversation Flow: Phase 3.2 - Continuation Detection
+  /** Whether the system expects the user to continue speaking */
+  isContinuationExpected: boolean;
+
+  // Natural Conversation Flow: Phase 6 - Network-Adaptive Behavior
+  /** Current network quality level */
+  networkQuality: "excellent" | "good" | "fair" | "poor" | "unknown";
+  /** RTT latency in milliseconds (null if unknown) */
+  networkRttMs: number | null;
+  /** Phase 6.3: Whether network is in degraded state (poor quality) */
+  isNetworkDegraded: boolean;
 }
 
 // ============================================================================
@@ -222,16 +262,44 @@ export function useThinkerTalkerVoiceMode(
     sileroVADEnabled = true,
     sileroEchoSuppressionMode = "threshold_boost",
     sileroPositiveThreshold = 0.5,
-    sileroPlaybackThresholdBoost = 0.2,
+    // Lower playback threshold boost for more responsive barge-in
+    // Previous: 0.2 (effective 0.7 during playback) - too conservative
+    // New: 0.1 (effective 0.6 during playback) - better balance
+    sileroPlaybackThresholdBoost = 0.1,
     sileroMinSpeechMs = 150,
-    sileroPlaybackMinSpeechMs = 200,
+    // Lower playback min speech duration for faster barge-in detection
+    // Previous: 200ms - too slow for natural interruption
+    // New: 150ms - same as normal mode for faster response
+    sileroPlaybackMinSpeechMs = 150,
   } = options;
+
+  // Detect automated browser environments (Playwright/WebDriver) to dial down noisy hooks
+  const isAutomation =
+    typeof navigator !== "undefined" &&
+    (navigator as Navigator & { webdriver?: boolean }).webdriver;
+
+  // Allow tests to explicitly enable Silero VAD even in automation
+  // Tests can set localStorage.setItem('voiceassist-force-silero-vad', 'true')
+  const forceSileroVAD =
+    typeof window !== "undefined" &&
+    window.localStorage?.getItem("voiceassist-force-silero-vad") === "true";
+
+  // Allow tests to explicitly enable instant barge-in even in automation
+  // Tests can set localStorage.setItem('voiceassist-force-instant-barge-in', 'true')
+  // This is important for E2E tests that need to test the full barge-in pipeline
+  const forceInstantBargeIn =
+    typeof window !== "undefined" &&
+    window.localStorage?.getItem("voiceassist-force-instant-barge-in") ===
+      "true";
 
   const { apiClient } = useAuth();
 
   const defaultSileroConfig: SileroFlagConfig = useMemo(
     () => ({
-      enabled: sileroVADEnabled,
+      // Disable Silero VAD in automation unless explicitly forced via localStorage
+      // forceSileroVAD completely overrides both feature flag AND automation check
+      // (for E2E tests that need to test full Silero VAD pipeline)
+      enabled: forceSileroVAD || (sileroVADEnabled && !isAutomation),
       echoSuppressionMode: sileroEchoSuppressionMode,
       positiveThreshold: sileroPositiveThreshold,
       playbackThresholdBoost: sileroPlaybackThresholdBoost,
@@ -246,6 +314,8 @@ export function useThinkerTalkerVoiceMode(
       sileroPlaybackThresholdBoost,
       sileroPositiveThreshold,
       sileroVADEnabled,
+      isAutomation,
+      forceSileroVAD,
     ],
   );
 
@@ -263,9 +333,21 @@ export function useThinkerTalkerVoiceMode(
     "frontend",
   );
 
+  // Natural Conversation Flow: Phase 1 - Manual Override Controls
+  const [isMuted, setIsMuted] = useState(false);
+
   // Refs for Silero VAD barge-in (avoid stale closures and debouncing)
   const lastBargeInTimeRef = useRef<number>(0);
   const BARGE_IN_DEBOUNCE_MS = 500; // Prevent multiple rapid barge-ins
+
+  // Ref to track "natural completion" mode - when backend has finished TTS generation
+  // but local audio buffer is still draining. In this state, any speech_started events
+  // from backend VAD are likely speaker echo (the AI's own audio being picked up by mic)
+  // and should NOT trigger barge-in.
+  const naturalCompletionModeRef = useRef<boolean>(false);
+
+  // Ref to track previous pipeline state for detecting speaking -> listening transitions
+  const previousPipelineStateRef = useRef<PipelineState | null>(null);
 
   // Ref for sileroVAD to avoid including entire object in effect dependencies
   // Declared early so it can be used in audioPlayback callbacks
@@ -299,6 +381,12 @@ export function useThinkerTalkerVoiceMode(
   );
 
   useEffect(() => {
+    if (isAutomation) {
+      // In automation, skip network flag fetch to reduce noise and rate limits
+      setSileroFlagsLoaded(true);
+      return;
+    }
+
     let cancelled = false;
     const parseNumberFlag = (
       flag: { value?: unknown; default_value?: unknown } | null,
@@ -469,9 +557,95 @@ export function useThinkerTalkerVoiceMode(
     getAccessToken,
   });
 
+  // Natural Conversation Flow: Phase 4.3 - AEC Feedback Loop
+  // Monitors AEC convergence state and adjusts VAD threshold accordingly
+  const aecFeedback = useAECFeedback({
+    enabled: sileroFlags.enabled, // Only enable when VAD is enabled
+    pollingIntervalMs: 500, // Poll every 500ms
+    convergenceThresholdDb: 10, // ERLE > 10dB indicates good AEC convergence
+    onAECStateChange: (state) => {
+      voiceLog.debug(
+        `[TTVoiceMode] AEC state changed: converged=${state.isConverged}, ` +
+          `erle=${state.erleDb?.toFixed(1) ?? "N/A"}dB`,
+      );
+      // Update Silero VAD's AEC state
+      const vad = sileroVADRef.current;
+      if (vad) {
+        vad.setAECConverged(state.isConverged);
+      }
+    },
+  });
+
+  // Natural Conversation Flow: Phase 6 - Network-Adaptive Behavior
+  // Monitors network quality and adjusts prebuffer size accordingly
+  const networkQuality = useNetworkQuality({
+    enabled: !isAutomation,
+    updateInterval: 10000, // Poll every 10 seconds
+    enablePing: !isAutomation,
+  });
+
+  // Phase 6.3: Graceful degradation state
+  const [isNetworkDegraded, setIsNetworkDegraded] = useState(false);
+  const previousNetworkQualityRef = useRef<string>(
+    networkQuality.metrics.quality,
+  );
+
+  // Phase 6.3: Monitor network quality changes for degradation
+  useEffect(() => {
+    const quality = networkQuality.metrics.quality;
+    const previousQuality = previousNetworkQualityRef.current;
+
+    // Detect degradation: transition to "poor" or sustained poor quality
+    if (quality === "poor" && !isNetworkDegraded) {
+      setIsNetworkDegraded(true);
+      voiceLog.warn(
+        `[TTVoiceMode] Network degraded to poor (RTT: ${networkQuality.metrics.rttMs}ms)`,
+      );
+      // Notify options callback if provided
+      options.onNetworkDegraded?.({
+        quality,
+        rttMs: networkQuality.metrics.rttMs,
+        recommendation:
+          "Consider using headphones or moving to a better network",
+      });
+    }
+
+    // Detect recovery: transition from "poor" to better quality
+    if (
+      isNetworkDegraded &&
+      quality !== "poor" &&
+      quality !== "unknown" &&
+      previousQuality === "poor"
+    ) {
+      setIsNetworkDegraded(false);
+      voiceLog.info(
+        `[TTVoiceMode] Network recovered to ${quality} (RTT: ${networkQuality.metrics.rttMs}ms)`,
+      );
+      options.onNetworkRecovered?.({
+        quality,
+        rttMs: networkQuality.metrics.rttMs,
+      });
+    }
+
+    previousNetworkQualityRef.current = quality;
+  }, [
+    networkQuality.metrics.quality,
+    networkQuality.metrics.rttMs,
+    isNetworkDegraded,
+    options,
+  ]);
+
+  // Feature flag for adaptive prebuffering
+  const { isEnabled: adaptivePrebufferEnabled } = useFeatureFlag(
+    "backend.voice_adaptive_prebuffer",
+  );
+
   // Audio playback hook
   const audioPlayback = useTTAudioPlayback({
     volume,
+    // Natural Conversation Flow: Phase 6 - Network-Adaptive Prebuffering
+    enableAdaptivePrebuffer: adaptivePrebufferEnabled,
+    networkQuality: networkQuality.metrics.quality,
     onPlaybackStart: () => {
       voiceLog.info(
         "[TTVoiceMode] Playback started - enabling echo suppression",
@@ -492,6 +666,9 @@ export function useThinkerTalkerVoiceMode(
         "[TTVoiceMode] Playback ended - disabling echo suppression",
       );
       stopSpeaking();
+      // Clear natural completion mode - audio has finished draining
+      // Now real user speech can trigger barge-in again
+      naturalCompletionModeRef.current = false;
       // Phase 1: Notify VAD that playback ended
       // VAD will handle the mode-specific logic (resume if paused, restore threshold, etc.)
       const vad = sileroVADRef.current;
@@ -504,6 +681,8 @@ export function useThinkerTalkerVoiceMode(
         "[TTVoiceMode] Playback interrupted (barge-in) - disabling echo suppression",
       );
       stopSpeaking();
+      // Clear natural completion mode on barge-in
+      naturalCompletionModeRef.current = false;
       // Phase 1: Notify VAD that playback ended due to barge-in
       const vad = sileroVADRef.current;
       if (vad) {
@@ -593,6 +772,33 @@ export function useThinkerTalkerVoiceMode(
       voiceLog.debug("[TTVoiceMode] Audio chunk received", {
         audioLength: audioBase64.length,
       });
+      // E2E Debug: Track audio chunk flow
+      if (typeof window !== "undefined") {
+        const win = window as Window & {
+          __tt_audio_debug?: Array<{
+            timestamp: number;
+            event: string;
+            length: number;
+            playbackState: string;
+            isPlaying: boolean;
+          }>;
+        };
+        if (!win.__tt_audio_debug) {
+          win.__tt_audio_debug = [];
+        }
+        win.__tt_audio_debug.push({
+          timestamp: Date.now(),
+          event: "onAudioChunk_called",
+          length: audioBase64.length,
+          playbackState: audioPlayback.playbackState,
+          isPlaying: audioPlayback.isPlaying,
+        });
+        console.log("[TTVoiceMode] onAudioChunk called", {
+          audioLength: audioBase64.length,
+          playbackState: audioPlayback.playbackState,
+          isPlaying: audioPlayback.isPlaying,
+        });
+      }
       audioPlayback.queueAudioChunk(audioBase64);
     },
 
@@ -605,27 +811,35 @@ export function useThinkerTalkerVoiceMode(
     onConnectionChange: (status: TTConnectionStatus) => {
       voiceLog.debug(`[TTVoiceMode] Connection status: ${status}`);
 
+      const mapStatus = (): typeof lastVoiceStoreStatusRef.current => {
+        if (status === "connected" || status === "ready") return "connected";
+        if (status === "connecting") return "connecting";
+        if (status === "reconnecting") return "reconnecting";
+        if (
+          status === "error" ||
+          status === "failed" ||
+          status === "mic_permission_denied"
+        ) {
+          return "error";
+        }
+        return "disconnected";
+      };
+
+      const mappedStatus = mapStatus();
+
       // Map T/T status to store status
-      if (status === "connected" || status === "ready") {
-        setVoiceConnectionStatus("connected");
-      } else if (status === "connecting") {
-        setVoiceConnectionStatus("connecting");
-      } else if (status === "reconnecting") {
-        setVoiceConnectionStatus("reconnecting");
-      } else if (
-        status === "error" ||
-        status === "failed" ||
-        status === "mic_permission_denied"
-      ) {
-        setVoiceConnectionStatus("error");
-      } else {
-        setVoiceConnectionStatus("disconnected");
+      if (lastVoiceStoreStatusRef.current !== mappedStatus) {
+        lastVoiceStoreStatusRef.current = mappedStatus;
+        setVoiceConnectionStatus(mappedStatus);
       }
     },
 
     // Handle pipeline state changes
-    onPipelineStateChange: (state: PipelineState) => {
-      voiceLog.debug(`[TTVoiceMode] Pipeline state: ${state}`);
+    onPipelineStateChange: (state: PipelineState, reason?: string) => {
+      const prevState = previousPipelineStateRef.current;
+      voiceLog.debug(
+        `[TTVoiceMode] Pipeline state: ${prevState} -> ${state}, reason: ${reason}`,
+      );
 
       switch (state) {
         case "listening":
@@ -637,17 +851,38 @@ export function useThinkerTalkerVoiceMode(
           // Note: Don't call reset() here - that would cut off audio mid-playback
           // during natural completion. reset() is called in "processing" state instead.
           audioPlayback.endStream();
+
+          // CRITICAL: Enter natural completion mode ONLY when transitioning
+          // from "speaking" to "listening" with reason "natural".
+          // This means backend finished TTS generation and local audio buffer
+          // may still be draining. During this window, speech_started events
+          // from backend VAD are likely speaker echo (the AI's TTS being picked up
+          // by the mic) and should NOT trigger barge-in.
+          // We check prevState === "speaking" to avoid triggering on:
+          // - Initial connection state (prevState is null)
+          // - Other transitions like processing -> listening
+          if (prevState === "speaking" && reason === "natural") {
+            voiceLog.info(
+              "[TTVoiceMode] Natural completion mode: speaking -> listening, allowing audio to drain",
+            );
+            naturalCompletionModeRef.current = true;
+          }
           break;
         case "processing":
           setVoiceState("processing");
           stopListening();
           clearSileroRollbackTimeout();
+          // Clear natural completion mode - new utterance being processed
+          naturalCompletionModeRef.current = false;
           // Reset audio when starting to process new utterance
           // This prevents audio overlap from stale responses
           audioPlayback.reset();
           break;
         case "speaking":
           setVoiceState("responding");
+          // Clear natural completion mode - backend is actively generating TTS
+          // Barge-in during speaking state should work normally
+          naturalCompletionModeRef.current = false;
           break;
         case "cancelled":
         case "idle":
@@ -658,6 +893,9 @@ export function useThinkerTalkerVoiceMode(
           audioPlayback.endStream();
           break;
       }
+
+      // Update previous state ref for next transition
+      previousPipelineStateRef.current = state;
     },
 
     // Handle speech events for barge-in
@@ -666,9 +904,20 @@ export function useThinkerTalkerVoiceMode(
       voiceLog.info("[TTVoiceMode] Backend VAD: User speech detected");
       startListening();
 
+      // CRITICAL: Skip barge-in if in natural completion mode
+      // During natural completion (backend finished TTS, local audio draining),
+      // speech_started events are likely speaker echo (AI's TTS picked up by mic)
+      // NOT real user speech. Wait until audio fully drains before allowing barge-in.
+      if (naturalCompletionModeRef.current) {
+        voiceLog.info(
+          "[TTVoiceMode] Backend VAD ignored: in natural completion mode (likely speaker echo)",
+        );
+        return;
+      }
+
       // CRITICAL: Trigger barge-in if AI is currently speaking
-      // Backend Deepgram VAD is more reliable than local Silero VAD during playback
-      // because it's server-side and not affected by speaker echo
+      // This applies when backend is still generating TTS (speaking state)
+      // not during natural audio drain
       if (audioPlayback.isPlaying) {
         // Debounce to prevent multiple rapid barge-ins
         const now = Date.now();
@@ -716,7 +965,9 @@ export function useThinkerTalkerVoiceMode(
     },
 
     // Enable instant barge-in for reduced latency
-    enableInstantBargeIn: true,
+    // In automation mode, instant barge-in is disabled by default to avoid flakiness
+    // unless explicitly forced via localStorage (for E2E tests that test barge-in)
+    enableInstantBargeIn: forceInstantBargeIn || !isAutomation,
 
     // Handle metrics
     onMetricsUpdate: (metrics: TTVoiceMetrics) => {
@@ -763,6 +1014,11 @@ export function useThinkerTalkerVoiceMode(
     audioPlaybackRef.current = audioPlayback;
     sessionRef.current = session;
   });
+
+  // Track last mapped connection status to avoid redundant store updates
+  const lastVoiceStoreStatusRef = useRef<
+    "connected" | "connecting" | "reconnecting" | "error" | "disconnected"
+  >("disconnected");
 
   // Silero VAD for reliable local voice activity detection
   // Uses neural network model (much more accurate than RMS threshold)
@@ -898,6 +1154,29 @@ export function useThinkerTalkerVoiceMode(
     }
   }, [session.isConnected]);
 
+  // Natural Conversation Flow: Phase 4.3 - Start/stop AEC monitoring based on connection
+  // AEC monitoring helps detect when echo cancellation is still learning the acoustic path
+  // During convergence, VAD threshold is boosted to prevent echo-triggered false positives
+  useEffect(() => {
+    if (isAutomation) {
+      return;
+    }
+
+    // Avoid restarting if the boolean didn't actually change
+    const wasConnected = lastVoiceStoreStatusRef.current === "connected";
+    if (wasConnected === session.isConnected) {
+      return;
+    }
+
+    if (session.isConnected) {
+      voiceLog.debug("[TTVoiceMode] Starting AEC monitoring (connected)");
+      aecFeedback.startMonitoring();
+    } else {
+      voiceLog.debug("[TTVoiceMode] Stopping AEC monitoring (disconnected)");
+      aecFeedback.stopMonitoring();
+    }
+  }, [session.isConnected, aecFeedback]);
+
   // Barge-in handler - combines session signal with audio stop
   // Optionally plays "I'm listening" prompt using ElevenLabs for consistent voice
   const bargeIn = useCallback(
@@ -921,6 +1200,47 @@ export function useThinkerTalkerVoiceMode(
     session.disconnect();
   }, [audioPlayback, session]);
 
+  // Natural Conversation Flow: Phase 1 - Manual Override Controls
+  /**
+   * Toggle microphone mute state.
+   * When muted, VAD stops listening but connection remains active.
+   */
+  const toggleMute = useCallback(() => {
+    const vad = sileroVADRef.current;
+    if (!vad) return;
+
+    if (isMuted) {
+      // Unmute: resume VAD
+      voiceLog.debug("[TTVoiceMode] Unmuting microphone");
+      vad.start();
+      setIsMuted(false);
+    } else {
+      // Mute: pause VAD
+      voiceLog.debug("[TTVoiceMode] Muting microphone");
+      vad.pause();
+      setIsMuted(true);
+    }
+  }, [isMuted]);
+
+  /**
+   * Force AI to respond immediately by ending user turn.
+   * Commits current audio buffer and triggers AI processing.
+   */
+  const forceReply = useCallback(() => {
+    voiceLog.debug("[TTVoiceMode] Force reply triggered");
+    session.commitAudio();
+  }, [session]);
+
+  /**
+   * Immediately stop AI speech without playing a voice prompt.
+   * More aggressive than bargeIn with playVoicePrompt=false.
+   */
+  const stopAI = useCallback(() => {
+    voiceLog.debug("[TTVoiceMode] Stop AI triggered");
+    audioPlayback.stop();
+    session.bargeIn();
+  }, [audioPlayback, session]);
+
   // Enhanced connect that pre-warms audio
   const connect = useCallback(async () => {
     voiceLog.debug("[TTVoiceMode] Connecting with audio pre-warm");
@@ -929,13 +1249,105 @@ export function useThinkerTalkerVoiceMode(
     return session.connect();
   }, [audioPlayback, session]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount only - use ref to avoid re-running on audioPlayback object changes
   useEffect(() => {
     return () => {
       clearSileroRollbackTimeout();
-      audioPlayback.reset();
+      // Use ref to get latest audioPlayback without triggering effect re-runs
+      audioPlaybackRef.current.reset();
     };
-  }, [audioPlayback, clearSileroRollbackTimeout]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clearSileroRollbackTimeout]); // audioPlayback excluded - use ref instead
+
+  // E2E Test Debug Exposure - Exposes combined voice mode state for Playwright tests
+  // This extends window.__voiceDebug with audio playback state that's only available here
+  // (useThinkerTalkerSession doesn't have access to audioPlayback hook)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Create or extend the voiceModeDebug object with audio playback state
+    const voiceModeDebug = {
+      // Audio playback state (not available in useThinkerTalkerSession's __voiceDebug)
+      // NOTE: isPlaying is derived from React state and may be stale
+      // Use getPlaybackDebugState() for accurate real-time ref values
+      isPlaying: audioPlayback.isPlaying,
+      playbackState: audioPlayback.playbackState,
+      ttfaMs: audioPlayback.ttfaMs,
+      queueLength: audioPlayback.queueLength,
+      queueDurationMs: audioPlayback.queueDurationMs,
+
+      // Combined state useful for tests
+      pipelineState: session.pipelineState,
+      isConnected: session.isConnected,
+      isSpeaking: session.isSpeaking,
+      isListening: session.isListening,
+
+      // Barge-in related
+      bargeInCount: session.metrics.bargeInCount,
+      successfulBargeInCount: session.metrics.successfulBargeInCount,
+
+      // Silero VAD state
+      isSileroVADActive: sileroVAD.isListening,
+      sileroVADConfidence: sileroVAD.lastSpeechProbability,
+
+      // Transcripts
+      partialTranscript: session.partialTranscript,
+      partialAIResponse: session.partialAIResponse,
+
+      // Helper to check if AI is actively playing audio (key for barge-in tests)
+      // NOTE: Uses state-derived isPlaying which may be stale. For real-time checks,
+      // use getPlaybackDebugState().isPlayingRef || getPlaybackDebugState().activeSourcesCount > 0
+      get isAIPlayingAudio() {
+        return audioPlayback.isPlaying && session.pipelineState === "speaking";
+      },
+
+      // Real-time playback debug state (reads directly from refs, not React state)
+      // Use this for accurate E2E testing - React state can be stale
+      getPlaybackDebugState: () => audioPlayback.getDebugState(),
+
+      // Convenience: Check if audio is actually playing via refs
+      get isActuallyPlaying() {
+        const debugState = audioPlayback.getDebugState();
+        return debugState.isPlayingRef || debugState.activeSourcesCount > 0;
+      },
+    };
+
+    // Expose for E2E tests
+    (
+      window as unknown as { __voiceModeDebug?: typeof voiceModeDebug }
+    ).__voiceModeDebug = voiceModeDebug;
+
+    // Log for debugging
+    voiceLog.debug("[TTVoiceMode] Debug state exposed", {
+      isPlaying: voiceModeDebug.isPlaying,
+      pipelineState: voiceModeDebug.pipelineState,
+      isAIPlayingAudio: voiceModeDebug.isAIPlayingAudio,
+    });
+
+    return () => {
+      if (typeof window !== "undefined") {
+        delete (
+          window as unknown as { __voiceModeDebug?: typeof voiceModeDebug }
+        ).__voiceModeDebug;
+      }
+    };
+  }, [
+    audioPlayback.isPlaying,
+    audioPlayback.playbackState,
+    audioPlayback.ttfaMs,
+    audioPlayback.queueLength,
+    audioPlayback.queueDurationMs,
+    session.pipelineState,
+    session.isConnected,
+    session.isSpeaking,
+    session.isListening,
+    session.metrics.bargeInCount,
+    session.metrics.successfulBargeInCount,
+    session.partialTranscript,
+    session.partialAIResponse,
+    sileroVAD.isListening,
+    sileroVAD.lastSpeechProbability,
+  ]);
 
   // Memoized return value
   return useMemo(
@@ -957,6 +1369,8 @@ export function useThinkerTalkerVoiceMode(
       // Transcription
       partialTranscript: session.partialTranscript,
       finalTranscript: session.transcript,
+      partialAIResponse: session.partialAIResponse, // Phase 5.1
+      lastTruncation: session.lastTruncation, // Phase 5.2
 
       // Tool Calls
       currentToolCalls: session.currentToolCalls,
@@ -1001,6 +1415,20 @@ export function useThinkerTalkerVoiceMode(
       // Barge-in prompt audio (uses ElevenLabs for consistent voice)
       playBargeInPrompt: bargeInPromptAudio.playPrompt,
       isBargeInPromptReady: bargeInPromptAudio.isReady,
+
+      // Natural Conversation Flow: Phase 1 - Manual Override Controls
+      isMuted,
+      toggleMute,
+      forceReply,
+      stopAI,
+
+      // Natural Conversation Flow: Phase 3.2 - Continuation Detection
+      isContinuationExpected: session.isContinuationExpected,
+
+      // Natural Conversation Flow: Phase 6 - Network-Adaptive Behavior
+      networkQuality: networkQuality.metrics.quality,
+      networkRttMs: networkQuality.metrics.rttMs,
+      isNetworkDegraded, // Phase 6.3
     }),
     [
       session,
@@ -1010,9 +1438,16 @@ export function useThinkerTalkerVoiceMode(
       sileroVAD,
       currentEmotion,
       thinkingSource,
+      isMuted,
       connect,
       disconnect,
       bargeIn,
+      toggleMute,
+      forceReply,
+      stopAI,
+      networkQuality.metrics.quality,
+      networkQuality.metrics.rttMs,
+      isNetworkDegraded,
     ],
   );
 }

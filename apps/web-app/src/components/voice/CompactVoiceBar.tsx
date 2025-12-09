@@ -49,6 +49,10 @@ export interface CompactVoiceBarProps {
   onClose: () => void;
   /** Called when user wants to open settings */
   onOpenSettings: () => void;
+  /** Whether continuation is expected (user pausing but will continue) */
+  isContinuationExpected?: boolean;
+  /** Network quality level for adaptive behavior indicator */
+  networkQuality?: "excellent" | "good" | "fair" | "poor" | "unknown";
 }
 
 // ============================================================================
@@ -290,6 +294,67 @@ function LatencyBadge({ ms }: { ms: number }) {
 }
 
 /**
+ * Network quality indicator badge
+ * Natural Conversation Flow: Phase 6 - Network-Adaptive Behavior
+ */
+function NetworkQualityBadge({
+  quality,
+}: {
+  quality: "excellent" | "good" | "fair" | "poor" | "unknown";
+}) {
+  const getConfig = () => {
+    switch (quality) {
+      case "excellent":
+        return {
+          color: "bg-green-100 text-green-700",
+          icon: "●●●●",
+          label: "Excellent",
+        };
+      case "good":
+        return {
+          color: "bg-green-100 text-green-700",
+          icon: "●●●○",
+          label: "Good",
+        };
+      case "fair":
+        return {
+          color: "bg-yellow-100 text-yellow-700",
+          icon: "●●○○",
+          label: "Fair",
+        };
+      case "poor":
+        return {
+          color: "bg-red-100 text-red-700",
+          icon: "●○○○",
+          label: "Poor",
+        };
+      default:
+        return {
+          color: "bg-neutral-100 text-neutral-500",
+          icon: "○○○○",
+          label: "Unknown",
+        };
+    }
+  };
+
+  const config = getConfig();
+
+  // Only show badge for non-excellent connections
+  if (quality === "excellent" || quality === "unknown") {
+    return null;
+  }
+
+  return (
+    <span
+      className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${config.color}`}
+      title={`Network: ${config.label}`}
+    >
+      {config.icon}
+    </span>
+  );
+}
+
+/**
  * Transcript line with state indicator
  */
 function TranscriptLine({ text, state }: { text: string; state: string }) {
@@ -452,10 +517,18 @@ export function CompactVoiceBar({
   onExpand,
   onClose,
   onOpenSettings,
+  isContinuationExpected = false,
+  networkQuality = "unknown",
 }: CompactVoiceBarProps) {
+  // Natural Conversation Flow: Phase 3.2 - Continuation indicator styles
+  // Pulsing border when system expects user to continue speaking
+  const borderClass = isContinuationExpected
+    ? "border-2 border-amber-400 animate-pulse"
+    : "border-2 border-primary-500";
+
   return (
     <div
-      className="flex items-center gap-3 h-16 px-4 bg-white border-2 border-primary-500 rounded-lg shadow-lg"
+      className={`flex items-center gap-3 h-16 px-4 bg-white rounded-lg shadow-lg ${borderClass}`}
       data-testid="compact-voice-bar"
     >
       {/* Compact mic button (48x48) */}
@@ -491,7 +564,8 @@ export function CompactVoiceBar({
 
       {/* Action buttons */}
       <div className="flex items-center gap-1 flex-shrink-0">
-        {/* Latency badge */}
+        {/* Network quality + Latency badges */}
+        {isConnected && <NetworkQualityBadge quality={networkQuality} />}
         {latencyMs !== null && isConnected && <LatencyBadge ms={latencyMs} />}
 
         <IconButton

@@ -38,7 +38,7 @@ test.describe("Voice Accessibility - ARIA Labels", () => {
     await navigateToVoiceChat(page);
     await waitForVoicePanel(page);
 
-    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
 
     // Check all buttons have accessible names
     const buttons = await voicePanel.locator("button").all();
@@ -75,7 +75,7 @@ test.describe("Voice Accessibility - ARIA Labels", () => {
     await navigateToVoiceChat(page);
     await waitForVoicePanel(page);
 
-    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
 
     // Check toggles have proper role
     const toggles = await voicePanel.locator('[role="switch"], input[type="checkbox"]').all();
@@ -175,7 +175,7 @@ test.describe("Voice Accessibility - Keyboard Navigation", () => {
       await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
 
       // Verify voice panel or action occurred
-      const voicePanel = page.locator(VOICE_SELECTORS.panel);
+      const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
       const panelVisible = await voicePanel.count() > 0;
 
       console.log(`Voice panel activated via keyboard: ${panelVisible}`);
@@ -190,7 +190,7 @@ test.describe("Voice Accessibility - Keyboard Navigation", () => {
     await navigateToVoiceChat(page);
     await waitForVoicePanel(page);
 
-    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
     const buttons = await voicePanel.locator("button").all();
 
     const buttonsWithoutFocusIndicator: string[] = [];
@@ -238,7 +238,8 @@ test.describe("Voice Accessibility - Keyboard Navigation", () => {
     await navigateToVoiceChat(page);
     await waitForVoicePanel(page);
 
-    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    // Use .first() since panel selector may match multiple elements
+    const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
     await voicePanel.focus();
 
     const tabOrder: string[] = [];
@@ -318,7 +319,7 @@ test.describe("Voice Accessibility - Screen Reader Support", () => {
     await navigateToVoiceChat(page);
     await waitForVoicePanel(page);
 
-    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
 
     // Check images
     const images = await voicePanel.locator("img").all();

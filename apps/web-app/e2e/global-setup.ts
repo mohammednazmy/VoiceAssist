@@ -28,8 +28,8 @@ async function globalSetup(config: FullConfig) {
     process.env.E2E_MOCK_AUTH === "true" || !process.env.E2E_AUTH_TOKEN;
 
   if (mockMode) {
-    console.log("[E2E Setup] Starting global setup...");
-    console.log("[E2E Setup] Mock mode - creating mock auth state");
+    console.warn("[E2E Setup] Starting global setup...");
+    console.warn("[E2E Setup] Mock mode - creating mock auth state");
 
     // Create mock auth state that the app will read from localStorage
     // Format must match Zustand persist middleware + AuthTokens interface
@@ -65,12 +65,12 @@ async function globalSetup(config: FullConfig) {
 
     // Save auth state to file
     fs.writeFileSync(AUTH_STATE_PATH, JSON.stringify(mockAuthState, null, 2));
-    console.log("[E2E Setup] Mock auth state saved to", AUTH_STATE_PATH);
+    console.warn("[E2E Setup] Mock auth state saved to", AUTH_STATE_PATH);
     return;
   }
 
   // Real authentication flow
-  console.log("[E2E Setup] Starting real authentication...");
+  console.warn("[E2E Setup] Starting real authentication...");
   const browser = await chromium.launch();
   const page = await browser.newPage();
 
@@ -90,7 +90,7 @@ async function globalSetup(config: FullConfig) {
 
     // Save authenticated state
     await page.context().storageState({ path: AUTH_STATE_PATH });
-    console.log("[E2E Setup] Auth state saved successfully");
+    console.warn("[E2E Setup] Auth state saved successfully");
   } catch (error) {
     console.error("[E2E Setup] Authentication failed:", error);
     throw error;
