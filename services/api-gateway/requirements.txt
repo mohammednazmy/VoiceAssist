@@ -45,7 +45,7 @@ cachetools==5.5.0  # LRU cache for in-memory caching (5.x for google-auth compat
 
 # Observability
 prometheus-client==0.23.1  # Prometheus metrics
-sentry-sdk[fastapi]==2.46.0  # Error tracking and performance monitoring
+sentry-sdk[fastapi]==2.47.0  # Error tracking and performance monitoring
 
 # Utilities
 python-dotenv==1.0.0
