@@ -184,7 +184,7 @@ describe("useRealtimeEvents", () => {
     });
 
     it("should cleanup on unmount", async () => {
-      const { result, unmount } = renderHook(() => useRealtimeEvents());
+      const { unmount } = renderHook(() => useRealtimeEvents());
 
       openConnection();
 
