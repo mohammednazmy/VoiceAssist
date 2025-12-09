@@ -15,6 +15,9 @@ const AUDIO_FIXTURES = {
   conversationStart: path.resolve(__dirname, 'e2e/fixtures/audio/conversation-start.wav'),
   followUp: path.resolve(__dirname, 'e2e/fixtures/audio/follow-up.wav'),
   yes: path.resolve(__dirname, 'e2e/fixtures/audio/yes.wav'),
+  // Two-phase audio: conversation-start (3.19s) + 10s silence + barge-in (2.21s) = 15.4s total
+  // This gives AI time to respond before the "interruption" phase
+  twoPhaseBargeIn: path.resolve(__dirname, 'e2e/fixtures/audio/two-phase-barge-in.wav'),
 };
 
 // Get audio file from environment variable or default to hello
@@ -242,6 +245,33 @@ export default defineConfig({
         },
       },
       timeout: 120 * 1000, // 2 minutes for comprehensive barge-in tests
+    },
+
+    /* Two-Phase Barge-in Tests - Uses structured audio with silence gap
+     * Audio structure: conversation-start (3.19s) + 10s silence + barge-in (2.21s) = 15.4s
+     * Phase 1: User asks a question, AI responds, AI starts playing audio
+     * Phase 2 (after 10s silence): User interrupts with "Stop!" - triggers barge-in
+     * This approach ensures AI has time to generate and play audio before interruption */
+    {
+      name: 'voice-barge-in-two-phase',
+      testDir: './e2e/voice',
+      testMatch: /voice-barge-in-two-phase\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        permissions: ['microphone'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+            `--use-file-for-fake-audio-capture=${AUDIO_FIXTURES.twoPhaseBargeIn}`,
+          ],
+        },
+        storageState: 'e2e/.auth/user.json',
+        contextOptions: {
+          recordVideo: { dir: 'test-results/videos' },
+        },
+      },
+      timeout: 120 * 1000, // 2 minutes for two-phase barge-in tests
     },
 
     /* Voice Smoke Tests - Fast critical path tests for PR validation (~5 min) */
