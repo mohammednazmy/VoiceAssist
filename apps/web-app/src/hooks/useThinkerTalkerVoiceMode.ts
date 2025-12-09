@@ -278,11 +278,18 @@ export function useThinkerTalkerVoiceMode(
     typeof navigator !== "undefined" &&
     (navigator as Navigator & { webdriver?: boolean }).webdriver;
 
+  // Allow tests to explicitly enable Silero VAD even in automation
+  // Tests can set localStorage.setItem('voiceassist-force-silero-vad', 'true')
+  const forceSileroVAD =
+    typeof window !== "undefined" &&
+    window.localStorage?.getItem("voiceassist-force-silero-vad") === "true";
+
   const { apiClient } = useAuth();
 
   const defaultSileroConfig: SileroFlagConfig = useMemo(
     () => ({
-      enabled: sileroVADEnabled && !isAutomation, // disable heavy VAD in automation to avoid flakiness
+      // Disable Silero VAD in automation unless explicitly forced via localStorage
+      enabled: sileroVADEnabled && (!isAutomation || forceSileroVAD),
       echoSuppressionMode: sileroEchoSuppressionMode,
       positiveThreshold: sileroPositiveThreshold,
       playbackThresholdBoost: sileroPlaybackThresholdBoost,
@@ -298,6 +305,7 @@ export function useThinkerTalkerVoiceMode(
       sileroPositiveThreshold,
       sileroVADEnabled,
       isAutomation,
+      forceSileroVAD,
     ],
   );
 
