@@ -1860,9 +1860,12 @@ export function useThinkerTalkerSession(
           }
 
           if (audioBase64) {
-            console.log("[ThinkerTalkerSession] Calling onAudioChunk callback");
+            const now = Date.now();
+            console.log(
+              `[BARGE-IN-DEBUG] Audio chunk received at ${now}, length=${audioBase64.length}`,
+            );
             // Track when audio was received (for barge-in detection fallback)
-            lastAudioChunkTimeRef.current = Date.now();
+            lastAudioChunkTimeRef.current = now;
             options.onAudioChunk?.(audioBase64);
           } else {
             console.log(
@@ -1918,6 +1921,9 @@ export function useThinkerTalkerSession(
           const state = message.state as PipelineState;
           const reason = message.reason as string | undefined;
           const prevState = pipelineStateRef.current;
+          console.log(
+            `[BARGE-IN-DEBUG] Pipeline state change: ${prevState} -> ${state} (reason=${reason})`,
+          );
           setPipelineState(state);
           pipelineStateRef.current = state; // Update ref for closure access
           options.onPipelineStateChange?.(state, reason);
@@ -1944,6 +1950,10 @@ export function useThinkerTalkerSession(
 
         case "pipeline.state": {
           const state = message.state as PipelineState;
+          const prevState = pipelineStateRef.current;
+          console.log(
+            `[BARGE-IN-DEBUG] Pipeline state (backend): ${prevState} -> ${state}`,
+          );
           pipelineStateRef.current = state;
           setPipelineState(state);
           options.onPipelineStateChange?.(state);
@@ -1988,6 +1998,12 @@ export function useThinkerTalkerSession(
             : Infinity;
           const audioRecentlyReceived = recentAudioMs < 3000; // 3 second window
 
+          // Debug logging for E2E test inspection
+          console.log(
+            `[BARGE-IN-DEBUG] Speech detected - pipelineState=${currentPipelineState}, ` +
+              `enableInstantBargeIn=${options.enableInstantBargeIn}, ` +
+              `recentAudioMs=${recentAudioMs}, audioRecentlyReceived=${audioRecentlyReceived}`,
+          );
           voiceLog.debug(
             `[ThinkerTalker] Speech detected - pipelineState=${currentPipelineState}, ` +
               `enableInstantBargeIn=${options.enableInstantBargeIn}, ` +
@@ -1999,7 +2015,16 @@ export function useThinkerTalkerSession(
             options.enableInstantBargeIn &&
             (currentPipelineState === "speaking" || audioRecentlyReceived);
 
+          // Always log barge-in evaluation result for debugging
+          console.log(
+            `[BARGE-IN-DEBUG] shouldBargeIn=${shouldBargeIn} (enableInstantBargeIn=${options.enableInstantBargeIn}, ` +
+              `isSpeaking=${currentPipelineState === "speaking"}, audioRecentlyReceived=${audioRecentlyReceived})`,
+          );
+
           if (shouldBargeIn) {
+            console.log(
+              `[BARGE-IN-DEBUG] TRIGGERING BARGE-IN: fading out audio (state=${currentPipelineState}, recentAudioMs=${recentAudioMs})`,
+            );
             voiceLog.info(
               `[ThinkerTalker] Instant barge-in: fading out AI audio ` +
                 `(state=${currentPipelineState}, recentAudioMs=${recentAudioMs})`,
@@ -3097,6 +3122,75 @@ export function useThinkerTalkerSession(
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options.autoConnect]);
+
+  // Expose debug state to window for E2E tests
+  // This allows Playwright tests to query actual barge-in state
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Track state transitions for debug/test inspection
+    const stateTransitions: string[] = [];
+    const prevStateRef = { current: pipelineState };
+
+    // Create debug object on window
+    const debug = {
+      get pipelineState() {
+        return pipelineState;
+      },
+      get lastAudioChunkTimeMs() {
+        return lastAudioChunkTimeRef.current;
+      },
+      get audioRecentlyReceived() {
+        if (!lastAudioChunkTimeRef.current) return false;
+        return Date.now() - lastAudioChunkTimeRef.current < 3000;
+      },
+      get recentAudioMs() {
+        if (!lastAudioChunkTimeRef.current) return Infinity;
+        return Date.now() - lastAudioChunkTimeRef.current;
+      },
+      get enableInstantBargeIn() {
+        return options.enableInstantBargeIn;
+      },
+      get bargeInCount() {
+        return metrics.bargeInCount;
+      },
+      get successfulBargeInCount() {
+        return metrics.successfulBargeInCount;
+      },
+      get status() {
+        return status;
+      },
+      stateTransitions,
+      isConnected: status === "connected" || status === "ready",
+    };
+
+    // Extend existing window type for TypeScript
+    (window as unknown as { __voiceDebug?: typeof debug }).__voiceDebug = debug;
+
+    // Track state transitions
+    if (prevStateRef.current !== pipelineState) {
+      const transition = `${prevStateRef.current}->${pipelineState}`;
+      stateTransitions.push(transition);
+      prevStateRef.current = pipelineState;
+      voiceLog.debug(
+        `[ThinkerTalker] Pipeline state transition: ${transition}`,
+      );
+    }
+
+    return () => {
+      // Cleanup on unmount
+      if (typeof window !== "undefined") {
+        delete (window as unknown as { __voiceDebug?: typeof debug })
+          .__voiceDebug;
+      }
+    };
+  }, [
+    pipelineState,
+    status,
+    metrics.bargeInCount,
+    metrics.successfulBargeInCount,
+    options.enableInstantBargeIn,
+  ]);
 
   // Handle tab visibility changes
   useEffect(() => {

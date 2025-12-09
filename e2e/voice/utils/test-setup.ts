@@ -1010,6 +1010,212 @@ export function generateDebugReport(
   return lines.join("\n");
 }
 
+// ============================================================================
+// Barge-In Verification Helpers
+// ============================================================================
+
+/**
+ * Voice debug state interface matching window.__voiceDebug
+ */
+export interface VoiceDebugState {
+  pipelineState: string;
+  lastAudioChunkTimeMs: number | null;
+  audioRecentlyReceived: boolean;
+  recentAudioMs: number;
+  enableInstantBargeIn: boolean;
+  bargeInCount: number;
+  successfulBargeInCount: number;
+  status: string;
+  stateTransitions: string[];
+  isConnected: boolean;
+}
+
+/**
+ * Get the voice debug state from window.__voiceDebug
+ * This requires the frontend to have the debug state exposure enabled
+ */
+export async function getVoiceDebugState(page: Page): Promise<VoiceDebugState | null> {
+  return page.evaluate(() => {
+    const debug = (window as unknown as { __voiceDebug?: VoiceDebugState }).__voiceDebug;
+    if (!debug) return null;
+
+    // Create a snapshot of the debug state (getters won't serialize)
+    return {
+      pipelineState: debug.pipelineState,
+      lastAudioChunkTimeMs: debug.lastAudioChunkTimeMs,
+      audioRecentlyReceived: debug.audioRecentlyReceived,
+      recentAudioMs: debug.recentAudioMs,
+      enableInstantBargeIn: debug.enableInstantBargeIn,
+      bargeInCount: debug.bargeInCount,
+      successfulBargeInCount: debug.successfulBargeInCount,
+      status: debug.status,
+      stateTransitions: [...debug.stateTransitions],
+      isConnected: debug.isConnected,
+    };
+  });
+}
+
+/**
+ * Wait for AI to be speaking with actual audio chunks being received
+ * This is more reliable than UI-based detection for barge-in testing
+ *
+ * @param page - The Playwright page instance
+ * @param timeout - Maximum time to wait (default: 30000ms)
+ * @returns Object with speaking status and debug info
+ */
+export async function waitForAISpeakingWithAudioChunks(
+  page: Page,
+  timeout = 30000
+): Promise<{
+  success: boolean;
+  pipelineState: string;
+  audioChunksReceived: boolean;
+  debugState: VoiceDebugState | null;
+}> {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeout) {
+    const debugState = await getVoiceDebugState(page);
+
+    if (debugState) {
+      const isSpeaking = debugState.pipelineState === "speaking";
+      const hasAudioChunks = debugState.audioRecentlyReceived;
+
+      console.log(
+        `[BARGE-IN-TEST] Checking AI speaking: pipelineState=${debugState.pipelineState}, ` +
+          `audioRecentlyReceived=${hasAudioChunks}, recentAudioMs=${debugState.recentAudioMs}`
+      );
+
+      // AI is speaking when pipeline state is "speaking" OR audio was recently received
+      if (isSpeaking || hasAudioChunks) {
+        return {
+          success: true,
+          pipelineState: debugState.pipelineState,
+          audioChunksReceived: hasAudioChunks,
+          debugState,
+        };
+      }
+    }
+
+    await page.waitForTimeout(500);
+  }
+
+  const finalState = await getVoiceDebugState(page);
+  return {
+    success: false,
+    pipelineState: finalState?.pipelineState || "unknown",
+    audioChunksReceived: finalState?.audioRecentlyReceived || false,
+    debugState: finalState,
+  };
+}
+
+/**
+ * Verify that barge-in actually occurred
+ * Checks for:
+ * 1. bargeInCount increased
+ * 2. Pipeline transitioned from speaking to listening
+ *
+ * @param page - The Playwright page instance
+ * @param initialBargeInCount - The barge-in count before the test action
+ * @param timeout - Maximum time to wait for barge-in to complete
+ */
+export async function verifyBargeInOccurred(
+  page: Page,
+  initialBargeInCount: number,
+  timeout = 10000
+): Promise<{
+  triggered: boolean;
+  bargeInCountIncreased: boolean;
+  pipelineTransitioned: boolean;
+  finalState: VoiceDebugState | null;
+}> {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeout) {
+    const debugState = await getVoiceDebugState(page);
+
+    if (debugState) {
+      const bargeInCountIncreased = debugState.bargeInCount > initialBargeInCount;
+      const pipelineTransitioned = debugState.stateTransitions.some(
+        (t) => t === "speaking->listening" || t === "speaking->idle"
+      );
+
+      console.log(
+        `[BARGE-IN-TEST] Verifying barge-in: bargeInCount=${debugState.bargeInCount} ` +
+          `(was ${initialBargeInCount}), transitions=${debugState.stateTransitions.join(", ")}`
+      );
+
+      if (bargeInCountIncreased || pipelineTransitioned) {
+        return {
+          triggered: true,
+          bargeInCountIncreased,
+          pipelineTransitioned,
+          finalState: debugState,
+        };
+      }
+    }
+
+    await page.waitForTimeout(200);
+  }
+
+  const finalState = await getVoiceDebugState(page);
+  return {
+    triggered: false,
+    bargeInCountIncreased: false,
+    pipelineTransitioned: false,
+    finalState,
+  };
+}
+
+/**
+ * Capture barge-in related console logs for debugging
+ */
+export interface BargeInConsoleState {
+  speechDetectedLogs: string[];
+  bargeInTriggeredLogs: string[];
+  audioChunkLogs: string[];
+  pipelineStateLogs: string[];
+  allBargeInLogs: string[];
+}
+
+/**
+ * Set up console log capture for barge-in debugging
+ * Returns an object that accumulates barge-in related logs
+ */
+export function setupBargeInConsoleCapture(page: Page): BargeInConsoleState {
+  const state: BargeInConsoleState = {
+    speechDetectedLogs: [],
+    bargeInTriggeredLogs: [],
+    audioChunkLogs: [],
+    pipelineStateLogs: [],
+    allBargeInLogs: [],
+  };
+
+  page.on("console", (msg) => {
+    const text = msg.text();
+
+    // Only capture BARGE-IN-DEBUG logs
+    if (text.includes("[BARGE-IN-DEBUG]")) {
+      state.allBargeInLogs.push(text);
+
+      if (text.includes("Speech detected")) {
+        state.speechDetectedLogs.push(text);
+      }
+      if (text.includes("TRIGGERING BARGE-IN") || text.includes("shouldBargeIn=true")) {
+        state.bargeInTriggeredLogs.push(text);
+      }
+      if (text.includes("Audio chunk received")) {
+        state.audioChunkLogs.push(text);
+      }
+      if (text.includes("Pipeline state")) {
+        state.pipelineStateLogs.push(text);
+      }
+    }
+  });
+
+  return state;
+}
+
 /**
  * Attach debug report to test info for Playwright
  */
