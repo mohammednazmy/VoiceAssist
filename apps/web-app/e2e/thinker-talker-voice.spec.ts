@@ -354,8 +354,7 @@ async function openVoicePanel(page: Page): Promise<boolean> {
     });
   } catch {
     // Panel may not have appeared - let the test handle this
-    // eslint-disable-next-line no-console
-    console.log("[openVoicePanel] Panel did not appear after clicking button");
+    console.warn("[openVoicePanel] Panel did not appear after clicking button");
   }
   return true;
 }
@@ -400,17 +399,17 @@ test.describe("Thinker/Talker Voice Mode UI", () => {
     // Debug: Log all requests
     page.on("request", (request) => {
       if (request.url().includes("/api/")) {
-        console.log(`[Request] ${request.method()} ${request.url()}`);
+        console.warn(`[Request] ${request.method()} ${request.url()}`);
       }
     });
     page.on("response", (response) => {
       if (response.url().includes("/api/")) {
-        console.log(`[Response] ${response.status()} ${response.url()}`);
+        console.warn(`[Response] ${response.status()} ${response.url()}`);
       }
     });
     page.on("console", (msg) => {
       if (msg.type() === "error") {
-        console.log(`[Console Error] ${msg.text()}`);
+        console.warn(`[Console Error] ${msg.text()}`);
       }
     });
 
@@ -421,7 +420,7 @@ test.describe("Thinker/Talker Voice Mode UI", () => {
       // Send connected message to client
       ws.onMessage((message) => {
         // Forward messages to server if needed, or just acknowledge
-        console.log(`[WS Mock] Received: ${message}`);
+        console.warn(`[WS Mock] Received: ${message}`);
       });
       // Send initial connected message
       setTimeout(() => {
@@ -444,7 +443,7 @@ test.describe("Thinker/Talker Voice Mode UI", () => {
     } catch {
       // If we're at login page, the auth mock didn't work - try to check
       const currentUrl = page.url();
-      console.log(`[Test Setup] Current URL after navigation: ${currentUrl}`);
+      console.warn(`[Test Setup] Current URL after navigation: ${currentUrl}`);
       if (currentUrl.includes("/login")) {
         throw new Error("Auth mock failed - redirected to login page");
       }
@@ -488,7 +487,7 @@ test.describe("Thinker/Talker Voice Mode UI", () => {
       await expect(voicePanel).toBeVisible({ timeout: 5000 });
     } else {
       // Button is disabled due to WebSocket not connected - this is expected in test env
-      console.log(
+      console.warn(
         "[Test] Voice button disabled (WebSocket not connected) - this is expected in E2E",
       );
       // Verify the disabled state is due to connection, not a bug
@@ -554,7 +553,7 @@ test.describe("Thinker/Talker Voice Mode UI", () => {
       }
     } else {
       // Button disabled - test passes as the component is correctly wired
-      console.log(
+      console.warn(
         "[Test] Voice button disabled - close test skipped (WebSocket not connected)",
       );
     }
@@ -790,10 +789,10 @@ test.describe("Thinker/Talker Integration", () => {
 
     // In test env without WebSocket, both may be disabled - that's OK
     // What matters is they coexist on the same page
-    console.log(
+    console.warn(
       `[Test] Voice button disabled: ${voiceDisabled}, Chat input disabled: ${chatDisabled}`,
     );
-    console.log(
+    console.warn(
       "[Test] Both elements present - voice and chat coexist successfully",
     );
   });

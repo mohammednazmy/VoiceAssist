@@ -312,6 +312,126 @@ voice_barge_in_total = _safe_counter(
     ["outcome"],  # outcome: successful, ignored, error
 )
 
+# ====================================================================
+# Barge-In Classification & SLO Metrics (Phase 7.2 - Natural Conversation Flow)
+# ====================================================================
+
+# Barge-in classification breakdown
+voice_barge_in_classification_total = _safe_counter(
+    "voiceassist_voice_barge_in_classification_total",
+    "Barge-in events by classification type",
+    ["classification", "language"],  # classification: backchannel, soft_barge, hard_barge, unclear
+)
+
+# Barge-in mute latency (SLO: P95 <50ms, P99 <100ms)
+voice_barge_in_mute_latency_seconds = _safe_histogram(
+    "voiceassist_voice_barge_in_mute_latency_seconds",
+    "Time from speech onset to audio muted (barge-in latency)",
+    ["source"],  # source: frontend, backend, hybrid
+    buckets=[0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.1, 0.15, 0.2, 0.3],  # 10ms-300ms
+)
+
+# Barge-in classification latency
+voice_barge_in_classification_latency_seconds = _safe_histogram(
+    "voiceassist_voice_barge_in_classification_latency_seconds",
+    "Time to classify barge-in type after detection",
+    buckets=[0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.3, 0.5],  # 10ms-500ms
+)
+
+# False positive/misfire tracking (SLO: <2% misfire rate)
+voice_barge_in_misfires_total = _safe_counter(
+    "voiceassist_voice_barge_in_misfires_total",
+    "False positive barge-in triggers (echo, noise, etc.)",
+    ["cause"],  # cause: echo, noise, no_transcript, timeout
+)
+
+# Backchannel detection accuracy
+voice_backchannel_total = _safe_counter(
+    "voiceassist_voice_backchannel_total",
+    "Backchannel phrases detected",
+    ["language", "phrase_type"],  # phrase_type: matched, fuzzy_matched
+)
+
+# Soft barge tracking
+voice_soft_barge_total = _safe_counter(
+    "voiceassist_voice_soft_barge_total",
+    "Soft barge events (AI paused)",
+    ["outcome"],  # outcome: resumed, converted_to_hard, timeout
+)
+
+# Hard barge tracking with context
+voice_hard_barge_total = _safe_counter(
+    "voiceassist_voice_hard_barge_total",
+    "Hard barge events (AI stopped)",
+    ["interrupted_at"],  # interrupted_at: early (<25%), mid (25-75%), late (>75%)
+)
+
+# Continuation detection metrics
+voice_continuation_detected_total = _safe_counter(
+    "voiceassist_voice_continuation_detected_total",
+    "Continuation detection triggers",
+    ["confidence_level"],  # confidence_level: low (<0.5), medium (0.5-0.8), high (>0.8)
+)
+
+# Utterance aggregation metrics
+voice_utterance_aggregation_total = _safe_counter(
+    "voiceassist_voice_utterance_aggregation_total",
+    "Multi-segment utterance aggregations",
+    ["segment_count"],  # segment_count: 2, 3, 4+
+)
+
+# Queue overflow tracking (SLO: <0.5% of turns)
+voice_queue_overflow_total = _safe_counter(
+    "voiceassist_voice_queue_overflow_total",
+    "Audio queue overflow events",
+    ["type"],  # type: trim, reset, dropped
+)
+
+# Queue depth gauge
+voice_queue_depth_chunks = _safe_gauge(
+    "voiceassist_voice_queue_depth_chunks",
+    "Current audio queue depth in chunks",
+)
+
+voice_queue_duration_ms = _safe_gauge(
+    "voiceassist_voice_queue_duration_ms",
+    "Current audio queue duration in milliseconds",
+)
+
+# VAD disagreement metrics
+voice_vad_disagreement_total = _safe_counter(
+    "voiceassist_voice_vad_disagreement_total",
+    "VAD disagreement events (frontend vs backend)",
+    ["resolution"],  # resolution: frontend_wins, backend_wins, both_agreed, timeout
+)
+
+voice_vad_disagreement_resolution_latency_seconds = _safe_histogram(
+    "voiceassist_voice_vad_disagreement_resolution_latency_seconds",
+    "Time to resolve VAD disagreement (SLO: <200ms)",
+    buckets=[0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 1.0],
+)
+
+# Hybrid VAD fusion metrics
+voice_hybrid_vad_decision_total = _safe_counter(
+    "voiceassist_voice_hybrid_vad_decision_total",
+    "Hybrid VAD fusion decisions",
+    ["source", "silero_fresh", "deepgram_fresh"],  # source: silero_only, deepgram_only, hybrid
+)
+
+# Perceived response latency (SLO: P95 <250ms)
+voice_perceived_latency_seconds = _safe_histogram(
+    "voiceassist_voice_perceived_latency_seconds",
+    "User-perceived response latency (speech end to first audio)",
+    buckets=[0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 1.0, 1.5, 2.0],
+)
+
+# Transcript truncation metrics
+voice_transcript_truncation_total = _safe_counter(
+    "voiceassist_voice_transcript_truncation_total",
+    "Transcript truncation events on barge-in",
+    ["accuracy"],  # accuracy: word_boundary, mid_word, estimated
+)
+
 # Audio chunk metrics
 voice_audio_chunks_total = _safe_counter(
     "voiceassist_voice_audio_chunks_total",

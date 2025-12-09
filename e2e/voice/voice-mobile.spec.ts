@@ -143,7 +143,7 @@ mobileTest.describe("Voice Mobile - iPhone 13", () => {
     }
 
     // Check voice panel layout
-    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
 
     if (await voicePanel.count() > 0) {
       // Get panel dimensions
@@ -192,7 +192,7 @@ mobileTest.describe("Voice Mobile - iPhone 13", () => {
     }
 
     // Check all buttons in voice panel
-    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
     const buttons = await voicePanel.locator("button").all();
 
     console.log(`Found ${buttons.length} buttons in voice panel`);
@@ -244,7 +244,7 @@ mobileTest.describe("Voice Mobile - iPhone 13", () => {
       await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
     }
 
-    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
     const portraitBox = await voicePanel.boundingBox();
 
     // Rotate to landscape
@@ -349,7 +349,7 @@ mobileTest.describe("Voice Mobile - Pixel 5", () => {
       await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
     }
 
-    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
     const initialPanelBox = await voicePanel.boundingBox();
 
     // Find scrollable chat area
@@ -444,7 +444,7 @@ mobileTest.describe("Voice Mobile - Common Tests", () => {
       await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
     }
 
-    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
     const panelVisible = await voicePanel.count() > 0;
 
     if (panelVisible) {
@@ -481,7 +481,7 @@ mobileTest.describe("Voice Mobile - Common Tests", () => {
       await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
     }
 
-    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voicePanel = page.locator(VOICE_SELECTORS.panel).first();
 
     if (await voicePanel.count() > 0) {
       const panelBox = await voicePanel.boundingBox();

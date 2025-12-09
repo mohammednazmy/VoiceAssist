@@ -1,0 +1,612 @@
+name: Voice Mode E2E Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feat/silero-*"
+      - "feat/voice-*"
+    paths:
+      - "apps/web-app/src/hooks/useThinkerTalker**"
+      - "apps/web-app/src/hooks/useSilero**"
+      - "apps/web-app/src/hooks/useTTAudio**"
+      - "apps/web-app/src/hooks/useIntelligentBargeIn**"
+      - "apps/web-app/src/components/VoiceMode/**"
+      - "e2e/voice/**"
+      - "packages/types/src/featureFlags.ts"
+      - ".github/workflows/voice-e2e.yml"
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - "apps/web-app/src/hooks/useThinkerTalker**"
+      - "apps/web-app/src/hooks/useSilero**"
+      - "apps/web-app/src/hooks/useTTAudio**"
+      - "apps/web-app/src/hooks/useIntelligentBargeIn**"
+      - "apps/web-app/src/components/VoiceMode/**"
+      - "e2e/voice/**"
+      - "packages/types/src/featureFlags.ts"
+      - ".github/workflows/voice-e2e.yml"
+  schedule:
+    # Nightly at 2 AM UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: "Test type to run"
+        required: true
+        default: "smoke"
+        type: choice
+        options:
+          - smoke
+          - nightly
+          - debug
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "10.23.0"
+
+jobs:
+  # ======================================
+  # Voice Smoke Tests (PR Validation)
+  # ======================================
+  voice-smoke:
+    name: Voice Smoke Tests
+    if: github.event_name == 'pull_request' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'smoke')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check required voice E2E secrets
+        id: check-secrets
+        env:
+          DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          E2E_API_URL: ${{ secrets.E2E_API_URL }}
+        run: |
+          missing=0
+          for var in DEEPGRAM_API_KEY ELEVENLABS_API_KEY OPENAI_API_KEY E2E_API_URL; do
+            if [ -z "${!var}" ]; then
+              echo "Missing $var" >> $GITHUB_STEP_SUMMARY
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "Skipping voice smoke - required secrets missing" >> $GITHUB_STEP_SUMMARY
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip voice smoke (missing secrets)
+        if: steps.check-secrets.outputs.skip == 'true'
+        run: echo "Skipping voice smoke - required secrets missing"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Install audio tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Validate audio fixtures
+        run: |
+          if [ -f "e2e/fixtures/audio/validate-fixtures.sh" ]; then
+            chmod +x e2e/fixtures/audio/validate-fixtures.sh
+            bash e2e/fixtures/audio/validate-fixtures.sh --generate || true
+          fi
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Build shared packages
+        run: |
+          pnpm --filter @voiceassist/ui build
+          pnpm --filter @voiceassist/api-client build
+          pnpm --filter @voiceassist/utils build
+          pnpm --filter @voiceassist/telemetry build
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Build frontend
+        run: pnpm --filter voiceassist-web build
+        env:
+          VITE_API_URL: ${{ secrets.E2E_API_URL || 'http://localhost:8000' }}
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Run voice smoke tests
+        run: |
+          pnpm exec playwright test \
+            --project=voice-smoke \
+            --reporter=html,json,junit
+        env:
+          LIVE_REALTIME_E2E: "1"
+          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL || 'http://localhost:5173' }}
+          CLIENT_GATEWAY_URL: ${{ secrets.E2E_API_URL || 'http://localhost:8000' }}
+          # API keys for live tests (from repository secrets)
+          DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Upload test results
+        if: always() && steps.check-secrets.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-smoke-results-${{ github.run_number }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 14
+
+      - name: Upload voice metrics
+        if: always() && steps.check-secrets.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-smoke-metrics-${{ github.run_number }}
+          path: test-results/voice-metrics/
+          retention-days: 30
+
+  # ======================================
+  # Voice Barge-in Tests (PR Validation)
+  # ======================================
+  voice-barge-in:
+    name: Voice Barge-in Tests
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check required voice E2E secrets
+        id: check-secrets
+        env:
+          DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          E2E_API_URL: ${{ secrets.E2E_API_URL }}
+        run: |
+          missing=0
+          for var in DEEPGRAM_API_KEY ELEVENLABS_API_KEY OPENAI_API_KEY E2E_API_URL; do
+            if [ -z "${!var}" ]; then
+              echo "Missing $var" >> $GITHUB_STEP_SUMMARY
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "Skipping voice barge-in - required secrets missing" >> $GITHUB_STEP_SUMMARY
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip voice barge-in (missing secrets)
+        if: steps.check-secrets.outputs.skip == 'true'
+        run: echo "Skipping voice barge-in - required secrets missing"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Build shared packages
+        run: |
+          pnpm --filter @voiceassist/ui build
+          pnpm --filter @voiceassist/api-client build
+          pnpm --filter @voiceassist/utils build
+          pnpm --filter @voiceassist/telemetry build
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Build frontend
+        run: pnpm --filter voiceassist-web build
+        env:
+          VITE_API_URL: ${{ secrets.E2E_API_URL || 'http://localhost:8000' }}
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Run barge-in tests
+        run: |
+          pnpm exec playwright test \
+            --project=voice-barge-in \
+            --reporter=html,json,junit
+        env:
+          LIVE_REALTIME_E2E: "1"
+          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL || 'http://localhost:5173' }}
+          CLIENT_GATEWAY_URL: ${{ secrets.E2E_API_URL || 'http://localhost:8000' }}
+          DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Upload test results
+        if: always() && steps.check-secrets.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-barge-in-results-${{ github.run_number }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 14
+
+  # ======================================
+  # Voice Nightly Matrix (Comprehensive)
+  # ======================================
+  voice-nightly:
+    name: Voice Nightly Matrix
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'nightly')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check required voice E2E secrets
+        id: check-secrets
+        env:
+          DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          E2E_API_URL: ${{ secrets.E2E_API_URL }}
+        run: |
+          missing=0
+          for var in DEEPGRAM_API_KEY ELEVENLABS_API_KEY OPENAI_API_KEY E2E_API_URL; do
+            if [ -z "${!var}" ]; then
+              echo "Missing $var" >> $GITHUB_STEP_SUMMARY
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "Skipping voice nightly - required secrets missing" >> $GITHUB_STEP_SUMMARY
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip voice nightly (missing secrets)
+        if: steps.check-secrets.outputs.skip == 'true'
+        run: echo "Skipping voice nightly - required secrets missing"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Install audio tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Validate and generate audio fixtures
+        run: |
+          if [ -f "e2e/fixtures/audio/validate-fixtures.sh" ]; then
+            chmod +x e2e/fixtures/audio/validate-fixtures.sh
+            bash e2e/fixtures/audio/validate-fixtures.sh --generate || true
+          fi
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Build shared packages
+        run: |
+          pnpm --filter @voiceassist/ui build
+          pnpm --filter @voiceassist/api-client build
+          pnpm --filter @voiceassist/utils build
+          pnpm --filter @voiceassist/telemetry build
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Build frontend
+        run: pnpm --filter voiceassist-web build
+        env:
+          VITE_API_URL: ${{ secrets.E2E_API_URL || 'http://localhost:8000' }}
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Run nightly flag matrix tests
+        run: |
+          pnpm exec playwright test \
+            --project=voice-nightly \
+            --reporter=html,json,junit
+        env:
+          LIVE_REALTIME_E2E: "1"
+          VOICE_MATRIX_NIGHTLY: "1"
+          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL || 'http://localhost:5173' }}
+          CLIENT_GATEWAY_URL: ${{ secrets.E2E_API_URL || 'http://localhost:8000' }}
+          DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Run scenario tests
+        run: |
+          pnpm exec playwright test \
+            --project=voice-scenarios \
+            --reporter=html,json,junit
+        env:
+          LIVE_REALTIME_E2E: "1"
+          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL || 'http://localhost:5173' }}
+          CLIENT_GATEWAY_URL: ${{ secrets.E2E_API_URL || 'http://localhost:8000' }}
+          DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Run real audio tests
+        run: |
+          pnpm exec playwright test \
+            --project=voice-real-audio \
+            --reporter=html,json,junit
+        env:
+          LIVE_REALTIME_E2E: "1"
+          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL || 'http://localhost:5173' }}
+          CLIENT_GATEWAY_URL: ${{ secrets.E2E_API_URL || 'http://localhost:8000' }}
+          DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        if: steps.check-secrets.outputs.skip != 'true'
+
+      - name: Generate matrix report
+        if: always() && steps.check-secrets.outputs.skip != 'true'
+        run: |
+          echo "# Voice Mode Nightly Test Report" > voice-matrix-report.md
+          echo "" >> voice-matrix-report.md
+          echo "**Run Date**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> voice-matrix-report.md
+          echo "**Branch**: ${{ github.ref_name }}" >> voice-matrix-report.md
+          echo "**Commit**: ${{ github.sha }}" >> voice-matrix-report.md
+          echo "" >> voice-matrix-report.md
+
+          if [ -f "test-results/results.json" ]; then
+            echo "## Test Results Summary" >> voice-matrix-report.md
+            echo "" >> voice-matrix-report.md
+            node -e "
+              const results = require('./test-results/results.json');
+              const total = results.stats?.expected || 0;
+              const passed = results.stats?.passed || 0;
+              const failed = results.stats?.failed || 0;
+              const skipped = results.stats?.skipped || 0;
+              console.log('| Metric | Value |');
+              console.log('|--------|-------|');
+              console.log('| Total Tests | ' + total + ' |');
+              console.log('| Passed | ' + passed + ' |');
+              console.log('| Failed | ' + failed + ' |');
+              console.log('| Skipped | ' + skipped + ' |');
+              console.log('| Pass Rate | ' + (total > 0 ? ((passed/total)*100).toFixed(1) : 0) + '% |');
+            " >> voice-matrix-report.md || echo "Could not parse results.json" >> voice-matrix-report.md
+          fi
+
+          echo "" >> voice-matrix-report.md
+          echo "## Metrics Summary" >> voice-matrix-report.md
+          echo "" >> voice-matrix-report.md
+
+          if [ -d "test-results/voice-metrics" ]; then
+            echo "Voice metrics collected. See artifacts for details." >> voice-matrix-report.md
+          else
+            echo "No voice metrics collected." >> voice-matrix-report.md
+          fi
+
+      - name: Upload test results
+        if: always() && steps.check-secrets.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-nightly-results-${{ github.run_number }}
+          path: |
+            test-results/
+            playwright-report/
+            voice-matrix-report.md
+          retention-days: 30
+
+      - name: Upload voice metrics
+        if: always() && steps.check-secrets.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-nightly-metrics-${{ github.run_number }}
+          path: test-results/voice-metrics/
+          retention-days: 60
+
+  # ======================================
+  # Voice Debug Tests (Manual Trigger)
+  # ======================================
+  voice-debug:
+    name: Voice Debug Investigation
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'debug'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Install audio tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Build frontend
+        run: pnpm --filter voiceassist-web build
+        env:
+          VITE_API_URL: ${{ secrets.E2E_API_URL || 'http://localhost:8000' }}
+
+      - name: Run debug tests
+        run: |
+          pnpm exec playwright test \
+            --project=voice-debug \
+            --reporter=html,json,junit \
+            --trace=on
+        env:
+          LIVE_REALTIME_E2E: "1"
+          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL || 'http://localhost:5173' }}
+          CLIENT_GATEWAY_URL: ${{ secrets.E2E_API_URL || 'http://localhost:8000' }}
+          DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Upload debug results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-debug-results-${{ github.run_number }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 30
+
+  # ======================================
+  # Summary Job
+  # ======================================
+  voice-summary:
+    name: Voice E2E Summary
+    runs-on: ubuntu-latest
+    needs: [voice-smoke, voice-barge-in]
+    if: always() && (github.event_name == 'pull_request' || github.event_name == 'push')
+
+    steps:
+      - name: Check test results
+        run: |
+          echo "Voice E2E Test Results:"
+          echo "========================"
+          echo "Smoke Tests: ${{ needs.voice-smoke.result }}"
+          echo "Barge-in Tests: ${{ needs.voice-barge-in.result }}"
+
+          if [ "${{ needs.voice-smoke.result }}" == "failure" ] || [ "${{ needs.voice-barge-in.result }}" == "failure" ]; then
+            echo "❌ Voice E2E tests failed!"
+            exit 1
+          fi
+
+          echo "✅ Voice E2E tests passed!"
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Voice E2E Test Results');
+            });
+
+            const smokeResult = '${{ needs.voice-smoke.result }}';
+            const bargeInResult = '${{ needs.voice-barge-in.result }}';
+
+            const output = `## 🎤 Voice E2E Test Results
+
+            | Test Suite | Status |
+            |------------|--------|
+            | Voice Smoke Tests | ${smokeResult === 'success' ? '✅ Passed' : smokeResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'} |
+            | Barge-in Tests | ${bargeInResult === 'success' ? '✅ Passed' : bargeInResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'} |
+
+            **Overall Status**: ${(smokeResult === 'success' || smokeResult === 'skipped') && (bargeInResult === 'success' || bargeInResult === 'skipped') ? '✅ PASSED' : '❌ FAILED'}
+
+            <details>
+            <summary>📊 Quality Thresholds</summary>
+
+            | Metric | Threshold |
+            |--------|-----------|
+            | Max Queue Overflows | 0 |
+            | Max Schedule Resets | 1 |
+            | Max False Barge-ins | 1 |
+            | Max Response Latency | 3500ms |
+            | Max Barge-in Latency | 800ms |
+            | VAD Threshold (base) | 0.5 |
+            | VAD Playback Boost | 0.2 |
+
+            </details>
+
+            [View full test report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              });
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              });
+            }

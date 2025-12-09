@@ -900,6 +900,71 @@ export const FEATURE_FLAGS = {
     // -------------------------------------------------------------------------
     // Natural Conversation Flow Flags - Phase: Natural Conversation
     // -------------------------------------------------------------------------
+    voice_queue_overflow_protection: {
+      name: "backend.voice_queue_overflow_protection",
+      description:
+        "[Natural Conversation Phase 1] Enable audio queue overflow protection. " +
+        "Enforces MAX_QUEUE_DURATION_MS (1000ms) limit on audio queue to prevent " +
+        "runaway accumulation. Automatically trims old chunks when queue exceeds limit.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useTTAudioPlayback"],
+        otherFlags: [],
+      },
+    },
+    voice_schedule_watchdog: {
+      name: "backend.voice_schedule_watchdog",
+      description:
+        "[Natural Conversation Phase 1] Enable scheduling watchdog for audio playback. " +
+        "Runs every 500ms to detect stuck schedules and queue overflow. " +
+        "Automatically resets schedule if stuck more than 2x lookahead ahead.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useTTAudioPlayback"],
+        otherFlags: ["backend.voice_queue_overflow_protection"],
+      },
+    },
+    voice_intelligent_barge_in: {
+      name: "backend.voice_intelligent_barge_in",
+      description:
+        "[Natural Conversation Phase 2] Enable intelligent barge-in classification. " +
+        "Classifies user interruptions as backchannel, soft_barge, hard_barge, or unclear. " +
+        "Supports 12 languages with fuzzy matching for STT error tolerance.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useIntelligentBargeIn",
+          "classifyBargeIn",
+          "BargeInClassifier",
+          "ThinkerTalkerWebSocketHandler",
+        ],
+        otherFlags: [],
+      },
+    },
     voice_instant_barge_in: {
       name: "backend.voice_instant_barge_in",
       description:
@@ -1030,6 +1095,149 @@ export const FEATURE_FLAGS = {
         services: ["api-gateway", "web-app"],
         components: ["OverlapHandler", "BargeInClassifier"],
         otherFlags: ["backend.voice_instant_barge_in"],
+      },
+    },
+    voice_barge_in_classifier_enabled: {
+      name: "backend.voice_barge_in_classifier_enabled",
+      description:
+        "[Natural Conversation] Enable intelligent barge-in classification. " +
+        "Classifies user interruptions as backchannel (continue AI), soft_barge (pause AI), " +
+        "or hard_barge (stop AI). Supports 12 languages with multilingual backchannel detection. " +
+        "When disabled, all barge-ins are treated as hard interruptions.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/barge-in-classification",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "BargeInClassifier",
+          "VoicePipelineService",
+          "useThinkerTalkerVoiceMode",
+        ],
+        otherFlags: ["backend.voice_instant_barge_in"],
+      },
+    },
+    voice_barge_in_killswitch: {
+      name: "backend.voice_barge_in_killswitch",
+      description:
+        "[Natural Conversation] MASTER KILL SWITCH for barge-in enhancements. " +
+        "When enabled, instantly reverts to legacy simple barge-in behavior. " +
+        "Use this flag to quickly disable all barge-in classification if issues arise.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "high" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/barge-in-classification",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["VoicePipelineService", "useThinkerTalkerVoiceMode"],
+        otherFlags: [],
+      },
+    },
+    voice_hybrid_vad_fusion: {
+      name: "backend.voice_hybrid_vad_fusion",
+      description:
+        "[Natural Conversation] Enable hybrid VAD fusion combining frontend Silero VAD " +
+        "with backend Deepgram VAD using weighted voting. Improves barge-in accuracy " +
+        "during AI playback by adjusting weights: Silero 0.3/Deepgram 0.7 during playback, " +
+        "Silero 0.6/Deepgram 0.4 when idle. Includes 500ms misfire rollback timer.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/hybrid-vad-fusion",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "HybridVADDecider",
+          "VoicePipelineService",
+          "useSileroVAD",
+        ],
+        otherFlags: ["backend.voice_silero_vad_enabled"],
+      },
+    },
+    voice_word_timestamps: {
+      name: "backend.voice_word_timestamps",
+      description:
+        "[Natural Conversation] Enable word-level transcript tracking for clean truncation " +
+        "during barge-in. Tracks AI response text and estimates word boundaries to provide " +
+        "accurate text cutoff when audio is interrupted. Sends transcript.truncated events " +
+        "to frontend with truncated_text, remaining_text, and word counts.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/word-timestamps",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["TranscriptSyncService", "VoicePipelineService"],
+        otherFlags: [],
+      },
+    },
+    voice_prosody_extraction: {
+      name: "backend.voice_prosody_extraction",
+      description:
+        "[Natural Conversation] Enable frontend prosody feature extraction for turn-taking. " +
+        "Extracts pitch, energy, and speech rate from audio frames using Web Audio API. " +
+        "Features are sent to backend with audio.input.complete messages for holistic " +
+        "turn-prediction combining transcript patterns with prosodic cues.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/prosody-turn-taking",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "ProsodyExtractor",
+          "useThinkerTalkerSession",
+          "ContinuationDetector",
+        ],
+        otherFlags: ["backend.voice_continuation_detection"],
+      },
+    },
+    voice_adaptive_prebuffer: {
+      name: "backend.voice_adaptive_prebuffer",
+      description:
+        "[Natural Conversation] Enable network-adaptive audio prebuffering. " +
+        "Dynamically adjusts the audio prebuffer size based on network quality. " +
+        "Good connections (RTT < 100ms): 2-3 chunks (~150ms). " +
+        "Poor connections (RTT > 300ms): 6-8 chunks (~400ms). " +
+        "Reduces jitter and audio glitches on poor networks while minimizing " +
+        "latency on good networks.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/network-adaptive",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: [
+          "useTTAudioPlayback",
+          "useNetworkQuality",
+          "useThinkerTalkerVoiceMode",
+        ],
+        otherFlags: ["backend.voice_ws_prebuffering"],
       },
     },
 

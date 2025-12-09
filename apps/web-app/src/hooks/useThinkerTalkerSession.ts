@@ -24,6 +24,13 @@ import { captureVoiceError } from "../lib/sentry";
 import { useAuth } from "./useAuth";
 import { voiceLog } from "../lib/logger";
 
+// Natural Conversation Flow: Phase 3.1 - Prosody Feature Extraction
+import {
+  ProsodyExtractor,
+  createProsodyExtractor,
+  type ProsodyWebSocketMessage,
+} from "../lib/prosodyExtractor";
+
 // Phase 7-10: Advanced voice barge-in hooks
 import { useMultilingual } from "./useMultilingual";
 import { usePersonalization } from "./usePersonalization";
@@ -363,6 +370,26 @@ export interface TTSessionRecoveryResult {
 }
 
 /**
+ * Phase 5.2: Transcript truncation result for audio-transcript sync
+ */
+export interface TTTranscriptTruncation {
+  /** Text that was spoken before interruption */
+  truncatedText: string;
+  /** Text that was cut off */
+  remainingText: string;
+  /** Milliseconds into audio when interruption occurred */
+  truncationPointMs: number;
+  /** Last complete word before interruption */
+  lastCompleteWord: string;
+  /** Number of words spoken */
+  wordsSpoken: number;
+  /** Number of words remaining (cut off) */
+  wordsRemaining: number;
+  /** Timestamp when truncation occurred */
+  timestamp: number;
+}
+
+/**
  * Voice metrics for performance monitoring
  */
 export interface TTVoiceMetrics {
@@ -390,6 +417,22 @@ export interface TTVoiceMetrics {
   reconnectCount: number;
   /** Session start timestamp */
   sessionStartedAt: number | null;
+
+  // Phase 7.1: Enhanced metrics for comprehensive voice observability
+  /** Time from barge-in trigger to audio mute (ms) - SLO target: P95 < 50ms */
+  bargeInMuteLatencyMs: number | null;
+  /** Average barge-in mute latency across session (ms) */
+  avgBargeInMuteLatencyMs: number | null;
+  /** Count of successful barge-ins (audio was playing) */
+  successfulBargeInCount: number;
+  /** Count of misfire barge-ins (no audio playing or echo triggered) */
+  misfireBargeInCount: number;
+  /** Time from user speech detected to first AI audio played (ms) - perceived latency */
+  perceivedLatencyMs: number | null;
+  /** Count of VAD events (speech segments detected) */
+  vadEventCount: number;
+  /** Count of truncated responses (barge-in during speech) */
+  truncatedResponseCount: number;
 }
 
 /**
@@ -410,6 +453,8 @@ export interface UseThinkerTalkerSessionOptions {
   conversation_id?: string;
   voiceSettings?: TTVoiceSettings;
   onTranscript?: (transcript: TTTranscript) => void;
+  /** Phase 5.2: Called when AI response is truncated during barge-in */
+  onTranscriptTruncated?: (truncation: TTTranscriptTruncation) => void;
   onResponseDelta?: (delta: string, messageId: string) => void;
   onResponseComplete?: (content: string, messageId: string) => void;
   onAudioChunk?: (audioBase64: string) => void;
@@ -417,7 +462,8 @@ export interface UseThinkerTalkerSessionOptions {
   onToolResult?: (toolCall: TTToolCall) => void;
   onError?: (error: Error) => void;
   onConnectionChange?: (status: TTConnectionStatus) => void;
-  onPipelineStateChange?: (state: PipelineState) => void;
+  /** Called when pipeline state changes. Reason is provided for listening state transitions. */
+  onPipelineStateChange?: (state: PipelineState, reason?: string) => void;
   onMetricsUpdate?: (metrics: TTVoiceMetrics) => void;
   /** Called when user starts speaking (for barge-in) */
   onSpeechStarted?: () => void;
@@ -447,6 +493,15 @@ export interface UseThinkerTalkerSessionOptions {
    * Controlled by feature flag: backend.voice_instant_barge_in
    */
   enableInstantBargeIn?: boolean;
+
+  /**
+   * Enable prosody feature extraction for turn-taking.
+   * When true, extracts pitch, energy, and speech rate from audio
+   * and sends features with audio.input.complete messages.
+   * Controlled by feature flag: backend.voice_prosody_extraction
+   * Natural Conversation Flow: Phase 3.1
+   */
+  enableProsodyExtraction?: boolean;
 
   // Phase 7-10: Advanced options
   /** Enable multilingual detection and switching */
@@ -576,6 +631,10 @@ export function useThinkerTalkerSession(
 ) {
   const { tokens } = useAuth();
 
+  const isAutomation =
+    typeof navigator !== "undefined" &&
+    (navigator as Navigator & { webdriver?: boolean }).webdriver;
+
   // Extract Phase 7-10 options
   const {
     enableMultilingual = true,
@@ -586,7 +645,17 @@ export function useThinkerTalkerSession(
     onLanguageDetected,
     onSentimentChange,
     onCalibrationComplete,
+    // Natural Conversation Flow: Phase 3.1 - Prosody extraction
+    enableProsodyExtraction = false,
   } = options;
+
+  // Natural Conversation Flow: Phase 3.1 - Initialize prosody ref from option
+  useEffect(() => {
+    prosodyEnabledRef.current = enableProsodyExtraction;
+    voiceLog.debug(
+      `[ThinkerTalker] Prosody extraction ${enableProsodyExtraction ? "enabled" : "disabled"}`,
+    );
+  }, [enableProsodyExtraction]);
 
   // Phase 7: Multilingual support
   const multilingual = useMultilingual({
@@ -656,12 +725,23 @@ export function useThinkerTalkerSession(
   const [error, setError] = useState<Error | null>(null);
   const [transcript, setTranscript] = useState<string>("");
   const [partialTranscript, setPartialTranscript] = useState<string>("");
+  // Phase 5.1: Streaming AI response text for progressive display
+  const [partialAIResponse, setPartialAIResponse] = useState<string>("");
+  // Phase 5.2: Transcript truncation result from barge-in
+  const [lastTruncation, setLastTruncation] =
+    useState<TTTranscriptTruncation | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [pipelineState, setPipelineState] = useState<PipelineState>("idle");
   // Ref to track pipeline state for use in closures (avoids stale closure bug)
   const pipelineStateRef = useRef<PipelineState>("idle");
   const [currentToolCalls, setCurrentToolCalls] = useState<TTToolCall[]>([]);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
+
+  // Natural Conversation Flow: Phase 3.2 - Continuation detection state
+  const [isContinuationExpected, setIsContinuationExpected] = useState(false);
+  const continuationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   // Metrics state
   const [metrics, setMetrics] = useState<TTVoiceMetrics>({
@@ -677,6 +757,14 @@ export function useThinkerTalkerSession(
     bargeInCount: 0,
     reconnectCount: 0,
     sessionStartedAt: null,
+    // Phase 7.1: Enhanced metrics
+    bargeInMuteLatencyMs: null,
+    avgBargeInMuteLatencyMs: null,
+    successfulBargeInCount: 0,
+    misfireBargeInCount: 0,
+    perceivedLatencyMs: null,
+    vadEventCount: 0,
+    truncatedResponseCount: 0,
   });
 
   // Refs
@@ -717,6 +805,10 @@ export function useThinkerTalkerSession(
   // If audio was received recently (<3s), we might still be "speaking" from user's perspective
   const lastAudioChunkTimeRef = useRef<number | null>(null);
 
+  // Phase 7.1: Barge-in metrics tracking
+  const bargeInStartTimeRef = useRef<number | null>(null);
+  const bargeInMuteLatenciesRef = useRef<number[]>([]);
+
   // Ref for local voice activity callback (used in audio processor closure)
   const onLocalVoiceActivityRef = useRef<
     ((rmsLevel: number) => void) | undefined
@@ -725,6 +817,11 @@ export function useThinkerTalkerSession(
   // Session recovery state (WebSocket Error Recovery)
   const sessionIdRef = useRef<string | null>(null);
   const recoveryEnabledRef = useRef<boolean>(false);
+
+  // Natural Conversation Flow: Phase 3.1 - Prosody Extraction
+  const prosodyExtractorRef = useRef<ProsodyExtractor | null>(null);
+  const prosodyEnabledRef = useRef<boolean>(false);
+  const lastProsodyFeaturesRef = useRef<ProsodyWebSocketMessage | null>(null);
   const isRecoveredSessionRef = useRef<boolean>(false);
   const lastMessageSeqRef = useRef<number>(0);
   const lastAudioSeqRef = useRef<number>(0);
@@ -1044,6 +1141,14 @@ export function useThinkerTalkerSession(
   const handleMessageWithSequence = useCallback(
     (message: Record<string, unknown>) => {
       const seq = message.seq as number | undefined;
+      const msgType = message.type as string;
+
+      // DEBUG: Log ALL audio-related messages before sequence processing
+      if (msgType?.includes("audio")) {
+        console.log(
+          `[SEQ-DEBUG] audio message: type=${msgType}, seq=${seq}, expected=${expectedSequenceRef.current}`,
+        );
+      }
 
       // If no sequence number, process immediately (legacy/control messages)
       if (seq === undefined) {
@@ -1052,7 +1157,6 @@ export function useThinkerTalkerSession(
       }
 
       const expected = expectedSequenceRef.current;
-      const msgType = message.type as string;
 
       if (seq === expected) {
         // In order - process immediately and drain buffer
@@ -1101,8 +1205,15 @@ export function useThinkerTalkerSession(
     (message: Record<string, unknown>) => {
       const msgType = message.type as string;
 
-      // Debug: Log ALL incoming messages to trace speech_started
-      if (msgType.includes("speech") || msgType.includes("state")) {
+      // Debug: Log ALL message types to trace audio delivery issue
+      console.log(`[ThinkerTalker] RECEIVED type: ${msgType}`);
+
+      // Extra debug: Log speech and state messages with full data
+      if (
+        msgType.includes("speech") ||
+        msgType.includes("state") ||
+        msgType.includes("audio")
+      ) {
         console.log(`[ThinkerTalker] RECEIVED message: ${msgType}`, message);
       }
 
@@ -1296,6 +1407,11 @@ export function useThinkerTalkerSession(
             setPartialTranscript(text);
             // Track for recovery
             partialTranscriptAccumRef.current = text;
+            const preview =
+              text.length > 200 ? `${text.slice(0, 200)}...` : text;
+            voiceLog.info(
+              `[ThinkerTalker] User transcript (partial): "${preview}"`,
+            );
 
             options.onTranscript?.({
               text,
@@ -1319,6 +1435,8 @@ export function useThinkerTalkerSession(
 
           setTranscript(text);
           setPartialTranscript("");
+          // Phase 5.1: Clear partial AI response as new response will start
+          setPartialAIResponse("");
           // Clear transcript accumulator on completion
           partialTranscriptAccumRef.current = "";
 
@@ -1349,11 +1467,79 @@ export function useThinkerTalkerSession(
             conversationManager.processUtterance(text, duration);
           }
 
+          const preview = text.length > 200 ? `${text.slice(0, 200)}...` : text;
+          voiceLog.info(
+            `[ThinkerTalker] User transcript (final): "${preview}"`,
+          );
+
           options.onTranscript?.({
             text,
             is_final: true,
             timestamp: now,
             message_id: messageId,
+          });
+          break;
+        }
+
+        case "transcript.truncated": {
+          // Phase 5.2: Audio-transcript synchronization
+          // When user barges in, backend sends truncation info for clean text cutoff
+          const truncatedText = message.truncated_text as string;
+          const remainingText = message.remaining_text as string;
+          const truncationPointMs = message.truncation_point_ms as number;
+          const lastCompleteWord = message.last_complete_word as string;
+          const wordsSpoken = message.words_spoken as number;
+          const wordsRemaining = message.words_remaining as number;
+          const timestamp = message.timestamp as number;
+
+          voiceLog.debug(
+            `[ThinkerTalker] Transcript truncated: "${truncatedText.slice(0, 30)}..." at ${truncationPointMs}ms`,
+            { wordsSpoken, wordsRemaining, lastCompleteWord },
+          );
+
+          setLastTruncation({
+            truncatedText,
+            remainingText,
+            truncationPointMs,
+            lastCompleteWord,
+            wordsSpoken,
+            wordsRemaining,
+            timestamp,
+          });
+
+          // Also update the partial AI response to show only what was spoken
+          setPartialAIResponse(truncatedText);
+
+          // Phase 7.1: Track barge-in mute latency
+          if (bargeInStartTimeRef.current) {
+            const muteLatency = Date.now() - bargeInStartTimeRef.current;
+            bargeInMuteLatenciesRef.current.push(muteLatency);
+
+            // Calculate average
+            const avgLatency =
+              bargeInMuteLatenciesRef.current.reduce((a, b) => a + b, 0) /
+              bargeInMuteLatenciesRef.current.length;
+
+            updateMetrics({
+              bargeInMuteLatencyMs: muteLatency,
+              avgBargeInMuteLatencyMs: avgLatency,
+              truncatedResponseCount: metrics.truncatedResponseCount + 1,
+            });
+
+            voiceLog.debug(
+              `[ThinkerTalker] Barge-in mute latency: ${muteLatency}ms (avg: ${avgLatency.toFixed(1)}ms)`,
+            );
+            bargeInStartTimeRef.current = null;
+          }
+
+          options.onTranscriptTruncated?.({
+            truncatedText,
+            remainingText,
+            truncationPointMs,
+            lastCompleteWord,
+            wordsSpoken,
+            wordsRemaining,
+            timestamp,
           });
           break;
         }
@@ -1372,6 +1558,11 @@ export function useThinkerTalkerSession(
           // Track accumulated response for recovery
           if (delta) {
             partialResponseAccumRef.current += delta;
+            // Phase 5.1: Update state for progressive UI display
+            setPartialAIResponse((prev) => prev + delta);
+            const preview =
+              delta.length > 200 ? `${delta.slice(0, 200)}...` : delta;
+            voiceLog.info(`[ThinkerTalker] AI response delta: "${preview}"`);
           }
 
           // Track time to first LLM token
@@ -1401,6 +1592,12 @@ export function useThinkerTalkerSession(
 
           // Clear response accumulator on completion
           partialResponseAccumRef.current = "";
+          // Phase 5.1: Clear partial AI response state
+          setPartialAIResponse("");
+
+          const preview =
+            content.length > 200 ? `${content.slice(0, 200)}...` : content;
+          voiceLog.info(`[ThinkerTalker] AI response complete: "${preview}"`);
 
           updateMetrics({ aiResponseCount: metrics.aiResponseCount + 1 });
           options.onResponseComplete?.(content, messageId);
@@ -1677,9 +1874,12 @@ export function useThinkerTalkerSession(
           }
 
           if (audioBase64) {
-            console.log("[ThinkerTalkerSession] Calling onAudioChunk callback");
+            const now = Date.now();
+            console.log(
+              `[BARGE-IN-DEBUG] Audio chunk received at ${now}, length=${audioBase64.length}`,
+            );
             // Track when audio was received (for barge-in detection fallback)
-            lastAudioChunkTimeRef.current = Date.now();
+            lastAudioChunkTimeRef.current = now;
             options.onAudioChunk?.(audioBase64);
           } else {
             console.log(
@@ -1735,9 +1935,12 @@ export function useThinkerTalkerSession(
           const state = message.state as PipelineState;
           const reason = message.reason as string | undefined;
           const prevState = pipelineStateRef.current;
+          console.log(
+            `[BARGE-IN-DEBUG] Pipeline state change: ${prevState} -> ${state} (reason=${reason})`,
+          );
           setPipelineState(state);
           pipelineStateRef.current = state; // Update ref for closure access
-          options.onPipelineStateChange?.(state);
+          options.onPipelineStateChange?.(state, reason);
 
           if (state === "listening") {
             setIsSpeaking(false);
@@ -1761,6 +1964,10 @@ export function useThinkerTalkerSession(
 
         case "pipeline.state": {
           const state = message.state as PipelineState;
+          const prevState = pipelineStateRef.current;
+          console.log(
+            `[BARGE-IN-DEBUG] Pipeline state (backend): ${prevState} -> ${state}`,
+          );
           pipelineStateRef.current = state;
           setPipelineState(state);
           options.onPipelineStateChange?.(state);
@@ -1805,6 +2012,12 @@ export function useThinkerTalkerSession(
             : Infinity;
           const audioRecentlyReceived = recentAudioMs < 3000; // 3 second window
 
+          // Debug logging for E2E test inspection
+          console.log(
+            `[BARGE-IN-DEBUG] Speech detected - pipelineState=${currentPipelineState}, ` +
+              `enableInstantBargeIn=${options.enableInstantBargeIn}, ` +
+              `recentAudioMs=${recentAudioMs}, audioRecentlyReceived=${audioRecentlyReceived}`,
+          );
           voiceLog.debug(
             `[ThinkerTalker] Speech detected - pipelineState=${currentPipelineState}, ` +
               `enableInstantBargeIn=${options.enableInstantBargeIn}, ` +
@@ -1816,7 +2029,16 @@ export function useThinkerTalkerSession(
             options.enableInstantBargeIn &&
             (currentPipelineState === "speaking" || audioRecentlyReceived);
 
+          // Always log barge-in evaluation result for debugging
+          console.log(
+            `[BARGE-IN-DEBUG] shouldBargeIn=${shouldBargeIn} (enableInstantBargeIn=${options.enableInstantBargeIn}, ` +
+              `isSpeaking=${currentPipelineState === "speaking"}, audioRecentlyReceived=${audioRecentlyReceived})`,
+          );
+
           if (shouldBargeIn) {
+            console.log(
+              `[BARGE-IN-DEBUG] TRIGGERING BARGE-IN: fading out audio (state=${currentPipelineState}, recentAudioMs=${recentAudioMs})`,
+            );
             voiceLog.info(
               `[ThinkerTalker] Instant barge-in: fading out AI audio ` +
                 `(state=${currentPipelineState}, recentAudioMs=${recentAudioMs})`,
@@ -2052,6 +2274,38 @@ export function useThinkerTalkerSession(
         }
 
         // ================================================================
+        // Natural Conversation Flow: Phase 3.2 - Continuation Detection
+        // ================================================================
+
+        case "turn.continuation_expected": {
+          // Backend detected that user is likely to continue speaking
+          // Show visual indicator and extend silence threshold
+          const probability = message.probability as number;
+          const reason = message.reason as string;
+          const waitMs = message.wait_ms as number;
+
+          voiceLog.debug(
+            `[ThinkerTalker] Continuation expected: probability=${probability.toFixed(2)}, reason=${reason}, wait=${waitMs}ms`,
+          );
+
+          // Set continuation state to true
+          setIsContinuationExpected(true);
+
+          // Clear any existing timeout
+          if (continuationTimeoutRef.current) {
+            clearTimeout(continuationTimeoutRef.current);
+          }
+
+          // Auto-clear after the wait period + buffer
+          continuationTimeoutRef.current = setTimeout(() => {
+            setIsContinuationExpected(false);
+            voiceLog.debug("[ThinkerTalker] Continuation indicator cleared");
+          }, waitMs + 500);
+
+          break;
+        }
+
+        // ================================================================
         // Issue 4: Progressive Response / Filler Events (via Event Bus)
         // ================================================================
 
@@ -2260,29 +2514,110 @@ export function useThinkerTalkerSession(
         };
 
         ws.onmessage = (event) => {
+          // === DIAGNOSTIC: Track ALL WebSocket messages in window arrays ===
+          // This helps diagnose message delivery issues in both browser and Playwright
+          const globalWindow = window as typeof window & {
+            __wsMessageLog?: Array<{
+              timestamp: number;
+              dataType: string;
+              size: number;
+              preview?: string;
+            }>;
+            __wsMessageCount?: number;
+            __wsLastMessageTime?: number;
+          };
+          if (!globalWindow.__wsMessageLog) {
+            globalWindow.__wsMessageLog = [];
+            globalWindow.__wsMessageCount = 0;
+          }
+          globalWindow.__wsMessageCount =
+            (globalWindow.__wsMessageCount || 0) + 1;
+          globalWindow.__wsLastMessageTime = Date.now();
+
+          // Debug: Log all incoming message types
+          const isBlob = event.data instanceof Blob;
+          const isArrayBuffer = event.data instanceof ArrayBuffer;
+          const dataType = isBlob
+            ? "Blob"
+            : isArrayBuffer
+              ? "ArrayBuffer"
+              : typeof event.data;
+
+          // Add to tracking array (limit to 1000 entries to prevent memory issues)
+          if (globalWindow.__wsMessageLog.length < 1000) {
+            const entry: (typeof globalWindow.__wsMessageLog)[0] = {
+              timestamp: Date.now(),
+              dataType,
+              size: isBlob
+                ? event.data.size
+                : isArrayBuffer
+                  ? (event.data as ArrayBuffer).byteLength
+                  : event.data?.length || 0,
+            };
+            // For text messages, add a preview of the type
+            if (!isBlob && !isArrayBuffer && typeof event.data === "string") {
+              try {
+                const parsed = JSON.parse(event.data);
+                entry.preview = `type=${parsed.type}, seq=${parsed.seq}`;
+              } catch {
+                entry.preview = event.data.slice(0, 50);
+              }
+            }
+            globalWindow.__wsMessageLog.push(entry);
+          }
+
+          // Debug: Track message counts (detailed logging removed to reduce noise)
+
           // Handle binary frames (audio data with 5-byte header)
           if (event.data instanceof Blob) {
-            event.data.arrayBuffer().then((buffer) => {
-              const data = new Uint8Array(buffer);
-              if (data.length >= 5) {
-                const frameType = data[0];
-                const sequence = new DataView(data.buffer).getUint32(1, false);
-                const audioData = data.slice(5);
-
-                if (frameType === 0x02) {
-                  // AUDIO_OUTPUT binary frame
-                  voiceLog.debug(
-                    `[ThinkerTalker] Binary audio: seq=${sequence}, ${audioData.length} bytes`,
+            event.data
+              .arrayBuffer()
+              .then((buffer) => {
+                const data = new Uint8Array(buffer);
+                if (data.length >= 5) {
+                  const frameType = data[0];
+                  const sequence = new DataView(data.buffer).getUint32(
+                    1,
+                    false,
                   );
+                  const audioData = data.slice(5);
 
-                  // Convert to base64 for existing audio handling
-                  const base64 = btoa(
-                    String.fromCharCode.apply(null, Array.from(audioData)),
+                  if (frameType === 0x02) {
+                    // AUDIO_OUTPUT binary frame
+                    voiceLog.debug(
+                      `[ThinkerTalker] Binary audio: seq=${sequence}, ${audioData.length} bytes`,
+                    );
+
+                    // Convert to base64 using chunked approach to avoid call stack overflow
+                    // String.fromCharCode.apply() can fail on large arrays (>~8KB)
+                    let binaryStr = "";
+                    const chunkSize = 8192;
+                    for (let i = 0; i < audioData.length; i += chunkSize) {
+                      const chunk = audioData.subarray(i, i + chunkSize);
+                      binaryStr += String.fromCharCode.apply(
+                        null,
+                        Array.from(chunk),
+                      );
+                    }
+                    const base64 = btoa(binaryStr);
+                    options.onAudioChunk?.(base64);
+                  } else {
+                    voiceLog.warn(
+                      `[ThinkerTalker] Unknown binary frameType: ${frameType}`,
+                    );
+                  }
+                } else {
+                  voiceLog.warn(
+                    `[ThinkerTalker] Binary frame too short: ${data.length} bytes`,
                   );
-                  options.onAudioChunk?.(base64);
                 }
-              }
-            });
+              })
+              .catch((err) => {
+                voiceLog.error(
+                  `[ThinkerTalker] Binary frame processing error:`,
+                  err,
+                );
+              });
             return;
           }
 
@@ -2291,16 +2626,42 @@ export function useThinkerTalkerSession(
             const message = JSON.parse(event.data);
             // DEBUG: Log ALL incoming WebSocket messages to trace message delivery
             const msgType = message.type as string;
+            // Log ALL messages for debugging audio delivery
+            console.log(`[ThinkerTalker] WS RAW message: ${msgType}`);
             if (
               msgType &&
               (msgType.includes("speech") ||
                 msgType.includes("state") ||
-                msgType.includes("voice"))
+                msgType.includes("voice") ||
+                msgType.includes("audio"))
             ) {
               console.log(
-                `[ThinkerTalker] WS RAW message: ${msgType}`,
+                `[ThinkerTalker] WS RAW message DETAIL: ${msgType}`,
                 message,
               );
+            }
+
+            // Expose WS events to automation for Playwright integration tests
+            if (isAutomation && typeof window !== "undefined") {
+              const globalWindow = window as typeof window & {
+                __tt_ws_events?: Array<{
+                  direction: "received";
+                  type: string;
+                  timestamp: number;
+                  data: unknown;
+                }>;
+              };
+              if (!globalWindow.__tt_ws_events) {
+                globalWindow.__tt_ws_events = [];
+              }
+              if (globalWindow.__tt_ws_events.length < 500) {
+                globalWindow.__tt_ws_events.push({
+                  direction: "received",
+                  type: msgType || "unknown",
+                  timestamp: Date.now(),
+                  data: message,
+                });
+              }
             }
             handleMessageWithSequenceRef.current(message);
           } catch (err) {
@@ -2372,6 +2733,15 @@ export function useThinkerTalkerSession(
       );
       processorNodeRef.current = scriptProcessor;
 
+      // Natural Conversation Flow: Phase 3.1 - Initialize prosody extractor
+      if (prosodyEnabledRef.current && !prosodyExtractorRef.current) {
+        prosodyExtractorRef.current = createProsodyExtractor({
+          sampleRate: 16000,
+          minVoiceActivity: 0.3,
+        });
+        voiceLog.debug("[ThinkerTalker] Prosody extractor initialized");
+      }
+
       let audioChunkCount = 0;
 
       // Local VAD state for barge-in detection
@@ -2381,6 +2751,10 @@ export function useThinkerTalkerSession(
 
       scriptProcessor.onaudioprocess = (event) => {
         if (ws.readyState !== WebSocket.OPEN) return;
+
+        if (isAutomation && pipelineStateRef.current !== "listening") {
+          return;
+        }
 
         const inputData = event.inputBuffer.getChannelData(0);
 
@@ -2404,6 +2778,15 @@ export function useThinkerTalkerSession(
           // console.log(`[ThinkerTalker] RMS threshold exceeded: rms=${rms.toFixed(4)}`);
           // DISABLED: Silero VAD now handles local voice activity detection
           // onLocalVoiceActivityRef.current?.(rms);
+        }
+
+        // Natural Conversation Flow: Phase 3.1 - Extract prosody features
+        if (prosodyEnabledRef.current && prosodyExtractorRef.current) {
+          const prosodyFeatures =
+            prosodyExtractorRef.current.process(inputData);
+          if (prosodyFeatures) {
+            lastProsodyFeaturesRef.current = prosodyFeatures;
+          }
         }
 
         // Convert float32 to PCM16
@@ -2697,13 +3080,35 @@ export function useThinkerTalkerSession(
       }
 
       voiceLog.debug("[ThinkerTalker] Sending barge-in signal");
+
+      // Phase 7.1: Track barge-in metrics
+      const bargeInTime = Date.now();
+      bargeInStartTimeRef.current = bargeInTime;
+      const isSuccessful = pipelineState === "speaking";
+
       wsRef.current.send(JSON.stringify({ type: "barge_in" }));
-      updateMetrics({ bargeInCount: metrics.bargeInCount + 1 });
+
+      // Update barge-in metrics
+      const metricsUpdate: Partial<TTVoiceMetrics> = {
+        bargeInCount: metrics.bargeInCount + 1,
+      };
+
+      if (isSuccessful) {
+        metricsUpdate.successfulBargeInCount =
+          metrics.successfulBargeInCount + 1;
+      } else {
+        // Misfire: barge-in triggered when AI wasn't speaking (possible echo or false positive)
+        metricsUpdate.misfireBargeInCount = metrics.misfireBargeInCount + 1;
+      }
+
+      updateMetrics(metricsUpdate);
       return { shouldInterrupt: true };
     },
     [
       updateMetrics,
       metrics.bargeInCount,
+      metrics.successfulBargeInCount,
+      metrics.misfireBargeInCount,
       enableConversationManagement,
       conversationManager,
       pipelineState,
@@ -2769,13 +3174,39 @@ export function useThinkerTalkerSession(
 
   /**
    * Commit audio buffer (manual end of speech)
+   * Natural Conversation Flow: Phase 3.1 - Include prosody features
    */
   const commitAudio = useCallback(() => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
       return;
     }
 
-    wsRef.current.send(JSON.stringify({ type: "audio.input.complete" }));
+    // Build message with optional prosody features
+    const message: {
+      type: string;
+      prosody_features?: ProsodyWebSocketMessage;
+    } = { type: "audio.input.complete" };
+
+    // Include prosody features if enabled and available
+    if (prosodyEnabledRef.current && lastProsodyFeaturesRef.current) {
+      message.prosody_features = lastProsodyFeaturesRef.current;
+      voiceLog.debug(
+        "[ThinkerTalker] Sending prosody features with audio.input.complete:",
+        lastProsodyFeaturesRef.current.pitch_contour,
+        "pitch:",
+        lastProsodyFeaturesRef.current.pitch,
+        "energy_decay:",
+        lastProsodyFeaturesRef.current.energy_decay,
+      );
+    }
+
+    wsRef.current.send(JSON.stringify(message));
+
+    // Reset prosody features for next utterance
+    if (prosodyExtractorRef.current) {
+      prosodyExtractorRef.current.reset();
+    }
+    lastProsodyFeaturesRef.current = null;
   }, []);
 
   // Auto-connect on mount if enabled
@@ -2789,6 +3220,75 @@ export function useThinkerTalkerSession(
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options.autoConnect]);
+
+  // Expose debug state to window for E2E tests
+  // This allows Playwright tests to query actual barge-in state
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Track state transitions for debug/test inspection
+    const stateTransitions: string[] = [];
+    const prevStateRef = { current: pipelineState };
+
+    // Create debug object on window
+    const debug = {
+      get pipelineState() {
+        return pipelineState;
+      },
+      get lastAudioChunkTimeMs() {
+        return lastAudioChunkTimeRef.current;
+      },
+      get audioRecentlyReceived() {
+        if (!lastAudioChunkTimeRef.current) return false;
+        return Date.now() - lastAudioChunkTimeRef.current < 3000;
+      },
+      get recentAudioMs() {
+        if (!lastAudioChunkTimeRef.current) return Infinity;
+        return Date.now() - lastAudioChunkTimeRef.current;
+      },
+      get enableInstantBargeIn() {
+        return options.enableInstantBargeIn;
+      },
+      get bargeInCount() {
+        return metrics.bargeInCount;
+      },
+      get successfulBargeInCount() {
+        return metrics.successfulBargeInCount;
+      },
+      get status() {
+        return status;
+      },
+      stateTransitions,
+      isConnected: status === "connected" || status === "ready",
+    };
+
+    // Extend existing window type for TypeScript
+    (window as unknown as { __voiceDebug?: typeof debug }).__voiceDebug = debug;
+
+    // Track state transitions
+    if (prevStateRef.current !== pipelineState) {
+      const transition = `${prevStateRef.current}->${pipelineState}`;
+      stateTransitions.push(transition);
+      prevStateRef.current = pipelineState;
+      voiceLog.debug(
+        `[ThinkerTalker] Pipeline state transition: ${transition}`,
+      );
+    }
+
+    return () => {
+      // Cleanup on unmount
+      if (typeof window !== "undefined") {
+        delete (window as unknown as { __voiceDebug?: typeof debug })
+          .__voiceDebug;
+      }
+    };
+  }, [
+    pipelineState,
+    status,
+    metrics.bargeInCount,
+    metrics.successfulBargeInCount,
+    options.enableInstantBargeIn,
+  ]);
 
   // Handle tab visibility changes
   useEffect(() => {
@@ -2840,6 +3340,8 @@ export function useThinkerTalkerSession(
     error,
     transcript,
     partialTranscript,
+    partialAIResponse, // Phase 5.1: Streaming AI response for progressive display
+    lastTruncation, // Phase 5.2: Last truncation result from barge-in
     isSpeaking,
     pipelineState,
     currentToolCalls,
@@ -2862,6 +3364,9 @@ export function useThinkerTalkerSession(
     canSend: status === "connected" || status === "ready",
     isProcessing: pipelineState === "processing",
     isListening: pipelineState === "listening",
+
+    // Natural Conversation Flow: Phase 3.2 - Continuation Detection
+    isContinuationExpected,
 
     // Phase 7: Multilingual
     multilingual: {

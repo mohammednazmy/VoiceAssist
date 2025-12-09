@@ -83,6 +83,10 @@ export interface BargeInEvent {
   contextSummary?: string;
   activeToolCall?: ToolCallState;
   language: SupportedLanguage;
+  /** Phase 2.2: Confidence level of the classification (0-1) */
+  confidence?: number;
+  /** Phase 2.2: Matched phrase for backchannel/soft barge detection */
+  matchedPhrase?: string;
 }
 
 /**
