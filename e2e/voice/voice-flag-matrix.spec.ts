@@ -6,6 +6,10 @@
  * - Smoke matrix (default): 5 critical combinations for PR validation
  * - Nightly matrix (VOICE_MATRIX_NIGHTLY=1): 25+ comprehensive combinations
  *
+ * IMPORTANT: These tests ONLY work on Chromium-based browsers because they rely on
+ * Chrome-specific flags (--use-fake-device-for-media-stream, --use-file-for-fake-audio-capture).
+ * Firefox, WebKit, and Safari do not support these fake audio injection features.
+ *
  * Run smoke tests: npx playwright test --project=voice-smoke
  * Run nightly tests: VOICE_MATRIX_NIGHTLY=1 npx playwright test --project=voice-nightly
  */
@@ -25,8 +29,18 @@ import {
   resetFeatureFlags,
   assertQualityThresholds,
   isLiveMode,
+  enableAllVoiceFeatures,
+  waitForFakeMicDevice,
 } from "./utils/test-setup";
 import type { VoiceMetricsCollector } from "./utils/voice-test-metrics";
+
+/**
+ * Check if the browser supports fake audio capture (Chrome/Chromium only)
+ */
+function isFakeAudioSupported(browserName: string | undefined): boolean {
+  // Only Chromium-based browsers support --use-fake-device-for-media-stream
+  return browserName === "chromium";
+}
 
 // ============================================================================
 // Matrix Loading
@@ -91,7 +105,16 @@ test.describe(`Voice Flag Matrix: ${matrix.name}`, () => {
     }
   });
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browserName }) => {
+    // Skip on non-Chromium browsers - fake audio capture is Chrome-only
+    if (!isFakeAudioSupported(browserName)) {
+      test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
+      return;
+    }
+
+    // Enable all voice features (Silero VAD + instant barge-in) for flag matrix tests
+    await enableAllVoiceFeatures(page);
+
     // Reset flags to defaults before each test
     try {
       await resetFeatureFlags(page);
@@ -101,9 +124,11 @@ test.describe(`Voice Flag Matrix: ${matrix.name}`, () => {
   });
 
   for (const combo of matrix.combinations) {
-    test(`[${combo.name}] ${combo.description || ""}`, async ({ page, metricsCollector }) => {
+    test(`[${combo.name}] ${combo.description || ""}`, async ({ page, browserName, metricsCollector }) => {
       // Skip if not in live mode
       test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
+      // Skip on non-Chromium browsers
+      test.skip(!isFakeAudioSupported(browserName), `Fake audio capture not supported on ${browserName}`);
 
       console.log(`\n[Flag Matrix] Testing: ${combo.name}`);
       console.log(`[Flag Matrix] Flags: ${JSON.stringify(combo.flags)}`);
@@ -120,6 +145,10 @@ test.describe(`Voice Flag Matrix: ${matrix.name}`, () => {
       // Navigate to chat page (where voice mode toggle is)
       await page.goto("/chat");
       await page.waitForLoadState("networkidle");
+
+      // Wait for Chrome's fake mic device to be available
+      await waitForFakeMicDevice(page);
+      await page.waitForTimeout(1000);
 
       // Wait for voice mode to be ready
       const ready = await waitForVoiceModeReady(page);

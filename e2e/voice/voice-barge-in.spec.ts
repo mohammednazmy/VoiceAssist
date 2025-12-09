@@ -21,6 +21,8 @@ import {
   QUALITY_THRESHOLDS,
   assertQualityThresholds,
   enableSileroVAD,
+  enableInstantBargeIn,
+  enableAllVoiceFeatures,
   waitForFakeMicDevice,
 } from "./utils/test-setup";
 import { createMetricsCollector, VoiceMetricsCollector } from "./utils/voice-test-metrics";
@@ -220,8 +222,10 @@ test.describe("Voice Barge-In with Real Audio", () => {
     }
 
     await page.context().grantPermissions(["microphone"]);
-    // Enable Silero VAD for barge-in tests (disabled by default in Playwright)
-    await enableSileroVAD(page);
+    // Enable all voice features for barge-in tests:
+    // - Silero VAD (disabled by default in Playwright)
+    // - Instant barge-in (disabled by default in Playwright)
+    await enableAllVoiceFeatures(page);
     await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 
@@ -535,8 +539,8 @@ test.describe("VAD Threshold Calibration", () => {
     }
 
     await page.context().grantPermissions(["microphone"]);
-    // Enable Silero VAD for threshold calibration tests
-    await enableSileroVAD(page);
+    // Enable all voice features for VAD threshold tests
+    await enableAllVoiceFeatures(page);
     await page.goto("/chat");
     await page.waitForLoadState("networkidle");
 

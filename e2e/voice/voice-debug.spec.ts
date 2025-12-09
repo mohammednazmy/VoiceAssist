@@ -27,6 +27,8 @@ import {
   resetFeatureFlags,
   isLiveMode,
   enableSileroVAD,
+  enableAllVoiceFeatures,
+  waitForFakeMicDevice,
 } from "./utils/test-setup";
 
 /**
@@ -177,8 +179,8 @@ test.describe("Choppy Audio Debug Tests", () => {
       test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
       return;
     }
-    // Enable Silero VAD for debug tests
-    await enableSileroVAD(page);
+    // Enable all voice features (Silero VAD + instant barge-in) for debug tests
+    await enableAllVoiceFeatures(page);
   });
 
   test("captures audio buffer state during barge-in", async ({ page, metricsCollector }) => {

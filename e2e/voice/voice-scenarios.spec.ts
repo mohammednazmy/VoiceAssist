@@ -29,6 +29,8 @@ import {
   assertQualityThresholds,
   isLiveMode,
   enableSileroVAD,
+  enableAllVoiceFeatures,
+  waitForFakeMicDevice,
 } from "./utils/test-setup";
 
 /**
@@ -178,7 +180,8 @@ test.describe("Multi-turn Conversation Scenarios", () => {
       test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
       return;
     }
-    await enableSileroVAD(page);
+    // Enable all voice features (Silero VAD + instant barge-in)
+    await enableAllVoiceFeatures(page);
   });
 
   test("3-turn conversation flow with natural exchanges", async ({
@@ -267,7 +270,8 @@ test.describe("Barge-in Scenarios", () => {
       test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
       return;
     }
-    await enableSileroVAD(page);
+    // Enable all voice features (Silero VAD + instant barge-in)
+    await enableAllVoiceFeatures(page);
   });
 
   test("user intentional barge-in during AI response", async ({
@@ -393,7 +397,8 @@ test.describe("Long Response Scenarios", () => {
       test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
       return;
     }
-    await enableSileroVAD(page);
+    // Enable all voice features (Silero VAD + instant barge-in)
+    await enableAllVoiceFeatures(page);
   });
 
   test("AI handles long response without audio issues", async ({
@@ -471,7 +476,8 @@ test.describe("Audio Queue Health Scenarios", () => {
       test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
       return;
     }
-    await enableSileroVAD(page);
+    // Enable all voice features (Silero VAD + instant barge-in)
+    await enableAllVoiceFeatures(page);
   });
 
   test("audio queue stays healthy throughout conversation", async ({
@@ -591,7 +597,8 @@ test.describe("Latency Scenarios", () => {
       test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
       return;
     }
-    await enableSileroVAD(page);
+    // Enable all voice features (Silero VAD + instant barge-in)
+    await enableAllVoiceFeatures(page);
   });
 
   test("response latency stays within thresholds", async ({
@@ -724,7 +731,8 @@ test.describe("Backchannel Scenarios", () => {
       test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
       return;
     }
-    await enableSileroVAD(page);
+    // Enable all voice features (Silero VAD + instant barge-in)
+    await enableAllVoiceFeatures(page);
   });
 
   test("backchannel does not trigger interruption", async ({
@@ -799,7 +807,8 @@ test.describe("Continuation Scenarios", () => {
       test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
       return;
     }
-    await enableSileroVAD(page);
+    // Enable all voice features (Silero VAD + instant barge-in)
+    await enableAllVoiceFeatures(page);
   });
 
   test("user continuation detected after pause", async ({
@@ -867,7 +876,8 @@ test.describe("Rapid Exchange Scenarios", () => {
       test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
       return;
     }
-    await enableSileroVAD(page);
+    // Enable all voice features (Silero VAD + instant barge-in)
+    await enableAllVoiceFeatures(page);
   });
 
   test("quick Q&A exchanges with minimal pauses", async ({
@@ -942,7 +952,8 @@ test.describe("Environmental Noise Scenarios", () => {
       test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
       return;
     }
-    await enableSileroVAD(page);
+    // Enable all voice features (Silero VAD + instant barge-in)
+    await enableAllVoiceFeatures(page);
   });
 
   test("handles mild background noise without false barge-in", async ({
@@ -1016,7 +1027,8 @@ test.describe("Low Volume Speech Scenarios", () => {
       test.skip(true, `Fake audio capture not supported on ${browserName} - Chrome/Chromium only`);
       return;
     }
-    await enableSileroVAD(page);
+    // Enable all voice features (Silero VAD + instant barge-in)
+    await enableAllVoiceFeatures(page);
   });
 
   test("VAD detects low-volume speech", async ({

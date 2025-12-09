@@ -310,6 +310,40 @@ export async function disableSileroVADOverride(page: Page): Promise<void> {
 }
 
 /**
+ * Enable instant barge-in in Playwright tests.
+ * By default, instant barge-in is disabled in automation environments to avoid flakiness.
+ * This localStorage flag overrides the automation detection to enable barge-in testing.
+ * Call this BEFORE page.goto() - uses addInitScript to set localStorage before the app loads.
+ */
+export async function enableInstantBargeIn(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    localStorage.setItem("voiceassist-force-instant-barge-in", "true");
+  });
+}
+
+/**
+ * Disable instant barge-in override (restore default automation behavior).
+ */
+export async function disableInstantBargeInOverride(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    localStorage.removeItem("voiceassist-force-instant-barge-in");
+  });
+}
+
+/**
+ * Enable all voice features for comprehensive E2E testing.
+ * This enables both Silero VAD and instant barge-in, which are normally
+ * disabled during automation to avoid flakiness.
+ * Call this BEFORE page.goto() - uses addInitScript to set localStorage before the app loads.
+ */
+export async function enableAllVoiceFeatures(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    localStorage.setItem("voiceassist-force-silero-vad", "true");
+    localStorage.setItem("voiceassist-force-instant-barge-in", "true");
+  });
+}
+
+/**
  * Wait for voice mode to be ready and enabled
  */
 export async function waitForVoiceModeReady(

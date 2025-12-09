@@ -29,6 +29,8 @@ import {
   QUALITY_THRESHOLDS,
   assertQualityThresholds,
   enableSileroVAD,
+  enableAllVoiceFeatures,
+  waitForFakeMicDevice,
 } from "./utils/test-setup";
 import { createMetricsCollector, VoiceMetricsCollector } from "./utils/voice-test-metrics";
 
@@ -215,11 +217,14 @@ test.describe("Voice Conversation with Real Audio", () => {
     }
 
     await page.context().grantPermissions(["microphone"]);
-    // Enable Silero VAD for real audio conversation tests
-    await enableSileroVAD(page);
+    // Enable all voice features (Silero VAD + instant barge-in) for real audio tests
+    await enableAllVoiceFeatures(page);
     await page.goto("/chat");
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+
+    // Wait for Chrome's fake mic device to be available
+    await waitForFakeMicDevice(page);
+    await page.waitForTimeout(1000);
   });
 
   /**
@@ -617,11 +622,14 @@ test.describe("Conversation Flow Analysis", () => {
     }
 
     await page.context().grantPermissions(["microphone"]);
-    // Enable Silero VAD for conversation flow analysis tests
-    await enableSileroVAD(page);
+    // Enable all voice features for conversation flow analysis tests
+    await enableAllVoiceFeatures(page);
     await page.goto("/chat");
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+
+    // Wait for Chrome's fake mic device to be available
+    await waitForFakeMicDevice(page);
+    await page.waitForTimeout(1000);
   });
 
   /**
@@ -754,9 +762,14 @@ test.describe("Natural Conversation Quality", () => {
     }
 
     await page.context().grantPermissions(["microphone"]);
+    // Enable all voice features for natural conversation quality tests
+    await enableAllVoiceFeatures(page);
     await page.goto("/chat");
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+
+    // Wait for Chrome's fake mic device to be available
+    await waitForFakeMicDevice(page);
+    await page.waitForTimeout(1000);
   });
 
   /**

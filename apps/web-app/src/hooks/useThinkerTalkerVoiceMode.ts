@@ -284,6 +284,14 @@ export function useThinkerTalkerVoiceMode(
     typeof window !== "undefined" &&
     window.localStorage?.getItem("voiceassist-force-silero-vad") === "true";
 
+  // Allow tests to explicitly enable instant barge-in even in automation
+  // Tests can set localStorage.setItem('voiceassist-force-instant-barge-in', 'true')
+  // This is important for E2E tests that need to test the full barge-in pipeline
+  const forceInstantBargeIn =
+    typeof window !== "undefined" &&
+    window.localStorage?.getItem("voiceassist-force-instant-barge-in") ===
+      "true";
+
   const { apiClient } = useAuth();
 
   const defaultSileroConfig: SileroFlagConfig = useMemo(
@@ -930,7 +938,9 @@ export function useThinkerTalkerVoiceMode(
     },
 
     // Enable instant barge-in for reduced latency
-    enableInstantBargeIn: !isAutomation,
+    // In automation mode, instant barge-in is disabled by default to avoid flakiness
+    // unless explicitly forced via localStorage (for E2E tests that test barge-in)
+    enableInstantBargeIn: forceInstantBargeIn || !isAutomation,
 
     // Handle metrics
     onMetricsUpdate: (metrics: TTVoiceMetrics) => {
