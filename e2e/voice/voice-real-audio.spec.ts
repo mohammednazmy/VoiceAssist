@@ -24,6 +24,7 @@ import {
   isLiveMode,
   QUALITY_THRESHOLDS,
   assertQualityThresholds,
+  enableSileroVAD,
 } from "./utils/test-setup";
 import { createMetricsCollector, VoiceMetricsCollector } from "./utils/voice-test-metrics";
 
@@ -195,6 +196,8 @@ test.describe("Voice Conversation with Real Audio", () => {
 
   test.beforeEach(async ({ page }) => {
     await page.context().grantPermissions(["microphone"]);
+    // Enable Silero VAD for real audio conversation tests
+    await enableSileroVAD(page);
     await page.goto("/chat");
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(2000);
@@ -588,6 +591,8 @@ test.describe("Conversation Flow Analysis", () => {
 
   test.beforeEach(async ({ page }) => {
     await page.context().grantPermissions(["microphone"]);
+    // Enable Silero VAD for conversation flow analysis tests
+    await enableSileroVAD(page);
     await page.goto("/chat");
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(2000);

@@ -22,6 +22,7 @@ import {
   setFeatureFlag,
   resetFeatureFlags,
   isLiveMode,
+  enableSileroVAD,
 } from "./utils/test-setup";
 
 // ============================================================================
@@ -157,6 +158,11 @@ function createDebugCapture(page: import("@playwright/test").Page) {
 
 test.describe("Choppy Audio Debug Tests", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
+
+  test.beforeEach(async ({ page }) => {
+    // Enable Silero VAD for debug tests
+    await enableSileroVAD(page);
+  });
 
   test("captures audio buffer state during barge-in", async ({ page, metricsCollector }) => {
     test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
@@ -360,6 +366,11 @@ test.describe("Choppy Audio Debug Tests", () => {
 
 test.describe("Self-Interruption Debug Tests", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
+
+  test.beforeEach(async ({ page }) => {
+    // Enable Silero VAD for self-interruption tests
+    await enableSileroVAD(page);
+  });
 
   test("captures VAD events during AI playback", async ({ page, metricsCollector }) => {
     test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
@@ -577,6 +588,11 @@ test.describe("Self-Interruption Debug Tests", () => {
 test.describe("Schedule Reset Debug Tests", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
 
+  test.beforeEach(async ({ page }) => {
+    // Enable Silero VAD for schedule reset tests
+    await enableSileroVAD(page);
+  });
+
   test("monitors schedule watchdog behavior", async ({ page, metricsCollector }) => {
     test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
     test.setTimeout(90000);
@@ -682,6 +698,11 @@ test.describe("Schedule Reset Debug Tests", () => {
 
 test.describe("Backend Correlation Debug Tests", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
+
+  test.beforeEach(async ({ page }) => {
+    // Enable Silero VAD for backend correlation tests
+    await enableSileroVAD(page);
+  });
 
   test("captures WebSocket message timing", async ({ page, metricsCollector }) => {
     test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
