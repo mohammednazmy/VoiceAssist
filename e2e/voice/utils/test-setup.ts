@@ -145,6 +145,13 @@ export const test = base.extend<{
     // Validate environment before test
     validateTestEnvironment();
 
+    // Clear any persisted voice settings to ensure clean test state
+    // This prevents auto-start behavior from previous test runs
+    await page.addInitScript(() => {
+      // Remove voice settings that might cause auto-start on page load
+      localStorage.removeItem("voiceassist-voice-settings");
+    });
+
     // Create and attach metrics collector
     const collector = createMetricsCollector(page);
 
@@ -196,6 +203,42 @@ export { expect };
 // ============================================================================
 // Test Helpers
 // ============================================================================
+
+/**
+ * Clear voice settings from localStorage to ensure clean test state.
+ * This prevents auto-start behavior from persisted settings.
+ */
+export async function clearVoiceSettings(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    // Clear voice settings that might cause auto-start
+    localStorage.removeItem("voiceassist-voice-settings");
+    // Also clear auth state to ensure clean slate (will be re-set by test setup)
+    // Note: Don't clear auth here as it's needed for authentication
+  });
+}
+
+/**
+ * Reset voice settings to defaults in localStorage.
+ * Use this when you want to ensure autoStartOnOpen is false.
+ */
+export async function resetVoiceSettingsToDefaults(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    // Get existing settings if any
+    const existing = localStorage.getItem("voiceassist-voice-settings");
+    if (existing) {
+      try {
+        const settings = JSON.parse(existing);
+        // Ensure autoStartOnOpen is false (though it's no longer persisted)
+        settings.state = settings.state || {};
+        settings.state.autoStartOnOpen = false;
+        localStorage.setItem("voiceassist-voice-settings", JSON.stringify(settings));
+      } catch {
+        // If parsing fails, just remove the settings
+        localStorage.removeItem("voiceassist-voice-settings");
+      }
+    }
+  });
+}
 
 /**
  * Wait for voice mode to be ready and enabled
