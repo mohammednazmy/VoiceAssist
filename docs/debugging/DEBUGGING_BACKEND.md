@@ -78,8 +78,8 @@ curl http://localhost:8000/ready
 4. Verify environment variables:
 
 ```bash
-# Check if critical vars are set in .env
-grep -E "DATABASE_URL|REDIS_URL|OPENAI_API_KEY" /home/asimo/VoiceAssist/.env
+# Check if critical vars are set in .env (from project root)
+grep -E "DATABASE_URL|REDIS_URL|OPENAI_API_KEY" .env
 ```
 
 **Relevant Logs:**

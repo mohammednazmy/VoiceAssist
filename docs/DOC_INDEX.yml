@@ -73,7 +73,7 @@ docs:
   - id: local_development
     path: docs/LOCAL_DEVELOPMENT.md
     title: "Local Development Guide"
-    category: development
+    category: reference
     audience: [developer]
     summary: "Complete local setup, ports table, separate Nextcloud stack, daily workflow."
     related: [architecture_v2, infrastructure_setup]

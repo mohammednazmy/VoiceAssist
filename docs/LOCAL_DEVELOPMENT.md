@@ -41,11 +41,11 @@ This allows for rapid iteration, testing, and debugging before deploying to Kube
 
 ## Development Philosophy
 
-- **Compose-First**: Docker Compose for Phases 0-10 (all features)
+- **Compose-First**: Docker Compose for all development and initial production
 - **Local-First**: Develop and test everything on Mac
 - **Separate Stacks**: Nextcloud and VoiceAssist run independently
 - **API Integration**: Stacks communicate via HTTP APIs (OIDC, WebDAV, CalDAV)
-- **Kubernetes-Later**: Migrate to K8s in Phases 11-14
+- **Kubernetes-Later**: Migrate to K8s when scaling requires
 - **Ubuntu-Last**: Deploy to production when ready
 
 ## Local Architecture

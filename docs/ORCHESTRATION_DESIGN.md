@@ -1238,7 +1238,7 @@ async def startup_event():
 - [DATA_MODEL.md](DATA_MODEL.md) - Entity definitions (QueryResponse, Citation, ToolCall, ToolResult)
 - [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md) - Service structure
 - [SEMANTIC_SEARCH_DESIGN.md](SEMANTIC_SEARCH_DESIGN.md) - Search implementation
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - System architecture
 - [WEB_APP_SPECS.md](WEB_APP_SPECS.md) - User preferences, tool confirmation UI
 - [ADMIN_PANEL_SPECS.md](ADMIN_PANEL_SPECS.md) - System configuration, tool testing
 - [SECURITY_COMPLIANCE.md](SECURITY_COMPLIANCE.md) - PHI handling, audit logging

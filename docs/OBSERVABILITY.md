@@ -40,7 +40,7 @@ VoiceAssist V2 uses a three-pillar observability approach:
 
 1. **Metrics** - Prometheus for time-series metrics
 2. **Logs** - Structured logging with trace IDs
-3. **Traces** - Distributed tracing (optional in Phase 11-14)
+3. **Traces** - Distributed tracing (optional, for microservices migration)
 
 ---
 
@@ -691,7 +691,7 @@ groups:
 
 ---
 
-## Distributed Tracing (Phase 11-14)
+## Distributed Tracing (Future - Microservices)
 
 For microservices deployment, add distributed tracing:
 
@@ -716,10 +716,10 @@ For microservices deployment, add distributed tracing:
 
 ## Related Documentation
 
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - System architecture
 - [SECURITY_COMPLIANCE.md](SECURITY_COMPLIANCE.md) - HIPAA logging requirements
 - [ADMIN_PANEL_SPECS.md](ADMIN_PANEL_SPECS.md) - Admin metrics dashboard
-- [server/README.md](../server/README.md) - API implementation
+- [../services/api-gateway/README.md](../services/api-gateway/README.md) - API implementation
 
 ---
 

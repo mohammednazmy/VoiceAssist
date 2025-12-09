@@ -7,7 +7,7 @@
  *
  * Examples:
  *   docPaths: [
- *     "ARCHITECTURE.md",                      // → docs/ARCHITECTURE.md
+ *     "UNIFIED_ARCHITECTURE.md",              // → docs/UNIFIED_ARCHITECTURE.md
  *     "api-reference/rest-api.md",            // → docs/api-reference/rest-api.md
  *     "@root/services/api-gateway/README.md", // → services/api-gateway/README.md
  *     "@root/packages/ui/README.md",          // → packages/ui/README.md
@@ -61,6 +61,12 @@ export const navigation: NavSection[] = [
         href: "/start/ai-agents",
         description: "Quick reference for AI coding assistants",
         docPaths: ["admin-guide/for-ai-agents.md"],
+      },
+      {
+        title: "Quick Reference",
+        href: "/quick-reference",
+        description: "Commands, ports, file locations cheatsheet",
+        docPaths: ["QUICK_REFERENCE.md"],
       },
     ],
   },
@@ -418,12 +424,6 @@ export const navigation: NavSection[] = [
         description: "Common AI agent tasks and relevant documentation",
         docPaths: ["ai/AGENT_TASK_INDEX.md"],
       },
-      {
-        title: "Admin Panel Plan",
-        href: "/admin/implementation-plan",
-        description: "Implementation roadmap for admin panel enhancements",
-        docPaths: ["admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md"],
-      },
     ],
   },
   {
@@ -433,28 +433,39 @@ export const navigation: NavSection[] = [
         title: "Voice Documentation Hub",
         href: "/voice",
         description: "Voice Mode documentation overview and navigation",
-        docPaths: [],
+        docPaths: ["VOICE_MODE_PIPELINE.md", "THINKER_TALKER_PIPELINE.md"],
       },
       {
         title: "Voice Mode Architecture",
         href: "/voice/architecture",
         description:
           "Comprehensive Voice Mode architecture: STT, LLM, TTS pipeline",
-        docPaths: [],
+        docPaths: [
+          "VOICE_MODE_PIPELINE.md",
+          "THINKER_TALKER_PIPELINE.md",
+          "services/thinker-service.md",
+          "services/talker-service.md",
+        ],
       },
       {
         title: "Natural Conversation Flow",
         href: "/voice/natural-conversation-flow",
         description:
           "Interrupted speech handling, hesitations, and barge-in detection",
-        docPaths: [],
+        docPaths: [
+          "voice/smart-conversational-voice-design.md",
+          "VOICE_MODE_PIPELINE.md",
+        ],
       },
       {
         title: "Silero VAD Integration",
         href: "/voice/silero-vad",
         description:
           "Neural network VAD for accurate speech detection and echo cancellation",
-        docPaths: [],
+        docPaths: [
+          "voice/adaptive-vad-presets.md",
+          "voice/voice-configuration.md",
+        ],
       },
     ],
   },

@@ -724,7 +724,9 @@ describe("LoginPage", () => {
     );
 
     const passwordInput = screen.getByLabelText(/password/i) as HTMLInputElement;
-    const toggleButton = screen.getByRole("button", { name: /toggle password/i });
+    const toggleButton = screen.getByRole("button", {
+      name: /toggle password/i,
+    });
 
     expect(passwordInput.type).toBe("password");
 

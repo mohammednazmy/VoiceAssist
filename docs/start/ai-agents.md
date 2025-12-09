@@ -53,7 +53,7 @@ This guide helps AI coding assistants (Claude, GPT, Copilot, etc.) quickly under
 ## Key Directories
 
 ```
-/home/asimo/VoiceAssist/
+VoiceAssist/
 ├── apps/
 │   ├── web-app/              # React frontend (main app)
 │   ├── admin-panel/          # Admin dashboard

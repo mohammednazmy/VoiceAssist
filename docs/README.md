@@ -1,11 +1,11 @@
 ---
 title: Readme
 slug: readme
-summary: "**Last Updated**: 2025-11-27"
+summary: "**Last Updated**: 2025-12-08"
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-08"
 audience:
   - human
   - ai-agents
@@ -17,7 +17,7 @@ relatedPaths:
   - "docs/ai/AGENT_ONBOARDING.md"
   - "docs/overview/IMPLEMENTATION_STATUS.md"
 ai_summary: >-
-  Last Updated: 2025-11-27 Project Status: ✅ All 15 Phases Complete - Production
+  Last Updated: 2025-12-08 Project Status: ✅ All 15 Phases Complete - Production
   Ready (100%) --- If you're an AI coding assistant (Claude, GPT, Copilot,
   etc.): - ai/AGENT_ONBOARDING.md - Start here for quick context, repository
   structure, critical rules, and common tasks - overview/IMPLEMENTATION_...
@@ -25,7 +25,7 @@ ai_summary: >-
 
 # VoiceAssist V2 Documentation Index
 
-**Last Updated**: 2025-11-27
+**Last Updated**: 2025-12-08
 **Project Status**: ✅ All 15 Phases Complete - Production Ready (100%)
 
 ---
@@ -43,6 +43,7 @@ If you're an AI coding assistant (Claude, GPT, Copilot, etc.):
 ### 🚀 Start Here
 
 - **[START_HERE.md](START_HERE.md)** - Project overview and getting started
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Commands, ports, file locations cheatsheet
 - **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** - Executive summary
 - **[LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md)** - Development environment setup
 - **[API_REFERENCE.md](API_REFERENCE.md)** - High-level API overview and endpoint groups
@@ -124,7 +125,7 @@ If you're an AI coding assistant (Claude, GPT, Copilot, etc.):
 | -------------------------------------------------------------------------- | ---------------------------------- | ---------------------- |
 | **[SERVICE_CATALOG.md](SERVICE_CATALOG.md)**                               | Microservices catalog              | All developers, DevOps |
 | **[../services/api-gateway/README.md](../services/api-gateway/README.md)** | Canonical API Gateway guide        | Backend devs           |
-| **[server/README.md](../server/README.md)**                                | Legacy server stub reference       | Backend devs           |
+| **[EXTENSION_GUIDE.md](EXTENSION_GUIDE.md)**                               | Practical patterns for extending   | All developers         |
 | **[../apps/web-app/README.md](../apps/web-app/README.md)**                 | Web app implementation details     | Frontend devs          |
 | **[../apps/admin-panel/README.md](../apps/admin-panel/README.md)**         | Admin panel implementation details | Frontend devs          |
 | **[../apps/docs-site/README.md](../apps/docs-site/README.md)**             | Documentation site implementation  | Frontend devs          |
@@ -216,29 +217,19 @@ All runbooks are production-ready with copy-paste commands:
 
 ---
 
-## 📈 Phase Completion Reports
+## 📁 Archived Documentation
 
-### Completed Phases
+Historical phase completion reports and summaries have been moved to the archive:
 
-- **[PHASE_0_1_COMPLETION_REPORT.md](PHASE_0_1_COMPLETION_REPORT.md)** - Phases 0-1
-- **[PHASE_02_COMPLETION_REPORT.md](PHASE_02_COMPLETION_REPORT.md)** - Phase 2
-- **[PHASE_03_COMPLETION_REPORT.md](PHASE_03_COMPLETION_REPORT.md)** - Phase 3
-- **[PHASE_04_COMPLETION_REPORT.md](PHASE_04_COMPLETION_REPORT.md)** - Phase 4
-- **[PHASE_05_COMPLETION_REPORT.md](PHASE_05_COMPLETION_REPORT.md)** - Phase 5
-- **[PHASE_06_COMPLETION_REPORT.md](PHASE_06_COMPLETION_REPORT.md)** - Phase 6
-- **[PHASE_07_COMPLETION_REPORT.md](PHASE_07_COMPLETION_REPORT.md)** - Phase 7
-- **[PHASE_08_COMPLETION_REPORT.md](PHASE_08_COMPLETION_REPORT.md)** - ✅ Phase 8
-- **[PHASE_09_COMPLETION_REPORT.md](PHASE_09_COMPLETION_REPORT.md)** - ✅ Phase 9
+- **[archive/phases/](archive/phases/)** - Phase completion reports (PHASE_0_1 through PHASE_10)
+- **[archive/summaries/](archive/summaries/)** - Historical summaries and celebration documents
+- **[archive/legacy-v1/](archive/legacy-v1/)** - V1 architecture documentation
 
-### Summary Documents
-
-- **[ALL_PHASES_SUMMARY.md](ALL_PHASES_SUMMARY.md)** - Cross-phase summary
-- **[DOCUMENTATION_COMPLETION_SUMMARY.md](DOCUMENTATION_COMPLETION_SUMMARY.md)** - Documentation status
-- **[FINAL_DOCUMENTATION_SUMMARY.md](FINAL_DOCUMENTATION_SUMMARY.md)** - Final docs review
+For current status, see **[overview/IMPLEMENTATION_STATUS.md](overview/IMPLEMENTATION_STATUS.md)**.
 
 ---
 
-## 🎯 Current Status (2025-11-27)
+## 🎯 Current Status (2025-12-08)
 
 ### ✅ All 15 Phases Complete - 100% Production Ready
 
@@ -262,7 +253,7 @@ All runbooks are production-ready with copy-paste commands:
 
 - **Client Applications**: Web app, admin panel, docs site (monorepo with pnpm + Turborepo)
 - **Frontend Status**: Phase 0-2 complete, Phase 3 (Voice Features) in progress
-- See [CONTINUOUS_IMPROVEMENT_PLAN.md](CONTINUOUS_IMPROVEMENT_PLAN.md) for roadmap
+- See [overview/IMPLEMENTATION_STATUS.md](overview/IMPLEMENTATION_STATUS.md) for current status
 
 ---
 
@@ -385,7 +376,7 @@ voiceassist_openai_api_cost_dollars_total
 
 ## 📝 Document Maintenance
 
-**Last Updated**: 2025-11-27
+**Last Updated**: 2025-12-08
 **Maintained By**: VoiceAssist Development Team
 **Review Cycle**: After each phase completion
 **Format**: GitHub-Flavored Markdown

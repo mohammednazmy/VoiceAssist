@@ -5,7 +5,7 @@ summary: "**Date:** 2025-11-21"
 status: stable
 stability: production
 owner: frontend
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-08"
 audience:
   - frontend
   - ai-agents
@@ -33,7 +33,7 @@ ai_summary: >-
 This guide provides step-by-step instructions for integrating the VoiceAssist client applications with the existing backend infrastructure.
 
 **Backend Status:** ✅ Complete (15/15 phases, HIPAA-compliant, production-ready)
-**Backend Location:** `/home/asimo/VoiceAssist/server/`
+**Backend Location:** `services/api-gateway/` (canonical backend)
 **Backend Tech:** FastAPI, PostgreSQL (pgvector), Redis, Qdrant
 **Backend Port:** 8000
 
@@ -58,7 +58,7 @@ This guide provides step-by-step instructions for integrating the VoiceAssist cl
 
 ### Available Endpoints
 
-Based on the existing backend (`server/` directory), the following APIs are available:
+Based on the existing backend (`services/api-gateway/` directory), the following APIs are available:
 
 #### Authentication API (`/api/auth/*`)
 
@@ -118,13 +118,14 @@ GET    /api/admin/services/status  - Service status
 ### Backend Directory Structure
 
 ```
-server/
+services/api-gateway/
 ├── app/
 │   ├── api/                        # API routers
 │   │   ├── auth.py                 # Auth endpoints
 │   │   ├── users.py                # User endpoints
 │   │   ├── admin_kb.py             # KB admin endpoints
 │   │   ├── admin_panel.py          # Admin dashboard
+│   │   ├── voice.py                # Voice endpoints
 │   │   └── ...
 │   ├── core/
 │   │   ├── security.py             # JWT, password hashing
@@ -136,16 +137,17 @@ server/
 │   │   └── ...
 │   ├── services/
 │   │   ├── auth_service.py
+│   │   ├── thinker_service.py      # AI reasoning (voice)
+│   │   ├── talker_service.py       # TTS service (voice)
+│   │   ├── voice_pipeline_service.py # Voice orchestration
 │   │   ├── query_orchestrator.py   # AI query processing
 │   │   ├── search_aggregator.py    # Vector search
 │   │   ├── kb_indexer.py           # Document indexing
 │   │   └── ...
-│   └── websockets/
-│       └── realtime.py             # WebSocket handler
 ├── alembic/                        # Database migrations
 ├── tests/
-├── main.py                         # FastAPI app entry
-└── requirements.txt
+├── requirements.txt
+└── Dockerfile
 ```
 
 ---
@@ -158,7 +160,7 @@ The backend uses **JWT-based authentication** with access and refresh tokens:
 
 **Backend Implementation:**
 
-- Location: `server/app/core/security.py`
+- Location: `services/api-gateway/app/core/security.py`
 - Access Token: 15 minutes expiry
 - Refresh Token: 7 days expiry
 - Token Storage: Sent in response, stored client-side
@@ -166,7 +168,7 @@ The backend uses **JWT-based authentication** with access and refresh tokens:
 **Token Structure:**
 
 ```python
-# Backend (server/app/core/security.py)
+# Backend (services/api-gateway/app/core/security.py)
 
 def create_access_token(user_id: str) -> str:
     """Create JWT access token"""
@@ -197,7 +199,7 @@ def create_refresh_token(user_id: str) -> str:
 import { apiClient } from "./client";
 import type { User, AuthTokens } from "@voiceassist/types";
 
-// Backend response types (match server/app/api/auth.py)
+// Backend response types (match services/api-gateway/app/api/auth.py)
 interface LoginRequest {
   email: string;
   password: string;
@@ -215,7 +217,7 @@ interface LoginResponse {
 export const authApi = {
   /**
    * Login - POST /api/auth/login
-   * Backend: server/app/api/auth.py::login()
+   * Backend: services/api-gateway/app/api/auth.py::login()
    */
   login: async (data: LoginRequest): Promise<{ user: User; tokens: AuthTokens }> => {
     const response = await apiClient.post<LoginResponse>("/api/auth/login", {
@@ -237,7 +239,7 @@ export const authApi = {
 
   /**
    * Register - POST /api/auth/register
-   * Backend: server/app/api/auth.py::register()
+   * Backend: services/api-gateway/app/api/auth.py::register()
    */
   register: async (data: {
     email: string;
@@ -267,7 +269,7 @@ export const authApi = {
 
   /**
    * Refresh token - POST /api/auth/refresh
-   * Backend: server/app/api/auth.py::refresh()
+   * Backend: services/api-gateway/app/api/auth.py::refresh()
    */
   refresh: async (refreshToken: string): Promise<{ tokens: AuthTokens }> => {
     const response = await apiClient.post<LoginResponse>("/api/auth/refresh", {
@@ -286,7 +288,7 @@ export const authApi = {
 
   /**
    * Logout - POST /api/auth/logout
-   * Backend: server/app/api/auth.py::logout()
+   * Backend: services/api-gateway/app/api/auth.py::logout()
    */
   logout: async (refreshToken: string): Promise<void> => {
     await apiClient.post("/api/auth/logout", {
@@ -296,7 +298,7 @@ export const authApi = {
 
   /**
    * Get current user - GET /api/auth/me
-   * Backend: server/app/api/auth.py::get_current_user()
+   * Backend: services/api-gateway/app/api/auth.py::get_current_user()
    */
   getCurrentUser: async (): Promise<User> => {
     const response = await apiClient.get<User>("/api/auth/me");
@@ -426,7 +428,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
 
 ### Step 1: Understand Backend WebSocket Protocol
 
-**Backend WebSocket Handler:** `server/app/websockets/realtime.py`
+**Backend WebSocket Handler:** `services/api-gateway/app/websockets/realtime.py`
 
 **Connection:**
 
@@ -437,7 +439,7 @@ WS ws://localhost:8000/api/realtime/ws
 **Message Protocol:**
 
 ```python
-# Backend (server/app/websockets/realtime.py)
+# Backend (services/api-gateway/app/websockets/realtime.py)
 
 # Client sends:
 {
@@ -638,7 +640,12 @@ export function useChat(options: UseChatOptions) {
         sessionId,
         role: "user",
         content,
-        attachments: attachments?.map((id) => ({ id, type: "file", url: "", name: "" })),
+        attachments: attachments?.map((id) => ({
+          id,
+          type: "file",
+          url: "",
+          name: "",
+        })),
         createdAt: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, userMessage]);
@@ -678,7 +685,7 @@ export function useChat(options: UseChatOptions) {
 
 ### Admin KB Management
 
-**Backend:** `server/app/api/admin_kb.py`
+**Backend:** `services/api-gateway/app/api/admin_kb.py`
 
 ```tsx
 // packages/api-client/src/admin.ts
@@ -689,7 +696,7 @@ import type { KBDocument, IndexingJob } from "@voiceassist/types";
 export const adminKbApi = {
   /**
    * List KB documents - GET /api/admin/kb/documents
-   * Backend: server/app/api/admin_kb.py::list_documents()
+   * Backend: services/api-gateway/app/api/admin_kb.py::list_documents()
    */
   listDocuments: async (params?: {
     skip?: number;
@@ -705,7 +712,7 @@ export const adminKbApi = {
 
   /**
    * Upload document - POST /api/admin/kb/upload
-   * Backend: server/app/api/admin_kb.py::upload_document()
+   * Backend: services/api-gateway/app/api/admin_kb.py::upload_document()
    */
   uploadDocument: async (
     file: File,
@@ -735,7 +742,7 @@ export const adminKbApi = {
 
   /**
    * Delete document - DELETE /api/admin/kb/:id
-   * Backend: server/app/api/admin_kb.py::delete_document()
+   * Backend: services/api-gateway/app/api/admin_kb.py::delete_document()
    */
   deleteDocument: async (documentId: string): Promise<void> => {
     await apiClient.delete(`/api/admin/kb/${documentId}`);
@@ -743,7 +750,7 @@ export const adminKbApi = {
 
   /**
    * Trigger reindexing - POST /api/admin/kb/reindex
-   * Backend: server/app/api/admin_kb.py::trigger_reindex()
+   * Backend: services/api-gateway/app/api/admin_kb.py::trigger_reindex()
    */
   triggerReindex: async (documentIds: string[]): Promise<{ job_id: string }> => {
     const response = await apiClient.post("/api/admin/kb/reindex", {
@@ -754,7 +761,7 @@ export const adminKbApi = {
 
   /**
    * Get indexing jobs - GET /api/admin/kb/jobs
-   * Backend: server/app/api/admin_kb.py::get_indexing_jobs()
+   * Backend: services/api-gateway/app/api/admin_kb.py::get_indexing_jobs()
    */
   getIndexingJobs: async (limit?: number): Promise<IndexingJob[]> => {
     const response = await apiClient.get<IndexingJob[]>("/api/admin/kb/jobs", {
@@ -765,7 +772,7 @@ export const adminKbApi = {
 
   /**
    * Get vector DB stats - GET /api/admin/kb/stats
-   * Backend: server/app/api/admin_kb.py::get_vector_stats()
+   * Backend: services/api-gateway/app/api/admin_kb.py::get_vector_stats()
    */
   getVectorStats: async (): Promise<{
     total_documents: number;
@@ -784,7 +791,7 @@ export const adminKbApi = {
 
 ### Backend File Upload
 
-**Backend:** `server/app/api/files.py`
+**Backend:** `services/api-gateway/app/api/files.py`
 
 ```tsx
 // apps/web-app/src/hooks/useFileUpload.ts
@@ -841,7 +848,7 @@ The backend expects authentication via query parameter:
 const ws = new WebSocket(`${WS_URL}/api/realtime/ws?token=${accessToken}`);
 ```
 
-**Backend Implementation:** `server/app/websockets/realtime.py`
+**Backend Implementation:** `services/api-gateway/app/websockets/realtime.py`
 
 ```python
 # Backend extracts token from query params
@@ -902,7 +909,7 @@ VITE_ENV=development
 Ensure backend CORS allows frontend origins:
 
 ```python
-# server/app/main.py
+# services/api-gateway/app/main.py
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -928,7 +935,7 @@ app.add_middleware(
 
 ### Development CORS
 
-**Backend:** Update `server/app/core/config.py`
+**Backend:** Update `services/api-gateway/app/core/config.py`
 
 ```python
 class Settings(BaseSettings):
@@ -1037,7 +1044,7 @@ console.log("Stored tokens:", tokens);
 **Solution:**
 
 ```python
-# server/app/main.py
+# services/api-gateway/app/main.py
 # Add your frontend URL to allow_origins
 allow_origins=[
     "http://localhost:5173",  # Add this
@@ -1065,7 +1072,7 @@ console.log("WebSocket URL:", `${WS_URL}/api/realtime/ws?token=${accessToken}`);
 **Solution:**
 
 ```python
-# server/app/main.py
+# services/api-gateway/app/main.py
 # Increase max file size
 app.add_middleware(
     ...

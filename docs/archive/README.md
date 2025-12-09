@@ -7,7 +7,7 @@ summary: >-
 status: deprecated
 stability: legacy
 owner: docs
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-08"
 audience:
   - human
   - ai-agents
@@ -23,7 +23,15 @@ ai_summary: >-
 
 This directory contains archived documentation from completed development phases. These files are preserved for historical reference.
 
-## Phase Completion Reports
+## Subdirectories
+
+| Directory                  | Description                                          |
+| -------------------------- | ---------------------------------------------------- |
+| [phases/](./phases/)       | Phase completion reports and dated fix documentation |
+| [summaries/](./summaries/) | Celebration/completion summary documents             |
+| [legacy-v1/](./legacy-v1/) | Original V1 architecture documentation               |
+
+## Phase Completion Reports (Legacy)
 
 | File                                        | Phase | Description                             |
 | ------------------------------------------- | ----- | --------------------------------------- |

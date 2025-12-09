@@ -297,6 +297,6 @@ The following were evaluated during planning but not implemented:
 
 ## Related Documentation
 
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - System architecture
 - [IMPLEMENTATION_STATUS.md](overview/IMPLEMENTATION_STATUS.md) - Component status
 - [Debugging Index](debugging/DEBUGGING_INDEX.md) - Troubleshooting guides
