@@ -4,7 +4,11 @@
  * These tests use actual speech audio files injected via Chrome's fake audio capture
  * to test barge-in functionality with realistic user interruptions.
  *
- * The barge-in.wav file contains "Stop! Wait a moment please." spoken clearly.
+ * CRITICAL: The audio file used MUST contain a QUESTION (not an interruption command)
+ * so that the AI generates a spoken response. Chrome's fake audio loops continuously,
+ * so the looped audio becomes the user's interruption after AI starts speaking.
+ *
+ * Audio file: conversation-start.wav (configured in playwright.config.ts)
  *
  * IMPORTANT: These tests ONLY work on Chromium-based browsers because they rely on
  * Chrome-specific flags (--use-fake-device-for-media-stream, --use-file-for-fake-audio-capture).
@@ -266,7 +270,7 @@ test.describe("Voice Barge-In with Real Audio", () => {
 
     console.log("[Test] Voice mode opened, waiting for VAD to detect speech from audio file...");
 
-    // The barge-in.wav file should be playing through fake audio capture
+    // The conversation-start.wav file should be playing through fake audio capture
     // Wait enough time for the audio to be processed
     await page.waitForTimeout(10000);
 
@@ -289,13 +293,21 @@ test.describe("Voice Barge-In with Real Audio", () => {
 
   /**
    * Test: Barge-in triggers during AI playback
-   * This test ACTUALLY verifies barge-in behavior by checking:
-   * 1. AI enters "speaking" state OR receives audio chunks
-   * 2. When user speech is detected, barge-in is triggered
-   * 3. Pipeline transitions from speaking to listening
    *
-   * IMPORTANT: This test will FAIL if barge-in doesn't actually work,
-   * unlike the previous version which only checked for speech detection.
+   * This test ACTUALLY verifies barge-in behavior by checking:
+   * 1. Audio transcript triggers AI response through voice pipeline
+   * 2. AI enters "speaking" state with audio chunks
+   * 3. Looped audio triggers barge-in
+   * 4. Pipeline transitions from speaking to listening
+   *
+   * CRITICAL: Test will FAIL if:
+   * - AI never speaks (no audio.output messages from backend)
+   * - Barge-in is not triggered when AI is speaking
+   * - Pipeline doesn't transition properly
+   *
+   * The test uses conversation-start.wav which contains a question that
+   * triggers AI response. Chrome loops the audio continuously, so after
+   * AI starts speaking, the looped audio becomes the user's interruption.
    */
   test("barge-in interrupts AI during playback", async ({ page }) => {
     // Set up console capture for detailed debugging
@@ -326,20 +338,15 @@ test.describe("Voice Barge-In with Real Audio", () => {
       console.warn("[Test] WARNING: Instant barge-in is NOT enabled! Test may not work correctly.");
     }
 
-    // Look for a chat input to send a message that will trigger AI response
-    const chatInput = page.locator(
-      '[data-testid="message-input"], [data-testid="chat-input"], textarea[placeholder*="message" i]'
-    ).first();
-
-    if (await chatInput.isVisible()) {
-      await chatInput.fill("Tell me a very long detailed story about exploring distant galaxies and meeting alien civilizations. Make it at least 5 paragraphs long.");
-      await chatInput.press("Enter");
-      console.log("[Test] Sent message to trigger long AI response");
-    }
+    // NOTE: We do NOT send a chat message. The audio file (conversation-start.wav) contains
+    // a question that will be transcribed by STT and trigger AI response through the voice
+    // pipeline. Text messages sent via chat input do NOT go through the voice WebSocket!
+    console.log("[Test] Waiting for audio transcript to trigger AI response through voice pipeline...");
 
     // CRITICAL: Wait for AI to ACTUALLY be speaking with audio chunks
+    // The conversation-start.wav audio should be transcribed and trigger AI speech
     console.log("[Test] Waiting for AI to start speaking with audio chunks...");
-    const speakingResult = await waitForAISpeakingWithAudioChunks(page, 30000);
+    const speakingResult = await waitForAISpeakingWithAudioChunks(page, 45000); // Longer timeout for STT + LLM + TTS
 
     console.log(`[Test] AI speaking check: success=${speakingResult.success}, ` +
       `pipelineState=${speakingResult.pipelineState}, ` +
@@ -352,15 +359,12 @@ test.describe("Voice Barge-In with Real Audio", () => {
       consoleState.pipelineStateLogs.forEach(log => console.log(`    ${log}`));
       console.log(`  Audio chunk logs: ${consoleState.audioChunkLogs.length}`);
       consoleState.audioChunkLogs.forEach(log => console.log(`    ${log}`));
-
-      // This is a soft failure - the AI not speaking is a backend issue, not a barge-in test issue
-      console.warn("[Test] WARNING: AI never entered speaking state. Backend may not be sending audio.");
-      console.warn("[Test] Barge-in test cannot proceed without AI audio playback.");
     }
 
-    // Wait for fake audio (user speech) to be detected and trigger barge-in
-    // The barge-in.wav file should be continuously playing via fake audio capture
-    console.log("[Test] Waiting for barge-in to be triggered by fake audio...");
+    // Wait for barge-in to be triggered by the looped audio
+    // The conversation-start.wav is continuously playing via fake audio capture
+    // When AI starts speaking, the looped audio becomes the interruption
+    console.log("[Test] Waiting for barge-in to be triggered by looped audio...");
     await page.waitForTimeout(10000);
 
     // CRITICAL: Verify barge-in actually occurred
@@ -397,26 +401,50 @@ test.describe("Voice Barge-In with Real Audio", () => {
     console.log(`  bargeInTriggered: ${vadState.bargeInTriggered}`);
     console.log(`  playbackStopped: ${vadState.playbackStopped}`);
 
-    // STRICT ASSERTION: Test ONLY passes if barge-in actually worked
-    // This is the key fix - we no longer pass just because speech was detected
-    if (speakingResult.success) {
-      // If AI was speaking, barge-in MUST have been triggered
-      expect(
-        bargeInResult.triggered,
-        `Barge-in must be triggered when AI is speaking. ` +
-        `AI was speaking: ${speakingResult.success}, ` +
-        `Barge-in triggered: ${bargeInResult.triggered}, ` +
-        `Speech detected logs: ${consoleState.speechDetectedLogs.length}`
-      ).toBeTruthy();
-    } else {
-      // AI was never speaking - this is a backend issue, soft pass with warning
-      console.warn("[Test] SOFT PASS: AI never entered speaking state - backend issue, not barge-in issue");
-      // Still check that we at least detected some speech
-      expect(
-        vadState.sileroSpeechEvents > 0 || vadState.deepgramSpeechEvents > 0,
-        "At minimum, speech should be detected from the fake audio"
-      ).toBeTruthy();
-    }
+    // STRICT ASSERTIONS: Test MUST verify real barge-in behavior
+    // There is no "soft pass" - if the system doesn't work, the test FAILS
+
+    // ASSERTION 1: AI must actually speak
+    // If this fails, the audio file isn't triggering AI response through voice pipeline
+    expect(
+      speakingResult.success,
+      `AI must enter speaking state with audio chunks. ` +
+      `pipelineState=${speakingResult.pipelineState}, ` +
+      `audioChunksReceived=${speakingResult.audioChunksReceived}. ` +
+      `Check: Is the audio file being transcribed correctly? ` +
+      `Is the backend sending audio.output messages?`
+    ).toBeTruthy();
+
+    // ASSERTION 2: Barge-in must be triggered when AI is speaking
+    // Use console log capture (vadState) which is more reliable than window.__voiceDebug
+    // because window.__voiceDebug.stateTransitions resets on each effect run
+    const bargeInWasTriggered =
+      vadState.bargeInTriggered ||
+      bargeInResult.triggered ||
+      consoleState.bargeInTriggeredLogs.length > 0;
+
+    expect(
+      bargeInWasTriggered,
+      `Barge-in must be triggered when AI is speaking. ` +
+      `AI was speaking: ${speakingResult.success}, ` +
+      `vadState.bargeInTriggered: ${vadState.bargeInTriggered}, ` +
+      `verifyBargeInOccurred.triggered: ${bargeInResult.triggered}, ` +
+      `Console barge-in logs: ${consoleState.bargeInTriggeredLogs.length}`
+    ).toBeTruthy();
+
+    // ASSERTION 3: Playback must have stopped (indicates barge-in completed)
+    const playbackWasStopped =
+      vadState.playbackStopped ||
+      bargeInResult.pipelineTransitioned ||
+      bargeInResult.bargeInCountIncreased;
+
+    expect(
+      playbackWasStopped,
+      `Playback must stop after barge-in. ` +
+      `vadState.playbackStopped: ${vadState.playbackStopped}, ` +
+      `pipelineTransitioned: ${bargeInResult.pipelineTransitioned}, ` +
+      `bargeInCountIncreased: ${bargeInResult.bargeInCountIncreased}`
+    ).toBeTruthy();
   });
 
   /**
@@ -465,18 +493,13 @@ test.describe("Voice Barge-In with Real Audio", () => {
       return;
     }
 
-    // Trigger AI response
-    const chatInput = page.locator(
-      '[data-testid="message-input"], [data-testid="chat-input"], textarea'
-    ).first();
+    // NOTE: AI response is triggered by the audio file (conversation-start.wav) being
+    // transcribed through the voice pipeline. We do NOT use chat input because text
+    // messages sent via chat input don't go through the voice WebSocket pipeline.
+    console.log("[Latency] Waiting for audio transcript to trigger AI response...");
 
-    if (await chatInput.isVisible()) {
-      await chatInput.fill("Count from 1 to 100 slowly and clearly.");
-      await chatInput.press("Enter");
-    }
-
-    // Wait for AI to start speaking and barge-in to occur
-    await page.waitForTimeout(20000);
+    // Wait for AI to start speaking and barge-in to occur (longer timeout for STT + LLM + TTS)
+    await page.waitForTimeout(30000);
 
     if (speechStartTime > 0 && playbackStopTime > 0) {
       const latency = playbackStopTime - speechStartTime;
@@ -524,15 +547,12 @@ test.describe("Voice Barge-In with Real Audio", () => {
       return;
     }
 
-    // Trigger AI speech
-    const chatInput = page.locator('[data-testid="message-input"], textarea').first();
-    if (await chatInput.isVisible()) {
-      await chatInput.fill("Hello, can you introduce yourself briefly?");
-      await chatInput.press("Enter");
-    }
+    // NOTE: AI response is triggered by the audio file (conversation-start.wav) being
+    // transcribed through the voice pipeline. We do NOT use chat input.
+    console.log("[Test] Waiting for audio transcript to trigger AI speech...");
 
-    // Wait for thresholds to be logged during playback
-    await page.waitForTimeout(15000);
+    // Wait for thresholds to be logged during playback (longer timeout for STT + LLM + TTS)
+    await page.waitForTimeout(25000);
 
     console.log("[Test] VAD Threshold Logs:");
     thresholdLogs.forEach((log) => console.log(`  ${log}`));
@@ -550,16 +570,20 @@ test.describe("Voice Barge-In with Real Audio", () => {
    * Since the audio file loops, this tests repeated interruption handling
    */
   test("handles multiple barge-in attempts", async ({ page }) => {
-    let bargeInCount = 0;
+    // Set up console capture using the proven setupVADCapture method
+    const vadState = setupVADCapture(page);
+    let bargeInLogCount = 0;
 
     page.on("console", (msg) => {
       const text = msg.text();
+      // Look for both the "[barge-in]" prefix and playback stopping messages
       if (
-        text.toLowerCase().includes("barge") &&
-        (text.includes("triggered") || text.includes("executing"))
+        text.includes("[barge-in]") ||
+        text.includes("Stopping playback") ||
+        (text.toLowerCase().includes("barge") && text.includes("interrupt"))
       ) {
-        bargeInCount++;
-        console.log(`[Test] Barge-in #${bargeInCount}: ${text}`);
+        bargeInLogCount++;
+        console.log(`[Test] Barge-in log #${bargeInLogCount}: ${text.substring(0, 100)}`);
       }
     });
 
@@ -575,23 +599,27 @@ test.describe("Voice Barge-In with Real Audio", () => {
       return;
     }
 
-    // Trigger a long AI response
-    const chatInput = page.locator('[data-testid="message-input"], textarea').first();
-    if (await chatInput.isVisible()) {
-      await chatInput.fill(
-        "Please explain in great detail the history of computing from the 1940s to today."
-      );
-      await chatInput.press("Enter");
-    }
+    // NOTE: AI response is triggered by the audio file (conversation-start.wav) being
+    // transcribed through the voice pipeline. The audio loops, so multiple barge-in
+    // attempts will occur naturally.
+    console.log("[Test] Waiting for audio transcript to trigger AI response (audio will loop)...");
 
     // Wait for extended period to capture multiple barge-in attempts
     // The audio file will loop repeatedly
-    await page.waitForTimeout(30000);
+    await page.waitForTimeout(45000);
 
-    console.log(`[Test] Total barge-in events detected: ${bargeInCount}`);
+    console.log(`[Test] Total barge-in log messages: ${bargeInLogCount}`);
+    console.log(`[Test] vadState.bargeInTriggered: ${vadState.bargeInTriggered}`);
+    console.log(`[Test] vadState.playbackStopped: ${vadState.playbackStopped}`);
 
-    // We should see at least one barge-in event
-    expect(bargeInCount).toBeGreaterThanOrEqual(0); // Relaxed for initial testing
+    // Barge-in should have been triggered at least once (via log or vadState)
+    expect(
+      vadState.bargeInTriggered || vadState.playbackStopped || bargeInLogCount > 0,
+      `At least one barge-in event should occur. ` +
+      `vadState.bargeInTriggered=${vadState.bargeInTriggered}, ` +
+      `vadState.playbackStopped=${vadState.playbackStopped}, ` +
+      `bargeInLogCount=${bargeInLogCount}`
+    ).toBeTruthy();
   });
 });
 

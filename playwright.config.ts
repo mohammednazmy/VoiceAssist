@@ -189,7 +189,10 @@ export default defineConfig({
       timeout: 120 * 1000, // 2 minutes for real conversation flow
     },
 
-    /* Barge-in specific tests with loud interruption audio */
+    /* Barge-in specific tests with question audio that triggers AI response */
+    /* IMPORTANT: Must use audio with a QUESTION (not interruption command) so AI speaks first.
+     * Chrome loops the audio, so after AI responds, the looped audio becomes the interruption.
+     * Using barge-in.wav ("Stop! Wait a moment please") fails because it doesn't trigger AI speech. */
     {
       name: 'voice-barge-in',
       testDir: './e2e/voice',
@@ -201,7 +204,8 @@ export default defineConfig({
           args: [
             '--use-fake-ui-for-media-stream',
             '--use-fake-device-for-media-stream',
-            `--use-file-for-fake-audio-capture=${AUDIO_FIXTURES.bargeIn}`,
+            // Use conversation-start (contains question) instead of barge-in (contains stop command)
+            `--use-file-for-fake-audio-capture=${AUDIO_FIXTURES.conversationStart}`,
           ],
         },
         storageState: 'e2e/.auth/user.json',
