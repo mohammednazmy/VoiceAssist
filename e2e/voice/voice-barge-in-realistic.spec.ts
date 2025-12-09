@@ -299,8 +299,13 @@ test.describe("Voice Mode Barge-In - Failure Diagnostics", () => {
 
     // Capture all console messages for debugging
     const allLogs: string[] = [];
+    const audioPlaybackLogs: string[] = []; // Specific logs for TTAudioPlayback
     page.on("console", (msg) => {
       const text = msg.text();
+      // Capture TTAudioPlayback logs specifically (these are the ones we're debugging)
+      if (text.includes("[TTAudioPlayback]")) {
+        audioPlaybackLogs.push(`[${msg.type()}] ${text}`);
+      }
       if (
         text.includes("voice") ||
         text.includes("Voice") ||
@@ -367,9 +372,84 @@ test.describe("Voice Mode Barge-In - Failure Diagnostics", () => {
     console.log(`Ever had isPlaying=true: ${everPlaying}`);
     console.log(`Barge-in ever triggered: ${bargeInTriggered}`);
 
+    console.log("\n=== TTAudioPlayback LOGS (processAudioQueue/queueAudioChunk) ===");
+    console.log(`Total TTAudioPlayback logs: ${audioPlaybackLogs.length}`);
+    // Show first 20 logs (where the important stuff happens)
+    console.log("First 20 TTAudioPlayback logs:");
+    for (const log of audioPlaybackLogs.slice(0, 20)) {
+      console.log(log);
+    }
+    // Filter for specific keywords we added
+    const processQueueLogs = audioPlaybackLogs.filter(l =>
+      l.includes("ENTRY") || l.includes("EXIT") || l.includes("PUSHING") ||
+      l.includes("PUSHED") || l.includes("NORMAL MODE") || l.includes("PREBUFFERING") ||
+      l.includes("AUDIO SCHEDULED") || l.includes("Getting AudioContext")
+    );
+    console.log(`\nProcessAudioQueue specific logs (${processQueueLogs.length}):`);
+    for (const log of processQueueLogs.slice(0, 30)) {
+      console.log(log);
+    }
+
     console.log("\n=== RELEVANT CONSOLE LOGS ===");
     for (const log of allLogs.slice(-50)) {
       console.log(log);
+    }
+
+    // Check WebSocket events array for audio messages
+    const wsEvents = await page.evaluate(() => {
+      const win = window as Window & { __tt_ws_events?: Array<{ type: string; direction: string; data: unknown }> };
+      if (!win.__tt_ws_events) return { total: 0, types: [] as string[], audioCount: 0 };
+      const types = [...new Set(win.__tt_ws_events.map((e) => e.type))];
+      const audioEvents = win.__tt_ws_events.filter((e) => e.type?.includes("audio"));
+      return {
+        total: win.__tt_ws_events.length,
+        types,
+        audioCount: audioEvents.length,
+        audioSample: audioEvents.slice(0, 3),
+      };
+    });
+    console.log("\n=== WS EVENTS ANALYSIS ===");
+    console.log(`Total WS events received: ${wsEvents.total}`);
+    console.log(`Message types: ${wsEvents.types.join(", ")}`);
+    console.log(`Audio events count: ${wsEvents.audioCount}`);
+    if (wsEvents.audioSample) {
+      console.log("Audio event samples:", JSON.stringify(wsEvents.audioSample, null, 2));
+    }
+
+    // Check audio debug events array for audio processing
+    const audioDebug = await page.evaluate(() => {
+      const win = window as Window & {
+        __tt_audio_debug?: Array<{
+          timestamp: number;
+          event: string;
+          length: number;
+          playbackState?: string;
+          isPlaying?: boolean;
+          bargeInActive?: boolean;
+          queueLength?: number;
+        }>;
+      };
+      if (!win.__tt_audio_debug) return { total: 0, events: [] as string[], droppedCount: 0 };
+      const events = [...new Set(win.__tt_audio_debug.map((e) => e.event))];
+      const droppedEvents = win.__tt_audio_debug.filter((e) => e.event.includes("dropped"));
+      const receivedEvents = win.__tt_audio_debug.filter((e) => e.event.includes("received") || e.event.includes("called"));
+      return {
+        total: win.__tt_audio_debug.length,
+        events,
+        droppedCount: droppedEvents.length,
+        receivedCount: receivedEvents.length,
+        samples: win.__tt_audio_debug.slice(-10),
+      };
+    });
+    console.log("\n=== AUDIO DEBUG ANALYSIS ===");
+    console.log(`Total audio debug events: ${audioDebug.total}`);
+    console.log(`Event types: ${audioDebug.events.join(", ")}`);
+    console.log(`Received chunks: ${audioDebug.receivedCount || 0}, Dropped chunks: ${audioDebug.droppedCount}`);
+    if (audioDebug.samples) {
+      console.log("Audio debug samples (last 10):");
+      for (const sample of audioDebug.samples) {
+        console.log(`  ${sample.event}: length=${sample.length}, isPlaying=${sample.isPlaying}, bargeIn=${sample.bargeInActive}, queue=${sample.queueLength}`);
+      }
     }
 
     // This test always passes - it's for diagnostics only

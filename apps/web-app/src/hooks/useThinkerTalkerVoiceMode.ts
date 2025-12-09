@@ -772,6 +772,33 @@ export function useThinkerTalkerVoiceMode(
       voiceLog.debug("[TTVoiceMode] Audio chunk received", {
         audioLength: audioBase64.length,
       });
+      // E2E Debug: Track audio chunk flow
+      if (typeof window !== "undefined") {
+        const win = window as Window & {
+          __tt_audio_debug?: Array<{
+            timestamp: number;
+            event: string;
+            length: number;
+            playbackState: string;
+            isPlaying: boolean;
+          }>;
+        };
+        if (!win.__tt_audio_debug) {
+          win.__tt_audio_debug = [];
+        }
+        win.__tt_audio_debug.push({
+          timestamp: Date.now(),
+          event: "onAudioChunk_called",
+          length: audioBase64.length,
+          playbackState: audioPlayback.playbackState,
+          isPlaying: audioPlayback.isPlaying,
+        });
+        console.log("[TTVoiceMode] onAudioChunk called", {
+          audioLength: audioBase64.length,
+          playbackState: audioPlayback.playbackState,
+          isPlaying: audioPlayback.isPlaying,
+        });
+      }
       audioPlayback.queueAudioChunk(audioBase64);
     },
 
@@ -1239,6 +1266,8 @@ export function useThinkerTalkerVoiceMode(
     // Create or extend the voiceModeDebug object with audio playback state
     const voiceModeDebug = {
       // Audio playback state (not available in useThinkerTalkerSession's __voiceDebug)
+      // NOTE: isPlaying is derived from React state and may be stale
+      // Use getPlaybackDebugState() for accurate real-time ref values
       isPlaying: audioPlayback.isPlaying,
       playbackState: audioPlayback.playbackState,
       ttfaMs: audioPlayback.ttfaMs,
@@ -1264,8 +1293,20 @@ export function useThinkerTalkerVoiceMode(
       partialAIResponse: session.partialAIResponse,
 
       // Helper to check if AI is actively playing audio (key for barge-in tests)
+      // NOTE: Uses state-derived isPlaying which may be stale. For real-time checks,
+      // use getPlaybackDebugState().isPlayingRef || getPlaybackDebugState().activeSourcesCount > 0
       get isAIPlayingAudio() {
         return audioPlayback.isPlaying && session.pipelineState === "speaking";
+      },
+
+      // Real-time playback debug state (reads directly from refs, not React state)
+      // Use this for accurate E2E testing - React state can be stale
+      getPlaybackDebugState: () => audioPlayback.getDebugState(),
+
+      // Convenience: Check if audio is actually playing via refs
+      get isActuallyPlaying() {
+        const debugState = audioPlayback.getDebugState();
+        return debugState.isPlayingRef || debugState.activeSourcesCount > 0;
       },
     };
 

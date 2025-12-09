@@ -349,7 +349,7 @@ export async function enableAllVoiceFeatures(page: Page): Promise<void> {
 export async function waitForVoiceModeReady(
   page: Page,
   timeout = 30000
-): Promise<boolean> {
+): Promise<{ ready: boolean; error?: string }> {
   try {
     const voiceButton = page
       .locator(
@@ -367,10 +367,10 @@ export async function waitForVoiceModeReady(
       },
       { timeout }
     );
-    return true;
-  } catch {
-    console.log("[Test] Voice mode not ready within timeout");
-    return false;
+    return { ready: true };
+  } catch (e) {
+    console.log("[Test] Voice mode not ready within timeout:", e);
+    return { ready: false, error: String(e) };
   }
 }
 
@@ -1031,11 +1031,23 @@ export interface VoiceDebugState {
 }
 
 /**
+ * Playback debug state from refs (not React state) - more accurate for E2E testing
+ */
+export interface PlaybackDebugState {
+  isPlayingRef: boolean;
+  isProcessingRef: boolean;
+  activeSourcesCount: number;
+  streamEndedRef: boolean;
+  bargeInActiveRef: boolean;
+}
+
+/**
  * Voice mode debug state interface matching window.__voiceModeDebug (from useThinkerTalkerVoiceMode)
  * This includes audio playback state that's not available in window.__voiceDebug
  */
 export interface VoiceModeDebugState {
-  // Audio playback state
+  // Audio playback state (NOTE: isPlaying is derived from React state, may be stale)
+  // Use isActuallyPlaying or playbackDebugState for real-time accuracy
   isPlaying: boolean;
   playbackState: string;
   ttfaMs: number | null;
@@ -1060,8 +1072,12 @@ export interface VoiceModeDebugState {
   partialTranscript: string;
   partialAIResponse: string;
 
-  // Computed helper
+  // Computed helper (uses state-derived isPlaying, may be stale)
   isAIPlayingAudio: boolean;
+
+  // Real-time playback state (reads directly from refs, accurate for E2E testing)
+  isActuallyPlaying: boolean;
+  playbackDebugState: PlaybackDebugState | null;
 }
 
 /**
@@ -1275,13 +1291,27 @@ export async function attachDebugReport(
 /**
  * Get the voice mode debug state from window.__voiceModeDebug
  * This includes audio playback state (isPlaying) that's not available in window.__voiceDebug
+ *
+ * NOTE: isPlaying is derived from React state and may be stale.
+ * For accurate real-time playback detection, use isActuallyPlaying or playbackDebugState.
  */
 export async function getVoiceModeDebugState(page: Page): Promise<VoiceModeDebugState | null> {
   return page.evaluate(() => {
-    const debug = (window as unknown as { __voiceModeDebug?: VoiceModeDebugState }).__voiceModeDebug;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const debug = (window as any).__voiceModeDebug;
     if (!debug) return null;
 
-    // Create a snapshot (getters won't serialize properly)
+    // Create a snapshot (getters won't serialize properly, so we call them)
+    // Also capture the ref-based debug state for accurate E2E testing
+    let playbackDebugState = null;
+    try {
+      if (typeof debug.getPlaybackDebugState === "function") {
+        playbackDebugState = debug.getPlaybackDebugState();
+      }
+    } catch {
+      // getPlaybackDebugState may not be available in older versions
+    }
+
     return {
       isPlaying: debug.isPlaying,
       playbackState: debug.playbackState,
@@ -1299,6 +1329,9 @@ export async function getVoiceModeDebugState(page: Page): Promise<VoiceModeDebug
       partialTranscript: debug.partialTranscript,
       partialAIResponse: debug.partialAIResponse,
       isAIPlayingAudio: debug.isAIPlayingAudio,
+      // New real-time playback detection fields
+      isActuallyPlaying: debug.isActuallyPlaying ?? false,
+      playbackDebugState: playbackDebugState,
     };
   });
 }
@@ -1306,6 +1339,9 @@ export async function getVoiceModeDebugState(page: Page): Promise<VoiceModeDebug
 /**
  * Wait for AI to be actively playing audio (not just in speaking state)
  * This is the KEY condition for testing barge-in - we need actual audio playback
+ *
+ * Uses isActuallyPlaying (ref-based) instead of isPlaying (state-derived) for accuracy.
+ * React state updates are async and can be stale, but refs reflect the actual current state.
  *
  * @param page - The Playwright page instance
  * @param timeout - Maximum time to wait (default: 30000ms)
@@ -1317,6 +1353,7 @@ export async function waitForAIPlayingAudio(
 ): Promise<{
   success: boolean;
   isPlaying: boolean;
+  isActuallyPlaying: boolean;
   pipelineState: string;
   debugState: VoiceModeDebugState | null;
   attempts: number;
@@ -1329,20 +1366,35 @@ export async function waitForAIPlayingAudio(
     const debugState = await getVoiceModeDebugState(page);
 
     if (debugState) {
+      // Log both state-derived and ref-derived playback status
+      const refState = debugState.playbackDebugState;
       console.log(
         `[BARGE-IN-TEST] Attempt ${attempts}: isPlaying=${debugState.isPlaying}, ` +
+          `isActuallyPlaying=${debugState.isActuallyPlaying}, ` +
           `playbackState=${debugState.playbackState}, pipelineState=${debugState.pipelineState}, ` +
-          `isAIPlayingAudio=${debugState.isAIPlayingAudio}, queueLength=${debugState.queueLength}`
+          `queueLength=${debugState.queueLength}` +
+          (refState
+            ? `, refState={isPlayingRef=${refState.isPlayingRef}, activeSources=${refState.activeSourcesCount}}`
+            : "")
       );
 
       // AI is playing audio when:
-      // 1. isPlaying is true (audio is being played through Web Audio API)
+      // 1. isActuallyPlaying is true (ref-based, accurate) OR
+      //    - isPlaying is true (state-derived, may be stale)
+      //    - OR playbackDebugState shows active sources
       // 2. AND pipeline state is "speaking" (backend is generating audio)
-      if (debugState.isPlaying && debugState.pipelineState === "speaking") {
-        console.log(`[BARGE-IN-TEST] SUCCESS: AI is playing audio after ${attempts} attempts`);
+      const actuallyPlaying =
+        debugState.isActuallyPlaying ||
+        (refState && (refState.isPlayingRef || refState.activeSourcesCount > 0));
+
+      if (actuallyPlaying && debugState.pipelineState === "speaking") {
+        console.log(
+          `[BARGE-IN-TEST] SUCCESS: AI is playing audio after ${attempts} attempts (isActuallyPlaying=${debugState.isActuallyPlaying})`
+        );
         return {
           success: true,
           isPlaying: debugState.isPlaying,
+          isActuallyPlaying: debugState.isActuallyPlaying,
           pipelineState: debugState.pipelineState,
           debugState,
           attempts,
@@ -1358,11 +1410,13 @@ export async function waitForAIPlayingAudio(
   const finalState = await getVoiceModeDebugState(page);
   console.log(
     `[BARGE-IN-TEST] TIMEOUT waiting for AI to play audio after ${attempts} attempts. ` +
-      `Final state: isPlaying=${finalState?.isPlaying}, pipelineState=${finalState?.pipelineState}`
+      `Final state: isPlaying=${finalState?.isPlaying}, isActuallyPlaying=${finalState?.isActuallyPlaying}, ` +
+      `pipelineState=${finalState?.pipelineState}`
   );
   return {
     success: false,
     isPlaying: finalState?.isPlaying || false,
+    isActuallyPlaying: finalState?.isActuallyPlaying || false,
     pipelineState: finalState?.pipelineState || "unknown",
     debugState: finalState,
     attempts,
@@ -1372,6 +1426,8 @@ export async function waitForAIPlayingAudio(
 /**
  * Wait for AI to stop playing audio after barge-in
  * This verifies that barge-in actually caused audio to stop
+ *
+ * Uses isActuallyPlaying (ref-based) for accurate detection.
  *
  * @param page - The Playwright page instance
  * @param timeout - Maximum time to wait (default: 5000ms)
@@ -1389,13 +1445,24 @@ export async function waitForAudioToStop(
     const debugState = await getVoiceModeDebugState(page);
 
     if (debugState) {
+      const refState = debugState.playbackDebugState;
       console.log(
         `[BARGE-IN-TEST] Checking audio stopped: isPlaying=${debugState.isPlaying}, ` +
-          `playbackState=${debugState.playbackState}, pipelineState=${debugState.pipelineState}`
+          `isActuallyPlaying=${debugState.isActuallyPlaying}, ` +
+          `playbackState=${debugState.playbackState}, pipelineState=${debugState.pipelineState}` +
+          (refState
+            ? `, refState={isPlayingRef=${refState.isPlayingRef}, activeSources=${refState.activeSourcesCount}}`
+            : "")
       );
 
-      // Audio has stopped when isPlaying is false
-      if (!debugState.isPlaying) {
+      // Audio has stopped when:
+      // 1. isActuallyPlaying is false (ref-based, accurate)
+      // 2. OR playbackDebugState shows no active sources
+      const notPlaying =
+        !debugState.isActuallyPlaying &&
+        (!refState || (refState.activeSourcesCount === 0 && !refState.isPlayingRef));
+
+      if (notPlaying) {
         return {
           success: true,
           debugState,

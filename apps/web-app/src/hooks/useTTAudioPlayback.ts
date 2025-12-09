@@ -241,6 +241,14 @@ export interface TTAudioPlaybackReturn {
   reset: () => void;
   /** Pre-warm AudioContext to reduce first-audio latency */
   warmup: () => Promise<void>;
+  /** Get debug state with ref values (for E2E testing) */
+  getDebugState: () => {
+    isPlayingRef: boolean;
+    isProcessingRef: boolean;
+    activeSourcesCount: number;
+    streamEndedRef: boolean;
+    bargeInActiveRef: boolean;
+  };
 }
 
 // ============================================================================
@@ -518,8 +526,17 @@ export function useTTAudioPlayback(
    * Process and schedule audio chunks for gapless playback
    */
   const processAudioQueue = useCallback(async () => {
+    // E2E Debug: Track processAudioQueue entry
+    console.log("[TTAudioPlayback] processAudioQueue ENTRY", {
+      bargeInActive: bargeInActiveRef.current,
+      isProcessing: isProcessingRef.current,
+      queueLength: audioQueueRef.current.length,
+      isPlaying: isPlayingRef.current,
+    });
+
     // Bail out immediately if a barge-in just occurred
     if (bargeInActiveRef.current) {
+      console.log("[TTAudioPlayback] processAudioQueue EXIT: barge-in active");
       audioQueueRef.current = [];
       isProcessingRef.current = false;
       nextScheduledTimeRef.current = 0;
@@ -533,20 +550,30 @@ export function useTTAudioPlayback(
     });
 
     if (isProcessingRef.current) {
+      console.log(
+        "[TTAudioPlayback] processAudioQueue EXIT: already processing",
+      );
       voiceLog.debug("[TTAudioPlayback] Already processing, skipping");
       return;
     }
     if (audioQueueRef.current.length === 0) {
+      console.log("[TTAudioPlayback] processAudioQueue EXIT: queue empty");
       voiceLog.debug("[TTAudioPlayback] Queue empty, skipping");
       return;
     }
 
     isProcessingRef.current = true;
+    console.log("[TTAudioPlayback] processAudioQueue STARTING PROCESSING");
     voiceLog.debug("[TTAudioPlayback] Starting to process queue");
 
     try {
+      console.log("[TTAudioPlayback] Getting AudioContext...");
       voiceLog.debug("[TTAudioPlayback] Getting AudioContext...");
       const audioContext = await getAudioContext();
+      console.log("[TTAudioPlayback] AudioContext obtained", {
+        state: audioContext.state,
+        sampleRate: audioContext.sampleRate,
+      });
       voiceLog.debug("[TTAudioPlayback] AudioContext obtained", {
         state: audioContext.state,
         sampleRate: audioContext.sampleRate,
@@ -706,6 +733,12 @@ export function useTTAudioPlayback(
           // Start at the scheduled time
           const startTime = nextScheduledTimeRef.current;
           source.start(startTime);
+          console.log(`[TTAudioPlayback] AUDIO SCHEDULED`, {
+            startTime: startTime.toFixed(3),
+            currentTime: now.toFixed(3),
+            bufferDuration: audioBuffer.duration.toFixed(3),
+            chunkIndex,
+          });
           voiceLog.debug(`[TTAudioPlayback] Scheduled source to start`, {
             startTime: startTime.toFixed(3),
             currentTime: now.toFixed(3),
@@ -715,9 +748,15 @@ export function useTTAudioPlayback(
           // Update next scheduled time to end of this buffer
           nextScheduledTimeRef.current = startTime + audioBuffer.duration;
 
+          console.log("[TTAudioPlayback] Setting playbackState to 'playing'");
           setPlaybackState("playing");
         } catch (err) {
-          console.error("[TTAudioPlayback] Error decoding chunk:", err);
+          console.error(
+            "[TTAudioPlayback] Error decoding chunk:",
+            err,
+            "chunk details:",
+            { chunkIndex },
+          );
           voiceLog.error("[TTAudioPlayback] Error decoding chunk:", err);
           // Continue with next chunk
         }
@@ -792,6 +831,44 @@ export function useTTAudioPlayback(
    */
   const queueAudioChunk = useCallback(
     (audioData: AudioChunkData) => {
+      const isBinary = audioData instanceof Uint8Array;
+      const dataLength = isBinary ? audioData.byteLength : audioData.length;
+
+      // E2E Debug: Track audio queue flow
+      if (typeof window !== "undefined") {
+        const win = window as Window & {
+          __tt_audio_debug?: Array<{
+            timestamp: number;
+            event: string;
+            length: number;
+            playbackState?: string;
+            isPlaying?: boolean;
+            bargeInActive?: boolean;
+            queueLength?: number;
+          }>;
+        };
+        if (!win.__tt_audio_debug) {
+          win.__tt_audio_debug = [];
+        }
+        win.__tt_audio_debug.push({
+          timestamp: Date.now(),
+          event: bargeInActiveRef.current
+            ? "queueAudioChunk_dropped_barge_in"
+            : "queueAudioChunk_received",
+          length: dataLength,
+          bargeInActive: bargeInActiveRef.current,
+          isPlaying: isPlayingRef.current,
+          queueLength: audioQueueRef.current.length,
+        });
+        console.log("[TTAudioPlayback] queueAudioChunk E2E debug", {
+          event: bargeInActiveRef.current ? "DROPPED" : "RECEIVED",
+          dataLength,
+          bargeInActive: bargeInActiveRef.current,
+          isPlaying: isPlayingRef.current,
+          queueLength: audioQueueRef.current.length,
+        });
+      }
+
       // Drop audio chunks if barge-in is active
       // This prevents stale audio from cancelled responses from playing
       if (bargeInActiveRef.current) {
@@ -801,7 +878,6 @@ export function useTTAudioPlayback(
         return;
       }
 
-      const isBinary = audioData instanceof Uint8Array;
       voiceLog.debug("[TTAudioPlayback] queueAudioChunk called", {
         dataType: isBinary ? "binary" : "base64",
         dataLength: isBinary ? audioData.byteLength : audioData.length,
@@ -859,7 +935,17 @@ export function useTTAudioPlayback(
         voiceLog.debug("[TTAudioPlayback] Converted to ArrayBuffer", {
           byteLength: arrayBuffer.byteLength,
         });
+        console.log("[TTAudioPlayback] PUSHING chunk to queue", {
+          byteLength: arrayBuffer.byteLength,
+          queueLengthBefore: audioQueueRef.current.length,
+        });
         audioQueueRef.current.push(arrayBuffer);
+        console.log("[TTAudioPlayback] PUSHED chunk to queue", {
+          queueLengthAfter: audioQueueRef.current.length,
+          enablePrebuffering,
+          prebufferReady: prebufferReadyRef.current,
+          isPlaying: isPlayingRef.current,
+        });
 
         // Update prebuffer count for UI feedback
         if (enablePrebuffering && !prebufferReadyRef.current) {
@@ -868,6 +954,9 @@ export function useTTAudioPlayback(
 
         // Check if we should start playback
         if (enablePrebuffering && !prebufferReadyRef.current) {
+          console.log(
+            "[TTAudioPlayback] PREBUFFERING MODE - waiting for threshold",
+          );
           // Pre-buffering mode: wait for threshold
           if (audioQueueRef.current.length >= prebufferChunks) {
             voiceLog.debug(
@@ -882,13 +971,19 @@ export function useTTAudioPlayback(
         } else {
           // Normal mode or prebuffer already ready: start immediately
           if (!isPlayingRef.current) {
+            console.log("[TTAudioPlayback] NORMAL MODE - starting playback", {
+              isPlayingBefore: isPlayingRef.current,
+              queueLength: audioQueueRef.current.length,
+            });
             voiceLog.debug(
               "[TTAudioPlayback] Starting playback (isPlaying was false)",
             );
             isPlayingRef.current = true;
             setPlaybackState("buffering");
+            console.log("[TTAudioPlayback] Calling playNextChunk()");
             playNextChunk();
           } else {
+            console.log("[TTAudioPlayback] ALREADY PLAYING - chunk queued");
             voiceLog.debug(
               "[TTAudioPlayback] Already playing, chunk queued for later processing",
             );
@@ -1297,6 +1392,18 @@ export function useTTAudioPlayback(
     };
   }, [estimateQueueDurationMs, handleQueueOverflow]);
 
+  // Debug state getter for E2E testing - reads directly from refs
+  const getDebugState = useCallback(
+    () => ({
+      isPlayingRef: isPlayingRef.current,
+      isProcessingRef: isProcessingRef.current,
+      activeSourcesCount: activeSourcesRef.current.size,
+      streamEndedRef: streamEndedRef.current,
+      bargeInActiveRef: bargeInActiveRef.current,
+    }),
+    [],
+  );
+
   return {
     // State
     playbackState,
@@ -1323,6 +1430,7 @@ export function useTTAudioPlayback(
     setVolume,
     reset,
     warmup,
+    getDebugState,
   };
 }
 
