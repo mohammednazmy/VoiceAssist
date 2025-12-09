@@ -36,17 +36,6 @@ from typing import Any, Callable, Dict, List, Optional
 
 from app.core.event_bus import VoiceEvent, get_event_bus
 from app.core.logging import get_logger
-from app.core.metrics import (
-    voice_backchannel_total,
-    voice_barge_in_classification_total,
-    voice_barge_in_mute_latency_seconds,
-    voice_barge_in_total,
-    voice_hard_barge_total,
-    voice_hybrid_vad_decision_total,
-    voice_soft_barge_total,
-)
-from app.services.barge_in_classifier import BargeInClassifier
-from app.services.hybrid_vad_decider import HybridVADDecider, VADState
 from app.services.voice_pipeline_service import (
     PipelineConfig,
     PipelineMessage,
@@ -255,10 +244,6 @@ class ThinkerTalkerWebSocketHandler:
 
         # Phase 2: VAD Confidence Sharing - store latest frontend VAD state
         self._last_vad_state: Optional[Dict[str, Any]] = None
-
-        # Phase 3: Intelligent Barge-In Classification & Hybrid VAD
-        self._barge_in_classifier = BargeInClassifier(language=config.language or "en")
-        self._hybrid_vad_decider = HybridVADDecider()
 
     @property
     def connection_state(self) -> TTConnectionState:
@@ -636,19 +621,8 @@ class ThinkerTalkerWebSocketHandler:
         else:
             logger.warning(f"Unknown binary frame type: 0x{frame_type:02x}")
 
-    async def _send_audio_binary(self, audio_data: bytes) -> bool:
-        """Send audio output as binary WebSocket frame.
-
-        Returns:
-            True if audio was sent successfully, False otherwise.
-        """
-        # Only block audio when WebSocket is actually disconnected or in error state
-        # Allow sending when connection is READY, even if receive loop has ended (_running=False)
-        # because the pipeline may still be generating audio responses
-        if self._connection_state in (TTConnectionState.DISCONNECTED, TTConnectionState.ERROR):
-            logger.debug(f"[WS] Skipping audio send - connection state: {self._connection_state.value}")
-            return False
-
+    async def _send_audio_binary(self, audio_data: bytes) -> None:
+        """Send audio output as binary WebSocket frame."""
         sequence = self.config._audio_sequence_out
         self.config._audio_sequence_out += 1
 
@@ -657,22 +631,11 @@ class ThinkerTalkerWebSocketHandler:
         frame = header + audio_data
 
         try:
-            logger.info(
-                f"[WS] SENDING binary audio frame: seq={sequence}, "
-                f"frame_size={len(frame)}, audio_size={len(audio_data)}"
-            )
             await self.websocket.send_bytes(frame)
             self._metrics.messages_sent += 1
-            logger.info(f"[WS] Binary audio frame SENT successfully: seq={sequence}")
-            return True
         except Exception as e:
-            # Only log as error if we thought the connection was active
-            if "close" in str(e).lower() or "completed" in str(e).lower():
-                logger.info(f"[WS] Audio send skipped - connection closed: {e}")
-            else:
-                logger.error(f"Error sending binary audio: {e}")
+            logger.error(f"Error sending binary audio: {e}")
             self._metrics.error_count += 1
-            return False
 
     async def _handle_client_message(self, message: Dict[str, Any]) -> None:
         """Handle a message from the client."""
@@ -877,83 +840,8 @@ class ThinkerTalkerWebSocketHandler:
         elif msg_type == "barge_in":
             # User wants to interrupt AI
             if self._pipeline_session:
-                barge_in_start = time.time()
-
-                # Extract classification from frontend (Phase 2.2)
-                frontend_classification = message.get("classification", "hard_barge")
-                language = message.get("language", "en")
-                frontend_confidence = message.get("confidence", 0.0)
-                matched_phrase = message.get("matched_phrase")
-                speech_duration_ms = message.get("speech_duration_ms", 0)
-                transcript = message.get("transcript", "")
-                defer_to_backend = message.get("defer_to_backend", False)
-
-                # Phase 3: Backend classification (for deferred or analytics)
-                backend_result = None
-                if defer_to_backend or frontend_classification == "unclear":
-                    # Update classifier language
-                    self._barge_in_classifier.set_language(language)
-                    backend_result = self._barge_in_classifier.classify(
-                        transcript=transcript,
-                        duration_ms=speech_duration_ms,
-                        vad_probability=frontend_confidence,
-                        during_ai_speech=True,
-                    )
-                    # Use backend classification when deferred
-                    classification = backend_result.classification
-                    confidence = backend_result.confidence
-                    logger.debug(
-                        f"[WS] Backend classification: {classification}, "
-                        f"intent={backend_result.intent}, action={backend_result.action.type}"
-                    )
-                else:
-                    classification = frontend_classification
-                    confidence = frontend_confidence
-
                 await self._pipeline_session.barge_in()
                 self._metrics.barge_in_count += 1
-
-                # Record barge-in metrics
-                barge_in_latency = time.time() - barge_in_start
-                voice_barge_in_total.labels(outcome="successful").inc()
-                voice_barge_in_classification_total.labels(classification=classification, language=language).inc()
-                voice_barge_in_mute_latency_seconds.labels(source="frontend").observe(barge_in_latency)
-
-                # Classification-specific metrics
-                if classification == "backchannel":
-                    phrase_type = "matched" if matched_phrase else "fuzzy_matched"
-                    voice_backchannel_total.labels(language=language, phrase_type=phrase_type).inc()
-                elif classification == "soft_barge":
-                    voice_soft_barge_total.labels(outcome="started").inc()
-                elif classification == "hard_barge":
-                    # Categorize by interruption point
-                    interrupted_at = message.get("completion_percentage", 50)
-                    if interrupted_at < 25:
-                        interrupted_cat = "early"
-                    elif interrupted_at < 75:
-                        interrupted_cat = "mid"
-                    else:
-                        interrupted_cat = "late"
-                    voice_hard_barge_total.labels(interrupted_at=interrupted_cat).inc()
-
-                # Send classification result back to frontend
-                await self._send_message(
-                    {
-                        "type": "barge_in.classified",
-                        "classification": classification,
-                        "confidence": confidence,
-                        "language": language,
-                        "action": backend_result.action.type if backend_result else "continue",
-                        "should_acknowledge": backend_result.action.should_acknowledge if backend_result else False,
-                    }
-                )
-
-                logger.info(
-                    f"[WS] Barge-in: classification={classification}, "
-                    f"language={language}, confidence={confidence:.2f}, "
-                    f"speech_duration={speech_duration_ms}ms, "
-                    f"latency={barge_in_latency*1000:.1f}ms"
-                )
 
         elif msg_type == "voice.mode":
             # Voice mode control
@@ -1146,31 +1034,6 @@ class ThinkerTalkerWebSocketHandler:
             "timestamp": time.time(),
         }
 
-        # Phase 3: Hybrid VAD Decision - combine Silero with Deepgram
-        self._hybrid_vad_decider.set_tts_playing(is_playback_active)
-        silero_state = VADState(
-            confidence=silero_confidence,
-            is_speaking=is_speaking,
-            speech_duration_ms=speech_duration_ms,
-        )
-        self._hybrid_vad_decider.update_silero_state(silero_state)
-
-        # Make hybrid decision and record metrics
-        hybrid_decision = self._hybrid_vad_decider.decide_barge_in(silero_state=silero_state)
-        voice_hybrid_vad_decision_total.labels(source=hybrid_decision.source).inc()
-
-        # Send hybrid decision to frontend if trigger recommended
-        if hybrid_decision.trigger:
-            await self._send_message(
-                {
-                    "type": "vad.hybrid_decision",
-                    "trigger": hybrid_decision.trigger,
-                    "source": hybrid_decision.source,
-                    "confidence": hybrid_decision.confidence,
-                    "reason": hybrid_decision.reason,
-                }
-            )
-
         # Forward to pipeline for hybrid VAD decision
         if self._pipeline_session:
             await self._pipeline_session.update_frontend_vad_state(
@@ -1185,7 +1048,7 @@ class ThinkerTalkerWebSocketHandler:
             logger.debug(
                 f"[WS] VAD state: conf={silero_confidence:.2f}, "
                 f"speaking={is_speaking}, duration={speech_duration_ms}ms, "
-                f"playback={is_playback_active}, hybrid_source={hybrid_decision.source}"
+                f"playback={is_playback_active}"
             )
 
     async def _handle_text_input(self, text: str) -> None:
@@ -1230,16 +1093,6 @@ class ThinkerTalkerWebSocketHandler:
         For audio.output messages, uses binary protocol if enabled.
         Tracks partial messages for recovery.
         """
-        # Debug: Log audio.output messages
-        if message.type == "audio.output":
-            audio_data = message.data.get("audio", "")
-            logger.info(
-                f"[WS] Received audio.output from pipeline: "
-                f"has_audio={bool(audio_data)}, audio_len={len(audio_data) if audio_data else 0}, "
-                f"binary_enabled={self.config.binary_protocol_enabled}, "
-                f"connection_state={self._connection_state.value}, running={self._running}"
-            )
-
         # Track partial messages for recovery
         await self._track_partial_messages(message)
 
@@ -1384,18 +1237,6 @@ class ThinkerTalkerWebSocketHandler:
         Uses message batcher if enabled for high-frequency messages.
         Buffers messages for recovery if message recovery is enabled.
         """
-        # DEBUG: Log audio.output BEFORE running check to catch blocked sends
-        msg_type = message.get("type", "")
-        if msg_type == "audio.output":
-            audio_len = len(message.get("audio", "")) if message.get("audio") else 0
-            logger.info(f"[WS] _send_message called with audio.output: running={self._running}, audio_len={audio_len}")
-
-        # Check if connection is still running before attempting to send
-        if not self._running:
-            if msg_type == "audio.output":
-                logger.info("[WS] BLOCKING audio.output - running=False!")
-            return
-
         # Add sequence number to all messages
         message["seq"] = self.config._message_sequence
         self.config._message_sequence += 1
@@ -1404,10 +1245,6 @@ class ThinkerTalkerWebSocketHandler:
         msg_type = message.get("type", "")
         if msg_type in ("voice.state", "input_audio_buffer.speech_started", "input_audio_buffer.speech_stopped"):
             logger.info(f"[WS] SENDING message: type={msg_type}, seq={message.get('seq')}, data={message}")
-        # Also log audio.output for debugging (without the full data to avoid spam)
-        if msg_type == "audio.output":
-            audio_len = len(message.get("audio", "")) if message.get("audio") else 0
-            logger.info(f"[WS] SENDING audio.output: seq={message.get('seq')}, audio_len={audio_len}")
 
         try:
             # Buffer message for potential recovery (if enabled)
@@ -1421,14 +1258,8 @@ class ThinkerTalkerWebSocketHandler:
                 await self.websocket.send_json(message)
             self._metrics.messages_sent += 1
         except Exception as e:
-            # Log exception type for debugging empty exception messages
-            exc_type = type(e).__name__
-            exc_msg = str(e) if str(e) else "(no message)"
-            logger.error(f"Error sending message ({exc_type}): {exc_msg}")
+            logger.error(f"Error sending message: {e}")
             self._metrics.error_count += 1
-            # Stop trying to send after connection closed
-            if "close" in exc_msg.lower() or "disconnect" in exc_msg.lower():
-                self._running = False
 
     async def _buffer_message_for_recovery(self, message: Dict[str, Any]) -> None:
         """Buffer a message for potential recovery after disconnect."""
