@@ -18,7 +18,7 @@ tags:
   - patterns
   - extension
   - how-to
-category: development
+category: reference
 component: "platform/development"
 relatedPaths:
   - "services/api-gateway/app/api/"

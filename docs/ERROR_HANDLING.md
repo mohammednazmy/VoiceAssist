@@ -13,7 +13,7 @@ tags:
   - errors
   - exceptions
   - patterns
-category: development
+category: debugging
 component: "backend/error-handling"
 ai_summary: >-
   Error handling patterns for VoiceAssist. Covers API errors, frontend handling,

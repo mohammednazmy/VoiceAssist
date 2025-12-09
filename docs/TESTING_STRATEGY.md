@@ -13,7 +13,7 @@ tags:
   - testing
   - quality
   - patterns
-category: development
+category: reference
 component: "testing"
 ai_summary: >-
   Testing strategy for VoiceAssist. Covers unit, integration, E2E tests.
