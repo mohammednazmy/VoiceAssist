@@ -24,6 +24,7 @@ import {
   waitForUserSpeechRecognized,
   assertQualityThresholds,
   isLiveMode,
+  enableSileroVAD,
 } from "./utils/test-setup";
 
 // ============================================================================
@@ -31,9 +32,11 @@ import {
 // ============================================================================
 
 const SCENARIO_TIMEOUTS = {
-  short: 30000, // Simple Q&A
-  medium: 60000, // Multi-turn conversation
-  long: 120000, // Extended conversation
+  // Increased timeouts for real audio processing with actual API calls:
+  // WebSocket + VAD + STT + LLM + TTS can take 10-30s per turn
+  short: 60000, // Simple Q&A (was 30s - too tight for real audio)
+  medium: 120000, // Multi-turn conversation (was 60s)
+  long: 180000, // Extended conversation (was 120s)
 };
 
 // ============================================================================
@@ -42,6 +45,11 @@ const SCENARIO_TIMEOUTS = {
 
 test.describe("Simple Q&A Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
+
+  test.beforeEach(async ({ page }) => {
+    // Enable Silero VAD for real audio scenario tests
+    await enableSileroVAD(page);
+  });
 
   test("user asks a simple question, AI responds completely", async ({
     page,
@@ -148,6 +156,10 @@ test.describe("Simple Q&A Scenarios", () => {
 test.describe("Multi-turn Conversation Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
 
+  test.beforeEach(async ({ page }) => {
+    await enableSileroVAD(page);
+  });
+
   test("3-turn conversation flow with natural exchanges", async ({
     page,
     metricsCollector,
@@ -228,6 +240,10 @@ test.describe("Multi-turn Conversation Scenarios", () => {
 
 test.describe("Barge-in Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
+
+  test.beforeEach(async ({ page }) => {
+    await enableSileroVAD(page);
+  });
 
   test("user intentional barge-in during AI response", async ({
     page,
@@ -347,6 +363,10 @@ test.describe("Barge-in Scenarios", () => {
 test.describe("Long Response Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
 
+  test.beforeEach(async ({ page }) => {
+    await enableSileroVAD(page);
+  });
+
   test("AI handles long response without audio issues", async ({
     page,
     metricsCollector,
@@ -416,6 +436,10 @@ test.describe("Long Response Scenarios", () => {
 
 test.describe("Audio Queue Health Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
+
+  test.beforeEach(async ({ page }) => {
+    await enableSileroVAD(page);
+  });
 
   test("audio queue stays healthy throughout conversation", async ({
     page,
@@ -528,6 +552,10 @@ test.describe("Audio Queue Health Scenarios", () => {
 
 test.describe("Latency Scenarios", () => {
   test.skip(!isLiveMode(), "Requires LIVE_REALTIME_E2E=1");
+
+  test.beforeEach(async ({ page }) => {
+    await enableSileroVAD(page);
+  });
 
   test("response latency stays within thresholds", async ({
     page,
