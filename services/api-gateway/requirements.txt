@@ -77,4 +77,4 @@ gruut>=2.4.0  # Multi-language G2P with pure Python implementation
 pytest==9.0.1
 pytest-asyncio==1.3.0
 pytest-timeout==2.3.1  # Prevent stuck tests in CI
-pact-python[compat-v2]==3.1.0  # Contract testing (Phase 7 - P3.4)
+pact-python[compat-v2]==3.2.0  # Contract testing (Phase 7 - P3.4)
