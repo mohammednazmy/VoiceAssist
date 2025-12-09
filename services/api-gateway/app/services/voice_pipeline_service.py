@@ -2497,7 +2497,15 @@ class VoicePipelineSession:
 
     async def _handle_audio_chunk(self, chunk: AudioChunk) -> None:
         """Handle audio chunk from Talker."""
+        # Debug: Log audio chunk reception
+        logger.info(
+            f"[Pipeline] _handle_audio_chunk called: "
+            f"has_data={bool(chunk.data)}, data_len={len(chunk.data) if chunk.data else 0}, "
+            f"is_final={chunk.is_final}, cancelled={self._cancelled}"
+        )
+
         if self._cancelled:
+            logger.info("[Pipeline] Audio chunk dropped - cancelled=True")
             return
 
         self._metrics.audio_chunks_sent += 1

@@ -642,13 +642,11 @@ class ThinkerTalkerWebSocketHandler:
         Returns:
             True if audio was sent successfully, False otherwise.
         """
-        # Check if connection is still active before sending
-        if self._connection_state != TTConnectionState.READY:
+        # Only block audio when WebSocket is actually disconnected or in error state
+        # Allow sending when connection is READY, even if receive loop has ended (_running=False)
+        # because the pipeline may still be generating audio responses
+        if self._connection_state in (TTConnectionState.DISCONNECTED, TTConnectionState.ERROR):
             logger.debug(f"[WS] Skipping audio send - connection state: {self._connection_state.value}")
-            return False
-
-        if not self._running:
-            logger.debug("[WS] Skipping audio send - handler not running")
             return False
 
         sequence = self.config._audio_sequence_out
@@ -1227,6 +1225,16 @@ class ThinkerTalkerWebSocketHandler:
         For audio.output messages, uses binary protocol if enabled.
         Tracks partial messages for recovery.
         """
+        # Debug: Log audio.output messages
+        if message.type == "audio.output":
+            audio_data = message.data.get("audio", "")
+            logger.info(
+                f"[WS] Received audio.output from pipeline: "
+                f"has_audio={bool(audio_data)}, audio_len={len(audio_data) if audio_data else 0}, "
+                f"binary_enabled={self.config.binary_protocol_enabled}, "
+                f"connection_state={self._connection_state.value}, running={self._running}"
+            )
+
         # Track partial messages for recovery
         await self._track_partial_messages(message)
 

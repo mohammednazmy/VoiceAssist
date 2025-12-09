@@ -2500,10 +2500,27 @@ export function useThinkerTalkerSession(
         };
 
         ws.onmessage = (event) => {
+          // Debug: Log all incoming message types
+          const isBlob = event.data instanceof Blob;
+          const isArrayBuffer = event.data instanceof ArrayBuffer;
+          const dataType = isBlob
+            ? "Blob"
+            : isArrayBuffer
+              ? "ArrayBuffer"
+              : typeof event.data;
+          if (isBlob || isArrayBuffer) {
+            console.log(
+              `[ThinkerTalker] Binary WS message received: type=${dataType}, size=${event.data instanceof Blob ? event.data.size : (event.data as ArrayBuffer).byteLength}`,
+            );
+          }
+
           // Handle binary frames (audio data with 5-byte header)
           if (event.data instanceof Blob) {
             event.data.arrayBuffer().then((buffer) => {
               const data = new Uint8Array(buffer);
+              console.log(
+                `[ThinkerTalker] Binary frame parsed: length=${data.length}, frameType=${data[0]}`,
+              );
               if (data.length >= 5) {
                 const frameType = data[0];
                 const sequence = new DataView(data.buffer).getUint32(1, false);
@@ -2511,6 +2528,9 @@ export function useThinkerTalkerSession(
 
                 if (frameType === 0x02) {
                   // AUDIO_OUTPUT binary frame
+                  console.log(
+                    `[ThinkerTalker] AUDIO_OUTPUT frame: seq=${sequence}, audioBytes=${audioData.length}`,
+                  );
                   voiceLog.debug(
                     `[ThinkerTalker] Binary audio: seq=${sequence}, ${audioData.length} bytes`,
                   );
@@ -2520,6 +2540,10 @@ export function useThinkerTalkerSession(
                     String.fromCharCode.apply(null, Array.from(audioData)),
                   );
                   options.onAudioChunk?.(base64);
+                } else {
+                  console.log(
+                    `[ThinkerTalker] Unknown binary frameType: ${frameType}`,
+                  );
                 }
               }
             });
