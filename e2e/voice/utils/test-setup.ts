@@ -243,6 +243,9 @@ export async function resetVoiceSettingsToDefaults(page: Page): Promise<void> {
 /**
  * Enable Silero VAD in Playwright tests.
  * By default, Silero VAD is disabled in automation environments to avoid flakiness.
+ * This localStorage flag completely overrides both:
+ * - The automation detection (navigator.webdriver)
+ * - The backend feature flag (backend.voice_silero_vad_enabled)
  * Call this before opening voice mode to test the full Silero VAD pipeline.
  */
 export async function enableSileroVAD(page: Page): Promise<void> {

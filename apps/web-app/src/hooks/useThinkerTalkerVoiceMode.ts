@@ -289,7 +289,9 @@ export function useThinkerTalkerVoiceMode(
   const defaultSileroConfig: SileroFlagConfig = useMemo(
     () => ({
       // Disable Silero VAD in automation unless explicitly forced via localStorage
-      enabled: sileroVADEnabled && (!isAutomation || forceSileroVAD),
+      // forceSileroVAD completely overrides both feature flag AND automation check
+      // (for E2E tests that need to test full Silero VAD pipeline)
+      enabled: forceSileroVAD || (sileroVADEnabled && !isAutomation),
       echoSuppressionMode: sileroEchoSuppressionMode,
       positiveThreshold: sileroPositiveThreshold,
       playbackThresholdBoost: sileroPlaybackThresholdBoost,
