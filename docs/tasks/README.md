@@ -4,11 +4,11 @@ Step-by-step guides for common development tasks. Use these as checklists when i
 
 ## Available Templates
 
-| Task | Description |
-|------|-------------|
-| [ADD_API_ENDPOINT.md](ADD_API_ENDPOINT.md) | Adding a new REST API endpoint |
-| [ADD_FRONTEND_COMPONENT.md](ADD_FRONTEND_COMPONENT.md) | Adding a new React component |
-| [DEBUG_ISSUE.md](DEBUG_ISSUE.md) | Systematic debugging checklist |
+| Task                                                   | Description                    |
+| ------------------------------------------------------ | ------------------------------ |
+| [ADD_API_ENDPOINT.md](ADD_API_ENDPOINT.md)             | Adding a new REST API endpoint |
+| [ADD_FRONTEND_COMPONENT.md](ADD_FRONTEND_COMPONENT.md) | Adding a new React component   |
+| [DEBUG_ISSUE.md](DEBUG_ISSUE.md)                       | Systematic debugging checklist |
 
 ## How to Use
 

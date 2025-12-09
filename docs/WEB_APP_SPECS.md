@@ -1760,11 +1760,21 @@ export function useToolConfirmation() {
         isOpen: true,
         toolCall,
         onConfirm: () => {
-          setState({ isOpen: false, toolCall: null, onConfirm: null, onCancel: null });
+          setState({
+            isOpen: false,
+            toolCall: null,
+            onConfirm: null,
+            onCancel: null,
+          });
           resolve(true);
         },
         onCancel: () => {
-          setState({ isOpen: false, toolCall: null, onConfirm: null, onCancel: null });
+          setState({
+            isOpen: false,
+            toolCall: null,
+            onConfirm: null,
+            onCancel: null,
+          });
           resolve(false);
         },
       });
@@ -2081,7 +2091,9 @@ export async function fetchAPI<T>(url: string, options?: RequestInit): Promise<T
     }
 
     // Network error or invalid JSON
-    throw new APIError("NETWORK_ERROR", "Failed to connect to server", { originalError: String(error) });
+    throw new APIError("NETWORK_ERROR", "Failed to connect to server", {
+      originalError: String(error),
+    });
   }
 }
 ```
@@ -2535,7 +2547,9 @@ test("quick consult workflow", async ({ page }) => {
 
   // Verify citations appear
   await expect(page.locator("text=Sources:")).toBeVisible();
-  await expect(page.locator('[data-testid="citation"]')).toHaveCount(3, { timeout: 5000 });
+  await expect(page.locator('[data-testid="citation"]')).toHaveCount(3, {
+    timeout: 5000,
+  });
 });
 ```
 

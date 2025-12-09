@@ -125,14 +125,14 @@ All documentation is in the `docs/` directory. Here's the complete index:
 
 ### 🎯 Overview & Planning
 
-| Document                                                                                      | Purpose                                                        | Audience                           |
-| --------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ---------------------------------- |
-| **[START_HERE.md](START_HERE.md)** ⭐                                                         | This file - project orientation                                | Everyone                           |
-| **[UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md)** ⭐                                     | **Canonical architecture reference**                           | **Developers, Architects, DevOps** |
-| **[architecture/ARCHITECTURE_DIAGRAMS.md](architecture/ARCHITECTURE_DIAGRAMS.md)** ⭐ **NEW** | **Visual architecture diagrams (Mermaid)**                     | **Developers, Architects**         |
-| **[EXTENSION_GUIDE.md](EXTENSION_GUIDE.md)**                                                  | Practical patterns for extending VoiceAssist                   | All developers                     |
-| **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)**                                                  | High-level overview, tech stack, cost estimates                | Stakeholders, PMs                  |
-| **[ROADMAP.md](ROADMAP.md)**                                                                  | Product roadmap and feature timeline                           | Product, Management                |
+| Document                                                                                      | Purpose                                         | Audience                           |
+| --------------------------------------------------------------------------------------------- | ----------------------------------------------- | ---------------------------------- |
+| **[START_HERE.md](START_HERE.md)** ⭐                                                         | This file - project orientation                 | Everyone                           |
+| **[UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md)** ⭐                                     | **Canonical architecture reference**            | **Developers, Architects, DevOps** |
+| **[architecture/ARCHITECTURE_DIAGRAMS.md](architecture/ARCHITECTURE_DIAGRAMS.md)** ⭐ **NEW** | **Visual architecture diagrams (Mermaid)**      | **Developers, Architects**         |
+| **[EXTENSION_GUIDE.md](EXTENSION_GUIDE.md)**                                                  | Practical patterns for extending VoiceAssist    | All developers                     |
+| **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)**                                                  | High-level overview, tech stack, cost estimates | Stakeholders, PMs                  |
+| **[ROADMAP.md](ROADMAP.md)**                                                                  | Product roadmap and feature timeline            | Product, Management                |
 
 ### 🛠️ Getting Started
 
@@ -152,16 +152,16 @@ All documentation is in the `docs/` directory. Here's the complete index:
 
 ### 🔧 Backend & Services
 
-| Document                                                                   | Purpose                                              | Audience                   |
-| -------------------------------------------------------------------------- | ---------------------------------------------------- | -------------------------- |
-| **[SERVICE_CATALOG.md](SERVICE_CATALOG.md)** ⭐                            | Complete catalog of all 10 microservices             | All developers, DevOps     |
-| **[SEMANTIC_SEARCH_DESIGN.md](SEMANTIC_SEARCH_DESIGN.md)** ⭐              | Knowledge base, vector search, RAG pipeline          | Backend devs, ML           |
-| **[api-reference/rest-api.md](api-reference/rest-api.md)**                 | Endpoint-by-endpoint REST reference                  | Backend devs               |
-| **[API_REFERENCE.md](API_REFERENCE.md)**                                   | High-level API overview and endpoint groups          | Backend devs, stakeholders |
-| **[../services/api-gateway/README.md](../services/api-gateway/README.md)** | Canonical API Gateway service guide                  | Backend devs               |
-| **[apps/web-app/README.md](../apps/web-app/README.md)**                    | Web app implementation details                       | Frontend devs              |
-| **[apps/admin-panel/README.md](../apps/admin-panel/README.md)**            | Admin panel implementation details                   | Frontend devs              |
-| **[apps/docs-site/README.md](../apps/docs-site/README.md)**                | Documentation site implementation                    | Frontend devs              |
+| Document                                                                   | Purpose                                     | Audience                   |
+| -------------------------------------------------------------------------- | ------------------------------------------- | -------------------------- |
+| **[SERVICE_CATALOG.md](SERVICE_CATALOG.md)** ⭐                            | Complete catalog of all 10 microservices    | All developers, DevOps     |
+| **[SEMANTIC_SEARCH_DESIGN.md](SEMANTIC_SEARCH_DESIGN.md)** ⭐              | Knowledge base, vector search, RAG pipeline | Backend devs, ML           |
+| **[api-reference/rest-api.md](api-reference/rest-api.md)**                 | Endpoint-by-endpoint REST reference         | Backend devs               |
+| **[API_REFERENCE.md](API_REFERENCE.md)**                                   | High-level API overview and endpoint groups | Backend devs, stakeholders |
+| **[../services/api-gateway/README.md](../services/api-gateway/README.md)** | Canonical API Gateway service guide         | Backend devs               |
+| **[apps/web-app/README.md](../apps/web-app/README.md)**                    | Web app implementation details              | Frontend devs              |
+| **[apps/admin-panel/README.md](../apps/admin-panel/README.md)**            | Admin panel implementation details          | Frontend devs              |
+| **[apps/docs-site/README.md](../apps/docs-site/README.md)**                | Documentation site implementation           | Frontend devs              |
 
 **Shared packages:** [../packages/api-client/README.md](../packages/api-client/README.md), [../packages/config/README.md](../packages/config/README.md), [../packages/design-tokens/README.md](../packages/design-tokens/README.md), [../packages/telemetry/README.md](../packages/telemetry/README.md), [../packages/types/README.md](../packages/types/README.md), [../packages/ui/README.md](../packages/ui/README.md), [../packages/utils/README.md](../packages/utils/README.md)
 
@@ -532,6 +532,7 @@ See the [Agent API Reference](ai/AGENT_API_REFERENCE.md) for complete details.
 ## Next Steps
 
 For development work:
+
 - **New feature?** See [EXTENSION_GUIDE.md](EXTENSION_GUIDE.md) for patterns
 - **Backend work?** Start at [services/api-gateway/README.md](../services/api-gateway/README.md)
 - **Frontend work?** See [apps/web-app/README.md](../apps/web-app/README.md)
@@ -548,6 +549,7 @@ Historical documents have been moved to the [archive/](archive/) directory:
 - [archive/phases/](archive/phases/) - Phase completion reports
 
 **Current canonical documents:**
+
 - [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - Architecture reference
 - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - V2 phase documentation
 - [overview/IMPLEMENTATION_STATUS.md](overview/IMPLEMENTATION_STATUS.md) - Living status

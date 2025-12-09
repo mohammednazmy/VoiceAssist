@@ -53,6 +53,7 @@ Guide to testing VoiceAssist effectively.
 **Location:** `tests/unit/`
 
 **What to test:**
+
 - Pure functions
 - Business logic in services
 - Schema validation
@@ -83,6 +84,7 @@ def test_no_phi_in_clean_text():
 **Location:** `tests/integration/`
 
 **What to test:**
+
 - API endpoints
 - Database operations
 - External service integrations (mocked)
@@ -160,6 +162,7 @@ async def auth_headers(test_user):
 **Location:** `apps/web-app/src/**/__tests__/`
 
 **What to test:**
+
 - Utility functions
 - Custom hooks
 - Component rendering
@@ -168,21 +171,21 @@ async def auth_headers(test_user):
 ```typescript
 // src/hooks/__tests__/useAuth.test.ts
 
-import { renderHook, act } from '@testing-library/react';
-import { useAuth } from '../useAuth';
+import { renderHook, act } from "@testing-library/react";
+import { useAuth } from "../useAuth";
 
-describe('useAuth', () => {
-  it('starts with no user', () => {
+describe("useAuth", () => {
+  it("starts with no user", () => {
     const { result } = renderHook(() => useAuth());
     expect(result.current.user).toBeNull();
     expect(result.current.isAuthenticated).toBe(false);
   });
 
-  it('logs in user', async () => {
+  it("logs in user", async () => {
     const { result } = renderHook(() => useAuth());
 
     await act(async () => {
-      await result.current.login('test@example.com', 'password');
+      await result.current.login("test@example.com", "password");
     });
 
     expect(result.current.isAuthenticated).toBe(true);
@@ -228,6 +231,7 @@ describe('MessageInput', () => {
 **Location:** `e2e/`
 
 **What to test:**
+
 - Critical user flows
 - Multi-page workflows
 - Authentication flows
@@ -236,26 +240,26 @@ describe('MessageInput', () => {
 ```typescript
 // e2e/auth.spec.ts
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Authentication', () => {
-  test('user can log in', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('[name="email"]', 'test@example.com');
-    await page.fill('[name="password"]', 'password123');
+test.describe("Authentication", () => {
+  test("user can log in", async ({ page }) => {
+    await page.goto("/login");
+    await page.fill('[name="email"]', "test@example.com");
+    await page.fill('[name="password"]', "password123");
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL('/dashboard');
-    await expect(page.getByText('Welcome')).toBeVisible();
+    await expect(page).toHaveURL("/dashboard");
+    await expect(page.getByText("Welcome")).toBeVisible();
   });
 
-  test('shows error on invalid credentials', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('[name="email"]', 'test@example.com');
-    await page.fill('[name="password"]', 'wrongpassword');
+  test("shows error on invalid credentials", async ({ page }) => {
+    await page.goto("/login");
+    await page.fill('[name="email"]', "test@example.com");
+    await page.fill('[name="password"]', "wrongpassword");
     await page.click('button[type="submit"]');
 
-    await expect(page.getByText('Invalid credentials')).toBeVisible();
+    await expect(page.getByText("Invalid credentials")).toBeVisible();
   });
 });
 ```
@@ -320,13 +324,13 @@ npx playwright test --debug
 
 ## Coverage Targets
 
-| Area | Target | Current |
-|------|--------|---------|
-| Backend unit tests | 80% | ~75% |
-| Backend integration | Key flows | ✅ |
-| Frontend components | 70% | ~65% |
-| Frontend hooks | 80% | ~80% |
-| E2E critical flows | 100% | ✅ |
+| Area                | Target    | Current |
+| ------------------- | --------- | ------- |
+| Backend unit tests  | 80%       | ~75%    |
+| Backend integration | Key flows | ✅      |
+| Frontend components | 70%       | ~65%    |
+| Frontend hooks      | 80%       | ~80%    |
+| E2E critical flows  | 100%      | ✅      |
 
 ---
 
@@ -357,6 +361,7 @@ npx playwright test --debug
 ## CI/CD Integration
 
 Tests run automatically on:
+
 - Pull request creation
 - Push to main branch
 - Nightly scheduled runs

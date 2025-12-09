@@ -472,7 +472,12 @@ describe("useChatSession - Editing", () => {
   it("should delete a message successfully", async () => {
     const initialMessages = [
       { id: "msg-1", role: "user", content: "Hello", timestamp: "2024-01-01" },
-      { id: "msg-2", role: "assistant", content: "Hi", timestamp: "2024-01-01" },
+      {
+        id: "msg-2",
+        role: "assistant",
+        content: "Hi",
+        timestamp: "2024-01-01",
+      },
     ];
 
     mockApiClient.deleteMessage.mockResolvedValue(undefined);

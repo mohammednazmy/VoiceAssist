@@ -49,6 +49,7 @@ ai_summary: >-
 **What is VoiceAssist?** A HIPAA-compliant medical AI assistant with voice and text interfaces. Clinicians use it to query medical knowledge bases, manage calendars, and get AI-assisted responses.
 
 **Tech Stack at a Glance:**
+
 ```
 Backend:   FastAPI (Python 3.11) → services/api-gateway/
 Frontend:  React 18 + TypeScript → apps/web-app/
@@ -61,6 +62,7 @@ Deploy:    Docker Compose (prod-ready)
 **The One Rule:** Use `services/api-gateway/` for backend. Never use `server/` (deprecated).
 
 **Quick Links:**
+
 - Status check: [IMPLEMENTATION_STATUS.md](../overview/IMPLEMENTATION_STATUS.md)
 - Add features: [EXTENSION_GUIDE.md](../EXTENSION_GUIDE.md)
 - Debug issues: [DEBUGGING_INDEX.md](../debugging/DEBUGGING_INDEX.md)

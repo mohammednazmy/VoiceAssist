@@ -25,11 +25,11 @@ This directory contains documentation from the original V1 architecture that has
 
 ## Contents
 
-| File | Superseded By |
-|------|---------------|
-| ARCHITECTURE.md | UNIFIED_ARCHITECTURE.md |
-| ARCHITECTURE_V2.md | UNIFIED_ARCHITECTURE.md (consolidated) |
-| DEVELOPMENT_PHASES.md | DEVELOPMENT_PHASES_V2.md |
+| File                  | Superseded By                          |
+| --------------------- | -------------------------------------- |
+| ARCHITECTURE.md       | UNIFIED_ARCHITECTURE.md                |
+| ARCHITECTURE_V2.md    | UNIFIED_ARCHITECTURE.md (consolidated) |
+| DEVELOPMENT_PHASES.md | DEVELOPMENT_PHASES_V2.md               |
 
 ## Key Differences V1 → V2
 

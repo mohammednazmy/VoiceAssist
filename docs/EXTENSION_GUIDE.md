@@ -35,14 +35,14 @@ This guide provides practical patterns for extending VoiceAssist. Each section i
 
 ## Quick Reference
 
-| Task | Location | Key Files |
-|------|----------|-----------|
-| Add API endpoint | `services/api-gateway/app/api/` | `*.py` route files |
-| Add service | `services/api-gateway/app/services/` | `*_service.py` |
-| Add database model | `services/api-gateway/app/models/` | `*.py` + migration |
-| Add frontend component | `apps/web-app/src/components/` | `*.tsx` |
-| Add React hook | `apps/web-app/src/hooks/` | `use*.ts` |
-| Add feature flag | `services/api-gateway/app/core/flag_definitions.py` | Flag definition |
+| Task                   | Location                                            | Key Files          |
+| ---------------------- | --------------------------------------------------- | ------------------ |
+| Add API endpoint       | `services/api-gateway/app/api/`                     | `*.py` route files |
+| Add service            | `services/api-gateway/app/services/`                | `*_service.py`     |
+| Add database model     | `services/api-gateway/app/models/`                  | `*.py` + migration |
+| Add frontend component | `apps/web-app/src/components/`                      | `*.tsx`            |
+| Add React hook         | `apps/web-app/src/hooks/`                           | `use*.ts`          |
+| Add feature flag       | `services/api-gateway/app/core/flag_definitions.py` | Flag definition    |
 
 ---
 
@@ -124,7 +124,7 @@ app.include_router(my_feature_router, prefix="/api")
 ```typescript
 // apps/web-app/src/services/myFeatureApi.ts
 
-import { apiClient } from '@voiceassist/api-client';
+import { apiClient } from "@voiceassist/api-client";
 
 export interface MyFeature {
   id: number;
@@ -134,9 +134,8 @@ export interface MyFeature {
 }
 
 export const myFeatureApi = {
-  list: () => apiClient.get<MyFeature[]>('/api/my-feature'),
-  create: (data: { name: string; description?: string }) =>
-    apiClient.post<MyFeature>('/api/my-feature', data),
+  list: () => apiClient.get<MyFeature[]>("/api/my-feature"),
+  create: (data: { name: string; description?: string }) => apiClient.post<MyFeature>("/api/my-feature", data),
 };
 ```
 
@@ -234,7 +233,7 @@ alembic revision --autogenerate -m "Add my_models table"
 alembic upgrade head
 ```
 
-**Step 3: Export from models/__init__.py**
+**Step 3: Export from models/**init**.py**
 
 ```python
 # services/api-gateway/app/models/__init__.py
@@ -253,7 +252,7 @@ from .my_model import MyModel
 ```tsx
 // apps/web-app/src/components/my-feature/MyFeatureCard.tsx
 
-import { Card, CardHeader, CardContent } from '@voiceassist/ui';
+import { Card, CardHeader, CardContent } from "@voiceassist/ui";
 
 interface MyFeatureCardProps {
   title: string;
@@ -269,10 +268,7 @@ export function MyFeatureCard({ title, description, onAction }: MyFeatureCardPro
       </CardHeader>
       <CardContent>
         {description && <p className="text-gray-600">{description}</p>}
-        <button
-          onClick={onAction}
-          className="mt-4 px-4 py-2 bg-primary text-white rounded"
-        >
+        <button onClick={onAction} className="mt-4 px-4 py-2 bg-primary text-white rounded">
           Take Action
         </button>
       </CardContent>
@@ -286,12 +282,12 @@ export function MyFeatureCard({ title, description, onAction }: MyFeatureCardPro
 ```tsx
 // apps/web-app/src/hooks/useMyFeature.ts
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { myFeatureApi } from '../services/myFeatureApi';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { myFeatureApi } from "../services/myFeatureApi";
 
 export function useMyFeatures() {
   return useQuery({
-    queryKey: ['my-features'],
+    queryKey: ["my-features"],
     queryFn: myFeatureApi.list,
   });
 }
@@ -302,7 +298,7 @@ export function useCreateMyFeature() {
   return useMutation({
     mutationFn: myFeatureApi.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-features'] });
+      queryClient.invalidateQueries({ queryKey: ["my-features"] });
     },
   });
 }
@@ -416,10 +412,10 @@ async def my_endpoint(user: User):
 **Step 3: Use in frontend**
 
 ```tsx
-import { useFeatureFlag } from '../hooks/useFeatureFlags';
+import { useFeatureFlag } from "../hooks/useFeatureFlags";
 
 function MyComponent() {
-  const isEnabled = useFeatureFlag('my_new_feature');
+  const isEnabled = useFeatureFlag("my_new_feature");
 
   if (!isEnabled) return null;
 
@@ -483,6 +479,7 @@ Voice components integrate with the Thinker/Talker pipeline.
 **Backend Location:** `services/api-gateway/app/services/`
 
 **Key files:**
+
 - `thinker_service.py` - AI reasoning
 - `talker_service.py` - TTS synthesis
 - `voice_pipeline_service.py` - Orchestration
@@ -490,6 +487,7 @@ Voice components integrate with the Thinker/Talker pipeline.
 **Frontend Location:** `apps/web-app/src/hooks/`
 
 **Key files:**
+
 - `useThinkerTalkerSession.ts` - Voice session management
 - `useTTAudioPlayback.ts` - Audio playback
 
@@ -562,15 +560,15 @@ async def test_process_item(db_session, test_user):
 
 ## File Naming Conventions
 
-| Type | Convention | Example |
-|------|------------|---------|
-| API route | `snake_case.py` | `admin_kb.py` |
-| Service | `snake_case_service.py` | `kb_indexer.py` |
-| Model | `snake_case.py` | `conversation_memory.py` |
-| Schema | `snake_case.py` | `auth.py` |
-| React component | `PascalCase.tsx` | `ChatPanel.tsx` |
-| React hook | `useCamelCase.ts` | `useChatSession.ts` |
-| Test file | `test_*.py` or `*.spec.ts` | `test_auth.py` |
+| Type            | Convention                 | Example                  |
+| --------------- | -------------------------- | ------------------------ |
+| API route       | `snake_case.py`            | `admin_kb.py`            |
+| Service         | `snake_case_service.py`    | `kb_indexer.py`          |
+| Model           | `snake_case.py`            | `conversation_memory.py` |
+| Schema          | `snake_case.py`            | `auth.py`                |
+| React component | `PascalCase.tsx`           | `ChatPanel.tsx`          |
+| React hook      | `useCamelCase.ts`          | `useChatSession.ts`      |
+| Test file       | `test_*.py` or `*.spec.ts` | `test_auth.py`           |
 
 ---
 

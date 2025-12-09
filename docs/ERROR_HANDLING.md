@@ -207,21 +207,18 @@ export class APIError extends Error {
     public code: string,
     message: string,
     public status: number,
-    public details?: Record<string, unknown>
+    public details?: Record<string, unknown>,
   ) {
     super(message);
-    this.name = 'APIError';
+    this.name = "APIError";
   }
 }
 
-export async function fetchAPI<T>(
-  endpoint: string,
-  options?: RequestInit
-): Promise<T> {
+export async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`/api${endpoint}`, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...options?.headers,
     },
   });
@@ -229,12 +226,7 @@ export async function fetchAPI<T>(
   const json = await response.json();
 
   if (!json.success) {
-    throw new APIError(
-      json.error.code,
-      json.error.message,
-      response.status,
-      json.error.details
-    );
+    throw new APIError(json.error.code, json.error.message, response.status, json.error.details);
   }
 
   return json.data;
@@ -271,29 +263,29 @@ function DocumentList() {
 ```typescript
 // lib/api/error-handler.ts
 
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
 export function handleAPIError(error: unknown) {
   if (error instanceof APIError) {
     switch (error.code) {
-      case 'AUTHENTICATION_ERROR':
-        toast.error('Please log in again');
+      case "AUTHENTICATION_ERROR":
+        toast.error("Please log in again");
         // Redirect to login
         break;
-      case 'AUTHORIZATION_ERROR':
-        toast.error('You don\'t have permission for this action');
+      case "AUTHORIZATION_ERROR":
+        toast.error("You don't have permission for this action");
         break;
-      case 'NOT_FOUND':
+      case "NOT_FOUND":
         toast.error(error.message);
         break;
-      case 'VALIDATION_ERROR':
-        toast.error('Please check your input');
+      case "VALIDATION_ERROR":
+        toast.error("Please check your input");
         break;
       default:
-        toast.error('Something went wrong');
+        toast.error("Something went wrong");
     }
   } else {
-    toast.error('Network error. Please try again.');
+    toast.error("Network error. Please try again.");
   }
 }
 ```
@@ -302,15 +294,15 @@ export function handleAPIError(error: unknown) {
 
 ## Error Codes Reference
 
-| Code | Status | Description |
-|------|--------|-------------|
-| `AUTHENTICATION_ERROR` | 401 | Invalid or expired credentials |
-| `AUTHORIZATION_ERROR` | 403 | Valid auth but insufficient permissions |
-| `NOT_FOUND` | 404 | Resource doesn't exist |
-| `VALIDATION_ERROR` | 422 | Request body validation failed |
-| `RATE_LIMIT_EXCEEDED` | 429 | Too many requests |
-| `INTERNAL_ERROR` | 500 | Server-side error |
-| `SERVICE_UNAVAILABLE` | 503 | External service down |
+| Code                   | Status | Description                             |
+| ---------------------- | ------ | --------------------------------------- |
+| `AUTHENTICATION_ERROR` | 401    | Invalid or expired credentials          |
+| `AUTHORIZATION_ERROR`  | 403    | Valid auth but insufficient permissions |
+| `NOT_FOUND`            | 404    | Resource doesn't exist                  |
+| `VALIDATION_ERROR`     | 422    | Request body validation failed          |
+| `RATE_LIMIT_EXCEEDED`  | 429    | Too many requests                       |
+| `INTERNAL_ERROR`       | 500    | Server-side error                       |
+| `SERVICE_UNAVAILABLE`  | 503    | External service down                   |
 
 ---
 
@@ -337,12 +329,12 @@ logger.error(f"Failed to get document {document_id}: {exc}")
 
 ### What to Log
 
-| Severity | When to Use | Example |
-|----------|-------------|---------|
-| ERROR | Unrecoverable failures | Database connection failed |
-| WARNING | Recoverable issues | Cache miss, retry succeeded |
-| INFO | Normal operations | User logged in |
-| DEBUG | Development details | Query executed in 50ms |
+| Severity | When to Use            | Example                     |
+| -------- | ---------------------- | --------------------------- |
+| ERROR    | Unrecoverable failures | Database connection failed  |
+| WARNING  | Recoverable issues     | Cache miss, retry succeeded |
+| INFO     | Normal operations      | User logged in              |
+| DEBUG    | Development details    | Query executed in 50ms      |
 
 ### What NOT to Log
 

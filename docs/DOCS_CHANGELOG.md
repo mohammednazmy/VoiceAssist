@@ -32,6 +32,7 @@ This changelog tracks significant documentation updates. For code changes, see t
 ### Major Cleanup & Improvements
 
 **New Documents:**
+
 - `QUICK_REFERENCE.md` - Commands, ports, and locations cheatsheet
 - `GLOSSARY.md` - Terminology definitions
 - `DOCS_CHANGELOG.md` - This file
@@ -41,6 +42,7 @@ This changelog tracks significant documentation updates. For code changes, see t
   - `DEBUG_ISSUE.md`
 
 **Updated Documents:**
+
 - `ai/AGENT_ONBOARDING.md` - Added "5-Minute Context" and decision trees
 - `README.md` - Fixed broken links, updated dates
 - `UNIFIED_ARCHITECTURE.md` - Removed outdated phase terminology
@@ -48,9 +50,11 @@ This changelog tracks significant documentation updates. For code changes, see t
 - Multiple docs - Fixed `server/` → `services/api-gateway/` references
 
 **Archived:**
+
 - Moved `VOICE_STATE_2025-11-29.md`, `VOICE_READY_STATE_2025-11-25.md`, `VOICE_MODE_ENHANCEMENT_10_PHASE.md` to `archive/voice-history/`
 
 **Infrastructure:**
+
 - Added `scripts/check-docs-health.js` for documentation validation
 - Updated navigation.ts with new Quick Reference link
 
@@ -61,18 +65,22 @@ This changelog tracks significant documentation updates. For code changes, see t
 ### Documentation Consolidation
 
 **Archived (to `archive/summaries/`):**
+
 - 13 celebration/summary documents
 - Historical phase completion summaries
 
 **Archived (to `archive/legacy-v1/`):**
+
 - `ARCHITECTURE.md` (replaced by UNIFIED_ARCHITECTURE.md)
 - `ARCHITECTURE_V2.md` (consolidated into UNIFIED_ARCHITECTURE.md)
 - `DEVELOPMENT_PHASES.md` (V1 phases)
 
 **New Documents:**
+
 - `EXTENSION_GUIDE.md` - Practical patterns for extending VoiceAssist
 
 **Updated Documents:**
+
 - `START_HERE.md` - Removed celebration content, added practical next steps
 
 ---

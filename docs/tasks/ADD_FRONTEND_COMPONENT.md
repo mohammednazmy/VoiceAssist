@@ -17,9 +17,9 @@ Step-by-step checklist for adding a new React component to VoiceAssist.
 ```tsx
 // apps/web-app/src/components/my-feature/MyComponent.tsx
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface MyComponentProps {
   title: string;
@@ -45,7 +45,7 @@ export function MyComponent({ title, onAction }: MyComponentProps) {
       </CardHeader>
       <CardContent>
         <Button onClick={handleClick} disabled={isLoading}>
-          {isLoading ? 'Loading...' : 'Do Action'}
+          {isLoading ? "Loading..." : "Do Action"}
         </Button>
       </CardContent>
     </Card>
@@ -63,7 +63,7 @@ export function MyComponent({ title, onAction }: MyComponentProps) {
 **Location:** `apps/web-app/src/components/my-feature/index.ts`
 
 ```tsx
-export { MyComponent } from './MyComponent';
+export { MyComponent } from "./MyComponent";
 ```
 
 - [ ] Created index.ts for barrel export
@@ -75,8 +75,8 @@ export { MyComponent } from './MyComponent';
 ```tsx
 // apps/web-app/src/hooks/useMyFeature.ts
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/client';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api/client";
 
 interface MyFeatureData {
   id: string;
@@ -87,15 +87,14 @@ export function useMyFeature() {
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['my-feature'],
-    queryFn: () => apiClient.get<MyFeatureData[]>('/api/my-feature'),
+    queryKey: ["my-feature"],
+    queryFn: () => apiClient.get<MyFeatureData[]>("/api/my-feature"),
   });
 
   const createMutation = useMutation({
-    mutationFn: (newItem: { name: string }) =>
-      apiClient.post<MyFeatureData>('/api/my-feature', newItem),
+    mutationFn: (newItem: { name: string }) => apiClient.post<MyFeatureData>("/api/my-feature", newItem),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-feature'] });
+      queryClient.invalidateQueries({ queryKey: ["my-feature"] });
     },
   });
 
@@ -121,8 +120,8 @@ export function useMyFeature() {
 ```tsx
 // apps/web-app/src/app/my-feature/page.tsx
 
-import { MyComponent } from '@/components/my-feature';
-import { useMyFeature } from '@/hooks/useMyFeature';
+import { MyComponent } from "@/components/my-feature";
+import { useMyFeature } from "@/hooks/useMyFeature";
 
 export default function MyFeaturePage() {
   const { data, create } = useMyFeature();
@@ -130,7 +129,7 @@ export default function MyFeaturePage() {
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-2xl font-bold mb-4">My Feature</h1>
-      <MyComponent title="Create Item" onAction={() => create({ name: 'New' })} />
+      <MyComponent title="Create Item" onAction={() => create({ name: "New" })} />
     </div>
   );
 }
@@ -168,20 +167,20 @@ export interface CreateMyFeatureRequest {
 ```tsx
 // MyComponent.test.tsx
 
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MyComponent } from '../MyComponent';
+import { render, screen, fireEvent } from "@testing-library/react";
+import { MyComponent } from "../MyComponent";
 
-describe('MyComponent', () => {
-  it('renders title', () => {
+describe("MyComponent", () => {
+  it("renders title", () => {
     render(<MyComponent title="Test Title" />);
-    expect(screen.getByText('Test Title')).toBeInTheDocument();
+    expect(screen.getByText("Test Title")).toBeInTheDocument();
   });
 
-  it('calls onAction when button clicked', async () => {
+  it("calls onAction when button clicked", async () => {
     const onAction = vi.fn();
     render(<MyComponent title="Test" onAction={onAction} />);
 
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole("button"));
 
     expect(onAction).toHaveBeenCalled();
   });
@@ -200,12 +199,12 @@ describe('MyComponent', () => {
 ```tsx
 // MyComponent.stories.tsx
 
-import type { Meta, StoryObj } from '@storybook/react';
-import { MyComponent } from './MyComponent';
+import type { Meta, StoryObj } from "@storybook/react";
+import { MyComponent } from "./MyComponent";
 
 const meta: Meta<typeof MyComponent> = {
   component: MyComponent,
-  title: 'Features/MyComponent',
+  title: "Features/MyComponent",
 };
 
 export default meta;
@@ -214,7 +213,7 @@ type Story = StoryObj<typeof MyComponent>;
 
 export const Default: Story = {
   args: {
-    title: 'Example Title',
+    title: "Example Title",
   },
 };
 ```

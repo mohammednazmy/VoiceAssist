@@ -640,7 +640,12 @@ export function useChat(options: UseChatOptions) {
         sessionId,
         role: "user",
         content,
-        attachments: attachments?.map((id) => ({ id, type: "file", url: "", name: "" })),
+        attachments: attachments?.map((id) => ({
+          id,
+          type: "file",
+          url: "",
+          name: "",
+        })),
         createdAt: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, userMessage]);

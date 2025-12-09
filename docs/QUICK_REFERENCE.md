@@ -112,45 +112,45 @@ docker compose ps
 
 ### Backend (services/api-gateway/)
 
-| Path | Purpose |
-|------|---------|
-| `app/main.py` | FastAPI application entry point |
-| `app/api/` | API route handlers |
-| `app/services/` | Business logic services |
-| `app/core/config.py` | Configuration and settings |
-| `app/models/` | SQLAlchemy database models |
-| `alembic/versions/` | Database migrations |
-| `tests/` | Test files |
+| Path                 | Purpose                         |
+| -------------------- | ------------------------------- |
+| `app/main.py`        | FastAPI application entry point |
+| `app/api/`           | API route handlers              |
+| `app/services/`      | Business logic services         |
+| `app/core/config.py` | Configuration and settings      |
+| `app/models/`        | SQLAlchemy database models      |
+| `alembic/versions/`  | Database migrations             |
+| `tests/`             | Test files                      |
 
 ### Frontend (apps/web-app/)
 
-| Path | Purpose |
-|------|---------|
-| `src/app/` | Next.js app router pages |
-| `src/components/` | React components |
-| `src/hooks/` | Custom React hooks |
-| `src/stores/` | Zustand state stores |
-| `src/lib/api/` | API client functions |
-| `src/types/` | TypeScript type definitions |
+| Path              | Purpose                     |
+| ----------------- | --------------------------- |
+| `src/app/`        | Next.js app router pages    |
+| `src/components/` | React components            |
+| `src/hooks/`      | Custom React hooks          |
+| `src/stores/`     | Zustand state stores        |
+| `src/lib/api/`    | API client functions        |
+| `src/types/`      | TypeScript type definitions |
 
 ### Configuration Files
 
-| Path | Purpose |
-|------|---------|
-| `.env` | Environment variables (create from .env.example) |
-| `docker-compose.yml` | Docker service definitions |
-| `docker-compose.override.yml` | Local overrides |
-| `turbo.json` | Turborepo configuration |
-| `pnpm-workspace.yaml` | Monorepo workspace config |
+| Path                          | Purpose                                          |
+| ----------------------------- | ------------------------------------------------ |
+| `.env`                        | Environment variables (create from .env.example) |
+| `docker-compose.yml`          | Docker service definitions                       |
+| `docker-compose.override.yml` | Local overrides                                  |
+| `turbo.json`                  | Turborepo configuration                          |
+| `pnpm-workspace.yaml`         | Monorepo workspace config                        |
 
 ### Documentation
 
-| Path | Purpose |
-|------|---------|
-| `docs/START_HERE.md` | Project entry point |
-| `docs/UNIFIED_ARCHITECTURE.md` | System architecture |
-| `docs/EXTENSION_GUIDE.md` | How to extend the system |
-| `docs/ai/AGENT_ONBOARDING.md` | AI agent quickstart |
+| Path                           | Purpose                  |
+| ------------------------------ | ------------------------ |
+| `docs/START_HERE.md`           | Project entry point      |
+| `docs/UNIFIED_ARCHITECTURE.md` | System architecture      |
+| `docs/EXTENSION_GUIDE.md`      | How to extend the system |
+| `docs/ai/AGENT_ONBOARDING.md`  | AI agent quickstart      |
 
 ---
 
@@ -197,33 +197,33 @@ LOG_LEVEL=INFO
 
 ### Development URLs
 
-| Service | URL | Purpose |
-|---------|-----|---------|
-| API Gateway | http://localhost:8000 | Backend API |
-| API Docs | http://localhost:8000/docs | Swagger UI |
-| Web App | http://localhost:3000 | Main frontend |
-| Admin Panel | http://localhost:3001 | Admin dashboard |
-| Docs Site | http://localhost:3002 | Documentation |
+| Service     | URL                        | Purpose         |
+| ----------- | -------------------------- | --------------- |
+| API Gateway | http://localhost:8000      | Backend API     |
+| API Docs    | http://localhost:8000/docs | Swagger UI      |
+| Web App     | http://localhost:3000      | Main frontend   |
+| Admin Panel | http://localhost:3001      | Admin dashboard |
+| Docs Site   | http://localhost:3002      | Documentation   |
 
 ### Infrastructure Services
 
-| Service | URL/Port | Purpose |
-|---------|----------|---------|
-| PostgreSQL | localhost:5432 | Primary database |
-| Redis | localhost:6379 | Cache & sessions |
-| Qdrant | localhost:6333 | Vector database |
-| Grafana | http://localhost:3000 | Metrics dashboards |
-| Prometheus | http://localhost:9090 | Metrics collection |
-| Jaeger | http://localhost:16686 | Distributed tracing |
+| Service    | URL/Port               | Purpose             |
+| ---------- | ---------------------- | ------------------- |
+| PostgreSQL | localhost:5432         | Primary database    |
+| Redis      | localhost:6379         | Cache & sessions    |
+| Qdrant     | localhost:6333         | Vector database     |
+| Grafana    | http://localhost:3000  | Metrics dashboards  |
+| Prometheus | http://localhost:9090  | Metrics collection  |
+| Jaeger     | http://localhost:16686 | Distributed tracing |
 
 ### Production URLs (asimo.io)
 
-| Service | URL |
-|---------|-----|
-| Web App | https://dev.asimo.io |
-| Admin Panel | https://admin.asimo.io |
-| Docs Site | https://assistdocs.asimo.io |
-| API | https://assist.asimo.io |
+| Service     | URL                         |
+| ----------- | --------------------------- |
+| Web App     | https://dev.asimo.io        |
+| Admin Panel | https://admin.asimo.io      |
+| Docs Site   | https://assistdocs.asimo.io |
+| API         | https://assist.asimo.io     |
 
 ---
 
@@ -257,15 +257,15 @@ curl http://localhost:8000/metrics
 
 ### Common Endpoints
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| POST | `/api/auth/login` | User login |
-| POST | `/api/auth/register` | User registration |
-| GET | `/api/user/me` | Current user profile |
-| POST | `/api/chat` | Send chat message |
-| WS | `/api/voice/realtime` | Voice WebSocket |
-| GET | `/api/admin/users` | List users (admin) |
-| GET | `/api/admin/kb/documents` | List KB documents |
+| Method | Endpoint                  | Purpose              |
+| ------ | ------------------------- | -------------------- |
+| POST   | `/api/auth/login`         | User login           |
+| POST   | `/api/auth/register`      | User registration    |
+| GET    | `/api/user/me`            | Current user profile |
+| POST   | `/api/chat`               | Send chat message    |
+| WS     | `/api/voice/realtime`     | Voice WebSocket      |
+| GET    | `/api/admin/users`        | List users (admin)   |
+| GET    | `/api/admin/kb/documents` | List KB documents    |
 
 ---
 

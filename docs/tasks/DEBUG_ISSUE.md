@@ -83,32 +83,32 @@ docker compose up -d
 
 ### Backend
 
-| Symptom | Likely Cause | Solution |
-|---------|--------------|----------|
-| 500 Internal Server Error | Unhandled exception | Check logs for stack trace |
-| 401 Unauthorized | Invalid/expired token | Re-authenticate |
-| 422 Validation Error | Bad request body | Check Pydantic schema |
-| Connection refused | Service not running | `docker compose up -d` |
-| Database error | Migration issue | `alembic upgrade head` |
+| Symptom                   | Likely Cause          | Solution                   |
+| ------------------------- | --------------------- | -------------------------- |
+| 500 Internal Server Error | Unhandled exception   | Check logs for stack trace |
+| 401 Unauthorized          | Invalid/expired token | Re-authenticate            |
+| 422 Validation Error      | Bad request body      | Check Pydantic schema      |
+| Connection refused        | Service not running   | `docker compose up -d`     |
+| Database error            | Migration issue       | `alembic upgrade head`     |
 
 ### Frontend
 
-| Symptom | Likely Cause | Solution |
-|---------|--------------|----------|
-| Blank page | JavaScript error | Check console |
-| CORS error | Backend misconfigured | Check CORS settings |
-| 404 on API | Wrong endpoint URL | Check API route |
-| Stale data | Query cache | Invalidate query |
-| Type error | Schema mismatch | Sync types with backend |
+| Symptom    | Likely Cause          | Solution                |
+| ---------- | --------------------- | ----------------------- |
+| Blank page | JavaScript error      | Check console           |
+| CORS error | Backend misconfigured | Check CORS settings     |
+| 404 on API | Wrong endpoint URL    | Check API route         |
+| Stale data | Query cache           | Invalidate query        |
+| Type error | Schema mismatch       | Sync types with backend |
 
 ### Voice
 
-| Symptom | Likely Cause | Solution |
-|---------|--------------|----------|
-| No audio input | Microphone permission | Grant browser permission |
-| STT not working | Deepgram API key | Check DEEPGRAM_API_KEY |
-| TTS not working | ElevenLabs API key | Check ELEVENLABS_API_KEY |
-| WebSocket disconnect | Session timeout | Refresh session |
+| Symptom              | Likely Cause          | Solution                 |
+| -------------------- | --------------------- | ------------------------ |
+| No audio input       | Microphone permission | Grant browser permission |
+| STT not working      | Deepgram API key      | Check DEEPGRAM_API_KEY   |
+| TTS not working      | ElevenLabs API key    | Check ELEVENLABS_API_KEY |
+| WebSocket disconnect | Session timeout       | Refresh session          |
 
 ## Step 4: Debug Process
 
@@ -131,7 +131,7 @@ LOG_LEVEL=DEBUG python -m pytest tests/test_file.py -v -s
 
 ```typescript
 // Add console logging
-console.log('Variable:', variable);
+console.log("Variable:", variable);
 
 // Use debugger
 debugger; // Will pause in browser DevTools

@@ -503,16 +503,37 @@ export interface Citation {
 // packages/types/src/events/websocket.ts
 
 export type ClientEvent =
-  | { type: "session.start"; sessionId?: string; mode: string; clinicalContext?: any }
-  | { type: "message.send"; sessionId: string; content: string; attachments?: string[] }
+  | {
+      type: "session.start";
+      sessionId?: string;
+      mode: string;
+      clinicalContext?: any;
+    }
+  | {
+      type: "message.send";
+      sessionId: string;
+      content: string;
+      attachments?: string[];
+    }
   | { type: "audio.chunk"; sessionId: string; data: ArrayBuffer }
   | { type: "generation.stop"; sessionId: string };
 
 export type ServerEvent =
   | { type: "session.started"; sessionId: string }
-  | { type: "message.delta"; sessionId: string; messageId: string; role: string; contentDelta: string }
+  | {
+      type: "message.delta";
+      sessionId: string;
+      messageId: string;
+      role: string;
+      contentDelta: string;
+    }
   | { type: "message.complete"; sessionId: string; messageId: string }
-  | { type: "citation.list"; sessionId: string; messageId: string; citations: Citation[] }
+  | {
+      type: "citation.list";
+      sessionId: string;
+      messageId: string;
+      citations: Citation[];
+    }
   | { type: "audio.chunk"; sessionId: string; data: ArrayBuffer }
   | { type: "error"; code: string; message: string };
 ```
