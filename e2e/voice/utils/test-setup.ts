@@ -246,10 +246,10 @@ export async function resetVoiceSettingsToDefaults(page: Page): Promise<void> {
  * This localStorage flag completely overrides both:
  * - The automation detection (navigator.webdriver)
  * - The backend feature flag (backend.voice_silero_vad_enabled)
- * Call this before opening voice mode to test the full Silero VAD pipeline.
+ * Call this BEFORE page.goto() - uses addInitScript to set localStorage before the app loads.
  */
 export async function enableSileroVAD(page: Page): Promise<void> {
-  await page.evaluate(() => {
+  await page.addInitScript(() => {
     localStorage.setItem("voiceassist-force-silero-vad", "true");
   });
 }
