@@ -24,7 +24,7 @@
  * Phase: Thinker/Talker Voice Pipeline Migration
  */
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { voiceLog } from "../lib/logger";
 
 // ============================================================================
@@ -45,6 +45,26 @@ const DEFAULT_PREBUFFER_CHUNKS = 3;
 const ENHANCED_PREBUFFER_CHUNKS = 5;
 
 /**
+ * Network-adaptive prebuffer sizes.
+ * Natural Conversation Flow: Phase 6 - Network-Adaptive Behavior
+ *
+ * - Excellent/Good: 2-3 chunks (~100-150ms buffer) - minimize latency
+ * - Fair/Moderate: 4-5 chunks (~200-250ms buffer) - balance latency/smoothness
+ * - Poor: 6-8 chunks (~300-400ms buffer) - prioritize smoothness
+ * - Unknown: Fall back to default (3 chunks)
+ */
+const NETWORK_PREBUFFER_MAP: Record<
+  "excellent" | "good" | "fair" | "poor" | "unknown",
+  number
+> = {
+  excellent: 2,
+  good: 3,
+  fair: 5,
+  poor: 7,
+  unknown: DEFAULT_PREBUFFER_CHUNKS,
+};
+
+/**
  * Maximum buffer size before we start playing anyway.
  * Prevents infinite buffering if stream is very slow.
  */
@@ -59,7 +79,20 @@ const MAX_PREBUFFER_WAIT_MS = 500;
  * (currentTime starts at 0 and advances slowly). This prevents the scheduling
  * loop from getting stuck waiting for currentTime to catch up.
  */
-const MAX_SCHEDULE_LOOKAHEAD_S = 3.0; // 3 second max lookahead
+const MAX_SCHEDULE_LOOKAHEAD_S = 1.0; // tighten lookahead to reduce perceived lag
+
+/**
+ * Maximum queue duration in milliseconds (Phase 1: Queue Duration Enforcement).
+ * Natural Conversation Flow: Prevent runaway queue accumulation.
+ * At ~50ms per chunk (24kHz), 1000ms ≈ 20 chunks.
+ */
+const MAX_QUEUE_DURATION_MS = 1000;
+
+/**
+ * Scheduling watchdog interval in milliseconds.
+ * Natural Conversation Flow: Phase 1.3 - Periodic check for stuck schedules.
+ */
+const WATCHDOG_INTERVAL_MS = 500;
 
 /**
  * Crossfade duration in samples for smooth chunk transitions.
@@ -90,6 +123,15 @@ export interface TTAudioPlaybackOptions {
   onPlaybackInterrupted?: () => void;
   /** Called on playback error */
   onError?: (error: Error) => void;
+  /**
+   * Called when queue overflow occurs (Natural Conversation Flow: Phase 1).
+   * Provides details about the overflow for metrics/logging.
+   */
+  onQueueOverflow?: (details: {
+    droppedChunks: number;
+    queueDurationMs: number;
+    source: "duration" | "lookahead" | "watchdog";
+  }) => void;
 
   // Pre-buffering options (WS Latency Optimization)
   /**
@@ -128,6 +170,20 @@ export interface TTAudioPlaybackOptions {
    * Default: false
    */
   enhancedQuality?: boolean;
+
+  // Network-Adaptive Options (Natural Conversation Flow: Phase 6)
+  /**
+   * Enable network-adaptive prebuffering.
+   * When enabled, prebuffer size is adjusted based on network quality.
+   * Default: false (controlled by feature flag: backend.voice_adaptive_prebuffer)
+   */
+  enableAdaptivePrebuffer?: boolean;
+  /**
+   * Current network quality level.
+   * Used to determine optimal prebuffer size when enableAdaptivePrebuffer is true.
+   * Default: "unknown"
+   */
+  networkQuality?: "excellent" | "good" | "fair" | "poor" | "unknown";
 }
 
 /**
@@ -154,6 +210,14 @@ export interface TTAudioPlaybackReturn {
   /** Target pre-buffer size */
   prebufferTarget: number;
 
+  // Queue overflow stats (Natural Conversation Flow: Phase 1)
+  /** Current queue length in chunks */
+  queueLength: number;
+  /** Estimated queue duration in ms */
+  queueDurationMs: number;
+  /** Total overflow events since reset */
+  overflowCount: number;
+
   // Actions
   /**
    * Queue an audio chunk for playback.
@@ -177,6 +241,14 @@ export interface TTAudioPlaybackReturn {
   reset: () => void;
   /** Pre-warm AudioContext to reduce first-audio latency */
   warmup: () => Promise<void>;
+  /** Get debug state with ref values (for E2E testing) */
+  getDebugState: () => {
+    isPlayingRef: boolean;
+    isProcessingRef: boolean;
+    activeSourcesCount: number;
+    streamEndedRef: boolean;
+    bargeInActiveRef: boolean;
+  };
 }
 
 // ============================================================================
@@ -281,6 +353,7 @@ export function useTTAudioPlayback(
     onPlaybackEnd,
     onPlaybackInterrupted,
     onError,
+    onQueueOverflow,
     // Pre-buffering options (WS Latency Optimization)
     enablePrebuffering = false,
     prebufferChunks: prebufferChunksOption,
@@ -288,12 +361,36 @@ export function useTTAudioPlayback(
     // Audio Quality Enhancement options
     enableCrossfade = false,
     enhancedQuality = false,
+    // Network-adaptive options (Natural Conversation Flow: Phase 6)
+    enableAdaptivePrebuffer = false,
+    networkQuality = "unknown",
   } = options;
 
-  // Determine effective prebuffer size based on enhanced quality mode
-  const prebufferChunks =
-    prebufferChunksOption ??
-    (enhancedQuality ? ENHANCED_PREBUFFER_CHUNKS : DEFAULT_PREBUFFER_CHUNKS);
+  // Determine effective prebuffer size based on:
+  // 1. Explicit prebufferChunks option (highest priority)
+  // 2. Network-adaptive prebuffer (if enabled)
+  // 3. Enhanced quality mode
+  // 4. Default
+  const prebufferChunks = (() => {
+    // Explicit option takes precedence
+    if (prebufferChunksOption !== undefined) {
+      return prebufferChunksOption;
+    }
+    // Network-adaptive prebuffering (Natural Conversation Flow: Phase 6)
+    if (enableAdaptivePrebuffer) {
+      const networkPrebuffer = NETWORK_PREBUFFER_MAP[networkQuality];
+      voiceLog.debug(
+        `[TTAudioPlayback] Network-adaptive prebuffer: quality=${networkQuality}, chunks=${networkPrebuffer}`,
+      );
+      return networkPrebuffer;
+    }
+    // Enhanced quality mode
+    if (enhancedQuality) {
+      return ENHANCED_PREBUFFER_CHUNKS;
+    }
+    // Default
+    return DEFAULT_PREBUFFER_CHUNKS;
+  })();
 
   // Determine crossfade samples based on enhanced quality mode
   const crossfadeSamples = enhancedQuality
@@ -309,6 +406,11 @@ export function useTTAudioPlayback(
   // Pre-buffering state (WS Latency Optimization)
   const [isPrebuffering, setIsPrebuffering] = useState(false);
   const [prebufferCount, setPrebufferCount] = useState(0);
+
+  // Queue overflow stats (Natural Conversation Flow: Phase 1)
+  const [queueLength, setQueueLength] = useState(0);
+  const [queueDurationMs, setQueueDurationMs] = useState(0);
+  const [overflowCount, setOverflowCount] = useState(0);
 
   // Refs
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -336,6 +438,65 @@ export function useTTAudioPlayback(
   // Barge-in: When true, drop incoming audio chunks until reset() is called
   // This prevents stale audio from the cancelled response from playing
   const bargeInActiveRef = useRef(false);
+  const bargeInStopLoggedRef = useRef(false);
+
+  // Guard to prevent onPlaybackInterrupted from being called multiple times
+  // during a single barge-in sequence (e.g., fadeOut calls it, then stop() calls it again)
+  const interruptCallbackFiredRef = useRef(false);
+
+  // Scheduling watchdog ref (Natural Conversation Flow: Phase 1.3)
+  const watchdogIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
+
+  /**
+   * Estimate queue duration in milliseconds.
+   * Assumes ~50ms per chunk (24kHz, typical ElevenLabs chunk size).
+   */
+  const estimateQueueDurationMs = useCallback(() => {
+    // Each chunk is approximately 50ms at 24kHz
+    const CHUNK_DURATION_MS = 50;
+    return audioQueueRef.current.length * CHUNK_DURATION_MS;
+  }, []);
+
+  /**
+   * Handle queue overflow by trimming old chunks.
+   * Natural Conversation Flow: Phase 1.1 - Queue Duration Enforcement
+   */
+  const handleQueueOverflow = useCallback(
+    (source: "duration" | "lookahead" | "watchdog") => {
+      const currentLength = audioQueueRef.current.length;
+      const currentDurationMs = estimateQueueDurationMs();
+
+      if (currentLength <= prebufferChunks) {
+        return; // Don't trim below prebuffer threshold
+      }
+
+      // Keep only the most recent chunks
+      const maxChunks = Math.ceil(MAX_QUEUE_DURATION_MS / 50);
+      const droppedChunks = currentLength - Math.min(currentLength, maxChunks);
+
+      if (droppedChunks > 0) {
+        audioQueueRef.current = audioQueueRef.current.slice(-maxChunks);
+
+        voiceLog.warn(
+          `[TTAudioPlayback] Queue overflow (${source}): dropped ${droppedChunks} chunks, ` +
+            `duration was ${currentDurationMs}ms`,
+        );
+
+        setOverflowCount((prev) => prev + 1);
+        setQueueLength(audioQueueRef.current.length);
+        setQueueDurationMs(estimateQueueDurationMs());
+
+        onQueueOverflow?.({
+          droppedChunks,
+          queueDurationMs: currentDurationMs,
+          source,
+        });
+      }
+    },
+    [estimateQueueDurationMs, onQueueOverflow, prebufferChunks],
+  );
 
   /**
    * Get or create AudioContext
@@ -365,6 +526,23 @@ export function useTTAudioPlayback(
    * Process and schedule audio chunks for gapless playback
    */
   const processAudioQueue = useCallback(async () => {
+    // E2E Debug: Track processAudioQueue entry
+    console.log("[TTAudioPlayback] processAudioQueue ENTRY", {
+      bargeInActive: bargeInActiveRef.current,
+      isProcessing: isProcessingRef.current,
+      queueLength: audioQueueRef.current.length,
+      isPlaying: isPlayingRef.current,
+    });
+
+    // Bail out immediately if a barge-in just occurred
+    if (bargeInActiveRef.current) {
+      console.log("[TTAudioPlayback] processAudioQueue EXIT: barge-in active");
+      audioQueueRef.current = [];
+      isProcessingRef.current = false;
+      nextScheduledTimeRef.current = 0;
+      return;
+    }
+
     voiceLog.debug("[TTAudioPlayback] processAudioQueue called", {
       isProcessing: isProcessingRef.current,
       queueLength: audioQueueRef.current.length,
@@ -372,20 +550,30 @@ export function useTTAudioPlayback(
     });
 
     if (isProcessingRef.current) {
+      console.log(
+        "[TTAudioPlayback] processAudioQueue EXIT: already processing",
+      );
       voiceLog.debug("[TTAudioPlayback] Already processing, skipping");
       return;
     }
     if (audioQueueRef.current.length === 0) {
+      console.log("[TTAudioPlayback] processAudioQueue EXIT: queue empty");
       voiceLog.debug("[TTAudioPlayback] Queue empty, skipping");
       return;
     }
 
     isProcessingRef.current = true;
+    console.log("[TTAudioPlayback] processAudioQueue STARTING PROCESSING");
     voiceLog.debug("[TTAudioPlayback] Starting to process queue");
 
     try {
+      console.log("[TTAudioPlayback] Getting AudioContext...");
       voiceLog.debug("[TTAudioPlayback] Getting AudioContext...");
       const audioContext = await getAudioContext();
+      console.log("[TTAudioPlayback] AudioContext obtained", {
+        state: audioContext.state,
+        sampleRate: audioContext.sampleRate,
+      });
       voiceLog.debug("[TTAudioPlayback] AudioContext obtained", {
         state: audioContext.state,
         sampleRate: audioContext.sampleRate,
@@ -399,16 +587,32 @@ export function useTTAudioPlayback(
         const now = audioContext.currentTime;
         const scheduledAhead = nextScheduledTimeRef.current - now;
         if (scheduledAhead > MAX_SCHEDULE_LOOKAHEAD_S) {
-          voiceLog.debug(
-            `[TTAudioPlayback] Pausing scheduling - ${scheduledAhead.toFixed(2)}s ahead, waiting for playback to catch up`,
+          // Hard reset the schedule to avoid runaway lookahead and drop stale audio
+          voiceLog.warn(
+            `[TTAudioPlayback] Overscheduled by ${scheduledAhead.toFixed(2)}s; resetting schedule and trimming queue`,
           );
-          // Schedule a retry after some of the audio has played
-          setTimeout(() => {
-            if (isPlayingRef.current && audioQueueRef.current.length > 0) {
-              processAudioQueue();
+          nextScheduledTimeRef.current = now + 0.01; // schedule near-future
+
+          // Stop any already scheduled sources so barge-in or new audio is not delayed
+          for (const source of activeSourcesRef.current) {
+            try {
+              source.stop();
+              source.disconnect();
+            } catch {
+              // Ignore
             }
-          }, 200); // Check again in 200ms
-          break;
+          }
+          activeSourcesRef.current.clear();
+
+          // Keep only the most recent chunks to prevent long backlogs (preserve minimal buffer)
+          const maxBufferedChunks = Math.max(
+            prebufferChunks,
+            DEFAULT_PREBUFFER_CHUNKS,
+          );
+          if (audioQueueRef.current.length > maxBufferedChunks) {
+            audioQueueRef.current =
+              audioQueueRef.current.slice(-maxBufferedChunks);
+          }
         }
 
         const audioData = audioQueueRef.current.shift()!;
@@ -529,6 +733,12 @@ export function useTTAudioPlayback(
           // Start at the scheduled time
           const startTime = nextScheduledTimeRef.current;
           source.start(startTime);
+          console.log(`[TTAudioPlayback] AUDIO SCHEDULED`, {
+            startTime: startTime.toFixed(3),
+            currentTime: now.toFixed(3),
+            bufferDuration: audioBuffer.duration.toFixed(3),
+            chunkIndex,
+          });
           voiceLog.debug(`[TTAudioPlayback] Scheduled source to start`, {
             startTime: startTime.toFixed(3),
             currentTime: now.toFixed(3),
@@ -538,9 +748,15 @@ export function useTTAudioPlayback(
           // Update next scheduled time to end of this buffer
           nextScheduledTimeRef.current = startTime + audioBuffer.duration;
 
+          console.log("[TTAudioPlayback] Setting playbackState to 'playing'");
           setPlaybackState("playing");
         } catch (err) {
-          console.error("[TTAudioPlayback] Error decoding chunk:", err);
+          console.error(
+            "[TTAudioPlayback] Error decoding chunk:",
+            err,
+            "chunk details:",
+            { chunkIndex },
+          );
           voiceLog.error("[TTAudioPlayback] Error decoding chunk:", err);
           // Continue with next chunk
         }
@@ -569,6 +785,7 @@ export function useTTAudioPlayback(
     onPlaybackEnd,
     enableCrossfade,
     crossfadeSamples,
+    prebufferChunks,
   ]);
 
   /**
@@ -614,6 +831,44 @@ export function useTTAudioPlayback(
    */
   const queueAudioChunk = useCallback(
     (audioData: AudioChunkData) => {
+      const isBinary = audioData instanceof Uint8Array;
+      const dataLength = isBinary ? audioData.byteLength : audioData.length;
+
+      // E2E Debug: Track audio queue flow
+      if (typeof window !== "undefined") {
+        const win = window as Window & {
+          __tt_audio_debug?: Array<{
+            timestamp: number;
+            event: string;
+            length: number;
+            playbackState?: string;
+            isPlaying?: boolean;
+            bargeInActive?: boolean;
+            queueLength?: number;
+          }>;
+        };
+        if (!win.__tt_audio_debug) {
+          win.__tt_audio_debug = [];
+        }
+        win.__tt_audio_debug.push({
+          timestamp: Date.now(),
+          event: bargeInActiveRef.current
+            ? "queueAudioChunk_dropped_barge_in"
+            : "queueAudioChunk_received",
+          length: dataLength,
+          bargeInActive: bargeInActiveRef.current,
+          isPlaying: isPlayingRef.current,
+          queueLength: audioQueueRef.current.length,
+        });
+        console.log("[TTAudioPlayback] queueAudioChunk E2E debug", {
+          event: bargeInActiveRef.current ? "DROPPED" : "RECEIVED",
+          dataLength,
+          bargeInActive: bargeInActiveRef.current,
+          isPlaying: isPlayingRef.current,
+          queueLength: audioQueueRef.current.length,
+        });
+      }
+
       // Drop audio chunks if barge-in is active
       // This prevents stale audio from cancelled responses from playing
       if (bargeInActiveRef.current) {
@@ -623,7 +878,6 @@ export function useTTAudioPlayback(
         return;
       }
 
-      const isBinary = audioData instanceof Uint8Array;
       voiceLog.debug("[TTAudioPlayback] queueAudioChunk called", {
         dataType: isBinary ? "binary" : "base64",
         dataLength: isBinary ? audioData.byteLength : audioData.length,
@@ -639,6 +893,8 @@ export function useTTAudioPlayback(
         streamStartTimeRef.current = Date.now();
         streamEndedRef.current = false;
         playbackCompletedRef.current = false;
+        // Reset interrupt callback guard for new stream
+        interruptCallbackFiredRef.current = false;
         // Reset scheduling time for new stream to prevent stale future scheduling
         // This ensures audio plays immediately rather than minutes in the future
         nextScheduledTimeRef.current = 0;
@@ -666,11 +922,11 @@ export function useTTAudioPlayback(
         // Convert to ArrayBuffer based on input type
         let arrayBuffer: ArrayBuffer;
         if (isBinary) {
-          // Binary Uint8Array - use buffer directly
+          // Binary Uint8Array - use buffer directly (slice returns ArrayBuffer | SharedArrayBuffer, we assert ArrayBuffer)
           arrayBuffer = audioData.buffer.slice(
             audioData.byteOffset,
             audioData.byteOffset + audioData.byteLength,
-          );
+          ) as ArrayBuffer;
         } else {
           // Base64 string - decode
           arrayBuffer = base64ToArrayBuffer(audioData);
@@ -679,7 +935,17 @@ export function useTTAudioPlayback(
         voiceLog.debug("[TTAudioPlayback] Converted to ArrayBuffer", {
           byteLength: arrayBuffer.byteLength,
         });
+        console.log("[TTAudioPlayback] PUSHING chunk to queue", {
+          byteLength: arrayBuffer.byteLength,
+          queueLengthBefore: audioQueueRef.current.length,
+        });
         audioQueueRef.current.push(arrayBuffer);
+        console.log("[TTAudioPlayback] PUSHED chunk to queue", {
+          queueLengthAfter: audioQueueRef.current.length,
+          enablePrebuffering,
+          prebufferReady: prebufferReadyRef.current,
+          isPlaying: isPlayingRef.current,
+        });
 
         // Update prebuffer count for UI feedback
         if (enablePrebuffering && !prebufferReadyRef.current) {
@@ -688,6 +954,9 @@ export function useTTAudioPlayback(
 
         // Check if we should start playback
         if (enablePrebuffering && !prebufferReadyRef.current) {
+          console.log(
+            "[TTAudioPlayback] PREBUFFERING MODE - waiting for threshold",
+          );
           // Pre-buffering mode: wait for threshold
           if (audioQueueRef.current.length >= prebufferChunks) {
             voiceLog.debug(
@@ -702,13 +971,19 @@ export function useTTAudioPlayback(
         } else {
           // Normal mode or prebuffer already ready: start immediately
           if (!isPlayingRef.current) {
+            console.log("[TTAudioPlayback] NORMAL MODE - starting playback", {
+              isPlayingBefore: isPlayingRef.current,
+              queueLength: audioQueueRef.current.length,
+            });
             voiceLog.debug(
               "[TTAudioPlayback] Starting playback (isPlaying was false)",
             );
             isPlayingRef.current = true;
             setPlaybackState("buffering");
+            console.log("[TTAudioPlayback] Calling playNextChunk()");
             playNextChunk();
           } else {
+            console.log("[TTAudioPlayback] ALREADY PLAYING - chunk queued");
             voiceLog.debug(
               "[TTAudioPlayback] Already playing, chunk queued for later processing",
             );
@@ -763,7 +1038,37 @@ export function useTTAudioPlayback(
    * Stop playback immediately (barge-in)
    */
   const stop = useCallback(() => {
-    voiceLog.debug("[TTAudioPlayback] Stopping playback (barge-in)");
+    // Guard: If barge-in is already active, skip redundant stop calls
+    // This prevents infinite loops where stop() -> setState -> re-render -> stop()
+    if (bargeInActiveRef.current) {
+      voiceLog.debug(
+        "[TTAudioPlayback] Stop called but barge-in already active, skipping",
+      );
+      return;
+    }
+
+    const hasActiveAudio =
+      isPlayingRef.current ||
+      isProcessingRef.current ||
+      audioQueueRef.current.length > 0 ||
+      activeSourcesRef.current.size > 0;
+    if (!hasActiveAudio) {
+      voiceLog.debug(
+        "[TTAudioPlayback] Stop called with no active audio, skipping",
+      );
+      return;
+    }
+
+    if (!bargeInStopLoggedRef.current) {
+      voiceLog.debug("[TTAudioPlayback] Stopping playback (barge-in)");
+      bargeInStopLoggedRef.current = true;
+      // Track stop calls for E2E debugging (store in window for test inspection)
+      if (typeof window !== "undefined") {
+        const win = window as Window & { __audioStopStacks?: string[] };
+        if (!win.__audioStopStacks) win.__audioStopStacks = [];
+        win.__audioStopStacks.push(`${Date.now()}: barge-in stop`);
+      }
+    }
 
     // Set barge-in flag to drop any incoming audio chunks
     // This prevents stale audio from the cancelled response from playing
@@ -807,7 +1112,12 @@ export function useTTAudioPlayback(
       setTotalPlayedMs(totalPlayed);
     }
 
-    onPlaybackInterrupted?.();
+    // Only fire callback once per barge-in sequence
+    // (prevents infinite loop when fadeOut calls this, then stop() is called again)
+    if (!interruptCallbackFiredRef.current) {
+      interruptCallbackFiredRef.current = true;
+      onPlaybackInterrupted?.();
+    }
   }, [onPlaybackInterrupted]);
 
   /**
@@ -819,6 +1129,15 @@ export function useTTAudioPlayback(
    */
   const fadeOut = useCallback(
     (durationMs: number = 50) => {
+      // Guard: If barge-in is already active, skip redundant fadeOut calls
+      // This prevents infinite loops where fadeOut() -> setState -> re-render -> fadeOut()
+      if (bargeInActiveRef.current) {
+        voiceLog.debug(
+          "[TTAudioPlayback] FadeOut called but barge-in already active, skipping",
+        );
+        return;
+      }
+
       // IMMEDIATELY set barge-in flag to drop any new incoming audio chunks
       // This prevents audio from being queued during the fade
       bargeInActiveRef.current = true;
@@ -862,8 +1181,11 @@ export function useTTAudioPlayback(
       gainNode.gain.setValueAtTime(currentGain, currentTime);
       gainNode.gain.linearRampToValueAtTime(0, fadeEndTime);
 
-      // Notify of interruption
-      onPlaybackInterrupted?.();
+      // Notify of interruption (only once per barge-in sequence)
+      if (!interruptCallbackFiredRef.current) {
+        interruptCallbackFiredRef.current = true;
+        onPlaybackInterrupted?.();
+      }
       setPlaybackState("stopped");
 
       // Restore gain value for next playback after a brief delay
@@ -902,6 +1224,10 @@ export function useTTAudioPlayback(
     // Clear barge-in flag AFTER stop() - we're starting a new response
     // This allows new audio chunks to be queued for the new response
     bargeInActiveRef.current = false;
+    bargeInStopLoggedRef.current = false;
+    // NOTE: interruptCallbackFiredRef is NOT reset here - it's reset when the first
+    // audio chunk of a new stream arrives in queueAudioChunk(). This prevents
+    // infinite loops where reset() -> stop() -> callback -> re-render -> reset().
 
     streamStartTimeRef.current = null;
     firstChunkTimeRef.current = null;
@@ -923,6 +1249,11 @@ export function useTTAudioPlayback(
     prebufferReadyRef.current = false;
     setIsPrebuffering(false);
     setPrebufferCount(0);
+
+    // Reset queue overflow stats (Natural Conversation Flow: Phase 1)
+    setQueueLength(0);
+    setQueueDurationMs(0);
+    setOverflowCount(0);
   }, [stop]);
 
   /**
@@ -1002,7 +1333,14 @@ export function useTTAudioPlayback(
         cleanedResources.push(`audioQueue(${queueLength})`);
       }
 
-      // 6. Reset refs
+      // 6. Clear watchdog interval
+      if (watchdogIntervalRef.current) {
+        clearInterval(watchdogIntervalRef.current);
+        watchdogIntervalRef.current = null;
+        cleanedResources.push("watchdog");
+      }
+
+      // 7. Reset refs
       isPlayingRef.current = false;
       isProcessingRef.current = false;
       streamEndedRef.current = false;
@@ -1023,28 +1361,107 @@ export function useTTAudioPlayback(
     }
   }, [volume]);
 
-  return {
-    // State
-    playbackState,
-    isPlaying: playbackState === "playing" || playbackState === "buffering",
-    volume,
-    ttfaMs,
-    totalPlayedMs,
+  // Scheduling watchdog (Natural Conversation Flow: Phase 1.3)
+  // Periodically checks for stuck schedules and queue overflow
+  useEffect(() => {
+    watchdogIntervalRef.current = setInterval(() => {
+      if (!isPlayingRef.current) return;
 
-    // Pre-buffering state (WS Latency Optimization)
-    isPrebuffering,
-    prebufferCount,
-    prebufferTarget: prebufferChunks,
+      // Update queue stats
+      setQueueLength(audioQueueRef.current.length);
+      setQueueDurationMs(estimateQueueDurationMs());
 
-    // Actions
-    queueAudioChunk,
-    endStream,
-    stop,
-    fadeOut,
-    setVolume,
-    reset,
-    warmup,
-  };
+      // Check for queue overflow
+      const currentDurationMs = estimateQueueDurationMs();
+      if (currentDurationMs > MAX_QUEUE_DURATION_MS) {
+        handleQueueOverflow("watchdog");
+      }
+
+      // Check for stuck schedule
+      if (audioContextRef.current) {
+        const now = audioContextRef.current.currentTime;
+        const scheduledAhead = nextScheduledTimeRef.current - now;
+        if (scheduledAhead > MAX_SCHEDULE_LOOKAHEAD_S * 2) {
+          voiceLog.warn(
+            `[TTAudioPlayback] Watchdog: schedule stuck ${scheduledAhead.toFixed(2)}s ahead, resetting`,
+          );
+          nextScheduledTimeRef.current = now + 0.01;
+        }
+      }
+    }, WATCHDOG_INTERVAL_MS);
+
+    return () => {
+      if (watchdogIntervalRef.current) {
+        clearInterval(watchdogIntervalRef.current);
+        watchdogIntervalRef.current = null;
+      }
+    };
+  }, [estimateQueueDurationMs, handleQueueOverflow]);
+
+  // Debug state getter for E2E testing - reads directly from refs
+  const getDebugState = useCallback(
+    () => ({
+      isPlayingRef: isPlayingRef.current,
+      isProcessingRef: isProcessingRef.current,
+      activeSourcesCount: activeSourcesRef.current.size,
+      streamEndedRef: streamEndedRef.current,
+      bargeInActiveRef: bargeInActiveRef.current,
+    }),
+    [],
+  );
+
+  // Memoize return object to prevent unnecessary re-renders and useEffect cleanups
+  // Without this, any useEffect depending on audioPlayback would cleanup on every render
+  return useMemo(
+    () => ({
+      // State
+      playbackState,
+      isPlaying: playbackState === "playing" || playbackState === "buffering",
+      volume,
+      ttfaMs,
+      totalPlayedMs,
+
+      // Pre-buffering state (WS Latency Optimization)
+      isPrebuffering,
+      prebufferCount,
+      prebufferTarget: prebufferChunks,
+
+      // Queue overflow stats (Natural Conversation Flow: Phase 1)
+      queueLength,
+      queueDurationMs,
+      overflowCount,
+
+      // Actions
+      queueAudioChunk,
+      endStream,
+      stop,
+      fadeOut,
+      setVolume,
+      reset,
+      warmup,
+      getDebugState,
+    }),
+    [
+      playbackState,
+      volume,
+      ttfaMs,
+      totalPlayedMs,
+      isPrebuffering,
+      prebufferCount,
+      prebufferChunks,
+      queueLength,
+      queueDurationMs,
+      overflowCount,
+      queueAudioChunk,
+      endStream,
+      stop,
+      fadeOut,
+      setVolume,
+      reset,
+      warmup,
+      getDebugState,
+    ],
+  );
 }
 
 export default useTTAudioPlayback;

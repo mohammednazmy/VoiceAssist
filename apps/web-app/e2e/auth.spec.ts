@@ -139,7 +139,7 @@ test.describe("OAuth Buttons", () => {
       .toBeVisible({ timeout: 5000 })
       .catch(() => {
         // If neither appears, test still passes (OAuth might be configured)
-        console.log("OAuth provider might be configured - no error shown");
+        console.warn("OAuth provider might be configured - no error shown");
       });
   });
 });

@@ -60,6 +60,16 @@ async def health_check(request: Request):
     )
 
 
+@router.head("/health", response_model=HealthResponse)
+@limiter.limit("100/minute")
+async def health_check_head(request: Request):
+    """
+    HEAD variant for health check.
+    Playwright/web server readiness probes issue HEAD requests; mirror GET behaviour.
+    """
+    return await health_check(request)
+
+
 @router.get("/ready", response_class=JSONResponse)
 @limiter.limit("100/minute")
 async def readiness_check(request: Request):

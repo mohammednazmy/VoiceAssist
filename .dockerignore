@@ -10,11 +10,6 @@
 .github
 .gitlab-ci.yml
 
-# Documentation
-README.md
-docs/
-*.md
-
 # Tests
 tests/
 **/test_*.py

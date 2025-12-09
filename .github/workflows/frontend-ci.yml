@@ -15,6 +15,7 @@ on:
       - "turbo.json"
       - "playwright.config.ts"
       - ".github/workflows/frontend-ci.yml"
+  workflow_dispatch:
   pull_request:
     branches:
       - main

@@ -11,14 +11,25 @@
  * - Adaptive personalization
  * - Tool-call safe interruption handling
  *
- * Phase: Voice Barge-In Implementation
+ * Natural Conversation Flow: Phase 1 - Frontend Integration
  */
 
 // Export types
 export * from "./types";
 
-// Note: The main useIntelligentBargeIn hook will be implemented in Phase 3
-// after the context-aware classification system is ready.
-//
-// For now, use the useNeuralVAD hook for basic speech detection:
-// import { useNeuralVAD } from '../useNeuralVAD';
+// Export the main hook
+export {
+  useIntelligentBargeIn,
+  type UseIntelligentBargeInOptions,
+} from "./useIntelligentBargeIn";
+export { useIntelligentBargeIn as default } from "./useIntelligentBargeIn";
+
+// Export classification functions (Phase 2.2)
+export {
+  classifyBargeIn,
+  isLikelyBackchannel,
+  getBackchannelPhrases,
+  getSoftBargeKeywords,
+  type ClassificationInput,
+  type ClassificationResult,
+} from "./classifyBargeIn";

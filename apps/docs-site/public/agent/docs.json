@@ -1,6 +1,6 @@
 {
-  "count": 295,
-  "generated_at": "2025-12-08T00:37:21.866Z",
+  "count": 296,
+  "generated_at": "2025-12-08T12:53:17.474Z",
   "docs": [
     {
       "slug": "reference/style-guide",
@@ -182,6 +182,13 @@
         "versioning"
       ],
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
+    },
+    {
+      "slug": "voice-mode-barge-in-improvements",
+      "path": "plans/voice-mode-barge-in-improvements.md",
+      "title": "voice-mode-barge-in-improvements",
+      "status": "draft",
+      "lastUpdated": "2025-12-08"
     },
     {
       "slug": "pr-176-description",

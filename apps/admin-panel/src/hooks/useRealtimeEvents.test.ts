@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import { useRealtimeEvents, useAdminEventListener } from "./useRealtimeEvents";
 
 // Mock WebSocket class for testing
@@ -184,7 +184,7 @@ describe("useRealtimeEvents", () => {
     });
 
     it("should cleanup on unmount", async () => {
-      const { result, unmount } = renderHook(() => useRealtimeEvents());
+      const { unmount } = renderHook(() => useRealtimeEvents());
 
       openConnection();
 
