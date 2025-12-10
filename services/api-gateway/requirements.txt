@@ -27,7 +27,7 @@ pyotp==2.9.0  # TOTP (Time-based One-Time Password) for 2FA
 qrcode[pil]==8.2  # QR code generation for 2FA setup
 
 # OpenAI (for future use)
-openai==2.8.1
+openai==2.9.0
 
 # Rate Limiting
 slowapi==0.1.9
