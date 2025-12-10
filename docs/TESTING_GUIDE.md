@@ -448,8 +448,10 @@ MOCK_WEBSOCKET_E2E=1 pnpm exec playwright test e2e/voice-transcript-validation.s
 
 ### What It Validates
 
-1. **User transcript accuracy**: DOM transcript matches expected user text (≥0.9 overallScore)
-2. **AI transcript accuracy (planned)**: Currently stubbed via deterministic mock data; stricter DOM-based assertions will be added once pipeline debug surfaces are stable
+1. **User transcript accuracy (pipeline + DOM)**: `transcript.complete` events in `window.__tt_ws_events` and the rendered chat timeline user message both match expected user text (≥0.9 `overallScore` via `TranscriptScorer`)
+2. **AI transcript accuracy (pipeline + DOM when available)**:
+   - When `response.complete` events are present in `window.__tt_ws_events`, their text is scored against the expected AI response (≥0.9).
+   - When the AI response appears in the chat timeline, the DOM transcript is also scored against the expected AI response (≥0.9). If the assistant message is not yet wired into the UI, the test logs a warning and continues.
 3. **Echo contamination**: User transcript is NOT polluted with AI keywords/phrases
 
 ### Mock WebSocket Details
@@ -463,6 +465,17 @@ MOCK_WEBSOCKET_E2E=1 pnpm exec playwright test e2e/voice-transcript-validation.s
 - `TranscriptScorer` class in `e2e/voice/utils/transcript-scorer.ts`
   - `score(expected, actual)`: Returns accuracy metrics
   - `detectEchoContamination(userText, aiKeywords, aiFullResponse?)`: Detects AI speech leakage
+
+## Voice E2E Profiles (How to Choose)
+
+Voice Mode E2E tests are grouped into named profiles (Playwright projects) described in `docs/voice/E2E_PROFILES.md`. Use these as a quick guide:
+
+- Run the **`voice-smoke`** project on every PR to cover navigation plus basic Voice Mode session behavior.
+- Use **`voice-multi-turn`** when you need Thinker/Talker multi-turn coverage and latency/turn-count metrics.
+- Use **`voice-barge-in`** and **`voice-barge-in-two-phase`** when working on barge-in responsiveness and latency.
+- Use the **Mock WS transcript profile** (`MOCK_WEBSOCKET_E2E=1` + `e2e/voice-transcript-validation.spec.ts`) when you need deterministic STT/echo validation without hitting the live backend.
+
+See `docs/voice/E2E_PROFILES.md` for the exact commands, required env vars, and the debug surfaces each profile relies on.
 
 ### Voice Mode Test Strategy
 
