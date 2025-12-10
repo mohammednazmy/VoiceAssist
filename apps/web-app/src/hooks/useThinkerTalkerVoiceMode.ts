@@ -296,10 +296,9 @@ export function useThinkerTalkerVoiceMode(
 
   const defaultSileroConfig: SileroFlagConfig = useMemo(
     () => ({
-      // Disable Silero VAD in automation unless explicitly forced via localStorage
-      // forceSileroVAD completely overrides both feature flag AND automation check
-      // (for E2E tests that need to test full Silero VAD pipeline)
-      enabled: forceSileroVAD || (sileroVADEnabled && !isAutomation),
+      // Silero VAD is primary for barge-in detection - always enabled by default
+      // forceSileroVAD can override if sileroVADEnabled is false
+      enabled: forceSileroVAD || sileroVADEnabled,
       echoSuppressionMode: sileroEchoSuppressionMode,
       positiveThreshold: sileroPositiveThreshold,
       playbackThresholdBoost: sileroPlaybackThresholdBoost,
@@ -314,7 +313,6 @@ export function useThinkerTalkerVoiceMode(
       sileroPlaybackThresholdBoost,
       sileroPositiveThreshold,
       sileroVADEnabled,
-      isAutomation,
       forceSileroVAD,
     ],
   );
@@ -987,10 +985,9 @@ export function useThinkerTalkerVoiceMode(
       }
     },
 
-    // Enable instant barge-in for reduced latency
-    // In automation mode, instant barge-in is disabled by default to avoid flakiness
-    // unless explicitly forced via localStorage (for E2E tests that test barge-in)
-    enableInstantBargeIn: forceInstantBargeIn || !isAutomation,
+    // Enable instant barge-in by default for responsive interruption
+    // This uses both Silero VAD (local) and backend VAD for barge-in detection
+    enableInstantBargeIn: true,
 
     // Handle metrics
     onMetricsUpdate: (metrics: TTVoiceMetrics) => {
@@ -1063,7 +1060,23 @@ export function useThinkerTalkerVoiceMode(
       }
 
       // Trigger barge-in if AI is currently speaking (audio playing)
-      if (audioPlaybackRef.current.isPlaying) {
+      // CRITICAL: Use getDebugState() to get real-time ref values, NOT the state-derived isPlaying
+      // The state-derived isPlaying uses React state which updates asynchronously and can be stale.
+      // The isPlayingRef and activeSourcesCount are updated synchronously and reflect actual playback state.
+      const debugState = audioPlaybackRef.current.getDebugState();
+      const isActuallyPlaying = debugState.isPlayingRef || debugState.activeSourcesCount > 0;
+
+      // E2E Debug: Always log to console for test visibility
+      console.log(
+        `[TTVoiceMode] BARGE_IN_CHECK: isPlayingRef=${debugState.isPlayingRef}, activeSourcesCount=${debugState.activeSourcesCount}, stateIsPlaying=${audioPlaybackRef.current.isPlaying}, willTrigger=${isActuallyPlaying}`,
+      );
+
+      voiceLog.debug(
+        `[TTVoiceMode] Silero VAD: Checking playback state - isPlayingRef=${debugState.isPlayingRef}, activeSourcesCount=${debugState.activeSourcesCount}, stateIsPlaying=${audioPlaybackRef.current.isPlaying}`,
+      );
+
+      if (isActuallyPlaying) {
+        console.log("[TTVoiceMode] BARGE_IN_TRIGGERED: user speaking while AI playing");
         voiceLog.info(
           "[TTVoiceMode] Silero VAD barge-in: user speaking while AI playing",
         );

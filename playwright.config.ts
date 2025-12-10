@@ -18,6 +18,17 @@ const AUDIO_FIXTURES = {
   // Two-phase audio: conversation-start (3.19s) + 10s silence + barge-in (2.21s) = 15.4s total
   // This gives AI time to respond before the "interruption" phase
   twoPhaseBargeIn: path.resolve(__dirname, 'e2e/fixtures/audio/two-phase-barge-in.wav'),
+  // Barge-in test audio: detailed question (12s) + 8s silence + interrupt (2s) = 23s
+  // Asks for a comprehensive explanation to generate a LONG AI response
+  bargeInTest: path.resolve(__dirname, 'e2e/fixtures/audio/barge-in-test.wav'),
+  // Multi-turn barge-in: 10 conversation turns (~2.2 minutes total)
+  // Structure: 6 normal Q&A turns + 4 barge-in scenarios (turns 3, 5, 8, 10)
+  // Normal turns: 12s silence for full AI response
+  // Barge-in turns: 4s silence to interrupt while AI is speaking
+  multiTurnBargeIn: path.resolve(__dirname, 'e2e/fixtures/audio/multi-turn-barge-in.wav'),
+  // Simple barge-in test: 3s silence + detailed question + 3s silence + interrupt
+  // Structure designed for single barge-in validation with 17.95s total
+  bargeInSimple: path.resolve(__dirname, 'e2e/fixtures/audio/barge-in-simple.wav'),
 };
 
 // Get audio file from environment variable or default to hello
@@ -296,6 +307,36 @@ export default defineConfig({
         },
       },
       timeout: 180 * 1000,
+    },
+
+    /* Multi-Turn Realistic Tests - Tests the bug: Turn 1 works, Turn 2 fails */
+    /* Run with: LIVE_REALTIME_E2E=1 npx playwright test --project=voice-multi-turn-realistic */
+    /* NOTE: Uses bargeInSimple audio (3s silence + question + 3s silence + interrupt = 17.95s)
+     *   - Single question asking for detailed explanation to generate LONG AI response
+     *   - 3s silence before interrupt to catch AI mid-speech
+     * This is a simpler, more reliable test for validating barge-in works. */
+    {
+      name: 'voice-multi-turn-realistic',
+      testDir: './e2e/voice',
+      testMatch: /voice-multi-turn-realistic\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        permissions: ['microphone'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+            // Use bargeInSimple - single question + interrupt for simpler testing
+            // Structure: 3s silence + detailed question + 3s silence + interrupt
+            `--use-file-for-fake-audio-capture=${AUDIO_FIXTURES.bargeInSimple}`,
+          ],
+        },
+        storageState: 'e2e/.auth/user.json',
+        contextOptions: {
+          recordVideo: { dir: 'test-results/videos' },
+        },
+      },
+      timeout: 120 * 1000, // 2 minutes for simpler barge-in test
     },
 
     /* Voice Smoke Tests - Fast critical path tests for PR validation (~5 min) */
