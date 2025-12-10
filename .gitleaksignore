@@ -10,3 +10,9 @@ f46507dd76ec3d39e66dfc2e744151e9cbf547da:apps/docs-site/public/agent/code-exampl
 # Blanket ignore for code-examples.json which contains example SQL schemas
 # with column names like "hashed_password" (not actual secrets)
 *:apps/docs-site/public/agent/code-examples.json:generic-password
+
+# E2E test authentication state files (generated during test setup)
+# These contain temporary JWT tokens for local testing and are now gitignored.
+# Files have been removed from the repo but existed in historical commits.
+*:e2e/.auth/user.json:jwt-token
+*:e2e/.auth/admin.json:jwt-token
