@@ -15,6 +15,7 @@ import type { LoginRequest } from "@voiceassist/types";
 import { useAuthStore } from "../stores/authStore";
 import type { AxiosError } from "axios";
 import { authLog } from "../lib/logger";
+import { resolveApiBaseUrl } from "../lib/api";
 
 /** OAuth provider availability status */
 export type OAuthProviderStatus = "unknown" | "available" | "unavailable";
@@ -57,16 +58,9 @@ function getOAuthErrorMessage(provider: string, err: unknown): string {
   return `${providerName} login failed. Please try again.`;
 }
 
-// Initialize API client
-const resolvedApiBase =
-  import.meta.env.VITE_API_URL ||
-  (typeof window !== "undefined"
-    ? window.location.origin
-    : "https://api.voiceassist.example.com");
-
 const apiClient = new VoiceAssistApiClient({
   // Fallback to current origin so dev/e2e proxied /api requests work without VITE_API_URL
-  baseURL: resolvedApiBase,
+  baseURL: resolveApiBaseUrl(),
   getAccessToken: () => {
     const state = useAuthStore.getState();
     return state.tokens?.accessToken || null;

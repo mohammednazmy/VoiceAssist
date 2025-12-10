@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Input, Button } from "@voiceassist/ui";
 import { extractErrorMessage } from "@voiceassist/types";
+import { resolveApiBaseUrl } from "../lib/api";
 
 interface SharedMessage {
   id: string;
@@ -57,7 +58,7 @@ export function SharedConversationPage() {
     setError(null);
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const apiUrl = resolveApiBaseUrl();
       const url = new URL(`${apiUrl}/api/shared/${token}`);
       if (passwordAttempt) {
         url.searchParams.set("password", passwordAttempt);

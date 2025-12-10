@@ -23,6 +23,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { captureVoiceError } from "../lib/sentry";
 import { useAuth } from "./useAuth";
 import { voiceLog } from "../lib/logger";
+import { resolveApiBaseUrl } from "../lib/api";
 
 // Natural Conversation Flow: Phase 3.1 - Prosody Feature Extraction
 import {
@@ -2416,10 +2417,25 @@ export function useThinkerTalkerSession(
         }
 
         // Build WebSocket URL with auth token
-        const apiBase = import.meta.env.VITE_API_URL || "";
-        const wsProtocol = apiBase.startsWith("https") ? "wss" : "ws";
-        const wsHost = apiBase.replace(/^https?:\/\//, "");
-        const wsUrl = `${wsProtocol}://${wsHost}/api/voice/pipeline-ws?token=${encodeURIComponent(accessToken)}`;
+        // Use resolveApiBaseUrl so local dev and Docker talk to the
+        // local gateway/backend instead of cloud hosts when running
+        // on localhost.
+        let wsUrl: string;
+        try {
+          const apiBase = resolveApiBaseUrl();
+          const apiUrl = new URL(apiBase);
+          const wsProtocol = apiUrl.protocol === "https:" ? "wss" : "ws";
+          wsUrl = `${wsProtocol}://${apiUrl.host}/api/voice/pipeline-ws?token=${encodeURIComponent(accessToken)}`;
+        } catch {
+          // Fallback to current origin or localhost:8000 in non-browser contexts
+          if (typeof window !== "undefined") {
+            const { protocol, host } = window.location;
+            const wsProtocol = protocol === "https:" ? "wss" : "ws";
+            wsUrl = `${wsProtocol}://${host}/api/voice/pipeline-ws?token=${encodeURIComponent(accessToken)}`;
+          } else {
+            wsUrl = `ws://localhost:8000/api/voice/pipeline-ws?token=${encodeURIComponent(accessToken)}`;
+          }
+        }
 
         voiceLog.debug(
           `[ThinkerTalker] Connecting to WebSocket (token present)`,

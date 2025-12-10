@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { resolveApiBaseUrl } from "../lib/api";
 
 // ============================================================================
 // Types
@@ -200,13 +201,9 @@ export function useNetworkQuality(
     if (!enablePing) return null;
 
     try {
-      // Prefer explicit API base; fall back to gateway when running from Vite dev server
-      const apiBase =
-        import.meta.env.VITE_API_URL ||
-        (typeof window !== "undefined" &&
-        window.location.origin.includes("localhost:5173")
-          ? "http://localhost:8000"
-          : window.location.origin || "");
+      // Use unified API base resolution so local dev and Docker
+      // talk to the local gateway/backend instead of cloud hosts.
+      const apiBase = resolveApiBaseUrl();
       const start = performance.now();
 
       const response = await fetch(`${apiBase}${pingEndpoint}`, {

@@ -16,6 +16,8 @@ COPY <<'NGINX_CONF' /etc/nginx/conf.d/default.conf
 server {
     listen 80;
     server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
 
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
@@ -24,7 +26,7 @@ server {
     add_header Strict-Transport-Security "max-age=31536000" always;
 
     location / {
-        try_files $uri /index.html;
+        try_files $uri $uri/ /index.html;
     }
 }
 NGINX_CONF

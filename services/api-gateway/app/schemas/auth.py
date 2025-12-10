@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_serializer
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_serializer, model_validator
 
 
 class UserRegister(BaseModel):
@@ -93,24 +93,55 @@ class UserResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    id: UUID
+    id: str
     email: str
     full_name: str
     is_active: bool
     is_admin: bool
     admin_role: Optional[str] = None
     nextcloud_user_id: Optional[str] = None
-    created_at: datetime
-    last_login: Optional[datetime] = None
+    created_at: str
+    last_login: Optional[str] = None
 
-    @field_serializer("id")
-    def serialize_id(self, value: UUID) -> str:
-        """Convert UUID to string for JSON response"""
-        return str(value)
+    @model_validator(mode='before')
+    @classmethod
+    def convert_types(cls, data):
+        """Convert UUID and datetime types to strings before validation"""
+        # Handle ORM objects (from_attributes=True)
+        if hasattr(data, '__dict__'):
+            # It's an ORM object, extract attributes
+            result = {}
+            for field in ['id', 'email', 'full_name', 'is_active', 'is_admin',
+                          'admin_role', 'nextcloud_user_id', 'created_at', 'last_login']:
+                val = getattr(data, field, None)
+                if field == 'id' and isinstance(val, UUID):
+                    result[field] = str(val)
+                elif field in ('created_at', 'last_login') and isinstance(val, datetime):
+                    result[field] = val.isoformat()
+                else:
+                    result[field] = val
+            return result
+        # Handle dict input
+        if isinstance(data, dict):
+            if 'id' in data and isinstance(data['id'], UUID):
+                data['id'] = str(data['id'])
+            if 'created_at' in data and isinstance(data['created_at'], datetime):
+                data['created_at'] = data['created_at'].isoformat()
+            if 'last_login' in data and isinstance(data['last_login'], datetime):
+                data['last_login'] = data['last_login'].isoformat()
+        return data
 
-    @field_serializer("created_at", "last_login")
-    def serialize_datetime(self, value: Optional[datetime]) -> Optional[str]:
-        """Convert datetime to ISO format string for JSON response"""
-        if value is None:
-            return None
-        return value.isoformat()
+    @classmethod
+    def from_user(cls, user):
+        """Create UserResponse from User model"""
+        return cls(
+            id=str(user.id),
+            email=user.email,
+            full_name=user.full_name,
+            is_active=user.is_active,
+            is_admin=user.is_admin,
+            admin_role=getattr(user, 'admin_role', None),
+            nextcloud_user_id=user.nextcloud_user_id,
+            created_at=user.created_at.isoformat() if user.created_at else None,
+            last_login=user.last_login.isoformat() if user.last_login else None
+        )
