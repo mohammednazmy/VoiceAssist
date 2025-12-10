@@ -14,7 +14,7 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { waitForVoiceModeReady } from "./utils/test-setup";
+import { waitForVoiceModeReady, assertQualityThresholds } from "./utils/test-setup";
 import { createMetricsCollector } from "./utils/voice-test-metrics";
 
 test.describe("Thinker/Talker Multi-Turn Voice Flow", () => {
@@ -61,18 +61,18 @@ test.describe("Thinker/Talker Multi-Turn Voice Flow", () => {
       `Voice mode was not ready within timeout: ${readyResult.error || "unknown error"}`,
     ).toBe(true);
 
-    // Allow the session to run briefly so that:
+    // Allow the session to run long enough that:
     // - Pipeline state transitions occur
-    // - Any initial transcripts / responses show up
-    // - Metrics collector can observe events
-    await page.waitForTimeout(10000);
+    // - Multiple user/AI turns can happen (looped audio)
+    // - Metrics collector can observe barge-in attempts if they occur
+    await page.waitForTimeout(15000);
 
     // Gather metrics and log a human-readable summary
     const metrics = collector.getMetrics();
     const conv = collector.getConversationMetrics();
     console.log("[Multi-Turn Voice] Metrics summary:\n", collector.getSummary());
 
-    // Soft assertions for scaffold:
+    // Assertions for multi-turn + metrics:
     // - We should see at least one state transition (idle -> connecting, etc.)
     expect(
       metrics.stateTransitions.length,
@@ -87,12 +87,20 @@ test.describe("Thinker/Talker Multi-Turn Voice Flow", () => {
       `Too many errors recorded during multi-turn scaffold test (errors=${conv.errors})`,
     ).toBeLessThanOrEqual(5);
 
-    // - Require at least a minimal multi-turn flow so we know the collector
-    //   is seeing meaningful interaction (1+ user + 1+ AI turn).
+    // - Require a meaningful multi-turn flow so we know the collector
+    //   is seeing more than a single exchange.
+    expect(
+      conv.userUtterances,
+      `Expected at least 1 user utterance in multi-turn test (got ${conv.userUtterances})`,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      conv.aiResponses,
+      `Expected at least 1 AI response in multi-turn test (got ${conv.aiResponses})`,
+    ).toBeGreaterThanOrEqual(1);
     expect(
       conv.totalTurns,
-      `Expected at least 2 turns in multi-turn scaffold (got ${conv.totalTurns})`,
-    ).toBeGreaterThanOrEqual(2);
+      `Expected at least 3 turns in multi-turn test (got ${conv.totalTurns})`,
+    ).toBeGreaterThanOrEqual(3);
 
     // - Coarse latency guardrail; once we have more deterministic audio,
     //   this can be tightened further.
@@ -102,6 +110,21 @@ test.describe("Thinker/Talker Multi-Turn Voice Flow", () => {
         `Average response latency too high in multi-turn scaffold: ${conv.averageResponseLatencyMs.toFixed(0)}ms`,
       ).toBeLessThan(4000);
     }
+
+    // - If barge-in attempts were observed, ensure latency is reasonable.
+    if (conv.bargeInAttempts > 0 && conv.averageBargeInLatencyMs > 0) {
+      expect(
+        conv.averageBargeInLatencyMs,
+        `Average barge-in latency too high in multi-turn test: ${conv.averageBargeInLatencyMs.toFixed(0)}ms`,
+      ).toBeLessThan(2500);
+    }
+
+    // Apply shared quality thresholds with slightly relaxed queue limits for
+    // multi-turn flows, which may legitimately trigger a small overflow.
+    assertQualityThresholds(collector, {
+      maxQueueOverflows: 3,
+      maxScheduleResets: 3,
+    });
 
     await context.close();
   });
