@@ -17,8 +17,9 @@
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
     "clean": "rm -rf dist",
     "type-check": "tsc --noEmit",
-    "test": "echo 'TODO: tests not yet implemented for utils package' && exit 0",
-    "test:fast": "echo 'No tests' && exit 0"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:fast": "vitest run --reporter=dot"
   },
   "devDependencies": {
     "tsup": "^8.0.1",

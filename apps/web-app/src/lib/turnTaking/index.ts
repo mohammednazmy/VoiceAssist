@@ -13,6 +13,17 @@ export { SilencePredictor, createSilencePredictor } from "./silencePredictor";
 export { ContextResumer, createContextResumer } from "./contextResumer";
 export * from "./types";
 
+// Phase 2: Semantic VAD Integration
+export {
+  SemanticVADIntegration,
+  createSemanticVADIntegration,
+  HESITATION_PROFILES,
+  getHesitationProfile,
+  type CombinedTurnAnalysis,
+  type SemanticVADConfig,
+  DEFAULT_SEMANTIC_VAD_CONFIG,
+} from "./semanticVADIntegration";
+
 import { ProsodicAnalyzer } from "./prosodicAnalyzer";
 import { SilencePredictor } from "./silencePredictor";
 import { ContextResumer } from "./contextResumer";

@@ -211,8 +211,10 @@ export const DEFAULT_TURN_SIGNALS: TurnCompletionSignals = {
       "though",
     ],
     incompletePatterns: [
-      // "I want to...", "Can you...", etc.
+      // "I want to...", "Can you...", etc. (standalone or with trailing words before incomplete)
       /^(i want to|i need to|i'd like to|i would like to|can you|could you|would you|will you|what if|how about|let me|let's|i'm going to|i'm gonna)\s*$/i,
+      // Extended incomplete starters with more words but no completion
+      /^(can you|could you|would you|will you|what if|how about)\s+\w+(\s+\w+){0,3}\s*$/i,
       // Determiners without noun phrase completion
       /^(the|a|an|my|your|his|her|their|our|this|that|these|those|some|any)\s+\w+\s*$/i,
       // Trailing conjunctions
@@ -221,6 +223,10 @@ export const DEFAULT_TURN_SIGNALS: TurnCompletionSignals = {
       /^(what|who|where|when|why|how|which)\s+$/i,
       // Comparative/superlative without completion
       /^.+\s+(more|less|better|worse|bigger|smaller|faster|slower)\s+(than\s*)?$/i,
+      // Sentences ending with prepositions (dangling preposition)
+      /^.+\s+(with|to|for|from|about|of|in|on|at|by)\s*$/i,
+      // Sentences ending with "to" infinitive marker
+      /^.+\s+(want|need|going|have|trying|planning|hoping|like)\s+to\s*$/i,
     ],
     risingIntonation: false,
     midSentencePause: false,
