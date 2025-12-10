@@ -136,81 +136,83 @@ export function ThinkerTalkerVoicePanel({
 
   return (
     <div data-testid="thinker-talker-voice-panel">
-      {/* Expanded drawer (slides up above compact bar) */}
-      <VoiceExpandedDrawer
-        isOpen={isExpanded}
-        onCollapse={() => setIsExpanded(false)}
-        metrics={mappedMetrics}
-        isConnected={voiceMode.isConnected}
-        toolCalls={voiceMode.currentToolCalls}
-        error={voiceMode.error}
-        onDismissError={voiceMode.resetError}
-        ttfaMs={voiceMode.ttfaMs}
-      />
+      <div data-testid="voice-mode-panel" aria-label="Voice mode panel">
+        {/* Expanded drawer (slides up above compact bar) */}
+        <VoiceExpandedDrawer
+          isOpen={isExpanded}
+          onCollapse={() => setIsExpanded(false)}
+          metrics={mappedMetrics}
+          isConnected={voiceMode.isConnected}
+          toolCalls={voiceMode.currentToolCalls}
+          error={voiceMode.error}
+          onDismissError={voiceMode.resetError}
+          ttfaMs={voiceMode.ttfaMs}
+        />
 
-      {/* Phase 1: Emotion indicator (floats above compact bar when emotion detected) */}
-      {voiceMode.isConnected && voiceMode.currentEmotion && (
-        <div className="absolute bottom-24 right-4 z-10">
-          <EmotionIndicator
-            emotion={voiceMode.currentEmotion}
-            size="sm"
-            showDetails={false}
-          />
-        </div>
-      )}
+        {/* Phase 1: Emotion indicator (floats above compact bar when emotion detected) */}
+        {voiceMode.isConnected && voiceMode.currentEmotion && (
+          <div className="absolute bottom-24 right-4 z-10">
+            <EmotionIndicator
+              emotion={voiceMode.currentEmotion}
+              size="sm"
+              showDetails={false}
+            />
+          </div>
+        )}
 
-      {/* Thinking feedback: audio tones + visual indicator during processing */}
-      {voiceMode.isConnected && (
-        <div className="absolute bottom-24 left-4 z-10">
-          <ThinkingFeedbackPanel
-            isThinking={
-              voiceMode.pipelineState === "processing" ||
-              voiceMode.currentToolCalls.length > 0
-            }
-            isTTSPlaying={voiceMode.isPlaying}
-            size="sm"
-            showLabel={true}
-            label={
-              voiceMode.currentToolCalls.length > 0
-                ? `Running ${voiceMode.currentToolCalls[0]?.name || "tool"}...`
-                : "Thinking..."
-            }
-            thinkingSource={voiceMode.thinkingSource}
-          />
-        </div>
-      )}
+        {/* Thinking feedback: audio tones + visual indicator during processing */}
+        {voiceMode.isConnected && (
+          <div className="absolute bottom-24 left-4 z-10">
+            <ThinkingFeedbackPanel
+              isThinking={
+                voiceMode.pipelineState === "processing" ||
+                voiceMode.currentToolCalls.length > 0
+              }
+              isTTSPlaying={voiceMode.isPlaying}
+              size="sm"
+              showLabel={true}
+              label={
+                voiceMode.currentToolCalls.length > 0
+                  ? `Running ${voiceMode.currentToolCalls[0]?.name || "tool"}...`
+                  : "Thinking..."
+              }
+              thinkingSource={voiceMode.thinkingSource}
+            />
+          </div>
+        )}
 
-      {/* Compact bar (always visible) */}
-      <CompactVoiceBar
-        isConnected={voiceMode.isConnected}
-        isConnecting={voiceMode.isConnecting}
-        isListening={voiceMode.isListening}
-        isPlaying={voiceMode.isPlaying}
-        isMicPermissionDenied={voiceMode.isMicPermissionDenied}
-        pipelineState={voiceMode.pipelineState}
-        partialTranscript={voiceMode.partialTranscript}
-        currentToolCalls={voiceMode.currentToolCalls}
-        latencyMs={voiceMode.metrics.totalLatencyMs}
-        onConnect={voiceMode.connect}
-        onDisconnect={voiceMode.disconnect}
-        onBargeIn={voiceMode.bargeIn}
-        onExpand={() => setIsExpanded(true)}
-        onClose={handleClose}
-        onOpenSettings={() => {
-          console.log(
-            "[ThinkerTalkerVoicePanel] Settings button clicked, setting showSettings to true",
-          );
-          setShowSettings(true);
-        }}
-        isContinuationExpected={voiceMode.isContinuationExpected}
-        networkQuality={voiceMode.networkQuality}
-      />
+        {/* Compact bar (always visible) */}
+        <CompactVoiceBar
+          isConnected={voiceMode.isConnected}
+          isConnecting={voiceMode.isConnecting}
+          isListening={voiceMode.isListening}
+          isPlaying={voiceMode.isPlaying}
+          isMicPermissionDenied={voiceMode.isMicPermissionDenied}
+          pipelineState={voiceMode.pipelineState}
+          partialTranscript={voiceMode.partialTranscript}
+          currentToolCalls={voiceMode.currentToolCalls}
+          latencyMs={voiceMode.metrics.totalLatencyMs}
+          onConnect={voiceMode.connect}
+          onDisconnect={voiceMode.disconnect}
+          onBargeIn={voiceMode.bargeIn}
+          onExpand={() => setIsExpanded(true)}
+          onClose={handleClose}
+          onOpenSettings={() => {
+            console.log(
+              "[ThinkerTalkerVoicePanel] Settings button clicked, setting showSettings to true",
+            );
+            setShowSettings(true);
+          }}
+          isContinuationExpected={voiceMode.isContinuationExpected}
+          networkQuality={voiceMode.networkQuality}
+        />
 
-      {/* Settings Modal */}
-      <VoiceModeSettings
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-      />
+        {/* Settings Modal */}
+        <VoiceModeSettings
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+        />
+      </div>
     </div>
   );
 }

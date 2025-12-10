@@ -68,8 +68,10 @@ export const VOICE_SELECTORS = {
 
   // Chat integration
   chatTimeline: '[data-testid="chat-timeline"], [data-testid="message-list"]',
-  userMessage: '[data-testid="user-message"]',
-  assistantMessage: '[data-testid="assistant-message"]',
+  userMessage:
+    '[data-testid="user-message"], [aria-label*="Your message"]',
+  assistantMessage:
+    '[data-testid="assistant-message"], [aria-label*="Assistant message"]',
 
   // Error states
   errorBanner: '[data-testid="connection-error"], [data-testid="mic-permission-error"], [data-testid="failed-alert"], [data-testid="reconnecting-alert"]',

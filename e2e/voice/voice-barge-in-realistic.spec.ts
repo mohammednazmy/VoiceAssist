@@ -29,6 +29,7 @@ import {
   getVoiceModeDebugState,
   setupBargeInConsoleCapture,
 } from "./utils/test-setup";
+import { createMetricsCollector } from "./utils/voice-test-metrics";
 
 // Note: Audio fixture is set in playwright.config.ts for the voice-barge-in-realistic project
 // It uses conversation-start.wav which contains a question that triggers AI response
@@ -58,6 +59,9 @@ test.describe("Voice Mode Barge-In - Realistic Flow", () => {
       permissions: ["microphone"],
     });
     const page = await context.newPage();
+
+    // Attach metrics collector for quantitative assertions
+    const collector = createMetricsCollector(page);
 
     // Enable force flags for proper Silero VAD and instant barge-in in automation
     await page.addInitScript(() => {
@@ -148,6 +152,27 @@ test.describe("Voice Mode Barge-In - Realistic Flow", () => {
     expect(bargeInSuccess).toBe(true);
 
     console.log("[TEST] Barge-in test PASSED!");
+
+    // Metrics-based assertions: ensure we see at least one barge-in with
+    // reasonable latency so this test remains aligned with production UX.
+    const conv = collector.getConversationMetrics();
+    console.log(
+      "[Barge-In Realistic] Metrics summary:\n",
+      collector.getSummary(),
+    );
+
+    expect(
+      conv.bargeInAttempts,
+      "Expected at least one barge-in attempt in realistic flow",
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      conv.successfulBargeIns,
+      "Expected at least one successful barge-in in realistic flow",
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      conv.averageBargeInLatencyMs,
+      `Barge-in latency too high in realistic flow: ${conv.averageBargeInLatencyMs.toFixed(0)}ms`,
+    ).toBeLessThanOrEqual(2000);
 
     await context.close();
   });

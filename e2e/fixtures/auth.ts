@@ -50,6 +50,9 @@ export const mockAuthState = {
 export async function setupAuthenticatedState(page: Page): Promise<void> {
   await page.addInitScript((authState) => {
     window.localStorage.setItem("voiceassist-auth", JSON.stringify(authState));
+    // Force unified chat/voice UI in E2E runs so tests always
+    // exercise the Chat-with-Voice path as the single source of truth.
+    window.localStorage.setItem("ff_unified_chat_voice_ui", "true");
   }, mockAuthState);
 }
 

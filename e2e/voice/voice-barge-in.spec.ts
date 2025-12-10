@@ -35,7 +35,6 @@ import {
   type VoiceDebugState,
   type BargeInConsoleState,
 } from "./utils/test-setup";
-import { createMetricsCollector, VoiceMetricsCollector } from "./utils/voice-test-metrics";
 
 /**
  * Check if the browser supports fake audio capture (Chrome/Chromium only)
@@ -309,7 +308,7 @@ test.describe("Voice Barge-In with Real Audio", () => {
    * triggers AI response. Chrome loops the audio continuously, so after
    * AI starts speaking, the looped audio becomes the user's interruption.
    */
-  test("barge-in interrupts AI during playback", async ({ page }) => {
+  test("barge-in interrupts AI during playback", async ({ page, metricsCollector }) => {
     // Set up console capture for detailed debugging
     const consoleState = setupBargeInConsoleCapture(page);
     const vadState = setupVADCapture(page);
@@ -445,6 +444,28 @@ test.describe("Voice Barge-In with Real Audio", () => {
       `pipelineTransitioned: ${bargeInResult.pipelineTransitioned}, ` +
       `bargeInCountIncreased: ${bargeInResult.bargeInCountIncreased}`
     ).toBeTruthy();
+
+    // Metrics-based assertions: ensure we see barge-in activity with reasonable quality.
+    const conv = metricsCollector.getConversationMetrics();
+    console.log(
+      "[Barge-In Live] Metrics summary:\n",
+      metricsCollector.getSummary(),
+    );
+
+    expect(
+      conv.bargeInAttempts,
+      "Expected at least one barge-in attempt in live barge-in test",
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      conv.successfulBargeIns,
+      "Expected at least one successful barge-in in live barge-in test",
+    ).toBeGreaterThanOrEqual(1);
+
+    // Apply global quality thresholds (latency, queue health, errors).
+    assertQualityThresholds(metricsCollector, {
+      maxBargeInLatencyMs: QUALITY_THRESHOLDS.maxBargeInLatencyMs,
+      maxResponseLatencyMs: QUALITY_THRESHOLDS.maxResponseLatencyMs,
+    });
   });
 
   /**

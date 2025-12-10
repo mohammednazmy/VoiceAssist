@@ -109,7 +109,7 @@ export type UIFlagKey = (typeof UI_FLAGS)[keyof typeof UI_FLAGS];
  * Used for offline fallback behavior.
  */
 export const UI_FLAG_DEFAULTS: Record<UIFlagKey, boolean> = {
-  [UI_FLAGS.UNIFIED_CHAT_VOICE]: false,
+  [UI_FLAGS.UNIFIED_CHAT_VOICE]: true,
   [UI_FLAGS.NEW_NAVIGATION]: false,
   [UI_FLAGS.ENHANCED_DOCUMENTS]: false,
   [UI_FLAGS.CLINICAL_WIZARD]: false,

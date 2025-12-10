@@ -878,7 +878,12 @@ export function VoiceModePanel({
           {userTranscript && (
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-xs font-semibold text-blue-900 mb-1">You:</p>
-              <p className="text-sm text-blue-800">{userTranscript}</p>
+              <p
+                className="text-sm text-blue-800"
+                data-testid="voice-user-transcript"
+              >
+                {userTranscript}
+              </p>
             </div>
           )}
 
@@ -888,7 +893,12 @@ export function VoiceModePanel({
               <p className="text-xs font-semibold text-purple-900 mb-1">
                 AI Assistant:
               </p>
-              <p className="text-sm text-purple-800">{aiTranscript}</p>
+              <p
+                className="text-sm text-purple-800"
+                data-testid="voice-ai-transcript"
+              >
+                {aiTranscript}
+              </p>
             </div>
           )}
         </div>

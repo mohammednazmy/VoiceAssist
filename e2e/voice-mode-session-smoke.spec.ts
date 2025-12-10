@@ -20,6 +20,7 @@
  */
 
 import { test, expect } from "./fixtures/auth";
+import { VOICE_SELECTORS } from "./fixtures/voice";
 
 const LIVE_REALTIME_E2E = process.env.LIVE_REALTIME_E2E === "1";
 
@@ -38,46 +39,43 @@ test.describe("Voice Mode Session Smoke Test", () => {
     // Wait for the page to fully render
     await page.waitForTimeout(2000);
 
-    // Look for Voice Mode panel or button
-    const voicePanel = page.locator('[data-testid="voice-mode-panel"]');
-    const voiceButton = page.locator('[data-testid="realtime-voice-mode-button"]');
+    // Look for Voice Mode panel or button (unified selectors)
+    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voiceButton = page.locator(VOICE_SELECTORS.toggleButton).first();
 
     // If panel not visible, click the voice button to open it
-    let panelExists = await voicePanel.count() > 0;
+    let panelExists = (await voicePanel.count()) > 0;
 
     if (!panelExists) {
-      console.log("ℹ Voice Mode panel not visible - clicking voice button to open");
+      console.log(
+        "ℹ Voice Mode panel not visible - clicking voice toggle to open",
+      );
 
-      // Wait for and click the voice button
-      await voiceButton.waitFor({ timeout: 5000 });
+      // Wait for and click the unified voice toggle button
+      await expect(voiceButton).toBeVisible({ timeout: 5000 });
       await voiceButton.click();
 
-      // Wait for panel to appear
-      await voicePanel.waitFor({ timeout: 5000 });
-      panelExists = await voicePanel.count() > 0;
+      // Wait for any voice UI (panel or compact bar) to appear
+      await expect(voicePanel.first()).toBeVisible({ timeout: 5000 });
+      panelExists = (await voicePanel.count()) > 0;
     }
 
-    if (!panelExists) {
-      test.skip(true, "Voice Mode UI not available");
-      return;
-    }
+    expect(
+      panelExists,
+      "Voice Mode UI should be available in unified Chat with Voice",
+    ).toBe(true);
 
     console.log("✓ Voice Mode panel is now visible");
 
-    // Find "Start Voice Session" button
-    const startButton = page.locator(
-      'button:has-text("Start Voice Session"), button:has-text("Start Session"), button[aria-label*="start voice" i], [data-testid="start-voice-session"]'
-    );
+    // Find "Start Voice Session" button or compact mic button
+    const startButton = page.locator(VOICE_SELECTORS.startButton);
 
-    const startButtonExists = await startButton.count() > 0;
+    const startButtonExists = (await startButton.count()) > 0;
 
-    if (!startButtonExists) {
-      console.log(
-        "⚠ Start Voice Session button not found - voice mode may be in different state"
-      );
-      test.skip(true, "Start Voice Session button not available");
-      return;
-    }
+    expect(
+      startButtonExists,
+      "Expected a Start Voice Session control (button or compact mic) to be present",
+    ).toBe(true);
 
     await expect(startButton.first()).toBeVisible();
     await expect(startButton.first()).toBeEnabled();
@@ -203,38 +201,38 @@ test.describe("Voice Mode Session Smoke Test", () => {
     await page.waitForTimeout(2000);
 
     // Look for Voice Mode panel or button
-    const voicePanel = page.locator('[data-testid="voice-mode-panel"]');
-    const voiceButton = page.locator('[data-testid="realtime-voice-mode-button"]');
+    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voiceButton = page.locator(VOICE_SELECTORS.toggleButton).first();
 
-    let panelExists = await voicePanel.count() > 0;
+    let panelExists = (await voicePanel.count()) > 0;
 
     if (!panelExists) {
-      console.log("ℹ Voice Mode panel not visible - clicking voice button to open");
+      console.log(
+        "ℹ Voice Mode panel not visible - clicking voice toggle to open",
+      );
 
-      await voiceButton.waitFor({ timeout: 5000 });
+      await expect(voiceButton).toBeVisible({ timeout: 5000 });
       await voiceButton.click();
-      await voicePanel.waitFor({ timeout: 5000 });
-      panelExists = await voicePanel.count() > 0;
+      await expect(voicePanel.first()).toBeVisible({ timeout: 5000 });
+      panelExists = (await voicePanel.count()) > 0;
     }
 
-    if (!panelExists) {
-      test.skip(true, "Voice Mode UI not available");
-      return;
-    }
+    expect(
+      panelExists,
+      "Voice Mode UI should be available in unified Chat with Voice",
+    ).toBe(true);
 
     console.log("✓ Voice Mode panel is now visible");
 
     // Find "Start Voice Session" button
-    const startButton = page.locator(
-      'button:has-text("Start Voice Session"), button:has-text("Start Session"), [data-testid="start-voice-session"]'
-    );
+    const startButton = page.locator(VOICE_SELECTORS.startButton);
 
-    const startButtonExists = await startButton.count() > 0;
+    const startButtonExists = (await startButton.count()) > 0;
 
-    if (!startButtonExists) {
-      test.skip(true, "Start Voice Session button not available");
-      return;
-    }
+    expect(
+      startButtonExists,
+      "Expected a Start Voice Session control (button or compact mic) to be present",
+    ).toBe(true);
 
     await expect(startButton.first()).toBeVisible();
     console.log("✓ Found Start Voice Session button");
@@ -308,25 +306,25 @@ test.describe("Voice Mode Session Smoke Test", () => {
     // Wait for the page to fully render
     await page.waitForTimeout(2000);
 
-    // Look for Voice Mode panel or button
-    const voicePanel = page.locator('[data-testid="voice-mode-panel"]');
-    const voiceButton = page.locator('[data-testid="realtime-voice-mode-button"]');
-    let panelExists = await voicePanel.count() > 0;
+    // Look for Voice Mode panel or button (unified selectors)
+    const voicePanel = page.locator(VOICE_SELECTORS.panel);
+    const voiceButton = page.locator(VOICE_SELECTORS.toggleButton).first();
+    let panelExists = (await voicePanel.count()) > 0;
 
     if (!panelExists) {
-      console.log("ℹ Voice Mode panel not visible - clicking voice button to open");
-      await voiceButton.waitFor({ timeout: 5000 });
+      console.log(
+        "ℹ Voice Mode panel not visible - clicking voice toggle to open",
+      );
+      await expect(voiceButton).toBeVisible({ timeout: 5000 });
       await voiceButton.click();
-      await voicePanel.waitFor({ timeout: 5000 });
-      panelExists = await voicePanel.count() > 0;
+      await expect(voicePanel.first()).toBeVisible({ timeout: 5000 });
+      panelExists = (await voicePanel.count()) > 0;
     }
 
     console.log("✓ Voice Mode panel is now visible");
 
     // Find Start button
-    const startButton = page.locator(
-      'button:has-text("Start Voice Session"), button:has-text("Start Session")'
-    );
+    const startButton = page.locator(VOICE_SELECTORS.startButton);
 
     await expect(startButton.first()).toBeVisible();
     await startButton.first().click();
@@ -337,13 +335,19 @@ test.describe("Voice Mode Session Smoke Test", () => {
     // Expect either:
     // 1. Connected state
     // 2. Error with helpful message
-    const connected = await page
-      .locator('text=/connected|active/i, [class*="connected"]')
+    const connectedTextCount = await page
+      .locator('text=/connected|active/i')
       .count();
+    const connectedClassCount = await page
+      .locator('[class*="connected"]')
+      .count();
+    const connected = connectedTextCount + connectedClassCount;
 
-    const error = await page
-      .locator('[role="alert"], text=/error|failed/i')
+    const errorBannerCount = await page.locator('[role="alert"]').count();
+    const errorTextCount = await page
+      .locator('text=/error|failed/i')
       .count();
+    const error = errorBannerCount + errorTextCount;
 
     // At least one should be true with a live backend
     expect(
