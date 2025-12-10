@@ -305,6 +305,10 @@ async function globalSetup() {
       version: 0,
     };
 
+    // Include sw-cleanup-version to prevent service worker cleanup from reloading
+    // the page and losing the auth state. Must match the version in index.html.
+    const SW_CLEANUP_VERSION = "20251207i";
+
     const mockStorageState = {
       cookies: [],
       origins: [
@@ -314,6 +318,10 @@ async function globalSetup() {
             {
               name: "voiceassist-auth",
               value: JSON.stringify(mockAuthState),
+            },
+            {
+              name: "sw-cleanup-version",
+              value: SW_CLEANUP_VERSION,
             },
           ],
         },
@@ -389,6 +397,10 @@ async function globalSetup() {
   };
 
   // Build storage state file
+  // Include sw-cleanup-version to prevent service worker cleanup from reloading
+  // the page and losing the auth state. The cleanup version must match index.html.
+  const SW_CLEANUP_VERSION = "20251207i";
+
   const storageState = {
     cookies: [],
     origins: [
@@ -398,6 +410,10 @@ async function globalSetup() {
           {
             name: "voiceassist-auth",
             value: JSON.stringify(authState),
+          },
+          {
+            name: "sw-cleanup-version",
+            value: SW_CLEANUP_VERSION,
           },
         ],
       },

@@ -20,6 +20,7 @@ import { expect } from "@playwright/test";
 import {
   test,
   QUALITY_THRESHOLDS,
+  waitForAuthReady,
   waitForVoiceModeReady,
   openVoiceMode,
   closeVoiceMode,

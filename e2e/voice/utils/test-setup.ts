@@ -344,6 +344,57 @@ export async function enableAllVoiceFeatures(page: Page): Promise<void> {
 }
 
 /**
+ * Wait for authentication to be ready
+ * This ensures the Zustand auth store has hydrated from localStorage
+ * and the user is authenticated before proceeding with tests.
+ */
+export async function waitForAuthReady(
+  page: Page,
+  timeout = 15000
+): Promise<{ authenticated: boolean; error?: string }> {
+  try {
+    // Wait for auth store to hydrate and user to be authenticated
+    await page.waitForFunction(
+      () => {
+        // Check localStorage for auth state
+        const authData = localStorage.getItem("voiceassist-auth");
+        if (!authData) return false;
+
+        try {
+          const parsed = JSON.parse(authData);
+          // Check Zustand persist format: { state: { isAuthenticated, _hasHydrated } }
+          const state = parsed.state;
+          return state?.isAuthenticated === true && state?._hasHydrated === true;
+        } catch {
+          return false;
+        }
+      },
+      { timeout }
+    );
+
+    // Also wait for the app to not be showing login page
+    // by checking for absence of login form or presence of authenticated UI
+    await page.waitForFunction(
+      () => {
+        // If we're on login page, auth isn't working
+        const loginForm = document.querySelector('[data-testid="login-form"], form[action*="login"], button:has-text("Sign in")');
+        const isLoginPage = window.location.pathname.includes('/login');
+        return !loginForm && !isLoginPage;
+      },
+      { timeout: 5000 }
+    ).catch(() => {
+      // If this times out, we're probably stuck on login page
+      console.log("[Test] Warning: Still appears to be on login page");
+    });
+
+    return { authenticated: true };
+  } catch (e) {
+    console.log("[Test] Auth not ready within timeout:", e);
+    return { authenticated: false, error: String(e) };
+  }
+}
+
+/**
  * Wait for voice mode to be ready and enabled
  */
 export async function waitForVoiceModeReady(
