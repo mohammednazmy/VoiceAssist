@@ -262,9 +262,15 @@ class UtteranceAggregator:
         """Called when user starts speaking again during aggregation window."""
         async with self._timer_lock:
             if self._is_aggregating:
-                # User is continuing, cancel the timeout
+                # User is continuing, cancel and restart the timeout with fresh window
+                # This ensures the window will still finalize eventually when speech stops,
+                # even if speech_started events keep firing (which would previously leave
+                # the timer permanently cancelled, causing the window to never finalize)
                 await self._cancel_timer()
-                logger.debug("Speech started during aggregation window, cancelling timer")
+                self._window_timer = asyncio.create_task(
+                    self._window_timeout(self.config.window_duration_ms)
+                )
+                logger.debug("Speech started during aggregation window, reset timer")
 
     # -------------------------------------------------------------------------
     # Private Methods

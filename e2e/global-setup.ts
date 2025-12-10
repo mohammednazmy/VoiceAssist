@@ -285,6 +285,7 @@ async function globalSetup() {
 
     // Create a mock auth state for non-live tests
     // IMPORTANT: Use backend format (snake_case) as that's what the frontend stores after real login
+    // Include _hasHydrated: true so E2E tests don't wait forever for hydration
     const mockAuthState = {
       state: {
         user: {
@@ -304,6 +305,7 @@ async function globalSetup() {
           expiresIn: 3600,
         },
         isAuthenticated: true,
+        _hasHydrated: true,
       },
       version: 0,
     };
@@ -379,6 +381,7 @@ async function globalSetup() {
 
   // Build auth state for localStorage
   // IMPORTANT: Use backend format (snake_case) as that's what the frontend stores after real login
+  // Include _hasHydrated: true so E2E tests don't wait forever for hydration
   const authState = {
     state: {
       user: {
@@ -398,6 +401,7 @@ async function globalSetup() {
         expiresIn: tokens.expires_in,
       },
       isAuthenticated: true,
+      _hasHydrated: true,
     },
     version: 0,
   };

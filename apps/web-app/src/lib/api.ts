@@ -33,7 +33,7 @@ function getAuthToken(): string | null {
     if (!authData) return null;
 
     const parsed = JSON.parse(authData);
-    return parsed.state?.tokens?.access_token || null;
+    return parsed.state?.tokens?.accessToken || null;
   } catch {
     return null;
   }

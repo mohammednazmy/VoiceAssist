@@ -145,37 +145,49 @@ class DeepgramStreamingSession:
         )
         return f"{self.WEBSOCKET_URL}?{'&'.join(params)}"
 
-    async def start(self) -> bool:
-        """Start the streaming session."""
+    async def start(self, max_retries: int = 3) -> bool:
+        """Start the streaming session with retry logic."""
         if self._running:
             logger.warning("Deepgram session already running")
             return False
 
-        try:
-            url = self._build_url()
-            headers = {"Authorization": f"Token {self.api_key}"}
+        url = self._build_url()
+        headers = {"Authorization": f"Token {self.api_key}"}
 
-            self._websocket = await websockets.connect(
-                url,
-                additional_headers=headers,
-                ping_interval=20,
-                ping_timeout=10,
-            )
+        for attempt in range(max_retries):
+            try:
+                self._websocket = await websockets.connect(
+                    url,
+                    additional_headers=headers,
+                    ping_interval=20,
+                    ping_timeout=10,
+                )
 
-            self._running = True
-            self._start_time = time.time()
-            self._final_transcript = ""
+                self._running = True
+                self._start_time = time.time()
+                self._final_transcript = ""
+                # Reset drop logging flag for new session
+                if hasattr(self, "_drop_logged"):
+                    delattr(self, "_drop_logged")
 
-            # Start receiving messages
-            self._receive_task = asyncio.create_task(self._receive_loop())
+                # Start receiving messages
+                self._receive_task = asyncio.create_task(self._receive_loop())
 
-            logger.info("Deepgram streaming session started")
-            return True
+                logger.info(f"Deepgram streaming session started (attempt {attempt + 1})")
+                return True
 
-        except Exception as e:
-            logger.error(f"Failed to start Deepgram session: {e}")
-            self._running = False
-            return False
+            except Exception as e:
+                logger.warning(f"Deepgram connection attempt {attempt + 1}/{max_retries} failed: {e}")
+                if attempt < max_retries - 1:
+                    # Wait before retrying (exponential backoff)
+                    delay = 0.5 * (2 ** attempt)
+                    logger.info(f"Retrying Deepgram connection in {delay}s...")
+                    await asyncio.sleep(delay)
+                else:
+                    logger.error(f"Failed to start Deepgram session after {max_retries} attempts: {e}")
+
+        self._running = False
+        return False
 
     async def send_audio(self, audio_chunk: bytes) -> None:
         """Send audio chunk to Deepgram."""

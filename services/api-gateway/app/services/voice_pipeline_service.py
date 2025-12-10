@@ -1031,6 +1031,8 @@ class VoicePipelineSession:
             # Restart STT for new input
             if self._stt_session:
                 await self._stt_session.stop()
+                # Allow Deepgram to fully release the connection before creating a new one
+                await asyncio.sleep(0.3)
 
             self._stt_session = await self._stt_service.create_session(
                 on_partial=self._handle_partial_transcript,
@@ -1039,6 +1041,12 @@ class VoicePipelineSession:
                 on_speech_start=self._handle_speech_start,
             )
             await self._stt_session.start()
+
+            # CRITICAL FIX: Reset _cancelled after STT is ready to receive new audio
+            # The _cancelled flag was set to stop stale AI audio from being sent,
+            # but it also blocks new user audio in send_audio(). Now that STT is
+            # restarted and ready, we must allow new audio to flow through.
+            self._cancelled = False
 
             # Send barge_in reason so frontend knows to stop audio playback
             await self._send_state_update(reason="barge_in")
@@ -1247,6 +1255,8 @@ class VoicePipelineSession:
             # Restart STT for new input
             if self._stt_session:
                 await self._stt_session.stop()
+                # Allow Deepgram to fully release the connection before creating a new one
+                await asyncio.sleep(0.3)
 
             self._stt_session = await self._stt_service.create_session(
                 on_partial=self._handle_partial_transcript,
@@ -2330,6 +2340,10 @@ class VoicePipelineSession:
                     await self._stt_session.stop()
                 except Exception as e:
                     logger.warning(f"[Pipeline] Error stopping old STT session: {e}")
+
+            # Allow Deepgram to fully release the connection before creating a new one
+            # Without this delay, we may get HTTP 400 errors when reconnecting too quickly
+            await asyncio.sleep(0.5)
 
             # Create fresh STT session for next input
             logger.debug("[Pipeline] Creating fresh STT session for next turn")

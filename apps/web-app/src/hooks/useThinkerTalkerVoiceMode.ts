@@ -866,6 +866,15 @@ export function useThinkerTalkerVoiceMode(
           // during natural completion. reset() is called in "processing" state instead.
           audioPlayback.endStream();
 
+          // CRITICAL: Clear natural completion mode when barge-in causes transition
+          // This handles the case where backend sends listening -> listening (reason=barge_in)
+          // or speaking -> listening (reason=barge_in)
+          if (reason === "barge_in") {
+            voiceLog.info(
+              "[TTVoiceMode] Clearing natural completion mode due to barge_in transition",
+            );
+            naturalCompletionModeRef.current = false;
+          }
           // CRITICAL: Enter natural completion mode ONLY when transitioning
           // from "speaking" to "listening" with reason "natural".
           // This means backend finished TTS generation and local audio buffer
@@ -875,7 +884,7 @@ export function useThinkerTalkerVoiceMode(
           // We check prevState === "speaking" to avoid triggering on:
           // - Initial connection state (prevState is null)
           // - Other transitions like processing -> listening
-          if (prevState === "speaking" && reason === "natural") {
+          else if (prevState === "speaking" && reason === "natural") {
             voiceLog.info(
               "[TTVoiceMode] Natural completion mode: speaking -> listening, allowing audio to drain",
             );
@@ -1075,6 +1084,9 @@ export function useThinkerTalkerVoiceMode(
             voiceLog.warn(
               "[TTVoiceMode] Silero VAD barge-in rollback (no transcript within 500ms)",
             );
+            // Clear natural completion mode - we're recovering from a false barge-in
+            // and need to allow new speech processing
+            naturalCompletionModeRef.current = false;
             audioPlaybackRef.current.reset();
           }
         }, 500);

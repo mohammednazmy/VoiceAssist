@@ -15,6 +15,7 @@
  */
 
 import { test, expect } from "@playwright/test";
+import * as path from "path";
 import {
   waitForVoiceModeReady,
   waitForAIPlayingAudio,
@@ -23,7 +24,11 @@ import {
   getVoiceModeDebugState,
   setupBargeInConsoleCapture,
 } from "./utils/test-setup";
+
 import { createMetricsCollector } from "./utils/voice-test-metrics";
+
+// Resolve auth state path relative to project root
+const AUTH_STATE_PATH = path.resolve(process.cwd(), "e2e/.auth/user.json");
 
 // Audio timeline constants (in milliseconds)
 const PHASE_1_END = 3190; // End of initial question
@@ -49,7 +54,7 @@ test.describe("Voice Mode Two-Phase Barge-In", () => {
   }) => {
     const context = await browser.newContext({
       permissions: ["microphone"],
-      storageState: "e2e/.auth/user.json",
+      storageState: AUTH_STATE_PATH,
     });
     const page = await context.newPage();
 
@@ -179,7 +184,7 @@ test.describe("Voice Mode Two-Phase Barge-In", () => {
   test("diagnostic: two-phase audio timeline analysis", async ({ browser }) => {
     const context = await browser.newContext({
       permissions: ["microphone"],
-      storageState: "e2e/.auth/user.json",
+      storageState: AUTH_STATE_PATH,
     });
     const page = await context.newPage();
 

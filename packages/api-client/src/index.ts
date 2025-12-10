@@ -242,6 +242,9 @@ export class VoiceAssistApiClient {
       const token = this.config.getAccessToken?.();
       if (token && requestConfig.headers) {
         requestConfig.headers.Authorization = `Bearer ${token}`;
+        console.log(`[ApiClient] Request to ${requestConfig.url} with token: ${token.substring(0, 20)}...`);
+      } else {
+        console.log(`[ApiClient] Request to ${requestConfig.url} WITHOUT token`);
       }
 
       const traceparent = buildTraceparent();

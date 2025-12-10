@@ -21,6 +21,7 @@
  */
 
 import { test, expect } from "@playwright/test";
+import * as path from "path";
 import {
   waitForVoiceModeReady,
   waitForAIPlayingAudio,
@@ -28,8 +29,12 @@ import {
   verifyBargeInWithVoiceModeDebug,
   getVoiceModeDebugState,
   setupBargeInConsoleCapture,
+  injectAuthFromFile,
 } from "./utils/test-setup";
 import { createMetricsCollector } from "./utils/voice-test-metrics";
+
+// Resolve auth state path relative to project root
+const AUTH_STATE_PATH = path.resolve(process.cwd(), "e2e/.auth/user.json");
 
 // Note: Audio fixture is set in playwright.config.ts for the voice-barge-in-realistic project
 // It uses conversation-start.wav which contains a question that triggers AI response
@@ -57,7 +62,7 @@ test.describe("Voice Mode Barge-In - Realistic Flow", () => {
     // Launch browser with fake audio capture and auth state
     const context = await browser.newContext({
       permissions: ["microphone"],
-      storageState: "e2e/.auth/user.json",
+      storageState: AUTH_STATE_PATH,
     });
     const page = await context.newPage();
 
@@ -187,7 +192,7 @@ test.describe("Voice Mode Barge-In - Realistic Flow", () => {
   }) => {
     const context = await browser.newContext({
       permissions: ["microphone"],
-      storageState: "e2e/.auth/user.json",
+      storageState: AUTH_STATE_PATH,
     });
     const page = await context.newPage();
 
@@ -245,7 +250,7 @@ test.describe("Voice Mode Barge-In - Realistic Flow", () => {
   test("conversation should continue after barge-in", async ({ browser }) => {
     const context = await browser.newContext({
       permissions: ["microphone"],
-      storageState: "e2e/.auth/user.json",
+      storageState: AUTH_STATE_PATH,
     });
     const page = await context.newPage();
 
@@ -313,9 +318,11 @@ test.describe("Voice Mode Barge-In - Failure Diagnostics", () => {
   }) => {
     const context = await browser.newContext({
       permissions: ["microphone"],
-      storageState: "e2e/.auth/user.json",
     });
     const page = await context.newPage();
+
+    // Inject auth state from file BEFORE navigation
+    await injectAuthFromFile(page, AUTH_STATE_PATH);
 
     // Enable all debugging
     await page.addInitScript(() => {
@@ -326,12 +333,36 @@ test.describe("Voice Mode Barge-In - Failure Diagnostics", () => {
 
     const consoleState = setupBargeInConsoleCapture(page);
 
-    // Capture all console messages for debugging
+    // Intercept network requests to debug auth issues
+    page.on("request", (request) => {
+      const url = request.url();
+      if (url.includes("/api/")) {
+        const headers = request.headers();
+        const authHeader = headers["authorization"] || "NONE";
+        console.log(`[NETWORK] ${request.method()} ${url}`);
+        console.log(`[NETWORK] Authorization: ${authHeader.substring(0, 50)}...`);
+      }
+    });
+
+    page.on("response", (response) => {
+      const url = response.url();
+      if (url.includes("/api/")) {
+        console.log(`[NETWORK] Response: ${response.status()} ${url}`);
+      }
+    });
+
+    // Capture ALL console messages to debug auth issues
     const allLogs: string[] = [];
-    const audioPlaybackLogs: string[] = []; // Specific logs for TTAudioPlayback
+    const authLogs: string[] = [];
+    const audioPlaybackLogs: string[] = [];
     page.on("console", (msg) => {
       const text = msg.text();
-      // Capture TTAudioPlayback logs specifically (these are the ones we're debugging)
+      // Capture auth-related logs
+      if (text.includes("Auth") || text.includes("auth") || text.includes("Browser") || text.includes("localStorage") || text.includes("Hydrat")) {
+        authLogs.push(`[${msg.type()}] ${text}`);
+        console.log(`[Browser Console] ${text}`);
+      }
+      // Capture TTAudioPlayback logs specifically
       if (text.includes("[TTAudioPlayback]")) {
         audioPlaybackLogs.push(`[${msg.type()}] ${text}`);
       }
@@ -350,8 +381,11 @@ test.describe("Voice Mode Barge-In - Failure Diagnostics", () => {
       }
     });
 
+    console.log("[DIAGNOSTIC] Navigating to /chat...");
     await page.goto("/chat");
     await page.waitForLoadState("networkidle");
+    console.log(`[DIAGNOSTIC] Current URL after navigation: ${page.url()}`);
+    console.log(`[DIAGNOSTIC] Auth logs captured: ${authLogs.length}`);
 
     // Start voice mode
     const voiceButton = page.getByTestId("voice-mode-toggle");

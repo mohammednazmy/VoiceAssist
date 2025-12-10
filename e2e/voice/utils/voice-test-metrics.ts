@@ -313,8 +313,9 @@ export class VoiceMetricsCollector {
     const lowerText = text.toLowerCase();
 
     if (lowerText.includes("barge")) {
-      // Barge-in triggered
-      if (lowerText.includes("triggered") || lowerText.includes("detecting")) {
+      // Barge-in triggered (matches "triggered", "triggering", "detecting", "initiated")
+      // "initiated" comes from backend barge_in.initiated events
+      if (lowerText.includes("trigger") || lowerText.includes("detecting") || lowerText.includes("initiated")) {
         const confMatch = text.match(/confidence[:\s]+(\d+\.?\d*)/i);
         this.metrics.bargeInEvents.push({
           time,
@@ -338,8 +339,17 @@ export class VoiceMetricsCollector {
         });
       }
 
-      // Barge-in executed
-      if (lowerText.includes("execut") || lowerText.includes("stopping playback")) {
+      // Barge-in executed (matches various execution patterns)
+      // - "stopping playback" from TTAudioPlayback.stop()
+      // - "fading out" from TTAudioPlayback.fadeOut()
+      // - "initiated" from backend barge_in.initiated
+      // - "execut" for any other execution messages
+      if (
+        lowerText.includes("execut") ||
+        lowerText.includes("stopping playback") ||
+        lowerText.includes("fading out") ||
+        lowerText.includes("initiated")
+      ) {
         this.metrics.bargeInEvents.push({
           time,
           type: "executed",

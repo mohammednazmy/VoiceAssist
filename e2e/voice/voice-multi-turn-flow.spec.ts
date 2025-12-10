@@ -14,8 +14,12 @@
  */
 
 import { test, expect } from "@playwright/test";
+import * as path from "path";
 import { waitForVoiceModeReady, assertQualityThresholds } from "./utils/test-setup";
 import { createMetricsCollector } from "./utils/voice-test-metrics";
+
+// Resolve auth state path relative to project root
+const AUTH_STATE_PATH = path.resolve(process.cwd(), "e2e/.auth/user.json");
 
 test.describe("Thinker/Talker Multi-Turn Voice Flow", () => {
   test("collects voice metrics during a unified Chat-with-Voice session", async ({
@@ -24,6 +28,7 @@ test.describe("Thinker/Talker Multi-Turn Voice Flow", () => {
     // Use a dedicated context so we can control permissions cleanly
     const context = await browser.newContext({
       permissions: ["microphone"],
+      storageState: AUTH_STATE_PATH,
     });
     const page = await context.newPage();
 

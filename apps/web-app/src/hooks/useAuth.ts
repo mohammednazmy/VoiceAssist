@@ -65,17 +65,63 @@ const resolvedApiBase =
   import.meta.env.VITE_API_URL ||
   (typeof window !== "undefined" ? window.location.origin : "");
 
+/**
+ * Helper to get access token, with fallback to localStorage for race condition
+ * during Zustand hydration. This ensures tokens are available immediately
+ * even before the persist middleware completes hydration.
+ */
+function getAccessTokenWithFallback(): string | null {
+  const state = useAuthStore.getState();
+
+  // If store has hydrated and has tokens, use them
+  if (state._hasHydrated && state.tokens?.accessToken) {
+    console.log("[Auth] getAccessToken: using hydrated store token");
+    return state.tokens.accessToken;
+  }
+
+  // If store has tokens even without hydration flag, use them
+  if (state.tokens?.accessToken) {
+    console.log("[Auth] getAccessToken: using store token (pre-hydration)");
+    return state.tokens.accessToken;
+  }
+
+  // Fallback: read directly from localStorage for pre-hydration requests
+  try {
+    const authData = localStorage.getItem("voiceassist-auth");
+    if (authData) {
+      const parsed = JSON.parse(authData);
+      const token = parsed.state?.tokens?.accessToken;
+      if (token) {
+        console.log("[Auth] getAccessToken: using localStorage fallback");
+        return token;
+      } else {
+        console.log("[Auth] getAccessToken: localStorage has no accessToken, keys:", Object.keys(parsed.state?.tokens || {}));
+      }
+    } else {
+      console.log("[Auth] getAccessToken: localStorage is empty");
+    }
+  } catch (e) {
+    console.log("[Auth] getAccessToken: localStorage parse error", e);
+  }
+
+  console.log("[Auth] getAccessToken: returning null, _hasHydrated=", state._hasHydrated);
+  return null;
+}
+
 const apiClient = new VoiceAssistApiClient({
   // Fallback to current origin so dev/e2e proxied /api requests work without VITE_API_URL
   baseURL: resolvedApiBase,
-  getAccessToken: () => {
-    const state = useAuthStore.getState();
-    return state.tokens?.accessToken || null;
-  },
+  getAccessToken: getAccessTokenWithFallback,
   onUnauthorized: () => {
     const state = useAuthStore.getState();
-    state.logout();
-    window.location.href = "/login";
+    // Only trigger logout if store has hydrated - avoids race condition
+    // where 401 during hydration clears the store prematurely
+    if (state._hasHydrated) {
+      state.logout();
+      window.location.href = "/login";
+    } else {
+      authLog.debug("[onUnauthorized] Ignoring 401 - store not hydrated yet");
+    }
   },
 });
 
