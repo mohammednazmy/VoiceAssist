@@ -69,6 +69,7 @@ Run these in order for progressive testing:
 ## Quick Start Guide
 
 ### 1. Install k6
+
 ```bash
 # macOS
 brew install k6
@@ -78,12 +79,14 @@ k6 version
 ```
 
 ### 2. Run Quick Test
+
 ```bash
 cd load-tests/k6
 ./run-quick-test.sh
 ```
 
 ### 3. View Results
+
 ```bash
 cat ../results/smoke-test-summary.json | jq .
 cat ../results/load-test-summary.json | jq .
@@ -91,24 +94,24 @@ cat ../results/load-test-summary.json | jq .
 
 ## File Purpose Matrix
 
-| File | Type | Purpose | When to Use |
-|------|------|---------|-------------|
-| INDEX.md | Doc | Navigation | Start here |
-| QUICK_REFERENCE.md | Doc | Quick lookup | Need quick command |
-| README.md | Doc | Full guide | Learning k6 tests |
-| EXAMPLES.md | Doc | Examples | Need specific example |
-| SUMMARY.md | Doc | Overview | Understanding project |
-| config.js | Code | Configuration | Customize settings |
-| utils.js | Code | Utilities | Understand helpers |
-| 01-smoke-test.js | Test | Validation | After deployment |
-| 02-load-test.js | Test | Performance | Daily/weekly |
-| 03-stress-test.js | Test | Capacity | Before scaling |
-| 04-spike-test.js | Test | Auto-scale | Before events |
-| 05-endurance-test.js | Test | Stability | Weekly |
-| 06-api-scenarios.js | Test | Workflows | After features |
-| 07-websocket-test.js | Test | Real-time | After voice changes |
-| run-quick-test.sh | Script | Quick run | Quick validation |
-| run-all-tests.sh | Script | Full run | Complete testing |
+| File                 | Type   | Purpose       | When to Use           |
+| -------------------- | ------ | ------------- | --------------------- |
+| INDEX.md             | Doc    | Navigation    | Start here            |
+| QUICK_REFERENCE.md   | Doc    | Quick lookup  | Need quick command    |
+| README.md            | Doc    | Full guide    | Learning k6 tests     |
+| EXAMPLES.md          | Doc    | Examples      | Need specific example |
+| SUMMARY.md           | Doc    | Overview      | Understanding project |
+| config.js            | Code   | Configuration | Customize settings    |
+| utils.js             | Code   | Utilities     | Understand helpers    |
+| 01-smoke-test.js     | Test   | Validation    | After deployment      |
+| 02-load-test.js      | Test   | Performance   | Daily/weekly          |
+| 03-stress-test.js    | Test   | Capacity      | Before scaling        |
+| 04-spike-test.js     | Test   | Auto-scale    | Before events         |
+| 05-endurance-test.js | Test   | Stability     | Weekly                |
+| 06-api-scenarios.js  | Test   | Workflows     | After features        |
+| 07-websocket-test.js | Test   | Real-time     | After voice changes   |
+| run-quick-test.sh    | Script | Quick run     | Quick validation      |
+| run-all-tests.sh     | Script | Full run      | Complete testing      |
 
 ## Common Tasks
 
@@ -173,6 +176,7 @@ cat ../results/load-test-summary.json | jq .
 All results are saved to: `../results/`
 
 Summary files:
+
 - `smoke-test-summary.json`
 - `load-test-summary.json`
 - `stress-test-summary.json`
@@ -182,9 +186,11 @@ Summary files:
 - `websocket-test-summary.json`
 
 Full results:
+
 - `*-full.json` (detailed metrics)
 
 View results:
+
 ```bash
 # Summary
 cat ../results/load-test-summary.json | jq .
@@ -251,6 +257,7 @@ VoiceAssist Load Tests
 ## Success Criteria
 
 Your tests are successful if:
+
 - [ ] Smoke test passes (all endpoints respond)
 - [ ] Load test P95 < 800ms
 - [ ] Stress test identifies breaking point

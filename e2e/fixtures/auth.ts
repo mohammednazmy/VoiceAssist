@@ -50,20 +50,36 @@ export const mockAuthState = {
 export async function setupAuthenticatedState(page: Page): Promise<void> {
   await page.addInitScript((authState) => {
     window.localStorage.setItem("voiceassist-auth", JSON.stringify(authState));
+    // Force unified chat/voice UI in E2E runs so tests always
+    // exercise the Chat-with-Voice path as the single source of truth.
+    window.localStorage.setItem("ff_unified_chat_voice_ui", "true");
   }, mockAuthState);
 }
+
+/**
+ * Check if we're running in live backend mode
+ * In live mode, we use real API calls instead of mocks
+ */
+export const isLiveBackend = (): boolean => {
+  return (
+    process.env.LIVE_REALTIME_E2E === "1" ||
+    process.env.LIVE_BACKEND === "1"
+  );
+};
 
 /**
  * Set up authenticated state and ensure it's hydrated
  * This is the recommended approach for tests that need to access protected routes
  *
  * The storageState is pre-configured in playwright.config.ts to load auth from
- * e2e/.auth/user.json. We also mock API calls to prevent 401 responses from
- * triggering the app's logout logic.
+ * e2e/.auth/user.json. For mock mode, we also mock API calls to prevent 401 responses.
+ * For live mode, we use real API calls with tokens from global-setup.
  */
 export async function setupAndHydrateAuth(page: Page): Promise<void> {
-  // Mock API responses to prevent 401 errors from triggering logout
-  await mockApiResponses(page);
+  // Only mock API responses in non-live mode
+  if (!isLiveBackend()) {
+    await mockApiResponses(page);
+  }
 
   // Navigate to root - storageState should already have auth in localStorage
   await page.goto("/");
@@ -137,10 +153,12 @@ async function mockApiResponses(page: Page): Promise<void> {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          data: [],
-          total: 0,
-          page: 1,
-          limit: 50,
+          data: {
+            items: [],
+            total: 0,
+            page: 1,
+            pageSize: 20,
+          },
         }),
       });
       return;
@@ -150,13 +168,15 @@ async function mockApiResponses(page: Page): Promise<void> {
     const conversationMatch = pathname.match(/^\/api\/conversations\/([^/]+)$/);
     if (conversationMatch && method === "GET") {
       const convId = conversationMatch[1];
+      // Return "New Conversation" for the created conversation, otherwise "Test Conversation"
+      const title = convId === createdConversationId ? "New Conversation" : "Test Conversation";
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
           data: {
             id: convId,
-            title: "Test Conversation",
+            title: title,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             user_id: "e2e-test-user",
@@ -173,10 +193,12 @@ async function mockApiResponses(page: Page): Promise<void> {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          data: [],
-          total: 0,
-          page: 1,
-          limit: 50,
+          data: {
+            items: [],
+            total: 0,
+            page: 1,
+            pageSize: 50,
+          },
         }),
       });
       return;

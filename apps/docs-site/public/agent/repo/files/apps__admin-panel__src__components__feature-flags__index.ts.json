@@ -1,0 +1,8 @@
+{
+  "path": "apps/admin-panel/src/components/feature-flags/index.ts",
+  "language": "typescript",
+  "size": 65,
+  "last_modified": "2025-12-04T12:32:40.221Z",
+  "lines": 2,
+  "content": "export { ScheduledChangesPanel } from \"./ScheduledChangesPanel\";\n"
+}

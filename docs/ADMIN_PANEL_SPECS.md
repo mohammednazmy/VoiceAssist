@@ -1,3 +1,34 @@
+---
+title: Admin Panel Specs
+slug: admin-panel-specs
+summary: >-
+  The VoiceAssist Admin Panel provides a centralized web interface for system
+  configuration, monitoring, and management. Accessible at `admin.asimo.io`.
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-12-02"
+audience:
+  - devops
+  - sre
+  - ai-agents
+tags:
+  - admin
+  - panel
+  - specs
+category: operations
+component: "frontend/admin-panel"
+relatedPaths:
+  - "apps/admin-panel/src/App.tsx"
+  - "apps/admin-panel/src/pages/Dashboard.tsx"
+  - "services/api-gateway/app/api/admin.py"
+ai_summary: >-
+  The VoiceAssist Admin Panel provides a centralized web interface for system
+  configuration, monitoring, and management. Accessible at admin.asimo.io. -
+  Framework: React 18+ with TypeScript - Build Tool: Vite - Styling: Tailwind
+  CSS - Component Library: shadcn/ui or Tremor (for dashboards) - Charts...
+---
+
 # Admin Panel Specifications
 
 ## Overview
@@ -7,6 +38,7 @@ The VoiceAssist Admin Panel provides a centralized web interface for system conf
 ## Technology Stack
 
 ### Frontend
+
 - **Framework**: React 18+ with TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS
@@ -16,6 +48,7 @@ The VoiceAssist Admin Panel provides a centralized web interface for system conf
 - **State Management**: Zustand or React Context
 
 ### Backend
+
 - **Framework**: FastAPI (Python)
 - **Authentication**: JWT with admin role
 - **Database**: PostgreSQL for admin data
@@ -23,7 +56,7 @@ The VoiceAssist Admin Panel provides a centralized web interface for system conf
 
 ### Standard API Envelope
 
-All admin API calls return a standard envelope. See [server/README.md](../server/README.md#standard-api-response-envelope) for complete specification.
+All admin API calls return a standard envelope. See [services/api-gateway/README.md](../services/api-gateway/README.md#standard-api-response-envelope) for complete specification.
 
 Use the same TypeScript types and fetch helper from WEB_APP_SPECS.md (can be shared package or duplicated).
 
@@ -32,16 +65,16 @@ Use the same TypeScript types and fetch helper from WEB_APP_SPECS.md (can be sha
 ```typescript
 // admin/hooks/useKBManagement.ts
 
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { fetchAPI, APIError } from '@/lib/api';
-import { KnowledgeDocument, IndexingJob } from '@/types'; // From DATA_MODEL.md
-import { toast } from '@/lib/toast';
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { fetchAPI, APIError } from "@/lib/api";
+import { KnowledgeDocument, IndexingJob } from "@/types"; // From DATA_MODEL.md
+import { toast } from "@/lib/toast";
 
 export function useKBDocuments() {
   return useQuery({
-    queryKey: ['kb-documents'],
+    queryKey: ["kb-documents"],
     queryFn: async () => {
-      return fetchAPI<KnowledgeDocument[]>('/api/admin/kb/documents');
+      return fetchAPI<KnowledgeDocument[]>("/api/admin/kb/documents");
     },
   });
 }
@@ -50,10 +83,10 @@ export function useUploadDocument() {
   return useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
-      return fetchAPI<IndexingJob>('/api/admin/kb/upload', {
-        method: 'POST',
+      return fetchAPI<IndexingJob>("/api/admin/kb/upload", {
+        method: "POST",
         body: formData,
         headers: {
           // Don't set Content-Type, let browser set it with boundary
@@ -64,10 +97,10 @@ export function useUploadDocument() {
       toast.success(`Upload started: ${job.id}`);
     },
     onError: (error: APIError) => {
-      if (error.code === 'VALIDATION_ERROR') {
-        toast.error('Invalid file format. Only PDF and DOCX supported.');
-      } else if (error.code === 'CONFLICT') {
-        toast.error('A document with this name already exists');
+      if (error.code === "VALIDATION_ERROR") {
+        toast.error("Invalid file format. Only PDF and DOCX supported.");
+      } else if (error.code === "CONFLICT") {
+        toast.error("A document with this name already exists");
       } else {
         toast.error(`Upload failed: ${error.message}`);
       }
@@ -78,8 +111,8 @@ export function useUploadDocument() {
 export function useReindexDocuments() {
   return useMutation({
     mutationFn: async (docIds: string[]) => {
-      return fetchAPI<{ job_count: number }>('/api/admin/kb/reindex', {
-        method: 'POST',
+      return fetchAPI<{ job_count: number }>("/api/admin/kb/reindex", {
+        method: "POST",
         body: JSON.stringify({ document_ids: docIds }),
       });
     },
@@ -95,13 +128,13 @@ export function useReindexDocuments() {
 
 ```typescript
 // services/api/admin.ts
-import axios from 'axios';
+import axios from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true, // Send JWT cookies
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -140,16 +173,16 @@ export interface ReindexResponse {
 export async function uploadDocument(
   file: File,
   sourceType: string,
-  specialty: string
+  specialty: string,
 ): Promise<DocumentUploadResponse> {
   const formData = new FormData();
-  formData.append('file', file);
-  formData.append('sourceType', sourceType);
-  formData.append('specialty', specialty);
+  formData.append("file", file);
+  formData.append("sourceType", sourceType);
+  formData.append("specialty", specialty);
 
-  const response = await api.post('/api/admin/knowledge/upload', formData, {
+  const response = await api.post("/api/admin/knowledge/upload", formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
 
@@ -160,9 +193,9 @@ export async function uploadDocument(
 export async function listDocuments(
   skip: number = 0,
   limit: number = 50,
-  status?: string
+  status?: string,
 ): Promise<DocumentListResponse[]> {
-  const response = await api.get('/api/admin/knowledge/documents', {
+  const response = await api.get("/api/admin/knowledge/documents", {
     params: { skip, limit, status },
   });
 
@@ -170,11 +203,8 @@ export async function listDocuments(
 }
 
 // Trigger reindex
-export async function triggerReindex(
-  documentIds: string[] = [],
-  force: boolean = false
-): Promise<ReindexResponse> {
-  const response = await api.post('/api/admin/knowledge/reindex', {
+export async function triggerReindex(documentIds: string[] = [], force: boolean = false): Promise<ReindexResponse> {
+  const response = await api.post("/api/admin/knowledge/reindex", {
     documentIds,
     force,
   });
@@ -184,7 +214,7 @@ export async function triggerReindex(
 
 // Get vector DB stats
 export async function getVectorDBStats(): Promise<VectorDBStatsResponse> {
-  const response = await api.get('/api/admin/knowledge/stats');
+  const response = await api.get("/api/admin/knowledge/stats");
   return response.data;
 }
 ```
@@ -345,11 +375,13 @@ function Dashboard() {
 ## Authentication & Authorization
 
 ### Access Control
+
 - **Admin Role**: Full access to all features
 - **Viewer Role**: Read-only access (future)
 - **API Keys**: Secure management with limited scopes
 
 ### Security
+
 - Strong password requirements
 - Two-factor authentication (TOTP)
 - Session timeout
@@ -456,34 +488,40 @@ function Dashboard() {
 **System metrics defined in [OBSERVABILITY.md](../docs/OBSERVABILITY.md).**
 
 **System Overview Cards:**
+
 - Active Sessions: Current WebSocket/REST sessions
 - API Calls Today: Total API requests with trend indicator
 - Avg Response Time: Mean latency with change indicator
 - Error Rate: Percentage of failed requests with trend
 
 **Real-Time Metrics:**
+
 - CPU, Memory, GPU usage with bar indicators
 - Disk space utilization
 - Network I/O (upload/download)
 - Active WebSocket connections count
 
 **Service Status Table:**
+
 - Health check status for each service (🟢 Up, 🟡 Degraded, 🔴 Down)
 - Last check timestamp
 - Click to view detailed metrics
 
 **Response Time Chart:**
+
 - Line chart showing 24-hour latency trends
 - Separate lines for local model vs cloud API
 - Hoverable data points
 
 **Recent Activity Feed:**
+
 - Last 10-20 system events
 - Query summaries (sanitized)
 - Document indexing events
 - Error notifications
 
 **Quick Actions:**
+
 - One-click service management
 - Cache clearing
 - Knowledge base updates
@@ -503,56 +541,56 @@ Complete TypeScript interface for system-level configuration:
 export interface SystemSettings {
   // General System Configuration
   general: {
-    systemName: string;                    // Display name (e.g., "VoiceAssist Production")
-    systemDescription: string;             // Description for documentation
-    timezone: string;                      // Default system timezone (IANA)
-    language: 'en' | 'es' | 'fr';         // Default interface language
-    maintenanceMode: boolean;              // Enable maintenance mode (blocks users)
-    maintenanceMessage: string;            // Message shown during maintenance
+    systemName: string; // Display name (e.g., "VoiceAssist Production")
+    systemDescription: string; // Description for documentation
+    timezone: string; // Default system timezone (IANA)
+    language: "en" | "es" | "fr"; // Default interface language
+    maintenanceMode: boolean; // Enable maintenance mode (blocks users)
+    maintenanceMessage: string; // Message shown during maintenance
   };
 
   // Data Retention & Cleanup
   dataRetention: {
-    conversationLogs: number;              // Days to keep conversation logs (7-365)
-    errorLogs: number;                     // Days to keep error logs (30-365)
-    accessLogs: number;                    // Days to keep access logs (30-730)
-    auditLogs: number;                     // Days to keep audit logs (365-2555)
-    tempFiles: number;                     // Days to keep temp files (1-30)
-    autoCleanup: boolean;                  // Enable automatic cleanup
-    cleanupSchedule: string;               // Cron expression for cleanup
+    conversationLogs: number; // Days to keep conversation logs (7-365)
+    errorLogs: number; // Days to keep error logs (30-365)
+    accessLogs: number; // Days to keep access logs (30-730)
+    auditLogs: number; // Days to keep audit logs (365-2555)
+    tempFiles: number; // Days to keep temp files (1-30)
+    autoCleanup: boolean; // Enable automatic cleanup
+    cleanupSchedule: string; // Cron expression for cleanup
   };
 
   // Backup Configuration
   backup: {
     enabled: boolean;
-    destination: 'local' | 'nextcloud' | 's3' | 'custom';
-    schedule: string;                      // Cron expression
-    retention: number;                     // Number of backups to keep
+    destination: "local" | "nextcloud" | "s3" | "custom";
+    schedule: string; // Cron expression
+    retention: number; // Number of backups to keep
     includeDatabase: boolean;
     includeVectorDB: boolean;
     includeDocuments: boolean;
     includeConfiguration: boolean;
     includeLogs: boolean;
-    compression: 'none' | 'gzip' | 'zstd';
+    compression: "none" | "gzip" | "zstd";
     encryption: boolean;
   };
 
   // Model Routing & AI Configuration
   ai: {
     // Default model preferences
-    defaultLocalModel: string;             // e.g., "llama-3.1-8b"
-    defaultCloudModel: string;             // e.g., "gpt-4-turbo"
-    defaultEmbeddingModel: string;         // e.g., "text-embedding-3-large"
+    defaultLocalModel: string; // e.g., "llama-3.1-8b"
+    defaultCloudModel: string; // e.g., "gpt-4-turbo"
+    defaultEmbeddingModel: string; // e.g., "text-embedding-3-large"
 
     // Routing rules
-    routingStrategy: 'auto' | 'always_local' | 'always_cloud';
-    phiDetectionEnabled: boolean;          // Auto-detect PHI and route to local
-    phiKeywords: string[];                 // Keywords that trigger PHI detection
+    routingStrategy: "auto" | "always_local" | "always_cloud";
+    phiDetectionEnabled: boolean; // Auto-detect PHI and route to local
+    phiKeywords: string[]; // Keywords that trigger PHI detection
 
     // Performance limits
-    maxConcurrentRequests: number;         // Max concurrent AI requests
-    requestTimeout: number;                // Timeout in seconds
-    retryAttempts: number;                 // Number of retry attempts
+    maxConcurrentRequests: number; // Max concurrent AI requests
+    requestTimeout: number; // Timeout in seconds
+    retryAttempts: number; // Number of retry attempts
 
     // Rate limiting (per user)
     rateLimits: {
@@ -563,42 +601,42 @@ export interface SystemSettings {
 
     // Cost controls
     costLimits: {
-      dailyLimit: number;                  // $ per day
-      monthlyLimit: number;                // $ per month
-      alertThreshold: number;              // % threshold for alerts (e.g., 80)
+      dailyLimit: number; // $ per day
+      monthlyLimit: number; // $ per month
+      alertThreshold: number; // % threshold for alerts (e.g., 80)
     };
   };
 
   // Logging & Monitoring
   logging: {
-    level: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
-    structuredLogging: boolean;            // JSON format
+    level: "DEBUG" | "INFO" | "WARN" | "ERROR";
+    structuredLogging: boolean; // JSON format
     logToFile: boolean;
     logToConsole: boolean;
     logToSyslog: boolean;
-    sensitiveDataRedaction: boolean;       // Redact PHI/PII from logs
-    performanceLogging: boolean;           // Log slow queries
-    performanceThreshold: number;          // ms threshold for slow query logging
+    sensitiveDataRedaction: boolean; // Redact PHI/PII from logs
+    performanceLogging: boolean; // Log slow queries
+    performanceThreshold: number; // ms threshold for slow query logging
   };
 
   // Security & Privacy
   security: {
     // Session management
-    sessionTimeout: number;                // Minutes of inactivity
-    maxSessionDuration: number;            // Max session duration in hours
+    sessionTimeout: number; // Minutes of inactivity
+    maxSessionDuration: number; // Max session duration in hours
     requireStrongPasswords: boolean;
     passwordMinLength: number;
     passwordRequireSpecialChars: boolean;
-    passwordExpiryDays: number;            // 0 = never
+    passwordExpiryDays: number; // 0 = never
 
     // Two-factor authentication
     twoFactorRequired: boolean;
-    twoFactorMethod: 'totp' | 'sms' | 'email';
+    twoFactorMethod: "totp" | "sms" | "email";
 
     // API security
     apiRateLimiting: boolean;
-    apiRateLimit: number;                  // Requests per minute
-    corsOrigins: string[];                 // Allowed CORS origins
+    apiRateLimit: number; // Requests per minute
+    corsOrigins: string[]; // Allowed CORS origins
 
     // Audit logging
     auditAllActions: boolean;
@@ -613,10 +651,10 @@ export interface SystemSettings {
     smtpHost: string;
     smtpPort: number;
     smtpUsername: string;
-    smtpPassword: string;                  // Encrypted in storage
+    smtpPassword: string; // Encrypted in storage
     smtpTLS: boolean;
     fromAddress: string;
-    adminEmails: string[];                 // Admins to notify
+    adminEmails: string[]; // Admins to notify
   };
 
   // Feature Flags
@@ -633,22 +671,22 @@ export interface SystemSettings {
 
   // Resource Limits
   resources: {
-    maxUploadSize: number;                 // MB
-    maxDocuments: number;                  // Max documents in KB (0 = unlimited)
-    maxVectorDBSize: number;               // GB (0 = unlimited)
-    maxConcurrentUsers: number;            // (0 = unlimited)
+    maxUploadSize: number; // MB
+    maxDocuments: number; // Max documents in KB (0 = unlimited)
+    maxVectorDBSize: number; // GB (0 = unlimited)
+    maxConcurrentUsers: number; // (0 = unlimited)
   };
 }
 
 // Default system settings
 export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   general: {
-    systemName: 'VoiceAssist',
-    systemDescription: 'Medical AI Assistant',
-    timezone: 'UTC',
-    language: 'en',
+    systemName: "VoiceAssist",
+    systemDescription: "Medical AI Assistant",
+    timezone: "UTC",
+    language: "en",
     maintenanceMode: false,
-    maintenanceMessage: 'System is currently under maintenance. Please check back soon.'
+    maintenanceMessage: "System is currently under maintenance. Please check back soon.",
   },
   dataRetention: {
     conversationLogs: 30,
@@ -657,51 +695,51 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
     auditLogs: 365,
     tempFiles: 7,
     autoCleanup: true,
-    cleanupSchedule: '0 2 * * *'  // Daily at 2 AM
+    cleanupSchedule: "0 2 * * *", // Daily at 2 AM
   },
   backup: {
     enabled: true,
-    destination: 'local',
-    schedule: '0 2 * * *',  // Daily at 2 AM
+    destination: "local",
+    schedule: "0 2 * * *", // Daily at 2 AM
     retention: 7,
     includeDatabase: true,
     includeVectorDB: true,
     includeDocuments: true,
     includeConfiguration: true,
     includeLogs: false,
-    compression: 'gzip',
-    encryption: true
+    compression: "gzip",
+    encryption: true,
   },
   ai: {
-    defaultLocalModel: 'llama-3.1-8b',
-    defaultCloudModel: 'gpt-4-turbo',
-    defaultEmbeddingModel: 'text-embedding-3-large',
-    routingStrategy: 'auto',
+    defaultLocalModel: "llama-3.1-8b",
+    defaultCloudModel: "gpt-4-turbo",
+    defaultEmbeddingModel: "text-embedding-3-large",
+    routingStrategy: "auto",
     phiDetectionEnabled: true,
-    phiKeywords: ['patient', 'MRN', 'DOB', 'SSN', 'medical record'],
+    phiKeywords: ["patient", "MRN", "DOB", "SSN", "medical record"],
     maxConcurrentRequests: 10,
     requestTimeout: 60,
     retryAttempts: 3,
     rateLimits: {
       queriesPerMinute: 20,
       queriesPerHour: 100,
-      queriesPerDay: 1000
+      queriesPerDay: 1000,
     },
     costLimits: {
       dailyLimit: 50,
       monthlyLimit: 1000,
-      alertThreshold: 80
-    }
+      alertThreshold: 80,
+    },
   },
   logging: {
-    level: 'INFO',
+    level: "INFO",
     structuredLogging: true,
     logToFile: true,
     logToConsole: true,
     logToSyslog: false,
     sensitiveDataRedaction: true,
     performanceLogging: true,
-    performanceThreshold: 1000
+    performanceThreshold: 1000,
   },
   security: {
     sessionTimeout: 30,
@@ -711,24 +749,24 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
     passwordRequireSpecialChars: true,
     passwordExpiryDays: 90,
     twoFactorRequired: false,
-    twoFactorMethod: 'totp',
+    twoFactorMethod: "totp",
     apiRateLimiting: true,
     apiRateLimit: 60,
     corsOrigins: [],
     auditAllActions: true,
     auditLoginAttempts: true,
     auditDataAccess: true,
-    auditConfigChanges: true
+    auditConfigChanges: true,
   },
   email: {
     enabled: false,
-    smtpHost: '',
+    smtpHost: "",
     smtpPort: 587,
-    smtpUsername: '',
-    smtpPassword: '',
+    smtpUsername: "",
+    smtpPassword: "",
     smtpTLS: true,
-    fromAddress: '',
-    adminEmails: []
+    fromAddress: "",
+    adminEmails: [],
   },
   features: {
     voiceEnabled: true,
@@ -738,30 +776,30 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
     calendarIntegration: true,
     emailIntegration: false,
     webSearchEnabled: true,
-    betaFeatures: false
+    betaFeatures: false,
   },
   resources: {
     maxUploadSize: 500,
     maxDocuments: 0,
     maxVectorDBSize: 0,
-    maxConcurrentUsers: 0
-  }
+    maxConcurrentUsers: 0,
+  },
 };
 ```
 
 #### Settings Comparison: User vs System
 
-| Setting Category | User Settings (Per-User) | System Settings (Global) |
-|------------------|--------------------------|--------------------------|
-| **Theme** | ✅ User chooses dark/light | ❌ Not configurable globally |
-| **Language** | ✅ User's preferred language | ✅ Default system language |
-| **Voice Input** | ✅ User enables/disables | ✅ System enables feature |
-| **Citations** | ✅ User's display preference | ❌ Not applicable |
-| **Logging** | ❌ Not user-configurable | ✅ System log level |
-| **Backups** | ❌ Not user-configurable | ✅ System backup schedule |
-| **AI Models** | ✅ User preference (fast/quality) | ✅ System default models |
-| **Rate Limits** | ❌ Applied system-wide | ✅ System rate limit rules |
-| **Data Retention** | ✅ User's conversation retention | ✅ System-wide retention policy |
+| Setting Category   | User Settings (Per-User)          | System Settings (Global)        |
+| ------------------ | --------------------------------- | ------------------------------- |
+| **Theme**          | ✅ User chooses dark/light        | ❌ Not configurable globally    |
+| **Language**       | ✅ User's preferred language      | ✅ Default system language      |
+| **Voice Input**    | ✅ User enables/disables          | ✅ System enables feature       |
+| **Citations**      | ✅ User's display preference      | ❌ Not applicable               |
+| **Logging**        | ❌ Not user-configurable          | ✅ System log level             |
+| **Backups**        | ❌ Not user-configurable          | ✅ System backup schedule       |
+| **AI Models**      | ✅ User preference (fast/quality) | ✅ System default models        |
+| **Rate Limits**    | ❌ Applied system-wide            | ✅ System rate limit rules      |
+| **Data Retention** | ✅ User's conversation retention  | ✅ System-wide retention policy |
 
 #### System Settings Backend API
 
@@ -876,11 +914,13 @@ async def validate_system_settings(
 #### System Settings Storage
 
 System settings are stored in:
+
 1. **PostgreSQL** `system_settings` table (single row)
 2. **Redis cache** for fast access (with 5-minute TTL)
 3. **File backup** in `/etc/voiceassist/system.json` (read on startup)
 
 When settings change:
+
 1. Database is updated
 2. Redis cache is invalidated
 3. WebSocket broadcast to all services
@@ -891,6 +931,7 @@ When settings change:
 #### Model Selection
 
 **Local Models (Ollama)**
+
 ```
 ┌──────────────────────────────────────────┐
 │ Local Model: [Dropdown]                  │
@@ -904,6 +945,7 @@ When settings change:
 ```
 
 **Cloud API Configuration**
+
 ```
 ┌──────────────────────────────────────────┐
 │ OpenAI                                    │
@@ -918,6 +960,7 @@ When settings change:
 ```
 
 #### Routing Logic
+
 ```
 ┌──────────────────────────────────────────┐
 │ Request Routing                          │
@@ -937,11 +980,13 @@ When settings change:
 ```
 
 #### Embedding Models
+
 - OpenAI text-embedding-3-large (cloud)
 - Local embedding model (if installed)
 - Benchmark performance
 
 #### Model Performance
+
 - Average response time per model
 - Token usage and costs
 - Success/failure rates
@@ -1135,21 +1180,21 @@ When settings change:
 
 ### Knowledge Base Management Endpoints
 
-All KB management endpoints use the standard API envelope pattern. See [server/README.md](../server/README.md#standard-api-response-envelope) for complete specification.
+All KB management endpoints use the standard API envelope pattern. See [services/api-gateway/README.md](../services/api-gateway/README.md#standard-api-response-envelope) for complete specification.
 
-| Endpoint | Method | Purpose | Request | Response |
-|----------|--------|---------|---------|----------|
-| `/api/admin/kb/documents` | GET | List documents | Query params (filters) | `APIEnvelope<KnowledgeDocument[]>` |
-| `/api/admin/kb/documents/{id}` | GET | Get document details | - | `APIEnvelope<KnowledgeDocument>` |
-| `/api/admin/kb/documents` | POST | Upload document | FormData (file) | `APIEnvelope<IndexingJob>` |
-| `/api/admin/kb/documents/{id}` | DELETE | Delete document | - | `APIEnvelope<{success: true}>` |
-| `/api/admin/kb/jobs` | GET | List indexing jobs | Query params (state filter) | `APIEnvelope<IndexingJob[]>` |
-| `/api/admin/kb/jobs/{id}` | GET | Get job details | - | `APIEnvelope<IndexingJob>` |
-| `/api/admin/kb/jobs/{id}/retry` | POST | Retry failed job | - | `APIEnvelope<IndexingJob>` |
-| `/api/admin/kb/reindex` | POST | Bulk reindex | `{document_ids: string[]}` | `APIEnvelope<{job_count: number}>` |
-| `/api/admin/kb/search` | POST | Test search | `{query, filters}` | `APIEnvelope<SearchResult[]>` |
+| Endpoint                        | Method | Purpose              | Request                     | Response                           |
+| ------------------------------- | ------ | -------------------- | --------------------------- | ---------------------------------- |
+| `/api/admin/kb/documents`       | GET    | List documents       | Query params (filters)      | `APIEnvelope<KnowledgeDocument[]>` |
+| `/api/admin/kb/documents/{id}`  | GET    | Get document details | -                           | `APIEnvelope<KnowledgeDocument>`   |
+| `/api/admin/kb/documents`       | POST   | Upload document      | FormData (file)             | `APIEnvelope<IndexingJob>`         |
+| `/api/admin/kb/documents/{id}`  | DELETE | Delete document      | -                           | `APIEnvelope<{success: true}>`     |
+| `/api/admin/kb/jobs`            | GET    | List indexing jobs   | Query params (state filter) | `APIEnvelope<IndexingJob[]>`       |
+| `/api/admin/kb/jobs/{id}`       | GET    | Get job details      | -                           | `APIEnvelope<IndexingJob>`         |
+| `/api/admin/kb/jobs/{id}/retry` | POST   | Retry failed job     | -                           | `APIEnvelope<IndexingJob>`         |
+| `/api/admin/kb/reindex`         | POST   | Bulk reindex         | `{document_ids: string[]}`  | `APIEnvelope<{job_count: number}>` |
+| `/api/admin/kb/search`          | POST   | Test search          | `{query, filters}`          | `APIEnvelope<SearchResult[]>`      |
 
-All endpoints return standard `APIEnvelope` as defined in [server/README.md](../server/README.md#standard-api-response-envelope).
+All endpoints return standard `APIEnvelope` as defined in [services/api-gateway/README.md](../services/api-gateway/README.md#standard-api-response-envelope).
 All entity types reference [DATA_MODEL.md](DATA_MODEL.md).
 
 ---
@@ -1221,13 +1266,13 @@ Complete React hook for managing indexing jobs:
 ```typescript
 // admin/hooks/useIndexingJobs.ts
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchAPI } from '@/lib/api';
-import { IndexingJob } from '@/types'; // From DATA_MODEL.md
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchAPI } from "@/lib/api";
+import { IndexingJob } from "@/types"; // From DATA_MODEL.md
 
 interface UseIndexingJobsOptions {
-  stateFilter?: 'pending' | 'running' | 'completed' | 'failed';
-  pollInterval?: number;  // Milliseconds (default: 2000)
+  stateFilter?: "pending" | "running" | "completed" | "failed";
+  pollInterval?: number; // Milliseconds (default: 2000)
 }
 
 export function useIndexingJobs(options: UseIndexingJobsOptions = {}) {
@@ -1236,18 +1281,16 @@ export function useIndexingJobs(options: UseIndexingJobsOptions = {}) {
 
   // Fetch jobs list
   const jobsQuery = useQuery({
-    queryKey: ['indexing-jobs', stateFilter],
+    queryKey: ["indexing-jobs", stateFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (stateFilter) params.append('state', stateFilter);
+      if (stateFilter) params.append("state", stateFilter);
 
-      return fetchAPI<IndexingJob[]>(
-        `/api/admin/kb/jobs?${params.toString()}`
-      );
+      return fetchAPI<IndexingJob[]>(`/api/admin/kb/jobs?${params.toString()}`);
     },
     refetchInterval: (data) => {
       // Poll if any jobs are running
-      const hasRunningJobs = data?.some(job => job.state === 'running');
+      const hasRunningJobs = data?.some((job) => job.state === "running");
       return hasRunningJobs ? pollInterval : false;
     },
   });
@@ -1256,17 +1299,17 @@ export function useIndexingJobs(options: UseIndexingJobsOptions = {}) {
   const retryJob = useMutation({
     mutationFn: async (jobId: string) => {
       return fetchAPI<IndexingJob>(`/api/admin/kb/jobs/${jobId}/retry`, {
-        method: 'POST',
+        method: "POST",
       });
     },
     onSuccess: () => {
       // Refetch jobs list
-      queryClient.invalidateQueries({ queryKey: ['indexing-jobs'] });
-      toast.success('Job retry initiated');
+      queryClient.invalidateQueries({ queryKey: ["indexing-jobs"] });
+      toast.success("Job retry initiated");
     },
     onError: (error: APIError) => {
-      if (error.code === 'VALIDATION_ERROR') {
-        toast.error('Cannot retry: Max retries exceeded');
+      if (error.code === "VALIDATION_ERROR") {
+        toast.error("Cannot retry: Max retries exceeded");
       } else {
         toast.error(`Retry failed: ${error.message}`);
       }
@@ -1276,13 +1319,13 @@ export function useIndexingJobs(options: UseIndexingJobsOptions = {}) {
   // Bulk reindex
   const reindexDocuments = useMutation({
     mutationFn: async (documentIds: string[]) => {
-      return fetchAPI<{ job_count: number }>('/api/admin/kb/reindex', {
-        method: 'POST',
+      return fetchAPI<{ job_count: number }>("/api/admin/kb/reindex", {
+        method: "POST",
         body: JSON.stringify({ document_ids: documentIds }),
       });
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['indexing-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ["indexing-jobs"] });
       toast.success(`${data.job_count} indexing jobs created`);
     },
   });
@@ -1302,13 +1345,13 @@ export function useIndexingJobs(options: UseIndexingJobsOptions = {}) {
 // Fetch single job with detailed progress
 export function useIndexingJob(jobId: string) {
   return useQuery({
-    queryKey: ['indexing-job', jobId],
+    queryKey: ["indexing-job", jobId],
     queryFn: async () => {
       return fetchAPI<IndexingJob>(`/api/admin/kb/jobs/${jobId}`);
     },
     refetchInterval: (data) => {
       // Poll while job is running
-      return data?.state === 'running' ? 2000 : false;
+      return data?.state === "running" ? 2000 : false;
     },
     enabled: !!jobId,
   });
@@ -1378,6 +1421,7 @@ export function IndexingJobsList() {
 #### Document Library Features
 
 **Table View:**
+
 - Checkbox for bulk operations
 - Sortable columns (name, type, pages, indexed date)
 - Expandable rows showing tags and metadata
@@ -1385,6 +1429,7 @@ export function IndexingJobsList() {
 - Action buttons (👁️ View, ⚙️ Re-index, ⬇️ Download, 🗑️ Delete)
 
 **Filters & Search:**
+
 - Full-text search across titles, authors, content
 - Filter by document type (textbook, journal, guideline, etc.)
 - Filter by specialty (multi-select)
@@ -1393,6 +1438,7 @@ export function IndexingJobsList() {
 - Sort by: name, date added, date modified, pages, usage count
 
 **Document Actions:**
+
 - 👁️ View details & metadata with usage stats
 - ⚙️ Re-index (with progress tracking)
 - ⬇️ Download original PDF
@@ -1402,6 +1448,7 @@ export function IndexingJobsList() {
 #### Bulk Operations
 
 **Available Actions:**
+
 - Select all / Select filtered
 - Batch re-indexing with priority queue
 - Batch delete with confirmation
@@ -1412,6 +1459,7 @@ export function IndexingJobsList() {
 #### Indexing Status Panel
 
 **Real-time Progress:**
+
 - Current job name and status
 - Progress bar with percentage
 - Estimated time remaining
@@ -1419,6 +1467,7 @@ export function IndexingJobsList() {
 - Error count
 
 **Queue Management:**
+
 - List of pending indexing jobs
 - Priority queue reordering
 - Pause/resume indexing
@@ -1428,6 +1477,7 @@ export function IndexingJobsList() {
 #### Vector Database Statistics
 
 **Metrics Display:**
+
 - Total documents indexed
 - Total text chunks generated
 - Total vector embeddings
@@ -1438,6 +1488,7 @@ export function IndexingJobsList() {
 - Cache hit rate
 
 **Top Queried Topics:**
+
 - Bar chart of most-accessed specialties
 - Most cited documents
 - Trending topics this week
@@ -1448,18 +1499,21 @@ export function IndexingJobsList() {
 **Note**: For single-user initially, this section is minimal. Expandable for multi-user future.
 
 #### User Profile
+
 - Name and email
 - Profile picture
 - Medical specialty
 - Preferences
 
 #### Session Management
+
 - Active sessions
 - Device/browser info
 - Last activity
 - Revoke session
 
 #### API Keys (Personal)
+
 - Generate API keys for programmatic access
 - Scoped permissions
 - Usage tracking
@@ -1470,30 +1524,35 @@ export function IndexingJobsList() {
 #### Query Analytics
 
 **Overview Metrics**
+
 - Total queries (by period)
 - Unique topics
 - Most common medical specialties
 - Peak usage times
 
 **Query Type Distribution** (Pie Chart)
+
 - Medical literature: 40%
 - Textbook queries: 25%
 - System commands: 20%
 - Web search: 15%
 
 **Popular Topics** (Bar Chart)
+
 - Cardiology: 120 queries
 - Diabetes: 95 queries
 - Infectious Disease: 78 queries
 - ...
 
 **Response Time Trends** (Line Chart)
+
 - Average response time over 30 days
 - Separate lines for local vs cloud
 
 #### Cost Analysis
 
 **API Usage**
+
 ```
 Month: November 2024
 
@@ -1512,22 +1571,26 @@ Total: $55.00
 ```
 
 **Cost Trends** (Line Chart)
+
 - Daily/monthly spend over time
 - Forecast next month
 
 #### Knowledge Base Analytics
+
 - Most accessed documents
 - Citation frequency
 - Specialties most queried
 - Recent additions performance
 
 #### User Activity
+
 - Sessions per day
 - Average session duration
 - Conversation length (messages)
 - Voice vs text usage ratio
 
 #### Export Reports
+
 - Generate PDF reports
 - CSV data export
 - Custom date ranges
@@ -1535,6 +1598,7 @@ Total: $55.00
 ### 7. Integrations (`/integrations`)
 
 #### Nextcloud
+
 ```
 ┌──────────────────────────────────────────┐
 │ Nextcloud Integration                    │
@@ -1554,6 +1618,7 @@ Total: $55.00
 ```
 
 #### Calendar (macOS/Google)
+
 ```
 ┌──────────────────────────────────────────┐
 │ Calendar Integration                     │
@@ -1571,6 +1636,7 @@ Total: $55.00
 ```
 
 #### Email
+
 ```
 ┌──────────────────────────────────────────┐
 │ Email Integration                        │
@@ -1588,6 +1654,7 @@ Total: $55.00
 ```
 
 #### PubMed
+
 ```
 ┌──────────────────────────────────────────┐
 │ PubMed / NCBI                            │
@@ -1604,6 +1671,7 @@ Total: $55.00
 ```
 
 #### OpenEvidence
+
 ```
 ┌──────────────────────────────────────────┐
 │ OpenEvidence                             │
@@ -1617,6 +1685,7 @@ Total: $55.00
 ```
 
 #### Web Search
+
 ```
 ┌──────────────────────────────────────────┐
 │ Web Search                               │
@@ -1633,6 +1702,7 @@ Total: $55.00
 ### 8. Security & Privacy (`/security`)
 
 #### Privacy Settings
+
 ```
 ┌──────────────────────────────────────────┐
 │ Data Retention                           │
@@ -1647,22 +1717,26 @@ Total: $55.00
 ```
 
 #### PHI Detection Rules
+
 - Keyword list (MRN, patient name patterns, etc.)
 - Regex patterns
 - Directory blacklist (never send to cloud)
 - Test PHI detector with examples
 
 #### Data Handling Policy
+
 - Document current privacy approach
 - HIPAA compliance checklist
 - Link to full privacy policy
 
 #### Encryption
+
 - Encryption at rest: Status
 - Encryption in transit: Status
 - Key management
 
 #### Access Logs
+
 - Admin login history
 - Failed login attempts
 - API access patterns
@@ -1673,6 +1747,7 @@ Total: $55.00
 #### Log Viewer
 
 **Real-Time Logs**
+
 ```
 ┌──────────────────────────────────────────────────┐
 │ [■ Pause] [⟳ Auto-refresh] [⬇️ Download]        │
@@ -1687,12 +1762,14 @@ Total: $55.00
 ```
 
 **Filters**
+
 - Log level (DEBUG, INFO, WARN, ERROR)
 - Service (backend, vector-db, ollama, etc.)
 - Time range
 - Search text
 
 #### Error Tracking
+
 - Error summary dashboard
 - Error rate over time
 - Most common errors
@@ -1700,6 +1777,7 @@ Total: $55.00
 - Error resolution status
 
 #### Performance Logs
+
 - Slow query log (> 5s)
 - API latency tracking
 - Database query performance
@@ -1707,6 +1785,7 @@ Total: $55.00
 ### 10. Backups & Maintenance (`/maintenance`)
 
 #### Backup Configuration
+
 ```
 ┌──────────────────────────────────────────┐
 │ Automated Backups                        │
@@ -1731,6 +1810,7 @@ Total: $55.00
 ```
 
 #### System Maintenance
+
 - Database vacuum and optimization
 - Clear old logs
 - Rebuild vector index
@@ -1738,6 +1818,7 @@ Total: $55.00
 - Prune old Docker images
 
 #### Health Checks
+
 - Run comprehensive system test
 - Check all integrations
 - Verify model availability
@@ -1745,6 +1826,7 @@ Total: $55.00
 - Database connectivity
 
 #### Update Management
+
 - Check for updates
 - View changelog
 - Schedule update
@@ -1760,16 +1842,19 @@ Total: $55.00
 ## Notifications & Alerts
 
 ### Alert Types
+
 - Critical: Service down
 - Warning: High error rate, disk space low
 - Info: Update available, backup completed
 
 ### Notification Channels
+
 - In-app notifications
 - Email alerts
 - Webhook (Slack, Discord, etc.)
 
 ### Alert Configuration
+
 - Set thresholds (CPU > 90%, error rate > 5%, etc.)
 - Enable/disable specific alerts
 - Quiet hours
@@ -1817,6 +1902,7 @@ interface ToolStatus {
 ```
 
 **Key Metrics:**
+
 - Total tool calls per tool (24h, 7d, 30d)
 - Success rate percentage
 - Average execution duration
@@ -1953,13 +2039,13 @@ const integrations: ExternalIntegration[] = [
 
 **Supported Integrations:**
 
-| Integration | Category | API Key Required | PHI Safe | Purpose |
-|-------------|----------|------------------|----------|---------|
-| OpenEvidence | Medical Search | Yes | Yes (external) | Evidence-based medicine search |
-| PubMed (NCBI) | Medical Search | No | Yes (external) | Biomedical literature search |
-| Nextcloud | File Storage | No (internal) | No (local PHI) | Document storage and retrieval |
-| CalDAV Server | Calendar | No (internal) | No (local PHI) | Calendar events (via Nextcloud) |
-| Google Custom Search | Web Search | Yes | Yes (external) | General medical web search |
+| Integration          | Category       | API Key Required | PHI Safe       | Purpose                         |
+| -------------------- | -------------- | ---------------- | -------------- | ------------------------------- |
+| OpenEvidence         | Medical Search | Yes              | Yes (external) | Evidence-based medicine search  |
+| PubMed (NCBI)        | Medical Search | No               | Yes (external) | Biomedical literature search    |
+| Nextcloud            | File Storage   | No (internal)    | No (local PHI) | Document storage and retrieval  |
+| CalDAV Server        | Calendar       | No (internal)    | No (local PHI) | Calendar events (via Nextcloud) |
+| Google Custom Search | Web Search     | Yes              | Yes (external) | General medical web search      |
 
 ### Integration Configuration UI
 
@@ -2213,6 +2299,7 @@ interface ToolHealth {
 ```
 
 **Related Documentation:**
+
 - [TOOLS_AND_INTEGRATIONS.md](TOOLS_AND_INTEGRATIONS.md) - Complete tools layer specification
 - [ORCHESTRATION_DESIGN.md](ORCHESTRATION_DESIGN.md) - Backend tool execution flow
 - [DATA_MODEL.md](DATA_MODEL.md) - ToolCall and ToolResult entities
@@ -2221,6 +2308,7 @@ interface ToolHealth {
 ## API for Admin Panel
 
 ### Endpoints
+
 ```
 GET    /api/admin/dashboard          - Dashboard metrics
 GET    /api/admin/services/status    - Service health
@@ -2241,6 +2329,100 @@ POST   /api/admin/backup             - Trigger backup
 GET    /api/admin/health             - System health check
 ```
 
+## Contextual Help & AI Assistant
+
+The admin panel includes integrated help features that connect to the documentation site and provide AI-powered assistance.
+
+### HelpButton Component
+
+Available from `packages/ui`, links to relevant documentation from any admin page:
+
+```tsx
+// Usage in admin pages
+import { HelpButton } from "@voiceassist/ui";
+
+<HelpButton
+  docPath="admin/security"           // Path to docs page
+  section="permissions"              // Optional section anchor
+  variant="icon" | "text" | "both"   // Display mode
+  size="sm" | "md" | "lg"            // Button size
+/>
+
+// Opens: https://assistdocs.asimo.io/admin/security#permissions
+```
+
+**Implementation:**
+
+- Location: `packages/ui/src/components/HelpButton.tsx`
+- Uses `NEXT_PUBLIC_DOCS_URL` environment variable
+- Opens docs in new tab with appropriate section hash
+- Keyboard accessible (Tab + Enter)
+
+### AskAIButton Component
+
+Embedded in admin panel pages to provide contextual AI assistance:
+
+```tsx
+// Location: apps/admin-panel/src/components/shared/AskAIButton.tsx
+
+<AskAIButton
+  context={{
+    page: "security", // Current page context
+    feature: "audit-logs", // Specific feature
+    userId: currentUser.id, // Optional user context
+  }}
+  position="bottom-right" // Fab position
+/>
+```
+
+**User Flow:**
+
+1. User clicks "Ask AI" floating action button
+2. Dialog opens with text input field
+3. Page context is pre-filled (user can modify)
+4. Submit sends request to `/api/ai/docs/ask`
+5. AI response includes relevant doc citations
+6. User can click citations to open full documentation
+
+**API Endpoint:**
+
+```typescript
+// POST /api/ai/docs/ask
+interface DocsAskRequest {
+  question: string;
+  context?: {
+    page?: string;
+    feature?: string;
+    userId?: string;
+  };
+}
+
+interface DocsAskResponse {
+  answer: string;
+  citations: Array<{
+    doc_path: string;
+    title: string;
+    section?: string;
+    relevance: number;
+  }>;
+  confidence: number;
+}
+```
+
+**Backend Integration:**
+
+- Uses `docs_search_tool` for semantic search across documentation
+- Leverages Qdrant `platform_docs` collection (1536-dim embeddings)
+- Returns top-k relevant passages with citations
+- Confidence score indicates answer quality
+
+**See Also:**
+
+- [DOCUMENTATION_SITE_SPECS.md](DOCUMENTATION_SITE_SPECS.md) - Full docs site specifications
+- [Agent API Reference](ai/AGENT_API_REFERENCE.md) - AI agent endpoints
+
+---
+
 ## Security Considerations
 
 - Admin panel on separate subdomain
@@ -2254,6 +2436,7 @@ GET    /api/admin/health             - System health check
 ## Future Enhancements
 
 ### Advanced Features
+
 - Multi-user management with roles
 - Team collaboration features
 - Custom dashboard widgets
@@ -2264,6 +2447,7 @@ GET    /api/admin/health             - System health check
 - Automated scaling suggestions
 
 ### AI-Powered Admin
+
 - Anomaly detection in metrics
 - Predictive maintenance alerts
 - Intelligent log analysis

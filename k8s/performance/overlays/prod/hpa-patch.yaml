@@ -7,21 +7,21 @@ kind: HorizontalPodAutoscaler
 metadata:
   name: voiceassist-server-hpa
 spec:
-  minReplicas: 3  # Increased from 2 for better HA
-  maxReplicas: 15  # Increased from 10 for peak traffic
+  minReplicas: 3 # Increased from 2 for better HA
+  maxReplicas: 15 # Increased from 10 for peak traffic
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 65  # More aggressive from 70%
+          averageUtilization: 65 # More aggressive from 70%
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
-          averageUtilization: 75  # More aggressive from 80%
+          averageUtilization: 75 # More aggressive from 80%
 
 ---
 apiVersion: autoscaling/v2
@@ -29,12 +29,12 @@ kind: HorizontalPodAutoscaler
 metadata:
   name: voiceassist-worker-hpa
 spec:
-  minReplicas: 2  # Increased from 1 for better throughput
-  maxReplicas: 8  # Increased from 5 for peak loads
+  minReplicas: 2 # Increased from 1 for better throughput
+  maxReplicas: 8 # Increased from 5 for peak loads
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 75  # More aggressive from 80%
+          averageUtilization: 75 # More aggressive from 80%

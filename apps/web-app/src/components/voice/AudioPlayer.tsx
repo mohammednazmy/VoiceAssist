@@ -3,8 +3,8 @@
  * Plays synthesized speech with controls
  */
 
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { Button } from '@voiceassist/ui';
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Button } from "@voiceassist/ui";
 
 interface AudioPlayerProps {
   audioBlob: Blob | null;
@@ -12,7 +12,11 @@ interface AudioPlayerProps {
   onPlaybackEnd?: () => void;
 }
 
-export function AudioPlayer({ audioBlob, autoPlay = false, onPlaybackEnd }: AudioPlayerProps) {
+export function AudioPlayer({
+  audioBlob,
+  autoPlay = false,
+  onPlaybackEnd,
+}: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -47,34 +51,36 @@ export function AudioPlayer({ audioBlob, autoPlay = false, onPlaybackEnd }: Audi
     audioUrlRef.current = url;
 
     const audio = new Audio(url);
+    // Explicitly set src to ensure metadata/loading fires in tests and browsers
+    audio.src = url;
 
-    audio.addEventListener('loadedmetadata', () => {
+    audio.addEventListener("loadedmetadata", () => {
       setDuration(audio.duration);
     });
 
-    audio.addEventListener('timeupdate', () => {
+    audio.addEventListener("timeupdate", () => {
       setCurrentTime(audio.currentTime);
     });
 
-    audio.addEventListener('ended', () => {
+    audio.addEventListener("ended", () => {
       setIsPlaying(false);
       setCurrentTime(0);
       onPlaybackEnd?.();
     });
 
-    audio.addEventListener('play', () => {
+    audio.addEventListener("play", () => {
       setIsPlaying(true);
     });
 
-    audio.addEventListener('pause', () => {
+    audio.addEventListener("pause", () => {
       setIsPlaying(false);
     });
 
     audioRef.current = audio;
 
     if (autoPlay) {
-      audio.play().catch(err => {
-        console.error('Autoplay failed:', err);
+      audio.play().catch((err) => {
+        console.error("Autoplay failed:", err);
       });
     }
 
@@ -91,24 +97,27 @@ export function AudioPlayer({ audioBlob, autoPlay = false, onPlaybackEnd }: Audi
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play().catch(err => {
-        console.error('Playback failed:', err);
+      audioRef.current.play().catch((err) => {
+        console.error("Playback failed:", err);
       });
     }
   }, [isPlaying]);
 
-  const handleSeek = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!audioRef.current) return;
+  const handleSeek = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (!audioRef.current) return;
 
-    const newTime = parseFloat(event.target.value);
-    audioRef.current.currentTime = newTime;
-    setCurrentTime(newTime);
-  }, []);
+      const newTime = parseFloat(event.target.value);
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+    },
+    [],
+  );
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   if (!audioBlob) {
@@ -123,7 +132,7 @@ export function AudioPlayer({ audioBlob, autoPlay = false, onPlaybackEnd }: Audi
         variant="ghost"
         size="sm"
         onClick={togglePlayback}
-        aria-label={isPlaying ? 'Pause' : 'Play'}
+        aria-label={isPlaying ? "Pause" : "Play"}
         className="flex-shrink-0"
       >
         {isPlaying ? (
@@ -133,7 +142,7 @@ export function AudioPlayer({ audioBlob, autoPlay = false, onPlaybackEnd }: Audi
             viewBox="0 0 24 24"
             className="w-5 h-5"
           >
-            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
           </svg>
         ) : (
           <svg
@@ -142,7 +151,7 @@ export function AudioPlayer({ audioBlob, autoPlay = false, onPlaybackEnd }: Audi
             viewBox="0 0 24 24"
             className="w-5 h-5"
           >
-            <path d="M8 5v14l11-7z"/>
+            <path d="M8 5v14l11-7z" />
           </svg>
         )}
       </Button>

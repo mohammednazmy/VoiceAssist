@@ -1,6 +1,43 @@
+---
+title: Backend Architecture
+slug: architecture/backend
+summary: Backend structure and production layout using FastAPI in services/api-gateway.
+status: stable
+stability: production
+owner: backend
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - agent
+  - ai-agents
+  - backend
+tags:
+  - architecture
+  - backend
+  - fastapi
+  - microservices
+relatedServices:
+  - api-gateway
+category: architecture
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/main.py"
+  - "services/api-gateway/app/api/__init__.py"
+  - "services/api-gateway/app/core/config.py"
+  - "services/api-gateway/app/core/database.py"
+  - "services/api-gateway/app/models/__init__.py"
+source_of_truth: true
+version: 2.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 (All 15 Phases Complete) Status: Canonical Reference
+  Purpose: Clarify backend structure evolution from monorepo to microservices
+  --- VoiceAssist V2 backend follows a progressive architecture strategy: -
+  Phases 0-10: Monorepo structure with clear module boundaries (Docker...
+---
+
 # VoiceAssist V2 - Backend Architecture
 
-**Last Updated**: 2025-11-20 (Phase 2 Enhancements)
+**Last Updated**: 2025-11-27 (All 15 Phases Complete)
 **Status**: Canonical Reference
 **Purpose**: Clarify backend structure evolution from monorepo to microservices
 
@@ -9,6 +46,7 @@
 ## Overview
 
 VoiceAssist V2 backend follows a **progressive architecture strategy**:
+
 - **Phases 0-10**: Monorepo structure with clear module boundaries (Docker Compose)
 - **Phases 11-14**: Optional split into microservices (Kubernetes)
 
@@ -29,19 +67,21 @@ This document explains both approaches and when to use each.
 
 ### Repository Layout for Backend
 
-During Phases 0–1 the backend code lives in two related locations:
+**IMPORTANT**: The canonical backend is `services/api-gateway/`. The `server/` directory is a deprecated legacy stub and should NOT be used.
 
-- `services/api-gateway/app/` – The **running API Gateway** used by Docker Compose.
-  This service hosts the health endpoints, database connectivity, and core infrastructure
-  needed to validate Phase 0–1 (PostgreSQL, Redis, Qdrant, metrics, logging, etc.).
-- `server/app/` – The **logical monorepo** used for higher-level service designs:
-  QueryOrchestrator, LLMClient, tool execution engine, and other components defined in
-  ORCHESTRATION_DESIGN.md, TOOLS_AND_INTEGRATIONS.md, and DATA_MODEL.md.
+The production backend code lives in:
 
-In early phases, `services/api-gateway` is responsible for infrastructure concerns and
-basic APIs, while `server/` hosts the emerging monorepo structure that later phases
-will build out. The SERVICE_CATALOG and .ai/index.json document how these pieces map
-to logical services.
+- `services/api-gateway/app/` – The **production API Gateway** (FastAPI)
+  - `app/api/` – 20+ API modules (auth, conversations, admin, voice, etc.)
+  - `app/core/` – Configuration, security, database, logging
+  - `app/models/` – SQLAlchemy ORM models
+  - `app/schemas/` – Pydantic request/response schemas
+  - `app/services/` – 40+ business logic services
+  - `app/middleware/` – Request middleware (rate limiting)
+
+- `server/` – **DEPRECATED** - Legacy stub kept only for historical reference. Do not use for new development.
+
+All new backend development should occur in `services/api-gateway/`.
 
 ## Development Evolution
 
@@ -64,6 +104,7 @@ Phases 11-14: Microservices + Kubernetes (Optional)
 ### Why Start with Monorepo?
 
 **Advantages**:
+
 - **Faster Development**: Single codebase, shared models, easier refactoring
 - **Simpler Debugging**: All code in one place, unified logging
 - **Lower Complexity**: No distributed tracing, service mesh, or K8s initially
@@ -71,6 +112,7 @@ Phases 11-14: Microservices + Kubernetes (Optional)
 - **Shared Dependencies**: Common libraries, models, utilities
 
 **When It's Sufficient**:
+
 - Development and testing phases
 - Deployment to single server
 - < 50 concurrent users
@@ -78,25 +120,30 @@ Phases 11-14: Microservices + Kubernetes (Optional)
 
 ---
 
-## Monorepo Structure (Phases 0-10)
+## Production Structure (All 15 Phases Complete)
 
 ### Directory Layout
 
 ```
-server/
+services/api-gateway/
 ├── app/
 │   ├── main.py                 # FastAPI application entry point
-│   ├── api/                    # API routes (FastAPI routers)
+│   ├── api/                    # API routes (20+ modules)
 │   │   ├── __init__.py
 │   │   ├── auth.py             # Authentication endpoints
-│   │   ├── chat.py             # Chat/conversation endpoints
-│   │   ├── search.py           # Knowledge base search endpoints
-│   │   ├── admin.py            # Admin panel endpoints
-│   │   ├── voice.py            # Voice/WebSocket endpoints
-│   │   ├── documents.py        # Document upload/management
-│   │   └── users.py            # User management
+│   │   ├── users.py            # User management
+│   │   ├── conversations.py    # Chat/conversation management
+│   │   ├── admin_panel.py      # Admin dashboard
+│   │   ├── admin_kb.py         # Knowledge base admin
+│   │   ├── admin_cache.py      # Cache management
+│   │   ├── admin_feature_flags.py # Feature flags
+│   │   ├── voice.py            # Voice endpoints
+│   │   ├── realtime.py         # WebSocket handling
+│   │   ├── medical_ai.py       # Medical AI endpoints
+│   │   ├── health.py           # Health checks
+│   │   └── ...                 # Additional modules
 │   │
-│   ├── services/               # Business logic (service layer)
+│   ├── services/               # Business logic (40+ services)
 │   │   ├── __init__.py
 │   │   ├── rag_service.py      # RAG pipeline orchestration
 │   │   ├── phi_detector.py     # PHI detection logic
@@ -171,6 +218,7 @@ server/
 ### FastAPI Application Structure
 
 **`app/main.py`**:
+
 ```python
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -208,6 +256,7 @@ async def health_check():
 Each "service" is a Python module with clear responsibilities:
 
 **`app/services/rag_service.py`**:
+
 ```python
 from typing import List, Dict
 from app.services.search_service import SearchService
@@ -268,19 +317,20 @@ class RAGService:
 
 Even in monorepo, maintain strict boundaries:
 
-| Module | Responsibility | Can Import From | Cannot Import From |
-|--------|----------------|-----------------|-------------------|
-| `api/` | HTTP endpoints, request/response | `services/`, `schemas/`, `core/` | `models/` directly |
-| `services/` | Business logic | `models/`, `schemas/`, `core/`, other `services/` | `api/` |
-| `models/` | Database ORM | `core/` | `api/`, `services/` |
-| `schemas/` | Pydantic models | Nothing (pure data) | Everything |
-| `core/` | Config, database, security | Nothing (foundational) | `api/`, `services/`, `models/` |
+| Module      | Responsibility                   | Can Import From                                   | Cannot Import From             |
+| ----------- | -------------------------------- | ------------------------------------------------- | ------------------------------ |
+| `api/`      | HTTP endpoints, request/response | `services/`, `schemas/`, `core/`                  | `models/` directly             |
+| `services/` | Business logic                   | `models/`, `schemas/`, `core/`, other `services/` | `api/`                         |
+| `models/`   | Database ORM                     | `core/`                                           | `api/`, `services/`            |
+| `schemas/`  | Pydantic models                  | Nothing (pure data)                               | Everything                     |
+| `core/`     | Config, database, security       | Nothing (foundational)                            | `api/`, `services/`, `models/` |
 
 ### Docker Compose Setup
 
 **`docker-compose.yml`**:
+
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   # Backend API (monorepo)
@@ -363,6 +413,7 @@ volumes:
 ### When to Split
 
 **Trigger Conditions**:
+
 - Deployment to Kubernetes cluster
 - Need for independent scaling (e.g., voice service needs more resources)
 - Team growth (> 5 developers, need ownership boundaries)
@@ -436,14 +487,17 @@ services/
 ### Service Communication
 
 **Synchronous (HTTP/REST)**:
+
 - API Gateway → Services: REST API calls
 - Service → Service: HTTP with service discovery (K8s DNS)
 
 **Asynchronous (Message Queue)**:
+
 - Document indexing: Publish to RabbitMQ/Redis queue
 - Audit logging: Async events to audit service
 
 **Shared Data**:
+
 - PostgreSQL: Shared database (schema per service if needed)
 - Redis: Shared cache
 - Qdrant: Shared vector DB
@@ -453,6 +507,7 @@ services/
 **Example: Chat Service**
 
 **`k8s/chat-service.yaml`**:
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -469,25 +524,25 @@ spec:
         app: chat-service
     spec:
       containers:
-      - name: chat-service
-        image: voiceassist/chat-service:latest
-        ports:
-        - containerPort: 8000
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: db-secret
-              key: url
-        - name: REDIS_URL
-          value: redis://redis-service:6379
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1000m"
+        - name: chat-service
+          image: voiceassist/chat-service:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: url
+            - name: REDIS_URL
+              value: redis://redis-service:6379
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
 ---
 apiVersion: v1
 kind: Service
@@ -497,8 +552,8 @@ spec:
   selector:
     app: chat-service
   ports:
-  - port: 80
-    targetPort: 8000
+    - port: 80
+      targetPort: 8000
   type: ClusterIP
 ```
 
@@ -508,16 +563,16 @@ spec:
 
 ### Decision Matrix
 
-| Factor | Monorepo | Microservices |
-|--------|----------|---------------|
-| **Team Size** | < 5 developers | > 5 developers |
-| **Concurrent Users** | < 50 users | > 50 users |
-| **Deployment** | Single server | Multi-node K8s cluster |
-| **Scaling Needs** | Vertical scaling OK | Need horizontal scaling |
-| **Development Speed** | Faster (single codebase) | Slower (coordination overhead) |
-| **Operational Complexity** | Low (Docker Compose) | High (K8s, service mesh) |
-| **Cost** | Lower (single server) | Higher (multiple servers) |
-| **Regulatory** | OK for small clinics | Required for large hospitals |
+| Factor                     | Monorepo                 | Microservices                  |
+| -------------------------- | ------------------------ | ------------------------------ |
+| **Team Size**              | < 5 developers           | > 5 developers                 |
+| **Concurrent Users**       | < 50 users               | > 50 users                     |
+| **Deployment**             | Single server            | Multi-node K8s cluster         |
+| **Scaling Needs**          | Vertical scaling OK      | Need horizontal scaling        |
+| **Development Speed**      | Faster (single codebase) | Slower (coordination overhead) |
+| **Operational Complexity** | Low (Docker Compose)     | High (K8s, service mesh)       |
+| **Cost**                   | Lower (single server)    | Higher (multiple servers)      |
+| **Regulatory**             | OK for small clinics     | Required for large hospitals   |
 
 ### Recommended Path
 
@@ -627,6 +682,7 @@ These are the logical boundaries, whether in monorepo or microservices:
 ### Core Infrastructure
 
 **Request ID Middleware** (`app/core/request_id.py`):
+
 - Generates unique UUID v4 for each request
 - Accepts client-provided request IDs via `X-Request-ID` header
 - Returns request ID in response header for correlation
@@ -634,6 +690,7 @@ These are the logical boundaries, whether in monorepo or microservices:
 - Stored in `request.state.request_id` for access in route handlers
 
 **API Envelope Standardization** (`app/core/api_envelope.py`):
+
 - **Consistent response format** for all endpoints:
   ```json
   {
@@ -723,6 +780,7 @@ POST /api/v1/search
 ### Shared Library Pattern
 
 **`shared/` Package**:
+
 ```python
 # shared/models/user.py
 from sqlalchemy import Column, String, Boolean
@@ -736,11 +794,13 @@ class User(Base):
 ```
 
 Install shared library in each service:
+
 ```bash
 pip install -e /path/to/shared
 ```
 
 Or publish to private PyPI:
+
 ```bash
 pip install voiceassist-shared==1.0.0
 ```
@@ -751,7 +811,7 @@ pip install voiceassist-shared==1.0.0
 
 - [DATA_MODEL.md](DATA_MODEL.md) - Canonical data entities
 - [SERVICE_CATALOG.md](SERVICE_CATALOG.md) - Complete service descriptions
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture overview
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - System architecture overview
 - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Phase-by-phase plan
 - [COMPOSE_TO_K8S_MIGRATION.md](COMPOSE_TO_K8S_MIGRATION.md) - K8s migration guide
-- [server/README.md](../server/README.md) - Backend implementation guide
+- [EXTENSION_GUIDE.md](EXTENSION_GUIDE.md) - Patterns for extending VoiceAssist

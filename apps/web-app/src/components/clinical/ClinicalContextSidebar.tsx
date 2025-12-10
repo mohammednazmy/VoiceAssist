@@ -3,9 +3,12 @@
  * Display and edit clinical context during chat consultations
  */
 
-import { useState } from 'react';
-import { Button } from '@voiceassist/ui';
-import { ClinicalContextPanel, type ClinicalContext } from './ClinicalContextPanel';
+import { useState } from "react";
+import { Button } from "@voiceassist/ui";
+import {
+  ClinicalContextPanel,
+  type ClinicalContext,
+} from "./ClinicalContextPanel";
 
 export interface ClinicalContextSidebarProps {
   isOpen: boolean;
@@ -29,12 +32,13 @@ export function ClinicalContextSidebar({
   const hasContext = Object.keys(context).some((key) => {
     const value = context[key as keyof ClinicalContext];
     if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === 'object' && value !== null) return Object.keys(value).length > 0;
+    if (typeof value === "object" && value !== null)
+      return Object.keys(value).length > 0;
     return Boolean(value);
   });
 
   const handleClear = () => {
-    if (confirm('Clear all clinical context?')) {
+    if (confirm("Clear all clinical context?")) {
       onChange({});
       setIsEditing(false);
     }
@@ -142,39 +146,42 @@ export function ClinicalContextSidebar({
             // View mode
             <div className="space-y-4">
               {/* Demographics Summary */}
-              {context.demographics && Object.keys(context.demographics).length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-                    Demographics
-                  </h3>
-                  <div className="text-sm text-neutral-600 dark:text-neutral-400 space-y-1">
-                    {context.demographics.age && (
-                      <div className="flex justify-between">
-                        <span className="font-medium">Age:</span>
-                        <span>{context.demographics.age} years</span>
-                      </div>
-                    )}
-                    {context.demographics.gender && (
-                      <div className="flex justify-between">
-                        <span className="font-medium">Gender:</span>
-                        <span className="capitalize">{context.demographics.gender}</span>
-                      </div>
-                    )}
-                    {context.demographics.weight && (
-                      <div className="flex justify-between">
-                        <span className="font-medium">Weight:</span>
-                        <span>{context.demographics.weight} kg</span>
-                      </div>
-                    )}
-                    {context.demographics.height && (
-                      <div className="flex justify-between">
-                        <span className="font-medium">Height:</span>
-                        <span>{context.demographics.height} cm</span>
-                      </div>
-                    )}
+              {context.demographics &&
+                Object.keys(context.demographics).length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                      Demographics
+                    </h3>
+                    <div className="text-sm text-neutral-600 dark:text-neutral-400 space-y-1">
+                      {context.demographics.age && (
+                        <div className="flex justify-between">
+                          <span className="font-medium">Age:</span>
+                          <span>{context.demographics.age} years</span>
+                        </div>
+                      )}
+                      {context.demographics.gender && (
+                        <div className="flex justify-between">
+                          <span className="font-medium">Gender:</span>
+                          <span className="capitalize">
+                            {context.demographics.gender}
+                          </span>
+                        </div>
+                      )}
+                      {context.demographics.weight && (
+                        <div className="flex justify-between">
+                          <span className="font-medium">Weight:</span>
+                          <span>{context.demographics.weight} kg</span>
+                        </div>
+                      )}
+                      {context.demographics.height && (
+                        <div className="flex justify-between">
+                          <span className="font-medium">Height:</span>
+                          <span>{context.demographics.height} cm</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Chief Complaint */}
               {context.chiefComplaint && (
@@ -260,31 +267,41 @@ export function ClinicalContextSidebar({
                     {context.vitals.temperature && (
                       <div className="flex flex-col">
                         <span className="text-xs text-neutral-500">Temp</span>
-                        <span className="font-medium">{context.vitals.temperature}°C</span>
+                        <span className="font-medium">
+                          {context.vitals.temperature}°C
+                        </span>
                       </div>
                     )}
                     {context.vitals.heartRate && (
                       <div className="flex flex-col">
                         <span className="text-xs text-neutral-500">HR</span>
-                        <span className="font-medium">{context.vitals.heartRate} bpm</span>
+                        <span className="font-medium">
+                          {context.vitals.heartRate} bpm
+                        </span>
                       </div>
                     )}
                     {context.vitals.bloodPressure && (
                       <div className="flex flex-col">
                         <span className="text-xs text-neutral-500">BP</span>
-                        <span className="font-medium">{context.vitals.bloodPressure}</span>
+                        <span className="font-medium">
+                          {context.vitals.bloodPressure}
+                        </span>
                       </div>
                     )}
                     {context.vitals.respiratoryRate && (
                       <div className="flex flex-col">
                         <span className="text-xs text-neutral-500">RR</span>
-                        <span className="font-medium">{context.vitals.respiratoryRate}/min</span>
+                        <span className="font-medium">
+                          {context.vitals.respiratoryRate}/min
+                        </span>
                       </div>
                     )}
                     {context.vitals.oxygenSaturation && (
                       <div className="flex flex-col">
                         <span className="text-xs text-neutral-500">SpO₂</span>
-                        <span className="font-medium">{context.vitals.oxygenSaturation}%</span>
+                        <span className="font-medium">
+                          {context.vitals.oxygenSaturation}%
+                        </span>
                       </div>
                     )}
                   </div>
@@ -312,7 +329,9 @@ export function ClinicalContextSidebar({
               />
             </svg>
             <p>
-              Clinical context provides background information for AI assistance. Do not enter PHI or personally identifiable information.
+              Clinical context provides background information for AI
+              assistance. Do not enter PHI or personally identifiable
+              information.
             </p>
           </div>
         </div>

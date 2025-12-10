@@ -18,55 +18,41 @@ Usage:
     profiler = QueryProfiler(slow_query_threshold_ms=100)
     profiler.setup(engine)
 """
+
 from __future__ import annotations
 
 import time
-import logging
-from typing import Dict, Optional, Any
-from contextlib import contextmanager
 from collections import defaultdict
+from contextlib import contextmanager
+from typing import Any, Dict, Optional
 
+from app.core.config import settings
+from app.core.logging import get_logger
+from prometheus_client import Counter, Gauge, Histogram
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session
-from prometheus_client import Counter, Histogram, Gauge
-
-from app.core.logging import get_logger
-from app.core.config import settings
-
 
 logger = get_logger(__name__)
 
 
 # Prometheus Metrics
 query_duration_histogram = Histogram(
-    'db_query_duration_seconds',
-    'Database query execution time in seconds',
-    ['query_type'],
-    buckets=[0.001, 0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+    "db_query_duration_seconds",
+    "Database query execution time in seconds",
+    ["query_type"],
+    buckets=[0.001, 0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
 )
 
-slow_queries_total = Counter(
-    'db_slow_queries_total',
-    'Total number of slow database queries',
-    ['query_type']
-)
+slow_queries_total = Counter("db_slow_queries_total", "Total number of slow database queries", ["query_type"])
 
-query_count_total = Counter(
-    'db_query_count_total',
-    'Total number of database queries executed',
-    ['query_type']
-)
+query_count_total = Counter("db_query_count_total", "Total number of database queries executed", ["query_type"])
 
 n_plus_one_warnings_total = Counter(
-    'db_n_plus_one_warnings_total',
-    'Total number of potential N+1 query pattern warnings'
+    "db_n_plus_one_warnings_total",
+    "Total number of potential N+1 query pattern warnings",
 )
 
-active_queries_gauge = Gauge(
-    'db_active_queries',
-    'Number of currently executing database queries'
-)
+active_queries_gauge = Gauge("db_active_queries", "Number of currently executing database queries")
 
 
 class QueryProfiler:
@@ -85,7 +71,7 @@ class QueryProfiler:
         self,
         slow_query_threshold_ms: int = 100,
         n_plus_one_threshold: int = 10,
-        enabled: bool = True
+        enabled: bool = True,
     ):
         """Initialize query profiler.
 
@@ -136,13 +122,13 @@ class QueryProfiler:
         statement: str,
         parameters: Any,
         context: Any,
-        executemany: bool
+        executemany: bool,
     ) -> None:
         """Event listener called before query execution.
 
         Records the start time for query duration calculation.
         """
-        conn.info.setdefault('query_start_time', []).append(time.time())
+        conn.info.setdefault("query_start_time", []).append(time.time())
         active_queries_gauge.inc()
 
     def _after_cursor_execute(
@@ -152,7 +138,7 @@ class QueryProfiler:
         statement: str,
         parameters: Any,
         context: Any,
-        executemany: bool
+        executemany: bool,
     ) -> None:
         """Event listener called after query execution.
 
@@ -161,7 +147,7 @@ class QueryProfiler:
         active_queries_gauge.dec()
 
         # Calculate query duration
-        start_time = conn.info['query_start_time'].pop()
+        start_time = conn.info["query_start_time"].pop()
         duration = time.time() - start_time
 
         # Extract query type (SELECT, INSERT, UPDATE, DELETE)
@@ -190,30 +176,24 @@ class QueryProfiler:
         """
         statement_upper = statement.strip().upper()
 
-        if statement_upper.startswith('SELECT'):
-            return 'SELECT'
-        elif statement_upper.startswith('INSERT'):
-            return 'INSERT'
-        elif statement_upper.startswith('UPDATE'):
-            return 'UPDATE'
-        elif statement_upper.startswith('DELETE'):
-            return 'DELETE'
-        elif statement_upper.startswith('BEGIN'):
-            return 'BEGIN'
-        elif statement_upper.startswith('COMMIT'):
-            return 'COMMIT'
-        elif statement_upper.startswith('ROLLBACK'):
-            return 'ROLLBACK'
+        if statement_upper.startswith("SELECT"):
+            return "SELECT"
+        elif statement_upper.startswith("INSERT"):
+            return "INSERT"
+        elif statement_upper.startswith("UPDATE"):
+            return "UPDATE"
+        elif statement_upper.startswith("DELETE"):
+            return "DELETE"
+        elif statement_upper.startswith("BEGIN"):
+            return "BEGIN"
+        elif statement_upper.startswith("COMMIT"):
+            return "COMMIT"
+        elif statement_upper.startswith("ROLLBACK"):
+            return "ROLLBACK"
         else:
-            return 'OTHER'
+            return "OTHER"
 
-    def _log_slow_query(
-        self,
-        statement: str,
-        parameters: Any,
-        duration: float,
-        query_type: str
-    ) -> None:
+    def _log_slow_query(self, statement: str, parameters: Any, duration: float, query_type: str) -> None:
         """Log details of a slow query.
 
         Args:
@@ -233,10 +213,10 @@ class QueryProfiler:
             f"Query: {truncated_statement}\n"
             f"Parameters: {parameters if parameters else 'None'}",
             extra={
-                'query_type': query_type,
-                'duration_ms': duration_ms,
-                'threshold_ms': self.slow_query_threshold_ms
-            }
+                "query_type": query_type,
+                "duration_ms": duration_ms,
+                "threshold_ms": self.slow_query_threshold_ms,
+            },
         )
 
     def _track_query_pattern(self, statement: str, query_type: str) -> None:
@@ -250,7 +230,7 @@ class QueryProfiler:
             query_type: Type of query
         """
         # Only track SELECT queries for N+1 detection
-        if query_type != 'SELECT':
+        if query_type != "SELECT":
             return
 
         # Create a normalized pattern by removing parameter values
@@ -282,17 +262,19 @@ class QueryProfiler:
         statement_upper = statement.strip().upper()
 
         # Extract the main components
-        if 'FROM' in statement_upper:
+        if "FROM" in statement_upper:
             # Find table name
-            from_idx = statement_upper.find('FROM')
-            where_idx = statement_upper.find('WHERE', from_idx)
+            from_idx = statement_upper.find("FROM")
+            where_idx = statement_upper.find("WHERE", from_idx)
 
             if where_idx > 0:
                 table_part = statement_upper[from_idx:where_idx].strip()
             else:
-                table_part = statement_upper[from_idx:].split()[1] if len(statement_upper[from_idx:].split()) > 1 else ""
+                table_part = (
+                    statement_upper[from_idx:].split()[1] if len(statement_upper[from_idx:].split()) > 1 else ""
+                )
 
-            return f"SELECT FROM {table_part}"
+            return f"SELECT FROM {table_part}"  # nosec B608 - logging description, not executed SQL
 
         return statement_upper[:100]  # Fallback to first 100 chars
 
@@ -308,10 +290,10 @@ class QueryProfiler:
             f"Pattern executed {count} times: {pattern}\n"
             f"Consider using eager loading (selectinload/joinedload) or joins to optimize.",
             extra={
-                'pattern': pattern,
-                'execution_count': count,
-                'threshold': self.n_plus_one_threshold
-            }
+                "pattern": pattern,
+                "execution_count": count,
+                "threshold": self.n_plus_one_threshold,
+            },
         )
 
     def _on_connect(self, dbapi_conn: Any, connection_record: Any) -> None:
@@ -361,13 +343,12 @@ class QueryProfiler:
                 unique_patterns = len(self._query_patterns)
 
                 self.logger.debug(
-                    f"Request {request_id}: {total_queries} queries "
-                    f"({unique_patterns} unique patterns)",
+                    f"Request {request_id}: {total_queries} queries " f"({unique_patterns} unique patterns)",
                     extra={
-                        'request_id': request_id,
-                        'total_queries': total_queries,
-                        'unique_patterns': unique_patterns
-                    }
+                        "request_id": request_id,
+                        "total_queries": total_queries,
+                        "unique_patterns": unique_patterns,
+                    },
                 )
 
             self.reset_pattern_tracking()
@@ -387,14 +368,14 @@ def get_query_profiler() -> QueryProfiler:
 
     if _global_profiler is None:
         # Get configuration from settings
-        slow_threshold = getattr(settings, 'SLOW_QUERY_THRESHOLD_MS', 100)
-        n_plus_one_threshold = getattr(settings, 'N_PLUS_ONE_THRESHOLD', 10)
-        profiler_enabled = getattr(settings, 'QUERY_PROFILER_ENABLED', True)
+        slow_threshold = getattr(settings, "SLOW_QUERY_THRESHOLD_MS", 100)
+        n_plus_one_threshold = getattr(settings, "N_PLUS_ONE_THRESHOLD", 10)
+        profiler_enabled = getattr(settings, "QUERY_PROFILER_ENABLED", True)
 
         _global_profiler = QueryProfiler(
             slow_query_threshold_ms=slow_threshold,
             n_plus_one_threshold=n_plus_one_threshold,
-            enabled=profiler_enabled
+            enabled=profiler_enabled,
         )
 
     return _global_profiler

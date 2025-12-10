@@ -1,3 +1,30 @@
+---
+title: E2e Testing Guide
+slug: testing/e2e-testing-guide
+summary: >-
+  This guide describes the comprehensive end-to-end (E2E) test suite for
+  VoiceAssist V2. These tests verify complete user workflows, service
+  integration...
+status: stable
+stability: production
+owner: sre
+lastUpdated: "2025-11-27"
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - e2e
+  - testing
+  - guide
+category: testing
+ai_summary: >-
+  This guide describes the comprehensive end-to-end (E2E) test suite for
+  VoiceAssist V2. These tests verify complete user workflows, service
+  integrations, failure recovery, and performance characteristics. Tests full
+  user workflows from registration through complex operations: - User
+  Registration &...
+---
+
 # End-to-End Testing Guide (Phase 7 - P2.2)
 
 ## Overview
@@ -18,6 +45,7 @@ Tests full user workflows from registration through complex operations:
 - **Session Management**: Token lifecycle across multiple requests
 
 **Key Test:**
+
 ```python
 test_full_user_journey()
 # Register → Login → Verify Auth → Token Refresh → Logout → Verify Revocation
@@ -38,6 +66,7 @@ Tests system behavior under failure conditions:
 - **Transaction Rollback**: Database consistency on failures
 
 **Key Test:**
+
 ```python
 test_redis_failure_graceful_degradation()
 # System continues operating when Redis is unavailable
@@ -56,6 +85,7 @@ Benchmarks and performance validation:
 - **Database Query Performance**: DB operation latency (<200ms avg)
 
 **Performance Targets:**
+
 - Authentication: <500ms average
 - Health checks: <100ms average, <200ms p95
 - Cached queries: 2x+ faster than uncached
@@ -66,11 +96,13 @@ Benchmarks and performance validation:
 ### Prerequisites
 
 1. **Services Running:**
+
    ```bash
    docker compose up -d
    ```
 
 2. **Service Health:**
+
    ```bash
    curl http://localhost:8000/health
    ```
@@ -265,7 +297,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
@@ -288,6 +320,7 @@ jobs:
 ### Common Issues
 
 **Test Database Connection Errors:**
+
 ```bash
 # Ensure PostgreSQL is running
 docker compose ps postgres
@@ -297,24 +330,28 @@ PGPASSWORD=changeme_secure_password psql -h localhost -U voiceassist -d postgres
 ```
 
 **Redis Connection Errors:**
+
 ```bash
 # Verify Redis is accessible
 redis-cli -h localhost -p 6379 -a changeme_redis_password ping
 ```
 
 **Qdrant Connection Errors:**
+
 ```bash
 # Check Qdrant health
 curl http://localhost:6333/health
 ```
 
 **Slow Tests:**
+
 ```bash
 # Run with timing report
 pytest -c pytest.e2e.ini tests/e2e/ --durations=10
 ```
 
 **Flaky Tests:**
+
 ```bash
 # Run tests multiple times to identify flakiness
 pytest -c pytest.e2e.ini tests/e2e/ --count=5
@@ -324,15 +361,15 @@ pytest -c pytest.e2e.ini tests/e2e/ --count=5
 
 Current performance baselines (run on MacBook Pro M3, 16GB RAM):
 
-| Operation | Target | Typical |
-|-----------|--------|---------|
-| Authentication (login) | <500ms | ~150ms |
-| Health check (avg) | <100ms | ~20ms |
-| Health check (p95) | <200ms | ~50ms |
-| Cached query | 2x faster | 5-10x faster |
-| Concurrent logins (10) | <1s | ~300ms |
-| Metrics endpoint | <500ms | ~100ms |
-| Database query | <200ms | ~50ms |
+| Operation              | Target    | Typical      |
+| ---------------------- | --------- | ------------ |
+| Authentication (login) | <500ms    | ~150ms       |
+| Health check (avg)     | <100ms    | ~20ms        |
+| Health check (p95)     | <200ms    | ~50ms        |
+| Cached query           | 2x faster | 5-10x faster |
+| Concurrent logins (10) | <1s       | ~300ms       |
+| Metrics endpoint       | <500ms    | ~100ms       |
+| Database query         | <200ms    | ~50ms        |
 
 ## Test Coverage Goals
 
@@ -371,6 +408,7 @@ Current performance baselines (run on MacBook Pro M3, 16GB RAM):
 ## Contact
 
 For questions or issues with E2E tests:
+
 - Review test output and logs
 - Check service health endpoints
 - Consult this guide

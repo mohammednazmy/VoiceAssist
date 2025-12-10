@@ -1,6 +1,6 @@
 /**
  * MessageActionMenu Unit Tests
- * Tests action menu visibility, role-based actions, and callbacks
+ * Tests action menu visibility, role-based actions, callbacks, loading states, and keyboard shortcuts
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -13,6 +13,7 @@ describe("MessageActionMenu", () => {
   const mockOnRegenerate = vi.fn();
   const mockOnDelete = vi.fn();
   const mockOnCopy = vi.fn();
+  const mockOnBranch = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -231,18 +232,11 @@ describe("MessageActionMenu", () => {
       });
     });
 
-    it("should close menu when clicking outside", async () => {
+    it("should close menu when pressing Escape", async () => {
       const user = userEvent.setup();
 
       render(
-        <div>
-          <MessageActionMenu
-            messageId="msg-1"
-            role="user"
-            onEdit={mockOnEdit}
-          />
-          <div data-testid="outside">Outside element</div>
-        </div>,
+        <MessageActionMenu messageId="msg-1" role="user" onEdit={mockOnEdit} />,
       );
 
       const menuButton = screen.getByRole("button", {
@@ -253,8 +247,8 @@ describe("MessageActionMenu", () => {
       // Menu should be open
       expect(screen.getByText(/edit/i)).toBeInTheDocument();
 
-      // Click outside
-      await user.click(screen.getByTestId("outside"));
+      // Press Escape to close
+      await user.keyboard("{Escape}");
 
       // Menu should close
       await waitFor(() => {
@@ -289,6 +283,293 @@ describe("MessageActionMenu", () => {
       await user.keyboard("{Enter}");
 
       expect(screen.getByText(/edit/i)).toBeInTheDocument();
+    });
+  });
+
+  describe("branch action", () => {
+    it("should show branch option when onBranch is provided", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <MessageActionMenu
+          messageId="msg-1"
+          role="user"
+          onEdit={mockOnEdit}
+          onBranch={mockOnBranch}
+        />,
+      );
+
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+
+      expect(screen.getByText(/branch conversation/i)).toBeInTheDocument();
+    });
+
+    it("should call onBranch when branch is clicked", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <MessageActionMenu
+          messageId="msg-1"
+          role="user"
+          onEdit={mockOnEdit}
+          onBranch={mockOnBranch}
+        />,
+      );
+
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+
+      const branchButton = screen.getByText(/branch conversation/i);
+      await user.click(branchButton);
+
+      expect(mockOnBranch).toHaveBeenCalledTimes(1);
+    });
+
+    it("should show branch for both user and assistant messages", async () => {
+      const user = userEvent.setup();
+
+      // Test for assistant
+      render(
+        <MessageActionMenu
+          messageId="msg-1"
+          role="assistant"
+          onRegenerate={mockOnRegenerate}
+          onBranch={mockOnBranch}
+        />,
+      );
+
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+
+      expect(screen.getByText(/branch conversation/i)).toBeInTheDocument();
+    });
+  });
+
+  describe("loading states", () => {
+    it("should disable actions when isDeleting is true", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <MessageActionMenu
+          messageId="msg-1"
+          role="user"
+          onEdit={mockOnEdit}
+          onDelete={mockOnDelete}
+          isDeleting={true}
+        />,
+      );
+
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+
+      const editItem = screen.getByTestId("action-edit");
+      // Radix uses data-disabled="" (empty string) when disabled
+      expect(editItem).toHaveAttribute("data-disabled");
+    });
+
+    it("should disable actions when isRegenerating is true", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <MessageActionMenu
+          messageId="msg-1"
+          role="assistant"
+          onRegenerate={mockOnRegenerate}
+          onDelete={mockOnDelete}
+          isRegenerating={true}
+        />,
+      );
+
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+
+      const regenerateItem = screen.getByTestId("action-regenerate");
+      // Radix uses data-disabled="" (empty string) when disabled
+      expect(regenerateItem).toHaveAttribute("data-disabled");
+    });
+
+    it("should disable actions when isBranching is true", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <MessageActionMenu
+          messageId="msg-1"
+          role="user"
+          onEdit={mockOnEdit}
+          onBranch={mockOnBranch}
+          isBranching={true}
+        />,
+      );
+
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+
+      const branchItem = screen.getByTestId("action-branch");
+      // Radix uses data-disabled="" (empty string) when disabled
+      expect(branchItem).toHaveAttribute("data-disabled");
+    });
+
+    it("should show spinner icon when action is in progress", async () => {
+      const user = userEvent.setup();
+
+      const { container: _container } = render(
+        <MessageActionMenu
+          messageId="msg-1"
+          role="assistant"
+          onRegenerate={mockOnRegenerate}
+          isRegenerating={true}
+        />,
+      );
+
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+
+      // Check for spinner animation class
+      const regenerateItem = screen.getByTestId("action-regenerate");
+      const spinner = regenerateItem.querySelector(".animate-spin");
+      expect(spinner).toBeInTheDocument();
+    });
+  });
+
+  describe("keyboard shortcuts display", () => {
+    it("should display keyboard shortcut for copy action", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <MessageActionMenu messageId="msg-1" role="user" onCopy={mockOnCopy} />,
+      );
+
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+
+      // Check for keyboard shortcut display
+      expect(screen.getByText("⌘C")).toBeInTheDocument();
+    });
+
+    it("should display keyboard shortcut for edit action", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <MessageActionMenu messageId="msg-1" role="user" onEdit={mockOnEdit} />,
+      );
+
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+
+      expect(screen.getByText("E")).toBeInTheDocument();
+    });
+
+    it("should display keyboard shortcut for regenerate action", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <MessageActionMenu
+          messageId="msg-1"
+          role="assistant"
+          onRegenerate={mockOnRegenerate}
+        />,
+      );
+
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+
+      expect(screen.getByText("R")).toBeInTheDocument();
+    });
+
+    it("should display keyboard shortcut for delete action", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <MessageActionMenu
+          messageId="msg-1"
+          role="user"
+          onDelete={mockOnDelete}
+        />,
+      );
+
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+
+      expect(screen.getByText("Del")).toBeInTheDocument();
+    });
+
+    it("should display keyboard shortcut for branch action", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <MessageActionMenu
+          messageId="msg-1"
+          role="user"
+          onBranch={mockOnBranch}
+        />,
+      );
+
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+
+      expect(screen.getByText("B")).toBeInTheDocument();
+    });
+  });
+
+  describe("data-testid attributes", () => {
+    it("should have data-testid on menu trigger", () => {
+      render(
+        <MessageActionMenu messageId="msg-1" role="user" onEdit={mockOnEdit} />,
+      );
+
+      expect(
+        screen.getByTestId("message-action-menu-trigger"),
+      ).toBeInTheDocument();
+    });
+
+    it("should have data-testid on action items", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <MessageActionMenu
+          messageId="msg-1"
+          role="user"
+          onEdit={mockOnEdit}
+          onCopy={mockOnCopy}
+          onDelete={mockOnDelete}
+          onBranch={mockOnBranch}
+        />,
+      );
+
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+
+      expect(screen.getByTestId("action-copy")).toBeInTheDocument();
+      expect(screen.getByTestId("action-edit")).toBeInTheDocument();
+      expect(screen.getByTestId("action-delete")).toBeInTheDocument();
+      expect(screen.getByTestId("action-branch")).toBeInTheDocument();
     });
   });
 });

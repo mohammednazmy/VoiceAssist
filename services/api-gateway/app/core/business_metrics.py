@@ -102,21 +102,13 @@ def _create_dummy_metric():
 
 
 # User Activity Metrics
-user_registrations_total = safe_counter(
-    "voiceassist_user_registrations_total", "Total number of user registrations"
-)
+user_registrations_total = safe_counter("voiceassist_user_registrations_total", "Total number of user registrations")
 
-user_logins_total = safe_counter(
-    "voiceassist_user_logins_total", "Total number of successful user logins"
-)
+user_logins_total = safe_counter("voiceassist_user_logins_total", "Total number of successful user logins")
 
-active_users_daily = safe_gauge(
-    "voiceassist_active_users_daily", "Number of unique users active today"
-)
+active_users_daily = safe_gauge("voiceassist_active_users_daily", "Number of unique users active today")
 
-active_users_monthly = safe_gauge(
-    "voiceassist_active_users_monthly", "Number of unique users active this month"
-)
+active_users_monthly = safe_gauge("voiceassist_active_users_monthly", "Number of unique users active this month")
 
 user_session_duration = safe_histogram(
     "voiceassist_user_session_duration_seconds",
@@ -144,13 +136,9 @@ rag_citations_per_query = safe_histogram(
 )
 
 # Knowledge Base Metrics
-kb_documents_total = safe_gauge(
-    "voiceassist_kb_documents_total", "Total number of documents in knowledge base"
-)
+kb_documents_total = safe_gauge("voiceassist_kb_documents_total", "Total number of documents in knowledge base")
 
-kb_chunks_total = safe_gauge(
-    "voiceassist_kb_chunks_total", "Total number of indexed chunks"
-)
+kb_chunks_total = safe_gauge("voiceassist_kb_chunks_total", "Total number of indexed chunks")
 
 kb_document_uploads_total = safe_counter(
     "voiceassist_kb_document_uploads_total",
@@ -206,14 +194,10 @@ openai_tokens_used_total = safe_counter(
     labelnames=["model", "token_type"],  # token_type: prompt, completion
 )
 
-openai_api_cost_dollars = safe_counter(
-    "voiceassist_openai_api_cost_dollars_total", "Estimated OpenAI API cost in USD"
-)
+openai_api_cost_dollars = safe_counter("voiceassist_openai_api_cost_dollars_total", "Estimated OpenAI API cost in USD")
 
 # System Health Business Metrics
-system_uptime_seconds = safe_gauge(
-    "voiceassist_system_uptime_seconds", "System uptime in seconds"
-)
+system_uptime_seconds = safe_gauge("voiceassist_system_uptime_seconds", "System uptime in seconds")
 
 feature_flag_checks_total = safe_counter(
     "voiceassist_feature_flag_checks_total",
@@ -250,24 +234,16 @@ db_query_count = safe_counter(
     labelnames=["query_type"],
 )
 
-db_n_plus_one_warnings = safe_counter(
-    "voiceassist_db_n_plus_one_warnings_total", "N+1 query pattern warnings"
-)
+db_n_plus_one_warnings = safe_counter("voiceassist_db_n_plus_one_warnings_total", "N+1 query pattern warnings")
 
 # Database Connection Pool Metrics
 db_pool_size = safe_gauge("voiceassist_db_pool_size", "Database connection pool size")
 
-db_pool_checked_out = safe_gauge(
-    "voiceassist_db_pool_checked_out", "Number of connections currently checked out"
-)
+db_pool_checked_out = safe_gauge("voiceassist_db_pool_checked_out", "Number of connections currently checked out")
 
-db_pool_checked_in = safe_gauge(
-    "voiceassist_db_pool_checked_in", "Number of connections available in pool"
-)
+db_pool_checked_in = safe_gauge("voiceassist_db_pool_checked_in", "Number of connections available in pool")
 
-db_pool_overflow = safe_gauge(
-    "voiceassist_db_pool_overflow", "Number of overflow connections in use"
-)
+db_pool_overflow = safe_gauge("voiceassist_db_pool_overflow", "Number of overflow connections in use")
 
 db_pool_utilization = safe_gauge(
     "voiceassist_db_pool_utilization_percent",
@@ -307,9 +283,7 @@ cache_evictions_total = safe_counter(
 )
 
 # Redis Connection Pool Metrics
-redis_pool_max_connections = safe_gauge(
-    "voiceassist_redis_pool_max_connections", "Maximum Redis pool connections"
-)
+redis_pool_max_connections = safe_gauge("voiceassist_redis_pool_max_connections", "Maximum Redis pool connections")
 
 redis_pool_active_connections = safe_gauge(
     "voiceassist_redis_pool_active_connections", "Currently active Redis connections"
@@ -368,12 +342,8 @@ response_time_p99 = safe_gauge(
 )
 
 # Resource Utilization
-memory_usage_bytes = safe_gauge(
-    "voiceassist_memory_usage_bytes", "Current memory usage in bytes"
-)
+memory_usage_bytes = safe_gauge("voiceassist_memory_usage_bytes", "Current memory usage in bytes")
 
-cpu_usage_percent = safe_gauge(
-    "voiceassist_cpu_usage_percent", "Current CPU usage percentage"
-)
+cpu_usage_percent = safe_gauge("voiceassist_cpu_usage_percent", "Current CPU usage percentage")
 
 thread_count = safe_gauge("voiceassist_thread_count", "Number of active threads")

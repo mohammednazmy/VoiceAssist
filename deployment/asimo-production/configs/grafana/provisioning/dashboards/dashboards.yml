@@ -3,9 +3,9 @@
 apiVersion: 1
 
 providers:
-  - name: 'VoiceAssist Dashboards'
+  - name: "VoiceAssist Dashboards"
     orgId: 1
-    folder: 'VoiceAssist'
+    folder: "VoiceAssist"
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30

@@ -189,9 +189,7 @@ class TestNameDetection:
     def test_medical_terms_not_flagged_as_names(self, detector):
         """Medical terms should not be flagged as names."""
         # The medical_terms whitelist should exclude these
-        result = detector.detect(
-            "Diagnosed with heart disease and blood pressure issues"
-        )
+        result = detector.detect("Diagnosed with heart disease and blood pressure issues")
         # Should not flag medical terms as PHI
         if result.contains_phi and "name" in result.phi_types:
             # If name is detected, ensure it's not a medical term
@@ -245,9 +243,7 @@ class TestClinicalContextPHI:
             "gender": "male",
             "chief_complaint": "Headache",
         }
-        result = detector.detect(
-            "What medications help with headaches?", clinical_context=clinical_context
-        )
+        result = detector.detect("What medications help with headaches?", clinical_context=clinical_context)
         # The query itself is clean
         if result.contains_phi:
             # Should not be due to SSN, phone, email etc.

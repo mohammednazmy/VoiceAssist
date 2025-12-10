@@ -255,7 +255,7 @@
 
 /* Apply smooth color transitions when theme changes */
 * {
-  transition-property: background-color, border-color, color, fill, stroke;
+  transition-property: background-color, border-color, color;
   transition-duration: var(--transition-normal);
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }

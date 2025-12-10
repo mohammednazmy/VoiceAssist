@@ -1,3 +1,26 @@
+---
+title: Phase 04 Voice Pipeline
+slug: phases/phase-04-voice-pipeline
+summary: "> **V2 PHASE DOCUMENT**"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - ai-agents
+tags:
+  - phase
+  - voice
+  - pipeline
+category: planning
+ai_summary: >-
+  > V2 PHASE DOCUMENT > > This phase description is part of the canonical 0–14
+  V2 plan. > It is intended to guide both human developers and Claude Code >
+  sessions. Always read DEVELOPMENT_PHASES_V2.md and BACKEND_ARCHITECTURE.md >
+  alongside this document. Implement web-based voice assistant with Re...
+---
+
 # Phase 4: Voice Pipeline & Realtime Conversations
 
 > **V2 PHASE DOCUMENT**
@@ -12,6 +35,7 @@
 Implement web-based voice assistant with Realtime API and voice proxy.
 
 See also:
+
 - [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)
 - [PHASE_STATUS.md](../../PHASE_STATUS.md)
 - [BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md)

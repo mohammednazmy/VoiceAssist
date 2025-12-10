@@ -3,10 +3,92 @@
  * Tests message rendering, markdown, citations, and streaming states
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MessageBubble } from "../MessageBubble";
 import type { Message } from "@voiceassist/types";
+
+// Mock useToastContext since MessageBubble uses it for copy feedback
+vi.mock("../../../contexts/ToastContext", () => ({
+  useToastContext: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  }),
+}));
+
+// Mock the Dialog components from @voiceassist/ui for RegenerationOptionsDialog
+vi.mock("@voiceassist/ui", async () => {
+  const actual = await vi.importActual("@voiceassist/ui");
+  return {
+    ...actual,
+    Dialog: ({
+      children,
+      open,
+    }: {
+      children: React.ReactNode;
+      open: boolean;
+    }) => (open ? <div role="dialog">{children}</div> : null),
+    DialogContent: ({
+      children,
+      className,
+      ...props
+    }: {
+      children: React.ReactNode;
+      className?: string;
+      [key: string]: unknown;
+    }) => (
+      <div className={className} {...props}>
+        {children}
+      </div>
+    ),
+    DialogHeader: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+    DialogTitle: ({ children }: { children: React.ReactNode }) => (
+      <h2>{children}</h2>
+    ),
+    DialogDescription: ({ children }: { children: React.ReactNode }) => (
+      <p>{children}</p>
+    ),
+    DialogFooter: ({
+      children,
+      className,
+    }: {
+      children: React.ReactNode;
+      className?: string;
+    }) => <div className={className}>{children}</div>,
+    Slider: ({
+      id,
+      value,
+      onValueChange,
+      min,
+      max,
+      step,
+      ...props
+    }: {
+      id?: string;
+      value: number[];
+      onValueChange: (value: number[]) => void;
+      min: number;
+      max: number;
+      step: number;
+      [key: string]: unknown;
+    }) => (
+      <input
+        id={id}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value[0]}
+        onChange={(e) => onValueChange([parseFloat(e.target.value)])}
+        {...props}
+      />
+    ),
+  };
+});
 
 describe("MessageBubble", () => {
   const baseMessage: Message = {

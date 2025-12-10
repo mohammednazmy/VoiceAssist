@@ -5,8 +5,8 @@ API endpoints for conversation folders
 from typing import Optional
 from uuid import UUID
 
-from app.core.dependencies import get_current_user
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
 from app.models.folder import ConversationFolder, FolderCreate, FolderUpdate
 from app.models.user import User
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -43,9 +43,7 @@ async def create_folder(
             .first()
         )
         if not parent:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Parent folder not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Parent folder not found")
 
     # Check for duplicate name in same parent
     existing = (
@@ -53,8 +51,7 @@ async def create_folder(
         .filter(
             ConversationFolder.user_id == current_user.id,
             ConversationFolder.name == folder.name,
-            ConversationFolder.parent_folder_id
-            == (UUID(folder.parent_folder_id) if folder.parent_folder_id else None),
+            ConversationFolder.parent_folder_id == (UUID(folder.parent_folder_id) if folder.parent_folder_id else None),
         )
         .first()
     )
@@ -70,9 +67,7 @@ async def create_folder(
         name=folder.name,
         color=folder.color,
         icon=folder.icon,
-        parent_folder_id=(
-            UUID(folder.parent_folder_id) if folder.parent_folder_id else None
-        ),
+        parent_folder_id=(UUID(folder.parent_folder_id) if folder.parent_folder_id else None),
     )
 
     db.add(db_folder)
@@ -99,9 +94,7 @@ async def list_folders(
     Returns:
         List of folders
     """
-    query = db.query(ConversationFolder).filter(
-        ConversationFolder.user_id == current_user.id
-    )
+    query = db.query(ConversationFolder).filter(ConversationFolder.user_id == current_user.id)
 
     if parent_id:
         query = query.filter(ConversationFolder.parent_folder_id == UUID(parent_id))
@@ -182,9 +175,7 @@ async def get_folder(
     )
 
     if not folder:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Folder not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Folder not found")
 
     return folder.to_dict()
 
@@ -218,9 +209,7 @@ async def update_folder(
     )
 
     if not folder:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Folder not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Folder not found")
 
     # Check for circular reference if updating parent
     if folder_update.parent_folder_id:
@@ -233,11 +222,7 @@ async def update_folder(
 
         # Check if new parent is a descendant
         def is_descendant(current_id: UUID, target_id: UUID) -> bool:
-            current = (
-                db.query(ConversationFolder)
-                .filter(ConversationFolder.id == current_id)
-                .first()
-            )
+            current = db.query(ConversationFolder).filter(ConversationFolder.id == current_id).first()
             if not current:
                 return False
             if current.parent_folder_id == target_id:
@@ -291,9 +276,7 @@ async def delete_folder(
     )
 
     if not folder:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Folder not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Folder not found")
 
     # Orphan child folders (due to SET NULL on delete)
     # This happens automatically with the foreign key constraint
@@ -334,9 +317,7 @@ async def move_folder(
     )
 
     if not folder:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Folder not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Folder not found")
 
     # Get target folder
     target = (
@@ -349,9 +330,7 @@ async def move_folder(
     )
 
     if not target:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Target folder not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target folder not found")
 
     # Check for circular reference
     if target_folder_id == folder_id:
@@ -362,11 +341,7 @@ async def move_folder(
 
     # Check if target is a descendant
     def is_descendant(current_id: UUID, target_id: UUID) -> bool:
-        current = (
-            db.query(ConversationFolder)
-            .filter(ConversationFolder.id == current_id)
-            .first()
-        )
+        current = db.query(ConversationFolder).filter(ConversationFolder.id == current_id).first()
         if not current:
             return False
         if current.parent_folder_id == target_id:

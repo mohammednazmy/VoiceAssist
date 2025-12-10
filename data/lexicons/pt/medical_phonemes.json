@@ -1,0 +1,21 @@
+{
+  "_meta": {
+    "version": "0.1.0",
+    "term_count": 10,
+    "last_updated": "2024-12-04",
+    "language": "pt",
+    "alphabet": "ipa",
+    "status": "in_progress",
+    "categories": ["drug_names", "conditions", "anatomy"]
+  },
+  "diabetes": "dʒiaˈbetʃis",
+  "hipertensão": "ipeʁtẽˈsɐ̃w̃",
+  "coração": "koɾaˈsɐ̃w̃",
+  "pulmão": "puwˈmɐ̃w̃",
+  "fígado": "ˈfiɡadu",
+  "rim": "ʁĩ",
+  "estômago": "isˈtomɐɡu",
+  "cérebro": "ˈsɛɾebɾu",
+  "dor": "doʁ",
+  "febre": "ˈfɛbɾi"
+}

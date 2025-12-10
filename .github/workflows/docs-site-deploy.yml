@@ -1,0 +1,239 @@
+name: Docs Site Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "apps/docs-site/**"
+      - "turbo.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/docs-site-deploy.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        type: choice
+        default: staging
+        options:
+          - staging
+          - production
+  schedule:
+    - cron: "15 6 * * *"
+
+concurrency: docs-site-${{ github.ref }}
+
+env:
+  NODE_VERSION: 20.x
+  PNPM_VERSION: 10.23.0
+  ARTIFACT_NAME: docs-site-static
+  DOCS_PROD_URL: https://docs.asimo.io
+  DOCS_STAGING_URL: https://staging.docs.asimo.io
+  SITEMAP_PATH: /sitemap.xml
+
+jobs:
+  build-docs:
+    name: Build static docs bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and package docs static export
+        run: pnpm turbo run deploy --filter=docs-site
+
+      - name: Upload static bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: artifacts/docs-site.tar.gz
+          retention-days: 14
+
+  deploy-staging:
+    name: Deploy docs to staging
+    needs: build-docs
+    if: github.event_name != 'schedule' && (github.ref == 'refs/heads/develop' || github.event.inputs.environment == 'staging')
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ env.DOCS_STAGING_URL }}
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+    steps:
+      - name: Download static bundle
+        uses: actions/download-artifact@v6
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: artifacts
+
+      - name: Extract static files
+        run: |
+          mkdir -p dist
+          tar -xzf artifacts/docs-site.tar.gz -C dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sync cached assets
+        run: |
+          aws s3 sync dist s3://${{ secrets.DOCS_STAGING_BUCKET }}/ \
+            --delete \
+            --cache-control "public,max-age=31536000,immutable" \
+            --exclude "*.html"
+
+      - name: Sync HTML with short cache
+        run: |
+          aws s3 sync dist s3://${{ secrets.DOCS_STAGING_BUCKET }}/ \
+            --delete \
+            --cache-control "public,max-age=300" \
+            --content-type "text/html" \
+            --exclude "*" \
+            --include "*.html"
+
+      - name: Invalidate staging CDN (optional)
+        if: secrets.DOCS_STAGING_DISTRIBUTION_ID != ''
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.DOCS_STAGING_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+  deploy-production:
+    name: Deploy docs to production
+    needs: build-docs
+    if: github.event_name != 'schedule' && (github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production')
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ env.DOCS_PROD_URL }}
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+    steps:
+      - name: Download static bundle
+        uses: actions/download-artifact@v6
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: artifacts
+
+      - name: Extract static files
+        run: |
+          mkdir -p dist
+          tar -xzf artifacts/docs-site.tar.gz -C dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sync cached assets
+        run: |
+          aws s3 sync dist s3://${{ secrets.DOCS_PROD_BUCKET }}/ \
+            --delete \
+            --cache-control "public,max-age=31536000,immutable" \
+            --exclude "*.html"
+
+      - name: Sync HTML with short cache
+        run: |
+          aws s3 sync dist s3://${{ secrets.DOCS_PROD_BUCKET }}/ \
+            --delete \
+            --cache-control "public,max-age=300" \
+            --content-type "text/html" \
+            --exclude "*" \
+            --include "*.html"
+
+      - name: Invalidate production CDN (optional)
+        if: secrets.DOCS_PROD_DISTRIBUTION_ID != ''
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.DOCS_PROD_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+      - name: Submit sitemap to Google
+        run: |
+          curl --fail --silent --show-error "https://www.google.com/ping?sitemap=${{ env.DOCS_PROD_URL }}${{ env.SITEMAP_PATH }}"
+
+  post-deploy-checks:
+    name: Post-deploy smoke tests
+    needs:
+      - deploy-staging
+      - deploy-production
+    if: github.event_name != 'schedule' && (needs.deploy-production.result == 'success' || needs.deploy-staging.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Smoke test staging
+        if: needs.deploy-staging.result == 'success'
+        run: |
+          curl --fail --silent --show-error ${{ env.DOCS_STAGING_URL }}/ > /dev/null
+          curl --fail --silent --show-error ${{ env.DOCS_STAGING_URL }}${{ env.SITEMAP_PATH }} > /dev/null
+          curl --fail --silent --show-error ${{ env.DOCS_STAGING_URL }}/overview > /dev/null
+
+      - name: Smoke test production
+        if: needs.deploy-production.result == 'success'
+        run: |
+          curl --fail --silent --show-error ${{ env.DOCS_PROD_URL }}/ > /dev/null
+          curl --fail --silent --show-error ${{ env.DOCS_PROD_URL }}${{ env.SITEMAP_PATH }} > /dev/null
+          curl --fail --silent --show-error ${{ env.DOCS_PROD_URL }}/reference > /dev/null
+
+      - name: Broken link crawl (production)
+        if: needs.deploy-production.result == 'success'
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: "--accept 200,301,302 --timeout 15 --max-redirects 5 ${{ env.DOCS_PROD_URL }}${{ env.SITEMAP_PATH }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  scheduled-uptime:
+    name: Scheduled uptime & sitemap checks
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify staging and production availability
+        run: |
+          for url in "${DOCS_STAGING_URL}" "${DOCS_PROD_URL}"; do
+            echo "Checking ${url}"
+            curl --fail --silent --show-error "$url/" > /dev/null
+            curl --fail --silent --show-error "${url}${SITEMAP_PATH}" > /dev/null
+          done
+
+      - name: Submit production sitemap
+        run: |
+          curl --fail --silent --show-error "https://www.google.com/ping?sitemap=${DOCS_PROD_URL}${SITEMAP_PATH}"
+
+      - name: Broken link crawl (scheduled)
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: "--accept 200,301,302 --timeout 20 --max-redirects 5 ${DOCS_PROD_URL}${SITEMAP_PATH} ${DOCS_STAGING_URL}${SITEMAP_PATH}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

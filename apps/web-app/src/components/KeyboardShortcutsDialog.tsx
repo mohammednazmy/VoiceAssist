@@ -28,6 +28,16 @@ const SHORTCUTS: Shortcut[] = [
     category: "Navigation",
   },
   {
+    keys: ["⌘", "⇧", "V"],
+    description: "Toggle voice mode",
+    category: "Voice",
+  },
+  {
+    keys: ["Esc"],
+    description: "Close voice panel (when open)",
+    category: "Voice",
+  },
+  {
     keys: ["⌘", "I"],
     description: "Toggle clinical context",
     category: "Clinical",
@@ -54,7 +64,7 @@ const SHORTCUTS: Shortcut[] = [
   },
   {
     keys: ["Esc"],
-    description: "Close modal/dialog",
+    description: "Close modal / Cancel edit",
     category: "General",
   },
   {

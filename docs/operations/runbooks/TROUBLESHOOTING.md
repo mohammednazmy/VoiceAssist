@@ -1,6 +1,35 @@
+---
+title: Troubleshooting Runbook
+slug: operations/runbooks/troubleshooting
+summary: Comprehensive troubleshooting guide for VoiceAssist V2 common issues.
+status: stable
+stability: production
+owner: sre
+lastUpdated: "2025-11-27"
+audience:
+  - devops
+  - backend
+  - ai-agents
+tags:
+  - runbook
+  - troubleshooting
+  - operations
+  - debugging
+category: debugging
+relatedServices:
+  - api-gateway
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 Purpose: Comprehensive troubleshooting guide for
+  VoiceAssist V2 common issues --- echo "VoiceAssist Quick Diagnostics -
+  $(date)" echo "=========================================" echo -e "\n[1]
+  Service Status:" docker compose ps echo -e "\n[2] Health Checks:" curl -s
+  http:...
+---
+
 # Troubleshooting Runbook
 
-**Last Updated**: 2025-11-21 (Phase 7 - P3.2)
+**Last Updated**: 2025-11-27
 **Purpose**: Comprehensive troubleshooting guide for VoiceAssist V2 common issues
 
 ---
@@ -47,6 +76,7 @@ echo -e "\n========================================="
 ### 1. Application Won't Start
 
 #### Symptom
+
 - Container exits immediately
 - Health check fails
 - "Connection refused" errors
@@ -74,6 +104,7 @@ docker compose exec voiceassist-server python -c "import sys; print(sys.path)"
 #### Common Causes & Solutions
 
 **Cause: Missing environment variables**
+
 ```bash
 # Check required variables
 cat .env | grep -E "(DATABASE_URL|REDIS_URL|SECRET_KEY)"
@@ -89,6 +120,7 @@ docker compose up -d voiceassist-server
 ```
 
 **Cause: Database not ready**
+
 ```bash
 # Check PostgreSQL status
 docker compose exec postgres pg_isready
@@ -103,6 +135,7 @@ docker compose up -d voiceassist-server
 ```
 
 **Cause: Port conflict**
+
 ```bash
 # Find process using port
 lsof -i :8000
@@ -116,6 +149,7 @@ ports:
 ```
 
 **Cause: Corrupted Python cache**
+
 ```bash
 # Remove Python cache
 docker compose exec voiceassist-server find . -type d -name __pycache__ -exec rm -r {} +
@@ -131,6 +165,7 @@ docker compose up -d voiceassist-server
 ### 2. Database Connection Issues
 
 #### Symptom
+
 - "Connection pool exhausted"
 - "Too many connections"
 - "Could not connect to database"
@@ -177,6 +212,7 @@ docker compose exec postgres psql -U voiceassist -d voiceassist -c \
 #### Solutions
 
 **Solution 1: Increase connection pool size**
+
 ```bash
 # Update .env
 cat >> .env <<EOF
@@ -194,6 +230,7 @@ docker compose logs voiceassist-server | grep -i "pool size"
 ```
 
 **Solution 2: Kill idle connections**
+
 ```bash
 # Terminate idle connections older than 10 minutes
 docker compose exec postgres psql -U voiceassist -d voiceassist -c \
@@ -209,6 +246,7 @@ docker compose exec postgres psql -U voiceassist -d voiceassist -c \
 ```
 
 **Solution 3: Increase max_connections in PostgreSQL**
+
 ```yaml
 # Update docker-compose.yml
 services:
@@ -216,7 +254,7 @@ services:
     command:
       - "postgres"
       - "-c"
-      - "max_connections=200"  # Increased from 100
+      - "max_connections=200" # Increased from 100
 ```
 
 ```bash
@@ -229,6 +267,7 @@ docker compose exec postgres psql -U voiceassist -d voiceassist -c \
 ```
 
 **Solution 4: Add PgBouncer for connection pooling**
+
 ```yaml
 # Add to docker-compose.yml
 services:
@@ -256,6 +295,7 @@ docker compose up -d
 ```
 
 **Solution 5: Fix connection leaks in code**
+
 ```python
 # Ensure proper connection cleanup
 from contextlib import asynccontextmanager
@@ -279,6 +319,7 @@ async with get_db() as db:
 ### 3. High Response Times / Performance Issues
 
 #### Symptom
+
 - API requests taking > 2 seconds
 - Timeout errors
 - Slow page loads
@@ -334,6 +375,7 @@ docker compose exec redis redis-cli SLOWLOG GET 10
 #### Solutions
 
 **Solution 1: Add database indexes**
+
 ```bash
 # Identify missing indexes
 docker compose exec postgres psql -U voiceassist -d voiceassist <<EOF
@@ -387,6 +429,7 @@ EOF
 ```
 
 **Solution 2: Enable query result caching**
+
 ```python
 # Implement Redis caching for expensive queries
 import redis
@@ -425,6 +468,7 @@ async def get_user_conversations(user_id: int):
 ```
 
 **Solution 3: Optimize database queries**
+
 ```python
 # Use eager loading to avoid N+1 queries
 from sqlalchemy.orm import joinedload
@@ -446,6 +490,7 @@ conversations = db.query(Conversation)\
 ```
 
 **Solution 4: Scale application horizontally**
+
 ```bash
 # Add more application instances
 docker compose up -d --scale voiceassist-server=3
@@ -458,6 +503,7 @@ docker compose ps voiceassist-server
 ```
 
 **Solution 5: Increase resource limits**
+
 ```yaml
 # Update docker-compose.yml
 services:
@@ -465,7 +511,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '4'
+          cpus: "4"
           memory: 4G
 ```
 
@@ -478,6 +524,7 @@ docker compose up -d voiceassist-server
 ### 4. Redis Connection Issues
 
 #### Symptom
+
 - "Connection to Redis failed"
 - "Redis timeout"
 - Cache not working
@@ -509,6 +556,7 @@ print(r.ping())
 #### Solutions
 
 **Solution 1: Restart Redis**
+
 ```bash
 # Restart Redis
 docker compose restart redis
@@ -524,6 +572,7 @@ docker compose restart voiceassist-server
 ```
 
 **Solution 2: Clear Redis if memory full**
+
 ```bash
 # Check memory usage
 docker compose exec redis redis-cli INFO memory | grep used_memory_human
@@ -539,13 +588,14 @@ docker compose exec redis redis-cli INFO memory | grep used_memory_human
 ```
 
 **Solution 3: Increase Redis memory limit**
+
 ```yaml
 # Update docker-compose.yml
 services:
   redis:
     command:
       - redis-server
-      - --maxmemory 2gb  # Increased from 1gb
+      - --maxmemory 2gb # Increased from 1gb
       - --maxmemory-policy allkeys-lru
 ```
 
@@ -554,6 +604,7 @@ docker compose up -d redis
 ```
 
 **Solution 4: Fix connection string**
+
 ```bash
 # Verify REDIS_URL in .env
 cat .env | grep REDIS_URL
@@ -573,6 +624,7 @@ docker compose restart voiceassist-server
 ### 5. Service Container Keeps Restarting
 
 #### Symptom
+
 - Container exits and restarts repeatedly
 - "Restarting (1) X seconds ago" in docker compose ps
 
@@ -598,6 +650,7 @@ docker stats --no-stream voiceassist-voiceassist-server-1
 #### Solutions
 
 **Solution 1: OOMKilled (exit code 137)**
+
 ```bash
 # Verify OOM kill
 docker inspect voiceassist-voiceassist-server-1 | grep OOMKilled
@@ -617,6 +670,7 @@ docker compose up -d voiceassist-server
 ```
 
 **Solution 2: Application crash loop**
+
 ```bash
 # Check for Python errors
 docker compose logs voiceassist-server | grep -i "traceback\|error\|exception"
@@ -634,6 +688,7 @@ docker compose logs -f voiceassist-server
 ```
 
 **Solution 3: Failed health check**
+
 ```bash
 # Check health check command
 docker inspect voiceassist-voiceassist-server-1 | grep -A 10 Healthcheck
@@ -659,6 +714,7 @@ docker compose up -d voiceassist-server
 ### 6. Authentication / JWT Issues
 
 #### Symptom
+
 - "Invalid token" errors
 - "Token expired" errors
 - Users logged out unexpectedly
@@ -693,6 +749,7 @@ docker compose exec redis redis-cli GET "session:some-session-id"
 #### Solutions
 
 **Solution 1: SECRET_KEY changed**
+
 ```bash
 # This invalidates all tokens
 # Generate new SECRET_KEY
@@ -710,6 +767,7 @@ docker compose exec redis redis-cli FLUSHDB
 ```
 
 **Solution 2: Token expiration too short**
+
 ```bash
 # Update .env
 cat >> .env <<EOF
@@ -722,6 +780,7 @@ docker compose restart voiceassist-server
 ```
 
 **Solution 3: Clock skew issues**
+
 ```bash
 # Check system time
 date
@@ -738,6 +797,7 @@ docker compose restart
 ### 7. Database Migration Issues
 
 #### Symptom
+
 - "Duplicate column" errors
 - "Table already exists" errors
 - Migration fails to apply
@@ -762,6 +822,7 @@ docker compose exec postgres psql -U voiceassist -d voiceassist -c "\d users"
 #### Solutions
 
 **Solution 1: Migration already applied manually**
+
 ```bash
 # Stamp database with current migration
 docker compose run --rm voiceassist-server alembic stamp head
@@ -771,6 +832,7 @@ docker compose run --rm voiceassist-server alembic current
 ```
 
 **Solution 2: Conflicting migrations**
+
 ```bash
 # Check for branches
 docker compose run --rm voiceassist-server alembic branches
@@ -783,6 +845,7 @@ docker compose run --rm voiceassist-server alembic upgrade head
 ```
 
 **Solution 3: Rollback and retry**
+
 ```bash
 # Downgrade one version
 docker compose run --rm voiceassist-server alembic downgrade -1
@@ -795,6 +858,7 @@ docker compose run --rm voiceassist-server alembic upgrade head
 ```
 
 **Solution 4: Reset migrations (DESTRUCTIVE)**
+
 ```bash
 # ⚠️  WARNING: This will destroy all data!
 
@@ -819,6 +883,7 @@ docker compose run --rm voiceassist-server alembic current
 ### 8. Disk Space Issues
 
 #### Symptom
+
 - "No space left on device"
 - Services failing to start
 - Logs not writing
@@ -848,6 +913,7 @@ docker ps -a --format "{{.Names}}\t{{.Size}}"
 #### Solutions
 
 **Solution 1: Clean up Docker**
+
 ```bash
 # Remove unused containers
 docker container prune -f
@@ -869,6 +935,7 @@ docker system df
 ```
 
 **Solution 2: Clean up old backups**
+
 ```bash
 # Remove old backups (keep last 7 days)
 find /backups/postgres/daily -name "*.dump.gz" -mtime +7 -delete
@@ -880,6 +947,7 @@ du -sh /backups/*
 ```
 
 **Solution 3: Configure log rotation**
+
 ```json
 // Create /etc/docker/daemon.json
 {
@@ -899,6 +967,7 @@ sudo systemctl restart docker
 ```
 
 **Solution 4: Clear application logs**
+
 ```bash
 # Clear Docker logs for specific container
 truncate -s 0 $(docker inspect --format='{{.LogPath}}' voiceassist-voiceassist-server-1)
@@ -912,6 +981,7 @@ find /var/log -name "*.log" -mtime +30 -delete
 ### 9. Network Connectivity Issues
 
 #### Symptom
+
 - "Connection refused"
 - "Host unreachable"
 - Containers can't communicate
@@ -944,6 +1014,7 @@ telnet localhost 8000
 #### Solutions
 
 **Solution 1: Recreate network**
+
 ```bash
 # Stop all services
 docker compose down
@@ -959,6 +1030,7 @@ docker network inspect voiceassist_default
 ```
 
 **Solution 2: Fix DNS issues**
+
 ```yaml
 # Add to docker-compose.yml
 services:
@@ -973,6 +1045,7 @@ docker compose up -d voiceassist-server
 ```
 
 **Solution 3: Use explicit links**
+
 ```yaml
 # Add to docker-compose.yml (if needed)
 services:
@@ -984,6 +1057,7 @@ services:
 ```
 
 **Solution 4: Check firewall**
+
 ```bash
 # macOS - check if firewall is blocking Docker
 sudo /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate
@@ -1000,6 +1074,7 @@ sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on
 ### 10. Qdrant Vector Search Issues
 
 #### Symptom
+
 - "Collection not found"
 - "Vector dimension mismatch"
 - Slow search results
@@ -1026,6 +1101,7 @@ docker compose logs --tail=100 qdrant
 #### Solutions
 
 **Solution 1: Create missing collection**
+
 ```bash
 # Create collection
 curl -X PUT http://localhost:6333/collections/voice_embeddings \
@@ -1042,6 +1118,7 @@ curl -s http://localhost:6333/collections/voice_embeddings | jq '.result.status'
 ```
 
 **Solution 2: Fix dimension mismatch**
+
 ```bash
 # Delete and recreate collection with correct dimensions
 curl -X DELETE http://localhost:6333/collections/voice_embeddings
@@ -1057,6 +1134,7 @@ curl -X PUT http://localhost:6333/collections/voice_embeddings \
 ```
 
 **Solution 3: Optimize collection for performance**
+
 ```bash
 # Create index
 curl -X POST http://localhost:6333/collections/voice_embeddings/index \
@@ -1071,6 +1149,7 @@ curl -X POST http://localhost:6333/collections/voice_embeddings/optimizer
 ```
 
 **Solution 4: Clear and reindex**
+
 ```bash
 # Delete all points
 curl -X POST http://localhost:6333/collections/voice_embeddings/points/delete \
@@ -1158,6 +1237,7 @@ echo "Please attach this file when escalating the issue"
 ### Error: "bind: address already in use"
 
 **Solution:**
+
 ```bash
 # Find and kill process using the port
 lsof -i :8000
@@ -1169,6 +1249,7 @@ kill -9 <PID>
 ### Error: "ERROR: could not find an available, non-overlapping IPv4 address pool"
 
 **Solution:**
+
 ```bash
 # Clean up unused networks
 docker network prune
@@ -1184,6 +1265,7 @@ networks:
 ### Error: "ERROR: Service 'X' failed to build"
 
 **Solution:**
+
 ```bash
 # Clean Docker build cache
 docker builder prune -a -f
@@ -1198,6 +1280,7 @@ docker compose config
 ### Error: "sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) FATAL: password authentication failed"
 
 **Solution:**
+
 ```bash
 # Verify credentials in .env
 cat .env | grep -E "(POSTGRES_USER|POSTGRES_PASSWORD)"
@@ -1216,6 +1299,7 @@ docker compose restart voiceassist-server
 ### Error: "redis.exceptions.ConnectionError: Error connecting to redis"
 
 **Solution:**
+
 ```bash
 # Check Redis is running
 docker compose ps redis

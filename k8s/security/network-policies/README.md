@@ -21,6 +21,7 @@ These NetworkPolicies implement a zero-trust network security model for the Voic
 **Applies to:** All pods in the `voiceassist` namespace
 
 **Effect:**
+
 - Blocks all inbound traffic
 - Blocks all outbound traffic
 - Other policies create exceptions for required traffic
@@ -30,10 +31,12 @@ These NetworkPolicies implement a zero-trust network security model for the Voic
 **Purpose:** Controls traffic to/from the API Gateway (FastAPI application)
 
 **Ingress Allows:**
+
 - Traffic from Ingress Controller (nginx-ingress)
 - Health check probes from Kubernetes
 
 **Egress Allows:**
+
 - DNS resolution (kube-dns)
 - PostgreSQL connection (port 5432)
 - Redis connection (ports 6379, 6380)
@@ -45,10 +48,12 @@ These NetworkPolicies implement a zero-trust network security model for the Voic
 **Purpose:** Restricts PostgreSQL access to authorized services only
 
 **Ingress Allows:**
+
 - Connections from API Gateway pods
 - Connections from Worker pods
 
 **Egress Allows:**
+
 - DNS resolution only
 
 ### 4. redis-policy.yaml
@@ -56,11 +61,13 @@ These NetworkPolicies implement a zero-trust network security model for the Voic
 **Purpose:** Restricts Redis cache access to authorized services only
 
 **Ingress Allows:**
+
 - Connections from API Gateway pods
 - Connections from Worker pods
 - Both plain (6379) and TLS (6380) ports
 
 **Egress Allows:**
+
 - DNS resolution only
 
 ### 5. qdrant-policy.yaml
@@ -68,11 +75,13 @@ These NetworkPolicies implement a zero-trust network security model for the Voic
 **Purpose:** Restricts Qdrant vector store access to authorized services only
 
 **Ingress Allows:**
+
 - Connections from API Gateway pods
 - Connections from Worker pods
 - REST API (6333) and gRPC (6334) ports
 
 **Egress Allows:**
+
 - DNS resolution only
 
 ---
@@ -203,12 +212,12 @@ kubectl run test-redis --rm -it --image=redis:7-alpine -n voiceassist -- \
 
 These NetworkPolicies satisfy the following HIPAA requirements:
 
-| Requirement | Implementation |
-|-------------|----------------|
-| **§164.312(e)(1) - Integrity Controls** | NetworkPolicies prevent unauthorized modification of ePHI in transit |
-| **§164.312(e)(2)(i) - Transmission Security** | Restricts network paths to only authorized services |
-| **§164.308(a)(4)(i) - Access Management** | Limits network access based on service identity |
-| **§164.308(a)(3)(i) - Workforce Clearance** | Only authorized pods can access PHI-containing databases |
+| Requirement                                   | Implementation                                                       |
+| --------------------------------------------- | -------------------------------------------------------------------- |
+| **§164.312(e)(1) - Integrity Controls**       | NetworkPolicies prevent unauthorized modification of ePHI in transit |
+| **§164.312(e)(2)(i) - Transmission Security** | Restricts network paths to only authorized services                  |
+| **§164.308(a)(4)(i) - Access Management**     | Limits network access based on service identity                      |
+| **§164.308(a)(3)(i) - Workforce Clearance**   | Only authorized pods can access PHI-containing databases             |
 
 ---
 
@@ -282,12 +291,14 @@ kubectl get events -n voiceassist --field-selector involvedObject.name=<pod-name
 ### 1. CNI Plugin Requirements
 
 NetworkPolicies require a CNI plugin that supports them:
+
 - **Supported:** Calico, Cilium, Weave Net
 - **Not Supported:** Flannel (without additional plugin)
 
 ### 2. Performance Impact
 
 NetworkPolicies have minimal performance impact:
+
 - **Latency:** < 1ms added per connection
 - **Throughput:** No significant impact
 - **CPU/Memory:** < 5% overhead on CNI plugin

@@ -1,212 +1,268 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { HelpButton } from "@voiceassist/ui";
+import { AskAIButton } from "../components/shared";
 import { useKnowledgeDocuments } from "../hooks/useKnowledgeDocuments";
+import { useKBUpload } from "../hooks/useKBUpload";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  DocumentTable,
+  type DocumentRow,
+} from "../components/knowledge/DocumentTable";
+import { UploadDialog } from "../components/knowledge/UploadDialog";
+import { AuditDrawer } from "../components/knowledge/AuditDrawer";
+
+const MAX_UPLOAD_MB = 50; // VoiceAssist backend supports up to 50 MB for PDFs
 
 export function KnowledgeBasePage() {
-  const { documents, loading, error, uploadDocument } = useKnowledgeDocuments();
-  const [uploading, setUploading] = useState(false);
+  const { docs, loading, error, refetch } = useKnowledgeDocuments();
+  const {
+    uploadDocument,
+    isUploading,
+    error: uploadHookError,
+    clearError,
+  } = useKBUpload();
+  const { isViewer } = useAuth();
+  const [documents, setDocuments] = useState<DocumentRow[]>([]);
+  const [showUpload, setShowUpload] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [auditDoc, setAuditDoc] = useState<DocumentRow | null>(null);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  useEffect(() => {
+    setDocuments(
+      docs.map((doc) => ({
+        ...doc,
+        status: doc.indexed ? "indexed" : "pending",
+        sizeMb: undefined,
+      })),
+    );
+  }, [docs]);
 
-    setUploading(true);
-    try {
-      await uploadDocument(file);
-      alert("Document uploaded successfully!");
-    } catch (err: any) {
-      alert(err.message || "Upload failed");
-    } finally {
-      setUploading(false);
-      e.target.value = ""; // Reset input
+  // Sync upload hook error with local state
+  useEffect(() => {
+    if (uploadHookError) {
+      setUploadError(uploadHookError);
     }
+  }, [uploadHookError]);
+
+  const handleUpload = useCallback(
+    async (file: File, onProgress: (value: number) => void) => {
+      if (isViewer) {
+        throw new Error("Uploads are disabled for viewer role");
+      }
+
+      setUploadError(null);
+      clearError();
+
+      try {
+        // Upload to backend with progress callback
+        const result = await uploadDocument(
+          file,
+          file.name.replace(/\.[^/.]+$/, ""), // title from filename
+          "", // author empty for now
+          (progress) => onProgress(progress.percent),
+        );
+
+        // Create new document entry from response
+        const now = new Date().toISOString();
+        const newDoc: DocumentRow = {
+          id: result.source,
+          name: result.title,
+          type: file.type?.includes("pdf") ? "pdf" : "note",
+          indexed: result.chunks > 0,
+          status: result.chunks > 0 ? "indexed" : "pending",
+          version: "v1",
+          lastIndexedAt: now,
+          sizeMb: file.size / (1024 * 1024),
+        };
+        setDocuments((prev) => [newDoc, ...prev]);
+
+        // Optionally refetch the full list
+        refetch?.();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Upload failed";
+        setUploadError(message);
+        throw err;
+      }
+    },
+    [isViewer, uploadDocument, clearError, refetch],
+  );
+
+  const updateDocumentsStatus = (
+    ids: string[],
+    status: DocumentRow["status"],
+  ) => {
+    setDocuments((prev) =>
+      prev.map((doc) =>
+        ids.includes(doc.id)
+          ? {
+              ...doc,
+              status,
+              indexed: status === "indexed",
+              lastIndexedAt:
+                status === "indexed"
+                  ? new Date().toISOString()
+                  : doc.lastIndexedAt,
+            }
+          : doc,
+      ),
+    );
   };
+
+  const handleDelete = async (ids: string[]) => {
+    if (isViewer) return;
+    setDocuments((prev) => prev.filter((doc) => !ids.includes(doc.id)));
+  };
+
+  const handleReindex = async (ids: string[]) => {
+    if (isViewer) return;
+    updateDocumentsStatus(ids, "reindexing");
+    setTimeout(() => updateDocumentsStatus(ids, "indexed"), 1000);
+  };
+
+  const stats = useMemo(() => {
+    const total = documents.length;
+    const indexed = documents.filter((d) => d.status === "indexed").length;
+    const pending = documents.filter((d) => d.status === "pending").length;
+    const reindexing = documents.filter(
+      (d) => d.status === "reindexing",
+    ).length;
+    return {
+      total,
+      indexed,
+      pending,
+      reindexing,
+    };
+  }, [documents]);
 
   return (
     <div className="flex-1 p-6 space-y-6 overflow-y-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Knowledge Base</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-slate-100">
+              Knowledge Base
+            </h1>
+            <HelpButton
+              docPath="admin/knowledge-base"
+              tooltipText="View KB documentation"
+              docsBaseUrl={import.meta.env.VITE_DOCS_URL}
+            />
+            <AskAIButton
+              pageContext="Knowledge Base management"
+              docPath="admin/knowledge-base"
+            />
+          </div>
           <p className="text-sm text-slate-400 mt-1">
             Manage medical documents, textbooks, and reference materials
           </p>
         </div>
-        <label className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors cursor-pointer">
-          {uploading ? "Uploading..." : "+ Upload Document"}
-          <input
-            type="file"
-            accept=".pdf,.txt"
-            onChange={handleFileUpload}
-            disabled={uploading}
-            className="hidden"
-          />
-        </label>
+        <button
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            isViewer
+              ? "cursor-not-allowed opacity-60 bg-slate-800 text-slate-400"
+              : "bg-blue-600 hover:bg-blue-700 text-white"
+          }`}
+          onClick={() => setShowUpload(true)}
+          disabled={isViewer || isUploading}
+        >
+          {isUploading ? "Uploading…" : "+ Upload"}
+        </button>
       </div>
 
-      {error && (
-        <div className="p-4 bg-red-950/50 border border-red-900 rounded-lg text-red-400">
-          {error}
+      {isViewer && (
+        <div className="p-3 bg-amber-950/40 border border-amber-900 rounded-md text-amber-300 text-sm">
+          Viewer role is read-only. Uploads and destructive actions are
+          disabled.
         </div>
       )}
 
-      {/* Statistics */}
+      {error && (
+        <div className="p-3 bg-rose-950/40 border border-rose-900 rounded-md text-rose-200 text-sm">
+          Failed to load documents. Showing demo data.
+        </div>
+      )}
+
+      {uploadError && (
+        <div className="p-3 bg-rose-950/40 border border-rose-900 rounded-md text-rose-200 text-sm">
+          {uploadError}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard
           label="Total Documents"
-          value={documents.length}
-          icon="📚"
+          value={stats.total}
           color="blue"
+          subtitle={`${stats.indexed} indexed`}
         />
         <StatCard
           label="Indexed"
-          value={documents.filter((d) => d.status === "indexed").length}
-          icon="✓"
+          value={stats.indexed}
           color="green"
+          subtitle="Ready for RAG"
         />
         <StatCard
-          label="Processing"
-          value={documents.filter((d) => d.status === "processing").length}
-          icon="⏳"
-          color="yellow"
+          label="Pending"
+          value={stats.pending}
+          color="amber"
+          subtitle="Waiting to index"
         />
         <StatCard
-          label="Failed"
-          value={documents.filter((d) => d.status === "failed").length}
-          icon="✗"
-          color="red"
+          label="Reindexing"
+          value={stats.reindexing}
+          color="blue"
+          subtitle="Queued"
         />
       </div>
 
-      {/* Documents Table */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-slate-400">Loading documents...</div>
-        </div>
-      ) : (
-        <div className="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-slate-900 border-b border-slate-800">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  Chunks
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  Uploaded
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800">
-              {documents.map((doc) => (
-                <tr key={doc.document_id} className="hover:bg-slate-800/50">
-                  <td className="px-4 py-3 text-sm text-slate-300 font-medium">
-                    {doc.title}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-400">
-                    {doc.source_type}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    <StatusBadge status={doc.status} />
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-400">
-                    {doc.chunks_indexed}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-400">
-                    {new Date(doc.upload_date).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-right space-x-2">
-                    <button
-                      className="text-blue-400 hover:text-blue-300 transition-colors"
-                      title="View details"
-                    >
-                      👁️
-                    </button>
-                    <button
-                      className="text-yellow-400 hover:text-yellow-300 transition-colors"
-                      title="Reindex"
-                    >
-                      🔄
-                    </button>
-                    <button
-                      className="text-red-400 hover:text-red-300 transition-colors"
-                      title="Delete"
-                    >
-                      🗑️
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <DocumentTable
+        documents={documents}
+        loading={loading}
+        onDelete={handleDelete}
+        onReindex={handleReindex}
+        onOpenAudit={(doc) => setAuditDoc(doc)}
+      />
 
-          {documents.length === 0 && (
-            <div className="p-8 text-center text-slate-400">
-              No documents found. Upload your first document to get started.
-            </div>
-          )}
-        </div>
-      )}
+      <UploadDialog
+        open={showUpload}
+        onClose={() => setShowUpload(false)}
+        onUpload={handleUpload}
+        maxSizeMb={MAX_UPLOAD_MB}
+        acceptedTypes={["application/pdf", "text/plain", "text/markdown"]}
+      />
 
-      <div className="text-xs text-slate-500">
-        Supported formats: PDF, TXT | Maximum file size: 50MB
-      </div>
+      <AuditDrawer
+        open={Boolean(auditDoc)}
+        document={auditDoc}
+        onClose={() => setAuditDoc(null)}
+      />
     </div>
   );
 }
 
-function StatCard({
-  label,
-  value,
-  icon,
-  color,
-}: {
+interface StatCardProps {
   label: string;
   value: number;
-  icon: string;
-  color: "blue" | "green" | "yellow" | "red";
-}) {
-  const colors = {
-    blue: "from-blue-900/50 to-blue-950/30 border-blue-800",
-    green: "from-green-900/50 to-green-950/30 border-green-800",
-    yellow: "from-yellow-900/50 to-yellow-950/30 border-yellow-800",
-    red: "from-red-900/50 to-red-950/30 border-red-800",
+  color: "blue" | "green" | "amber";
+  subtitle?: string;
+}
+
+function StatCard({ label, value, color, subtitle }: StatCardProps) {
+  const colorMap: Record<StatCardProps["color"], string> = {
+    blue: "bg-blue-950/50 border-blue-900 text-blue-100",
+    green: "bg-emerald-950/50 border-emerald-900 text-emerald-100",
+    amber: "bg-amber-950/50 border-amber-900 text-amber-100",
   };
 
   return (
-    <div className={`bg-gradient-to-br ${colors[color]} border rounded-lg p-4`}>
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xl">{icon}</span>
-        <span className="text-2xl font-bold text-slate-200">{value}</span>
+    <div className={`border rounded-lg p-4 ${colorMap[color]}`}>
+      <div className="text-xs uppercase tracking-wide text-slate-400">
+        {label}
       </div>
-      <div className="text-xs text-slate-400">{label}</div>
+      <div className="text-2xl font-semibold text-white mt-2">{value}</div>
+      {subtitle && (
+        <div className="text-xs text-slate-500 mt-1">{subtitle}</div>
+      )}
     </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles =
-    {
-      indexed: "bg-green-900/50 text-green-400 border-green-800",
-      processing: "bg-yellow-900/50 text-yellow-400 border-yellow-800",
-      failed: "bg-red-900/50 text-red-400 border-red-800",
-      uploaded: "bg-blue-900/50 text-blue-400 border-blue-800",
-    }[status] || "bg-slate-800 text-slate-400 border-slate-700";
-
-  return (
-    <span
-      className={`inline-flex px-2 py-1 text-xs font-medium rounded border ${styles}`}
-    >
-      {status}
-    </span>
   );
 }

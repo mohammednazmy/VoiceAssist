@@ -2,36 +2,44 @@
  * Badge Component Stories
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
-import { Badge } from '../components/Badge';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Badge } from "../components/Badge";
 
 const meta = {
-  title: 'Components/Badge',
+  title: "Components/Badge",
   component: Badge,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     docs: {
       description: {
         component:
-          'Small count and labeling component for status indicators, counts, and labels.',
+          "Small count and labeling component for status indicators, counts, and labels.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: 'select',
-      options: ['default', 'primary', 'secondary', 'success', 'warning', 'error', 'outline'],
-      description: 'The visual style variant',
+      control: "select",
+      options: [
+        "default",
+        "primary",
+        "secondary",
+        "success",
+        "warning",
+        "error",
+        "outline",
+      ],
+      description: "The visual style variant",
     },
     size: {
-      control: 'select',
-      options: ['sm', 'md'],
-      description: 'The size of the badge',
+      control: "select",
+      options: ["sm", "md"],
+      description: "The size of the badge",
     },
     dot: {
-      control: 'boolean',
-      description: 'Show a dot indicator',
+      control: "boolean",
+      description: "Show a dot indicator",
     },
   },
 } satisfies Meta<typeof Badge>;
@@ -41,66 +49,66 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    children: 'Badge',
-    variant: 'default',
-    size: 'md',
+    children: "Badge",
+    variant: "default",
+    size: "md",
   },
 };
 
 export const Primary: Story = {
   args: {
-    children: 'Primary',
-    variant: 'primary',
+    children: "Primary",
+    variant: "primary",
   },
 };
 
 export const Secondary: Story = {
   args: {
-    children: 'Secondary',
-    variant: 'secondary',
+    children: "Secondary",
+    variant: "secondary",
   },
 };
 
 export const Success: Story = {
   args: {
-    children: 'Success',
-    variant: 'success',
+    children: "Success",
+    variant: "success",
   },
 };
 
 export const Warning: Story = {
   args: {
-    children: 'Warning',
-    variant: 'warning',
+    children: "Warning",
+    variant: "warning",
   },
 };
 
 export const Error: Story = {
   args: {
-    children: 'Error',
-    variant: 'error',
+    children: "Error",
+    variant: "error",
   },
 };
 
 export const Outline: Story = {
   args: {
-    children: 'Outline',
-    variant: 'outline',
+    children: "Outline",
+    variant: "outline",
   },
 };
 
 export const WithDot: Story = {
   args: {
-    children: 'Online',
-    variant: 'success',
+    children: "Online",
+    variant: "success",
     dot: true,
   },
 };
 
 export const Small: Story = {
   args: {
-    children: 'Small',
-    size: 'sm',
+    children: "Small",
+    size: "sm",
   },
 };
 
@@ -119,7 +127,7 @@ export const AllVariants: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'All available badge variants',
+        story: "All available badge variants",
       },
     },
   },
@@ -128,16 +136,24 @@ export const AllVariants: Story = {
 export const WithDots: Story = {
   render: () => (
     <div className="flex flex-wrap gap-2">
-      <Badge variant="success" dot>Online</Badge>
-      <Badge variant="error" dot>Offline</Badge>
-      <Badge variant="warning" dot>Away</Badge>
-      <Badge variant="primary" dot>Busy</Badge>
+      <Badge variant="success" dot>
+        Online
+      </Badge>
+      <Badge variant="error" dot>
+        Offline
+      </Badge>
+      <Badge variant="warning" dot>
+        Away
+      </Badge>
+      <Badge variant="primary" dot>
+        Busy
+      </Badge>
     </div>
   ),
   parameters: {
     docs: {
       description: {
-        story: 'Badges with status dot indicators',
+        story: "Badges with status dot indicators",
       },
     },
   },
@@ -163,7 +179,7 @@ export const Counts: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Using badges for notification counts',
+        story: "Using badges for notification counts",
       },
     },
   },

@@ -10,6 +10,16 @@ import { CitationSidebar } from "../CitationSidebar";
 import type { Message } from "@voiceassist/types";
 import type { Citation } from "../../../types";
 
+// Mock useToastContext since CitationDisplay uses it for copy feedback
+vi.mock("../../../contexts/ToastContext", () => ({
+  useToastContext: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  }),
+}));
+
 describe("CitationSidebar - Phase 8", () => {
   // Phase 8: Messages with structured citations
   const textbookCitation: Citation = {
@@ -728,6 +738,317 @@ describe("CitationSidebar - Phase 8", () => {
           "Citations are automatically collected from AI responses and provide sources for medical information.",
         ),
       ).toBeInTheDocument();
+    });
+  });
+
+  describe("Phase 3C: Type filters", () => {
+    it("should display type filter pills", () => {
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={messagesWithCitations}
+        />,
+      );
+
+      expect(screen.getByTestId("type-filter-all")).toBeInTheDocument();
+      expect(screen.getByTestId("type-filter-kb")).toBeInTheDocument();
+      expect(screen.getByTestId("type-filter-pubmed")).toBeInTheDocument();
+      expect(screen.getByTestId("type-filter-guideline")).toBeInTheDocument();
+    });
+
+    it("should filter by Knowledge Base type", async () => {
+      const user = userEvent.setup();
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={messagesWithCitations}
+        />,
+      );
+
+      await user.click(screen.getByTestId("type-filter-kb"));
+
+      // textbookCitation has source: "kb"
+      expect(screen.getByText(/Harrison's Principles/i)).toBeInTheDocument();
+      // journalCitation has source: "pubmed" - should be hidden
+      expect(
+        screen.queryByText(/Management of Type 2 Diabetes/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("should filter by PubMed type", async () => {
+      const user = userEvent.setup();
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={messagesWithCitations}
+        />,
+      );
+
+      await user.click(screen.getByTestId("type-filter-pubmed"));
+
+      // journalCitation has source: "pubmed"
+      expect(
+        screen.getByText(/Management of Type 2 Diabetes/i),
+      ).toBeInTheDocument();
+      // textbookCitation has source: "kb" - should be hidden
+      expect(
+        screen.queryByText(/Harrison's Principles/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("should filter by Guideline type", async () => {
+      const user = userEvent.setup();
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={messagesWithCitations}
+        />,
+      );
+
+      await user.click(screen.getByTestId("type-filter-guideline"));
+
+      // guidelineCitation has sourceType: "guideline"
+      expect(screen.getByText(/ADA Standards/i)).toBeInTheDocument();
+      // Other citations should be hidden
+      expect(
+        screen.queryByText(/Harrison's Principles/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("should show all citations when All filter is selected", async () => {
+      const user = userEvent.setup();
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={messagesWithCitations}
+        />,
+      );
+
+      // First filter to kb (only textbookCitation has source: "kb" without guideline sourceType)
+      await user.click(screen.getByTestId("type-filter-kb"));
+      expect(screen.getByText("1 of 3")).toBeInTheDocument();
+
+      // Then back to all
+      await user.click(screen.getByTestId("type-filter-all"));
+      expect(screen.getByText("3 of 3")).toBeInTheDocument();
+    });
+
+    it("should indicate active filter with aria-pressed", async () => {
+      const user = userEvent.setup();
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={messagesWithCitations}
+        />,
+      );
+
+      const kbFilter = screen.getByTestId("type-filter-kb");
+      expect(kbFilter).toHaveAttribute("aria-pressed", "false");
+
+      await user.click(kbFilter);
+      expect(kbFilter).toHaveAttribute("aria-pressed", "true");
+    });
+  });
+
+  describe("Phase 3C: Message filters", () => {
+    it("should display message filter dropdown when multiple messages have citations", () => {
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={messagesWithCitations}
+        />,
+      );
+
+      expect(screen.getByTestId("message-filter-select")).toBeInTheDocument();
+      expect(screen.getByText("Filter by message")).toBeInTheDocument();
+    });
+
+    it("should not display message filter when only one message has citations", () => {
+      const singleMessage: Message[] = [
+        {
+          id: "msg-1",
+          role: "assistant",
+          content: "Only message",
+          timestamp: 1700000000000,
+          citations: [textbookCitation, journalCitation],
+        },
+      ];
+
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={singleMessage}
+        />,
+      );
+
+      expect(
+        screen.queryByTestId("message-filter-select"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("should filter citations by selected message", async () => {
+      const user = userEvent.setup();
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={messagesWithCitations}
+        />,
+      );
+
+      const select = screen.getByTestId("message-filter-select");
+
+      // Select first message (has only textbookCitation)
+      await user.selectOptions(select, "msg-1");
+
+      expect(screen.getByText(/Harrison's Principles/i)).toBeInTheDocument();
+      expect(
+        screen.queryByText(/Management of Type 2 Diabetes/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("should show all citations when All messages is selected", async () => {
+      const user = userEvent.setup();
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={messagesWithCitations}
+        />,
+      );
+
+      const select = screen.getByTestId("message-filter-select");
+
+      // First filter to msg-1
+      await user.selectOptions(select, "msg-1");
+      expect(screen.getByText("1 of 3")).toBeInTheDocument();
+
+      // Then back to all
+      await user.selectOptions(select, "all");
+      expect(screen.getByText("3 of 3")).toBeInTheDocument();
+    });
+  });
+
+  describe("Phase 3C: Jump to message", () => {
+    it("should display jump-to button when onJumpToMessage is provided", () => {
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={messagesWithCitations}
+          onJumpToMessage={vi.fn()}
+        />,
+      );
+
+      // Should have jump buttons for each citation
+      const jumpButtons = screen.getAllByText(/Jump to message/i);
+      expect(jumpButtons.length).toBe(3);
+    });
+
+    it("should not display jump-to button when onJumpToMessage is not provided", () => {
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={messagesWithCitations}
+        />,
+      );
+
+      expect(screen.queryByText(/Jump to message/i)).not.toBeInTheDocument();
+    });
+
+    it("should call onJumpToMessage with correct message ID when clicked", async () => {
+      const user = userEvent.setup();
+      const handleJump = vi.fn();
+
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={messagesWithCitations}
+          onJumpToMessage={handleJump}
+        />,
+      );
+
+      // Click the first jump button
+      const jumpButtons = screen.getAllByText(/Jump to message/i);
+      await user.click(jumpButtons[0]);
+
+      expect(handleJump).toHaveBeenCalledWith("msg-1");
+    });
+
+    it("should show correct message index in jump button", () => {
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={messagesWithCitations}
+          onJumpToMessage={vi.fn()}
+        />,
+      );
+
+      // First citation is from msg-1 (index 1)
+      expect(screen.getByText("Jump to message #1")).toBeInTheDocument();
+      // Second and third citations are from msg-2 (index 2)
+      expect(screen.getAllByText("Jump to message #2")).toHaveLength(2);
+    });
+  });
+
+  describe("Phase 3C: Combined filters", () => {
+    it("should combine type filter with search query", async () => {
+      const user = userEvent.setup();
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={messagesWithCitations}
+        />,
+      );
+
+      // Filter to guideline type (guidelineCitation has sourceType: "guideline")
+      await user.click(screen.getByTestId("type-filter-guideline"));
+
+      // Then search within guideline
+      const searchInput = screen.getByPlaceholderText("Search citations...");
+      await user.type(searchInput, "ADA");
+
+      // guidelineCitation matches both guideline type AND "ADA" search
+      expect(screen.getByText(/ADA Standards/i)).toBeInTheDocument();
+      expect(
+        screen.queryByText(/Harrison's Principles/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("should combine message filter with type filter", async () => {
+      const user = userEvent.setup();
+      render(
+        <CitationSidebar
+          isOpen={true}
+          onClose={vi.fn()}
+          messages={messagesWithCitations}
+        />,
+      );
+
+      // Filter to msg-2 (has journalCitation and guidelineCitation)
+      const select = screen.getByTestId("message-filter-select");
+      await user.selectOptions(select, "msg-2");
+
+      // Filter to pubmed type (journalCitation has source: "pubmed")
+      await user.click(screen.getByTestId("type-filter-pubmed"));
+
+      // Only journalCitation should show (from msg-2, pubmed type)
+      expect(
+        screen.getByText(/Management of Type 2 Diabetes/i),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/ADA Standards/i)).not.toBeInTheDocument();
     });
   });
 });

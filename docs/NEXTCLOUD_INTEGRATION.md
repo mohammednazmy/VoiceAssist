@@ -1,3 +1,30 @@
+---
+title: Nextcloud Integration
+slug: nextcloud-integration
+summary: >-
+  VoiceAssist integrates with Nextcloud for identity management, file storage,
+  calendar, and email functionality.
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - ai-agents
+tags:
+  - nextcloud
+  - integration
+category: reference
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/services/nextcloud_service.py"
+ai_summary: >-
+  VoiceAssist integrates with Nextcloud for identity management, file storage,
+  calendar, and email functionality. Current Status (Phase 6): VoiceAssist now
+  has working CalDAV calendar integration, WebDAV file auto-indexing, and email
+  service skeleton. Implementation Notes: - Phase 2: Nextcloud adde...
+---
+
 # Nextcloud Integration Guide
 
 ## Overview
@@ -7,11 +34,13 @@ VoiceAssist integrates with Nextcloud for identity management, file storage, cal
 **Current Status (Phase 6):** VoiceAssist now has working CalDAV calendar integration, WebDAV file auto-indexing, and email service skeleton.
 
 **Implementation Notes:**
+
 - **Phase 2:** Nextcloud added to docker-compose.yml, OCS API integration created
 - **Phase 6:** CalDAV calendar operations, WebDAV file auto-indexer, email service skeleton
 - **Phase 7+:** Full OIDC authentication, complete email integration, CardDAV contacts
 
 For development, Phase 2+ includes Nextcloud directly in the VoiceAssist docker-compose.yml stack. For production, you may choose to:
+
 - Continue using the integrated Nextcloud (simpler deployment)
 - Use a separate Nextcloud installation (more flexible, as described in the "Separate Stack" section below)
 
@@ -24,13 +53,16 @@ For development, Phase 2+ includes Nextcloud directly in the VoiceAssist docker-
 Phase 2 added Nextcloud directly to the VoiceAssist docker-compose.yml stack for simplified local development:
 
 **Docker Services Added:**
+
 - **nextcloud**: Nextcloud 29 (Apache), accessible at http://localhost:8080
 - **nextcloud-db**: PostgreSQL 16 database for Nextcloud
 
 **Integration Service Created:**
+
 - **NextcloudService** (`services/api-gateway/app/services/nextcloud.py`): OCS API client for user provisioning and management
 
 **Environment Variables:**
+
 ```bash
 NEXTCLOUD_URL=http://nextcloud:80          # Internal Docker network URL
 NEXTCLOUD_ADMIN_USER=admin                 # Nextcloud admin username
@@ -39,21 +71,43 @@ NEXTCLOUD_DB_PASSWORD=<from .env>          # Nextcloud database password
 ```
 
 **OCS API Integration:**
+
 - User creation via OCS API (`/ocs/v1.php/cloud/users`)
 - User existence check
 - Health check for Nextcloud connectivity
 - Authentication with admin credentials
 
 **Phase 6 Enhancements Implemented:**
+
 - ✅ CalDAV calendar integration (full CRUD operations)
 - ✅ WebDAV file auto-indexing into knowledge base
 - ✅ Email service skeleton (IMAP/SMTP basics)
 
 **Future Enhancements (Phase 7+):**
+
 - OIDC authentication integration
 - Full email integration with message parsing
 - CardDAV contacts integration
 - Full user provisioning workflow
+
+### Deployment Steps for OIDC, Contacts, and Email
+
+1. **Configure OIDC providers (API Gateway):**
+   - Set `NEXTCLOUD_URL`, `NEXTCLOUD_OAUTH_CLIENT_ID`, `NEXTCLOUD_OAUTH_CLIENT_SECRET`, and `NEXTCLOUD_OAUTH_REDIRECT_URI` in `.env` for Nextcloud SSO.
+   - Optionally set `GOOGLE_OAUTH_CLIENT_ID/SECRET` or `MICROSOFT_CLIENT_ID/SECRET` with their redirect URIs if federating logins.
+   - Restart the API Gateway; `configure_oidc_from_settings()` registers providers and caches JWKS for validation.
+
+2. **Enable CardDAV + contacts:**
+   - Provide `NEXTCLOUD_WEBDAV_URL`, `NEXTCLOUD_CALDAV_USERNAME`, and `NEXTCLOUD_CALDAV_PASSWORD` for CardDAV access.
+   - The `CardDAVService` now supports sync tokens; call `/api/integrations/contacts` endpoints to keep address books in sync.
+
+3. **Finalize IMAP/SMTP email:**
+   - Supply `EMAIL_IMAP_HOST`, `EMAIL_IMAP_PORT`, `EMAIL_SMTP_HOST`, `EMAIL_SMTP_PORT`, `EMAIL_USERNAME`, and `EMAIL_PASSWORD` in `.env`.
+   - The email service will reconnect automatically on IMAP failures and respects TLS/STARTTLS based on configuration.
+
+4. **Package and install Nextcloud apps:**
+   - Run `bash nextcloud-apps/package.sh` to create `build/*.tar.gz` archives for `voiceassist-client`, `voiceassist-admin`, and `voiceassist-docs`.
+   - Upload/enable the apps in Nextcloud; routes under `/apps/<app>/api/*` mirror API Gateway endpoints for calendar, files, contacts, and email.
 
 ### Quick Start (Phase 2)
 
@@ -78,6 +132,7 @@ print(f'Nextcloud healthy: {result}')
 ```
 
 **Phase 2 Limitations:**
+
 - OIDC integration not yet implemented (JWT tokens used for auth instead)
 - WebDAV/CalDAV integration not yet implemented
 - User provisioning is manual via Nextcloud UI
@@ -91,12 +146,14 @@ print(f'Nextcloud healthy: {result}')
 Phase 6 adds real integration with Nextcloud Calendar and Files, plus email service foundation:
 
 **Services Created:**
+
 - **CalDAVService** (`services/api-gateway/app/services/caldav_service.py`): Full CalDAV protocol support for calendar operations
 - **NextcloudFileIndexer** (`services/api-gateway/app/services/nextcloud_file_indexer.py`): Automatic medical document discovery and indexing
 - **EmailService** (`services/api-gateway/app/services/email_service.py`): IMAP/SMTP skeleton for future email integration
 - **Integration API** (`services/api-gateway/app/api/integrations.py`): Unified REST API for all integrations
 
 **Calendar Features (CalDAV):**
+
 - List all calendars for authenticated user
 - Get events within date range with filtering
 - Create new calendar events with full metadata
@@ -107,6 +164,7 @@ Phase 6 adds real integration with Nextcloud Calendar and Files, plus email serv
 - Error handling for connection and parsing failures
 
 **File Auto-Indexing (WebDAV):**
+
 - Discover medical documents in configurable Nextcloud directories
 - Automatic indexing into Phase 5 knowledge base
 - Supported formats: PDF, TXT, MD
@@ -116,6 +174,7 @@ Phase 6 adds real integration with Nextcloud Calendar and Files, plus email serv
 - Batch scanning with progress reporting
 
 **API Endpoints Added:**
+
 ```
 Calendar Operations:
   GET    /api/integrations/calendar/calendars
@@ -135,6 +194,7 @@ Email (Skeleton):
 ```
 
 **Configuration Required:**
+
 ```bash
 # Add to ~/VoiceAssist/.env:
 
@@ -155,6 +215,7 @@ NEXTCLOUD_WATCH_DIRECTORIES=/Documents,/Medical_Guidelines
 ### Testing Phase 6 Integrations
 
 **Test Calendar Operations:**
+
 ```bash
 # List calendars
 curl -X GET http://localhost:8000/api/integrations/calendar/calendars \
@@ -178,6 +239,7 @@ curl -X GET "http://localhost:8000/api/integrations/calendar/events?start_date=2
 ```
 
 **Test File Auto-Indexing:**
+
 ```bash
 # First, add some medical documents to Nextcloud
 # Via Nextcloud web UI: Upload PDFs to /Documents folder
@@ -206,6 +268,7 @@ curl -X POST http://localhost:8000/api/integrations/files/index \
 ```
 
 **Verify Integration:**
+
 ```bash
 # Files should now be searchable via Phase 5 RAG
 curl -X POST http://localhost:8000/api/realtime/query \
@@ -219,6 +282,7 @@ curl -X POST http://localhost:8000/api/realtime/query \
 ### Phase 6 Limitations
 
 **Not Yet Implemented:**
+
 - OIDC authentication (still using JWT tokens from Phase 2)
 - Per-user credentials (currently using admin credentials for all operations)
 - CardDAV contacts integration
@@ -263,6 +327,7 @@ Separate Stacks:
 ✅ **Reusability** - Nextcloud can serve multiple applications
 
 **Integration Method:**
+
 - HTTP/HTTPS APIs (OIDC, WebDAV, CalDAV, CardDAV)
 - Environment variables for configuration
 - No shared Docker networks or volumes
@@ -303,7 +368,7 @@ cd ~/Nextcloud-Dev
 #### Create docker-compose.yml
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   nextcloud-db:
@@ -412,6 +477,7 @@ Password: admin_dev_password
    - Go to Apps (top right) → Search
 
 2. **Install OIDC App**
+
    ```
    Search: "OpenID Connect"
    Install: "OpenID Connect user backend"
@@ -526,6 +592,7 @@ print(client.test_connection())
 ### Assumptions
 
 In production, you likely have:
+
 - Existing Nextcloud installation (e.g., https://cloud.asimo.io)
 - OR need to deploy Nextcloud separately on Ubuntu server
 - SSL certificates already configured
@@ -703,6 +770,7 @@ class NextcloudCalendarClient:
 ### 4. Email (IMAP/SMTP or Nextcloud Mail API)
 
 **Email Service** can use:
+
 - **Option A:** IMAP/SMTP directly
 - **Option B:** Nextcloud Mail API (if available)
 
@@ -764,10 +832,12 @@ class NextcloudEmailClient:
 ### Network Security
 
 **Local Development:**
+
 - HTTP is acceptable for localhost
 - Consider self-signed certs for HTTPS practice
 
 **Production:**
+
 - **ALWAYS use HTTPS** for Nextcloud communication
 - Validate SSL certificates
 - Use certificate pinning for critical operations
@@ -813,18 +883,21 @@ curl http://localhost:8080/.well-known/openid-configuration
 ### Authentication Failures
 
 **Problem:** "Invalid redirect URI"
+
 ```
 Solution: Ensure NEXTCLOUD_REDIRECT_URI in .env matches exactly
 what's configured in Nextcloud OAuth client
 ```
 
 **Problem:** "Client authentication failed"
+
 ```
 Solution: Verify CLIENT_ID and CLIENT_SECRET are correct
 Check for typos, extra spaces
 ```
 
 **Problem:** "Token validation failed"
+
 ```
 Solution: Ensure NEXTCLOUD_OIDC_ISSUER is correct
 Check that Nextcloud OIDC app is enabled
@@ -833,12 +906,14 @@ Check that Nextcloud OIDC app is enabled
 ### WebDAV Issues
 
 **Problem:** "Unauthorized" when accessing files
+
 ```
 Solution: Verify NEXTCLOUD_WEBDAV_USERNAME and PASSWORD
 Check that user has permission to access files
 ```
 
 **Problem:** "Method not allowed"
+
 ```
 Solution: Ensure URL is correct: /remote.php/dav
 Not /webdav or /dav
@@ -847,6 +922,7 @@ Not /webdav or /dav
 ### CalDAV Issues
 
 **Problem:** "Calendar not found"
+
 ```
 Solution: Verify calendar exists for the user
 Check CALDAV_URL includes /calendars/username/calendar-name
@@ -950,6 +1026,7 @@ Track which integrations are implemented:
 - [ ] Phase 10: Load test Nextcloud integration
 
 **Phase 6 Deliverables (Completed):**
+
 - ✅ CalDAV Service with full event CRUD operations
 - ✅ Nextcloud File Indexer for automatic KB population
 - ✅ Email Service skeleton (IMAP/SMTP basics)
@@ -958,6 +1035,7 @@ Track which integrations are implemented:
 - ✅ Documentation updates
 
 **Deferred to Phase 7+:**
+
 - ⏳ OIDC authentication flow
 - ⏳ Per-user credential management
 - ⏳ CardDAV contacts integration

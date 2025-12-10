@@ -60,6 +60,7 @@ class TestSafeSendJson:
 
         mock_websocket = MagicMock()
         mock_websocket.client_state = WebSocketState.CONNECTED
+        mock_websocket.application_state = WebSocketState.CONNECTED  # Also needed
         mock_websocket.send_json = AsyncMock()
 
         result = await safe_send_json(mock_websocket, {"type": "test"})
@@ -89,9 +90,7 @@ class TestSafeSendJson:
         mock_websocket = MagicMock()
         mock_websocket.client_state = WebSocketState.CONNECTED
         mock_websocket.send_json = AsyncMock(
-            side_effect=RuntimeError(
-                "Cannot call 'send' once a close message has been sent"
-            )
+            side_effect=RuntimeError("Cannot call 'send' once a close message has been sent")
         )
 
         result = await safe_send_json(mock_websocket, {"type": "test"})
@@ -99,20 +98,18 @@ class TestSafeSendJson:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_safe_send_json_reraises_other_runtime_errors(
-        self, mock_dependencies
-    ):
-        """Test safe_send_json re-raises RuntimeError not related to close."""
+    async def test_safe_send_json_logs_other_runtime_errors(self, mock_dependencies):
+        """Test safe_send_json logs RuntimeError not related to close and returns False."""
         from app.api.realtime import safe_send_json
 
         mock_websocket = MagicMock()
         mock_websocket.client_state = WebSocketState.CONNECTED
-        mock_websocket.send_json = AsyncMock(
-            side_effect=RuntimeError("Some other runtime error")
-        )
+        mock_websocket.application_state = WebSocketState.CONNECTED
+        mock_websocket.send_json = AsyncMock(side_effect=RuntimeError("Some other runtime error"))
 
-        with pytest.raises(RuntimeError, match="Some other runtime error"):
-            await safe_send_json(mock_websocket, {"type": "test"})
+        # safe_send_json catches all RuntimeErrors and returns False
+        result = await safe_send_json(mock_websocket, {"type": "test"})
+        assert result is False
 
     @pytest.mark.asyncio
     async def test_safe_send_json_handles_generic_exception(self, mock_dependencies):
@@ -132,9 +129,7 @@ class TestConnectionManagerErrorHandling:
     """Tests for ConnectionManager error handling."""
 
     @pytest.mark.asyncio
-    async def test_send_personal_message_handles_closed_connection(
-        self, mock_dependencies
-    ):
+    async def test_send_personal_message_handles_closed_connection(self, mock_dependencies):
         """Test that send_personal_message doesn't crash on closed connection."""
         from app.api.realtime import ConnectionManager
 
@@ -162,9 +157,7 @@ class TestConnectionManagerErrorHandling:
 
         mock_websocket = MagicMock()
         mock_websocket.client_state = WebSocketState.CONNECTED
-        mock_websocket.send_json = AsyncMock(
-            side_effect=RuntimeError("Cannot send after close")
-        )
+        mock_websocket.send_json = AsyncMock(side_effect=RuntimeError("Cannot send after close"))
 
         manager.active_connections["test-client"] = mock_websocket
 
@@ -199,11 +192,11 @@ class TestStreamingInterruption:
             # Simulate disconnect after 3rd chunk
             if call_count >= 3:
                 mock_websocket.client_state = WebSocketState.DISCONNECTED
-                raise RuntimeError(
-                    "Cannot call 'send' once a close message has been sent"
-                )
+                mock_websocket.application_state = WebSocketState.DISCONNECTED
+                raise RuntimeError("Cannot call 'send' once a close message has been sent")
 
         mock_websocket.client_state = WebSocketState.CONNECTED
+        mock_websocket.application_state = WebSocketState.CONNECTED
         mock_websocket.send_json = send_json_with_disconnect
 
         # Simulate streaming multiple chunks
@@ -213,9 +206,7 @@ class TestStreamingInterruption:
 
         for i in range(0, len(response_text), chunk_size):
             chunk = response_text[i : i + chunk_size]
-            result = await safe_send_json(
-                mock_websocket, {"type": "chunk", "content": chunk}
-            )
+            result = await safe_send_json(mock_websocket, {"type": "chunk", "content": chunk})
             if not result:
                 break  # Stop streaming on disconnect
             chunks_sent += 1

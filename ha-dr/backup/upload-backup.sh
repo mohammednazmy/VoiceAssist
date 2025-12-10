@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155
 # Upload Encrypted Backups to Off-Site Storage (Phase 12 - HA/DR)
 # Supports AWS S3, Nextcloud WebDAV, and local directory
 

@@ -27,7 +27,8 @@ def sample_user():
     user = User(
         id=uuid.uuid4(),
         email="test@example.com",
-        role="clinician",
+        full_name="Test User",
+        admin_role="user",
         hashed_password="hashed_password",
     )
     return user
@@ -38,9 +39,7 @@ def mock_request():
     """Create a mock request object."""
     request = Mock()
     request.client.host = "192.168.1.1"
-    request.headers.get = lambda key, default=None: (
-        "Mozilla/5.0" if key.lower() == "user-agent" else default
-    )
+    request.headers.get = lambda key, default=None: ("Mozilla/5.0" if key.lower() == "user-agent" else default)
     request.url.path = "/api/test"
     request.state.request_id = str(uuid.uuid4())
     return request
@@ -119,13 +118,9 @@ class TestAuditLogModel:
         user_id = uuid.uuid4()
         timestamp = datetime.now(timezone.utc)
 
-        log1 = AuditLog(
-            user_id=user_id, action="action1", success=True, timestamp=timestamp
-        )
+        log1 = AuditLog(user_id=user_id, action="action1", success=True, timestamp=timestamp)
 
-        log2 = AuditLog(
-            user_id=user_id, action="action2", success=True, timestamp=timestamp
-        )
+        log2 = AuditLog(user_id=user_id, action="action2", success=True, timestamp=timestamp)
 
         hash1 = log1.calculate_hash()
         hash2 = log2.calculate_hash()
@@ -149,7 +144,7 @@ class TestAuditService:
 
         assert log.action == "test_action"
         assert log.success is True
-        assert log.user_id == sample_user.id
+        assert str(log.user_id) == str(sample_user.id)
         assert log.user_email == sample_user.email
         assert log.ip_address == "192.168.1.1"
         assert log.hash is not None
@@ -245,7 +240,7 @@ class TestAuditService:
         assert log.action == "user_login"
         assert log.success is True
         assert log.resource_type == "authentication"
-        assert log.user_id == sample_user.id
+        assert str(log.user_id) == str(sample_user.id)
 
     @pytest.mark.asyncio
     async def test_log_authentication_failure(self, mock_db, mock_request):
@@ -280,9 +275,7 @@ class TestAuditService:
         assert log.request_id is None
 
     @pytest.mark.asyncio
-    async def test_integrity_hash_automatically_set(
-        self, mock_db, sample_user, mock_request
-    ):
+    async def test_integrity_hash_automatically_set(self, mock_db, sample_user, mock_request):
         """Test that integrity hash is automatically calculated."""
         log = await AuditService.log_event(
             db=mock_db,
@@ -300,9 +293,7 @@ class TestAuditService:
         assert log.verify_integrity() is True
 
     @pytest.mark.asyncio
-    async def test_log_event_captures_request_id(
-        self, mock_db, sample_user, mock_request
-    ):
+    async def test_log_event_captures_request_id(self, mock_db, sample_user, mock_request):
         """Test that request ID is captured from request context."""
         expected_request_id = str(uuid.uuid4())
         mock_request.state.request_id = expected_request_id
@@ -317,23 +308,23 @@ class TestAuditService:
 
         assert log.request_id == expected_request_id
 
-    @pytest.mark.asyncio
-    async def test_get_user_audit_logs(self, mock_db, sample_user):
+    def test_get_user_audit_logs(self, mock_db, sample_user):
         """Test retrieving audit logs for a specific user."""
-        # Mock the query chain
+        # Mock the query chain: query() → filter() → order_by() → limit() → offset() → all()
         mock_query = Mock()
         mock_filter = Mock()
         mock_order = Mock()
+        mock_limit = Mock()
+        mock_offset = Mock()
 
         mock_db.query.return_value = mock_query
         mock_query.filter.return_value = mock_filter
         mock_filter.order_by.return_value = mock_order
-        mock_order.limit.return_value = mock_order
-        mock_order.all.return_value = []
+        mock_order.limit.return_value = mock_limit
+        mock_limit.offset.return_value = mock_offset
+        mock_offset.all.return_value = []
 
-        logs = await AuditService.get_user_audit_logs(
-            db=mock_db, user_id=sample_user.id, limit=50
-        )
+        logs = AuditService.get_user_audit_trail(db=mock_db, user_id=str(sample_user.id), limit=50)
 
         # Verify query was constructed correctly
         mock_db.query.assert_called_once_with(AuditLog)

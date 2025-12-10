@@ -2,13 +2,13 @@
  * MessageList Component
  * Virtualized list of messages using react-virtuoso
  *
- * TODO: Performance Improvements
- * - Add pagination for conversations with >1000 messages
- * - Implement lazy loading of older messages on scroll to top
- * - Add message caching/indexing for very large histories
+ * Features:
+ * - Virtualized rendering for performance
+ * - Scroll-to-load older messages
+ * - Auto-scroll to bottom on new messages
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import type { Message } from "@voiceassist/types";
 import { MessageBubble } from "./MessageBubble";
@@ -21,7 +21,17 @@ export interface MessageListProps {
   onEditSave?: (messageId: string, newContent: string) => Promise<void>;
   onRegenerate?: (messageId: string) => Promise<void>;
   onDelete?: (messageId: string) => Promise<void>;
-  onBranch?: (messageId: string) => void;
+  onBranch?: (messageId: string) => Promise<void>;
+  /** Set of message IDs that have branches created from them */
+  branchedMessageIds?: Set<string>;
+  /** Pagination: callback to load older messages */
+  onLoadMore?: () => void;
+  /** Pagination: whether there are more messages to load */
+  hasMore?: boolean;
+  /** Pagination: whether currently loading more messages */
+  isLoadingMore?: boolean;
+  /** Total number of messages in conversation */
+  totalCount?: number;
 }
 
 export function MessageList({
@@ -32,8 +42,29 @@ export function MessageList({
   onRegenerate,
   onDelete,
   onBranch,
+  branchedMessageIds,
+  onLoadMore,
+  hasMore = false,
+  isLoadingMore = false,
+  totalCount,
 }: MessageListProps) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const isLoadingRef = useRef(false);
+
+  // Handle scroll to top - load older messages
+  const handleStartReached = useCallback(() => {
+    if (hasMore && !isLoadingRef.current && onLoadMore) {
+      isLoadingRef.current = true;
+      onLoadMore();
+    }
+  }, [hasMore, onLoadMore]);
+
+  // Reset loading ref when isLoadingMore changes to false
+  useEffect(() => {
+    if (!isLoadingMore) {
+      isLoadingRef.current = false;
+    }
+  }, [isLoadingMore]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -78,6 +109,61 @@ export function MessageList({
     );
   }
 
+  // Loading indicator component for the header
+  const LoadingHeader = () => {
+    if (isLoadingMore) {
+      return (
+        <div className="flex justify-center py-3">
+          <div className="flex items-center gap-2 text-sm text-neutral-500">
+            <svg
+              className="animate-spin h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+            <span>Loading older messages...</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (hasMore) {
+      return (
+        <div className="flex justify-center py-2">
+          <span className="text-xs text-neutral-400">
+            Scroll up to load more
+          </span>
+        </div>
+      );
+    }
+
+    if (totalCount && totalCount > 0) {
+      return (
+        <div className="flex justify-center py-2">
+          <span className="text-xs text-neutral-400">
+            Beginning of conversation ({totalCount} messages)
+          </span>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <div role="region" aria-label="Message list" className="h-full">
       <Virtuoso
@@ -86,6 +172,7 @@ export function MessageList({
         className="h-full"
         initialTopMostItemIndex={messages.length - 1}
         followOutput="smooth"
+        startReached={handleStartReached}
         itemContent={(index, message) => (
           <MessageBubble
             key={message.id}
@@ -95,9 +182,11 @@ export function MessageList({
             onRegenerate={onRegenerate}
             onDelete={onDelete}
             onBranch={onBranch}
+            hasBranch={branchedMessageIds?.has(message.id)}
           />
         )}
         components={{
+          Header: LoadingHeader,
           Footer: () =>
             isTyping && !streamingMessageId ? (
               <div className="flex justify-start mb-4">

@@ -1,8 +1,9 @@
 """
 Unit tests for structured citations functionality
 """
-import pytest
+
 from uuid import uuid4
+
 from app.models.citation import MessageCitation
 
 
@@ -24,7 +25,7 @@ def test_message_citation_creation():
         doi="10.1234/xyz.2024.123",
         pmid="12345",
         relevance_score=95,
-        quoted_text="This study found that..."
+        quoted_text="This study found that...",
     )
 
     assert citation.source_id == "pubmed_12345"
@@ -46,7 +47,7 @@ def test_message_citation_to_dict():
         source_type="textbook",
         title="Medical Textbook Chapter 5",
         authors=["Author A", "Author B"],
-        relevance_score=88
+        relevance_score=88,
     )
 
     result = citation.to_dict()
@@ -66,7 +67,7 @@ def test_message_citation_minimal_data():
         message_id=uuid4(),
         source_id="note_001",
         source_type="note",
-        title="Clinical Note on Patient Care"
+        title="Clinical Note on Patient Care",
     )
 
     assert citation.source_id == "note_001"
@@ -90,11 +91,16 @@ def test_message_citation_apa_format():
         volume="10",
         issue="2",
         pages="45-52",
-        doi="10.1234/test.2024"
+        doi="10.1234/test.2024",
     )
 
     # Simple APA format: Authors (Year). Title. Journal, Volume(Issue), Pages. DOI
-    apa_citation = f"{', '.join(citation.authors)} ({citation.publication_date}). {citation.title}. {citation.journal}, {citation.volume}({citation.issue}), {citation.pages}. https://doi.org/{citation.doi}"
+    authors_str = ", ".join(citation.authors)
+    apa_citation = (
+        f"{authors_str} ({citation.publication_date}). {citation.title}. "
+        f"{citation.journal}, {citation.volume}({citation.issue}), "
+        f"{citation.pages}. https://doi.org/{citation.doi}"
+    )
 
     assert "Smith, J." in apa_citation
     assert "2024" in apa_citation

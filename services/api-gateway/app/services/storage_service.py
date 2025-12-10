@@ -7,7 +7,6 @@ import uuid
 from pathlib import Path
 from typing import Optional
 
-from app.core.config import settings
 from app.core.logging import get_logger
 from fastapi import UploadFile
 

@@ -1,10 +1,14 @@
 /**
  * Login Page
  * User authentication page with email/password login
+ *
+ * Phase 4 enhancements:
+ * - OAuth buttons disabled when provider is unavailable (503 from backend)
+ * - User-friendly error messages based on HTTP status codes
  */
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, type KeyboardEvent } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -23,8 +27,32 @@ import { useAuth } from "../hooks/useAuth";
 import { loginSchema, type LoginFormData } from "../lib/validations";
 
 export function LoginPage() {
-  const { login, loginWithOAuth, isLoading, error: authError } = useAuth();
+  const {
+    login,
+    loginWithOAuth,
+    isLoading,
+    error: authError,
+    oauthStatus,
+  } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [oauthError, setOauthError] = useState<string | null>(null);
+
+  // Handle OAuth error from redirect
+  useEffect(() => {
+    const error = searchParams.get("error");
+    const message = searchParams.get("message");
+
+    if (error === "oauth_failed" || error === "oauth_invalid") {
+      setOauthError(
+        message || "OAuth authentication failed. Please try again.",
+      );
+      // Clear the URL params
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
+
+  const displayError = oauthError || authError;
 
   const {
     register,
@@ -36,6 +64,7 @@ export function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
+      setOauthError(null); // Clear any OAuth errors
       await login(data);
     } catch (err) {
       // Error is handled by the auth store
@@ -43,8 +72,24 @@ export function LoginPage() {
     }
   };
 
+  const handleOAuthLogin = (provider: "google" | "microsoft") => {
+    setOauthError(null); // Clear any OAuth errors
+    loginWithOAuth(provider);
+  };
+
+  const handleShortcutSubmit = (event: KeyboardEvent<HTMLFormElement>) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      event.preventDefault();
+      void handleSubmit(onSubmit)();
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
+    <main
+      id="main-content"
+      role="main"
+      className="flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12"
+    >
       <div className="w-full max-w-md">
         <Card>
           <CardHeader className="space-y-1">
@@ -72,14 +117,18 @@ export function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {authError && (
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              onKeyDown={handleShortcutSubmit}
+              className="space-y-4"
+            >
+              {displayError && (
                 <div
-                  className="rounded-md bg-error-50 p-4 text-sm text-error-800"
+                  className="rounded-md bg-error-50 p-4 text-sm text-text-error"
                   role="alert"
                   aria-live="polite"
                 >
-                  {authError}
+                  {displayError}
                 </div>
               )}
 
@@ -101,7 +150,7 @@ export function LoginPage() {
                 {errors.email && (
                   <p
                     id="email-error"
-                    className="text-sm text-error-600"
+                    className="text-sm text-text-error"
                     role="alert"
                   >
                     {errors.email.message}
@@ -184,7 +233,7 @@ export function LoginPage() {
                 {errors.password && (
                   <p
                     id="password-error"
-                    className="text-sm text-error-600"
+                    className="text-sm text-text-error"
                     role="alert"
                   >
                     {errors.password.message}
@@ -197,6 +246,8 @@ export function LoginPage() {
                 fullWidth
                 disabled={isLoading}
                 className="mt-6"
+                aria-label="Sign in to VoiceAssist"
+                aria-keyshortcuts="Enter Control+Enter Meta+Enter"
               >
                 {isLoading ? "Signing in..." : "Sign in"}
               </Button>
@@ -214,18 +265,34 @@ export function LoginPage() {
             </div>
 
             <div className="grid gap-3">
-              <OAuthButton
-                provider="google"
-                fullWidth
-                disabled={isLoading}
-                onClick={() => loginWithOAuth("google")}
-              />
-              <OAuthButton
-                provider="microsoft"
-                fullWidth
-                disabled={isLoading}
-                onClick={() => loginWithOAuth("microsoft")}
-              />
+              <div className="relative">
+                <OAuthButton
+                  provider="google"
+                  fullWidth
+                  disabled={isLoading || oauthStatus.google === "unavailable"}
+                  onClick={() => handleOAuthLogin("google")}
+                />
+                {oauthStatus.google === "unavailable" && (
+                  <p className="text-xs text-neutral-500 mt-1 text-center">
+                    Google login is not configured in this environment
+                  </p>
+                )}
+              </div>
+              <div className="relative">
+                <OAuthButton
+                  provider="microsoft"
+                  fullWidth
+                  disabled={
+                    isLoading || oauthStatus.microsoft === "unavailable"
+                  }
+                  onClick={() => handleOAuthLogin("microsoft")}
+                />
+                {oauthStatus.microsoft === "unavailable" && (
+                  <p className="text-xs text-neutral-500 mt-1 text-center">
+                    Microsoft login is not configured in this environment
+                  </p>
+                )}
+              </div>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
@@ -252,6 +319,6 @@ export function LoginPage() {
           </a>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

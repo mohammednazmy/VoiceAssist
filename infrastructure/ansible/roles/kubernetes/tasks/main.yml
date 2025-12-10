@@ -41,7 +41,7 @@
     dest: /etc/default/kubelet
     content: |
       KUBELET_EXTRA_ARGS="--cloud-provider=aws --node-ip={{ ansible_default_ipv4.address }}"
-    mode: '0644'
+    mode: "0644"
   notify: restart kubelet
   tags: [kubernetes]
 
@@ -57,7 +57,7 @@
     content: |
       br_netfilter
       overlay
-    mode: '0644'
+    mode: "0644"
   tags: [kubernetes]
 
 - name: Configure Kubernetes sysctl
@@ -67,9 +67,9 @@
     state: present
     reload: yes
   loop:
-    - { name: 'net.bridge.bridge-nf-call-iptables', value: '1' }
-    - { name: 'net.bridge.bridge-nf-call-ip6tables', value: '1' }
-    - { name: 'net.ipv4.ip_forward', value: '1' }
+    - { name: "net.bridge.bridge-nf-call-iptables", value: "1" }
+    - { name: "net.bridge.bridge-nf-call-ip6tables", value: "1" }
+    - { name: "net.ipv4.ip_forward", value: "1" }
   tags: [kubernetes]
 
 - name: Install AWS CLI (for EKS)

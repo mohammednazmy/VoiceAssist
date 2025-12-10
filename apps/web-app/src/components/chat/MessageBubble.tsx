@@ -3,7 +3,7 @@
  * Renders a chat message with markdown support, code blocks, and citations
  */
 
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -12,8 +12,14 @@ import { Highlight, themes } from "prism-react-renderer";
 import type { Message, Attachment } from "@voiceassist/types";
 import { CitationDisplay } from "./CitationDisplay";
 import { MessageActionMenu } from "./MessageActionMenu";
+import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
+import {
+  RegenerationOptionsDialog,
+  type RegenerationOptions,
+} from "./RegenerationOptionsDialog";
 import { AudioPlayer } from "../voice/AudioPlayer";
 import { useAuth } from "../../hooks/useAuth";
+import { useToastContext } from "../../contexts/ToastContext";
 import { createAttachmentsApi } from "../../lib/api/attachmentsApi";
 import { useAuthStore } from "../../stores/authStore";
 import "katex/dist/katex.min.css";
@@ -22,9 +28,20 @@ export interface MessageBubbleProps {
   message: Message;
   isStreaming?: boolean;
   onEditSave?: (messageId: string, newContent: string) => Promise<void>;
-  onRegenerate?: (messageId: string) => Promise<void>;
+  onRegenerate?: (
+    messageId: string,
+    options?: RegenerationOptions,
+  ) => Promise<void>;
   onDelete?: (messageId: string) => Promise<void>;
   onBranch?: (messageId: string) => Promise<void>;
+  /** Whether this message has branches created from it */
+  hasBranch?: boolean;
+  /** Source of the message (text input, voice input, or system) */
+  source?: "text" | "voice" | "system";
+  /** Whether audio controls should be shown in compact mode */
+  compactAudio?: boolean;
+  /** Callback when audio playback is requested */
+  onPlayAudio?: (messageId: string) => void;
 }
 
 // Memoize to prevent unnecessary re-renders when other messages update
@@ -35,11 +52,16 @@ export const MessageBubble = memo(function MessageBubble({
   onRegenerate,
   onDelete,
   onBranch,
+  hasBranch,
+  source,
+  compactAudio: _compactAudio,
+  onPlayAudio: _onPlayAudio,
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
   const { apiClient } = useAuth();
   const { tokens } = useAuthStore();
+  const toast = useToastContext();
 
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
@@ -58,6 +80,17 @@ export const MessageBubble = memo(function MessageBubble({
   const [downloadingAttachments, setDownloadingAttachments] = useState<
     Set<string>
   >(new Set());
+
+  // Delete confirmation state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Regeneration dialog state
+  const [showRegenerationDialog, setShowRegenerationDialog] = useState(false);
+
+  // Action loading states
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isBranching, setIsBranching] = useState(false);
 
   // Save handler
   const handleSave = async () => {
@@ -89,9 +122,102 @@ export const MessageBubble = memo(function MessageBubble({
   };
 
   // Copy handler
-  const handleCopy = () => {
-    navigator.clipboard.writeText(message.content);
-  };
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      toast.success(
+        "Copied to clipboard",
+        "Message content copied successfully.",
+      );
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      toast.error("Copy failed", "Unable to copy to clipboard.");
+    }
+  }, [message.content, toast]);
+
+  // Delete handler - opens confirmation dialog
+  const handleDeleteClick = useCallback(() => {
+    setShowDeleteConfirm(true);
+  }, []);
+
+  // Confirm delete handler
+  const handleDeleteConfirm = useCallback(async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete?.(message.id);
+      setShowDeleteConfirm(false);
+      toast.success("Message deleted", "The message has been removed.");
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+      toast.error(
+        "Delete failed",
+        error instanceof Error ? error.message : "Unable to delete message.",
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [message.id, onDelete, toast]);
+
+  // Cancel delete handler
+  const handleDeleteCancel = useCallback(() => {
+    if (!isDeleting) {
+      setShowDeleteConfirm(false);
+    }
+  }, [isDeleting]);
+
+  // Regenerate click handler - opens the options dialog
+  const handleRegenerateClick = useCallback(() => {
+    setShowRegenerationDialog(true);
+  }, []);
+
+  // Regenerate confirm handler - called when user confirms options
+  const handleRegenerateConfirm = useCallback(
+    async (options: RegenerationOptions) => {
+      setShowRegenerationDialog(false);
+      setIsRegenerating(true);
+      try {
+        await onRegenerate?.(message.id, options);
+      } catch (error) {
+        console.error("Failed to regenerate message:", error);
+        toast.error(
+          "Regeneration failed",
+          error instanceof Error
+            ? error.message
+            : "Unable to regenerate message.",
+        );
+      } finally {
+        setIsRegenerating(false);
+      }
+    },
+    [message.id, onRegenerate, toast],
+  );
+
+  // Regenerate cancel handler
+  const handleRegenerateCancel = useCallback(() => {
+    if (!isRegenerating) {
+      setShowRegenerationDialog(false);
+    }
+  }, [isRegenerating]);
+
+  // Branch handler
+  const handleBranch = useCallback(async () => {
+    setIsBranching(true);
+    try {
+      await onBranch?.(message.id);
+      toast.success(
+        "Branch created",
+        "A new conversation branch has been created.",
+      );
+    } catch (error) {
+      console.error("Failed to branch conversation:", error);
+      toast.error(
+        "Branch failed",
+        error instanceof Error ? error.message : "Unable to create branch.",
+      );
+    } finally {
+      setIsBranching(false);
+    }
+  }, [message.id, onBranch, toast]);
 
   // Audio synthesis handler
   const handlePlayAudio = async () => {
@@ -279,15 +405,36 @@ export const MessageBubble = memo(function MessageBubble({
             role={message.role as "user" | "assistant" | "system"}
             onEdit={isUser ? () => setIsEditing(true) : undefined}
             onRegenerate={
-              !isUser && !isSystem
-                ? () => onRegenerate?.(message.id)
-                : undefined
+              !isUser && !isSystem ? handleRegenerateClick : undefined
             }
-            onDelete={() => onDelete?.(message.id)}
+            onDelete={onDelete ? handleDeleteClick : undefined}
             onCopy={handleCopy}
-            onBranch={!isSystem ? () => onBranch?.(message.id) : undefined}
+            onBranch={!isSystem && onBranch ? handleBranch : undefined}
+            isDeleting={isDeleting}
+            isRegenerating={isRegenerating}
+            isBranching={isBranching}
           />
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmationDialog
+          isOpen={showDeleteConfirm}
+          messageContent={message.content}
+          messageRole={message.role as "user" | "assistant"}
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+          isDeleting={isDeleting}
+        />
+
+        {/* Regeneration Options Dialog */}
+        <RegenerationOptionsDialog
+          isOpen={showRegenerationDialog}
+          onClose={handleRegenerateCancel}
+          onRegenerate={handleRegenerateConfirm}
+          originalContent={message.content}
+          isRegenerating={isRegenerating}
+          hasClinicalContext={false}
+        />
 
         {/* Message Content - Editing Mode or Display Mode */}
         {isEditing ? (
@@ -367,12 +514,32 @@ export const MessageBubble = memo(function MessageBubble({
               remarkPlugins={[remarkGfm, remarkMath]}
               rehypePlugins={[rehypeKatex]}
               components={{
+                // Pre wrapper - use div to avoid DOM nesting issues
+                // (react-markdown wraps code blocks in <pre><code>, but our code
+                // component renders its own <pre> inside Highlight)
+                pre({ children }) {
+                  return <>{children}</>;
+                },
+
                 // Code blocks with syntax highlighting
-                code({ inline, className, children, ...props }) {
+                // In react-markdown v10+, we detect code blocks by checking if className exists
+                // (fenced code blocks have language-xxx class) or if content has newlines
+                code({ className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || "");
                   const language = match ? match[1] : "";
+                  const codeString = String(children).replace(/\n$/, "");
 
-                  if (inline) {
+                  // Detect if this is a code block (fenced with ```) vs inline code
+                  // Code blocks have a language class OR contain newlines OR are inside pre
+                  const isCodeBlock =
+                    match ||
+                    codeString.includes("\n") ||
+                    (props.node?.tagName === "code" &&
+                      props.node?.position?.start?.line !==
+                        props.node?.position?.end?.line);
+
+                  if (!isCodeBlock) {
+                    // Inline code
                     return (
                       <code
                         className={`px-1.5 py-0.5 rounded text-sm font-mono ${
@@ -387,23 +554,23 @@ export const MessageBubble = memo(function MessageBubble({
                     );
                   }
 
-                  const code = String(children).replace(/\n$/, "");
+                  // Code block with syntax highlighting
                   return (
                     <div className="my-2 rounded-md overflow-hidden">
                       <Highlight
                         theme={themes.vsDark}
-                        code={code}
+                        code={codeString}
                         language={(language || "text") as any}
                       >
                         {({
-                          className,
+                          className: highlightClassName,
                           style,
                           tokens,
                           getLineProps,
                           getTokenProps,
                         }) => (
                           <pre
-                            className={className}
+                            className={highlightClassName}
                             style={{
                               ...style,
                               margin: 0,
@@ -412,16 +579,18 @@ export const MessageBubble = memo(function MessageBubble({
                               padding: "1rem",
                             }}
                           >
-                            {tokens.map((line, i) => (
-                              <div key={i} {...getLineProps({ line })}>
-                                {line.map((token, key) => (
-                                  <span
-                                    key={key}
-                                    {...getTokenProps({ token })}
-                                  />
-                                ))}
-                              </div>
-                            ))}
+                            <code>
+                              {tokens.map((line, i) => (
+                                <div key={i} {...getLineProps({ line })}>
+                                  {line.map((token, key) => (
+                                    <span
+                                      key={key}
+                                      {...getTokenProps({ token })}
+                                    />
+                                  ))}
+                                </div>
+                              ))}
+                            </code>
                           </pre>
                         )}
                       </Highlight>
@@ -714,16 +883,72 @@ export const MessageBubble = memo(function MessageBubble({
               </div>
             )}
 
-            {/* Timestamp */}
+            {/* Timestamp, Source Indicator, and Branch Indicator */}
             <div
-              className={`text-xs mt-2 ${
+              className={`flex items-center gap-2 text-xs mt-2 ${
                 isUser ? "text-primary-100" : "text-neutral-500"
               }`}
             >
-              {new Date(message.timestamp).toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {/* Voice Source Indicator */}
+              {source === "voice" && (
+                <span
+                  className={`inline-flex items-center gap-0.5 ${
+                    isUser ? "text-primary-100" : "text-neutral-500"
+                  }`}
+                  aria-label="Voice message"
+                  title="Sent via voice"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-3.5 h-3.5"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"
+                    />
+                  </svg>
+                </span>
+              )}
+              <span>
+                {new Date(message.timestamp).toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+              {hasBranch && (
+                <span
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${
+                    isUser
+                      ? "bg-primary-400/30 text-primary-100"
+                      : "bg-amber-100 text-amber-700"
+                  }`}
+                  aria-label="This message has branches"
+                  data-testid="branch-indicator"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-3 h-3"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"
+                    />
+                  </svg>
+                  Branched
+                </span>
+              )}
             </div>
           </div>
         )}

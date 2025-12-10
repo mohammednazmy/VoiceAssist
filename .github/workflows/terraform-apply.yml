@@ -4,14 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to apply changes to'
+        description: "Environment to apply changes to"
         required: true
         type: choice
         options:
           - staging
           - production
       auto_approve:
-        description: 'Auto-approve apply (use with caution)'
+        description: "Auto-approve apply (use with caution)"
         required: false
         type: boolean
         default: false
@@ -20,7 +20,7 @@ on:
     branches:
       - main
     paths:
-      - 'infrastructure/terraform/**'
+      - "infrastructure/terraform/**"
 
 env:
   TF_VERSION: "1.6.0"
@@ -361,7 +361,7 @@ jobs:
       - name: Download terraform outputs
         uses: actions/download-artifact@v6
         with:
-          pattern: '*-terraform-outputs'
+          pattern: "*-terraform-outputs"
 
       - name: Verify EKS cluster
         run: |
@@ -452,7 +452,7 @@ jobs:
       - name: Download state backup
         uses: actions/download-artifact@v6
         with:
-          pattern: 'production-state-backup-*'
+          pattern: "production-state-backup-*"
 
       - name: Terraform Init
         run: |

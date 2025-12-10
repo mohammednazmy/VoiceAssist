@@ -28,9 +28,7 @@ class TestBranchSchemas:
         """Test valid branch creation request"""
         from app.api.conversations import CreateBranchRequest
 
-        request = CreateBranchRequest(
-            parent_message_id=str(uuid.uuid4()), initial_message="Test message"
-        )
+        request = CreateBranchRequest(parent_message_id=str(uuid.uuid4()), initial_message="Test message")
         assert request.parent_message_id is not None
         assert request.initial_message == "Test message"
 

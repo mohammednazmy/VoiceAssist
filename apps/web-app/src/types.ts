@@ -3,7 +3,7 @@
 // publicationYear, snippet, relevanceScore
 export interface Citation {
   id: string;
-  source?: "kb" | "url" | "pubmed" | "doi"; // Added for backward compatibility with CitationDisplay
+  source?: "kb" | "url" | "pubmed" | "doi" | "openevidence"; // Added for backward compatibility with CitationDisplay
   sourceType?:
     | "textbook"
     | "journal"
@@ -12,6 +12,7 @@ export interface Citation {
     | "uptodate"
     | "pubmed"
     | string;
+  sourceTag?: string;
   title?: string;
   subtitle?: string;
   location?: string; // e.g., "ch. 252", "p. 2987"
@@ -24,6 +25,7 @@ export interface Citation {
   sourceId?: string;
   authors?: string[];
   publicationYear?: number;
+  journal?: string; // Journal name for academic citations
   snippet?: string;
   relevanceScore?: number;
   metadata?: Record<string, any>; // Additional metadata

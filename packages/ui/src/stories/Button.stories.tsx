@@ -3,40 +3,40 @@
  * Storybook documentation and examples for the Button component
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
-import { Button } from '../components/Button';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Button } from "../components/Button";
 
 const meta = {
-  title: 'Components/Button',
+  title: "Components/Button",
   component: Button,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     docs: {
       description: {
         component:
-          'A versatile button component with multiple variants and sizes. Built with Radix UI primitives and styled with Tailwind CSS.',
+          "A versatile button component with multiple variants and sizes. Built with Radix UI primitives and styled with Tailwind CSS.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: 'select',
-      options: ['primary', 'secondary', 'outline', 'ghost', 'danger'],
-      description: 'The visual style variant of the button',
+      control: "select",
+      options: ["primary", "secondary", "outline", "ghost", "danger"],
+      description: "The visual style variant of the button",
     },
     size: {
-      control: 'select',
-      options: ['sm', 'md', 'lg'],
-      description: 'The size of the button',
+      control: "select",
+      options: ["sm", "md", "lg"],
+      description: "The size of the button",
     },
     fullWidth: {
-      control: 'boolean',
-      description: 'Whether the button should span full width',
+      control: "boolean",
+      description: "Whether the button should span full width",
     },
     disabled: {
-      control: 'boolean',
-      description: 'Whether the button is disabled',
+      control: "boolean",
+      description: "Whether the button is disabled",
     },
   },
 } satisfies Meta<typeof Button>;
@@ -47,85 +47,85 @@ type Story = StoryObj<typeof meta>;
 // Primary variant
 export const Primary: Story = {
   args: {
-    children: 'Primary Button',
-    variant: 'primary',
-    size: 'md',
+    children: "Primary Button",
+    variant: "primary",
+    size: "md",
   },
 };
 
 // Secondary variant
 export const Secondary: Story = {
   args: {
-    children: 'Secondary Button',
-    variant: 'secondary',
-    size: 'md',
+    children: "Secondary Button",
+    variant: "secondary",
+    size: "md",
   },
 };
 
 // Outline variant
 export const Outline: Story = {
   args: {
-    children: 'Outline Button',
-    variant: 'outline',
-    size: 'md',
+    children: "Outline Button",
+    variant: "outline",
+    size: "md",
   },
 };
 
 // Ghost variant
 export const Ghost: Story = {
   args: {
-    children: 'Ghost Button',
-    variant: 'ghost',
-    size: 'md',
+    children: "Ghost Button",
+    variant: "ghost",
+    size: "md",
   },
 };
 
 // Danger variant
 export const Danger: Story = {
   args: {
-    children: 'Danger Button',
-    variant: 'danger',
-    size: 'md',
+    children: "Danger Button",
+    variant: "danger",
+    size: "md",
   },
 };
 
 // Small size
 export const Small: Story = {
   args: {
-    children: 'Small Button',
-    variant: 'primary',
-    size: 'sm',
+    children: "Small Button",
+    variant: "primary",
+    size: "sm",
   },
 };
 
 // Large size
 export const Large: Story = {
   args: {
-    children: 'Large Button',
-    variant: 'primary',
-    size: 'lg',
+    children: "Large Button",
+    variant: "primary",
+    size: "lg",
   },
 };
 
 // Full width
 export const FullWidth: Story = {
   args: {
-    children: 'Full Width Button',
-    variant: 'primary',
-    size: 'md',
+    children: "Full Width Button",
+    variant: "primary",
+    size: "md",
     fullWidth: true,
   },
   parameters: {
-    layout: 'padded',
+    layout: "padded",
   },
 };
 
 // Disabled state
 export const Disabled: Story = {
   args: {
-    children: 'Disabled Button',
-    variant: 'primary',
-    size: 'md',
+    children: "Disabled Button",
+    variant: "primary",
+    size: "md",
     disabled: true,
   },
 };
@@ -145,7 +145,7 @@ export const WithIcon: Story = {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          style={{ marginRight: '8px' }}
+          style={{ marginRight: "8px" }}
         >
           <path d="M5 12h14" />
           <path d="m12 5 7 7-7 7" />
@@ -153,15 +153,15 @@ export const WithIcon: Story = {
         Button with Icon
       </>
     ),
-    variant: 'primary',
-    size: 'md',
+    variant: "primary",
+    size: "md",
   },
 };
 
 // All variants showcase
 export const AllVariants: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
       <Button variant="primary">Primary</Button>
       <Button variant="secondary">Secondary</Button>
       <Button variant="outline">Outline</Button>
@@ -172,7 +172,7 @@ export const AllVariants: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'A showcase of all available button variants',
+        story: "A showcase of all available button variants",
       },
     },
   },
@@ -181,7 +181,7 @@ export const AllVariants: Story = {
 // All sizes showcase
 export const AllSizes: Story = {
   render: () => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
       <Button size="sm">Small</Button>
       <Button size="md">Medium</Button>
       <Button size="lg">Large</Button>
@@ -190,7 +190,7 @@ export const AllSizes: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'A showcase of all available button sizes',
+        story: "A showcase of all available button sizes",
       },
     },
   },

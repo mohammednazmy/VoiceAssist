@@ -81,7 +81,7 @@ describe("MessageInput", () => {
       const user = userEvent.setup();
       render(<MessageInput onSend={mockOnSend} />);
 
-      const textarea = screen.getByRole("textbox");
+      const textarea = screen.getByRole("textbox") as HTMLTextAreaElement;
       await user.type(textarea, "Line 1{Shift>}{Enter}{/Shift}Line 2");
 
       expect(textarea.value).toContain("\n");
@@ -127,7 +127,7 @@ describe("MessageInput", () => {
       const user = userEvent.setup();
       render(<MessageInput onSend={mockOnSend} />);
 
-      const textarea = screen.getByRole("textbox");
+      const textarea = screen.getByRole("textbox") as HTMLTextAreaElement;
       await user.type(textarea, "Line 1{Shift>}{Enter}{/Shift}Line 2");
 
       expect(textarea.value).toBe("Line 1\nLine 2");

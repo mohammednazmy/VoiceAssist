@@ -1,3 +1,33 @@
+---
+title: Remaining Message Edit Work
+slug: remaining-message-edit-work
+summary: "**Created:** 2025-11-23"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - ai-agents
+tags:
+  - remaining
+  - message
+  - edit
+  - work
+category: reference
+component: "frontend/web-app"
+relatedPaths:
+  - "packages/api-client/src/index.ts"
+  - "apps/web-app/src/components/chat/MessageBubble.tsx"
+  - "apps/web-app/src/components/chat/MessageActionMenu.tsx"
+ai_summary: >-
+  Created: 2025-11-23 Status: In Progress (API + Menu Complete, UI + Tests
+  Pending) Priority: High (Phase 2 Advanced Features) --- File:
+  packages/api-client/src/index.ts Added two new methods: async
+  editMessage(conversationId: string, messageId: string, content: string):
+  Promise<Message> async dele...
+---
+
 # Message Editing & Regeneration - Remaining Implementation
 
 **Created:** 2025-11-23
@@ -442,7 +472,12 @@ describe("useChatSession - Editing", () => {
   it("should delete a message successfully", async () => {
     const initialMessages = [
       { id: "msg-1", role: "user", content: "Hello", timestamp: "2024-01-01" },
-      { id: "msg-2", role: "assistant", content: "Hi", timestamp: "2024-01-01" },
+      {
+        id: "msg-2",
+        role: "assistant",
+        content: "Hi",
+        timestamp: "2024-01-01",
+      },
     ];
 
     mockApiClient.deleteMessage.mockResolvedValue(undefined);

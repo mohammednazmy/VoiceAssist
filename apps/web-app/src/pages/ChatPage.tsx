@@ -1,21 +1,28 @@
 /**
  * Chat Page
  * Main chat interface with WebSocket streaming
+ *
+ * When the unified_chat_voice_ui feature flag is enabled, renders the new
+ * UnifiedChatContainer component which merges text and voice modes.
  */
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { extractErrorMessage } from "@voiceassist/types";
 import { useAuth } from "../hooks/useAuth";
 import { useChatSession } from "../hooks/useChatSession";
 import { useBranching } from "../hooks/useBranching";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useClinicalContext } from "../hooks/useClinicalContext";
 import { useToastContext } from "../contexts/ToastContext";
+import { useFeatureFlag } from "../hooks/useExperiment";
+import { UI_FLAGS } from "../lib/featureFlags";
 import { MessageList } from "../components/chat/MessageList";
 import { MessageInput } from "../components/chat/MessageInput";
 import { ConnectionStatus } from "../components/chat/ConnectionStatus";
 import { ChatErrorBoundary } from "../components/chat/ChatErrorBoundary";
 import { BranchSidebar } from "../components/chat/BranchSidebar";
+import { BranchPreview } from "../components/chat/BranchPreview";
 import { KeyboardShortcutsDialog } from "../components/KeyboardShortcutsDialog";
 import { ClinicalContextSidebar } from "../components/clinical/ClinicalContextSidebar";
 import { CitationSidebar } from "../components/citations/CitationSidebar";
@@ -24,6 +31,7 @@ import { ShareDialog } from "../components/sharing/ShareDialog";
 import { SaveAsTemplateDialog } from "../components/templates/SaveAsTemplateDialog";
 import { useTemplates } from "../hooks/useTemplates";
 import { useAnnouncer } from "../components/accessibility/LiveRegion";
+import { UnifiedChatContainer } from "../components/unified-chat";
 import {
   backendToFrontend,
   frontendToBackend,
@@ -34,6 +42,7 @@ import type {
   WebSocketErrorCode,
   Conversation,
 } from "@voiceassist/types";
+import type { VoiceMetrics } from "../components/voice/VoiceMetricsDisplay";
 
 type LoadingState = "idle" | "creating" | "validating" | "loading-history";
 type ErrorType =
@@ -43,11 +52,70 @@ type ErrorType =
   | "websocket"
   | null;
 
+/** Default page size for message pagination */
+const MESSAGE_PAGE_SIZE = 50;
+
+/** Skeleton loader for chat messages during history loading */
+function MessageSkeleton({ isUser = false }: { isUser?: boolean }) {
+  return (
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
+      <div
+        className={`max-w-[70%] rounded-lg p-4 animate-pulse ${
+          isUser ? "bg-primary-100" : "bg-white border border-neutral-200"
+        }`}
+      >
+        <div className={`space-y-2 ${isUser ? "items-end" : "items-start"}`}>
+          <div
+            className={`h-4 rounded ${isUser ? "bg-primary-200" : "bg-neutral-200"} w-48`}
+          />
+          <div
+            className={`h-4 rounded ${isUser ? "bg-primary-200" : "bg-neutral-200"} w-64`}
+          />
+          <div
+            className={`h-4 rounded ${isUser ? "bg-primary-200" : "bg-neutral-200"} w-32`}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Skeleton loader for the entire chat area */
+function ChatSkeleton() {
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header skeleton */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 bg-white">
+        <div className="h-6 w-32 bg-neutral-200 rounded animate-pulse" />
+        <div className="flex items-center space-x-2">
+          <div className="h-8 w-20 bg-neutral-100 rounded animate-pulse" />
+          <div className="h-8 w-20 bg-neutral-100 rounded animate-pulse" />
+        </div>
+      </div>
+      {/* Messages skeleton */}
+      <div className="flex-1 overflow-hidden bg-neutral-50 px-4 py-4">
+        <MessageSkeleton isUser={true} />
+        <MessageSkeleton isUser={false} />
+        <MessageSkeleton isUser={true} />
+        <MessageSkeleton isUser={false} />
+      </div>
+      {/* Input skeleton */}
+      <div className="border-t border-neutral-200 bg-white px-4 py-3">
+        <div className="h-12 bg-neutral-100 rounded-lg animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
 export function ChatPage() {
   const { conversationId } = useParams<{ conversationId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { apiClient } = useAuth();
+
+  // Check if unified chat/voice UI feature flag is enabled
+  const { isEnabled: useUnifiedUI, isLoading: isFeatureFlagLoading } =
+    useFeatureFlag(UI_FLAGS.UNIFIED_CHAT_VOICE);
 
   // Check if we should auto-open voice mode (from Home page Voice Mode card)
   // Support both query param (?mode=voice) and location state for backwards compatibility
@@ -67,6 +135,12 @@ export function ChatPage() {
   >(null);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [initialMessages, setInitialMessages] = useState<Message[]>([]);
+
+  // Pagination state for loading older messages
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
+  const [totalMessageCount, setTotalMessageCount] = useState(0);
+  const [oldestLoadedPage, setOldestLoadedPage] = useState(1);
   const [isBranchSidebarOpen, setIsBranchSidebarOpen] = useState(false);
   const [isShortcutsDialogOpen, setIsShortcutsDialogOpen] = useState(false);
   const [isClinicalContextOpen, setIsClinicalContextOpen] = useState(false);
@@ -75,6 +149,13 @@ export function ChatPage() {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] =
     useState(false);
+  const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(false);
+
+  // Branch preview state
+  const [branchPreviewMessageId, setBranchPreviewMessageId] = useState<
+    string | null
+  >(null);
+  const [isCreatingBranch, setIsCreatingBranch] = useState(false);
 
   // Clinical context management
   const clinicalContextHook = useClinicalContext(
@@ -100,13 +181,21 @@ export function ChatPage() {
   // Accessibility: Screen reader announcements
   const { announce, LiveRegion: AnnouncementRegion } = useAnnouncer("polite");
 
+  // Track if we're currently initializing to prevent duplicate calls
+  const isInitializingRef = useRef(false);
+
   // Handle conversation initialization and validation
   useEffect(() => {
+    // Skip if unified UI is enabled - UnifiedChatContainer handles its own initialization
+    if (useUnifiedUI) return;
+
     const initializeConversation = async () => {
+      // Prevent duplicate initialization
+      if (isInitializingRef.current) return;
+
       // If no conversationId in URL, auto-create and redirect
       if (!conversationId) {
-        if (loadingState === "creating") return; // Already creating
-
+        isInitializingRef.current = true;
         setLoadingState("creating");
         setErrorType(null);
         try {
@@ -118,73 +207,207 @@ export function ChatPage() {
           setErrorType("failed-create");
           setErrorMessage("Failed to create conversation. Please try again.");
           setLoadingState("idle");
+        } finally {
+          isInitializingRef.current = false;
         }
         return;
       }
 
       // If conversationId changed, validate and load
       if (conversationId !== activeConversationId) {
+        isInitializingRef.current = true;
         setLoadingState("validating");
         setErrorType(null);
         setActiveConversationId(null);
         setConversation(null);
         setInitialMessages([]);
+        // Reset pagination state
+        setHasMoreMessages(false);
+        setTotalMessageCount(0);
+        setOldestLoadedPage(1);
 
         try {
           // Validate conversation exists
           const conv = await apiClient.getConversation(conversationId);
           setConversation(conv);
 
-          // Load conversation history
+          // Load conversation history (start with first page to get total count)
           setLoadingState("loading-history");
-          const messagesResponse = await apiClient.getMessages(
+          const firstPageResponse = await apiClient.getMessages(
             conversationId,
             1,
-            50,
+            MESSAGE_PAGE_SIZE,
           );
-          setInitialMessages(messagesResponse.items);
+
+          // Ensure total defaults to 0 if undefined to prevent NaN pagination calculations
+          const total = firstPageResponse.totalCount ?? 0;
+          setTotalMessageCount(total);
+
+          if (total === 0) {
+            // Empty conversation
+            setInitialMessages([]);
+            setHasMoreMessages(false);
+            setOldestLoadedPage(1);
+          } else {
+            // Calculate last page (most recent messages)
+            const lastPage = Math.ceil(total / MESSAGE_PAGE_SIZE);
+
+            if (lastPage === 1) {
+              // Only one page, use the response we already have
+              setInitialMessages(firstPageResponse.items);
+              setHasMoreMessages(false);
+              setOldestLoadedPage(1);
+            } else {
+              // Fetch the last page (most recent messages)
+              const lastPageResponse = await apiClient.getMessages(
+                conversationId,
+                lastPage,
+                MESSAGE_PAGE_SIZE,
+              );
+              setInitialMessages(lastPageResponse.items);
+              setHasMoreMessages(lastPage > 1);
+              setOldestLoadedPage(lastPage);
+            }
+          }
 
           // Set active conversation (will trigger WebSocket connection)
           setActiveConversationId(conversationId);
           setLoadingState("idle");
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error("Failed to load conversation:", err);
 
-          if (err.response?.status === 404) {
+          const errorResponse = (err as { response?: { status?: number } })
+            ?.response;
+          if (errorResponse?.status === 404) {
             setErrorType("not-found");
             setErrorMessage(
               "This conversation could not be found. It may have been deleted.",
             );
           } else {
             setErrorType("failed-load");
-            setErrorMessage("Failed to load conversation. Please try again.");
+            setErrorMessage(extractErrorMessage(err));
           }
           setLoadingState("idle");
+        } finally {
+          isInitializingRef.current = false;
         }
       }
     };
 
     initializeConversation();
-  }, [conversationId, activeConversationId, apiClient, navigate, loadingState]);
+    // Note: loadingState intentionally excluded to prevent infinite loops
+  }, [conversationId, activeConversationId, apiClient, navigate, useUnifiedUI]);
+
+  // Load older messages (pagination)
+  const loadOlderMessages = useCallback(async () => {
+    if (
+      !activeConversationId ||
+      isLoadingMoreMessages ||
+      !hasMoreMessages ||
+      oldestLoadedPage <= 1
+    ) {
+      return;
+    }
+
+    setIsLoadingMoreMessages(true);
+
+    try {
+      const nextPage = oldestLoadedPage - 1;
+      const response = await apiClient.getMessages(
+        activeConversationId,
+        nextPage,
+        MESSAGE_PAGE_SIZE,
+      );
+
+      // Prepend older messages to the list
+      setInitialMessages((prev) => {
+        // Avoid duplicates by filtering based on ID
+        const existingIds = new Set(prev.map((m) => m.id));
+        const newMessages = response.items.filter(
+          (m) => !existingIds.has(m.id),
+        );
+        // Sort by timestamp (oldest first)
+        return [...newMessages, ...prev].sort(
+          (a, b) => a.timestamp - b.timestamp,
+        );
+      });
+
+      setOldestLoadedPage(nextPage);
+      setHasMoreMessages(nextPage > 1);
+    } catch (err) {
+      console.error("Failed to load older messages:", err);
+      toast.error("Failed to load messages", "Please try again.");
+    } finally {
+      setIsLoadingMoreMessages(false);
+    }
+  }, [
+    activeConversationId,
+    isLoadingMoreMessages,
+    hasMoreMessages,
+    oldestLoadedPage,
+    apiClient,
+    toast,
+  ]);
 
   const handleError = useCallback(
     (code: WebSocketErrorCode, message: string) => {
+      console.error(`[ChatPage] WebSocket error: ${code} - ${message}`);
+
+      // Show toast notification for better visibility
+      switch (code) {
+        case "AUTH_FAILED":
+          toast.error(
+            "Authentication Failed",
+            "Please log in again to continue.",
+          );
+          navigate("/login");
+          break;
+        case "RATE_LIMITED":
+          toast.warning(
+            "Rate Limited",
+            "Please wait a moment before sending more messages.",
+          );
+          break;
+        case "QUOTA_EXCEEDED":
+          toast.error("Quota Exceeded", "You have reached your usage limit.");
+          break;
+        case "BACKEND_ERROR":
+          toast.error(
+            "Server Error",
+            message || "The server encountered an error. Please try again.",
+          );
+          break;
+        case "CONNECTION_DROPPED":
+          toast.warning("Connection Lost", "Reconnecting to the server...");
+          break;
+        default:
+          toast.error(
+            "Connection Error",
+            message || "An unexpected error occurred.",
+          );
+      }
+
+      // Also update error state for persistent display in UI
       setErrorType("websocket");
-      // Show transient toast for recoverable errors
-      if (["RATE_LIMITED", "BACKEND_ERROR"].includes(code)) {
-        setErrorMessage(`${code}: ${message}`);
+      setErrorMessage(`${code}: ${message}`);
+
+      // Auto-clear transient errors after 5 seconds
+      if (
+        ["RATE_LIMITED", "BACKEND_ERROR", "CONNECTION_DROPPED"].includes(code)
+      ) {
         setTimeout(() => {
           setErrorType(null);
           setErrorMessage(null);
         }, 5000);
-      } else {
-        // Persistent error for fatal issues
-        setErrorMessage(`${code}: ${message}`);
       }
     },
-    [],
+    [toast, navigate],
   );
 
+  // NOTE: When useUnifiedUI is true, UnifiedChatContainer manages its own
+  // useChatSession. We pass undefined for conversationId here to prevent
+  // ChatPage from creating a duplicate WebSocket connection that would
+  // cause duplicate messages in the chat.
   const {
     messages,
     connectionStatus,
@@ -194,34 +417,132 @@ export function ChatPage() {
     regenerateMessage,
     deleteMessage,
     reconnect,
+    addMessage: _addMessage,
   } = useChatSession({
-    conversationId: activeConversationId ?? undefined,
+    conversationId: useUnifiedUI
+      ? undefined
+      : (activeConversationId ?? undefined),
     onError: handleError,
-    initialMessages,
+    initialMessages: useUnifiedUI ? [] : initialMessages,
   });
 
-  // Branching functionality
-  const { createBranch } = useBranching(activeConversationId);
+  // Voice mode message handlers - informational callbacks only
+  // NOTE: The useThinkerTalkerVoiceMode hook already handles adding messages
+  // to the conversation store. These callbacks are for any additional
+  // processing (e.g., analytics, logging) but should NOT add messages
+  // to avoid duplicates.
+  const handleVoiceUserMessage = useCallback((_content: string) => {
+    // Message already added by useThinkerTalkerVoiceMode hook
+    // This callback is available for additional processing if needed
+  }, []);
 
-  // Handle branch creation from message
-  const handleBranchFromMessage = useCallback(
-    async (messageId: string) => {
+  const handleVoiceAssistantMessage = useCallback((_content: string) => {
+    // Message already added by useThinkerTalkerVoiceMode hook
+    // This callback is available for additional processing if needed
+  }, []);
+
+  /**
+   * Handle voice metrics update - export to backend for observability
+   * Only sends in production when VITE_ENABLE_VOICE_METRICS is set
+   */
+  const handleVoiceMetricsUpdate = useCallback(
+    (metrics: VoiceMetrics) => {
+      // Send metrics by default; allow opt-out via VITE_ENABLE_VOICE_METRICS="false"
+      const shouldSendMetrics =
+        import.meta.env.VITE_ENABLE_VOICE_METRICS !== "false";
+
+      if (!shouldSendMetrics) {
+        return;
+      }
+
       try {
-        const branch = await createBranch(messageId);
-        if (branch) {
-          // Show branch sidebar after creating
-          setIsBranchSidebarOpen(true);
+        const payload = {
+          conversation_id: activeConversationId ?? undefined,
+          connection_time_ms: metrics.connectionTimeMs,
+          time_to_first_transcript_ms: metrics.timeToFirstTranscriptMs,
+          last_stt_latency_ms: metrics.lastSttLatencyMs,
+          last_response_latency_ms: metrics.lastResponseLatencyMs,
+          session_duration_ms: metrics.sessionDurationMs,
+          user_transcript_count: metrics.userTranscriptCount,
+          ai_response_count: metrics.aiResponseCount,
+          reconnect_count: metrics.reconnectCount,
+          session_started_at: metrics.sessionStartedAt,
+        };
+
+        // Use sendBeacon for reliability (survives page navigation)
+        if (navigator.sendBeacon) {
+          const blob = new Blob([JSON.stringify(payload)], {
+            type: "application/json",
+          });
+          navigator.sendBeacon("/api/voice/metrics", blob);
+        } else {
+          // Fallback to fetch with keepalive
+          void fetch("/api/voice/metrics", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            keepalive: true,
+          });
         }
-      } catch (error) {
-        console.error("Failed to create branch:", error);
-        setErrorType("websocket");
-        setErrorMessage("Failed to create branch. Please try again.");
+      } catch (err) {
+        console.warn("[VoiceMetrics] Failed to send metrics", err);
       }
     },
-    [createBranch],
+    [activeConversationId],
   );
 
-  // Keyboard shortcuts (pass function that opens dialog via Cmd+/)
+  // Branching functionality
+  const { branches, createBranch } = useBranching(activeConversationId);
+
+  // Compute set of message IDs that have branches
+  const branchedMessageIds = useMemo(
+    () =>
+      new Set(
+        (branches || [])
+          .map((b) => b.parentMessageId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    [branches],
+  );
+
+  // Handle branch request from message - shows preview instead of directly creating
+  const handleBranchFromMessage = useCallback(
+    async (messageId: string): Promise<void> => {
+      setBranchPreviewMessageId(messageId);
+    },
+    [],
+  );
+
+  // Handle branch creation confirmation
+  const handleConfirmBranch = useCallback(async () => {
+    if (!branchPreviewMessageId) return;
+
+    setIsCreatingBranch(true);
+    try {
+      const branch = await createBranch(branchPreviewMessageId);
+      if (branch) {
+        // Show branch sidebar after creating
+        setIsBranchSidebarOpen(true);
+        toast.success(
+          "Branch created",
+          "You can now explore an alternative conversation path.",
+        );
+      }
+      setBranchPreviewMessageId(null);
+    } catch (error) {
+      console.error("Failed to create branch:", error);
+      toast.error("Branch creation failed", "Please try again.");
+    } finally {
+      setIsCreatingBranch(false);
+    }
+  }, [branchPreviewMessageId, createBranch, toast]);
+
+  // Handle branch preview cancel
+  const handleCancelBranchPreview = useCallback(() => {
+    setBranchPreviewMessageId(null);
+  }, []);
+
+  // Keyboard shortcuts
   useKeyboardShortcuts({
     onToggleBranchSidebar: () => setIsBranchSidebarOpen((prev) => !prev),
     onCreateBranch: () => {
@@ -231,36 +552,13 @@ export function ChatPage() {
         handleBranchFromMessage(lastMessage.id);
       }
     },
+    onShowShortcuts: () => setIsShortcutsDialogOpen(true),
+    onToggleCitations: () => setIsCitationSidebarOpen((prev) => !prev),
+    onToggleClinicalContext: () => setIsClinicalContextOpen((prev) => !prev),
+    onToggleVoicePanel: () => setIsVoicePanelOpen((prev) => !prev),
+    onCloseVoicePanel: () => setIsVoicePanelOpen(false),
+    isVoicePanelOpen,
   });
-
-  // Override keyboard shortcut dialog handler
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
-      const modKey = isMac ? event.metaKey : event.ctrlKey;
-
-      // Cmd/Ctrl + /: Show keyboard shortcuts
-      if (modKey && event.key === "/") {
-        event.preventDefault();
-        setIsShortcutsDialogOpen(true);
-      }
-
-      // Cmd/Ctrl + I: Toggle clinical context sidebar
-      if (modKey && event.key === "i") {
-        event.preventDefault();
-        setIsClinicalContextOpen((prev) => !prev);
-      }
-
-      // Cmd/Ctrl + C: Toggle citation sidebar
-      if (modKey && event.key === "c") {
-        event.preventDefault();
-        setIsCitationSidebarOpen((prev) => !prev);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
 
   // Handle clinical context changes with debounced save
   const handleClinicalContextChange = useCallback(
@@ -311,27 +609,24 @@ export function ChatPage() {
       }
     }
   }, [messages, announce]);
-  // Loading states
-  if (loadingState === "creating") {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-primary-500 border-t-transparent animate-spin" />
-          <p className="text-neutral-600">Creating conversation...</p>
-        </div>
-      </div>
-    );
-  }
 
-  if (loadingState === "validating" || loadingState === "loading-history") {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-primary-500 border-t-transparent animate-spin" />
-          <p className="text-neutral-600">Loading conversation...</p>
-        </div>
-      </div>
-    );
+  // Debug: Log early in render to catch what's happening
+  console.log("[ChatPage] Early render check:", {
+    loadingState,
+    isFeatureFlagLoading,
+    useUnifiedUI,
+  });
+
+  // Loading states - use skeleton loaders for better UX
+  // BUT: Skip this check if unified UI is enabled - UnifiedChatContainer handles its own loading
+  if (
+    !useUnifiedUI &&
+    (loadingState === "creating" ||
+      loadingState === "validating" ||
+      loadingState === "loading-history")
+  ) {
+    console.log("[ChatPage] Showing skeleton - loadingState:", loadingState);
+    return <ChatSkeleton />;
   }
 
   // Error states
@@ -423,7 +718,46 @@ export function ChatPage() {
     );
   }
 
+  // Debug logging for render path
+  console.log("[ChatPage] Render state:", {
+    isFeatureFlagLoading,
+    useUnifiedUI,
+    conversationId,
+    activeConversationId,
+    loadingState,
+  });
+
+  // Show loading while checking feature flag
+  if (isFeatureFlagLoading) {
+    console.log("[ChatPage] Showing skeleton - feature flag loading");
+    return <ChatSkeleton />;
+  }
+
+  // Render unified chat/voice UI when feature flag is enabled
+  // UnifiedChatContainer handles its own conversation creation/loading
+  // NOTE: We pass conversationId from URL params directly (not activeConversationId state)
+  // to ensure immediate updates when user clicks a different conversation in sidebar.
+  // UnifiedChatContainer will read from URL params and handle loading internally.
+  if (useUnifiedUI) {
+    console.log("[ChatPage] Rendering UnifiedChatContainer", {
+      conversationId,
+    });
+    return (
+      <UnifiedChatContainer
+        // Use key to force complete remount when conversation changes
+        // This ensures all state (WebSocket, messages, etc.) is reset cleanly
+        key={conversationId || "new"}
+        conversationId={conversationId || undefined}
+        startInVoiceMode={startVoiceMode}
+      />
+    );
+  }
+
+  // For legacy UI: show loading while creating/loading conversation
   if (!activeConversationId) {
+    console.log(
+      "[ChatPage] Showing legacy loading spinner - no activeConversationId",
+    );
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
@@ -657,6 +991,19 @@ export function ChatPage() {
               </button>
             </div>
           )}
+          {/* Branch Preview */}
+          {branchPreviewMessageId && (
+            <div className="px-4 py-3 border-b border-neutral-200">
+              <BranchPreview
+                messages={messages}
+                parentMessageId={branchPreviewMessageId}
+                isCreating={isCreatingBranch}
+                onConfirm={handleConfirmBranch}
+                onCancel={handleCancelBranchPreview}
+              />
+            </div>
+          )}
+
           {/* Messages */}
           <div className="flex-1 overflow-hidden bg-neutral-50 px-4 py-4">
             <MessageList
@@ -669,6 +1016,11 @@ export function ChatPage() {
               onRegenerate={regenerateMessage}
               onDelete={deleteMessage}
               onBranch={handleBranchFromMessage}
+              branchedMessageIds={branchedMessageIds}
+              onLoadMore={loadOlderMessages}
+              hasMore={hasMoreMessages}
+              isLoadingMore={isLoadingMoreMessages}
+              totalCount={totalMessageCount}
             />
           </div>
 
@@ -681,6 +1033,11 @@ export function ChatPage() {
             enableRealtimeVoice={true} // Realtime voice mode (OpenAI Realtime API)
             autoOpenRealtimeVoice={startVoiceMode} // Auto-open voice mode when navigating from Voice Mode card
             conversationId={activeConversationId || undefined}
+            onVoiceUserMessage={handleVoiceUserMessage}
+            onVoiceAssistantMessage={handleVoiceAssistantMessage}
+            onVoiceMetricsUpdate={handleVoiceMetricsUpdate}
+            isVoicePanelOpen={isVoicePanelOpen}
+            onVoicePanelChange={setIsVoicePanelOpen}
           />
         </div>
 
@@ -700,6 +1057,18 @@ export function ChatPage() {
             isOpen={isCitationSidebarOpen}
             onClose={() => setIsCitationSidebarOpen(false)}
             messages={messages}
+            onJumpToMessage={(messageId) => {
+              const el = document.querySelector<HTMLElement>(
+                `[data-message-id="${messageId}"]`,
+              );
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                el.classList.add("ring-2", "ring-primary-500");
+                setTimeout(() => {
+                  el.classList.remove("ring-2", "ring-primary-500");
+                }, 2000);
+              }
+            }}
           />
         )}
 

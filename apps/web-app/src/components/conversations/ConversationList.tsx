@@ -1,71 +1,76 @@
 /**
  * ConversationList Component
- * Displays list of user's conversations with actions
+ * Displays list of user's conversations with actions and skeleton loading
  */
 
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import { Input } from '@voiceassist/ui';
-import type { Conversation } from '@voiceassist/types';
-import { ConversationListItem } from './ConversationListItem';
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useConversations } from "../../hooks/useConversations";
+import { useToastContext } from "../../contexts/ToastContext";
+import { Input } from "@voiceassist/ui";
+import { ConversationListItem } from "./ConversationListItem";
 
 export interface ConversationListProps {
   showArchived?: boolean;
 }
 
-export function ConversationList({ showArchived = false }: ConversationListProps) {
+/** Skeleton loader for conversation items */
+function ConversationSkeleton() {
+  return (
+    <div className="px-3 py-2.5 animate-pulse">
+      <div className="h-4 bg-neutral-200 rounded w-3/4 mb-2" />
+      <div className="h-3 bg-neutral-100 rounded w-full mb-1.5" />
+      <div className="h-3 bg-neutral-100 rounded w-1/3" />
+    </div>
+  );
+}
+
+export function ConversationList({
+  showArchived = false,
+}: ConversationListProps) {
   const navigate = useNavigate();
   const { conversationId } = useParams<{ conversationId: string }>();
-  const { apiClient } = useAuth();
-
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToastContext();
   const [isCreating, setIsCreating] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    loadConversations();
-  }, [showArchived]);
+  const {
+    conversations,
+    isLoading,
+    isLoadingMore,
+    error,
+    searchQuery,
+    setSearchQuery,
+    hasMore,
+    loadMore,
+    createConversation,
+    updateConversation,
+    archiveConversation,
+    deleteConversation,
+    reload,
+  } = useConversations({
+    onError: (title, description) => {
+      toast.error(title, description);
+    },
+    pageSize: 20,
+  });
 
-  const loadConversations = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await apiClient.getConversations(1, 50);
-      let filtered = response.items;
-
-      // Filter by archived status
-      if (showArchived) {
-        filtered = filtered.filter((c) => c.archived);
-      } else {
-        filtered = filtered.filter((c) => !c.archived);
-      }
-
-      // Sort by most recently updated first
-      filtered.sort((a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      );
-
-      setConversations(filtered);
-    } catch (err) {
-      console.error('Failed to load conversations:', err);
-      setError('Failed to load conversations');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Filter by archived status locally (since API may not filter)
+  const filteredConversations = conversations
+    .filter((c) => (showArchived ? c.archived : !c.archived))
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+    );
 
   const handleCreateNew = async () => {
     setIsCreating(true);
     try {
-      const newConversation = await apiClient.createConversation('New Conversation');
-      setConversations((prev) => [newConversation, ...prev]);
+      const newConversation = await createConversation("New Conversation");
       navigate(`/chat/${newConversation.id}`);
+      toast.success("Created conversation", "New conversation started");
     } catch (err) {
-      console.error('Failed to create conversation:', err);
-      setError('Failed to create conversation');
+      console.error("Failed to create conversation:", err);
+      // Error toast already shown by useConversations
     } finally {
       setIsCreating(false);
     }
@@ -73,60 +78,73 @@ export function ConversationList({ showArchived = false }: ConversationListProps
 
   const handleRename = async (id: string, newTitle: string) => {
     try {
-      const updated = await apiClient.updateConversation(id, { title: newTitle });
-      setConversations((prev) =>
-        prev.map((c) => (c.id === id ? updated : c))
-      );
+      await updateConversation(id, { title: newTitle });
+      // Success - optimistic update already applied
     } catch (err) {
-      console.error('Failed to rename conversation:', err);
+      console.error("Failed to rename conversation:", err);
+      // Error toast already shown by useConversations, will rollback
       throw err;
     }
   };
 
   const handleArchive = async (id: string) => {
     try {
-      await apiClient.archiveConversation(id);
-      // Remove from current list
-      setConversations((prev) => prev.filter((c) => c.id !== id));
-
+      await archiveConversation(id);
       // If archiving the active conversation, navigate away
       if (id === conversationId) {
-        navigate('/chat');
+        navigate("/chat");
       }
+      toast.info(
+        "Conversation archived",
+        "You can find it in the archived section",
+      );
     } catch (err) {
-      console.error('Failed to archive conversation:', err);
+      console.error("Failed to archive conversation:", err);
+      // Error toast already shown by useConversations, will rollback
       throw err;
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
-      await apiClient.deleteConversation(id);
-      // Remove from list
-      setConversations((prev) => prev.filter((c) => c.id !== id));
-
+      await deleteConversation(id);
       // If deleting the active conversation, navigate away
       if (id === conversationId) {
-        navigate('/chat');
+        navigate("/chat");
       }
+      toast.success(
+        "Conversation deleted",
+        "The conversation has been permanently deleted",
+      );
     } catch (err) {
-      console.error('Failed to delete conversation:', err);
+      console.error("Failed to delete conversation:", err);
+      // Error toast already shown by useConversations, will rollback
       throw err;
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="w-8 h-8 mx-auto mb-3 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-neutral-600">Loading conversations...</p>
+      <div className="flex flex-col h-full">
+        {/* Header skeleton */}
+        <div className="px-4 py-3 border-b border-neutral-200 bg-white space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="h-5 w-24 bg-neutral-200 rounded animate-pulse" />
+            <div className="h-8 w-8 bg-neutral-100 rounded animate-pulse" />
+          </div>
+          <div className="h-9 bg-neutral-100 rounded animate-pulse" />
+        </div>
+        {/* Skeleton items */}
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {[...Array(6)].map((_, i) => (
+            <ConversationSkeleton key={i} />
+          ))}
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error && filteredConversations.length === 0) {
     return (
       <div className="flex items-center justify-center h-full p-4">
         <div className="text-center max-w-sm">
@@ -149,7 +167,7 @@ export function ConversationList({ showArchived = false }: ConversationListProps
           <p className="text-sm font-medium text-neutral-900 mb-1">{error}</p>
           <button
             type="button"
-            onClick={loadConversations}
+            onClick={() => reload()}
             className="text-sm text-primary-600 hover:text-primary-700 underline"
           >
             Try again
@@ -180,12 +198,14 @@ export function ConversationList({ showArchived = false }: ConversationListProps
             </svg>
           </div>
           <h3 className="text-base font-semibold text-neutral-900 mb-2">
-            {showArchived ? 'No archived conversations' : 'No conversations yet'}
+            {showArchived
+              ? "No archived conversations"
+              : "No conversations yet"}
           </h3>
           <p className="text-sm text-neutral-600 mb-6">
             {showArchived
-              ? 'Archived conversations will appear here.'
-              : 'Start a new conversation to get going!'}
+              ? "Archived conversations will appear here."
+              : "Start a new conversation to get going!"}
           </p>
           {!showArchived && (
             <button
@@ -209,7 +229,11 @@ export function ConversationList({ showArchived = false }: ConversationListProps
                     stroke="currentColor"
                     className="w-4 h-4 mr-2"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 4.5v15m7.5-7.5h-15"
+                    />
                   </svg>
                   New Conversation
                 </>
@@ -221,18 +245,13 @@ export function ConversationList({ showArchived = false }: ConversationListProps
     );
   }
 
-  // Filter conversations based on search
-  const filteredConversations = conversations.filter((conv) =>
-    conv.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <div className="flex flex-col h-full">
       {/* Header with New Conversation button */}
       <div className="flex flex-col px-4 py-3 border-b border-neutral-200 bg-white space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-neutral-900">
-            {showArchived ? 'Archived' : 'Conversations'}
+            {showArchived ? "Archived" : "Conversations"}
           </h2>
           {!showArchived && (
             <button
@@ -250,7 +269,11 @@ export function ConversationList({ showArchived = false }: ConversationListProps
                 stroke="currentColor"
                 className="w-5 h-5"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4.5v15m7.5-7.5h-15"
+                />
               </svg>
             </button>
           )}
@@ -299,6 +322,36 @@ export function ConversationList({ showArchived = false }: ConversationListProps
             onDelete={handleDelete}
           />
         ))}
+
+        {/* Load More Button */}
+        {hasMore && !searchQuery && (
+          <div className="pt-2 pb-1">
+            <button
+              type="button"
+              onClick={loadMore}
+              disabled={isLoadingMore}
+              className="w-full py-2 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-md transition-colors disabled:opacity-50"
+            >
+              {isLoadingMore ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                  Loading more...
+                </span>
+              ) : (
+                "Load more conversations"
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Loading more skeletons */}
+        {isLoadingMore && (
+          <div className="space-y-1">
+            {[...Array(3)].map((_, i) => (
+              <ConversationSkeleton key={`loading-more-${i}`} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

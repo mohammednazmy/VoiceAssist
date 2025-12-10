@@ -44,6 +44,11 @@ class ChatMessageResponse(BaseModel):
     content: str
     created_at: datetime
     citations: List[dict] = []
+    model: Optional[str] = None
+    model_provider: Optional[str] = None
+    retrieval_confidence: Optional[float] = None
+    model_confidence: Optional[float] = None
+    reasoning_path: List[dict] = []
 
 
 @router.post("/message", response_model=APIEnvelope)
@@ -73,5 +78,10 @@ async def post_chat_message(
         content=q_res.answer,
         created_at=q_res.created_at,
         citations=[c.model_dump() for c in q_res.citations],
+        model=q_res.model,
+        model_provider=q_res.model_provider,
+        retrieval_confidence=q_res.retrieval_confidence,
+        model_confidence=q_res.model_confidence,
+        reasoning_path=q_res.reasoning_path,
     )
     return success_response(resp, trace_id=trace_id)

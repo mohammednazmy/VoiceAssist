@@ -1,9 +1,11 @@
 """Unit tests for Request ID middleware."""
-import pytest
+
 import uuid
+
+import pytest
+from app.core.request_id import RequestIDMiddleware, get_request_id
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
-from app.core.request_id import RequestIDMiddleware, get_request_id
 
 
 @pytest.fixture
@@ -77,10 +79,12 @@ def test_request_id_consistency_across_calls(client):
 
 def test_get_request_id_helper_with_missing_id():
     """Test get_request_id helper when request ID is not set."""
+
     # Create a mock request without request_id in state
     class MockRequest:
         class State:
             pass
+
         state = State()
 
     request = MockRequest()

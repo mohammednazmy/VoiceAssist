@@ -1,0 +1,8 @@
+{
+  "path": "turbo.json",
+  "language": "json",
+  "size": 952,
+  "last_modified": "2025-11-27T09:29:21.016Z",
+  "lines": 61,
+  "content": "{\n  \"$schema\": \"https://turbo.build/schema.json\",\n  \"globalDependencies\": [\n    \"**/.env.*local\"\n  ],\n  \"ui\": \"stream\",\n  \"tasks\": {\n    \"build\": {\n      \"dependsOn\": [\n        \"^build\"\n      ],\n      \"outputs\": [\n        \"dist/**\",\n        \".next/**\",\n        \"!.next/cache/**\",\n        \"build/**\",\n        \"out/**\"\n      ]\n    },\n    \"dev\": {\n      \"cache\": false,\n      \"persistent\": true\n    },\n    \"test\": {\n      \"dependsOn\": [\n        \"build\"\n      ],\n      \"outputs\": [\n        \"coverage/**\"\n      ]\n    },\n    \"test:fast\": {\n      \"cache\": false,\n      \"outputs\": []\n    },\n    \"lint\": {\n      \"dependsOn\": [\n        \"^build\"\n      ]\n    },\n    \"type-check\": {\n      \"dependsOn\": [\n        \"^build\"\n      ]\n    },\n    \"clean\": {\n      \"cache\": false\n    },\n    \"deploy\": {\n      \"dependsOn\": [\n        \"build\"\n      ],\n      \"outputs\": [\n        \"out/**\",\n        \"artifacts/**\",\n        \"../../artifacts/docs-site.tar.gz\"\n      ]\n    }\n  }\n}\n"
+}

@@ -1,3 +1,30 @@
+---
+title: Realtime Proxy Spec
+slug: client-implementation/realtime-proxy-spec
+summary: >-
+  The VoiceAssist platform uses WebSocket connections for real-time
+  bidirectional communication between the client and the OpenAI Realtime API.
+  This doc...
+status: stable
+stability: production
+owner: frontend
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - ai-agents
+tags:
+  - realtime
+  - proxy
+  - spec
+category: planning
+ai_summary: >-
+  The VoiceAssist platform uses WebSocket connections for real-time
+  bidirectional communication between the client and the OpenAI Realtime API.
+  This document specifies the protocol, message formats, error handling, and
+  implementation details. --- wss://assist.asimo.io/api/realtime const
+  conversatio...
+---
+
 # Real-time Proxy Specification
 
 ## Overview
@@ -16,19 +43,17 @@ wss://assist.asimo.io/api/realtime
 
 ### Query Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `conversationId` | string | Yes | Unique conversation identifier |
-| `token` | string | Yes | JWT authentication token |
+| Parameter        | Type   | Required | Description                    |
+| ---------------- | ------ | -------- | ------------------------------ |
+| `conversationId` | string | Yes      | Unique conversation identifier |
+| `token`          | string | Yes      | JWT authentication token       |
 
 ### Example Connection
 
 ```javascript
-const conversationId = 'conv-123';
-const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
-const ws = new WebSocket(
-  `wss://assist.asimo.io/api/realtime?conversationId=${conversationId}&token=${token}`
-);
+const conversationId = "conv-123";
+const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+const ws = new WebSocket(`wss://assist.asimo.io/api/realtime?conversationId=${conversationId}&token=${token}`);
 ```
 
 ---
@@ -42,11 +67,13 @@ Each WebSocket connection is scoped to a single conversation. The `conversationI
 ### Conversation-WebSocket Relationship
 
 **One-to-One Mapping:**
+
 - Each WebSocket connection is associated with exactly one conversation
 - Each conversation can have at most one active WebSocket connection per client
 - Messages sent over the WebSocket are automatically associated with the conversation
 
 **Connection Lifecycle:**
+
 ```
 Conversation Created → Load History → Connect WebSocket → Send/Receive Messages
                                            ↓
@@ -58,6 +85,7 @@ Conversation Created → Load History → Connect WebSocket → Send/Receive Mes
 ### Switching Conversations
 
 **Process:**
+
 1. Client disconnects existing WebSocket connection
 2. Client clears message state for old conversation
 3. Client fetches new conversation history via REST API:
@@ -66,20 +94,20 @@ Conversation Created → Load History → Connect WebSocket → Send/Receive Mes
    ```
 4. Client connects new WebSocket with new `conversationId`:
    ```javascript
-   const ws = new WebSocket(
-     `wss://assist.asimo.io/api/realtime?conversationId=${newConversationId}&token=${token}`
-   );
+   const ws = new WebSocket(`wss://assist.asimo.io/api/realtime?conversationId=${newConversationId}&token=${token}`);
    ```
 
 **Critical Requirements:**
+
 - Old WebSocket **must** be disconnected before connecting to new conversation
 - Message state **must** be cleared to prevent cross-contamination
 - Connection to new conversation **must** use correct `conversationId` parameter
 
 **Error Prevention:**
+
 ```typescript
 // WRONG: Switching conversationId without disconnecting
-ws.send(JSON.stringify({ conversationId: 'new-id' })); // ❌ NOT SUPPORTED
+ws.send(JSON.stringify({ conversationId: "new-id" })); // ❌ NOT SUPPORTED
 
 // CORRECT: Disconnect old, connect new
 oldWs.close();
@@ -89,16 +117,19 @@ const newWs = new WebSocket(`wss://...?conversationId=new-id&token=${token}`); /
 ### Message Persistence
 
 **REST API (Persistent):**
+
 - Messages are stored in the database associated with their conversation
 - History retrieved via: `GET /api/conversations/{conversationId}/messages`
 - Persists across WebSocket disconnections
 
 **WebSocket (Real-time):**
+
 - New messages sent via WebSocket are saved to database
 - Streaming responses are saved when complete (`message.done` event)
 - Messages persist even if WebSocket disconnects during streaming
 
 **Initial Load:**
+
 ```typescript
 // 1. Load conversation history from REST API
 const history = await apiClient.getMessages(conversationId, 1, 50);
@@ -113,12 +144,14 @@ const ws = useChatSession({ conversationId, initialMessages: history.items });
 ### Authorization
 
 **Conversation Access Control:**
+
 1. Server validates JWT token
 2. Server extracts user ID from token
 3. Server checks if user owns conversation with given `conversationId`
 4. If unauthorized, connection is rejected with `AUTH_FAILED` error
 
 **Security Flow:**
+
 ```
 Client connects with conversationId + token
           ↓
@@ -158,6 +191,7 @@ Client                          Server
 **Interval:** 30 seconds
 
 **Protocol:**
+
 ```
 Client                          Server
   │                               │
@@ -168,6 +202,7 @@ Client                          Server
 ```
 
 **Ping Message:**
+
 ```json
 {
   "type": "ping"
@@ -175,6 +210,7 @@ Client                          Server
 ```
 
 **Pong Response:**
+
 ```json
 {
   "type": "pong"
@@ -184,6 +220,7 @@ Client                          Server
 ### 3. Connection Close
 
 **Normal Closure:**
+
 ```
 Client                          Server
   │                               │
@@ -195,6 +232,7 @@ Client                          Server
 ```
 
 **Abnormal Closure (triggers reconnection):**
+
 - Code 1006: Connection dropped
 - Server crashes or network failure
 - Authentication failure
@@ -205,15 +243,15 @@ Client                          Server
 
 ### Event Types
 
-| Event Type | Direction | Description |
-|-----------|-----------|-------------|
-| `delta` | Server → Client | Incremental text update during streaming |
-| `chunk` | Server → Client | Complete text chunk |
+| Event Type     | Direction       | Description                                  |
+| -------------- | --------------- | -------------------------------------------- |
+| `delta`        | Server → Client | Incremental text update during streaming     |
+| `chunk`        | Server → Client | Complete text chunk                          |
 | `message.done` | Server → Client | Final message with full content and metadata |
-| `message.send` | Client → Server | User sends a new message |
-| `error` | Server → Client | Error occurred during processing |
-| `ping` | Client → Server | Heartbeat from client |
-| `pong` | Server → Client | Heartbeat response |
+| `message.send` | Client → Server | User sends a new message                     |
+| `error`        | Server → Client | Error occurred during processing             |
+| `ping`         | Client → Server | Heartbeat from client                        |
+| `pong`         | Server → Client | Heartbeat response                           |
 
 ---
 
@@ -226,20 +264,22 @@ Client                          Server
 **Purpose:** User sends a new message to the assistant
 
 **Schema:**
+
 ```typescript
 interface MessageSendEvent {
-  type: 'message.send';
+  type: "message.send";
   message: {
-    id: string;              // Client-generated unique ID
-    role: 'user';
-    content: string;         // Message text
-    attachments?: string[];  // Optional attachment IDs
-    timestamp: number;       // Unix timestamp in milliseconds
+    id: string; // Client-generated unique ID
+    role: "user";
+    content: string; // Message text
+    attachments?: string[]; // Optional attachment IDs
+    timestamp: number; // Unix timestamp in milliseconds
   };
 }
 ```
 
 **Example:**
+
 ```json
 {
   "type": "message.send",
@@ -262,17 +302,19 @@ interface MessageSendEvent {
 **Purpose:** Incremental text updates during streaming response
 
 **Schema:**
+
 ```typescript
 interface DeltaEvent {
-  type: 'delta';
-  eventId?: string;       // Optional unique event ID
-  messageId: string;      // Assistant message ID
-  delta: string;          // Incremental text to append
-  metadata?: any;         // Optional metadata
+  type: "delta";
+  eventId?: string; // Optional unique event ID
+  messageId: string; // Assistant message ID
+  delta: string; // Incremental text to append
+  metadata?: any; // Optional metadata
 }
 ```
 
 **Example Sequence:**
+
 ```json
 // Delta 1
 {
@@ -297,6 +339,7 @@ interface DeltaEvent {
 ```
 
 **Client Behavior:**
+
 - Append `delta` to existing message content
 - If no message exists with `messageId`, create new message
 - Update UI in real-time as deltas arrive
@@ -311,17 +354,19 @@ interface DeltaEvent {
 **Purpose:** Complete text chunks (alternative to delta)
 
 **Schema:**
+
 ```typescript
 interface ChunkEvent {
-  type: 'chunk';
+  type: "chunk";
   eventId?: string;
   messageId: string;
-  content: string;        // Complete text chunk
+  content: string; // Complete text chunk
   metadata?: any;
 }
 ```
 
 **Example:**
+
 ```json
 {
   "type": "chunk",
@@ -331,6 +376,7 @@ interface ChunkEvent {
 ```
 
 **Client Behavior:**
+
 - Append `content` to existing message
 - Similar to delta but with larger chunks
 
@@ -343,34 +389,37 @@ interface ChunkEvent {
 **Purpose:** Signal end of streaming and provide final message
 
 **Schema:**
+
 ```typescript
 interface MessageDoneEvent {
-  type: 'message.done';
+  type: "message.done";
   message: {
     id: string;
-    role: 'assistant';
-    content: string;        // Final complete message text
+    role: "assistant";
+    content: string; // Final complete message text
     citations?: Citation[]; // Optional citations/sources
     attachments?: string[]; // Optional attachment IDs
-    timestamp: number;      // Unix timestamp
+    timestamp: number; // Unix timestamp
     metadata?: any;
   };
 }
 ```
 
 **Citation Schema:**
+
 ```typescript
 interface Citation {
-  id: string;               // Unique citation ID
-  source: 'kb' | 'url';     // Knowledge base or external URL
-  reference: string;        // Document ID or URL
-  snippet?: string;         // Relevant excerpt
-  page?: number;            // Page number (for PDFs)
+  id: string; // Unique citation ID
+  source: "kb" | "url"; // Knowledge base or external URL
+  reference: string; // Document ID or URL
+  snippet?: string; // Relevant excerpt
+  page?: number; // Page number (for PDFs)
   metadata?: Record<string, any>;
 }
 ```
 
 **Example:**
+
 ```json
 {
   "type": "message.done",
@@ -397,6 +446,7 @@ interface Citation {
 ```
 
 **Client Behavior:**
+
 - Replace streaming message with final message
 - Display citations if present
 - Hide streaming indicator
@@ -412,9 +462,10 @@ interface Citation {
 **Purpose:** Communicate errors during processing
 
 **Schema:**
+
 ```typescript
 interface ErrorEvent {
-  type: 'error';
+  type: "error";
   error: {
     code: WebSocketErrorCode;
     message: string;
@@ -423,17 +474,18 @@ interface ErrorEvent {
 }
 
 type WebSocketErrorCode =
-  | 'AUTH_FAILED'         // Authentication failed
-  | 'RATE_LIMITED'        // Too many requests
-  | 'QUOTA_EXCEEDED'      // Usage quota exceeded
-  | 'INVALID_EVENT'       // Malformed event
-  | 'BACKEND_ERROR'       // Server error
-  | 'CONNECTION_DROPPED'; // Connection lost
+  | "AUTH_FAILED" // Authentication failed
+  | "RATE_LIMITED" // Too many requests
+  | "QUOTA_EXCEEDED" // Usage quota exceeded
+  | "INVALID_EVENT" // Malformed event
+  | "BACKEND_ERROR" // Server error
+  | "CONNECTION_DROPPED"; // Connection lost
 ```
 
 **Examples:**
 
 **Rate Limited:**
+
 ```json
 {
   "type": "error",
@@ -448,6 +500,7 @@ type WebSocketErrorCode =
 ```
 
 **Authentication Failed:**
+
 ```json
 {
   "type": "error",
@@ -459,6 +512,7 @@ type WebSocketErrorCode =
 ```
 
 **Backend Error:**
+
 ```json
 {
   "type": "error",
@@ -470,6 +524,7 @@ type WebSocketErrorCode =
 ```
 
 **Client Behavior:**
+
 - Display error toast/notification
 - For `AUTH_FAILED`, `QUOTA_EXCEEDED`: Close connection (fatal)
 - For `RATE_LIMITED`, `BACKEND_ERROR`: Show transient error
@@ -484,23 +539,23 @@ type WebSocketErrorCode =
 
 #### 1. Fatal Errors (Close Connection)
 
-| Error Code | Description | Client Action |
-|-----------|-------------|---------------|
-| `AUTH_FAILED` | Invalid or expired token | Close connection, redirect to login |
-| `QUOTA_EXCEEDED` | Usage limit reached | Close connection, show quota error |
+| Error Code       | Description              | Client Action                       |
+| ---------------- | ------------------------ | ----------------------------------- |
+| `AUTH_FAILED`    | Invalid or expired token | Close connection, redirect to login |
+| `QUOTA_EXCEEDED` | Usage limit reached      | Close connection, show quota error  |
 
 #### 2. Transient Errors (Show Toast)
 
-| Error Code | Description | Client Action |
-|-----------|-------------|---------------|
-| `RATE_LIMITED` | Too many requests | Show error toast for 5s |
-| `BACKEND_ERROR` | Server error | Show error toast for 5s |
+| Error Code      | Description       | Client Action           |
+| --------------- | ----------------- | ----------------------- |
+| `RATE_LIMITED`  | Too many requests | Show error toast for 5s |
+| `BACKEND_ERROR` | Server error      | Show error toast for 5s |
 | `INVALID_EVENT` | Malformed message | Show error toast for 5s |
 
 #### 3. Connection Errors (Reconnect)
 
-| Error Code | Description | Client Action |
-|-----------|-------------|---------------|
+| Error Code           | Description     | Client Action                     |
+| -------------------- | --------------- | --------------------------------- |
 | `CONNECTION_DROPPED` | Lost connection | Attempt reconnection with backoff |
 
 ### Reconnection Logic
@@ -508,12 +563,14 @@ type WebSocketErrorCode =
 **Strategy:** Exponential backoff with maximum attempts
 
 **Parameters:**
+
 - Initial delay: 1 second
 - Backoff multiplier: 2x
 - Maximum attempts: 5
 - Maximum delay: 16 seconds
 
 **Delay Sequence:**
+
 1. 1 second
 2. 2 seconds
 3. 4 seconds
@@ -521,6 +578,7 @@ type WebSocketErrorCode =
 5. 16 seconds
 
 **Implementation:**
+
 ```typescript
 const BASE_RECONNECT_DELAY = 1000; // 1 second
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -529,7 +587,7 @@ let reconnectAttempts = 0;
 
 function attemptReconnect() {
   if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-    showError('CONNECTION_DROPPED', 'Maximum reconnection attempts reached');
+    showError("CONNECTION_DROPPED", "Maximum reconnection attempts reached");
     return;
   }
 
@@ -574,12 +632,12 @@ function attemptReconnect() {
 
 ### State Descriptions
 
-| State | Description | UI Indicator |
-|-------|-------------|--------------|
-| `connecting` | Initial connection in progress | Yellow pulsing dot |
-| `connected` | WebSocket open and ready | Green solid dot |
-| `reconnecting` | Attempting to reconnect after disconnect | Orange pinging dot |
-| `disconnected` | Connection closed, not reconnecting | Red solid dot + Retry button |
+| State          | Description                              | UI Indicator                 |
+| -------------- | ---------------------------------------- | ---------------------------- |
+| `connecting`   | Initial connection in progress           | Yellow pulsing dot           |
+| `connected`    | WebSocket open and ready                 | Green solid dot              |
+| `reconnecting` | Attempting to reconnect after disconnect | Orange pinging dot           |
+| `disconnected` | Connection closed, not reconnecting      | Red solid dot + Retry button |
 
 ---
 
@@ -588,23 +646,28 @@ function attemptReconnect() {
 ### Client-Side Throttling
 
 **Message Sending:**
+
 - Maximum: 10 messages per minute
 - Burst: 3 messages per 5 seconds
 
 **Heartbeat:**
+
 - Fixed interval: 30 seconds
 - No user-triggered pings
 
 ### Server-Side Limits
 
 **Per User:**
+
 - 100 messages per hour
 - 1000 messages per day
 
 **Per Conversation:**
+
 - 50 messages per 10 minutes
 
 **Response:**
+
 ```json
 {
   "type": "error",
@@ -626,24 +689,28 @@ function attemptReconnect() {
 ### Authentication
 
 **Token Validation:**
+
 1. Extract `token` from WebSocket query parameter
 2. Verify JWT signature and expiration
 3. Extract user ID from token
 4. Authorize conversation access
 
 **Token Refresh:**
+
 - Client refreshes token before expiration
 - Reconnects with new token automatically
 
 ### Input Validation
 
 **Server-Side:**
+
 - Validate all event types
 - Sanitize message content
 - Check message length limits (max 10,000 characters)
 - Validate attachment IDs
 
 **Client-Side:**
+
 - Sanitize user input before display
 - Validate file types and sizes for attachments
 - Use `react-markdown` for safe markdown rendering
@@ -661,6 +728,7 @@ function attemptReconnect() {
 ### Message Batching
 
 **Delta Events:**
+
 - Server may batch small deltas to reduce event frequency
 - Target: 10-20 deltas per second maximum
 - Client handles rapid delta updates efficiently
@@ -668,19 +736,20 @@ function attemptReconnect() {
 ### Streaming Latency
 
 **Target Metrics:**
+
 - Time to first token: <200ms
 - Average delta interval: 50-100ms
 - Total response time: <2s for typical responses
 
 ### Message Size Limits
 
-| Type | Maximum Size |
-|------|--------------|
+| Type                 | Maximum Size      |
+| -------------------- | ----------------- |
 | User message content | 10,000 characters |
-| Delta content | 1,000 characters |
-| Chunk content | 5,000 characters |
-| Citation snippet | 500 characters |
-| Attachments | 10 MB per file |
+| Delta content        | 1,000 characters  |
+| Chunk content        | 5,000 characters  |
+| Citation snippet     | 500 characters    |
+| Attachments          | 10 MB per file    |
 
 ---
 
@@ -689,18 +758,21 @@ function attemptReconnect() {
 ### WebSocket Test Suite
 
 **Connection Tests:**
+
 - Successful connection with valid token
 - Rejected connection with invalid token
 - Reconnection after disconnect
 - Heartbeat mechanism
 
 **Message Flow Tests:**
+
 - Send user message
 - Receive delta events
 - Receive message.done event
 - Handle error events
 
 **Error Handling Tests:**
+
 - Fatal errors close connection
 - Transient errors show toast
 - Reconnection with exponential backoff
@@ -714,18 +786,21 @@ function attemptReconnect() {
 ### Client-Side Metrics
 
 **Connection Quality:**
+
 - Connection success rate
 - Reconnection frequency
 - Average connection duration
 - Heartbeat response time
 
 **Message Performance:**
+
 - Message send latency
 - Time to first token
 - Average streaming duration
 - Delta reception rate
 
 **Error Tracking:**
+
 - Error frequency by type
 - Fatal vs transient errors
 - Reconnection success rate
@@ -733,11 +808,13 @@ function attemptReconnect() {
 ### Server-Side Metrics
 
 **WebSocket Connections:**
+
 - Active connections
 - Connection duration
 - Disconnection reasons
 
 **Message Processing:**
+
 - Messages processed per second
 - Average response time
 - Error rate
@@ -751,6 +828,7 @@ function attemptReconnect() {
 **Location:** `apps/web-app/src/hooks/useChatSession.ts`
 
 **Key Features:**
+
 - Automatic connection management
 - Message state synchronization
 - Streaming support with delta/chunk handling
@@ -758,6 +836,7 @@ function attemptReconnect() {
 - Error handling and callbacks
 
 **Usage Example:**
+
 ```typescript
 import { useChatSession } from '../hooks/useChatSession';
 

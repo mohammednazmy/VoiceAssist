@@ -23,18 +23,18 @@ locals {
 module "vpc" {
   source = "./modules/vpc"
 
-  name_prefix            = local.name_prefix
-  vpc_cidr               = var.vpc_cidr
-  availability_zones     = var.availability_zones
-  public_subnet_cidrs    = var.public_subnet_cidrs
-  private_subnet_cidrs   = var.private_subnet_cidrs
-  database_subnet_cidrs  = var.database_subnet_cidrs
-  enable_nat_gateway     = true
-  single_nat_gateway     = var.environment == "dev" ? true : false
-  enable_dns_hostnames   = true
-  enable_dns_support     = true
-  enable_flow_logs       = true
-  flow_logs_retention    = var.log_retention_days
+  name_prefix           = local.name_prefix
+  vpc_cidr              = var.vpc_cidr
+  availability_zones    = var.availability_zones
+  public_subnet_cidrs   = var.public_subnet_cidrs
+  private_subnet_cidrs  = var.private_subnet_cidrs
+  database_subnet_cidrs = var.database_subnet_cidrs
+  enable_nat_gateway    = true
+  single_nat_gateway    = var.environment == "dev" ? true : false
+  enable_dns_hostnames  = true
+  enable_dns_support    = true
+  enable_flow_logs      = true
+  flow_logs_retention   = var.log_retention_days
 
   tags = local.common_tags
 }
@@ -46,10 +46,10 @@ module "vpc" {
 module "security_groups" {
   source = "./modules/security-groups"
 
-  name_prefix          = local.name_prefix
-  vpc_id               = module.vpc.vpc_id
-  vpc_cidr             = var.vpc_cidr
-  allowed_cidr_blocks  = var.allowed_cidr_blocks
+  name_prefix         = local.name_prefix
+  vpc_id              = module.vpc.vpc_id
+  vpc_cidr            = var.vpc_cidr
+  allowed_cidr_blocks = var.allowed_cidr_blocks
 
   tags = local.common_tags
 }
@@ -61,8 +61,8 @@ module "security_groups" {
 module "iam" {
   source = "./modules/iam"
 
-  name_prefix  = local.name_prefix
-  environment  = var.environment
+  name_prefix = local.name_prefix
+  environment = var.environment
 
   tags = local.common_tags
 }
@@ -81,14 +81,14 @@ module "eks" {
   cluster_security_group_id = module.security_groups.eks_cluster_sg_id
   node_security_group_id    = module.security_groups.eks_node_sg_id
 
-  node_instance_types  = var.eks_node_instance_types
-  node_desired_size    = var.eks_node_desired_size
-  node_min_size        = var.eks_node_min_size
-  node_max_size        = var.eks_node_max_size
+  node_instance_types = var.eks_node_instance_types
+  node_desired_size   = var.eks_node_desired_size
+  node_min_size       = var.eks_node_min_size
+  node_max_size       = var.eks_node_max_size
 
-  enable_irsa          = true
+  enable_irsa               = true
   enable_cluster_encryption = var.enable_encryption_at_rest
-  log_retention_days   = var.log_retention_days
+  log_retention_days        = var.log_retention_days
 
   tags = local.common_tags
 }
@@ -100,29 +100,29 @@ module "eks" {
 module "rds" {
   source = "./modules/rds"
 
-  name_prefix             = local.name_prefix
-  vpc_id                  = module.vpc.vpc_id
-  database_subnet_ids     = module.vpc.database_subnet_ids
-  security_group_id       = module.security_groups.rds_sg_id
+  name_prefix         = local.name_prefix
+  vpc_id              = module.vpc.vpc_id
+  database_subnet_ids = module.vpc.database_subnet_ids
+  security_group_id   = module.security_groups.rds_sg_id
 
-  instance_class          = var.rds_instance_class
-  allocated_storage       = var.rds_allocated_storage
-  max_allocated_storage   = var.rds_max_allocated_storage
-  engine_version          = var.rds_engine_version
+  instance_class        = var.rds_instance_class
+  allocated_storage     = var.rds_allocated_storage
+  max_allocated_storage = var.rds_max_allocated_storage
+  engine_version        = var.rds_engine_version
 
   backup_retention_period = var.rds_backup_retention_days
   backup_window           = "03:00-04:00"
   maintenance_window      = "sun:04:00-sun:05:00"
 
-  multi_az                = var.rds_multi_az
-  storage_encrypted       = var.enable_encryption_at_rest
-  deletion_protection     = var.enable_deletion_protection
+  multi_az            = var.rds_multi_az
+  storage_encrypted   = var.enable_encryption_at_rest
+  deletion_protection = var.enable_deletion_protection
 
-  enable_performance_insights = true
+  enable_performance_insights    = true
   performance_insights_retention = var.log_retention_days
 
-  enable_cloudwatch_logs  = var.enable_cloudwatch_logs
-  log_retention_days      = var.log_retention_days
+  enable_cloudwatch_logs = var.enable_cloudwatch_logs
+  log_retention_days     = var.log_retention_days
 
   tags = local.common_tags
 }
@@ -134,14 +134,14 @@ module "rds" {
 module "elasticache" {
   source = "./modules/elasticache"
 
-  name_prefix          = local.name_prefix
-  vpc_id               = module.vpc.vpc_id
-  private_subnet_ids   = module.vpc.private_subnet_ids
-  security_group_id    = module.security_groups.redis_sg_id
+  name_prefix        = local.name_prefix
+  vpc_id             = module.vpc.vpc_id
+  private_subnet_ids = module.vpc.private_subnet_ids
+  security_group_id  = module.security_groups.redis_sg_id
 
-  node_type            = var.redis_node_type
-  num_cache_nodes      = var.redis_num_cache_nodes
-  engine_version       = var.redis_engine_version
+  node_type       = var.redis_node_type
+  num_cache_nodes = var.redis_num_cache_nodes
+  engine_version  = var.redis_engine_version
 
   at_rest_encryption_enabled = var.enable_encryption_at_rest
   transit_encryption_enabled = var.enable_encryption_in_transit
@@ -166,7 +166,7 @@ resource "random_password" "rds_password" {
 
 resource "random_password" "redis_auth_token" {
   length  = 64
-  special = false  # Redis AUTH tokens can't have special chars
+  special = false # Redis AUTH tokens can't have special chars
 }
 
 resource "aws_secretsmanager_secret" "rds_credentials" {

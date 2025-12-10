@@ -5,9 +5,10 @@
 
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { VoiceInput } from "../voice/VoiceInput";
-import { VoiceModePanel } from "../voice/VoiceModePanel";
+import { ThinkerTalkerVoicePanel } from "../voice/ThinkerTalkerVoicePanel";
 import { ChatAttachmentUpload, type PendingFile } from "./ChatAttachmentUpload";
 import { useVoiceSettingsStore } from "../../stores/voiceSettingsStore";
+import type { TTVoiceMetrics } from "../../hooks/useThinkerTalkerSession";
 
 export interface MessageInputProps {
   onSend: (content: string, files?: File[]) => void;
@@ -19,6 +20,16 @@ export interface MessageInputProps {
   /** Auto-open the realtime voice panel when component mounts (e.g., from Home Voice Mode card) */
   autoOpenRealtimeVoice?: boolean;
   conversationId?: string;
+  /** Called when a voice user message should be added to chat (user spoke) */
+  onVoiceUserMessage?: (content: string) => void;
+  /** Called when a voice assistant message should be added to chat (AI responded) */
+  onVoiceAssistantMessage?: (content: string) => void;
+  /** Called when voice metrics are updated (for backend export) */
+  onVoiceMetricsUpdate?: (metrics: TTVoiceMetrics) => void;
+  /** External control: whether voice panel is open (controlled mode) */
+  isVoicePanelOpen?: boolean;
+  /** External control: callback when voice panel open state changes */
+  onVoicePanelChange?: (isOpen: boolean) => void;
 }
 
 export function MessageInput({
@@ -30,13 +41,37 @@ export function MessageInput({
   enableRealtimeVoice = false,
   autoOpenRealtimeVoice = false,
   conversationId,
+  onVoiceUserMessage,
+  onVoiceAssistantMessage,
+  onVoiceMetricsUpdate,
+  isVoicePanelOpen: externalIsVoicePanelOpen,
+  onVoicePanelChange,
 }: MessageInputProps) {
   const [content, setContent] = useState("");
   const [showVoiceInput, setShowVoiceInput] = useState(false);
-  const [showRealtimeVoice, setShowRealtimeVoice] = useState(false);
+  const [internalShowRealtimeVoice, setInternalShowRealtimeVoice] =
+    useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Support both controlled and uncontrolled modes for voice panel
+  const isControlled = externalIsVoicePanelOpen !== undefined;
+  const showRealtimeVoice = isControlled
+    ? externalIsVoicePanelOpen
+    : internalShowRealtimeVoice;
+
+  const setShowRealtimeVoice = (
+    value: boolean | ((prev: boolean) => boolean),
+  ) => {
+    const newValue =
+      typeof value === "function" ? value(showRealtimeVoice) : value;
+    if (isControlled) {
+      onVoicePanelChange?.(newValue);
+    } else {
+      setInternalShowRealtimeVoice(newValue);
+    }
+  };
 
   // Get autoStartOnOpen setting from store
   const autoStartOnOpenSetting = useVoiceSettingsStore(
@@ -61,6 +96,7 @@ export function MessageInput({
     if (shouldAutoOpen) {
       setShowRealtimeVoice(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enableRealtimeVoice, autoOpenRealtimeVoice, autoStartOnOpenSetting]); // Intentionally omit showRealtimeVoice to only trigger once
 
   const handleSend = () => {
@@ -92,22 +128,46 @@ export function MessageInput({
     setShowVoiceInput(false);
   };
 
-  const handleRealtimeTranscript = (text: string, isFinal: boolean) => {
-    if (isFinal) {
-      // Add AI response to message history by sending it
-      onSend(text);
+  /**
+   * Handle user message from voice mode (user finished speaking)
+   * This adds the user's spoken words to the chat timeline
+   */
+  const handleVoiceUserMessage = (text: string) => {
+    if (text.trim()) {
+      // Call the parent's handler if provided, otherwise fall back to onSend
+      if (onVoiceUserMessage) {
+        onVoiceUserMessage(text.trim());
+      } else {
+        // Fallback: send as regular user message
+        onSend(text.trim());
+      }
     }
+  };
+
+  /**
+   * Handle assistant message from voice mode (AI finished responding)
+   * This adds the AI's response to the chat timeline
+   */
+  const handleVoiceAssistantMessage = (text: string) => {
+    if (text && text.trim() && onVoiceAssistantMessage) {
+      onVoiceAssistantMessage(text.trim());
+    }
+    // Note: If no onVoiceAssistantMessage handler is provided,
+    // the AI message is still shown in the VoiceModePanel but not added to chat
   };
 
   return (
     <div className="border-t border-neutral-200 bg-white p-4">
-      {/* Realtime Voice Mode Panel */}
+      {/* Thinker/Talker Voice Mode Panel */}
       {showRealtimeVoice && enableRealtimeVoice && (
         <div className="mb-4">
-          <VoiceModePanel
+          <ThinkerTalkerVoicePanel
+            key="tt-voice-mode-panel"
             conversationId={conversationId}
             onClose={() => setShowRealtimeVoice(false)}
-            onTranscriptReceived={handleRealtimeTranscript}
+            onUserMessage={handleVoiceUserMessage}
+            onAssistantMessage={handleVoiceAssistantMessage}
+            onMetricsUpdate={onVoiceMetricsUpdate}
           />
         </div>
       )}

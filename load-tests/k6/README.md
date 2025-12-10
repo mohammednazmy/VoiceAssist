@@ -62,11 +62,13 @@ This directory contains a complete suite of load tests designed to validate Voic
 ### Install K6
 
 **macOS (Homebrew)**:
+
 ```bash
 brew install k6
 ```
 
 **Linux**:
+
 ```bash
 sudo gpg -k
 sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
@@ -76,16 +78,19 @@ sudo apt-get install k6
 ```
 
 **Windows (Chocolatey)**:
+
 ```powershell
 choco install k6
 ```
 
 **Docker**:
+
 ```bash
 docker pull grafana/k6
 ```
 
 ### Verify Installation
+
 ```bash
 k6 version
 ```
@@ -95,6 +100,7 @@ k6 version
 ### 1. Configure Base URL
 
 Edit `config.js` or set environment variable:
+
 ```bash
 export BASE_URL=http://localhost:8000
 export WS_URL=ws://localhost:8000
@@ -200,32 +206,38 @@ cat ../results/stress-test-summary.json | jq '.recommendations'
 Each test defines specific thresholds that must pass:
 
 ### Smoke Test (Strict)
+
 - P95 response time < 500ms
 - P99 response time < 1000ms
 - Error rate < 1%
 
 ### Load Test (Balanced)
+
 - P95 response time < 800ms
 - P99 response time < 1500ms
 - Error rate < 5%
 
 ### Stress Test (Relaxed)
+
 - P95 response time < 2000ms
 - P99 response time < 5000ms
 - Error rate < 10%
 
 ### Spike Test
+
 - P95 response time < 1500ms
 - P99 response time < 3000ms
 - Error rate < 15%
 
 ### Endurance Test (Stability)
+
 - P95 response time < 1000ms
 - P99 response time < 2000ms
 - Error rate < 5%
 - No performance degradation over time
 
 ### WebSocket Test
+
 - Connection time P95 < 1000ms
 - Message latency P95 < 200ms
 - Minimum 100 messages sent/received
@@ -263,11 +275,13 @@ Each test defines specific thresholds that must pass:
 Monitor tests in real-time using Grafana:
 
 1. Start InfluxDB and Grafana:
+
    ```bash
    docker-compose up -d influxdb grafana
    ```
 
 2. Configure k6 to export to InfluxDB:
+
    ```bash
    k6 run --out influxdb=http://localhost:8086/k6 02-load-test.js
    ```
@@ -284,7 +298,7 @@ name: Load Tests
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # Run daily at 2 AM
+    - cron: "0 2 * * *" # Run daily at 2 AM
   workflow_dispatch:
 
 jobs:
@@ -340,6 +354,7 @@ jobs:
 ### Debug Mode
 
 Run tests with debug output:
+
 ```bash
 k6 run --http-debug 01-smoke-test.js
 ```
@@ -368,20 +383,21 @@ k6 run --http-debug 01-smoke-test.js
 
 Based on VoiceAssist requirements:
 
-| Metric | Target | Threshold |
-|--------|--------|-----------|
-| Health check | < 100ms | < 200ms |
-| Simple query | < 500ms | < 1000ms |
-| Complex query | < 2000ms | < 5000ms |
-| Admin operations | < 300ms | < 600ms |
-| WebSocket connection | < 500ms | < 1000ms |
-| Message latency | < 50ms | < 200ms |
-| Error rate | < 0.1% | < 1% |
-| Concurrent users | 100 | 500 |
+| Metric               | Target   | Threshold |
+| -------------------- | -------- | --------- |
+| Health check         | < 100ms  | < 200ms   |
+| Simple query         | < 500ms  | < 1000ms  |
+| Complex query        | < 2000ms | < 5000ms  |
+| Admin operations     | < 300ms  | < 600ms   |
+| WebSocket connection | < 500ms  | < 1000ms  |
+| Message latency      | < 50ms   | < 200ms   |
+| Error rate           | < 0.1%   | < 1%      |
+| Concurrent users     | 100      | 500       |
 
 ## Support
 
 For issues or questions:
+
 - Review test logs and summaries
 - Check Grafana dashboards
 - Review server logs

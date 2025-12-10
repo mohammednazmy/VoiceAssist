@@ -19,7 +19,7 @@ export function capitalize(str: string): string {
  */
 export function truncate(str: string, maxLength: number): string {
   if (str.length <= maxLength) return str;
-  return str.slice(0, maxLength - 3) + '...';
+  return str.slice(0, maxLength - 3) + "...";
 }
 
 /**
@@ -27,8 +27,8 @@ export function truncate(str: string, maxLength: number): string {
  */
 export function kebabCase(str: string): string {
   return str
-    .replace(/([a-z])([A-Z])/g, '$1-$2')
-    .replace(/[\s_]+/g, '-')
+    .replace(/([a-z])([A-Z])/g, "$1-$2")
+    .replace(/[\s_]+/g, "-")
     .toLowerCase();
 }
 
@@ -37,7 +37,7 @@ export function kebabCase(str: string): string {
  */
 export function camelCase(str: string): string {
   return str
-    .replace(/[-_\s]+(.)?/g, (_, char) => (char ? char.toUpperCase() : ''))
+    .replace(/[-_\s]+(.)?/g, (_, char) => (char ? char.toUpperCase() : ""))
     .replace(/^[A-Z]/, (char) => char.toLowerCase());
 }
 
@@ -48,19 +48,22 @@ export function camelCase(str: string): string {
 /**
  * Formats a date to a human-readable string
  */
-export function formatDate(date: Date | string, format: 'short' | 'long' = 'short'): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
+export function formatDate(
+  date: Date | string,
+  format: "short" | "long" = "short",
+): string {
+  const d = typeof date === "string" ? new Date(date) : date;
 
-  if (format === 'short') {
+  if (format === "short") {
     return d.toLocaleDateString();
   }
 
   return d.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -68,7 +71,7 @@ export function formatDate(date: Date | string, format: 'short' | 'long' = 'shor
  * Returns a relative time string (e.g., "2 hours ago")
  */
 export function relativeTime(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
+  const d = typeof date === "string" ? new Date(date) : date;
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const diffSec = Math.floor(diffMs / 1000);
@@ -76,10 +79,10 @@ export function relativeTime(date: Date | string): string {
   const diffHour = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHour / 24);
 
-  if (diffSec < 60) return 'just now';
-  if (diffMin < 60) return `${diffMin} minute${diffMin > 1 ? 's' : ''} ago`;
-  if (diffHour < 24) return `${diffHour} hour${diffHour > 1 ? 's' : ''} ago`;
-  if (diffDay < 7) return `${diffDay} day${diffDay > 1 ? 's' : ''} ago`;
+  if (diffSec < 60) return "just now";
+  if (diffMin < 60) return `${diffMin} minute${diffMin > 1 ? "s" : ""} ago`;
+  if (diffHour < 24) return `${diffHour} hour${diffHour > 1 ? "s" : ""} ago`;
+  if (diffDay < 7) return `${diffDay} day${diffDay > 1 ? "s" : ""} ago`;
 
   return formatDate(d);
 }
@@ -134,7 +137,7 @@ export function deepClone<T>(obj: T): T {
  */
 export function pick<T extends object, K extends keyof T>(
   obj: T,
-  keys: K[]
+  keys: K[],
 ): Pick<T, K> {
   const result = {} as Pick<T, K>;
   keys.forEach((key) => {
@@ -150,7 +153,7 @@ export function pick<T extends object, K extends keyof T>(
  */
 export function omit<T extends object, K extends keyof T>(
   obj: T,
-  keys: K[]
+  keys: K[],
 ): Omit<T, K> {
   const result = { ...obj };
   keys.forEach((key) => {
@@ -188,9 +191,9 @@ export function isValidUrl(url: string): boolean {
  */
 export function isEmpty(value: unknown): boolean {
   if (value === null || value === undefined) return true;
-  if (typeof value === 'string') return value.trim().length === 0;
+  if (typeof value === "string") return value.trim().length === 0;
   if (Array.isArray(value)) return value.length === 0;
-  if (typeof value === 'object') return Object.keys(value).length === 0;
+  if (typeof value === "object") return Object.keys(value).length === 0;
   return false;
 }
 
@@ -202,10 +205,10 @@ export function isEmpty(value: unknown): boolean {
  * Formats a file size in bytes to a human-readable string
  */
 export function formatBytes(bytes: number, decimals = 2): string {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
 
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(decimals))} ${sizes[i]}`;
@@ -227,7 +230,7 @@ export function formatNumber(num: number): string {
  */
 export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
-  wait: number
+  wait: number,
 ): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -247,7 +250,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
  */
 export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
-  limit: number
+  limit: number,
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean;
 
@@ -290,8 +293,11 @@ export function redactPHI(text: string): string {
   let redacted = text;
   Object.entries(PHI_PATTERNS).forEach(([type, pattern]) => {
     // Create global version of pattern for replace (to redact all occurrences)
-    const globalPattern = new RegExp(pattern.source, pattern.flags + 'g');
-    redacted = redacted.replace(globalPattern, `[REDACTED_${type.toUpperCase()}]`);
+    const globalPattern = new RegExp(pattern.source, pattern.flags + "g");
+    redacted = redacted.replace(
+      globalPattern,
+      `[REDACTED_${type.toUpperCase()}]`,
+    );
   });
   return redacted;
 }

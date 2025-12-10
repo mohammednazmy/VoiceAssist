@@ -3,10 +3,10 @@
  * Individual conversation item in the list
  */
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import type { Conversation } from '@voiceassist/types';
-import { relativeTime } from '@voiceassist/utils';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import type { Conversation } from "@voiceassist/types";
+import { relativeTime } from "@voiceassist/utils";
 
 export interface ConversationListItemProps {
   conversation: Conversation;
@@ -44,10 +44,10 @@ export function ConversationListItem({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       handleRename();
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       setEditedTitle(conversation.title);
       setIsEditing(false);
     }
@@ -59,13 +59,14 @@ export function ConversationListItem({
       await onDelete(conversation.id);
       setShowDeleteConfirm(false);
     } catch (error) {
-      console.error('Failed to delete conversation:', error);
+      console.error("Failed to delete conversation:", error);
       setIsDeleting(false);
     }
   };
 
-  const displayTitle = conversation.title || `Conversation ${conversation.id.slice(0, 8)}`;
-  const preview = conversation.lastMessagePreview || 'No messages yet';
+  const displayTitle =
+    conversation.title || `Conversation ${conversation.id.slice(0, 8)}`;
+  const preview = conversation.lastMessagePreview || "No messages yet";
   const timeAgo = relativeTime(conversation.updatedAt);
 
   return (
@@ -73,16 +74,16 @@ export function ConversationListItem({
       <div
         className={`group relative flex items-center px-3 py-2.5 rounded-md cursor-pointer transition-colors ${
           isActive
-            ? 'bg-primary-50 border-l-2 border-primary-500'
-            : 'hover:bg-neutral-100'
+            ? "bg-primary-50 border-l-2 border-primary-500"
+            : "hover:bg-neutral-100"
         }`}
         onClick={handleClick}
         role="button"
         tabIndex={0}
         aria-label={`Conversation: ${displayTitle}`}
-        aria-current={isActive ? 'page' : undefined}
+        aria-current={isActive ? "page" : undefined}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
+          if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             handleClick();
           }
@@ -102,10 +103,14 @@ export function ConversationListItem({
             />
           ) : (
             <>
-              <h3 className={`text-sm font-medium truncate ${isActive ? 'text-primary-700' : 'text-neutral-900'}`}>
+              <h3
+                className={`text-sm font-medium truncate ${isActive ? "text-primary-700" : "text-neutral-900"}`}
+              >
                 {displayTitle}
               </h3>
-              <p className="text-xs text-neutral-500 truncate mt-0.5">{preview}</p>
+              <p className="text-xs text-neutral-500 truncate mt-0.5">
+                {preview}
+              </p>
               <p className="text-xs text-neutral-400 mt-0.5">{timeAgo}</p>
             </>
           )}
@@ -243,9 +248,12 @@ export function ConversationListItem({
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-neutral-900 mb-2">Delete Conversation?</h3>
+            <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+              Delete Conversation?
+            </h3>
             <p className="text-sm text-neutral-600 mb-6">
-              This will permanently delete "{displayTitle}" and all its messages. This action cannot be undone.
+              This will permanently delete "{displayTitle}" and all its
+              messages. This action cannot be undone.
             </p>
             <div className="flex justify-end space-x-3">
               <button

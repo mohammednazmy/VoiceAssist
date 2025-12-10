@@ -1,7 +1,23 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { App } from "./App";
+import { createTelemetryClient } from "@voiceassist/telemetry";
+
+// Initialize i18n before rendering
+import "./i18n";
+
 import "./styles.css";
+
+const telemetry = createTelemetryClient({
+  sentryDsn: import.meta.env.VITE_SENTRY_DSN,
+  environment: import.meta.env.MODE,
+  release: import.meta.env.VITE_APP_VERSION,
+  grafanaUrl: import.meta.env.VITE_GRAFANA_ENDPOINT,
+  grafanaToken: import.meta.env.VITE_GRAFANA_TOKEN,
+  app: "web-app",
+});
+
+telemetry.trackWebVitals();
 
 console.log("🔍 main.tsx executing");
 console.log("🔍 root element:", document.getElementById("root"));

@@ -16,7 +16,7 @@ metadata:
     app.kubernetes.io/component: security
     security.voiceassist.io/policy: default-deny
 spec:
-  podSelector: {}  # Applies to all pods in namespace
+  podSelector: {} # Applies to all pods in namespace
   policyTypes:
     - Ingress
     - Egress

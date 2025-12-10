@@ -39,7 +39,7 @@ export interface VADState {
 export class VoiceActivityDetector {
   private audioContext: AudioContext;
   private analyser: AnalyserNode;
-  private dataArray: Uint8Array;
+  private dataArray: Uint8Array<ArrayBuffer>;
   private config: VADConfig;
   private state: VADState;
   private rafId: number | null = null;
@@ -54,7 +54,9 @@ export class VoiceActivityDetector {
     });
     this.analyser = this.audioContext.createAnalyser();
     this.analyser.fftSize = this.config.fftSize;
-    this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+    this.dataArray = new Uint8Array(
+      new ArrayBuffer(this.analyser.frequencyBinCount),
+    );
 
     this.state = {
       isSpeaking: false,
@@ -92,7 +94,7 @@ export class VoiceActivityDetector {
    */
   on(
     event: "speechStart" | "speechEnd" | "energyChange",
-    handler: (data?: any) => void,
+    handler: (data?: number) => void,
   ): void {
     switch (event) {
       case "speechStart":
@@ -222,29 +224,30 @@ export async function testMicrophoneAccess(): Promise<{
       hasPermission: true,
       devices: audioInputs,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     let errorMessage = "Unknown microphone error";
+    const err = error as { name?: string };
 
     if (
-      error.name === "NotAllowedError" ||
-      error.name === "PermissionDeniedError"
+      err.name === "NotAllowedError" ||
+      err.name === "PermissionDeniedError"
     ) {
       errorMessage =
         "Microphone permission denied. Please allow microphone access in your browser settings.";
     } else if (
-      error.name === "NotFoundError" ||
-      error.name === "DevicesNotFoundError"
+      err.name === "NotFoundError" ||
+      err.name === "DevicesNotFoundError"
     ) {
       errorMessage =
         "No microphone found. Please connect a microphone and try again.";
     } else if (
-      error.name === "NotReadableError" ||
-      error.name === "TrackStartError"
+      err.name === "NotReadableError" ||
+      err.name === "TrackStartError"
     ) {
       errorMessage = "Microphone is already in use by another application.";
-    } else if (error.name === "OverconstrainedError") {
+    } else if (err.name === "OverconstrainedError") {
       errorMessage = "Microphone constraints could not be satisfied.";
-    } else if (error.name === "SecurityError") {
+    } else if (err.name === "SecurityError") {
       errorMessage =
         "Microphone access blocked due to security restrictions (HTTPS required).";
     }

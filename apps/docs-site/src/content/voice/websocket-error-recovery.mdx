@@ -1,0 +1,231 @@
+---
+title: WebSocket Error Recovery
+description: Seamless voice mode reconnection with session state preservation, message recovery, and audio checkpointing
+---
+
+# WebSocket Error Recovery
+
+WebSocket Error Recovery is a reliability enhancement for Voice Mode that enables seamless reconnection after network interruptions. It addresses three key deficiencies in the original WebSocket implementation:
+
+1. **No partial message recovery after disconnects** - Now buffered and replayed
+2. **No conversation state preservation during reconnection** - Now persisted in Redis
+3. **Missing audio buffer checkpointing** - Now tracked and resumable
+
+## Feature Flags
+
+All recovery features are controlled by feature flags and can be enabled/disabled from the admin panel:
+
+| Flag Name | Description |
+|-----------|-------------|
+| `backend.ws_session_recovery` | Enable session state persistence in Redis |
+| `backend.ws_message_recovery` | Enable message buffering and replay (requires session_recovery) |
+| `backend.ws_audio_checkpointing` | Enable audio checkpoint tracking (requires session_recovery) |
+
+## Operational Notes (Dec 2025)
+
+- Health probes now target `GET/HEAD /health` (FastAPI returns 200 for both) to avoid 404s from the old `/ping` path; the Playwright network-quality ping also uses `/health`.
+- Playwright voice suites expose automation-only WebSocket breadcrumbs via `window.__tt_ws_events` (populated inside `useThinkerTalkerSession`) to debug handshake/message flow without packet captures.
+- When running `voice-websocket-integration`, the suite focuses on handshake and recovery events; full transcript/audio validation lives in `voice-live-e2e` and the flag matrix smoke/nightly suites.
+- WS performance assertions use relative timestamps: barge-in latency must stay under 10s max (avg < 8s) and first WS response under 10s; connection/first-audio checks remain in the low seconds.
+- To avoid multi-project misfires, explicitly scope Playwright runs, e.g. `pnpm exec playwright test --project=voice-live e2e/voice/voice-websocket-integration.spec.ts` for live checks, `--project=voice-smoke` for the flag smoke matrix, or `--project=voice-nightly` when invoking the full matrix on CI.
+
+## Architecture
+
+### Session State Persistence
+
+When `ws_session_recovery` is enabled, the backend stores session state in Redis:
+
+```python
+# Session state stored in Redis with 10-minute TTL
+WebSocketSessionState:
+  - session_id: str
+  - user_id: str
+  - conversation_id: Optional[str]
+  - pipeline_state: str  # idle, listening, processing, speaking
+  - connection_state: str  # connected, ready, disconnected
+  - last_message_seq: int
+  - last_audio_seq_in: int
+  - last_audio_seq_out: int
+  - partial_transcript: str
+  - partial_response: str
+  - active_tool_calls: List[Dict]
+  - voice_settings: Optional[Dict]
+```
+
+The frontend also maintains recovery state in localStorage for cross-tab recovery.
+
+### Message Recovery Protocol
+
+When `ws_message_recovery` is enabled:
+
+1. Server buffers the last 100 messages per session
+2. On reconnection, client sends `session.resume` with last known sequence
+3. Server replays missed messages via `message.replay` events
+4. Partial transcripts and responses are restored
+
+#### Message Flow
+
+```
+Client                              Server
+   |                                   |
+   |-- session.resume --------------->|
+   |   {session_id, last_message_seq} |
+   |                                   |
+   |<---- session.resume.ack ---------|
+   |   {recovery_state, missed_count} |
+   |                                   |
+   |<---- message.replay -------------|  (repeated for each missed)
+   |   {original: {...}}              |
+   |                                   |
+```
+
+### Audio Checkpointing
+
+When `ws_audio_checkpointing` is enabled:
+
+1. Server tracks `last_confirmed_audio_seq` per session
+2. Client sends `audio.ack` to confirm receipt of audio chunks
+3. Server buffers unconfirmed audio chunks (last 50)
+4. On reconnection, server sends `audio.resume` with resume position
+
+## Usage
+
+### Backend Integration
+
+The WebSocket handler automatically uses recovery features when enabled:
+
+```python
+# In thinker_talker_websocket_handler.py
+
+# Session recovery is initialized in start()
+async def _init_session_recovery(self):
+    # Check feature flags
+    self.config.session_recovery_enabled = await feature_flag_service.is_enabled(
+        "backend.ws_session_recovery"
+    )
+    # ...
+
+# Session state is saved on disconnect
+async def _save_disconnection_state(self):
+    await self._session_state_service.update_session_state(
+        self.config.session_id,
+        {
+            "connection_state": "disconnected",
+            "pipeline_state": self._pipeline_session.state.value,
+            # ...
+        }
+    )
+```
+
+### Frontend Integration
+
+The `useThinkerTalkerSession` hook automatically handles recovery:
+
+```typescript
+// Recovery callbacks
+const { connect, disconnect, status } = useThinkerTalkerSession({
+  onSessionRecovered: (result) => {
+    console.log(`Session recovered: ${result.recoveryState}`);
+    console.log(`Missed messages: ${result.missedMessageCount}`);
+  },
+  onSessionRecoveryFailed: (reason) => {
+    console.warn(`Recovery failed: ${reason}`);
+  },
+  onMessageReplayed: (message) => {
+    // Process replayed message
+  },
+});
+```
+
+### Recovery State Types
+
+```typescript
+interface TTSessionRecoveryState {
+  sessionId: string;
+  conversationId?: string;
+  lastMessageSeq: number;
+  lastAudioSeq: number;
+  partialTranscript: string;
+  partialResponse: string;
+  savedAt: number;
+}
+
+interface TTSessionRecoveryResult {
+  recoveryState: "none" | "partial" | "full";
+  conversationId?: string;
+  partialTranscript: string;
+  partialResponse: string;
+  missedMessageCount: number;
+}
+```
+
+## Recovery States
+
+| State | Description |
+|-------|-------------|
+| `none` | No recovery data available, starting fresh |
+| `partial` | Conversation context restored, but no buffered messages |
+| `full` | Full recovery with missed messages replayed |
+
+## Configuration
+
+### Session TTL
+
+The default session TTL is 10 minutes. This can be configured in the service:
+
+```python
+websocket_session_state_service = WebSocketSessionStateService(
+    session_ttl_seconds=600,  # 10 minutes
+    max_message_buffer=100,   # Max messages to buffer
+    max_audio_buffer=50,      # Max audio chunks to buffer
+)
+```
+
+### Frontend Recovery TTL
+
+The frontend localStorage recovery state expires after 10 minutes:
+
+```typescript
+const RECOVERY_TTL_MS = 10 * 60 * 1000; // 10 minutes
+```
+
+## Error Handling
+
+Recovery can fail for several reasons:
+
+| Error | Cause | Resolution |
+|-------|-------|------------|
+| `recovery_disabled` | Feature flag is off | Session starts fresh |
+| `No session state found` | Session expired or never existed | Session starts fresh |
+| `User ID mismatch` | Different user attempting recovery | Session starts fresh |
+| `Session expired` | Beyond TTL | Session starts fresh |
+
+All failures gracefully fall back to starting a new session.
+
+## Metrics and Monitoring
+
+The recovery system logs events for monitoring:
+
+```
+[WS Recovery] Enabled for session-123: message_recovery=true, audio_checkpointing=true
+[WS Recovery] Resume request: session=session-123, last_msg_seq=45, last_audio_seq=20
+[WS Recovery] Session resumed: session-123, state=full, missed_msgs=3
+[WS Recovery] Saved disconnection state: session-123
+```
+
+## Testing
+
+Unit tests are available in:
+- `tests/unit/services/test_websocket_session_state.py` (38 tests)
+
+Run tests with:
+```bash
+cd services/api-gateway
+pytest tests/unit/services/test_websocket_session_state.py -v
+```
+
+## Related Documentation
+
+- [Voice Mode Architecture](/voice/voice-mode-architecture)
+- [WebSocket Latency Optimization](/voice/websocket-latency-optimization)
+- [Feature Flags](/admin/feature-flags)

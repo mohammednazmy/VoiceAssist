@@ -8,6 +8,16 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Message, Citation, Attachment } from "@voiceassist/types";
 
+// Mock useToastContext since MessageBubble uses it for copy feedback
+vi.mock("../../../contexts/ToastContext", () => ({
+  useToastContext: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  }),
+}));
+
 // Mock the hooks and API clients
 const mockSendMessage = vi.fn();
 const mockDownloadAttachment = vi.fn();
@@ -15,7 +25,7 @@ const mockListMessageAttachments = vi.fn();
 const mockExportMarkdown = vi.fn();
 const mockExportPdf = vi.fn();
 
-vi.mock("../../hooks/useChatSession", () => ({
+vi.mock("../../../hooks/useChatSession", () => ({
   useChatSession: () => ({
     messages: [],
     connectionStatus: "connected" as const,
@@ -38,11 +48,11 @@ const mockAttachmentsApiClient = {
   deleteAttachment: vi.fn(),
 };
 
-vi.mock("../../lib/api/attachmentsApi", () => ({
+vi.mock("../../../lib/api/attachmentsApi", () => ({
   createAttachmentsApi: () => mockAttachmentsApiClient,
 }));
 
-vi.mock("../../hooks/useAuth", () => ({
+vi.mock("../../../hooks/useAuth", () => ({
   useAuth: () => ({
     apiClient: {
       exportConversationAsMarkdown: mockExportMarkdown,
@@ -64,7 +74,7 @@ vi.mock("../../hooks/useAuth", () => ({
   }),
 }));
 
-vi.mock("../../stores/authStore", () => ({
+vi.mock("../../../stores/authStore", () => ({
   useAuthStore: () => ({
     tokens: {
       accessToken: "test-token",

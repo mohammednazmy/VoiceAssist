@@ -1,0 +1,1922 @@
+{
+  "version": "1.0",
+  "generated_at": "2025-12-05T03:24:08.308Z",
+  "description": "Manifest of exported repository files for AI agents",
+  "total_files": 382,
+  "exported": 382,
+  "skipped": 0,
+  "path_encoding": "/ replaced with __ (double underscore), .json appended",
+  "base_url": "/agent/repo/files/",
+  "files": [
+    {
+      "path": "Makefile",
+      "encoded": "Makefile.json",
+      "url": "/agent/repo/files/Makefile.json"
+    },
+    {
+      "path": "README.md",
+      "encoded": "README.md.json",
+      "url": "/agent/repo/files/README.md.json"
+    },
+    {
+      "path": "apps/admin-panel/package.json",
+      "encoded": "apps__admin-panel__package.json.json",
+      "url": "/agent/repo/files/apps__admin-panel__package.json.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/AdminLayout.tsx",
+      "encoded": "apps__admin-panel__src__components__AdminLayout.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__AdminLayout.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/AdminLayoutWithRouter.tsx",
+      "encoded": "apps__admin-panel__src__components__AdminLayoutWithRouter.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__AdminLayoutWithRouter.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/Dashboard.tsx",
+      "encoded": "apps__admin-panel__src__components__Dashboard.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__Dashboard.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/KnowledgeBase.tsx",
+      "encoded": "apps__admin-panel__src__components__KnowledgeBase.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__KnowledgeBase.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/ProtectedRoute.tsx",
+      "encoded": "apps__admin-panel__src__components__ProtectedRoute.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__ProtectedRoute.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/SettingsPanel.tsx",
+      "encoded": "apps__admin-panel__src__components__SettingsPanel.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__SettingsPanel.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/ToolsIntegrations.tsx",
+      "encoded": "apps__admin-panel__src__components__ToolsIntegrations.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__ToolsIntegrations.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/dashboard/ActivityFeed.tsx",
+      "encoded": "apps__admin-panel__src__components__dashboard__ActivityFeed.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__dashboard__ActivityFeed.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/dashboard/IntegrationsWidget.tsx",
+      "encoded": "apps__admin-panel__src__components__dashboard__IntegrationsWidget.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__dashboard__IntegrationsWidget.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/dashboard/MetricCard.tsx",
+      "encoded": "apps__admin-panel__src__components__dashboard__MetricCard.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__dashboard__MetricCard.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/dashboard/ServiceStatus.tsx",
+      "encoded": "apps__admin-panel__src__components__dashboard__ServiceStatus.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__dashboard__ServiceStatus.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/feature-flags/RuleEditor.tsx",
+      "encoded": "apps__admin-panel__src__components__feature-flags__RuleEditor.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__feature-flags__RuleEditor.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/feature-flags/ScheduledChangesPanel.tsx",
+      "encoded": "apps__admin-panel__src__components__feature-flags__ScheduledChangesPanel.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__feature-flags__ScheduledChangesPanel.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/feature-flags/UserOverridesPanel.tsx",
+      "encoded": "apps__admin-panel__src__components__feature-flags__UserOverridesPanel.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__feature-flags__UserOverridesPanel.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/feature-flags/VariantEditor.tsx",
+      "encoded": "apps__admin-panel__src__components__feature-flags__VariantEditor.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__feature-flags__VariantEditor.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/feature-flags/index.ts",
+      "encoded": "apps__admin-panel__src__components__feature-flags__index.ts.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__feature-flags__index.ts.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/integrations/SystemKeyManager.tsx",
+      "encoded": "apps__admin-panel__src__components__integrations__SystemKeyManager.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__integrations__SystemKeyManager.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/knowledge/AuditDrawer.tsx",
+      "encoded": "apps__admin-panel__src__components__knowledge__AuditDrawer.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__knowledge__AuditDrawer.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/knowledge/DocumentTable.tsx",
+      "encoded": "apps__admin-panel__src__components__knowledge__DocumentTable.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__knowledge__DocumentTable.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/knowledge/UploadDialog.tsx",
+      "encoded": "apps__admin-panel__src__components__knowledge__UploadDialog.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__knowledge__UploadDialog.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/logs/LogFilters.tsx",
+      "encoded": "apps__admin-panel__src__components__logs__LogFilters.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__logs__LogFilters.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/logs/LogViewer.tsx",
+      "encoded": "apps__admin-panel__src__components__logs__LogViewer.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__logs__LogViewer.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/security/AuditLogViewer.tsx",
+      "encoded": "apps__admin-panel__src__components__security__AuditLogViewer.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__security__AuditLogViewer.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/security/TwoFactorSettings.tsx",
+      "encoded": "apps__admin-panel__src__components__security__TwoFactorSettings.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__security__TwoFactorSettings.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/security/UserAPIKeyManager.tsx",
+      "encoded": "apps__admin-panel__src__components__security__UserAPIKeyManager.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__security__UserAPIKeyManager.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/session/SessionTimeoutWarning.tsx",
+      "encoded": "apps__admin-panel__src__components__session__SessionTimeoutWarning.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__session__SessionTimeoutWarning.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/shared/AskAIButton.tsx",
+      "encoded": "apps__admin-panel__src__components__shared__AskAIButton.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__shared__AskAIButton.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/shared/ConfirmDialog.tsx",
+      "encoded": "apps__admin-panel__src__components__shared__ConfirmDialog.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__shared__ConfirmDialog.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/shared/DataPanel.tsx",
+      "encoded": "apps__admin-panel__src__components__shared__DataPanel.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__shared__DataPanel.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/shared/EmptyState.tsx",
+      "encoded": "apps__admin-panel__src__components__shared__EmptyState.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__shared__EmptyState.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/shared/ErrorBoundary.tsx",
+      "encoded": "apps__admin-panel__src__components__shared__ErrorBoundary.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__shared__ErrorBoundary.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/shared/ErrorState.tsx",
+      "encoded": "apps__admin-panel__src__components__shared__ErrorState.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__shared__ErrorState.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/shared/HelpTooltip.tsx",
+      "encoded": "apps__admin-panel__src__components__shared__HelpTooltip.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__shared__HelpTooltip.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/shared/LoadingState.tsx",
+      "encoded": "apps__admin-panel__src__components__shared__LoadingState.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__shared__LoadingState.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/shared/PageContainer.tsx",
+      "encoded": "apps__admin-panel__src__components__shared__PageContainer.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__shared__PageContainer.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/shared/PageHeader.tsx",
+      "encoded": "apps__admin-panel__src__components__shared__PageHeader.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__shared__PageHeader.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/shared/RefreshButton.tsx",
+      "encoded": "apps__admin-panel__src__components__shared__RefreshButton.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__shared__RefreshButton.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/shared/StatCard.tsx",
+      "encoded": "apps__admin-panel__src__components__shared__StatCard.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__shared__StatCard.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/shared/StatusBadge.tsx",
+      "encoded": "apps__admin-panel__src__components__shared__StatusBadge.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__shared__StatusBadge.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/shared/TabGroup.tsx",
+      "encoded": "apps__admin-panel__src__components__shared__TabGroup.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__shared__TabGroup.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/shared/index.ts",
+      "encoded": "apps__admin-panel__src__components__shared__index.ts.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__shared__index.ts.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/users/BulkActionBar.tsx",
+      "encoded": "apps__admin-panel__src__components__users__BulkActionBar.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__users__BulkActionBar.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/users/CreateUserDialog.tsx",
+      "encoded": "apps__admin-panel__src__components__users__CreateUserDialog.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__users__CreateUserDialog.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/users/EditUserDialog.tsx",
+      "encoded": "apps__admin-panel__src__components__users__EditUserDialog.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__users__EditUserDialog.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/users/PermanentDeleteDialog.tsx",
+      "encoded": "apps__admin-panel__src__components__users__PermanentDeleteDialog.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__users__PermanentDeleteDialog.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/users/RoleBadge.tsx",
+      "encoded": "apps__admin-panel__src__components__users__RoleBadge.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__users__RoleBadge.tsx.json"
+    },
+    {
+      "path": "apps/admin-panel/src/components/users/RoleSelector.tsx",
+      "encoded": "apps__admin-panel__src__components__users__RoleSelector.tsx.json",
+      "url": "/agent/repo/files/apps__admin-panel__src__components__users__RoleSelector.tsx.json"
+    },
+    {
+      "path": "apps/docs-site/package.json",
+      "encoded": "apps__docs-site__package.json.json",
+      "url": "/agent/repo/files/apps__docs-site__package.json.json"
+    },
+    {
+      "path": "apps/docs-site/src/app/layout.tsx",
+      "encoded": "apps__docs-site__src__app__layout.tsx.json",
+      "url": "/agent/repo/files/apps__docs-site__src__app__layout.tsx.json"
+    },
+    {
+      "path": "apps/docs-site/src/app/page.tsx",
+      "encoded": "apps__docs-site__src__app__page.tsx.json",
+      "url": "/agent/repo/files/apps__docs-site__src__app__page.tsx.json"
+    },
+    {
+      "path": "apps/web-app/package.json",
+      "encoded": "apps__web-app__package.json.json",
+      "url": "/agent/repo/files/apps__web-app__package.json.json"
+    },
+    {
+      "path": "apps/web-app/src/components/Chat.tsx",
+      "encoded": "apps__web-app__src__components__Chat.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__Chat.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/KeyboardShortcutsDialog.tsx",
+      "encoded": "apps__web-app__src__components__KeyboardShortcutsDialog.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__KeyboardShortcutsDialog.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/LanguageSelector.tsx",
+      "encoded": "apps__web-app__src__components__LanguageSelector.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__LanguageSelector.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/LanguageToolbar.tsx",
+      "encoded": "apps__web-app__src__components__LanguageToolbar.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__LanguageToolbar.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/Layout.tsx",
+      "encoded": "apps__web-app__src__components__Layout.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__Layout.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/PWAPrompt.tsx",
+      "encoded": "apps__web-app__src__components__PWAPrompt.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__PWAPrompt.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/Sidebar.tsx",
+      "encoded": "apps__web-app__src__components__Sidebar.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__Sidebar.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/ToolConfirmationDialog.tsx",
+      "encoded": "apps__web-app__src__components__ToolConfirmationDialog.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__ToolConfirmationDialog.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/accessibility/LiveRegion.tsx",
+      "encoded": "apps__web-app__src__components__accessibility__LiveRegion.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__accessibility__LiveRegion.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/accessibility/SkipLink.tsx",
+      "encoded": "apps__web-app__src__components__accessibility__SkipLink.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__accessibility__SkipLink.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/admin/AdminErrorBoundary.tsx",
+      "encoded": "apps__web-app__src__components__admin__AdminErrorBoundary.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__admin__AdminErrorBoundary.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/admin/AdminSkeletons.tsx",
+      "encoded": "apps__web-app__src__components__admin__AdminSkeletons.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__admin__AdminSkeletons.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/admin/AnalyticsDashboard.tsx",
+      "encoded": "apps__web-app__src__components__admin__AnalyticsDashboard.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__admin__AnalyticsDashboard.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/admin/AuditLogViewer.tsx",
+      "encoded": "apps__web-app__src__components__admin__AuditLogViewer.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__admin__AuditLogViewer.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/admin/CacheManager.tsx",
+      "encoded": "apps__web-app__src__components__admin__CacheManager.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__admin__CacheManager.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/admin/DashboardOverview.tsx",
+      "encoded": "apps__web-app__src__components__admin__DashboardOverview.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__admin__DashboardOverview.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/admin/FeatureFlagsManager.tsx",
+      "encoded": "apps__web-app__src__components__admin__FeatureFlagsManager.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__admin__FeatureFlagsManager.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/admin/KnowledgeBaseManager.tsx",
+      "encoded": "apps__web-app__src__components__admin__KnowledgeBaseManager.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__admin__KnowledgeBaseManager.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/admin/MetricsCharts.tsx",
+      "encoded": "apps__web-app__src__components__admin__MetricsCharts.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__admin__MetricsCharts.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/admin/SystemHealth.tsx",
+      "encoded": "apps__web-app__src__components__admin__SystemHealth.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__admin__SystemHealth.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/admin/UserManagement.tsx",
+      "encoded": "apps__web-app__src__components__admin__UserManagement.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__admin__UserManagement.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/admin/VoiceAdminPanel.tsx",
+      "encoded": "apps__web-app__src__components__admin__VoiceAdminPanel.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__admin__VoiceAdminPanel.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/admin/VoiceMetricsDashboard.tsx",
+      "encoded": "apps__web-app__src__components__admin__VoiceMetricsDashboard.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__admin__VoiceMetricsDashboard.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/admin/WebSocketStatusPanel.tsx",
+      "encoded": "apps__web-app__src__components__admin__WebSocketStatusPanel.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__admin__WebSocketStatusPanel.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/auth/ProtectedRoute.tsx",
+      "encoded": "apps__web-app__src__components__auth__ProtectedRoute.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__auth__ProtectedRoute.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/chat/BranchPreview.tsx",
+      "encoded": "apps__web-app__src__components__chat__BranchPreview.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__chat__BranchPreview.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/chat/BranchSidebar.tsx",
+      "encoded": "apps__web-app__src__components__chat__BranchSidebar.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__chat__BranchSidebar.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/chat/BranchTree.tsx",
+      "encoded": "apps__web-app__src__components__chat__BranchTree.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__chat__BranchTree.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/chat/ChatAttachmentUpload.tsx",
+      "encoded": "apps__web-app__src__components__chat__ChatAttachmentUpload.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__chat__ChatAttachmentUpload.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/chat/ChatErrorBoundary.tsx",
+      "encoded": "apps__web-app__src__components__chat__ChatErrorBoundary.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__chat__ChatErrorBoundary.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/chat/ChatHeaderActions.tsx",
+      "encoded": "apps__web-app__src__components__chat__ChatHeaderActions.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__chat__ChatHeaderActions.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/chat/CitationDisplay.tsx",
+      "encoded": "apps__web-app__src__components__chat__CitationDisplay.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__chat__CitationDisplay.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/chat/ConnectionStatus.tsx",
+      "encoded": "apps__web-app__src__components__chat__ConnectionStatus.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__chat__ConnectionStatus.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/chat/DeleteConfirmationDialog.tsx",
+      "encoded": "apps__web-app__src__components__chat__DeleteConfirmationDialog.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__chat__DeleteConfirmationDialog.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/chat/MessageActionMenu.tsx",
+      "encoded": "apps__web-app__src__components__chat__MessageActionMenu.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__chat__MessageActionMenu.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/chat/MessageBubble.tsx",
+      "encoded": "apps__web-app__src__components__chat__MessageBubble.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__chat__MessageBubble.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/chat/MessageInput.tsx",
+      "encoded": "apps__web-app__src__components__chat__MessageInput.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__chat__MessageInput.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/chat/MessageList.tsx",
+      "encoded": "apps__web-app__src__components__chat__MessageList.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__chat__MessageList.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/chat/RegenerationOptionsDialog.tsx",
+      "encoded": "apps__web-app__src__components__chat__RegenerationOptionsDialog.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__chat__RegenerationOptionsDialog.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/chat/StreamingIndicator.tsx",
+      "encoded": "apps__web-app__src__components__chat__StreamingIndicator.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__chat__StreamingIndicator.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/citations/CitationSidebar.tsx",
+      "encoded": "apps__web-app__src__components__citations__CitationSidebar.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__citations__CitationSidebar.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/clinical/ClinicalContextAdapter.tsx",
+      "encoded": "apps__web-app__src__components__clinical__ClinicalContextAdapter.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__clinical__ClinicalContextAdapter.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/clinical/ClinicalContextPanel.tsx",
+      "encoded": "apps__web-app__src__components__clinical__ClinicalContextPanel.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__clinical__ClinicalContextPanel.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/clinical/ClinicalContextPresetPicker.tsx",
+      "encoded": "apps__web-app__src__components__clinical__ClinicalContextPresetPicker.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__clinical__ClinicalContextPresetPicker.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/clinical/ClinicalContextSidebar.tsx",
+      "encoded": "apps__web-app__src__components__clinical__ClinicalContextSidebar.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__clinical__ClinicalContextSidebar.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/conversations/ConversationList.tsx",
+      "encoded": "apps__web-app__src__components__conversations__ConversationList.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__conversations__ConversationList.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/conversations/ConversationListItem.tsx",
+      "encoded": "apps__web-app__src__components__conversations__ConversationListItem.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__conversations__ConversationListItem.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/conversations/ConversationsSidebar.tsx",
+      "encoded": "apps__web-app__src__components__conversations__ConversationsSidebar.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__conversations__ConversationsSidebar.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/export/ExportDialog.tsx",
+      "encoded": "apps__web-app__src__components__export__ExportDialog.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__export__ExportDialog.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/feedback/FeedbackWidget.tsx",
+      "encoded": "apps__web-app__src__components__feedback__FeedbackWidget.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__feedback__FeedbackWidget.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/files/FileAttachmentList.tsx",
+      "encoded": "apps__web-app__src__components__files__FileAttachmentList.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__files__FileAttachmentList.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/files/FileUpload.tsx",
+      "encoded": "apps__web-app__src__components__files__FileUpload.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__files__FileUpload.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/files/FileUploadZone.tsx",
+      "encoded": "apps__web-app__src__components__files__FileUploadZone.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__files__FileUploadZone.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/folders/FolderDialog.tsx",
+      "encoded": "apps__web-app__src__components__folders__FolderDialog.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__folders__FolderDialog.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/folders/FolderSidebar.tsx",
+      "encoded": "apps__web-app__src__components__folders__FolderSidebar.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__folders__FolderSidebar.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/layout/AnalyticsConsentUI.tsx",
+      "encoded": "apps__web-app__src__components__layout__AnalyticsConsentUI.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__layout__AnalyticsConsentUI.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/layout/AnalyticsOptInLayout.tsx",
+      "encoded": "apps__web-app__src__components__layout__AnalyticsOptInLayout.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__layout__AnalyticsOptInLayout.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/layout/MainLayout.tsx",
+      "encoded": "apps__web-app__src__components__layout__MainLayout.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__layout__MainLayout.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/notifications/Toast.tsx",
+      "encoded": "apps__web-app__src__components__notifications__Toast.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__notifications__Toast.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/notifications/ToastContainer.tsx",
+      "encoded": "apps__web-app__src__components__notifications__ToastContainer.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__notifications__ToastContainer.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/performance/LazyComponent.tsx",
+      "encoded": "apps__web-app__src__components__performance__LazyComponent.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__performance__LazyComponent.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/performance/OptimizedImage.tsx",
+      "encoded": "apps__web-app__src__components__performance__OptimizedImage.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__performance__OptimizedImage.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/sharing/ShareDialog.tsx",
+      "encoded": "apps__web-app__src__components__sharing__ShareDialog.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__sharing__ShareDialog.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/sidebar/DeleteAllConfirmDialog.tsx",
+      "encoded": "apps__web-app__src__components__sidebar__DeleteAllConfirmDialog.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__sidebar__DeleteAllConfirmDialog.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/templates/SaveAsTemplateDialog.tsx",
+      "encoded": "apps__web-app__src__components__templates__SaveAsTemplateDialog.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__templates__SaveAsTemplateDialog.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/templates/TemplatePicker.tsx",
+      "encoded": "apps__web-app__src__components__templates__TemplatePicker.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__templates__TemplatePicker.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/ui/Tooltip.tsx",
+      "encoded": "apps__web-app__src__components__ui__Tooltip.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__ui__Tooltip.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/unified-chat/CollapsibleContextPane.tsx",
+      "encoded": "apps__web-app__src__components__unified-chat__CollapsibleContextPane.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__unified-chat__CollapsibleContextPane.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/unified-chat/CollapsibleSidebar.tsx",
+      "encoded": "apps__web-app__src__components__unified-chat__CollapsibleSidebar.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__unified-chat__CollapsibleSidebar.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/unified-chat/UnifiedChatContainer.tsx",
+      "encoded": "apps__web-app__src__components__unified-chat__UnifiedChatContainer.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__unified-chat__UnifiedChatContainer.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/unified-chat/UnifiedChatError.tsx",
+      "encoded": "apps__web-app__src__components__unified-chat__UnifiedChatError.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__unified-chat__UnifiedChatError.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/unified-chat/UnifiedChatSkeleton.tsx",
+      "encoded": "apps__web-app__src__components__unified-chat__UnifiedChatSkeleton.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__unified-chat__UnifiedChatSkeleton.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/unified-chat/UnifiedHeader.tsx",
+      "encoded": "apps__web-app__src__components__unified-chat__UnifiedHeader.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__unified-chat__UnifiedHeader.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/unified-chat/UnifiedInputArea.tsx",
+      "encoded": "apps__web-app__src__components__unified-chat__UnifiedInputArea.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__unified-chat__UnifiedInputArea.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/unified-chat/index.ts",
+      "encoded": "apps__web-app__src__components__unified-chat__index.ts.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__unified-chat__index.ts.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/AudioDeviceSelector.tsx",
+      "encoded": "apps__web-app__src__components__voice__AudioDeviceSelector.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__AudioDeviceSelector.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/AudioPlayer.tsx",
+      "encoded": "apps__web-app__src__components__voice__AudioPlayer.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__AudioPlayer.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/AudioPlayerEnhanced.tsx",
+      "encoded": "apps__web-app__src__components__voice__AudioPlayerEnhanced.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__AudioPlayerEnhanced.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/BargeInFeedback.tsx",
+      "encoded": "apps__web-app__src__components__voice__BargeInFeedback.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__BargeInFeedback.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/CalibrationDialog.tsx",
+      "encoded": "apps__web-app__src__components__voice__CalibrationDialog.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__CalibrationDialog.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/CompactVoiceBar.tsx",
+      "encoded": "apps__web-app__src__components__voice__CompactVoiceBar.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__CompactVoiceBar.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/ConnectionStatusIndicator.tsx",
+      "encoded": "apps__web-app__src__components__voice__ConnectionStatusIndicator.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__ConnectionStatusIndicator.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/DuplexIndicator.tsx",
+      "encoded": "apps__web-app__src__components__voice__DuplexIndicator.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__DuplexIndicator.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/EmotionIndicator.tsx",
+      "encoded": "apps__web-app__src__components__voice__EmotionIndicator.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__EmotionIndicator.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/FrequencySpectrum.tsx",
+      "encoded": "apps__web-app__src__components__voice__FrequencySpectrum.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__FrequencySpectrum.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/LatencyIndicator.tsx",
+      "encoded": "apps__web-app__src__components__voice__LatencyIndicator.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__LatencyIndicator.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/PendingRecordingsPanel.tsx",
+      "encoded": "apps__web-app__src__components__voice__PendingRecordingsPanel.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__PendingRecordingsPanel.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/PlaybackSpeedControl.tsx",
+      "encoded": "apps__web-app__src__components__voice__PlaybackSpeedControl.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__PlaybackSpeedControl.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/QualityBadge.tsx",
+      "encoded": "apps__web-app__src__components__voice__QualityBadge.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__QualityBadge.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/SpeakerAttributedTranscript.tsx",
+      "encoded": "apps__web-app__src__components__voice__SpeakerAttributedTranscript.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__SpeakerAttributedTranscript.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/StreamingTextDisplay.tsx",
+      "encoded": "apps__web-app__src__components__voice__StreamingTextDisplay.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__StreamingTextDisplay.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx",
+      "encoded": "apps__web-app__src__components__voice__ThinkerTalkerVoicePanel.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__ThinkerTalkerVoicePanel.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx",
+      "encoded": "apps__web-app__src__components__voice__ThinkingFeedbackPanel.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__ThinkingFeedbackPanel.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/ThinkingVisualIndicator.tsx",
+      "encoded": "apps__web-app__src__components__voice__ThinkingVisualIndicator.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__ThinkingVisualIndicator.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/ToolCallDisplay.tsx",
+      "encoded": "apps__web-app__src__components__voice__ToolCallDisplay.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__ToolCallDisplay.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/VitalsPanel.tsx",
+      "encoded": "apps__web-app__src__components__voice__VitalsPanel.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__VitalsPanel.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/VoiceActivityIndicator.tsx",
+      "encoded": "apps__web-app__src__components__voice__VoiceActivityIndicator.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__VoiceActivityIndicator.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/VoiceBargeInIndicator.tsx",
+      "encoded": "apps__web-app__src__components__voice__VoiceBargeInIndicator.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__VoiceBargeInIndicator.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/VoiceErrorBoundary.tsx",
+      "encoded": "apps__web-app__src__components__voice__VoiceErrorBoundary.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__VoiceErrorBoundary.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/VoiceExpandedDrawer.tsx",
+      "encoded": "apps__web-app__src__components__voice__VoiceExpandedDrawer.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__VoiceExpandedDrawer.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/VoiceFirstInputBar.tsx",
+      "encoded": "apps__web-app__src__components__voice__VoiceFirstInputBar.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__VoiceFirstInputBar.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/VoiceInput.tsx",
+      "encoded": "apps__web-app__src__components__voice__VoiceInput.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__VoiceInput.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/VoiceInputEnhanced.tsx",
+      "encoded": "apps__web-app__src__components__voice__VoiceInputEnhanced.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__VoiceInputEnhanced.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/VoiceMetricsDisplay.tsx",
+      "encoded": "apps__web-app__src__components__voice__VoiceMetricsDisplay.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__VoiceMetricsDisplay.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/VoiceMicControl.tsx",
+      "encoded": "apps__web-app__src__components__voice__VoiceMicControl.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__VoiceMicControl.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/VoiceModePanel.tsx",
+      "encoded": "apps__web-app__src__components__voice__VoiceModePanel.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__VoiceModePanel.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/VoiceModeSettings.tsx",
+      "encoded": "apps__web-app__src__components__voice__VoiceModeSettings.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__VoiceModeSettings.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/VoiceSettings.tsx",
+      "encoded": "apps__web-app__src__components__voice__VoiceSettings.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__VoiceSettings.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/VoiceSettingsEnhanced.tsx",
+      "encoded": "apps__web-app__src__components__voice__VoiceSettingsEnhanced.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__VoiceSettingsEnhanced.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/VoiceTranscriptPreview.tsx",
+      "encoded": "apps__web-app__src__components__voice__VoiceTranscriptPreview.tsx.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__VoiceTranscriptPreview.tsx.json"
+    },
+    {
+      "path": "apps/web-app/src/components/voice/index.ts",
+      "encoded": "apps__web-app__src__components__voice__index.ts.json",
+      "url": "/agent/repo/files/apps__web-app__src__components__voice__index.ts.json"
+    },
+    {
+      "path": "docker-compose.yml",
+      "encoded": "docker-compose.yml.json",
+      "url": "/agent/repo/files/docker-compose.yml.json"
+    },
+    {
+      "path": "docs/DOCUMENTATION_METADATA_STANDARD.md",
+      "encoded": "docs__DOCUMENTATION_METADATA_STANDARD.md.json",
+      "url": "/agent/repo/files/docs__DOCUMENTATION_METADATA_STANDARD.md.json"
+    },
+    {
+      "path": "docs/START_HERE.md",
+      "encoded": "docs__START_HERE.md.json",
+      "url": "/agent/repo/files/docs__START_HERE.md.json"
+    },
+    {
+      "path": "docs/ai/AGENT_API_REFERENCE.md",
+      "encoded": "docs__ai__AGENT_API_REFERENCE.md.json",
+      "url": "/agent/repo/files/docs__ai__AGENT_API_REFERENCE.md.json"
+    },
+    {
+      "path": "docs/ai/AGENT_ONBOARDING.md",
+      "encoded": "docs__ai__AGENT_ONBOARDING.md.json",
+      "url": "/agent/repo/files/docs__ai__AGENT_ONBOARDING.md.json"
+    },
+    {
+      "path": "docs/overview/IMPLEMENTATION_STATUS.md",
+      "encoded": "docs__overview__IMPLEMENTATION_STATUS.md.json",
+      "url": "/agent/repo/files/docs__overview__IMPLEMENTATION_STATUS.md.json"
+    },
+    {
+      "path": "package.json",
+      "encoded": "package.json.json",
+      "url": "/agent/repo/files/package.json.json"
+    },
+    {
+      "path": "packages/api-client/dist/index.d.ts",
+      "encoded": "packages__api-client__dist__index.d.ts.json",
+      "url": "/agent/repo/files/packages__api-client__dist__index.d.ts.json"
+    },
+    {
+      "path": "packages/api-client/src/index.ts",
+      "encoded": "packages__api-client__src__index.ts.json",
+      "url": "/agent/repo/files/packages__api-client__src__index.ts.json"
+    },
+    {
+      "path": "packages/api-client/src/retry.ts",
+      "encoded": "packages__api-client__src__retry.ts.json",
+      "url": "/agent/repo/files/packages__api-client__src__retry.ts.json"
+    },
+    {
+      "path": "packages/config/i18n.ts",
+      "encoded": "packages__config__i18n.ts.json",
+      "url": "/agent/repo/files/packages__config__i18n.ts.json"
+    },
+    {
+      "path": "packages/design-tokens/dist/animations.d.ts",
+      "encoded": "packages__design-tokens__dist__animations.d.ts.json",
+      "url": "/agent/repo/files/packages__design-tokens__dist__animations.d.ts.json"
+    },
+    {
+      "path": "packages/design-tokens/dist/breakpoints.d.ts",
+      "encoded": "packages__design-tokens__dist__breakpoints.d.ts.json",
+      "url": "/agent/repo/files/packages__design-tokens__dist__breakpoints.d.ts.json"
+    },
+    {
+      "path": "packages/design-tokens/dist/colors.d.ts",
+      "encoded": "packages__design-tokens__dist__colors.d.ts.json",
+      "url": "/agent/repo/files/packages__design-tokens__dist__colors.d.ts.json"
+    },
+    {
+      "path": "packages/design-tokens/dist/elevation.d.ts",
+      "encoded": "packages__design-tokens__dist__elevation.d.ts.json",
+      "url": "/agent/repo/files/packages__design-tokens__dist__elevation.d.ts.json"
+    },
+    {
+      "path": "packages/design-tokens/dist/index.d.ts",
+      "encoded": "packages__design-tokens__dist__index.d.ts.json",
+      "url": "/agent/repo/files/packages__design-tokens__dist__index.d.ts.json"
+    },
+    {
+      "path": "packages/design-tokens/dist/spacing.d.ts",
+      "encoded": "packages__design-tokens__dist__spacing.d.ts.json",
+      "url": "/agent/repo/files/packages__design-tokens__dist__spacing.d.ts.json"
+    },
+    {
+      "path": "packages/design-tokens/dist/typography.d.ts",
+      "encoded": "packages__design-tokens__dist__typography.d.ts.json",
+      "url": "/agent/repo/files/packages__design-tokens__dist__typography.d.ts.json"
+    },
+    {
+      "path": "packages/design-tokens/src/animations.ts",
+      "encoded": "packages__design-tokens__src__animations.ts.json",
+      "url": "/agent/repo/files/packages__design-tokens__src__animations.ts.json"
+    },
+    {
+      "path": "packages/design-tokens/src/breakpoints.ts",
+      "encoded": "packages__design-tokens__src__breakpoints.ts.json",
+      "url": "/agent/repo/files/packages__design-tokens__src__breakpoints.ts.json"
+    },
+    {
+      "path": "packages/design-tokens/src/colors.ts",
+      "encoded": "packages__design-tokens__src__colors.ts.json",
+      "url": "/agent/repo/files/packages__design-tokens__src__colors.ts.json"
+    },
+    {
+      "path": "packages/design-tokens/src/elevation.ts",
+      "encoded": "packages__design-tokens__src__elevation.ts.json",
+      "url": "/agent/repo/files/packages__design-tokens__src__elevation.ts.json"
+    },
+    {
+      "path": "packages/design-tokens/src/index.ts",
+      "encoded": "packages__design-tokens__src__index.ts.json",
+      "url": "/agent/repo/files/packages__design-tokens__src__index.ts.json"
+    },
+    {
+      "path": "packages/design-tokens/src/spacing.ts",
+      "encoded": "packages__design-tokens__src__spacing.ts.json",
+      "url": "/agent/repo/files/packages__design-tokens__src__spacing.ts.json"
+    },
+    {
+      "path": "packages/design-tokens/src/typography.ts",
+      "encoded": "packages__design-tokens__src__typography.ts.json",
+      "url": "/agent/repo/files/packages__design-tokens__src__typography.ts.json"
+    },
+    {
+      "path": "packages/telemetry/dist/index.d.ts",
+      "encoded": "packages__telemetry__dist__index.d.ts.json",
+      "url": "/agent/repo/files/packages__telemetry__dist__index.d.ts.json"
+    },
+    {
+      "path": "packages/telemetry/src/index.ts",
+      "encoded": "packages__telemetry__src__index.ts.json",
+      "url": "/agent/repo/files/packages__telemetry__src__index.ts.json"
+    },
+    {
+      "path": "packages/types/dist/index.d.ts",
+      "encoded": "packages__types__dist__index.d.ts.json",
+      "url": "/agent/repo/files/packages__types__dist__index.d.ts.json"
+    },
+    {
+      "path": "packages/types/src/featureFlags.ts",
+      "encoded": "packages__types__src__featureFlags.ts.json",
+      "url": "/agent/repo/files/packages__types__src__featureFlags.ts.json"
+    },
+    {
+      "path": "packages/types/src/index.ts",
+      "encoded": "packages__types__src__index.ts.json",
+      "url": "/agent/repo/files/packages__types__src__index.ts.json"
+    },
+    {
+      "path": "packages/ui/dist/index.d.ts",
+      "encoded": "packages__ui__dist__index.d.ts.json",
+      "url": "/agent/repo/files/packages__ui__dist__index.d.ts.json"
+    },
+    {
+      "path": "packages/ui/src/index.ts",
+      "encoded": "packages__ui__src__index.ts.json",
+      "url": "/agent/repo/files/packages__ui__src__index.ts.json"
+    },
+    {
+      "path": "packages/ui/vitest.config.ts",
+      "encoded": "packages__ui__vitest.config.ts.json",
+      "url": "/agent/repo/files/packages__ui__vitest.config.ts.json"
+    },
+    {
+      "path": "packages/utils/dist/index.d.ts",
+      "encoded": "packages__utils__dist__index.d.ts.json",
+      "url": "/agent/repo/files/packages__utils__dist__index.d.ts.json"
+    },
+    {
+      "path": "packages/utils/src/index.ts",
+      "encoded": "packages__utils__src__index.ts.json",
+      "url": "/agent/repo/files/packages__utils__src__index.ts.json"
+    },
+    {
+      "path": "pnpm-workspace.yaml",
+      "encoded": "pnpm-workspace.yaml.json",
+      "url": "/agent/repo/files/pnpm-workspace.yaml.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/__init__.py",
+      "encoded": "services__api-gateway__app__api____init__.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api____init__.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin/__init__.py",
+      "encoded": "services__api-gateway__app__api__admin____init__.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin____init__.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin/schemas.py",
+      "encoded": "services__api-gateway__app__api__admin__schemas.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin__schemas.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin/utils.py",
+      "encoded": "services__api-gateway__app__api__admin__utils.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin__utils.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_attachments.py",
+      "encoded": "services__api-gateway__app__api__admin_attachments.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_attachments.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_cache.py",
+      "encoded": "services__api-gateway__app__api__admin_cache.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_cache.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_calendar_connections.py",
+      "encoded": "services__api-gateway__app__api__admin_calendar_connections.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_calendar_connections.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_clinical.py",
+      "encoded": "services__api-gateway__app__api__admin_clinical.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_clinical.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_conversations.py",
+      "encoded": "services__api-gateway__app__api__admin_conversations.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_conversations.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_feature_flags.py",
+      "encoded": "services__api-gateway__app__api__admin_feature_flags.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_feature_flags.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_folders.py",
+      "encoded": "services__api-gateway__app__api__admin_folders.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_folders.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_integrations.py",
+      "encoded": "services__api-gateway__app__api__admin_integrations.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_integrations.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_kb.py",
+      "encoded": "services__api-gateway__app__api__admin_kb.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_kb.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_medical.py",
+      "encoded": "services__api-gateway__app__api__admin_medical.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_medical.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_panel.py",
+      "encoded": "services__api-gateway__app__api__admin_panel.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_panel.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_phi.py",
+      "encoded": "services__api-gateway__app__api__admin_phi.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_phi.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_prompts.py",
+      "encoded": "services__api-gateway__app__api__admin_prompts.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_prompts.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_system.py",
+      "encoded": "services__api-gateway__app__api__admin_system.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_system.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_tools.py",
+      "encoded": "services__api-gateway__app__api__admin_tools.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_tools.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_troubleshooting.py",
+      "encoded": "services__api-gateway__app__api__admin_troubleshooting.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_troubleshooting.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_user_flag_overrides.py",
+      "encoded": "services__api-gateway__app__api__admin_user_flag_overrides.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_user_flag_overrides.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/admin_voice.py",
+      "encoded": "services__api-gateway__app__api__admin_voice.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__admin_voice.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/advanced_search.py",
+      "encoded": "services__api-gateway__app__api__advanced_search.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__advanced_search.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/attachments.py",
+      "encoded": "services__api-gateway__app__api__attachments.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__attachments.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/auth.py",
+      "encoded": "services__api-gateway__app__api__auth.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__auth.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/auth_2fa.py",
+      "encoded": "services__api-gateway__app__api__auth_2fa.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__auth_2fa.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/auth_oauth.py",
+      "encoded": "services__api-gateway__app__api__auth_oauth.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__auth_oauth.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/calendar_connections.py",
+      "encoded": "services__api-gateway__app__api__calendar_connections.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__calendar_connections.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/clinical_context.py",
+      "encoded": "services__api-gateway__app__api__clinical_context.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__clinical_context.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/conversation_schemas/__init__.py",
+      "encoded": "services__api-gateway__app__api__conversation_schemas____init__.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__conversation_schemas____init__.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/conversation_schemas/schemas.py",
+      "encoded": "services__api-gateway__app__api__conversation_schemas__schemas.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__conversation_schemas__schemas.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/conversations.py",
+      "encoded": "services__api-gateway__app__api__conversations.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__conversations.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/experiments.py",
+      "encoded": "services__api-gateway__app__api__experiments.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__experiments.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/export.py",
+      "encoded": "services__api-gateway__app__api__export.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__export.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/external_medical.py",
+      "encoded": "services__api-gateway__app__api__external_medical.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__external_medical.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/feature_flags_realtime.py",
+      "encoded": "services__api-gateway__app__api__feature_flags_realtime.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__feature_flags_realtime.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/folders.py",
+      "encoded": "services__api-gateway__app__api__folders.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__folders.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/health.py",
+      "encoded": "services__api-gateway__app__api__health.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__health.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/integrations.py",
+      "encoded": "services__api-gateway__app__api__integrations.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__integrations.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/medical_ai.py",
+      "encoded": "services__api-gateway__app__api__medical_ai.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__medical_ai.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/metrics.py",
+      "encoded": "services__api-gateway__app__api__metrics.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__metrics.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/realtime.py",
+      "encoded": "services__api-gateway__app__api__realtime.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__realtime.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/sharing.py",
+      "encoded": "services__api-gateway__app__api__sharing.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__sharing.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/user_api_keys.py",
+      "encoded": "services__api-gateway__app__api__user_api_keys.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__user_api_keys.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/users.py",
+      "encoded": "services__api-gateway__app__api__users.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__users.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/voice.py",
+      "encoded": "services__api-gateway__app__api__voice.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__voice.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/voice_schemas/__init__.py",
+      "encoded": "services__api-gateway__app__api__voice_schemas____init__.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__voice_schemas____init__.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/api/voice_schemas/schemas.py",
+      "encoded": "services__api-gateway__app__api__voice_schemas__schemas.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__api__voice_schemas__schemas.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/main.py",
+      "encoded": "services__api-gateway__app__main.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__main.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/__init__.py",
+      "encoded": "services__api-gateway__app__models____init__.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models____init__.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/admin_audit_log.py",
+      "encoded": "services__api-gateway__app__models__admin_audit_log.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__admin_audit_log.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/attachment.py",
+      "encoded": "services__api-gateway__app__models__attachment.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__attachment.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/audit_log.py",
+      "encoded": "services__api-gateway__app__models__audit_log.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__audit_log.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/citation.py",
+      "encoded": "services__api-gateway__app__models__citation.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__citation.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/clinical_context.py",
+      "encoded": "services__api-gateway__app__models__clinical_context.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__clinical_context.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/conversation_memory.py",
+      "encoded": "services__api-gateway__app__models__conversation_memory.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__conversation_memory.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/document.py",
+      "encoded": "services__api-gateway__app__models__document.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__document.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/feature_flag.py",
+      "encoded": "services__api-gateway__app__models__feature_flag.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__feature_flag.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/feature_flag_analytics.py",
+      "encoded": "services__api-gateway__app__models__feature_flag_analytics.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__feature_flag_analytics.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/folder.py",
+      "encoded": "services__api-gateway__app__models__folder.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__folder.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/message.py",
+      "encoded": "services__api-gateway__app__models__message.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__message.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/prompt.py",
+      "encoded": "services__api-gateway__app__models__prompt.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__prompt.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/session.py",
+      "encoded": "services__api-gateway__app__models__session.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__session.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/session_event.py",
+      "encoded": "services__api-gateway__app__models__session_event.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__session_event.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/system_api_key.py",
+      "encoded": "services__api-gateway__app__models__system_api_key.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__system_api_key.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/user.py",
+      "encoded": "services__api-gateway__app__models__user.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__user.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/user_api_key.py",
+      "encoded": "services__api-gateway__app__models__user_api_key.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__user_api_key.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/user_emotion_profile.py",
+      "encoded": "services__api-gateway__app__models__user_emotion_profile.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__user_emotion_profile.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/user_feature_flag.py",
+      "encoded": "services__api-gateway__app__models__user_feature_flag.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__user_feature_flag.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/user_voice_preferences.py",
+      "encoded": "services__api-gateway__app__models__user_voice_preferences.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__user_voice_preferences.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/models/voice_session_metrics.py",
+      "encoded": "services__api-gateway__app__models__voice_session_metrics.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__models__voice_session_metrics.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/__init__.py",
+      "encoded": "services__api-gateway__app__services____init__.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services____init__.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/adaptive_quality_service.py",
+      "encoded": "services__api-gateway__app__services__adaptive_quality_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__adaptive_quality_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/adaptive_vad_service.py",
+      "encoded": "services__api-gateway__app__services__adaptive_vad_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__adaptive_vad_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/admin_audit_log_service.py",
+      "encoded": "services__api-gateway__app__services__admin_audit_log_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__admin_audit_log_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/admin_event_publisher.py",
+      "encoded": "services__api-gateway__app__services__admin_event_publisher.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__admin_event_publisher.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/advanced_search.py",
+      "encoded": "services__api-gateway__app__services__advanced_search.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__advanced_search.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/audio_processing_service.py",
+      "encoded": "services__api-gateway__app__services__audio_processing_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__audio_processing_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/audio_processor.py",
+      "encoded": "services__api-gateway__app__services__audio_processor.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__audio_processor.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/audit_service.py",
+      "encoded": "services__api-gateway__app__services__audit_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__audit_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/backchannel_service.py",
+      "encoded": "services__api-gateway__app__services__backchannel_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__backchannel_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/barge_in_classifier.py",
+      "encoded": "services__api-gateway__app__services__barge_in_classifier.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__barge_in_classifier.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/cache_service.py",
+      "encoded": "services__api-gateway__app__services__cache_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__cache_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/caldav_service.py",
+      "encoded": "services__api-gateway__app__services__caldav_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__caldav_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/carddav_service.py",
+      "encoded": "services__api-gateway__app__services__carddav_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__carddav_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/dictation_phi_monitor.py",
+      "encoded": "services__api-gateway__app__services__dictation_phi_monitor.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__dictation_phi_monitor.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/dictation_service.py",
+      "encoded": "services__api-gateway__app__services__dictation_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__dictation_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/document_queue.py",
+      "encoded": "services__api-gateway__app__services__document_queue.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__document_queue.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/elevenlabs_service.py",
+      "encoded": "services__api-gateway__app__services__elevenlabs_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__elevenlabs_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/email_service.py",
+      "encoded": "services__api-gateway__app__services__email_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__email_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/emotion_detection_service.py",
+      "encoded": "services__api-gateway__app__services__emotion_detection_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__emotion_detection_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/enhanced_g2p_service.py",
+      "encoded": "services__api-gateway__app__services__enhanced_g2p_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__enhanced_g2p_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/event_logging_service.py",
+      "encoded": "services__api-gateway__app__services__event_logging_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__event_logging_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/external_connectors.py",
+      "encoded": "services__api-gateway__app__services__external_connectors.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__external_connectors.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/feature_flags.py",
+      "encoded": "services__api-gateway__app__services__feature_flags.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__feature_flags.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/feedback_service.py",
+      "encoded": "services__api-gateway__app__services__feedback_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__feedback_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/fhir_subscription_service.py",
+      "encoded": "services__api-gateway__app__services__fhir_subscription_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__fhir_subscription_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/file_processor.py",
+      "encoded": "services__api-gateway__app__services__file_processor.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__file_processor.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/hybrid_search_service.py",
+      "encoded": "services__api-gateway__app__services__hybrid_search_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__hybrid_search_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/intent_classifier.py",
+      "encoded": "services__api-gateway__app__services__intent_classifier.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__intent_classifier.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/kb_indexer.py",
+      "encoded": "services__api-gateway__app__services__kb_indexer.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__kb_indexer.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/language_detection_service.py",
+      "encoded": "services__api-gateway__app__services__language_detection_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__language_detection_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/latency_aware_orchestrator.py",
+      "encoded": "services__api-gateway__app__services__latency_aware_orchestrator.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__latency_aware_orchestrator.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/lexicon_service.py",
+      "encoded": "services__api-gateway__app__services__lexicon_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__lexicon_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/llm_client.py",
+      "encoded": "services__api-gateway__app__services__llm_client.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__llm_client.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/local_whisper_service.py",
+      "encoded": "services__api-gateway__app__services__local_whisper_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__local_whisper_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/log_stream_service.py",
+      "encoded": "services__api-gateway__app__services__log_stream_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__log_stream_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/medical_calculators.py",
+      "encoded": "services__api-gateway__app__services__medical_calculators.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__medical_calculators.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/medical_embedding_service.py",
+      "encoded": "services__api-gateway__app__services__medical_embedding_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__medical_embedding_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/medical_embeddings.py",
+      "encoded": "services__api-gateway__app__services__medical_embeddings.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__medical_embeddings.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/medical_ner_service.py",
+      "encoded": "services__api-gateway__app__services__medical_ner_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__medical_ner_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/medical_vocabulary_service.py",
+      "encoded": "services__api-gateway__app__services__medical_vocabulary_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__medical_vocabulary_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/memory_context_service.py",
+      "encoded": "services__api-gateway__app__services__memory_context_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__memory_context_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/model_adapters.py",
+      "encoded": "services__api-gateway__app__services__model_adapters.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__model_adapters.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/multi_hop_reasoning_service.py",
+      "encoded": "services__api-gateway__app__services__multi_hop_reasoning_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__multi_hop_reasoning_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/multilingual_rag_service.py",
+      "encoded": "services__api-gateway__app__services__multilingual_rag_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__multilingual_rag_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/nextcloud.py",
+      "encoded": "services__api-gateway__app__services__nextcloud.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__nextcloud.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/nextcloud_file_indexer.py",
+      "encoded": "services__api-gateway__app__services__nextcloud_file_indexer.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__nextcloud_file_indexer.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/note_formatter_service.py",
+      "encoded": "services__api-gateway__app__services__note_formatter_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__note_formatter_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/oidc_service.py",
+      "encoded": "services__api-gateway__app__services__oidc_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__oidc_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/openai_realtime_client.py",
+      "encoded": "services__api-gateway__app__services__openai_realtime_client.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__openai_realtime_client.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/openai_tts_service.py",
+      "encoded": "services__api-gateway__app__services__openai_tts_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__openai_tts_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/parallel_stt_service.py",
+      "encoded": "services__api-gateway__app__services__parallel_stt_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__parallel_stt_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/patient_context_service.py",
+      "encoded": "services__api-gateway__app__services__patient_context_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__patient_context_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/phi_detector.py",
+      "encoded": "services__api-gateway__app__services__phi_detector.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__phi_detector.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/phi_stt_router.py",
+      "encoded": "services__api-gateway__app__services__phi_stt_router.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__phi_stt_router.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/phi_telemetry.py",
+      "encoded": "services__api-gateway__app__services__phi_telemetry.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__phi_telemetry.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/preemptive_stt_service.py",
+      "encoded": "services__api-gateway__app__services__preemptive_stt_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__preemptive_stt_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/privacy_aware_stt_router.py",
+      "encoded": "services__api-gateway__app__services__privacy_aware_stt_router.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__privacy_aware_stt_router.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/prompt_service.py",
+      "encoded": "services__api-gateway__app__services__prompt_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__prompt_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/prosody_analysis_service.py",
+      "encoded": "services__api-gateway__app__services__prosody_analysis_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__prosody_analysis_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/pubmed_enhanced_service.py",
+      "encoded": "services__api-gateway__app__services__pubmed_enhanced_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__pubmed_enhanced_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/query_expansion.py",
+      "encoded": "services__api-gateway__app__services__query_expansion.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__query_expansion.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/rag_cache.py",
+      "encoded": "services__api-gateway__app__services__rag_cache.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__rag_cache.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/rag_service.py",
+      "encoded": "services__api-gateway__app__services__rag_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__rag_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/realtime_voice_service.py",
+      "encoded": "services__api-gateway__app__services__realtime_voice_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__realtime_voice_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/repair_strategy_service.py",
+      "encoded": "services__api-gateway__app__services__repair_strategy_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__repair_strategy_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/reranking_service.py",
+      "encoded": "services__api-gateway__app__services__reranking_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__reranking_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/rule_engine.py",
+      "encoded": "services__api-gateway__app__services__rule_engine.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__rule_engine.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/search_aggregator.py",
+      "encoded": "services__api-gateway__app__services__search_aggregator.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__search_aggregator.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/sentence_chunker.py",
+      "encoded": "services__api-gateway__app__services__sentence_chunker.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__sentence_chunker.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/session_activity.py",
+      "encoded": "services__api-gateway__app__services__session_activity.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__session_activity.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/session_analytics_service.py",
+      "encoded": "services__api-gateway__app__services__session_analytics_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__session_analytics_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/speaker_diarization_service.py",
+      "encoded": "services__api-gateway__app__services__speaker_diarization_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__speaker_diarization_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/ssml_processor.py",
+      "encoded": "services__api-gateway__app__services__ssml_processor.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__ssml_processor.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/storage_service.py",
+      "encoded": "services__api-gateway__app__services__storage_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__storage_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/streaming_stt_service.py",
+      "encoded": "services__api-gateway__app__services__streaming_stt_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__streaming_stt_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/system_key_service.py",
+      "encoded": "services__api-gateway__app__services__system_key_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__system_key_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/talker_service.py",
+      "encoded": "services__api-gateway__app__services__talker_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__talker_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/thinker_service.py",
+      "encoded": "services__api-gateway__app__services__thinker_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__thinker_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/thinker_talker_websocket_handler.py",
+      "encoded": "services__api-gateway__app__services__thinker_talker_websocket_handler.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__thinker_talker_websocket_handler.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/thinking_feedback_service.py",
+      "encoded": "services__api-gateway__app__services__thinking_feedback_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__thinking_feedback_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/token_revocation.py",
+      "encoded": "services__api-gateway__app__services__token_revocation.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__token_revocation.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/tools/__init__.py",
+      "encoded": "services__api-gateway__app__services__tools____init__.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__tools____init__.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/tools/analytics_service.py",
+      "encoded": "services__api-gateway__app__services__tools__analytics_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__tools__analytics_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/tools/calendar_tool.py",
+      "encoded": "services__api-gateway__app__services__tools__calendar_tool.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__tools__calendar_tool.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/tools/medical_tools.py",
+      "encoded": "services__api-gateway__app__services__tools__medical_tools.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__tools__medical_tools.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/tools/oauth_service.py",
+      "encoded": "services__api-gateway__app__services__tools__oauth_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__tools__oauth_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/tools/search_tools.py",
+      "encoded": "services__api-gateway__app__services__tools__search_tools.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__tools__search_tools.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/tools/tool_service.py",
+      "encoded": "services__api-gateway__app__services__tools__tool_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__tools__tool_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/translation_service.py",
+      "encoded": "services__api-gateway__app__services__translation_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__translation_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/tts/__init__.py",
+      "encoded": "services__api-gateway__app__services__tts____init__.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__tts____init__.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/tts/quality_presets.py",
+      "encoded": "services__api-gateway__app__services__tts__quality_presets.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__tts__quality_presets.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/tts_cache_service.py",
+      "encoded": "services__api-gateway__app__services__tts_cache_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__tts_cache_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/two_factor.py",
+      "encoded": "services__api-gateway__app__services__two_factor.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__two_factor.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/unified_memory_service.py",
+      "encoded": "services__api-gateway__app__services__unified_memory_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__unified_memory_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/uptodate_service.py",
+      "encoded": "services__api-gateway__app__services__uptodate_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__uptodate_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/user_api_key_service.py",
+      "encoded": "services__api-gateway__app__services__user_api_key_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__user_api_key_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/user_flag_override_service.py",
+      "encoded": "services__api-gateway__app__services__user_flag_override_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__user_flag_override_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/variant_assignment.py",
+      "encoded": "services__api-gateway__app__services__variant_assignment.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__variant_assignment.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/voice_activity_detector.py",
+      "encoded": "services__api-gateway__app__services__voice_activity_detector.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__voice_activity_detector.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/voice_authentication.py",
+      "encoded": "services__api-gateway__app__services__voice_authentication.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__voice_authentication.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/voice_command_service.py",
+      "encoded": "services__api-gateway__app__services__voice_command_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__voice_command_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/voice_fallback_orchestrator.py",
+      "encoded": "services__api-gateway__app__services__voice_fallback_orchestrator.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__voice_fallback_orchestrator.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/voice_pipeline_service.py",
+      "encoded": "services__api-gateway__app__services__voice_pipeline_service.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__voice_pipeline_service.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/voice_style_detector.py",
+      "encoded": "services__api-gateway__app__services__voice_style_detector.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__voice_style_detector.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/voice_websocket_handler.py",
+      "encoded": "services__api-gateway__app__services__voice_websocket_handler.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__voice_websocket_handler.py.json"
+    },
+    {
+      "path": "services/api-gateway/app/services/webrtc_signaling.py",
+      "encoded": "services__api-gateway__app__services__webrtc_signaling.py.json",
+      "url": "/agent/repo/files/services__api-gateway__app__services__webrtc_signaling.py.json"
+    },
+    {
+      "path": "services/api-gateway/requirements.txt",
+      "encoded": "services__api-gateway__requirements.txt.json",
+      "url": "/agent/repo/files/services__api-gateway__requirements.txt.json"
+    },
+    {
+      "path": "tsconfig.json",
+      "encoded": "tsconfig.json.json",
+      "url": "/agent/repo/files/tsconfig.json.json"
+    },
+    {
+      "path": "turbo.json",
+      "encoded": "turbo.json.json",
+      "url": "/agent/repo/files/turbo.json.json"
+    }
+  ]
+}

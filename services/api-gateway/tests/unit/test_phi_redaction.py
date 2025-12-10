@@ -250,9 +250,7 @@ class TestPHIFieldDetection:
             "duration",
         ]
         for field in non_phi_fields:
-            assert not redactor._is_phi_field(
-                field
-            ), f"Should not detect {field} as PHI"
+            assert not redactor._is_phi_field(field), f"Should not detect {field} as PHI"
 
     def test_case_insensitive_field_detection(self, redactor):
         """Should detect PHI fields regardless of case."""

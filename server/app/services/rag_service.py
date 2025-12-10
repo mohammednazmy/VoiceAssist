@@ -6,15 +6,18 @@ be expanded in future phases.
 """
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import List, Optional
+
+logger = logging.getLogger(__name__)
 
 from pydantic import BaseModel, Field
 
 from app.services.llm_client import LLMClient, LLMRequest, LLMResponse
+from app.services.phi_detector import PHIDetector
 from app.services.search_aggregator import SearchAggregator, SearchResult
 # NOTE: In future phases we will inject concrete implementations for:
-# - PHI detector (app.services.phi_detector)
 # - semantic search / KB (app.services.search_aggregator)
 # - external evidence (OpenEvidence, PubMed clients)
 # - tool execution (app.services.orchestration.tool_executor)
@@ -64,6 +67,7 @@ class QueryOrchestrator:
         # In future, accept Settings and injected clients (DB, Qdrant, etc.)
         self.llm_client = LLMClient()
         self.search_aggregator = SearchAggregator()
+        self.phi_detector = PHIDetector()
 
     async def handle_query(
         self,
@@ -91,10 +95,7 @@ class QueryOrchestrator:
             )
         except Exception as e:
             # Log error but continue with empty results (graceful degradation)
-            import logging
-            logging.getLogger(__name__).warning(
-                f"Search failed, continuing without RAG context: {e}"
-            )
+            logger.warning(f"Search failed, continuing without RAG context: {e}")
 
         # Step 2: Build context from search results
         context = ""
@@ -117,19 +118,35 @@ class QueryOrchestrator:
                 f"Answer this query: {request.query}"
             )
 
-        # Step 4: Generate LLM response
+        # Step 4: Run PHI detection on query and context
+        phi_result = await self.phi_detector.detect_in_text(request.query)
+        phi_present = phi_result.contains_phi
+
+        # Also check the context for PHI if we have search results
+        if not phi_present and context:
+            context_phi_result = await self.phi_detector.detect_in_text(context)
+            phi_present = context_phi_result.contains_phi
+
+        # Log if PHI detected (for monitoring/audit)
+        if phi_present:
+            logger.info(
+                f"PHI detected in query, routing to local model. "
+                f"trace_id={trace_id}, phi_types={phi_result.phi_types}"
+            )
+
+        # Step 5: Generate LLM response
         llm_request = LLMRequest(
             prompt=prompt,
             intent="other",
             temperature=0.1,
             max_tokens=512,
-            phi_present=False,  # TODO: Run PHI detector first
+            phi_present=phi_present,
             trace_id=trace_id,
         )
 
         llm_response: LLMResponse = await self.llm_client.generate(llm_request)
 
-        # Step 5: Extract citations
+        # Step 6: Extract citations
         citation_dicts = self.search_aggregator.extract_citations(search_results)
         citations = [
             Citation(

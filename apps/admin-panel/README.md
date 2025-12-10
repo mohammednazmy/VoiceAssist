@@ -1,7 +1,25 @@
+---
+title: Admin Panel
+description: System administration and monitoring dashboard - React/TypeScript SPA
+version: 2.0.0
+status: production
+last_updated: 2025-11-27
+audience:
+  - frontend-developers
+  - administrators
+  - ai-agents
+tags:
+  - frontend
+  - react
+  - typescript
+  - admin
+  - dashboard
+---
+
 # VoiceAssist Admin Panel
 
 **Status:** ✅ **Production Ready** (v2.0)
-**Last Updated:** 2025-11-22
+**Last Updated:** 2025-11-27
 
 ## Overview
 
@@ -12,30 +30,35 @@ The Admin Panel provides a comprehensive, secure web interface for managing and 
 ## ✨ Features
 
 ### 🔐 Security & Authentication
+
 - **JWT-based Authentication**: Secure token-based login system
 - **Admin-Only Access**: All routes protected with admin role verification
 - **Session Management**: Automatic validation and logout
 - **HIPAA Compliant**: Follows enterprise security standards
 
 ### 📊 Dashboard & Monitoring
+
 - **Real-Time Metrics**: View user counts, active sessions, system health
 - **Service Health**: Monitor PostgreSQL, Redis, and Qdrant status
 - **Auto-Refresh**: Metrics update every 30 seconds
 - **Visual Indicators**: Color-coded cards and status badges
 
 ### 👥 User Management
+
 - **User Listing**: View all users with email, name, role, and status
 - **Role Management**: Promote/demote users to admin role
 - **Account Control**: Activate or deactivate user accounts
 - **Statistics Dashboard**: Track total, active, and admin users
 
 ### 📚 Knowledge Base Management
+
 - **Document Upload**: Support for PDF and TXT files (up to 50MB)
 - **Status Tracking**: Monitor indexing progress (uploaded, processing, indexed, failed)
 - **Document Actions**: View, reindex, or delete documents
 - **Statistics**: Track total documents and processing queue
 
 ### ⚙️ System Configuration
+
 - **Environment Settings**: Configure deployment environment
 - **Database Configuration**: Adjust connection pool sizes
 - **Feature Flags**: Toggle Voice Mode, RAG Search, Nextcloud Integration
@@ -123,17 +146,20 @@ admin-panel/
 ### Setup
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 2. Configure:
+
 ```bash
 cp .env.example .env.local
 # Edit with admin API URL and credentials
 ```
 
 3. Start development:
+
 ```bash
 npm run dev
 ```
@@ -161,7 +187,7 @@ VITE_ENABLE_LOGS=true
 
 ### Production Environment
 
-Create `.env.production` for production builds:
+Production settings are centralized in `deployment/production/configs/admin-panel.env` and loaded automatically by `deploy-admin-fix.sh`:
 
 ```bash
 # API URLs (production)
@@ -170,6 +196,33 @@ VITE_WS_URL=wss://admin.asimo.io/api/ws
 
 # Environment
 VITE_ENV=production
+
+# Features
+VITE_ENABLE_METRICS=true
+VITE_ENABLE_LOGS=true
+```
+
+## Release Checklist
+
+Run this checklist before promoting changes to staging or production:
+
+1. **Select the environment file**: export `ENV_FILE` to either `deployment/production/configs/admin-panel.staging.env` or `deployment/production/configs/admin-panel.env`. Ensure any secrets pulled from the secret manager are loaded into that file before building.
+2. **Build with the selected config**: `cd apps/admin-panel && set -a && source "$ENV_FILE" && set +a && npm run build`. Vite will embed the centralized values for `VITE_ADMIN_API_URL`, `VITE_WS_URL`, and feature flags.
+3. **Publish static assets**: deploy the `dist/` contents to the appropriate bucket/server/CDN origin (e.g., `rsync -av --delete dist/ /var/www/admin.asimo.io/`). Confirm hashed asset filenames to ensure cache busting.
+4. **Invalidate caches**: issue a CDN/edge cache invalidation for `admin.asimo.io` (or staging) and announce that operators should perform a hard refresh to pick up the new bundle.
+5. **Smoke test**: verify login, analytics export, and WebSocket-backed widgets against the targeted API/WS endpoints. Confirm environment/feature flags reflect the expected values in the UI.
+
+### Staging Environment
+
+Use `deployment/production/configs/admin-panel.staging.env` for pre-production validation (loaded by setting `ENV_FILE` when running deployment scripts):
+
+```bash
+# API URLs (staging)
+VITE_ADMIN_API_URL=https://admin-staging.asimo.io/api
+VITE_WS_URL=wss://admin-staging.asimo.io/api/ws
+
+# Environment
+VITE_ENV=staging
 
 # Features
 VITE_ENABLE_METRICS=true
@@ -187,9 +240,9 @@ Complete type definitions for all admin panel entities. All types are defined in
 export interface KBDocument {
   id: string;
   filename: string;
-  sourceType: 'textbook' | 'journal' | 'guideline' | 'reference' | 'trial';
+  sourceType: "textbook" | "journal" | "guideline" | "reference" | "trial";
   specialty: string;
-  status: 'uploaded' | 'processing' | 'indexed' | 'failed';
+  status: "uploaded" | "processing" | "indexed" | "failed";
   fileSize: number;
   chunkCount: number | null;
   uploadedAt: string;
@@ -211,7 +264,7 @@ export interface IndexingJob {
   id: string;
   documentCount: number;
   processedCount: number;
-  status: 'pending' | 'running' | 'completed' | 'failed';
+  status: "pending" | "running" | "completed" | "failed";
   error: string | null;
   createdAt: string;
   completedAt: string | null;
@@ -285,36 +338,36 @@ export interface DashboardMetrics {
 
 export interface SystemResources {
   cpu: {
-    usage: number;  // Percentage
+    usage: number; // Percentage
     cores: number;
   };
   memory: {
-    usage: number;  // Percentage
-    total: number;  // GB
-    used: number;   // GB
+    usage: number; // Percentage
+    total: number; // GB
+    used: number; // GB
   };
   gpu?: {
-    usage: number;  // Percentage
+    usage: number; // Percentage
     memory: {
       total: number;
       used: number;
     };
   };
   disk: {
-    usage: number;  // Percentage
-    total: number;  // GB
-    free: number;   // GB
+    usage: number; // Percentage
+    total: number; // GB
+    free: number; // GB
   };
   network: {
-    upload: number;    // MB/s
-    download: number;  // MB/s
+    upload: number; // MB/s
+    download: number; // MB/s
   };
   websocketConnections: number;
 }
 
 export interface ServiceStatus {
   name: string;
-  status: 'up' | 'degraded' | 'down';
+  status: "up" | "degraded" | "down";
   lastCheck: string;
   responseTime?: number;
   errorMessage?: string;
@@ -323,16 +376,16 @@ export interface ServiceStatus {
 export interface ActivityEvent {
   id: string;
   timestamp: string;
-  type: 'query' | 'document_indexed' | 'error' | 'system_event';
+  type: "query" | "document_indexed" | "error" | "system_event";
   message: string;
-  severity?: 'info' | 'warning' | 'error';
+  severity?: "info" | "warning" | "error";
   metadata?: Record<string, any>;
 }
 
 export interface Alert {
   id: string;
   timestamp: string;
-  severity: 'info' | 'warning' | 'critical';
+  severity: "info" | "warning" | "critical";
   message: string;
   service?: string;
   acknowledged: boolean;
@@ -384,7 +437,7 @@ export interface CostAnalytics {
   otherAPIs: Array<{
     name: string;
     cost: number;
-    type: 'usage' | 'subscription';
+    type: "usage" | "subscription";
   }>;
   totalCost: number;
   forecast?: number;
@@ -395,15 +448,15 @@ export interface CostAnalytics {
 // src/types/integration.ts
 export interface Integration {
   name: string;
-  type: 'nextcloud' | 'calendar' | 'email' | 'pubmed' | 'openevidence' | 'websearch';
-  status: 'connected' | 'configured' | 'disconnected' | 'error';
+  type: "nextcloud" | "calendar" | "email" | "pubmed" | "openevidence" | "websearch";
+  status: "connected" | "configured" | "disconnected" | "error";
   config: Record<string, any>;
   lastSync?: string;
   errorMessage?: string;
 }
 
 export interface NextcloudIntegration extends Integration {
-  type: 'nextcloud';
+  type: "nextcloud";
   config: {
     url: string;
     username: string;
@@ -414,9 +467,9 @@ export interface NextcloudIntegration extends Integration {
 }
 
 export interface CalendarIntegration extends Integration {
-  type: 'calendar';
+  type: "calendar";
   config: {
-    source: 'macos' | 'google' | 'caldav';
+    source: "macos" | "google" | "caldav";
     readEvents: boolean;
     createEvents: boolean;
     updateEvents: boolean;
@@ -430,7 +483,7 @@ export interface CalendarIntegration extends Integration {
 export interface LogEntry {
   id: string;
   timestamp: string;
-  level: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
+  level: "DEBUG" | "INFO" | "WARN" | "ERROR";
   service: string;
   message: string;
   metadata?: Record<string, any>;
@@ -438,8 +491,8 @@ export interface LogEntry {
 }
 
 export interface LogFilters {
-  level?: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'all';
-  service?: string | 'all';
+  level?: "DEBUG" | "INFO" | "WARN" | "ERROR" | "all";
+  service?: string | "all";
   search?: string;
   timeRange?: {
     start: string;
@@ -454,7 +507,7 @@ Complete typed API client implementation.
 
 ```typescript
 // src/services/adminApi.ts
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from "axios";
 import type {
   KBDocument,
   IndexingJob,
@@ -471,8 +524,8 @@ import type {
   CostAnalytics,
   Integration,
   LogEntry,
-  LogFilters
-} from '../types';
+  LogFilters,
+} from "../types";
 
 class AdminAPIClient {
   private client: AxiosInstance;
@@ -481,13 +534,13 @@ class AdminAPIClient {
     this.client = axios.create({
       baseURL,
       headers: {
-        'Content-Type': 'application/json'
-      }
+        "Content-Type": "application/json",
+      },
     });
 
     // Add auth interceptor
     this.client.interceptors.request.use((config) => {
-      const token = localStorage.getItem('admin_token');
+      const token = localStorage.getItem("admin_token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -497,22 +550,22 @@ class AdminAPIClient {
 
   // Dashboard APIs
   async getDashboardMetrics(): Promise<DashboardMetrics> {
-    const { data } = await this.client.get('/admin/dashboard');
+    const { data } = await this.client.get("/admin/dashboard");
     return data;
   }
 
   async getSystemResources(): Promise<SystemResources> {
-    const { data } = await this.client.get('/admin/system/resources');
+    const { data } = await this.client.get("/admin/system/resources");
     return data;
   }
 
   async getServiceStatus(): Promise<ServiceStatus[]> {
-    const { data } = await this.client.get('/admin/services/status');
+    const { data } = await this.client.get("/admin/services/status");
     return data;
   }
 
   async getRecentActivity(): Promise<ActivityEvent[]> {
-    const { data } = await this.client.get('/admin/activity');
+    const { data } = await this.client.get("/admin/activity");
     return data;
   }
 
@@ -524,15 +577,15 @@ class AdminAPIClient {
     sourceType?: string;
     specialty?: string;
   }): Promise<KBDocument[]> {
-    const { data } = await this.client.get('/admin/knowledge/documents', { params });
+    const { data } = await this.client.get("/admin/knowledge/documents", { params });
     return data;
   }
 
   async uploadDocument(request: DocumentUploadRequest): Promise<DocumentUploadResponse> {
     const formData = new FormData();
-    formData.append('file', request.file);
-    formData.append('sourceType', request.sourceType);
-    formData.append('specialty', request.specialty);
+    formData.append("file", request.file);
+    formData.append("sourceType", request.sourceType);
+    formData.append("specialty", request.specialty);
 
     if (request.metadata) {
       Object.entries(request.metadata).forEach(([key, value]) => {
@@ -548,29 +601,29 @@ class AdminAPIClient {
       });
     }
 
-    const { data } = await this.client.post('/admin/knowledge/upload', formData, {
+    const { data } = await this.client.post("/admin/knowledge/upload", formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+        "Content-Type": "multipart/form-data",
+      },
     });
 
     return data;
   }
 
   async triggerReindex(request: ReindexRequest): Promise<ReindexResponse> {
-    const { data } = await this.client.post('/admin/knowledge/reindex', request);
+    const { data } = await this.client.post("/admin/knowledge/reindex", request);
     return data;
   }
 
   async getIndexingJobs(limit: number = 20): Promise<IndexingJob[]> {
-    const { data } = await this.client.get('/admin/knowledge/jobs', {
-      params: { limit }
+    const { data } = await this.client.get("/admin/knowledge/jobs", {
+      params: { limit },
     });
     return data;
   }
 
   async getVectorDBStats(): Promise<VectorDBStats> {
-    const { data } = await this.client.get('/admin/knowledge/stats');
+    const { data } = await this.client.get("/admin/knowledge/stats");
     return data;
   }
 
@@ -579,25 +632,19 @@ class AdminAPIClient {
   }
 
   // Analytics APIs
-  async getQueryAnalytics(params?: {
-    period?: string;
-    startDate?: string;
-    endDate?: string;
-  }): Promise<QueryAnalytics> {
-    const { data } = await this.client.get('/admin/analytics/queries', { params });
+  async getQueryAnalytics(params?: { period?: string; startDate?: string; endDate?: string }): Promise<QueryAnalytics> {
+    const { data } = await this.client.get("/admin/analytics/queries", { params });
     return data;
   }
 
-  async getCostAnalytics(params?: {
-    period?: string;
-  }): Promise<CostAnalytics> {
-    const { data } = await this.client.get('/admin/analytics/costs', { params });
+  async getCostAnalytics(params?: { period?: string }): Promise<CostAnalytics> {
+    const { data } = await this.client.get("/admin/analytics/costs", { params });
     return data;
   }
 
   // Integration APIs
   async getIntegrations(): Promise<Integration[]> {
-    const { data } = await this.client.get('/admin/integrations');
+    const { data } = await this.client.get("/admin/integrations");
     return data;
   }
 
@@ -612,12 +659,15 @@ class AdminAPIClient {
   }
 
   // Logs APIs
-  async getLogs(filters?: LogFilters, params?: {
-    skip?: number;
-    limit?: number;
-  }): Promise<LogEntry[]> {
-    const { data } = await this.client.get('/admin/logs', {
-      params: { ...filters, ...params }
+  async getLogs(
+    filters?: LogFilters,
+    params?: {
+      skip?: number;
+      limit?: number;
+    },
+  ): Promise<LogEntry[]> {
+    const { data } = await this.client.get("/admin/logs", {
+      params: { ...filters, ...params },
     });
     return data;
   }
@@ -628,30 +678,24 @@ class AdminAPIClient {
   }
 
   async runHealthCheck(): Promise<Record<string, any>> {
-    const { data } = await this.client.post('/admin/system/health-check');
+    const { data } = await this.client.post("/admin/system/health-check");
     return data;
   }
 }
 
 // Export singleton instance
-export const adminApi = new AdminAPIClient(
-  import.meta.env.VITE_ADMIN_API_URL || 'http://localhost:8000/api'
-);
+export const adminApi = new AdminAPIClient(import.meta.env.VITE_ADMIN_API_URL || "http://localhost:8000/api");
 ```
 
 ### Custom Hooks with Types
 
 ```typescript
 // src/hooks/useDocuments.ts
-import { useState, useEffect } from 'react';
-import { adminApi } from '../services/adminApi';
-import type { KBDocument } from '../types';
+import { useState, useEffect } from "react";
+import { adminApi } from "../services/adminApi";
+import type { KBDocument } from "../types";
 
-export function useDocuments(filters?: {
-  status?: string;
-  sourceType?: string;
-  specialty?: string;
-}) {
+export function useDocuments(filters?: { status?: string; sourceType?: string; specialty?: string }) {
   const [documents, setDocuments] = useState<KBDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -678,7 +722,7 @@ export function useDocuments(filters?: {
       file,
       sourceType: metadata.sourceType,
       specialty: metadata.specialty,
-      metadata
+      metadata,
     });
 
     // Refresh list
@@ -704,16 +748,16 @@ export function useDocuments(filters?: {
     uploadDocument,
     deleteDocument,
     reindexDocuments,
-    refresh: fetchDocuments
+    refresh: fetchDocuments,
   };
 }
 ```
 
 ```typescript
 // src/hooks/useDashboard.ts
-import { useState, useEffect } from 'react';
-import { adminApi } from '../services/adminApi';
-import type { DashboardMetrics, SystemResources, ServiceStatus, ActivityEvent } from '../types';
+import { useState, useEffect } from "react";
+import { adminApi } from "../services/adminApi";
+import type { DashboardMetrics, SystemResources, ServiceStatus, ActivityEvent } from "../types";
 
 export function useDashboard() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -729,7 +773,7 @@ export function useDashboard() {
         adminApi.getDashboardMetrics(),
         adminApi.getSystemResources(),
         adminApi.getServiceStatus(),
-        adminApi.getRecentActivity()
+        adminApi.getRecentActivity(),
       ]);
 
       setMetrics(metricsData);
@@ -737,7 +781,7 @@ export function useDashboard() {
       setServices(servicesData);
       setActivity(activityData);
     } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
+      console.error("Failed to fetch dashboard data:", error);
     } finally {
       setLoading(false);
     }
@@ -758,18 +802,18 @@ export function useDashboard() {
     services,
     activity,
     loading,
-    refresh: fetchDashboardData
+    refresh: fetchDashboardData,
   };
 }
 ```
 
 ```typescript
 // src/hooks/useWebSocketMetrics.ts
-import { useState, useEffect, useRef } from 'react';
-import type { DashboardMetrics, SystemResources } from '../types';
+import { useState, useEffect, useRef } from "react";
+import type { DashboardMetrics, SystemResources } from "../types";
 
 interface MetricsUpdate {
-  type: 'metrics' | 'resources';
+  type: "metrics" | "resources";
   data: DashboardMetrics | SystemResources;
 }
 
@@ -780,40 +824,40 @@ export function useWebSocketMetrics() {
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws';
+    const wsUrl = import.meta.env.VITE_WS_URL || "ws://localhost:8000/ws";
     const ws = new WebSocket(`${wsUrl}/metrics`);
 
     ws.onopen = () => {
       setConnected(true);
-      console.log('WebSocket connected');
+      console.log("WebSocket connected");
     };
 
     ws.onmessage = (event) => {
       try {
         const update: MetricsUpdate = JSON.parse(event.data);
 
-        if (update.type === 'metrics') {
+        if (update.type === "metrics") {
           setMetrics(update.data as DashboardMetrics);
-        } else if (update.type === 'resources') {
+        } else if (update.type === "resources") {
           setResources(update.data as SystemResources);
         }
       } catch (error) {
-        console.error('Failed to parse WebSocket message:', error);
+        console.error("Failed to parse WebSocket message:", error);
       }
     };
 
     ws.onclose = () => {
       setConnected(false);
-      console.log('WebSocket disconnected');
+      console.log("WebSocket disconnected");
 
       // Attempt reconnection after 5 seconds
       setTimeout(() => {
-        console.log('Attempting to reconnect...');
+        console.log("Attempting to reconnect...");
       }, 5000);
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error("WebSocket error:", error);
     };
 
     wsRef.current = ws;
@@ -826,7 +870,7 @@ export function useWebSocketMetrics() {
   return {
     metrics,
     resources,
-    connected
+    connected,
   };
 }
 ```
@@ -836,6 +880,7 @@ export function useWebSocketMetrics() {
 ### Dashboard
 
 **Components:**
+
 - System overview cards (sessions, API calls, response time, errors)
 - Service status indicators
 - Real-time metrics charts
@@ -843,12 +888,14 @@ export function useWebSocketMetrics() {
 - Quick actions
 
 **API Endpoints:**
+
 - `GET /api/admin/dashboard` - Dashboard data
 - `WS /ws/metrics` - Real-time metric updates
 
 ### System Settings
 
 **Features:**
+
 - System configuration
 - Environment variables viewer
 - Service management (restart, status)
@@ -856,6 +903,7 @@ export function useWebSocketMetrics() {
 - Health checks
 
 **API Endpoints:**
+
 - `GET /api/admin/system/config`
 - `PATCH /api/admin/system/config`
 - `POST /api/admin/system/services/restart`
@@ -864,6 +912,7 @@ export function useWebSocketMetrics() {
 ### AI Models
 
 **Features:**
+
 - Local model selection (Ollama)
 - Cloud API configuration (OpenAI, Claude)
 - Routing logic configuration
@@ -871,6 +920,7 @@ export function useWebSocketMetrics() {
 - Test endpoints
 
 **API Endpoints:**
+
 - `GET /api/admin/models`
 - `PATCH /api/admin/models/config`
 - `POST /api/admin/models/test`
@@ -878,6 +928,7 @@ export function useWebSocketMetrics() {
 ### Knowledge Base
 
 **Features:**
+
 - Document library table
 - Upload interface (single/bulk)
 - Indexing queue and status
@@ -885,12 +936,14 @@ export function useWebSocketMetrics() {
 - Search and filters
 
 **API Endpoints:**
+
 - `GET /api/admin/knowledge` - List documents
 - `POST /api/admin/knowledge/upload` - Upload files
 - `POST /api/admin/knowledge/reindex` - Trigger reindex
 - `DELETE /api/admin/knowledge/:id` - Delete document
 
 **Upload Component:**
+
 ```typescript
 const UploadDialog = () => {
   const [files, setFiles] = useState<File[]>([]);
@@ -917,6 +970,7 @@ const UploadDialog = () => {
 ### Analytics
 
 **Features:**
+
 - Query analytics (total, by type, topics)
 - Cost tracking (API usage breakdown)
 - Performance metrics (response times, latency)
@@ -924,12 +978,14 @@ const UploadDialog = () => {
 - Export reports
 
 **Charts:**
+
 - Query distribution pie chart
 - Cost trends line chart
 - Response time histogram
 - Popular topics bar chart
 
 **API Endpoints:**
+
 - `GET /api/admin/analytics/queries`
 - `GET /api/admin/analytics/costs`
 - `GET /api/admin/analytics/performance`
@@ -937,6 +993,7 @@ const UploadDialog = () => {
 ### Integrations
 
 **Features:**
+
 - Integration status cards (Nextcloud, Calendar, Email, etc.)
 - Configuration dialogs
 - Connection testing
@@ -944,6 +1001,7 @@ const UploadDialog = () => {
 - API key management
 
 **Integration Card Example:**
+
 ```typescript
 <IntegrationCard
   name="Nextcloud"
@@ -959,6 +1017,7 @@ const UploadDialog = () => {
 ```
 
 **API Endpoints:**
+
 - `GET /api/admin/integrations`
 - `PATCH /api/admin/integrations/:name`
 - `POST /api/admin/integrations/:name/test`
@@ -966,6 +1025,7 @@ const UploadDialog = () => {
 ### Logs
 
 **Features:**
+
 - Real-time log streaming
 - Log level filtering (DEBUG, INFO, WARN, ERROR)
 - Service filtering
@@ -974,6 +1034,7 @@ const UploadDialog = () => {
 - Download logs
 
 **Log Viewer:**
+
 ```typescript
 const LogViewer = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -999,12 +1060,14 @@ const LogViewer = () => {
 ```
 
 **API Endpoints:**
+
 - `GET /api/admin/logs` - Historical logs
 - `WS /ws/logs` - Real-time streaming
 
 ### Settings
 
 **Features:**
+
 - Admin user profile
 - Security settings (2FA, password change)
 - Notification preferences
@@ -1020,11 +1083,11 @@ const useMetrics = () => {
   const [metrics, setMetrics] = useState<Metrics>({});
 
   useEffect(() => {
-    const ws = new WebSocket('wss://admin.asimo.io/ws/metrics');
+    const ws = new WebSocket("wss://admin.asimo.io/ws/metrics");
 
     ws.onmessage = (event) => {
       const update = JSON.parse(event.data);
-      setMetrics(prev => ({ ...prev, ...update }));
+      setMetrics((prev) => ({ ...prev, ...update }));
     };
 
     return () => ws.close();
@@ -1041,12 +1104,12 @@ const useLogs = (filters: LogFilters) => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
 
   useEffect(() => {
-    const ws = new WebSocket('wss://admin.asimo.io/ws/logs');
+    const ws = new WebSocket("wss://admin.asimo.io/ws/logs");
 
     ws.onmessage = (event) => {
       const log = JSON.parse(event.data);
       if (matchFilters(log, filters)) {
-        setLogs(prev => [log, ...prev].slice(0, 1000)); // Keep last 1000
+        setLogs((prev) => [log, ...prev].slice(0, 1000)); // Keep last 1000
       }
     };
 
@@ -1154,15 +1217,15 @@ const useAuth = () => {
   const login = async (email: string, password: string) => {
     const response = await adminApi.login(email, password);
     setUser(response.user);
-    localStorage.setItem('admin_token', response.token);
+    localStorage.setItem("admin_token", response.token);
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('admin_token');
+    localStorage.removeItem("admin_token");
   };
 
-  return { user, login, logout, isAuthenticated: !!user, isAdmin: user?.role === 'admin' };
+  return { user, login, logout, isAuthenticated: !!user, isAdmin: user?.role === "admin" };
 };
 ```
 
@@ -1174,7 +1237,7 @@ All requests include JWT token in header:
 
 ```typescript
 axios.interceptors.request.use((config) => {
-  const token = localStorage.getItem('admin_token');
+  const token = localStorage.getItem("admin_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -1196,16 +1259,11 @@ Admin panel requires `admin` role. Future: viewer role with read-only access.
 
 ## Build & Deploy
 
-```bash
-# Production build
-npm run build
+- Production builds run with `npm run build` (Vite picks up `.env.production` pointing to `https://admin.asimo.io`).
+- GitHub Actions workflow **Admin Panel Build & Deploy** builds the panel on pushes to `main`, publishes the `dist/` artifact, and syncs it to `/var/www/admin/` via SSH using the configured deploy secrets.
+- Post-deploy smoke checks verify login, dashboard metrics, and knowledge-base listing against `https://admin.asimo.io`.
 
-# Preview
-npm run preview
-
-# Deploy
-rsync -avz dist/ user@asimo.io:/var/www/admin/
-```
+Manual preview remains available via `npm run preview`.
 
 ## Troubleshooting
 

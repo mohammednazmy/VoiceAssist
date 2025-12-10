@@ -1,3 +1,27 @@
+---
+title: Web App Feature Specs
+slug: client-implementation/web-app-feature-specs
+summary: "**Date:** 2025-11-21"
+status: stable
+stability: production
+owner: frontend
+lastUpdated: "2025-11-27"
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - web
+  - app
+  - feature
+  - specs
+category: planning
+ai_summary: >-
+  Version: 1.0 Date: 2025-11-21 Application: Main User-Facing Medical AI
+  Assistant URL: https://voiceassist.asimo.io --- 1. Overview 2. Authentication
+  & User Management (5 features) 3. Chat Interface (12 features) 4. Voice Mode
+  (8 features) 5. Clinical Context (6 features) 6. File Management (4 fea...
+---
+
 # VoiceAssist Web App - Comprehensive Feature Specifications
 
 **Version:** 1.0
@@ -67,6 +91,7 @@ The VoiceAssist Web App is a React-based single-page application that provides m
 A clean, professional login interface with email and password fields, validation, and error handling.
 
 **User Flow:**
+
 1. User navigates to `/login`
 2. Enters email and password
 3. Clicks "Sign In" or presses Enter
@@ -75,6 +100,7 @@ A clean, professional login interface with email and password fields, validation
 6. On failure: Shows inline error message
 
 **Features:**
+
 - Real-time validation
 - Password visibility toggle
 - "Remember me" checkbox
@@ -88,25 +114,21 @@ A clean, professional login interface with email and password fields, validation
 ```tsx
 // File: apps/web-app/src/pages/auth/LoginPage.tsx
 
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@voiceassist/ui';
-import { Input } from '@voiceassist/ui';
-import { Label } from '@voiceassist/ui';
-import { useAuth } from '@/hooks/useAuth';
-import { GoogleIcon, MicrosoftIcon } from '@/components/icons';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@voiceassist/ui";
+import { Input } from "@voiceassist/ui";
+import { Label } from "@voiceassist/ui";
+import { useAuth } from "@/hooks/useAuth";
+import { GoogleIcon, MicrosoftIcon } from "@/components/icons";
 
 // Validation schema
 const loginSchema = z.object({
-  email: z.string()
-    .email('Invalid email address')
-    .min(1, 'Email is required'),
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .max(100, 'Password is too long'),
+  email: z.string().email("Invalid email address").min(1, "Email is required"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(100, "Password is too long"),
   rememberMe: z.boolean().optional(),
 });
 
@@ -133,19 +155,19 @@ export function LoginPage() {
     try {
       setApiError(null);
       await login(data.email, data.password, data.rememberMe);
-      navigate('/chat');
+      navigate("/chat");
     } catch (error: any) {
       if (error.response?.status === 401) {
-        setApiError('Invalid email or password');
+        setApiError("Invalid email or password");
       } else if (error.response?.status === 429) {
-        setApiError('Too many login attempts. Please try again later.');
+        setApiError("Too many login attempts. Please try again later.");
       } else {
-        setApiError('An error occurred. Please try again.');
+        setApiError("An error occurred. Please try again.");
       }
     }
   };
 
-  const handleOAuthLogin = async (provider: 'google' | 'microsoft') => {
+  const handleOAuthLogin = async (provider: "google" | "microsoft") => {
     try {
       await loginWithOAuth(provider);
     } catch (error) {
@@ -158,17 +180,9 @@ export function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img
-            src="/logo.svg"
-            alt="VoiceAssist"
-            className="h-12 mx-auto mb-4"
-          />
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Welcome Back
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Sign in to your VoiceAssist account
-          </p>
+          <img src="/logo.svg" alt="VoiceAssist" className="h-12 mx-auto mb-4" />
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome Back</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Sign in to your VoiceAssist account</p>
         </div>
 
         {/* Login Form Card */}
@@ -183,7 +197,7 @@ export function LoginPage() {
                 autoComplete="email"
                 placeholder="doctor@hospital.com"
                 error={errors.email?.message}
-                {...register('email')}
+                {...register("email")}
               />
             </div>
 
@@ -191,21 +205,18 @@ export function LoginPage() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <Label htmlFor="password">Password</Label>
-                <Link
-                  to="/forgot-password"
-                  className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
-                >
+                <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400">
                   Forgot password?
                 </Link>
               </div>
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   placeholder="••••••••"
                   error={errors.password?.message}
-                  {...register('password')}
+                  {...register("password")}
                 />
                 <button
                   type="button"
@@ -213,11 +224,7 @@ export function LoginPage() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   tabIndex={-1}
                 >
-                  {showPassword ? (
-                    <EyeOffIcon className="w-5 h-5" />
-                  ) : (
-                    <EyeIcon className="w-5 h-5" />
-                  )}
+                  {showPassword ? <EyeOffIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                 </button>
               </div>
             </div>
@@ -228,12 +235,9 @@ export function LoginPage() {
                 id="rememberMe"
                 type="checkbox"
                 className="h-4 w-4 text-blue-600 rounded border-gray-300"
-                {...register('rememberMe')}
+                {...register("rememberMe")}
               />
-              <label
-                htmlFor="rememberMe"
-                className="ml-2 text-sm text-gray-700 dark:text-gray-300"
-              >
+              <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                 Remember me for 30 days
               </label>
             </div>
@@ -241,20 +245,13 @@ export function LoginPage() {
             {/* API Error */}
             {apiError && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
-                <p className="text-sm text-red-800 dark:text-red-200">
-                  {apiError}
-                </p>
+                <p className="text-sm text-red-800 dark:text-red-200">{apiError}</p>
               </div>
             )}
 
             {/* Submit Button */}
-            <Button
-              type="submit"
-              className="w-full"
-              size="lg"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Signing in...' : 'Sign In'}
+            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+              {isSubmitting ? "Signing in..." : "Sign In"}
             </Button>
           </form>
 
@@ -264,27 +261,17 @@ export function LoginPage() {
               <div className="w-full border-t border-gray-300 dark:border-gray-600" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">
-                Or continue with
-              </span>
+              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Or continue with</span>
             </div>
           </div>
 
           {/* OAuth Buttons */}
           <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              onClick={() => handleOAuthLogin('google')}
-              className="w-full"
-            >
+            <Button variant="outline" onClick={() => handleOAuthLogin("google")} className="w-full">
               <GoogleIcon className="w-5 h-5 mr-2" />
               Google
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleOAuthLogin('microsoft')}
-              className="w-full"
-            >
+            <Button variant="outline" onClick={() => handleOAuthLogin("microsoft")} className="w-full">
               <MicrosoftIcon className="w-5 h-5 mr-2" />
               Microsoft
             </Button>
@@ -293,11 +280,8 @@ export function LoginPage() {
           {/* Sign Up Link */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Don't have an account?{' '}
-              <Link
-                to="/register"
-                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium"
-              >
+              Don't have an account?{" "}
+              <Link to="/register" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium">
                 Sign up
               </Link>
             </p>
@@ -307,11 +291,11 @@ export function LoginPage() {
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            By signing in, you agree to our{' '}
+            By signing in, you agree to our{" "}
             <a href="/terms" className="underline hover:text-gray-700">
               Terms of Service
-            </a>{' '}
-            and{' '}
+            </a>{" "}
+            and{" "}
             <a href="/privacy" className="underline hover:text-gray-700">
               Privacy Policy
             </a>
@@ -328,10 +312,10 @@ export function LoginPage() {
 ```tsx
 // File: apps/web-app/src/hooks/useAuth.ts
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { authApi } from '@voiceassist/api-client';
-import type { User, AuthTokens } from '@voiceassist/types';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { authApi } from "@voiceassist/api-client";
+import type { User, AuthTokens } from "@voiceassist/types";
 
 interface AuthState {
   user: User | null;
@@ -339,7 +323,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
-  loginWithOAuth: (provider: 'google' | 'microsoft') => Promise<void>;
+  loginWithOAuth: (provider: "google" | "microsoft") => Promise<void>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
@@ -390,7 +374,7 @@ export const useAuth = create<AuthState>()(
           try {
             await authApi.logout(tokens.refreshToken);
           } catch (error) {
-            console.error('Logout failed:', error);
+            console.error("Logout failed:", error);
           }
         }
         set({
@@ -403,7 +387,7 @@ export const useAuth = create<AuthState>()(
       refreshToken: async () => {
         const { tokens } = get();
         if (!tokens?.refreshToken) {
-          throw new Error('No refresh token available');
+          throw new Error("No refresh token available");
         }
 
         try {
@@ -421,21 +405,21 @@ export const useAuth = create<AuthState>()(
 
       updateProfile: async (updates) => {
         const { user } = get();
-        if (!user) throw new Error('No user logged in');
+        if (!user) throw new Error("No user logged in");
 
         const updatedUser = await authApi.updateProfile(user.id, updates);
         set({ user: updatedUser });
       },
     }),
     {
-      name: 'voiceassist-auth',
+      name: "voiceassist-auth",
       partialize: (state) => ({
         user: state.user,
         tokens: state.tokens,
         isAuthenticated: state.isAuthenticated,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // Helper function to schedule token refresh
@@ -460,9 +444,9 @@ function scheduleTokenRefresh(expiresIn: number) {
 ```tsx
 // File: apps/web-app/src/components/auth/ProtectedRoute.tsx
 
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { Spinner } from '@voiceassist/ui';
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { Spinner } from "@voiceassist/ui";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -486,7 +470,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (requireAdmin && user?.role !== 'admin') {
+  if (requireAdmin && user?.role !== "admin") {
     return <Navigate to="/unauthorized" replace />;
   }
 
@@ -499,8 +483,8 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
 ```tsx
 // File: packages/api-client/src/auth.ts
 
-import { apiClient } from './client';
-import type { User, AuthTokens } from '@voiceassist/types';
+import { apiClient } from "./client";
+import type { User, AuthTokens } from "@voiceassist/types";
 
 interface LoginRequest {
   email: string;
@@ -526,7 +510,7 @@ export const authApi = {
    * Login with email and password
    */
   login: async (data: LoginRequest): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>('/api/auth/login', data);
+    const response = await apiClient.post<LoginResponse>("/api/auth/login", data);
     return response.data;
   },
 
@@ -534,14 +518,14 @@ export const authApi = {
    * Register new user account
    */
   register: async (data: RegisterRequest): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>('/api/auth/register', data);
+    const response = await apiClient.post<LoginResponse>("/api/auth/register", data);
     return response.data;
   },
 
   /**
    * Get OAuth authorization URL
    */
-  getOAuthUrl: async (provider: 'google' | 'microsoft'): Promise<string> => {
+  getOAuthUrl: async (provider: "google" | "microsoft"): Promise<string> => {
     const response = await apiClient.get<{ url: string }>(`/api/auth/oauth/${provider}`);
     return response.data.url;
   },
@@ -560,7 +544,7 @@ export const authApi = {
    * Refresh access token
    */
   refresh: async (refreshToken: string): Promise<{ tokens: AuthTokens }> => {
-    const response = await apiClient.post<{ tokens: AuthTokens }>('/api/auth/refresh', {
+    const response = await apiClient.post<{ tokens: AuthTokens }>("/api/auth/refresh", {
       refreshToken,
     });
     return response.data;
@@ -570,21 +554,21 @@ export const authApi = {
    * Logout and revoke tokens
    */
   logout: async (refreshToken: string): Promise<void> => {
-    await apiClient.post('/api/auth/logout', { refreshToken });
+    await apiClient.post("/api/auth/logout", { refreshToken });
   },
 
   /**
    * Request password reset email
    */
   requestPasswordReset: async (email: string): Promise<void> => {
-    await apiClient.post('/api/auth/forgot-password', { email });
+    await apiClient.post("/api/auth/forgot-password", { email });
   },
 
   /**
    * Reset password with token
    */
   resetPassword: async (token: string, newPassword: string): Promise<void> => {
-    await apiClient.post('/api/auth/reset-password', { token, newPassword });
+    await apiClient.post("/api/auth/reset-password", { token, newPassword });
   },
 
   /**
@@ -599,7 +583,7 @@ export const authApi = {
    * Get current user
    */
   getCurrentUser: async (): Promise<User> => {
-    const response = await apiClient.get<User>('/api/auth/me');
+    const response = await apiClient.get<User>("/api/auth/me");
     return response.data;
   },
 };
@@ -610,17 +594,17 @@ export const authApi = {
 ```tsx
 // File: apps/web-app/src/pages/auth/__tests__/LoginPage.test.tsx
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { BrowserRouter } from 'react-router-dom';
-import { LoginPage } from '../LoginPage';
-import { useAuth } from '@/hooks/useAuth';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { BrowserRouter } from "react-router-dom";
+import { LoginPage } from "../LoginPage";
+import { useAuth } from "@/hooks/useAuth";
 
 // Mock auth hook
-vi.mock('@/hooks/useAuth');
+vi.mock("@/hooks/useAuth");
 
-describe('LoginPage', () => {
+describe("LoginPage", () => {
   const mockLogin = vi.fn();
   const mockLoginWithOAuth = vi.fn();
 
@@ -632,88 +616,82 @@ describe('LoginPage', () => {
     });
   });
 
-  it('renders login form', () => {
+  it("renders login form", () => {
     render(
       <BrowserRouter>
         <LoginPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
   });
 
-  it('validates email format', async () => {
+  it("validates email format", async () => {
     const user = userEvent.setup();
 
     render(
       <BrowserRouter>
         <LoginPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const emailInput = screen.getByLabelText(/email/i);
-    const submitButton = screen.getByRole('button', { name: /sign in/i });
+    const submitButton = screen.getByRole("button", { name: /sign in/i });
 
-    await user.type(emailInput, 'invalid-email');
+    await user.type(emailInput, "invalid-email");
     await user.click(submitButton);
 
     expect(await screen.findByText(/invalid email address/i)).toBeInTheDocument();
     expect(mockLogin).not.toHaveBeenCalled();
   });
 
-  it('validates password length', async () => {
+  it("validates password length", async () => {
     const user = userEvent.setup();
 
     render(
       <BrowserRouter>
         <LoginPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const emailInput = screen.getByLabelText(/email/i);
     const passwordInput = screen.getByLabelText(/password/i);
-    const submitButton = screen.getByRole('button', { name: /sign in/i });
+    const submitButton = screen.getByRole("button", { name: /sign in/i });
 
-    await user.type(emailInput, 'test@example.com');
-    await user.type(passwordInput, 'short');
+    await user.type(emailInput, "test@example.com");
+    await user.type(passwordInput, "short");
     await user.click(submitButton);
 
-    expect(
-      await screen.findByText(/password must be at least 8 characters/i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/password must be at least 8 characters/i)).toBeInTheDocument();
     expect(mockLogin).not.toHaveBeenCalled();
   });
 
-  it('submits valid credentials', async () => {
+  it("submits valid credentials", async () => {
     const user = userEvent.setup();
     mockLogin.mockResolvedValue(undefined);
 
     render(
       <BrowserRouter>
         <LoginPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const emailInput = screen.getByLabelText(/email/i);
     const passwordInput = screen.getByLabelText(/password/i);
-    const submitButton = screen.getByRole('button', { name: /sign in/i });
+    const submitButton = screen.getByRole("button", { name: /sign in/i });
 
-    await user.type(emailInput, 'doctor@hospital.com');
-    await user.type(passwordInput, 'SecurePass123!');
+    await user.type(emailInput, "doctor@hospital.com");
+    await user.type(passwordInput, "SecurePass123!");
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalledWith(
-        'doctor@hospital.com',
-        'SecurePass123!',
-        false
-      );
+      expect(mockLogin).toHaveBeenCalledWith("doctor@hospital.com", "SecurePass123!", false);
     });
   });
 
-  it('handles login error', async () => {
+  it("handles login error", async () => {
     const user = userEvent.setup();
     mockLogin.mockRejectedValue({
       response: { status: 401 },
@@ -722,56 +700,56 @@ describe('LoginPage', () => {
     render(
       <BrowserRouter>
         <LoginPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const emailInput = screen.getByLabelText(/email/i);
     const passwordInput = screen.getByLabelText(/password/i);
-    const submitButton = screen.getByRole('button', { name: /sign in/i });
+    const submitButton = screen.getByRole("button", { name: /sign in/i });
 
-    await user.type(emailInput, 'doctor@hospital.com');
-    await user.type(passwordInput, 'WrongPassword');
+    await user.type(emailInput, "doctor@hospital.com");
+    await user.type(passwordInput, "WrongPassword");
     await user.click(submitButton);
 
-    expect(
-      await screen.findByText(/invalid email or password/i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/invalid email or password/i)).toBeInTheDocument();
   });
 
-  it('toggles password visibility', async () => {
+  it("toggles password visibility", async () => {
     const user = userEvent.setup();
 
     render(
       <BrowserRouter>
         <LoginPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     const passwordInput = screen.getByLabelText(/password/i) as HTMLInputElement;
-    const toggleButton = screen.getByRole('button', { name: /toggle password/i });
+    const toggleButton = screen.getByRole("button", {
+      name: /toggle password/i,
+    });
 
-    expect(passwordInput.type).toBe('password');
+    expect(passwordInput.type).toBe("password");
 
     await user.click(toggleButton);
-    expect(passwordInput.type).toBe('text');
+    expect(passwordInput.type).toBe("text");
 
     await user.click(toggleButton);
-    expect(passwordInput.type).toBe('password');
+    expect(passwordInput.type).toBe("password");
   });
 
-  it('handles OAuth login', async () => {
+  it("handles OAuth login", async () => {
     const user = userEvent.setup();
 
     render(
       <BrowserRouter>
         <LoginPage />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    const googleButton = screen.getByRole('button', { name: /google/i });
+    const googleButton = screen.getByRole("button", { name: /google/i });
     await user.click(googleButton);
 
-    expect(mockLoginWithOAuth).toHaveBeenCalledWith('google');
+    expect(mockLoginWithOAuth).toHaveBeenCalledWith("google");
   });
 });
 ```
@@ -789,6 +767,7 @@ describe('LoginPage', () => {
 Registration page for new users with comprehensive validation, email verification, and specialty selection.
 
 **User Flow:**
+
 1. User navigates to `/register`
 2. Fills in required information
 3. Selects medical specialty
@@ -799,6 +778,7 @@ Registration page for new users with comprehensive validation, email verificatio
 8. Account activated
 
 **Features:**
+
 - Real-time validation
 - Password strength meter
 - Email availability check
@@ -812,37 +792,40 @@ Registration page for new users with comprehensive validation, email verificatio
 ```tsx
 // File: apps/web-app/src/pages/auth/RegisterPage.tsx
 
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button, Input, Label, Select } from '@voiceassist/ui';
-import { useAuth } from '@/hooks/useAuth';
-import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
-import { medicalSpecialties } from '@/constants/specialties';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button, Input, Label, Select } from "@voiceassist/ui";
+import { useAuth } from "@/hooks/useAuth";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
+import { medicalSpecialties } from "@/constants/specialties";
 
-const registerSchema = z.object({
-  firstName: z.string().min(1, 'First name is required').max(50),
-  lastName: z.string().min(1, 'Last name is required').max(50),
-  email: z.string().email('Invalid email address'),
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain uppercase letter')
-    .regex(/[a-z]/, 'Password must contain lowercase letter')
-    .regex(/[0-9]/, 'Password must contain number')
-    .regex(/[^A-Za-z0-9]/, 'Password must contain special character'),
-  confirmPassword: z.string(),
-  specialty: z.string().optional(),
-  licenseNumber: z.string().optional(),
-  institution: z.string().optional(),
-  agreeToTerms: z.boolean().refine((val) => val === true, {
-    message: 'You must agree to the terms and conditions',
-  }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword'],
-});
+const registerSchema = z
+  .object({
+    firstName: z.string().min(1, "First name is required").max(50),
+    lastName: z.string().min(1, "Last name is required").max(50),
+    email: z.string().email("Invalid email address"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Password must contain uppercase letter")
+      .regex(/[a-z]/, "Password must contain lowercase letter")
+      .regex(/[0-9]/, "Password must contain number")
+      .regex(/[^A-Za-z0-9]/, "Password must contain special character"),
+    confirmPassword: z.string(),
+    specialty: z.string().optional(),
+    licenseNumber: z.string().optional(),
+    institution: z.string().optional(),
+    agreeToTerms: z.boolean().refine((val) => val === true, {
+      message: "You must agree to the terms and conditions",
+    }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -861,8 +844,8 @@ export function RegisterPage() {
     resolver: zodResolver(registerSchema),
   });
 
-  const password = watch('password');
-  const email = watch('email');
+  const password = watch("password");
+  const email = watch("email");
 
   // Check email availability with debounce
   const checkEmailAvailability = useDebouncedCallback(async (email: string) => {
@@ -875,7 +858,7 @@ export function RegisterPage() {
       const available = await authApi.checkEmailAvailability(email);
       setEmailAvailable(available);
     } catch (error) {
-      console.error('Failed to check email:', error);
+      console.error("Failed to check email:", error);
     }
   }, 500);
 
@@ -897,14 +880,14 @@ export function RegisterPage() {
       });
 
       // Show verification email sent message
-      navigate('/verify-email', {
+      navigate("/verify-email", {
         state: { email: data.email },
       });
     } catch (error: any) {
       if (error.response?.data?.message) {
         setApiError(error.response.data.message);
       } else {
-        setApiError('Registration failed. Please try again.');
+        setApiError("Registration failed. Please try again.");
       }
     }
   };
@@ -915,12 +898,8 @@ export function RegisterPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <img src="/logo.svg" alt="VoiceAssist" className="h-12 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Create Your Account
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Join VoiceAssist to enhance your clinical practice
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Create Your Account</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Join VoiceAssist to enhance your clinical practice</p>
         </div>
 
         {/* Registration Form Card */}
@@ -930,21 +909,11 @@ export function RegisterPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="firstName">First Name *</Label>
-                <Input
-                  id="firstName"
-                  placeholder="John"
-                  error={errors.firstName?.message}
-                  {...register('firstName')}
-                />
+                <Input id="firstName" placeholder="John" error={errors.firstName?.message} {...register("firstName")} />
               </div>
               <div>
                 <Label htmlFor="lastName">Last Name *</Label>
-                <Input
-                  id="lastName"
-                  placeholder="Doe"
-                  error={errors.lastName?.message}
-                  {...register('lastName')}
-                />
+                <Input id="lastName" placeholder="Doe" error={errors.lastName?.message} {...register("lastName")} />
               </div>
             </div>
 
@@ -957,7 +926,7 @@ export function RegisterPage() {
                   type="email"
                   placeholder="doctor@hospital.com"
                   error={errors.email?.message}
-                  {...register('email')}
+                  {...register("email")}
                 />
                 {emailAvailable === false && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -980,7 +949,7 @@ export function RegisterPage() {
                 type="password"
                 placeholder="••••••••"
                 error={errors.password?.message}
-                {...register('password')}
+                {...register("password")}
               />
               {password && <PasswordStrengthMeter password={password} />}
             </div>
@@ -993,15 +962,13 @@ export function RegisterPage() {
                 type="password"
                 placeholder="••••••••"
                 error={errors.confirmPassword?.message}
-                {...register('confirmPassword')}
+                {...register("confirmPassword")}
               />
             </div>
 
             {/* Professional Information */}
             <div className="border-t pt-6">
-              <h3 className="text-lg font-medium mb-4">
-                Professional Information
-              </h3>
+              <h3 className="text-lg font-medium mb-4">Professional Information</h3>
 
               <div className="space-y-4">
                 <div>
@@ -1010,26 +977,18 @@ export function RegisterPage() {
                     id="specialty"
                     options={medicalSpecialties}
                     placeholder="Select your specialty"
-                    {...register('specialty')}
+                    {...register("specialty")}
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="licenseNumber">Medical License Number</Label>
-                  <Input
-                    id="licenseNumber"
-                    placeholder="e.g., MD123456"
-                    {...register('licenseNumber')}
-                  />
+                  <Input id="licenseNumber" placeholder="e.g., MD123456" {...register("licenseNumber")} />
                 </div>
 
                 <div>
                   <Label htmlFor="institution">Institution/Hospital</Label>
-                  <Input
-                    id="institution"
-                    placeholder="e.g., Memorial Hospital"
-                    {...register('institution')}
-                  />
+                  <Input id="institution" placeholder="e.g., Memorial Hospital" {...register("institution")} />
                 </div>
               </div>
             </div>
@@ -1040,41 +999,24 @@ export function RegisterPage() {
                 id="agreeToTerms"
                 type="checkbox"
                 className="h-4 w-4 text-blue-600 rounded border-gray-300 mt-1"
-                {...register('agreeToTerms')}
+                {...register("agreeToTerms")}
               />
-              <label
-                htmlFor="agreeToTerms"
-                className="ml-2 text-sm text-gray-700 dark:text-gray-300"
-              >
-                I agree to the{' '}
-                <a
-                  href="/terms"
-                  target="_blank"
-                  className="text-blue-600 hover:underline"
-                >
+              <label htmlFor="agreeToTerms" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                I agree to the{" "}
+                <a href="/terms" target="_blank" className="text-blue-600 hover:underline">
                   Terms of Service
                 </a>
-                ,{' '}
-                <a
-                  href="/privacy"
-                  target="_blank"
-                  className="text-blue-600 hover:underline"
-                >
+                ,{" "}
+                <a href="/privacy" target="_blank" className="text-blue-600 hover:underline">
                   Privacy Policy
                 </a>
-                , and{' '}
-                <a
-                  href="/hipaa"
-                  target="_blank"
-                  className="text-blue-600 hover:underline"
-                >
+                , and{" "}
+                <a href="/hipaa" target="_blank" className="text-blue-600 hover:underline">
                   HIPAA Agreement
                 </a>
               </label>
             </div>
-            {errors.agreeToTerms && (
-              <p className="text-sm text-red-600">{errors.agreeToTerms.message}</p>
-            )}
+            {errors.agreeToTerms && <p className="text-sm text-red-600">{errors.agreeToTerms.message}</p>}
 
             {/* API Error */}
             {apiError && (
@@ -1084,24 +1026,16 @@ export function RegisterPage() {
             )}
 
             {/* Submit Button */}
-            <Button
-              type="submit"
-              className="w-full"
-              size="lg"
-              disabled={isSubmitting || emailAvailable === false}
-            >
-              {isSubmitting ? 'Creating Account...' : 'Create Account'}
+            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting || emailAvailable === false}>
+              {isSubmitting ? "Creating Account..." : "Create Account"}
             </Button>
           </form>
 
           {/* Login Link */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Already have an account?{' '}
-              <Link
-                to="/login"
-                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium"
-              >
+              Already have an account?{" "}
+              <Link to="/login" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium">
                 Sign in
               </Link>
             </p>
@@ -1126,48 +1060,33 @@ export function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) 
   const strength = calculatePasswordStrength(password);
 
   const getColor = () => {
-    if (strength < 30) return 'bg-red-500';
-    if (strength < 60) return 'bg-yellow-500';
-    if (strength < 80) return 'bg-blue-500';
-    return 'bg-green-500';
+    if (strength < 30) return "bg-red-500";
+    if (strength < 60) return "bg-yellow-500";
+    if (strength < 80) return "bg-blue-500";
+    return "bg-green-500";
   };
 
   const getLabel = () => {
-    if (strength < 30) return 'Weak';
-    if (strength < 60) return 'Fair';
-    if (strength < 80) return 'Good';
-    return 'Strong';
+    if (strength < 30) return "Weak";
+    if (strength < 60) return "Fair";
+    if (strength < 80) return "Good";
+    return "Strong";
   };
 
   return (
     <div className="mt-2">
       <div className="flex items-center gap-2 mb-1">
         <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div
-            className={`h-full transition-all duration-300 ${getColor()}`}
-            style={{ width: `${strength}%` }}
-          />
+          <div className={`h-full transition-all duration-300 ${getColor()}`} style={{ width: `${strength}%` }} />
         </div>
-        <span className="text-xs font-medium text-gray-600">
-          {getLabel()}
-        </span>
+        <span className="text-xs font-medium text-gray-600">{getLabel()}</span>
       </div>
       <ul className="text-xs text-gray-500 space-y-1 mt-2">
-        <li className={password.length >= 8 ? 'text-green-600' : ''}>
-          ✓ At least 8 characters
-        </li>
-        <li className={/[A-Z]/.test(password) ? 'text-green-600' : ''}>
-          ✓ Contains uppercase letter
-        </li>
-        <li className={/[a-z]/.test(password) ? 'text-green-600' : ''}>
-          ✓ Contains lowercase letter
-        </li>
-        <li className={/[0-9]/.test(password) ? 'text-green-600' : ''}>
-          ✓ Contains number
-        </li>
-        <li className={/[^A-Za-z0-9]/.test(password) ? 'text-green-600' : ''}>
-          ✓ Contains special character
-        </li>
+        <li className={password.length >= 8 ? "text-green-600" : ""}>✓ At least 8 characters</li>
+        <li className={/[A-Z]/.test(password) ? "text-green-600" : ""}>✓ Contains uppercase letter</li>
+        <li className={/[a-z]/.test(password) ? "text-green-600" : ""}>✓ Contains lowercase letter</li>
+        <li className={/[0-9]/.test(password) ? "text-green-600" : ""}>✓ Contains number</li>
+        <li className={/[^A-Za-z0-9]/.test(password) ? "text-green-600" : ""}>✓ Contains special character</li>
       </ul>
     </div>
   );
@@ -1204,6 +1123,7 @@ function calculatePasswordStrength(password: string): number {
 Comprehensive user profile page where users can view and edit their personal and professional information.
 
 **Features:**
+
 - View profile information
 - Edit personal details
 - Update professional information
@@ -1218,27 +1138,17 @@ Comprehensive user profile page where users can view and edit their personal and
 ```tsx
 // File: apps/web-app/src/pages/settings/ProfilePage.tsx
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import {
-  Button,
-  Input,
-  Label,
-  Select,
-  Avatar,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from '@voiceassist/ui';
-import { useAuth } from '@/hooks/useAuth';
-import { medicalSpecialties } from '@/constants/specialties';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button, Input, Label, Select, Avatar, Tabs, TabsList, TabsTrigger, TabsContent } from "@voiceassist/ui";
+import { useAuth } from "@/hooks/useAuth";
+import { medicalSpecialties } from "@/constants/specialties";
 
 const profileSchema = z.object({
-  firstName: z.string().min(1, 'Required'),
-  lastName: z.string().min(1, 'Required'),
+  firstName: z.string().min(1, "Required"),
+  lastName: z.string().min(1, "Required"),
   specialty: z.string().optional(),
   licenseNumber: z.string().optional(),
   institution: z.string().optional(),
@@ -1261,13 +1171,13 @@ export function ProfilePage() {
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      firstName: user?.firstName || '',
-      lastName: user?.lastName || '',
-      specialty: user?.specialty || '',
-      licenseNumber: user?.licenseNumber || '',
-      institution: user?.institution || '',
-      phone: user?.phone || '',
-      bio: user?.bio || '',
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
+      specialty: user?.specialty || "",
+      licenseNumber: user?.licenseNumber || "",
+      institution: user?.institution || "",
+      phone: user?.phone || "",
+      bio: user?.bio || "",
     },
   });
 
@@ -1276,9 +1186,9 @@ export function ProfilePage() {
     try {
       await updateProfile(data);
       setIsEditing(false);
-      toast.success('Profile updated successfully');
+      toast.success("Profile updated successfully");
     } catch (error) {
-      toast.error('Failed to update profile');
+      toast.error("Failed to update profile");
     } finally {
       setIsSaving(false);
     }
@@ -1304,11 +1214,7 @@ export function ProfilePage() {
           <TabsContent value="profile" className="p-6">
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-center gap-4">
-                <Avatar
-                  src={user?.avatarUrl}
-                  alt={user?.firstName}
-                  size="xl"
-                />
+                <Avatar src={user?.avatarUrl} alt={user?.firstName} size="xl" />
                 <div>
                   <h2 className="text-2xl font-bold">
                     {user?.firstName} {user?.lastName}
@@ -1318,11 +1224,7 @@ export function ProfilePage() {
                 </div>
               </div>
 
-              {!isEditing && (
-                <Button onClick={() => setIsEditing(true)}>
-                  Edit Profile
-                </Button>
-              )}
+              {!isEditing && <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>}
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -1336,7 +1238,7 @@ export function ProfilePage() {
                       id="firstName"
                       disabled={!isEditing}
                       error={errors.firstName?.message}
-                      {...register('firstName')}
+                      {...register("firstName")}
                     />
                   </div>
                   <div>
@@ -1345,7 +1247,7 @@ export function ProfilePage() {
                       id="lastName"
                       disabled={!isEditing}
                       error={errors.lastName?.message}
-                      {...register('lastName')}
+                      {...register("lastName")}
                     />
                   </div>
                   <div className="col-span-2">
@@ -1355,7 +1257,7 @@ export function ProfilePage() {
                       type="tel"
                       disabled={!isEditing}
                       placeholder="+1 (555) 000-0000"
-                      {...register('phone')}
+                      {...register("phone")}
                     />
                   </div>
                 </div>
@@ -1363,9 +1265,7 @@ export function ProfilePage() {
 
               {/* Professional Information */}
               <div>
-                <h3 className="text-lg font-medium mb-4">
-                  Professional Information
-                </h3>
+                <h3 className="text-lg font-medium mb-4">Professional Information</h3>
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="specialty">Medical Specialty</Label>
@@ -1373,24 +1273,16 @@ export function ProfilePage() {
                       id="specialty"
                       disabled={!isEditing}
                       options={medicalSpecialties}
-                      {...register('specialty')}
+                      {...register("specialty")}
                     />
                   </div>
                   <div>
                     <Label htmlFor="licenseNumber">Medical License Number</Label>
-                    <Input
-                      id="licenseNumber"
-                      disabled={!isEditing}
-                      {...register('licenseNumber')}
-                    />
+                    <Input id="licenseNumber" disabled={!isEditing} {...register("licenseNumber")} />
                   </div>
                   <div>
                     <Label htmlFor="institution">Institution/Hospital</Label>
-                    <Input
-                      id="institution"
-                      disabled={!isEditing}
-                      {...register('institution')}
-                    />
+                    <Input id="institution" disabled={!isEditing} {...register("institution")} />
                   </div>
                   <div>
                     <Label htmlFor="bio">Bio</Label>
@@ -1400,11 +1292,9 @@ export function ProfilePage() {
                       rows={4}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       placeholder="Tell us about yourself..."
-                      {...register('bio')}
+                      {...register("bio")}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Maximum 500 characters
-                    </p>
+                    <p className="text-xs text-gray-500 mt-1">Maximum 500 characters</p>
                   </div>
                 </div>
               </div>
@@ -1412,18 +1302,11 @@ export function ProfilePage() {
               {/* Action Buttons */}
               {isEditing && (
                 <div className="flex justify-end gap-3 pt-4 border-t">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleCancel}
-                  >
+                  <Button type="button" variant="outline" onClick={handleCancel}>
                     Cancel
                   </Button>
-                  <Button
-                    type="submit"
-                    disabled={!isDirty || isSaving}
-                  >
-                    {isSaving ? 'Saving...' : 'Save Changes'}
+                  <Button type="submit" disabled={!isDirty || isSaving}>
+                    {isSaving ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
               )}
@@ -1459,13 +1342,15 @@ export function ProfilePage() {
 
 ---
 
-*This document continues with detailed specifications for all 55 features. Due to length constraints, I'm showing the format and depth. Would you like me to continue with the remaining features in this document, or shall I proceed to create the other planning documents (Admin Panel, Docs Site, Technical Architecture, etc.)?*
+_This document continues with detailed specifications for all 55 features. Due to length constraints, I'm showing the format and depth. Would you like me to continue with the remaining features in this document, or shall I proceed to create the other planning documents (Admin Panel, Docs Site, Technical Architecture, etc.)?_
 
 **Current Progress:**
+
 - ✅ MASTER_IMPLEMENTATION_PLAN.md (Complete - 20,000+ words)
 - ⏳ WEB_APP_FEATURE_SPECS.md (In progress - showing 3 of 55 features with full code examples)
 
 **Next Steps:**
+
 1. Complete remaining 52 web app features (estimated 40,000+ more words)
 2. Create ADMIN_PANEL_FEATURE_SPECS.md
 3. Create DOCS_SITE_FEATURE_SPECS.md

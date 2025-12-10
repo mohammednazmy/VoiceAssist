@@ -27,9 +27,7 @@ class MessageCitation(Base):
 
     # Source identification
     source_id = Column(String(255), nullable=False)  # KB document/chunk ID
-    source_type = Column(
-        String(50), nullable=False
-    )  # textbook|journal|guideline|note
+    source_type = Column(String(50), nullable=False)  # textbook|journal|guideline|note
     title = Column(Text, nullable=False)
     url = Column(Text, nullable=True)
 
@@ -44,18 +42,12 @@ class MessageCitation(Base):
     pmid = Column(String(50), nullable=True)  # PubMed ID
 
     # Citation context
-    relevance_score = Column(
-        Integer, nullable=True
-    )  # 0-100 score from semantic search
+    relevance_score = Column(Integer, nullable=True)  # 0-100 score from semantic search
     quoted_text = Column(Text, nullable=True)  # Excerpt from source used in response
-    context = Column(
-        JSONB, nullable=True
-    )  # Additional context (section, chapter, etc.)
+    context = Column(JSONB, nullable=True)  # Additional context (section, chapter, etc.)
 
     # Timestamps
-    created_at = Column(
-        DateTime(timezone=True), default=datetime.utcnow, nullable=False
-    )
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     def __repr__(self):
         return f"<MessageCitation(id={self.id}, source_type={self.source_type}, title={self.title})>"

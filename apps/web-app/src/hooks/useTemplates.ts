@@ -11,11 +11,11 @@ import type {
   UpdateTemplateRequest,
   Message,
 } from "@voiceassist/types";
+import { extractErrorMessage } from "@voiceassist/types";
 
 const STORAGE_KEY = "voiceassist:templates";
 
 export function useTemplates() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user: _user } = useAuth();
   const [templates, setTemplates] = useState<ConversationTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,8 +35,8 @@ export function useTemplates() {
       } else {
         setTemplates([]);
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to load templates");
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err));
       console.error("Failed to load templates:", err);
     } finally {
       setIsLoading(false);
@@ -90,8 +90,8 @@ export function useTemplates() {
         saveToStorage(updatedTemplates);
 
         return newTemplate;
-      } catch (err: any) {
-        setError(err.message || "Failed to create template");
+      } catch (err: unknown) {
+        setError(extractErrorMessage(err));
         throw err;
       }
     },
@@ -120,8 +120,8 @@ export function useTemplates() {
         saveToStorage(updatedTemplates);
 
         return newTemplate;
-      } catch (err: any) {
-        setError(err.message || "Failed to create template");
+      } catch (err: unknown) {
+        setError(extractErrorMessage(err));
         throw err;
       }
     },
@@ -145,8 +145,8 @@ export function useTemplates() {
         saveToStorage(updatedTemplates);
 
         return updatedTemplates.find((t) => t.id === id)!;
-      } catch (err: any) {
-        setError(err.message || "Failed to update template");
+      } catch (err: unknown) {
+        setError(extractErrorMessage(err));
         throw err;
       }
     },
@@ -159,8 +159,8 @@ export function useTemplates() {
       try {
         const updatedTemplates = templates.filter((t) => t.id !== id);
         saveToStorage(updatedTemplates);
-      } catch (err: any) {
-        setError(err.message || "Failed to delete template");
+      } catch (err: unknown) {
+        setError(extractErrorMessage(err));
         throw err;
       }
     },
@@ -182,7 +182,7 @@ export function useTemplates() {
         );
 
         saveToStorage(updatedTemplates);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Failed to increment template usage:", err);
       }
     },

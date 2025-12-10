@@ -1,0 +1,62 @@
+{
+  "version": "2.0.0",
+  "generated_at": "2025-12-04T10:37:10.087Z",
+  "system": {
+    "name": "VoiceAssist",
+    "environment": "development",
+    "backend_status": "operational",
+    "docs_status": "operational"
+  },
+  "implementation_status": {
+    "backend": {
+      "completion": 100,
+      "phase": "15/15 complete"
+    },
+    "frontend": {
+      "completion": 80,
+      "phase": "Phase 3.5 complete"
+    },
+    "admin_panel": {
+      "completion": 90,
+      "phase": "Complete"
+    },
+    "docs_site": {
+      "completion": 85,
+      "phase": "Active development"
+    }
+  },
+  "feature_flags": {
+    "total_count": 24,
+    "by_category": {
+      "ui": 8,
+      "backend": 10,
+      "experiment": 4,
+      "ops": 2
+    },
+    "by_status": {
+      "active": 20,
+      "deprecated": 3,
+      "scheduled": 1,
+      "disabled": 0
+    },
+    "recent_changes": [],
+    "flags": [],
+    "source_file": "packages/types/src/featureFlags.ts"
+  },
+  "canonical_urls": {
+    "web_app": "https://dev.asimo.io",
+    "api": "https://assist.asimo.io",
+    "admin": "https://admin.asimo.io",
+    "docs": "https://assistdocs.asimo.io",
+    "monitoring": "https://monitor.asimo.io"
+  },
+  "documentation": {
+    "total_docs": 254,
+    "by_status": {
+      "stable": 214,
+      "draft": 2,
+      "deprecated": 35,
+      "experimental": 3
+    }
+  }
+}

@@ -15,23 +15,23 @@ DEPLOYMENT SCRIPTS (scripts/deploy/)
    - Main deployment orchestrator
    - Handles complete deployment lifecycle
    - Integrates all other deployment scripts
-   
+
 2. rollback.sh (15KB)
    - Automated rollback to previous versions
    - Database migration rollback support
    - Confirmation prompts for production
-   
+
 3. pre-deploy-checks.sh (15KB)
    - Comprehensive environment validation
    - AWS, Kubernetes, database connectivity checks
    - Ensures deployment readiness
-   
+
 4. backup.sh (16KB)
    - RDS database snapshots
    - Kubernetes configuration backups
    - Redis/ElastiCache snapshots
    - S3 storage with lifecycle policies
-   
+
 5. migrate.sh (13KB)
    - Alembic database migration runner
    - Forward and rollback support
@@ -45,7 +45,7 @@ KUBERNETES SCRIPTS (scripts/k8s/)
    - ConfigMaps, Secrets, Deployments, Services, Ingress, HPA
    - Rollout status monitoring
    - Health verification
-   
+
 7. scale.sh (13KB)
    - Manual scaling of deployments
    - HPA configuration updates
@@ -68,7 +68,7 @@ INITIALIZATION SCRIPTS (scripts/init/)
    - DynamoDB table for Terraform locks
    - AWS Secrets Manager structure
    - IAM roles and policies
-   
+
 10. bootstrap-k8s.sh (18KB)
     - metrics-server installation
     - ingress-nginx installation
@@ -85,7 +85,7 @@ DOCUMENTATION
     - Examples for all scripts
     - Troubleshooting guide
     - Best practices
-    
+
 12. QUICK_REFERENCE.md (quick reference guide)
     - Common commands
     - Emergency procedures

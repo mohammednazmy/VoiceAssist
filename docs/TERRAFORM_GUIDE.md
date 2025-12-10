@@ -1,3 +1,29 @@
+---
+title: Terraform Guide
+slug: terraform-guide
+summary: "1. [Overview](#overview)"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - terraform
+  - guide
+category: deployment
+component: "infra/terraform"
+relatedPaths:
+  - "terraform"
+  - "Makefile"
+ai_summary: >-
+  1. Overview 2. Directory Structure 3. Module Documentation 4. Variables
+  Reference 5. Outputs Reference 6. State Management 7. Multi-Environment Setup
+  8. Best Practices 9. Common Operations 10. Troubleshooting VoiceAssist uses
+  Terraform to provision and manage all AWS infrastructure. The configura...
+---
+
 # Terraform Guide
 
 ## Table of Contents
@@ -90,6 +116,7 @@ infrastructure/terraform/
 Creates a complete VPC with public, private, and database subnets across multiple availability zones.
 
 **Resources Created:**
+
 - VPC with DNS support and hostnames enabled
 - 3 public subnets (internet-facing)
 - 3 private subnets (application tier)
@@ -100,6 +127,7 @@ Creates a complete VPC with public, private, and database subnets across multipl
 - VPC Flow Logs to CloudWatch
 
 **Usage Example:**
+
 ```hcl
 module "vpc" {
   source = "./modules/vpc"
@@ -123,6 +151,7 @@ module "vpc" {
 ```
 
 **Key Outputs:**
+
 - `vpc_id`: VPC identifier
 - `public_subnet_ids`: List of public subnet IDs
 - `private_subnet_ids`: List of private subnet IDs
@@ -133,6 +162,7 @@ module "vpc" {
 Creates a production-ready EKS cluster with managed node groups.
 
 **Resources Created:**
+
 - EKS Cluster with encryption enabled
 - Managed Node Group with auto-scaling
 - IRSA (IAM Roles for Service Accounts) enabled
@@ -142,6 +172,7 @@ Creates a production-ready EKS cluster with managed node groups.
 - OIDC provider for IRSA
 
 **Usage Example:**
+
 ```hcl
 module "eks" {
   source = "./modules/eks"
@@ -169,6 +200,7 @@ module "eks" {
 ```
 
 **Key Outputs:**
+
 - `cluster_id`: EKS cluster ID
 - `cluster_endpoint`: EKS cluster API endpoint
 - `cluster_name`: EKS cluster name
@@ -179,6 +211,7 @@ module "eks" {
 Creates a highly available PostgreSQL database with encryption and automated backups.
 
 **Resources Created:**
+
 - RDS PostgreSQL instance
 - DB subnet group
 - DB parameter group (optimized for VoiceAssist)
@@ -189,6 +222,7 @@ Creates a highly available PostgreSQL database with encryption and automated bac
 - KMS encryption key
 
 **Usage Example:**
+
 ```hcl
 module "rds" {
   source = "./modules/rds"
@@ -223,6 +257,7 @@ module "rds" {
 ```
 
 **Key Outputs:**
+
 - `db_instance_id`: Database instance identifier
 - `db_instance_address`: Database endpoint address
 - `db_instance_port`: Database port
@@ -233,6 +268,7 @@ module "rds" {
 Creates a Redis cluster with replication and automatic failover.
 
 **Resources Created:**
+
 - ElastiCache Redis replication group
 - Cache subnet group
 - Redis parameter group
@@ -242,6 +278,7 @@ Creates a Redis cluster with replication and automatic failover.
 - Automated backups
 
 **Usage Example:**
+
 ```hcl
 module "elasticache" {
   source = "./modules/elasticache"
@@ -271,6 +308,7 @@ module "elasticache" {
 ```
 
 **Key Outputs:**
+
 - `redis_cluster_id`: Redis cluster identifier
 - `redis_endpoint_address`: Primary endpoint address
 - `redis_endpoint_port`: Redis port
@@ -281,6 +319,7 @@ module "elasticache" {
 Creates IAM roles and policies for EKS and application services.
 
 **Resources Created:**
+
 - EKS cluster role
 - EKS node group role
 - IRSA roles for application pods
@@ -288,6 +327,7 @@ Creates IAM roles and policies for EKS and application services.
 - Trust relationships
 
 **Usage Example:**
+
 ```hcl
 module "iam" {
   source = "./modules/iam"
@@ -302,6 +342,7 @@ module "iam" {
 ```
 
 **Key Outputs:**
+
 - `eks_cluster_role_arn`: EKS cluster IAM role ARN
 - `eks_node_role_arn`: EKS node IAM role ARN
 - `eks_node_role_name`: EKS node IAM role name
@@ -311,6 +352,7 @@ module "iam" {
 Creates security groups with least-privilege access rules.
 
 **Resources Created:**
+
 - EKS cluster security group
 - EKS node security group
 - RDS security group
@@ -318,6 +360,7 @@ Creates security groups with least-privilege access rules.
 - ALB security group
 
 **Usage Example:**
+
 ```hcl
 module "security_groups" {
   source = "./modules/security-groups"
@@ -334,6 +377,7 @@ module "security_groups" {
 ```
 
 **Key Outputs:**
+
 - `eks_cluster_sg_id`: EKS cluster security group ID
 - `eks_node_sg_id`: EKS node security group ID
 - `rds_sg_id`: RDS security group ID
@@ -343,66 +387,66 @@ module "security_groups" {
 
 ### Environment Variables
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `environment` | string | - | Environment name (dev/staging/production) |
-| `aws_region` | string | us-east-1 | AWS region |
-| `project_name` | string | voiceassist | Project name for resource naming |
+| Variable       | Type   | Default     | Description                               |
+| -------------- | ------ | ----------- | ----------------------------------------- |
+| `environment`  | string | -           | Environment name (dev/staging/production) |
+| `aws_region`   | string | us-east-1   | AWS region                                |
+| `project_name` | string | voiceassist | Project name for resource naming          |
 
 ### Network Variables
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `vpc_cidr` | string | 10.0.0.0/16 | VPC CIDR block |
-| `availability_zones` | list(string) | [us-east-1a, us-east-1b, us-east-1c] | AZs for resources |
-| `public_subnet_cidrs` | list(string) | [10.0.1.0/24, ...] | Public subnet CIDRs |
-| `private_subnet_cidrs` | list(string) | [10.0.10.0/24, ...] | Private subnet CIDRs |
-| `database_subnet_cidrs` | list(string) | [10.0.20.0/24, ...] | Database subnet CIDRs |
+| Variable                | Type         | Default                              | Description           |
+| ----------------------- | ------------ | ------------------------------------ | --------------------- |
+| `vpc_cidr`              | string       | 10.0.0.0/16                          | VPC CIDR block        |
+| `availability_zones`    | list(string) | [us-east-1a, us-east-1b, us-east-1c] | AZs for resources     |
+| `public_subnet_cidrs`   | list(string) | [10.0.1.0/24, ...]                   | Public subnet CIDRs   |
+| `private_subnet_cidrs`  | list(string) | [10.0.10.0/24, ...]                  | Private subnet CIDRs  |
+| `database_subnet_cidrs` | list(string) | [10.0.20.0/24, ...]                  | Database subnet CIDRs |
 
 ### EKS Variables
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `eks_cluster_version` | string | 1.28 | Kubernetes version |
-| `eks_node_instance_types` | list(string) | [t3.large, t3.xlarge] | Node instance types |
-| `eks_node_desired_size` | number | 3 | Desired number of nodes |
-| `eks_node_min_size` | number | 2 | Minimum number of nodes |
-| `eks_node_max_size` | number | 10 | Maximum number of nodes |
+| Variable                  | Type         | Default               | Description             |
+| ------------------------- | ------------ | --------------------- | ----------------------- |
+| `eks_cluster_version`     | string       | 1.28                  | Kubernetes version      |
+| `eks_node_instance_types` | list(string) | [t3.large, t3.xlarge] | Node instance types     |
+| `eks_node_desired_size`   | number       | 3                     | Desired number of nodes |
+| `eks_node_min_size`       | number       | 2                     | Minimum number of nodes |
+| `eks_node_max_size`       | number       | 10                    | Maximum number of nodes |
 
 ### RDS Variables
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `rds_instance_class` | string | db.t3.large | RDS instance type |
-| `rds_allocated_storage` | number | 100 | Allocated storage (GB) |
-| `rds_max_allocated_storage` | number | 500 | Max storage for autoscaling (GB) |
-| `rds_engine_version` | string | 16.1 | PostgreSQL version |
-| `rds_backup_retention_days` | number | 90 | Backup retention (HIPAA: 90 days) |
-| `rds_multi_az` | bool | true | Enable multi-AZ deployment |
+| Variable                    | Type   | Default     | Description                       |
+| --------------------------- | ------ | ----------- | --------------------------------- |
+| `rds_instance_class`        | string | db.t3.large | RDS instance type                 |
+| `rds_allocated_storage`     | number | 100         | Allocated storage (GB)            |
+| `rds_max_allocated_storage` | number | 500         | Max storage for autoscaling (GB)  |
+| `rds_engine_version`        | string | 16.1        | PostgreSQL version                |
+| `rds_backup_retention_days` | number | 90          | Backup retention (HIPAA: 90 days) |
+| `rds_multi_az`              | bool   | true        | Enable multi-AZ deployment        |
 
 ### Redis Variables
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `redis_node_type` | string | cache.t3.medium | ElastiCache node type |
-| `redis_num_cache_nodes` | number | 2 | Number of cache nodes |
-| `redis_engine_version` | string | 7.0 | Redis version |
+| Variable                | Type   | Default         | Description           |
+| ----------------------- | ------ | --------------- | --------------------- |
+| `redis_node_type`       | string | cache.t3.medium | ElastiCache node type |
+| `redis_num_cache_nodes` | number | 2               | Number of cache nodes |
+| `redis_engine_version`  | string | 7.0             | Redis version         |
 
 ### Security Variables
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `enable_encryption_at_rest` | bool | true | Enable encryption at rest (HIPAA required) |
-| `enable_encryption_in_transit` | bool | true | Enable encryption in transit (HIPAA required) |
-| `allowed_cidr_blocks` | list(string) | [0.0.0.0/0] | Allowed CIDR blocks |
-| `enable_deletion_protection` | bool | true | Enable deletion protection |
+| Variable                       | Type         | Default     | Description                                   |
+| ------------------------------ | ------------ | ----------- | --------------------------------------------- |
+| `enable_encryption_at_rest`    | bool         | true        | Enable encryption at rest (HIPAA required)    |
+| `enable_encryption_in_transit` | bool         | true        | Enable encryption in transit (HIPAA required) |
+| `allowed_cidr_blocks`          | list(string) | [0.0.0.0/0] | Allowed CIDR blocks                           |
+| `enable_deletion_protection`   | bool         | true        | Enable deletion protection                    |
 
 ### Monitoring Variables
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `enable_cloudwatch_logs` | bool | true | Enable CloudWatch logs |
-| `log_retention_days` | number | 90 | Log retention (HIPAA: 90 days minimum) |
+| Variable                 | Type   | Default | Description                            |
+| ------------------------ | ------ | ------- | -------------------------------------- |
+| `enable_cloudwatch_logs` | bool   | true    | Enable CloudWatch logs                 |
+| `log_retention_days`     | number | 90      | Log retention (HIPAA: 90 days minimum) |
 
 ## Outputs Reference
 
@@ -455,6 +499,7 @@ output "redis_endpoint" {
 VoiceAssist uses S3 for remote state storage with DynamoDB for state locking.
 
 **Backend Configuration** (`backend.tf`):
+
 ```hcl
 terraform {
   backend "s3" {
@@ -545,6 +590,7 @@ terraform workspace show
 Create separate `.tfvars` files for each environment:
 
 **`environments/dev.tfvars`**
+
 ```hcl
 environment = "dev"
 aws_region  = "us-east-1"
@@ -567,6 +613,7 @@ log_retention_days        = 7
 ```
 
 **`environments/production.tfvars`**
+
 ```hcl
 environment = "production"
 aws_region  = "us-east-1"
@@ -810,11 +857,13 @@ terraform refresh -var-file="environments/production.tfvars"
 #### Issue: State Lock Error
 
 **Error:**
+
 ```
 Error: Error acquiring the state lock
 ```
 
 **Solution:**
+
 ```bash
 # Check who has the lock
 aws dynamodb get-item \
@@ -828,11 +877,13 @@ terraform force-unlock <lock-id>
 #### Issue: Provider Authentication Failed
 
 **Error:**
+
 ```
 Error: error configuring Terraform AWS Provider
 ```
 
 **Solution:**
+
 ```bash
 # Verify AWS credentials
 aws sts get-caller-identity
@@ -846,11 +897,13 @@ export AWS_REGION="us-east-1"
 #### Issue: Module Not Found
 
 **Error:**
+
 ```
 Error: Module not installed
 ```
 
 **Solution:**
+
 ```bash
 # Reinitialize to download modules
 terraform init -upgrade
@@ -859,11 +912,13 @@ terraform init -upgrade
 #### Issue: Resource Already Exists
 
 **Error:**
+
 ```
 Error: resource already exists
 ```
 
 **Solution:**
+
 ```bash
 # Import existing resource
 terraform import module.example.aws_instance.main i-1234567890abcdef
@@ -876,11 +931,13 @@ terraform apply
 #### Issue: Dependency Cycle
 
 **Error:**
+
 ```
 Error: Cycle: module.a, module.b
 ```
 
 **Solution:**
+
 - Review resource dependencies
 - Remove circular references
 - Use `depends_on` explicitly if needed

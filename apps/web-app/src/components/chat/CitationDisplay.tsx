@@ -5,11 +5,26 @@
 
 import { useState } from "react";
 import type { Citation } from "../../types";
+import { useToastContext } from "../../contexts/ToastContext";
 
 export interface CitationDisplayProps {
   citations: Citation[];
   enableExport?: boolean;
 }
+
+const getSourceKey = (citation: Citation): string =>
+  (citation.sourceType || citation.source || "unknown").toLowerCase();
+
+const getSourceLabel = (citation: Citation): string => {
+  const key = getSourceKey(citation);
+  if (key === "kb") return "Knowledge Base";
+  if (key === "pubmed") return "PubMed";
+  if (key === "openevidence") return "OpenEvidence";
+  if (key === "guideline") return "Guideline";
+  if (key === "url") return "External Link";
+  if (key === "doi") return "DOI";
+  return "External";
+};
 
 // Helper function to export citations as Markdown
 const exportAsMarkdown = (citations: Citation[]): string => {
@@ -80,11 +95,103 @@ const downloadFile = (content: string, filename: string, mimeType: string) => {
   URL.revokeObjectURL(url);
 };
 
+// Helper function to format a single citation for clipboard
+const formatCitationForClipboard = (citation: Citation): string => {
+  const parts: string[] = [];
+
+  // Title or source
+  const title =
+    citation.title ||
+    (citation.source === "kb" ? "Knowledge Base" : "External Link");
+  parts.push(title);
+
+  // Authors and year (academic style)
+  if (citation.authors && citation.authors.length > 0) {
+    const authorStr = citation.authors.join(", ");
+    if (citation.publicationYear) {
+      parts.push(`${authorStr} (${citation.publicationYear})`);
+    } else {
+      parts.push(authorStr);
+    }
+  } else if (citation.publicationYear) {
+    parts.push(`(${citation.publicationYear})`);
+  }
+
+  // Journal/source info
+  if (citation.journal) {
+    parts.push(citation.journal);
+  }
+
+  // Page
+  if (citation.page) {
+    parts.push(`Page ${citation.page}`);
+  }
+
+  // Reference
+  if (citation.reference) {
+    parts.push(citation.reference);
+  }
+
+  // Snippet (quoted)
+  if (citation.snippet) {
+    parts.push(`"${citation.snippet}"`);
+  }
+
+  // DOI
+  if (citation.doi) {
+    parts.push(`DOI: ${citation.doi}`);
+  }
+
+  // PubMed
+  if (citation.pubmedId) {
+    parts.push(`PubMed: ${citation.pubmedId}`);
+  }
+
+  // URL
+  if (citation.url) {
+    parts.push(citation.url);
+  }
+
+  return parts.join("\n");
+};
+
 export function CitationDisplay({
   citations,
   enableExport = true,
 }: CitationDisplayProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const toast = useToastContext();
+
+  const availableSources = Array.from(
+    new Set(citations.map((citation) => getSourceKey(citation))),
+  ).filter(Boolean);
+
+  const filteredCitations =
+    sourceFilter === "all"
+      ? citations
+      : citations.filter((citation) => getSourceKey(citation) === sourceFilter);
+
+  const visibleCitations = filteredCitations;
+  const totalCount = citations.length;
+  const visibleCount = visibleCitations.length;
+  const countLabel =
+    sourceFilter === "all"
+      ? totalCount === 1
+        ? "1 Source"
+        : `${totalCount} Sources`
+      : `${visibleCount} of ${totalCount} Sources`;
+
+  const formatSourceKey = (key: string) => {
+    if (key === "kb") return "Knowledge Base";
+    if (key === "pubmed") return "PubMed";
+    if (key === "openevidence") return "OpenEvidence";
+    if (key === "guideline") return "Guideline";
+    if (key === "url") return "External Link";
+    if (key === "doi") return "DOI";
+    return key.charAt(0).toUpperCase() + key.slice(1);
+  };
 
   const toggleExpanded = (id: string) => {
     setExpandedIds((prev) => {
@@ -98,14 +205,27 @@ export function CitationDisplay({
     });
   };
 
+  const handleCopyCitation = async (citation: Citation) => {
+    try {
+      const text = formatCitationForClipboard(citation);
+      await navigator.clipboard.writeText(text);
+      setCopiedId(citation.id);
+      toast.success("Citation copied to clipboard");
+      // Reset copied state after 2 seconds
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      toast.error("Failed to copy citation");
+    }
+  };
+
   const handleExportMarkdown = () => {
-    const markdown = exportAsMarkdown(citations);
+    const markdown = exportAsMarkdown(visibleCitations);
     const timestamp = new Date().toISOString().split("T")[0];
     downloadFile(markdown, `citations-${timestamp}.md`, "text/markdown");
   };
 
   const handleExportText = () => {
-    const markdown = exportAsMarkdown(citations);
+    const markdown = exportAsMarkdown(visibleCitations);
     // Convert markdown to plain text (simple approach)
     const plainText = markdown
       .replace(/^#{1,6}\s+/gm, "")
@@ -125,9 +245,7 @@ export function CitationDisplay({
     <div className="space-y-2">
       {/* Header with export buttons */}
       <div className="flex items-center justify-between">
-        <div className="text-xs font-medium text-neutral-600">
-          {citations.length === 1 ? "1 Source" : `${citations.length} Sources`}
-        </div>
+        <div className="text-xs font-medium text-neutral-600">{countLabel}</div>
 
         {enableExport && citations.length > 0 && (
           <div className="flex items-center space-x-1">
@@ -177,7 +295,47 @@ export function CitationDisplay({
         )}
       </div>
 
-      {citations.map((citation, index) => {
+      {availableSources.length > 1 && (
+        <div
+          className="flex flex-wrap gap-2"
+          role="group"
+          aria-label="Filter citations by source"
+        >
+          <button
+            onClick={() => setSourceFilter("all")}
+            className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
+              sourceFilter === "all"
+                ? "bg-primary-100 text-primary-800 border-primary-200"
+                : "bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100"
+            }`}
+            aria-pressed={sourceFilter === "all"}
+          >
+            All sources
+          </button>
+          {availableSources.map((sourceKey) => (
+            <button
+              key={sourceKey}
+              onClick={() => setSourceFilter(sourceKey)}
+              className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
+                sourceFilter === sourceKey
+                  ? "bg-primary-100 text-primary-800 border-primary-200"
+                  : "bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100"
+              }`}
+              aria-pressed={sourceFilter === sourceKey}
+            >
+              {formatSourceKey(sourceKey)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {visibleCount === 0 && totalCount > 0 && (
+        <div className="text-xs text-neutral-500" role="status">
+          No citations match this source filter.
+        </div>
+      )}
+
+      {visibleCitations.map((citation, index) => {
         const isExpanded = expandedIds.has(citation.id);
         const sourceLabel =
           citation.title ||
@@ -201,6 +359,9 @@ export function CitationDisplay({
                 </span>
 
                 <div className="flex items-center space-x-2">
+                  <span className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-neutral-100 text-neutral-700 rounded-full">
+                    {getSourceLabel(citation)}
+                  </span>
                   {citation.source === "kb" ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -279,6 +440,54 @@ export function CitationDisplay({
                 id={`citation-${citation.id}`}
                 className="px-3 pb-3 space-y-2 bg-neutral-50"
               >
+                {/* Copy button */}
+                <div className="flex justify-end pt-1">
+                  <button
+                    onClick={() => handleCopyCitation(citation)}
+                    className="inline-flex items-center space-x-1 text-xs text-neutral-600 hover:text-neutral-800 px-2 py-1 rounded hover:bg-neutral-200 transition-colors"
+                    title="Copy citation to clipboard"
+                    aria-label="Copy citation to clipboard"
+                  >
+                    {copiedId === citation.id ? (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="w-4 h-4 text-green-600"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M4.5 12.75l6 6 9-13.5"
+                          />
+                        </svg>
+                        <span className="text-green-600">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
+                          />
+                        </svg>
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
                 {/* Snippet */}
                 {citation.snippet && (
                   <div>

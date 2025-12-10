@@ -4,7 +4,6 @@ File processing service for OCR, text extraction, and document parsing
 
 import mimetypes
 from io import BytesIO
-from pathlib import Path
 from typing import Optional, Tuple
 
 from app.core.logging import get_logger
@@ -138,13 +137,10 @@ class FileProcessor:
             return "", {"error": "OCR not available (pytesseract not installed)"}
 
         try:
-            from PIL import Image
             import pytesseract
+            from PIL import Image
         except ImportError:
-            logger.error(
-                "Image processing libraries not installed. "
-                "Install with: pip install Pillow pytesseract"
-            )
+            logger.error("Image processing libraries not installed. " "Install with: pip install Pillow pytesseract")
             return "", {"error": "Image processing not available"}
 
         try:
@@ -172,9 +168,7 @@ class FileProcessor:
         try:
             from docx import Document
         except ImportError:
-            logger.error(
-                "python-docx not installed. Install with: pip install python-docx"
-            )
+            logger.error("python-docx not installed. Install with: pip install python-docx")
             return "", {"error": "DOCX support not available"}
 
         try:
@@ -257,8 +251,7 @@ class FileProcessor:
         if mime_type not in self.get_supported_types():
             return (
                 False,
-                f"Unsupported file type: {mime_type}. "
-                f"Supported types: {', '.join(self.get_supported_types())}",
+                f"Unsupported file type: {mime_type}. " f"Supported types: {', '.join(self.get_supported_types())}",
             )
 
         # Check if file is empty

@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import { Label, Input, Button } from '@voiceassist/ui';
+import { Label, Input, Button } from "@voiceassist/ui";
 
 export interface ClinicalContext {
   demographics?: {

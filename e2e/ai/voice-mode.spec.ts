@@ -26,112 +26,82 @@ test.describe("Voice Mode Session", () => {
   }) => {
     const page = authenticatedPage;
 
-    // Navigate to chat page
-    await page.goto("/chat");
+    // Navigate via Home "Chat with Voice" tile (canonical path)
+    await page.goto("/");
+    const voiceModeCard = page.getByTestId("chat-with-voice-card");
+    await expect(voiceModeCard).toBeVisible({ timeout: 10000 });
+    await voiceModeCard.click();
+
+    // Unified Chat + Voice UI should be rendered on /chat
     await expect(page).toHaveURL(/\/chat/);
 
     // Wait for chat interface to load
     await page.waitForLoadState("networkidle");
 
-    // Look for voice input button (microphone icon)
-    const voiceButton = page.locator(
-      'button[aria-label*="voice" i], button[aria-label*="mic" i], button[title*="voice" i], button[title*="mic" i], [data-testid="voice-button"], button:has(svg[class*="mic"]), button:has([class*="microphone"])'
-    );
+    // Unified chat container should be present
+    await expect(page.getByTestId("unified-chat-container")).toBeVisible({
+      timeout: 10000,
+    });
 
-    // Check if voice mode is available in the UI
-    const voiceButtonCount = await voiceButton.count();
+    // Use unified voice-mode toggle as the canonical entry point
+    const voiceButton = page.getByTestId("voice-mode-toggle");
+    await expect(voiceButton).toBeVisible({ timeout: 10000 });
+    await expect(voiceButton).toBeEnabled();
 
-    if (voiceButtonCount > 0) {
-      // Voice button exists - test interaction
-      await expect(voiceButton.first()).toBeEnabled();
+    // Click to open Thinker/Talker Voice panel
+    await voiceButton.click();
 
-      // Click to activate voice mode
-      await voiceButton.first().click();
+    const voicePanel = page.getByTestId("voice-mode-panel");
+    await expect(voicePanel).toBeVisible({ timeout: 10000 });
 
-      // Wait a moment for any transition
-      await page.waitForTimeout(500);
+    // Compact voice bar + mic button should be present inside the panel
+    const compactMic = page.getByTestId("compact-mic-button");
+    await expect(compactMic).toBeVisible();
 
-      // Look for voice mode indicators (could be visualizer, recording indicator, etc.)
-      const voiceIndicators = page.locator(
-        '[class*="visualizer"], [class*="recording"], [class*="voice-active"], [class*="listening"], [data-voice-active="true"]'
-      );
+    // Toggle voice mode closed via the same button
+    await voiceButton.click();
+    await expect(voicePanel).toBeHidden();
 
-      // Check if voice mode activated OR if there's a permission dialog
-      const indicatorVisible = await voiceIndicators.count() > 0;
-      const permissionDialog = page.locator(
-        '[class*="permission"], [class*="dialog"], [role="dialog"]'
-      );
-      const hasPermissionPrompt = await permissionDialog.count() > 0;
+    // Verify text input remains available after closing voice mode
+    const messageInput = page.getByTestId("message-input");
+    await expect(messageInput).toBeVisible({ timeout: 10000 });
 
-      // Either voice mode activated or permission was requested
-      console.log(`Voice indicators visible: ${indicatorVisible}`);
-      console.log(`Permission prompt shown: ${hasPermissionPrompt}`);
-
-      // Look for stop/cancel button
-      const stopButton = page.locator(
-        'button[aria-label*="stop" i], button[aria-label*="cancel" i], [data-testid="stop-recording"], button:has(svg[class*="stop"])'
-      );
-
-      if (await stopButton.count() > 0) {
-        // Click stop to deactivate voice mode
-        await stopButton.first().click();
-        await page.waitForTimeout(500);
-      } else {
-        // Click voice button again to toggle off
-        await voiceButton.first().click();
-      }
-
-      // Verify we're back to normal state
-      await expect(page.locator('textarea, [data-testid="chat-input"]').first()).toBeVisible();
-
-      console.log("Voice mode UI test completed successfully");
-    } else {
-      // Voice mode not available in UI - log and skip
-      console.log("Voice mode button not found in UI - feature may not be enabled");
-      test.skip(true, "Voice mode UI not available");
-    }
+    console.log("Voice mode UI test completed successfully (unified Chat with Voice)");
   });
 
   test("Voice mode is keyboard accessible", async ({ authenticatedPage }) => {
     const page = authenticatedPage;
 
-    // Navigate to chat page
-    await page.goto("/chat");
+    // Navigate directly to Chat with Voice
+    await page.goto("/chat?mode=voice");
     await expect(page).toHaveURL(/\/chat/);
 
     await page.waitForLoadState("networkidle");
 
-    // Find voice button
-    const voiceButton = page.locator(
-      'button[aria-label*="voice" i], button[aria-label*="mic" i], [data-testid="voice-button"]'
+    // Unified voice toggle should be present
+    const voiceButton = page.getByTestId("voice-mode-toggle");
+    await expect(voiceButton).toBeVisible({ timeout: 10000 });
+
+    // Test keyboard focus
+    await voiceButton.focus();
+
+    // Verify it can receive focus
+    const isFocused = await voiceButton.evaluate(
+      (el) => document.activeElement === el,
     );
 
-    const count = await voiceButton.count();
+    // Voice button should be focusable for accessibility
+    console.log(`Voice button focusable: ${isFocused}`);
 
-    if (count > 0) {
-      // Test keyboard focus
-      await voiceButton.first().focus();
+    // Check for proper ARIA attributes
+    const ariaLabel = await voiceButton.getAttribute("aria-label");
+    const role = await voiceButton.getAttribute("role");
 
-      // Verify it can receive focus
-      const isFocused = await voiceButton.first().evaluate(
-        (el) => document.activeElement === el
-      );
+    console.log(`ARIA label: ${ariaLabel}`);
+    console.log(`Role: ${role || "button (implicit)"}`);
 
-      // Voice button should be focusable for accessibility
-      console.log(`Voice button focusable: ${isFocused}`);
-
-      // Check for proper ARIA attributes
-      const ariaLabel = await voiceButton.first().getAttribute("aria-label");
-      const role = await voiceButton.first().getAttribute("role");
-
-      console.log(`ARIA label: ${ariaLabel}`);
-      console.log(`Role: ${role || "button (implicit)"}`);
-
-      // Basic accessibility check passed
-      expect(ariaLabel || role).toBeTruthy();
-    } else {
-      test.skip(true, "Voice mode button not found");
-    }
+    // Basic accessibility check passed
+    expect(ariaLabel || role).toBeTruthy();
   });
 
   test("Chat still works when voice mode is not used", async ({
@@ -143,10 +113,8 @@ test.describe("Voice Mode Session", () => {
     await page.goto("/chat");
     await expect(page).toHaveURL(/\/chat/);
 
-    // Find chat input (text mode)
-    const chatInput = page.locator(
-      'textarea[placeholder*="message"], input[placeholder*="message"], [data-testid="chat-input"]'
-    );
+    // Find chat input (unified input area)
+    const chatInput = page.getByTestId("message-input");
 
     await expect(chatInput.first()).toBeVisible({ timeout: 10000 });
 

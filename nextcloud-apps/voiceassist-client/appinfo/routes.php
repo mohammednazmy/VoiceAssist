@@ -6,7 +6,10 @@
  */
 return [
   'routes' => [
-    // Example:
-    // ['name' => 'voiceassist-client.page.index', 'url' => '/apps/voiceassist-client', 'verb' => 'GET'],
+    ['name' => 'proxy#status', 'url' => '/api/status', 'verb' => 'GET'],
+    ['name' => 'proxy#calendar', 'url' => '/api/calendar', 'verb' => 'GET'],
+    ['name' => 'proxy#files', 'url' => '/api/files', 'verb' => 'GET'],
+    ['name' => 'proxy#contacts', 'url' => '/api/contacts', 'verb' => 'GET'],
+    ['name' => 'proxy#email', 'url' => '/api/email', 'verb' => 'GET'],
   ],
 ];

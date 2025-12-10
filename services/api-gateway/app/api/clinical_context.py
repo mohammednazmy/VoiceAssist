@@ -37,8 +37,7 @@ async def create_clinical_context(
         db.query(ClinicalContext)
         .filter(
             ClinicalContext.user_id == current_user.id,
-            ClinicalContext.session_id
-            == (UUID(context.session_id) if context.session_id else None),
+            ClinicalContext.session_id == (UUID(context.session_id) if context.session_id else None),
         )
         .first()
     )
@@ -132,9 +131,7 @@ async def get_clinical_context(
     )
 
     if not context:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Clinical context not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Clinical context not found")
 
     return context.to_dict()
 
@@ -168,9 +165,7 @@ async def update_clinical_context(
     )
 
     if not context:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Clinical context not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Clinical context not found")
 
     # Update fields if provided
     update_data = context_update.dict(exclude_unset=True)
@@ -186,9 +181,7 @@ async def update_clinical_context(
     return context.to_dict()
 
 
-@router.delete(
-    "/clinical-contexts/{context_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/clinical-contexts/{context_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_clinical_context(
     context_id: UUID,
     db: Session = Depends(get_db),
@@ -212,9 +205,7 @@ async def delete_clinical_context(
     )
 
     if not context:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Clinical context not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Clinical context not found")
 
     db.delete(context)
     db.commit()

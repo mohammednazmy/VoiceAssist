@@ -3,10 +3,12 @@ Request ID middleware for distributed tracing and debugging.
 
 Adds a unique correlation ID to every request for tracking across services.
 """
+
 import uuid
+from typing import Callable
+
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from typing import Callable
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):

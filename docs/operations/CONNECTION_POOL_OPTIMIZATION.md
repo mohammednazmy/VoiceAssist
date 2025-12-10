@@ -1,3 +1,27 @@
+---
+title: Connection Pool Optimization
+slug: operations/connection-pool-optimization
+summary: "**Last Updated**: 2025-11-20 (Phase 7 - P2.5)"
+status: stable
+stability: production
+owner: sre
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - ai-agents
+tags:
+  - connection
+  - pool
+  - optimization
+category: operations
+ai_summary: >-
+  Last Updated: 2025-11-20 (Phase 7 - P2.5) Purpose: Guide for optimizing and
+  monitoring database connection pools --- VoiceAssist V2 uses connection
+  pooling for efficient database resource management. This document covers
+  configuration, monitoring, and optimization of connection pools for
+  PostgreS...
+---
+
 # Connection Pool Optimization Guide
 
 **Last Updated**: 2025-11-20 (Phase 7 - P2.5)
@@ -62,24 +86,28 @@ max_over_time(voiceassist_db_pool_overflow[1h])
 ###Optimization Recommendations
 
 #### Low Traffic (< 10 concurrent users)
+
 ```bash
 DB_POOL_SIZE=10
 DB_MAX_OVERFLOW=20
 ```
 
 #### Medium Traffic (10-50 concurrent users)
+
 ```bash
 DB_POOL_SIZE=20
 DB_MAX_OVERFLOW=40
 ```
 
 #### High Traffic (50-100 concurrent users)
+
 ```bash
 DB_POOL_SIZE=30
 DB_MAX_OVERFLOW=70
 ```
 
 #### Very High Traffic (100+ concurrent users)
+
 ```bash
 DB_POOL_SIZE=50
 DB_MAX_OVERFLOW=100
@@ -93,6 +121,7 @@ DB_MAX_OVERFLOW=100
 **Cause**: Pool exhausted, all connections in use
 
 **Solutions**:
+
 1. Increase `DB_POOL_SIZE` or `DB_MAX_OVERFLOW`
 2. Reduce query execution time (optimize slow queries)
 3. Check for connection leaks (connections not closed)
@@ -103,6 +132,7 @@ DB_MAX_OVERFLOW=100
 **Cause**: Pool too small for workload
 
 **Solutions**:
+
 1. Increase `DB_POOL_SIZE` to accommodate peak load
 2. Monitor `db_pool_overflow` metric for frequent spikes
 
@@ -111,6 +141,7 @@ DB_MAX_OVERFLOW=100
 **Cause**: Stale connections (server closed idle connections)
 
 **Solutions**:
+
 1. Reduce `DB_POOL_RECYCLE` (currently 3600s)
 2. Enable `pool_pre_ping=True` (already enabled)
 
@@ -159,16 +190,19 @@ rate(voiceassist_redis_pool_in_use[5m])
 ### Optimization Recommendations
 
 #### Low Traffic
+
 ```bash
 REDIS_MAX_CONNECTIONS=25
 ```
 
 #### Medium Traffic
+
 ```bash
 REDIS_MAX_CONNECTIONS=50
 ```
 
 #### High Traffic
+
 ```bash
 REDIS_MAX_CONNECTIONS=100
 ```
@@ -180,6 +214,7 @@ REDIS_MAX_CONNECTIONS=100
 **Cause**: Redis `maxclients` limit reached or pool exhausted
 
 **Solutions**:
+
 1. Increase `REDIS_MAX_CONNECTIONS`
 2. Check Redis `maxclients` configuration (`redis-cli CONFIG GET maxclients`)
 3. Optimize Redis usage (reduce unnecessary calls)
@@ -189,6 +224,7 @@ REDIS_MAX_CONNECTIONS=100
 **Cause**: Connection timeout or network latency
 
 **Solutions**:
+
 1. Increase `REDIS_CONNECT_TIMEOUT` if network is slow
 2. Check Redis server performance (`redis-cli INFO stats`)
 3. Monitor network latency between application and Redis
@@ -224,6 +260,7 @@ qdrant_client = AsyncQdrantClient(
 **No dedicated connection pool metrics** (Qdrant uses async HTTP/gRPC, not traditional connection pooling)
 
 **Monitor via**:
+
 - Request latency: `voiceassist_rag_query_duration_seconds{stage="search"}`
 - External API calls: `voiceassist_external_api_duration_seconds{service="qdrant"}`
 
@@ -247,12 +284,14 @@ qdrant_client = AsyncQdrantClient(
 ### Health Checks
 
 **Readiness Probe** (`GET /ready`):
+
 - Checks PostgreSQL connection
 - Checks Redis connection
 - Checks Qdrant connection
 - Returns 503 if any dependency is down
 
 **Health Dashboard** (Grafana):
+
 - Monitor pool utilization over time
 - Set alerts for high utilization (> 80%)
 - Track connection errors
@@ -290,6 +329,7 @@ qdrant_client = AsyncQdrantClient(
 **Why**: PgBouncer provides lightweight connection pooling at the database proxy level
 
 **Benefits**:
+
 - Thousands of client connections with minimal resource overhead
 - Transaction-level pooling (connections shared between transactions)
 - Connection pooling across multiple application instances
@@ -322,6 +362,7 @@ DB_MAX_OVERFLOW=10
 ### Redis Cluster (For High Availability)
 
 For production with > 100 concurrent users, consider Redis Cluster or Redis Sentinel for:
+
 - Automatic failover
 - Read replicas for load distribution
 - Data persistence with snapshots/AOF
@@ -333,16 +374,19 @@ For production with > 100 concurrent users, consider Redis Cluster or Redis Sent
 ### PostgreSQL
 
 **Check active connections**:
+
 ```sql
 SELECT count(*) FROM pg_stat_activity WHERE state = 'active';
 ```
 
 **Check idle connections**:
+
 ```sql
 SELECT count(*) FROM pg_stat_activity WHERE state = 'idle';
 ```
 
 **Check long-running queries**:
+
 ```sql
 SELECT pid, now() - query_start AS duration, query
 FROM pg_stat_activity
@@ -353,11 +397,13 @@ ORDER BY duration DESC;
 ### Redis
 
 **Check connection count**:
+
 ```bash
 redis-cli INFO clients | grep connected_clients
 ```
 
 **Check memory usage**:
+
 ```bash
 redis-cli INFO memory | grep used_memory_human
 ```

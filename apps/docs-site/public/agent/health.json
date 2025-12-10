@@ -1,0 +1,323 @@
+{
+  "version": "2.0.0",
+  "generated_at": "2025-12-04T10:37:10.137Z",
+  "health_status": "healthy",
+  "scores": {
+    "overall": 100,
+    "coverage": 100,
+    "freshness": 100
+  },
+  "summary": {
+    "total_docs": 254,
+    "stale_count": 0,
+    "missing_frontmatter_count": 0,
+    "coverage_percentage": 100
+  },
+  "category_freshness": {
+    "reference": {
+      "freshness_score": 100,
+      "total_docs": 91,
+      "fresh_docs": 91,
+      "stale_docs": 0,
+      "newest_update": "2025-12-04",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "deployment": {
+      "freshness_score": 100,
+      "total_docs": 7,
+      "fresh_docs": 7,
+      "stale_docs": 0,
+      "newest_update": "2025-11-27",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "operations": {
+      "freshness_score": 100,
+      "total_docs": 18,
+      "fresh_docs": 18,
+      "stale_docs": 0,
+      "newest_update": "2025-12-04",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "planning": {
+      "freshness_score": 100,
+      "total_docs": 76,
+      "fresh_docs": 76,
+      "stale_docs": 0,
+      "newest_update": "2025-12-04",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "api": {
+      "freshness_score": 100,
+      "total_docs": 5,
+      "fresh_docs": 5,
+      "stale_docs": 0,
+      "newest_update": "2025-12-02",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "architecture": {
+      "freshness_score": 100,
+      "total_docs": 10,
+      "fresh_docs": 10,
+      "stale_docs": 0,
+      "newest_update": "2025-12-03",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "testing": {
+      "freshness_score": 100,
+      "total_docs": 7,
+      "fresh_docs": 7,
+      "stale_docs": 0,
+      "newest_update": "2025-11-27",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "ai": {
+      "freshness_score": 100,
+      "total_docs": 5,
+      "fresh_docs": 5,
+      "stale_docs": 0,
+      "newest_update": "2025-12-03",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "debugging": {
+      "freshness_score": 100,
+      "total_docs": 14,
+      "fresh_docs": 14,
+      "stale_docs": 0,
+      "newest_update": "2025-12-03",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "security": {
+      "freshness_score": 100,
+      "total_docs": 4,
+      "fresh_docs": 4,
+      "stale_docs": 0,
+      "newest_update": "2025-11-27",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "overview": {
+      "freshness_score": 100,
+      "total_docs": 4,
+      "fresh_docs": 4,
+      "stale_docs": 0,
+      "newest_update": "2025-12-02",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "uncategorized": {
+      "freshness_score": 100,
+      "total_docs": 6,
+      "fresh_docs": 6,
+      "stale_docs": 0,
+      "newest_update": "2025-12-02",
+      "oldest_update": "2025-11-27",
+      "status": "healthy",
+      "docs_needing_update": []
+    },
+    "feature-flags": {
+      "freshness_score": 100,
+      "total_docs": 7,
+      "fresh_docs": 7,
+      "stale_docs": 0,
+      "newest_update": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)",
+      "oldest_update": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)",
+      "status": "healthy",
+      "docs_needing_update": []
+    }
+  },
+  "metrics": {
+    "stale_docs": {
+      "count": 0,
+      "threshold_days": 30,
+      "docs": []
+    },
+    "missing_frontmatter": {
+      "count": 0,
+      "docs": []
+    },
+    "ai_summary": {
+      "with_summary": 219,
+      "without_summary": 35,
+      "coverage_percentage": 86,
+      "docs_needing_summary": [
+        {
+          "path": "archive/BACKEND_IMPLEMENTATION_PLAN.md",
+          "category": "reference",
+          "title": "Backend Implementation Plan"
+        },
+        {
+          "path": "archive/BACKEND_IMPLEMENTATION_SUMMARY.md",
+          "category": "reference",
+          "title": "Backend Implementation Summary"
+        },
+        {
+          "path": "archive/BRANCHING_AND_SHORTCUTS_IMPLEMENTATION.md",
+          "category": "reference",
+          "title": "Branching And Shortcuts Implementation"
+        },
+        {
+          "path": "archive/CHANGES_SUMMARY.md",
+          "category": "reference",
+          "title": "Changes Summary"
+        },
+        {
+          "path": "archive/CURRENT_PHASE.md",
+          "category": "reference",
+          "title": "Current Phase"
+        },
+        {
+          "path": "archive/DEPLOYMENT_COMPLETE.md",
+          "category": "reference",
+          "title": "Deployment Complete"
+        },
+        {
+          "path": "archive/DESIGN_SYSTEM_IMPLEMENTATION_PLAN.md",
+          "category": "reference",
+          "title": "Design System Implementation Plan"
+        },
+        {
+          "path": "archive/DEVELOPMENT_LOG.md",
+          "category": "reference",
+          "title": "Development Log"
+        },
+        {
+          "path": "archive/DEVELOPMENT_SESSION_SUMMARY.md",
+          "category": "reference",
+          "title": "Development Session Summary"
+        },
+        {
+          "path": "archive/DEV_CORS_FIX_SUMMARY.md",
+          "category": "reference",
+          "title": "Dev Cors Fix Summary"
+        },
+        {
+          "path": "archive/DOCUMENTATION_CREATED.md",
+          "category": "reference",
+          "title": "Documentation Created"
+        },
+        {
+          "path": "archive/FRONTEND_PHASE1_PHASE2_SUMMARY.md",
+          "category": "reference",
+          "title": "Frontend Phase1 Phase2 Summary"
+        },
+        {
+          "path": "archive/FRONTEND_PHASE8_TESTS.md",
+          "category": "reference",
+          "title": "Frontend Phase8 Tests"
+        },
+        {
+          "path": "archive/PHASE_09_COMPLETE_SUMMARY.md",
+          "category": "reference",
+          "title": "Phase 09 Complete Summary"
+        },
+        {
+          "path": "archive/PHASE_10_COMPLETE_SUMMARY.md",
+          "category": "reference",
+          "title": "Phase 10 Complete Summary"
+        },
+        {
+          "path": "archive/PHASE_10_LOCUST_SUMMARY.md",
+          "category": "reference",
+          "title": "Phase 10 Locust Summary"
+        },
+        {
+          "path": "archive/PHASE_10_OPTIMIZATION_SUMMARY.md",
+          "category": "reference",
+          "title": "Phase 10 Optimization Summary"
+        },
+        {
+          "path": "archive/PHASE_3_VOICE_COMPLETE.md",
+          "category": "reference",
+          "title": "Phase 3 Voice Complete"
+        },
+        {
+          "path": "archive/PHASE_5_COMPLETE.md",
+          "category": "reference",
+          "title": "Phase 5 Complete"
+        },
+        {
+          "path": "archive/PHASE_6_CITATIONS_COMPLETE.md",
+          "category": "reference",
+          "title": "Phase 6 Citations Complete"
+        }
+      ]
+    },
+    "by_status": {
+      "stable": 214,
+      "draft": 2,
+      "deprecated": 35,
+      "experimental": 3
+    },
+    "by_owner": {
+      "docs": 141,
+      "backend": 27,
+      "product": 3,
+      "frontend": 31,
+      "security": 1,
+      "mixed": 33,
+      "sre": 15,
+      "infra": 2
+    },
+    "by_category": {
+      "reference": 91,
+      "deployment": 7,
+      "operations": 18,
+      "planning": 76,
+      "api": 5,
+      "architecture": 10,
+      "testing": 7,
+      "ai": 5,
+      "debugging": 14,
+      "security": 4,
+      "overview": 4,
+      "feature-flags": 7
+    },
+    "coverage": {
+      "total": 254,
+      "documented": 254,
+      "undocumented": 0
+    }
+  },
+  "thresholds": {
+    "stale_days": 30,
+    "required_frontmatter": ["title", "status", "lastUpdated", "summary"],
+    "health_warning": 70,
+    "health_critical": 50
+  },
+  "recommendations": [
+    {
+      "priority": "low",
+      "category": "cleanup",
+      "message": "35 deprecated docs should be reviewed",
+      "action": "Archive or remove deprecated documentation"
+    }
+  ],
+  "next_steps": [
+    {
+      "priority": 4,
+      "action": "Clean up deprecated documentation",
+      "reason": "35 deprecated docs should be archived or removed",
+      "suggested_docs": []
+    }
+  ]
+}

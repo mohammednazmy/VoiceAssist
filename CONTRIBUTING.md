@@ -528,7 +528,7 @@ Update documentation when you:
 ### Documentation Locations
 
 - **API docs**: Auto-generated from code (`/docs` endpoint)
-- **Architecture**: `docs/ARCHITECTURE_V2.md`
+- **Architecture**: `docs/UNIFIED_ARCHITECTURE.md`
 - **Setup**: `docs/DEVELOPMENT_SETUP.md`
 - **Deployment**: `docs/DEPLOYMENT_GUIDE.md`
 - **Client implementation**: `docs/client-implementation/`

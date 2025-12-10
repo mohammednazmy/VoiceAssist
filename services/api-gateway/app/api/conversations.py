@@ -3,111 +3,42 @@ Conversation branching API endpoints.
 
 This module provides REST API endpoints for conversation branching functionality,
 allowing users to fork conversations at any message point and navigate between branches.
+
+Note: Pydantic schemas are now defined in app/api/conversations/schemas.py
 """
 
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
+from app.api.conversation_schemas.schemas import (
+    BranchInfo,
+    BranchResponse,
+    ConversationResponse,
+    ConversationSettingsSchema,
+    ConversationsListResponse,
+    CreateBranchRequest,
+    CreateConversationRequest,
+    CreateMessageRequest,
+    EditMessageRequest,
+    MessageResponse,
+    MessagesListResponse,
+    SessionEventResponse,
+    UpdateConversationRequest,
+)
 from app.core.api_envelope import ErrorCodes, error_response, success_response
-from app.core.database import get_db
+from app.core.database import get_db, transaction
 from app.core.dependencies import get_current_user
 from app.core.logging import get_logger
 from app.models.message import Message
 from app.models.session import Session as ChatSession
 from app.models.user import User
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 logger = get_logger(__name__)
-
-
-# Pydantic Schemas
-class CreateConversationRequest(BaseModel):
-    """Request to create a new conversation"""
-
-    title: str = Field(..., description="Conversation title")
-    folder_id: Optional[str] = Field(
-        None, description="Optional folder ID to organize conversation"
-    )
-
-
-class UpdateConversationRequest(BaseModel):
-    """Request to update a conversation"""
-
-    title: Optional[str] = Field(None, description="New conversation title")
-    archived: Optional[bool] = Field(None, description="Archive status")
-    folder_id: Optional[str] = Field(None, description="Move to folder")
-
-
-class ConversationResponse(BaseModel):
-    """Response containing conversation details"""
-
-    id: str
-    userId: str
-    title: str
-    archived: bool = False
-    messageCount: int = 0
-    folderId: Optional[str] = None
-    createdAt: str
-    updatedAt: str
-
-
-class ConversationsListResponse(BaseModel):
-    """Paginated list of conversations"""
-
-    items: List[ConversationResponse]
-    total: int
-    page: int
-    pageSize: int
-
-
-class CreateBranchRequest(BaseModel):
-    """Request to create a new conversation branch"""
-
-    parent_message_id: str = Field(
-        ..., description="UUID of the message to branch from"
-    )
-    initial_message: Optional[str] = Field(
-        None, description="Optional first message in the new branch"
-    )
-
-
-class BranchResponse(BaseModel):
-    """Response containing branch details"""
-
-    branch_id: str = Field(..., description="Unique identifier for the branch")
-    session_id: str = Field(..., description="Session (conversation) ID")
-    parent_message_id: str = Field(..., description="Parent message UUID")
-    created_at: str = Field(..., description="ISO 8601 timestamp")
-    message_count: int = Field(default=0, description="Number of messages in branch")
-
-
-class BranchInfo(BaseModel):
-    """Information about a conversation branch"""
-
-    branch_id: str = Field(..., description="Branch identifier")
-    parent_message_id: Optional[str] = Field(None, description="Parent message UUID")
-    message_count: int = Field(..., description="Number of messages in branch")
-    created_at: str = Field(..., description="ISO 8601 timestamp of first message")
-    last_activity: str = Field(..., description="ISO 8601 timestamp of last message")
-
-
-class MessageResponse(BaseModel):
-    """Message response with branching fields"""
-
-    id: str
-    session_id: str
-    role: str
-    content: str
-    parent_message_id: Optional[str] = None
-    branch_id: Optional[str] = None
-    created_at: str
-    tokens: Optional[int] = None
-    model: Optional[str] = None
 
 
 # Helper Functions
@@ -134,17 +65,13 @@ def get_session_or_404(db: Session, session_id: uuid.UUID, user: User) -> ChatSe
     if not session:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=error_response(
-                error_code=ErrorCodes.NOT_FOUND, message="Session not found"
-            ),
+            detail=error_response(error_code=ErrorCodes.NOT_FOUND, message="Session not found"),
         )
 
     return session
 
 
-def get_message_or_404(
-    db: Session, message_id: uuid.UUID, session: ChatSession
-) -> Message:
+def get_message_or_404(db: Session, message_id: uuid.UUID, session: ChatSession) -> Message:
     """Get message by ID or raise 404 if not found or not in session"""
     message = (
         db.query(Message)
@@ -160,9 +87,7 @@ def get_message_or_404(
     if not message:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=error_response(
-                error_code=ErrorCodes.NOT_FOUND, message="Message not found"
-            ),
+            detail=error_response(error_code=ErrorCodes.NOT_FOUND, message="Message not found"),
         )
 
     return message
@@ -194,11 +119,7 @@ async def list_conversations(
     offset = (page - 1) * pageSize
 
     # Query total count
-    total = (
-        db.query(func.count(ChatSession.id))
-        .filter(ChatSession.user_id == current_user.id)
-        .scalar()
-    )
+    total = db.query(func.count(ChatSession.id)).filter(ChatSession.user_id == current_user.id).scalar()
 
     # Query sessions with message counts
     sessions = (
@@ -277,9 +198,7 @@ async def create_conversation(
             if not folder:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=error_response(
-                        error_code=ErrorCodes.NOT_FOUND, message="Folder not found"
-                    ),
+                    detail=error_response(error_code=ErrorCodes.NOT_FOUND, message="Folder not found"),
                 )
         except ValueError:
             raise HTTPException(
@@ -290,7 +209,7 @@ async def create_conversation(
                 ),
             )
 
-    # Create new session
+    # Create new session with transaction management
     new_session = ChatSession(
         user_id=current_user.id,
         title=request.title,
@@ -298,10 +217,11 @@ async def create_conversation(
         archived=0,  # 0 = not archived, 1 = archived (Integer column)
     )
 
-    db.add(new_session)
-    db.commit()
-    db.refresh(new_session)
+    with transaction(db):
+        db.add(new_session)
+        # Transaction context manager handles commit/rollback
 
+    db.refresh(new_session)
     logger.info(f"Created conversation {new_session.id} for user {current_user.id}")
 
     return success_response(
@@ -344,19 +264,13 @@ async def get_conversation(
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error_response(
-                error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"
-            ),
+            detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
         )
 
     session = get_session_or_404(db, conv_uuid, current_user)
 
     # Get message count
-    message_count = (
-        db.query(func.count(Message.id))
-        .filter(Message.session_id == session.id)
-        .scalar()
-    )
+    message_count = db.query(func.count(Message.id)).filter(Message.session_id == session.id).scalar()
 
     return success_response(
         data=ConversationResponse(
@@ -400,9 +314,7 @@ async def update_conversation(
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error_response(
-                error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"
-            ),
+            detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
         )
 
     session = get_session_or_404(db, conv_uuid, current_user)
@@ -432,9 +344,7 @@ async def update_conversation(
                 if not folder:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
-                        detail=error_response(
-                            error_code=ErrorCodes.NOT_FOUND, message="Folder not found"
-                        ),
+                        detail=error_response(error_code=ErrorCodes.NOT_FOUND, message="Folder not found"),
                     )
                 session.folder_id = folder_uuid
             except ValueError:
@@ -448,15 +358,13 @@ async def update_conversation(
         else:
             session.folder_id = None
 
-    db.commit()
+    with transaction(db):
+        pass  # Changes tracked by session, committed by transaction
+
     db.refresh(session)
 
     # Get message count
-    message_count = (
-        db.query(func.count(Message.id))
-        .filter(Message.session_id == session.id)
-        .scalar()
-    )
+    message_count = db.query(func.count(Message.id)).filter(Message.session_id == session.id).scalar()
 
     logger.info(f"Updated conversation {session.id}")
 
@@ -471,6 +379,54 @@ async def update_conversation(
             createdAt=session.created_at.isoformat() + "Z",
             updatedAt=session.updated_at.isoformat() + "Z",
         )
+    )
+
+
+@router.delete("/all")
+async def delete_all_conversations(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Delete ALL conversations for the current user.
+
+    This is a destructive operation that removes all conversations and their messages.
+    Used for bulk cleanup / account reset scenarios.
+
+    Args:
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        Success response with count of deleted conversations
+    """
+    # Get all user's conversations
+    user_sessions = db.query(ChatSession).filter(ChatSession.user_id == current_user.id).all()
+
+    session_ids = [s.id for s in user_sessions]
+
+    if not session_ids:
+        return success_response(data={"deleted_count": 0, "message": "No conversations to delete"})
+
+    # Delete all messages and sessions atomically
+    with transaction(db):
+        # Delete messages first (foreign key constraint)
+        deleted_messages = (
+            db.query(Message).filter(Message.session_id.in_(session_ids)).delete(synchronize_session=False)
+        )
+
+        # Delete all sessions
+        deleted_count = (
+            db.query(ChatSession).filter(ChatSession.user_id == current_user.id).delete(synchronize_session=False)
+        )
+
+    logger.info(f"Deleted {deleted_count} conversations and {deleted_messages} messages for user {current_user.id}")
+
+    return success_response(
+        data={
+            "deleted_count": deleted_count,
+            "message": f"Successfully deleted {deleted_count} conversation(s)",
+        }
     )
 
 
@@ -500,19 +456,15 @@ async def delete_conversation(
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error_response(
-                error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"
-            ),
+            detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
         )
 
     session = get_session_or_404(db, conv_uuid, current_user)
 
-    # Delete all messages first (cascade should handle this, but being explicit)
-    db.query(Message).filter(Message.session_id == session.id).delete()
-
-    # Delete the session
-    db.delete(session)
-    db.commit()
+    # Delete all messages and session atomically
+    with transaction(db):
+        db.query(Message).filter(Message.session_id == session.id).delete()
+        db.delete(session)
 
     logger.info(f"Deleted conversation {conversation_id}")
 
@@ -552,9 +504,7 @@ async def get_messages(
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error_response(
-                error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"
-            ),
+            detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
         )
 
     # Verify conversation exists and belongs to user
@@ -596,9 +546,7 @@ async def get_messages(
             session_id=str(msg.session_id),
             role=msg.role,
             content=msg.content,
-            parent_message_id=(
-                str(msg.parent_message_id) if msg.parent_message_id else None
-            ),
+            parent_message_id=(str(msg.parent_message_id) if msg.parent_message_id else None),
             branch_id=msg.branch_id,
             created_at=msg.created_at.isoformat() + "Z",
             tokens=msg.tokens,
@@ -606,12 +554,6 @@ async def get_messages(
         )
         for msg in messages
     ]
-
-    class MessagesListResponse(BaseModel):
-        items: List[MessageResponse]
-        total: int
-        page: int
-        pageSize: int
 
     return success_response(
         data=MessagesListResponse(
@@ -623,10 +565,135 @@ async def get_messages(
     )
 
 
-class EditMessageRequest(BaseModel):
-    """Request to edit a message"""
+@router.post("/{conversation_id}/messages")
+async def create_message(
+    conversation_id: str,
+    request: CreateMessageRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Create a new message in a conversation with optional idempotency.
 
-    content: str = Field(..., description="New message content")
+    If `client_message_id` is provided, this endpoint is idempotent:
+    - If a message with the same (conversation_id, branch_id, client_message_id)
+      already exists, the existing message is returned without creating a duplicate.
+    - This allows safe retries without creating duplicate messages.
+
+    Args:
+        conversation_id: UUID of the conversation
+        request: Message creation request
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        MessageResponse with the created (or existing) message
+
+    Raises:
+        404: Conversation not found
+        403: User doesn't own the conversation
+        400: Invalid request (e.g., invalid UUIDs)
+    """
+    try:
+        conv_uuid = uuid.UUID(conversation_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
+        )
+
+    # Verify conversation exists and belongs to user
+    session = get_session_or_404(db, conv_uuid, current_user)
+
+    # Parse optional parent_message_id
+    parent_message_uuid = None
+    if request.parent_message_id:
+        try:
+            parent_message_uuid = uuid.UUID(request.parent_message_id)
+            # Verify parent message exists and belongs to session
+            get_message_or_404(db, parent_message_uuid, session)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error_response(
+                    error_code=ErrorCodes.VALIDATION_ERROR,
+                    message="Invalid parent_message_id UUID format",
+                ),
+            )
+
+    # Check for idempotent request
+    if request.client_message_id:
+        # Look for existing message with same idempotency key
+        existing_message = (
+            db.query(Message)
+            .filter(
+                and_(
+                    Message.session_id == session.id,
+                    Message.branch_id == request.branch_id,
+                    Message.client_message_id == request.client_message_id,
+                )
+            )
+            .first()
+        )
+
+        if existing_message:
+            logger.info(
+                f"Idempotent message creation: returning existing message "
+                f"{existing_message.id} for client_message_id={request.client_message_id}"
+            )
+            return success_response(
+                data=MessageResponse(
+                    id=str(existing_message.id),
+                    session_id=str(existing_message.session_id),
+                    role=existing_message.role,
+                    content=existing_message.content,
+                    parent_message_id=(
+                        str(existing_message.parent_message_id) if existing_message.parent_message_id else None
+                    ),
+                    branch_id=existing_message.branch_id,
+                    client_message_id=existing_message.client_message_id,
+                    created_at=existing_message.created_at.isoformat() + "Z",
+                    tokens=existing_message.tokens,
+                    model=existing_message.model,
+                    is_duplicate=True,
+                )
+            )
+
+    # Create new message
+    new_message = Message(
+        session_id=session.id,
+        role=request.role,
+        content=request.content,
+        branch_id=request.branch_id,
+        parent_message_id=parent_message_uuid,
+        client_message_id=request.client_message_id,
+        message_metadata=request.metadata,
+    )
+
+    db.add(new_message)
+    db.commit()
+    db.refresh(new_message)
+
+    logger.info(
+        f"Created message {new_message.id} in conversation {conversation_id}"
+        + (f" with client_message_id={request.client_message_id}" if request.client_message_id else "")
+    )
+
+    return success_response(
+        data=MessageResponse(
+            id=str(new_message.id),
+            session_id=str(new_message.session_id),
+            role=new_message.role,
+            content=new_message.content,
+            parent_message_id=(str(new_message.parent_message_id) if new_message.parent_message_id else None),
+            branch_id=new_message.branch_id,
+            client_message_id=new_message.client_message_id,
+            created_at=new_message.created_at.isoformat() + "Z",
+            tokens=new_message.tokens,
+            model=new_message.model,
+            is_duplicate=False,
+        )
+    )
 
 
 @router.patch("/{conversation_id}/messages/{message_id}")
@@ -660,9 +727,7 @@ async def edit_message(
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error_response(
-                error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"
-            ),
+            detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
         )
 
     # Verify conversation exists and belongs to user
@@ -684,9 +749,7 @@ async def edit_message(
             session_id=str(message.session_id),
             role=message.role,
             content=message.content,
-            parent_message_id=(
-                str(message.parent_message_id) if message.parent_message_id else None
-            ),
+            parent_message_id=(str(message.parent_message_id) if message.parent_message_id else None),
             branch_id=message.branch_id,
             created_at=message.created_at.isoformat() + "Z",
             tokens=message.tokens,
@@ -724,9 +787,7 @@ async def delete_message(
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error_response(
-                error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"
-            ),
+            detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
         )
 
     # Verify conversation exists and belongs to user
@@ -777,9 +838,7 @@ async def create_branch(
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error_response(
-                error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"
-            ),
+            detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
         )
 
     # Verify session exists and belongs to user
@@ -805,10 +864,7 @@ async def create_branch(
         db.commit()
         message_count = 1
 
-    logger.info(
-        f"Created branch {branch_id} from message {request.parent_message_id} "
-        f"in session {session_id}"
-    )
+    logger.info(f"Created branch {branch_id} from message {request.parent_message_id} " f"in session {session_id}")
 
     return success_response(
         data=BranchResponse(
@@ -849,9 +905,7 @@ async def list_branches(
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error_response(
-                error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"
-            ),
+            detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
         )
 
     # Verify session exists and belongs to user
@@ -879,9 +933,7 @@ async def list_branches(
     branches = [
         BranchInfo(
             branch_id=row.branch_id,
-            parent_message_id=(
-                str(row.parent_message_id) if row.parent_message_id else None
-            ),
+            parent_message_id=(str(row.parent_message_id) if row.parent_message_id else None),
             message_count=row.message_count,
             created_at=row.created_at.isoformat() + "Z",
             last_activity=row.last_activity.isoformat() + "Z",
@@ -960,9 +1012,7 @@ async def get_branch_messages(
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error_response(
-                error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"
-            ),
+            detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
         )
 
     # Verify session exists and belongs to user
@@ -994,9 +1044,7 @@ async def get_branch_messages(
             session_id=str(msg.session_id),
             role=msg.role,
             content=msg.content,
-            parent_message_id=(
-                str(msg.parent_message_id) if msg.parent_message_id else None
-            ),
+            parent_message_id=(str(msg.parent_message_id) if msg.parent_message_id else None),
             branch_id=msg.branch_id,
             created_at=msg.created_at.isoformat() + "Z",
             tokens=msg.tokens,
@@ -1006,3 +1054,217 @@ async def get_branch_messages(
     ]
 
     return success_response(data=message_responses)
+
+
+# ============================================================================
+# Session Events API (P0.5 - Structured Event Logging)
+# ============================================================================
+
+
+@router.get("/{conversation_id}/events")
+async def get_conversation_events(
+    conversation_id: str,
+    event_types: Optional[str] = None,
+    since: Optional[str] = None,
+    limit: int = 100,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get events for a conversation (for session inspection/debugging).
+
+    This endpoint returns structured events logged during conversation/voice
+    sessions, useful for debugging, performance analysis, and session replay.
+
+    Args:
+        conversation_id: UUID of the conversation
+        event_types: Optional comma-separated list of event types to filter
+        since: Optional ISO timestamp to filter events after
+        limit: Max events to return (default 100, max 1000)
+        offset: Pagination offset
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        List of SessionEventResponse objects
+
+    Raises:
+        404: Conversation not found
+        403: User doesn't own the conversation
+    """
+    try:
+        conv_uuid = uuid.UUID(conversation_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
+        )
+
+    # Verify conversation exists and belongs to user
+    session = get_session_or_404(db, conv_uuid, current_user)
+
+    # Import here to avoid circular imports
+    from app.models.session_event import SessionEvent
+
+    # Build query
+    query = db.query(SessionEvent).filter(SessionEvent.conversation_id == session.id)
+
+    # Filter by event types
+    if event_types:
+        type_list = [t.strip() for t in event_types.split(",")]
+        query = query.filter(SessionEvent.event_type.in_(type_list))
+
+    # Filter by time
+    if since:
+        try:
+            since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
+            query = query.filter(SessionEvent.created_at >= since_dt)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error_response(
+                    error_code=ErrorCodes.VALIDATION_ERROR,
+                    message="Invalid 'since' timestamp format. Use ISO 8601.",
+                ),
+            )
+
+    # Limit to reasonable max
+    limit = min(limit, 1000)
+
+    events = query.order_by(SessionEvent.created_at.asc()).offset(offset).limit(limit).all()
+
+    event_responses = [
+        SessionEventResponse(
+            id=str(event.id),
+            conversation_id=str(event.conversation_id),
+            session_id=event.session_id,
+            branch_id=event.branch_id,
+            event_type=event.event_type,
+            payload=event.payload,
+            source=event.source,
+            trace_id=event.trace_id,
+            created_at=event.created_at.isoformat() + "Z",
+        )
+        for event in events
+    ]
+
+    return success_response(data=event_responses)
+
+
+# ============================================================================
+# Conversation Settings API (P1 feature)
+# ============================================================================
+
+
+@router.get("/{conversation_id}/settings")
+async def get_conversation_settings(
+    conversation_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get settings for a conversation.
+
+    Args:
+        conversation_id: UUID of the conversation
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        ConversationSettingsSchema with current settings
+
+    Raises:
+        404: Conversation not found
+        403: User doesn't own the conversation
+    """
+    try:
+        conv_uuid = uuid.UUID(conversation_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
+        )
+
+    # Verify conversation exists and belongs to user
+    session = get_session_or_404(db, conv_uuid, current_user)
+
+    # Return settings (or empty dict if none)
+    settings = session.settings or {}
+
+    return success_response(data=ConversationSettingsSchema(**settings))
+
+
+@router.put("/{conversation_id}/settings")
+async def update_conversation_settings(
+    conversation_id: str,
+    settings: ConversationSettingsSchema,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Update settings for a conversation.
+
+    Args:
+        conversation_id: UUID of the conversation
+        settings: New settings to apply
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        Updated ConversationSettingsSchema
+
+    Raises:
+        404: Conversation not found
+        403: User doesn't own the conversation
+    """
+    try:
+        conv_uuid = uuid.UUID(conversation_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
+        )
+
+    # Verify conversation exists and belongs to user
+    session = get_session_or_404(db, conv_uuid, current_user)
+
+    # Merge new settings with existing (exclude None values)
+    current_settings = session.settings or {}
+    new_settings = settings.model_dump(exclude_none=True)
+    merged_settings = {**current_settings, **new_settings}
+
+    # Update session
+    session.settings = merged_settings
+    db.commit()
+    db.refresh(session)
+
+    logger.info(f"Updated settings for conversation {conversation_id}")
+
+    return success_response(data=ConversationSettingsSchema(**merged_settings))
+
+
+@router.patch("/{conversation_id}/settings")
+async def patch_conversation_settings(
+    conversation_id: str,
+    settings: ConversationSettingsSchema,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Partially update settings for a conversation (same as PUT for this use case).
+
+    Args:
+        conversation_id: UUID of the conversation
+        settings: Settings to update (only non-None values are applied)
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        Updated ConversationSettingsSchema
+
+    Raises:
+        404: Conversation not found
+        403: User doesn't own the conversation
+    """
+    return await update_conversation_settings(conversation_id, settings, db, current_user)

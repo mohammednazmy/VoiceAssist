@@ -40,9 +40,7 @@ def upgrade():
             nullable=False,
             comment="pdf, image, text, markdown",
         ),
-        sa.Column(
-            "file_size", sa.Integer, nullable=False, comment="File size in bytes"
-        ),
+        sa.Column("file_size", sa.Integer, nullable=False, comment="File size in bytes"),
         sa.Column("file_url", sa.Text, nullable=False, comment="S3/storage URL"),
         sa.Column("mime_type", sa.String(100), nullable=True),
         sa.Column("file_metadata", JSONB, nullable=True, comment="Additional file metadata"),
@@ -61,18 +59,12 @@ def upgrade():
     )
 
     # Create indexes
-    op.create_index(
-        "idx_message_attachments_message_id", "message_attachments", ["message_id"]
-    )
-    op.create_index(
-        "idx_message_attachments_file_type", "message_attachments", ["file_type"]
-    )
+    op.create_index("idx_message_attachments_message_id", "message_attachments", ["message_id"])
+    op.create_index("idx_message_attachments_file_type", "message_attachments", ["file_type"])
 
 
 def downgrade():
     """Drop message_attachments table"""
     op.drop_index("idx_message_attachments_file_type", table_name="message_attachments")
-    op.drop_index(
-        "idx_message_attachments_message_id", table_name="message_attachments"
-    )
+    op.drop_index("idx_message_attachments_message_id", table_name="message_attachments")
     op.drop_table("message_attachments")

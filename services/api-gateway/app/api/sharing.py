@@ -7,8 +7,9 @@ from datetime import datetime, timedelta
 from typing import Optional
 from uuid import UUID
 
-from app.core.dependencies import get_current_user
+from app.core.config import settings
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
 from app.models.session import Session
 from app.models.user import User
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -74,15 +75,9 @@ async def create_share_link(
         Share link details
     """
     # Verify session exists and belongs to user
-    session = (
-        db.query(Session)
-        .filter(Session.id == session_id, Session.user_id == current_user.id)
-        .first()
-    )
+    session = db.query(Session).filter(Session.id == session_id, Session.user_id == current_user.id).first()
     if not session:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
 
     # Generate secure share token
     share_token = secrets.token_urlsafe(32)
@@ -113,9 +108,9 @@ async def create_share_link(
     # Store share (in production, save to database)
     _shares[share_token] = share
 
-    # Generate share URL
-    # TODO: Get base URL from config
-    share_url = f"/shared/{share_token}"
+    # Generate share URL using configured frontend URL
+    base_url = settings.FRONTEND_URL.rstrip("/")
+    share_url = f"{base_url}/shared/{share_token}"
 
     return ShareResponse(
         share_id=share_token,
@@ -145,15 +140,11 @@ async def get_shared_conversation(
     # Get share record
     share = _shares.get(share_token)
     if not share:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Share link not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Share link not found")
 
     # Check expiration
     if datetime.utcnow() > share.expires_at:
-        raise HTTPException(
-            status_code=status.HTTP_410_GONE, detail="Share link has expired"
-        )
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Share link has expired")
 
     # Check password if required
     if share.password_hash:
@@ -175,23 +166,14 @@ async def get_shared_conversation(
     share.access_count += 1
 
     # Get session and messages
-    session = (
-        db.query(Session).filter(Session.id == UUID(share.session_id)).first()
-    )
+    session = db.query(Session).filter(Session.id == UUID(share.session_id)).first()
     if not session:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
 
     # Get messages
     from app.models.message import Message
 
-    messages = (
-        db.query(Message)
-        .filter(Message.session_id == UUID(share.session_id))
-        .order_by(Message.created_at)
-        .all()
-    )
+    messages = db.query(Message).filter(Message.session_id == UUID(share.session_id)).order_by(Message.created_at).all()
 
     return {
         "session": {
@@ -234,22 +216,14 @@ async def revoke_share_link(
         current_user: Authenticated user
     """
     # Verify session belongs to user
-    session = (
-        db.query(Session)
-        .filter(Session.id == session_id, Session.user_id == current_user.id)
-        .first()
-    )
+    session = db.query(Session).filter(Session.id == session_id, Session.user_id == current_user.id).first()
     if not session:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
 
     # Get share and verify ownership
     share = _shares.get(share_token)
     if not share:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Share link not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Share link not found")
 
     if share.created_by != str(current_user.id):
         raise HTTPException(
@@ -281,15 +255,9 @@ async def list_share_links(
         List of share links
     """
     # Verify session belongs to user
-    session = (
-        db.query(Session)
-        .filter(Session.id == session_id, Session.user_id == current_user.id)
-        .first()
-    )
+    session = db.query(Session).filter(Session.id == session_id, Session.user_id == current_user.id).first()
     if not session:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
 
     # Find all shares for this session
     shares = [
@@ -300,10 +268,13 @@ async def list_share_links(
         and datetime.utcnow() <= share.expires_at
     ]
 
+    # Generate share URLs using configured frontend URL
+    base_url = settings.FRONTEND_URL.rstrip("/")
+
     return [
         {
             "share_token": share.share_token,
-            "share_url": f"/shared/{share.share_token}",
+            "share_url": f"{base_url}/shared/{share.share_token}",
             "created_at": share.created_at.isoformat(),
             "expires_at": share.expires_at.isoformat(),
             "password_protected": bool(share.password_hash),

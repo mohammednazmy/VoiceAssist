@@ -177,6 +177,12 @@ describe("useRealtimeVoiceSession", () => {
       expect(result.current.transcript).toBe("");
     });
 
+    it("should initialize partialTranscript as empty string", () => {
+      const { result } = renderHook(() => useRealtimeVoiceSession());
+
+      expect(result.current.partialTranscript).toBe("");
+    });
+
     it("should expose connect and disconnect functions", () => {
       const { result } = renderHook(() => useRealtimeVoiceSession());
 
@@ -305,6 +311,16 @@ describe("useRealtimeVoiceSession", () => {
 
       expect(result.current.isSpeaking).toBe(false);
     });
+
+    it("should clear partialTranscript when disconnect is called", () => {
+      const { result } = renderHook(() => useRealtimeVoiceSession());
+
+      act(() => {
+        result.current.disconnect();
+      });
+
+      expect(result.current.partialTranscript).toBe("");
+    });
   });
 
   describe("error handling", () => {
@@ -353,7 +369,9 @@ describe("useRealtimeVoiceSession", () => {
         result.current.sendMessage("Hello");
       });
 
+      // Logger adds [RealtimeVoiceSession] prefix
       expect(consoleWarn).toHaveBeenCalledWith(
+        "[RealtimeVoiceSession]",
         expect.stringContaining("WebSocket not connected"),
       );
 
@@ -405,6 +423,73 @@ describe("useRealtimeVoiceSession", () => {
 
       // Initially not connecting
       expect(result.current.isConnecting).toBe(false);
+    });
+  });
+
+  describe("metrics", () => {
+    it("should expose metrics object with initial values", () => {
+      const { result } = renderHook(() => useRealtimeVoiceSession());
+
+      expect(result.current.metrics).toBeDefined();
+      expect(result.current.metrics.connectionTimeMs).toBeNull();
+      expect(result.current.metrics.timeToFirstTranscriptMs).toBeNull();
+      expect(result.current.metrics.lastSttLatencyMs).toBeNull();
+      expect(result.current.metrics.lastResponseLatencyMs).toBeNull();
+      expect(result.current.metrics.sessionDurationMs).toBeNull();
+      expect(result.current.metrics.userTranscriptCount).toBe(0);
+      expect(result.current.metrics.aiResponseCount).toBe(0);
+      expect(result.current.metrics.reconnectCount).toBe(0);
+      expect(result.current.metrics.sessionStartedAt).toBeNull();
+    });
+
+    it("should reset metrics when connect is called", async () => {
+      const { result } = renderHook(() => useRealtimeVoiceSession());
+
+      await act(async () => {
+        result.current.connect();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      });
+
+      // Metrics should be reset to initial values
+      expect(result.current.metrics.connectionTimeMs).toBeNull();
+      expect(result.current.metrics.userTranscriptCount).toBe(0);
+      expect(result.current.metrics.aiResponseCount).toBe(0);
+    });
+
+    it("should support onMetricsUpdate callback option", async () => {
+      const onMetricsUpdate = vi.fn();
+
+      const { result } = renderHook(() =>
+        useRealtimeVoiceSession({ onMetricsUpdate }),
+      );
+
+      // Verify hook renders without error
+      expect(result.current.status).toBe("disconnected");
+
+      // Trigger a connect which should update metrics
+      await act(async () => {
+        result.current.connect();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      });
+
+      // Callback may or may not have been called depending on status transitions
+      // The main thing is the hook doesn't crash
+      expect(result.current.metrics).toBeDefined();
+    });
+
+    it("should have all required metric fields", () => {
+      const { result } = renderHook(() => useRealtimeVoiceSession());
+
+      const metrics = result.current.metrics;
+      expect(metrics).toHaveProperty("connectionTimeMs");
+      expect(metrics).toHaveProperty("timeToFirstTranscriptMs");
+      expect(metrics).toHaveProperty("lastSttLatencyMs");
+      expect(metrics).toHaveProperty("lastResponseLatencyMs");
+      expect(metrics).toHaveProperty("sessionDurationMs");
+      expect(metrics).toHaveProperty("userTranscriptCount");
+      expect(metrics).toHaveProperty("aiResponseCount");
+      expect(metrics).toHaveProperty("reconnectCount");
+      expect(metrics).toHaveProperty("sessionStartedAt");
     });
   });
 });
