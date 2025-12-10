@@ -41,9 +41,7 @@ async def upload_attachment(
     # Verify message exists and belongs to user's session
     message = db.query(Message).filter(Message.id == message_id).first()
     if not message:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
 
     # Verify user has access to the session
     # Note: Add session ownership check based on your Session model
@@ -78,9 +76,7 @@ async def upload_attachment(
         )
 
     # Upload file
-    file_url = await storage_service.upload_file(
-        file, str(current_user.id), str(message_id)
-    )
+    file_url = await storage_service.upload_file(file, str(current_user.id), str(message_id))
 
     # Create attachment record
     attachment = MessageAttachment(
@@ -118,16 +114,10 @@ async def list_attachments(
     # Verify message exists
     message = db.query(Message).filter(Message.id == message_id).first()
     if not message:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
 
     # Get attachments
-    attachments = (
-        db.query(MessageAttachment)
-        .filter(MessageAttachment.message_id == message_id)
-        .all()
-    )
+    attachments = db.query(MessageAttachment).filter(MessageAttachment.message_id == message_id).all()
 
     return [attachment.to_dict() for attachment in attachments]
 
@@ -149,15 +139,9 @@ async def delete_attachment(
     storage_service = get_storage_service()
 
     # Get attachment
-    attachment = (
-        db.query(MessageAttachment)
-        .filter(MessageAttachment.id == attachment_id)
-        .first()
-    )
+    attachment = db.query(MessageAttachment).filter(MessageAttachment.id == attachment_id).first()
     if not attachment:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found")
 
     # Verify user has access to the message's session
     # Add ownership verification here
@@ -192,15 +176,9 @@ async def download_attachment(
     storage_service = get_storage_service()
 
     # Get attachment
-    attachment = (
-        db.query(MessageAttachment)
-        .filter(MessageAttachment.id == attachment_id)
-        .first()
-    )
+    attachment = db.query(MessageAttachment).filter(MessageAttachment.id == attachment_id).first()
     if not attachment:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found")
 
     # Verify user has access to the message's session
     # Add ownership verification here
@@ -208,9 +186,7 @@ async def download_attachment(
     # Get file content
     file_content = await storage_service.get_file(attachment.file_url)
     if not file_content:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="File not found in storage"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found in storage")
 
     # Return file stream
     return StreamingResponse(

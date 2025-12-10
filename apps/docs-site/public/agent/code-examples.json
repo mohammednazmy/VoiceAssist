@@ -1,0 +1,4274 @@
+{
+  "version": "2.0.0",
+  "generated_at": "2025-12-04T10:37:09.725Z",
+  "description": "Code examples extracted from documentation",
+  "stats": {
+    "total_examples": 3294,
+    "languages": 26,
+    "top_languages": [
+      {
+        "language": "bash",
+        "count": 1097
+      },
+      {
+        "language": "text",
+        "count": 613
+      },
+      {
+        "language": "typescript",
+        "count": 460
+      },
+      {
+        "language": "python",
+        "count": 456
+      },
+      {
+        "language": "json",
+        "count": 184
+      },
+      {
+        "language": "yaml",
+        "count": 175
+      },
+      {
+        "language": "tsx",
+        "count": 72
+      },
+      {
+        "language": "javascript",
+        "count": 46
+      },
+      {
+        "language": "sql",
+        "count": 39
+      },
+      {
+        "language": "markdown",
+        "count": 24
+      }
+    ]
+  },
+  "by_language": {
+    "tsx": {
+      "count": 72,
+      "examples": [
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:0",
+          "doc_path": "ACCESSIBILITY_AUDIT.md",
+          "description": "Improvements Needed:"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:1",
+          "doc_path": "ACCESSIBILITY_AUDIT.md",
+          "description": "Improvements:"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:2",
+          "doc_path": "ACCESSIBILITY_AUDIT.md",
+          "description": "Improvements:"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:3",
+          "doc_path": "ACCESSIBILITY_AUDIT.md",
+          "description": "Improvements:"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:5",
+          "doc_path": "ACCESSIBILITY_AUDIT.md",
+          "description": "```"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:6",
+          "doc_path": "ACCESSIBILITY_AUDIT.md",
+          "description": "Improvements:"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:35",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "Available from `packages/ui`, links to relevant documentation from any admin page:"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:36",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "Embedded in admin panel pages to provide contextual AI assistance:"
+        },
+        {
+          "id": "DOCUMENTATION_SITE_SPECS.md:5",
+          "doc_path": "DOCUMENTATION_SITE_SPECS.md",
+          "description": "Links to relevant documentation from any page:"
+        },
+        {
+          "id": "DOCUMENTATION_SITE_SPECS.md:6",
+          "doc_path": "DOCUMENTATION_SITE_SPECS.md",
+          "description": "Opens dialog to ask questions with page context:"
+        },
+        {
+          "id": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md:3",
+          "doc_path": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md",
+          "description": "**File:** `packages/ui/src/components/medical/VitalSignCard.tsx`"
+        },
+        {
+          "id": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md:4",
+          "doc_path": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md",
+          "description": "**File:** `packages/ui/src/components/medical/MedicationList.tsx`"
+        },
+        {
+          "id": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md:20",
+          "doc_path": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md",
+          "description": "**File:** `apps/admin-panel/src/pages/KBCurationDashboard.tsx`"
+        },
+        {
+          "id": "REMAINING_MESSAGE_EDIT_WORK.md:2",
+          "doc_path": "REMAINING_MESSAGE_EDIT_WORK.md",
+          "description": "3. **Implement Inline Edit UI**"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md:2",
+          "doc_path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
+          "description": "The `AppSwitcher` component provides a dropdown menu for navigating between applications:"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md:17",
+          "doc_path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
+          "description": "Using the React Hook"
+        },
+        {
+          "id": "admin/REALTIME_EVENTS_GUIDE.md:13",
+          "doc_path": "admin/REALTIME_EVENTS_GUIDE.md",
+          "description": "The `useRealtimeEvents` hook provides a complete interface for consuming real-time events:"
+        },
+        {
+          "id": "admin/REALTIME_EVENTS_GUIDE.md:14",
+          "doc_path": "admin/REALTIME_EVENTS_GUIDE.md",
+          "description": "For listening to specific event types:"
+        },
+        {
+          "id": "admin/REALTIME_EVENTS_GUIDE.md:28",
+          "doc_path": "admin/REALTIME_EVENTS_GUIDE.md",
+          "description": "2. **Filter events on client:**"
+        },
+        {
+          "id": "archive/DESIGN_SYSTEM_IMPLEMENTATION_PLAN.md:7",
+          "doc_path": "archive/DESIGN_SYSTEM_IMPLEMENTATION_PLAN.md",
+          "description": "**D. Layout Structure**"
+        }
+      ]
+    },
+    "css": {
+      "count": 19,
+      "examples": [
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:4",
+          "doc_path": "ACCESSIBILITY_AUDIT.md",
+          "description": "Improvements:"
+        },
+        {
+          "id": "archive/DESIGN_SYSTEM_IMPLEMENTATION_PLAN.md:4",
+          "doc_path": "archive/DESIGN_SYSTEM_IMPLEMENTATION_PLAN.md",
+          "description": "- Support both light and dark modes"
+        },
+        {
+          "id": "archive/DEVELOPMENT_SESSION_SUMMARY.md:3",
+          "doc_path": "archive/DEVELOPMENT_SESSION_SUMMARY.md",
+          "description": "**CSS Animations** (30 lines):"
+        },
+        {
+          "id": "archive/PHASE_8_ACCESSIBILITY_COMPLETE.md:2",
+          "doc_path": "archive/PHASE_8_ACCESSIBILITY_COMPLETE.md",
+          "description": "**CSS:**"
+        },
+        {
+          "id": "archive/PHASE_8_ACCESSIBILITY_COMPLETE.md:3",
+          "doc_path": "archive/PHASE_8_ACCESSIBILITY_COMPLETE.md",
+          "description": "**Implementation:**"
+        },
+        {
+          "id": "archive/PHASE_8_ACCESSIBILITY_COMPLETE.md:4",
+          "doc_path": "archive/PHASE_8_ACCESSIBILITY_COMPLETE.md",
+          "description": "**Implementation:**"
+        },
+        {
+          "id": "archive/PHASE_8_ACCESSIBILITY_COMPLETE.md:5",
+          "doc_path": "archive/PHASE_8_ACCESSIBILITY_COMPLETE.md",
+          "description": "**CSS:**"
+        },
+        {
+          "id": "archive/PHASE_8_ACCESSIBILITY_COMPLETE.md:6",
+          "doc_path": "archive/PHASE_8_ACCESSIBILITY_COMPLETE.md",
+          "description": "**Implementation:**"
+        },
+        {
+          "id": "client-implementation/DOCS_SITE_FEATURE_SPECS.md:20",
+          "doc_path": "client-implementation/DOCS_SITE_FEATURE_SPECS.md",
+          "description": "**styles/docsearch.css (Customizations):**"
+        },
+        {
+          "id": "client-implementation/MASTER_IMPLEMENTATION_PLAN.md:2",
+          "doc_path": "client-implementation/MASTER_IMPLEMENTATION_PLAN.md",
+          "description": "Color Palette"
+        },
+        {
+          "id": "client-implementation/MASTER_IMPLEMENTATION_PLAN.md:3",
+          "doc_path": "client-implementation/MASTER_IMPLEMENTATION_PLAN.md",
+          "description": "Typography"
+        },
+        {
+          "id": "design-system/PHASE_1_BREAKDOWN.md:3",
+          "doc_path": "design-system/PHASE_1_BREAKDOWN.md",
+          "description": "1. Generate CSS custom properties from design tokens"
+        },
+        {
+          "id": "design-system/PHASE_1_BREAKDOWN.md:4",
+          "doc_path": "design-system/PHASE_1_BREAKDOWN.md",
+          "description": "2. Create dark mode overrides"
+        },
+        {
+          "id": "design-system/PHASE_1_BREAKDOWN.md:5",
+          "doc_path": "design-system/PHASE_1_BREAKDOWN.md",
+          "description": "3. Create semantic tokens"
+        },
+        {
+          "id": "design-system/PHASE_1_BREAKDOWN.md:6",
+          "doc_path": "design-system/PHASE_1_BREAKDOWN.md",
+          "description": "4. Add transition support"
+        },
+        {
+          "id": "design-system/PHASE_1_BREAKDOWN.md:11",
+          "doc_path": "design-system/PHASE_1_BREAKDOWN.md",
+          "description": "1. Import theme variables"
+        },
+        {
+          "id": "design-system/PHASE_1_BREAKDOWN.md:12",
+          "doc_path": "design-system/PHASE_1_BREAKDOWN.md",
+          "description": "2. Apply Tailwind directives"
+        },
+        {
+          "id": "design-system/PHASE_1_BREAKDOWN.md:13",
+          "doc_path": "design-system/PHASE_1_BREAKDOWN.md",
+          "description": "3. Add base styles"
+        },
+        {
+          "id": "planning/SPRINT_3_DESIGN_DOCS.md:11",
+          "doc_path": "planning/SPRINT_3_DESIGN_DOCS.md",
+          "description": "CSS Variables"
+        }
+      ]
+    },
+    "bash": {
+      "count": 1097,
+      "examples": [
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:7",
+          "doc_path": "ACCESSIBILITY_AUDIT.md",
+          "description": "Tools:"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:0",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+          "description": "1. Build Process"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:1",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+          "description": "2. File Deployment"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:2",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+          "description": "4. Apache Activation"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:6",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+          "description": "2. **Build**:"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:7",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+          "description": "3. **Deploy**:"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:8",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+          "description": "**Apache Logs:**"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:9",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+          "description": "**Service Status:**"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:10",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+          "description": "If issues occur, rollback to previous version:"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:13",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+          "description": "   - Enable HTTP/2 protocol for faster loading"
+        },
+        {
+          "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:1",
+          "doc_path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
+          "description": "Build Testing"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:6",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "4. Rebuilt and Redeployed ✅"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:7",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "1. Health Endpoint ✅"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:8",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "2. Auth Endpoint ✅"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:13",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "If Apache proxy not working:"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:14",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "If database connection fails:"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:15",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "3. (Current) Update via database:"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:18",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "1. **Temporary fix** (in running container):"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:20",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "Verification"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:1",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md",
+          "description": "**Commands:**"
+        }
+      ]
+    },
+    "text": {
+      "count": 613,
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:3",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+          "description": "HTTP Headers"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:4",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+          "description": "Frontend (Static SPA)"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:5",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+          "description": "API Communication"
+        },
+        {
+          "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:0",
+          "doc_path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
+          "description": "📈 Code Statistics"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:0",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "1. Firebase Errors (Wrong Bundle)"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:1",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "2. CORS Error"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:9",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "Before (Broken)"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:10",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "After (Working)"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:12",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "Git Commits"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:16",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "Error Message"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:17",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "- Docker logs showed:"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:21",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "Error Message"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:23",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "Error Message"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:12",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md",
+          "description": "**Commit Message:**"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:4",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "Interface Layout"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:5",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "**Full Dashboard Wireframe:**"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:8",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "**Local Models (Ollama)**"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:9",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "**Cloud API Configuration**"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:10",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "Routing Logic"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:11",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "**Full Knowledge Base Page Wireframe:**"
+        }
+      ]
+    },
+    "apache": {
+      "count": 9,
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:11",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+          "description": "1. **HSTS Header**"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:12",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+          "description": "2. **Restrict CORS**"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:4",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "**Added**:"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:5",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "**Added to rewrite conditions**:"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:0",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md",
+          "description": "**File:** `/etc/apache2/sites-available/admin.asimo.io.conf`"
+        },
+        {
+          "id": "debugging/DEBUGGING_DOCS_SITE.md:35",
+          "doc_path": "debugging/DEBUGGING_DOCS_SITE.md",
+          "description": "Required config at `/etc/apache2/sites-available/assistdocs.asimo.io-le-ssl.conf`:"
+        },
+        {
+          "id": "debugging/DEBUGGING_VOICE_REALTIME.md:21",
+          "doc_path": "debugging/DEBUGGING_VOICE_REALTIME.md",
+          "description": "4. Check Apache/Nginx proxy config:"
+        },
+        {
+          "id": "debugging/DEBUGGING_VOICE_REALTIME.md:25",
+          "doc_path": "debugging/DEBUGGING_VOICE_REALTIME.md",
+          "description": "4. Check proxy timeouts:"
+        },
+        {
+          "id": "operations/runbooks/DOCS_SITE_DEPLOYMENT_AND_TLS.md:22",
+          "doc_path": "operations/runbooks/DOCS_SITE_DEPLOYMENT_AND_TLS.md",
+          "description": "Key Configuration"
+        }
+      ]
+    },
+    "json": {
+      "count": 184,
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:2",
+          "doc_path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
+          "description": "📦 Dependencies Added"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:4",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md",
+          "description": "**Problem:** The backend `/api/auth/login` endpoint returns a flat JSON response:"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:5",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md",
+          "description": "But the frontend was using `fetchAPI()` which expects responses wrapped in an APIEnvelope:"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:9",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md",
+          "description": "**Expected Output:**"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:10",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Docker Daemon Configuration** (`templates/daemon.json.j2`):"
+        },
+        {
+          "id": "BACKEND_ARCHITECTURE.md:7",
+          "doc_path": "BACKEND_ARCHITECTURE.md",
+          "description": "- **Consistent response format** for all endpoints:"
+        },
+        {
+          "id": "CONFIGURATION_REFERENCE.md:21",
+          "doc_path": "CONFIGURATION_REFERENCE.md",
+          "description": "For programmatic validation, use this JSON Schema:"
+        },
+        {
+          "id": "DATA_MODEL.md:0",
+          "doc_path": "DATA_MODEL.md",
+          "description": "JSON Schema"
+        },
+        {
+          "id": "DATA_MODEL.md:3",
+          "doc_path": "DATA_MODEL.md",
+          "description": "JSON Schema"
+        },
+        {
+          "id": "DATA_MODEL.md:7",
+          "doc_path": "DATA_MODEL.md",
+          "description": "JSON Schema"
+        },
+        {
+          "id": "DATA_MODEL.md:10",
+          "doc_path": "DATA_MODEL.md",
+          "description": "JSON Schema"
+        },
+        {
+          "id": "DATA_MODEL.md:13",
+          "doc_path": "DATA_MODEL.md",
+          "description": "JSON Schema"
+        },
+        {
+          "id": "DATA_MODEL.md:16",
+          "doc_path": "DATA_MODEL.md",
+          "description": "JSON Schema"
+        },
+        {
+          "id": "DATA_MODEL.md:19",
+          "doc_path": "DATA_MODEL.md",
+          "description": "JSON Schema (PostgreSQL)"
+        },
+        {
+          "id": "DATA_MODEL.md:22",
+          "doc_path": "DATA_MODEL.md",
+          "description": "JSON Schema"
+        },
+        {
+          "id": "DATA_MODEL.md:27",
+          "doc_path": "DATA_MODEL.md",
+          "description": "JSON Schema"
+        },
+        {
+          "id": "DATA_MODEL.md:30",
+          "doc_path": "DATA_MODEL.md",
+          "description": "JSON Schema"
+        },
+        {
+          "id": "DEEP_VERIFICATION_QA_SUMMARY.md:13",
+          "doc_path": "DEEP_VERIFICATION_QA_SUMMARY.md",
+          "description": "- `recent_changes` field summarizing this update"
+        },
+        {
+          "id": "DEVELOPMENT_SETUP.md:23",
+          "doc_path": "DEVELOPMENT_SETUP.md",
+          "description": "Example response:"
+        },
+        {
+          "id": "FEATURE_FLAGS.md:9",
+          "doc_path": "FEATURE_FLAGS.md",
+          "description": "**Response**:"
+        }
+      ]
+    },
+    "typescript": {
+      "count": 460,
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:2",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "**Original Code**:"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:3",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "**Changed**:"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:22",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "**Changes:**"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:25",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "3. **Security**: Backend still validates tokens on all API calls"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:6",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md",
+          "description": "**Change:**"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:0",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "Usage Example - KB Management"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:1",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "**Knowledge Base Management (TypeScript):**"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:2",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "**React Hook for Document Management:**"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:3",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "**Real-time Metrics with WebSocket:**"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:6",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "Complete TypeScript interface for system-level configuration:"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:15",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "Complete React hook for managing indexing jobs:"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:16",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "**Usage in Component:**"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:27",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "Tools Overview Dashboard"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:28",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "Tool Configuration"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:29",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "External API Integrations"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:30",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "Integration Configuration UI"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:31",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "Tool Invocation Logs"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:32",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "Tool Usage Analytics"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:33",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "Tool Health Monitoring"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:37",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "**API Endpoint:**"
+        }
+      ]
+    },
+    "sql": {
+      "count": 39,
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:11",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "Created users table and admin user:"
+        },
+        {
+          "id": "FEATURE_FLAGS.md:1",
+          "doc_path": "FEATURE_FLAGS.md",
+          "description": "`feature_flags` Table"
+        },
+        {
+          "id": "PART2_DEFERRED_BACKEND_FEATURES_PLAN.md:0",
+          "doc_path": "PART2_DEFERRED_BACKEND_FEATURES_PLAN.md",
+          "description": "**Database Schema:**"
+        },
+        {
+          "id": "PART2_DEFERRED_BACKEND_FEATURES_PLAN.md:4",
+          "doc_path": "PART2_DEFERRED_BACKEND_FEATURES_PLAN.md",
+          "description": "**Database Schema:**"
+        },
+        {
+          "id": "PART2_DEFERRED_BACKEND_FEATURES_PLAN.md:6",
+          "doc_path": "PART2_DEFERRED_BACKEND_FEATURES_PLAN.md",
+          "description": "**Database Schema:**"
+        },
+        {
+          "id": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md:17",
+          "doc_path": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md",
+          "description": "4.3 Database Schema"
+        },
+        {
+          "id": "PERFORMANCE_TUNING_GUIDE.md:1",
+          "doc_path": "PERFORMANCE_TUNING_GUIDE.md",
+          "description": "**Tools**:"
+        },
+        {
+          "id": "PERFORMANCE_TUNING_GUIDE.md:3",
+          "doc_path": "PERFORMANCE_TUNING_GUIDE.md",
+          "description": "**Common Patterns**:"
+        },
+        {
+          "id": "PERFORMANCE_TUNING_GUIDE.md:4",
+          "doc_path": "PERFORMANCE_TUNING_GUIDE.md",
+          "description": "**Index Analysis**:"
+        },
+        {
+          "id": "PERFORMANCE_TUNING_GUIDE.md:13",
+          "doc_path": "PERFORMANCE_TUNING_GUIDE.md",
+          "description": "**Regular Tasks**:"
+        },
+        {
+          "id": "PHASE_02_COMPLETION_REPORT.md:5",
+          "doc_path": "PHASE_02_COMPLETION_REPORT.md",
+          "description": "**Users Table:**"
+        },
+        {
+          "id": "PHASE_02_ENHANCEMENTS_REPORT.md:13",
+          "doc_path": "PHASE_02_ENHANCEMENTS_REPORT.md",
+          "description": "**Table Schema**:"
+        },
+        {
+          "id": "PHASE_0_1_COMPLETION_REPORT.md:0",
+          "doc_path": "PHASE_0_1_COMPLETION_REPORT.md",
+          "description": "Users Table"
+        },
+        {
+          "id": "PHASE_0_1_COMPLETION_REPORT.md:1",
+          "doc_path": "PHASE_0_1_COMPLETION_REPORT.md",
+          "description": "Sessions Table"
+        },
+        {
+          "id": "PHASE_0_1_COMPLETION_REPORT.md:2",
+          "doc_path": "PHASE_0_1_COMPLETION_REPORT.md",
+          "description": "Messages Table"
+        },
+        {
+          "id": "PHASE_2_OPTIMIZED_PLAN.md:15",
+          "doc_path": "PHASE_2_OPTIMIZED_PLAN.md",
+          "description": "**Add to users table:**"
+        },
+        {
+          "id": "PHASE_2_OPTIMIZED_PLAN.md:16",
+          "doc_path": "PHASE_2_OPTIMIZED_PLAN.md",
+          "description": "**Add to sessions table:**"
+        },
+        {
+          "id": "RTO_RPO_DOCUMENTATION.md:1",
+          "doc_path": "RTO_RPO_DOCUMENTATION.md",
+          "description": "**Example Query (from audit logs):**"
+        },
+        {
+          "id": "RTO_RPO_DOCUMENTATION.md:3",
+          "doc_path": "RTO_RPO_DOCUMENTATION.md",
+          "description": "**Example Query (replication lag):**"
+        },
+        {
+          "id": "SECURITY_COMPLIANCE.md:7",
+          "doc_path": "SECURITY_COMPLIANCE.md",
+          "description": "**PostgreSQL (Transparent Data Encryption):**"
+        }
+      ]
+    },
+    "diff": {
+      "count": 3,
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:19",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "2. **Permanent fix** (in requirements.txt):"
+        },
+        {
+          "id": "LOGIN_500_FIX_2025-11-25.md:0",
+          "doc_path": "LOGIN_500_FIX_2025-11-25.md",
+          "description": "Downgraded bcrypt from 5.0.0 to 4.0.1 in `services/api-gateway/requirements.txt`:"
+        },
+        {
+          "id": "LOGIN_500_FIX_2025-11-25.md:1",
+          "doc_path": "LOGIN_500_FIX_2025-11-25.md",
+          "description": "Also updated redis version (from previous session fix):"
+        }
+      ]
+    },
+    "python": {
+      "count": 456,
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:24",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "**Pydantic Response Validation Error:**"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:26",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+          "description": "The proper fix requires updating the backend `UserResponse` schema:"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:7",
+          "doc_path": "ADMIN_PANEL_SPECS.md",
+          "description": "System Settings Backend API"
+        },
+        {
+          "id": "API_REFERENCE.md:1",
+          "doc_path": "API_REFERENCE.md",
+          "description": "**Tool Functions (for AI agents):**"
+        },
+        {
+          "id": "BACKEND_ARCHITECTURE.md:2",
+          "doc_path": "BACKEND_ARCHITECTURE.md",
+          "description": "**`app/main.py`**:"
+        },
+        {
+          "id": "BACKEND_ARCHITECTURE.md:3",
+          "doc_path": "BACKEND_ARCHITECTURE.md",
+          "description": "**`app/services/rag_service.py`**:"
+        },
+        {
+          "id": "BACKEND_ARCHITECTURE.md:9",
+          "doc_path": "BACKEND_ARCHITECTURE.md",
+          "description": "**`shared/` Package**:"
+        },
+        {
+          "id": "BACKEND_SKELETON_VERIFICATION.md:0",
+          "doc_path": "BACKEND_SKELETON_VERIFICATION.md",
+          "description": "**Fields**:"
+        },
+        {
+          "id": "BACKEND_SKELETON_VERIFICATION.md:1",
+          "doc_path": "BACKEND_SKELETON_VERIFICATION.md",
+          "description": "1. **Added Prometheus Metrics** (5 metrics):"
+        },
+        {
+          "id": "BACKEND_SKELETON_VERIFICATION.md:2",
+          "doc_path": "BACKEND_SKELETON_VERIFICATION.md",
+          "description": "3. **Added Structured Logging**:"
+        },
+        {
+          "id": "BACKEND_SKELETON_VERIFICATION.md:3",
+          "doc_path": "BACKEND_SKELETON_VERIFICATION.md",
+          "description": "4. **Graceful Degradation**: Wrapped Prometheus imports in try/except"
+        },
+        {
+          "id": "DATA_MODEL.md:1",
+          "doc_path": "DATA_MODEL.md",
+          "description": "Pydantic (Python)"
+        },
+        {
+          "id": "DATA_MODEL.md:4",
+          "doc_path": "DATA_MODEL.md",
+          "description": "Pydantic (Python)"
+        },
+        {
+          "id": "DATA_MODEL.md:8",
+          "doc_path": "DATA_MODEL.md",
+          "description": "Pydantic (Python)"
+        },
+        {
+          "id": "DATA_MODEL.md:11",
+          "doc_path": "DATA_MODEL.md",
+          "description": "Pydantic (Python)"
+        },
+        {
+          "id": "DATA_MODEL.md:14",
+          "doc_path": "DATA_MODEL.md",
+          "description": "Pydantic (Python)"
+        },
+        {
+          "id": "DATA_MODEL.md:17",
+          "doc_path": "DATA_MODEL.md",
+          "description": "Pydantic (Python)"
+        },
+        {
+          "id": "DATA_MODEL.md:20",
+          "doc_path": "DATA_MODEL.md",
+          "description": "Pydantic (Python)"
+        },
+        {
+          "id": "DATA_MODEL.md:23",
+          "doc_path": "DATA_MODEL.md",
+          "description": "Pydantic (Python)"
+        },
+        {
+          "id": "DATA_MODEL.md:28",
+          "doc_path": "DATA_MODEL.md",
+          "description": "Pydantic (Python)"
+        }
+      ]
+    },
+    "yaml": {
+      "count": 175,
+      "examples": [
+        {
+          "id": "ANSIBLE_GUIDE.md:1",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "The main playbook (`site.yml`) orchestrates all configuration:"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:4",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Key Tasks** (`tasks/main.yml`):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:5",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Variables** (`defaults/main.yml`):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:6",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Key Tasks** (`tasks/main.yml`):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:8",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Variables** (`defaults/main.yml`):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:9",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Key Tasks** (`tasks/main.yml`):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:11",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Variables** (`defaults/main.yml`):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:12",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Key Tasks** (`tasks/main.yml`):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:13",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Variables** (`defaults/main.yml`):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:14",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Key Tasks** (`tasks/main.yml`):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:15",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Variables** (`defaults/main.yml`):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:16",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Development** (`inventories/dev/hosts.yml`):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:17",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Production** (`inventories/production/hosts.yml`):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:18",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**All Hosts** (`inventories/production/group_vars/all.yml`):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:19",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Docker Hosts** (`inventories/production/group_vars/docker_hosts.yml`):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:24",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Example vault file** (`group_vars/vault.yml`):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:25",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "**Using vault variables:**"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:30",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "HIPAA Compliance Playbook"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:31",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "Ensure tasks are idempotent (safe to run multiple times):"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:32",
+          "doc_path": "ANSIBLE_GUIDE.md",
+          "description": "2. Use Modules Over Shell"
+        }
+      ]
+    },
+    "markdown": {
+      "count": 24,
+      "examples": [
+        {
+          "id": "BACKEND_SKELETON_VERIFICATION.md:4",
+          "doc_path": "BACKEND_SKELETON_VERIFICATION.md",
+          "description": "**Stub Structure**:"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:4",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md",
+          "description": "**Example Session Checklist:**"
+        },
+        {
+          "id": "DEEP_VERIFICATION_QA_SUMMARY.md:9",
+          "doc_path": "DEEP_VERIFICATION_QA_SUMMARY.md",
+          "description": "**Before** (Generic):"
+        },
+        {
+          "id": "DEEP_VERIFICATION_QA_SUMMARY.md:10",
+          "doc_path": "DEEP_VERIFICATION_QA_SUMMARY.md",
+          "description": "**After** (Specific):"
+        },
+        {
+          "id": "DEEP_VERIFICATION_QA_SUMMARY.md:11",
+          "doc_path": "DEEP_VERIFICATION_QA_SUMMARY.md",
+          "description": "**Before** (Generic):"
+        },
+        {
+          "id": "DEEP_VERIFICATION_QA_SUMMARY.md:12",
+          "doc_path": "DEEP_VERIFICATION_QA_SUMMARY.md",
+          "description": "**After** (Specific):"
+        },
+        {
+          "id": "DEVELOPMENT_PHASES.md:0",
+          "doc_path": "DEVELOPMENT_PHASES.md",
+          "description": "Create a `PHASE_STATUS.md` file to track progress:"
+        },
+        {
+          "id": "DEVELOPMENT_PHASES_V2.md:1",
+          "doc_path": "DEVELOPMENT_PHASES_V2.md",
+          "description": "Create `~/VoiceAssist/CURRENT_PHASE.md`:"
+        },
+        {
+          "id": "DOCUMENTATION_COMPLETION_SUMMARY.md:1",
+          "doc_path": "DOCUMENTATION_COMPLETION_SUMMARY.md",
+          "description": "**Current Content:**"
+        },
+        {
+          "id": "RTO_RPO_DOCUMENTATION.md:7",
+          "doc_path": "RTO_RPO_DOCUMENTATION.md",
+          "description": "**Template:**"
+        },
+        {
+          "id": "STYLE_GUIDE.md:1",
+          "doc_path": "STYLE_GUIDE.md",
+          "description": "Headings"
+        },
+        {
+          "id": "STYLE_GUIDE.md:4",
+          "doc_path": "STYLE_GUIDE.md",
+          "description": "`"
+        },
+        {
+          "id": "archive/PHASE_7_EXPORT_COMPLETE.md:0",
+          "doc_path": "archive/PHASE_7_EXPORT_COMPLETE.md",
+          "description": "Markdown Format Example"
+        },
+        {
+          "id": "client-implementation/DEVELOPMENT_WORKFLOW.md:6",
+          "doc_path": "client-implementation/DEVELOPMENT_WORKFLOW.md",
+          "description": "Create `.github/PULL_REQUEST_TEMPLATE.md`:"
+        },
+        {
+          "id": "client-implementation/DEVELOPMENT_WORKFLOW.md:18",
+          "doc_path": "client-implementation/DEVELOPMENT_WORKFLOW.md",
+          "description": "Use this checklist for every code review:"
+        },
+        {
+          "id": "client-implementation/DEVELOPMENT_WORKFLOW.md:44",
+          "doc_path": "client-implementation/DEVELOPMENT_WORKFLOW.md",
+          "description": "5.1 Pre-Deployment Checklist"
+        },
+        {
+          "id": "client-implementation/DEVELOPMENT_WORKFLOW.md:54",
+          "doc_path": "client-implementation/DEVELOPMENT_WORKFLOW.md",
+          "description": "`"
+        },
+        {
+          "id": "client-implementation/OPEN_QUESTIONS.md:2",
+          "doc_path": "client-implementation/OPEN_QUESTIONS.md",
+          "description": "For each decision, use this template:"
+        },
+        {
+          "id": "operations/runbooks/INCIDENT_RESPONSE.md:19",
+          "doc_path": "operations/runbooks/INCIDENT_RESPONSE.md",
+          "description": "**Post-Mortem Template:**"
+        },
+        {
+          "id": "phases/PHASE_01_LOCAL_ENVIRONMENT.md:33",
+          "doc_path": "phases/PHASE_01_LOCAL_ENVIRONMENT.md",
+          "description": "1. Create `~/VoiceAssist/PHASE_STATUS.md`:"
+        }
+      ]
+    },
+    "promql": {
+      "count": 15,
+      "examples": [
+        {
+          "id": "CHAOS_ENGINEERING.md:30",
+          "doc_path": "CHAOS_ENGINEERING.md",
+          "description": "Track Resilience Over Time"
+        },
+        {
+          "id": "README.md:4",
+          "doc_path": "README.md",
+          "description": "Key Prometheus Queries"
+        },
+        {
+          "id": "archive/WORK_COMPLETED_2025-11-21.md:6",
+          "doc_path": "archive/WORK_COMPLETED_2025-11-21.md",
+          "description": "**Sample Queries:**"
+        },
+        {
+          "id": "operations/BUSINESS_METRICS.md:0",
+          "doc_path": "operations/BUSINESS_METRICS.md",
+          "description": "Set up Grafana alerts:"
+        },
+        {
+          "id": "operations/CONNECTION_POOL_OPTIMIZATION.md:1",
+          "doc_path": "operations/CONNECTION_POOL_OPTIMIZATION.md",
+          "description": "**Example Prometheus Queries**:"
+        },
+        {
+          "id": "operations/CONNECTION_POOL_OPTIMIZATION.md:7",
+          "doc_path": "operations/CONNECTION_POOL_OPTIMIZATION.md",
+          "description": "**Example Prometheus Queries**:"
+        },
+        {
+          "id": "operations/SLO_DEFINITIONS.md:0",
+          "doc_path": "operations/SLO_DEFINITIONS.md",
+          "description": "**SLI Definition:**"
+        },
+        {
+          "id": "operations/SLO_DEFINITIONS.md:1",
+          "doc_path": "operations/SLO_DEFINITIONS.md",
+          "description": "**SLI Definition:**"
+        },
+        {
+          "id": "operations/SLO_DEFINITIONS.md:2",
+          "doc_path": "operations/SLO_DEFINITIONS.md",
+          "description": "**SLI Definition:**"
+        },
+        {
+          "id": "operations/SLO_DEFINITIONS.md:3",
+          "doc_path": "operations/SLO_DEFINITIONS.md",
+          "description": "**SLI Definition:**"
+        },
+        {
+          "id": "operations/SLO_DEFINITIONS.md:4",
+          "doc_path": "operations/SLO_DEFINITIONS.md",
+          "description": "**SLI Definition:**"
+        },
+        {
+          "id": "operations/SLO_DEFINITIONS.md:5",
+          "doc_path": "operations/SLO_DEFINITIONS.md",
+          "description": "**SLI Definition:**"
+        },
+        {
+          "id": "operations/SLO_DEFINITIONS.md:8",
+          "doc_path": "operations/SLO_DEFINITIONS.md",
+          "description": "Quick SLO Status Check"
+        },
+        {
+          "id": "operations/SLO_DEFINITIONS.md:9",
+          "doc_path": "operations/SLO_DEFINITIONS.md",
+          "description": "Error Budget Remaining"
+        },
+        {
+          "id": "operations/SLO_DEFINITIONS.md:10",
+          "doc_path": "operations/SLO_DEFINITIONS.md",
+          "description": "SLO Burn Rate"
+        }
+      ]
+    },
+    "ini": {
+      "count": 4,
+      "examples": [
+        {
+          "id": "DEPLOYMENT_GUIDE.md:9",
+          "doc_path": "DEPLOYMENT_GUIDE.md",
+          "description": "**PostgreSQL (Production):**"
+        },
+        {
+          "id": "DEPLOYMENT_GUIDE.md:10",
+          "doc_path": "DEPLOYMENT_GUIDE.md",
+          "description": "Redis Configuration"
+        },
+        {
+          "id": "phases/PHASE_02_DATABASE_SCHEMA.md:1",
+          "doc_path": "phases/PHASE_02_DATABASE_SCHEMA.md",
+          "description": "Edit `~/VoiceAssist/server/alembic.ini`:"
+        },
+        {
+          "id": "phases/PHASE_12_COMPLETE_SUMMARY.md:0",
+          "doc_path": "phases/PHASE_12_COMPLETE_SUMMARY.md",
+          "description": "**Configuration Highlights:**"
+        }
+      ]
+    },
+    "nginx": {
+      "count": 2,
+      "examples": [
+        {
+          "id": "DEPLOYMENT_GUIDE.md:16",
+          "doc_path": "DEPLOYMENT_GUIDE.md",
+          "description": "Load Balancing"
+        },
+        {
+          "id": "operations/runbooks/SCALING.md:4",
+          "doc_path": "operations/runbooks/SCALING.md",
+          "description": "```"
+        }
+      ]
+    },
+    "http": {
+      "count": 24,
+      "examples": [
+        {
+          "id": "FEATURE_FLAGS.md:8",
+          "doc_path": "FEATURE_FLAGS.md",
+          "description": "1. List All Feature Flags"
+        },
+        {
+          "id": "FEATURE_FLAGS.md:10",
+          "doc_path": "FEATURE_FLAGS.md",
+          "description": "2. Get Specific Feature Flag"
+        },
+        {
+          "id": "FEATURE_FLAGS.md:11",
+          "doc_path": "FEATURE_FLAGS.md",
+          "description": "3. Create Feature Flag"
+        },
+        {
+          "id": "FEATURE_FLAGS.md:12",
+          "doc_path": "FEATURE_FLAGS.md",
+          "description": "4. Update Feature Flag"
+        },
+        {
+          "id": "FEATURE_FLAGS.md:13",
+          "doc_path": "FEATURE_FLAGS.md",
+          "description": "5. Delete Feature Flag"
+        },
+        {
+          "id": "FEATURE_FLAGS.md:14",
+          "doc_path": "FEATURE_FLAGS.md",
+          "description": "Quick toggle endpoint for boolean flags:"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md:4",
+          "doc_path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
+          "description": "Conversation List API"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md:6",
+          "doc_path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
+          "description": "Viewing Conversation Details"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md:8",
+          "doc_path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
+          "description": "Clinical Context List"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md:10",
+          "doc_path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
+          "description": "To reveal PHI data (logged for audit):"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md:13",
+          "doc_path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
+          "description": "API Endpoints"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md:19",
+          "doc_path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
+          "description": "All admin API requests require a valid JWT token in the Authorization header:"
+        },
+        {
+          "id": "ai/AGENT_API_REFERENCE.md:0",
+          "doc_path": "ai/AGENT_API_REFERENCE.md",
+          "description": "Request"
+        },
+        {
+          "id": "ai/AGENT_API_REFERENCE.md:2",
+          "doc_path": "ai/AGENT_API_REFERENCE.md",
+          "description": "Request"
+        },
+        {
+          "id": "ai/AGENT_API_REFERENCE.md:5",
+          "doc_path": "ai/AGENT_API_REFERENCE.md",
+          "description": "Request"
+        },
+        {
+          "id": "ai/AGENT_API_REFERENCE.md:9",
+          "doc_path": "ai/AGENT_API_REFERENCE.md",
+          "description": "Request"
+        },
+        {
+          "id": "ai/AGENT_API_REFERENCE.md:11",
+          "doc_path": "ai/AGENT_API_REFERENCE.md",
+          "description": "Request"
+        },
+        {
+          "id": "ai/AGENT_API_REFERENCE.md:16",
+          "doc_path": "ai/AGENT_API_REFERENCE.md",
+          "description": "1. Discover the System"
+        },
+        {
+          "id": "ai/AGENT_API_REFERENCE.md:17",
+          "doc_path": "ai/AGENT_API_REFERENCE.md",
+          "description": "2. Get All Documents"
+        },
+        {
+          "id": "ai/AGENT_API_REFERENCE.md:18",
+          "doc_path": "ai/AGENT_API_REFERENCE.md",
+          "description": "3. Search for Specific Topics"
+        }
+      ]
+    },
+    "mermaid": {
+      "count": 16,
+      "examples": [
+        {
+          "id": "FRONTEND_COMPLETION_PLAN.md:9",
+          "doc_path": "FRONTEND_COMPLETION_PLAN.md",
+          "description": "Dependencies"
+        },
+        {
+          "id": "WEBSOCKET_PROTOCOL.md:11",
+          "doc_path": "WEBSOCKET_PROTOCOL.md",
+          "description": "1. Connection Establishment"
+        },
+        {
+          "id": "WEBSOCKET_PROTOCOL.md:12",
+          "doc_path": "WEBSOCKET_PROTOCOL.md",
+          "description": "2. Message Exchange"
+        },
+        {
+          "id": "WEBSOCKET_PROTOCOL.md:13",
+          "doc_path": "WEBSOCKET_PROTOCOL.md",
+          "description": "3. Error Handling"
+        },
+        {
+          "id": "WEBSOCKET_PROTOCOL.md:14",
+          "doc_path": "WEBSOCKET_PROTOCOL.md",
+          "description": "4. Heartbeat"
+        },
+        {
+          "id": "WEBSOCKET_PROTOCOL.md:15",
+          "doc_path": "WEBSOCKET_PROTOCOL.md",
+          "description": "5. Disconnection"
+        },
+        {
+          "id": "architecture/ARCHITECTURE_DIAGRAMS.md:0",
+          "doc_path": "architecture/ARCHITECTURE_DIAGRAMS.md",
+          "description": "High-level view of VoiceAssist and its external dependencies."
+        },
+        {
+          "id": "architecture/ARCHITECTURE_DIAGRAMS.md:1",
+          "doc_path": "architecture/ARCHITECTURE_DIAGRAMS.md",
+          "description": "Internal containers within VoiceAssist system."
+        },
+        {
+          "id": "architecture/ARCHITECTURE_DIAGRAMS.md:2",
+          "doc_path": "architecture/ARCHITECTURE_DIAGRAMS.md",
+          "description": "Internal components of the API Gateway application."
+        },
+        {
+          "id": "architecture/ARCHITECTURE_DIAGRAMS.md:3",
+          "doc_path": "architecture/ARCHITECTURE_DIAGRAMS.md",
+          "description": "RAG Query Flow"
+        },
+        {
+          "id": "architecture/ARCHITECTURE_DIAGRAMS.md:4",
+          "doc_path": "architecture/ARCHITECTURE_DIAGRAMS.md",
+          "description": "Document Indexing Flow"
+        },
+        {
+          "id": "architecture/ARCHITECTURE_DIAGRAMS.md:5",
+          "doc_path": "architecture/ARCHITECTURE_DIAGRAMS.md",
+          "description": "Authentication Flow"
+        },
+        {
+          "id": "architecture/ARCHITECTURE_DIAGRAMS.md:6",
+          "doc_path": "architecture/ARCHITECTURE_DIAGRAMS.md",
+          "description": "Current Deployment (Docker Compose - Phases 0-7)"
+        },
+        {
+          "id": "architecture/ARCHITECTURE_DIAGRAMS.md:7",
+          "doc_path": "architecture/ARCHITECTURE_DIAGRAMS.md",
+          "description": "Future Deployment (Kubernetes - Phases 11-14)"
+        },
+        {
+          "id": "architecture/ARCHITECTURE_DIAGRAMS.md:8",
+          "doc_path": "architecture/ARCHITECTURE_DIAGRAMS.md",
+          "description": "Calendar Event Creation"
+        },
+        {
+          "id": "architecture/ARCHITECTURE_DIAGRAMS.md:9",
+          "doc_path": "architecture/ARCHITECTURE_DIAGRAMS.md",
+          "description": "File Auto-Indexing from Nextcloud"
+        }
+      ]
+    },
+    "env": {
+      "count": 10,
+      "examples": [
+        {
+          "id": "OAUTH_LOGIN_CONFIG.md:0",
+          "doc_path": "OAUTH_LOGIN_CONFIG.md",
+          "description": "Google OAuth"
+        },
+        {
+          "id": "OAUTH_LOGIN_CONFIG.md:1",
+          "doc_path": "OAUTH_LOGIN_CONFIG.md",
+          "description": "Microsoft OAuth"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md:3",
+          "doc_path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
+          "description": "Configure application URLs via environment variables:"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md:21",
+          "doc_path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
+          "description": "Environment Variables"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md:23",
+          "doc_path": "admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
+          "description": "Feature Flags"
+        },
+        {
+          "id": "admin/REALTIME_EVENTS_GUIDE.md:18",
+          "doc_path": "admin/REALTIME_EVENTS_GUIDE.md",
+          "description": "Redis Configuration"
+        },
+        {
+          "id": "admin/REALTIME_EVENTS_GUIDE.md:26",
+          "doc_path": "admin/REALTIME_EVENTS_GUIDE.md",
+          "description": "1. **Check for CORS issues:**"
+        },
+        {
+          "id": "archive/BACKEND_IMPLEMENTATION_PLAN.md:20",
+          "doc_path": "archive/BACKEND_IMPLEMENTATION_PLAN.md",
+          "description": "Configuration"
+        },
+        {
+          "id": "archive/VOICE_REALTIME_INTEGRATION.md:10",
+          "doc_path": "archive/VOICE_REALTIME_INTEGRATION.md",
+          "description": "Environment Variables"
+        },
+        {
+          "id": "client-implementation/DOCS_SITE_FEATURE_SPECS.md:7",
+          "doc_path": "client-implementation/DOCS_SITE_FEATURE_SPECS.md",
+          "description": "Create a `.env.local` file in your project root:"
+        }
+      ]
+    },
+    "xml": {
+      "count": 1,
+      "examples": [
+        {
+          "id": "PART2_DEFERRED_BACKEND_FEATURES_PLAN.md:23",
+          "doc_path": "PART2_DEFERRED_BACKEND_FEATURES_PLAN.md",
+          "description": "**App Metadata (info.xml):**"
+        }
+      ]
+    },
+    "txt": {
+      "count": 3,
+      "examples": [
+        {
+          "id": "PHASE_06_COMPLETION_REPORT.md:6",
+          "doc_path": "PHASE_06_COMPLETION_REPORT.md",
+          "description": "**Updated:** `services/api-gateway/requirements.txt`"
+        },
+        {
+          "id": "PHASE_2_OPTIMIZED_PLAN.md:3",
+          "doc_path": "PHASE_2_OPTIMIZED_PLAN.md",
+          "description": "**Dependencies:**"
+        },
+        {
+          "id": "phases/PHASE_01_LOCAL_ENVIRONMENT.md:17",
+          "doc_path": "phases/PHASE_01_LOCAL_ENVIRONMENT.md",
+          "description": "Create `~/VoiceAssist/server/requirements.txt`:"
+        }
+      ]
+    },
+    "javascript": {
+      "count": 46,
+      "examples": [
+        {
+          "id": "SECURITY_COMPLIANCE.md:14",
+          "doc_path": "SECURITY_COMPLIANCE.md",
+          "description": "3. Client-to-Server (WebRTC Voice)"
+        },
+        {
+          "id": "TESTING_GUIDE.md:18",
+          "doc_path": "TESTING_GUIDE.md",
+          "description": "Edit `scripts/generate-e2e-tests.js` to add new scenarios:"
+        },
+        {
+          "id": "WEBSOCKET_PROTOCOL.md:18",
+          "doc_path": "WEBSOCKET_PROTOCOL.md",
+          "description": "**Connection Test:**"
+        },
+        {
+          "id": "WEBSOCKET_PROTOCOL.md:19",
+          "doc_path": "WEBSOCKET_PROTOCOL.md",
+          "description": "**Ping Test:**"
+        },
+        {
+          "id": "admin/REALTIME_EVENTS_GUIDE.md:15",
+          "doc_path": "admin/REALTIME_EVENTS_GUIDE.md",
+          "description": "Connection"
+        },
+        {
+          "id": "ai/AGENT_API_REFERENCE.md:4",
+          "doc_path": "ai/AGENT_API_REFERENCE.md",
+          "description": "Since filtering is done client-side, here are JavaScript examples:"
+        },
+        {
+          "id": "ai/AGENT_API_REFERENCE.md:7",
+          "doc_path": "ai/AGENT_API_REFERENCE.md",
+          "description": "Filtering and Usage Examples"
+        },
+        {
+          "id": "ai/AGENT_API_REFERENCE.md:8",
+          "doc_path": "ai/AGENT_API_REFERENCE.md",
+          "description": "4. **Check prerequisites** - Verify required tools are available before executing"
+        },
+        {
+          "id": "ai/AGENT_API_REFERENCE.md:10",
+          "doc_path": "ai/AGENT_API_REFERENCE.md",
+          "description": "Usage Example"
+        },
+        {
+          "id": "ai/AGENT_API_REFERENCE.md:13",
+          "doc_path": "ai/AGENT_API_REFERENCE.md",
+          "description": "Client-Side Search Example"
+        },
+        {
+          "id": "ai/AGENT_ONBOARDING.md:11",
+          "doc_path": "ai/AGENT_ONBOARDING.md",
+          "description": "**Find docs for debugging:**"
+        },
+        {
+          "id": "ai/AGENT_ONBOARDING.md:12",
+          "doc_path": "ai/AGENT_ONBOARDING.md",
+          "description": "**Find task-specific guidance:**"
+        },
+        {
+          "id": "ai/AGENT_ONBOARDING.md:13",
+          "doc_path": "ai/AGENT_ONBOARDING.md",
+          "description": "**Full-text search:**"
+        },
+        {
+          "id": "ai/AGENT_TASK_INDEX.md:3",
+          "doc_path": "ai/AGENT_TASK_INDEX.md",
+          "description": "Use the agent JSON API to filter documents:"
+        },
+        {
+          "id": "api-reference/voice-pipeline-ws.md:0",
+          "doc_path": "api-reference/voice-pipeline-ws.md",
+          "description": "Include JWT token in connection URL or headers:"
+        },
+        {
+          "id": "api-reference/voice-pipeline-ws.md:22",
+          "doc_path": "api-reference/voice-pipeline-ws.md",
+          "description": "Example: Complete Session"
+        },
+        {
+          "id": "archive/VOICE_REALTIME_INTEGRATION.md:8",
+          "doc_path": "archive/VOICE_REALTIME_INTEGRATION.md",
+          "description": "Sent to OpenAI"
+        },
+        {
+          "id": "archive/VOICE_REALTIME_INTEGRATION.md:9",
+          "doc_path": "archive/VOICE_REALTIME_INTEGRATION.md",
+          "description": "Received from OpenAI"
+        },
+        {
+          "id": "client-implementation/DEVELOPMENT_WORKFLOW.md:15",
+          "doc_path": "client-implementation/DEVELOPMENT_WORKFLOW.md",
+          "description": "`commitlint.config.js`:"
+        },
+        {
+          "id": "client-implementation/REALTIME_PROXY_SPEC.md:1",
+          "doc_path": "client-implementation/REALTIME_PROXY_SPEC.md",
+          "description": "Example Connection"
+        }
+      ]
+    },
+    "hcl": {
+      "count": 13,
+      "examples": [
+        {
+          "id": "TERRAFORM_GUIDE.md:0",
+          "doc_path": "TERRAFORM_GUIDE.md",
+          "description": "Terraform Version"
+        },
+        {
+          "id": "TERRAFORM_GUIDE.md:2",
+          "doc_path": "TERRAFORM_GUIDE.md",
+          "description": "**Usage Example:**"
+        },
+        {
+          "id": "TERRAFORM_GUIDE.md:3",
+          "doc_path": "TERRAFORM_GUIDE.md",
+          "description": "**Usage Example:**"
+        },
+        {
+          "id": "TERRAFORM_GUIDE.md:4",
+          "doc_path": "TERRAFORM_GUIDE.md",
+          "description": "**Usage Example:**"
+        },
+        {
+          "id": "TERRAFORM_GUIDE.md:5",
+          "doc_path": "TERRAFORM_GUIDE.md",
+          "description": "**Usage Example:**"
+        },
+        {
+          "id": "TERRAFORM_GUIDE.md:6",
+          "doc_path": "TERRAFORM_GUIDE.md",
+          "description": "**Usage Example:**"
+        },
+        {
+          "id": "TERRAFORM_GUIDE.md:7",
+          "doc_path": "TERRAFORM_GUIDE.md",
+          "description": "**Usage Example:**"
+        },
+        {
+          "id": "TERRAFORM_GUIDE.md:8",
+          "doc_path": "TERRAFORM_GUIDE.md",
+          "description": "VPC Outputs"
+        },
+        {
+          "id": "TERRAFORM_GUIDE.md:9",
+          "doc_path": "TERRAFORM_GUIDE.md",
+          "description": "EKS Outputs"
+        },
+        {
+          "id": "TERRAFORM_GUIDE.md:10",
+          "doc_path": "TERRAFORM_GUIDE.md",
+          "description": "Database Outputs"
+        },
+        {
+          "id": "TERRAFORM_GUIDE.md:11",
+          "doc_path": "TERRAFORM_GUIDE.md",
+          "description": "**Backend Configuration** (`backend.tf`):"
+        },
+        {
+          "id": "TERRAFORM_GUIDE.md:15",
+          "doc_path": "TERRAFORM_GUIDE.md",
+          "description": "**`environments/dev.tfvars`**"
+        },
+        {
+          "id": "TERRAFORM_GUIDE.md:16",
+          "doc_path": "TERRAFORM_GUIDE.md",
+          "description": "**`environments/production.tfvars`**"
+        }
+      ]
+    },
+    "dockerfile": {
+      "count": 1,
+      "examples": [
+        {
+          "id": "WEB_APP_SPECS.md:44",
+          "doc_path": "WEB_APP_SPECS.md",
+          "description": "Docker Container"
+        }
+      ]
+    },
+    "html": {
+      "count": 2,
+      "examples": [
+        {
+          "id": "archive/DESIGN_SYSTEM_IMPLEMENTATION_PLAN.md:5",
+          "doc_path": "archive/DESIGN_SYSTEM_IMPLEMENTATION_PLAN.md",
+          "description": "**A. Add Google Fonts Link**"
+        },
+        {
+          "id": "design-system/PHASE_1_BREAKDOWN.md:10",
+          "doc_path": "design-system/PHASE_1_BREAKDOWN.md",
+          "description": "1. Add Google Fonts link to both apps"
+        }
+      ]
+    },
+    "mdx": {
+      "count": 5,
+      "examples": [
+        {
+          "id": "client-implementation/DOCS_SITE_FEATURE_SPECS.md:4",
+          "doc_path": "client-implementation/DOCS_SITE_FEATURE_SPECS.md",
+          "description": "`"
+        },
+        {
+          "id": "client-implementation/DOCS_SITE_FEATURE_SPECS.md:26",
+          "doc_path": "client-implementation/DOCS_SITE_FEATURE_SPECS.md",
+          "description": "**Usage in MDX:**"
+        },
+        {
+          "id": "client-implementation/DOCS_SITE_FEATURE_SPECS.md:29",
+          "doc_path": "client-implementation/DOCS_SITE_FEATURE_SPECS.md",
+          "description": "**Usage in MDX:**"
+        },
+        {
+          "id": "client-implementation/DOCS_SITE_FEATURE_SPECS.md:31",
+          "doc_path": "client-implementation/DOCS_SITE_FEATURE_SPECS.md",
+          "description": "**Usage in MDX:**"
+        },
+        {
+          "id": "client-implementation/DOCS_SITE_FEATURE_SPECS.md:34",
+          "doc_path": "client-implementation/DOCS_SITE_FEATURE_SPECS.md",
+          "description": "`"
+        }
+      ]
+    },
+    "cron": {
+      "count": 1,
+      "examples": [
+        {
+          "id": "phases/PHASE_12_COMPLETE_SUMMARY.md:2",
+          "doc_path": "phases/PHASE_12_COMPLETE_SUMMARY.md",
+          "description": "**Cron Schedule:**"
+        }
+      ]
+    }
+  },
+  "by_category": {
+    "reference": {
+      "count": 1063,
+      "examples": [
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:0",
+          "language": "tsx",
+          "description": "Improvements Needed:"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:1",
+          "language": "tsx",
+          "description": "Improvements:"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:2",
+          "language": "tsx",
+          "description": "Improvements:"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:3",
+          "language": "tsx",
+          "description": "Improvements:"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:4",
+          "language": "css",
+          "description": "Improvements:"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:5",
+          "language": "tsx",
+          "description": "```"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:6",
+          "language": "tsx",
+          "description": "Improvements:"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:7",
+          "language": "bash",
+          "description": "Tools:"
+        },
+        {
+          "id": "BACKEND_SKELETON_VERIFICATION.md:0",
+          "language": "python",
+          "description": "**Fields**:"
+        },
+        {
+          "id": "BACKEND_SKELETON_VERIFICATION.md:1",
+          "language": "python",
+          "description": "1. **Added Prometheus Metrics** (5 metrics):"
+        }
+      ]
+    },
+    "deployment": {
+      "count": 178,
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:0",
+          "language": "bash",
+          "description": "1. Build Process"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:1",
+          "language": "bash",
+          "description": "2. File Deployment"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:2",
+          "language": "bash",
+          "description": "4. Apache Activation"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:3",
+          "language": "text",
+          "description": "HTTP Headers"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:4",
+          "language": "text",
+          "description": "Frontend (Static SPA)"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:5",
+          "language": "text",
+          "description": "API Communication"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:6",
+          "language": "bash",
+          "description": "2. **Build**:"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:7",
+          "language": "bash",
+          "description": "3. **Deploy**:"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:8",
+          "language": "bash",
+          "description": "**Apache Logs:**"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:9",
+          "language": "bash",
+          "description": "**Service Status:**"
+        }
+      ]
+    },
+    "operations": {
+      "count": 328,
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:0",
+          "language": "text",
+          "description": "📈 Code Statistics"
+        },
+        {
+          "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:1",
+          "language": "bash",
+          "description": "Build Testing"
+        },
+        {
+          "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:2",
+          "language": "json",
+          "description": "📦 Dependencies Added"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:0",
+          "language": "text",
+          "description": "1. Firebase Errors (Wrong Bundle)"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:1",
+          "language": "text",
+          "description": "2. CORS Error"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:2",
+          "language": "typescript",
+          "description": "**Original Code**:"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:3",
+          "language": "typescript",
+          "description": "**Changed**:"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:4",
+          "language": "apache",
+          "description": "**Added**:"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:5",
+          "language": "apache",
+          "description": "**Added to rewrite conditions**:"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:6",
+          "language": "bash",
+          "description": "4. Rebuilt and Redeployed ✅"
+        }
+      ]
+    },
+    "api": {
+      "count": 91,
+      "examples": [
+        {
+          "id": "API_REFERENCE.md:0",
+          "language": "text",
+          "description": "All authenticated endpoints require a Bearer token:"
+        },
+        {
+          "id": "API_REFERENCE.md:1",
+          "language": "python",
+          "description": "**Tool Functions (for AI agents):**"
+        },
+        {
+          "id": "API_REFERENCE.md:2",
+          "language": "bash",
+          "description": "**Re-indexing Documentation:**"
+        },
+        {
+          "id": "PHASE_08_API_CONTRACTS.md:0",
+          "language": "json",
+          "description": "Send Message"
+        },
+        {
+          "id": "PHASE_08_API_CONTRACTS.md:1",
+          "language": "json",
+          "description": "Heartbeat"
+        },
+        {
+          "id": "PHASE_08_API_CONTRACTS.md:2",
+          "language": "json",
+          "description": "Connection Established"
+        },
+        {
+          "id": "PHASE_08_API_CONTRACTS.md:3",
+          "language": "json",
+          "description": "Streaming Chunk"
+        },
+        {
+          "id": "PHASE_08_API_CONTRACTS.md:4",
+          "language": "json",
+          "description": "Message Complete"
+        },
+        {
+          "id": "PHASE_08_API_CONTRACTS.md:5",
+          "language": "json",
+          "description": "Error"
+        },
+        {
+          "id": "PHASE_08_API_CONTRACTS.md:6",
+          "language": "json",
+          "description": "Heartbeat Response"
+        }
+      ]
+    },
+    "architecture": {
+      "count": 113,
+      "examples": [
+        {
+          "id": "ARCHITECTURE.md:0",
+          "language": "text",
+          "description": "Architecture Diagram"
+        },
+        {
+          "id": "ARCHITECTURE.md:1",
+          "language": "text",
+          "description": "Example 1: Voice Query with Local Processing"
+        },
+        {
+          "id": "ARCHITECTURE.md:2",
+          "language": "text",
+          "description": "Example 2: Medical Literature Query"
+        },
+        {
+          "id": "ARCHITECTURE.md:3",
+          "language": "text",
+          "description": "Example 3: Medical Textbook Query"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:0",
+          "language": "text",
+          "description": "**Key Architectural Decision: Nextcloud is a separate stack, not part of VoiceAssist deployment.**"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:1",
+          "language": "text",
+          "description": "**Authentication Flow:**"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:2",
+          "language": "text",
+          "description": "Local Development Architecture"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:3",
+          "language": "text",
+          "description": "└─────────────────────────────────────────────────────────────────┘"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:4",
+          "language": "text",
+          "description": "│ NEXTCLOUD_BASE_URL=http://localhost:8080"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:5",
+          "language": "text",
+          "description": "- Can be existing NC installation - Environment: NEXTCLOUD_BASE_URL=https://cloud.asimo.io"
+        }
+      ]
+    },
+    "testing": {
+      "count": 147,
+      "examples": [
+        {
+          "id": "CHAOS_ENGINEERING.md:0",
+          "language": "text",
+          "description": "Architecture"
+        },
+        {
+          "id": "CHAOS_ENGINEERING.md:1",
+          "language": "bash",
+          "description": "1. Install Chaos Toolkit"
+        },
+        {
+          "id": "CHAOS_ENGINEERING.md:2",
+          "language": "bash",
+          "description": "2. Verify System is Running"
+        },
+        {
+          "id": "CHAOS_ENGINEERING.md:3",
+          "language": "bash",
+          "description": "3. Run Your First Experiment"
+        },
+        {
+          "id": "CHAOS_ENGINEERING.md:4",
+          "language": "bash",
+          "description": "**Run**:"
+        },
+        {
+          "id": "CHAOS_ENGINEERING.md:5",
+          "language": "bash",
+          "description": "**Run**:"
+        },
+        {
+          "id": "CHAOS_ENGINEERING.md:6",
+          "language": "bash",
+          "description": "**Prerequisites**:"
+        },
+        {
+          "id": "CHAOS_ENGINEERING.md:7",
+          "language": "bash",
+          "description": "**Run**:"
+        },
+        {
+          "id": "CHAOS_ENGINEERING.md:8",
+          "language": "bash",
+          "description": "**Run**:"
+        },
+        {
+          "id": "CHAOS_ENGINEERING.md:9",
+          "language": "bash",
+          "description": "Run Single Experiment"
+        }
+      ]
+    },
+    "ai": {
+      "count": 87,
+      "examples": [
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:0",
+          "language": "bash",
+          "description": "1.1 Sync and Setup"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:1",
+          "language": "bash",
+          "description": "If working on an existing branch:"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:2",
+          "language": "bash",
+          "description": "Backend:"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:3",
+          "language": "bash",
+          "description": "Frontend:"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:4",
+          "language": "markdown",
+          "description": "**Example Session Checklist:**"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:5",
+          "language": "text",
+          "description": "**Phase Implementation:**"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:6",
+          "language": "text",
+          "description": "**Feature Work:**"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:7",
+          "language": "text",
+          "description": "**Bug Fixes:**"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:8",
+          "language": "text",
+          "description": "**Documentation Updates:**"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:9",
+          "language": "text",
+          "description": "**Infrastructure/Deployment:**"
+        }
+      ]
+    },
+    "planning": {
+      "count": 699,
+      "examples": [
+        {
+          "id": "DEVELOPMENT_PHASES.md:0",
+          "language": "markdown",
+          "description": "Create a `PHASE_STATUS.md` file to track progress:"
+        },
+        {
+          "id": "DEVELOPMENT_PHASES.md:1",
+          "language": "bash",
+          "description": "When starting a new phase:"
+        },
+        {
+          "id": "DEVELOPMENT_PHASES.md:2",
+          "language": "text",
+          "description": "Phase Dependencies"
+        },
+        {
+          "id": "DEVELOPMENT_PHASES.md:3",
+          "language": "text",
+          "description": "Each phase document is designed to be given to Claude Code as a prompt:"
+        },
+        {
+          "id": "DEVELOPMENT_PHASES_V2.md:0",
+          "language": "text",
+          "description": "Migration Timeline"
+        },
+        {
+          "id": "DEVELOPMENT_PHASES_V2.md:1",
+          "language": "markdown",
+          "description": "Create `~/VoiceAssist/CURRENT_PHASE.md`:"
+        },
+        {
+          "id": "DEVELOPMENT_PHASES_V2.md:2",
+          "language": "text",
+          "description": "Starting a Phase"
+        },
+        {
+          "id": "FRONTEND_COMPLETION_PLAN.md:0",
+          "language": "yaml",
+          "description": "Implementation"
+        },
+        {
+          "id": "FRONTEND_COMPLETION_PLAN.md:1",
+          "language": "typescript",
+          "description": "Implementation Notes"
+        },
+        {
+          "id": "FRONTEND_COMPLETION_PLAN.md:2",
+          "language": "typescript",
+          "description": "API Endpoints to Wire"
+        }
+      ]
+    },
+    "debugging": {
+      "count": 393,
+      "examples": [
+        {
+          "id": "DISASTER_RECOVERY_RUNBOOK.md:0",
+          "language": "bash",
+          "description": "1. Verify Backup System"
+        },
+        {
+          "id": "DISASTER_RECOVERY_RUNBOOK.md:1",
+          "language": "bash",
+          "description": "2. Document Current Configuration"
+        },
+        {
+          "id": "DISASTER_RECOVERY_RUNBOOK.md:2",
+          "language": "bash",
+          "description": "3. Verify Off-Site Backups"
+        },
+        {
+          "id": "DISASTER_RECOVERY_RUNBOOK.md:3",
+          "language": "bash",
+          "description": "Detection"
+        },
+        {
+          "id": "DISASTER_RECOVERY_RUNBOOK.md:4",
+          "language": "bash",
+          "description": "**Step 1: Verify Replica Status**"
+        },
+        {
+          "id": "DISASTER_RECOVERY_RUNBOOK.md:5",
+          "language": "bash",
+          "description": "**Step 2: Promote Replica to Primary**"
+        },
+        {
+          "id": "DISASTER_RECOVERY_RUNBOOK.md:6",
+          "language": "bash",
+          "description": "**Step 3: Update Application Configuration**"
+        },
+        {
+          "id": "DISASTER_RECOVERY_RUNBOOK.md:7",
+          "language": "bash",
+          "description": "**Step 4: Verify Application Functionality**"
+        },
+        {
+          "id": "DISASTER_RECOVERY_RUNBOOK.md:8",
+          "language": "bash",
+          "description": "**Step 5: Restore Original Primary (when available)**"
+        },
+        {
+          "id": "DISASTER_RECOVERY_RUNBOOK.md:9",
+          "language": "bash",
+          "description": "**Step 1: Provision New Infrastructure**"
+        }
+      ]
+    },
+    "security": {
+      "count": 40,
+      "examples": [
+        {
+          "id": "HIPAA_COMPLIANCE_MATRIX.md:0",
+          "language": "bash",
+          "description": "The security audit framework (`security/audit/security-audit.sh`) performs automated compliance verification:"
+        },
+        {
+          "id": "HIPAA_COMPLIANCE_MATRIX.md:1",
+          "language": "bash",
+          "description": "1. Access Control Verification"
+        },
+        {
+          "id": "HIPAA_COMPLIANCE_MATRIX.md:2",
+          "language": "bash",
+          "description": "2. Encryption Verification"
+        },
+        {
+          "id": "HIPAA_COMPLIANCE_MATRIX.md:3",
+          "language": "bash",
+          "description": "3. Network Policy Verification"
+        },
+        {
+          "id": "HIPAA_COMPLIANCE_MATRIX.md:4",
+          "language": "bash",
+          "description": "4. Audit Logging Verification"
+        },
+        {
+          "id": "SECURITY_COMPLIANCE.md:0",
+          "language": "yaml",
+          "description": "**Docker Compose (Phases 0-10):**"
+        },
+        {
+          "id": "SECURITY_COMPLIANCE.md:1",
+          "language": "yaml",
+          "description": "**Kubernetes (Phases 11-14):**"
+        },
+        {
+          "id": "SECURITY_COMPLIANCE.md:2",
+          "language": "yaml",
+          "description": "**Docker Compose:**"
+        },
+        {
+          "id": "SECURITY_COMPLIANCE.md:3",
+          "language": "yaml",
+          "description": "**Kubernetes:**"
+        },
+        {
+          "id": "SECURITY_COMPLIANCE.md:4",
+          "language": "python",
+          "description": "3. Identity-Based Access"
+        }
+      ]
+    },
+    "overview": {
+      "count": 6,
+      "examples": [
+        {
+          "id": "START_HERE.md:0",
+          "language": "text",
+          "description": "Architecture Overview"
+        },
+        {
+          "id": "START_HERE.md:1",
+          "language": "bash",
+          "description": "Step 1: Set Up Environment"
+        },
+        {
+          "id": "START_HERE.md:2",
+          "language": "bash",
+          "description": "Step 2: Understand the Architecture"
+        },
+        {
+          "id": "START_HERE.md:3",
+          "language": "bash",
+          "description": "Step 3: Start Phase 0"
+        },
+        {
+          "id": "START_HERE.md:4",
+          "language": "text",
+          "description": "Working with Claude Code"
+        },
+        {
+          "id": "overview/IMPLEMENTATION_STATUS.md:0",
+          "language": "bash",
+          "description": "Health Endpoints"
+        }
+      ]
+    },
+    "uncategorized": {
+      "count": 116,
+      "examples": [
+        {
+          "id": "admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md:0",
+          "language": "typescript",
+          "description": "Current Route Structure"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md:1",
+          "language": "python",
+          "description": "**Pydantic Models** (align with [DATA_MODEL.md](../DATA_MODEL.md)):"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md:2",
+          "language": "python",
+          "description": "**Pydantic Models:**"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md:3",
+          "language": "python",
+          "description": "**Pydantic Models:**"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md:4",
+          "language": "python",
+          "description": "1. **Response Envelope**: All responses use standard APIEnvelope:"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md:5",
+          "language": "python",
+          "description": "3. **Pagination**: Use standard pagination schema for list endpoints:"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md:6",
+          "language": "python",
+          "description": "4. **Admin Authentication**: All admin endpoints must use:"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md:7",
+          "language": "python",
+          "description": "**Pydantic Models** (reuse from `app/schemas/` or create new):"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md:8",
+          "language": "python",
+          "description": "**Pydantic Models:**"
+        },
+        {
+          "id": "admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md:9",
+          "language": "python",
+          "description": "Add additional metrics to dashboard summary:"
+        }
+      ]
+    },
+    "feature-flags": {
+      "count": 33,
+      "examples": [
+        {
+          "id": "admin-guide/feature-flags/README.md:0",
+          "language": "typescript",
+          "description": "All flags follow the pattern: `<category>.<feature_name>`"
+        },
+        {
+          "id": "admin-guide/feature-flags/README.md:1",
+          "language": "text",
+          "description": "Architecture"
+        },
+        {
+          "id": "admin-guide/feature-flags/admin-panel-guide.md:0",
+          "language": "text",
+          "description": "Interface Overview"
+        },
+        {
+          "id": "admin-guide/feature-flags/advanced-types.md:0",
+          "language": "typescript",
+          "description": "Simple on/off toggles for feature enablement."
+        },
+        {
+          "id": "admin-guide/feature-flags/advanced-types.md:1",
+          "language": "typescript",
+          "description": "**Usage:**"
+        },
+        {
+          "id": "admin-guide/feature-flags/advanced-types.md:2",
+          "language": "typescript",
+          "description": "Gradual rollout to a percentage of users."
+        },
+        {
+          "id": "admin-guide/feature-flags/advanced-types.md:3",
+          "language": "typescript",
+          "description": "**Usage:**"
+        },
+        {
+          "id": "admin-guide/feature-flags/advanced-types.md:4",
+          "language": "typescript",
+          "description": "Multi-variant testing for A/B/C experiments."
+        },
+        {
+          "id": "admin-guide/feature-flags/advanced-types.md:5",
+          "language": "typescript",
+          "description": "**Usage:**"
+        },
+        {
+          "id": "admin-guide/feature-flags/advanced-types.md:6",
+          "language": "typescript",
+          "description": "Time-based activation with start/end dates."
+        }
+      ]
+    }
+  },
+  "by_tag": {
+    "snippet": {
+      "count": 847,
+      "languages": {
+        "tsx": 9,
+        "css": 17,
+        "bash": 159,
+        "text": 266,
+        "apache": 5,
+        "diff": 2,
+        "typescript": 141,
+        "python": 183,
+        "markdown": 6,
+        "promql": 8,
+        "mermaid": 4,
+        "sql": 6,
+        "txt": 2,
+        "javascript": 22,
+        "hcl": 1,
+        "http": 10,
+        "mdx": 3,
+        "env": 1,
+        "ini": 1,
+        "cron": 1
+      },
+      "examples": [
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:0",
+          "language": "tsx",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:1",
+          "language": "tsx",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:3",
+          "language": "tsx",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:4",
+          "language": "css",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:1",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:4",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:7",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:8",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:11",
+          "language": "apache",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:13",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        }
+      ]
+    },
+    "react": {
+      "count": 147,
+      "languages": {
+        "tsx": 30,
+        "typescript": 94,
+        "python": 1,
+        "xml": 1,
+        "mermaid": 10,
+        "html": 2,
+        "text": 6,
+        "markdown": 1,
+        "mdx": 2
+      },
+      "examples": [
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:2",
+          "language": "tsx",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:5",
+          "language": "tsx",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:6",
+          "language": "tsx",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:3",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:16",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:27",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:29",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:31",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "DOCUMENTATION_SITE_SPECS.md:5",
+          "language": "tsx",
+          "doc_path": "DOCUMENTATION_SITE_SPECS.md"
+        },
+        {
+          "id": "DOCUMENTATION_SITE_SPECS.md:6",
+          "language": "tsx",
+          "doc_path": "DOCUMENTATION_SITE_SPECS.md"
+        }
+      ]
+    },
+    "database": {
+      "count": 521,
+      "languages": {
+        "tsx": 16,
+        "text": 61,
+        "bash": 150,
+        "sql": 32,
+        "python": 77,
+        "typescript": 102,
+        "yaml": 39,
+        "markdown": 11,
+        "json": 23,
+        "http": 3,
+        "javascript": 3,
+        "mermaid": 1,
+        "css": 2,
+        "ini": 1
+      },
+      "examples": [
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:5",
+          "language": "tsx",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:3",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:6",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:11",
+          "language": "sql",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:14",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:15",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:5",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:7",
+          "language": "python",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:11",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:12",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        }
+      ]
+    },
+    "environment": {
+      "count": 70,
+      "languages": {
+        "bash": 35,
+        "typescript": 18,
+        "yaml": 1,
+        "text": 7,
+        "python": 4,
+        "tsx": 3,
+        "javascript": 1,
+        "txt": 1
+      },
+      "examples": [
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:7",
+          "language": "bash",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:2",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:3",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:1",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:3",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:12",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "BACKEND_ARCHITECTURE.md:1",
+          "language": "text",
+          "doc_path": "BACKEND_ARCHITECTURE.md"
+        },
+        {
+          "id": "CONFIGURATION_REFERENCE.md:13",
+          "language": "bash",
+          "doc_path": "CONFIGURATION_REFERENCE.md"
+        },
+        {
+          "id": "CONFIGURATION_REFERENCE.md:14",
+          "language": "bash",
+          "doc_path": "CONFIGURATION_REFERENCE.md"
+        },
+        {
+          "id": "DEPLOYMENT_GUIDE.md:2",
+          "language": "bash",
+          "doc_path": "DEPLOYMENT_GUIDE.md"
+        }
+      ]
+    },
+    "package-manager": {
+      "count": 153,
+      "languages": {
+        "bash": 153
+      },
+      "examples": [
+        {
+          "id": "ACCESSIBILITY_AUDIT.md:7",
+          "language": "bash",
+          "doc_path": "ACCESSIBILITY_AUDIT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:0",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:6",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:10",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:1",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:6",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:18",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:7",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "BACKEND_ARCHITECTURE.md:10",
+          "language": "bash",
+          "doc_path": "BACKEND_ARCHITECTURE.md"
+        },
+        {
+          "id": "BACKEND_ARCHITECTURE.md:11",
+          "language": "bash",
+          "doc_path": "BACKEND_ARCHITECTURE.md"
+        }
+      ]
+    },
+    "system": {
+      "count": 188,
+      "languages": {
+        "bash": 188
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:2",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:9",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:6",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:13",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:1",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:2",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:29",
+          "language": "bash",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "CHAOS_ENGINEERING.md:2",
+          "language": "bash",
+          "doc_path": "CHAOS_ENGINEERING.md"
+        },
+        {
+          "id": "CHAOS_ENGINEERING.md:23",
+          "language": "bash",
+          "doc_path": "CHAOS_ENGINEERING.md"
+        },
+        {
+          "id": "CHAOS_ENGINEERING.md:24",
+          "language": "bash",
+          "doc_path": "CHAOS_ENGINEERING.md"
+        }
+      ]
+    },
+    "api": {
+      "count": 835,
+      "languages": {
+        "text": 160,
+        "apache": 4,
+        "typescript": 69,
+        "bash": 376,
+        "python": 92,
+        "tsx": 15,
+        "yaml": 36,
+        "json": 25,
+        "markdown": 7,
+        "nginx": 2,
+        "http": 13,
+        "env": 5,
+        "xml": 1,
+        "sql": 2,
+        "hcl": 3,
+        "javascript": 17,
+        "mermaid": 5,
+        "html": 2,
+        "promql": 1
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:3",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:5",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:12",
+          "language": "apache",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:1",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:2",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:3",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:4",
+          "language": "apache",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:7",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:8",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:9",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        }
+      ]
+    },
+    "http": {
+      "count": 487,
+      "languages": {
+        "text": 116,
+        "bash": 113,
+        "python": 101,
+        "typescript": 61,
+        "yaml": 33,
+        "json": 8,
+        "markdown": 5,
+        "http": 13,
+        "tsx": 18,
+        "env": 1,
+        "javascript": 8,
+        "mermaid": 7,
+        "promql": 3
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:3",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:5",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:8",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:20",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:24",
+          "language": "python",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:6",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:8",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:0",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:1",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:5",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        }
+      ]
+    },
+    "authentication": {
+      "count": 491,
+      "languages": {
+        "text": 112,
+        "bash": 105,
+        "sql": 8,
+        "typescript": 62,
+        "python": 101,
+        "json": 25,
+        "yaml": 17,
+        "markdown": 7,
+        "http": 8,
+        "env": 4,
+        "xml": 1,
+        "javascript": 10,
+        "mermaid": 5,
+        "tsx": 25,
+        "txt": 1
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:3",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:0",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:0",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:1",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:8",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:9",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:10",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:11",
+          "language": "sql",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:16",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:20",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        }
+      ]
+    },
+    "cache": {
+      "count": 360,
+      "languages": {
+        "text": 60,
+        "bash": 137,
+        "json": 19,
+        "yaml": 40,
+        "python": 53,
+        "markdown": 2,
+        "ini": 2,
+        "typescript": 24,
+        "diff": 1,
+        "sql": 2,
+        "hcl": 4,
+        "http": 1,
+        "env": 2,
+        "mermaid": 6,
+        "tsx": 3,
+        "promql": 3,
+        "txt": 1
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:5",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:20",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:2",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:3",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:4",
+          "language": "json",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:9",
+          "language": "json",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:10",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:5",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:1",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:4",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        }
+      ]
+    },
+    "realtime": {
+      "count": 224,
+      "languages": {
+        "text": 66,
+        "typescript": 56,
+        "bash": 31,
+        "python": 30,
+        "json": 8,
+        "yaml": 4,
+        "mermaid": 6,
+        "javascript": 9,
+        "tsx": 10,
+        "env": 2,
+        "apache": 1,
+        "txt": 1
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:5",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:3",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:14",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:17",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ARCHITECTURE.md:0",
+          "language": "text",
+          "doc_path": "ARCHITECTURE.md"
+        },
+        {
+          "id": "ARCHITECTURE.md:1",
+          "language": "text",
+          "doc_path": "ARCHITECTURE.md"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:3",
+          "language": "text",
+          "doc_path": "ARCHITECTURE_V2.md"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:8",
+          "language": "text",
+          "doc_path": "ARCHITECTURE_V2.md"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:11",
+          "language": "text",
+          "doc_path": "ARCHITECTURE_V2.md"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:20",
+          "language": "text",
+          "doc_path": "ARCHITECTURE_V2.md"
+        }
+      ]
+    },
+    "git": {
+      "count": 63,
+      "languages": {
+        "bash": 63
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_DEPLOYMENT.md:10",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_DEPLOYMENT.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:13",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:18",
+          "language": "bash",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:22",
+          "language": "bash",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:0",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:1",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:10",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:12",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:13",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:14",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        }
+      ]
+    },
+    "config": {
+      "count": 359,
+      "languages": {
+        "json": 184,
+        "yaml": 175
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:2",
+          "language": "json",
+          "doc_path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:4",
+          "language": "json",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:5",
+          "language": "json",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:9",
+          "language": "json",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:1",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:4",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:5",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:6",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:8",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:9",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        }
+      ]
+    },
+    "kubernetes": {
+      "count": 192,
+      "languages": {
+        "text": 33,
+        "yaml": 28,
+        "python": 33,
+        "bash": 93,
+        "json": 1,
+        "mermaid": 1,
+        "typescript": 1,
+        "markdown": 2
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:12",
+          "language": "text",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:1",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:2",
+          "language": "text",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:8",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:12",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:13",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:3",
+          "language": "text",
+          "doc_path": "ARCHITECTURE_V2.md"
+        },
+        {
+          "id": "ARCHITECTURE_V2.md:20",
+          "language": "text",
+          "doc_path": "ARCHITECTURE_V2.md"
+        },
+        {
+          "id": "BACKEND_ARCHITECTURE.md:0",
+          "language": "text",
+          "doc_path": "BACKEND_ARCHITECTURE.md"
+        },
+        {
+          "id": "BACKEND_ARCHITECTURE.md:3",
+          "language": "python",
+          "doc_path": "BACKEND_ARCHITECTURE.md"
+        }
+      ]
+    },
+    "docker": {
+      "count": 477,
+      "languages": {
+        "bash": 348,
+        "yaml": 70,
+        "text": 40,
+        "markdown": 2,
+        "typescript": 7,
+        "json": 3,
+        "dockerfile": 1,
+        "python": 2,
+        "mermaid": 1,
+        "tsx": 2,
+        "css": 1
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:14",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:15",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX.md:18",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:2",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:3",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:10",
+          "language": "bash",
+          "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:1",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:2",
+          "language": "text",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:9",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        },
+        {
+          "id": "ANSIBLE_GUIDE.md:11",
+          "language": "yaml",
+          "doc_path": "ANSIBLE_GUIDE.md"
+        }
+      ]
+    },
+    "component": {
+      "count": 100,
+      "languages": {
+        "typescript": 73,
+        "tsx": 27
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_SPECS.md:2",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:3",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:16",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:33",
+          "language": "typescript",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "ADMIN_PANEL_SPECS.md:36",
+          "language": "tsx",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "DOCUMENTATION_SITE_SPECS.md:5",
+          "language": "tsx",
+          "doc_path": "DOCUMENTATION_SITE_SPECS.md"
+        },
+        {
+          "id": "DOCUMENTATION_SITE_SPECS.md:6",
+          "language": "tsx",
+          "doc_path": "DOCUMENTATION_SITE_SPECS.md"
+        },
+        {
+          "id": "FRONTEND_COMPLETION_PLAN.md:7",
+          "language": "typescript",
+          "doc_path": "FRONTEND_COMPLETION_PLAN.md"
+        },
+        {
+          "id": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md:3",
+          "language": "tsx",
+          "doc_path": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md"
+        },
+        {
+          "id": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md:4",
+          "language": "tsx",
+          "doc_path": "PART3_PLATFORM_ENHANCEMENTS_PLAN.md"
+        }
+      ]
+    },
+    "testing": {
+      "count": 197,
+      "languages": {
+        "python": 61,
+        "yaml": 6,
+        "bash": 53,
+        "typescript": 57,
+        "text": 4,
+        "tsx": 15,
+        "txt": 1
+      },
+      "examples": [
+        {
+          "id": "ADMIN_PANEL_SPECS.md:7",
+          "language": "python",
+          "doc_path": "ADMIN_PANEL_SPECS.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:3",
+          "language": "yaml",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:4",
+          "language": "yaml",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:5",
+          "language": "yaml",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:31",
+          "language": "bash",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:17",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:18",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "CLAUDE_EXECUTION_GUIDE.md:25",
+          "language": "bash",
+          "doc_path": "CLAUDE_EXECUTION_GUIDE.md"
+        },
+        {
+          "id": "DEEP_VERIFICATION_QA_SUMMARY.md:6",
+          "language": "python",
+          "doc_path": "DEEP_VERIFICATION_QA_SUMMARY.md"
+        },
+        {
+          "id": "DEEP_VERIFICATION_QA_SUMMARY.md:21",
+          "language": "python",
+          "doc_path": "DEEP_VERIFICATION_QA_SUMMARY.md"
+        }
+      ]
+    },
+    "infrastructure": {
+      "count": 70,
+      "languages": {
+        "text": 10,
+        "yaml": 2,
+        "bash": 44,
+        "markdown": 1,
+        "json": 2,
+        "hcl": 10,
+        "env": 1
+      },
+      "examples": [
+        {
+          "id": "ARCHITECTURE_V2.md:20",
+          "language": "text",
+          "doc_path": "ARCHITECTURE_V2.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:0",
+          "language": "text",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:1",
+          "language": "text",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:8",
+          "language": "yaml",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:9",
+          "language": "yaml",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:10",
+          "language": "text",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:13",
+          "language": "text",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:22",
+          "language": "bash",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:39",
+          "language": "bash",
+          "doc_path": "CICD_GUIDE.md"
+        },
+        {
+          "id": "CICD_GUIDE.md:41",
+          "language": "bash",
+          "doc_path": "CICD_GUIDE.md"
+        }
+      ]
+    }
+  },
+  "recent_examples": [
+    {
+      "id": "ACCESSIBILITY_AUDIT.md:0",
+      "doc_path": "ACCESSIBILITY_AUDIT.md",
+      "doc_title": "Accessibility Audit",
+      "language": "tsx",
+      "tags": ["snippet"],
+      "description": "Improvements Needed:",
+      "code": "// Add skip navigation\n<a href=\"#main-content\" className=\"sr-only focus:not-sr-only\">\n  Skip to main content\n</a>\n\n// Ensure all modals have focus trap\n// Use react-focus-lock or similar",
+      "full_length": 186,
+      "category": "reference"
+    },
+    {
+      "id": "ACCESSIBILITY_AUDIT.md:1",
+      "doc_path": "ACCESSIBILITY_AUDIT.md",
+      "doc_title": "Accessibility Audit",
+      "language": "tsx",
+      "tags": ["snippet"],
+      "description": "Improvements:",
+      "code": "// Message streaming\n<div aria-live=\"polite\" aria-atomic=\"true\">\n  {isTyping && <p>Assistant is typing...</p>}\n</div>\n\n// File upload progress\n<div\n  role=\"progressbar\"\n  aria-valuenow={progress}\n  aria-valuemin={0}\n  aria-valuemax={100}\n  aria-label=\"File upload progress\"\n>\n  {progress}%\n</div>",
+      "full_length": 296,
+      "category": "reference"
+    },
+    {
+      "id": "ACCESSIBILITY_AUDIT.md:2",
+      "doc_path": "ACCESSIBILITY_AUDIT.md",
+      "doc_title": "Accessibility Audit",
+      "language": "tsx",
+      "tags": ["react"],
+      "description": "Improvements:",
+      "code": "// Add live region for announcements\nconst [announcement, setAnnouncement] = useState(\"\");\n\n// Announce new messages\nuseEffect(() => {\n  if (newMessage && newMessage.role === \"assistant\") {\n    setAnnouncement(`New message from assistant: ${newMessage.content.substring(0, 100)}`);\n  }\n}, [newMessage]);\n\n<div role=\"status\" aria-live=\"polite\" aria-atomic=\"true\" className=\"sr-only\">\n  {announcement}\n</div>;",
+      "full_length": 407,
+      "category": "reference"
+    },
+    {
+      "id": "ACCESSIBILITY_AUDIT.md:3",
+      "doc_path": "ACCESSIBILITY_AUDIT.md",
+      "doc_title": "Accessibility Audit",
+      "language": "tsx",
+      "tags": ["snippet"],
+      "description": "Improvements:",
+      "code": "// Proper form field association\n<label htmlFor=\"patient-age\" className=\"...\">\n  Age <span aria-label=\"required\">*</span>\n</label>\n<input\n  id=\"patient-age\"\n  type=\"number\"\n  aria-required=\"true\"\n  aria-invalid={errors.age ? \"true\" : \"false\"}\n  aria-describedby={errors.age ? \"age-error\" : undefined}\n/>\n{errors.age && (\n  <span id=\"age-error\" role=\"alert\" className=\"...\">\n    {errors.age}\n  </span>\n)}",
+      "full_length": 403,
+      "category": "reference"
+    },
+    {
+      "id": "ACCESSIBILITY_AUDIT.md:4",
+      "doc_path": "ACCESSIBILITY_AUDIT.md",
+      "doc_title": "Accessibility Audit",
+      "language": "css",
+      "tags": ["snippet"],
+      "description": "Improvements:",
+      "code": "/* Enhanced focus indicators */\n*:focus-visible {\n  outline: 2px solid var(--color-primary-500);\n  outline-offset: 2px;\n}\n\n/* High contrast focus for critical elements */\nbutton:focus-visible,\na:focus-visible {\n  outline: 3px solid var(--color-primary-500);\n  outline-offset: 2px;\n}",
+      "full_length": 282,
+      "category": "reference"
+    },
+    {
+      "id": "ACCESSIBILITY_AUDIT.md:5",
+      "doc_path": "ACCESSIBILITY_AUDIT.md",
+      "doc_title": "Accessibility Audit",
+      "language": "tsx",
+      "tags": ["database", "react"],
+      "description": "```",
+      "code": "// Focus management in modals\nuseEffect(() => {\n  if (isOpen) {\n    const previouslyFocused = document.activeElement as HTMLElement;\n    const firstFocusable = dialogRef.current?.querySelector(\n      'button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])',\n    ) as HTMLElement;\n\n    firstFocusable?.focus();\n\n    return () => {\n      previouslyFocused?.focus();\n    };\n  }\n}, [isOpen]);",
+      "full_length": 406,
+      "category": "reference"
+    },
+    {
+      "id": "ACCESSIBILITY_AUDIT.md:6",
+      "doc_path": "ACCESSIBILITY_AUDIT.md",
+      "doc_title": "Accessibility Audit",
+      "language": "tsx",
+      "tags": ["react"],
+      "description": "Improvements:",
+      "code": "// SVG with title\n<svg aria-labelledby=\"icon-title\" role=\"img\">\n  <title id=\"icon-title\">Settings</title>\n  <path d=\"...\" />\n</svg>\n\n// Image preview\n<img\n  src={preview.url}\n  alt={`Preview of uploaded file: ${file.name}`}\n  loading=\"lazy\"\n/>",
+      "full_length": 243,
+      "category": "reference"
+    },
+    {
+      "id": "ACCESSIBILITY_AUDIT.md:7",
+      "doc_path": "ACCESSIBILITY_AUDIT.md",
+      "doc_title": "Accessibility Audit",
+      "language": "bash",
+      "tags": ["environment", "package-manager"],
+      "description": "Tools:",
+      "code": "# Install axe-core for testing\nnpm install --save-dev @axe-core/react\n\n# Add to app entry point (dev only)\nif (process.env.NODE_ENV !== 'production') {\n  import('@axe-core/react').then(axe => {\n    axe.default(React, ReactDOM, 1000);\n  });\n}",
+      "full_length": 241,
+      "category": "reference"
+    },
+    {
+      "id": "ADMIN_PANEL_DEPLOYMENT.md:0",
+      "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "doc_title": "Admin Panel Deployment",
+      "language": "bash",
+      "tags": ["package-manager"],
+      "description": "1. Build Process",
+      "code": "cd ~/VoiceAssist/apps/admin-panel\nnpm run build",
+      "full_length": 47,
+      "category": "deployment"
+    },
+    {
+      "id": "ADMIN_PANEL_DEPLOYMENT.md:1",
+      "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "doc_title": "Admin Panel Deployment",
+      "language": "bash",
+      "tags": ["snippet"],
+      "description": "2. File Deployment",
+      "code": "# Create web directory\nsudo mkdir -p /var/www/admin.asimo.io\n\n# Copy built files\nsudo cp -r ~/VoiceAssist/apps/admin-panel/dist/* /var/www/admin.asimo.io/\n\n# Set ownership\nsudo chown -R www-data:www-data /var/www/admin.asimo.io",
+      "full_length": 227,
+      "category": "deployment"
+    },
+    {
+      "id": "ADMIN_PANEL_DEPLOYMENT.md:2",
+      "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "doc_title": "Admin Panel Deployment",
+      "language": "bash",
+      "tags": ["system"],
+      "description": "4. Apache Activation",
+      "code": "# Enable site\nsudo a2ensite admin.asimo.io.conf\n\n# Test configuration\nsudo apache2ctl configtest\n\n# Reload Apache\nsudo systemctl reload apache2",
+      "full_length": 143,
+      "category": "deployment"
+    },
+    {
+      "id": "ADMIN_PANEL_DEPLOYMENT.md:3",
+      "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "doc_title": "Admin Panel Deployment",
+      "language": "text",
+      "tags": ["api", "http", "database", "authentication"],
+      "description": "HTTP Headers",
+      "code": "HTTP/1.1 200 OK\nDate: Sun, 23 Nov 2025 01:05:50 GMT\nServer: Apache/2.4.58 (Ubuntu)\nX-Content-Type-Options: nosniff\nX-Frame-Options: SAMEORIGIN\nX-XSS-Protection: 1; mode=block\nReferrer-Policy: strict-origin-when-cross-origin\nContent-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' http://localhost:8000 https://api.asimo.io;\nAccess-Control-Allow-Origin: *\nAc...",
+      "full_length": 648,
+      "category": "deployment"
+    },
+    {
+      "id": "ADMIN_PANEL_DEPLOYMENT.md:4",
+      "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "doc_title": "Admin Panel Deployment",
+      "language": "text",
+      "tags": ["snippet"],
+      "description": "Frontend (Static SPA)",
+      "code": "Browser\n   ↓ HTTPS\nApache (admin.asimo.io:443)\n   ↓ Serves static files\n/var/www/admin.asimo.io/\n   ├── index.html\n   └── assets/\n       ├── index-C3epBpcL.js\n       └── index-D8qvZpew.css",
+      "full_length": 188,
+      "category": "deployment"
+    },
+    {
+      "id": "ADMIN_PANEL_DEPLOYMENT.md:5",
+      "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "doc_title": "Admin Panel Deployment",
+      "language": "text",
+      "tags": ["api", "http", "cache", "realtime"],
+      "description": "API Communication",
+      "code": "Admin Panel (Browser)\n   ↓ HTTP/HTTPS\nAPI Backend (localhost:8000 or api.asimo.io)\n   ↓ REST/WebSocket\nServices (PostgreSQL, Redis, Qdrant)",
+      "full_length": 139,
+      "category": "deployment"
+    },
+    {
+      "id": "ADMIN_PANEL_DEPLOYMENT.md:6",
+      "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "doc_title": "Admin Panel Deployment",
+      "language": "bash",
+      "tags": ["package-manager"],
+      "description": "2. **Build**:",
+      "code": "cd ~/VoiceAssist/apps/admin-panel\n   npm run build",
+      "full_length": 50,
+      "category": "deployment"
+    },
+    {
+      "id": "ADMIN_PANEL_DEPLOYMENT.md:7",
+      "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "doc_title": "Admin Panel Deployment",
+      "language": "bash",
+      "tags": ["snippet"],
+      "description": "3. **Deploy**:",
+      "code": "sudo cp -r dist/* /var/www/admin.asimo.io/\n   sudo chown -R www-data:www-data /var/www/admin.asimo.io",
+      "full_length": 101,
+      "category": "deployment"
+    },
+    {
+      "id": "ADMIN_PANEL_DEPLOYMENT.md:8",
+      "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "doc_title": "Admin Panel Deployment",
+      "language": "bash",
+      "tags": ["snippet"],
+      "description": "**Apache Logs:**",
+      "code": "# Error log\nsudo tail -f /var/log/apache2/admin-voiceassist-error.log\n\n# Access log\nsudo tail -f /var/log/apache2/admin-voiceassist-access.log",
+      "full_length": 142,
+      "category": "deployment"
+    },
+    {
+      "id": "ADMIN_PANEL_DEPLOYMENT.md:9",
+      "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "doc_title": "Admin Panel Deployment",
+      "language": "bash",
+      "tags": ["system"],
+      "description": "**Service Status:**",
+      "code": "# Apache status\nsudo systemctl status apache2\n\n# Test configuration\nsudo apache2ctl configtest\n\n# List virtual hosts\nsudo apache2ctl -S | grep admin",
+      "full_length": 148,
+      "category": "deployment"
+    },
+    {
+      "id": "ADMIN_PANEL_DEPLOYMENT.md:10",
+      "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "doc_title": "Admin Panel Deployment",
+      "language": "bash",
+      "tags": ["git", "package-manager"],
+      "description": "If issues occur, rollback to previous version:",
+      "code": "# 1. Checkout previous commit\ncd ~/VoiceAssist\ngit log --oneline | head -10  # Find previous commit\ngit checkout <previous-commit>\n\n# 2. Rebuild\ncd apps/admin-panel\nnpm run build\n\n# 3. Redeploy\nsudo cp -r dist/* /var/www/admin.asimo.io/\nsudo chown -R www-data:www-data /var/www/admin.asimo.io\n\n# 4. Return to main\ngit checkout main",
+      "full_length": 331,
+      "category": "deployment"
+    },
+    {
+      "id": "ADMIN_PANEL_DEPLOYMENT.md:11",
+      "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "doc_title": "Admin Panel Deployment",
+      "language": "apache",
+      "tags": ["snippet"],
+      "description": "1. **HSTS Header**",
+      "code": "Header always set Strict-Transport-Security \"max-age=31536000; includeSubDomains\"",
+      "full_length": 81,
+      "category": "deployment"
+    },
+    {
+      "id": "ADMIN_PANEL_DEPLOYMENT.md:12",
+      "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "doc_title": "Admin Panel Deployment",
+      "language": "apache",
+      "tags": ["api"],
+      "description": "2. **Restrict CORS**",
+      "code": "Header always set Access-Control-Allow-Origin \"https://admin.asimo.io\"",
+      "full_length": 70,
+      "category": "deployment"
+    },
+    {
+      "id": "ADMIN_PANEL_DEPLOYMENT.md:13",
+      "doc_path": "ADMIN_PANEL_DEPLOYMENT.md",
+      "doc_title": "Admin Panel Deployment",
+      "language": "bash",
+      "tags": ["snippet"],
+      "description": "   - Enable HTTP/2 protocol for faster loading",
+      "code": "sudo a2enmod http2",
+      "full_length": 18,
+      "category": "deployment"
+    },
+    {
+      "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:0",
+      "doc_path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
+      "doc_title": "Admin Panel Implementation Summary",
+      "language": "text",
+      "tags": ["authentication"],
+      "description": "📈 Code Statistics",
+      "code": "Total Files Created:      9\nTotal Files Modified:     3\nTotal Lines Added:        2,466\nTotal Lines Removed:      36\nDocumentation:            1,100+ lines\n\nComponents:              4 (AuthContext, ProtectedRoute, AdminLayoutWithRouter, and 4 page components)\nPages:                   5 (Login, Dashboard, Users, KB, System)\nContexts:                1 (AuthContext)\nRoutes:                  6 (/, /login, /dashboard, /users, /knowledge-base, /system)",
+      "full_length": 450,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:1",
+      "doc_path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
+      "doc_title": "Admin Panel Implementation Summary",
+      "language": "bash",
+      "tags": ["package-manager"],
+      "description": "Build Testing",
+      "code": "npm run build",
+      "full_length": 13,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md:2",
+      "doc_path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
+      "doc_title": "Admin Panel Implementation Summary",
+      "language": "json",
+      "tags": ["config"],
+      "description": "📦 Dependencies Added",
+      "code": "{\n  \"react-router-dom\": \"^6.x\",\n  \"@heroicons/react\": \"^2.x\",\n  \"recharts\": \"^2.x\",\n  \"date-fns\": \"^3.x\"\n}",
+      "full_length": 106,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:0",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "text",
+      "tags": ["authentication"],
+      "description": "1. Firebase Errors (Wrong Bundle)",
+      "code": "Firebase: Error (auth/network-request-failed)",
+      "full_length": 45,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:1",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "text",
+      "tags": ["api", "authentication"],
+      "description": "2. CORS Error",
+      "code": "Access to fetch at 'http://localhost:8000/api/auth/login' from origin 'https://admin.asimo.io'\nhas been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present",
+      "full_length": 178,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:2",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "typescript",
+      "tags": ["api", "environment"],
+      "description": "**Original Code**:",
+      "code": "const API_BASE = import.meta.env.VITE_API_URL || \"http://localhost:8000\";",
+      "full_length": 73,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:3",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "typescript",
+      "tags": ["api", "environment"],
+      "description": "**Changed**:",
+      "code": "// Before\nconst API_BASE = import.meta.env.VITE_API_URL || \"http://localhost:8000\";\n\n// After\nconst API_BASE = import.meta.env.VITE_API_URL || \"\";",
+      "full_length": 146,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:4",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "apache",
+      "tags": ["api"],
+      "description": "**Added**:",
+      "code": "# Proxy API requests to backend\nProxyPreserveHost On\nProxyPass /api http://localhost:8000/api\nProxyPassReverse /api http://localhost:8000/api\nProxyPass /health http://localhost:8000/health\nProxyPassReverse /health http://localhost:8000/health",
+      "full_length": 242,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:5",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "apache",
+      "tags": ["snippet"],
+      "description": "**Added to rewrite conditions**:",
+      "code": "RewriteCond %{REQUEST_URI} !^/api\nRewriteCond %{REQUEST_URI} !^/health",
+      "full_length": 70,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:6",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "bash",
+      "tags": ["database", "system", "package-manager"],
+      "description": "4. Rebuilt and Redeployed ✅",
+      "code": "# Rebuild with new configuration\ncd ~/VoiceAssist/apps/admin-panel\nnpm run build\n\n# Deploy new build\nsudo cp -r dist/* /var/www/admin.asimo.io/\nsudo chown -R www-data:www-data /var/www/admin.asimo.io\n\n# Update Apache config\nsudo cp /tmp/admin.asimo.io-static.conf /etc/apache2/sites-available/admin.asimo.io.conf\n\n# Reload Apache\nsudo systemctl reload apache2",
+      "full_length": 359,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:7",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "bash",
+      "tags": ["api"],
+      "description": "1. Health Endpoint ✅",
+      "code": "$ curl -s https://admin.asimo.io/health | jq .\n{\n  \"status\": \"healthy\",\n  \"version\": \"0.1.0\",\n  \"timestamp\": 1763861360.3138871\n}",
+      "full_length": 129,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:8",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "bash",
+      "tags": ["api", "http", "authentication"],
+      "description": "2. Auth Endpoint ✅",
+      "code": "$ curl -s https://admin.asimo.io/api/auth/login -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\":\"test@example.com\",\"password\":\"test\"}'\n\n# Returns proper validation error (endpoint working)",
+      "full_length": 205,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:9",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "text",
+      "tags": ["api", "authentication"],
+      "description": "Before (Broken)",
+      "code": "Browser (https://admin.asimo.io)\n   ↓ Fetch http://localhost:8000/api/auth/login\n   ✗ CORS Error: Cross-origin request blocked",
+      "full_length": 126,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:10",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "text",
+      "tags": ["api", "authentication"],
+      "description": "After (Working)",
+      "code": "Browser (https://admin.asimo.io)\n   ↓ Fetch https://admin.asimo.io/api/auth/login (same-origin)\n   ↓\nApache (admin.asimo.io:443)\n   ↓ ProxyPass to http://localhost:8000/api/auth/login\n   ↓\nBackend (voiceassist-server:8000)\n   ↓ Process request\n   ↓\nApache\n   ↓ Return response\n   ↓\nBrowser\n   ✓ Success: Same-origin, no CORS issues",
+      "full_length": 331,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:11",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "sql",
+      "tags": ["database", "authentication"],
+      "description": "Created users table and admin user:",
+      "code": "-- Create users table\nCREATE TABLE users (\n    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n    email VARCHAR(255) NOT NULL UNIQUE,\n    full_name VARCHAR(255) NOT NULL DEFAULT 'User',\n    hashed_password VARCHAR(255),\n    is_active BOOLEAN NOT NULL DEFAULT true,\n    is_admin BOOLEAN NOT NULL DEFAULT false,\n    nextcloud_user_id VARCHAR(255) UNIQUE,\n    created_at TIMESTAMP NOT NULL DEFAULT NOW(),\n    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),\n    last_login TIMESTAMP\n);\n\n-- Create admin user...",
+      "full_length": 714,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:12",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "text",
+      "tags": ["api", "kubernetes"],
+      "description": "Git Commits",
+      "code": "e7125e3 - fix(admin-panel): Use same-origin API requests for production deployment\n- Changed API_BASE from 'http://localhost:8000' to '' (same origin)\n- API requests now go through Apache proxy\n- Fixes CORS issues in production\n- Admin panel now works at https://admin.asimo.io",
+      "full_length": 277,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:13",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "bash",
+      "tags": ["api", "system"],
+      "description": "If Apache proxy not working:",
+      "code": "# Check Apache is running\nsudo systemctl status apache2\n\n# Check site is enabled\nsudo a2query -s admin.asimo.io\n\n# Check proxy module is enabled\nsudo a2query -m proxy\nsudo a2query -m proxy_http\n\n# Enable if needed\nsudo a2enmod proxy\nsudo a2enmod proxy_http\nsudo systemctl reload apache2\n\n# Test proxy\ncurl -s https://admin.asimo.io/health",
+      "full_length": 338,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:14",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "bash",
+      "tags": ["docker", "database"],
+      "description": "If database connection fails:",
+      "code": "# Check container is running\ndocker ps | grep voiceassist-server\n\n# Check users table exists\ndocker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c \"\\dt users\"\n\n# Check admin user exists\ndocker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c \"SELECT email, is_admin FROM users WHERE email='admin@asimo.io';\"",
+      "full_length": 339,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:15",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "bash",
+      "tags": ["docker", "database"],
+      "description": "3. (Current) Update via database:",
+      "code": "docker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c \"\n   UPDATE users\n   SET hashed_password = '<new-bcrypt-hash>'\n   WHERE email = 'admin@asimo.io';\n   \"",
+      "full_length": 173,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:16",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "text",
+      "tags": ["authentication"],
+      "description": "Error Message",
+      "code": "Unexpected token 'I', 'Internal S'... is not valid JSON",
+      "full_length": 55,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:17",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "text",
+      "tags": ["snippet"],
+      "description": "- Docker logs showed:",
+      "code": "ValueError: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])",
+      "full_length": 107,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:18",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "bash",
+      "tags": ["api", "docker", "package-manager"],
+      "description": "1. **Temporary fix** (in running container):",
+      "code": "docker exec voiceassist-server pip install 'bcrypt==4.1.3' --force-reinstall\n   docker restart voiceassist-server",
+      "full_length": 113,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:19",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "diff",
+      "tags": ["snippet"],
+      "description": "2. **Permanent fix** (in requirements.txt):",
+      "code": "# Security\n   python-jose[cryptography]==3.5.0\n   passlib[bcrypt]==1.7.4\n   -bcrypt==5.0.0\n   +bcrypt==4.1.3  # Pinned to 4.1.3 for passlib compatibility",
+      "full_length": 153,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:20",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "bash",
+      "tags": ["api", "http", "cache", "authentication"],
+      "description": "Verification",
+      "code": "# Test login endpoint\ncurl -s https://admin.asimo.io/api/auth/login -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\":\"admin@asimo.io\",\"password\":\"admin123\"}' | jq .\n\n# Expected response:\n{\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"refresh_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"token_type\": \"bearer\",\n  \"expires_in\": 900\n}",
+      "full_length": 375,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:21",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "text",
+      "tags": ["authentication"],
+      "description": "Error Message",
+      "code": "api/auth/login:1 Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "full_length": 98,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:22",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "typescript",
+      "tags": ["api", "authentication"],
+      "description": "**Changes:**",
+      "code": "// Before: Expected user in login response\nconst response = await fetchAPI<{ access_token: string; user: User }>('/api/auth/login', ...);\nif (!response.user.is_admin) { ... }\n\n// After: Fetch user data separately\nconst response = await fetchAPI<{ access_token: string; refresh_token: string; token_type: string }>('/api/auth/login', ...);\nlocalStorage.setItem('auth_token', response.access_token);\n\nconst userData = await fetchAPI<User>('/api/auth/me', {\n  headers: { Authorization: `Bearer ${respons...",
+      "full_length": 655,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:23",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "text",
+      "tags": ["authentication"],
+      "description": "Error Message",
+      "code": "api/auth/login:1 Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "full_length": 98,
+      "category": "operations"
+    },
+    {
+      "id": "ADMIN_PANEL_LOGIN_FIX.md:24",
+      "doc_path": "ADMIN_PANEL_LOGIN_FIX.md",
+      "doc_title": "Admin Panel Login Fix",
+      "language": "python",
+      "tags": ["http", "authentication"],
+      "description": "**Pydantic Response Validation Error:**",
+      "code": "fastapi.exceptions.ResponseValidationError: 3 validation errors:\n  {'type': 'string_type', 'loc': ('response', 'id'), 'msg': 'Input should be a valid string', 'input': UUID('e70ba65f-4283-4aca-aa6e-13ab97e4cbc4')}\n  {'type': 'string_type', 'loc': ('response', 'created_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2025, 11, 23, 1, 36, 37, 510969)}\n  {'type': 'string_type', 'loc': ('response', 'last_login'), 'msg': 'Input should be a valid string', 'input': datetime.dat...",
+      "full_length": 539,
+      "category": "operations"
+    }
+  ],
+  "usage_notes": [
+    "Use by_language to find examples in specific languages",
+    "Use by_category to find examples related to specific topics",
+    "Use by_tag to find examples by semantic type (api, database, testing, etc.)",
+    "Code snippets are truncated to 500 chars - fetch full doc for complete code",
+    "Each example has an id in format \"doc_path:index\" and semantic tags"
+  ],
+  "tag_descriptions": {
+    "api": "Examples involving REST APIs, HTTP calls, or API endpoints",
+    "http": "HTTP methods (GET, POST, PUT, DELETE)",
+    "docker": "Docker/container configuration and commands",
+    "kubernetes": "Kubernetes manifests and kubectl commands",
+    "infrastructure": "Infrastructure as code (Terraform, AWS)",
+    "database": "SQL queries and database operations",
+    "cache": "Redis and caching patterns",
+    "testing": "Unit tests, integration tests, assertions",
+    "config": "Configuration files (YAML, JSON)",
+    "environment": "Environment variables and dotenv",
+    "system": "System administration commands",
+    "git": "Git operations and commands",
+    "package-manager": "npm, pnpm, pip package management",
+    "react": "React hooks and components",
+    "component": "UI component patterns",
+    "authentication": "Auth, login, tokens, OAuth",
+    "realtime": "WebSocket and real-time communication",
+    "snippet": "General code snippets"
+  }
+}

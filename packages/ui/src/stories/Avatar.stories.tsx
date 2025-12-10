@@ -2,32 +2,32 @@
  * Avatar Component Stories
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
-import { Avatar, AvatarGroup } from '../components/Avatar';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Avatar, AvatarGroup } from "../components/Avatar";
 
 const meta = {
-  title: 'Components/Avatar',
+  title: "Components/Avatar",
   component: Avatar,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     docs: {
       description: {
         component:
-          'Display user profile images or initials with optional status indicators.',
+          "Display user profile images or initials with optional status indicators.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     size: {
-      control: 'select',
-      options: ['xs', 'sm', 'md', 'lg', 'xl'],
-      description: 'The size of the avatar',
+      control: "select",
+      options: ["xs", "sm", "md", "lg", "xl"],
+      description: "The size of the avatar",
     },
     status: {
-      control: 'select',
-      options: ['online', 'offline', 'busy', 'away', undefined],
-      description: 'Status indicator',
+      control: "select",
+      options: ["online", "offline", "busy", "away", undefined],
+      description: "Status indicator",
     },
   },
 } satisfies Meta<typeof Avatar>;
@@ -37,29 +37,29 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    alt: 'John Doe',
+    alt: "John Doe",
   },
 };
 
 export const WithImage: Story = {
   args: {
-    src: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-    alt: 'John Doe',
+    src: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
+    alt: "John Doe",
   },
 };
 
 export const WithInitials: Story = {
   args: {
-    initials: 'JD',
-    alt: 'John Doe',
+    initials: "JD",
+    alt: "John Doe",
   },
 };
 
 export const WithStatus: Story = {
   args: {
-    initials: 'JD',
-    alt: 'John Doe',
-    status: 'online',
+    initials: "JD",
+    alt: "John Doe",
+    status: "online",
   },
 };
 
@@ -89,17 +89,32 @@ export const AllStatuses: Story = {
 export const Group: Story = {
   render: () => (
     <AvatarGroup max={3}>
-      <Avatar src="https://api.dicebear.com/7.x/avataaars/svg?seed=1" alt="User 1" />
-      <Avatar src="https://api.dicebear.com/7.x/avataaars/svg?seed=2" alt="User 2" />
-      <Avatar src="https://api.dicebear.com/7.x/avataaars/svg?seed=3" alt="User 3" />
-      <Avatar src="https://api.dicebear.com/7.x/avataaars/svg?seed=4" alt="User 4" />
-      <Avatar src="https://api.dicebear.com/7.x/avataaars/svg?seed=5" alt="User 5" />
+      <Avatar
+        src="https://api.dicebear.com/7.x/avataaars/svg?seed=1"
+        alt="User 1"
+      />
+      <Avatar
+        src="https://api.dicebear.com/7.x/avataaars/svg?seed=2"
+        alt="User 2"
+      />
+      <Avatar
+        src="https://api.dicebear.com/7.x/avataaars/svg?seed=3"
+        alt="User 3"
+      />
+      <Avatar
+        src="https://api.dicebear.com/7.x/avataaars/svg?seed=4"
+        alt="User 4"
+      />
+      <Avatar
+        src="https://api.dicebear.com/7.x/avataaars/svg?seed=5"
+        alt="User 5"
+      />
     </AvatarGroup>
   ),
   parameters: {
     docs: {
       description: {
-        story: 'Group of avatars with overflow count (+2)',
+        story: "Group of avatars with overflow count (+2)",
       },
     },
   },

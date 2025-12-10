@@ -17,6 +17,7 @@ cd k8s/performance
 ## Essential kubectl Commands
 
 ### Check HPA Status
+
 ```bash
 # List all HPAs
 kubectl get hpa -n voiceassist
@@ -29,6 +30,7 @@ kubectl describe hpa voiceassist-server-hpa -n voiceassist
 ```
 
 ### Monitor Resources
+
 ```bash
 # Current pod resource usage
 kubectl top pods -n voiceassist
@@ -41,6 +43,7 @@ kubectl get pods -n voiceassist --watch
 ```
 
 ### Check Scaling Events
+
 ```bash
 # Recent events
 kubectl get events -n voiceassist --sort-by='.lastTimestamp'
@@ -50,6 +53,7 @@ kubectl describe hpa voiceassist-server-hpa -n voiceassist | grep Events -A 20
 ```
 
 ### VPA Recommendations
+
 ```bash
 # View VPA recommendations
 kubectl describe vpa voiceassist-server-vpa -n voiceassist
@@ -59,6 +63,7 @@ kubectl get vpa voiceassist-server-vpa -n voiceassist -o json | jq '.status.reco
 ```
 
 ### PodDisruptionBudgets
+
 ```bash
 # List all PDBs
 kubectl get pdb -n voiceassist
@@ -69,29 +74,31 @@ kubectl describe pdb voiceassist-server-pdb -n voiceassist
 
 ## Configuration Scaling Levels
 
-| Component | Dev | Staging | Prod |
-|-----------|-----|---------|------|
+| Component       | Dev   | Staging | Prod  |
+| --------------- | ----- | ------- | ----- |
 | **API Gateway** |
-| Min Replicas | 1 | 2 | 3 |
-| Max Replicas | 3 | 6 | 15 |
-| CPU Target | 80% | 70% | 65% |
-| CPU Limits | 1000m | 2000m | 3000m |
-| Memory Limits | 1Gi | 2Gi | 3Gi |
-| **Worker** |
-| Min Replicas | 1 | 1 | 2 |
-| Max Replicas | 2 | 3 | 8 |
-| CPU Target | 85% | 80% | 75% |
-| CPU Limits | 2000m | 4000m | 6000m |
-| Memory Limits | 2Gi | 4Gi | 6Gi |
+| Min Replicas    | 1     | 2       | 3     |
+| Max Replicas    | 3     | 6       | 15    |
+| CPU Target      | 80%   | 70%     | 65%   |
+| CPU Limits      | 1000m | 2000m   | 3000m |
+| Memory Limits   | 1Gi   | 2Gi     | 3Gi   |
+| **Worker**      |
+| Min Replicas    | 1     | 1       | 2     |
+| Max Replicas    | 2     | 3       | 8     |
+| CPU Target      | 85%   | 80%     | 75%   |
+| CPU Limits      | 2000m | 4000m   | 6000m |
+| Memory Limits   | 2Gi   | 4Gi     | 6Gi   |
 
 ## Scaling Behavior
 
 ### API Gateway
+
 - **Scale Up:** 100% every 30s (max +2 pods)
 - **Scale Down:** 10% every 5m (max -1 pod)
 - **Triggers:** CPU >70%, Memory >80%, Requests >100/s
 
 ### Worker
+
 - **Scale Up:** 50% every 60s
 - **Scale Down:** 10% every 10m
 - **Triggers:** CPU >80%, Memory >85%, Queue >50 jobs
@@ -112,6 +119,7 @@ kubectl apply -k k8s/performance/overlays/prod/
 ## Troubleshooting
 
 ### HPA Shows "unknown" Metrics
+
 ```bash
 # Check metrics-server
 kubectl get apiservices v1beta1.metrics.k8s.io
@@ -122,6 +130,7 @@ kubectl logs -n kube-system deployment/metrics-server
 ```
 
 ### Pods Not Scaling
+
 ```bash
 # Check HPA conditions
 kubectl describe hpa voiceassist-server-hpa -n voiceassist
@@ -131,6 +140,7 @@ kubectl get --raw /apis/metrics.k8s.io/v1beta1/namespaces/voiceassist/pods
 ```
 
 ### OOMKilled Pods
+
 ```bash
 # Check memory usage
 kubectl top pods -n voiceassist
@@ -144,6 +154,7 @@ kubectl patch deployment voiceassist-server -n voiceassist \
 ```
 
 ### Node Drain Blocked
+
 ```bash
 # Check PDB status
 kubectl get pdb -n voiceassist -o wide
@@ -155,6 +166,7 @@ kubectl delete pdb voiceassist-server-pdb -n voiceassist
 ## Load Testing
 
 ### Test API Gateway
+
 ```bash
 # Using hey tool (automated in test script)
 kubectl run -it --rm load-generator --image=williamyeh/hey:latest -- \
@@ -162,6 +174,7 @@ kubectl run -it --rm load-generator --image=williamyeh/hey:latest -- \
 ```
 
 ### Test Worker
+
 ```bash
 # Generate jobs (automated in test script)
 kubectl run -it --rm job-gen --image=redis:alpine -- \
@@ -202,11 +215,11 @@ k8s/performance/
 
 ## Metrics Endpoints
 
-| Component | Endpoint | Port |
-|-----------|----------|------|
-| API Gateway | /metrics | 8000 |
-| Worker | /metrics | 9090 |
-| Metrics Server | /apis/metrics.k8s.io | - |
+| Component      | Endpoint             | Port |
+| -------------- | -------------------- | ---- |
+| API Gateway    | /metrics             | 8000 |
+| Worker         | /metrics             | 9090 |
+| Metrics Server | /apis/metrics.k8s.io | -    |
 
 ## Important Notes
 
@@ -228,22 +241,30 @@ k8s/performance/
 ## Common Scenarios
 
 ### Increase Max Replicas
+
 Edit overlay file: `overlays/prod/hpa-patch.yaml`
+
 ```yaml
 spec:
-  maxReplicas: 20  # Increase from 15
+  maxReplicas: 20 # Increase from 15
 ```
+
 Apply: `kubectl apply -k k8s/performance/overlays/prod/`
 
 ### Lower CPU Threshold
+
 Edit overlay file or base: `api-gateway-hpa.yaml`
+
 ```yaml
-averageUtilization: 60  # Lower from 70
+averageUtilization: 60 # Lower from 70
 ```
+
 Apply: `kubectl apply -f api-gateway-hpa.yaml`
 
 ### Add Custom Metric
+
 Edit HPA: `api-gateway-hpa.yaml`
+
 ```yaml
 - type: Pods
   pods:
@@ -255,4 +276,5 @@ Edit HPA: `api-gateway-hpa.yaml`
 ```
 
 ---
+
 **Version:** 1.0 | **Date:** 2025-01-21 | **Phase:** 10

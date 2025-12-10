@@ -10,6 +10,7 @@ import type {
   ClinicalContextCreate,
   ClinicalContextUpdate,
 } from "@voiceassist/types";
+import { extractErrorMessage } from "@voiceassist/types";
 
 export function useClinicalContext(sessionId?: string) {
   const { apiClient } = useAuth();
@@ -26,10 +27,10 @@ export function useClinicalContext(sessionId?: string) {
     try {
       const data = await apiClient.getCurrentClinicalContext(sessionId);
       setContext(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // 404 is expected when no context exists yet
-      if (err.response?.status !== 404) {
-        setError(err.message || "Failed to load clinical context");
+      if ((err as any).response?.status !== 404) {
+        setError(extractErrorMessage(err));
         console.error("Failed to load clinical context:", err);
       }
     } finally {
@@ -55,8 +56,8 @@ export function useClinicalContext(sessionId?: string) {
         });
         setContext(newContext);
         return newContext;
-      } catch (err: any) {
-        setError(err.message || "Failed to create clinical context");
+      } catch (err: unknown) {
+        setError(extractErrorMessage(err));
         console.error("Failed to create clinical context:", err);
         throw err;
       } finally {
@@ -79,8 +80,8 @@ export function useClinicalContext(sessionId?: string) {
         const updated = await apiClient.updateClinicalContext(context.id, data);
         setContext(updated);
         return updated;
-      } catch (err: any) {
-        setError(err.message || "Failed to update clinical context");
+      } catch (err: unknown) {
+        setError(extractErrorMessage(err));
         console.error("Failed to update clinical context:", err);
         throw err;
       } finally {
@@ -113,8 +114,8 @@ export function useClinicalContext(sessionId?: string) {
     try {
       await apiClient.deleteClinicalContext(context.id);
       setContext(null);
-    } catch (err: any) {
-      setError(err.message || "Failed to delete clinical context");
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err));
       console.error("Failed to delete clinical context:", err);
       throw err;
     } finally {

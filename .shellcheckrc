@@ -1,0 +1,37 @@
+# Global shellcheck configuration
+# Disable common style warnings that are safe in this codebase
+
+# SC2155: Declare and assign separately to avoid masking return values
+# This is a style preference - we prefer the compact form
+disable=SC2155
+
+# SC2086: Double quote to prevent globbing and word splitting
+# Covered by intentional unquoted variables in some scripts
+disable=SC2086
+
+# SC2034: Variable appears unused
+# Often used for exported or sourced variables
+disable=SC2034
+
+# SC2181: Check exit code directly
+# This is a style preference - both patterns are valid
+disable=SC2181
+
+# SC2091: Not following sourced files
+disable=SC1091
+
+# SC2002: Useless cat
+disable=SC2002
+
+# SC2015: Note that A && B || C is not if-then-else
+disable=SC2015
+
+# SC2029: Unescaped SSH expansion
+disable=SC2029
+
+# SC2087: Quote EOF for server-side expansion
+disable=SC2087
+
+# SC2154: Variable is referenced but not assigned
+# Often used in terraform templates with external variable injection
+disable=SC2154

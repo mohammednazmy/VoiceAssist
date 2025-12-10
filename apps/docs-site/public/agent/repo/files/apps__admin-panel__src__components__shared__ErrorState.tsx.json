@@ -1,0 +1,8 @@
+{
+  "path": "apps/admin-panel/src/components/shared/ErrorState.tsx",
+  "language": "typescript",
+  "size": 1042,
+  "last_modified": "2025-11-28T04:58:57.201Z",
+  "lines": 40,
+  "content": "/**\n * ErrorState - Consistent error display with retry action\n */\n\ninterface ErrorStateProps {\n  message: string;\n  onRetry?: () => void;\n  retryLabel?: string;\n  className?: string;\n}\n\nexport function ErrorState({\n  message,\n  onRetry,\n  retryLabel = \"Retry\",\n  className = \"\",\n}: ErrorStateProps) {\n  return (\n    <div\n      className={`p-4 bg-red-950/50 border border-red-900 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${className}`}\n      role=\"alert\"\n    >\n      <div className=\"flex items-start gap-3\">\n        <span className=\"text-red-400 text-lg flex-shrink-0\" aria-hidden=\"true\">\n          ⚠️\n        </span>\n        <span className=\"text-red-400 text-sm\">{message}</span>\n      </div>\n      {onRetry && (\n        <button\n          onClick={onRetry}\n          className=\"px-3 py-1.5 text-xs bg-red-900/50 border border-red-800 rounded-md text-red-100 hover:bg-red-900 transition-colors whitespace-nowrap\"\n        >\n          {retryLabel}\n        </button>\n      )}\n    </div>\n  );\n}\n"
+}

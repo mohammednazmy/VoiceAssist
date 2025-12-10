@@ -3,50 +3,76 @@
 HIPAA Compliance: Ensures that PHI is never logged or exposed in traces/metrics.
 Implements automatic redaction patterns for common PHI data types.
 """
-import re
-from typing import Any, Dict, List, Optional
 
+import re
+from typing import Any, Dict, List
 
 # Patterns for common PHI data types
 PHI_PATTERNS = {
     # Social Security Numbers
-    'ssn': re.compile(r'\b\d{3}-\d{2}-\d{4}\b'),
-    'ssn_compact': re.compile(r'\b\d{9}\b'),
-
+    "ssn": re.compile(r"\b\d{3}-\d{2}-\d{4}\b"),
+    "ssn_compact": re.compile(r"\b\d{9}\b"),
     # Phone numbers
-    'phone': re.compile(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b'),
-
+    "phone": re.compile(r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b"),
     # Email addresses
-    'email': re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'),
-
+    "email": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"),
     # Medical Record Numbers (MRN) - typically 6-10 digits
-    'mrn': re.compile(r'\b(?:mrn|medical[-_]?record[-_]?number|patient[-_]?id)[:\s]*(\d{6,10})\b', re.IGNORECASE),
-
+    "mrn": re.compile(
+        r"\b(?:mrn|medical[-_]?record[-_]?number|patient[-_]?id)[:\s]*(\d{6,10})\b",
+        re.IGNORECASE,
+    ),
     # Date of Birth
-    'dob': re.compile(r'\b(?:dob|date[-_]?of[-_]?birth|birth[-_]?date)[:\s]*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b', re.IGNORECASE),
-
+    "dob": re.compile(
+        r"\b(?:dob|date[-_]?of[-_]?birth|birth[-_]?date)[:\s]*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b",
+        re.IGNORECASE,
+    ),
     # IP addresses (can be used to identify individuals)
-    'ip_address': re.compile(r'\b(?:\d{1,3}\.){3}\d{1,3}\b'),
-
+    "ip_address": re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b"),
     # Credit card numbers
-    'credit_card': re.compile(r'\b(?:\d{4}[-\s]?){3}\d{4}\b'),
-
+    "credit_card": re.compile(r"\b(?:\d{4}[-\s]?){3}\d{4}\b"),
     # Addresses (simplified pattern)
-    'address': re.compile(r'\b\d{1,5}\s+\w+\s+(street|st|avenue|ave|road|rd|lane|ln|drive|dr|court|ct|boulevard|blvd)\b', re.IGNORECASE),
+    "address": re.compile(
+        r"\b\d{1,5}\s+\w+\s+(street|st|avenue|ave|road|rd|lane|ln|drive|dr|court|ct|boulevard|blvd)\b",
+        re.IGNORECASE,
+    ),
 }
 
 # Fields that should always be redacted
 PHI_FIELD_NAMES = {
-    'ssn', 'social_security', 'social_security_number',
-    'phone', 'phone_number', 'telephone', 'mobile',
-    'email', 'email_address',
-    'mrn', 'medical_record_number', 'patient_id',
-    'dob', 'date_of_birth', 'birth_date', 'birthdate',
-    'address', 'street_address', 'home_address',
-    'first_name', 'last_name', 'full_name', 'name',
-    'password', 'token', 'access_token', 'refresh_token',
-    'api_key', 'secret', 'private_key',
-    'credit_card', 'card_number', 'cvv', 'card_cvv',
+    "ssn",
+    "social_security",
+    "social_security_number",
+    "phone",
+    "phone_number",
+    "telephone",
+    "mobile",
+    "email",
+    "email_address",
+    "mrn",
+    "medical_record_number",
+    "patient_id",
+    "dob",
+    "date_of_birth",
+    "birth_date",
+    "birthdate",
+    "address",
+    "street_address",
+    "home_address",
+    "first_name",
+    "last_name",
+    "full_name",
+    "name",
+    "password",
+    "token",
+    "access_token",
+    "refresh_token",
+    "api_key",
+    "secret",
+    "private_key",
+    "credit_card",
+    "card_number",
+    "cvv",
+    "card_cvv",
 }
 
 
@@ -121,10 +147,15 @@ class PHIRedactor:
             return data
 
         return [
-            self.redact_dict(item) if isinstance(item, dict)
-            else self.redact_list(item) if isinstance(item, list)
-            else self.redact_string(item) if isinstance(item, str)
-            else item
+            (
+                self.redact_dict(item)
+                if isinstance(item, dict)
+                else (
+                    self.redact_list(item)
+                    if isinstance(item, list)
+                    else self.redact_string(item) if isinstance(item, str) else item
+                )
+            )
             for item in data
         ]
 
@@ -137,7 +168,7 @@ class PHIRedactor:
         Returns:
             True if field contains PHI
         """
-        field_lower = field_name.lower().replace('-', '_')
+        field_lower = field_name.lower().replace("-", "_")
         return any(phi_field in field_lower for phi_field in PHI_FIELD_NAMES)
 
     def redact_exception(self, exception: Exception) -> str:

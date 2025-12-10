@@ -1,3 +1,31 @@
+---
+title: Phase8 Folders Testing Guide
+slug: phase8-folders-testing-guide
+summary: "**Date**: 2024-11-24"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - phase8
+  - folders
+  - testing
+  - guide
+category: testing
+component: "frontend/web-app"
+relatedPaths:
+  - "apps/web-app/src/components/folders"
+ai_summary: >-
+  Date: 2024-11-24 Feature: Conversation Folders Organization Environment:
+  dev.asimo.io This guide provides comprehensive manual testing steps for the
+  new Folders feature in Phase 8, which allows users to organize their
+  conversations into hierarchical folder structures. - ✅ Database table:
+  conversa...
+---
+
 # Phase 8 Folders Feature - Manual Testing Guide
 
 **Date**: 2024-11-24
@@ -64,8 +92,8 @@ This guide provides comprehensive manual testing steps for the new Folders featu
 - ✅ Folder tree displays if folders exist
 - ✅ Empty state message if no folders created yet
 
-**Pass/Fail**: ****\_\_\_****
-**Notes**: ********************\_\_\_********************
+**Pass/Fail**: \***\*\_\_\_\*\***
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -95,8 +123,8 @@ curl -H "Authorization: Bearer $TOKEN" \
   https://dev.asimo.io:8000/api/folders/tree
 ```
 
-**Pass/Fail**: ****\_\_\_****
-**Notes**: ********************\_\_\_********************
+**Pass/Fail**: \***\*\_\_\_\*\***
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -118,8 +146,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 - ✅ Indentation shows hierarchy (16px per level)
 - ✅ API call: `POST /api/folders` with `parent_folder_id` set
 
-**Pass/Fail**: ****\_\_\_****
-**Notes**: ********************\_\_\_********************
+**Pass/Fail**: \***\*\_\_\_\*\***
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -142,8 +170,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 - ✅ State persists while navigating (expandedFolderIds Set maintained)
 - ✅ Multiple folders can be expanded simultaneously
 
-**Pass/Fail**: ****\_\_\_****
-**Notes**: ********************\_\_\_********************
+**Pass/Fail**: \***\*\_\_\_\*\***
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -169,8 +197,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 - ✅ filteredConversations useMemo updates correctly
 - ✅ Empty state shows if folder has no conversations
 
-**Pass/Fail**: ****\_\_\_****
-**Notes**: ********************\_\_\_********************
+**Pass/Fail**: \***\*\_\_\_\*\***
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -212,8 +240,8 @@ curl -H "Authorization: Bearer $TOKEN" \
   https://dev.asimo.io:8000/api/sessions/{session_id}
 ```
 
-**Pass/Fail**: ****\_\_\_****
-**Notes**: ********************\_\_\_********************
+**Pass/Fail**: \***\*\_\_\_\*\***
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -235,8 +263,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 - ✅ Conversation appears when "All Conversations" selected
 - ✅ Toast notification: "Conversation moved to root level"
 
-**Pass/Fail**: ****\_\_\_****
-**Notes**: ********************\_\_\_********************
+**Pass/Fail**: \***\*\_\_\_\*\***
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -270,8 +298,8 @@ curl -X PUT -H "Authorization: Bearer $TOKEN" \
   https://dev.asimo.io:8000/api/folders/{folder_id}
 ```
 
-**Pass/Fail**: ****\_\_\_****
-**Notes**: ********************\_\_\_********************
+**Pass/Fail**: \***\*\_\_\_\*\***
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -302,8 +330,8 @@ curl -X PUT -H "Authorization: Bearer $TOKEN" \
 SELECT id, title, folder_id FROM sessions WHERE user_id = 'USER_ID';
 ```
 
-**Pass/Fail**: ****\_\_\_****
-**Notes**: ********************\_\_\_********************
+**Pass/Fail**: \***\*\_\_\_\*\***
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -331,8 +359,8 @@ SELECT id, title, folder_id FROM sessions WHERE user_id = 'USER_ID';
 - ✅ Conversations can be assigned to deeply nested folders
 - ✅ Filtering works correctly at any depth
 
-**Pass/Fail**: ****\_\_\_****
-**Notes**: ********************\_\_\_********************
+**Pass/Fail**: \***\*\_\_\_\*\***
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -357,8 +385,8 @@ SELECT id, title, folder_id FROM sessions WHERE user_id = 'USER_ID';
 - ✅ No layout shift issues
 - ✅ More vertical space for conversations when hidden
 
-**Pass/Fail**: ****\_\_\_****
-**Notes**: ********************\_\_\_********************
+**Pass/Fail**: \***\*\_\_\_\*\***
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -383,8 +411,8 @@ SELECT id, title, folder_id FROM sessions WHERE user_id = 'USER_ID';
 - ✅ Operations succeed after network restored
 - ✅ State remains consistent (no phantom folders)
 
-**Pass/Fail**: ****\_\_\_****
-**Notes**: ********************\_\_\_********************
+**Pass/Fail**: \***\*\_\_\_\*\***
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -410,8 +438,8 @@ SELECT id, title, folder_id FROM sessions WHERE user_id = 'USER_ID';
   - Expand/Collapse buttons: "Expand" / "Collapse"
 - ✅ Keyboard shortcuts work (Enter, Escape in edit mode)
 
-**Pass/Fail**: ****\_\_\_****
-**Notes**: ********************\_\_\_********************
+**Pass/Fail**: \***\*\_\_\_\*\***
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -435,8 +463,8 @@ SELECT id, title, folder_id FROM sessions WHERE user_id = 'USER_ID';
 - ✅ No janky animations or stuttering
 - ✅ Scroll performance smooth (max-h-64 overflow-y-auto works)
 
-**Pass/Fail**: ****\_\_\_****
-**Notes**: ********************\_\_\_********************
+**Pass/Fail**: \***\*\_\_\_\*\***
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -463,8 +491,8 @@ SELECT id, title, folder_id FROM sessions WHERE user_id = 'USER_ID';
 - ✅ No data loss or corruption
 - ✅ folder_id persists in database
 
-**Pass/Fail**: ****\_\_\_****
-**Notes**: ********************\_\_\_********************
+**Pass/Fail**: \***\*\_\_\_\*\***
+**Notes**: **\*\*\*\***\*\*\*\***\*\*\*\***\_\_\_**\*\*\*\***\*\*\*\***\*\*\*\***
 
 ---
 
@@ -630,9 +658,9 @@ Ensure existing features still work after folder integration:
 
 ## Test Results Summary
 
-**Date Tested**: ****\_\_\_****
-**Tester Name**: ****\_\_\_****
-**Environment**: ****\_\_\_****
+**Date Tested**: \***\*\_\_\_\*\***
+**Tester Name**: \***\*\_\_\_\*\***
+**Environment**: \***\*\_\_\_\*\***
 
 ### Overall Results
 

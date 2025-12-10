@@ -118,12 +118,12 @@ resource "aws_secretsmanager_secret" "redis_auth_token" {
 resource "aws_secretsmanager_secret_version" "redis_auth_token" {
   secret_id = aws_secretsmanager_secret.redis_auth_token.id
   secret_string = jsonencode({
-    auth_token             = random_password.auth_token.result
-    primary_endpoint       = var.cluster_mode_enabled ? aws_elasticache_replication_group.main.configuration_endpoint_address : aws_elasticache_replication_group.main.primary_endpoint_address
-    reader_endpoint        = var.cluster_mode_enabled ? null : aws_elasticache_replication_group.main.reader_endpoint_address
-    port                   = var.port
-    engine                 = "redis"
-    cluster_mode_enabled   = var.cluster_mode_enabled
+    auth_token           = random_password.auth_token.result
+    primary_endpoint     = var.cluster_mode_enabled ? aws_elasticache_replication_group.main.configuration_endpoint_address : aws_elasticache_replication_group.main.primary_endpoint_address
+    reader_endpoint      = var.cluster_mode_enabled ? null : aws_elasticache_replication_group.main.reader_endpoint_address
+    port                 = var.port
+    engine               = "redis"
+    cluster_mode_enabled = var.cluster_mode_enabled
   })
 
   depends_on = [
@@ -133,15 +133,15 @@ resource "aws_secretsmanager_secret_version" "redis_auth_token" {
 
 # ElastiCache Replication Group (Redis Cluster)
 resource "aws_elasticache_replication_group" "main" {
-  replication_group_id       = "${var.name_prefix}-redis"
+  replication_group_id          = "${var.name_prefix}-redis"
   replication_group_description = "VoiceAssist Redis cluster - ${var.environment}"
-  engine                     = "redis"
-  engine_version             = var.engine_version
-  node_type                  = var.node_type
-  port                       = var.port
+  engine                        = "redis"
+  engine_version                = var.engine_version
+  node_type                     = var.node_type
+  port                          = var.port
 
   # Number of cache clusters (primary + read replicas)
-  num_cache_clusters         = var.cluster_mode_enabled ? null : var.num_cache_clusters
+  num_cache_clusters = var.cluster_mode_enabled ? null : var.num_cache_clusters
 
   # Cluster mode configuration
   cluster_mode {
@@ -153,8 +153,8 @@ resource "aws_elasticache_replication_group" "main" {
   parameter_group_name = aws_elasticache_parameter_group.main.name
 
   # Network configuration
-  subnet_group_name    = aws_elasticache_subnet_group.main.name
-  security_group_ids   = [var.security_group_id]
+  subnet_group_name  = aws_elasticache_subnet_group.main.name
+  security_group_ids = [var.security_group_id]
 
   # High availability
   automatic_failover_enabled = var.automatic_failover_enabled
@@ -167,10 +167,10 @@ resource "aws_elasticache_replication_group" "main" {
   auth_token                 = random_password.auth_token.result
 
   # Maintenance and backup
-  maintenance_window         = var.maintenance_window
-  snapshot_window            = var.snapshot_window
-  snapshot_retention_limit   = var.snapshot_retention_limit
-  final_snapshot_identifier  = var.create_final_snapshot ? "${var.name_prefix}-redis-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}" : null
+  maintenance_window        = var.maintenance_window
+  snapshot_window           = var.snapshot_window
+  snapshot_retention_limit  = var.snapshot_retention_limit
+  final_snapshot_identifier = var.create_final_snapshot ? "${var.name_prefix}-redis-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}" : null
 
   # Auto minor version upgrade
   auto_minor_version_upgrade = var.auto_minor_version_upgrade

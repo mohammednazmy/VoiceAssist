@@ -1,8 +1,9 @@
 """
 Unit tests for conversation folders functionality
 """
-import pytest
+
 from uuid import uuid4
+
 from app.models.folder import ConversationFolder
 
 
@@ -13,7 +14,7 @@ def test_conversation_folder_creation():
         user_id=uuid4(),
         name="Work Projects",
         color="#FF5733",
-        icon="briefcase"
+        icon="briefcase",
     )
 
     assert folder.name == "Work Projects"
@@ -31,7 +32,7 @@ def test_conversation_folder_with_parent():
         name="Q1 2024",
         parent_folder_id=parent_id,
         color="#3498db",
-        icon="calendar"
+        icon="calendar",
     )
 
     assert folder.name == "Q1 2024"
@@ -48,7 +49,7 @@ def test_conversation_folder_to_dict():
         user_id=user_id,
         name="Medical Cases",
         color="#2ecc71",
-        icon="medical"
+        icon="medical",
     )
 
     result = folder.to_dict()
@@ -61,11 +62,7 @@ def test_conversation_folder_to_dict():
 
 def test_conversation_folder_minimal_data():
     """Test creating folder with minimal required data"""
-    folder = ConversationFolder(
-        id=uuid4(),
-        user_id=uuid4(),
-        name="General"
-    )
+    folder = ConversationFolder(id=uuid4(), user_id=uuid4(), name="General")
 
     assert folder.name == "General"
     assert folder.color is None
@@ -78,27 +75,13 @@ def test_conversation_folder_hierarchy():
     user_id = uuid4()
 
     # Root folder
-    root = ConversationFolder(
-        id=uuid4(),
-        user_id=user_id,
-        name="Projects"
-    )
+    root = ConversationFolder(id=uuid4(), user_id=user_id, name="Projects")
 
     # Child folder
-    child = ConversationFolder(
-        id=uuid4(),
-        user_id=user_id,
-        name="2024",
-        parent_folder_id=root.id
-    )
+    child = ConversationFolder(id=uuid4(), user_id=user_id, name="2024", parent_folder_id=root.id)
 
     # Grandchild folder
-    grandchild = ConversationFolder(
-        id=uuid4(),
-        user_id=user_id,
-        name="Q1",
-        parent_folder_id=child.id
-    )
+    grandchild = ConversationFolder(id=uuid4(), user_id=user_id, name="Q1", parent_folder_id=child.id)
 
     assert root.parent_folder_id is None
     assert child.parent_folder_id == root.id

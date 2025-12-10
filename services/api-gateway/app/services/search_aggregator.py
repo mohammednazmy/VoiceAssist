@@ -28,12 +28,37 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-import openai
 from app.core.config import settings
-from app.core.metrics import rag_embedding_tokens_total, rag_query_duration_seconds, rag_search_results_total
-from app.services.cache_service import cache_service, generate_cache_key
-from qdrant_client import QdrantClient
-from qdrant_client.models import FieldCondition, Filter, MatchValue
+from openai import AsyncOpenAI
+
+# Async OpenAI client for embedding generation
+_async_openai_client: AsyncOpenAI | None = None
+
+
+def get_async_openai_client() -> AsyncOpenAI:
+    """Get or create the async OpenAI client."""
+    global _async_openai_client
+    if _async_openai_client is None:
+        _async_openai_client = AsyncOpenAI()
+    return _async_openai_client
+
+
+# isort: off
+from app.core.metrics import (  # noqa: E402
+    rag_embedding_tokens_total,
+    rag_query_duration_seconds,
+    rag_search_results_total,
+)
+from app.services.cache_service import cache_service, generate_cache_key  # noqa: E402
+from qdrant_client import QdrantClient  # noqa: E402
+from qdrant_client.models import (  # noqa: E402
+    FieldCondition,
+    Filter,
+    MatchAny,
+    MatchValue,
+)
+
+# isort: on
 
 logger = logging.getLogger(__name__)
 
@@ -97,21 +122,20 @@ class SearchAggregator:
         backoff_seconds = [1, 2, 4]
 
         # Check cache first
-        cache_key = generate_cache_key(
-            "rag_embedding", query, model=self.embedding_model
-        )
+        cache_key = generate_cache_key("rag_embedding", query, model=self.embedding_model)
         cached_embedding = await cache_service.get(cache_key)
         if cached_embedding is not None:
             logger.debug(f"Using cached embedding for query: {query[:50]}...")
             return cached_embedding
 
-        # Generate embedding
+        # Generate embedding using async client
         last_error: Optional[Exception] = None
+        client = get_async_openai_client()
         for attempt, delay in enumerate(backoff_seconds, start=1):
             try:
                 start_time = time.time()
                 response = await asyncio.wait_for(
-                    openai.embeddings.create(model=self.embedding_model, input=query),
+                    client.embeddings.create(model=self.embedding_model, input=query),
                     timeout=15,
                 )
                 embedding = response.data[0].embedding
@@ -142,9 +166,7 @@ class SearchAggregator:
             await asyncio.sleep(delay)
 
         # If all attempts fail, bubble up the last error
-        raise RuntimeError(
-            f"Failed to generate embedding after retries: {last_error}"
-        ) from last_error
+        raise RuntimeError(f"Failed to generate embedding after retries: {last_error}") from last_error
 
     async def search(
         self,
@@ -199,27 +221,30 @@ class SearchAggregator:
                 if filter_conditions:
                     filter_must = []
                     for key, value in filter_conditions.items():
-                        filter_must.append(
-                            FieldCondition(key=key, match=MatchValue(value=value))
-                        )
+                        if isinstance(value, (list, tuple, set)):
+                            filter_must.append(FieldCondition(key=key, match=MatchAny(any=list(value))))
+                        else:
+                            filter_must.append(FieldCondition(key=key, match=MatchValue(value=value)))
                     search_filter = Filter(must=filter_must)
 
                 # Perform vector search in Qdrant off the event loop
+                # Note: qdrant-client v1.6+ uses query_points instead of search
                 search_start = time.time()
-                search_results = await asyncio.wait_for(
+                query_response = await asyncio.wait_for(
                     asyncio.to_thread(
-                        self.qdrant_client.search,
+                        self.qdrant_client.query_points,
                         collection_name=self.collection_name,
-                        query_vector=query_embedding,
+                        query=query_embedding,
                         limit=top_k,
                         score_threshold=score_threshold,
                         query_filter=search_filter,
                     ),
                     timeout=5,
                 )
-                rag_query_duration_seconds.labels(stage="search").observe(
-                    time.time() - search_start
-                )
+                rag_query_duration_seconds.labels(stage="search").observe(time.time() - search_start)
+
+                # Extract points from QueryResponse
+                search_results = query_response.points if hasattr(query_response, "points") else []
 
                 # Format results
                 results = []
@@ -250,9 +275,7 @@ class SearchAggregator:
                     results.append(search_result)
 
                 # Track metrics
-                rag_query_duration_seconds.labels(stage="total").observe(
-                    time.time() - start_time
-                )
+                rag_query_duration_seconds.labels(stage="total").observe(time.time() - start_time)
                 rag_search_results_total.observe(len(results))
 
                 # Cache search results (30 minute TTL)
@@ -283,9 +306,7 @@ class SearchAggregator:
         logger.error("Search failed after retries: %s", last_error)
         return []
 
-    async def search_by_document_id(
-        self, document_id: str, top_k: int = 10
-    ) -> List[SearchResult]:
+    async def search_by_document_id(self, document_id: str, top_k: int = 10) -> List[SearchResult]:
         """
         Retrieve all chunks for a specific document.
 
@@ -326,9 +347,7 @@ class SearchAggregator:
 
                 # Format results
                 results = []
-                for result in search_results[
-                    0
-                ]:  # scroll returns (points, next_page_offset)
+                for result in search_results[0]:  # scroll returns (points, next_page_offset)
                     search_result = SearchResult(
                         chunk_id=str(result.id),
                         document_id=result.payload.get("document_id", "unknown"),
@@ -354,9 +373,7 @@ class SearchAggregator:
                     )
                     results.append(search_result)
 
-                logger.info(
-                    "Retrieved %d chunks for document %s", len(results), document_id
-                )
+                logger.info("Retrieved %d chunks for document %s", len(results), document_id)
                 return results
 
             except asyncio.TimeoutError as exc:
@@ -378,9 +395,7 @@ class SearchAggregator:
 
             await asyncio.sleep(delay)
 
-        logger.error(
-            "Failed to retrieve document %s after retries: %s", document_id, last_error
-        )
+        logger.error("Failed to retrieve document %s after retries: %s", document_id, last_error)
         return []
 
     def format_context_for_rag(self, search_results: List[SearchResult]) -> str:
@@ -398,16 +413,16 @@ class SearchAggregator:
 
         context_parts = []
         for i, result in enumerate(search_results, 1):
+            source_type = result.metadata.get("source_type", "unknown")
+            source_tag = source_type.upper()
             context_parts.append(
-                f"[Source {i}] {result.metadata.get('title', 'Unknown')} "
+                f"[Source {i} | {source_tag}] {result.metadata.get('title', 'Unknown')} "
                 f"(Score: {result.score:.2f})\n{result.content}\n"
             )
 
         return "\n".join(context_parts)
 
-    def extract_citations(
-        self, search_results: List[SearchResult]
-    ) -> List[Dict[str, Any]]:
+    def extract_citations(self, search_results: List[SearchResult]) -> List[Dict[str, Any]]:
         """
         Extract citation information from search results.
 
@@ -433,7 +448,62 @@ class SearchAggregator:
                 "title": result.metadata.get("title", "Untitled"),
                 "url": result.metadata.get("url"),
                 "relevance_score": result.score,
+                "source_tag": result.metadata.get("source_type", "unknown").upper(),
             }
             citations.append(citation)
 
         return citations
+
+    def synthesize_across_documents(self, search_results: List[SearchResult]) -> Dict[str, Any]:
+        """Create a cross-document synthesis summary.
+
+        Groups results by document and returns a condensed context string and
+        lightweight metadata for auditing.
+        """
+
+        if not search_results:
+            return {"context": "", "documents": []}
+
+        grouped: Dict[str, Dict[str, Any]] = {}
+        for result in search_results:
+            doc_group = grouped.setdefault(
+                result.document_id,
+                {
+                    "title": result.metadata.get("title", "Untitled"),
+                    "score": 0.0,
+                    "chunks": [],
+                },
+            )
+            doc_group["score"] = max(doc_group["score"], result.score)
+            doc_group["chunks"].append(result.content)
+
+        context_sections: List[str] = []
+        documents_meta: List[Dict[str, Any]] = []
+
+        for idx, (document_id, doc) in enumerate(grouped.items(), start=1):
+            snippet = " ".join(doc["chunks"][:2])
+            snippet = (snippet[:600] + "…") if len(snippet) > 600 else snippet
+            context_sections.append(f"[Doc {idx}: {doc['title']}] {snippet}")
+            documents_meta.append(
+                {
+                    "document_id": document_id,
+                    "title": doc["title"],
+                    "score": doc["score"],
+                    "chunks": len(doc["chunks"]),
+                }
+            )
+
+        return {"context": "\n\n".join(context_sections), "documents": documents_meta}
+
+    def confidence_score(self, search_results: List[SearchResult]) -> float:
+        """Estimate confidence for retrieval stage based on scores and coverage."""
+
+        if not search_results:
+            return 0.2
+
+        top_scores = sorted([r.score for r in search_results], reverse=True)[:3]
+        avg_top = sum(top_scores) / len(top_scores)
+        doc_coverage = len({r.document_id for r in search_results})
+        coverage_boost = min(doc_coverage / 5, 1.0) * 0.2
+        normalized = min(max(avg_top, 0.0), 1.0)
+        return min(1.0, 0.6 * normalized + coverage_boost + 0.2)

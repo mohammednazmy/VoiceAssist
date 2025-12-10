@@ -1,8 +1,9 @@
 """
 Unit tests for message attachments functionality
 """
-import pytest
+
 from uuid import uuid4
+
 from app.models.attachment import MessageAttachment
 
 
@@ -16,7 +17,7 @@ def test_message_attachment_creation():
         file_size=1024,
         file_url="https://example.com/test.pdf",
         mime_type="application/pdf",
-        file_metadata={"pages": 5}
+        file_metadata={"pages": 5},
     )
 
     assert attachment.file_name == "test.pdf"
@@ -38,7 +39,7 @@ def test_message_attachment_to_dict():
         file_size=1024,
         file_url="https://example.com/test.pdf",
         mime_type="application/pdf",
-        file_metadata={"pages": 5}
+        file_metadata={"pages": 5},
     )
 
     result = attachment.to_dict()
@@ -58,7 +59,7 @@ def test_message_attachment_no_metadata():
         file_name="test.txt",
         file_type="text",
         file_size=512,
-        file_url="https://example.com/test.txt"
+        file_url="https://example.com/test.txt",
     )
 
     assert attachment.file_metadata is None

@@ -1,39 +1,81 @@
+---
+title: Start Here
+slug: start-here
+summary: >-
+  **Welcome to VoiceAssist V2** - A HIPAA-compliant voice-enabled clinical
+  decision support system.
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-12-08"
+audience:
+  - human
+  - ai-agents
+tags:
+  - start
+  - here
+category: overview
+component: "docs/overview"
+relatedPaths:
+  - "docs/overview/IMPLEMENTATION_STATUS.md"
+  - "apps/web-app/src/App.tsx"
+  - "services/api-gateway/app/main.py"
+ai_summary: >-
+  Welcome to VoiceAssist V2 - A HIPAA-compliant voice-enabled clinical decision
+  support system. This document is your entry point to the project. Choose your
+  path below based on your role and experience level. Status update: All 16
+  project phases (0-15) are complete. Backend, infrastructure, admin...
+---
+
 # 🚀 VoiceAssist V2 - Start Here
 
 **Welcome to VoiceAssist V2** - A HIPAA-compliant voice-enabled clinical decision support system.
 
 This document is your entry point to the project. Choose your path below based on your role and experience level.
 
+**Status update:** All 16 project phases (0-15) are complete. Backend, infrastructure, admin panel, and web app (through Phase 3.5) are production-ready. **Voice Mode Enhancement (10-phase plan) completed 2025-12-03** - includes emotion detection, medical dictation, session analytics, and feedback collection. See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for the authoritative component status.
+
 ---
 
 ## 🎯 Quick Start
 
 ### For New Developers
+
 1. Read [What is VoiceAssist V2?](#what-is-voiceassist-v2) (5 min)
 2. Follow [Getting Started](#getting-started) (30 min)
 3. Review [Documentation Map](#documentation-map) to understand what's available
 4. Start with [PHASE_00_INITIALIZATION.md](phases/PHASE_00_INITIALIZATION.md)
 
 ### For Experienced Developers
-1. Review **[UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md)** for complete system design (Phase 7 current state)
+
+1. Review **[UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md)** for complete system design
 2. Check [ARCHITECTURE_DIAGRAMS.md](architecture/ARCHITECTURE_DIAGRAMS.md) for visual diagrams
 3. Set up local environment: [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md)
 4. Jump to [Development Roadmap](#development-roadmap) to see phases
 
 ### For Clinicians
+
 1. Read [WEB_APP_SPECS.md](WEB_APP_SPECS.md) to understand clinical workflows
 2. Review [User Settings](WEB_APP_SPECS.md#user-settings--preferences) you'll be able to configure
 3. Understand [HIPAA protections](SECURITY_COMPLIANCE.md) built into the system
 
 ### For Security Reviewers
+
 1. Start with [SECURITY_COMPLIANCE.md](SECURITY_COMPLIANCE.md)
 2. Review [PHI Detection & Routing](SEMANTIC_SEARCH_DESIGN.md#phi-detection--routing)
 3. Check [Audit Logging](ADMIN_PANEL_SPECS.md#audit-logs-audit) requirements
 
 ### For System Administrators
+
 1. Read [ADMIN_PANEL_SPECS.md](ADMIN_PANEL_SPECS.md) for admin interface
 2. Review [System Settings](ADMIN_PANEL_SPECS.md#system-settings-interface) you'll configure
 3. Follow [INFRASTRUCTURE_SETUP.md](INFRASTRUCTURE_SETUP.md) for deployment
+
+### Choosing API References
+
+- Use [API_REFERENCE.md](API_REFERENCE.md) for a high-level overview of endpoint groups, concepts, and quick lookups.
+- Use [api-reference/rest-api.md](api-reference/rest-api.md) for endpoint-by-endpoint request/response details and examples.
+- See [../services/api-gateway/README.md](../services/api-gateway/README.md) for the canonical backend service guide.
 
 ---
 
@@ -42,6 +84,7 @@ This document is your entry point to the project. Choose your path below based o
 VoiceAssist V2 is a **HIPAA-compliant voice-enabled clinical decision support system** designed for healthcare providers. It enables doctors to ask clinical questions using voice input and receive evidence-based answers with citations from authoritative medical sources.
 
 ### Key Features
+
 - 🎤 **Voice-First Interface**: Push-to-talk and voice-activated modes
 - 🔒 **HIPAA Compliant**: PHI detection, audit logging, encrypted storage
 - 📚 **Evidence-Based**: Searches UpToDate, PubMed, guidelines, and local knowledge base
@@ -56,7 +99,7 @@ VoiceAssist V2 is a **HIPAA-compliant voice-enabled clinical decision support sy
 ┌─────────────────────────────────────────────────────────────────┐
 │                    VoiceAssist V2 Stack                          │
 ├─────────────────────────────────────────────────────────────────┤
-│  Web App (Next.js)          Admin Panel (Next.js)               │
+│  Web App (Vite/React)       Admin Panel (Vite/React)            │
 │       ↓                            ↓                             │
 │  ┌─────────────────────────────────────────────────┐            │
 │  │         FastAPI Backend (Python)                │            │
@@ -78,124 +121,153 @@ VoiceAssist V2 is a **HIPAA-compliant voice-enabled clinical decision support sy
 
 ## 📚 Documentation Map
 
-All documentation is in `/Users/mohammednazmy/VoiceAssist/docs/`. Here's the complete index:
+All documentation is in the `docs/` directory. Here's the complete index:
 
 ### 🎯 Overview & Planning
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| **[START_HERE.md](START_HERE.md)** ⭐ | This file - project orientation | Everyone |
-| **[UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md)** ⭐ **NEW** | **Canonical architecture reference (Phase 7)** | **Developers, Architects, DevOps** |
-| **[architecture/ARCHITECTURE_DIAGRAMS.md](architecture/ARCHITECTURE_DIAGRAMS.md)** ⭐ **NEW** | **Visual architecture diagrams (Mermaid)** | **Developers, Architects** |
-| **[ARCHITECTURE_V2.md](ARCHITECTURE_V2.md)** | System architecture, Docker Compose-first approach (reference) | Developers, DevOps |
-| **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** | High-level overview, tech stack, cost estimates | Stakeholders, PMs |
-| **[ROADMAP.md](ROADMAP.md)** | Product roadmap and feature timeline | Product, Management |
-| **[ENHANCEMENT_SUMMARY.md](ENHANCEMENT_SUMMARY.md)** | Summary of documentation enhancements | Contributors |
+| Document                                                                                      | Purpose                                         | Audience                           |
+| --------------------------------------------------------------------------------------------- | ----------------------------------------------- | ---------------------------------- |
+| **[START_HERE.md](START_HERE.md)** ⭐                                                         | This file - project orientation                 | Everyone                           |
+| **[UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md)** ⭐                                     | **Canonical architecture reference**            | **Developers, Architects, DevOps** |
+| **[architecture/ARCHITECTURE_DIAGRAMS.md](architecture/ARCHITECTURE_DIAGRAMS.md)** ⭐ **NEW** | **Visual architecture diagrams (Mermaid)**      | **Developers, Architects**         |
+| **[EXTENSION_GUIDE.md](EXTENSION_GUIDE.md)**                                                  | Practical patterns for extending VoiceAssist    | All developers                     |
+| **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)**                                                  | High-level overview, tech stack, cost estimates | Stakeholders, PMs                  |
+| **[ROADMAP.md](ROADMAP.md)**                                                                  | Product roadmap and feature timeline            | Product, Management                |
 
 ### 🛠️ Getting Started
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| **[LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md)** ⭐ | Complete local dev setup guide | Developers |
-| **[INFRASTRUCTURE_SETUP.md](INFRASTRUCTURE_SETUP.md)** | Production server deployment | DevOps |
-| **[COMPOSE_TO_K8S_MIGRATION.md](COMPOSE_TO_K8S_MIGRATION.md)** | Migration guide from Compose to K8s | DevOps |
+| Document                                                       | Purpose                             | Audience   |
+| -------------------------------------------------------------- | ----------------------------------- | ---------- |
+| **[LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md)** ⭐            | Complete local dev setup guide      | Developers |
+| **[INFRASTRUCTURE_SETUP.md](INFRASTRUCTURE_SETUP.md)**         | Production server deployment        | DevOps     |
+| **[COMPOSE_TO_K8S_MIGRATION.md](COMPOSE_TO_K8S_MIGRATION.md)** | Migration guide from Compose to K8s | DevOps     |
 
 ### 🖥️ Frontend Specifications
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| **[WEB_APP_SPECS.md](WEB_APP_SPECS.md)** ⭐ | Doctor-facing web app specs, clinical workflows | Frontend devs, UX |
-| **[ADMIN_PANEL_SPECS.md](ADMIN_PANEL_SPECS.md)** ⭐ | Admin panel specs, system management | Frontend devs, Admins |
-| **[DOCUMENTATION_SITE_SPECS.md](DOCUMENTATION_SITE_SPECS.md)** | User-facing docs site specs | Technical writers |
+| Document                                                       | Purpose                                         | Audience              |
+| -------------------------------------------------------------- | ----------------------------------------------- | --------------------- |
+| **[WEB_APP_SPECS.md](WEB_APP_SPECS.md)** ⭐                    | Doctor-facing web app specs, clinical workflows | Frontend devs, UX     |
+| **[ADMIN_PANEL_SPECS.md](ADMIN_PANEL_SPECS.md)** ⭐            | Admin panel specs, system management            | Frontend devs, Admins |
+| **[DOCUMENTATION_SITE_SPECS.md](DOCUMENTATION_SITE_SPECS.md)** | User-facing docs site specs                     | Technical writers     |
 
 ### 🔧 Backend & Services
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| **[SERVICE_CATALOG.md](SERVICE_CATALOG.md)** ⭐ | Complete catalog of all 10 microservices | All developers, DevOps |
-| **[SEMANTIC_SEARCH_DESIGN.md](SEMANTIC_SEARCH_DESIGN.md)** ⭐ | Knowledge base, vector search, RAG pipeline | Backend devs, ML |
-| **[server/README.md](../server/README.md)** | Backend API documentation | Backend devs |
-| **[web-app/README.md](../web-app/README.md)** | Web app implementation details | Frontend devs |
-| **[admin-panel/README.md](../admin-panel/README.md)** | Admin panel implementation details | Frontend devs |
+| Document                                                                   | Purpose                                     | Audience                   |
+| -------------------------------------------------------------------------- | ------------------------------------------- | -------------------------- |
+| **[SERVICE_CATALOG.md](SERVICE_CATALOG.md)** ⭐                            | Complete catalog of all 10 microservices    | All developers, DevOps     |
+| **[SEMANTIC_SEARCH_DESIGN.md](SEMANTIC_SEARCH_DESIGN.md)** ⭐              | Knowledge base, vector search, RAG pipeline | Backend devs, ML           |
+| **[api-reference/rest-api.md](api-reference/rest-api.md)**                 | Endpoint-by-endpoint REST reference         | Backend devs               |
+| **[API_REFERENCE.md](API_REFERENCE.md)**                                   | High-level API overview and endpoint groups | Backend devs, stakeholders |
+| **[../services/api-gateway/README.md](../services/api-gateway/README.md)** | Canonical API Gateway service guide         | Backend devs               |
+| **[apps/web-app/README.md](../apps/web-app/README.md)**                    | Web app implementation details              | Frontend devs              |
+| **[apps/admin-panel/README.md](../apps/admin-panel/README.md)**            | Admin panel implementation details          | Frontend devs              |
+| **[apps/docs-site/README.md](../apps/docs-site/README.md)**                | Documentation site implementation           | Frontend devs              |
+
+**Shared packages:** [../packages/api-client/README.md](../packages/api-client/README.md), [../packages/config/README.md](../packages/config/README.md), [../packages/design-tokens/README.md](../packages/design-tokens/README.md), [../packages/telemetry/README.md](../packages/telemetry/README.md), [../packages/types/README.md](../packages/types/README.md), [../packages/ui/README.md](../packages/ui/README.md), [../packages/utils/README.md](../packages/utils/README.md)
 
 ### 🔒 Security & Compliance
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| **[SECURITY_COMPLIANCE.md](SECURITY_COMPLIANCE.md)** ⭐ | HIPAA compliance, PHI handling, audit logs | Security, Compliance |
-| **[NEXTCLOUD_INTEGRATION.md](NEXTCLOUD_INTEGRATION.md)** | Separate Nextcloud stack for PHI docs | DevOps, Security |
+| Document                                                 | Purpose                                    | Audience             |
+| -------------------------------------------------------- | ------------------------------------------ | -------------------- |
+| **[SECURITY_COMPLIANCE.md](SECURITY_COMPLIANCE.md)** ⭐  | HIPAA compliance, PHI handling, audit logs | Security, Compliance |
+| **[NEXTCLOUD_INTEGRATION.md](NEXTCLOUD_INTEGRATION.md)** | Separate Nextcloud stack for PHI docs      | DevOps, Security     |
 
 ### 🚀 Infrastructure & Deployment
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| **[INFRASTRUCTURE_SETUP.md](INFRASTRUCTURE_SETUP.md)** | Ubuntu server setup, production deployment | DevOps |
-| **[COMPOSE_TO_K8S_MIGRATION.md](COMPOSE_TO_K8S_MIGRATION.md)** | Kubernetes migration guide | DevOps |
+| Document                                                       | Purpose                                    | Audience |
+| -------------------------------------------------------------- | ------------------------------------------ | -------- |
+| **[INFRASTRUCTURE_SETUP.md](INFRASTRUCTURE_SETUP.md)**         | Ubuntu server setup, production deployment | DevOps   |
+| **[COMPOSE_TO_K8S_MIGRATION.md](COMPOSE_TO_K8S_MIGRATION.md)** | Kubernetes migration guide                 | DevOps   |
+
+### 🎤 Voice Features
+
+| Document                                                                        | Purpose                                                         | Audience              |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------------- | --------------------- |
+| **[VOICE_MODE_PIPELINE.md](VOICE_MODE_PIPELINE.md)** ⭐                         | Core voice pipeline architecture, WebSocket protocol            | Backend/Frontend devs |
+| **[VOICE_MODE_ENHANCEMENT_10_PHASE.md](VOICE_MODE_ENHANCEMENT_10_PHASE.md)** ⭐ | **10-phase enhancement: emotion, dictation, memory, analytics** | All developers        |
+| **[VOICE_MODE_SETTINGS_GUIDE.md](VOICE_MODE_SETTINGS_GUIDE.md)**                | User voice settings configuration                               | Frontend devs         |
+| **[frontend/thinker-talker-hooks.md](frontend/thinker-talker-hooks.md)**        | Thinker-Talker React hooks                                      | Frontend devs         |
+| **[api-reference/voice-pipeline-ws.md](api-reference/voice-pipeline-ws.md)**    | Voice pipeline WebSocket API reference                          | Backend/Frontend devs |
 
 ### 🤖 For AI Assistants / Automation
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| **[.ai/README.md](../.ai/README.md)** ⭐ | AI agent navigation guide, how to use index.json | Claude Code, AI assistants |
-| **[.ai/index.json](../.ai/index.json)** ⭐ | Machine-readable project index, task-to-docs mapping | Claude Code, AI assistants |
+> **Quick Links for AI Agents:**
+>
+> - [Agent Onboarding](ai/AGENT_ONBOARDING.md) - Start here
+> - [Implementation Status](overview/IMPLEMENTATION_STATUS.md) - Component status (source of truth)
+> - [Agent API Reference](ai/AGENT_API_REFERENCE.md) - Machine-readable endpoints
+> - [Agent Task Index](ai/AGENT_TASK_INDEX.md) - Common tasks and relevant docs
+
+| Document                                                   | Purpose                                                  | Audience                   |
+| ---------------------------------------------------------- | -------------------------------------------------------- | -------------------------- |
+| **[Agent Onboarding](ai/AGENT_ONBOARDING.md)** ⭐          | Quick start guide for AI coding assistants               | Claude Code, AI assistants |
+| **[Agent API Reference](ai/AGENT_API_REFERENCE.md)** ⭐    | Machine-readable JSON endpoints for agents               | Claude Code, AI assistants |
+| **[Agent Task Index](ai/AGENT_TASK_INDEX.md)**             | Common AI agent tasks and relevant documentation         | Claude Code, AI assistants |
 | **[CLAUDE_EXECUTION_GUIDE.md](CLAUDE_EXECUTION_GUIDE.md)** | Session startup, branching, safety rules, quality checks | Claude Code, AI assistants |
-| **[CLAUDE_PROMPTS.md](CLAUDE_PROMPTS.md)** | Ready-to-use prompts for common development tasks | Claude Code, AI assistants |
+| **[CLAUDE_PROMPTS.md](CLAUDE_PROMPTS.md)**                 | Ready-to-use prompts for common development tasks        | Claude Code, AI assistants |
+
+**Machine-Readable Endpoints (web):**
+
+- `GET /agent/index.json` - Documentation system metadata
+- `GET /agent/docs.json` - Full document list with filtering
+- `GET /search-index.json` - Full-text search index (Fuse.js format)
 
 ### 📋 Phase Documents (Development Plan)
 
-All phases are in `docs/phases/`. Follow them sequentially:
+All phases are in `docs/phases/`. The project has 16 phases (0-15):
 
-| Phase | Name | Duration | Focus | File |
-|-------|------|----------|-------|------|
-| **Phase 0** | Initialization | 2h | Read all specs, understand architecture | [PHASE_00_INITIALIZATION.md](phases/PHASE_00_INITIALIZATION.md) ⭐ |
-| **Phase 1** | Local Environment | 3h | Docker Compose, PostgreSQL, Redis, Qdrant | PHASE_01_*.md |
-| **Phase 2** | Database Schema | 2h | SQLAlchemy models, Alembic migrations | PHASE_02_*.md |
-| **Phase 3** | Authentication | 4h | JWT, user management, RBAC | PHASE_03_*.md |
-| **Phase 4** | Document Ingestion | 4h | PDF/DOCX parsing, vector embeddings | PHASE_04_*.md |
-| **Phase 5** | Semantic Search | 5h | Qdrant integration, RAG pipeline | PHASE_05_*.md |
-| **Phase 6** | PHI Detection | 3h | Presidio integration, routing logic | PHASE_06_*.md |
-| **Phase 7** | AI Router | 4h | Llama local, OpenAI cloud, cost tracking | PHASE_07_*.md |
-| **Phase 8** | External Search | 3h | PubMed, UpToDate APIs | PHASE_08_*.md |
-| **Phase 9** | Nextcloud Integration | 3h | WebDAV, PHI document storage | PHASE_09_*.md |
-| **Phase 10** | WebSocket & Voice | 4h | Real-time chat, voice transcription | PHASE_10_*.md |
-| **Phase 11** | Web App UI | 8h | Next.js, clinical workflows, voice UI | PHASE_11_*.md |
-| **Phase 12** | Admin Panel UI | 6h | Next.js, KB management, user admin | PHASE_12_*.md |
-| **Phase 13** | Testing & Monitoring | 4h | Pytest, Prometheus, Grafana | PHASE_13_*.md |
-| **Phase 14** | Production Deployment | 5h | Ubuntu server, systemd, backups | PHASE_14_*.md |
+| Phase        | Name                  | Status   | Focus                                     | File                                                               |
+| ------------ | --------------------- | -------- | ----------------------------------------- | ------------------------------------------------------------------ |
+| **Phase 0**  | Initialization        | Complete | Read all specs, understand architecture   | [PHASE_00_INITIALIZATION.md](phases/PHASE_00_INITIALIZATION.md) ⭐ |
+| **Phase 1**  | Local Environment     | Complete | Docker Compose, PostgreSQL, Redis, Qdrant | PHASE*01*\*.md                                                     |
+| **Phase 2**  | Database Schema       | Complete | SQLAlchemy models, Alembic migrations     | PHASE*02*\*.md                                                     |
+| **Phase 3**  | Authentication        | Complete | JWT, user management, RBAC                | PHASE*03*\*.md                                                     |
+| **Phase 4**  | Document Ingestion    | Complete | PDF/DOCX parsing, vector embeddings       | PHASE*04*\*.md                                                     |
+| **Phase 5**  | Semantic Search       | Complete | Qdrant integration, RAG pipeline          | PHASE*05*\*.md                                                     |
+| **Phase 6**  | PHI Detection         | Complete | Presidio integration, routing logic       | PHASE*06*\*.md                                                     |
+| **Phase 7**  | AI Router             | Complete | Llama local, OpenAI cloud, cost tracking  | PHASE*07*\*.md                                                     |
+| **Phase 8**  | External Search       | Complete | PubMed, UpToDate APIs                     | PHASE*08*\*.md                                                     |
+| **Phase 9**  | Nextcloud Integration | Complete | WebDAV, PHI document storage              | PHASE*09*\*.md                                                     |
+| **Phase 10** | WebSocket & Voice     | Complete | Real-time chat, voice transcription       | PHASE*10*\*.md                                                     |
+| **Phase 11** | Security & HIPAA      | Complete | Security hardening, compliance            | PHASE*11*\*.md                                                     |
+| **Phase 12** | HA/DR                 | Complete | High availability, disaster recovery      | PHASE*12*\*.md                                                     |
+| **Phase 13** | Testing & Docs        | Complete | Pytest, Prometheus, documentation         | PHASE*13*\*.md                                                     |
+| **Phase 14** | Production Deployment | Complete | Ubuntu server, systemd, backups           | PHASE*14*\*.md                                                     |
+| **Phase 15** | Final Review          | Complete | Final review, handoff, validation         | PHASE*15*\*.md                                                     |
 
-**Total Estimated Time**: ~60 hours of focused development
+**Note**: Web App frontend development follows a separate milestone plan (Phases 0-8) tracked in [Implementation Status](overview/IMPLEMENTATION_STATUS.md).
 
 ---
 
 ## 🗺️ Development Roadmap
 
-### Docker Compose Development (Phases 0-10)
-**Goal**: Build fully functional system using Docker Compose on local machine
+### Project Phases (0-15) - Complete ✅
 
-- ✅ **Phase 0**: Understand architecture and specifications
-- 🏗️ **Phases 1-3**: Foundation (environment, database, auth)
-- 🏗️ **Phases 4-8**: Core functionality (ingestion, search, AI)
-- 🏗️ **Phases 9-10**: Integration (Nextcloud, voice)
+All 16 project phases have been completed:
 
-**Deliverable**: Working backend with Docker Compose
+- ✅ **Phases 0-3**: Foundation (environment, database, auth)
+- ✅ **Phases 4-8**: Core functionality (ingestion, search, AI)
+- ✅ **Phases 9-10**: Integration (Nextcloud, voice backend)
+- ✅ **Phases 11-12**: Security, HA/DR
+- ✅ **Phases 13-15**: Testing, deployment, final review
 
-### Frontend Development (Phases 11-12)
-**Goal**: Build Next.js frontends that connect to backend
+**Deliverable**: Production-ready backend and infrastructure
 
-- 🏗️ **Phase 11**: Web App (doctor-facing interface)
-- 🏗️ **Phase 12**: Admin Panel (system management)
+### Web App Frontend Milestones - Phase 3.5 Complete ✅
 
-**Deliverable**: Complete web and admin interfaces
+The web app follows its own milestone plan:
 
-### Production Deployment (Phases 13-14)
-**Goal**: Deploy to Ubuntu server with production configs
+- ✅ **Phase 0**: Foundation (monorepo, shared packages)
+- ✅ **Phase 1**: Auth & Layout
+- ✅ **Phase 2**: Chat Interface
+- ✅ **Phase 3**: Voice Features
+- ✅ **Phase 3.5**: Unified Chat/Voice UI
+- 📋 **Phases 4-8**: Files, medical features, admin, polish (planned)
 
-- 🏗️ **Phase 13**: Testing, monitoring, observability
-- 🏗️ **Phase 14**: Production deployment, backups, systemd
-
-**Deliverable**: Production-ready system on Ubuntu server
+See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for current progress.
 
 ### Future: Kubernetes Migration (Optional)
+
 **Goal**: Scale to multi-node K8s cluster
 
 - Follow [COMPOSE_TO_K8S_MIGRATION.md](COMPOSE_TO_K8S_MIGRATION.md)
@@ -207,45 +279,55 @@ All phases are in `docs/phases/`. Follow them sequentially:
 ## 🔑 Key Decisions & Rationale
 
 ### 1. Docker Compose First, Kubernetes Later
+
 **Decision**: Build with Docker Compose, deploy to single Ubuntu server first, migrate to K8s when needed
 
 **Rationale**:
+
 - Faster development iteration
 - Simpler debugging and local testing
 - Cost-effective for initial deployment
 - Easy migration path when scaling needs arise
 
 ### 2. Separate Nextcloud Stack
+
 **Decision**: Run Nextcloud in separate Docker Compose stack with its own database
 
 **Rationale**:
+
 - PHI isolation (separate audit logs, backups, encryption keys)
 - Independent scaling and maintenance
 - Clear security boundary
 - Easier compliance audits
 
 ### 3. HIPAA Compliance from Day 1
+
 **Decision**: Build HIPAA controls into every component from the start
 
 **Rationale**:
+
 - Retrofitting compliance is expensive and risky
 - PHI detection must be part of core routing logic
 - Audit logging must be comprehensive from start
 - Encryption and access controls easier to add early
 
 ### 4. Hybrid AI Model
+
 **Decision**: Use local Llama for PHI queries, cloud models for general questions
 
 **Rationale**:
+
 - Keeps PHI on-premises for HIPAA compliance
 - Leverages cloud model quality when safe
 - Reduces cloud costs by routing appropriately
 - Provides fallback options
 
 ### 5. Phase-Based Development
-**Decision**: Break project into 14 sequential phases
+
+**Decision**: Break project into 16 sequential phases (0-15)
 
 **Rationale**:
+
 - Each phase is independently completable
 - Clear exit criteria and verification
 - Easy progress tracking
@@ -256,6 +338,7 @@ All phases are in `docs/phases/`. Follow them sequentially:
 ## 🏁 Getting Started
 
 ### Prerequisites
+
 - macOS (or Linux) with Docker Desktop
 - Python 3.11+
 - Node.js 18+ with pnpm
@@ -263,8 +346,10 @@ All phases are in `docs/phases/`. Follow them sequentially:
 - Basic knowledge of FastAPI, Next.js, Docker
 
 ### Step 1: Set Up Environment
+
 ```bash
-cd /Users/mohammednazmy/VoiceAssist
+# Navigate to project root
+cd ~/VoiceAssist  # or your project directory
 
 # Read the local development guide
 cat docs/LOCAL_DEVELOPMENT.md
@@ -276,9 +361,10 @@ cat docs/LOCAL_DEVELOPMENT.md
 ```
 
 ### Step 2: Understand the Architecture
+
 ```bash
 # Read architecture document
-cat docs/ARCHITECTURE_V2.md
+cat docs/UNIFIED_ARCHITECTURE.md
 
 # Review key specifications
 cat docs/WEB_APP_SPECS.md
@@ -287,6 +373,7 @@ cat docs/SEMANTIC_SEARCH_DESIGN.md
 ```
 
 ### Step 3: Start Phase 0
+
 ```bash
 # Read Phase 0 instructions
 cat docs/phases/PHASE_00_INITIALIZATION.md
@@ -299,6 +386,7 @@ cat docs/phases/PHASE_00_INITIALIZATION.md
 ```
 
 ### Step 4: Continue Through Phases
+
 Follow phases sequentially, verifying exit criteria before moving to the next phase.
 
 ---
@@ -306,27 +394,32 @@ Follow phases sequentially, verifying exit criteria before moving to the next ph
 ## 🧭 Learning Path
 
 ### Week 1: Foundation
+
 - **Day 1-2**: Read all specifications, understand architecture
 - **Day 3**: Set up local environment (Phase 1)
 - **Day 4**: Create database schema (Phase 2)
 - **Day 5**: Implement authentication (Phase 3)
 
 ### Week 2: Core Features
+
 - **Day 1-2**: Document ingestion pipeline (Phase 4)
 - **Day 3-4**: Semantic search and RAG (Phase 5)
 - **Day 5**: PHI detection (Phase 6)
 
 ### Week 3: AI & Integration
+
 - **Day 1-2**: AI model router (Phase 7)
 - **Day 3**: External search APIs (Phase 8)
 - **Day 4**: Nextcloud integration (Phase 9)
 - **Day 5**: WebSocket and voice (Phase 10)
 
 ### Week 4: Frontend
+
 - **Day 1-4**: Web app UI (Phase 11)
 - **Day 5**: Admin panel UI (Phase 12)
 
 ### Week 5: Production
+
 - **Day 1-2**: Testing and monitoring (Phase 13)
 - **Day 3-4**: Production deployment (Phase 14)
 - **Day 5**: Verification and documentation
@@ -336,6 +429,7 @@ Follow phases sequentially, verifying exit criteria before moving to the next ph
 ## 📝 Development Workflow
 
 ### Daily Workflow
+
 1. **Start services**: `docker compose up -d`
 2. **Check logs**: `docker compose logs -f`
 3. **Work on current phase**: Follow phase document
@@ -345,6 +439,7 @@ Follow phases sequentially, verifying exit criteria before moving to the next ph
 7. **Update phase status**: Mark tasks complete
 
 ### Working with Claude Code
+
 ```
 I want to work on Phase [N]. Please:
 1. Read ~/VoiceAssist/docs/phases/PHASE_[N]_*.md
@@ -357,6 +452,7 @@ I want to work on Phase [N]. Please:
 ```
 
 ### Troubleshooting
+
 - Check service logs: `docker compose logs [service-name]`
 - Verify environment variables: `cat .env`
 - Review [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) troubleshooting section
@@ -366,30 +462,34 @@ I want to work on Phase [N]. Please:
 
 ## 📊 Project Status
 
-**Current Status**: Documentation Complete, Ready to Begin Development
+**Current Status**: Backend, Infrastructure, Admin Panel, and Web App (Phase 3.5) Production-Ready.
 
-**Next Step**: Phase 0 - Initialization (Read all specs and understand architecture)
+**Phase Completion**: All 16 project phases (0-15) complete. Web app Phase 3.5 (Unified Chat/Voice UI) complete.
 
-**Estimated Time to MVP**: 60 hours across 14 phases
+**Implementation Reference**: See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for detailed component status.
 
-**Target Deployment**: Single Ubuntu server with Docker Compose
+**Target Deployment**: Ubuntu server with Docker Compose (production-ready)
 
 ---
 
 ## 🆘 Support & Resources
 
 ### Documentation
-- **All specs**: `/Users/mohammednazmy/VoiceAssist/docs/`
-- **Phase docs**: `/Users/mohammednazmy/VoiceAssist/docs/phases/`
-- **Code repos**: `/Users/mohammednazmy/VoiceAssist/{server,web-app,admin-panel}/`
+
+- **All specs**: `docs/`
+- **Phase docs**: `docs/phases/`
+- **Applications**: `apps/{web-app,admin-panel,docs-site}/`
+- **Services**: `services/api-gateway/`
 
 ### Key Technologies
+
 - **Backend**: FastAPI, SQLAlchemy, Alembic, LangChain
-- **Frontend**: Next.js, React, TailwindCSS, shadcn/ui
-- **AI/ML**: Llama 3.1 8B, OpenAI GPT-4, Qdrant
+- **Frontend**: Vite + React (web-app, admin-panel), Next.js 14 (docs-site), TailwindCSS, shadcn/ui
+- **AI/ML**: OpenAI GPT-4o, Qdrant, ElevenLabs TTS, Deepgram STT
 - **Infrastructure**: Docker Compose, PostgreSQL, Redis, Nextcloud
 
 ### Getting Help
+
 1. Check phase troubleshooting section
 2. Review specification documents
 3. Search logs for errors
@@ -397,54 +497,59 @@ I want to work on Phase [N]. Please:
 
 ---
 
-## 📇 Machine-Readable Documentation Index
+## 📇 Machine-Readable Documentation API
 
-For AI assistants and automated tooling, VoiceAssist V2 provides machine-readable documentation indexes:
+For AI assistants and automated tooling, VoiceAssist provides machine-readable JSON endpoints:
 
-### DOC_INDEX.yml
+### Web API Endpoints
+
+**Base URL**: `https://assistdocs.asimo.io`
+
+| Endpoint             | Purpose                                        |
+| -------------------- | ---------------------------------------------- |
+| `/agent/index.json`  | Documentation system metadata and discovery    |
+| `/agent/docs.json`   | Full document list with metadata for filtering |
+| `/search-index.json` | Full-text search index (Fuse.js format)        |
+| `/sitemap.xml`       | XML sitemap for crawlers                       |
+
+**Usage by AI Agents**:
+
+1. Fetch `/agent/index.json` to understand available endpoints and schema
+2. Fetch `/agent/docs.json` to get all documents with metadata
+3. Filter client-side by `status`, `audience`, `tags`, etc.
+4. Use `/search-index.json` with Fuse.js for full-text search
+
+See the [Agent API Reference](ai/AGENT_API_REFERENCE.md) for complete details.
+
+### DOC_INDEX.yml (Legacy)
 
 **Location**: [`docs/DOC_INDEX.yml`](DOC_INDEX.yml)
 
-**Purpose**: Canonical registry of all project documentation with metadata for AI assistants.
-
-**Contents**:
-- 30+ documented files with unique IDs, paths, titles, categories, audiences, summaries
-- Task-to-docs mappings (e.g., "implement_backend" → list of relevant docs)
-
-**Usage by AI Agents**:
-1. Read DOC_INDEX.yml to understand documentation structure
-2. Look up doc IDs to find file paths
-3. Use `task_mappings` to find relevant docs for specific tasks
-4. Follow `related` links to discover connected documentation
-
-### .ai/index.json
-
-**Location**: [`.ai/index.json`](../.ai/index.json)
-
-**Purpose**: Fast lookup index for AI agents with task mappings and dependency graphs.
-
-See [.ai/README.md](../.ai/README.md) for complete AI agent navigation guide.
+**Purpose**: Canonical registry of all project documentation with metadata. This YAML file is still available for local tooling but the web JSON endpoints are preferred for programmatic access.
 
 ---
 
-## 🎉 Let's Build!
+## Next Steps
 
-You now have a comprehensive understanding of VoiceAssist V2. The project is structured to be built phase-by-phase, with clear specifications and requirements at every step.
+For development work:
 
-**Ready to start?** Open [PHASE_00_INITIALIZATION.md](phases/PHASE_00_INITIALIZATION.md) and begin your journey.
-
-Good luck! 🚀
+- **New feature?** See [EXTENSION_GUIDE.md](EXTENSION_GUIDE.md) for patterns
+- **Backend work?** Start at [services/api-gateway/README.md](../services/api-gateway/README.md)
+- **Frontend work?** See [apps/web-app/README.md](../apps/web-app/README.md)
+- **Debugging?** Check [debugging/DEBUGGING_INDEX.md](debugging/DEBUGGING_INDEX.md)
 
 ---
 
-## 📜 Legacy V1 Materials
+## 📜 Legacy & Archived Materials
 
-The following documents describe the original 20-phase V1 plan. They are preserved **for historical reference only** and are not canonical for V2 development:
+Historical documents have been moved to the [archive/](archive/) directory:
 
-- [DEVELOPMENT_PHASES.md](DEVELOPMENT_PHASES.md) - Original 20-phase plan (V1)
-- [ALL_PHASES_SUMMARY.md](ALL_PHASES_SUMMARY.md) - Original phase summaries (V1)
-- [ROADMAP.md](ROADMAP.md) - Original roadmap (V1)
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Original architecture (V1)
-- [../PHASE_STATUS.md](../PHASE_STATUS.md) - Original phase tracking (V1)
+- [archive/legacy-v1/](archive/legacy-v1/) - V1 architecture and phase documents
+- [archive/summaries/](archive/summaries/) - Historical completion summaries
+- [archive/phases/](archive/phases/) - Phase completion reports
 
-**Note**: All V1 documents have been marked with a legacy banner directing readers to the current V2 documentation.
+**Current canonical documents:**
+
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - Architecture reference
+- [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - V2 phase documentation
+- [overview/IMPLEMENTATION_STATUS.md](overview/IMPLEMENTATION_STATUS.md) - Living status

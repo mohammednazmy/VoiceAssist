@@ -16,24 +16,24 @@
         direction: "{{ item.direction }}"
         policy: "{{ item.policy }}"
       loop:
-        - { direction: 'incoming', policy: 'deny' }
-        - { direction: 'outgoing', policy: 'allow' }
+        - { direction: "incoming", policy: "deny" }
+        - { direction: "outgoing", policy: "allow" }
       tags: [firewall]
 
     - name: Allow SSH
       community.general.ufw:
         rule: allow
-        port: '22'
+        port: "22"
         proto: tcp
-        comment: 'SSH access'
+        comment: "SSH access"
       tags: [firewall]
 
     - name: Allow Kubernetes API (if K8s node)
       community.general.ufw:
         rule: allow
-        port: '6443'
+        port: "6443"
         proto: tcp
-        comment: 'Kubernetes API'
+        comment: "Kubernetes API"
       when: "'k8s_masters' in group_names"
       tags: [firewall, kubernetes]
 
@@ -61,7 +61,7 @@
           port = ssh
           logpath = /var/log/auth.log
           maxretry = 3
-        mode: '0644'
+        mode: "0644"
       tags: [fail2ban]
 
     - name: Restart fail2ban
@@ -80,14 +80,14 @@
         line: "{{ item.line }}"
         state: present
       loop:
-        - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
-        - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
-        - { regexp: '^#?PubkeyAuthentication', line: 'PubkeyAuthentication yes' }
-        - { regexp: '^#?X11Forwarding', line: 'X11Forwarding no' }
-        - { regexp: '^#?MaxAuthTries', line: 'MaxAuthTries 3' }
-        - { regexp: '^#?ClientAliveInterval', line: 'ClientAliveInterval 300' }
-        - { regexp: '^#?ClientAliveCountMax', line: 'ClientAliveCountMax 2' }
-        - { regexp: '^#?Protocol', line: 'Protocol 2' }
+        - { regexp: "^#?PermitRootLogin", line: "PermitRootLogin no" }
+        - { regexp: "^#?PasswordAuthentication", line: "PasswordAuthentication no" }
+        - { regexp: "^#?PubkeyAuthentication", line: "PubkeyAuthentication yes" }
+        - { regexp: "^#?X11Forwarding", line: "X11Forwarding no" }
+        - { regexp: "^#?MaxAuthTries", line: "MaxAuthTries 3" }
+        - { regexp: "^#?ClientAliveInterval", line: "ClientAliveInterval 300" }
+        - { regexp: "^#?ClientAliveCountMax", line: "ClientAliveCountMax 2" }
+        - { regexp: "^#?Protocol", line: "Protocol 2" }
       notify: restart sshd
       tags: [ssh]
 
@@ -125,7 +125,7 @@
 
       # Make configuration immutable
       -e 2
-    mode: '0640'
+    mode: "0640"
   when: hipaa_compliant | default(false)
   notify: restart auditd
   tags: [audit, hipaa]
@@ -171,5 +171,5 @@
       Unattended-Upgrade::MinimalSteps "true";
       Unattended-Upgrade::InstallOnShutdown "false";
       Unattended-Upgrade::Automatic-Reboot "false";
-    mode: '0644'
+    mode: "0644"
   tags: [updates]

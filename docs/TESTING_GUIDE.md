@@ -1,3 +1,34 @@
+---
+title: Testing Guide
+slug: testing-guide
+summary: >-
+  This guide describes how to run, write, and generate end-to-end (E2E) tests
+  for the VoiceAssist web application using Playwright and Auto Playwright (...
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - testing
+  - guide
+category: testing
+component: "testing/e2e"
+relatedPaths:
+  - "apps/web-app/playwright.config.ts"
+  - "apps/web-app/e2e/example.spec.ts"
+  - "apps/web-app/src/__tests__"
+  - "packages/ui/vitest.config.ts"
+ai_summary: >-
+  This guide describes how to run, write, and generate end-to-end (E2E) tests
+  for the VoiceAssist web application using Playwright and Auto Playwright
+  (AI-powered test generation). VoiceAssist uses a multi-layered testing
+  approach: - Unit Tests: Component-level tests using Vitest (in
+  apps/web-app/s...
+---
+
 # VoiceAssist E2E Testing Guide
 
 This guide describes how to run, write, and generate end-to-end (E2E) tests for the VoiceAssist web application using Playwright and Auto Playwright (AI-powered test generation).
@@ -404,6 +435,48 @@ npx playwright test e2e/voice-mode-*.spec.ts --project=chromium --reporter=list
 
 For detailed pipeline architecture, metrics tracking, and complete test commands, see [VOICE_MODE_PIPELINE.md](./VOICE_MODE_PIPELINE.md).
 
+## Thinker/Talker Transcript Validation Tests
+
+The transcript validation suite tests STT accuracy and echo contamination using a mocked Thinker/Talker WebSocket.
+
+### Running the Tests
+
+```bash
+# Run with mock WebSocket (deterministic, no real backend)
+MOCK_WEBSOCKET_E2E=1 pnpm exec playwright test e2e/voice-transcript-validation.spec.ts --project=chromium
+```
+
+### What It Validates
+
+1. **User transcript accuracy (pipeline + DOM)**: `transcript.complete` events in `window.__tt_ws_events` and the rendered chat timeline user message both match expected user text (≥0.9 `overallScore` via `TranscriptScorer`)
+2. **AI transcript accuracy (pipeline + DOM when available)**:
+   - When `response.complete` events are present in `window.__tt_ws_events`, their text is scored against the expected AI response (≥0.9).
+   - When the AI response appears in the chat timeline, the DOM transcript is also scored against the expected AI response (≥0.9). If the assistant message is not yet wired into the UI, the test logs a warning and continues.
+3. **Echo contamination**: User transcript is NOT polluted with AI keywords/phrases
+
+### Mock WebSocket Details
+
+- Intercepts connections to `/api/voice/pipeline-ws`
+- Emits T/T protocol messages: `transcript.delta`, `transcript.complete`, `response.delta`, `response.complete`
+- Uses deterministic test transcripts for reproducible assertions
+
+### Utilities
+
+- `TranscriptScorer` class in `e2e/voice/utils/transcript-scorer.ts`
+  - `score(expected, actual)`: Returns accuracy metrics
+  - `detectEchoContamination(userText, aiKeywords, aiFullResponse?)`: Detects AI speech leakage
+
+## Voice E2E Profiles (How to Choose)
+
+Voice Mode E2E tests are grouped into named profiles (Playwright projects) described in `docs/voice/E2E_PROFILES.md`. Use these as a quick guide:
+
+- Run the **`voice-smoke`** project on every PR to cover navigation plus basic Voice Mode session behavior.
+- Use **`voice-multi-turn`** when you need Thinker/Talker multi-turn coverage and latency/turn-count metrics.
+- Use **`voice-barge-in`** and **`voice-barge-in-two-phase`** when working on barge-in responsiveness and latency.
+- Use the **Mock WS transcript profile** (`MOCK_WEBSOCKET_E2E=1` + `e2e/voice-transcript-validation.spec.ts`) when you need deterministic STT/echo validation without hitting the live backend.
+
+See `docs/voice/E2E_PROFILES.md` for the exact commands, required env vars, and the debug surfaces each profile relies on.
+
 ### Voice Mode Test Strategy
 
 **Deterministic Tests** (run in CI):
@@ -440,8 +513,9 @@ Both features are tested with similar patterns:
 
 **Voice Mode panel not found**:
 
-- Check that `data-testid="voice-mode-card"` exists on Home page
-- Verify ChatPage passes `autoOpenRealtimeVoice` prop
+- Check that `data-testid="chat-with-voice-card"` exists on Home page
+- Verify unified chat/voice feature flag is enabled (`unified_chat_voice_ui` via `/api/experiments/flags/unified_chat_voice_ui`)
+- Confirm `UnifiedChatContainer` is rendering `ThinkerTalkerVoicePanel` with `data-testid="voice-mode-panel"`
 - Check browser console for React errors
 
 **Start button not responding**:

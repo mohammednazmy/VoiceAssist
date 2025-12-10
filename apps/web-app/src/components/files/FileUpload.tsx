@@ -100,7 +100,10 @@ export function FileUpload({
           );
 
           // Upload to backend
-          const document = await apiClient.uploadDocument(file, "chat-attachment");
+          const document = (await apiClient.uploadDocument(
+            file,
+            "chat-attachment",
+          )) as { id: string; url?: string };
 
           // Update progress
           setUploadingFiles((prev) =>
@@ -162,7 +165,15 @@ export function FileUpload({
         fileInputRef.current.value = "";
       }
     },
-    [apiClient, disabled, maxFiles, maxSizeMB, uploadedFiles.length, onFilesUploaded, generatePreview],
+    [
+      apiClient,
+      disabled,
+      maxFiles,
+      maxSizeMB,
+      uploadedFiles.length,
+      onFilesUploaded,
+      generatePreview,
+    ],
   );
 
   const handleRemoveFile = useCallback(

@@ -1,0 +1,202 @@
+name: Sync Feature Flag Documentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "packages/types/src/featureFlags.ts"
+      - "docs/admin-guide/feature-flags/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "packages/types/src/featureFlags.ts"
+      - "docs/admin-guide/feature-flags/**"
+  workflow_dispatch:
+    inputs:
+      regenerate:
+        description: "Force regenerate all flag docs"
+        required: false
+        default: "false"
+        type: boolean
+
+env:
+  CI: true
+
+jobs:
+  sync-flag-docs:
+    name: Sync Feature Flag Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20.x
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.23.0
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Extract flag definitions and validate
+      - name: Validate Feature Flag Definitions
+        run: |
+          echo "Validating feature flag definitions..."
+
+          # Check featureFlags.ts exists
+          if [ ! -f "packages/types/src/featureFlags.ts" ]; then
+            echo "::warning::Feature flags TypeScript file not found"
+            exit 0
+          fi
+
+          # Validate flag naming convention
+          INVALID_FLAGS=$(grep -oE "ff_[a-z_]+" packages/types/src/featureFlags.ts | \
+            grep -vE "^ff_(ui|backend|experiment|ops)_" || true)
+
+          if [ -n "$INVALID_FLAGS" ]; then
+            echo "::error::Invalid flag names found in featureFlags.ts:"
+            echo "$INVALID_FLAGS"
+            echo "Flags must follow pattern: ff_<ui|backend|experiment|ops>_<name>"
+            exit 1
+          fi
+
+          echo "All flag definitions are valid."
+
+      # Generate reference documentation from TypeScript
+      - name: Generate Feature Flag Reference
+        run: |
+          echo "Generating feature flag reference documentation..."
+
+          # Create output directory if needed
+          mkdir -p apps/docs-site/src/pages/reference
+
+          # Run generator if it exists
+          if [ -f "apps/docs-site/scripts/generate-feature-flags-docs.js" ]; then
+            node apps/docs-site/scripts/generate-feature-flags-docs.js
+          else
+            echo "::warning::Feature flag doc generator not found, skipping"
+          fi
+
+      # Update agent JSON files
+      - name: Update Agent JSON
+        run: |
+          echo "Updating agent JSON files..."
+
+          if [ -f "scripts/generate-all-agent-json.js" ]; then
+            node scripts/generate-all-agent-json.js --only=status
+          else
+            echo "::warning::Agent JSON generator not found, skipping"
+          fi
+
+      # Check for changes
+      - name: Check for generated changes
+        id: check_changes
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "Generated files have changes:"
+            git status --short
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "No changes to generated files."
+          fi
+
+      # On main branch, commit changes
+      - name: Commit generated files
+        if: github.ref == 'refs/heads/main' && steps.check_changes.outputs.changes == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps/docs-site/src/pages/reference/feature-flags.mdx || true
+          git add apps/docs-site/public/agent/*.json || true
+          git commit -m "docs: auto-sync feature flag documentation
+
+          Generated from packages/types/src/featureFlags.ts
+
+          [skip ci]" || echo "No changes to commit"
+          git push
+
+      # On PR, create annotation
+      - name: Annotate PR with changes
+        if: github.event_name == 'pull_request' && steps.check_changes.outputs.changes == 'true'
+        run: |
+          echo "::notice::Feature flag documentation will be auto-generated on merge"
+          echo "Changed files:"
+          git status --short
+
+  validate-flag-docs:
+    name: Validate Flag Documentation
+    runs-on: ubuntu-latest
+    needs: sync-flag-docs
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check documentation completeness
+        run: |
+          echo "Checking feature flag documentation..."
+
+          # List expected docs
+          EXPECTED_DOCS=(
+            "docs/admin-guide/feature-flags/README.md"
+            "docs/admin-guide/feature-flags/naming-conventions.md"
+            "docs/admin-guide/feature-flags/lifecycle.md"
+            "docs/admin-guide/feature-flags/best-practices.md"
+          )
+
+          MISSING=0
+          for doc in "${EXPECTED_DOCS[@]}"; do
+            if [ ! -f "$doc" ]; then
+              echo "::warning::Missing documentation: $doc"
+              MISSING=$((MISSING + 1))
+            fi
+          done
+
+          if [ $MISSING -gt 0 ]; then
+            echo "::warning::$MISSING expected documentation files are missing"
+          else
+            echo "All expected documentation files present."
+          fi
+
+      - name: Validate cross-references
+        run: |
+          echo "Checking documentation cross-references..."
+
+          # Check for broken internal links in flag docs
+          BROKEN_LINKS=$(grep -roh '\[.*\](\.\/[^)]*\.md)' docs/admin-guide/feature-flags/ | \
+            sed 's/.*(\(.*\))/\1/' | \
+            while read link; do
+              TARGET="docs/admin-guide/feature-flags/$link"
+              if [ ! -f "$TARGET" ]; then
+                echo "$TARGET"
+              fi
+            done)
+
+          if [ -n "$BROKEN_LINKS" ]; then
+            echo "::warning::Broken links found in feature flag docs:"
+            echo "$BROKEN_LINKS"
+          else
+            echo "All internal links are valid."
+          fi

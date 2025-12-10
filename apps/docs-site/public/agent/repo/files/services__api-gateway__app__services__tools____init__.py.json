@@ -1,0 +1,8 @@
+{
+  "path": "services/api-gateway/app/services/tools/__init__.py",
+  "language": "python",
+  "size": 614,
+  "last_modified": "2025-12-04T11:27:00.331Z",
+  "lines": 20,
+  "content": "\"\"\"\nTool execution system for VoiceAssist\n\nThis module provides the tool service layer for function calling in Voice and Chat modes.\nSupports multi-provider calendar integration, web search, PubMed search, and medical calculators.\n\"\"\"\n\nfrom app.services.tools.analytics_service import ToolAnalyticsService, tool_analytics_service\nfrom app.services.tools.tool_service import ToolCategory, ToolDefinition, ToolResult, ToolService, tool_service\n\n__all__ = [\n    \"ToolService\",\n    \"ToolDefinition\",\n    \"ToolResult\",\n    \"ToolCategory\",\n    \"tool_service\",\n    \"ToolAnalyticsService\",\n    \"tool_analytics_service\",\n]\n"
+}

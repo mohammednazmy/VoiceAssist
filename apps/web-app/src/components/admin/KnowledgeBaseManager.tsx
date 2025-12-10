@@ -1,11 +1,16 @@
 /**
  * Knowledge Base Manager
  * Upload, manage, and index documents for RAG
+ *
+ * Phase 8.3: Added document preview modal
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import { Button } from "@voiceassist/ui";
+import type {
+  AdminKBDocument,
+  AdminKBDocumentDetail,
+} from "@voiceassist/api-client";
 
 interface Document {
   id: string;
@@ -18,62 +23,74 @@ interface Document {
   chunks?: number;
 }
 
+interface DocumentPreview {
+  detail: AdminKBDocumentDetail;
+  isLoading: boolean;
+}
+
+/** Convert API document to local Document type */
+function apiDocToLocal(doc: AdminKBDocument): Document {
+  return {
+    id: doc.document_id,
+    title: doc.title,
+    filename: doc.title, // API doesn't return filename in list, use title
+    fileType: doc.source_type,
+    size: 0, // Not available in list response
+    uploadedAt: doc.upload_date,
+    status: "indexed",
+    chunks: doc.chunks_indexed,
+  };
+}
+
+/** Convert detailed API document to local Document type */
+function _apiDetailToLocal(doc: AdminKBDocumentDetail): Document {
+  const metadata = doc.metadata as { file_size?: number } | undefined;
+  return {
+    id: doc.document_id,
+    title: doc.title,
+    filename: doc.filename,
+    fileType: doc.file_type,
+    size: metadata?.file_size ?? 0,
+    uploadedAt: doc.created_at,
+    status:
+      doc.indexing_status === "indexed"
+        ? "indexed"
+        : doc.indexing_status === "processing"
+          ? "processing"
+          : "failed",
+    chunks: doc.chunks_indexed,
+  };
+}
+
 export function KnowledgeBaseManager() {
-  const { apiClient: _apiClient } = useAuth();
+  const { apiClient } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  // Phase 8.3: Preview state
+  const [preview, setPreview] = useState<DocumentPreview | null>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+
+  const loadDocuments = useCallback(async () => {
+    try {
+      setError(null);
+      const response = await apiClient.getAdminKBDocuments(0, 100);
+      const localDocs = response.documents.map(apiDocToLocal);
+      setDocuments(localDocs);
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Failed to load documents:", err);
+      setError(err instanceof Error ? err.message : "Failed to load documents");
+      setIsLoading(false);
+    }
+  }, [apiClient]);
 
   useEffect(() => {
     loadDocuments();
-  }, []);
-
-  const loadDocuments = async () => {
-    try {
-      // TODO: Replace with actual API call when backend is ready
-      // const docs = await apiClient.get('/admin/documents');
-
-      // Mock data for now
-      setDocuments([
-        {
-          id: "1",
-          title: "Harrison's Principles of Internal Medicine",
-          filename: "harrisons-21st-edition.pdf",
-          fileType: "application/pdf",
-          size: 52428800, // 50 MB
-          uploadedAt: new Date().toISOString(),
-          status: "indexed",
-          chunks: 2500,
-        },
-        {
-          id: "2",
-          title: "Clinical Practice Guidelines - Diabetes",
-          filename: "diabetes-guidelines-2024.pdf",
-          fileType: "application/pdf",
-          size: 5242880, // 5 MB
-          uploadedAt: new Date(Date.now() - 86400000).toISOString(),
-          status: "indexed",
-          chunks: 150,
-        },
-        {
-          id: "3",
-          title: "Cardiology Clinical Updates",
-          filename: "cardiology-updates.pdf",
-          fileType: "application/pdf",
-          size: 10485760, // 10 MB
-          uploadedAt: new Date(Date.now() - 172800000).toISOString(),
-          status: "processing",
-          chunks: 0,
-        },
-      ]);
-
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Failed to load documents:", error);
-      setIsLoading(false);
-    }
-  };
+  }, [loadDocuments]);
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -82,25 +99,26 @@ export function KnowledgeBaseManager() {
     if (!files || files.length === 0) return;
 
     setIsUploading(true);
+    setUploadProgress(0);
+    setError(null);
 
     try {
-      // TODO: Implement actual file upload when backend is ready
-      // for (const file of files) {
-      //   const formData = new FormData();
-      //   formData.append('file', file);
-      //   await apiClient.post('/admin/documents/upload', formData);
-      // }
-
-      // Simulate upload
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      alert("File upload will be available when backend is ready");
+      for (const file of Array.from(files)) {
+        await apiClient.uploadAdminKBDocument(
+          file,
+          undefined, // Use filename as title
+          "uploaded",
+          (progress) => setUploadProgress(progress),
+        );
+      }
 
       await loadDocuments();
-    } catch (error) {
-      console.error("Upload failed:", error);
-      alert("Upload failed. Please try again.");
+    } catch (err) {
+      console.error("Upload failed:", err);
+      setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
       event.target.value = "";
     }
   };
@@ -109,27 +127,41 @@ export function KnowledgeBaseManager() {
     if (!confirm("Are you sure you want to delete this document?")) return;
 
     try {
-      // TODO: Implement actual delete when backend is ready
-      // await apiClient.delete(`/admin/documents/${id}`);
-
+      setError(null);
+      await apiClient.deleteAdminKBDocument(id);
+      // Remove from local state immediately for better UX
       setDocuments((docs) => docs.filter((d) => d.id !== id));
-      alert("Delete functionality will be available when backend is ready");
-    } catch (error) {
-      console.error("Delete failed:", error);
-      alert("Delete failed. Please try again.");
+    } catch (err) {
+      console.error("Delete failed:", err);
+      setError(err instanceof Error ? err.message : "Delete failed");
     }
   };
 
-  const handleReindex = async (_id: string) => {
-    try {
-      // TODO: Implement actual reindex when backend is ready
-      // await apiClient.post(`/admin/documents/${id}/reindex`);
+  const handleReindex = async (id: string) => {
+    // TODO: Backend doesn't have reindex endpoint yet
+    // When implemented, call: await apiClient.reindexAdminKBDocument(id);
+    setError(
+      `Reindex for document ${id} is not yet implemented. Delete and re-upload the document to reindex.`,
+    );
+  };
 
-      alert("Reindex functionality will be available when backend is ready");
-    } catch (error) {
-      console.error("Reindex failed:", error);
-      alert("Reindex failed. Please try again.");
+  // Phase 8.3: Preview document
+  const handlePreview = async (docId: string) => {
+    setIsLoadingPreview(true);
+    setError(null);
+    try {
+      const detail = await apiClient.getAdminKBDocument(docId);
+      setPreview({ detail, isLoading: false });
+    } catch (err) {
+      console.error("Failed to load document preview:", err);
+      setError(err instanceof Error ? err.message : "Failed to load preview");
+    } finally {
+      setIsLoadingPreview(false);
     }
+  };
+
+  const closePreview = () => {
+    setPreview(null);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -200,12 +232,14 @@ export function KnowledgeBaseManager() {
             onChange={handleFileUpload}
             disabled={isUploading}
           />
-          <label htmlFor="file-upload">
-            <Button as="span" disabled={isUploading}>
+          <label htmlFor="file-upload" className="cursor-pointer">
+            <span
+              className={`inline-flex items-center justify-center gap-2 rounded-md font-medium transition-all h-10 px-4 py-2 text-base bg-primary-600 text-white hover:bg-primary-700 ${isUploading ? "opacity-50 pointer-events-none" : ""}`}
+            >
               {isUploading ? (
                 <>
                   <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Uploading...
+                  {uploadProgress > 0 ? `${uploadProgress}%` : "Uploading..."}
                 </>
               ) : (
                 <>
@@ -226,10 +260,52 @@ export function KnowledgeBaseManager() {
                   Upload Documents
                 </>
               )}
-            </Button>
+            </span>
           </label>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+            />
+          </svg>
+          <div className="flex-1">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-500 hover:text-red-700"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Search */}
       <div className="relative">
@@ -359,6 +435,13 @@ export function KnowledgeBaseManager() {
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <button
+                        onClick={() => handlePreview(doc.id)}
+                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                        disabled={isLoadingPreview}
+                      >
+                        Preview
+                      </button>
+                      <button
                         onClick={() => handleReindex(doc.id)}
                         className="text-sm text-primary-600 hover:text-primary-700 font-medium"
                       >
@@ -378,6 +461,189 @@ export function KnowledgeBaseManager() {
           </table>
         </div>
       </div>
+
+      {/* Phase 8.3: Preview Modal */}
+      {preview && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-neutral-900">
+                Document Preview
+              </h3>
+              <button
+                onClick={closePreview}
+                className="text-neutral-400 hover:text-neutral-600"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Document Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Title
+                  </label>
+                  <p className="text-sm text-neutral-900 mt-1">
+                    {preview.detail.title}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Filename
+                  </label>
+                  <p className="text-sm text-neutral-900 mt-1">
+                    {preview.detail.filename}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    File Type
+                  </label>
+                  <p className="text-sm text-neutral-900 mt-1">
+                    {preview.detail.file_type}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Source Type
+                  </label>
+                  <p className="text-sm text-neutral-900 mt-1">
+                    {preview.detail.source_type}
+                  </p>
+                </div>
+              </div>
+
+              {/* Indexing Status */}
+              <div className="bg-neutral-50 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-neutral-700 mb-3">
+                  Indexing Information
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-neutral-500">Status</p>
+                    <p
+                      className={`text-sm font-medium ${
+                        preview.detail.indexing_status === "indexed"
+                          ? "text-green-600"
+                          : preview.detail.indexing_status === "processing"
+                            ? "text-yellow-600"
+                            : "text-red-600"
+                      }`}
+                    >
+                      {preview.detail.indexing_status}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-500">Chunks Indexed</p>
+                    <p className="text-sm font-medium text-neutral-900">
+                      {preview.detail.chunks_indexed?.toLocaleString() || 0}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-500">Total Tokens</p>
+                    <p className="text-sm font-medium text-neutral-900">
+                      {preview.detail.total_tokens?.toLocaleString() || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-500">Document ID</p>
+                    <p className="text-sm font-mono text-neutral-600">
+                      {preview.detail.document_id.substring(0, 16)}...
+                    </p>
+                  </div>
+                </div>
+
+                {preview.detail.indexing_error && (
+                  <div className="mt-4 p-3 bg-red-50 rounded border border-red-200">
+                    <p className="text-xs font-medium text-red-700 mb-1">
+                      Indexing Error
+                    </p>
+                    <p className="text-sm text-red-600">
+                      {preview.detail.indexing_error}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Metadata */}
+              {preview.detail.metadata &&
+                Object.keys(preview.detail.metadata).length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-neutral-700 mb-2">
+                      Metadata
+                    </h4>
+                    <div className="bg-neutral-50 rounded-lg p-4 overflow-x-auto">
+                      <pre className="text-xs text-neutral-700 whitespace-pre-wrap">
+                        {JSON.stringify(preview.detail.metadata, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+
+              {/* Timestamps */}
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-neutral-200">
+                <div>
+                  <label className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Created
+                  </label>
+                  <p className="text-sm text-neutral-900 mt-1">
+                    {new Date(preview.detail.created_at).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Updated
+                  </label>
+                  <p className="text-sm text-neutral-900 mt-1">
+                    {new Date(preview.detail.updated_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-neutral-200 flex justify-end space-x-3">
+              <button
+                onClick={closePreview}
+                className="px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Preview Overlay */}
+      {isLoadingPreview && (
+        <div className="fixed inset-0 bg-black/25 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm text-neutral-700">
+                Loading preview...
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

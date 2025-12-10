@@ -9,13 +9,14 @@
  */
 
 import { useState } from "react";
+import { extractErrorMessage } from "@voiceassist/types";
 import { VoiceInputEnhanced } from "../components/voice/VoiceInputEnhanced";
 import { AudioPlayerEnhanced } from "../components/voice/AudioPlayerEnhanced";
 import {
   VoiceSettingsEnhanced,
   useVoiceSettings,
 } from "../components/voice/VoiceSettingsEnhanced";
-import { VoiceModePanel } from "../components/voice/VoiceModePanel";
+import { ThinkerTalkerVoicePanel } from "../components/voice/ThinkerTalkerVoicePanel";
 import { useAuth } from "../hooks/useAuth";
 
 export default function VoiceTestPage() {
@@ -50,9 +51,9 @@ export default function VoiceTestPage() {
         settings.voiceId,
       );
       setAudioBlob(blob);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Speech synthesis failed:", err);
-      setError(err.message || "Failed to synthesize speech");
+      setError(extractErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
@@ -201,18 +202,17 @@ export default function VoiceTestPage() {
         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 space-y-4">
           <div>
             <h2 className="text-xl font-semibold text-neutral-900 mb-2">
-              Realtime Voice Mode (OpenAI Realtime API)
+              Thinker/Talker Voice Mode
             </h2>
             <p className="text-sm text-neutral-600 mb-4">
-              Full-duplex voice conversation with real-time bidirectional audio
-              streaming. The AI responds naturally with voice and text.
+              Full-duplex voice conversation with Deepgram STT and ElevenLabs
+              TTS. Features tool calling support and lower latency than OpenAI
+              Realtime.
             </p>
           </div>
-          <VoiceModePanel
-            onTranscriptReceived={(text, isFinal) => {
-              if (isFinal) {
-                console.log("Realtime transcript (final):", text);
-              }
+          <ThinkerTalkerVoicePanel
+            onUserMessage={(text) => {
+              console.log("T/T transcript:", text);
             }}
           />
         </div>

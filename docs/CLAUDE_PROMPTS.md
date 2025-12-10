@@ -1,3 +1,35 @@
+---
+title: Claude Prompts Library
+slug: ai/claude-prompts
+summary: >-
+  Ready-to-use prompts for Claude Code sessions on VoiceAssist - phase
+  implementation, bugfix, documentation, testing.
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience:
+  - agent
+  - ai-agents
+  - human
+tags:
+  - claude
+  - prompts
+  - ai-agent
+  - templates
+category: ai
+version: 1.0.0
+component: "platform/ai-agents"
+relatedPaths:
+  - "docs/CLAUDE_EXECUTION_GUIDE.md"
+  - "docs/ai/AGENT_ONBOARDING.md"
+ai_summary: >-
+  This document contains ready-to-use prompts for different types of work on
+  VoiceAssist V2. Copy and paste these prompts into a Claude Code session, fill
+  in the bracketed placeholders, and Claude will follow the appropriate
+  workflow. For detailed execution guidelines, see CLAUDE_EXECUTION_GUIDE.md...
+---
+
 # Claude Code Prompt Library
 
 This document contains ready-to-use prompts for different types of work on VoiceAssist V2. Copy and paste these prompts into a Claude Code session, fill in the bracketed placeholders, and Claude will follow the appropriate workflow.
@@ -20,7 +52,8 @@ This document contains ready-to-use prompts for different types of work on Voice
 Use this prompt when you want Claude to implement a complete development phase from the VoiceAssist V2 roadmap.
 
 ### When to Use
-- Implementing Phase 0-14 from DEVELOPMENT_PHASES_V2.md
+
+- Implementing project phases 0-15 or web app phases 0-8
 - Starting a new major component or feature
 - Following the documented phase plan
 
@@ -30,9 +63,9 @@ Use this prompt when you want Claude to implement a complete development phase f
 I want you to implement Phase [N]: [Phase Name] for the VoiceAssist V2 project.
 
 **Before starting:**
-1. Read ~/VoiceAssist/CURRENT_PHASE.md
+1. Read ~/VoiceAssist/docs/overview/IMPLEMENTATION_STATUS.md (source of truth)
 2. Read ~/VoiceAssist/docs/phases/PHASE_[N]_[NAME].md
-3. Read ~/VoiceAssist/docs/ARCHITECTURE_V2.md
+3. Read ~/VoiceAssist/docs/UNIFIED_ARCHITECTURE.md
 4. Read relevant spec documents for this phase
 
 **Your task:**
@@ -43,7 +76,7 @@ I want you to implement Phase [N]: [Phase Name] for the VoiceAssist V2 project.
 5. Verify all exit criteria are met
 6. Run full test suite (backend + frontend)
 7. Commit with message: `feat(phase-[N]): implement [phase name]`
-8. Update CURRENT_PHASE.md to mark phase complete
+8. Update IMPLEMENTATION_STATUS.md if component status changed
 
 **Quality standards:**
 - All tests must pass
@@ -93,6 +126,7 @@ Please confirm you've read the required docs, then proceed with implementation.
 Use this prompt when you need to fix a bug or refactor existing code without adding new features.
 
 ### When to Use
+
 - Fixing a reported bug or issue
 - Refactoring code for better maintainability
 - Improving performance of existing features
@@ -114,9 +148,9 @@ I need you to fix a bug / refactor code in the VoiceAssist V2 project.
 [Specify: voice-proxy, medical-kb, web-app, admin-panel, auth-service, etc.]
 
 **Before starting:**
-1. Read ~/VoiceAssist/docs/ARCHITECTURE_V2.md
-2. Read ~/VoiceAssist/docs/SERVICE_CATALOG.md
-3. Read the relevant service README (e.g., server/README.md)
+1. Read ~/VoiceAssist/docs/overview/IMPLEMENTATION_STATUS.md (source of truth)
+2. Read ~/VoiceAssist/docs/UNIFIED_ARCHITECTURE.md
+3. Read the relevant service README (e.g., services/api-gateway/README.md)
 4. Review existing code in the affected area
 
 **Your task:**
@@ -147,8 +181,10 @@ The Medical KB search is timing out for queries longer than 100 characters. When
 
 Error message:
 ```
+
 TimeoutError: Qdrant search exceeded 30s timeout
 File: app/services/medical/rag.py, line 145
+
 ```
 
 Expected: Search should complete within 5 seconds
@@ -158,10 +194,10 @@ Actual: Search times out after 30 seconds
 medical-kb service (app/services/medical/rag.py)
 
 **Before starting:**
-1. Read ~/VoiceAssist/docs/ARCHITECTURE_V2.md
-2. Read ~/VoiceAssist/docs/SERVICE_CATALOG.md
-3. Read server/README.md
-4. Review existing code in app/services/medical/rag.py
+1. Read ~/VoiceAssist/docs/overview/IMPLEMENTATION_STATUS.md (source of truth)
+2. Read ~/VoiceAssist/docs/UNIFIED_ARCHITECTURE.md
+3. Read services/api-gateway/README.md
+4. Review existing code in services/api-gateway/app/services/
 
 **Your task:**
 1. Create a branch: `fix/kb-search-timeout`
@@ -188,6 +224,7 @@ Please confirm understanding and proceed.
 Use this prompt when you need to update, create, or improve documentation without changing code.
 
 ### When to Use
+
 - Adding missing documentation
 - Updating docs after code changes
 - Creating new guides or references
@@ -281,6 +318,7 @@ Please proceed with the documentation updates.
 Use this prompt for infrastructure changes, deployment configuration, Docker Compose updates, or Kubernetes manifest work.
 
 ### When to Use
+
 - Modifying docker-compose.yml
 - Creating or updating Kubernetes manifests
 - Configuring monitoring/observability
@@ -301,8 +339,8 @@ I need you to work on infrastructure or deployment for VoiceAssist V2.
 - Optimize Docker image sizes]
 
 **Before starting:**
-1. Read ~/VoiceAssist/docs/ARCHITECTURE_V2.md
-2. Read ~/VoiceAssist/docs/LOCAL_DEVELOPMENT.md
+1. Read ~/VoiceAssist/docs/overview/IMPLEMENTATION_STATUS.md (source of truth)
+2. Read ~/VoiceAssist/docs/UNIFIED_ARCHITECTURE.md
 3. Read ~/VoiceAssist/docs/INFRASTRUCTURE_SETUP.md
 4. If K8s-related: Read ~/VoiceAssist/docs/COMPOSE_TO_K8S_MIGRATION.md
 
@@ -375,26 +413,31 @@ Please confirm understanding and proceed.
 ## Using These Prompts
 
 ### Step 1: Choose the Right Prompt
+
 - **Phase Implementation**: For sequential development phases
 - **Bugfix/Refactor**: For fixing issues or improving code
 - **Documentation**: For doc-only changes
 - **Infrastructure**: For Docker, K8s, monitoring, deployment
 
 ### Step 2: Fill in the Placeholders
+
 Replace all `[bracketed text]` with specific information:
-- `[N]` → Phase number (0-14)
-- `[Phase Name]` → Phase name from DEVELOPMENT_PHASES_V2.md
+
+- `[N]` → Phase number (0-15 for project phases, 0-8 for web app phases)
+- `[Phase Name]` → Phase name from docs/phases/
 - `[issue-description]` → Brief description of the issue
 - `[description]` → Brief description of the work
-- `[service/component]` → Specific microservice or component name
+- `[service/component]` → Specific service or component name
 
 ### Step 3: Paste into Claude Code
+
 1. Open a new Claude Code conversation
 2. Paste the filled-in prompt
 3. Wait for Claude to confirm it has read the required docs
 4. Claude will proceed with the work
 
 ### Step 4: Monitor Progress
+
 - Claude will provide updates as it works
 - Review code changes before committing
 - Run quality checks manually if desired
@@ -405,6 +448,7 @@ Replace all `[bracketed text]` with specific information:
 ## Prompt Customization
 
 ### Adding Constraints
+
 You can add additional constraints to any prompt:
 
 ```
@@ -416,6 +460,7 @@ You can add additional constraints to any prompt:
 ```
 
 ### Specifying Context
+
 Provide additional context if needed:
 
 ```
@@ -427,6 +472,7 @@ Provide additional context if needed:
 ```
 
 ### Requesting Specific Approach
+
 Guide Claude's approach:
 
 ```
@@ -442,24 +488,28 @@ Guide Claude's approach:
 ## Common Scenarios
 
 ### Scenario 1: Starting Fresh on a Phase
+
 ```
 I want you to implement Phase 3: Authentication & Security for the VoiceAssist V2 project.
 [Use Phase Implementation Prompt]
 ```
 
 ### Scenario 2: Fixing a Production Bug
+
 ```
 I need you to fix a critical bug in the voice-proxy service causing WebSocket disconnections.
 [Use Bugfix Prompt with high priority noted]
 ```
 
 ### Scenario 3: Adding API Documentation
+
 ```
 I need you to update server/README.md with complete API contract examples for all endpoints.
 [Use Documentation Update Prompt]
 ```
 
 ### Scenario 4: Setting Up CI/CD
+
 ```
 I need you to create a GitHub Actions workflow for automated testing and deployment.
 [Use Infrastructure Prompt]
@@ -470,20 +520,24 @@ I need you to create a GitHub Actions workflow for automated testing and deploym
 ## Tips for Effective Prompts
 
 ### Be Specific
+
 - **Bad**: "Fix the search bug"
 - **Good**: "Fix the Qdrant timeout issue in medical-kb when queries exceed 100 characters"
 
 ### Provide Context
+
 - Include error messages
 - Note what you've already tried
 - Mention any constraints or requirements
 
 ### Set Clear Expectations
+
 - Define "done" criteria
 - Specify quality standards
 - Note any blockers or dependencies
 
 ### Reference Docs
+
 - Point to relevant specs
 - Link to related issues
 - Mention similar implementations
@@ -493,21 +547,25 @@ I need you to create a GitHub Actions workflow for automated testing and deploym
 ## Troubleshooting
 
 ### "Claude isn't following the prompt"
+
 - Ensure all placeholders `[like this]` are filled in
 - Check that referenced files exist
 - Verify paths are correct for the project
 
 ### "Claude skipped quality checks"
+
 - Explicitly remind Claude to run checks
 - Add checks to the task list
 - Request verification before marking complete
 
 ### "Claude made changes I didn't want"
+
 - Be more specific in the issue description
 - Add constraints section
 - Review changes before committing
 
 ### "Multiple prompts are needed"
+
 - Break complex work into smaller prompts
 - Use Phase prompt for new features
 - Use Bugfix prompt for corrections
@@ -518,13 +576,15 @@ I need you to create a GitHub Actions workflow for automated testing and deploym
 ## Related Documentation
 
 - [CLAUDE_EXECUTION_GUIDE.md](CLAUDE_EXECUTION_GUIDE.md) - Detailed execution guidelines
-- [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Phase-by-phase plan
+- [Implementation Status](overview/IMPLEMENTATION_STATUS.md) - **Source of truth** for component status
 - [START_HERE.md](START_HERE.md) - Project orientation
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - System architecture
+- [Agent Onboarding](ai/AGENT_ONBOARDING.md) - AI assistant quick start
+- [Agent API Reference](ai/AGENT_API_REFERENCE.md) - Machine-readable endpoints
 
 ---
 
-**Last Updated**: 2025-11-20
-**Version**: V2.0
+**Last Updated**: 2025-11-27
+**Version**: V2.1
 
 **Note**: These prompts are designed for Claude Code but can be adapted for other AI assistants or human developers by adjusting the phrasing and removing AI-specific instructions.

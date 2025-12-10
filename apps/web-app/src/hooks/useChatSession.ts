@@ -18,6 +18,9 @@ import type {
 import { useAuthStore } from "../stores/authStore";
 import { useAuth } from "./useAuth";
 import { createAttachmentsApi } from "../lib/api/attachmentsApi";
+import { websocketLog } from "../lib/logger";
+
+const DEFAULT_GATEWAY = "https://api.voiceassist.example.com";
 
 interface UseChatSessionOptions {
   conversationId: string | undefined;
@@ -43,11 +46,19 @@ interface UseChatSessionReturn {
 }
 
 // WebSocket URL - configurable per environment
-const WS_URL =
-  import.meta.env.VITE_WS_URL ||
-  (import.meta.env.DEV
-    ? "ws://localhost:8000/api/realtime/ws"
-    : "wss://assist.asimo.io/api/realtime/ws");
+const DEFAULT_WS_PATH = "/api/realtime/ws";
+
+const WS_URL = (() => {
+  if (import.meta.env.VITE_WS_URL) {
+    return import.meta.env.VITE_WS_URL;
+  }
+
+  if (import.meta.env.DEV) {
+    return `ws://localhost:8000${DEFAULT_WS_PATH}`;
+  }
+
+  return `wss://api.voiceassist.example.com${DEFAULT_WS_PATH}`;
+})();
 
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -75,21 +86,46 @@ export function useChatSession(
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const streamingMessageRef = useRef<Message | null>(null);
+  const skipLoggedRef = useRef<{
+    conversationId: string | undefined;
+    hasToken: boolean;
+  } | null>(null);
+  // Flag to distinguish intentional disconnects from unexpected closes
+  const intentionalDisconnectRef = useRef(false);
+  // Track connection state to prevent duplicate connect attempts
+  const isConnectingRef = useRef(false);
+  // Track if a connecting WebSocket should be aborted when it opens
+  const abortOnOpenRef = useRef(false);
+  // Track pending file uploads waiting for server message ID
+  const pendingFileUploadsRef = useRef<
+    Map<
+      string,
+      { files: File[]; resolve: () => void; reject: (error: Error) => void }
+    >
+  >(new Map());
 
   const { tokens } = useAuthStore();
   const { apiClient } = useAuth();
 
   // Create attachments API client
   const attachmentsApi = createAttachmentsApi(
-    import.meta.env.VITE_API_URL || "http://localhost:8000",
+    import.meta.env.VITE_API_URL || DEFAULT_GATEWAY,
     () => tokens?.accessToken || null,
   );
 
-  // Update messages when initialMessages changes (e.g., when conversation changes)
+  // Track previous initialMessages to avoid infinite loops from array reference changes
+  const prevInitialMessagesRef = useRef<string>("");
+
+  // Update messages when initialMessages content changes (e.g., when conversation changes)
   useEffect(() => {
-    setMessages(initialMessages);
-    streamingMessageRef.current = null;
-    setIsTyping(false);
+    // Compare by stringified content to avoid infinite loops from array reference changes
+    const currentKey = JSON.stringify(initialMessages.map((m) => m.id));
+    if (currentKey !== prevInitialMessagesRef.current) {
+      prevInitialMessagesRef.current = currentKey;
+      setMessages(initialMessages);
+      streamingMessageRef.current = null;
+      setIsTyping(false);
+    }
   }, [initialMessages]);
 
   const updateConnectionStatus = useCallback(
@@ -102,7 +138,7 @@ export function useChatSession(
 
   const handleError = useCallback(
     (code: WebSocketErrorCode, message: string) => {
-      console.error(`[WebSocket Error] ${code}: ${message}`);
+      websocketLog.error(`Error ${code}: ${message}`);
       onError?.(code, message);
     },
     [onError],
@@ -240,42 +276,169 @@ export function useChatSession(
             // Heartbeat response
             break;
           }
+
+          case "history": {
+            // Receive message history on connect
+            if (data.messages && Array.isArray(data.messages)) {
+              websocketLog.debug(
+                `Received ${data.messages.length} history messages`,
+              );
+              interface HistoryMessage {
+                id: string;
+                role: "user" | "assistant" | "system";
+                content: string;
+                timestamp?: number;
+                citations?: Message["citations"];
+                metadata?: Message["metadata"];
+              }
+              const historyMessages: Message[] = data.messages.map(
+                (msg: HistoryMessage) => ({
+                  id: msg.id,
+                  role: msg.role,
+                  content: msg.content,
+                  timestamp: msg.timestamp || Date.now(),
+                  citations: msg.citations || [],
+                  metadata: msg.metadata || {},
+                }),
+              );
+              // Replace messages with history (merge with any provided initialMessages)
+              setMessages((prev) => {
+                // Keep any messages that aren't in history (e.g., optimistic updates)
+                const historyIds = new Set(historyMessages.map((m) => m.id));
+                const nonHistoryMessages = prev.filter(
+                  (m) => !historyIds.has(m.id),
+                );
+                return [...historyMessages, ...nonHistoryMessages];
+              });
+            }
+            break;
+          }
+
+          case "user_message.created": {
+            // Server confirms user message was persisted - now we can upload attachments
+            const serverMessageId = data.messageId;
+            const clientMessageId = data.clientMessageId;
+
+            if (clientMessageId && serverMessageId) {
+              websocketLog.debug(
+                `Message ID sync: client=${clientMessageId} -> server=${serverMessageId}`,
+              );
+
+              // Update the local message ID to use the server's ID
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === clientMessageId
+                    ? { ...msg, id: serverMessageId }
+                    : msg,
+                ),
+              );
+
+              // Check if there are pending file uploads for this client message ID
+              const pending =
+                pendingFileUploadsRef.current.get(clientMessageId);
+              if (pending) {
+                pendingFileUploadsRef.current.delete(clientMessageId);
+                // Upload files with the server's message ID
+                (async () => {
+                  try {
+                    for (const file of pending.files) {
+                      await attachmentsApi.uploadAttachment(
+                        serverMessageId,
+                        file,
+                      );
+                    }
+                    websocketLog.debug(
+                      `Uploaded ${pending.files.length} attachments for message ${serverMessageId}`,
+                    );
+                    pending.resolve();
+                  } catch (error) {
+                    websocketLog.error("Failed to upload attachments:", error);
+                    pending.reject(
+                      error instanceof Error
+                        ? error
+                        : new Error("Upload failed"),
+                    );
+                  }
+                })();
+              }
+            }
+            break;
+          }
         }
       } catch (error) {
-        console.error("[WebSocket] Failed to parse message:", error);
+        websocketLog.error("Failed to parse message:", error);
       }
     },
     [onMessage, handleError],
   );
 
   const connect = useCallback(() => {
+    const hasToken = !!tokens?.accessToken;
+
     // Don't try to connect without a valid conversationId or token
-    if (!conversationId || !tokens?.accessToken) {
-      console.debug(
-        "[WebSocket] Skipping connect - missing conversationId or token",
-        { conversationId, hasToken: !!tokens?.accessToken },
-      );
+    if (!conversationId || !hasToken) {
+      // Only log skip once per unique state to reduce noise
+      const currentSkipState = { conversationId, hasToken };
+      const shouldLog =
+        !skipLoggedRef.current ||
+        skipLoggedRef.current.conversationId !==
+          currentSkipState.conversationId ||
+        skipLoggedRef.current.hasToken !== currentSkipState.hasToken;
+
+      if (shouldLog) {
+        websocketLog.debug(
+          "Skipping connect - missing conversationId or token",
+          currentSkipState,
+        );
+        skipLoggedRef.current = currentSkipState;
+      }
       updateConnectionStatus("disconnected");
       return;
     }
 
+    // Clear skip log state when we actually connect
+    skipLoggedRef.current = null;
+
+    // Guard: Already connected
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       return;
     }
+
+    // Guard: Already connecting (prevents duplicate connection attempts)
+    if (isConnectingRef.current) {
+      websocketLog.debug("Already connecting, skipping duplicate attempt");
+      return;
+    }
+
+    // Clear flags when starting new connection
+    intentionalDisconnectRef.current = false;
+    abortOnOpenRef.current = false;
+    isConnectingRef.current = true;
 
     updateConnectionStatus("connecting");
 
     try {
       const url = new URL(WS_URL);
       url.searchParams.append("conversationId", conversationId);
-      if (tokens?.accessToken) {
-        url.searchParams.append("token", tokens.accessToken);
-      }
+      // Token is guaranteed to exist at this point (checked above)
+      url.searchParams.append("token", tokens!.accessToken);
 
       const ws = new WebSocket(url.toString());
 
       ws.onopen = () => {
-        console.log("[WebSocket] Connected");
+        isConnectingRef.current = false;
+
+        // Check if this connection was aborted while connecting
+        if (abortOnOpenRef.current) {
+          websocketLog.debug(
+            "Connection opened but was aborted - closing cleanly",
+          );
+          abortOnOpenRef.current = false;
+          ws.close(1000, "Aborted");
+          return;
+        }
+
+        websocketLog.debug("Connected");
         updateConnectionStatus("connected");
         reconnectAttemptsRef.current = 0;
         startHeartbeat();
@@ -284,29 +447,71 @@ export function useChatSession(
       ws.onmessage = handleWebSocketMessage;
 
       ws.onerror = (error) => {
-        // Log error details for debugging
-        console.error("[WebSocket] Error event received:", {
-          type: error.type,
-          target: error.target,
-          readyState: ws.readyState,
-        });
+        isConnectingRef.current = false;
+        // Only log as error if this wasn't an intentional disconnect, already closed,
+        // or from an aborted connection (one we abandoned while connecting).
+        // These cases often trigger error events that are expected and don't indicate real problems.
+        const isAlreadyClosed = ws.readyState === WebSocket.CLOSED;
+        const isExpected =
+          intentionalDisconnectRef.current ||
+          isAlreadyClosed ||
+          abortOnOpenRef.current ||
+          wsRef.current !== ws; // This WS is no longer the active one
+        if (isExpected) {
+          websocketLog.debug(
+            "Error event (expected - intentional, closed, or superseded):",
+            {
+              type: error.type,
+              readyState: ws.readyState,
+            },
+          );
+        } else {
+          websocketLog.warn("WebSocket error event:", {
+            type: error.type,
+            readyState: ws.readyState,
+          });
+        }
         // Note: WebSocket error events don't contain detailed error info
         // The actual reason will be in the subsequent close event
       };
 
       ws.onclose = (event) => {
-        console.log("[WebSocket] Closed:", {
+        websocketLog.debug("Closed:", {
           code: event.code,
           reason: event.reason || "(no reason provided)",
           wasClean: event.wasClean,
+          intentional: intentionalDisconnectRef.current,
         });
+        isConnectingRef.current = false;
         stopHeartbeat();
         updateConnectionStatus("disconnected");
+
+        // Don't reconnect if this was an intentional disconnect
+        if (intentionalDisconnectRef.current) {
+          websocketLog.debug("Intentional disconnect - not reconnecting");
+          return;
+        }
 
         // Only treat as error if not a clean close (1000) or going away (1001)
         const isNormalClosure = event.code === 1000 || event.code === 1001;
 
-        // Attempt reconnection for abnormal closures
+        // Check for auth-related close codes (1008 = Policy Violation, typically auth failure)
+        const isAuthError = event.code === 1008;
+
+        if (isAuthError) {
+          // Don't reconnect on auth errors - user needs to re-login
+          websocketLog.warn(
+            "WebSocket closed due to auth error - not reconnecting",
+          );
+          handleError(
+            "AUTH_FAILED",
+            event.reason || "Authentication failed - please log in again",
+          );
+          // Don't attempt reconnection - the token is likely expired
+          return;
+        }
+
+        // Attempt reconnection for abnormal closures (but not auth errors)
         if (
           !isNormalClosure &&
           reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS
@@ -315,8 +520,8 @@ export function useChatSession(
             BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current);
           reconnectAttemptsRef.current += 1;
 
-          console.log(
-            `[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})`,
+          websocketLog.debug(
+            `Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})`,
           );
           updateConnectionStatus("reconnecting");
 
@@ -335,7 +540,8 @@ export function useChatSession(
 
       wsRef.current = ws;
     } catch (error) {
-      console.error("[WebSocket] Connection failed:", error);
+      websocketLog.error("Connection failed:", error);
+      isConnectingRef.current = false;
       handleError("CONNECTION_DROPPED", "Failed to establish connection");
       updateConnectionStatus("disconnected");
     }
@@ -350,6 +556,10 @@ export function useChatSession(
   ]);
 
   const disconnect = useCallback(() => {
+    // Mark as intentional to prevent auto-reconnect
+    intentionalDisconnectRef.current = true;
+    isConnectingRef.current = false;
+
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
@@ -358,8 +568,20 @@ export function useChatSession(
     stopHeartbeat();
 
     if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
+      // If WebSocket is still connecting, don't close it immediately
+      // (this would cause "closed before established" browser error)
+      // Instead, mark it for abort when it opens
+      if (wsRef.current.readyState === WebSocket.CONNECTING) {
+        websocketLog.debug(
+          "WebSocket still connecting - marking for abort on open",
+        );
+        abortOnOpenRef.current = true;
+        // Still null the ref so a new connection can be started
+        wsRef.current = null;
+      } else {
+        wsRef.current.close(1000, "Intentional disconnect");
+        wsRef.current = null;
+      }
     }
 
     updateConnectionStatus("disconnected");
@@ -374,65 +596,125 @@ export function useChatSession(
 
   const sendMessage = useCallback(
     async (content: string, files?: File[]) => {
+      // If not connected, try to reconnect and wait briefly
       if (wsRef.current?.readyState !== WebSocket.OPEN) {
-        handleError("CONNECTION_DROPPED", "Cannot send message: not connected");
-        return;
+        // Check prerequisites before attempting reconnect
+        const hasToken = !!tokens?.accessToken;
+        if (!conversationId) {
+          websocketLog.warn("Cannot send message: no conversation selected");
+          handleError(
+            "CONNECTION_DROPPED",
+            "Cannot send message: no conversation selected",
+          );
+          return;
+        }
+        if (!hasToken) {
+          websocketLog.warn("Cannot send message: not authenticated");
+          handleError(
+            "AUTH_FAILED",
+            "Cannot send message: please log in again",
+          );
+          return;
+        }
+
+        websocketLog.debug(
+          "WebSocket not open, attempting reconnect before send",
+          { connectionStatus, hasWs: !!wsRef.current },
+        );
+
+        // Trigger reconnect if not already reconnecting
+        if (connectionStatus !== "reconnecting" && !isConnectingRef.current) {
+          reconnectAttemptsRef.current = 0;
+          connect();
+        }
+
+        // Wait up to 3 seconds for connection to open
+        const maxWait = 3000;
+        const checkInterval = 100;
+        let waited = 0;
+
+        while (waited < maxWait) {
+          await new Promise((resolve) => setTimeout(resolve, checkInterval));
+          waited += checkInterval;
+
+          if (wsRef.current?.readyState === WebSocket.OPEN) {
+            websocketLog.debug("WebSocket reconnected, proceeding with send");
+            break;
+          }
+        }
+
+        // If still not connected after waiting, show error
+        if (wsRef.current?.readyState !== WebSocket.OPEN) {
+          websocketLog.warn("Reconnection failed after waiting", {
+            waited,
+            connectionStatus,
+            isConnecting: isConnectingRef.current,
+          });
+          handleError(
+            "CONNECTION_DROPPED",
+            "Cannot send message: connection unavailable. Please try again.",
+          );
+          return;
+        }
       }
 
-      // Generate unique message ID
-      const messageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      // Generate unique client message ID
+      const clientMessageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
       const userMessage: Message = {
-        id: messageId,
+        id: clientMessageId,
         role: "user",
         content,
         attachments: [], // Will be populated after upload
         timestamp: Date.now(),
       };
 
-      // Add user message to messages immediately
+      // Add user message to messages immediately (optimistic update)
       setMessages((prev) => [...prev, userMessage]);
 
-      // Send text message to server via WebSocket
+      // If there are files, register them as pending uploads
+      // They'll be uploaded when we receive user_message.created with the server's message ID
+      if (files && files.length > 0) {
+        const uploadPromise = new Promise<void>((resolve, reject) => {
+          pendingFileUploadsRef.current.set(clientMessageId, {
+            files,
+            resolve,
+            reject,
+          });
+
+          // Timeout after 30 seconds if we don't get the server message ID
+          setTimeout(() => {
+            if (pendingFileUploadsRef.current.has(clientMessageId)) {
+              pendingFileUploadsRef.current.delete(clientMessageId);
+              reject(new Error("Timeout waiting for message ID from server"));
+            }
+          }, 30000);
+        });
+
+        // Don't await - let it complete in background
+        uploadPromise.catch((error) => {
+          websocketLog.error("Failed to upload attachments:", error);
+        });
+      }
+
+      // Send text message to server via WebSocket with client_message_id
       wsRef.current.send(
         JSON.stringify({
           type: "message",
           content: content,
           session_id: conversationId,
+          client_message_id: clientMessageId,
         }),
       );
-
-      // Upload files asynchronously if present
-      if (files && files.length > 0) {
-        try {
-          const uploadedAttachments = [];
-          for (const file of files) {
-            const attachment = await attachmentsApi.uploadAttachment(
-              messageId,
-              file,
-            );
-            uploadedAttachments.push(attachment);
-          }
-
-          // Update message with uploaded attachments
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === messageId
-                ? { ...msg, attachments: uploadedAttachments.map((a) => a.id) }
-                : msg,
-            ),
-          );
-        } catch (error) {
-          console.error("Failed to upload attachments:", error);
-          // Don't fail the whole message send if attachments fail
-        }
-      }
     },
-    [handleError, conversationId, attachmentsApi],
+    [handleError, conversationId, connectionStatus, connect, tokens],
   );
 
   const editMessage = useCallback(
     async (messageId: string, newContent: string) => {
+      if (!conversationId) {
+        throw new Error("Cannot edit message: no conversation ID");
+      }
       try {
         const updatedMessage = await apiClient.editMessage(
           conversationId,
@@ -447,7 +729,7 @@ export function useChatSession(
 
         setEditingMessageId(null);
       } catch (error) {
-        console.error("Failed to edit message:", error);
+        websocketLog.error("Failed to edit message:", error);
         throw error;
       }
     },
@@ -461,13 +743,15 @@ export function useChatSession(
         (m) => m.id === assistantMessageId,
       );
       if (messageIndex === -1 || messageIndex === 0) {
-        console.error("Cannot regenerate: invalid message");
+        websocketLog.error("Cannot regenerate: invalid message");
         return;
       }
 
       const userMessage = messages[messageIndex - 1];
       if (userMessage.role !== "user") {
-        console.error("Cannot regenerate: previous message is not from user");
+        websocketLog.error(
+          "Cannot regenerate: previous message is not from user",
+        );
         return;
       }
 
@@ -475,13 +759,17 @@ export function useChatSession(
       setMessages((prev) => prev.filter((m) => m.id !== assistantMessageId));
 
       // Re-send the user message (will trigger new assistant response via WebSocket)
-      sendMessage(userMessage.content, userMessage.attachments);
+      // Note: attachments are not re-uploaded on regenerate
+      sendMessage(userMessage.content);
     },
     [messages, sendMessage],
   );
 
   const deleteMessage = useCallback(
     async (messageId: string) => {
+      if (!conversationId) {
+        throw new Error("Cannot delete message: no conversation ID");
+      }
       if (!confirm("Are you sure you want to delete this message?")) {
         return;
       }
@@ -492,7 +780,7 @@ export function useChatSession(
         // Update local state
         setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
       } catch (error) {
-        console.error("Failed to delete message:", error);
+        websocketLog.error("Failed to delete message:", error);
         throw error;
       }
     },
@@ -521,14 +809,32 @@ export function useChatSession(
     [onMessage],
   );
 
-  // Connect on mount
+  // Store connect/disconnect in refs to avoid effect dependency issues
+  const connectRef = useRef(connect);
+  const disconnectRef = useRef(disconnect);
   useEffect(() => {
-    connect();
+    connectRef.current = connect;
+    disconnectRef.current = disconnect;
+  }, [connect, disconnect]);
+
+  // Connect when conversationId and token are available
+  // Disconnect when the hook unmounts or when conversationId changes
+  // NOTE: Using refs for connect/disconnect to avoid infinite effect loops
+  // when those functions' identities change
+  useEffect(() => {
+    // Only attempt connect when we have both prerequisites
+    // This prevents unnecessary connect() calls that just log and return
+    const hasToken = !!tokens?.accessToken;
+    const hasConversationId = !!conversationId;
+
+    if (hasToken && hasConversationId) {
+      connectRef.current();
+    }
 
     return () => {
-      disconnect();
+      disconnectRef.current();
     };
-  }, [connect, disconnect]);
+  }, [conversationId, tokens?.accessToken]);
 
   return {
     messages,

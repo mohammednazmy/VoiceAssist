@@ -1,39 +1,106 @@
 /**
  * useConversations Hook
- * Manages conversation list, search, and operations
+ * Manages conversation list, search, and operations with optimistic updates
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "./useAuth";
-import type { Conversation, PaginatedResponse } from "@voiceassist/types";
+import type {
+  Conversation,
+  PaginatedResponse,
+  Message,
+  Citation,
+} from "@voiceassist/types";
+import { extractErrorMessage } from "@voiceassist/types";
+import { createLogger } from "../lib/logger";
 
-export function useConversations() {
+const log = createLogger("Conversations");
+
+export interface UseConversationsOptions {
+  /** Callback when an error occurs (for toast notifications) */
+  onError?: (message: string, description?: string) => void;
+  /** Initial page size for pagination */
+  pageSize?: number;
+}
+
+export function useConversations(options: UseConversationsOptions = {}) {
+  const { onError, pageSize = 20 } = options;
   const { apiClient } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalCountRef = useRef(0);
 
-  const loadConversations = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  // Refs to prevent infinite fetch loops
+  const isLoadingRef = useRef(false);
+  const hasInitializedRef = useRef(false);
 
-    try {
-      const response: PaginatedResponse<Conversation> =
-        await apiClient.getConversations(1, 100);
-      setConversations(response.items);
-    } catch (err: any) {
-      setError(err.message || "Failed to load conversations");
-      console.error("Failed to load conversations:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [apiClient]);
+  const loadConversations = useCallback(
+    async (page = 1, append = false) => {
+      log.debug(`loadConversations called (page: ${page}, append: ${append})`);
+      // Guard against concurrent requests (prevents request storm)
+      if (isLoadingRef.current && !append) {
+        log.debug(`Skipping load - already loading (page: ${page})`);
+        return;
+      }
 
+      isLoadingRef.current = true;
+
+      if (page === 1) {
+        setIsLoading(true);
+      } else {
+        setIsLoadingMore(true);
+      }
+      setError(null);
+
+      try {
+        const response: PaginatedResponse<Conversation> =
+          await apiClient.getConversations(page, pageSize);
+
+        log.debug(`Loaded ${response.items.length} conversations from API`);
+        totalCountRef.current = response.totalCount;
+        setHasMore(page < response.totalPages);
+        setCurrentPage(page);
+
+        if (append) {
+          setConversations((prev) => [...prev, ...response.items]);
+        } else {
+          setConversations(response.items);
+        }
+      } catch (err: unknown) {
+        const errorMessage = extractErrorMessage(err);
+        setError(errorMessage);
+        log.error("Failed to load conversations:", err);
+        onError?.("Failed to load conversations", errorMessage);
+      } finally {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+        isLoadingRef.current = false;
+      }
+    },
+    [apiClient, pageSize, onError],
+  );
+
+  const loadMore = useCallback(async () => {
+    if (!hasMore || isLoadingMore || isLoadingRef.current) return;
+    await loadConversations(currentPage + 1, true);
+  }, [hasMore, isLoadingMore, currentPage, loadConversations]);
+
+  // Initial load - runs only once on mount
+  // Using hasInitializedRef to prevent re-fetching when dependencies change identity
   useEffect(() => {
+    if (hasInitializedRef.current) {
+      return;
+    }
+    hasInitializedRef.current = true;
     loadConversations();
-  }, [loadConversations]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const createConversation = useCallback(
     async (title: string) => {
@@ -41,12 +108,14 @@ export function useConversations() {
         const newConversation = await apiClient.createConversation(title);
         setConversations((prev) => [newConversation, ...prev]);
         return newConversation;
-      } catch (err: any) {
-        setError(err.message || "Failed to create conversation");
+      } catch (err: unknown) {
+        const errorMessage = extractErrorMessage(err);
+        setError(errorMessage);
+        onError?.("Failed to create conversation", errorMessage);
         throw err;
       }
     },
-    [apiClient],
+    [apiClient, onError],
   );
 
   const updateConversation = useCallback(
@@ -54,62 +123,167 @@ export function useConversations() {
       id: string,
       updates: { title?: string; folderId?: string | null },
     ) => {
+      // Save original state for rollback
+      const originalConversations = conversations;
+
+      // Optimistically update
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === id
+            ? { ...conv, ...updates, updatedAt: new Date().toISOString() }
+            : conv,
+        ),
+      );
+
       try {
         const updated = await apiClient.updateConversation(id, updates);
+        // Replace with server response
         setConversations((prev) =>
           prev.map((conv) => (conv.id === id ? updated : conv)),
         );
         return updated;
-      } catch (err: any) {
-        setError(err.message || "Failed to update conversation");
+      } catch (err: unknown) {
+        // Rollback on error
+        setConversations(originalConversations);
+        const errorMessage = extractErrorMessage(err);
+        setError(errorMessage);
+        onError?.("Failed to update conversation", errorMessage);
         throw err;
       }
     },
-    [apiClient],
+    [apiClient, conversations, onError],
   );
 
   const archiveConversation = useCallback(
     async (id: string) => {
+      // Save original state for rollback
+      const originalConversations = conversations;
+
+      // Optimistically update
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === id
+            ? { ...conv, archived: true, updatedAt: new Date().toISOString() }
+            : conv,
+        ),
+      );
+
       try {
         const updated = await apiClient.archiveConversation(id);
         setConversations((prev) =>
           prev.map((conv) => (conv.id === id ? updated : conv)),
         );
-      } catch (err: any) {
-        setError(err.message || "Failed to archive conversation");
+        return updated;
+      } catch (err: unknown) {
+        // Rollback on error
+        setConversations(originalConversations);
+        const errorMessage = extractErrorMessage(err);
+        setError(errorMessage);
+        onError?.("Failed to archive conversation", errorMessage);
         throw err;
       }
     },
-    [apiClient],
+    [apiClient, conversations, onError],
   );
 
   const unarchiveConversation = useCallback(
     async (id: string) => {
+      // Save original state for rollback
+      const originalConversations = conversations;
+
+      // Optimistically update
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === id
+            ? { ...conv, archived: false, updatedAt: new Date().toISOString() }
+            : conv,
+        ),
+      );
+
       try {
         const updated = await apiClient.unarchiveConversation(id);
         setConversations((prev) =>
           prev.map((conv) => (conv.id === id ? updated : conv)),
         );
-      } catch (err: any) {
-        setError(err.message || "Failed to unarchive conversation");
+        return updated;
+      } catch (err: unknown) {
+        // Rollback on error
+        setConversations(originalConversations);
+        const errorMessage = extractErrorMessage(err);
+        setError(errorMessage);
+        onError?.("Failed to unarchive conversation", errorMessage);
         throw err;
       }
     },
-    [apiClient],
+    [apiClient, conversations, onError],
   );
 
   const deleteConversation = useCallback(
     async (id: string) => {
+      log.debug(`Deleting conversation: ${id}`);
+      // Save original state for rollback
+      const originalConversations = conversations;
+      const deletedConversation = conversations.find((conv) => conv.id === id);
+
+      // Optimistically remove
+      log.debug(
+        `Optimistically removing conversation, count before: ${conversations.length}`,
+      );
+      setConversations((prev) => {
+        const newList = prev.filter((conv) => conv.id !== id);
+        log.debug(`After filter, count: ${newList.length}`);
+        return newList;
+      });
+
       try {
         await apiClient.deleteConversation(id);
-        setConversations((prev) => prev.filter((conv) => conv.id !== id));
-      } catch (err: any) {
-        setError(err.message || "Failed to delete conversation");
+        log.debug(`API delete successful for: ${id}`);
+      } catch (err: unknown) {
+        // Rollback on error
+        log.debug(`API delete failed, rolling back`);
+        setConversations(originalConversations);
+        const errorMessage = extractErrorMessage(err);
+        setError(errorMessage);
+        onError?.(
+          "Failed to delete conversation",
+          `"${deletedConversation?.title}" could not be deleted. ${errorMessage}`,
+        );
         throw err;
       }
     },
-    [apiClient],
+    [apiClient, conversations, onError],
   );
+
+  const deleteAllConversations = useCallback(async () => {
+    // Save original state for rollback
+    const originalConversations = conversations;
+    const originalTotal = totalCountRef.current;
+    const count = conversations.length;
+
+    // Optimistically clear all
+    setConversations([]);
+    totalCountRef.current = 0;
+    setHasMore(false);
+    setCurrentPage(1);
+
+    try {
+      const result = await apiClient.deleteAllConversations();
+      log.debug(`Deleted ${result.deleted_count} conversations`);
+      return result;
+    } catch (err: unknown) {
+      // Rollback on error
+      setConversations(originalConversations);
+      totalCountRef.current = originalTotal;
+      setHasMore(originalConversations.length >= pageSize);
+      const errorMessage = extractErrorMessage(err);
+      setError(errorMessage);
+      onError?.(
+        "Failed to delete all conversations",
+        `Could not delete ${count} conversation(s). ${errorMessage}`,
+      );
+      throw err;
+    }
+  }, [apiClient, conversations, pageSize, onError]);
 
   const exportConversation = useCallback(
     async (id: string, format: "markdown" | "text" = "markdown") => {
@@ -121,7 +295,8 @@ export function useConversations() {
         }
 
         // Get all messages for this conversation
-        const messages = await apiClient.getMessages(id);
+        const messagesResponse = await apiClient.getMessages(id);
+        const messages = messagesResponse.items;
 
         // Generate export content based on format
         let content: string;
@@ -148,8 +323,8 @@ export function useConversations() {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-      } catch (err: any) {
-        setError(err.message || "Failed to export conversation");
+      } catch (err: unknown) {
+        setError(extractErrorMessage(err));
         throw err;
       }
     },
@@ -169,17 +344,22 @@ export function useConversations() {
     conversations: filteredConversations,
     allConversations: conversations,
     isLoading,
+    isLoadingMore,
     error,
     searchQuery,
     setSearchQuery,
     showArchived,
     setShowArchived,
+    hasMore,
+    totalCount: totalCountRef.current,
     createConversation,
     updateConversation,
     archiveConversation,
     unarchiveConversation,
     deleteConversation,
+    deleteAllConversations,
     exportConversation,
+    loadMore,
     reload: loadConversations,
   };
 }
@@ -187,7 +367,7 @@ export function useConversations() {
 // Helper function to generate Markdown export
 function generateMarkdownExport(
   conversation: Conversation,
-  messages: any[],
+  messages: Message[],
 ): string {
   const formattedDate = new Date(conversation.createdAt).toLocaleString();
   let markdown = `# ${conversation.title}\n\n`;
@@ -208,26 +388,28 @@ function generateMarkdownExport(
     // Add citations if present
     if (message.metadata?.citations && message.metadata.citations.length > 0) {
       markdown += `### Citations\n\n`;
-      message.metadata.citations.forEach((citation: any, citIndex: number) => {
-        markdown += `${citIndex + 1}. `;
-        if (citation.title) {
-          markdown += `**${citation.title}**`;
-        }
-        if (citation.reference) {
-          markdown += ` (${citation.reference})`;
-        }
-        markdown += `\n`;
-        if (citation.snippet) {
-          markdown += `   > ${citation.snippet}\n`;
-        }
-        if (citation.doi) {
-          markdown += `   DOI: [${citation.doi}](https://doi.org/${citation.doi})\n`;
-        }
-        if (citation.pubmedId) {
-          markdown += `   PubMed: [${citation.pubmedId}](https://pubmed.ncbi.nlm.nih.gov/${citation.pubmedId}/)\n`;
-        }
-        markdown += `\n`;
-      });
+      message.metadata.citations.forEach(
+        (citation: Citation, citIndex: number) => {
+          markdown += `${citIndex + 1}. `;
+          if (citation.title) {
+            markdown += `**${citation.title}**`;
+          }
+          if (citation.reference) {
+            markdown += ` (${citation.reference})`;
+          }
+          markdown += `\n`;
+          if (citation.snippet) {
+            markdown += `   > ${citation.snippet}\n`;
+          }
+          if (citation.doi) {
+            markdown += `   DOI: [${citation.doi}](https://doi.org/${citation.doi})\n`;
+          }
+          if (citation.pubmedId) {
+            markdown += `   PubMed: [${citation.pubmedId}](https://pubmed.ncbi.nlm.nih.gov/${citation.pubmedId}/)\n`;
+          }
+          markdown += `\n`;
+        },
+      );
     }
 
     markdown += `---\n\n`;
@@ -240,7 +422,7 @@ function generateMarkdownExport(
 // Helper function to generate plain text export
 function generateTextExport(
   conversation: Conversation,
-  messages: any[],
+  messages: Message[],
 ): string {
   const formattedDate = new Date(conversation.createdAt).toLocaleString();
   let text = `${conversation.title}\n`;
@@ -262,25 +444,27 @@ function generateTextExport(
     // Add citations if present
     if (message.metadata?.citations && message.metadata.citations.length > 0) {
       text += `CITATIONS:\n`;
-      message.metadata.citations.forEach((citation: any, citIndex: number) => {
-        text += `  ${citIndex + 1}. `;
-        if (citation.title) {
-          text += citation.title;
-        }
-        if (citation.reference) {
-          text += ` (${citation.reference})`;
-        }
-        text += `\n`;
-        if (citation.snippet) {
-          text += `     "${citation.snippet}"\n`;
-        }
-        if (citation.doi) {
-          text += `     DOI: https://doi.org/${citation.doi}\n`;
-        }
-        if (citation.pubmedId) {
-          text += `     PubMed: https://pubmed.ncbi.nlm.nih.gov/${citation.pubmedId}/\n`;
-        }
-      });
+      message.metadata.citations.forEach(
+        (citation: Citation, citIndex: number) => {
+          text += `  ${citIndex + 1}. `;
+          if (citation.title) {
+            text += citation.title;
+          }
+          if (citation.reference) {
+            text += ` (${citation.reference})`;
+          }
+          text += `\n`;
+          if (citation.snippet) {
+            text += `     "${citation.snippet}"\n`;
+          }
+          if (citation.doi) {
+            text += `     DOI: https://doi.org/${citation.doi}\n`;
+          }
+          if (citation.pubmedId) {
+            text += `     PubMed: https://pubmed.ncbi.nlm.nih.gov/${citation.pubmedId}/\n`;
+          }
+        },
+      );
       text += `\n`;
     }
 

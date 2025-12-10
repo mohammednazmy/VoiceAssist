@@ -1,3 +1,30 @@
+---
+title: Orchestration Design
+slug: orchestration-design
+summary: "**Last Updated**: 2025-11-20"
+status: stable
+stability: beta
+owner: docs
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - ai-agents
+tags:
+  - orchestration
+  - design
+category: reference
+component: "backend/orchestrator"
+relatedPaths:
+  - "services/api-gateway/app/services/ai_service.py"
+  - "services/api-gateway/app/services/rag_service.py"
+  - "services/api-gateway/app/services/conversation_service.py"
+ai_summary: >-
+  Last Updated: 2025-11-20 Status: Canonical Reference Purpose: Define the
+  Conductor/Orchestrator that routes and processes clinical queries --- The
+  Query Orchestrator (also called "Conductor" or "RAG Service") is the central
+  component that: 1. Receives user queries 2. Makes routing decisions (PHI...
+---
+
 # VoiceAssist V2 - Query Orchestration Design
 
 **Last Updated**: 2025-11-20
@@ -9,6 +36,7 @@
 ## Overview
 
 The **Query Orchestrator** (also called "Conductor" or "RAG Service") is the central component that:
+
 1. Receives user queries
 2. Makes routing decisions (PHI detection, source selection, model selection)
 3. Orchestrates searches across multiple sources
@@ -37,23 +65,24 @@ This document defines its architecture, decision logic, and implementation.
 ### Definition
 
 The **Query Orchestrator** is a service layer component that:
+
 - Lives in: `app/services/rag_service.py` (monorepo) or `chat-service/` (microservices)
 - Purpose: Coordinate all steps from query → response
 - Not exposed directly: Called by API layer (`app/api/chat.py`)
 
 ### Responsibilities
 
-| Responsibility | Description |
-|----------------|-------------|
-| **PHI Detection** | Detect protected health information in query |
+| Responsibility            | Description                                                  |
+| ------------------------- | ------------------------------------------------------------ |
+| **PHI Detection**         | Detect protected health information in query                 |
 | **Intent Classification** | Determine query type (diagnosis, treatment, drug info, etc.) |
-| **Source Selection** | Choose which knowledge bases to search |
-| **Model Selection** | Route to local Llama or cloud GPT-4 |
-| **Parallel Search** | Search multiple sources concurrently |
-| **Reranking** | Prioritize most relevant results |
-| **Answer Generation** | Generate response with LLM |
-| **Response Assembly** | Format response with citations |
-| **Audit Logging** | Log all actions for HIPAA compliance |
+| **Source Selection**      | Choose which knowledge bases to search                       |
+| **Model Selection**       | Route to local Llama or cloud GPT-4                          |
+| **Parallel Search**       | Search multiple sources concurrently                         |
+| **Reranking**             | Prioritize most relevant results                             |
+| **Answer Generation**     | Generate response with LLM                                   |
+| **Response Assembly**     | Format response with citations                               |
+| **Audit Logging**         | Log all actions for HIPAA compliance                         |
 
 ---
 
@@ -208,6 +237,7 @@ User (Web App or Voice)
 ### 1. PHI Detection & Routing
 
 **Logic**:
+
 ```python
 def decide_model(phi_result: PHIResult) -> str:
     """
@@ -222,6 +252,7 @@ def decide_model(phi_result: PHIResult) -> str:
 ```
 
 **Edge Cases**:
+
 - **False Positive**: PHI detected incorrectly (e.g., common names)
   - Solution: Allow user to override in settings
 - **False Negative**: PHI not detected (rare but possible)
@@ -230,6 +261,7 @@ def decide_model(phi_result: PHIResult) -> str:
 ### 2. Intent Classification
 
 **Rule-Based Classifier** (simple, fast):
+
 ```python
 def classify_intent(query: str) -> Intent:
     """
@@ -254,6 +286,7 @@ def classify_intent(query: str) -> Intent:
 ```
 
 **ML-Based Classifier** (more accurate, slower):
+
 ```python
 from transformers import pipeline
 
@@ -274,16 +307,17 @@ def classify_intent_ml(query: str) -> Intent:
 
 **Decision Matrix**:
 
-| Intent | Priority Sources | Fallback Sources |
-|--------|------------------|------------------|
-| `diagnosis` | Internal KB (textbooks), UpToDate | PubMed, Guidelines |
-| `treatment` | UpToDate, Guidelines (CDC/WHO) | Internal KB, PubMed |
-| `drug_info` | Internal KB (drug references), UpToDate | PubMed |
-| `guideline` | Guidelines (CDC/WHO/Specialty), UpToDate | Internal KB |
-| `case_consultation` | Internal KB, UpToDate, PubMed | Nextcloud notes |
-| `general` | UpToDate, Internal KB | PubMed, Guidelines |
+| Intent              | Priority Sources                         | Fallback Sources    |
+| ------------------- | ---------------------------------------- | ------------------- |
+| `diagnosis`         | Internal KB (textbooks), UpToDate        | PubMed, Guidelines  |
+| `treatment`         | UpToDate, Guidelines (CDC/WHO)           | Internal KB, PubMed |
+| `drug_info`         | Internal KB (drug references), UpToDate  | PubMed              |
+| `guideline`         | Guidelines (CDC/WHO/Specialty), UpToDate | Internal KB         |
+| `case_consultation` | Internal KB, UpToDate, PubMed            | Nextcloud notes     |
+| `general`           | UpToDate, Internal KB                    | PubMed, Guidelines  |
 
 **User Preferences**:
+
 ```python
 def select_sources(intent: Intent, user_prefs: Dict) -> List[str]:
     """
@@ -306,6 +340,7 @@ def select_sources(intent: Intent, user_prefs: Dict) -> List[str]:
 ### 4. Confidence Threshold
 
 **When to Ask Clarifying Questions**:
+
 ```python
 def should_clarify(query: str, intent: Intent, search_results: List) -> bool:
     """
@@ -333,6 +368,7 @@ def should_clarify(query: str, intent: Intent, search_results: List) -> bool:
 ```
 
 **Clarifying Question Examples**:
+
 - Query: "kidney disease treatment"
   - Clarify: "Are you asking about acute kidney injury (AKI) or chronic kidney disease (CKD)? And if CKD, what stage?"
 
@@ -346,6 +382,7 @@ def should_clarify(query: str, intent: Intent, search_results: List) -> bool:
 ### Conversation Context
 
 **What to Track**:
+
 ```python
 class ConversationContext:
     """Track conversation state for context-aware responses"""
@@ -360,10 +397,12 @@ class ConversationContext:
 ```
 
 **Storage**:
+
 - **Redis**: For active sessions (TTL: 30 minutes of inactivity)
 - **PostgreSQL**: For persistent conversation history
 
 **Context Management**:
+
 ```python
 async def get_context(session_id: str) -> ConversationContext:
     """
@@ -401,11 +440,13 @@ async def get_context(session_id: str) -> ConversationContext:
 ### Clinical Context Persistence
 
 **When to Use**:
+
 - Case Workspace mode (persistent context)
 - Differential Diagnosis assistant (track symptoms, findings)
 - Drug interaction checks (track current medications)
 
 **Example**:
+
 ```python
 # User starts case workspace
 context = ClinicalContext(
@@ -635,15 +676,15 @@ Admins can configure via Admin Panel (see ADMIN_PANEL_SPECS.md):
 
 ```typescript
 interface AIConfiguration {
-  routingStrategy: 'hybrid' | 'local-only' | 'cloud-only';
+  routingStrategy: "hybrid" | "local-only" | "cloud-only";
   localModelName: string;
   cloudModelName: string;
-  enabledSources: string[];  // ["uptodate", "pubmed", "guidelines"]
-  searchTimeout: number;  // seconds
-  confidenceThreshold: number;  // 0-1
+  enabledSources: string[]; // ["uptodate", "pubmed", "guidelines"]
+  searchTimeout: number; // seconds
+  confidenceThreshold: number; // 0-1
   maxTokens: number;
   temperature: number;
-  costLimit: number;  // $/month
+  costLimit: number; // $/month
 }
 ```
 
@@ -653,9 +694,9 @@ Users can configure via Web App Settings (see WEB_APP_SPECS.md):
 
 ```typescript
 interface CitationSettings {
-  displayStyle: 'inline' | 'footnote' | 'sidebar';
-  citationFormat: 'AMA' | 'APA' | 'Vancouver';
-  prioritizeSources: string[];  // ["uptodate", "harrison", "pubmed"]
+  displayStyle: "inline" | "footnote" | "sidebar";
+  citationFormat: "AMA" | "APA" | "Vancouver";
+  prioritizeSources: string[]; // ["uptodate", "harrison", "pubmed"]
 }
 ```
 
@@ -665,25 +706,26 @@ interface CitationSettings {
 
 ### Comprehensive Failure Matrix
 
-| Component | Failure Scenario | Fallback Behavior | User Impact | Recovery Strategy |
-|-----------|------------------|-------------------|-------------|-------------------|
-| **KB Search (Qdrant)** | Vector DB down or timeout (> 5s) | Use external tools only (PubMed, UpToDate) + warning message | Partial answer, sources from external APIs only | Cache recent searches in Redis; auto-retry with exponential backoff |
-| **External Tools (PubMed/UpToDate)** | API timeout or rate limit exceeded | Use KB only + warning message | Partial answer, sources from internal KB only | Implement rate limiting queue; cache API responses (1 hour TTL) |
-| **PHI Detector** | Presidio service failure | Assume PHI present, route to local LLM (conservative) | Slower response (local model), extra caution | Alert admin; manual PHI review; temporary bypass flag for emergencies |
-| **Intent Classifier** | Classifier failure or low confidence (< 0.3) | Default to "general" intent, search all sources | May search less relevant sources, longer latency | Use rule-based fallback; retrain classifier with user feedback |
-| **LLM Generation (Cloud)** | OpenAI API timeout or error | Retry once (exponential backoff), then fallback to local Llama model | Slower response, potentially lower quality | Implement circuit breaker pattern; alert if failure rate > 5% |
-| **LLM Generation (Local)** | Ollama service down or OOM | Return curated excerpts from top search results with citations | No generated answer, only source excerpts + warning | Restart Ollama service; increase memory allocation; implement health check |
-| **Safety Filters** | Safety check failure (hallucination detector down) | Block response entirely for safety | Error message to user, query logged for review | Manual review queue for admin; implement fallback simple filters (keyword matching) |
-| **Search Reranker** | Reranking model failure | Skip reranking, use raw relevance scores from vector search | Potentially less optimal result ordering | Use simpler scoring (keyword overlap + vector score); alert admin |
-| **Embedding Generation** | OpenAI embedding API down | Use cached embeddings if query similar (cosine > 0.95), else fail gracefully | Cannot process new queries, use cached or return error | Fallback to local embedding model (all-MiniLM-L6-v2); cache aggressive |
-| **Database (PostgreSQL)** | Connection pool exhausted or DB down | Serve from Redis cache if available, else return 503 | Cannot save messages, read-only mode | Increase connection pool; implement read replicas; alert immediately |
-| **Redis Cache** | Redis down or eviction | Bypass cache, hit DB/APIs directly (slower) | Increased latency (2-5x slower), higher DB load | Run Redis in cluster mode; increase memory; implement disk persistence |
+| Component                            | Failure Scenario                                   | Fallback Behavior                                                            | User Impact                                            | Recovery Strategy                                                                   |
+| ------------------------------------ | -------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| **KB Search (Qdrant)**               | Vector DB down or timeout (> 5s)                   | Use external tools only (PubMed, UpToDate) + warning message                 | Partial answer, sources from external APIs only        | Cache recent searches in Redis; auto-retry with exponential backoff                 |
+| **External Tools (PubMed/UpToDate)** | API timeout or rate limit exceeded                 | Use KB only + warning message                                                | Partial answer, sources from internal KB only          | Implement rate limiting queue; cache API responses (1 hour TTL)                     |
+| **PHI Detector**                     | Presidio service failure                           | Assume PHI present, route to local LLM (conservative)                        | Slower response (local model), extra caution           | Alert admin; manual PHI review; temporary bypass flag for emergencies               |
+| **Intent Classifier**                | Classifier failure or low confidence (< 0.3)       | Default to "general" intent, search all sources                              | May search less relevant sources, longer latency       | Use rule-based fallback; retrain classifier with user feedback                      |
+| **LLM Generation (Cloud)**           | OpenAI API timeout or error                        | Retry once (exponential backoff), then fallback to local Llama model         | Slower response, potentially lower quality             | Implement circuit breaker pattern; alert if failure rate > 5%                       |
+| **LLM Generation (Local)**           | Ollama service down or OOM                         | Return curated excerpts from top search results with citations               | No generated answer, only source excerpts + warning    | Restart Ollama service; increase memory allocation; implement health check          |
+| **Safety Filters**                   | Safety check failure (hallucination detector down) | Block response entirely for safety                                           | Error message to user, query logged for review         | Manual review queue for admin; implement fallback simple filters (keyword matching) |
+| **Search Reranker**                  | Reranking model failure                            | Skip reranking, use raw relevance scores from vector search                  | Potentially less optimal result ordering               | Use simpler scoring (keyword overlap + vector score); alert admin                   |
+| **Embedding Generation**             | OpenAI embedding API down                          | Use cached embeddings if query similar (cosine > 0.95), else fail gracefully | Cannot process new queries, use cached or return error | Fallback to local embedding model (all-MiniLM-L6-v2); cache aggressive              |
+| **Database (PostgreSQL)**            | Connection pool exhausted or DB down               | Serve from Redis cache if available, else return 503                         | Cannot save messages, read-only mode                   | Increase connection pool; implement read replicas; alert immediately                |
+| **Redis Cache**                      | Redis down or eviction                             | Bypass cache, hit DB/APIs directly (slower)                                  | Increased latency (2-5x slower), higher DB load        | Run Redis in cluster mode; increase memory; implement disk persistence              |
 
 ### Degraded Mode Operation
 
 When **multiple critical components** fail simultaneously (e.g., Qdrant + OpenAI API), enter **Degraded Mode**:
 
 **Behavior:**
+
 1. Return simple curated excerpts from cached search results
 2. Display prominent warning: "I'm experiencing technical difficulties. Here are some relevant sources I found: [citations only]"
 3. Log incident with full context for investigation
@@ -691,6 +733,7 @@ When **multiple critical components** fail simultaneously (e.g., Qdrant + OpenAI
 5. Disable background jobs to conserve resources
 
 **Recovery:**
+
 - Automatic recovery check every 60 seconds
 - Exit degraded mode when all critical components healthy again
 - Send recovery notification to admin
@@ -807,13 +850,13 @@ class CircuitBreakerConfig:
 
 ### Performance Targets
 
-| Metric | Target | Notes |
-|--------|--------|-------|
-| **Query Latency** | < 3 seconds (p95) | Time from query → first response token |
-| **Search Time** | < 2 seconds | Parallel search across all sources |
-| **LLM Generation** | < 2 seconds | Streaming, so first token < 500ms |
-| **Cache Hit Rate** | > 30% | For frequently asked questions |
-| **Concurrent Users** | 50 (Compose), 200+ (K8s) | With horizontal scaling |
+| Metric               | Target                   | Notes                                  |
+| -------------------- | ------------------------ | -------------------------------------- |
+| **Query Latency**    | < 3 seconds (p95)        | Time from query → first response token |
+| **Search Time**      | < 2 seconds              | Parallel search across all sources     |
+| **LLM Generation**   | < 2 seconds              | Streaming, so first token < 500ms      |
+| **Cache Hit Rate**   | > 30%                    | For frequently asked questions         |
+| **Concurrent Users** | 50 (Compose), 200+ (K8s) | With horizontal scaling                |
 
 ---
 
@@ -1125,11 +1168,13 @@ async def process_query(
 ### Tool Call Routing
 
 **For Voice Mode (OpenAI Realtime API)**:
+
 - Tool calls initiated by AI model via function calling
 - Voice Proxy receives tool call → forwards to Orchestrator
 - Orchestrator executes tool → returns result to Voice Proxy → back to OpenAI
 
 **For Chat Mode**:
+
 - User explicitly requests action (e.g., "Create a meeting at 2pm")
 - Orchestrator detects action intent
 - Can trigger tool directly or use OpenAI function calling
@@ -1179,6 +1224,7 @@ async def startup_event():
 ### Tool Metrics
 
 **Prometheus Metrics** (see [OBSERVABILITY.md](OBSERVABILITY.md)):
+
 - `voiceassist_tool_calls_total` - Counter by tool_name and status
 - `voiceassist_tool_execution_duration_seconds` - Histogram by tool_name
 - `voiceassist_tool_confirmation_rate` - Gauge by tool_name
@@ -1192,7 +1238,7 @@ async def startup_event():
 - [DATA_MODEL.md](DATA_MODEL.md) - Entity definitions (QueryResponse, Citation, ToolCall, ToolResult)
 - [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md) - Service structure
 - [SEMANTIC_SEARCH_DESIGN.md](SEMANTIC_SEARCH_DESIGN.md) - Search implementation
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - System architecture
 - [WEB_APP_SPECS.md](WEB_APP_SPECS.md) - User preferences, tool confirmation UI
 - [ADMIN_PANEL_SPECS.md](ADMIN_PANEL_SPECS.md) - System configuration, tool testing
 - [SECURITY_COMPLIANCE.md](SECURITY_COMPLIANCE.md) - PHI handling, audit logging

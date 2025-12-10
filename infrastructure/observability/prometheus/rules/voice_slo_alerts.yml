@@ -1,0 +1,387 @@
+# Voice Mode SLO Alert Rules
+# VoiceAssist Platform - Phase 3 Observability
+#
+# SLO Targets:
+# - TTFA (Time To First Audio): P95 < 200ms
+# - STT Latency: P95 < 300ms
+# - TTS First Chunk: P95 < 200ms
+# - Connection Time: P95 < 500ms
+# - Error Rate: < 1%
+# - Session Success Rate: > 95%
+
+groups:
+  - name: voice_slo_alerts
+    rules:
+      # ================================================================
+      # TTFA (Time To First Audio) SLO Alerts
+      # ================================================================
+
+      - alert: VoiceTTFASLOViolation
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_voice_ttfa_seconds_bucket[5m])) by (le)
+          ) > 0.2
+        for: 5m
+        labels:
+          severity: critical
+          team: voice
+          slo: ttfa
+        annotations:
+          summary: "Voice TTFA P95 SLO violation"
+          description: "Voice Time To First Audio P95 is {{ $value | humanizeDuration }} (SLO: 200ms)"
+          runbook_url: "https://docs.asimo.io/runbooks/voice-ttfa-slo"
+
+      - alert: VoiceTTFASLOWarning
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_voice_ttfa_seconds_bucket[10m])) by (le)
+          ) > 0.15
+        for: 10m
+        labels:
+          severity: warning
+          team: voice
+          slo: ttfa
+        annotations:
+          summary: "Voice TTFA P95 approaching SLO threshold"
+          description: "Voice Time To First Audio P95 is {{ $value | humanizeDuration }} (warning threshold: 150ms)"
+
+      # ================================================================
+      # STT (Speech-to-Text) Latency Alerts
+      # ================================================================
+
+      - alert: VoiceSTTLatencySLOViolation
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_voice_stt_latency_seconds_bucket[5m])) by (le)
+          ) > 0.3
+        for: 5m
+        labels:
+          severity: critical
+          team: voice
+          slo: stt_latency
+        annotations:
+          summary: "Voice STT P95 latency SLO violation"
+          description: "STT latency P95 is {{ $value | humanizeDuration }} (SLO: 300ms)"
+          runbook_url: "https://docs.asimo.io/runbooks/voice-stt-slo"
+
+      - alert: VoiceSTTLatencyDegraded
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_voice_stt_latency_seconds_bucket[5m])) by (le)
+          ) > 0.25
+        for: 10m
+        labels:
+          severity: warning
+          team: voice
+          slo: stt_latency
+        annotations:
+          summary: "Voice STT latency degraded"
+          description: "STT latency P95 is {{ $value | humanizeDuration }} (warning threshold: 250ms)"
+
+      # ================================================================
+      # TTS (Text-to-Speech) Latency Alerts
+      # ================================================================
+
+      - alert: VoiceTTSFirstChunkSLOViolation
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_voice_pipeline_stage_latency_seconds_bucket{stage="tts_synthesize"}[5m])) by (le)
+          ) > 0.2
+        for: 5m
+        labels:
+          severity: critical
+          team: voice
+          slo: tts_latency
+        annotations:
+          summary: "Voice TTS P95 latency SLO violation"
+          description: "TTS synthesis P95 is {{ $value | humanizeDuration }} (SLO: 200ms)"
+          runbook_url: "https://docs.asimo.io/runbooks/voice-tts-slo"
+
+      # ================================================================
+      # Connection Time Alerts
+      # ================================================================
+
+      - alert: VoiceConnectionTimeSLOViolation
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_voice_connection_time_seconds_bucket[5m])) by (le)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: critical
+          team: voice
+          slo: connection_time
+        annotations:
+          summary: "Voice connection time P95 SLO violation"
+          description: "WebSocket connection P95 is {{ $value | humanizeDuration }} (SLO: 500ms)"
+
+      # ================================================================
+      # Error Rate Alerts
+      # ================================================================
+
+      - alert: VoiceErrorRateHigh
+        expr: |
+          (
+            sum(rate(voiceassist_voice_errors_total[5m]))
+            /
+            sum(rate(voiceassist_voice_sessions_total[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: voice
+          slo: error_rate
+        annotations:
+          summary: "Voice error rate exceeds 5%"
+          description: "Voice error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+          runbook_url: "https://docs.asimo.io/runbooks/voice-error-rate"
+
+      - alert: VoiceErrorRateElevated
+        expr: |
+          (
+            sum(rate(voiceassist_voice_errors_total[5m]))
+            /
+            sum(rate(voiceassist_voice_sessions_total[5m]))
+          ) > 0.01
+        for: 10m
+        labels:
+          severity: warning
+          team: voice
+          slo: error_rate
+        annotations:
+          summary: "Voice error rate elevated"
+          description: "Voice error rate is {{ $value | humanizePercentage }} (warning threshold: 1%)"
+
+      - alert: VoiceNonRecoverableErrorSpike
+        expr: |
+          sum(rate(voiceassist_voice_errors_total{recoverable="false"}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: voice
+        annotations:
+          summary: "Spike in non-recoverable voice errors"
+          description: "Non-recoverable voice errors are occurring at {{ $value | humanize }} per second"
+
+      # ================================================================
+      # Provider Availability Alerts
+      # ================================================================
+
+      - alert: VoiceProviderFailureRateHigh
+        expr: |
+          sum by (provider) (rate(voiceassist_voice_provider_failures_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          team: voice
+        annotations:
+          summary: "Voice provider {{ $labels.provider }} failure rate high"
+          description: "Provider {{ $labels.provider }} is failing at {{ $value | humanize }} failures per second"
+          runbook_url: "https://docs.asimo.io/runbooks/voice-provider-failure"
+
+      - alert: VoiceTTSProviderDown
+        expr: |
+          sum(rate(voiceassist_voice_errors_total{code=~"TTS_.*"}[5m])) > 0.5
+        for: 3m
+        labels:
+          severity: critical
+          team: voice
+        annotations:
+          summary: "TTS provider appears to be down"
+          description: "High rate of TTS errors detected ({{ $value | humanize }} errors/sec)"
+
+      - alert: VoiceSTTProviderDown
+        expr: |
+          sum(rate(voiceassist_voice_errors_total{code=~"STT_.*"}[5m])) > 0.5
+        for: 3m
+        labels:
+          severity: critical
+          team: voice
+        annotations:
+          summary: "STT provider appears to be down"
+          description: "High rate of STT errors detected ({{ $value | humanize }} errors/sec)"
+
+      # ================================================================
+      # Session Health Alerts
+      # ================================================================
+
+      - alert: VoiceSessionSuccessRateLow
+        expr: |
+          (
+            sum(rate(voiceassist_voice_sessions_total{status="completed"}[10m]))
+            /
+            sum(rate(voiceassist_voice_sessions_total[10m]))
+          ) < 0.95
+        for: 10m
+        labels:
+          severity: warning
+          team: voice
+          slo: session_success
+        annotations:
+          summary: "Voice session success rate below 95%"
+          description: "Session success rate is {{ $value | humanizePercentage }} (SLO: 95%)"
+
+      - alert: VoiceSessionAbandonmentHigh
+        expr: |
+          (
+            sum(rate(voiceassist_voice_sessions_total{status="abandoned"}[10m]))
+            /
+            sum(rate(voiceassist_voice_sessions_total[10m]))
+          ) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          team: voice
+        annotations:
+          summary: "High voice session abandonment rate"
+          description: "{{ $value | humanizePercentage }} of voice sessions are being abandoned"
+
+      - alert: VoiceActiveSessions High
+        expr: voiceassist_voice_active_sessions > 100
+        for: 5m
+        labels:
+          severity: warning
+          team: voice
+        annotations:
+          summary: "High number of active voice sessions"
+          description: "{{ $value }} active voice sessions (capacity planning threshold)"
+
+      # ================================================================
+      # Pipeline Stage Alerts
+      # ================================================================
+
+      - alert: VoiceLLMProcessingSlow
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_voice_pipeline_stage_latency_seconds_bucket{stage="llm_process"}[5m])) by (le)
+          ) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          team: voice
+        annotations:
+          summary: "LLM processing latency elevated"
+          description: "LLM processing P95 is {{ $value | humanizeDuration }}"
+
+      - alert: VoiceVADLatencyHigh
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_voice_vad_trigger_latency_seconds_bucket[5m])) by (le)
+          ) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+          team: voice
+        annotations:
+          summary: "VAD trigger latency high"
+          description: "VAD trigger P95 is {{ $value | humanizeDuration }} (target: 200ms)"
+
+      # ================================================================
+      # Audio Quality Alerts
+      # ================================================================
+
+      - alert: VoiceAudioChunkDropRate High
+        expr: |
+          (
+            sum(rate(voiceassist_voice_audio_chunks_total{status="dropped"}[5m]))
+            /
+            sum(rate(voiceassist_voice_audio_chunks_total[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          team: voice
+        annotations:
+          summary: "High audio chunk drop rate"
+          description: "{{ $value | humanizePercentage }} of audio chunks are being dropped"
+
+      - alert: VoiceEchoSuppressionHigh
+        expr: rate(voiceassist_voice_echo_suppression_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: info
+          team: voice
+        annotations:
+          summary: "High echo suppression activity"
+          description: "Echo suppression firing at {{ $value | humanize }} times per second"
+
+      # ================================================================
+      # Reconnection Alerts
+      # ================================================================
+
+      - alert: VoiceReconnectionRateHigh
+        expr: rate(voiceassist_voice_reconnects_total[10m]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          team: voice
+        annotations:
+          summary: "High voice reconnection rate"
+          description: "Voice sessions are reconnecting at {{ $value | humanize }} times per second"
+
+      - alert: VoiceConnectionErrors
+        expr: |
+          sum(rate(voiceassist_voice_errors_total{category="connection"}[5m])) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          team: voice
+        annotations:
+          summary: "Voice connection errors elevated"
+          description: "Connection errors at {{ $value | humanize }} per second"
+
+  # ================================================================
+  # Recording Rules for SLO Tracking
+  # ================================================================
+
+  - name: voice_slo_recording_rules
+    interval: 30s
+    rules:
+      # TTFA SLO compliance (1 = compliant, 0 = violation)
+      - record: voiceassist:voice_ttfa_slo_compliant
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_voice_ttfa_seconds_bucket[5m])) by (le)
+          ) <= 0.2
+
+      # STT Latency SLO compliance
+      - record: voiceassist:voice_stt_slo_compliant
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_voice_stt_latency_seconds_bucket[5m])) by (le)
+          ) <= 0.3
+
+      # Error rate SLO compliance
+      - record: voiceassist:voice_error_rate_slo_compliant
+        expr: |
+          (
+            sum(rate(voiceassist_voice_errors_total[5m]))
+            /
+            sum(rate(voiceassist_voice_sessions_total[5m]))
+          ) <= 0.01
+
+      # Session success rate
+      - record: voiceassist:voice_session_success_rate
+        expr: |
+          sum(rate(voiceassist_voice_sessions_total{status="completed"}[5m]))
+          /
+          sum(rate(voiceassist_voice_sessions_total[5m]))
+
+      # TTFA P50 for dashboards
+      - record: voiceassist:voice_ttfa_p50_seconds
+        expr: |
+          histogram_quantile(0.50,
+            sum(rate(voiceassist_voice_ttfa_seconds_bucket[5m])) by (le)
+          )
+
+      # TTFA P95 for dashboards
+      - record: voiceassist:voice_ttfa_p95_seconds
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(voiceassist_voice_ttfa_seconds_bucket[5m])) by (le)
+          )
+
+      # Error rate by category
+      - record: voiceassist:voice_error_rate_by_category
+        expr: |
+          sum by (category) (rate(voiceassist_voice_errors_total[5m]))

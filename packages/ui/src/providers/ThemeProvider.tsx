@@ -9,11 +9,11 @@
  * - No flash of wrong theme on load
  * - Smooth transitions between themes
  */
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { ThemeContext, Theme, ResolvedTheme } from './ThemeContext';
+import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { ThemeContext, Theme, ResolvedTheme } from "./ThemeContext";
 
-const STORAGE_KEY = 'voiceassist-theme';
-const THEME_ATTRIBUTE = 'data-theme';
+const STORAGE_KEY = "voiceassist-theme";
+const THEME_ATTRIBUTE = "data-theme";
 
 interface ThemeProviderProps {
   /**
@@ -36,30 +36,30 @@ interface ThemeProviderProps {
  * Get the system theme preference
  */
 function getSystemTheme(): ResolvedTheme {
-  if (typeof window === 'undefined') {
-    return 'light';
+  if (typeof window === "undefined") {
+    return "light";
   }
 
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  return prefersDark ? 'dark' : 'light';
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  return prefersDark ? "dark" : "light";
 }
 
 /**
  * Get the stored theme from localStorage
  */
 function getStoredTheme(): Theme | null {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return null;
   }
 
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'light' || stored === 'dark' || stored === 'system') {
+    if (stored === "light" || stored === "dark" || stored === "system") {
       return stored;
     }
   } catch (error) {
     // localStorage might be blocked
-    console.warn('Failed to read theme from localStorage:', error);
+    console.warn("Failed to read theme from localStorage:", error);
   }
 
   return null;
@@ -69,7 +69,7 @@ function getStoredTheme(): Theme | null {
  * Store the theme in localStorage
  */
 function storeTheme(theme: Theme): void {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return;
   }
 
@@ -77,7 +77,7 @@ function storeTheme(theme: Theme): void {
     localStorage.setItem(STORAGE_KEY, theme);
   } catch (error) {
     // localStorage might be blocked
-    console.warn('Failed to write theme to localStorage:', error);
+    console.warn("Failed to write theme to localStorage:", error);
   }
 }
 
@@ -85,7 +85,7 @@ function storeTheme(theme: Theme): void {
  * Apply the theme to the document
  */
 function applyTheme(theme: ResolvedTheme): void {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return;
   }
 
@@ -98,7 +98,7 @@ function applyTheme(theme: ResolvedTheme): void {
   root.setAttribute(THEME_ATTRIBUTE, theme);
 
   // Also add as class for Tailwind dark mode
-  root.classList.remove('light', 'dark');
+  root.classList.remove("light", "dark");
   root.classList.add(theme);
 }
 
@@ -106,7 +106,7 @@ function applyTheme(theme: ResolvedTheme): void {
  * Theme Provider Component
  */
 export function ThemeProvider({
-  defaultTheme = 'system',
+  defaultTheme = "system",
   children,
   forcedTheme,
 }: ThemeProviderProps) {
@@ -126,31 +126,31 @@ export function ThemeProvider({
     if (forcedTheme) {
       return forcedTheme;
     }
-    return theme === 'system' ? systemTheme : theme;
+    return theme === "system" ? systemTheme : theme;
   }, [theme, systemTheme, forcedTheme]);
 
   // Set theme and persist to storage
   const setTheme = useCallback(
     (newTheme: Theme) => {
       if (forcedTheme) {
-        console.warn('Theme is forced, cannot change');
+        console.warn("Theme is forced, cannot change");
         return;
       }
 
       setThemeState(newTheme);
       storeTheme(newTheme);
     },
-    [forcedTheme]
+    [forcedTheme],
   );
 
   // Toggle between light and dark
   const toggleTheme = useCallback(() => {
     if (forcedTheme) {
-      console.warn('Theme is forced, cannot toggle');
+      console.warn("Theme is forced, cannot toggle");
       return;
     }
 
-    setTheme(resolvedTheme === 'light' ? 'dark' : 'light');
+    setTheme(resolvedTheme === "light" ? "dark" : "light");
   }, [resolvedTheme, setTheme, forcedTheme]);
 
   // Apply theme to document when resolved theme changes
@@ -160,14 +160,14 @@ export function ThemeProvider({
 
   // Listen for system theme changes
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return;
     }
 
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      const newSystemTheme = e.matches ? 'dark' : 'light';
+      const newSystemTheme = e.matches ? "dark" : "light";
       setSystemTheme(newSystemTheme);
     };
 
@@ -177,8 +177,8 @@ export function ThemeProvider({
     // Listen for changes
     // Use addEventListener if available (modern browsers)
     if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
     } else {
       // Fallback for older browsers
       mediaQuery.addListener(handleChange);
@@ -193,9 +193,9 @@ export function ThemeProvider({
       resolvedTheme,
       setTheme,
       toggleTheme,
-      isSystemTheme: theme === 'system',
+      isSystemTheme: theme === "system",
     }),
-    [theme, resolvedTheme, setTheme, toggleTheme]
+    [theme, resolvedTheme, setTheme, toggleTheme],
   );
 
   return (

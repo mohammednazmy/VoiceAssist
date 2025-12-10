@@ -177,6 +177,12 @@ describe("useRealtimeVoiceSession", () => {
       expect(result.current.transcript).toBe("");
     });
 
+    it("should initialize partialTranscript as empty string", () => {
+      const { result } = renderHook(() => useRealtimeVoiceSession());
+
+      expect(result.current.partialTranscript).toBe("");
+    });
+
     it("should expose connect and disconnect functions", () => {
       const { result } = renderHook(() => useRealtimeVoiceSession());
 
@@ -305,6 +311,16 @@ describe("useRealtimeVoiceSession", () => {
 
       expect(result.current.isSpeaking).toBe(false);
     });
+
+    it("should clear partialTranscript when disconnect is called", () => {
+      const { result } = renderHook(() => useRealtimeVoiceSession());
+
+      act(() => {
+        result.current.disconnect();
+      });
+
+      expect(result.current.partialTranscript).toBe("");
+    });
   });
 
   describe("error handling", () => {
@@ -353,7 +369,9 @@ describe("useRealtimeVoiceSession", () => {
         result.current.sendMessage("Hello");
       });
 
+      // Logger adds [RealtimeVoiceSession] prefix
       expect(consoleWarn).toHaveBeenCalledWith(
+        "[RealtimeVoiceSession]",
         expect.stringContaining("WebSocket not connected"),
       );
 

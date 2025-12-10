@@ -1,0 +1,304 @@
+{
+  "dashboard": {
+    "title": "Voice Mode - Barge-In & Natural Conversation",
+    "tags": ["voiceassist", "voice", "barge-in", "slo"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "10s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Barge-In Mute Latency (P95 SLO: <50ms)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(voiceassist_voice_barge_in_mute_latency_seconds_bucket[5m])) * 1000",
+            "legendFormat": "P95 ({{source}})"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(voiceassist_voice_barge_in_mute_latency_seconds_bucket[5m])) * 1000",
+            "legendFormat": "P99 ({{source}})"
+          },
+          {
+            "expr": "50",
+            "legendFormat": "SLO Target (50ms)"
+          }
+        ],
+        "yAxes": [{"label": "Latency (ms)", "min": 0}],
+        "thresholds": [
+          {"value": 50, "colorMode": "critical", "op": "gt", "fill": true, "line": true}
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Barge-In Classification Distribution",
+        "type": "piechart",
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "sum by (classification) (increase(voiceassist_voice_barge_in_classification_total[1h]))",
+            "legendFormat": "{{classification}}"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Barge-In Rate by Classification",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(voiceassist_voice_barge_in_classification_total[5m])",
+            "legendFormat": "{{classification}} ({{language}})"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Misfire Rate (SLO: <2%)",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 4, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "sum(increase(voiceassist_voice_barge_in_misfires_total[1h])) / sum(increase(voiceassist_voice_barge_in_total[1h])) * 100",
+            "legendFormat": "Misfire %"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "thresholds": {
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 2, "color": "yellow"},
+              {"value": 5, "color": "red"}
+            ]
+          }
+        },
+        "fieldConfig": {"defaults": {"unit": "percent", "decimals": 2}}
+      },
+      {
+        "id": 5,
+        "title": "Total Barge-Ins (1h)",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 4, "x": 4, "y": 8},
+        "targets": [
+          {
+            "expr": "sum(increase(voiceassist_voice_barge_in_total[1h]))"
+          }
+        ],
+        "options": {"colorMode": "value"}
+      },
+      {
+        "id": 6,
+        "title": "Backchannels Detected (1h)",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 4, "x": 8, "y": 8},
+        "targets": [
+          {
+            "expr": "sum(increase(voiceassist_voice_backchannel_total[1h]))"
+          }
+        ],
+        "options": {"colorMode": "value"}
+      },
+      {
+        "id": 7,
+        "title": "Backchannel by Language",
+        "type": "bargauge",
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "sum by (language) (increase(voiceassist_voice_backchannel_total[1h]))",
+            "legendFormat": "{{language}}"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Soft Barge Outcomes",
+        "type": "piechart",
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 8},
+        "targets": [
+          {
+            "expr": "sum by (outcome) (increase(voiceassist_voice_soft_barge_total[1h]))",
+            "legendFormat": "{{outcome}}"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Hard Barge Interruption Points",
+        "type": "bargauge",
+        "gridPos": {"h": 4, "w": 8, "x": 0, "y": 12},
+        "targets": [
+          {
+            "expr": "sum by (interrupted_at) (increase(voiceassist_voice_hard_barge_total[1h]))",
+            "legendFormat": "{{interrupted_at}}"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Perceived Response Latency (P95 SLO: <250ms)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(voiceassist_voice_perceived_latency_seconds_bucket[5m])) * 1000",
+            "legendFormat": "P95 Latency"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(voiceassist_voice_perceived_latency_seconds_bucket[5m])) * 1000",
+            "legendFormat": "P50 Latency"
+          },
+          {
+            "expr": "250",
+            "legendFormat": "SLO Target (250ms)"
+          }
+        ],
+        "yAxes": [{"label": "Latency (ms)", "min": 0}]
+      },
+      {
+        "id": 11,
+        "title": "Queue Overflow Rate (SLO: <0.5%)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(voiceassist_voice_queue_overflow_total[5m])",
+            "legendFormat": "{{type}}"
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Queue Depth (Chunks)",
+        "type": "gauge",
+        "gridPos": {"h": 4, "w": 4, "x": 0, "y": 24},
+        "targets": [
+          {
+            "expr": "voiceassist_voice_queue_depth_chunks"
+          }
+        ],
+        "options": {
+          "thresholds": {
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 10, "color": "yellow"},
+              {"value": 20, "color": "red"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 13,
+        "title": "Queue Duration (ms)",
+        "type": "gauge",
+        "gridPos": {"h": 4, "w": 4, "x": 4, "y": 24},
+        "targets": [
+          {
+            "expr": "voiceassist_voice_queue_duration_ms"
+          }
+        ],
+        "options": {
+          "thresholds": {
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 500, "color": "yellow"},
+              {"value": 1000, "color": "red"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 14,
+        "title": "VAD Disagreement Resolution (SLO: <200ms)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 24},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(voiceassist_voice_vad_disagreement_resolution_latency_seconds_bucket[5m])) * 1000",
+            "legendFormat": "Resolution P95"
+          },
+          {
+            "expr": "200",
+            "legendFormat": "SLO Target (200ms)"
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "title": "VAD Decision Source",
+        "type": "piechart",
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 24},
+        "targets": [
+          {
+            "expr": "sum by (source) (increase(voiceassist_voice_hybrid_vad_decision_total[1h]))",
+            "legendFormat": "{{source}}"
+          }
+        ]
+      },
+      {
+        "id": 16,
+        "title": "Continuation Detection Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32},
+        "targets": [
+          {
+            "expr": "rate(voiceassist_voice_continuation_detected_total[5m])",
+            "legendFormat": "{{confidence_level}}"
+          }
+        ]
+      },
+      {
+        "id": 17,
+        "title": "Utterance Aggregation",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32},
+        "targets": [
+          {
+            "expr": "rate(voiceassist_voice_utterance_aggregation_total[5m])",
+            "legendFormat": "{{segment_count}} segments"
+          }
+        ]
+      },
+      {
+        "id": 18,
+        "title": "Transcript Truncation Accuracy",
+        "type": "piechart",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 40},
+        "targets": [
+          {
+            "expr": "sum by (accuracy) (increase(voiceassist_voice_transcript_truncation_total[1h]))",
+            "legendFormat": "{{accuracy}}"
+          }
+        ]
+      },
+      {
+        "id": 19,
+        "title": "Misfire Causes",
+        "type": "bargauge",
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 40},
+        "targets": [
+          {
+            "expr": "sum by (cause) (increase(voiceassist_voice_barge_in_misfires_total[1h]))",
+            "legendFormat": "{{cause}}"
+          }
+        ]
+      },
+      {
+        "id": 20,
+        "title": "Active Voice Sessions",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 40},
+        "targets": [
+          {
+            "expr": "voiceassist_voice_active_sessions"
+          }
+        ],
+        "options": {"colorMode": "value", "graphMode": "area"}
+      }
+    ]
+  }
+}

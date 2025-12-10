@@ -11,35 +11,35 @@
  * - Dark mode support
  */
 
-import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../lib/utils';
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "../lib/utils";
 
 const inputVariants = cva(
-  'flex w-full rounded-md border bg-background-primary px-3 py-2 text-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-disabled focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+  "flex w-full rounded-md border border-border-default bg-surface-input px-3 py-2 text-sm text-text-primary shadow-sm transition-colors duration-normal file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-disabled focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background-primary hover:border-border-strong focus-visible:bg-surface-input-focus disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {
-        default:
-          'border-border-default focus-visible:ring-primary-500 hover:border-border-strong',
+        default: "",
         error:
-          'border-error-500 focus-visible:ring-error-500',
+          "border-border-error focus-visible:ring-border-error focus-visible:bg-surface-input",
       },
       inputSize: {
-        sm: 'h-8 text-xs',
-        md: 'h-10 text-sm',
-        lg: 'h-12 text-base',
+        sm: "h-8 text-xs",
+        md: "h-10 text-sm",
+        lg: "h-12 text-base",
       },
     },
     defaultVariants: {
-      variant: 'default',
-      inputSize: 'md',
+      variant: "default",
+      inputSize: "md",
     },
-  }
+  },
 );
 
 export interface InputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
+  extends
+    Omit<React.InputHTMLAttributes<HTMLInputElement>, "size">,
     VariantProps<typeof inputVariants> {
   /**
    * Show error state
@@ -100,23 +100,23 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       id,
       ...props
     },
-    ref
+    ref,
   ) => {
     const inputId = id || `input-${React.useId()}`;
     const helperTextId = `${inputId}-helper`;
     const errorMessageId = `${inputId}-error`;
 
-    const finalVariant = error ? 'error' : variant;
+    const finalVariant = error ? "error" : variant;
 
     return (
-      <div className={cn('flex flex-col gap-1.5', fullWidth && 'w-full')}>
+      <div className={cn("flex flex-col gap-1.5", fullWidth && "w-full")}>
         {label && (
           <label
             htmlFor={inputId}
             className="text-sm font-medium text-text-primary"
           >
             {label}
-            {required && <span className="text-error-600 ml-1">*</span>}
+            {required && <span className="text-text-error ml-1">*</span>}
           </label>
         )}
 
@@ -132,8 +132,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={type}
             className={cn(
               inputVariants({ variant: finalVariant, inputSize, className }),
-              iconLeft && 'pl-10',
-              iconRight && 'pr-10'
+              iconLeft && "pl-10",
+              iconRight && "pr-10",
             )}
             ref={ref}
             aria-invalid={error}
@@ -141,8 +141,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               error && errorMessage
                 ? errorMessageId
                 : helperText
-                ? helperTextId
-                : undefined
+                  ? helperTextId
+                  : undefined
             }
             aria-required={required}
             {...props}
@@ -158,7 +158,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {error && errorMessage && (
           <p
             id={errorMessageId}
-            className="text-sm text-error-600"
+            className="text-sm text-text-error"
             role="alert"
           >
             {errorMessage}
@@ -172,9 +172,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
-Input.displayName = 'Input';
+Input.displayName = "Input";
 
 export { Input, inputVariants };

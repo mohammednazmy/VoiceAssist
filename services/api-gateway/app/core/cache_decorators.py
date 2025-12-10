@@ -30,6 +30,7 @@ Usage:
     # Invalidate entire namespace
     await invalidate_namespace("user")
 """
+
 from __future__ import annotations
 
 import functools
@@ -38,13 +39,12 @@ import inspect
 import json
 from typing import Any, Callable, Optional, Set, TypeVar, Union
 
-from app.services.cache_service import cache_service
 from app.core.logging import get_logger
-
+from app.services.cache_service import cache_service
 
 logger = get_logger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def _generate_cache_key(
@@ -52,7 +52,7 @@ def _generate_cache_key(
     namespace: Optional[str],
     args: tuple,
     kwargs: dict,
-    exclude_args: Set[str]
+    exclude_args: Set[str],
 ) -> str:
     """Generate a cache key from function name and arguments.
 
@@ -80,12 +80,12 @@ def _generate_cache_key(
             continue
 
         # Skip 'self' and 'cls' for methods
-        if param_name in ('self', 'cls'):
+        if param_name in ("self", "cls"):
             continue
 
         # Convert value to string for hashing
         try:
-            if hasattr(param_value, '__dict__'):
+            if hasattr(param_value, "__dict__"):
                 # For objects, use their dict representation
                 value_str = json.dumps(param_value.__dict__, sort_keys=True, default=str)
             else:
@@ -98,7 +98,8 @@ def _generate_cache_key(
 
     # Create hash from key parts
     key_data = "|".join(key_parts)
-    key_hash = hashlib.md5(key_data.encode()).hexdigest()[:16]
+    # MD5 used for cache key generation, not security purposes
+    key_hash = hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()[:16]
 
     # Build full key
     func_name = f"{func.__module__}.{func.__qualname__}"
@@ -112,7 +113,7 @@ def cache_result(
     ttl: Optional[int] = None,
     namespace: Optional[str] = None,
     exclude_args: Optional[Set[str]] = None,
-    key_builder: Optional[Callable] = None
+    key_builder: Optional[Callable] = None,
 ) -> Callable[[T], T]:
     """Decorator to cache function results.
 
@@ -141,6 +142,7 @@ def cache_result(
         is_async = inspect.iscoroutinefunction(func)
 
         if is_async:
+
             @functools.wraps(func)
             async def async_wrapper(*args, **kwargs):
                 # Generate cache key
@@ -154,14 +156,14 @@ def cache_result(
                 if cached_value is not None:
                     logger.debug(
                         f"Cache hit for {func.__name__}",
-                        extra={'cache_key': cache_key, 'namespace': namespace}
+                        extra={"cache_key": cache_key, "namespace": namespace},
                     )
                     return cached_value
 
                 # Cache miss - execute function
                 logger.debug(
                     f"Cache miss for {func.__name__}",
-                    extra={'cache_key': cache_key, 'namespace': namespace}
+                    extra={"cache_key": cache_key, "namespace": namespace},
                 )
                 result = await func(*args, **kwargs)
 
@@ -173,6 +175,7 @@ def cache_result(
 
             return async_wrapper
         else:
+
             @functools.wraps(func)
             def sync_wrapper(*args, **kwargs):
                 # Generate cache key
@@ -185,6 +188,7 @@ def cache_result(
                 # In production, consider using asyncio.run() or ensure cache_service
                 # has sync methods
                 import asyncio
+
                 try:
                     loop = asyncio.get_event_loop()
                     cached_value = loop.run_until_complete(cache_service.get(cache_key))
@@ -195,14 +199,14 @@ def cache_result(
                 if cached_value is not None:
                     logger.debug(
                         f"Cache hit for {func.__name__}",
-                        extra={'cache_key': cache_key, 'namespace': namespace}
+                        extra={"cache_key": cache_key, "namespace": namespace},
                     )
                     return cached_value
 
                 # Cache miss - execute function
                 logger.debug(
                     f"Cache miss for {func.__name__}",
-                    extra={'cache_key': cache_key, 'namespace': namespace}
+                    extra={"cache_key": cache_key, "namespace": namespace},
                 )
                 result = func(*args, **kwargs)
 
@@ -223,12 +227,7 @@ def cache_result(
     return decorator
 
 
-async def invalidate_cache(
-    func: Union[Callable, str],
-    namespace: Optional[str] = None,
-    *args,
-    **kwargs
-) -> bool:
+async def invalidate_cache(func: Union[Callable, str], namespace: Optional[str] = None, *args, **kwargs) -> bool:
     """Invalidate cache for a specific function call.
 
     Args:
@@ -253,7 +252,8 @@ async def invalidate_cache(
             func_name = func
             key_parts = [f"{k}={v}" for k, v in sorted(kwargs.items())]
             key_data = "|".join(key_parts)
-            key_hash = hashlib.md5(key_data.encode()).hexdigest()[:16]
+            # MD5 used for cache key generation, not security purposes
+            key_hash = hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()[:16]
 
             if namespace:
                 cache_key = f"{namespace}:{func_name}:{key_hash}"
@@ -297,7 +297,7 @@ async def invalidate_namespace(namespace: str) -> int:
 def cache_on_mutation(
     mutation_func: Callable,
     invalidate_funcs: list[tuple[Callable, dict]],
-    namespace: Optional[str] = None
+    namespace: Optional[str] = None,
 ):
     """Decorator to invalidate caches when a mutation occurs.
 
@@ -323,10 +323,12 @@ def cache_on_mutation(
             user = await db.update(user_id, data)
             return user
     """
+
     def decorator(func: Callable) -> Callable:
         is_async = inspect.iscoroutinefunction(func)
 
         if is_async:
+
             @functools.wraps(func)
             async def async_wrapper(*args, **kwargs):
                 # Execute the mutation
@@ -348,16 +350,13 @@ def cache_on_mutation(
                                 if idx < len(args):
                                     resolved_kwargs[key] = args[idx]
 
-                    await invalidate_cache(
-                        invalidate_func,
-                        namespace=namespace,
-                        **resolved_kwargs
-                    )
+                    await invalidate_cache(invalidate_func, namespace=namespace, **resolved_kwargs)
 
                 return result
 
             return async_wrapper
         else:
+
             @functools.wraps(func)
             def sync_wrapper(*args, **kwargs):
                 # Execute the mutation
@@ -365,6 +364,7 @@ def cache_on_mutation(
 
                 # Invalidate related caches
                 import asyncio
+
                 for invalidate_func, invalidate_kwargs in invalidate_funcs:
                     resolved_kwargs = {}
                     for key, value in invalidate_kwargs.items():
@@ -377,9 +377,7 @@ def cache_on_mutation(
                             invalidate_cache(invalidate_func, namespace=namespace, **resolved_kwargs)
                         )
                     except RuntimeError:
-                        asyncio.run(
-                            invalidate_cache(invalidate_func, namespace=namespace, **resolved_kwargs)
-                        )
+                        asyncio.run(invalidate_cache(invalidate_func, namespace=namespace, **resolved_kwargs))
 
                 return result
 
@@ -410,12 +408,12 @@ class CacheManager:
             ttl: Time-to-live for cached value
         """
         cache_key = _generate_cache_key(func, self.namespace, args, kwargs, set())
-        self.operations.append(('warm', cache_key, (func, args, kwargs), ttl))
+        self.operations.append(("warm", cache_key, (func, args, kwargs), ttl))
 
     async def execute(self):
         """Execute all queued cache operations."""
         for op_type, cache_key, data, ttl in self.operations:
-            if op_type == 'warm':
+            if op_type == "warm":
                 func, args, kwargs = data
                 if inspect.iscoroutinefunction(func):
                     result = await func(*args, **kwargs)
@@ -424,9 +422,7 @@ class CacheManager:
 
                 await cache_service.set(cache_key, result, ttl=ttl)
 
-        logger.info(
-            f"Cache warmed: {len(self.operations)} operations in namespace '{self.namespace}'"
-        )
+        logger.info(f"Cache warmed: {len(self.operations)} operations in namespace '{self.namespace}'")
 
     async def __aenter__(self):
         """Enter context manager."""

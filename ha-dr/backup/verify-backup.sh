@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2002
 # Verify Backup Integrity (Phase 12 - HA/DR)
 # This script performs a test restore to verify backup can be restored successfully
 

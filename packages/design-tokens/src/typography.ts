@@ -17,26 +17,26 @@
  */
 export const fontFamily = {
   sans: [
-    'Inter',
-    '-apple-system',
-    'BlinkMacSystemFont',
-    'Segoe UI',
-    'Roboto',
-    'Helvetica Neue',
-    'Arial',
-    'sans-serif',
-  ].join(', '),
+    "Inter",
+    "-apple-system",
+    "BlinkMacSystemFont",
+    "Segoe UI",
+    "Roboto",
+    "Helvetica Neue",
+    "Arial",
+    "sans-serif",
+  ].join(", "),
 
   mono: [
-    'JetBrains Mono',
-    'SF Mono',
-    'Monaco',
-    'Inconsolata',
-    'Fira Code',
-    'Consolas',
-    'Courier New',
-    'monospace',
-  ].join(', '),
+    "JetBrains Mono",
+    "SF Mono",
+    "Monaco",
+    "Inconsolata",
+    "Fira Code",
+    "Consolas",
+    "Courier New",
+    "monospace",
+  ].join(", "),
 } as const;
 
 /**
@@ -45,17 +45,17 @@ export const fontFamily = {
  * All sizes use rem for accessibility
  */
 export const fontSize = {
-  xs: ['0.75rem', { lineHeight: '1rem' }],      // 12px / 16px line-height
-  sm: ['0.875rem', { lineHeight: '1.25rem' }],  // 14px / 20px line-height
-  base: ['1rem', { lineHeight: '1.5rem' }],     // 16px / 24px line-height (default)
-  lg: ['1.125rem', { lineHeight: '1.75rem' }],  // 18px / 28px line-height
-  xl: ['1.25rem', { lineHeight: '1.75rem' }],   // 20px / 28px line-height
-  '2xl': ['1.5rem', { lineHeight: '2rem' }],    // 24px / 32px line-height
-  '3xl': ['1.875rem', { lineHeight: '2.25rem' }], // 30px / 36px line-height
-  '4xl': ['2.25rem', { lineHeight: '2.5rem' }], // 36px / 40px line-height
-  '5xl': ['3rem', { lineHeight: '1' }],         // 48px / 1 (tight for hero)
-  '6xl': ['3.75rem', { lineHeight: '1' }],      // 60px / 1
-  '7xl': ['4.5rem', { lineHeight: '1' }],       // 72px / 1
+  xs: ["0.75rem", { lineHeight: "1rem" }], // 12px / 16px line-height
+  sm: ["0.875rem", { lineHeight: "1.25rem" }], // 14px / 20px line-height
+  base: ["1rem", { lineHeight: "1.5rem" }], // 16px / 24px line-height (default)
+  lg: ["1.125rem", { lineHeight: "1.75rem" }], // 18px / 28px line-height
+  xl: ["1.25rem", { lineHeight: "1.75rem" }], // 20px / 28px line-height
+  "2xl": ["1.5rem", { lineHeight: "2rem" }], // 24px / 32px line-height
+  "3xl": ["1.875rem", { lineHeight: "2.25rem" }], // 30px / 36px line-height
+  "4xl": ["2.25rem", { lineHeight: "2.5rem" }], // 36px / 40px line-height
+  "5xl": ["3rem", { lineHeight: "1" }], // 48px / 1 (tight for hero)
+  "6xl": ["3.75rem", { lineHeight: "1" }], // 60px / 1
+  "7xl": ["4.5rem", { lineHeight: "1" }], // 72px / 1
 } as const;
 
 /**
@@ -92,12 +92,12 @@ export const lineHeight = {
  * Subtle adjustments for different contexts
  */
 export const letterSpacing = {
-  tighter: '-0.05em',
-  tight: '-0.025em',
-  normal: '0em',
-  wide: '0.025em',
-  wider: '0.05em',
-  widest: '0.1em',
+  tighter: "-0.05em",
+  tight: "-0.025em",
+  normal: "0em",
+  wide: "0.025em",
+  wider: "0.05em",
+  widest: "0.1em",
 } as const;
 
 /**
@@ -108,22 +108,22 @@ export const letterSpacing = {
 export const typographyPresets = {
   // Headings
   h1: {
-    fontSize: fontSize['4xl'][0],
-    lineHeight: fontSize['4xl'][1].lineHeight,
+    fontSize: fontSize["4xl"][0],
+    lineHeight: fontSize["4xl"][1].lineHeight,
     fontWeight: fontWeight.bold,
     letterSpacing: letterSpacing.tight,
   },
 
   h2: {
-    fontSize: fontSize['3xl'][0],
-    lineHeight: fontSize['3xl'][1].lineHeight,
+    fontSize: fontSize["3xl"][0],
+    lineHeight: fontSize["3xl"][1].lineHeight,
     fontWeight: fontWeight.bold,
     letterSpacing: letterSpacing.tight,
   },
 
   h3: {
-    fontSize: fontSize['2xl'][0],
-    lineHeight: fontSize['2xl'][1].lineHeight,
+    fontSize: fontSize["2xl"][0],
+    lineHeight: fontSize["2xl"][1].lineHeight,
     fontWeight: fontWeight.semibold,
     letterSpacing: letterSpacing.normal,
   },
@@ -198,7 +198,7 @@ export const typographyPresets = {
     lineHeight: fontSize.xs[1].lineHeight,
     fontWeight: fontWeight.semibold,
     letterSpacing: letterSpacing.wider,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
 
   label: {

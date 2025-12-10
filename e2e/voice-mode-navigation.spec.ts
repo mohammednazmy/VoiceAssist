@@ -29,12 +29,16 @@ test.describe("Voice Mode Navigation Flow", () => {
     // URL should be root or /home (with or without trailing slash)
     await expect(page).toHaveURL(/\/$|\/home/);
 
-    // Step 2: Wait for Voice Mode card to be visible
-    const voiceModeCard = page.getByTestId("voice-mode-card");
+    // Step 2: Wait for Chat-with-Voice card to be visible
+    const voiceModeCard = page.getByTestId("chat-with-voice-card");
     await expect(voiceModeCard).toBeVisible({ timeout: 10000 });
 
-    // Verify Voice Mode card content
-    await expect(voiceModeCard.getByRole("heading", { name: /voice mode/i })).toBeVisible();
+    // Verify card content
+    await expect(
+      voiceModeCard.getByRole("heading", {
+        name: /chat with voice|voice mode/i,
+      }),
+    ).toBeVisible();
 
     // Step 3: Click Voice Mode card
     await voiceModeCard.click();
@@ -110,12 +114,14 @@ test.describe("Voice Mode Navigation Flow", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // Find Voice Mode card
-    const voiceModeCard = page.getByTestId("voice-mode-card");
+    // Find Chat-with-Voice card
+    const voiceModeCard = page.getByTestId("chat-with-voice-card");
     await expect(voiceModeCard).toBeVisible();
 
     // Verify card has heading
-    const heading = voiceModeCard.getByRole("heading", { name: /voice mode/i });
+    const heading = voiceModeCard.getByRole("heading", {
+      name: /voice mode|chat with voice/i,
+    });
     await expect(heading).toBeVisible();
 
     // Verify card has description mentioning hands-free or voice
@@ -142,8 +148,8 @@ test.describe("Voice Mode Navigation Flow", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // Find Voice Mode card
-    const voiceModeCard = page.getByTestId("voice-mode-card");
+    // Find Chat-with-Voice card
+    const voiceModeCard = page.getByTestId("chat-with-voice-card");
     await expect(voiceModeCard).toBeVisible();
 
     // Test keyboard focus
@@ -181,8 +187,8 @@ test.describe("Voice Mode Navigation Flow", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // Voice Mode and Chat tiles should be visible on the home page
-    const voiceModeCard = page.getByTestId("voice-mode-card");
+    // Chat-with-Voice and Chat tiles should be visible on the home page
+    const voiceModeCard = page.getByTestId("chat-with-voice-card");
 
     // The Chat card doesn't have a specific data-testid, so we look for it by content
     const chatCard = page.locator('div:has-text("Chat"):has-text("conversation")').first();

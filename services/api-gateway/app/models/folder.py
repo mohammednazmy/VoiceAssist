@@ -38,9 +38,7 @@ class ConversationFolder(Base):
     )
 
     # Timestamps
-    created_at = Column(
-        DateTime(timezone=True), default=datetime.utcnow, nullable=False
-    )
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     # Relationships
     sessions = relationship("Session", back_populates="folder")
@@ -57,9 +55,7 @@ class ConversationFolder(Base):
             "name": self.name,
             "color": self.color,
             "icon": self.icon,
-            "parent_folder_id": (
-                str(self.parent_folder_id) if self.parent_folder_id else None
-            ),
+            "parent_folder_id": (str(self.parent_folder_id) if self.parent_folder_id else None),
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 

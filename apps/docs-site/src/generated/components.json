@@ -1,0 +1,1768 @@
+{
+  "generatedAt": "2025-12-03T20:14:24.114Z",
+  "generator": "scripts/extract-component-docs.mjs",
+  "source": "packages/ui/src/components",
+  "componentCount": 72,
+  "components": {
+    "Table": {
+      "name": "Table",
+      "description": "",
+      "filePath": "packages/ui/src/components/Table.tsx",
+      "props": []
+    },
+    "TableHeader": {
+      "name": "TableHeader",
+      "description": "",
+      "filePath": "packages/ui/src/components/Table.tsx",
+      "props": []
+    },
+    "TableBody": {
+      "name": "TableBody",
+      "description": "",
+      "filePath": "packages/ui/src/components/Table.tsx",
+      "props": [
+        {
+          "name": "striped",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": "Show striped rows"
+        }
+      ]
+    },
+    "TableFooter": {
+      "name": "TableFooter",
+      "description": "",
+      "filePath": "packages/ui/src/components/Table.tsx",
+      "props": []
+    },
+    "TableHead": {
+      "name": "TableHead",
+      "description": "",
+      "filePath": "packages/ui/src/components/Table.tsx",
+      "props": [
+        {
+          "name": "sortable",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": "Make the column sortable"
+        },
+        {
+          "name": "sortDirection",
+          "type": "\"asc\" | \"desc\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": "Current sort direction"
+        },
+        {
+          "name": "onSort",
+          "type": "(() => void)",
+          "required": false,
+          "defaultValue": null,
+          "description": "Sort handler"
+        }
+      ]
+    },
+    "TableRow": {
+      "name": "TableRow",
+      "description": "",
+      "filePath": "packages/ui/src/components/Table.tsx",
+      "props": [
+        {
+          "name": "hoverable",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": "Show hover state"
+        },
+        {
+          "name": "selected",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": "Selected state"
+        }
+      ]
+    },
+    "TableCell": {
+      "name": "TableCell",
+      "description": "",
+      "filePath": "packages/ui/src/components/Table.tsx",
+      "props": []
+    },
+    "TableCaption": {
+      "name": "TableCaption",
+      "description": "",
+      "filePath": "packages/ui/src/components/Table.tsx",
+      "props": []
+    },
+    "Spinner": {
+      "name": "Spinner",
+      "description": "",
+      "filePath": "packages/ui/src/components/Spinner.tsx",
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "required": false,
+          "defaultValue": "Loading",
+          "description": "Accessible label for screen readers"
+        },
+        {
+          "name": "size",
+          "type": "\"sm\" | \"md\" | \"lg\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "color",
+          "type": "\"primary\" | \"secondary\" | \"neutral\" | \"white\" | \"current\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "SpinnerOverlay": {
+      "name": "SpinnerOverlay",
+      "description": "",
+      "filePath": "packages/ui/src/components/Spinner.tsx",
+      "props": [
+        {
+          "name": "show",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "true",
+          "description": "Show overlay background"
+        },
+        {
+          "name": "text",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Text to display below spinner"
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Accessible label for screen readers"
+        },
+        {
+          "name": "size",
+          "type": "\"sm\" | \"md\" | \"lg\" | null",
+          "required": false,
+          "defaultValue": "lg",
+          "description": ""
+        },
+        {
+          "name": "color",
+          "type": "\"primary\" | \"secondary\" | \"neutral\" | \"white\" | \"current\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "Slider": {
+      "name": "Slider",
+      "description": "",
+      "filePath": "packages/ui/src/components/Slider.tsx",
+      "props": [
+        {
+          "name": "trackClassName",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Additional class names for the slider track"
+        },
+        {
+          "name": "rangeClassName",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Additional class names for the slider range (filled portion)"
+        },
+        {
+          "name": "thumbClassName",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Additional class names for the slider thumb(s)"
+        },
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "Skeleton": {
+      "name": "Skeleton",
+      "description": "",
+      "filePath": "packages/ui/src/components/Skeleton.tsx",
+      "props": [
+        {
+          "name": "width",
+          "type": "string | number",
+          "required": false,
+          "defaultValue": null,
+          "description": "Width of the skeleton (CSS value)"
+        },
+        {
+          "name": "height",
+          "type": "string | number",
+          "required": false,
+          "defaultValue": null,
+          "description": "Height of the skeleton (CSS value)"
+        },
+        {
+          "name": "lines",
+          "type": "number",
+          "required": false,
+          "defaultValue": null,
+          "description": "Number of lines (for text variant)"
+        },
+        {
+          "name": "variant",
+          "type": "\"text\" | \"circle\" | \"rectangle\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "SkeletonAvatar": {
+      "name": "SkeletonAvatar",
+      "description": "Skeleton for Avatar",
+      "filePath": "packages/ui/src/components/Skeleton.tsx",
+      "props": [
+        {
+          "name": "width",
+          "type": "string | number",
+          "required": false,
+          "defaultValue": null,
+          "description": "Width of the skeleton (CSS value)"
+        },
+        {
+          "name": "height",
+          "type": "string | number",
+          "required": false,
+          "defaultValue": null,
+          "description": "Height of the skeleton (CSS value)"
+        },
+        {
+          "name": "lines",
+          "type": "number",
+          "required": false,
+          "defaultValue": null,
+          "description": "Number of lines (for text variant)"
+        }
+      ]
+    },
+    "SkeletonCard": {
+      "name": "SkeletonCard",
+      "description": "Skeleton for Card",
+      "filePath": "packages/ui/src/components/Skeleton.tsx",
+      "props": [
+        {
+          "name": "width",
+          "type": "string | number",
+          "required": false,
+          "defaultValue": null,
+          "description": "Width of the skeleton (CSS value)"
+        },
+        {
+          "name": "height",
+          "type": "string | number",
+          "required": false,
+          "defaultValue": null,
+          "description": "Height of the skeleton (CSS value)"
+        },
+        {
+          "name": "lines",
+          "type": "number",
+          "required": false,
+          "defaultValue": null,
+          "description": "Number of lines (for text variant)"
+        }
+      ]
+    },
+    "SkeletonTableRow": {
+      "name": "SkeletonTableRow",
+      "description": "Skeleton for Table Row",
+      "filePath": "packages/ui/src/components/Skeleton.tsx",
+      "props": [
+        {
+          "name": "width",
+          "type": "string | number",
+          "required": false,
+          "defaultValue": null,
+          "description": "Width of the skeleton (CSS value)"
+        },
+        {
+          "name": "height",
+          "type": "string | number",
+          "required": false,
+          "defaultValue": null,
+          "description": "Height of the skeleton (CSS value)"
+        },
+        {
+          "name": "lines",
+          "type": "number",
+          "required": false,
+          "defaultValue": null,
+          "description": "Number of lines (for text variant)"
+        },
+        {
+          "name": "columns",
+          "type": "number",
+          "required": false,
+          "defaultValue": "4",
+          "description": ""
+        }
+      ]
+    },
+    "Select": {
+      "name": "Select",
+      "description": "",
+      "filePath": "packages/ui/src/components/Select.tsx",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "defaultValue",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "onValueChange",
+          "type": "((value: string) => void)",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "SelectGroup": {
+      "name": "SelectGroup",
+      "description": "",
+      "filePath": "packages/ui/src/components/Select.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "SelectValue": {
+      "name": "SelectValue",
+      "description": "",
+      "filePath": "packages/ui/src/components/Select.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "SelectTrigger": {
+      "name": "SelectTrigger",
+      "description": "",
+      "filePath": "packages/ui/src/components/Select.tsx",
+      "props": [
+        {
+          "name": "error",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "variant",
+          "type": "\"default\" | \"error\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "SelectContent": {
+      "name": "SelectContent",
+      "description": "",
+      "filePath": "packages/ui/src/components/Select.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "SelectLabel": {
+      "name": "SelectLabel",
+      "description": "",
+      "filePath": "packages/ui/src/components/Select.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "SelectItem": {
+      "name": "SelectItem",
+      "description": "",
+      "filePath": "packages/ui/src/components/Select.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "SelectSeparator": {
+      "name": "SelectSeparator",
+      "description": "",
+      "filePath": "packages/ui/src/components/Select.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "SelectScrollUpButton": {
+      "name": "SelectScrollUpButton",
+      "description": "",
+      "filePath": "packages/ui/src/components/Select.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "SelectScrollDownButton": {
+      "name": "SelectScrollDownButton",
+      "description": "",
+      "filePath": "packages/ui/src/components/Select.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "OAuthButton": {
+      "name": "OAuthButton",
+      "description": "",
+      "filePath": "packages/ui/src/components/OAuthButton.tsx",
+      "props": [
+        {
+          "name": "provider",
+          "type": "\"google\" | \"microsoft\"",
+          "required": true,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "fullWidth",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "LocaleSwitcher": {
+      "name": "LocaleSwitcher",
+      "description": "",
+      "filePath": "packages/ui/src/components/LocaleSwitcher.tsx",
+      "props": [
+        {
+          "name": "languages",
+          "type": "LocaleOption[]",
+          "required": true,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "Label": {
+      "name": "Label",
+      "description": "",
+      "filePath": "packages/ui/src/components/Label.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "error",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "Input": {
+      "name": "Input",
+      "description": "",
+      "filePath": "packages/ui/src/components/Input.tsx",
+      "props": [
+        {
+          "name": "error",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": "Show error state"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Error message to display"
+        },
+        {
+          "name": "helperText",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Helper text to display below input"
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Label for the input"
+        },
+        {
+          "name": "iconLeft",
+          "type": "ReactNode",
+          "required": false,
+          "defaultValue": null,
+          "description": "Icon to display at the start of the input"
+        },
+        {
+          "name": "iconRight",
+          "type": "ReactNode",
+          "required": false,
+          "defaultValue": null,
+          "description": "Icon to display at the end of the input"
+        },
+        {
+          "name": "fullWidth",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": "Make the input full width"
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": "Whether the field is required"
+        },
+        {
+          "name": "variant",
+          "type": "\"default\" | \"error\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "inputSize",
+          "type": "\"sm\" | \"md\" | \"lg\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "IconButton": {
+      "name": "IconButton",
+      "description": "",
+      "filePath": "packages/ui/src/components/IconButton.tsx",
+      "props": [
+        {
+          "name": "icon",
+          "type": "ReactNode",
+          "required": false,
+          "defaultValue": null,
+          "description": "Icon to display (React node)"
+        },
+        {
+          "name": "aria-label",
+          "type": "string",
+          "required": true,
+          "defaultValue": null,
+          "description": "Accessible label (required for icon-only buttons)"
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "false",
+          "description": "Show loading spinner"
+        },
+        {
+          "name": "variant",
+          "type": "\"primary\" | \"secondary\" | \"outline\" | \"ghost\" | \"danger\" | \"success\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "size",
+          "type": "\"xs\" | \"sm\" | \"md\" | \"lg\" | \"xl\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "shape",
+          "type": "\"circle\" | \"square\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "HelpButton": {
+      "name": "HelpButton",
+      "description": "",
+      "filePath": "packages/ui/src/components/HelpButton.tsx",
+      "props": [
+        {
+          "name": "docPath",
+          "type": "string",
+          "required": true,
+          "defaultValue": null,
+          "description": "Documentation path relative to docs site (e.g., \"admin/knowledge-base\")"
+        },
+        {
+          "name": "section",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Optional section anchor within the doc (e.g., \"permissions\")"
+        },
+        {
+          "name": "size",
+          "type": "\"sm\" | \"md\"",
+          "required": false,
+          "defaultValue": "sm",
+          "description": "Size variant"
+        },
+        {
+          "name": "tooltipText",
+          "type": "string",
+          "required": false,
+          "defaultValue": "View documentation",
+          "description": "Custom tooltip text"
+        },
+        {
+          "name": "docsBaseUrl",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Base URL for docs site\nDefaults to VITE_DOCS_URL env var or https://assistdocs.asimo.io/"
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Additional className for the button"
+        },
+        {
+          "name": "side",
+          "type": "\"top\" | \"right\" | \"bottom\" | \"left\"",
+          "required": false,
+          "defaultValue": "top",
+          "description": "Tooltip placement side"
+        }
+      ]
+    },
+    "FeedbackRating": {
+      "name": "FeedbackRating",
+      "description": "FeedbackRating Component",
+      "filePath": "packages/ui/src/components/FeedbackRating.tsx",
+      "props": [
+        {
+          "name": "value",
+          "type": "FeedbackRatingValue",
+          "required": false,
+          "defaultValue": null,
+          "description": "Current rating value"
+        },
+        {
+          "name": "onChange",
+          "type": "((value: FeedbackRatingValue) => void)",
+          "required": false,
+          "defaultValue": null,
+          "description": "Callback when rating changes"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "false",
+          "description": "Whether the component is disabled"
+        },
+        {
+          "name": "showLabels",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "false",
+          "description": "Show labels next to icons"
+        },
+        {
+          "name": "positiveLabel",
+          "type": "string",
+          "required": false,
+          "defaultValue": "Helpful",
+          "description": "Custom positive label"
+        },
+        {
+          "name": "negativeLabel",
+          "type": "string",
+          "required": false,
+          "defaultValue": "Not helpful",
+          "description": "Custom negative label"
+        },
+        {
+          "name": "allowToggle",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "true",
+          "description": "Whether to allow toggling off (clicking again to deselect)"
+        },
+        {
+          "name": "isLoading",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "false",
+          "description": "Loading state"
+        },
+        {
+          "name": "aria-label",
+          "type": "string",
+          "required": false,
+          "defaultValue": "Rate this response",
+          "description": "ARIA label"
+        },
+        {
+          "name": "variant",
+          "type": "\"ghost\" | \"outline\" | null",
+          "required": false,
+          "defaultValue": "ghost",
+          "description": ""
+        },
+        {
+          "name": "size",
+          "type": "\"sm\" | \"md\" | \"lg\" | null",
+          "required": false,
+          "defaultValue": "md",
+          "description": ""
+        },
+        {
+          "name": "active",
+          "type": "\"positive\" | \"negative\" | \"neutral\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "FeedbackForm": {
+      "name": "FeedbackForm",
+      "description": "FeedbackForm Component",
+      "filePath": "packages/ui/src/components/FeedbackForm.tsx",
+      "props": [
+        {
+          "name": "rating",
+          "type": "\"positive\" | \"negative\" | \"neutral\"",
+          "required": false,
+          "defaultValue": "negative",
+          "description": "Initial rating that triggered the form"
+        },
+        {
+          "name": "onSubmit",
+          "type": "((data: FeedbackFormData) => void)",
+          "required": false,
+          "defaultValue": null,
+          "description": "Callback when form is submitted"
+        },
+        {
+          "name": "onCancel",
+          "type": "(() => void)",
+          "required": false,
+          "defaultValue": null,
+          "description": "Callback when form is cancelled"
+        },
+        {
+          "name": "isSubmitting",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "false",
+          "description": "Whether form is submitting"
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Additional class names"
+        },
+        {
+          "name": "showSeverity",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "true",
+          "description": "Show severity selector (for negative feedback)"
+        },
+        {
+          "name": "showCorrectionField",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "true",
+          "description": "Show correction suggestion field"
+        },
+        {
+          "name": "minCommentLength",
+          "type": "number",
+          "required": false,
+          "defaultValue": "10",
+          "description": "Minimum comment length"
+        },
+        {
+          "name": "maxCommentLength",
+          "type": "number",
+          "required": false,
+          "defaultValue": "1000",
+          "description": "Maximum comment length"
+        }
+      ]
+    },
+    "DropdownMenu": {
+      "name": "DropdownMenu",
+      "description": "",
+      "filePath": "packages/ui/src/components/DropdownMenu.tsx",
+      "props": []
+    },
+    "DropdownMenuTrigger": {
+      "name": "DropdownMenuTrigger",
+      "description": "",
+      "filePath": "packages/ui/src/components/DropdownMenu.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "DropdownMenuContent": {
+      "name": "DropdownMenuContent",
+      "description": "",
+      "filePath": "packages/ui/src/components/DropdownMenu.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "DropdownMenuItem": {
+      "name": "DropdownMenuItem",
+      "description": "",
+      "filePath": "packages/ui/src/components/DropdownMenu.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "inset",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "DropdownMenuCheckboxItem": {
+      "name": "DropdownMenuCheckboxItem",
+      "description": "",
+      "filePath": "packages/ui/src/components/DropdownMenu.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "DropdownMenuRadioItem": {
+      "name": "DropdownMenuRadioItem",
+      "description": "",
+      "filePath": "packages/ui/src/components/DropdownMenu.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "DropdownMenuLabel": {
+      "name": "DropdownMenuLabel",
+      "description": "",
+      "filePath": "packages/ui/src/components/DropdownMenu.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "inset",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "DropdownMenuSeparator": {
+      "name": "DropdownMenuSeparator",
+      "description": "",
+      "filePath": "packages/ui/src/components/DropdownMenu.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "DropdownMenuShortcut": {
+      "name": "DropdownMenuShortcut",
+      "description": "",
+      "filePath": "packages/ui/src/components/DropdownMenu.tsx",
+      "props": []
+    },
+    "DropdownMenuGroup": {
+      "name": "DropdownMenuGroup",
+      "description": "",
+      "filePath": "packages/ui/src/components/DropdownMenu.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "DropdownMenuPortal": {
+      "name": "DropdownMenuPortal",
+      "description": "",
+      "filePath": "packages/ui/src/components/DropdownMenu.tsx",
+      "props": []
+    },
+    "DropdownMenuSub": {
+      "name": "DropdownMenuSub",
+      "description": "",
+      "filePath": "packages/ui/src/components/DropdownMenu.tsx",
+      "props": []
+    },
+    "DropdownMenuSubContent": {
+      "name": "DropdownMenuSubContent",
+      "description": "",
+      "filePath": "packages/ui/src/components/DropdownMenu.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "DropdownMenuSubTrigger": {
+      "name": "DropdownMenuSubTrigger",
+      "description": "",
+      "filePath": "packages/ui/src/components/DropdownMenu.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "inset",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "DropdownMenuRadioGroup": {
+      "name": "DropdownMenuRadioGroup",
+      "description": "",
+      "filePath": "packages/ui/src/components/DropdownMenu.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "Dialog": {
+      "name": "Dialog",
+      "description": "",
+      "filePath": "packages/ui/src/components/Dialog.tsx",
+      "props": []
+    },
+    "DialogPortal": {
+      "name": "DialogPortal",
+      "description": "",
+      "filePath": "packages/ui/src/components/Dialog.tsx",
+      "props": []
+    },
+    "DialogOverlay": {
+      "name": "DialogOverlay",
+      "description": "",
+      "filePath": "packages/ui/src/components/Dialog.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "DialogClose": {
+      "name": "DialogClose",
+      "description": "",
+      "filePath": "packages/ui/src/components/Dialog.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "DialogTrigger": {
+      "name": "DialogTrigger",
+      "description": "",
+      "filePath": "packages/ui/src/components/Dialog.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "DialogContent": {
+      "name": "DialogContent",
+      "description": "",
+      "filePath": "packages/ui/src/components/Dialog.tsx",
+      "props": [
+        {
+          "name": "showClose",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "true",
+          "description": "Show close button"
+        },
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "size",
+          "type": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"2xl\" | \"full\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "DialogHeader": {
+      "name": "DialogHeader",
+      "description": "",
+      "filePath": "packages/ui/src/components/Dialog.tsx",
+      "props": []
+    },
+    "DialogFooter": {
+      "name": "DialogFooter",
+      "description": "",
+      "filePath": "packages/ui/src/components/Dialog.tsx",
+      "props": []
+    },
+    "DialogTitle": {
+      "name": "DialogTitle",
+      "description": "",
+      "filePath": "packages/ui/src/components/Dialog.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "DialogDescription": {
+      "name": "DialogDescription",
+      "description": "",
+      "filePath": "packages/ui/src/components/Dialog.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "Card": {
+      "name": "Card",
+      "description": "",
+      "filePath": "packages/ui/src/components/Card.tsx",
+      "props": [
+        {
+          "name": "variant",
+          "type": "\"default\" | \"bordered\" | \"elevated\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "hoverable",
+          "type": "boolean | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "CardHeader": {
+      "name": "CardHeader",
+      "description": "",
+      "filePath": "packages/ui/src/components/Card.tsx",
+      "props": []
+    },
+    "CardFooter": {
+      "name": "CardFooter",
+      "description": "",
+      "filePath": "packages/ui/src/components/Card.tsx",
+      "props": []
+    },
+    "CardTitle": {
+      "name": "CardTitle",
+      "description": "",
+      "filePath": "packages/ui/src/components/Card.tsx",
+      "props": []
+    },
+    "CardDescription": {
+      "name": "CardDescription",
+      "description": "",
+      "filePath": "packages/ui/src/components/Card.tsx",
+      "props": []
+    },
+    "CardContent": {
+      "name": "CardContent",
+      "description": "",
+      "filePath": "packages/ui/src/components/Card.tsx",
+      "props": []
+    },
+    "Button": {
+      "name": "Button",
+      "description": "",
+      "filePath": "packages/ui/src/components/Button.tsx",
+      "props": [
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": "Render as a child component (e.g., Next.js Link)"
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "false",
+          "description": "Show loading spinner and disable button"
+        },
+        {
+          "name": "iconLeft",
+          "type": "ReactNode",
+          "required": false,
+          "defaultValue": null,
+          "description": "Icon to display before the button text"
+        },
+        {
+          "name": "iconRight",
+          "type": "ReactNode",
+          "required": false,
+          "defaultValue": null,
+          "description": "Icon to display after the button text"
+        },
+        {
+          "name": "loadingText",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Loading text to display when button is loading"
+        },
+        {
+          "name": "variant",
+          "type": "\"primary\" | \"secondary\" | \"outline\" | \"ghost\" | \"danger\" | \"success\" | \"link\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "size",
+          "type": "\"sm\" | \"md\" | \"lg\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "fullWidth",
+          "type": "boolean | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "Badge": {
+      "name": "Badge",
+      "description": "",
+      "filePath": "packages/ui/src/components/Badge.tsx",
+      "props": [
+        {
+          "name": "dot",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": "Show a dot indicator"
+        },
+        {
+          "name": "count",
+          "type": "number",
+          "required": false,
+          "defaultValue": null,
+          "description": "Show count badge (displays number up to 99+)"
+        },
+        {
+          "name": "showZero",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": null,
+          "description": "Show count even when it's 0"
+        },
+        {
+          "name": "variant",
+          "type": "\"default\" | \"primary\" | \"secondary\" | \"success\" | \"warning\" | \"error\" | \"outline\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "size",
+          "type": "\"sm\" | \"md\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "Avatar": {
+      "name": "Avatar",
+      "description": "",
+      "filePath": "packages/ui/src/components/Avatar.tsx",
+      "props": [
+        {
+          "name": "src",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Image source URL"
+        },
+        {
+          "name": "alt",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Alt text for the image"
+        },
+        {
+          "name": "initials",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Initials to display as fallback"
+        },
+        {
+          "name": "status",
+          "type": "\"online\" | \"offline\" | \"busy\" | \"away\"",
+          "required": false,
+          "defaultValue": null,
+          "description": "Status indicator"
+        },
+        {
+          "name": "size",
+          "type": "\"xs\" | \"sm\" | \"md\" | \"lg\" | \"xl\" | null",
+          "required": false,
+          "defaultValue": "md",
+          "description": ""
+        }
+      ]
+    },
+    "AvatarGroup": {
+      "name": "AvatarGroup",
+      "description": "",
+      "filePath": "packages/ui/src/components/Avatar.tsx",
+      "props": [
+        {
+          "name": "max",
+          "type": "number",
+          "required": false,
+          "defaultValue": "5",
+          "description": "Maximum number of avatars to display"
+        },
+        {
+          "name": "size",
+          "type": "\"xs\" | \"sm\" | \"md\" | \"lg\" | \"xl\" | null",
+          "required": false,
+          "defaultValue": "md",
+          "description": "Size of the avatars"
+        }
+      ]
+    },
+    "VitalSignCard": {
+      "name": "VitalSignCard",
+      "description": "VitalSignCard Component",
+      "filePath": "packages/ui/src/components/medical/VitalSignCard.tsx",
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "required": true,
+          "defaultValue": null,
+          "description": "Label for the vital sign (e.g., \"Heart Rate\", \"Blood Pressure\")"
+        },
+        {
+          "name": "value",
+          "type": "string | number",
+          "required": true,
+          "defaultValue": null,
+          "description": "Current value of the vital sign"
+        },
+        {
+          "name": "unit",
+          "type": "string",
+          "required": true,
+          "defaultValue": null,
+          "description": "Unit of measurement (e.g., \"bpm\", \"mmHg\", \"%\")"
+        },
+        {
+          "name": "status",
+          "type": "\"normal\" | \"warning\" | \"critical\" | \"unknown\"",
+          "required": false,
+          "defaultValue": "unknown",
+          "description": "Current status of the vital sign"
+        },
+        {
+          "name": "trend",
+          "type": "\"up\" | \"down\" | \"stable\"",
+          "required": false,
+          "defaultValue": null,
+          "description": "Trend direction"
+        },
+        {
+          "name": "normalRange",
+          "type": "{ min: number; max: number; }",
+          "required": false,
+          "defaultValue": null,
+          "description": "Normal range for reference"
+        },
+        {
+          "name": "timestamp",
+          "type": "Date",
+          "required": false,
+          "defaultValue": null,
+          "description": "Last updated timestamp"
+        },
+        {
+          "name": "secondaryValue",
+          "type": "string | number",
+          "required": false,
+          "defaultValue": null,
+          "description": "Secondary value (e.g., diastolic for blood pressure)"
+        },
+        {
+          "name": "secondaryUnit",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Secondary unit (if different from primary)"
+        },
+        {
+          "name": "showStatusBadge",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "false",
+          "description": "Whether to show the status badge"
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "false",
+          "description": "Whether the card is loading"
+        },
+        {
+          "name": "onPress",
+          "type": "(() => void)",
+          "required": false,
+          "defaultValue": null,
+          "description": "Callback when card is clicked"
+        },
+        {
+          "name": "size",
+          "type": "\"sm\" | \"md\" | \"lg\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "MedicationList": {
+      "name": "MedicationList",
+      "description": "MedicationList Component",
+      "filePath": "packages/ui/src/components/medical/MedicationList.tsx",
+      "props": [
+        {
+          "name": "medications",
+          "type": "Medication[]",
+          "required": true,
+          "defaultValue": null,
+          "description": "Array of medications to display"
+        },
+        {
+          "name": "showInteractions",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "true",
+          "description": "Whether to show interaction warnings"
+        },
+        {
+          "name": "showContraindications",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "true",
+          "description": "Whether to show contraindication warnings"
+        },
+        {
+          "name": "onMedicationClick",
+          "type": "((medication: Medication) => void)",
+          "required": false,
+          "defaultValue": null,
+          "description": "Callback when a medication is clicked"
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "false",
+          "description": "Whether the list is loading"
+        },
+        {
+          "name": "loadingCount",
+          "type": "number",
+          "required": false,
+          "defaultValue": "3",
+          "description": "Number of skeleton items to show when loading"
+        },
+        {
+          "name": "emptyMessage",
+          "type": "string",
+          "required": false,
+          "defaultValue": "No medications found",
+          "description": "Message to show when list is empty"
+        },
+        {
+          "name": "showRoute",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "true",
+          "description": "Whether to show the route column"
+        },
+        {
+          "name": "showPrescriber",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "false",
+          "description": "Whether to show the prescriber column"
+        },
+        {
+          "name": "variant",
+          "type": "\"default\" | \"compact\" | \"card\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "MedicationItem": {
+      "name": "MedicationItem",
+      "description": "",
+      "filePath": "packages/ui/src/components/medical/MedicationList.tsx",
+      "props": [
+        {
+          "name": "medication",
+          "type": "Medication",
+          "required": true,
+          "defaultValue": null,
+          "description": ""
+        },
+        {
+          "name": "showInteractions",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "true",
+          "description": ""
+        },
+        {
+          "name": "showContraindications",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "true",
+          "description": ""
+        },
+        {
+          "name": "showRoute",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "true",
+          "description": ""
+        },
+        {
+          "name": "showPrescriber",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "false",
+          "description": ""
+        },
+        {
+          "name": "onClick",
+          "type": "(() => void)",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    },
+    "AlertBanner": {
+      "name": "AlertBanner",
+      "description": "AlertBanner Component",
+      "filePath": "packages/ui/src/components/medical/AlertBanner.tsx",
+      "props": [
+        {
+          "name": "title",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Alert title (bold heading)"
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "required": false,
+          "defaultValue": null,
+          "description": "Alert message (body text)"
+        },
+        {
+          "name": "severity",
+          "type": "\"info\" | \"success\" | \"warning\" | \"critical\"",
+          "required": false,
+          "defaultValue": "info",
+          "description": "Alert severity level"
+        },
+        {
+          "name": "dismissible",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "false",
+          "description": "Whether the alert can be dismissed"
+        },
+        {
+          "name": "onDismiss",
+          "type": "(() => void)",
+          "required": false,
+          "defaultValue": null,
+          "description": "Callback when alert is dismissed"
+        },
+        {
+          "name": "autoDismiss",
+          "type": "number",
+          "required": false,
+          "defaultValue": null,
+          "description": "Auto-dismiss after specified milliseconds"
+        },
+        {
+          "name": "showIcon",
+          "type": "boolean",
+          "required": false,
+          "defaultValue": "true",
+          "description": "Whether to show the severity icon"
+        },
+        {
+          "name": "icon",
+          "type": "ReactNode",
+          "required": false,
+          "defaultValue": null,
+          "description": "Custom icon element"
+        },
+        {
+          "name": "actions",
+          "type": "AlertAction[]",
+          "required": false,
+          "defaultValue": null,
+          "description": "Action buttons"
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "required": false,
+          "defaultValue": null,
+          "description": "Additional content to render below the message"
+        },
+        {
+          "name": "ariaLive",
+          "type": "\"polite\" | \"assertive\" | \"off\"",
+          "required": false,
+          "defaultValue": "polite",
+          "description": "ARIA live politeness for screen readers"
+        },
+        {
+          "name": "variant",
+          "type": "\"default\" | \"subtle\" | \"solid\" | null",
+          "required": false,
+          "defaultValue": null,
+          "description": ""
+        }
+      ]
+    }
+  }
+}

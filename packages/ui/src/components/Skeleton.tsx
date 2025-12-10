@@ -9,28 +9,29 @@
  * - Accessible (aria-busy, aria-live)
  */
 
-import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../lib/utils';
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "../lib/utils";
 
 const skeletonVariants = cva(
-  'animate-pulse bg-neutral-200 dark:bg-neutral-700',
+  "animate-pulse bg-neutral-200 dark:bg-neutral-700",
   {
     variants: {
       variant: {
-        text: 'rounded h-4',
-        circle: 'rounded-full',
-        rectangle: 'rounded-md',
+        text: "rounded h-4",
+        circle: "rounded-full",
+        rectangle: "rounded-md",
       },
     },
     defaultVariants: {
-      variant: 'rectangle',
+      variant: "rectangle",
     },
-  }
+  },
 );
 
 export interface SkeletonProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends
+    React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof skeletonVariants> {
   /**
    * Width of the skeleton (CSS value)
@@ -58,18 +59,23 @@ function Skeleton({
   ...props
 }: SkeletonProps) {
   // If lines is specified, render multiple text lines
-  if (lines && variant === 'text') {
+  if (lines && variant === "text") {
     return (
-      <div className="space-y-2" role="status" aria-busy="true" aria-live="polite">
+      <div
+        className="space-y-2"
+        role="status"
+        aria-busy="true"
+        aria-live="polite"
+      >
         {Array.from({ length: lines }).map((_, i) => (
           <div
             key={i}
             className={cn(
               skeletonVariants({ variant, className }),
-              i === lines - 1 && 'w-4/5' // Last line slightly shorter
+              i === lines - 1 && "w-4/5", // Last line slightly shorter
             )}
             style={{
-              width: i === lines - 1 ? '80%' : width,
+              width: i === lines - 1 ? "80%" : width,
               ...style,
             }}
           />
@@ -100,7 +106,10 @@ function Skeleton({
 /**
  * Skeleton for Avatar
  */
-function SkeletonAvatar({ className, ...props }: Omit<SkeletonProps, 'variant'>) {
+function SkeletonAvatar({
+  className,
+  ...props
+}: Omit<SkeletonProps, "variant">) {
   return (
     <Skeleton
       variant="circle"
@@ -115,9 +124,15 @@ function SkeletonAvatar({ className, ...props }: Omit<SkeletonProps, 'variant'>)
 /**
  * Skeleton for Card
  */
-function SkeletonCard({ className, ...props }: Omit<SkeletonProps, 'variant'>) {
+function SkeletonCard({ className, ...props }: Omit<SkeletonProps, "variant">) {
   return (
-    <div className={cn('space-y-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-700', className)} {...props}>
+    <div
+      className={cn(
+        "space-y-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-700",
+        className,
+      )}
+      {...props}
+    >
       <Skeleton variant="rectangle" height="120px" />
       <Skeleton variant="text" />
       <Skeleton variant="text" width="80%" />
@@ -128,7 +143,10 @@ function SkeletonCard({ className, ...props }: Omit<SkeletonProps, 'variant'>) {
 /**
  * Skeleton for Table Row
  */
-function SkeletonTableRow({ columns = 4, ...props }: Omit<SkeletonProps, 'variant'> & { columns?: number }) {
+function SkeletonTableRow({
+  columns = 4,
+  ...props
+}: Omit<SkeletonProps, "variant"> & { columns?: number }) {
   return (
     <tr {...props}>
       {Array.from({ length: columns }).map((_, i) => (
@@ -140,4 +158,10 @@ function SkeletonTableRow({ columns = 4, ...props }: Omit<SkeletonProps, 'varian
   );
 }
 
-export { Skeleton, SkeletonAvatar, SkeletonCard, SkeletonTableRow, skeletonVariants };
+export {
+  Skeleton,
+  SkeletonAvatar,
+  SkeletonCard,
+  SkeletonTableRow,
+  skeletonVariants,
+};

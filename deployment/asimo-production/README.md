@@ -416,7 +416,7 @@ For issues or questions:
 ## 📚 Additional Resources
 
 - [VoiceAssist Main README](../../README.md)
-- [Architecture Documentation](../../docs/ARCHITECTURE_V2.md)
+- [Architecture Documentation](../../docs/UNIFIED_ARCHITECTURE.md)
 - [Deployment Guide](../../docs/DEPLOYMENT_GUIDE.md)
 - [HIPAA Compliance](../../docs/HIPAA_COMPLIANCE_MATRIX.md)
 - [API Documentation](https://assist.asimo.io/docs)

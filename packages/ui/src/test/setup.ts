@@ -3,13 +3,13 @@
  * Global test configuration and setup
  */
 
-import '@testing-library/jest-dom';
-import { cleanup } from '@testing-library/react';
-import { afterEach, vi } from 'vitest';
+import "@testing-library/jest-dom";
+import { cleanup } from "@testing-library/react";
+import { afterEach, vi } from "vitest";
 
 // Workaround for jsdom/webidl-conversions issue
 // See: https://github.com/jsdom/jsdom/issues/3363
-if (typeof globalThis.WeakRef === 'undefined') {
+if (typeof globalThis.WeakRef === "undefined") {
   (globalThis as any).WeakRef = class WeakRef {
     private target: any;
     constructor(target: any) {
@@ -27,7 +27,7 @@ afterEach(() => {
 });
 
 // Mock window.matchMedia for theme and responsive components
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: vi.fn().mockImplementation((query) => ({
     matches: false,

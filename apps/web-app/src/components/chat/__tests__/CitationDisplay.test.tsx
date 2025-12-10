@@ -3,11 +3,21 @@
  * Tests citation rendering, expansion, and source types
  */
 
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CitationDisplay } from "../CitationDisplay";
 import type { Citation } from "@voiceassist/types";
+
+// Mock useToastContext since CitationDisplay uses it for copy feedback
+vi.mock("../../../contexts/ToastContext", () => ({
+  useToastContext: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  }),
+}));
 
 describe("CitationDisplay", () => {
   const kbCitation: Citation = {
@@ -50,12 +60,23 @@ describe("CitationDisplay", () => {
   describe("source type badges", () => {
     it("should show KB badge for knowledge base citations", () => {
       render(<CitationDisplay citations={[kbCitation]} />);
-      expect(screen.getByText(/knowledge base/i)).toBeInTheDocument();
+
+      const citationButton = screen.getByRole("button", { expanded: false });
+      // The badge is in a span with specific styling (uppercase, rounded-full)
+      const badges = within(citationButton).getAllByText(/knowledge base/i);
+      // At least one should be the badge (smaller, uppercase styling)
+      expect(badges.length).toBeGreaterThanOrEqual(1);
+      expect(badges[0]).toBeInTheDocument();
     });
 
     it("should show external link badge for URL citations", () => {
       render(<CitationDisplay citations={[urlCitation]} />);
-      expect(screen.getByText(/external link/i)).toBeInTheDocument();
+
+      const citationButton = screen.getByRole("button", { expanded: false });
+      // The badge and label both contain "External Link"
+      const badges = within(citationButton).getAllByText(/external link/i);
+      expect(badges.length).toBeGreaterThanOrEqual(1);
+      expect(badges[0]).toBeInTheDocument();
     });
 
     it("should show page number when present", () => {
@@ -252,6 +273,37 @@ describe("CitationDisplay", () => {
       await user.click(expandedButton);
       const collapsedButton = screen.getByRole("button", { expanded: false });
       expect(collapsedButton).toHaveAttribute("aria-expanded", "false");
+    });
+  });
+
+  describe("source filters", () => {
+    it("should filter citations by selected source", async () => {
+      const user = userEvent.setup();
+      render(<CitationDisplay citations={[kbCitation, urlCitation]} />);
+
+      // Find the filter group and click the External Link filter pill within it
+      const filterGroup = screen.getByRole("group", {
+        name: /filter citations by source/i,
+      });
+      const externalFilter = within(filterGroup).getByRole("button", {
+        name: /external link/i,
+      });
+      await user.click(externalFilter);
+
+      // The filter buttons have aria-pressed, citation buttons have aria-expanded
+      const citationButtons = screen.getAllByRole("button", {
+        expanded: false,
+      });
+      expect(citationButtons).toHaveLength(1);
+      // The remaining citation should be "External Link" type
+      const kbMatches = within(citationButtons[0]).queryAllByText(
+        /knowledge base/i,
+      );
+      expect(kbMatches).toHaveLength(0);
+      const externalMatches = within(citationButtons[0]).getAllByText(
+        /external link/i,
+      );
+      expect(externalMatches.length).toBeGreaterThanOrEqual(1);
     });
   });
 });

@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034,SC2086,SC2154
 set -o xtrace
 
 # Bootstrap the EKS node

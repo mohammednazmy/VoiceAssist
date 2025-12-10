@@ -1,6 +1,7 @@
 import type { APIEnvelope } from "../types";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE =
+  import.meta.env.VITE_API_URL || "https://api.voiceassist.example.com";
 
 export class APIError extends Error {
   code: string;

@@ -1,6 +1,34 @@
+---
+title: Backup & Restore Runbook
+slug: operations/runbooks/backup-restore
+summary: Comprehensive guide for backup and restore operations in VoiceAssist V2.
+status: stable
+stability: production
+owner: sre
+lastUpdated: "2025-11-27"
+audience:
+  - devops
+  - ai-agents
+tags:
+  - runbook
+  - backup
+  - restore
+  - disaster-recovery
+  - operations
+category: debugging
+relatedServices:
+  - api-gateway
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 Purpose: Comprehensive guide for backup and restore
+  operations in VoiceAssist V2 --- /backups/ ├── postgres/ │ ├── daily/ │ ├──
+  weekly/ │ └── monthly/ ├── redis/ ├── qdrant/ ├── config/ ├── volumes/ └──
+  logs/ --- BACKUP_DATE=$(date +%Y%m%d_%H%M%S) BACKUP_DIR="/backups/pos...
+---
+
 # Backup & Restore Runbook
 
-**Last Updated**: 2025-11-21 (Phase 7 - P3.2)
+**Last Updated**: 2025-11-27
 **Purpose**: Comprehensive guide for backup and restore operations in VoiceAssist V2
 
 ---
@@ -9,14 +37,14 @@
 
 ### Backup Schedule
 
-| Component | Frequency | Retention | Method |
-|-----------|-----------|-----------|--------|
-| **PostgreSQL Database** | Every 6 hours | 30 days | pg_dump + automated snapshots |
-| **Redis Cache** | Daily | 7 days | RDB snapshots |
-| **Qdrant Vectors** | Daily | 14 days | Collection snapshots |
-| **Configuration Files** | On change | 90 days | Git + encrypted backups |
-| **Application Logs** | Hourly | 30 days | Log aggregation |
-| **Docker Volumes** | Weekly | 30 days | Volume snapshots |
+| Component               | Frequency     | Retention | Method                        |
+| ----------------------- | ------------- | --------- | ----------------------------- |
+| **PostgreSQL Database** | Every 6 hours | 30 days   | pg_dump + automated snapshots |
+| **Redis Cache**         | Daily         | 7 days    | RDB snapshots                 |
+| **Qdrant Vectors**      | Daily         | 14 days   | Collection snapshots          |
+| **Configuration Files** | On change     | 90 days   | Git + encrypted backups       |
+| **Application Logs**    | Hourly        | 30 days   | Log aggregation               |
+| **Docker Volumes**      | Weekly        | 30 days   | Volume snapshots              |
 
 ### Backup Storage Locations
 

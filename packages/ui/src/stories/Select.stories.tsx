@@ -2,7 +2,7 @@
  * Select Component Stories
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from "@storybook/react";
 import {
   Select,
   SelectContent,
@@ -12,21 +12,21 @@ import {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-} from '../components/Select';
+} from "../components/Select";
 
 const meta = {
-  title: 'Components/Select',
+  title: "Components/Select",
   component: Select,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     docs: {
       description: {
         component:
-          'Select dropdown built on Radix UI. Supports keyboard navigation, grouping, and full accessibility.',
+          "Select dropdown built on Radix UI. Supports keyboard navigation, grouping, and full accessibility.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
 } satisfies Meta<typeof Select>;
 
 export default meta;
@@ -110,7 +110,8 @@ export const WithGroups: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Select with grouped options and separators for better organization.',
+        story:
+          "Select with grouped options and separators for better organization.",
       },
     },
   },
@@ -160,7 +161,7 @@ export const WithDisabledOptions: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Select with some options disabled to show unavailable choices.',
+        story: "Select with some options disabled to show unavailable choices.",
       },
     },
   },
@@ -190,7 +191,7 @@ export const ErrorState: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Select in error state with error message.',
+        story: "Select in error state with error message.",
       },
     },
   },
@@ -231,7 +232,8 @@ export const LongList: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Select with many options - automatically scrollable with scroll buttons.',
+        story:
+          "Select with many options - automatically scrollable with scroll buttons.",
       },
     },
   },
@@ -240,7 +242,9 @@ export const LongList: Story = {
 export const FormExample: Story = {
   render: () => (
     <div className="w-96 space-y-6">
-      <h3 className="text-lg font-semibold text-text-primary">Appointment Booking</h3>
+      <h3 className="text-lg font-semibold text-text-primary">
+        Appointment Booking
+      </h3>
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-text-primary">
@@ -324,7 +328,8 @@ export const FormExample: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Complete form example using multiple Select components for appointment booking.',
+        story:
+          "Complete form example using multiple Select components for appointment booking.",
       },
     },
   },

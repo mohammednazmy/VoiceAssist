@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155,SC2086
 
 ###############################################################################
 # VoiceAssist Health Check Script

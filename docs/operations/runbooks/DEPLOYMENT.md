@@ -1,6 +1,36 @@
+---
+title: Deployment Runbook
+slug: operations/runbooks/deployment
+summary: Step-by-step guide for deploying VoiceAssist V2 to production.
+status: stable
+stability: production
+owner: sre
+lastUpdated: "2025-11-27"
+audience:
+  - devops
+  - backend
+  - ai-agents
+tags:
+  - runbook
+  - deployment
+  - operations
+  - production
+category: debugging
+relatedServices:
+  - api-gateway
+  - web-app
+  - admin-panel
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 Purpose: Step-by-step guide for deploying VoiceAssist
+  V2 --- - [ ] All tests passing in CI/CD - [ ] Code reviewed and approved - [ ]
+  Database migrations reviewed - [ ] Breaking changes documented - [ ] Rollback
+  plan documented - [ ] Stakeholders notified - [ ] Maintenance...
+---
+
 # Deployment Runbook
 
-**Last Updated**: 2025-11-21 (Phase 7 - P3.2)
+**Last Updated**: 2025-11-27
 **Purpose**: Step-by-step guide for deploying VoiceAssist V2
 
 ---
@@ -39,7 +69,7 @@ docker compose exec redis redis-cli ping
 curl http://localhost:6333/collections
 ```
 
-###  2. Backup Current State
+### 2. Backup Current State
 
 ```bash
 # Backup database
@@ -232,6 +262,7 @@ curl http://localhost:8000/health
 ## Deployment Checklist
 
 **Post-Deployment:**
+
 - [ ] Health endpoint returning 200
 - [ ] Readiness endpoint returning 200
 - [ ] No error logs in last 5 minutes
@@ -252,6 +283,7 @@ curl http://localhost:8000/health
 **Symptoms**: Migration command returns error
 
 **Solution**:
+
 ```bash
 # Check current state
 docker compose run --rm voiceassist-server alembic current
@@ -271,6 +303,7 @@ docker compose run --rm voiceassist-server alembic upgrade head
 **Symptoms**: Container crashes immediately or fails healthcheck
 
 **Solution**:
+
 ```bash
 # Check logs
 docker compose logs --tail=50 voiceassist-server
@@ -291,6 +324,7 @@ docker compose exec redis redis-cli ping
 **Symptoms**: Increased 5xx errors in logs/metrics
 
 **Solution**:
+
 ```bash
 # Check error logs
 docker compose logs voiceassist-server | grep -i error

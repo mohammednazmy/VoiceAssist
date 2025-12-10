@@ -8,64 +8,168 @@ import { CitationDisplay } from "../chat/CitationDisplay";
 import type { Citation } from "../../types";
 import type { Message } from "@voiceassist/types";
 
+/** Type filter options */
+type TypeFilter =
+  | "all"
+  | "kb"
+  | "pubmed"
+  | "guideline"
+  | "openevidence"
+  | "external";
+
+/** Citation with message reference for jump-to functionality */
+interface CitationWithMessage {
+  citation: Citation;
+  messageId: string;
+  messageRole: string;
+  messageIndex: number;
+}
+
 export interface CitationSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   messages: Message[];
-  onCitationClick?: (citationId: string) => void;
+  /** Called when user clicks jump-to for a citation */
+  onJumpToMessage?: (messageId: string) => void;
 }
 
 export function CitationSidebar({
   isOpen,
   onClose,
   messages,
-  onCitationClick: _onCitationClick,
+  onJumpToMessage,
 }: CitationSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [messageFilter, setMessageFilter] = useState<string>("all");
 
-  // Aggregate all citations from all messages
-  const allCitations = useMemo(() => {
-    const citationsMap = new Map<string, Citation>();
+  // Aggregate all citations from all messages with message references
+  const { allCitationsWithMessages, messageOptions } = useMemo(() => {
+    const citationsMap = new Map<string, CitationWithMessage>();
+    const messagesWithCitations: Array<{
+      id: string;
+      label: string;
+      index: number;
+    }> = [];
 
-    messages.forEach((message) => {
+    messages.forEach((message, index) => {
       // Check metadata.citations first, then top-level citations
       const citations = message.metadata?.citations || message.citations || [];
-      citations.forEach((citation: Citation) => {
-        if (!citationsMap.has(citation.id)) {
-          citationsMap.set(citation.id, citation);
-        }
-      });
+
+      if (citations.length > 0) {
+        // Build message label for filter dropdown
+        const roleLabel = message.role === "user" ? "You" : "Assistant";
+        const timestamp = new Date(message.timestamp).toLocaleTimeString(
+          "en-US",
+          {
+            hour: "2-digit",
+            minute: "2-digit",
+          },
+        );
+        messagesWithCitations.push({
+          id: message.id,
+          label: `${roleLabel} · ${timestamp}`,
+          index: index + 1,
+        });
+
+        citations.forEach((citation: Citation) => {
+          if (!citationsMap.has(citation.id)) {
+            citationsMap.set(citation.id, {
+              citation,
+              messageId: message.id,
+              messageRole: message.role,
+              messageIndex: index + 1,
+            });
+          }
+        });
+      }
     });
 
-    return Array.from(citationsMap.values());
+    return {
+      allCitationsWithMessages: Array.from(citationsMap.values()),
+      messageOptions: messagesWithCitations,
+    };
   }, [messages]);
 
-  // Filter citations based on search query
-  const filteredCitations = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return allCitations;
+  // Get unique citations for display count
+  const allCitations = useMemo(
+    () => allCitationsWithMessages.map((c) => c.citation),
+    [allCitationsWithMessages],
+  );
+
+  // Helper to determine citation type category
+  const getCitationType = (citation: Citation): TypeFilter => {
+    // Check for guidelines first (sourceType takes precedence)
+    if (
+      citation.sourceType === "guideline" ||
+      citation.title?.toLowerCase().includes("guideline")
+    ) {
+      return "guideline";
     }
+    if (
+      citation.sourceType === "openevidence" ||
+      citation.source === "openevidence"
+    ) {
+      return "openevidence";
+    }
+    // Check for PubMed (source or pubmedId, not just DOI)
+    if (citation.source === "pubmed" || citation.pubmedId) {
+      return "pubmed";
+    }
+    // KB is the default for knowledge base
+    if (citation.source === "kb") {
+      return "kb";
+    }
+    // Default to external bucket for everything else
+    return "external";
+  };
 
-    const query = searchQuery.toLowerCase();
-    return allCitations.filter((citation) => {
-      // Search in title, authors, snippet, reference
-      const searchableText = [
-        citation.title,
-        citation.subtitle,
-        citation.reference,
-        citation.snippet,
-        citation.authors?.join(" "),
-        citation.location,
-        citation.doi,
-        citation.pubmedId,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+  // Filter citations based on search, type, and message filters
+  const filteredCitationsWithMessages = useMemo(() => {
+    return allCitationsWithMessages.filter((item) => {
+      const { citation, messageId } = item;
 
-      return searchableText.includes(query);
+      // Type filter
+      if (typeFilter !== "all" && getCitationType(citation) !== typeFilter) {
+        return false;
+      }
+
+      // Message filter
+      if (messageFilter !== "all" && messageId !== messageFilter) {
+        return false;
+      }
+
+      // Search filter
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const searchableText = [
+          citation.title,
+          citation.subtitle,
+          citation.reference,
+          citation.snippet,
+          citation.authors?.join(" "),
+          citation.location,
+          citation.doi,
+          citation.pubmedId,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        if (!searchableText.includes(query)) {
+          return false;
+        }
+      }
+
+      return true;
     });
-  }, [allCitations, searchQuery]);
+  }, [allCitationsWithMessages, typeFilter, messageFilter, searchQuery]);
+
+  // Extract just the citations for CitationDisplay
+  const filteredCitations = useMemo(
+    () => filteredCitationsWithMessages.map((c) => c.citation),
+    [filteredCitationsWithMessages],
+  );
 
   if (!isOpen) {
     return null;
@@ -122,9 +226,10 @@ export function CitationSidebar({
           </div>
         </div>
 
-        {/* Search Bar */}
+        {/* Filters Section */}
         {hasCitations && (
-          <div className="px-4 py-3 border-b border-neutral-200 dark:border-neutral-700">
+          <div className="px-4 py-3 border-b border-neutral-200 dark:border-neutral-700 space-y-3">
+            {/* Search Bar */}
             <div className="relative">
               <input
                 type="text"
@@ -132,6 +237,7 @@ export function CitationSidebar({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-neutral-800 dark:text-neutral-100"
+                data-testid="citation-search-input"
               />
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -170,6 +276,73 @@ export function CitationSidebar({
                 </button>
               )}
             </div>
+
+            {/* Type Filter Pills */}
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label="Filter by type"
+            >
+              {(
+                [
+                  { value: "all", label: "All" },
+                  { value: "kb", label: "Knowledge Base" },
+                  { value: "pubmed", label: "PubMed / DOI" },
+                  { value: "guideline", label: "Guidelines" },
+                  { value: "openevidence", label: "OpenEvidence" },
+                  { value: "external", label: "External" },
+                ] as const
+              )
+                .filter(
+                  (option) =>
+                    option.value === "all" ||
+                    allCitations.some(
+                      (citation) => getCitationType(citation) === option.value,
+                    ),
+                )
+                .map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setTypeFilter(option.value)}
+                    className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
+                      typeFilter === option.value
+                        ? "bg-primary-500 text-white"
+                        : "bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600"
+                    }`}
+                    aria-pressed={typeFilter === option.value}
+                    data-testid={`type-filter-${option.value}`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+            </div>
+
+            {/* Message Filter Dropdown */}
+            {messageOptions.length > 1 && (
+              <div>
+                <label
+                  htmlFor="message-filter"
+                  className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1"
+                >
+                  Filter by message
+                </label>
+                <select
+                  id="message-filter"
+                  value={messageFilter}
+                  onChange={(e) => setMessageFilter(e.target.value)}
+                  className="w-full px-3 py-1.5 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-neutral-800 dark:text-neutral-100"
+                  data-testid="message-filter-select"
+                >
+                  <option value="all">All messages</option>
+                  {messageOptions.map((msg) => (
+                    <option key={msg.id} value={msg.id}>
+                      Message #{msg.index} ({msg.label})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         )}
 
@@ -224,12 +397,47 @@ export function CitationSidebar({
               </p>
             </div>
           ) : (
-            // Display citations
+            // Display citations with jump-to functionality
             <div className="space-y-4">
-              <CitationDisplay
-                citations={filteredCitations}
-                enableExport={true}
-              />
+              {filteredCitationsWithMessages.map((item) => (
+                <div
+                  key={item.citation.id}
+                  className="bg-neutral-50 dark:bg-neutral-800 rounded-lg p-3 border border-neutral-200 dark:border-neutral-700"
+                  data-testid={`citation-item-${item.citation.id}`}
+                >
+                  {/* Citation content */}
+                  <CitationDisplay
+                    citations={[item.citation]}
+                    enableExport={true}
+                  />
+
+                  {/* Jump to message button */}
+                  {onJumpToMessage && (
+                    <button
+                      type="button"
+                      onClick={() => onJumpToMessage(item.messageId)}
+                      className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/40 rounded-md transition-colors"
+                      data-testid={`jump-to-message-${item.citation.id}`}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="w-3.5 h-3.5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                        />
+                      </svg>
+                      Jump to message #{item.messageIndex}
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>

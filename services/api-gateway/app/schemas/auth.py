@@ -31,6 +31,8 @@ class TokenResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int  # seconds until expiration
+    refresh_expires_in: Optional[int] = None
+    role: Optional[str] = None
 
 
 class TokenRefresh(BaseModel):
@@ -39,11 +41,51 @@ class TokenRefresh(BaseModel):
     refresh_token: str
 
 
+class TwoFactorRequiredResponse(BaseModel):
+    """Response when 2FA verification is needed to complete login"""
+
+    requires_2fa: bool = True
+    user_id: str
+    message: str = "Two-factor authentication required"
+
+
 class PasswordChange(BaseModel):
     """Password change request"""
 
     old_password: str
     new_password: str = Field(..., min_length=8, max_length=100)
+
+
+class AcceptInvitationRequest(BaseModel):
+    """Accept invitation and set password request"""
+
+    token: str
+    password: str = Field(..., min_length=8, max_length=100)
+    full_name: Optional[str] = Field(None, max_length=255)
+
+
+class AcceptInvitationResponse(BaseModel):
+    """Response after successfully accepting invitation"""
+
+    success: bool
+    message: str
+    user: Optional["UserResponse"] = None
+    access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
+    token_type: str = "bearer"
+    expires_in: Optional[int] = None
+    refresh_expires_in: Optional[int] = None
+
+
+class SessionInfoResponse(BaseModel):
+    """Session timeout information for frontend"""
+
+    absolute_timeout_hours: int
+    inactivity_timeout_minutes: int
+    absolute_remaining_seconds: int
+    inactivity_remaining_seconds: int
+    session_started_at: str
+    last_activity_at: Optional[str] = None
 
 
 class UserResponse(BaseModel):
@@ -56,6 +98,7 @@ class UserResponse(BaseModel):
     full_name: str
     is_active: bool
     is_admin: bool
+    admin_role: Optional[str] = None
     nextcloud_user_id: Optional[str] = None
     created_at: datetime
     last_login: Optional[datetime] = None

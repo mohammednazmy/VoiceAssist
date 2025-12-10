@@ -45,7 +45,7 @@ Create `.env` file in `apps/web-app/`:
 ```env
 # API Configuration
 VITE_API_URL=https://api.voiceassist.example.com
-VITE_WS_URL=wss://api.voiceassist.example.com/ws
+VITE_WS_URL=wss://api.voiceassist.example.com/api/realtime/ws
 
 # OpenAI Configuration
 VITE_OPENAI_API_KEY=sk-...
@@ -76,12 +76,13 @@ VITE_ENVIRONMENT=production
 All routes are lazy-loaded using React.lazy():
 
 ```typescript
-const ChatPage = lazy(() => import('./pages/ChatPage'));
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const ChatPage = lazy(() => import("./pages/ChatPage"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 // ... other pages
 ```
 
 **Benefits**:
+
 - Reduced initial bundle size
 - Faster initial page load
 - Better Time to Interactive (TTI)
@@ -92,12 +93,14 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 **File**: `apps/web-app/lighthouserc.json`
 
 **Performance Targets**:
+
 - Performance Score: ≥ 90
 - Accessibility Score: ≥ 90
 - Best Practices: ≥ 90
 - SEO: ≥ 80
 
 **Key Metrics**:
+
 - First Contentful Paint: < 2s
 - Time to Interactive: < 3.5s
 - Speed Index: < 3s
@@ -315,6 +318,7 @@ sudo certbot --nginx -d voiceassist.example.com
 **URL**: `https://voiceassist.example.com/admin`
 
 **Features**:
+
 1. **Dashboard Overview**
    - Real-time metrics (active sessions, conversations, API calls)
    - System health status
@@ -373,6 +377,7 @@ pnpm lighthouse
 ```
 
 **Expected Results**:
+
 - ✅ Performance: ≥ 90
 - ✅ Accessibility: ≥ 90
 - ✅ Best Practices: ≥ 90
@@ -419,16 +424,19 @@ open stats.html
 **Recommended Tools**:
 
 1. **Error Tracking**: Sentry
+
    ```bash
    pnpm add @sentry/react
    ```
 
 2. **Analytics**: Google Analytics 4
+
    ```bash
    pnpm add react-ga4
    ```
 
 3. **Performance**: Web Vitals
+
    ```bash
    pnpm add web-vitals
    ```
@@ -453,6 +461,7 @@ pnpm build
 **2. Routes Not Working (404)**
 
 Ensure nginx is configured for SPA routing:
+
 ```nginx
 location / {
     try_files $uri $uri/ /index.html;
@@ -462,6 +471,7 @@ location / {
 **3. API Connection Issues**
 
 Check environment variables:
+
 ```bash
 echo $VITE_API_URL
 ```
@@ -529,6 +539,7 @@ pnpm preview
 ## Deployment Checklist
 
 **Pre-Deployment**:
+
 - [ ] All tests passing
 - [ ] Lighthouse scores meet targets
 - [ ] Accessibility audit complete
@@ -538,6 +549,7 @@ pnpm preview
 - [ ] Domain DNS configured
 
 **Deployment**:
+
 - [ ] Build production bundle
 - [ ] Deploy to server
 - [ ] Configure nginx/Apache
@@ -547,6 +559,7 @@ pnpm preview
 - [ ] Test all functionality
 
 **Post-Deployment**:
+
 - [ ] Verify all routes work
 - [ ] Check performance metrics
 - [ ] Monitor error rates
@@ -604,6 +617,7 @@ pnpm build
 **Status**: ✅ Ready for Production Deployment
 
 **Next Steps**:
+
 1. Configure production environment variables
 2. Run final Lighthouse audit
 3. Deploy to production server

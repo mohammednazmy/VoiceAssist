@@ -1,0 +1,56 @@
+{
+  "version": "1.1",
+  "generated_at": "2025-12-08T12:53:17.255Z",
+  "description": "VoiceAssist documentation index for AI agents and integrations",
+  "endpoints": {
+    "docs_list": {
+      "path": "/agent/docs.json",
+      "description": "Full list of all documentation with metadata",
+      "method": "GET",
+      "response_format": "JSON array of DocIndexEntry objects"
+    },
+    "search_index": {
+      "path": "/search-index.json",
+      "description": "Full-text search index for client-side searching",
+      "method": "GET",
+      "response_format": "JSON with 'docs' array for Fuse.js"
+    },
+    "tasks": {
+      "path": "/agent/tasks.json",
+      "description": "Common tasks AI agents can perform with commands and prerequisites",
+      "method": "GET",
+      "response_format": "JSON with 'tasks' array of TaskEntry objects"
+    },
+    "schema": {
+      "path": "/agent/schema.json",
+      "description": "JSON Schema definitions for all agent API responses",
+      "method": "GET",
+      "response_format": "JSON Schema (draft-07)"
+    }
+  },
+  "schema": {
+    "DocIndexEntry": {
+      "slug": "string - URL-friendly identifier",
+      "path": "string - Relative path to markdown file",
+      "title": "string - Document title",
+      "summary": "string? - Brief description",
+      "ai_summary": "string? - AI-optimized summary (2-3 sentences)",
+      "status": "draft|experimental|stable|deprecated",
+      "stability": "production|beta|experimental|legacy",
+      "owner": "backend|frontend|infra|sre|docs|product|security|mixed",
+      "audience": "string[] - Target readers (use 'ai-agents' for AI)",
+      "category": "admin|ai|api|architecture|debugging|deployment|feature-flags|getting-started|operations|overview|planning|reference|releases|security|testing|voice",
+      "tags": "string[] - Categorization tags",
+      "relatedServices": "string[] - Related service names",
+      "component": "string? - Logical component identifier (e.g., backend/api-gateway)",
+      "relatedPaths": "string[]? - Repo-relative paths to related code files",
+      "lastUpdated": "string - ISO date"
+    }
+  },
+  "usage_notes": [
+    "Use docs.json for browsing and filtering documentation",
+    "Use search-index.json with Fuse.js for full-text search",
+    "All paths are relative to the docs/ directory",
+    "Filter client-side by status, audience, tags, etc."
+  ]
+}

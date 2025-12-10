@@ -2,15 +2,15 @@
 
 Tracks feature flag usage for analytics and monitoring.
 """
+
 from __future__ import annotations
 
-from datetime import datetime
 import uuid
-
-from sqlalchemy import Column, String, Boolean, DateTime, Integer, Index
-from sqlalchemy.dialects.postgresql import UUID
+from datetime import datetime
 
 from app.core.database import Base
+from sqlalchemy import Boolean, Column, DateTime, Index, String
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class FeatureFlagAnalytics(Base):
@@ -43,8 +43,8 @@ class FeatureFlagAnalytics(Base):
 
     __table_args__ = (
         # Composite indexes for common queries
-        Index('ix_feature_flag_analytics_flag_date', 'flag_name', 'checked_at'),
-        Index('ix_feature_flag_analytics_user_date', 'user_id', 'checked_at'),
+        Index("ix_feature_flag_analytics_flag_date", "flag_name", "checked_at"),
+        Index("ix_feature_flag_analytics_user_date", "user_id", "checked_at"),
     )
 
     def __repr__(self):

@@ -1,3 +1,26 @@
+---
+title: Phase 14 Production Deploy
+slug: phases/phase-14-production-deploy
+summary: "> **V2 PHASE DOCUMENT**"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - ai-agents
+tags:
+  - phase
+  - production
+  - deploy
+category: planning
+ai_summary: >-
+  > V2 PHASE DOCUMENT > > This phase description is part of the canonical 0–14
+  V2 plan. > It is intended to guide both human developers and Claude Code >
+  sessions. Always read DEVELOPMENT_PHASES_V2.md and BACKEND_ARCHITECTURE.md >
+  alongside this document. Deploy to production and hand off runbooks....
+---
+
 # Phase 14: Production Deployment
 
 > **V2 PHASE DOCUMENT**
@@ -12,6 +35,7 @@
 Deploy to production and hand off runbooks.
 
 See also:
+
 - [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)
 - [PHASE_STATUS.md](../../PHASE_STATUS.md)
 - [BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md)

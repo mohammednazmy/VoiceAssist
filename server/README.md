@@ -1,4 +1,20 @@
+---
+title: Legacy Server (Deprecated)
+description: Legacy backend service - DO NOT USE for new development
+version: 1.0.0
+status: deprecated
+last_updated: 2025-11-27
+---
+
 # VoiceAssist Server
+
+> **DEPRECATION NOTICE**
+>
+> This `server/` directory is a **legacy stub** and should **NOT** be used for new development.
+>
+> **Use `services/api-gateway/` instead** - This is the canonical, production-ready backend.
+>
+> This directory is preserved only for historical reference and documentation of the API response envelope format.
 
 ## Overview
 
@@ -44,21 +60,21 @@ All API endpoints return responses wrapped in a standard envelope for consistent
 
 ### Standard Error Codes
 
-| Code | HTTP Status | Meaning | When to Use |
-|------|-------------|---------|-------------|
-| `AUTH_FAILED` | 401 | Authentication failed | Invalid or expired JWT token |
-| `AUTH_REQUIRED` | 401 | Authentication required | No token provided |
-| `FORBIDDEN` | 403 | Insufficient permissions | User lacks required role (e.g., admin) |
-| `VALIDATION_ERROR` | 422 | Request validation failed | Invalid request body, missing required fields |
-| `RATE_LIMITED` | 429 | Too many requests | User or IP exceeded rate limit |
-| `PHI_DETECTED` | 200* | PHI detected in query | Query routed to local LLM (not an error) |
-| `PHI_REDACTED` | 200* | PHI redacted from response | Safety filter triggered, partial response |
-| `KB_TIMEOUT` | 504 | KB search timeout | Qdrant didn't respond within timeout |
-| `TOOL_ERROR` | 503 | External tool failure | PubMed, UpToDate, or other API failed |
-| `LLM_ERROR` | 503 | LLM generation failed | OpenAI or local Llama error |
-| `INTERNAL_ERROR` | 500 | Unexpected server error | Unhandled exception, database error |
-| `NOT_FOUND` | 404 | Resource not found | Document, session, or user doesn't exist |
-| `CONFLICT` | 409 | Resource conflict | Document with same key already exists |
+| Code               | HTTP Status | Meaning                    | When to Use                                   |
+| ------------------ | ----------- | -------------------------- | --------------------------------------------- |
+| `AUTH_FAILED`      | 401         | Authentication failed      | Invalid or expired JWT token                  |
+| `AUTH_REQUIRED`    | 401         | Authentication required    | No token provided                             |
+| `FORBIDDEN`        | 403         | Insufficient permissions   | User lacks required role (e.g., admin)        |
+| `VALIDATION_ERROR` | 422         | Request validation failed  | Invalid request body, missing required fields |
+| `RATE_LIMITED`     | 429         | Too many requests          | User or IP exceeded rate limit                |
+| `PHI_DETECTED`     | 200\*       | PHI detected in query      | Query routed to local LLM (not an error)      |
+| `PHI_REDACTED`     | 200\*       | PHI redacted from response | Safety filter triggered, partial response     |
+| `KB_TIMEOUT`       | 504         | KB search timeout          | Qdrant didn't respond within timeout          |
+| `TOOL_ERROR`       | 503         | External tool failure      | PubMed, UpToDate, or other API failed         |
+| `LLM_ERROR`        | 503         | LLM generation failed      | OpenAI or local Llama error                   |
+| `INTERNAL_ERROR`   | 500         | Unexpected server error    | Unhandled exception, database error           |
+| `NOT_FOUND`        | 404         | Resource not found         | Document, session, or user doesn't exist      |
+| `CONFLICT`         | 409         | Resource conflict          | Document with same key already exists         |
 
 **Note**: `PHI_DETECTED` and `PHI_REDACTED` use HTTP 200 because they're successful responses with warnings, not errors.
 
@@ -248,22 +264,23 @@ During **Phases 0-10**, all services run in this single application as routers. 
 
 ### Service Mapping
 
-| Service (SERVICE_CATALOG.md) | Implementation in server/ |
-|------------------------------|---------------------------|
-| **Auth Service** | `app/api/auth.py` + `app/services/auth/` + `app/core/security.py` |
-| **KB Service / Medical KB** | `app/api/kb.py` or `app/api/chat.py` + `app/services/rag_service.py` |
-| **Orchestrator/Conductor** | `app/services/ai/orchestrator.py` (part of KB Service) |
-| **Admin API** | `app/api/admin.py` |
-| **Voice Proxy / Realtime** | `app/api/realtime.py` or `app/api/voice.py` + `app/services/voice/` |
-| **Search Service** | `app/services/search_service.py` + `app/core/vector_db.py` |
-| **Ingestion Service** | `app/services/ingestion/` + `app/tasks/indexing.py` |
-| **PHI Detector** | `app/services/phi/phi_detector.py` |
-| **External APIs** | `app/services/external_apis/` (pubmed.py, uptodate.py, nextcloud.py) |
-| **Logging Service** | `app/core/logging.py` + `app/core/middleware.py` |
+| Service (SERVICE_CATALOG.md) | Implementation in server/                                            |
+| ---------------------------- | -------------------------------------------------------------------- |
+| **Auth Service**             | `app/api/auth.py` + `app/services/auth/` + `app/core/security.py`    |
+| **KB Service / Medical KB**  | `app/api/kb.py` or `app/api/chat.py` + `app/services/rag_service.py` |
+| **Orchestrator/Conductor**   | `app/services/ai/orchestrator.py` (part of KB Service)               |
+| **Admin API**                | `app/api/admin.py`                                                   |
+| **Voice Proxy / Realtime**   | `app/api/realtime.py` or `app/api/voice.py` + `app/services/voice/`  |
+| **Search Service**           | `app/services/search_service.py` + `app/core/vector_db.py`           |
+| **Ingestion Service**        | `app/services/ingestion/` + `app/tasks/indexing.py`                  |
+| **PHI Detector**             | `app/services/phi/phi_detector.py`                                   |
+| **External APIs**            | `app/services/external_apis/` (pubmed.py, uptodate.py, nextcloud.py) |
+| **Logging Service**          | `app/core/logging.py` + `app/core/middleware.py`                     |
 
 ### Orchestrator / Conductor
 
 The orchestrator (`app/services/ai/orchestrator.py` or `app/services/rag_service.py`) is the core component of the **KB Service** that coordinates:
+
 - Intent classification
 - PHI detection and routing (local vs cloud LLM)
 - KB retrieval (semantic search)
@@ -346,28 +363,33 @@ server/
 ### Installation
 
 1. Create virtual environment:
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
 2. Install dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 3. Configure environment:
+
 ```bash
 cp .env.example .env
 # Edit .env with your settings
 ```
 
 4. Run database migrations:
+
 ```bash
 alembic upgrade head
 ```
 
 5. Start server:
+
 ```bash
 uvicorn app.main:app --reload
 ```
@@ -378,43 +400,52 @@ API documentation: `http://localhost:8000/docs`
 ## Key Services
 
 ### AI Orchestrator
+
 Routes requests to appropriate AI model (local vs cloud) based on privacy classification.
 
 ### Medical RAG System
+
 Retrieves relevant medical knowledge from textbooks, journals, and guidelines using vector search.
 
 ### PDF Processing Pipeline
+
 Downloads, extracts text, generates embeddings, and indexes medical literature.
 
 ### Integration Services
+
 Connects to external services like Nextcloud, calendar, email, PubMed, etc.
 
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/login` - User login
 - `POST /api/auth/logout` - User logout
 - `POST /api/auth/refresh` - Refresh JWT token
 
 ### Chat
+
 - `WS /api/chat/ws` - WebSocket for real-time chat
 - `POST /api/chat/message` - Send message (REST alternative)
 - `GET /api/chat/conversations` - List conversations
 - `GET /api/chat/conversations/{id}` - Get conversation details
 
 ### Medical
+
 - `POST /api/medical/search` - Search medical knowledge base
 - `POST /api/medical/journal/search` - Search PubMed
 - `POST /api/medical/journal/download` - Download PDF
 - `GET /api/medical/textbook/{id}/section/{section}` - Get textbook content
 
 ### Admin
+
 - `GET /api/admin/dashboard` - Dashboard metrics
 - `GET /api/admin/services/status` - Service health
 - `POST /api/admin/knowledge/upload` - Upload document
 - `POST /api/admin/knowledge/reindex` - Trigger reindex
 
 ### Integrations
+
 - `GET /api/integrations/calendar/events` - Get calendar events
 - `POST /api/integrations/calendar/events` - Create event
 - `GET /api/integrations/nextcloud/files` - List files
@@ -1004,30 +1035,30 @@ class VectorDBStatsResponse(BaseModel):
 
 ```typescript
 // admin-panel/src/services/api.ts
-import axios from 'axios';
+import axios from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    "Content-Type": "application/json",
+  },
 });
 
 // Upload document
 export async function uploadDocument(
   file: File,
   sourceType: string,
-  specialty: string
+  specialty: string,
 ): Promise<DocumentUploadResponse> {
   const formData = new FormData();
-  formData.append('file', file);
-  formData.append('sourceType', sourceType);
-  formData.append('specialty', specialty);
+  formData.append("file", file);
+  formData.append("sourceType", sourceType);
+  formData.append("specialty", specialty);
 
-  const response = await api.post('/api/admin/knowledge/upload', formData, {
+  const response = await api.post("/api/admin/knowledge/upload", formData, {
     headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+      "Content-Type": "multipart/form-data",
+    },
   });
 
   return response.data;
@@ -1037,23 +1068,20 @@ export async function uploadDocument(
 export async function listDocuments(
   skip: number = 0,
   limit: number = 50,
-  status?: string
+  status?: string,
 ): Promise<DocumentListResponse[]> {
-  const response = await api.get('/api/admin/knowledge/documents', {
-    params: { skip, limit, status }
+  const response = await api.get("/api/admin/knowledge/documents", {
+    params: { skip, limit, status },
   });
 
   return response.data;
 }
 
 // Trigger reindex
-export async function triggerReindex(
-  documentIds: string[] = [],
-  force: boolean = false
-): Promise<ReindexResponse> {
-  const response = await api.post('/api/admin/knowledge/reindex', {
+export async function triggerReindex(documentIds: string[] = [], force: boolean = false): Promise<ReindexResponse> {
+  const response = await api.post("/api/admin/knowledge/reindex", {
     documentIds,
-    force
+    force,
   });
 
   return response.data;
@@ -1061,7 +1089,7 @@ export async function triggerReindex(
 
 // Get vector DB stats
 export async function getVectorDBStats(): Promise<VectorDBStatsResponse> {
-  const response = await api.get('/api/admin/knowledge/stats');
+  const response = await api.get("/api/admin/knowledge/stats");
   return response.data;
 }
 ```
@@ -1096,11 +1124,13 @@ JWT_SECRET=...
 ## Development
 
 ### Running Tests
+
 ```bash
 pytest tests/
 ```
 
 ### Code Quality
+
 ```bash
 # Format code
 black app/
@@ -1113,6 +1143,7 @@ mypy app/
 ```
 
 ### Database Migrations
+
 ```bash
 # Create migration
 alembic revision --autogenerate -m "description"
@@ -1127,11 +1158,13 @@ alembic downgrade -1
 ## Deployment
 
 ### Docker
+
 ```bash
 docker-compose up -d
 ```
 
 ### Production
+
 See [INFRASTRUCTURE_SETUP.md](../docs/INFRASTRUCTURE_SETUP.md) for detailed deployment instructions.
 
 ## Monitoring
@@ -1159,16 +1192,19 @@ See [INFRASTRUCTURE_SETUP.md](../docs/INFRASTRUCTURE_SETUP.md) for detailed depl
 ## Troubleshooting
 
 ### Server won't start
+
 - Check port 8000 is not in use: `lsof -i :8000`
 - Verify database connection
 - Check environment variables
 
 ### Slow responses
+
 - Check database query performance
 - Monitor vector search latency
 - Review API rate limits
 
 ### Memory issues
+
 - Monitor Ollama memory usage
 - Check vector DB size
 - Review background task queue

@@ -1,3 +1,25 @@
+---
+title: Open Questions
+slug: client-implementation/open-questions
+summary: "**Date:** 2025-11-21"
+status: stable
+stability: production
+owner: frontend
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - ai-agents
+tags:
+  - open
+  - questions
+category: planning
+ai_summary: >-
+  Version: 2.0 Date: 2025-11-21 Status: ✅ Critical Decisions Made - Ready for
+  Milestone 1 Branch: client-roadmap-reconciliation --- All 8 critical questions
+  have been resolved! Development can proceed. See Resolved Decisions section
+  for details. --- This document consolidates all open questions tha...
+---
+
 # VoiceAssist Client Development - Open Questions & Decisions
 
 **Version:** 2.0
@@ -11,16 +33,16 @@
 
 **All 8 critical questions have been resolved! Development can proceed.**
 
-| Question | Decision | Impact |
-|----------|----------|--------|
-| Q1: Design System | ✅ Create from scratch (Radix UI + Tailwind) | Week 1-2 |
-| Q2: Storybook | ✅ Yes, include in monorepo setup | Week 1-2 |
-| Q6: Deployment | ✅ Ubuntu server (Docker Compose) initially | Week 1-2 |
-| Q10: UpToDate License | ✅ No budget, use free sources | Milestone 5 |
-| Q15: Offline PHI | ✅ No PHI offline, non-PHI only | Milestone 6 |
-| Q18: GPU Budget | ✅ No budget, use OpenAI APIs | Milestone 3 |
-| Q22: Image Datasets | ✅ Use pre-trained models (GPT-4 Vision) | Milestone 6 |
-| Q23: AI Liability | ✅ Decision support only, clear disclaimers | All phases |
+| Question              | Decision                                     | Impact      |
+| --------------------- | -------------------------------------------- | ----------- |
+| Q1: Design System     | ✅ Create from scratch (Radix UI + Tailwind) | Week 1-2    |
+| Q2: Storybook         | ✅ Yes, include in monorepo setup            | Week 1-2    |
+| Q6: Deployment        | ✅ Ubuntu server (Docker Compose) initially  | Week 1-2    |
+| Q10: UpToDate License | ✅ No budget, use free sources               | Milestone 5 |
+| Q15: Offline PHI      | ✅ No PHI offline, non-PHI only              | Milestone 6 |
+| Q18: GPU Budget       | ✅ No budget, use OpenAI APIs                | Milestone 3 |
+| Q22: Image Datasets   | ✅ Use pre-trained models (GPT-4 Vision)     | Milestone 6 |
+| Q23: AI Liability     | ✅ Decision support only, clear disclaimers  | All phases  |
 
 **See [Resolved Decisions](#resolved-decisions) section for details.**
 
@@ -31,6 +53,7 @@
 This document consolidates all open questions that require answers before proceeding with client development. Questions are organized by category and priority.
 
 **Total Questions:** 23
+
 - **Critical (resolved):** 8 questions ✅
 - **Medium Priority (answer by specific milestones):** 10 questions
 - **Low Priority (can decide later):** 5 questions
@@ -39,14 +62,14 @@ This document consolidates all open questions that require answers before procee
 
 ## Summary Dashboard
 
-| Category | Total | Critical | Medium | Low |
-|----------|-------|----------|--------|-----|
-| Design & UX | 5 | 2 | 2 | 1 |
-| Infrastructure & Operations | 4 | 2 | 2 | 0 |
-| External Dependencies | 5 | 1 | 3 | 1 |
-| Compliance & Security | 3 | 1 | 2 | 0 |
-| AI & Machine Learning | 6 | 2 | 1 | 3 |
-| **Total** | **23** | **8** | **10** | **5** |
+| Category                    | Total  | Critical | Medium | Low   |
+| --------------------------- | ------ | -------- | ------ | ----- |
+| Design & UX                 | 5      | 2        | 2      | 1     |
+| Infrastructure & Operations | 4      | 2        | 2      | 0     |
+| External Dependencies       | 5      | 1        | 3      | 1     |
+| Compliance & Security       | 3      | 1        | 2      | 0     |
+| AI & Machine Learning       | 6      | 2        | 1      | 3     |
+| **Total**                   | **23** | **8**    | **10** | **5** |
 
 ---
 
@@ -69,16 +92,19 @@ All 8 critical questions have been answered and documented below. These decision
 ---
 
 #### ✅ Q1: Design System Availability - RESOLVED
+
 **Decision Date:** 2025-11-21
 **Decision Maker:** Product Team
 **Final Decision:** **Create design system from scratch**
 
 **Rationale:**
+
 - No existing design system available
 - Create basic design system using Radix UI + Tailwind as foundation
 - Focus on medical professionalism and trust-building design
 
 **Implementation Details:**
+
 - **Design Tokens Package:** `@voiceassist/design-tokens`
   - Colors: Medical blues, teals, grays (trust-building palette)
   - Typography: System fonts (San Francisco, Segoe UI, Roboto)
@@ -98,17 +124,20 @@ All 8 critical questions have been answered and documented below. These decision
 ---
 
 #### ✅ Q2: Storybook Setup - RESOLVED
+
 **Decision Date:** 2025-11-21
 **Decision Maker:** Product Team
 **Final Decision:** **Yes, include Storybook in monorepo setup**
 
 **Rationale:**
+
 - Component documentation from day 1
 - Visual testing during development
 - Accessibility testing integration (axe-core)
 - Better collaboration and design system showcase
 
 **Implementation Details:**
+
 - **Setup:** Storybook 8.0+ with Vite
 - **Addons:**
   - Accessibility addon (axe-core)
@@ -125,11 +154,13 @@ All 8 critical questions have been answered and documented below. These decision
 ---
 
 #### ✅ Q6: Deployment Strategy - RESOLVED
+
 **Decision Date:** 2025-11-21
 **Decision Maker:** Product Team
 **Final Decision:** **Ubuntu server (Docker Compose) initially, evaluate Vercel/Netlify after Milestone 1**
 
 **Rationale:**
+
 - Leverage existing production-ready Ubuntu server infrastructure
 - Simple deployment via Docker Compose (same as backend)
 - No additional cost or complexity
@@ -139,6 +170,7 @@ All 8 critical questions have been answered and documented below. These decision
   - Preview deployments
 
 **Implementation Details:**
+
 - **Backend:** Ubuntu server (asimo.io) - existing
 - **Frontend:** Ubuntu server (Docker Compose) for Milestone 1
   - Deploy web-app, admin-panel, docs-site as Docker containers
@@ -161,11 +193,13 @@ All 8 critical questions have been answered and documented below. These decision
 ---
 
 #### ✅ Q10: UpToDate Licensing Budget - RESOLVED
+
 **Decision Date:** 2025-11-21
 **Decision Maker:** Product Team
 **Final Decision:** **No budget allocated, use free sources**
 
 **Rationale:**
+
 - UpToDate license ($500-1000/month) not in current budget
 - Excellent free alternatives available:
   - PubMed (35M+ citations, free)
@@ -175,6 +209,7 @@ All 8 critical questions have been answered and documented below. These decision
 - Re-evaluate in later milestones if user demand justifies cost
 
 **Implementation Details:**
+
 - **Primary Sources (Milestone 5):**
   1. **PubMed** - Week 40-42 (highest priority)
   2. **OpenEvidence** - Week 37-38 (high priority)
@@ -189,16 +224,19 @@ All 8 critical questions have been answered and documented below. These decision
 ---
 
 #### ✅ Q15: Offline Mode PHI Regulations - RESOLVED
+
 **Decision Date:** 2025-11-21
 **Decision Maker:** Product Team (with compliance consideration)
 **Final Decision:** **No PHI in offline storage, non-PHI only with encryption**
 
 **Rationale:**
+
 - HIPAA compliance: Safest approach is no offline PHI
 - Minimize risk of PHI exposure on lost/stolen devices
 - Offline functionality limited to non-PHI features
 
 **Implementation Details:**
+
 - **Allowed Offline (non-PHI):**
   - Medical knowledge base articles
   - De-identified conversation history (remove names, dates, identifiers)
@@ -228,17 +266,20 @@ All 8 critical questions have been answered and documented below. These decision
 ---
 
 #### ✅ Q18: GPU Infrastructure Budget - RESOLVED
+
 **Decision Date:** 2025-11-21
 **Decision Maker:** Product Team
 **Final Decision:** **No budget for GPU infrastructure, use hosted OpenAI APIs**
 
 **Rationale:**
+
 - GPU infrastructure ($500-1500/month) not in current budget
 - OpenAI APIs provide good medical performance
 - Hosted services (OpenAI) sufficient for MVP
 - Re-assess GPU needs after core system is live and user feedback collected
 
 **Implementation Details:**
+
 - **Current Approach (Milestone 3 and beyond):**
   - Continue with OpenAI text-embedding-3-small for embeddings
   - Use OpenAI GPT-4 for generation
@@ -259,16 +300,19 @@ All 8 critical questions have been answered and documented below. These decision
 ---
 
 #### ✅ Q22: Medical Image Datasets - RESOLVED
+
 **Decision Date:** 2025-11-21
 **Decision Maker:** Product Team
 **Final Decision:** **Use pre-trained models (GPT-4 Vision), evaluate public datasets later**
 
 **Rationale:**
+
 - Pre-trained GPT-4 Vision provides good accuracy (80-90%) out-of-the-box
 - No need for custom training or labeled datasets initially
 - Public datasets available if needed later (HAM10000, ChestX-ray14)
 
 **Implementation Details:**
+
 - **Initial Approach (Milestone 6):**
   - GPT-4 Vision for medical image analysis
   - Support use cases:
@@ -295,17 +339,20 @@ All 8 critical questions have been answered and documented below. These decision
 ---
 
 #### ✅ Q23: AI Diagnosis Liability - RESOLVED
+
 **Decision Date:** 2025-11-21
 **Decision Maker:** Product Team
 **Final Decision:** **Decision support tool only, clear disclaimers, no diagnostic claims**
 
 **Rationale:**
+
 - Avoid FDA medical device classification
 - Lower liability risk
 - Faster to market (no FDA approval required)
 - Clear positioning as educational/decision support tool
 
 **Implementation Details:**
+
 - **Positioning:**
   - "Clinical decision support tool"
   - "For educational and reference purposes"
@@ -314,6 +361,7 @@ All 8 critical questions have been answered and documented below. These decision
 
 - **Required Disclaimers:**
   1. **On First Use:**
+
      ```
      VoiceAssist is a clinical decision support tool, not a diagnostic device.
      All AI-generated information should be verified with primary sources and
@@ -321,6 +369,7 @@ All 8 critical questions have been answered and documented below. These decision
      you acknowledge that VoiceAssist is for educational and reference
      purposes only.
      ```
+
      - User must accept terms before using
 
   2. **Footer on Every Page:**
@@ -355,6 +404,7 @@ All 8 critical questions have been answered and documented below. These decision
 ### Design & UX
 
 #### Q1: Design System Availability ⚠️ CRITICAL
+
 **Category:** Design & UX
 **Priority:** P0 (Critical)
 **Impact:** HIGH - Affects Week 1-2 timeline
@@ -364,6 +414,7 @@ All 8 critical questions have been answered and documented below. These decision
 Does a design system already exist (Figma/Sketch files, style guide, component library)?
 
 **Options:**
+
 - **A)** Existing design system available
   - Use as-is, create design tokens from it
   - Timeline: 1 week
@@ -380,6 +431,7 @@ Does a design system already exist (Figma/Sketch files, style guide, component l
 **Assume Option C** (no existing design system).
 
 **Recommended Approach:**
+
 1. Research medical UI references:
    - Medscape, UpToDate, Epic MyChart
    - Healthcare.gov, Patient portals
@@ -397,6 +449,7 @@ Does a design system already exist (Figma/Sketch files, style guide, component l
 **Effort:** 1 designer + 1 developer
 
 **What We Need:**
+
 - [ ] Confirmation of existing design system availability
 - [ ] Brand guidelines (if any)
 - [ ] Logo files (SVG, PNG)
@@ -409,6 +462,7 @@ If this decision is delayed, Week 1-2 timeline extends to Week 1-3.
 ---
 
 #### Q2: Storybook Setup ⚠️ CRITICAL
+
 **Category:** Design & UX
 **Priority:** P0 (Critical)
 **Impact:** MEDIUM - Affects Week 1-2 tasks
@@ -418,6 +472,7 @@ If this decision is delayed, Week 1-2 timeline extends to Week 1-3.
 Should Storybook be part of the initial monorepo setup?
 
 **Options:**
+
 - **A)** Yes, set up Storybook in Week 1-2
   - Better component documentation from day 1
   - Visual testing during development
@@ -434,6 +489,7 @@ Should Storybook be part of the initial monorepo setup?
 **Recommend Option A** (set up Storybook in Week 1-2).
 
 **Benefits:**
+
 - Component documentation from day 1
 - Visual regression testing
 - Accessibility testing with axe-core
@@ -442,10 +498,12 @@ Should Storybook be part of the initial monorepo setup?
 - Design system showcase
 
 **Drawbacks:**
+
 - Adds 0.5 week to Phase 0
 - Requires Storybook maintenance
 
 **Recommended Setup:**
+
 - Storybook 7.0+ with Vite
 - Accessibility addon (axe-core)
 - Docs addon for MDX documentation
@@ -453,6 +511,7 @@ Should Storybook be part of the initial monorepo setup?
 - Viewport addon for responsive testing
 
 **What We Need:**
+
 - [ ] Approval to extend Phase 0 by 0.5 week if needed
 - [ ] Decision: Deploy Storybook or keep local only?
 
@@ -464,6 +523,7 @@ If deferred to Week 10+, component documentation will be incomplete, making coll
 ### Infrastructure & Operations
 
 #### Q6: Deployment Strategy ⚠️ CRITICAL
+
 **Category:** Infrastructure
 **Priority:** P0 (Critical)
 **Impact:** HIGH - Affects deployment architecture
@@ -473,6 +533,7 @@ If deferred to Week 10+, component documentation will be incomplete, making coll
 Should frontend apps deploy to the same Ubuntu server or separate infrastructure?
 
 **Options:**
+
 - **A)** Same Ubuntu server (asimo.io)
   - **Pros:** Simpler, single point of management, no extra cost
   - **Cons:** Single point of failure, no global CDN, manual deployments
@@ -497,6 +558,7 @@ Should frontend apps deploy to the same Ubuntu server or separate infrastructure
 **Recommend Option B** (hybrid approach):
 
 **Architecture:**
+
 - **Backend:** Ubuntu server at asimo.io (existing, production-ready)
   - API Gateway, databases, services
   - Existing monitoring stack
@@ -509,6 +571,7 @@ Should frontend apps deploy to the same Ubuntu server or separate infrastructure
   - Automatic preview deployments for PRs
 
 **Benefits:**
+
 - Frontend updates don't require backend deployment
 - Global CDN improves performance
 - Free tier sufficient for development/testing
@@ -516,15 +579,18 @@ Should frontend apps deploy to the same Ubuntu server or separate infrastructure
 - Automatic SSL certificates
 
 **Configuration:**
+
 - DNS: Point frontend subdomains to Vercel/Netlify
 - CORS: Update backend to allow frontend origins
 - Environment variables: API_URL, WebSocket URL
 
 **Cost Estimate:**
+
 - Vercel/Netlify: $0-20/month (free tier: 100GB bandwidth)
 - Total: $0-20/month extra
 
 **What We Need:**
+
 - [ ] Approval for Vercel/Netlify usage
 - [ ] DNS access to configure subdomains
 - [ ] Approval for $0-20/month budget (if exceeding free tier)
@@ -535,6 +601,7 @@ Deploy to Ubuntu server with Nginx serving static files and reverse proxy to bac
 ---
 
 #### Q18: GPU Infrastructure Budget ⚠️ CRITICAL
+
 **Category:** AI & Machine Learning
 **Priority:** P0 (Critical)
 **Impact:** HIGH - Affects Milestone 3 (Advanced AI)
@@ -547,6 +614,7 @@ Do we have budget/resources for GPU infrastructure to run BioGPT/PubMedBERT?
 Phase 5 (Medical AI) was completed with OpenAI embeddings (MVP). Specialized medical models (BioGPT, PubMedBERT) were deferred due to GPU infrastructure requirements.
 
 **Options:**
+
 - **A)** Yes, budget approved for GPU infrastructure
   - **Benefits:**
     - Medical-specific embeddings (higher accuracy)
@@ -568,23 +636,27 @@ Phase 5 (Medical AI) was completed with OpenAI embeddings (MVP). Specialized med
 **Recommend Option A if budget allows**, with cost-benefit analysis:
 
 **Year 1 Projection:**
+
 - OpenAI embeddings: ~$300-500/month (at 100k queries/month)
 - BioGPT self-hosted: $500/month (GPU) + minimal API costs
 - **Break-even:** ~6 months
 - **Year 1 savings:** $1,200-2,400
 
 **Accuracy Improvement (estimated):**
+
 - RAG precision: +5-10%
 - Medical entity recognition: +15-20%
 - Domain-specific queries: +20-30%
 
 **Recommended Approach:**
+
 1. **Month 1-3:** Use OpenAI embeddings (current)
 2. **Month 4:** Evaluate BioGPT/PubMedBERT on test dataset
 3. **Month 5:** If accuracy improvement > 10%, migrate
 4. **Month 6+:** Self-hosted medical models
 
 **What We Need:**
+
 - [ ] Budget approval for $500-1500/month GPU infrastructure
 - [ ] Choice of cloud provider (AWS, GCP, Azure)
 - [ ] IT approval for GPU instance provisioning
@@ -595,6 +667,7 @@ Continue with OpenAI embeddings. Accuracy will be good but not medical-optimized
 ---
 
 #### Q10: UpToDate Licensing Budget ⚠️ CRITICAL
+
 **Category:** External Dependencies
 **Priority:** P0 (Critical)
 **Impact:** HIGH - Affects Milestone 5
@@ -607,6 +680,7 @@ What's the budget for UpToDate licensing (~$500-1000/month)?
 UpToDate is the gold-standard clinical decision support tool used by healthcare professionals worldwide. Integration requires a commercial license.
 
 **Options:**
+
 - **A)** Budget approved for UpToDate
   - **Cost:** $500-1000/month (~$6,000-12,000/year)
   - **Benefits:**
@@ -629,6 +703,7 @@ UpToDate is the gold-standard clinical decision support tool used by healthcare 
 **Budget approval needed.** UpToDate is highly valuable but expensive.
 
 **Cost-Benefit Analysis:**
+
 - **Value per User:** If 100 clinicians use VoiceAssist daily
   - Cost per user: $5-10/month
   - Time saved: ~30 min/day (faster lookups)
@@ -636,17 +711,20 @@ UpToDate is the gold-standard clinical decision support tool used by healthcare 
   - **ROI:** 5-10x
 
 **Recommended Approach:**
+
 1. **Start with free sources:** PubMed, OpenEvidence, guidelines
 2. **Evaluate user feedback:** Do users need UpToDate?
 3. **Month 6:** If high demand, pursue UpToDate license
 4. **Year 1:** Re-evaluate based on usage metrics
 
 **Alternatives (if no budget):**
+
 - **DynaMed:** $400-800/month (alternative to UpToDate)
 - **ClinicalKey:** $300-600/month (Elsevier)
 - **PubMed + OpenEvidence:** Free
 
 **What We Need:**
+
 - [ ] Budget approval for $500-1000/month
 - [ ] Legal approval for commercial API license
 - [ ] Decision on alternatives if UpToDate not approved
@@ -659,6 +737,7 @@ No UpToDate integration. Use free sources (PubMed, OpenEvidence). Users may need
 ### Compliance & Security
 
 #### Q15: Offline Mode PHI Regulations ⚠️ CRITICAL
+
 **Category:** Compliance & Security
 **Priority:** P0 (Critical)
 **Impact:** HIGH - Affects Milestone 6 (Offline/PWA)
@@ -671,6 +750,7 @@ What are the regulatory constraints on offline PHI storage under HIPAA?
 Milestone 6 includes offline mode and PWA features. Storing PHI offline (on user's device) requires careful HIPAA compliance.
 
 **Options:**
+
 - **A)** PHI allowed offline with proper encryption
   - **Requirements:**
     - AES-256 encryption for offline data
@@ -702,12 +782,14 @@ Milestone 6 includes offline mode and PWA features. Storing PHI offline (on user
 **Strongly recommend Option C** (consult compliance officer), then implement **Option B** (non-PHI only) for safety.
 
 **Recommended Approach:**
+
 1. **Before Week 45:** Consult with HIPAA compliance officer
 2. **Get written approval** for offline PHI storage (if allowed)
 3. **Implement Option B** (non-PHI only) as default
 4. **If Option A approved:** Add encrypted PHI storage as optional feature
 
 **Non-PHI Offline Mode (Recommended Baseline):**
+
 - Medical knowledge base articles (cached)
 - De-identified conversation history:
   - Remove patient names, dates, identifiers
@@ -717,6 +799,7 @@ Milestone 6 includes offline mode and PWA features. Storing PHI offline (on user
 - UI assets (JavaScript, CSS, images)
 
 **PHI Offline Mode (If Approved):**
+
 - Encrypted IndexedDB storage (AES-256)
 - Auto-expiration after 24 hours
 - Remote wipe via backend API
@@ -725,6 +808,7 @@ Milestone 6 includes offline mode and PWA features. Storing PHI offline (on user
 - Device PIN/biometric required to access
 
 **What We Need:**
+
 - [ ] Meeting with HIPAA compliance officer
 - [ ] Written approval for offline PHI storage (or denial)
 - [ ] Updated Business Associate Agreement (if PHI offline allowed)
@@ -740,6 +824,7 @@ Offline mode limited to non-PHI features. Users must be online for clinical feat
 ### AI & Machine Learning
 
 #### Q22: Medical Image Datasets ⚠️ CRITICAL
+
 **Category:** AI & Machine Learning
 **Priority:** P0 (Critical)
 **Impact:** HIGH - Affects Milestone 6 (Multi-Modal AI)
@@ -752,6 +837,7 @@ Do we have access to labeled medical image datasets for training/fine-tuning?
 Milestone 6 includes multi-modal AI (medical image analysis). Custom models require labeled medical images.
 
 **Options:**
+
 - **A)** Yes, licensed datasets available
   - **Use Cases:**
     - Train custom medical image classifiers
@@ -775,6 +861,7 @@ Milestone 6 includes multi-modal AI (medical image analysis). Custom models requ
 **Recommend Option B** (pre-trained models) initially.
 
 **Recommended Approach:**
+
 1. **Start with GPT-4 Vision:**
    - General medical image analysis
    - Supports dermatology, wounds, ECG, X-rays
@@ -793,15 +880,18 @@ Milestone 6 includes multi-modal AI (medical image analysis). Custom models requ
 4. **Month 12+:** Custom models if needed
 
 **Free Datasets Available:**
+
 - **HAM10000** (dermatology, 10k images, free)
 - **ChestX-ray14** (radiology, 100k images, free)
 - **PAD-UFES-20** (skin lesions, 2k images, free)
 
 **Licensed Datasets:**
+
 - **MIMIC-CXR** (radiology, 377k images, requires PhysioNet license)
 - **NIH Chest X-ray** (112k images, free but citation required)
 
 **What We Need:**
+
 - [ ] Decision: Pre-trained models only or custom training?
 - [ ] If custom: Dataset license approvals
 - [ ] If custom: GPU infrastructure (see Q18)
@@ -813,6 +903,7 @@ Use GPT-4 Vision only. Accuracy will be good (80-90%) but not medical-optimized 
 ---
 
 #### Q23: AI Diagnosis Liability ⚠️ CRITICAL
+
 **Category:** AI & Machine Learning
 **Priority:** P0 (Critical)
 **Impact:** CRITICAL - Legal/regulatory
@@ -825,6 +916,7 @@ What are the liability considerations for AI-assisted diagnosis? Should we pursu
 Medical AI systems that provide diagnostic advice may be considered medical devices requiring FDA approval.
 
 **Options:**
+
 - **A)** Decision support only (no diagnosis claims)
   - **Positioning:**
     - "Educational and decision support tool"
@@ -856,6 +948,7 @@ Medical AI systems that provide diagnostic advice may be considered medical devi
 **Strongly recommend Option A** (decision support only).
 
 **Recommended Approach:**
+
 1. **Position as decision support tool:**
    - "For educational purposes"
    - "Clinical decision support"
@@ -868,6 +961,7 @@ Medical AI systems that provide diagnostic advice may be considered medical devi
    - In Terms of Service
 
 3. **Clear user acknowledgment:**
+
    ```
    "VoiceAssist is a clinical decision support tool, not a diagnostic device.
    All AI-generated information should be verified with primary sources and
@@ -885,6 +979,7 @@ Medical AI systems that provide diagnostic advice may be considered medical devi
    - Encourage verification
 
 **Legal Requirements:**
+
 - [ ] Legal review of all AI features
 - [ ] Terms of Service updated with disclaimers
 - [ ] User acceptance flow implemented
@@ -892,6 +987,7 @@ Medical AI systems that provide diagnostic advice may be considered medical devi
 - [ ] Consult with FDA regulatory expert
 
 **What We Need:**
+
 - [ ] Legal review before Week 40
 - [ ] Decision: Decision support only or pursue FDA approval?
 - [ ] If FDA: Budget $50k-200k, timeline 6-12 months
@@ -908,6 +1004,7 @@ Medical AI systems that provide diagnostic advice may be considered medical devi
 ### Design & UX
 
 #### Q3: Component Library Strategy
+
 **Priority:** P2 (Medium)
 **Impact:** MEDIUM - Affects maintainability
 **Decision Needed By:** Week 1
@@ -916,6 +1013,7 @@ Medical AI systems that provide diagnostic advice may be considered medical devi
 Should we use shadcn/ui as-is or fork and customize extensively?
 
 **Options:**
+
 - **A)** Use shadcn/ui as-is
   - Easier updates from upstream
   - Community support
@@ -930,12 +1028,14 @@ Should we use shadcn/ui as-is or fork and customize extensively?
 **Recommend Option A** (use shadcn/ui as-is with theme customization).
 
 **Rationale:**
+
 - shadcn/ui is highly customizable via Tailwind
 - Design tokens provide sufficient control
 - Forking creates maintenance burden
 - Can always fork specific components later if needed
 
 **Recommendation:**
+
 - Start with shadcn/ui + design tokens
 - Customize colors, typography, spacing via tokens
 - Fork only if specific component needs major changes
@@ -943,6 +1043,7 @@ Should we use shadcn/ui as-is or fork and customize extensively?
 ---
 
 #### Q4: Dark Mode Priority
+
 **Priority:** P3 (Low)
 **Impact:** LOW - Can be added later
 **Decision Needed By:** Week 10
@@ -951,6 +1052,7 @@ Should we use shadcn/ui as-is or fork and customize extensively?
 Should dark mode be in MVP or deferred?
 
 **Options:**
+
 - **A)** MVP (Week 2)
   - More work upfront
   - Both themes from day 1
@@ -965,12 +1067,14 @@ Should dark mode be in MVP or deferred?
 **Recommend Option B** (defer to Week 10).
 
 **Rationale:**
+
 - Light mode sufficient for MVP
 - Medical professionals typically work in well-lit environments
 - Dark mode can be added in polish phase (Week 10)
 - Saves 0.5 week in Phase 0
 
 **Recommendation:**
+
 - Build light mode first
 - Design tokens support dark mode (prepare colors)
 - Implement dark mode in Week 10 (Phase 2, Advanced Features)
@@ -980,6 +1084,7 @@ Should dark mode be in MVP or deferred?
 ### Infrastructure & Operations
 
 #### Q7: Staging Environments
+
 **Priority:** P1 (High)
 **Impact:** MEDIUM - Affects testing workflow
 **Decision Needed By:** Week 2
@@ -988,6 +1093,7 @@ Should dark mode be in MVP or deferred?
 Do we need separate staging/production environments for frontend?
 
 **Options:**
+
 - **A)** Yes, separate staging environments
   - **Staging:** staging.voiceassist.asimo.io
   - **Production:** voiceassist.asimo.io
@@ -1003,12 +1109,14 @@ Do we need separate staging/production environments for frontend?
 **Recommend Option A** (separate staging environments).
 
 **Configuration:**
+
 - **Local Dev:** http://localhost:3000 → API at http://localhost:8000
 - **Staging:** https://staging.voiceassist.asimo.io → API at https://staging-api.asimo.io
 - **Production:** https://voiceassist.asimo.io → API at https://api.asimo.io
 - **PR Previews:** https://pr-123.voiceassist.vercel.app → API at staging
 
 **Workflow:**
+
 1. Develop locally
 2. Open PR → preview deployment
 3. Merge to `develop` → deploy to staging
@@ -1020,6 +1128,7 @@ Do we need separate staging/production environments for frontend?
 ---
 
 #### Q9: Telemetry Provider
+
 **Priority:** P1 (High)
 **Impact:** MEDIUM - Affects cost and features
 **Decision Needed By:** Week 19 (when implementing telemetry package)
@@ -1028,6 +1137,7 @@ Do we need separate staging/production environments for frontend?
 Which telemetry provider for client-side errors and performance monitoring?
 
 **Options:**
+
 - **A)** Sentry (error tracking)
   - **Cost:** $26/month (50k errors/month), $79/month (250k errors/month)
   - **Features:** Error tracking, performance monitoring, session replay
@@ -1052,20 +1162,24 @@ Which telemetry provider for client-side errors and performance monitoring?
 
 **Provisional Answer:**
 **Recommend hybrid approach:**
+
 - **Client-side errors:** Sentry ($26-79/month)
 - **Backend observability:** Existing Grafana stack (Prometheus, Loki, Jaeger)
 
 **Rationale:**
+
 - Sentry excels at client-side error tracking
 - Grafana stack already set up for backend
 - Best of both worlds, reasonable cost
 
 **Budget Estimate:**
+
 - **Development:** Sentry free tier (5k errors/month)
 - **Production:** Sentry $26-79/month (50k-250k errors/month)
 - **Year 1:** ~$300-900/year
 
 **What We Need:**
+
 - [ ] Budget approval for $26-79/month ($300-900/year)
 - [ ] Sentry account setup
 - [ ] GDPR review (if applicable)
@@ -1075,6 +1189,7 @@ Which telemetry provider for client-side errors and performance monitoring?
 ### External Dependencies
 
 #### Q11: External API Priorities
+
 **Priority:** P1 (High)
 **Impact:** MEDIUM - Affects Milestone 5 sequencing
 **Decision Needed By:** Week 35
@@ -1083,6 +1198,7 @@ Which telemetry provider for client-side errors and performance monitoring?
 What's the priority ranking for external medical integrations?
 
 **Options to Rank:**
+
 - UpToDate (clinical decision support)
 - OpenEvidence (evidence-based medicine)
 - PubMed (literature search)
@@ -1123,18 +1239,21 @@ What's the priority ranking for external medical integrations?
    - **Timeline:** Milestone 8+ (future)
 
 **Rationale:**
+
 - PubMed is free and essential for citations
 - OpenEvidence provides evidence synthesis for free
 - UpToDate requires budget approval
 - Drug info and trials can be deferred
 
 **What We Need:**
+
 - [ ] Confirmation of priority ranking
 - [ ] Budget approval for UpToDate (if high priority)
 
 ---
 
 #### Q12: EMR Integration Targets
+
 **Priority:** P2 (Medium)
 **Impact:** HIGH - Affects future EMR integration
 **Decision Needed By:** Month 6
@@ -1143,6 +1262,7 @@ What's the priority ranking for external medical integrations?
 Are there specific hospital partners or EMR systems to target first?
 
 **Options:**
+
 - **A)** Specific hospital partnership in progress
   - Focus on their EMR system first
   - Customized integration
@@ -1161,12 +1281,14 @@ Are there specific hospital partners or EMR systems to target first?
 **Recommend Option C** (generic FHIR R4) initially.
 
 **Rationale:**
+
 - HL7 FHIR R4 is standard across major EMRs
 - Avoid vendor lock-in
 - Easier to add hospital-specific customizations later
 - Start with read-only to reduce complexity
 
 **Recommended Approach:**
+
 1. **Implement FHIR R4 read-only:**
    - Patient demographics
    - Observations (labs, vitals)
@@ -1183,6 +1305,7 @@ Are there specific hospital partners or EMR systems to target first?
 4. **Timeline:** Milestone 7+ (Month 13+)
 
 **What We Need:**
+
 - [ ] Hospital partnership status
 - [ ] Preferred EMR systems
 - [ ] Read-only vs read-write requirements
@@ -1190,6 +1313,7 @@ Are there specific hospital partners or EMR systems to target first?
 ---
 
 #### Q14: FHIR Certification
+
 **Priority:** P2 (Medium)
 **Impact:** MEDIUM - Affects EMR credibility
 **Decision Needed By:** Month 12
@@ -1198,6 +1322,7 @@ Are there specific hospital partners or EMR systems to target first?
 Should we pursue HL7 FHIR compliance certification?
 
 **Options:**
+
 - **A)** Yes, pursue certification
   - **Cost:** $5,000-10,000
   - **Benefits:** Official certification, trust, partnerships
@@ -1210,11 +1335,13 @@ Should we pursue HL7 FHIR compliance certification?
 
 **Provisional Answer:**
 **Defer to Month 12+**, then decide based on:
+
 - Hospital partnership requirements
 - Market demand for certification
 - Budget availability
 
 **Recommended Approach:**
+
 1. **Build FHIR R4 support** (self-certified)
 2. **Test with major EMRs** (Epic, Cerner sandboxes)
 3. **Month 12:** Evaluate need for certification
@@ -1225,6 +1352,7 @@ Should we pursue HL7 FHIR compliance certification?
 ### Compliance & Security
 
 #### Q16: GDPR Priority
+
 **Priority:** P2 (Medium)
 **Impact:** MEDIUM - Affects Milestone 5
 **Decision Needed By:** Week 40
@@ -1233,6 +1361,7 @@ Should we pursue HL7 FHIR compliance certification?
 Is European deployment a near-term goal? Should we prioritize GDPR compliance?
 
 **Options:**
+
 - **A)** Yes, European deployment planned
   - Implement GDPR features in Milestone 5
   - Right to be forgotten
@@ -1249,11 +1378,13 @@ Is European deployment a near-term goal? Should we prioritize GDPR compliance?
 **Recommend Option B** (defer GDPR) unless European deployment confirmed.
 
 **Rationale:**
+
 - HIPAA compliance already achieved
 - GDPR can be added later if needed
 - Focus resources on core features first
 
 **If GDPR Needed Later:**
+
 - Right to be forgotten: User data deletion API
 - Data portability: Export user data (JSON, CSV)
 - Consent management: Cookie consent, data processing consent
@@ -1261,12 +1392,14 @@ Is European deployment a near-term goal? Should we prioritize GDPR compliance?
 - Effort: 2-3 weeks
 
 **What We Need:**
+
 - [ ] Confirmation of European deployment plans
 - [ ] Timeline for European launch (if planned)
 
 ---
 
 #### Q17: Data Residency Options
+
 **Priority:** P3 (Low)
 **Impact:** MEDIUM - Affects architecture
 **Decision Needed By:** Month 9
@@ -1275,6 +1408,7 @@ Is European deployment a near-term goal? Should we prioritize GDPR compliance?
 Should we implement data residency options (US, EU, other regions)?
 
 **Options:**
+
 - **A)** Yes, multi-region deployment
   - US region (primary)
   - EU region (GDPR compliance)
@@ -1290,11 +1424,13 @@ Should we implement data residency options (US, EU, other regions)?
 **Recommend Option B** (US-only) initially.
 
 **Rationale:**
+
 - US-only sufficient for initial launch
 - Global CDN (Vercel/Netlify) provides fast frontend worldwide
 - Backend API can be added to additional regions later if demand
 
 **If Multi-Region Needed:**
+
 - Deploy backend to AWS regions (us-east-1, eu-west-1)
 - Use Route 53 for geo-routing
 - Database replication across regions
@@ -1305,6 +1441,7 @@ Should we implement data residency options (US, EU, other regions)?
 ### AI & Machine Learning
 
 #### Q19: Model Training Strategy
+
 **Priority:** P2 (Medium)
 **Impact:** MEDIUM - Affects accuracy and cost
 **Decision Needed By:** Week 20
@@ -1313,6 +1450,7 @@ Should we implement data residency options (US, EU, other regions)?
 Should we fine-tune models or rely on prompt engineering only?
 
 **Options:**
+
 - **A)** Fine-tune models
   - **Benefits:** Higher accuracy, specialized to medical domain
   - **Drawbacks:** More work, requires training data, GPU infrastructure
@@ -1331,6 +1469,7 @@ Should we fine-tune models or rely on prompt engineering only?
 **Recommend Option C** (hybrid approach).
 
 **Recommended Approach:**
+
 1. **Fine-tune embeddings:**
    - Use BioGPT or PubMedBERT for medical embeddings
    - Improves retrieval quality
@@ -1353,6 +1492,7 @@ Should we fine-tune models or rely on prompt engineering only?
 ### Design & UX
 
 #### Q5: Mobile App Strategy
+
 **Priority:** P3 (Low)
 **Impact:** HIGH - Future roadmap
 **Decision Needed By:** After Milestone 2 (Month 6)
@@ -1361,6 +1501,7 @@ Should we fine-tune models or rely on prompt engineering only?
 Should we plan for native mobile apps (iOS/Android) or stick to responsive web/PWA?
 
 **Options:**
+
 - **A)** Responsive web + PWA only
   - **Benefits:** Single codebase, faster development, lower cost
   - **Limitations:** Limited native features, slower performance
@@ -1373,6 +1514,7 @@ Should we plan for native mobile apps (iOS/Android) or stick to responsive web/P
 **Recommend Option A** (responsive web + PWA) for Year 1.
 
 **Rationale:**
+
 - Build excellent responsive web experience first
 - PWA provides app-like experience (install to home screen)
 - Evaluate native apps after Milestone 2 based on:
@@ -1381,6 +1523,7 @@ Should we plan for native mobile apps (iOS/Android) or stick to responsive web/P
   - Feature requests (push notifications, offline mode, etc.)
 
 **Decision Point:** Month 6 (after Milestone 2)
+
 - If mobile usage > 40%: Consider native apps
 - If mobile usage < 40%: Continue with PWA
 
@@ -1389,6 +1532,7 @@ Should we plan for native mobile apps (iOS/Android) or stick to responsive web/P
 ### Infrastructure & Operations
 
 #### Q8: CI/CD Platform
+
 **Priority:** P3 (Low)
 **Impact:** LOW - Most platforms similar
 **Decision Needed By:** Week 1
@@ -1397,6 +1541,7 @@ Should we plan for native mobile apps (iOS/Android) or stick to responsive web/P
 CI/CD platform preference: GitHub Actions, GitLab CI, or CircleCI?
 
 **Options:**
+
 - **A)** GitHub Actions
   - Already using for backend
   - Tight GitHub integration
@@ -1412,6 +1557,7 @@ CI/CD platform preference: GitHub Actions, GitLab CI, or CircleCI?
 **Recommend Option A** (GitHub Actions).
 
 **Rationale:**
+
 - Already configured for backend
 - Tight integration with GitHub
 - Free for public repos, generous limits for private
@@ -1422,6 +1568,7 @@ CI/CD platform preference: GitHub Actions, GitLab CI, or CircleCI?
 ### External Dependencies
 
 #### Q13: Hospital Partnership Timeline
+
 **Priority:** P3 (Low)
 **Impact:** MEDIUM - Affects EMR integration planning
 **Decision Needed By:** Month 6
@@ -1433,6 +1580,7 @@ What's the timeline for hospital partnership discussions?
 Defer EMR integration to Milestone 7+ (Month 13+).
 
 **Recommended Approach:**
+
 1. **Focus on core features first** (Milestones 1-6)
 2. **Month 6:** Evaluate market demand for EMR integration
 3. **Month 9:** Begin hospital partnership discussions
@@ -1443,6 +1591,7 @@ Defer EMR integration to Milestone 7+ (Month 13+).
 ### AI & Machine Learning
 
 #### Q20: Model Evaluation Framework
+
 **Priority:** P3 (Low)
 **Impact:** MEDIUM - Affects quality assurance
 **Decision Needed By:** Week 25
@@ -1451,6 +1600,7 @@ Defer EMR integration to Milestone 7+ (Month 13+).
 What's the strategy for model evaluation and benchmarking?
 
 **Options:**
+
 - **A)** Manual evaluation by medical experts
 - **B)** Automated benchmarks (MedQA, PubMedQA, USMLE)
 - **C)** Hybrid (automated + manual)
@@ -1459,6 +1609,7 @@ What's the strategy for model evaluation and benchmarking?
 **Recommend Option C** (hybrid).
 
 **Recommended Approach:**
+
 1. **Automated benchmarks:**
    - MedQA dataset (US Medical Licensing Exam questions)
    - PubMedQA dataset (biomedical literature questions)
@@ -1477,6 +1628,7 @@ What's the strategy for model evaluation and benchmarking?
 ---
 
 #### Q21: Multi-Modal AI Use Cases Priority
+
 **Priority:** P3 (Low)
 **Impact:** MEDIUM - Affects Milestone 6
 **Decision Needed By:** Week 45
@@ -1485,6 +1637,7 @@ What's the strategy for model evaluation and benchmarking?
 Which medical image analysis use cases are highest priority?
 
 **Options to Rank:**
+
 - Radiology (X-ray, CT, MRI)
 - Dermatology (skin lesions)
 - Pathology (microscopy)
@@ -1520,6 +1673,7 @@ Which medical image analysis use cases are highest priority?
    - Niche use case
 
 **Rationale:**
+
 - Start with simpler use cases (dermatology, wounds)
 - Validate accuracy and user feedback
 - Expand to complex use cases (radiology) later
@@ -1532,6 +1686,7 @@ For each decision, use this template:
 
 ```markdown
 ### [Question Number]: [Question Title]
+
 **Category:** [Design & UX | Infrastructure | External Dependencies | Compliance | AI/ML]
 **Priority:** [P0 Critical | P1 High | P2 Medium | P3 Low]
 **Impact:** [HIGH | MEDIUM | LOW]
@@ -1541,6 +1696,7 @@ For each decision, use this template:
 [Clear statement of the question]
 
 **Options:**
+
 - **A)** [Option description]
   - Pros: [List]
   - Cons: [List]
@@ -1557,6 +1713,7 @@ For each decision, use this template:
 [Recommended option with rationale]
 
 **What We Need:**
+
 - [ ] [Required information or approval]
 - [ ] [Additional requirements]
 
@@ -1570,12 +1727,12 @@ For each decision, use this template:
 
 ### Decision Authority
 
-| Priority | Decision Authority | Approval Process |
-|----------|-------------------|------------------|
+| Priority          | Decision Authority  | Approval Process          |
+| ----------------- | ------------------- | ------------------------- |
 | **P0 (Critical)** | Product Owner + CTO | Written approval required |
-| **P1 (High)** | Product Owner | Email approval |
-| **P2 (Medium)** | Technical Lead | Team consensus |
-| **P3 (Low)** | Development Team | Team discussion |
+| **P1 (High)**     | Product Owner       | Email approval            |
+| **P2 (Medium)**   | Technical Lead      | Team consensus            |
+| **P3 (Low)**      | Development Team    | Team discussion           |
 
 ### Approval Workflow
 
@@ -1590,31 +1747,31 @@ For each decision, use this template:
 
 ## Progress Tracking
 
-| Question | Status | Decision | Decided By | Date |
-|----------|--------|----------|-----------|------|
-| Q1: Design System | ✅ Resolved | Create from scratch (Radix + Tailwind) | Product Team | 2025-11-21 |
-| Q2: Storybook | ✅ Resolved | Yes, include in monorepo | Product Team | 2025-11-21 |
-| Q3: Component Library | ⏳ Pending | - | - | - |
-| Q4: Dark Mode | ⏳ Pending | - | - | - |
-| Q5: Mobile Apps | ⏳ Pending | - | - | - |
-| Q6: Deployment | ✅ Resolved | Ubuntu (Docker Compose) initially | Product Team | 2025-11-21 |
-| Q7: Staging Env | ⏳ Pending | - | - | - |
-| Q8: CI/CD Platform | ⏳ Pending | - | - | - |
-| Q9: Telemetry | ⏳ Pending | - | - | - |
-| Q10: UpToDate | ✅ Resolved | No budget, use free sources | Product Team | 2025-11-21 |
-| Q11: API Priorities | ⏳ Pending | - | - | - |
-| Q12: EMR Targets | ⏳ Pending | - | - | - |
-| Q13: Hospital Partnership | ⏳ Pending | - | - | - |
-| Q14: FHIR Cert | ⏳ Pending | - | - | - |
-| Q15: Offline PHI | ✅ Resolved | No PHI offline, non-PHI only | Product Team | 2025-11-21 |
-| Q16: GDPR | ⏳ Pending | - | - | - |
-| Q17: Data Residency | ⏳ Pending | - | - | - |
-| Q18: GPU Budget | ✅ Resolved | No budget, use OpenAI APIs | Product Team | 2025-11-21 |
-| Q19: Model Training | ⏳ Pending | - | - | - |
-| Q20: Model Evaluation | ⏳ Pending | - | - | - |
-| Q21: Multi-Modal Priority | ⏳ Pending | - | - | - |
-| Q22: Image Datasets | ✅ Resolved | Pre-trained models (GPT-4 Vision) | Product Team | 2025-11-21 |
-| Q23: AI Liability | ✅ Resolved | Decision support only, disclaimers | Product Team | 2025-11-21 |
+| Question                  | Status      | Decision                               | Decided By   | Date       |
+| ------------------------- | ----------- | -------------------------------------- | ------------ | ---------- |
+| Q1: Design System         | ✅ Resolved | Create from scratch (Radix + Tailwind) | Product Team | 2025-11-21 |
+| Q2: Storybook             | ✅ Resolved | Yes, include in monorepo               | Product Team | 2025-11-21 |
+| Q3: Component Library     | ⏳ Pending  | -                                      | -            | -          |
+| Q4: Dark Mode             | ⏳ Pending  | -                                      | -            | -          |
+| Q5: Mobile Apps           | ⏳ Pending  | -                                      | -            | -          |
+| Q6: Deployment            | ✅ Resolved | Ubuntu (Docker Compose) initially      | Product Team | 2025-11-21 |
+| Q7: Staging Env           | ⏳ Pending  | -                                      | -            | -          |
+| Q8: CI/CD Platform        | ⏳ Pending  | -                                      | -            | -          |
+| Q9: Telemetry             | ⏳ Pending  | -                                      | -            | -          |
+| Q10: UpToDate             | ✅ Resolved | No budget, use free sources            | Product Team | 2025-11-21 |
+| Q11: API Priorities       | ⏳ Pending  | -                                      | -            | -          |
+| Q12: EMR Targets          | ⏳ Pending  | -                                      | -            | -          |
+| Q13: Hospital Partnership | ⏳ Pending  | -                                      | -            | -          |
+| Q14: FHIR Cert            | ⏳ Pending  | -                                      | -            | -          |
+| Q15: Offline PHI          | ✅ Resolved | No PHI offline, non-PHI only           | Product Team | 2025-11-21 |
+| Q16: GDPR                 | ⏳ Pending  | -                                      | -            | -          |
+| Q17: Data Residency       | ⏳ Pending  | -                                      | -            | -          |
+| Q18: GPU Budget           | ✅ Resolved | No budget, use OpenAI APIs             | Product Team | 2025-11-21 |
+| Q19: Model Training       | ⏳ Pending  | -                                      | -            | -          |
+| Q20: Model Evaluation     | ⏳ Pending  | -                                      | -            | -          |
+| Q21: Multi-Modal Priority | ⏳ Pending  | -                                      | -            | -          |
+| Q22: Image Datasets       | ✅ Resolved | Pre-trained models (GPT-4 Vision)      | Product Team | 2025-11-21 |
+| Q23: AI Liability         | ✅ Resolved | Decision support only, disclaimers     | Product Team | 2025-11-21 |
 
 **Summary:** 8/23 questions resolved (all critical questions). Ready for Milestone 1.
 

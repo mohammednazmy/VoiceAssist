@@ -1,0 +1,8 @@
+{
+  "path": "services/api-gateway/app/services/admin_audit_log_service.py",
+  "language": "python",
+  "size": 1494,
+  "last_modified": "2025-11-27T09:29:21.016Z",
+  "lines": 52,
+  "content": "\"\"\"Helper for writing admin audit logs.\"\"\"\n\nfrom __future__ import annotations\n\nfrom typing import Any, Dict, Optional\n\nfrom app.core.request_id import get_request_id\nfrom app.models.admin_audit_log import AdminAuditLog\nfrom app.models.user import User\nfrom fastapi import Request\nfrom sqlalchemy.orm import Session\n\n\nclass AdminAuditLogService:\n    \"\"\"Persist admin-focused audit events.\"\"\"\n\n    def log_action(\n        self,\n        db: Session,\n        *,\n        actor: Optional[User],\n        action: str,\n        target_type: Optional[str] = None,\n        target_id: Optional[str] = None,\n        success: bool = True,\n        metadata: Optional[Dict[str, Any]] = None,\n        request: Optional[Request] = None,\n    ) -> AdminAuditLog:\n        request_id = get_request_id(request) if request else None\n        ip_address = request.client.host if request and request.client else None\n\n        log_entry = AdminAuditLog(\n            actor_id=str(actor.id) if actor else None,\n            actor_email=actor.email if actor else None,\n            actor_role=actor.admin_role if actor else None,\n            action=action,\n            target_type=target_type,\n            target_id=target_id,\n            success=success,\n            action_metadata=metadata,\n            request_id=request_id,\n            ip_address=ip_address,\n        )\n\n        db.add(log_entry)\n        db.commit()\n        db.refresh(log_entry)\n        return log_entry\n\n\nadmin_audit_log_service = AdminAuditLogService()\n"
+}

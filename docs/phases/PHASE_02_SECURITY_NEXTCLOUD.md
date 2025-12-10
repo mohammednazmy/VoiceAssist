@@ -1,3 +1,26 @@
+---
+title: Phase 02 Security Nextcloud
+slug: phases/phase-02-security-nextcloud
+summary: "> **V2 PHASE DOCUMENT**"
+status: stable
+stability: production
+owner: mixed
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - ai-agents
+tags:
+  - phase
+  - security
+  - nextcloud
+category: planning
+ai_summary: >-
+  > V2 PHASE DOCUMENT > > This phase description is part of the canonical 0–14
+  V2 plan. > It is intended to guide both human developers and Claude Code >
+  sessions. Always read DEVELOPMENT_PHASES_V2.md and BACKEND_ARCHITECTURE.md >
+  alongside this document. Implement SSO, JWT auth, and baseline secur...
+---
+
 # Phase 2: Security Foundation & Nextcloud Integration
 
 > **V2 PHASE DOCUMENT**
@@ -12,6 +35,7 @@
 Implement SSO, JWT auth, and baseline security controls; connect to Nextcloud.
 
 See also:
+
 - [DEVELOPMENT_PHASES_V2.md](../DEVELOPMENT_PHASES_V2.md)
 - [PHASE_STATUS.md](../../PHASE_STATUS.md)
 - [BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md)
