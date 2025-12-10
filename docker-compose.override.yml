@@ -1,7 +1,48 @@
-# Docker Compose Override for asimo.io Production Deployment
+# Docker Compose Override for Local macOS Development
 # Custom ports to avoid conflicts with existing services
 
 services:
+  # ARQ Worker for async document processing
+  voiceassist-worker:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    container_name: voiceassist-worker
+    entrypoint: ["python", "worker.py"]
+    command: []
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-true}
+      # Required by app config validation
+      - NEXTCLOUD_URL=${NEXTCLOUD_URL:-https://nextcloud.local}
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER:-admin}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD:-changeme}
+    networks:
+      - voiceassist-network
+      - database-network
+    depends_on:
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    # Disable HTTP health check (worker doesn't serve HTTP)
+    healthcheck:
+      disable: true
+    restart: unless-stopped
+
   # API Gateway - Main VoiceAssist server
   voiceassist-server:
     ports:

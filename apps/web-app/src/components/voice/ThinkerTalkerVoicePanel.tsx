@@ -15,7 +15,7 @@
  * Phase 11: Compact Voice Mode UI
  */
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useThinkerTalkerVoiceMode } from "../../hooks/useThinkerTalkerVoiceMode";
 import type {
   TTToolCall,
@@ -64,31 +64,55 @@ export function ThinkerTalkerVoicePanel({
   const { elevenlabsVoiceId, language, vadSensitivity } =
     useVoiceSettingsStore();
 
-  // T/T Voice Mode hook
-  const voiceMode = useThinkerTalkerVoiceMode({
-    conversation_id: conversationId,
-    voiceSettings: {
-      voice_id: elevenlabsVoiceId || DEFAULT_VOICE_ID, // From voiceConstants.ts
+  // Memoize voice settings to prevent infinite re-renders
+  const voiceSettings = useMemo(
+    () => ({
+      voice_id: elevenlabsVoiceId || DEFAULT_VOICE_ID,
       language,
       barge_in_enabled: true,
-      vad_sensitivity: vadSensitivity, // 0-100 from settings
-    },
-    onUserTranscript: (text, isFinal) => {
+      vad_sensitivity: vadSensitivity,
+    }),
+    [elevenlabsVoiceId, language, vadSensitivity],
+  );
+
+  // Memoize callbacks to prevent infinite re-renders
+  const handleUserTranscript = useCallback(
+    (text: string, isFinal: boolean) => {
       if (isFinal) {
         onUserMessage?.(text);
       }
     },
-    onAIResponse: (text, isFinal) => {
+    [onUserMessage],
+  );
+
+  const handleAIResponse = useCallback(
+    (text: string, isFinal: boolean) => {
       if (isFinal) {
         onAssistantMessage?.(text);
       }
     },
-    onToolCall: (toolCall: TTToolCall) => {
-      console.log("[ThinkerTalkerVoicePanel] Tool call:", toolCall.name);
-    },
-    onMetricsUpdate: (metrics: TTVoiceMetrics) => {
+    [onAssistantMessage],
+  );
+
+  const handleToolCall = useCallback((toolCall: TTToolCall) => {
+    console.log("[ThinkerTalkerVoicePanel] Tool call:", toolCall.name);
+  }, []);
+
+  const handleMetricsUpdate = useCallback(
+    (metrics: TTVoiceMetrics) => {
       onMetricsUpdate?.(metrics);
     },
+    [onMetricsUpdate],
+  );
+
+  // T/T Voice Mode hook
+  const voiceMode = useThinkerTalkerVoiceMode({
+    conversation_id: conversationId,
+    voiceSettings,
+    onUserTranscript: handleUserTranscript,
+    onAIResponse: handleAIResponse,
+    onToolCall: handleToolCall,
+    onMetricsUpdate: handleMetricsUpdate,
   });
 
   // Map metrics to VoiceMetrics format for the drawer

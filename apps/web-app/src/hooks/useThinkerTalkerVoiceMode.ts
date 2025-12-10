@@ -440,7 +440,8 @@ export function useThinkerTalkerVoiceMode(
         const responses = await Promise.all(
           flagNames.map(async (name) => {
             try {
-              return await apiClient.getFeatureFlag(name);
+              // Use public experiments endpoint (no admin auth required)
+              return await apiClient.getPublicFeatureFlag(name);
             } catch (err) {
               voiceLog.debug(
                 `[TTVoiceMode] Failed to fetch feature flag ${name}:`,
@@ -590,6 +591,21 @@ export function useThinkerTalkerVoiceMode(
     networkQuality.metrics.quality,
   );
 
+  // Keep network degradation callbacks in refs so we don't depend on the
+  // entire options object (which is recreated on every render) and risk
+  // unnecessary effect re-runs.
+  const onNetworkDegradedRef = useRef<
+    TTVoiceModeOptions["onNetworkDegraded"] | undefined
+  >(options.onNetworkDegraded);
+  const onNetworkRecoveredRef = useRef<
+    TTVoiceModeOptions["onNetworkRecovered"] | undefined
+  >(options.onNetworkRecovered);
+
+  useEffect(() => {
+    onNetworkDegradedRef.current = options.onNetworkDegraded;
+    onNetworkRecoveredRef.current = options.onNetworkRecovered;
+  }, [options.onNetworkDegraded, options.onNetworkRecovered]);
+
   // Phase 6.3: Monitor network quality changes for degradation
   useEffect(() => {
     const quality = networkQuality.metrics.quality;
@@ -602,7 +618,7 @@ export function useThinkerTalkerVoiceMode(
         `[TTVoiceMode] Network degraded to poor (RTT: ${networkQuality.metrics.rttMs}ms)`,
       );
       // Notify options callback if provided
-      options.onNetworkDegraded?.({
+      onNetworkDegradedRef.current?.({
         quality,
         rttMs: networkQuality.metrics.rttMs,
         recommendation:
@@ -621,19 +637,14 @@ export function useThinkerTalkerVoiceMode(
       voiceLog.info(
         `[TTVoiceMode] Network recovered to ${quality} (RTT: ${networkQuality.metrics.rttMs}ms)`,
       );
-      options.onNetworkRecovered?.({
+      onNetworkRecoveredRef.current?.({
         quality,
         rttMs: networkQuality.metrics.rttMs,
       });
     }
 
     previousNetworkQualityRef.current = quality;
-  }, [
-    networkQuality.metrics.quality,
-    networkQuality.metrics.rttMs,
-    isNetworkDegraded,
-    options,
-  ]);
+  }, [networkQuality.metrics.quality, networkQuality.metrics.rttMs, isNetworkDegraded]);
 
   // Feature flag for adaptive prebuffering
   const { isEnabled: adaptivePrebufferEnabled } = useFeatureFlag(
@@ -1070,6 +1081,21 @@ export function useThinkerTalkerVoiceMode(
       voiceLog.debug(
         `[TTVoiceMode] Silero VAD: Speech ended, audio length: ${audio.length}`,
       );
+      // When frontend Silero VAD detects speech end, commit the audio buffer
+      // to trigger AI processing. This is needed when backend VAD doesn't
+      // detect speech end (e.g., due to audio quality or configuration issues).
+      // Only commit if we're in listening state (not during AI playback)
+      const currentSession = sessionRef.current;
+      if (
+        currentSession?.isConnected &&
+        currentSession?.pipelineState === "listening" &&
+        !audioPlaybackRef.current.isPlaying
+      ) {
+        voiceLog.info(
+          "[TTVoiceMode] Silero VAD: Committing audio buffer after speech end",
+        );
+        currentSession.commitAudio();
+      }
     },
     onVADMisfire: () => {
       voiceLog.debug("[TTVoiceMode] Silero VAD: Misfire (speech too short)");
@@ -1264,6 +1290,13 @@ export function useThinkerTalkerVoiceMode(
   // (useThinkerTalkerSession doesn't have access to audioPlayback hook)
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    // Only expose debug state when explicitly enabled for E2E/debugging.
+    // This prevents unnecessary effect churn during normal usage.
+    const globalAny = window as unknown as { __ENABLE_VOICE_DEBUG__?: boolean };
+    if (!globalAny.__ENABLE_VOICE_DEBUG__) {
+      return;
+    }
 
     // Create or extend the voiceModeDebug object with audio playback state
     const voiceModeDebug = {

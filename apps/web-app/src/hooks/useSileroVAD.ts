@@ -654,7 +654,12 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
       };
 
       // If external stream is provided, use it via getStream callback
+      // Validate that the stream is still active before using it
       if (externalStream) {
+        const tracks = externalStream.getAudioTracks();
+        if (tracks.length === 0 || tracks.every((t) => t.readyState === "ended")) {
+          throw new Error("External audio stream has no active audio tracks");
+        }
         vadOptions.getStream = async () => externalStream;
       }
 
@@ -671,9 +676,17 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
       });
       return vad;
     } catch (err) {
-      const error =
-        err instanceof Error ? err : new Error("Failed to initialize VAD");
-      voiceLog.error("[SileroVAD] Initialization failed:", error);
+      // Ensure we capture the full error info even for non-Error objects
+      let errorMessage = "Failed to initialize VAD";
+      if (err instanceof Error) {
+        errorMessage = err.message || err.name || "Unknown VAD error";
+      } else if (typeof err === "string") {
+        errorMessage = err;
+      } else if (err && typeof err === "object") {
+        errorMessage = JSON.stringify(err);
+      }
+      const error = new Error(errorMessage);
+      voiceLog.error("[SileroVAD] Initialization failed:", errorMessage, err);
       setError(error);
       setIsLoading(false);
       initializingRef.current = false;
@@ -766,7 +779,16 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
         voiceLog.debug("[SileroVAD] Started listening");
       }
     } catch (err) {
-      voiceLog.error("[SileroVAD] Failed to start:", err);
+      // Capture full error info for debugging
+      let errorMessage = "Failed to start VAD";
+      if (err instanceof Error) {
+        errorMessage = err.message || err.name || "Unknown start error";
+      } else if (typeof err === "string") {
+        errorMessage = err;
+      } else if (err && typeof err === "object") {
+        errorMessage = JSON.stringify(err);
+      }
+      voiceLog.error("[SileroVAD] Failed to start:", errorMessage, err);
     }
   }, [initialize]);
 

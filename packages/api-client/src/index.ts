@@ -1487,6 +1487,26 @@ export class VoiceAssistApiClient {
     return response.data;
   }
 
+  /**
+   * Get a feature flag value using the public experiments endpoint.
+   * This does NOT require admin access and is suitable for client-side feature checks.
+   * @param flagName - The flag name (e.g., "backend.voice_silero_vad_enabled")
+   * @returns The flag value and metadata
+   */
+  async getPublicFeatureFlag(flagName: string): Promise<{
+    name: string;
+    enabled: boolean;
+    value: unknown;
+    flag_type: string;
+    description?: string;
+    rollout_percentage?: number;
+  }> {
+    const response = await this.client.get(
+      `/api/experiments/flags/${flagName}`,
+    );
+    return response.data;
+  }
+
   async createFeatureFlag(
     flag: CreateFeatureFlagRequest,
   ): Promise<FeatureFlag> {

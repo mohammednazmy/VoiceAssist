@@ -300,17 +300,21 @@ export function useNetworkQuality(
     }
   }, [getNavigatorMetrics, measureRtt]);
 
+  // Track monitoring state in ref to avoid dependency cycles
+  const isMonitoringRef = useRef(false);
+
   /**
    * Start monitoring
    */
   const start = useCallback(() => {
-    if (!enabled || isMonitoring) return;
+    if (!enabled || isMonitoringRef.current) return;
 
+    isMonitoringRef.current = true;
     setIsMonitoring(true);
     updateMetrics();
 
     intervalRef.current = setInterval(updateMetrics, updateInterval);
-  }, [enabled, isMonitoring, updateMetrics, updateInterval]);
+  }, [enabled, updateMetrics, updateInterval]);
 
   /**
    * Stop monitoring
@@ -320,6 +324,7 @@ export function useNetworkQuality(
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    isMonitoringRef.current = false;
     setIsMonitoring(false);
   }, []);
 
@@ -334,7 +339,7 @@ export function useNetworkQuality(
   useEffect(() => {
     mountedRef.current = true;
 
-    if (enabled) {
+    if (enabled && !isMonitoringRef.current) {
       start();
     }
 
@@ -342,7 +347,9 @@ export function useNetworkQuality(
       mountedRef.current = false;
       stop();
     };
-  }, [enabled, start, stop]);
+    // Note: start/stop are stable now since we use refs for the guard
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled]);
 
   // Listen for network change events
   useEffect(() => {

@@ -22,6 +22,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY app/ app/
 
+# Copy worker script for ARQ background tasks
+COPY worker.py .
+
 # Copy Alembic configuration
 COPY alembic.ini .
 COPY alembic/ alembic/
