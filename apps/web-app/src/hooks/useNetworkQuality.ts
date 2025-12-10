@@ -192,6 +192,9 @@ export function useNetworkQuality(
   // Refs
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mountedRef = useRef(true);
+  // Use ref for monitoring state check to prevent infinite re-render loops
+  // when start/stop functions are in useEffect dependencies
+  const isMonitoringRef = useRef(false);
 
   /**
    * Measure RTT using a ping to the health endpoint
@@ -200,13 +203,14 @@ export function useNetworkQuality(
     if (!enablePing) return null;
 
     try {
-      // Prefer explicit API base; fall back to gateway when running from Vite dev server
-      const apiBase =
-        import.meta.env.VITE_API_URL ||
-        (typeof window !== "undefined" &&
-        window.location.origin.includes("localhost:5173")
-          ? "http://localhost:8000"
-          : window.location.origin || "");
+      // For local development, always use localhost to avoid CORS issues with remote health endpoints
+      // In production, VITE_API_URL or window.location.origin is used
+      const isLocalDev =
+        typeof window !== "undefined" &&
+        window.location.origin.includes("localhost");
+      const apiBase = isLocalDev
+        ? "http://localhost:8000"
+        : (import.meta.env.VITE_API_URL || window?.location?.origin || "");
       const start = performance.now();
 
       const response = await fetch(`${apiBase}${pingEndpoint}`, {
@@ -229,8 +233,8 @@ export function useNetworkQuality(
    */
   const getNavigatorMetrics = useCallback(() => {
     // Check if Network Information API is available
-    // @ts-expect-error - Navigator.connection is not in all TypeScript libs
-    const connection = navigator.connection as
+    // Use type assertion for Network Information API which isn't in all TS libs
+    const connection = (navigator as { connection?: unknown }).connection as
       | {
           effectiveType?: string;
           downlink?: number;
@@ -307,13 +311,16 @@ export function useNetworkQuality(
    * Start monitoring
    */
   const start = useCallback(() => {
-    if (!enabled || isMonitoring) return;
+    // Use ref for the guard check to avoid including isMonitoring in dependencies,
+    // which would cause the function reference to change and trigger infinite loops
+    if (!enabled || isMonitoringRef.current) return;
 
+    isMonitoringRef.current = true;
     setIsMonitoring(true);
     updateMetrics();
 
     intervalRef.current = setInterval(updateMetrics, updateInterval);
-  }, [enabled, isMonitoring, updateMetrics, updateInterval]);
+  }, [enabled, updateMetrics, updateInterval]);
 
   /**
    * Stop monitoring
@@ -323,6 +330,7 @@ export function useNetworkQuality(
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    isMonitoringRef.current = false;
     setIsMonitoring(false);
   }, []);
 
@@ -349,8 +357,8 @@ export function useNetworkQuality(
 
   // Listen for network change events
   useEffect(() => {
-    // @ts-expect-error - Navigator.connection is not in all TypeScript libs
-    const connection = navigator.connection;
+    // Use type assertion for Network Information API which isn't in all TS libs
+    const connection = (navigator as { connection?: EventTarget }).connection;
     if (!connection) return;
 
     const handleChange = () => {
